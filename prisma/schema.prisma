@@ -1,0 +1,407 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String?
+  access_token      String?
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String?
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+  @@map("accounts")
+}
+
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@map("sessions")
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  title     String? // Anrede (Herr, Frau, etc.)
+  firstName String? // Vorname
+  lastName  String? // Nachname
+  password  String?
+  image     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // E-Mail Bestätigung
+  emailVerified                 Boolean   @default(false)
+  emailVerifiedAt               DateTime?
+  emailVerificationToken        String?
+  emailVerificationTokenExpires DateTime?
+
+  // Public profile fields
+  nickname       String?
+  bio            String?
+  specialization String?
+
+  // Profil-Daten (nur nötig zum Handeln)
+  profileComplete Boolean   @default(false)
+  dateOfBirth     DateTime?
+  nationality     String?
+  phone           String?
+  phoneVerified   Boolean   @default(false)
+
+  // Adresse
+  street       String?
+  streetNumber String?
+  postalCode   String?
+  city         String?
+  country      String?
+
+  // Rechnungsadresse (optional)
+  billingStreet       String?
+  billingStreetNumber String?
+  billingPostalCode   String?
+  billingCity         String?
+  billingCountry      String?
+
+  // Lieferadresse (abweichend, optional)
+  deliveryStreet       String?
+  deliveryStreetNumber String?
+  deliveryPostalCode   String?
+  deliveryCity         String?
+  deliveryCountry      String?
+
+  // Zahlungsmittel (JSON String: array von payment methods)
+  // Format: [{type: "twint", phone: "..."}, {type: "bank", iban: "...", accountHolderFirstName: "...", accountHolderLastName: "...", bank: "..."}, {type: "creditcard", ...}]
+  paymentMethods String? // JSON array
+
+  // Ausweiskopie (Base64 String)
+  idDocument      String? // Base64 encoded document (for Passport or single file)
+  idDocumentPage1 String? // Base64 encoded Seite 1 der Identitätskarte
+  idDocumentPage2 String? // Base64 encoded Seite 2 der Identitätskarte
+  idDocumentType  String? // "ID" or "Passport"
+
+  // Firmeninfo
+  companyName String?
+
+  // Kontotyp & Verifizierung
+  accountType            String? // privat, geschäftlich
+  verified               Boolean   @default(false)
+  verificationLevel      String? // basic, verified, premium
+  verifiedAt             DateTime? // Wann wurde der User verifiziert
+  verificationStatus     String?   @default("pending") // pending, approved, rejected
+  verificationReviewedAt DateTime? // Wann wurde die Verifizierung geprüft
+  verificationReviewedBy String? // ID des Admin-Users der geprüft hat
+
+  // Admin & Moderation
+  isAdmin      Boolean   @default(false)
+  isBlocked    Boolean   @default(false)
+  blockedAt    DateTime?
+  blockedBy    String? // ID des Admin-Users der blockiert hat
+  warningCount Int       @default(0)
+  lastWarnedAt DateTime?
+
+  // Relations
+  accounts         Account[]
+  sessions         Session[]
+  watches          Watch[]
+  bids             Bid[]
+  purchases        Purchase[]
+  sales            Sale[]
+  salePurchases    Sale[]     @relation("SaleBuyer")
+  reviews          Review[]
+  receivedReviews  Review[]   @relation("ReviewedUser")
+  favorites        Favorite[]
+  messages         Message[]  @relation("MessageSender")
+  receivedMessages Message[]  @relation("MessageReceiver")
+  invoices         Invoice[]
+
+  @@map("users")
+}
+
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+  @@map("verification_tokens")
+}
+
+model Watch {
+  id              String    @id @default(cuid())
+  title           String
+  description     String?
+  brand           String
+  model           String
+  year            Int?
+  condition       String
+  material        String?
+  movement        String?
+  caseSize        Float?
+  caseDiameter    Float?
+  price           Float
+  buyNowPrice     Float?
+  isAuction       Boolean   @default(false)
+  auctionStart    DateTime? // Optional: Starttermin für das Angebot
+  auctionEnd      DateTime?
+  auctionDuration Int? // Dauer in Tagen (max. 30)
+  autoRenew       Boolean   @default(false) // Automatische Verlängerung
+  images          String
+  video           String?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  // Additional fields for detailed form
+  lastRevision        DateTime?
+  accuracy            String?
+  fullset             Boolean   @default(false)
+  allLinks            Boolean   @default(false)
+  box                 Boolean   @default(false)
+  papers              Boolean   @default(false)
+  warranty            String?
+  warrantyMonths      Int?
+  warrantyYears       Int?
+  warrantyNote        String?
+  warrantyDescription String?
+  referenceNumber     String?
+  shippingMethod      String? // JSON Array: ['pickup', 'b-post', 'a-post']
+  boosters            String? // JSON Array: selected boosters ['top', 'homepage', 'highlighted', etc.]
+
+  // Relations
+  sellerId     String
+  seller       User            @relation(fields: [sellerId], references: [id])
+  bids         Bid[]
+  purchases    Purchase[]
+  sales        Sale[]
+  favorites    Favorite[]
+  messages     Message[]
+  categories   WatchCategory[]
+  invoiceItems InvoiceItem[]
+
+  @@map("watches")
+}
+
+model Bid {
+  id        String   @id @default(cuid())
+  amount    Float
+  createdAt DateTime @default(now())
+
+  watchId String
+  watch   Watch  @relation(fields: [watchId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+
+  @@map("bids")
+}
+
+model Purchase {
+  id             String    @id @default(cuid())
+  price          Float? // Verkaufspreis zum Zeitpunkt des Kaufs (optional für Migration)
+  shippingMethod String? // Gewählte Lieferart: 'pickup', 'b-post', 'a-post'
+  paid           Boolean   @default(false) // Status: bezahlt
+  paidAt         DateTime? // Zeitpunkt der Bezahlbestätigung
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+
+  watchId String
+  watch   Watch  @relation(fields: [watchId], references: [id])
+  buyerId String
+  buyer   User   @relation(fields: [buyerId], references: [id])
+
+  reviews Review[] // Bewertungen für diesen Kauf
+
+  @@map("purchases")
+}
+
+model Sale {
+  id        String   @id @default(cuid())
+  price     Float? // Verkaufspreis zum Zeitpunkt des Verkaufs (optional für Migration)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  watchId  String
+  watch    Watch   @relation(fields: [watchId], references: [id])
+  sellerId String
+  seller   User    @relation(fields: [sellerId], references: [id])
+  buyerId  String? // Käufer (optional, falls vorhanden)
+  buyer    User?   @relation("SaleBuyer", fields: [buyerId], references: [id])
+
+  reviews Review[] // Bewertungen für diesen Verkauf
+
+  @@map("sales")
+}
+
+model Payment {
+  id        String   @id @default(cuid())
+  amount    Float
+  status    String
+  createdAt DateTime @default(now())
+
+  @@map("payments")
+}
+
+model Review {
+  id        String   @id @default(cuid())
+  rating    String // positive, neutral, negative
+  comment   String?
+  createdAt DateTime @default(now())
+
+  // Relations
+  reviewerId     String
+  reviewer       User   @relation(fields: [reviewerId], references: [id])
+  reviewedUserId String
+  reviewedUser   User   @relation("ReviewedUser", fields: [reviewedUserId], references: [id])
+
+  // Optional: Verknüpfung zu Purchase/Sale (für Bewertungen nach Kauf/Verkauf)
+  purchaseId String?
+  purchase   Purchase? @relation(fields: [purchaseId], references: [id])
+  saleId     String?
+  sale       Sale?     @relation(fields: [saleId], references: [id])
+
+  @@unique([purchaseId, reviewerId]) // Ein Reviewer kann nur einmal pro Purchase bewerten
+  @@unique([saleId, reviewerId]) // Ein Reviewer kann nur einmal pro Sale bewerten
+  @@map("reviews")
+}
+
+model Favorite {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+
+  watchId String
+  watch   Watch  @relation(fields: [watchId], references: [id])
+  userId  String
+  user    User   @relation(fields: [userId], references: [id])
+
+  @@unique([watchId, userId])
+  @@map("favorites")
+}
+
+model Category {
+  id        String   @id @default(cuid())
+  name      String   @unique
+  slug      String   @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  watches WatchCategory[]
+
+  @@map("categories")
+}
+
+model WatchCategory {
+  id         String @id @default(cuid())
+  watchId    String
+  categoryId String
+
+  watch    Watch    @relation(fields: [watchId], references: [id])
+  category Category @relation(fields: [categoryId], references: [id])
+
+  @@unique([watchId, categoryId])
+  @@map("watch_categories")
+}
+
+model Message {
+  id        String   @id @default(cuid())
+  content   String
+  createdAt DateTime @default(now())
+  read      Boolean  @default(false)
+  isPublic  Boolean  @default(false)
+
+  watchId String
+  watch   Watch  @relation(fields: [watchId], references: [id])
+
+  senderId String
+  sender   User   @relation("MessageSender", fields: [senderId], references: [id])
+
+  receiverId String
+  receiver   User   @relation("MessageReceiver", fields: [receiverId], references: [id])
+
+  @@map("messages")
+}
+
+model Invoice {
+  id            String @id @default(cuid())
+  invoiceNumber String @unique // Eindeutige Rechnungsnummer (z.B. REV-2024-001)
+
+  // Verkäufer
+  sellerId String
+  seller   User   @relation(fields: [sellerId], references: [id])
+
+  // Verkaufsinformationen
+  saleId String? // Reference to Purchase
+
+  // Gebührenberechnung
+  subtotal  Float // Summe ohne MwSt (Booster + 10% vom Verkauf)
+  vatRate   Float @default(0.081) // MwSt-Satz (8.1%)
+  vatAmount Float // MwSt-Betrag
+  total     Float // Total zu zahlen (Subtotal + MwSt)
+
+  // Status
+  status  String    @default("pending") // pending, paid, overdue, cancelled
+  paidAt  DateTime?
+  dueDate DateTime
+
+  // Zahlungsmethoden
+  paymentMethod    String? // twint, creditcard, qr-transfer
+  paymentReference String? // Referenznummer / Transaction ID
+
+  // Score-Max QR-Code
+  qrCode String? // Score-Max QR-Code String
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  items InvoiceItem[]
+
+  @@map("invoices")
+}
+
+model InvoiceItem {
+  id        String  @id @default(cuid())
+  invoiceId String
+  invoice   Invoice @relation(fields: [invoiceId], references: [id])
+
+  watchId String?
+  watch   Watch?  @relation(fields: [watchId], references: [id])
+
+  description String // Beschreibung (z.B. "Plattformgebühr 10%", "Booster: Top-Anzeige")
+  quantity    Int    @default(1)
+  price       Float // Einzelpreis
+  total       Float // Gesamtpreis (quantity * price)
+
+  createdAt DateTime @default(now())
+
+  @@map("invoice_items")
+}
+
+model BoosterPrice {
+  id          String  @id @default(cuid())
+  code        String  @unique // Eindeutiger Code: 'top', 'homepage', 'highlighted', etc.
+  name        String // Anzeigename: "Top-Anzeige", "Homepage-Feature", etc.
+  description String? // Beschreibung der Funktion
+  price       Float // Preis in CHF
+  isActive    Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("booster_prices")
+}

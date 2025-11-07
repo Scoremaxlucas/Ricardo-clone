@@ -1,0 +1,199 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
+import { prisma } from '@/lib/prisma'
+
+export async function GET(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const watch = await prisma.watch.findUnique({
+      where: { id },
+      include: { 
+        bids: true,
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true
+          }
+        }
+      }
+    })
+
+    if (!watch) {
+      return NextResponse.json(
+        { message: 'Uhr nicht gefunden' },
+        { status: 404 }
+      )
+    }
+
+    const images = watch.images ? JSON.parse(watch.images) : []
+
+    return NextResponse.json({
+      watch: {
+        id: watch.id,
+        title: watch.title,
+        description: watch.description,
+        brand: watch.brand,
+        model: watch.model,
+        referenceNumber: (watch as any).referenceNumber,
+        year: watch.year,
+        condition: watch.condition,
+        material: watch.material,
+        movement: watch.movement,
+        caseDiameter: (watch as any).caseDiameter,
+        price: watch.price,
+        buyNowPrice: watch.buyNowPrice,
+        isAuction: watch.isAuction,
+        auctionStart: watch.auctionStart,
+        auctionEnd: watch.auctionEnd,
+        lastRevision: watch.lastRevision,
+        accuracy: watch.accuracy,
+        fullset: watch.fullset,
+        box: (watch as any).box,
+        papers: (watch as any).papers,
+        allLinks: (watch as any).allLinks,
+        warranty: (watch as any).warranty,
+        warrantyMonths: (watch as any).warrantyMonths,
+        warrantyYears: (watch as any).warrantyYears,
+        warrantyNote: (watch as any).warrantyNote,
+        warrantyDescription: (watch as any).warrantyDescription,
+        sellerId: watch.sellerId,
+        seller: watch.seller,
+        images: images,
+        video: watch.video,
+        bids: watch.bids || [],
+        shippingMethod: (watch as any).shippingMethod,
+        boosters: (watch as any).boosters
+      }
+    })
+  } catch (error: any) {
+    return NextResponse.json(
+      { message: 'Fehler beim Laden: ' + error.message },
+      { status: 500 }
+    )
+  }
+}
+
+export async function PATCH(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { message: 'Nicht autorisiert' },
+        { status: 401 }
+      )
+    }
+
+    const watch = await prisma.watch.findUnique({
+      where: { id },
+      include: { bids: true }
+    })
+
+    if (!watch) {
+      return NextResponse.json(
+        { message: 'Uhr nicht gefunden' },
+        { status: 404 }
+      )
+    }
+
+    if (watch.sellerId !== session.user.id) {
+      return NextResponse.json(
+        { message: 'Nur der Verkäufer kann das Angebot bearbeiten' },
+        { status: 403 }
+      )
+    }
+
+    const hasBids = watch.bids.length > 0
+    const data = await request.json()
+
+    // Wenn es Gebote gibt: Preis-Felder blockieren
+    if (hasBids && (data.price !== undefined || data.buyNowPrice !== undefined)) {
+      return NextResponse.json(
+        { message: 'Preise können nicht mehr geändert werden, da bereits Gebote vorhanden sind' },
+        { status: 400 }
+      )
+    }
+
+    // Update-Objekt zusammenstellen
+    const updateData: any = {}
+
+    // Wenn keine Gebote: alles editierbar
+    if (!hasBids) {
+      if (data.brand !== undefined) updateData.brand = data.brand
+      if (data.model !== undefined) updateData.model = data.model
+      if (data.referenceNumber !== undefined) updateData.referenceNumber = data.referenceNumber
+      if (data.year !== undefined) updateData.year = data.year ? parseInt(data.year) : null
+      if (data.condition !== undefined) updateData.condition = data.condition
+      if (data.material !== undefined) updateData.material = data.material
+      if (data.movement !== undefined) updateData.movement = data.movement
+      if (data.caseDiameter !== undefined) updateData.caseDiameter = data.caseDiameter ? parseFloat(data.caseDiameter) : null
+      if (data.lastRevision !== undefined) updateData.lastRevision = data.lastRevision ? new Date(data.lastRevision) : null
+      if (data.accuracy !== undefined) updateData.accuracy = data.accuracy
+      if (data.title !== undefined) updateData.title = data.title
+      if (data.description !== undefined) updateData.description = data.description
+      if (data.fullset !== undefined) updateData.fullset = data.fullset
+      if (data.onlyBox !== undefined) updateData.box = data.onlyBox
+      if (data.onlyPapers !== undefined) updateData.papers = data.onlyPapers
+      if (data.onlyAllLinks !== undefined) {
+        updateData.box = data.onlyAllLinks
+        updateData.papers = data.onlyAllLinks
+        updateData.allLinks = data.onlyAllLinks
+      }
+      if (data.hasWarranty !== undefined) updateData.warranty = data.hasWarranty ? 'Herstellergarantie' : null
+      if (data.warrantyMonths !== undefined) updateData.warrantyMonths = data.warrantyMonths ? parseInt(data.warrantyMonths) : null
+      if (data.warrantyYears !== undefined) updateData.warrantyYears = data.warrantyYears ? parseInt(data.warrantyYears) : null
+      if (data.hasSellerWarranty !== undefined && data.sellerWarrantyNote !== undefined) {
+        updateData.warrantyNote = data.sellerWarrantyNote
+        updateData.warrantyDescription = `Verkäufer-Garantie: ${data.sellerWarrantyMonths || 0} Monate, ${data.sellerWarrantyYears || 0} Jahre`
+      }
+      if (data.price !== undefined) updateData.price = parseFloat(data.price)
+      if (data.buyNowPrice !== undefined) updateData.buyNowPrice = data.buyNowPrice ? parseFloat(data.buyNowPrice) : null
+      if (data.auctionEnd !== undefined) updateData.auctionEnd = data.auctionEnd ? new Date(data.auctionEnd) : null
+      if (data.images !== undefined) {
+        const currentImages = watch.images ? JSON.parse(watch.images) : []
+        const newImages = Array.isArray(data.images) ? data.images : []
+        // Zusätzliche Bilder hinzufügen (nicht ersetzen)
+        updateData.images = JSON.stringify([...currentImages, ...newImages.filter(img => !currentImages.includes(img))])
+      }
+      if (data.video !== undefined) updateData.video = data.video
+    } else {
+      // Mit Geboten: nur zusätzliche Bilder und "Nachträgliche Information"
+      if (data.images !== undefined) {
+        const currentImages = watch.images ? JSON.parse(watch.images) : []
+        const newImages = Array.isArray(data.images) ? data.images : []
+        // Nur zusätzliche Bilder hinzufügen
+        updateData.images = JSON.stringify([...currentImages, ...newImages.filter(img => !currentImages.includes(img))])
+      }
+      if (data.additionalInfo !== undefined) {
+        // Nachträgliche Information speichern
+        const currentDesc = watch.description || ''
+        const additionalInfo = `\n\n--- Nachträgliche Information ---\n${data.additionalInfo}`
+        updateData.description = currentDesc + additionalInfo
+      }
+    }
+
+    const updatedWatch = await prisma.watch.update({
+      where: { id },
+      data: updateData
+    })
+
+    return NextResponse.json({
+      message: 'Angebot erfolgreich aktualisiert',
+      watch: updatedWatch
+    })
+  } catch (error: any) {
+    console.error('Error updating watch:', error)
+    return NextResponse.json(
+      { message: 'Fehler beim Aktualisieren: ' + error.message },
+      { status: 500 }
+    )
+  }
+}
