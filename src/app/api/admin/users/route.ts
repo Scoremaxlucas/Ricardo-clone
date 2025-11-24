@@ -52,9 +52,11 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Alle Benutzer laden
+    // Alle Benutzer laden - verwende queryRaw um ALLE User zu bekommen
     console.log('Fetching all users from database...')
-    const users = await prisma.user.findMany({
+    
+    // Zuerst mit Prisma Standard-Methode
+    let users = await prisma.user.findMany({
       select: {
         id: true,
         email: true,
@@ -76,7 +78,52 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    console.log('Users fetched:', users.length)
+    console.log('Users fetched via Prisma:', users.length)
+    
+    // Falls weniger User als erwartet, versuche queryRaw
+    if (users.length < 5) {
+      console.log('⚠️  Prisma findet weniger User als erwartet, versuche queryRaw...')
+      const rawUsers = await prisma.$queryRaw<Array<{
+        id: string
+        email: string
+        name: string | null
+        firstName: string | null
+        lastName: string | null
+        nickname: string | null
+        isAdmin: number | boolean
+        isBlocked: number | boolean
+        verified: number | boolean
+        verificationStatus: string | null
+        createdAt: Date
+      }>>`
+        SELECT id, email, name, firstName, lastName, nickname, 
+               isAdmin, isBlocked, verified, verificationStatus, createdAt
+        FROM users
+        ORDER BY createdAt DESC
+      `
+      
+      console.log('Users fetched via queryRaw:', rawUsers.length)
+      
+      // Konvertiere raw Users zu Prisma-Format
+      users = rawUsers.map(u => ({
+        id: u.id,
+        email: u.email,
+        name: u.name,
+        firstName: u.firstName,
+        lastName: u.lastName,
+        nickname: u.nickname,
+        isAdmin: u.isAdmin === 1 || u.isAdmin === true,
+        isBlocked: u.isBlocked === 1 || u.isBlocked === true,
+        blockedAt: null,
+        verified: u.verified === 1 || u.verified === true,
+        verificationStatus: u.verificationStatus,
+        warningCount: 0,
+        lastWarnedAt: null,
+        createdAt: u.createdAt
+      }))
+    }
+
+    console.log('Total users to return:', users.length)
     console.log('First user:', users[0])
 
     return NextResponse.json(users)
