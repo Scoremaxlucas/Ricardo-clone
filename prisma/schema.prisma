@@ -254,11 +254,12 @@ model Purchase {
   estimatedDeliveryDate DateTime? // Geschätztes Lieferdatum
 
   // Dispute-System
-  disputeOpenedAt   DateTime? // Zeitpunkt der Dispute-Eröffnung
-  disputeReason     String? // Grund für Dispute
-  disputeStatus     String? // pending, resolved, closed
-  disputeResolvedAt DateTime? // Zeitpunkt der Dispute-Lösung
-  disputeResolvedBy String? // ID des Admin-Users der gelöst hat
+  disputeOpenedAt     DateTime? // Zeitpunkt der Dispute-Eröffnung
+  disputeReason       String? // Grund für Dispute (item_not_received, item_damaged, etc.)
+  disputeDescription  String? // Detaillierte Beschreibung des Disputes
+  disputeStatus       String? // pending, resolved, closed
+  disputeResolvedAt   DateTime? // Zeitpunkt der Dispute-Lösung
+  disputeResolvedBy   String? // ID des Admin-Users der gelöst hat
 
   // Status-Historie
   statusHistory String? // JSON Array: [{status, timestamp, changedBy, reason}]

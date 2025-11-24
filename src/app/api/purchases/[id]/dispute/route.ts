@@ -115,8 +115,8 @@ export async function POST(
       data: {
         disputeOpenedAt: new Date(),
         disputeStatus: 'pending',
-        // Speichere Grund und Beschreibung im disputeReason
-        disputeReason: `${reason}: ${description}`
+        disputeReason: reason, // Nur der Grund (z.B. 'item_not_received')
+        disputeDescription: description // Detaillierte Beschreibung getrennt
       }
     })
 

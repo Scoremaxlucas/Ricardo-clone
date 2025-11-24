@@ -87,9 +87,8 @@ export async function GET(request: NextRequest) {
 
     // Formatiere Daten für Frontend
     const disputes = purchases.map(purchase => {
-      const reasonParts = purchase.disputeReason?.split(': ') || []
-      const reason = reasonParts[0] || 'unknown'
-      const description = reasonParts.slice(1).join(': ') || ''
+      const reason = purchase.disputeReason || 'unknown'
+      const description = purchase.disputeDescription || ''
 
       return {
         id: purchase.id,

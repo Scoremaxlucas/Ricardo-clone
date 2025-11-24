@@ -92,10 +92,9 @@ export async function GET(
       )
     }
 
-    // Parse Dispute-Reason
-    const reasonParts = purchase.disputeReason?.split(': ') || []
-    const reason = reasonParts[0] || 'unknown'
-    const description = reasonParts.slice(1).join(': ') || ''
+    // Dispute-Reason und Description sind jetzt getrennt gespeichert
+    const reason = purchase.disputeReason || 'unknown'
+    const description = purchase.disputeDescription || ''
 
     // Parse Status-Historie
     let statusHistory: any[] = []

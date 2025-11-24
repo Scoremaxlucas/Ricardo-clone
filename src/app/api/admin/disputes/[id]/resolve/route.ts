@@ -101,7 +101,8 @@ export async function POST(
       disputeStatus: 'resolved',
       disputeResolvedAt: new Date(),
       disputeResolvedBy: session.user.id,
-      disputeReason: `${purchase.disputeReason}\n\nLösung: ${resolution}`
+      // Speichere Lösung in disputeDescription (nicht in disputeReason überschreiben)
+      disputeDescription: `${purchase.disputeDescription || ''}\n\n--- ADMIN-LÖSUNG ---\n${resolution}`
     }
 
     // Storniere Purchase falls gewünscht
