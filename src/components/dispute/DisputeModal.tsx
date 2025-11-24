@@ -9,19 +9,29 @@ interface DisputeModalProps {
   onClose: () => void
   purchaseId: string
   onDisputeOpened?: () => void
+  isSeller?: boolean // Gibt an, ob der aktuelle Benutzer der Verkäufer ist
 }
 
-const DISPUTE_REASONS = [
+// Dispute-Gründe für Käufer
+const BUYER_DISPUTE_REASONS = [
   { value: 'item_not_received', label: 'Artikel nicht erhalten' },
   { value: 'item_damaged', label: 'Artikel beschädigt' },
   { value: 'item_wrong', label: 'Falscher Artikel geliefert' },
   { value: 'payment_not_confirmed', label: 'Zahlung nicht bestätigt' },
   { value: 'seller_not_responding', label: 'Verkäufer antwortet nicht' },
+  { value: 'other', label: 'Sonstiges' }
+]
+
+// Dispute-Gründe für Verkäufer
+const SELLER_DISPUTE_REASONS = [
+  { value: 'payment_not_confirmed', label: 'Zahlung nicht bestätigt' },
   { value: 'buyer_not_responding', label: 'Käufer antwortet nicht' },
   { value: 'other', label: 'Sonstiges' }
 ]
 
-export function DisputeModal({ isOpen, onClose, purchaseId, onDisputeOpened }: DisputeModalProps) {
+export function DisputeModal({ isOpen, onClose, purchaseId, onDisputeOpened, isSeller = false }: DisputeModalProps) {
+  // Wähle die passenden Gründe basierend auf der Rolle
+  const DISPUTE_REASONS = isSeller ? SELLER_DISPUTE_REASONS : BUYER_DISPUTE_REASONS
   const [reason, setReason] = useState<string>('')
   const [description, setDescription] = useState<string>('')
   const [loading, setLoading] = useState(false)

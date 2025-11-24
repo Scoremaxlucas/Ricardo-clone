@@ -81,6 +81,18 @@ export async function POST(
       )
     }
 
+    // RICARDO-STYLE: Validiere, dass der Dispute-Grund für die Rolle gültig ist
+    const buyerReasons = ['item_not_received', 'item_damaged', 'item_wrong', 'payment_not_confirmed', 'seller_not_responding', 'other']
+    const sellerReasons = ['payment_not_confirmed', 'buyer_not_responding', 'other']
+    
+    const validReasons = isSeller ? sellerReasons : buyerReasons
+    if (!validReasons.includes(reason)) {
+      return NextResponse.json(
+        { message: `Dieser Dispute-Grund ist für ${isSeller ? 'Verkäufer' : 'Käufer'} nicht gültig` },
+        { status: 400 }
+      )
+    }
+
     // Prüfe ob bereits ein Dispute existiert
     if (purchase.disputeOpenedAt) {
       return NextResponse.json(

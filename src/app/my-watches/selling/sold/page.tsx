@@ -481,6 +481,7 @@ export default function SoldPage() {
             setDisputeSaleId(null)
           }}
           purchaseId={disputeSaleId}
+          isSeller={true}
           onDisputeOpened={() => {
             handleMarkPaid()
           }}
