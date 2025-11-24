@@ -406,9 +406,10 @@ model Invoice {
   total     Float // Total zu zahlen (Subtotal + MwSt)
 
   // Status
-  status  String    @default("pending") // pending, paid, overdue, cancelled, blocked
-  paidAt  DateTime?
-  dueDate DateTime
+  status     String    @default("pending") // pending, paid, overdue, cancelled, blocked
+  paidAt     DateTime?
+  refundedAt DateTime? // Zeitpunkt der Rückerstattung (bei Stornierung)
+  dueDate    DateTime
 
   // Zahlungsmethoden
   paymentMethod      String? // twint, creditcard, qr-transfer, bank, paypal

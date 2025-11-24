@@ -49,7 +49,10 @@ export async function POST(
       where: { id },
       include: {
         watch: {
-          include: {
+          select: {
+            id: true,
+            title: true,
+            sellerId: true,
             seller: {
               select: {
                 id: true,
@@ -109,22 +112,28 @@ export async function POST(
     if (cancelPurchase) {
       updateData.status = 'cancelled'
       
-      // Storniere zugehörige Rechnung
-      const invoice = await prisma.invoice.findFirst({
-        where: {
-          saleId: id,
-          sellerId: purchase.watch.sellerId
-        }
-      })
-
-      if (invoice) {
-        await prisma.invoice.update({
-          where: { id: invoice.id },
-          data: {
-            status: 'cancelled',
-            refundedAt: new Date()
+      // Storniere zugehörige Rechnung (falls vorhanden)
+      try {
+        const invoice = await prisma.invoice.findFirst({
+          where: {
+            saleId: id,
+            sellerId: purchase.watch.sellerId
           }
         })
+
+        if (invoice) {
+          await prisma.invoice.update({
+            where: { id: invoice.id },
+            data: {
+              status: 'cancelled',
+              refundedAt: new Date()
+            }
+          })
+          console.log(`[dispute/resolve] Invoice ${invoice.id} wurde storniert`)
+        }
+      } catch (invoiceError: any) {
+        console.error('[dispute/resolve] Fehler beim Stornieren der Invoice:', invoiceError)
+        // Invoice-Fehler sollte nicht die Dispute-Lösung verhindern
       }
     }
 
