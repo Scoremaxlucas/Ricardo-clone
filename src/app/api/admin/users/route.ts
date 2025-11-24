@@ -80,27 +80,27 @@ export async function GET(request: NextRequest) {
 
     console.log('Users fetched via Prisma:', users.length)
     
-    // Falls weniger User als erwartet, versuche queryRaw
-    if (users.length < 5) {
-      console.log('⚠️  Prisma findet weniger User als erwartet, versuche queryRaw...')
-      const rawUsers = await prisma.$queryRaw<Array<{
-        id: string
-        email: string
-        name: string | null
-        firstName: string | null
-        lastName: string | null
-        nickname: string | null
-        isAdmin: number | boolean
-        isBlocked: number | boolean
-        verified: number | boolean
-        verificationStatus: string | null
-        createdAt: Date
-      }>>`
-        SELECT id, email, name, firstName, lastName, nickname, 
-               isAdmin, isBlocked, verified, verificationStatus, createdAt
-        FROM users
-        ORDER BY createdAt DESC
-      `
+    // Verwende IMMER queryRaw um sicherzustellen, dass alle User gefunden werden
+    console.log('⚠️  Verwende queryRaw um alle User zu finden...')
+    const rawUsers = await prisma.$queryRaw<Array<{
+      id: string
+      email: string
+      name: string | null
+      firstName: string | null
+      lastName: string | null
+      nickname: string | null
+      isAdmin: number | boolean
+      isBlocked: number | boolean
+      verified: number | boolean
+      verificationStatus: string | null
+      createdAt: Date
+    }>>`
+      SELECT id, email, name, firstName, lastName, nickname, 
+             isAdmin, isBlocked, verified, verificationStatus, createdAt
+      FROM users
+      WHERE email NOT IN ('test@watch-out.ch', 'seller@watch-out.ch')
+      ORDER BY createdAt DESC
+    `
       
       console.log('Users fetched via queryRaw:', rawUsers.length)
       
