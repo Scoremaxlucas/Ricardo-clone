@@ -62,6 +62,25 @@ sleep 10
 SERVER_PID=$(lsof -ti:$PORT 2>/dev/null || echo "")  # Korrekt: PID des tatsächlichen Prozesses
 ```
 
+## Wichtige Änderungen
+
+### Dateien aus Repository entfernt
+
+Die folgenden Dateien mit hardcodierten Pfaden wurden aus dem Git-Repository entfernt:
+- `.env.new` - Enthielt hardcodierten absoluten Pfad
+- `.env.backup` - Enthielt hardcodierten absoluten Pfad  
+- `.env.tmp` - Temporäre Datei mit hardcodiertem Pfad
+- `com.helvenda.devserver.plist` - Enthielt hardcodierte Pfade
+- `com.helvenda.watchdog.plist` - Enthielt hardcodierte Pfade
+
+**Hinweis:** Diese Dateien bleiben lokal erhalten, werden aber nicht mehr ins Repository committed. Stattdessen werden die `.plist.template` Dateien verwendet, die beim Installieren dynamisch angepasst werden.
+
+### .gitignore aktualisiert
+
+Die `.gitignore` wurde aktualisiert, um zukünftige solche Dateien zu ignorieren:
+- Alle `.env.*` Dateien (außer `.env.example`)
+- Alle `.plist` Dateien (außer `*.plist.template`)
+
 ## Verwendung
 
 ### Für neue Entwickler

@@ -23,6 +23,8 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+.env.*
+!.env.example
 
 # Database
 prisma/*.db
@@ -38,6 +40,10 @@ prisma/*.db-journal
 # OS
 .DS_Store
 Thumbs.db
+
+# LaunchAgent plist files (use templates instead)
+*.plist
+!*.plist.template
 
 # Expo
 .expo/
