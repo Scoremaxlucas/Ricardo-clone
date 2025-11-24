@@ -18,13 +18,15 @@ echo "⚠️  Server läuft nicht. Starte Server..."
 echo ""
 
 # Starte Server im Hintergrund
-./start-server.sh &
-SERVER_PID=$!
+./start-server.sh > /dev/null 2>&1 &
 
-# Warte kurz und prüfe ob Server gestartet wurde
+# Warte kurz bis Server gestartet wurde
 sleep 5
 
+# Prüfe ob Server gestartet wurde und hole die tatsächliche PID
 if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+    # Hole die tatsächliche PID des Prozesses auf Port 3002
+    SERVER_PID=$(lsof -ti:$PORT)
     echo ""
     echo "✅ Server erfolgreich gestartet!"
     echo "🌐 http://localhost:$PORT"

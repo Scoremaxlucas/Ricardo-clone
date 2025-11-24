@@ -24,8 +24,26 @@ fi
 # Installiere Watchdog LaunchAgent
 echo "📦 Installiere Watchdog-Service..."
 mkdir -p ~/Library/LaunchAgents
-cp com.helvenda.watchdog.plist ~/Library/LaunchAgents/
-launchctl load ~/Library/LaunchAgents/com.helvenda.watchdog.plist
+
+PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+WATCHDOG_PLIST="com.helvenda.watchdog.plist"
+TARGET_PLIST="$HOME/Library/LaunchAgents/$WATCHDOG_PLIST"
+
+# Verwende Template falls vorhanden, sonst normale Datei
+if [ -f "${WATCHDOG_PLIST}.template" ]; then
+    # Ersetze Platzhalter mit aktuellem Projekt-Verzeichnis
+    sed "s|__PROJECT_DIR__|$PROJECT_DIR|g" "${WATCHDOG_PLIST}.template" > "$TARGET_PLIST"
+else
+    # Fallback: Verwende normale Datei (für Rückwärtskompatibilität)
+    if [ -f "$WATCHDOG_PLIST" ]; then
+        sed "s|/Users/lucasrodrigues/ricardo-clone|$PROJECT_DIR|g" "$WATCHDOG_PLIST" > "$TARGET_PLIST"
+    else
+        echo "❌ Fehler: Weder ${WATCHDOG_PLIST}.template noch $WATCHDOG_PLIST gefunden"
+        exit 1
+    fi
+fi
+
+launchctl load "$TARGET_PLIST"
 
 echo ""
 echo "✅ Installation abgeschlossen!"

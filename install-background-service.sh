@@ -32,10 +32,25 @@ if [ -f "$TARGET_PATH" ]; then
     echo ""
 fi
 
-# Kopiere plist Datei
+# Erstelle plist Datei mit dynamischen Pfaden
 echo "📋 Installiere Service..."
 mkdir -p "$LAUNCH_AGENTS_DIR"
-cp "$PLIST_FILE" "$TARGET_PATH"
+
+# Verwende Template falls vorhanden, sonst normale Datei
+if [ -f "${PLIST_FILE}.template" ]; then
+    # Ersetze Platzhalter mit aktuellem Projekt-Verzeichnis
+    PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+    sed "s|__PROJECT_DIR__|$PROJECT_DIR|g" "${PLIST_FILE}.template" > "$TARGET_PATH"
+else
+    # Fallback: Verwende normale Datei (für Rückwärtskompatibilität)
+    PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
+    if [ -f "$PLIST_FILE" ]; then
+        sed "s|/Users/lucasrodrigues/ricardo-clone|$PROJECT_DIR|g" "$PLIST_FILE" > "$TARGET_PATH"
+    else
+        echo "❌ Fehler: Weder ${PLIST_FILE}.template noch $PLIST_FILE gefunden"
+        exit 1
+    fi
+fi
 
 # Lade Service
 echo "🚀 Starte Service..."

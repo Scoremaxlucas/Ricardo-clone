@@ -40,14 +40,20 @@ start_server() {
     # Starte Server im Hintergrund
     cd "$(dirname "$0")"
     nohup npm run dev > "$PWD/server.log" 2>&1 &
-    SERVER_PID=$!
     
     # Warte auf Server-Start
     sleep 10
     
+    # Hole die tatsächliche PID des Prozesses auf Port 3002
+    SERVER_PID=$(lsof -ti:$PORT 2>/dev/null || echo "")
+    
     # Prüfe ob Server erfolgreich gestartet wurde
     if check_server; then
-        echo "$(date '+%Y-%m-%d %H:%M:%S') - ✅ Server erfolgreich gestartet (PID: $SERVER_PID)" >> "$LOG_FILE"
+        if [ -n "$SERVER_PID" ]; then
+            echo "$(date '+%Y-%m-%d %H:%M:%S') - ✅ Server erfolgreich gestartet (PID: $SERVER_PID)" >> "$LOG_FILE"
+        else
+            echo "$(date '+%Y-%m-%d %H:%M:%S') - ✅ Server erfolgreich gestartet" >> "$LOG_FILE"
+        fi
         RESTART_COUNT=0
         return 0
     else
