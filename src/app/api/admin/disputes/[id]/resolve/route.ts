@@ -99,13 +99,22 @@ export async function POST(
       )
     }
 
-    // Update Purchase
-    const updateData: any = {
+    // Update Purchase - Baue Update-Objekt sorgfältig auf
+    const existingDescription = purchase.disputeDescription || ''
+    const adminResolution = `\n\n--- ADMIN-LÖSUNG ---\n${resolution}`
+    const newDescription = existingDescription + adminResolution
+
+    const updateData: {
+      disputeStatus: string
+      disputeResolvedAt: Date
+      disputeResolvedBy: string
+      disputeDescription: string
+      status?: string
+    } = {
       disputeStatus: 'resolved',
       disputeResolvedAt: new Date(),
       disputeResolvedBy: session.user.id,
-      // Speichere Lösung in disputeDescription (nicht in disputeReason überschreiben)
-      disputeDescription: `${purchase.disputeDescription || ''}\n\n--- ADMIN-LÖSUNG ---\n${resolution}`
+      disputeDescription: newDescription
     }
 
     // Storniere Purchase falls gewünscht
@@ -137,6 +146,7 @@ export async function POST(
       }
     }
 
+    // Führe Update durch
     const updatedPurchase = await prisma.purchase.update({
       where: { id },
       data: updateData
