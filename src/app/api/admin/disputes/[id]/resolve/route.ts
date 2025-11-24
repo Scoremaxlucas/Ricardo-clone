@@ -14,20 +14,38 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    if (!session?.user?.id && !session?.user?.email) {
       return NextResponse.json(
         { message: 'Nicht autorisiert' },
         { status: 401 }
       )
     }
 
-    // Prüfe ob Admin
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isAdmin: true }
-    })
+    // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
+    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+    
+    // Prüfe ob User Admin ist (per ID oder E-Mail)
+    let user = null
+    if (session.user.id) {
+      user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { isAdmin: true, email: true }
+      })
+    }
 
-    if (!user?.isAdmin) {
+    // Falls nicht gefunden per ID, versuche per E-Mail
+    if (!user && session.user.email) {
+      user = await prisma.user.findUnique({
+        where: { email: session.user.email },
+        select: { isAdmin: true, email: true }
+      })
+    }
+
+    // Prüfe Admin-Status: Session ODER Datenbank
+    const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
+    const isAdmin = isAdminInSession || isAdminInDb
+
+    if (!isAdmin) {
       return NextResponse.json(
         { message: 'Zugriff verweigert. Nur Admins können Disputes lösen.' },
         { status: 403 }
