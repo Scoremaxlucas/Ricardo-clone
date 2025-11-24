@@ -13,12 +13,16 @@ async function main() {
     update: {
       password: hashedPassword,
       isAdmin: true,
+      emailVerified: true, // Wichtig: E-Mail als verifiziert markieren
+      verified: true,
+      verificationStatus: 'approved',
     },
     create: {
       email: 'admin@admin.ch',
       name: 'Admin',
       password: hashedPassword,
       isAdmin: true,
+      emailVerified: true, // Wichtig: E-Mail als verifiziert markieren
       verified: true,
       verificationStatus: 'approved',
     },

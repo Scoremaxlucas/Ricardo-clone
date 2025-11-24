@@ -71,9 +71,15 @@ export const authOptions = {
           })
 
           // Prüfe ob E-Mail bestätigt ist (RICARDO-STYLE: E-Mail-Bestätigung erforderlich)
-          if (!user.emailVerified) {
+          // AUSNAHME: Admins können sich auch ohne E-Mail-Verifizierung einloggen
+          const isAdmin = user.isAdmin === true || user.isAdmin === 1
+          if (!user.emailVerified && !isAdmin) {
             console.log('[AUTH] Email not verified:', normalizedEmail)
             throw new Error('EMAIL_NOT_VERIFIED')
+          }
+          
+          if (isAdmin && !user.emailVerified) {
+            console.log('[AUTH] Admin login without email verification - allowed')
           }
 
           // Prüfe ob Benutzer blockiert ist
