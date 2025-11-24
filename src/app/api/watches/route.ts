@@ -109,11 +109,8 @@ export async function GET(request: NextRequest) {
       // Verkaufte Uhren ausschließen
       purchases: {
         none: {}
-      },
-      seller: {
-        // Nur Watches von existierenden Usern (nicht von gelöschten Usern)
-        id: { not: null }
       }
+      // seller wird automatisch durch Prisma gefiltert (nur existierende User)
     }
     
     if (category) {

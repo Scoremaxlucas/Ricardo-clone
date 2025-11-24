@@ -40,11 +40,8 @@ export async function GET(request: NextRequest) {
     const whereClause: any = {
       purchases: {
         none: {} // Nur nicht verkaufte Produkte
-      },
-      seller: {
-        // Nur Watches von existierenden Usern (nicht von gelöschten Usern)
-        id: { not: null }
       }
+      // seller wird automatisch durch Prisma gefiltert (nur existierende User)
     }
     
     // Filter nach Angebotsart (Auktion oder Sofortkauf)
@@ -218,6 +215,8 @@ export async function GET(request: NextRequest) {
             },
             seller: {
               select: {
+                id: true,
+                email: true,
                 city: true,
                 postalCode: true
               }
@@ -234,6 +233,9 @@ export async function GET(request: NextRequest) {
           orderBy: { createdAt: 'desc' }
         })
         
+        // Filtere Watches ohne gültigen Seller heraus
+        watches = watches.filter((w: any) => w.seller && w.seller.id)
+        
         console.log(`[SEARCH] Prisma query without category filter: ${watches.length} watches`)
       }
     } else {
@@ -246,6 +248,8 @@ export async function GET(request: NextRequest) {
           },
           seller: {
             select: {
+              id: true,
+              email: true,
               city: true,
               postalCode: true
             }
@@ -261,6 +265,9 @@ export async function GET(request: NextRequest) {
         },
         orderBy: { createdAt: 'desc' }
       })
+      
+      // Filtere Watches ohne gültigen Seller heraus
+      watches = watches.filter((w: any) => w.seller && w.seller.id)
       
       console.log('[SEARCH] Prisma query result:', watches.length, 'watches')
     }
