@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { addStatusHistory } from '@/lib/status-history'
 
 /**
  * POST: Versand-Informationen hinzufügen/aktualisieren
@@ -57,11 +58,23 @@ export async function POST(
       )
     }
 
+    // RICARDO-STYLE: Versandinformationen können nur hinzugefügt werden, wenn die Zahlung bestätigt wurde
+    if (!purchase.paymentConfirmed) {
+      return NextResponse.json(
+        { message: 'Versand-Informationen können erst hinzugefügt werden, nachdem die Zahlung bestätigt wurde' },
+        { status: 400 }
+      )
+    }
+
     // Update Purchase mit Versand-Informationen
+    // Status wird auf "shipped" gesetzt, wenn noch nicht "completed"
+    const newStatus = purchase.status === 'completed' ? 'completed' : 'shipped'
+    
     const updateData: any = {
       trackingNumber,
       trackingProvider,
-      shippedAt: new Date()
+      shippedAt: new Date(),
+      status: newStatus
     }
 
     if (estimatedDeliveryDate) {
@@ -91,7 +104,7 @@ export async function POST(
     try {
       await addStatusHistory(
         id,
-        purchase.status || 'pending',
+        newStatus,
         session.user.id,
         `Artikel versandt - Tracking: ${trackingNumber}`
       )
