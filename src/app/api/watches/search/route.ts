@@ -40,6 +40,10 @@ export async function GET(request: NextRequest) {
     const whereClause: any = {
       purchases: {
         none: {} // Nur nicht verkaufte Produkte
+      },
+      seller: {
+        // Nur Watches von existierenden Usern (nicht von gelöschten Usern)
+        id: { not: null }
       }
     }
     
