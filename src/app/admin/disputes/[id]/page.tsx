@@ -61,7 +61,7 @@ interface Dispute {
   statusHistory: any[]
 }
 
-export default function AdminDisputeDetailPage({ params }: { params: Promise<{ id: string }> }) {
+export default function AdminDisputeDetailPage({ params }: { params: { id: string } }) {
   const { data: session, status } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(true)
@@ -71,17 +71,9 @@ export default function AdminDisputeDetailPage({ params }: { params: Promise<{ i
   const [refundBuyer, setRefundBuyer] = useState(false)
   const [refundSeller, setRefundSeller] = useState(false)
   const [cancelPurchase, setCancelPurchase] = useState(false)
-  const [disputeId, setDisputeId] = useState<string | null>(null)
 
   useEffect(() => {
-    // Resolve params promise
-    params.then((resolvedParams) => {
-      setDisputeId(resolvedParams.id)
-    })
-  }, [params])
-
-  useEffect(() => {
-    if (status === 'loading' || !disputeId) return
+    if (status === 'loading' || !params.id) return
 
     if (!session?.user) {
       router.push('/login')
@@ -97,13 +89,13 @@ export default function AdminDisputeDetailPage({ params }: { params: Promise<{ i
     }
 
     loadDispute()
-  }, [session, status, router, disputeId])
+  }, [session, status, router, params.id])
 
   const loadDispute = async () => {
-    if (!disputeId) return
+    if (!params.id) return
     setLoading(true)
     try {
-      const res = await fetch(`/api/admin/disputes/${disputeId}`)
+      const res = await fetch(`/api/admin/disputes/${params.id}`)
       if (res.ok) {
         const data = await res.json()
         setDispute(data.dispute)
@@ -129,10 +121,10 @@ export default function AdminDisputeDetailPage({ params }: { params: Promise<{ i
       return
     }
 
-    if (!disputeId) return
+    if (!params.id) return
     setResolving(true)
     try {
-      const res = await fetch(`/api/admin/disputes/${disputeId}/resolve`, {
+      const res = await fetch(`/api/admin/disputes/${params.id}/resolve`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json'
