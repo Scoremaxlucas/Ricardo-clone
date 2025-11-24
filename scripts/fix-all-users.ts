@@ -22,27 +22,49 @@ async function main() {
 
   console.log(`📋 Gefundene User: ${users.length}\n`)
 
-  // Alle User aktualisieren
-  for (const user of users) {
-    const updates: any = {
-      password: hashedPassword, // Setze Passwort auf test123
+  // Alle User aktualisieren - verwende updateMany für bessere Performance
+  const updateResult = await prisma.user.updateMany({
+    data: {
+      password: hashedPassword, // Setze Passwort auf test123 für alle
       emailVerified: true, // E-Mail als verifiziert markieren
     }
+  })
 
-    // Für Admin-User zusätzlich sicherstellen
-    if (user.isAdmin) {
-      updates.isAdmin = true
-      updates.verified = true
-      updates.verificationStatus = 'approved'
+  console.log(`✅ ${updateResult.count} User wurden aktualisiert!`)
+
+  // Admin-User zusätzlich konfigurieren
+  const adminUsers = users.filter(u => u.isAdmin)
+  if (adminUsers.length > 0) {
+    for (const admin of adminUsers) {
+      await prisma.user.update({
+        where: { id: admin.id },
+        data: {
+          isAdmin: true,
+          verified: true,
+          verificationStatus: 'approved'
+        }
+      })
     }
-
-    await prisma.user.update({
-      where: { id: user.id },
-      data: updates
-    })
-
-    console.log(`✅ ${user.email} - Passwort: test123, emailVerified: true`)
+    console.log(`✅ ${adminUsers.length} Admin-User zusätzlich konfiguriert`)
   }
+
+  // Zeige alle User
+  const allUsers = await prisma.user.findMany({
+    select: {
+      email: true,
+      name: true,
+      isAdmin: true,
+      emailVerified: true
+    },
+    orderBy: { createdAt: 'desc' }
+  })
+
+  console.log(`\n📋 Alle User in der Datenbank (${allUsers.length}):`)
+  allUsers.forEach(user => {
+    const adminTag = user.isAdmin ? ' [ADMIN]' : ''
+    const verifiedTag = user.emailVerified ? ' ✅' : ' ❌'
+    console.log(`   - ${user.email}${adminTag}${verifiedTag}`)
+  })
 
   console.log(`\n✅ Alle ${users.length} User wurden aktualisiert!`)
   console.log('\n📧 Login-Daten für alle User:')
