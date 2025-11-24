@@ -68,7 +68,8 @@ export async function GET(request: NextRequest) {
       watches,
       purchases,
       verifiedUsers,
-      pendingVerifications
+      pendingVerifications,
+      pendingDisputes
     ] = await Promise.all([
       // Benutzer-Statistiken
       prisma.user.count(),
@@ -98,7 +99,9 @@ export async function GET(request: NextRequest) {
       }),
       // Verifizierungs-Statistiken
       prisma.user.count({ where: { verified: true, verificationStatus: 'approved' } }),
-      prisma.user.count({ where: { verificationStatus: 'pending' } })
+      prisma.user.count({ where: { verificationStatus: 'pending' } }),
+      // Dispute-Statistiken
+      prisma.purchase.count({ where: { disputeStatus: 'pending', disputeOpenedAt: { not: null } } })
     ])
 
     // Berechne aktive und verkaufte Angebote aus den Watch-Daten
@@ -133,7 +136,8 @@ export async function GET(request: NextRequest) {
       totalRevenue: totalRevenue || 0,
       platformMargin: platformMargin || 0,
       verifiedUsers: verifiedUsers || 0,
-      pendingVerifications: pendingVerifications || 0
+      pendingVerifications: pendingVerifications || 0,
+      pendingDisputes: pendingDisputes || 0
     }
     
     console.log('Stats calculated:', result)

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { addStatusHistory } from '@/lib/status-history'
 
 /**
  * POST: Dispute durch Admin lösen

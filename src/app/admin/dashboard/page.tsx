@@ -9,6 +9,7 @@ import {
   TrendingUp, 
   DollarSign, 
   AlertCircle,
+  AlertTriangle,
   FileCheck,
   Shield,
   BarChart3,
@@ -29,6 +30,7 @@ interface Stats {
   platformMargin: number
   pendingVerifications: number
   verifiedUsers: number
+  pendingDisputes: number
 }
 
 export default function AdminDashboard() {
@@ -77,7 +79,8 @@ export default function AdminDashboard() {
         totalRevenue: Number(data.totalRevenue) || 0,
         platformMargin: Number(data.platformMargin) || 0,
         verifiedUsers: Number(data.verifiedUsers) || 0,
-        pendingVerifications: Number(data.pendingVerifications) || 0
+        pendingVerifications: Number(data.pendingVerifications) || 0,
+        pendingDisputes: Number(data.pendingDisputes) || 0
       }
       
       console.log('Cleaned stats data:', cleanedData)
@@ -328,6 +331,14 @@ export default function AdminDashboard() {
             href="/admin/invoices"
             color="red"
             badge={0}
+          />
+          <ActionCard
+            title="Disputes verwalten"
+            description="Streitfälle bearbeiten und lösen"
+            icon={AlertTriangle}
+            href="/admin/disputes"
+            color="orange"
+            badge={stats?.pendingDisputes || 0}
           />
         </div>
       </div>
