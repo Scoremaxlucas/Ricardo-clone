@@ -2,21 +2,25 @@
 
 ## Letzter Backup-Commit
 
-**Commit-Hash:** `24afcdf`  
-**Datum:** $(date +%Y-%m-%d)  
-**Beschreibung:** Backup: Aktueller Stand mit allen Fixes und Implementierungen
+**Commit-Hash:** `251b48f`  
+**Datum:** 2024-12-20  
+**Beschreibung:** Backup: Redirect-Probleme behoben - Konsistente Session-Behandlung und Navigation
 
 **Enthaltene Änderungen:**
-- Webpack-Config-Fixes (null-checks verbessert)
-- Portabilitäts-Fixes (hardcodierte Pfade entfernt)
-- Admin-UI für Disputes implementiert
-- Alle Bugfixes enthalten
+- Alle Redirect-Probleme behoben
+- Konsistente Session-Behandlung auf allen Seiten
+- Login-Seite verwendet jetzt Client-Side Navigation
+- Alle Seiten warten auf Session-Laden bevor Redirects
+- callbackUrl Parameter für alle Login-Redirects
+- Neue useRequireAuth Hook erstellt
+- Admin Dashboard Redirect-Fixes
+- Alle "Mein Kaufen" und "Mein Verkaufen" Seiten korrigiert
 
 ---
 
 ## Vorheriger Backup-Commit
 
-**Commit-Hash:** `513685d`  
+**Commit-Hash:** `24afcdf`  
 **Datum:** 2024-12-20  
 **Beschreibung:** Backup: Aktueller Stand vor weiteren Änderungen
 
@@ -31,12 +35,12 @@
 
 ### Option 2: Manuell mit Git
 ```bash
-git reset --hard 513685d
+git reset --hard 251b48f
 ```
 
 ### Option 3: Als neuen Branch erstellen (Änderungen bleiben erhalten)
 ```bash
-git checkout -b restore-backup 513685d
+git checkout -b restore-backup 251b48f
 ```
 
 ---
@@ -45,13 +49,13 @@ git checkout -b restore-backup 513685d
 
 ```bash
 # Zeige Backup-Commit
-git show 513685d --stat
+git show 251b48f --stat
 
 # Vergleiche aktuellen Stand mit Backup
-git diff 513685d
+git diff 251b48f
 
 # Zeige alle Commits seit Backup
-git log 513685d..HEAD --oneline
+git log 251b48f..HEAD --oneline
 ```
 
 ---
@@ -79,5 +83,4 @@ git checkout <commit-hash>
 
 ---
 
-**Zuletzt aktualisiert:** $(date)
-
+**Zuletzt aktualisiert:** 2024-12-20
