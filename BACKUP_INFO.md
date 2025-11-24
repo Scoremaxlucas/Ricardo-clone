@@ -2,6 +2,22 @@
 
 ## Letzter Backup-Commit
 
+**Commit-Hash:** `e67339b`  
+**Datum:** 2024-12-20  
+**Beschreibung:** Backup: ensure-server-running.sh Environment-Variable-Handling verbessert
+
+**Enthaltene Änderungen:**
+- `ensure-server-running.sh` Environment-Variable-Handling verbessert
+- Validierung bestehender `.env` Konfigurationen
+- Warnungen bei fehlenden kritischen Variablen
+- Sicherheitswarnungen für Development-Secrets
+- Schutz vor Überschreibung bestehender Konfigurationen
+- Verbesserte Fehlerbehandlung in Shell-Scripts
+
+---
+
+## Vorheriger Backup-Commit
+
 **Commit-Hash:** `251b48f`  
 **Datum:** 2024-12-20  
 **Beschreibung:** Backup: Redirect-Probleme behoben - Konsistente Session-Behandlung und Navigation
@@ -18,14 +34,6 @@
 
 ---
 
-## Vorheriger Backup-Commit
-
-**Commit-Hash:** `24afcdf`  
-**Datum:** 2024-12-20  
-**Beschreibung:** Backup: Aktueller Stand vor weiteren Änderungen
-
----
-
 ## 🚀 Schnelle Wiederherstellung
 
 ### Option 1: Script verwenden (Empfohlen)
@@ -35,12 +43,12 @@
 
 ### Option 2: Manuell mit Git
 ```bash
-git reset --hard 251b48f
+git reset --hard e67339b
 ```
 
 ### Option 3: Als neuen Branch erstellen (Änderungen bleiben erhalten)
 ```bash
-git checkout -b restore-backup 251b48f
+git checkout -b restore-backup e67339b
 ```
 
 ---
@@ -49,13 +57,13 @@ git checkout -b restore-backup 251b48f
 
 ```bash
 # Zeige Backup-Commit
-git show 251b48f --stat
+git show e67339b --stat
 
 # Vergleiche aktuellen Stand mit Backup
-git diff 251b48f
+git diff e67339b
 
 # Zeige alle Commits seit Backup
-git log 251b48f..HEAD --oneline
+git log e67339b..HEAD --oneline
 ```
 
 ---
