@@ -2,6 +2,20 @@
 
 ## Letzter Backup-Commit
 
+**Commit-Hash:** `24afcdf`  
+**Datum:** $(date +%Y-%m-%d)  
+**Beschreibung:** Backup: Aktueller Stand mit allen Fixes und Implementierungen
+
+**Enthaltene Änderungen:**
+- Webpack-Config-Fixes (null-checks verbessert)
+- Portabilitäts-Fixes (hardcodierte Pfade entfernt)
+- Admin-UI für Disputes implementiert
+- Alle Bugfixes enthalten
+
+---
+
+## Vorheriger Backup-Commit
+
 **Commit-Hash:** `513685d`  
 **Datum:** 2024-12-20  
 **Beschreibung:** Backup: Aktueller Stand vor weiteren Änderungen

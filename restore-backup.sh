@@ -6,7 +6,7 @@
 cd "$(dirname "$0")"
 
 # Backup-Commit-Hash (vom letzten Backup)
-BACKUP_COMMIT="513685d"
+BACKUP_COMMIT="24afcdf"
 
 echo "🔄 Wiederherstellung zum Backup-Stand"
 echo "======================================"
