@@ -84,6 +84,18 @@ export default function MyWatchesPage() {
   }
 
   useEffect(() => {
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
+      return
+    }
+
+    // Wenn nicht authentifiziert, leite um
+    if (status === 'unauthenticated' || !session?.user) {
+      const currentPath = window.location.pathname
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
+      return
+    }
+
     loadWatches()
     const loadVerificationStatus = async () => {
       if (session?.user?.id) {
@@ -105,7 +117,7 @@ export default function MyWatchesPage() {
       }
     }
     loadVerificationStatus()
-  }, [session?.user?.id])
+  }, [session, status, router])
 
   // Lade Booster-Optionen
   useEffect(() => {
@@ -225,7 +237,18 @@ export default function MyWatchesPage() {
   }, [])
 
   if (status === 'loading') return <div className="p-6">Lädt...</div>
-  if (!session) return <div className="p-6">Bitte anmelden.</div>
+  // Session-Check wird in useEffect behandelt, hier nur Loading zeigen wenn nicht authentifiziert
+  if (status === 'unauthenticated' || !session) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-gray-500">Weiterleitung zur Anmeldung...</div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
 
   const menuItems = [
     {

@@ -42,11 +42,18 @@ export default function PurchaseReviewsPage() {
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
-    if (status === 'loading') return
-    if (!session?.user) {
-      router.push('/login')
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
       return
     }
+
+    // Wenn nicht authentifiziert, leite um
+    if (status === 'unauthenticated' || !session?.user) {
+      const currentPath = window.location.pathname
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
+      return
+    }
+
     loadPurchases()
   }, [session, status, router])
 

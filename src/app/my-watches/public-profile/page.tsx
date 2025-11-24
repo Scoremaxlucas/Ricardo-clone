@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -9,13 +10,27 @@ export default function PublicProfilePage() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
+  useEffect(() => {
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
+      return
+    }
+
+    // Wenn nicht authentifiziert, leite um
+    if (status === 'unauthenticated' || !session) {
+      const currentPath = window.location.pathname
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
+      return
+    }
+  }, [status, session, router])
+
   if (status === 'loading') {
     return <div className="flex min-h-screen items-center justify-center">Lädt...</div>
   }
 
-  if (!session) {
-    router.push('/login')
-    return null
+  // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
+  if (status === 'unauthenticated' || !session) {
+    return <div className="flex min-h-screen items-center justify-center">Weiterleitung zur Anmeldung...</div>
   }
 
   // Mock data - später aus der Datenbank laden

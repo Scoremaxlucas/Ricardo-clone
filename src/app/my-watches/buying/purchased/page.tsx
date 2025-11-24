@@ -116,11 +116,19 @@ export default function MyPurchasedPage() {
   }
 
   useEffect(() => {
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
+      return
+    }
+
+    // Wenn nicht authentifiziert, leite um
+    if (status === 'unauthenticated' || !session?.user) {
+      const currentPath = window.location.pathname
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
+      return
+    }
+
     const loadPurchases = async () => {
-      if (!session?.user) {
-        console.log('[purchased-page] Keine Session')
-        return
-      }
       try {
         console.log('[purchased-page] Lade Purchases für User:', session.user.id, session.user.email)
         const res = await fetch(`/api/purchases/my-purchases?t=${Date.now()}`)
@@ -145,32 +153,32 @@ export default function MyPurchasedPage() {
         setLoading(false)
       }
     }
-    if (session?.user) {
-      loadPurchases()
-      
-      // Rufe check-expired auf, um abgelaufene Auktionen zu verarbeiten
-      const checkExpired = async () => {
-        try {
-          await fetch('/api/auctions/check-expired', { method: 'POST' })
-          // Nach dem Check die Purchases neu laden
-          setTimeout(loadPurchases, 1000)
-        } catch (error) {
-          console.error('[purchased-page] Fehler beim Prüfen abgelaufener Auktionen:', error)
-        }
-      }
-      
-      // Sofort prüfen beim Laden der Seite
-      checkExpired()
-      
-      // Polling alle 5 Sekunden für Updates (häufiger für bessere Reaktionszeit)
-      const interval = setInterval(() => {
-        loadPurchases()
-        checkExpired() // Auch beim Polling prüfen
-      }, 5000)
-      return () => clearInterval(interval)
-    }
-  }, [session?.user])
 
+    loadPurchases()
+    
+    // Rufe check-expired auf, um abgelaufene Auktionen zu verarbeiten
+    const checkExpired = async () => {
+      try {
+        await fetch('/api/auctions/check-expired', { method: 'POST' })
+        // Nach dem Check die Purchases neu laden
+        setTimeout(loadPurchases, 1000)
+      } catch (error) {
+        console.error('[purchased-page] Fehler beim Prüfen abgelaufener Auktionen:', error)
+      }
+    }
+    
+    // Sofort prüfen beim Laden der Seite
+    checkExpired()
+    
+    // Polling alle 5 Sekunden für Updates (häufiger für bessere Reaktionszeit)
+    const interval = setInterval(() => {
+      loadPurchases()
+      checkExpired() // Auch beim Polling prüfen
+    }, 5000)
+    return () => clearInterval(interval)
+  }, [session, status, router])
+
+  // Warte auf Session-Laden bevor Redirect
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -183,9 +191,18 @@ export default function MyPurchasedPage() {
     )
   }
 
-  if (!session) {
-    router.push('/login')
-    return null
+  // Redirect nur wenn Session definitiv nicht vorhanden ist
+  if (status === 'unauthenticated' || !session) {
+    // Redirect wird in useEffect behandelt, hier nur Loading zeigen
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-gray-500">Weiterleitung zur Anmeldung...</div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   // Filtere Purchases nach Status

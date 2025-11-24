@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -9,13 +10,24 @@ export default function MySellingPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
 
+  useEffect(() => {
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
+      return
+    }
+
+    if (status === 'unauthenticated' || !session) {
+      router.push('/login?callbackUrl=/my-watches/selling')
+      return
+    }
+  }, [status, session, router])
+
   if (status === 'loading') {
     return <div className="flex min-h-screen items-center justify-center">Lädt...</div>
   }
 
-  if (!session) {
-    router.push('/login')
-    return null
+  if (!session || status === 'unauthenticated') {
+    return <div className="flex min-h-screen items-center justify-center">Weiterleitung zur Anmeldung...</div>
   }
 
   const menuItems = [

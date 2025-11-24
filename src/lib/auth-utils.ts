@@ -1,55 +1,38 @@
-'use client'
-
-import { useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
+import { Session } from 'next-auth'
+import { prisma } from './prisma'
 
 /**
- * Prüft ob der Benutzer eingeloggt ist und leitet zur Login-Seite weiter falls nicht
- * @param callbackUrl - URL zu der nach dem Login zurückgeleitet werden soll
- * @returns true wenn eingeloggt, false wenn nicht eingeloggt (und weitergeleitet wurde)
+ * Server-seitige Funktion zum Prüfen ob ein User Admin ist
+ * Kann sowohl per ID als auch per E-Mail prüfen
  */
-export function requireAuth(callbackUrl?: string): boolean {
-  if (typeof window === 'undefined') return false
-  
-  const currentUrl = window.location.pathname + window.location.search
-  const redirectUrl = callbackUrl || currentUrl
-  const loginUrl = `/login?callbackUrl=${encodeURIComponent(redirectUrl)}`
-  
-  window.location.href = loginUrl
-  return false
-}
-
-/**
- * Hook zum Prüfen ob der Benutzer eingeloggt ist
- * Leitet automatisch zur Login-Seite weiter falls nicht eingeloggt
- */
-export function useRequireAuth(callbackUrl?: string) {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-
-  const checkAuth = () => {
-    if (status === 'loading') return false
-    if (!session?.user) {
-      const currentUrl = typeof window !== 'undefined' 
-        ? window.location.pathname + window.location.search 
-        : '/'
-      const redirectUrl = callbackUrl || currentUrl
-      router.push(`/login?callbackUrl=${encodeURIComponent(redirectUrl)}`)
-      return false
-    }
-    return true
+export async function checkAdmin(session: Session | null): Promise<boolean> {
+  if (!session?.user?.id && !session?.user?.email) {
+    return false
   }
 
-  return {
-    isAuthenticated: !!session?.user,
-    isLoading: status === 'loading',
-    checkAuth
+  // Prüfe Admin-Status aus Session
+  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+  
+  // Prüfe ob User Admin ist (per ID oder E-Mail)
+  let user = null
+  if (session.user.id) {
+    user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { isAdmin: true, email: true }
+    })
   }
+
+  // Falls nicht gefunden per ID, versuche per E-Mail
+  if (!user && session.user.email) {
+    user = await prisma.user.findUnique({
+      where: { email: session.user.email },
+      select: { isAdmin: true, email: true }
+    })
+  }
+
+  // Prüfe Admin-Status: Session ODER Datenbank
+  const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
+  const isAdmin = isAdminInSession || isAdminInDb
+
+  return isAdmin
 }
-
-
-
-
-
-
-

@@ -34,10 +34,22 @@ export default function OffersPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
+      return
+    }
+
+    // Wenn nicht authentifiziert, leite um
+    if (status === 'unauthenticated' || !session) {
+      const currentPath = window.location.pathname
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
+      return
+    }
+
     if (status === 'authenticated' && session?.user?.id) {
       fetchOffers()
     }
-  }, [status, session])
+  }, [status, session, router])
 
   const fetchOffers = async () => {
     try {
@@ -61,9 +73,13 @@ export default function OffersPage() {
     )
   }
 
-  if (!session) {
-    router.push('/login')
-    return null
+  // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
+  if (status === 'unauthenticated' || !session) {
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-gray-500">Weiterleitung zur Anmeldung...</div>
+      </div>
+    )
   }
 
   const getStatusIcon = (status: string) => {

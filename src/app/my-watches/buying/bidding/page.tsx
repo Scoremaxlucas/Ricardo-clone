@@ -128,6 +128,20 @@ export default function MyBiddingPage() {
     }
   }, [session?.user])
 
+  useEffect(() => {
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
+      return
+    }
+
+    // Wenn nicht authentifiziert, leite um
+    if (status === 'unauthenticated' || !session) {
+      const currentPath = window.location.pathname
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
+      return
+    }
+  }, [status, session, router])
+
   if (status === 'loading' || loading) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -140,9 +154,17 @@ export default function MyBiddingPage() {
     )
   }
 
-  if (!session) {
-    router.push('/login')
-    return null
+  // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
+  if (status === 'unauthenticated' || !session) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-gray-500">Weiterleitung zur Anmeldung...</div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   const activeBids = bids.filter(bid => bid.watch.auctionActive && bid.watch.isMyBidHighest)

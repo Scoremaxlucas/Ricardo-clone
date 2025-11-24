@@ -11,10 +11,12 @@ import {
   AlertTriangle,
   CheckCircle,
   XCircle,
-  UserCheck,
-  UserX
+  UserCheck
 } from 'lucide-react'
 import Link from 'next/link'
+import { Header } from '@/components/layout/Header'
+import { Footer } from '@/components/layout/Footer'
+import { toast } from 'react-hot-toast'
 
 interface User {
   id: string
@@ -89,29 +91,28 @@ export default function AdminUsersPage() {
       console.log('Users API response status:', res.status)
       
       if (!res.ok) {
-        const errorData = await res.json().catch(() => ({ message: 'Unknown error' }))
+        const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
         console.error('Users API error:', errorData)
-        alert('Fehler beim Laden der Benutzer: ' + (errorData.message || 'Unbekannter Fehler'))
+        toast.error('Fehler beim Laden der Benutzer')
+        setUsers([])
         setLoading(false)
         return
       }
       
       const data = await res.json()
-      console.log('Users data received:', data)
-      console.log('Number of users:', Array.isArray(data) ? data.length : 'Not an array')
-      console.log('First user:', Array.isArray(data) && data.length > 0 ? data[0] : 'No users')
       
       if (!Array.isArray(data)) {
         console.error('API returned non-array data:', data)
-        alert('Fehler: API hat keine Liste zurückgegeben. Bitte Seite neu laden.')
         setUsers([])
+        setLoading(false)
         return
       }
       
       setUsers(data)
     } catch (error: any) {
       console.error('Error loading users:', error)
-      alert('Fehler beim Laden der Benutzer: ' + (error?.message || String(error)))
+      toast.error('Fehler beim Laden der Benutzer')
+      setUsers([])
     } finally {
       setLoading(false)
     }
@@ -123,14 +124,15 @@ export default function AdminUsersPage() {
         method: 'POST'
       })
       if (res.ok) {
+        toast.success(block ? 'Benutzer blockiert' : 'Benutzer entblockt')
         loadUsers()
       } else {
         const data = await res.json()
-        alert(data.message || 'Fehler beim Blockieren/Entblocken')
+        toast.error(data.message || 'Fehler beim Blockieren/Entblocken')
       }
     } catch (error) {
       console.error('Error blocking user:', error)
-      alert('Fehler beim Blockieren/Entblocken')
+      toast.error('Fehler beim Blockieren/Entblocken')
     }
   }
 
@@ -140,15 +142,15 @@ export default function AdminUsersPage() {
         method: 'POST'
       })
       if (res.ok) {
+        toast.success('Warnung wurde gesendet')
         loadUsers()
-        alert('Warnung wurde gesendet')
       } else {
         const data = await res.json()
-        alert(data.message || 'Fehler beim Senden der Warnung')
+        toast.error(data.message || 'Fehler beim Senden der Warnung')
       }
     } catch (error) {
       console.error('Error warning user:', error)
-      alert('Fehler beim Senden der Warnung')
+      toast.error('Fehler beim Senden der Warnung')
     }
   }
 
@@ -160,14 +162,15 @@ export default function AdminUsersPage() {
         body: JSON.stringify({ isAdmin: makeAdmin })
       })
       if (res.ok) {
+        toast.success(makeAdmin ? 'Admin-Rechte vergeben' : 'Admin-Rechte entfernt')
         loadUsers()
       } else {
         const data = await res.json()
-        alert(data.message || 'Fehler beim Ändern der Admin-Rechte')
+        toast.error(data.message || 'Fehler beim Ändern der Admin-Rechte')
       }
     } catch (error) {
       console.error('Error toggling admin:', error)
-      alert('Fehler beim Ändern der Admin-Rechte')
+      toast.error('Fehler beim Ändern der Admin-Rechte')
     }
   }
 
@@ -216,6 +219,7 @@ export default function AdminUsersPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <Header />
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
@@ -458,6 +462,7 @@ export default function AdminUsersPage() {
           </div>
         )}
       </div>
+      <Footer />
     </div>
   )
 }

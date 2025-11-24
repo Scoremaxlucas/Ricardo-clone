@@ -44,6 +44,7 @@ Thumbs.db
 # LaunchAgent plist files (use templates instead)
 *.plist
 !*.plist.template
+!**/*.plist.template
 
 # Expo
 .expo/

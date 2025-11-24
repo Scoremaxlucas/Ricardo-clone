@@ -118,13 +118,23 @@ export default function SoldPage() {
         setLoading(false)
       }
     }
-    if (session?.user) {
-      loadSales()
-      // Polling alle 5 Sekunden für Updates
-      const interval = setInterval(loadSales, 5000)
-      return () => clearInterval(interval)
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
+      return
     }
-  }, [session?.user])
+
+    // Wenn nicht authentifiziert, leite um
+    if (status === 'unauthenticated' || !session?.user) {
+      const currentPath = window.location.pathname
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
+      return
+    }
+
+    loadSales()
+    // Polling alle 5 Sekunden für Updates
+    const interval = setInterval(loadSales, 5000)
+    return () => clearInterval(interval)
+  }, [session, status, router])
 
   if (status === 'loading' || loading) {
     return (
@@ -138,9 +148,17 @@ export default function SoldPage() {
     )
   }
 
-  if (!session) {
-    router.push('/login')
-    return null
+  // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
+  if (status === 'unauthenticated' || !session) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-screen">
+          <div className="text-gray-500">Weiterleitung zur Anmeldung...</div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (

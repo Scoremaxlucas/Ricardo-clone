@@ -21,7 +21,7 @@ export async function POST(
       )
     }
 
-    // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
+    // Prüfe Admin-Status
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
     
     // Prüfe ob User Admin ist (per ID oder E-Mail)

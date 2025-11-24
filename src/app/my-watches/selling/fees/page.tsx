@@ -50,10 +50,15 @@ export default function SellingFeesPage() {
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null)
 
   useEffect(() => {
-    if (status === 'loading') return
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
+      return
+    }
 
-    if (!session) {
-      router.push('/login')
+    // Wenn nicht authentifiziert, leite um
+    if (status === 'unauthenticated' || !session) {
+      const currentPath = window.location.pathname
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
       return
     }
 

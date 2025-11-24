@@ -101,27 +101,26 @@ export async function GET(request: NextRequest) {
       WHERE email NOT IN ('test@watch-out.ch', 'seller@watch-out.ch')
       ORDER BY createdAt DESC
     `
-      
-      console.log('Users fetched via queryRaw:', rawUsers.length)
-      
-      // Konvertiere raw Users zu Prisma-Format
-      users = rawUsers.map(u => ({
-        id: u.id,
-        email: u.email,
-        name: u.name,
-        firstName: u.firstName,
-        lastName: u.lastName,
-        nickname: u.nickname,
-        isAdmin: u.isAdmin === 1 || u.isAdmin === true,
-        isBlocked: u.isBlocked === 1 || u.isBlocked === true,
-        blockedAt: null,
-        verified: u.verified === 1 || u.verified === true,
-        verificationStatus: u.verificationStatus,
-        warningCount: 0,
-        lastWarnedAt: null,
-        createdAt: u.createdAt
-      }))
-    }
+    
+    console.log('Users fetched via queryRaw:', rawUsers.length)
+    
+    // Konvertiere raw Users zu Prisma-Format
+    users = rawUsers.map(u => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      firstName: u.firstName,
+      lastName: u.lastName,
+      nickname: u.nickname,
+      isAdmin: u.isAdmin === 1 || u.isAdmin === true,
+      isBlocked: u.isBlocked === 1 || u.isBlocked === true,
+      blockedAt: null,
+      verified: u.verified === 1 || u.verified === true,
+      verificationStatus: u.verificationStatus,
+      warningCount: 0,
+      lastWarnedAt: null,
+      createdAt: u.createdAt
+    }))
 
     console.log('Total users to return:', users.length)
     console.log('First user:', users[0])

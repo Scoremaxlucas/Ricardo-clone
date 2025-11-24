@@ -25,14 +25,16 @@ sleep 5
 
 # Prüfe ob Server gestartet wurde und hole die tatsächliche PID
 if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    # Hole die tatsächliche PID des Prozesses auf Port 3002
-    SERVER_PID=$(lsof -ti:$PORT)
+    # Hole die tatsächliche PID des Prozesses auf Port 3002 (nur erste PID falls mehrere vorhanden)
+    SERVER_PID=$(lsof -ti:$PORT 2>/dev/null | head -1)
     echo ""
     echo "✅ Server erfolgreich gestartet!"
     echo "🌐 http://localhost:$PORT"
     echo ""
-    echo "PID: $SERVER_PID"
-    echo "Zum Beenden: kill $SERVER_PID"
+    if [ -n "$SERVER_PID" ]; then
+        echo "PID: $SERVER_PID"
+        echo "Zum Beenden: kill $SERVER_PID"
+    fi
 else
     echo ""
     echo "❌ Server konnte nicht gestartet werden"

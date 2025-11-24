@@ -80,11 +80,17 @@ export default function LoginPage() {
         // Felder erst jetzt leeren (nach erfolgreichem Login)
         setEmail('')
         setPassword('')
-        // Kurz warten, damit Session aktualisiert wird
-        console.log('Redirecting to:', callbackUrl)
+        // Session aktualisieren und dann umleiten
+        console.log('Updating session and redirecting to:', callbackUrl)
+        // Aktualisiere Session explizit
+        const updatedSession = await getSession()
+        console.log('Session updated:', updatedSession?.user?.email)
+        // Verwende router.push statt window.location.href für Client-Side Navigation
+        // Warte kurz, damit Session vollständig aktualisiert wird
         setTimeout(() => {
-          window.location.href = callbackUrl
-        }, 500)
+          router.push(callbackUrl)
+          router.refresh() // Stelle sicher, dass die Seite aktualisiert wird
+        }, 100)
       } else {
         console.error('❌ Unexpected login result')
         console.error('Full result:', result)

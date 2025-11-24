@@ -119,7 +119,8 @@ export default function AdminDashboard() {
         console.log('Dashboard: No user in session')
         if (status === 'unauthenticated') {
           setLoading(false)
-          router.push('/login')
+          const currentPath = window.location.pathname
+          router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
         } else {
           setLoading(false)
         }

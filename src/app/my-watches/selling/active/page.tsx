@@ -52,11 +52,18 @@ export default function ActivePage() {
   }
 
   useEffect(() => {
-    if (status === 'loading') return
-    if (!session) {
-      router.push('/login')
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
       return
     }
+
+    // Wenn nicht authentifiziert, leite um
+    if (status === 'unauthenticated' || !session) {
+      const currentPath = window.location.pathname
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
+      return
+    }
+
     loadWatches()
   }, [session, status, router])
 
@@ -75,8 +82,19 @@ export default function ActivePage() {
     )
   }
 
-  if (!session) {
-    return null
+  // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
+  if (status === 'unauthenticated' || !session) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col">
+        <Header />
+        <div className="flex-1 flex items-center justify-center">
+          <div className="text-center">
+            <p className="text-gray-600">Weiterleitung zur Anmeldung...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   return (

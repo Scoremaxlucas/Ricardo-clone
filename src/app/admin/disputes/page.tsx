@@ -92,12 +92,16 @@ export default function AdminDisputesPage() {
         setDisputes(data.disputes || [])
         setStats(data.stats || { total: 0, pending: 0, resolved: 0, closed: 0 })
       } else {
+        // Nur Fehler loggen, keine Toast-Benachrichtigung
         const errorData = await res.json().catch(() => ({ message: 'Unknown error' }))
-        toast.error('Fehler beim Laden der Disputes: ' + (errorData.message || 'Unbekannter Fehler'))
+        console.error('Error loading disputes:', errorData)
+        setDisputes([])
+        setStats({ total: 0, pending: 0, resolved: 0, closed: 0 })
       }
     } catch (error) {
       console.error('Error loading disputes:', error)
-      toast.error('Fehler beim Laden der Disputes')
+      setDisputes([])
+      setStats({ total: 0, pending: 0, resolved: 0, closed: 0 })
     } finally {
       setLoading(false)
     }

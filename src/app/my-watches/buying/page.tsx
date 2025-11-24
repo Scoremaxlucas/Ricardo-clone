@@ -53,8 +53,13 @@ export default function MyBuyingPage() {
   })
 
   useEffect(() => {
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
+      return
+    }
+
     if (status === 'unauthenticated') {
-      router.push('/login?redirect=/my-watches/buying')
+      router.push('/login?callbackUrl=/my-watches/buying')
       return
     }
 
@@ -151,7 +156,7 @@ export default function MyBuyingPage() {
   }
 
   if (status === 'unauthenticated') {
-    router.push('/login?redirect=/my-watches/buying')
+    // Redirect wird bereits im useEffect behandelt
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />

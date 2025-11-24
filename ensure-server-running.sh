@@ -45,7 +45,7 @@ cd "$(dirname "$0")"
 if [ ! -f .env ]; then
     echo "📝 Erstelle .env Datei..."
     cat > .env << EOF
-DATABASE_URL="file:./prisma/dev.db"
+DATABASE_URL=file:./prisma/dev.db
 NEXTAUTH_SECRET=development-secret-key-change-in-production
 NEXTAUTH_URL=http://localhost:3002
 EOF
@@ -53,18 +53,23 @@ fi
 
 # Starte Server im Hintergrund
 nohup npm run dev > "$PWD/server.log" 2>&1 &
-SERVER_PID=$!
 
-echo "⏳ Warte auf Server-Start (PID: $SERVER_PID)..."
+echo "⏳ Warte auf Server-Start..."
 
 # Warte bis Server antwortet
 WAIT_TIME=0
 while [ $WAIT_TIME -lt $MAX_WAIT ]; do
     if check_server_health; then
+        # Hole die tatsächliche PID des Next.js Server-Prozesses auf Port 3002
+        SERVER_PID=$(lsof -ti:$PORT 2>/dev/null | head -1)
+        
         echo ""
         echo "✅ Server erfolgreich gestartet!"
         echo "🌐 http://localhost:$PORT"
-        echo "📋 PID: $SERVER_PID"
+        if [ -n "$SERVER_PID" ]; then
+            echo "📋 PID: $SERVER_PID"
+            echo "💡 Zum Beenden: kill $SERVER_PID"
+        fi
         echo "📝 Logs: $PWD/server.log"
         exit 0
     fi

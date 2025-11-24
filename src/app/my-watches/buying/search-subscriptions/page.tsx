@@ -46,7 +46,7 @@ export default function SearchSubscriptionsPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/login?redirect=/my-watches/buying/search-subscriptions')
+      router.push('/login?callbackUrl=/my-watches/buying/search-subscriptions')
       return
     }
 
