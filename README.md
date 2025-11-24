@@ -1,13 +1,13 @@
-# WatchMarket - Luxusuhren Plattform
+# Helvenda - Schweizer Online-Marktplatz
 
-Eine moderne Webapplikation für den Handel mit Luxusuhren, Vintage-Uhren und seltenen Zeitmessern. Inspiriert von Ricardo.ch, aber spezialisiert auf Uhren.
+Eine moderne Webapplikation für den Handel mit allen Arten von Artikeln. Der Schweizer Online-Marktplatz für Private und Gewerbetreibende.
 
 ## 🚀 Features
 
-- **Uhren-spezialisierte Plattform** - Fokus auf Luxusuhren, Vintage-Uhren und seltene Zeitmesser
+- **Universeller Marktplatz** - Handel mit allen Artikelkategorien
 - **Responsive Design** - Optimiert für Desktop, Tablet und Mobile
-- **Auktionssystem** - Bieten Sie auf seltene Uhren
-- **Marken-Filter** - Rolex, Patek Philippe, Omega, Audemars Piguet und mehr
+- **Auktionssystem** - Bieten oder Sofortkauf
+- **Kategorisierung** - Übersichtliche Struktur für alle Produktgruppen
 - **User Management** - Registrierung, Anmeldung, Profil
 - **Mobile App Ready** - Vorbereitet für React Native Mobile App
 
@@ -20,6 +20,18 @@ Eine moderne Webapplikation für den Handel mit Luxusuhren, Vintage-Uhren und se
 - **Authentication**: NextAuth.js
 - **Database**: Prisma (PostgreSQL)
 - **Mobile**: React Native (geplant)
+
+## 🚀 Stripe Setup (Kreditkartenzahlung)
+
+Um Kreditkartenzahlungen zu aktivieren, führen Sie einfach aus:
+
+```bash
+npm run setup:stripe
+```
+
+Das Script führt Sie durch den Setup-Prozess. Weitere Informationen finden Sie in `docs/stripe-schnellstart.md`.
+
+**Wichtig:** Sie benötigen einen kostenlosen Stripe-Account. Test-Keys erhalten Sie unter: https://dashboard.stripe.com/test/apikeys
 
 ## 📦 Installation
 
@@ -153,5 +165,5 @@ MIT License - siehe LICENSE Datei für Details.
 
 ---
 
-**WatchMarket** - Die führende Plattform für Luxusuhren und seltene Zeitmesser.
+**Helvenda** - Der Schweizer Online-Marktplatz für alle.
 

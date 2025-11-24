@@ -24,11 +24,9 @@ async function checkAdmin(session: any): Promise<boolean> {
     })
   }
 
-  const userEmail = session.user.email?.toLowerCase()
-  const isAdminEmail = userEmail === 'admin@admin.ch'
   const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
 
-  return isAdminInDb || isAdminEmail
+  return isAdminInDb
 }
 
 export async function GET(

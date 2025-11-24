@@ -18,12 +18,10 @@ export async function POST(request: NextRequest) {
         )
       }
     } else {
-      // Prüfe ob User Admin ist
-      const userEmail = session.user.email?.toLowerCase()
-      const isAdminEmail = userEmail === 'admin@admin.ch'
+      // Prüfe ob User Admin ist (nur aus Session)
       const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
       
-      if (!isAdminInSession && !isAdminEmail) {
+      if (!isAdminInSession) {
         return NextResponse.json(
           { message: 'Zugriff verweigert' },
           { status: 403 }

@@ -1,12 +1,13 @@
 'use client'
 
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Wallet, Download, CheckCircle, Clock, FileText } from 'lucide-react'
+import { ArrowLeft, Wallet, Download, CheckCircle, Clock, FileText, CreditCard } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { InvoicePaymentModal } from '@/components/payment/InvoicePaymentModal'
 
 interface InvoiceItem {
   id: string
@@ -41,8 +42,12 @@ interface Invoice {
 export default function SellingFeesPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [loading, setLoading] = useState(true)
   const [invoices, setInvoices] = useState<Invoice[]>([])
+  const invoiceRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
+  const [highlightedInvoiceId, setHighlightedInvoiceId] = useState<string | null>(null)
+  const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -54,6 +59,27 @@ export default function SellingFeesPage() {
 
     loadInvoices()
   }, [session, status, router])
+
+  // Scroll zu spezifischer Rechnung wenn Invoice-ID in URL
+  useEffect(() => {
+    const invoiceId = searchParams.get('invoice')
+    if (invoiceId && invoices.length > 0) {
+      // Warte kurz, damit die Rechnungen gerendert sind
+      setTimeout(() => {
+        const invoiceElement = invoiceRefs.current[invoiceId]
+        if (invoiceElement) {
+          invoiceElement.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          setHighlightedInvoiceId(invoiceId)
+          // Entferne Highlight nach 3 Sekunden
+          setTimeout(() => {
+            setHighlightedInvoiceId(null)
+            // Entferne Query-Parameter aus URL
+            router.replace('/my-watches/selling/fees')
+          }, 3000)
+        }
+      }, 300)
+    }
+  }, [invoices, searchParams, router])
 
   const loadInvoices = async () => {
     try {
@@ -171,8 +197,8 @@ export default function SellingFeesPage() {
       <Header />
       <div className="max-w-7xl mx-auto px-4 py-12">
         <Link
-          href="/my-watches/selling"
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          href="/my-watches"
+          className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Zurück zu Mein Verkaufen
@@ -251,7 +277,15 @@ export default function SellingFeesPage() {
         ) : (
           <div className="space-y-4">
             {invoices.map((invoice) => (
-              <div key={invoice.id} className="bg-white rounded-lg shadow-md p-6">
+              <div 
+                key={invoice.id} 
+                ref={(el) => { invoiceRefs.current[invoice.id] = el }}
+                className={`bg-white rounded-lg shadow-md p-6 transition-all duration-500 ${
+                  highlightedInvoiceId === invoice.id 
+                    ? 'ring-4 ring-primary-500 ring-offset-2 bg-primary-50' 
+                    : ''
+                }`}
+              >
                 <div className="flex items-start justify-between mb-4">
                   <div>
                     <div className="flex items-center gap-3 mb-2">
@@ -273,7 +307,16 @@ export default function SellingFeesPage() {
                     <p className="text-2xl font-bold text-gray-900">
                       CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(invoice.total)}
                     </p>
-                    <div className="mt-2">
+                    <div className="mt-2 flex gap-2">
+                      {invoice.status !== 'paid' && (
+                        <button
+                          onClick={() => setSelectedInvoiceForPayment(invoice)}
+                          className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                        >
+                          <CreditCard className="h-4 w-4 mr-2" />
+                          Jetzt bezahlen
+                        </button>
+                      )}
                       <button
                         onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}
                         className="inline-flex items-center px-3 py-1.5 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors"
@@ -345,6 +388,23 @@ export default function SellingFeesPage() {
         )}
       </div>
       <Footer />
+
+      {/* Payment Modal */}
+      {selectedInvoiceForPayment && (
+        <InvoicePaymentModal
+          invoiceId={selectedInvoiceForPayment.id}
+          invoiceNumber={selectedInvoiceForPayment.invoiceNumber}
+          amount={selectedInvoiceForPayment.total}
+          isOpen={!!selectedInvoiceForPayment}
+          onClose={() => {
+            setSelectedInvoiceForPayment(null)
+            loadInvoices() // Reload invoices to update status
+          }}
+          onPaymentSuccess={() => {
+            loadInvoices() // Reload invoices to update status
+          }}
+        />
+      )}
     </div>
   )
 }

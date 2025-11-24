@@ -19,7 +19,6 @@ export default function RegisterPage() {
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const router = useRouter()
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -82,20 +81,11 @@ export default function RegisterPage() {
       })
 
       if (response.ok) {
-        // Zeige Erfolgsmeldung mit E-Mail-Bestätigungshinweis
-        setSuccess('Registrierung erfolgreich! Bitte bestätigen Sie Ihre E-Mail-Adresse.')
-        
-        // In Entwicklung: Zeige Link direkt (sonst E-Mail versenden)
         const data = await response.json()
-        if (data.verificationToken && process.env.NODE_ENV === 'development') {
-          console.log('Dev: Verification Link:', `/verify-email?token=${data.verificationToken}`)
-        }
         
-        // Felder NICHT leeren - Benutzer soll die Erfolgsmeldung sehen
-        // Nach 3 Sekunden zur Login-Seite
-        setTimeout(() => {
-          router.push('/login')
-        }, 3000)
+        // IMMER zur "Check your email" Seite weiterleiten (wie bei Resend)
+        // KEIN Link zur manuellen Bestätigung mehr - nur über E-Mail!
+        router.push(`/check-email?email=${encodeURIComponent(email.trim())}`)
       } else {
         const data = await response.json()
         setError(data.message || 'Ein Fehler ist aufgetreten')
@@ -122,7 +112,7 @@ export default function RegisterPage() {
         </div>
         <div>
           <div className="mx-auto h-12 w-12 bg-primary-600 rounded-lg flex items-center justify-center">
-            <span className="text-white font-bold text-xl">W</span>
+            <span className="text-white font-bold text-xl">H</span>
           </div>
           <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
             Neues Konto erstellen
@@ -136,13 +126,7 @@ export default function RegisterPage() {
         </div>
         
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-          {success && (
-          <div className="mb-4 p-4 bg-green-50 border border-green-200 rounded-md">
-            <p className="text-sm text-green-800">{success}</p>
-          </div>
-        )}
-        
-        {error && (
+          {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg">
               {error}
             </div>

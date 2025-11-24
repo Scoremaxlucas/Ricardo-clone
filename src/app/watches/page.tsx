@@ -78,7 +78,7 @@ export default function WatchesPage() {
               return (
                 <Link
                   key={watch.id}
-                  href={`/watches/${watch.id}`}
+                  href={`/products/${watch.id}`}
                   className={`rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow ${
                     hasSuperBoost 
                       ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400' 

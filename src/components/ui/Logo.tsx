@@ -12,67 +12,40 @@ export function Logo({ className = '', size = 'md' }: LogoProps) {
     lg: 'h-12 w-12'
   }
 
+  const textSizeClasses = {
+    sm: 'text-base',
+    md: 'text-xl',
+    lg: 'text-2xl'
+  }
+
   return (
     <div className={`flex items-center ${className}`}>
+      {/* Simple H */}
       <div className={`${sizeClasses[size]} relative`}>
-        {/* Watch Icon */}
         <svg
           viewBox="0 0 40 40"
           className="w-full h-full"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
         >
-          {/* Watch Case */}
-          <rect
-            x="8"
-            y="12"
-            width="24"
-            height="16"
-            rx="3"
-            stroke="#64748b"
-            strokeWidth="2"
-            fill="none"
+          <rect width="40" height="40" rx="8" fill="#0f766e"/>
+          <path
+            d="M12 12 L12 28 M12 20 L28 20 M28 12 L28 28"
+            stroke="white"
+            strokeWidth="3.5"
+            strokeLinecap="round"
+            strokeLinejoin="round"
           />
-          
-          {/* Watch Face */}
-          <circle
-            cx="20"
-            cy="20"
-            r="8"
-            stroke="#64748b"
-            strokeWidth="1.5"
-            fill="none"
-          />
-          
-          {/* Hour Markers */}
-          <circle cx="20" cy="12" r="1" fill="#64748b" />
-          <circle cx="28" cy="20" r="1" fill="#64748b" />
-          <circle cx="20" cy="28" r="1" fill="#64748b" />
-          <circle cx="12" cy="20" r="1" fill="#64748b" />
-          
-          {/* Crown */}
-          <rect
-            x="22"
-            y="8"
-            width="2"
-            height="4"
-            rx="1"
-            fill="#64748b"
-          />
-          
-          {/* Bracelet */}
-          <rect x="6" y="16" width="4" height="8" rx="1" fill="#64748b" />
-          <rect x="30" y="16" width="4" height="8" rx="1" fill="#64748b" />
         </svg>
       </div>
       
       {/* Text */}
-      <div className="ml-2">
-        <div className="flex items-center">
-          <span className="text-xl font-bold text-gray-900">watch-</span>
-          <div className="bg-blue-600 px-2 py-1 rounded">
-            <span className="text-yellow-400 font-bold text-sm">OUT.CH</span>
-          </div>
+      <div className="ml-2.5">
+        <div className="flex items-center gap-0.5">
+          <span className={`${textSizeClasses[size]} font-bold text-gray-900`}>
+            Helvenda
+          </span>
+          <span className={`${size === 'sm' ? 'text-[9px]' : size === 'md' ? 'text-[11px]' : 'text-sm'} text-gray-500`}>.ch</span>
         </div>
       </div>
     </div>

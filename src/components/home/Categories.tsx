@@ -1,116 +1,184 @@
+'use client'
+
 import Link from 'next/link'
-import { 
-  Watch,
-  Crown,
-  Zap,
-  Shield,
-  Star,
-  Gem,
-  Clock,
-  Award,
-  Sparkles,
-  Heart
-} from 'lucide-react'
+import { getCategoryConfig } from '@/data/categories'
 
 const categories = [
   { 
-    name: 'Rolex', 
-    icon: Crown, 
-    href: '/categories/rolex', 
-    color: 'bg-green-600',
-    logo: 'https://logos-world.net/wp-content/uploads/2020/09/Rolex-Logo.png',
-    image: 'https://media.rolex.com/image/upload/q_auto/f_auto/c_limit,w_3840/v1753431990/rolexcom/collection/family-pages/professional-watches/cosmograph-daytona/landing/2025/professional-watches-cosmograph-daytona-cover-m126508-0008_2505stj_0001'
+    name: 'Computer & Netzwerk', 
+    slug: 'computer-netzwerk',
+    href: '/search?category=computer-netzwerk', 
+    description: 'Notebooks, PCs, Tablets & mehr',
   },
   { 
-    name: 'Patek Philippe', 
-    icon: Star, 
-    href: '/categories/patek-philippe', 
-    color: 'bg-blue-600',
-    logo: 'https://logos-world.net/wp-content/uploads/2020/09/Patek-Philippe-Logo.png',
-    image: 'https://patek-res.cloudinary.com/dfsmedia/0906caea301d42b3b8bd23bd656d1711/202201-51890'
+    name: 'Kleidung & Accessoires', 
+    slug: 'kleidung-accessoires',
+    href: '/search?category=kleidung-accessoires', 
+    description: 'Mode für Damen & Herren',
   },
   { 
-    name: 'Omega', 
-    icon: Zap, 
-    href: '/categories/omega', 
-    color: 'bg-red-600',
-    logo: 'https://logos-world.net/wp-content/uploads/2020/09/Omega-Logo.png',
-    image: 'https://www.omegawatches.com/media/catalog/product/o/m/omega-speedmaster-moonwatch-professional-co-axial-master-chronometer-chronograph-42-mm-31030425001002-198df2.png?w=230'
+    name: 'Haushalt & Wohnen', 
+    slug: 'haushalt-wohnen',
+    href: '/search?category=haushalt-wohnen', 
+    description: 'Möbel, Deko & Haushaltsgeräte',
   },
   { 
-    name: 'Audemars Piguet', 
-    icon: Gem, 
-    href: '/categories/audemars-piguet', 
-    color: 'bg-purple-600',
-    logo: 'https://logos-world.net/wp-content/uploads/2020/09/Audemars-Piguet-Logo.png',
-    image: 'https://dynamicmedia.audemarspiguet.com/is/image/audemarspiguet/car_produit_RO_26674ST-OO-1320ST-01?size=568,0&fmt=avif-alpha&dpr=off'
+    name: 'Auto & Motorrad', 
+    slug: 'auto-motorrad',
+    href: '/search?category=auto-motorrad', 
+    description: 'Fahrzeuge & Zubehör',
   },
   { 
-    name: 'Vintage Uhren', 
-    icon: Clock, 
-    href: '/categories/vintage', 
-    color: 'bg-yellow-600',
-    logo: null,
-    image: 'https://cdn.shopify.com/s/files/1/0526/8658/6018/files/Vintage_Watch_Longines_1024x1024.jpg?v=1741170820'
+    name: 'Sport', 
+    slug: 'sport',
+    href: '/search?category=sport', 
+    description: 'Fahrräder, Fitness & Outdoor',
   },
   { 
-    name: 'Smartwatches', 
-    icon: Zap, 
-    href: '/categories/smartwatches', 
-    color: 'bg-indigo-600',
-    logo: 'https://logos-world.net/wp-content/uploads/2020/09/Apple-Logo.png',
-    image: 'https://www.apple.com/v/watch/bs/images/overview/select/product_s11__c23ym6fc09me_large.png'
+    name: 'Kind & Baby', 
+    slug: 'kind-baby',
+    href: '/search?category=kind-baby', 
+    description: 'Kleidung, Spielzeug & Ausstattung',
   },
   { 
-    name: 'Sportuhren', 
-    icon: Shield, 
-    href: '/categories/sport', 
-    color: 'bg-orange-600',
-    logo: null,
-    image: 'https://res.garmin.com/en/products/010-02905-10/v/cf-lg.jpg'
+    name: 'Bücher', 
+    slug: 'buecher',
+    href: '/search?category=buecher', 
+    description: 'Romane, Sachbücher & Comics',
   },
   { 
-    name: 'Exklusive Luxusuhren', 
-    icon: Award, 
-    href: '/categories/luxury', 
-    color: 'bg-pink-600',
-    logo: null,
-    image: 'https://media.richardmille.com/wp-content/uploads/2021/04/23134358/40-01card.png?dpr=3&width=187.5'
+    name: 'Games & Spielkonsolen', 
+    slug: 'games-konsolen',
+    href: '/search?category=games-konsolen', 
+    description: 'PS5, Xbox, Switch & PC-Spiele',
   },
   { 
-    name: 'Seltene Uhren', 
-    icon: Sparkles, 
-    href: '/categories/rare', 
-    color: 'bg-teal-600',
-    logo: null,
-    image: 'https://backend.esquire.de/sites/esquire.de/files/images/2021-11/rolex-cosmograph-daytona-ref-6263-albino.jpg'
+    name: 'Uhren & Schmuck', 
+    slug: 'uhren-schmuck',
+    href: '/search?category=uhren-schmuck', 
+    description: 'Armbanduhren & Schmuckstücke',
   },
   { 
-    name: 'Favoriten', 
-    icon: Heart, 
-    href: '/categories/favorites', 
-    color: 'bg-red-500',
-    logo: null,
-    image: 'https://img.freepik.com/vektoren-kostenlos/herz-symbol-isoliert_24911-115700.jpg?semt=ais_hybrid&w=740&q=80'
+    name: 'Sammeln & Seltenes', 
+    slug: 'sammeln-seltenes',
+    href: '/search?category=sammeln-seltenes', 
+    description: 'Antiquitäten, Kunst & Raritäten',
+  },
+  { 
+    name: 'Immobilien', 
+    slug: 'immobilien',
+    href: '/search?category=immobilien', 
+    description: 'Wohnungen, Häuser & Grundstücke',
+  },
+  { 
+    name: 'Jobs & Karriere', 
+    slug: 'jobs-karriere',
+    href: '/search?category=jobs-karriere', 
+    description: 'Stellenangebote & Karriere',
+  },
+  { 
+    name: 'Dienstleistungen', 
+    slug: 'dienstleistungen',
+    href: '/search?category=dienstleistungen', 
+    description: 'Handwerk, Reparatur & Service',
+  },
+  { 
+    name: 'Camping & Outdoor', 
+    slug: 'camping-outdoor',
+    href: '/search?category=camping-outdoor', 
+    description: 'Zelte, Ausrüstung & Outdoor',
+  },
+  { 
+    name: 'Wellness & Gesundheit', 
+    slug: 'wellness-gesundheit',
+    href: '/search?category=wellness-gesundheit', 
+    description: 'Massage, Sauna & Fitness',
+  },
+  { 
+    name: 'Reise & Urlaub', 
+    slug: 'reise-urlaub',
+    href: '/search?category=reise-urlaub', 
+    description: 'Reiseführer & Reisezubehör',
+  },
+  { 
+    name: 'Garten & Pflanzen', 
+    slug: 'garten-pflanzen',
+    href: '/search?category=garten-pflanzen', 
+    description: 'Pflanzen, Samen & Gartendeko',
+  },
+  { 
+    name: 'Boote & Schiffe', 
+    slug: 'boote-schiffe',
+    href: '/search?category=boote-schiffe', 
+    description: 'Yachten, Boote & Bootszubehör',
+  },
+  { 
+    name: 'Tiere', 
+    slug: 'tiere',
+    href: '/search?category=tiere', 
+    description: 'Hunde, Katzen & Haustiere',
+  },
+  { 
+    name: 'Lebensmittel', 
+    slug: 'lebensmittel',
+    href: '/search?category=lebensmittel', 
+    description: 'Bio-Produkte & Delikatessen',
+  },
+  { 
+    name: 'Medizin & Gesundheit', 
+    slug: 'medizin-gesundheit',
+    href: '/search?category=medizin-gesundheit', 
+    description: 'Hilfsmittel & Pflegeprodukte',
+  },
+  { 
+    name: 'Flugzeuge', 
+    slug: 'flugzeuge',
+    href: '/search?category=flugzeuge', 
+    description: 'Flugzeuge & Flugzeugzubehör',
+  },
+  { 
+    name: 'Smart Home', 
+    slug: 'smart-home',
+    href: '/search?category=smart-home', 
+    description: 'Smart Home Systeme & Geräte',
+  },
+  { 
+    name: 'Elektrogeräte', 
+    slug: 'elektrogeraete',
+    href: '/search?category=elektrogeraete', 
+    description: 'Küchen- & Haushaltsgeräte',
+  },
+  { 
+    name: 'Baustoffe', 
+    slug: 'baustoffe',
+    href: '/search?category=baustoffe', 
+    description: 'Baustoffe & Dämmstoffe',
+  },
+  { 
+    name: 'Kunst & Handwerk', 
+    slug: 'kunst-handwerk',
+    href: '/search?category=kunst-handwerk', 
+    description: 'Kunstwerke & Handwerkskunst',
   },
 ]
 
 export function Categories() {
   return (
     <section className="py-16 bg-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
         <div className="text-center mb-12">
           <h2 className="text-3xl font-bold text-gray-900 mb-4">
-            Beliebte Uhrenmarken
+            Beliebte Kategorien
           </h2>
           <p className="text-lg text-gray-600">
-            Entdecken Sie Uhren von den weltweit führenden Marken
+            Entdecken Sie unsere vielfältigen Angebote
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-5 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 xl:grid-cols-6 gap-6">
           {categories.map((category) => {
-            const IconComponent = category.icon
+            const config = getCategoryConfig(category.slug)
+            const IconComponent = config.icon
             return (
               <Link
                 key={category.name}
@@ -118,18 +186,19 @@ export function Categories() {
                 className="group flex flex-col items-center p-6 rounded-lg border border-gray-200 hover:border-primary-300 hover:shadow-lg transition-all duration-200"
               >
                 <div className="relative mb-4">
-                  {/* Hintergrundbild */}
-                  <div className="w-16 h-16 rounded-full overflow-hidden bg-gray-100">
-                    <img
-                      src={category.image}
-                      alt={category.name}
-                      className="w-full h-full object-cover"
-                    />
+                  <div 
+                    className="w-16 h-16 rounded-xl flex items-center justify-center"
+                    style={{ backgroundColor: '#0f766e' }}
+                  >
+                    <IconComponent className="h-10 w-10 text-white" />
                   </div>
                 </div>
                 
-                <span className="text-sm font-medium text-gray-900 group-hover:text-primary-600 text-center">
+                <span className="text-sm font-semibold text-gray-900 group-hover:text-primary-600 text-center mb-1">
                   {category.name}
+                </span>
+                <span className="text-xs text-gray-500 text-center">
+                  {category.description}
                 </span>
               </Link>
             )
@@ -138,10 +207,10 @@ export function Categories() {
 
         <div className="text-center mt-8">
           <Link
-            href="/brands"
+            href="/categories"
             className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium"
           >
-            Alle Marken anzeigen
+            Alle Kategorien anzeigen
             <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
             </svg>

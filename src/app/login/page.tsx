@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { signIn, getSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Logo } from '@/components/ui/Logo'
 
 export default function LoginPage() {
   const [email, setEmail] = useState('')
@@ -14,7 +15,12 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
+  const [showResendEmail, setShowResendEmail] = useState(false)
+  const [resendLoading, setResendLoading] = useState(false)
+  const [resendMessage, setResendMessage] = useState('')
   const router = useRouter()
+  const searchParams = useSearchParams()
+  const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/'
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -53,7 +59,18 @@ export default function LoginPage() {
 
       if (result?.error) {
         console.error('❌ Login error:', result.error)
-        setError(`Fehler: ${result.error}. Bitte überprüfen Sie E-Mail und Passwort.`)
+        
+        // Spezielle Fehlermeldung für nicht bestätigte E-Mail
+        if (result.error === 'EMAIL_NOT_VERIFIED' || result.error.includes('EMAIL_NOT_VERIFIED')) {
+          setError(
+            'Ihre E-Mail-Adresse wurde noch nicht bestätigt. Bitte überprüfen Sie Ihr E-Mail-Postfach und klicken Sie auf den Bestätigungslink.'
+          )
+          setShowResendEmail(true) // Zeige "E-Mail erneut senden" Button
+        } else {
+          setError(`Fehler: ${result.error}. Bitte überprüfen Sie E-Mail und Passwort.`)
+          setShowResendEmail(false)
+        }
+        
         setIsLoading(false)
         return
       } 
@@ -64,9 +81,9 @@ export default function LoginPage() {
         setEmail('')
         setPassword('')
         // Kurz warten, damit Session aktualisiert wird
-        console.log('Redirecting to home...')
+        console.log('Redirecting to:', callbackUrl)
         setTimeout(() => {
-          window.location.href = '/'
+          window.location.href = callbackUrl
         }, 500)
       } else {
         console.error('❌ Unexpected login result')
@@ -84,6 +101,44 @@ export default function LoginPage() {
     }
   }
 
+  const handleResendVerificationEmail = async () => {
+    if (!email || !email.trim()) {
+      setResendMessage('Bitte geben Sie Ihre E-Mail-Adresse ein.')
+      return
+    }
+
+    setResendLoading(true)
+    setResendMessage('')
+
+    try {
+      const response = await fetch('/api/auth/resend-verification', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: email.trim() }),
+      })
+
+      const data = await response.json()
+
+      if (data.success) {
+        setResendMessage(data.message || 'Eine neue Verifizierungs-E-Mail wurde gesendet.')
+        if (data.verificationUrl) {
+          // Falls E-Mail nicht versendet werden konnte, zeige Link
+          setResendMessage(
+            `${data.message} Link: ${data.verificationUrl}`
+          )
+        }
+      } else {
+        setResendMessage(data.message || 'Fehler beim Versenden der E-Mail.')
+      }
+    } catch (error: any) {
+      setResendMessage('Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.')
+    } finally {
+      setResendLoading(false)
+    }
+  }
+
 
 
   return (
@@ -93,8 +148,8 @@ export default function LoginPage() {
         <div className="max-w-md w-full">
           <div className="bg-white shadow-xl rounded-lg px-8 py-10 space-y-8">
             <div className="text-center">
-              <div className="mx-auto h-16 w-16 bg-primary-600 rounded-lg flex items-center justify-center shadow-lg">
-                <span className="text-white font-bold text-2xl">W</span>
+              <div className="flex justify-center mb-6">
+                <Logo size="lg" />
               </div>
               <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
                 Bei Ihrem Konto anmelden
@@ -111,6 +166,28 @@ export default function LoginPage() {
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
               {error}
+              {showResendEmail && (
+                <div className="mt-3 pt-3 border-t border-red-200">
+                  <button
+                    type="button"
+                    onClick={handleResendVerificationEmail}
+                    disabled={resendLoading}
+                    className="text-sm font-medium text-primary-600 hover:text-primary-700 underline disabled:opacity-50 disabled:cursor-not-allowed"
+                  >
+                    {resendLoading ? 'Wird gesendet...' : 'E-Mail erneut senden'}
+                  </button>
+                </div>
+              )}
+            </div>
+          )}
+          
+          {resendMessage && (
+            <div className={`px-4 py-3 rounded-lg text-sm ${
+              resendMessage.includes('erfolgreich') || resendMessage.includes('gesendet')
+                ? 'bg-green-50 border border-green-200 text-green-700'
+                : 'bg-yellow-50 border border-yellow-200 text-yellow-700'
+            }`}>
+              {resendMessage}
             </div>
           )}
           

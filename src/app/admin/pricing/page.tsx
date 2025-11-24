@@ -54,12 +54,10 @@ export default function AdminPricingPage() {
       return
     }
 
-    // Prüfe Admin-Status
-    const userEmail = session?.user?.email?.toLowerCase()
-    const isAdminEmail = userEmail === 'admin@admin.ch'
+    // Prüfe Admin-Status nur aus Session
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
 
-    if (isAdminInSession || isAdminEmail) {
+    if (isAdminInSession) {
       loadPricing()
       loadBoosters()
       return
@@ -191,12 +189,10 @@ export default function AdminPricingPage() {
     )
   }
 
-  // Prüfe Admin-Status
-  const userEmail = session?.user?.email?.toLowerCase()
-  const isAdminEmail = userEmail === 'admin@admin.ch'
+  // Prüfe Admin-Status nur aus Session
   const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
   
-  if (!session || (!isAdminInSession && !isAdminEmail)) {
+  if (!session || !isAdminInSession) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

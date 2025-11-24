@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { VerifiedBadge } from './VerifiedBadge'
 
 interface UserNameProps {
@@ -9,6 +10,7 @@ interface UserNameProps {
   className?: string
   showVerifiedBadge?: boolean
   badgeSize?: 'sm' | 'md' | 'lg'
+  linkToProfile?: boolean
 }
 
 export function UserName({ 
@@ -16,7 +18,8 @@ export function UserName({
   userName, 
   className = '',
   showVerifiedBadge = true,
-  badgeSize = 'sm'
+  badgeSize = 'sm',
+  linkToProfile = true
 }: UserNameProps) {
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
 
@@ -35,12 +38,29 @@ export function UserName({
       })
   }, [userId, showVerifiedBadge])
 
-  return (
-    <span className={`inline-flex items-center gap-1 ${className}`}>
+  const content = (
+    <>
       {userName}
       {showVerifiedBadge && isVerified === true && (
         <VerifiedBadge size={badgeSize} />
       )}
+    </>
+  )
+
+  if (linkToProfile) {
+    return (
+      <Link 
+        href={`/users/${userId}`}
+        className={`inline-flex items-center gap-1 hover:text-primary-600 transition-colors ${className}`}
+      >
+        {content}
+      </Link>
+    )
+  }
+
+  return (
+    <span className={`inline-flex items-center gap-1 ${className}`}>
+      {content}
     </span>
   )
 }

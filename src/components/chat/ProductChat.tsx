@@ -118,10 +118,13 @@ export function ProductChat({ watchId, sellerId }: ProductChatProps) {
   }
 
   if (!session?.user) {
+    const currentUrl = typeof window !== 'undefined' 
+      ? window.location.pathname + window.location.search 
+      : '/'
     return (
       <div className="bg-white rounded-lg shadow p-6 mt-8">
         <p className="text-gray-600 text-center">
-          Bitte <a href="/login" className="text-primary-600 hover:underline">anmelden</a>, um Fragen zu stellen.
+          Bitte <a href={`/login?callbackUrl=${encodeURIComponent(currentUrl)}`} className="text-primary-600 hover:underline">anmelden</a>, um Fragen zu stellen.
         </p>
       </div>
     )

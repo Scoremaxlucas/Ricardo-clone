@@ -48,12 +48,10 @@ export default function AdminTransactionsPage() {
       return
     }
 
-    // Prüfe Admin-Status
-    const userEmail = session?.user?.email?.toLowerCase()
-    const isAdminEmail = userEmail === 'admin@admin.ch'
+    // Prüfe Admin-Status nur aus Session
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
 
-    if (!isAdminInSession && !isAdminEmail) {
+    if (!isAdminInSession) {
       router.push('/')
       return
     }
@@ -95,11 +93,9 @@ export default function AdminTransactionsPage() {
   }
 
   // Prüfe Admin-Status erneut für UI
-  const userEmail = session?.user?.email?.toLowerCase()
-  const isAdminEmail = userEmail === 'admin@admin.ch'
   const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
 
-  if (!isAdminInSession && !isAdminEmail) {
+  if (!isAdminInSession) {
     return null
   }
 

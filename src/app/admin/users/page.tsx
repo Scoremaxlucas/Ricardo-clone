@@ -52,12 +52,10 @@ export default function AdminUsersPage() {
       return
     }
 
-    // Prüfe Admin-Status: Session, E-Mail oder lade aus DB
-    const userEmail = session?.user?.email?.toLowerCase()
-    const isAdminEmail = userEmail === 'admin@admin.ch'
+    // Prüfe Admin-Status nur aus Session
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
 
-    if (isAdminInSession || isAdminEmail) {
+    if (isAdminInSession) {
       console.log('Admin confirmed, loading users...')
       loadUsers()
       return
@@ -175,12 +173,10 @@ export default function AdminUsersPage() {
     )
   }
 
-  // Prüfe Admin-Status: Session, E-Mail oder lade aus DB
-  const userEmail = session?.user?.email?.toLowerCase()
-  const isAdminEmail = userEmail === 'admin@admin.ch'
+  // Prüfe Admin-Status nur aus Session
   const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
   
-  if (!session || (!isAdminInSession && !isAdminEmail)) {
+  if (!session || !isAdminInSession) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

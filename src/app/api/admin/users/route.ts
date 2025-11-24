@@ -35,12 +35,10 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Prüfe Admin-Status: aus DB oder per E-Mail
-    const userEmail = session.user.email?.toLowerCase()
-    const isAdminEmail = userEmail === 'admin@admin.ch'
+    // Prüfe Admin-Status nur aus Datenbank
     const isAdminInDb = adminUser?.isAdmin === true || adminUser?.isAdmin === 1
 
-    if (!isAdminInDb && !isAdminEmail) {
+    if (!isAdminInDb) {
       return NextResponse.json(
         { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
         { status: 403 }

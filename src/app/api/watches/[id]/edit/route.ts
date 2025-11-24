@@ -302,12 +302,15 @@ export async function PUT(
 
           // Erstelle Rechnung nur wenn der neue Booster teurer ist oder vorher keiner vorhanden war
           if (priceDifference > 0) {
+            // Preis ist bereits inkl. MwSt - berechne Netto und MwSt-Betrag
             const vatRate = 0.081 // 8.1% MwSt
-            const subtotal = priceDifference
-            const vatAmount = subtotal * vatRate
+            const total = priceDifference // Total ist der Preis inkl. MwSt
+            const subtotal = total / (1 + vatRate) // Netto-Preis ohne MwSt
+            const vatAmount = total - subtotal // MwSt-Betrag
             // Schweizer Rappenrundung auf 0.05
-            const totalBeforeRounding = subtotal + vatAmount
-            const total = Math.ceil(totalBeforeRounding * 20) / 20
+            const roundedSubtotal = Math.floor(subtotal * 20) / 20
+            const roundedVatAmount = Math.ceil(vatAmount * 20) / 20
+            const roundedTotal = roundedSubtotal + roundedVatAmount
 
             // Generiere Rechnungsnummer (z.B. REV-2024-001)
             const year = new Date().getFullYear()
@@ -348,17 +351,17 @@ export async function PUT(
                 console.warn(`[watches/edit] Rechnungsnummer bereits vorhanden, verwende: ${invoiceNumber}`)
               }
 
-              await prisma.invoice.create({
+              const invoice = await prisma.invoice.create({
                 data: {
                   invoiceNumber,
                   sellerId: session.user.id,
                   saleId: null, // Kein Verkauf, nur Booster
-                  subtotal,
+                  subtotal: roundedSubtotal,
                   vatRate,
-                  vatAmount,
-                  total,
+                  vatAmount: roundedVatAmount,
+                  total: roundedTotal,
                   status: 'pending',
-                  dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 Tage Frist
+                  dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist (wie Ricardo)
                   items: {
                     create: [{
                       watchId: watch.id,
@@ -366,14 +369,23 @@ export async function PUT(
                         ? `Booster-Upgrade: ${newBoosterPrice.name} (Differenz)`
                         : `Booster: ${newBoosterPrice.name}`,
                       quantity: 1,
-                      price: priceDifference,
-                      total: priceDifference
+                      price: roundedSubtotal,
+                      total: roundedSubtotal
                     }]
                   }
                 }
               })
 
-              console.log(`[watches/edit] Booster-Rechnung erstellt: ${invoiceNumber} für ${newBoosterPrice.name} (Differenz: CHF ${total.toFixed(2)})`)
+              console.log(`[watches/edit] Booster-Rechnung erstellt: ${invoiceNumber} für ${newBoosterPrice.name} (Differenz: CHF ${roundedTotal.toFixed(2)} inkl. MwSt)`)
+
+              // RICARDO-STYLE: Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
+              try {
+                const { sendInvoiceNotificationAndEmail } = await import('@/lib/invoice')
+                await sendInvoiceNotificationAndEmail(invoice)
+              } catch (notificationError: any) {
+                console.error('[watches/edit] Fehler bei Benachrichtigung:', notificationError)
+                // Fehler sollte nicht die Rechnungserstellung verhindern
+              }
             } catch (invoiceError: any) {
               console.error('[watches/edit] Fehler beim Erstellen der Rechnung:', invoiceError)
               console.error('[watches/edit] Invoice error code:', invoiceError.code)
@@ -392,12 +404,12 @@ export async function PUT(
                       invoiceNumber: newInvoiceNumber,
                       sellerId: session.user.id,
                       saleId: null,
-                      subtotal,
+                      subtotal: roundedSubtotal,
                       vatRate,
-                      vatAmount,
-                      total,
+                      vatAmount: roundedVatAmount,
+                      total: roundedTotal,
                       status: 'pending',
-                      dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
+                      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist (wie Ricardo)
                       items: {
                         create: [{
                           watchId: watch.id,
@@ -405,13 +417,27 @@ export async function PUT(
                             ? `Booster-Upgrade: ${newBoosterPrice.name} (Differenz)`
                             : `Booster: ${newBoosterPrice.name}`,
                           quantity: 1,
-                          price: priceDifference,
-                          total: priceDifference
+                          price: roundedSubtotal,
+                          total: roundedSubtotal
                         }]
                       }
                     }
                   })
                   console.log(`[watches/edit] Booster-Rechnung erfolgreich mit neuer Nummer erstellt: ${newInvoiceNumber}`)
+
+                  // RICARDO-STYLE: Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
+                  try {
+                    const retryInvoice = await prisma.invoice.findUnique({
+                      where: { invoiceNumber: newInvoiceNumber },
+                      include: { items: true, seller: true }
+                    })
+                    if (retryInvoice) {
+                      const { sendInvoiceNotificationAndEmail } = await import('@/lib/invoice')
+                      await sendInvoiceNotificationAndEmail(retryInvoice)
+                    }
+                  } catch (notificationError: any) {
+                    console.error('[watches/edit] Fehler bei Benachrichtigung:', notificationError)
+                  }
                 } catch (retryError: any) {
                   // Auch Retry fehlgeschlagen
                   throw new Error(`Fehler beim Erstellen der Rechnung (auch Retry fehlgeschlagen): ${retryError.message}`)

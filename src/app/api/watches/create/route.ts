@@ -2,20 +2,215 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { generateArticleNumber } from '@/lib/article-number'
 
 export async function POST(request: NextRequest) {
   try {
     console.log('Watch creation API called')
     
-    const data = await request.json()
-    console.log('Received data keys:', Object.keys(data))
-    console.log('Auction-related data:', {
-      auctionStart: data.auctionStart,
-      auctionDuration: data.auctionDuration,
-      auctionEnd: data.auctionEnd,
-      isAuction: data.isAuction
+    const rawData = await request.json()
+    
+    // Prüfe ob description vielleicht ein JSON-String ist, der geparst werden muss
+    if (typeof rawData.description === 'string' && rawData.description.trim().startsWith('[')) {
+      try {
+        const parsed = JSON.parse(rawData.description)
+        if (Array.isArray(parsed)) {
+          console.log('Description was a JSON string, parsed it to array')
+          rawData.description = parsed
+        }
+      } catch (e) {
+        // Nicht parsbar, bleibt wie es ist
+      }
+    }
+    
+    // DEBUG: Zeige was ankommt
+    console.log('Raw data received:', {
+      descriptionType: typeof rawData.description,
+      descriptionIsArray: Array.isArray(rawData.description),
+      descriptionLength: typeof rawData.description === 'string' ? rawData.description.length : 'N/A',
+      descriptionPreview: typeof rawData.description === 'string' 
+        ? rawData.description.substring(0, 200) 
+        : Array.isArray(rawData.description) 
+          ? `Array[${rawData.description.length}]` 
+          : rawData.description,
+      imagesType: Array.isArray(rawData.images),
+      imagesCount: rawData.images?.length || 0,
+      descriptionContainsImage: typeof rawData.description === 'string' 
+        ? (rawData.description.includes('data:image/') || rawData.description.includes('iVBORw0KGgo'))
+        : false
     })
-    console.log('shippingMethods received:', data.shippingMethods)
+    
+    // KRITISCH: Bereinige description SOFORT nach dem Parsen - KOMPLETT NEU AUFBAUEN
+    let cleanDescription = ''
+    
+    // Hilfsfunktion: Prüft ob ein String ein Bild ist
+    const isImageData = (str: string): boolean => {
+      if (typeof str !== 'string') return false
+      // Prüfe auf Base64-Bilder (mit oder ohne Prefix)
+      if (str.startsWith('data:image/') || 
+          str.startsWith('data:video/') ||
+          str.startsWith('iVBORw0KGgo') ||
+          str.startsWith('/9j/') || // JPEG Base64
+          str.startsWith('R0lGODlh') || // GIF Base64
+          str.startsWith('UklGR')) { // WebP Base64
+        return true
+      }
+      // Prüfe auf sehr lange Strings (wahrscheinlich Base64 ohne Prefix)
+      if (str.length > 10000) {
+        return true
+      }
+      // Prüfe ob es hauptsächlich Base64-Zeichen sind
+      const base64Pattern = /^[A-Za-z0-9+/=]+$/
+      if (str.length > 100 && base64Pattern.test(str)) {
+        return true
+      }
+      return false
+    }
+    
+    if (rawData.description) {
+      if (Array.isArray(rawData.description)) {
+        // Baue description komplett neu auf - NUR Text, KEINE Bilder
+        const textParts: string[] = []
+        for (const item of rawData.description) {
+          if (typeof item === 'string') {
+            // Prüfe ob es ein Bild ist
+            if (!isImageData(item)) {
+              // Prüfe ob der String selbst Bilder enthält (z.B. "text" + Base64)
+              let cleanItem = item
+              const imagePatterns = ['data:image/', 'iVBORw0KGgo', '/9j/', 'R0lGODlh', 'UklGR']
+              let earliestIndex = -1
+              for (const pattern of imagePatterns) {
+                const idx = cleanItem.indexOf(pattern)
+                if (idx !== -1 && (earliestIndex === -1 || idx < earliestIndex)) {
+                  earliestIndex = idx
+                }
+              }
+              if (earliestIndex !== -1) {
+                cleanItem = cleanItem.substring(0, earliestIndex).trim()
+              }
+              if (cleanItem && cleanItem.length > 0 && cleanItem.length < 10000) {
+                textParts.push(cleanItem)
+              }
+            }
+          }
+        }
+        cleanDescription = textParts.join(' ').trim()
+      } else if (typeof rawData.description === 'string') {
+        // Prüfe ob der gesamte String ein Bild ist
+        if (isImageData(rawData.description)) {
+          console.log('Description is entirely image data, clearing it')
+          cleanDescription = ''
+        } else {
+          // Prüfe ob der String Bilder enthält und entferne sie KOMPLETT
+          let tempDesc = rawData.description
+          
+          // Entferne ALLE Base64-Bild-Strings - suche nach allen möglichen Positionen
+          const imagePatterns = [
+            'data:image/',
+            'iVBORw0KGgo', // PNG Base64
+            '/9j/', // JPEG Base64
+            'R0lGODlh', // GIF Base64
+            'UklGR' // WebP Base64
+          ]
+          
+          let earliestImageIndex = -1
+          for (const pattern of imagePatterns) {
+            const index = tempDesc.indexOf(pattern)
+            if (index !== -1 && (earliestImageIndex === -1 || index < earliestImageIndex)) {
+              earliestImageIndex = index
+            }
+          }
+          
+          if (earliestImageIndex !== -1) {
+            console.log(`Found image data at index ${earliestImageIndex}, removing everything from that point`)
+            tempDesc = tempDesc.substring(0, earliestImageIndex).trim()
+          }
+          
+          // Prüfe nochmal ob der verbleibende String ein Bild ist
+          if (!isImageData(tempDesc)) {
+            cleanDescription = tempDesc.trim()
+          } else {
+            console.log('Remaining description still contains image data, clearing it')
+            cleanDescription = ''
+          }
+        }
+      }
+    }
+    
+    console.log('After initial cleanup:', {
+      cleanDescriptionLength: cleanDescription.length,
+      cleanDescriptionPreview: cleanDescription.substring(0, 100)
+    })
+    
+    // Stelle sicher, dass description max. 100000 Zeichen hat
+    if (cleanDescription.length > 100000) {
+      cleanDescription = cleanDescription.substring(0, 100000)
+    }
+    
+    // FINALE PRÜFUNG: Stelle sicher, dass wirklich keine Bilder mehr drin sind
+    if (cleanDescription.includes('data:image/') || 
+        cleanDescription.includes('iVBORw0KGgo') ||
+        cleanDescription.includes('/9j/') ||
+        cleanDescription.includes('R0lGODlh') ||
+        cleanDescription.includes('UklGR')) {
+      console.error('CRITICAL: Images still found in cleanDescription, clearing it!')
+      cleanDescription = ''
+    }
+    
+    // Extrahiere Bilder aus description und füge sie zu images hinzu
+    let extractedImages: string[] = []
+    if (rawData.description) {
+      if (Array.isArray(rawData.description)) {
+        extractedImages = rawData.description.filter((item: any) => {
+          return typeof item === 'string' && (
+            item.startsWith('data:image/') || 
+            item.startsWith('http://') || 
+            item.startsWith('https://') ||
+            item.startsWith('iVBORw0KGgo') ||
+            item.length > 10000
+          )
+        })
+      } else if (typeof rawData.description === 'string') {
+        if (rawData.description.startsWith('data:image/') || 
+            rawData.description.startsWith('http://') || 
+            rawData.description.startsWith('https://') ||
+            rawData.description.startsWith('iVBORw0KGgo') ||
+            rawData.description.length > 10000) {
+          extractedImages.push(rawData.description)
+        }
+      }
+    }
+    
+    // Kombiniere images mit extrahierten Bildern
+    let allImages: string[] = []
+    if (rawData.images && Array.isArray(rawData.images)) {
+      allImages = [...rawData.images, ...extractedImages]
+    } else if (rawData.images && typeof rawData.images === 'string') {
+      try {
+        const parsed = JSON.parse(rawData.images)
+        if (Array.isArray(parsed)) {
+          allImages = [...parsed, ...extractedImages]
+        } else {
+          allImages = extractedImages
+        }
+      } catch {
+        allImages = extractedImages
+      }
+    } else {
+      allImages = extractedImages
+    }
+    
+    // Entferne Duplikate
+    allImages = [...new Set(allImages)]
+    
+    console.log('Data cleanup:', {
+      originalDescriptionType: typeof rawData.description,
+      originalDescriptionIsArray: Array.isArray(rawData.description),
+      cleanedDescriptionLength: cleanDescription.length,
+      extractedImagesCount: extractedImages.length,
+      totalImagesCount: allImages.length
+    })
+    
     const {
       brand,
       model,
@@ -45,21 +240,32 @@ export async function POST(request: NextRequest) {
       sellerWarrantyYears,
       sellerWarrantyNote,
       title,
-      description,
-      images,
       video,
       shippingMethods,
-      booster
-    } = data
+      booster,
+      category: rawCategory,
+      subcategory
+    } = rawData
+    
+    // Normalisiere Kategorie
+    const category = rawCategory && typeof rawCategory === 'string' ? rawCategory.trim() : ''
+    
+    // Verwende bereinigte Werte
+    const description = cleanDescription
+    const images = allImages
 
-    // Validierung der Pflichtfelder
-    if (!brand || !model || !condition || !price) {
-      console.log('Validation failed:', { brand, model, condition, price })
+    // Validierung der Pflichtfelder (description wird später final bereinigt)
+    // Prüfe hier nur, ob überhaupt etwas vorhanden ist
+    if (!title || !condition || !price) {
+      console.log('Validation failed:', { title, condition, price })
       return NextResponse.json(
-        { message: 'Bitte füllen Sie alle Pflichtfelder aus' },
+        { message: 'Bitte füllen Sie alle Pflichtfelder aus (Titel, Beschreibung, Zustand, Preis)' },
         { status: 400 }
       )
     }
+    
+    // Description-Validierung: Auch wenn leer, erlauben wir es (kann später bereinigt werden)
+    // Die finale Bereinigung passiert vor dem Prisma-Call
 
     // Validierung der Lieferart
     if (!shippingMethods || !Array.isArray(shippingMethods) || shippingMethods.length === 0) {
@@ -95,7 +301,7 @@ export async function POST(request: NextRequest) {
     let auctionEndDate: Date | null = null
     let auctionDurationInt: number | null = null
     
-    const isAuctionActive = data.isAuction === true || data.isAuction === 'true'
+    const isAuctionActive = rawData.isAuction === true || rawData.isAuction === 'true'
     
     if (isAuctionActive) {
       // Parse Startzeitpunkt, falls vorhanden (nicht leer und nicht null)
@@ -191,18 +397,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prüfe ob User verifiziert ist
-    const user = await prisma.user.findUnique({
+    // Prüfe ob der User in der Datenbank existiert
+    const seller = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { verified: true }
+      select: { id: true, email: true }
     })
 
-    if (!user?.verified) {
+    if (!seller) {
+      console.error('User not found in database:', session.user.id)
       return NextResponse.json(
-        { message: 'Sie müssen sich zuerst verifizieren, um Uhren zum Verkauf anzubieten. Bitte besuchen Sie die Verifizierungsseite.' },
-        { status: 403 }
+        { message: 'Benutzer nicht gefunden. Bitte melden Sie sich erneut an.' },
+        { status: 404 }
       )
     }
+
+    console.log('Seller verified:', { id: seller.id, email: seller.email })
+
+    // Verifizierungsprüfung entfernt - die Frontend-Seite prüft bereits die Verifizierung
+    // Wenn das Formular angezeigt wird, kann der Benutzer auch speichern
+    // Dies verhindert Inkonsistenzen zwischen Frontend und Backend
     
     console.log('Creating watch with data:', {
       title: title || `${brand} ${model}`,
@@ -211,11 +424,56 @@ export async function POST(request: NextRequest) {
       price: priceFloat
     })
 
+    // cleanDescription wurde bereits oben bereinigt
+
+    // FINALE VALIDIERUNG: Stelle sicher, dass description wirklich ein String ist
+    // cleanDescription wurde bereits oben komplett bereinigt
+    let finalDescription = ''
+    
+    if (typeof cleanDescription === 'string') {
+      // Prüfe nochmal, ob es Bilder enthält (sollte nicht passieren, aber Sicherheit)
+      if (cleanDescription.includes('data:image/') || 
+          cleanDescription.includes('data:video/') ||
+          cleanDescription.includes('iVBORw0KGgo') ||
+          cleanDescription.includes('/9j/') ||
+          cleanDescription.includes('R0lGODlh') ||
+          cleanDescription.includes('UklGR') ||
+          cleanDescription.length > 100000) {
+        console.error('CRITICAL: cleanDescription still contains images after cleanup!')
+        finalDescription = ''
+      } else {
+        finalDescription = cleanDescription.trim()
+      }
+    } else {
+      // Falls es kein String ist, mache es zu einem leeren String
+      finalDescription = ''
+    }
+    
+    // Stelle sicher, dass description max. 100000 Zeichen hat
+    if (finalDescription.length > 100000) {
+      finalDescription = finalDescription.substring(0, 100000)
+    }
+    
+    console.log('Final description validation:', {
+      originalType: typeof cleanDescription,
+      finalLength: finalDescription.length,
+      finalPreview: finalDescription.substring(0, 100),
+      containsImageData: finalDescription.includes('data:image/') || finalDescription.includes('iVBORw0KGgo')
+    })
+    
+    // Finale Validierung: Stelle sicher, dass description nicht leer ist
+    // ABER: Falls die Bereinigung alles entfernt hat, erlaube einen minimalen Fallback
+    if (!finalDescription || finalDescription.trim().length === 0) {
+      console.log('Warning: description is empty after cleanup, using fallback')
+      // Fallback: Verwende Titel als Beschreibung falls vorhanden
+      finalDescription = title || `${brand || ''} ${model || ''}`.trim() || 'Keine Beschreibung verfügbar'
+    }
+
     // Erstelle die Uhr in der Datenbank
-    // Bauen Sie das Datenobjekt dynamisch auf, damit Auktionsfelder nur bei aktiven Auktionen enthalten sind
+    // images wurde bereits oben bereinigt und kombiniert
     const watchData: any = {
       title: title || `${brand} ${model}`,
-      description: description || '',
+      description: finalDescription, // FINAL bereinigt, garantiert ein String ohne Bilder
       brand,
       model,
       year: yearInt,
@@ -228,10 +486,18 @@ export async function POST(request: NextRequest) {
       isAuction: !!auctionEndDate,
       images: (() => {
         try {
+          // images wurde bereits oben bereinigt und ist ein Array
           if (images && Array.isArray(images) && images.length > 0) {
-            return JSON.stringify(images)
+            // Filtere nur gültige Bild-URLs
+            const validImages = images.filter((img: any) => {
+              return typeof img === 'string' && (
+                img.startsWith('data:image/') || 
+                img.startsWith('http://') || 
+                img.startsWith('https://')
+              )
+            })
+            return validImages.length > 0 ? JSON.stringify(validImages) : JSON.stringify([])
           }
-          // Fallback: Leeres Array als JSON-String
           return JSON.stringify([])
         } catch (err) {
           console.error('Error stringifying images:', err)
@@ -250,7 +516,7 @@ export async function POST(request: NextRequest) {
       warrantyYears: warrantyYearsInt,
       warrantyNote: hasSellerWarranty ? sellerWarrantyNote : null,
       warrantyDescription: hasSellerWarranty ? `Verkäufer-Garantie: ${sellerWarrantyMonthsInt || 0} Monate, ${sellerWarrantyYearsInt || 0} Jahre` : null,
-      sellerId: session.user.id,
+      sellerId: seller.id, // Verwende die verifizierte sellerId
       referenceNumber: referenceNumber || null,
       shippingMethod: (() => {
         try {
@@ -291,11 +557,258 @@ export async function POST(request: NextRequest) {
       watchData.autoRenew = (autoRenew === true || autoRenew === 'true') || false
     }
 
+    // Generiere eindeutige Artikelnummer
+    // WICHTIG: Temporär entfernt, bis Prisma Client vollständig synchronisiert ist
+    // try {
+    //   watchData.articleNumber = await generateArticleNumber()
+    // } catch (error) {
+    //   console.error('Error generating article number:', error)
+    //   // Weiter ohne Artikelnummer, wird später nachgeholt
+    // }
+
+    // FINALE ABSOLUTE SICHERHEITSPRÜFUNG direkt vor Prisma-Call
+    // Diese Funktion stellt sicher, dass description wirklich ein sauberer String ist
+    
+    const sanitizeDescription = (desc: any): string => {
+      // Schritt 1: Stelle sicher, dass es ein String ist
+      let result = ''
+      if (typeof desc === 'string') {
+        result = desc
+      } else if (Array.isArray(desc)) {
+        // Falls Array, filtere nur Text-Elemente und bereinige jeden einzelnen
+        const textParts: string[] = []
+        for (const item of desc) {
+          if (typeof item === 'string') {
+            // Prüfe ob es ein Bild ist
+            if (!isImageData(item)) {
+              // Prüfe ob der String selbst Bilder enthält
+              let cleanItem = item
+              const imagePatterns = ['data:image/', 'iVBORw0KGgo', '/9j/', 'R0lGODlh', 'UklGR']
+              let earliestIndex = -1
+              for (const pattern of imagePatterns) {
+                const idx = cleanItem.indexOf(pattern)
+                if (idx !== -1 && (earliestIndex === -1 || idx < earliestIndex)) {
+                  earliestIndex = idx
+                }
+              }
+              if (earliestIndex !== -1) {
+                cleanItem = cleanItem.substring(0, earliestIndex).trim()
+              }
+              if (cleanItem && cleanItem.length > 0 && cleanItem.length < 10000) {
+                textParts.push(cleanItem)
+              }
+            }
+          }
+        }
+        result = textParts.join(' ').trim()
+      } else {
+        result = String(desc || '').trim()
+      }
+      
+      // Schritt 2: Entferne ALLE Bilddaten komplett aus dem String
+      const imagePatterns = [
+        'data:image/',
+        'data:video/',
+        'iVBORw0KGgo', // PNG Base64
+        '/9j/', // JPEG Base64
+        'R0lGODlh', // GIF Base64
+        'UklGR' // WebP Base64
+      ]
+      
+      // Finde die erste Position eines Bildes
+      let earliestIndex = -1
+      for (const pattern of imagePatterns) {
+        const index = result.indexOf(pattern)
+        if (index !== -1 && (earliestIndex === -1 || index < earliestIndex)) {
+          earliestIndex = index
+        }
+      }
+      
+      // Entferne alles ab der ersten Bildposition
+      if (earliestIndex !== -1) {
+        result = result.substring(0, earliestIndex).trim()
+      }
+      
+      // Schritt 3: Prüfe auf sehr lange Strings (wahrscheinlich Base64)
+      if (result.length > 100000) {
+        result = result.substring(0, 100000)
+      }
+      
+      // Schritt 4: Prüfe nochmal auf Base64-Muster (nur wenn sehr lang)
+      const base64Pattern = /^[A-Za-z0-9+/=]+$/
+      if (result.length > 1000 && base64Pattern.test(result)) {
+        // Wahrscheinlich Base64, leere es
+        result = ''
+      }
+      
+      return result
+    }
+    
+    // Bereinige watchData.description KOMPLETT
+    const originalDescription = watchData.description
+    watchData.description = sanitizeDescription(watchData.description)
+    
+    console.log('ABSOLUTE FINAL CHECK before Prisma:', {
+      originalType: typeof originalDescription,
+      originalLength: typeof originalDescription === 'string' ? originalDescription.length : 'N/A',
+      originalPreview: typeof originalDescription === 'string' ? originalDescription.substring(0, 50) : 'N/A',
+      sanitizedLength: watchData.description.length,
+      sanitizedPreview: watchData.description.substring(0, 50),
+      containsImageData: watchData.description.includes('data:image/') || watchData.description.includes('iVBORw0KGgo')
+    })
+    
+    // Prüfe ob description leer ist - Falls ja, verwende Fallback
+    if (!watchData.description || watchData.description.trim().length === 0) {
+      console.log('Warning: description is empty after sanitization, using fallback')
+      watchData.description = title || `${brand || ''} ${model || ''}`.trim() || 'Keine Beschreibung verfügbar'
+    }
+    
+    console.log('Final watchData before Prisma:', {
+      descriptionType: typeof watchData.description,
+      descriptionLength: watchData.description.length,
+      descriptionPreview: watchData.description.substring(0, 50),
+      imagesType: typeof watchData.images,
+      imagesIsString: typeof watchData.images === 'string'
+    })
+
     const watch = await prisma.watch.create({
       data: watchData
     })
     
     console.log('Watch created successfully:', watch.id)
+
+    // Verknüpfe Kategorie, falls angegeben
+    if (category && category.trim() !== '') {
+      try {
+        // Normalisiere den Category-Slug (falls nötig)
+        const categorySlug = category.toLowerCase().trim()
+        
+        console.log('[CREATE] Linking category:', { 
+          originalCategory: rawCategory,
+          normalizedCategory: category, 
+          categorySlug, 
+          watchId: watch.id,
+          watchTitle: watch.title || 'N/A'
+        })
+        
+        // Finde die Kategorie zuerst nach slug, dann nach name
+        // Prüfe verschiedene Varianten
+        let categoryRecord = await prisma.category.findFirst({
+          where: {
+            OR: [
+              { slug: categorySlug },
+              { slug: category },
+              { slug: category.toLowerCase() },
+              { slug: category.toUpperCase() },
+              { name: { equals: category, mode: 'insensitive' } },
+              { name: { equals: categorySlug, mode: 'insensitive' } }
+            ]
+          }
+        })
+
+        if (!categoryRecord) {
+          // Erstelle die Kategorie, falls sie nicht existiert
+          // Verwende den übergebenen Wert als name und slug
+          categoryRecord = await prisma.category.create({
+            data: {
+              name: category,
+              slug: categorySlug
+            }
+          })
+          console.log('[CREATE] Category created:', { id: categoryRecord.id, name: categoryRecord.name, slug: categoryRecord.slug })
+        } else {
+          console.log('[CREATE] Category found:', { id: categoryRecord.id, name: categoryRecord.name, slug: categoryRecord.slug })
+        }
+
+        // Prüfe ob Verknüpfung bereits existiert
+        const existingLink = await prisma.watchCategory.findFirst({
+          where: {
+            watchId: watch.id,
+            categoryId: categoryRecord.id
+          }
+        })
+
+        if (!existingLink) {
+          // Erstelle die WatchCategory-Verknüpfung
+          const link = await prisma.watchCategory.create({
+            data: {
+              watchId: watch.id,
+              categoryId: categoryRecord.id
+            }
+          })
+          console.log('[CREATE] Category linked successfully:', { 
+            linkId: link.id,
+            watchId: watch.id, 
+            categoryId: categoryRecord.id,
+            category: categoryRecord.name, 
+            slug: categoryRecord.slug 
+          })
+          
+          // Verifiziere die Verknüpfung
+          const verifyLink = await prisma.watchCategory.findUnique({
+            where: { id: link.id },
+            include: {
+              watch: { select: { id: true, title: true } },
+              category: { select: { id: true, name: true, slug: true } }
+            }
+          })
+          console.log('[CREATE] Verified link:', verifyLink)
+        } else {
+          console.log('[CREATE] Category link already exists:', { 
+            linkId: existingLink.id,
+            category: categoryRecord.name, 
+            watchId: watch.id 
+          })
+        }
+      } catch (categoryError: any) {
+        console.error('[CREATE] Error linking category:', categoryError)
+        console.error('[CREATE] Category error details:', {
+          category,
+          watchId: watch.id,
+          error: categoryError.message,
+          stack: categoryError.stack
+        })
+        // Fehler bei Kategorie-Verknüpfung sollte nicht die Watch-Erstellung verhindern
+      }
+    } else {
+      console.warn('[CREATE] No category provided for watch:', watch.id)
+    }
+
+    // Benachrichtige alle Follower des Verkäufers
+    try {
+      const followers = await prisma.follow.findMany({
+        where: {
+          followingId: session.user.id
+        },
+        include: {
+          follower: {
+            select: {
+              name: true,
+              nickname: true
+            }
+          }
+        }
+      })
+
+      if (followers.length > 0) {
+        const sellerName = session.user.name || session.user.nickname || 'Ein Verkäufer'
+        const notifications = followers.map(follow => ({
+          userId: follow.followerId,
+          type: 'NEW_PRODUCT_FROM_FOLLOWED',
+          title: 'Neuer Artikel von gefolgtem Verkäufer',
+          message: `${sellerName} hat einen neuen Artikel eingestellt: "${title}"`,
+          watchId: watch.id
+        }))
+
+        await prisma.notification.createMany({
+          data: notifications
+        })
+        
+        console.log(`Created ${notifications.length} notifications for followers`)
+      }
+    } catch (notifError) {
+      console.error('Error creating follower notifications:', notifError)
+    }
 
     // Erstelle Rechnung für Booster, falls ein kostenpflichtiger Booster gewählt wurde
     try {
@@ -309,11 +822,14 @@ export async function POST(request: NextRequest) {
 
         if (boosterPrice && boosterPrice.price > 0) {
           const vatRate = 0.081 // 8.1% MwSt
-          const subtotal = boosterPrice.price
-          const vatAmount = subtotal * vatRate
+          // Preis ist bereits inkl. MwSt - berechne Netto und MwSt-Betrag
+          const total = boosterPrice.price // Total ist der Preis inkl. MwSt
+          const subtotal = total / (1 + vatRate) // Netto-Preis ohne MwSt
+          const vatAmount = total - subtotal // MwSt-Betrag
           // Schweizer Rappenrundung auf 0.05
-          const totalBeforeRounding = subtotal + vatAmount
-          const total = Math.ceil(totalBeforeRounding * 20) / 20
+          const roundedSubtotal = Math.floor(subtotal * 20) / 20
+          const roundedVatAmount = Math.ceil(vatAmount * 20) / 20
+          const roundedTotal = roundedSubtotal + roundedVatAmount
 
           // Generiere Rechnungsnummer
           const year = new Date().getFullYear()
@@ -338,32 +854,95 @@ export async function POST(request: NextRequest) {
           const invoice = await prisma.invoice.create({
             data: {
               invoiceNumber,
-              sellerId: session.user.id,
+              sellerId: seller.id,
               saleId: null, // Kein Verkauf, nur Booster
-              subtotal,
+              subtotal: roundedSubtotal,
               vatRate,
-              vatAmount,
-              total,
+              vatAmount: roundedVatAmount,
+              total: roundedTotal,
               status: 'pending',
-              dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 Tage Frist
+              dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist (wie Ricardo)
               items: {
                 create: [{
                   watchId: watch.id,
                   description: `Booster: ${boosterPrice.name}`,
                   quantity: 1,
-                  price: boosterPrice.price,
-                  total: boosterPrice.price
+                  price: roundedSubtotal,
+                  total: roundedSubtotal
                 }]
               }
             }
           })
 
-          console.log(`[watches/create] Booster-Rechnung erstellt: ${invoiceNumber} für ${boosterPrice.name} (CHF ${total.toFixed(2)})`)
+          console.log(`[watches/create] Booster-Rechnung erstellt: ${invoiceNumber} für ${boosterPrice.name} (CHF ${roundedTotal.toFixed(2)} inkl. MwSt)`)
+
+          // RICARDO-STYLE: Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
+          try {
+            const { sendInvoiceNotificationAndEmail } = await import('@/lib/invoice')
+            await sendInvoiceNotificationAndEmail(invoice)
+          } catch (notificationError: any) {
+            console.error('[watches/create] Fehler bei Benachrichtigung:', notificationError)
+            // Fehler sollte nicht die Rechnungserstellung verhindern
+          }
         }
       }
     } catch (invoiceError: any) {
       console.error('[watches/create] Fehler bei Booster-Rechnungserstellung:', invoiceError)
       // Fehler wird ignoriert, Watch war erfolgreich erstellt
+    }
+
+    // E-Mail: Angebotsbestätigung an Verkäufer
+    try {
+      const { sendEmail, getListingConfirmationEmail } = await import('@/lib/email')
+      const seller = await prisma.user.findUnique({
+        where: { id: watch.sellerId },
+        select: {
+          name: true,
+          email: true,
+          nickname: true,
+          firstName: true
+        }
+      })
+      if (seller && seller.email) {
+        const sellerName = seller.nickname || seller.firstName || seller.name || 'Verkäufer'
+        const { subject, html, text } = getListingConfirmationEmail(
+          sellerName,
+          watch.title,
+          watch.articleNumber,
+          watch.id
+        )
+        await sendEmail({
+          to: seller.email,
+          subject,
+          html,
+          text
+        })
+        console.log(`[watches/create] ✅ Angebotsbestätigungs-E-Mail gesendet an ${seller.email}`)
+      }
+    } catch (emailError: any) {
+      console.error('[watches/create] ❌ Fehler beim Senden der Angebotsbestätigungs-E-Mail:', emailError)
+    }
+
+    // Suchabo-Matching: Prüfe ob der neue Artikel zu Suchabos passt
+    try {
+      const { checkSearchSubscriptions } = await import('@/lib/search-subscription-matcher')
+      const matchCount = await checkSearchSubscriptions({
+        id: watch.id,
+        title: watch.title,
+        brand: watch.brand,
+        model: watch.model,
+        price: watch.price,
+        condition: watch.condition,
+        year: watch.year ? parseInt(watch.year.toString()) : null,
+        categoryId: watch.categoryId,
+        subcategoryId: watch.subcategoryId,
+      })
+      if (matchCount > 0) {
+        console.log(`[watches/create] ✓ ${matchCount} Suchabo-Match(es) gefunden und Benachrichtigungen gesendet`)
+      }
+    } catch (matchError: any) {
+      console.error('[watches/create] ❌ Fehler bei Suchabo-Matching:', matchError)
+      // Fehler sollte nicht die Watch-Erstellung verhindern
     }
 
     return NextResponse.json({

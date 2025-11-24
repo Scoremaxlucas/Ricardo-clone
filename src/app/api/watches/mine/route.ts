@@ -46,11 +46,27 @@ export async function GET(_request: NextRequest) {
       const isSold = w.purchases.length > 0
       const buyer = isSold ? w.purchases[0].buyer : null
       
+      // Parse boosters
+      let boosters: string[] = []
+      if (w.boosters) {
+        try {
+          boosters = JSON.parse(w.boosters)
+        } catch (e) {
+          if (w.boosters !== 'none' && w.boosters) {
+            boosters = [w.boosters]
+          }
+        }
+      }
+      
       // Bestimme finalPrice: höchstes Gebot oder Purchase-Preis oder Startpreis
       let finalPrice = w.price // Fallback zum Startpreis
+      const highestBid = w.bids?.[0] // Höchstes Gebot
+      
       if (isSold) {
-        const winningBid = w.bids?.[0]
-        finalPrice = winningBid?.amount || w.purchases[0].price || w.price
+        finalPrice = highestBid?.amount || w.purchases[0].price || w.price
+      } else if (highestBid) {
+        // Wenn noch nicht verkauft, aber Gebote vorhanden: zeige höchstes Gebot
+        finalPrice = highestBid.amount
       }
       
       return {
@@ -58,7 +74,13 @@ export async function GET(_request: NextRequest) {
         images,
         isSold,
         buyer,
-        finalPrice
+        finalPrice,
+        highestBid: highestBid ? {
+          amount: highestBid.amount,
+          createdAt: highestBid.createdAt
+        } : null,
+        bidCount: w.bids.length,
+        boosters
       }
     })
 

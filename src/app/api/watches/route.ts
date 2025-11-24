@@ -105,13 +105,26 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const search = searchParams.get('search')
 
-    const where: any = {}
+    const where: any = {
+      // Verkaufte Uhren ausschließen
+      purchases: {
+        none: {}
+      }
+    }
     
     if (category) {
+      // SQLite ist standardmäßig case-insensitive, daher kein 'mode: insensitive' nötig
       where.categories = {
         some: {
           category: {
-            name: category
+            OR: [
+              { slug: category },
+              { slug: category.toLowerCase() },
+              { slug: category.toUpperCase() },
+              { name: category },
+              { name: category.toLowerCase() },
+              { name: category.toUpperCase() }
+            ]
           }
         }
       }
@@ -128,24 +141,15 @@ export async function GET(request: NextRequest) {
     const now = new Date()
     
     const watches = await prisma.watch.findMany({
-      where: {
-        ...where,
-        // Verkaufe Uhren ausschließen
-        purchases: {
-          none: {} // Keine Käufe = nicht verkauft
-        },
-        // Nur aktive Angebote anzeigen (kein Starttermin oder Starttermin bereits erreicht)
-        OR: [
-          { auctionStart: null },
-          { auctionStart: { lte: now } }
-        ]
-      },
+      where,
       include: {
         seller: {
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            city: true,
+            postalCode: true
           }
         },
         categories: {
@@ -182,10 +186,23 @@ export async function GET(request: NextRequest) {
         boosters = []
       }
       
+      // Parse images
+      let images: string[] = []
+      try {
+        if (watch.images) {
+          images = JSON.parse(watch.images)
+        }
+      } catch (e) {
+        images = []
+      }
+      
       return {
         ...watch,
         price: currentPrice, // Überschreibe price mit aktuellem Preis
-        boosters: boosters
+        images: images, // Geparste Bilder
+        boosters: boosters,
+        city: watch.seller?.city || null,
+        postalCode: watch.seller?.postalCode || null
       }
     })
 

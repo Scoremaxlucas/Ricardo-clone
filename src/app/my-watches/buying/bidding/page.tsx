@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Gavel, Clock, TrendingUp, AlertCircle, Zap } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { BuyNowConfirmationModal } from '@/components/bids/BuyNowConfirmationModal'
 
 interface BidWithWatch {
   id: string
@@ -40,12 +41,17 @@ export default function MyBiddingPage() {
   const [processingBuyNow, setProcessingBuyNow] = useState<string | null>(null)
   const [buyNowError, setBuyNowError] = useState<string | null>(null)
   const [buyNowSuccess, setBuyNowSuccess] = useState<string | null>(null)
+  const [showBuyNowModal, setShowBuyNowModal] = useState<{ watchId: string; buyNowPrice: number } | null>(null)
 
   const handleBuyNow = async (watchId: string, buyNowPrice: number) => {
-    if (!confirm(`Möchten Sie diese Uhr für CHF ${new Intl.NumberFormat('de-CH').format(buyNowPrice)} sofort kaufen?\n\nDer Kauf ist verbindlich.`)) {
-      return
-    }
+    setShowBuyNowModal({ watchId, buyNowPrice })
+  }
 
+  const handleBuyNowConfirm = async () => {
+    if (!showBuyNowModal) return
+
+    const { watchId, buyNowPrice } = showBuyNowModal
+    setShowBuyNowModal(null)
     setProcessingBuyNow(watchId)
     setBuyNowError(null)
     setBuyNowSuccess(null)
@@ -351,6 +357,18 @@ export default function MyBiddingPage() {
         )}
       </div>
       <Footer />
+
+      {/* Buy Now Confirmation Modal */}
+      {showBuyNowModal && (
+        <BuyNowConfirmationModal
+          isOpen={!!showBuyNowModal}
+          onClose={() => setShowBuyNowModal(null)}
+          onConfirm={handleBuyNowConfirm}
+          buyNowPrice={showBuyNowModal.buyNowPrice}
+          shippingCost={0} // TODO: Get shipping cost from watch data if available
+          isLoading={processingBuyNow === showBuyNowModal.watchId}
+        />
+      )}
     </div>
   )
 }

@@ -112,10 +112,10 @@ export async function GET(request: NextRequest) {
           images = []
         }
         
-        const winningBid = watch.bids[0]
+        const winningBid = watch.bids?.[0]
 
         // Bestimme finalPrice und purchaseType
-        const finalPrice = winningBid?.amount || purchase.price || watch.price
+        const finalPrice = winningBid?.amount || purchase.price || watch.price || 0
         // Wenn buyNowPrice existiert und das Gewinner-Gebot gleich dem buyNowPrice ist, dann ist es ein Sofortkauf
         // Ansonsten ist es eine Auktion
         const isBuyNow = watch.buyNowPrice && winningBid && winningBid.amount === watch.buyNowPrice
@@ -123,17 +123,43 @@ export async function GET(request: NextRequest) {
 
         return {
           id: purchase.id,
-          purchasedAt: purchase.createdAt,
-          shippingMethod: watch.shippingMethod,
-          paid: purchase.paid || false,
+          price: finalPrice, // Für Rückwärtskompatibilität
+          purchasedAt: purchase.createdAt.toISOString(),
+          createdAt: purchase.createdAt.toISOString(), // Für Rückwärtskompatibilität
+          shippingMethod: purchase.shippingMethod || watch.shippingMethod || null,
+          paid: purchase.paymentConfirmed || purchase.paid || false,
+          status: purchase.status || 'pending',
+          itemReceived: purchase.itemReceived || false,
+          itemReceivedAt: purchase.itemReceivedAt?.toISOString() || null,
+          paymentConfirmed: purchase.paymentConfirmed || false,
+          paymentConfirmedAt: purchase.paymentConfirmedAt?.toISOString() || null,
+          // Kontaktfrist-Felder
+          contactDeadline: purchase.contactDeadline?.toISOString() || null,
+          sellerContactedAt: purchase.sellerContactedAt?.toISOString() || null,
+          buyerContactedAt: purchase.buyerContactedAt?.toISOString() || null,
+          contactWarningSentAt: purchase.contactWarningSentAt?.toISOString() || null,
+          contactDeadlineMissed: purchase.contactDeadlineMissed || false,
+          // Zahlungsfrist-Felder
+          paymentDeadline: purchase.paymentDeadline?.toISOString() || null,
+          paymentReminderSentAt: purchase.paymentReminderSentAt?.toISOString() || null,
+          paymentDeadlineMissed: purchase.paymentDeadlineMissed || false,
+          // Dispute-Felder
+          disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
+          disputeReason: purchase.disputeReason || null,
+          disputeStatus: purchase.disputeStatus || null,
+          disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
+          // Versand-Felder
+          trackingNumber: purchase.trackingNumber || null,
+          trackingProvider: purchase.trackingProvider || null,
+          shippedAt: purchase.shippedAt?.toISOString() || null,
           watch: {
             id: watch.id,
-            title: watch.title,
-            brand: watch.brand,
-            model: watch.model,
-            images: images,
-            seller: watch.seller,
-            price: watch.price,
+            title: watch.title || 'Unbekanntes Produkt',
+            brand: watch.brand || null,
+            model: watch.model || null,
+            images: images || [],
+            seller: watch.seller || null,
+            price: watch.price || 0,
             finalPrice: finalPrice,
             purchaseType: purchaseType
           }

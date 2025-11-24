@@ -23,7 +23,8 @@ export async function POST(
       where: { id },
       include: {
         purchases: { take: 1 },
-        sales: { take: 1 }
+        sales: { take: 1 },
+        bids: { take: 1 } // Prüfe ob bereits Gebote vorhanden sind
       }
     })
 
@@ -46,6 +47,15 @@ export async function POST(
     if (watch.purchases.length > 0 || watch.sales.length > 0) {
       return NextResponse.json(
         { message: 'Das Angebot kann nicht gestoppt werden, da bereits ein Kauf stattgefunden hat' },
+        { status: 400 }
+      )
+    }
+
+    // REGEL: Auktionen können nicht manuell beendet werden
+    // Auktionen enden nur automatisch nach Ablauf der Frist
+    if (watch.isAuction) {
+      return NextResponse.json(
+        { message: 'Auktionen können nicht manuell beendet werden. Die Auktion endet automatisch nach Ablauf der festgelegten Frist.' },
         { status: 400 }
       )
     }

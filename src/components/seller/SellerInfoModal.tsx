@@ -233,6 +233,7 @@ export function SellerInfoModal({ sellerId, watchTitle, purchaseId, isPaid, isOp
                   Keine Zahlungsmethoden hinterlegt
                 </div>
               )}
+
             </div>
           ) : (
             <div className="text-center py-12 text-gray-500">
@@ -242,27 +243,12 @@ export function SellerInfoModal({ sellerId, watchTitle, purchaseId, isPaid, isOp
         </div>
 
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4">
-          <div className="space-y-3">
-            {isPaid ? (
-              <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
-                <p className="text-sm font-semibold text-green-700">✓ Als bezahlt markiert</p>
-              </div>
-            ) : purchaseId && onMarkPaid ? (
-              <button
-                onClick={handleMarkPaid}
-                disabled={isMarkingPaid}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isMarkingPaid ? 'Wird verarbeitet...' : 'Als bezahlt markieren'}
-              </button>
-            ) : null}
-            <button
-              onClick={onClose}
-              className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
-            >
-              Schliessen
-            </button>
-          </div>
+          <button
+            onClick={onClose}
+            className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"
+          >
+            Schliessen
+          </button>
         </div>
       </div>
     </div>

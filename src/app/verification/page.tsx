@@ -508,11 +508,8 @@ export default function VerificationPage() {
       console.log('API Response Data:', data)
 
       if (res.ok) {
-        setSuccess('Verifizierung erfolgreich abgeschlossen! Sie können jetzt kaufen und verkaufen.')
-        setIsVerified(true)
-        setTimeout(() => {
-          router.push('/')
-        }, 2000)
+        // Weiterleitung zur Hauptseite mit Query-Parameter für Toast
+        router.push('/?verificationSubmitted=true')
       } else {
         console.error('API Error Response:', {
           status: res.status,

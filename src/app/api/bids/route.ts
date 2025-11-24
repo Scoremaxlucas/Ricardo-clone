@@ -41,9 +41,29 @@ export async function POST(request: NextRequest) {
     const watch = await prisma.watch.findUnique({
       where: { id: watchId },
       include: {
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            nickname: true,
+            firstName: true
+          }
+        },
         bids: {
           orderBy: { amount: 'desc' }, // Sortiere nach Betrag, nicht nach Datum
-          take: 1 // Nur das höchste Gebot
+          take: 1, // Nur das höchste Gebot
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                nickname: true,
+                firstName: true
+              }
+            }
+          }
         }
       }
     })
@@ -119,12 +139,17 @@ export async function POST(request: NextRequest) {
         }
       })
 
+      // Berechne Kontaktfrist (7 Tage nach Purchase)
+      const contactDeadline = new Date()
+      contactDeadline.setDate(contactDeadline.getDate() + 7)
+      
       // Erstelle Purchase-Eintrag
       const purchase = await prisma.purchase.create({
         data: {
           watchId,
           buyerId: session.user.id,
-          price: watch.buyNowPrice || watch.price // Speichere den tatsächlichen Kaufpreis
+          price: watch.buyNowPrice || watch.price, // Speichere den tatsächlichen Kaufpreis
+          contactDeadline: contactDeadline // 7-Tage-Kontaktfrist
         },
         include: {
           buyer: {
@@ -158,6 +183,17 @@ export async function POST(request: NextRequest) {
 
       console.log(`[bids] Purchase erstellt: ID=${purchase.id}, buyerId=${session.user.id}, watchId=${watchId}, price=${watch.buyNowPrice || watch.price}`)
 
+      // RICARDO-STYLE: Erstelle Rechnung SOFORT nach erfolgreichem Verkauf
+      let invoice = null
+      try {
+        const { calculateInvoiceForSale } = await import('@/lib/invoice')
+        invoice = await calculateInvoiceForSale(purchase.id)
+        console.log(`[bids] ✅ Rechnung erstellt: ${invoice.invoiceNumber} für Seller ${purchase.watch.sellerId} (Ricardo-Style: sofort nach Verkauf)`)
+      } catch (invoiceError: any) {
+        console.error('[bids] ❌ Fehler bei Rechnungserstellung:', invoiceError)
+        // Fehler wird geloggt, aber Purchase bleibt bestehen
+      }
+
       // Sende E-Mail-Benachrichtigung an Verkäufer
       try {
         const { sendEmail, getSaleNotificationEmail } = await import('@/lib/email')
@@ -185,6 +221,71 @@ export async function POST(request: NextRequest) {
         console.log(`[bids] Verkaufs-E-Mail gesendet an ${seller.email}`)
       } catch (emailError: any) {
         console.error('Fehler beim Senden der Verkaufs-E-Mail:', emailError)
+        // E-Mail-Fehler sollte den Kauf nicht verhindern
+      }
+
+      // RICARDO-STYLE: Erstelle Benachrichtigung für Verkäufer
+      try {
+        const buyer = purchase.buyer
+        const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Ein Käufer'
+        await prisma.notification.create({
+          data: {
+            userId: watch.sellerId,
+            type: 'PURCHASE',
+            title: 'Ihr Artikel wurde verkauft',
+            message: `${buyerName} hat "${watch.title}" für CHF ${(watch.buyNowPrice || watch.price).toFixed(2)} gekauft`,
+            watchId: watchId,
+            link: `/my-watches/selling/sold`
+          }
+        })
+        console.log(`[bids] ✅ Verkaufs-Benachrichtigung für Seller ${watch.sellerId} erstellt`)
+      } catch (notificationError: any) {
+        console.error('[bids] ❌ Fehler beim Erstellen der Verkaufs-Benachrichtigung:', notificationError)
+        // Fehler sollte den Kauf nicht verhindern
+      }
+
+      // RICARDO-STYLE: Sende Bestätigungs-E-Mail an Käufer
+      try {
+        const { sendEmail, getPurchaseConfirmationEmail } = await import('@/lib/email')
+        const { getShippingCost } = await import('@/lib/shipping')
+        const seller = purchase.watch.seller
+        const buyer = purchase.buyer
+        const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
+        const sellerName = seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
+        
+        // Berechne Versandkosten
+        const shippingMethod = watch.shippingMethod
+        let shippingMethods: any = null
+        try {
+          if (shippingMethod) {
+            shippingMethods = typeof shippingMethod === 'string' ? JSON.parse(shippingMethod) : shippingMethod
+          }
+        } catch {
+          shippingMethods = null
+        }
+        const shippingCost = getShippingCost(shippingMethods)
+        
+        const { subject, html, text } = getPurchaseConfirmationEmail(
+          buyerName,
+          sellerName,
+          watch.title,
+          watch.buyNowPrice || watch.price,
+          shippingCost,
+          'buy-now',
+          purchase.id,
+          watchId
+        )
+        
+        await sendEmail({
+          to: buyer.email,
+          subject,
+          html,
+          text
+        })
+        
+        console.log(`[bids] ✅ Kaufbestätigungs-E-Mail gesendet an Käufer ${buyer.email}`)
+      } catch (emailError: any) {
+        console.error('[bids] ❌ Fehler beim Senden der Kaufbestätigungs-E-Mail:', emailError)
         // E-Mail-Fehler sollte den Kauf nicht verhindern
       }
 
@@ -263,20 +364,127 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            email: true
+            email: true,
+            nickname: true
           }
         }
       }
     })
 
-    // Aktualisiere auctionEnd falls verlängert
+    // Aktualisiere auctionEnd falls verlängert und setze lastBidAt
     if (newAuctionEnd && newAuctionEnd !== auctionEndDate) {
       await prisma.watch.update({
         where: { id: watchId },
         data: {
-          auctionEnd: newAuctionEnd
+          auctionEnd: newAuctionEnd,
+          lastBidAt: now // Track Last-Minute-Gebot für Auto-Verlängerung
         }
       })
+      console.log(`[bids] ✅ Auktion verlängert um 3 Minuten. Neues Ende: ${newAuctionEnd.toISOString()}`)
+    } else {
+      // Aktualisiere lastBidAt auch wenn keine Verlängerung
+      await prisma.watch.update({
+        where: { id: watchId },
+        data: {
+          lastBidAt: now
+        }
+      })
+    }
+
+    // Erstelle Benachrichtigung für Verkäufer
+    try {
+      const bidderName = bid.user.nickname || bid.user.name || bid.user.email
+      await prisma.notification.create({
+        data: {
+          userId: watch.sellerId,
+          type: 'BID',
+          title: 'Neues Gebot auf Ihren Artikel',
+          message: `${bidderName} hat CHF ${amount.toFixed(2)} auf "${watch.title}" geboten`,
+          watchId: watchId,
+          bidId: bid.id
+        }
+      })
+    } catch (notifError) {
+      console.error('Error creating notification:', notifError)
+      // Don't fail the bid if notification fails
+    }
+
+    // E-Mail: Gebotsbestätigung an Käufer
+    try {
+      const { sendEmail, getBidConfirmationEmail } = await import('@/lib/email')
+      const buyerName = bid.user.nickname || bid.user.firstName || bid.user.name || 'Käufer'
+      const { subject, html, text } = getBidConfirmationEmail(
+        buyerName,
+        watch.title,
+        amount,
+        watchId
+      )
+      await sendEmail({
+        to: bid.user.email,
+        subject,
+        html,
+        text
+      })
+      console.log(`[bids] ✅ Gebotsbestätigungs-E-Mail gesendet an Käufer ${bid.user.email}`)
+    } catch (emailError: any) {
+      console.error('[bids] ❌ Fehler beim Senden der Gebotsbestätigungs-E-Mail:', emailError)
+    }
+
+    // E-Mail: Gebotsbenachrichtigung an Verkäufer
+    try {
+      const { sendEmail, getBidNotificationEmail } = await import('@/lib/email')
+      const sellerName = watch.seller.nickname || watch.seller.firstName || watch.seller.name || 'Verkäufer'
+      const bidderName = bid.user.nickname || bid.user.firstName || bid.user.name || bid.user.email || 'Ein Bieter'
+      const { subject, html, text } = getBidNotificationEmail(
+        sellerName,
+        watch.title,
+        amount,
+        bidderName,
+        watchId
+      )
+      await sendEmail({
+        to: watch.seller.email,
+        subject,
+        html,
+        text
+      })
+      console.log(`[bids] ✅ Gebotsbenachrichtigungs-E-Mail gesendet an Verkäufer ${watch.seller.email}`)
+    } catch (emailError: any) {
+      console.error('[bids] ❌ Fehler beim Senden der Gebotsbenachrichtigungs-E-Mail:', emailError)
+    }
+
+    // E-Mail: Überboten-Benachrichtigung an vorherigen Höchstbietenden (wenn vorhanden)
+    if (highestBid && highestBid.userId !== session.user.id) {
+      try {
+        const { sendEmail, getOutbidNotificationEmail } = await import('@/lib/email')
+        const previousBidder = await prisma.user.findUnique({
+          where: { id: highestBid.userId },
+          select: {
+            email: true,
+            name: true,
+            nickname: true,
+            firstName: true
+          }
+        })
+        if (previousBidder && previousBidder.email) {
+          const previousBidderName = previousBidder.nickname || previousBidder.firstName || previousBidder.name || 'Käufer'
+          const { subject, html, text } = getOutbidNotificationEmail(
+            previousBidderName,
+            watch.title,
+            amount, // Neues Höchstgebot
+            watchId
+          )
+          await sendEmail({
+            to: previousBidder.email,
+            subject,
+            html,
+            text
+          })
+          console.log(`[bids] ✅ Überboten-Benachrichtigungs-E-Mail gesendet an ${previousBidder.email}`)
+        }
+      } catch (emailError: any) {
+        console.error('[bids] ❌ Fehler beim Senden der Überboten-Benachrichtigungs-E-Mail:', emailError)
+      }
     }
 
     return NextResponse.json({

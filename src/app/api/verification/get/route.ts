@@ -18,6 +18,7 @@ export async function GET(request: NextRequest) {
       select: {
         verified: true,
         verifiedAt: true,
+        verificationStatus: true,
         title: true,
         firstName: true,
         lastName: true,
@@ -48,8 +49,9 @@ export async function GET(request: NextRequest) {
     }
 
     return NextResponse.json({
-      verified: user.verified || false,
+      verified: user.verified === true && user.verificationStatus === 'approved',
       verifiedAt: user.verifiedAt,
+      verificationStatus: user.verificationStatus,
       user: {
         title: user.title,
         firstName: user.firstName,

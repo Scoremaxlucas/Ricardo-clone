@@ -32,6 +32,12 @@ export async function GET(
 
     const images = watch.images ? JSON.parse(watch.images) : []
 
+    // Berechne aktuellen Preis basierend auf Geboten
+    const highestBid = watch.bids && watch.bids.length > 0 
+      ? Math.max(...watch.bids.map((b: any) => b.amount))
+      : null
+    const currentPrice = highestBid || watch.price || 0
+
     return NextResponse.json({
       watch: {
         id: watch.id,
@@ -45,7 +51,7 @@ export async function GET(
         material: watch.material,
         movement: watch.movement,
         caseDiameter: (watch as any).caseDiameter,
-        price: watch.price,
+        price: currentPrice,
         buyNowPrice: watch.buyNowPrice,
         isAuction: watch.isAuction,
         auctionStart: watch.auctionStart,

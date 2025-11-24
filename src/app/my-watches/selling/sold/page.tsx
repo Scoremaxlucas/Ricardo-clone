@@ -4,10 +4,13 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, CheckCircle, Package, User } from 'lucide-react'
+import { ArrowLeft, CheckCircle, Package, User, CreditCard, Clock, PackageCheck, AlertCircle, AlertTriangle } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
+import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
+import { DisputeModal } from '@/components/dispute/DisputeModal'
 import { getShippingLabels, getShippingCost } from '@/lib/shipping'
 
 interface Sale {
@@ -16,6 +19,17 @@ interface Sale {
   shippingMethod: string | null
   paid: boolean
   paidAt: string | null
+  status: string
+  itemReceived: boolean
+  itemReceivedAt: string | null
+  paymentConfirmed: boolean
+  paymentConfirmedAt: string | null
+  // Kontaktfrist-Felder
+  contactDeadline: string | null
+  sellerContactedAt: string | null
+  buyerContactedAt: string | null
+  contactWarningSentAt: string | null
+  contactDeadlineMissed: boolean
   watch: {
     id: string
     title: string
@@ -48,6 +62,8 @@ export default function SoldPage() {
   const [loading, setLoading] = useState(true)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [showBuyerInfo, setShowBuyerInfo] = useState(false)
+  const [showDisputeModal, setShowDisputeModal] = useState(false)
+  const [disputeSaleId, setDisputeSaleId] = useState<string | null>(null)
 
   const handleMarkPaid = () => {
     // Refresh sales data
@@ -58,6 +74,27 @@ export default function SoldPage() {
           setSales(data.sales || [])
         })
         .catch(error => console.error('Error loading sales:', error))
+    }
+  }
+
+  const handleConfirmPayment = async (purchaseId: string) => {
+    try {
+      const res = await fetch(`/api/purchases/${purchaseId}/confirm-payment`, {
+        method: 'POST'
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast.success('Zahlung erfolgreich bestätigt!')
+        // Refresh sales
+        handleMarkPaid()
+      } else {
+        toast.error(data.message || 'Fehler beim Bestätigen der Zahlung')
+      }
+    } catch (error) {
+      console.error('Error confirming payment:', error)
+      toast.error('Fehler beim Bestätigen der Zahlung')
     }
   }
 
@@ -106,8 +143,8 @@ export default function SoldPage() {
       <Header />
       <div className="max-w-7xl mx-auto px-4 py-12">
         <Link
-          href="/my-watches/selling"
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          href="/my-watches"
+          className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Zurück zu Mein Verkaufen
@@ -217,27 +254,200 @@ export default function SoldPage() {
                     </div>
                   )}
 
-                  {sale.paid && (
-                    <div className="bg-green-50 border border-green-200 rounded p-2 mb-3">
-                      <div className="flex items-center gap-2">
-                        <CheckCircle className="h-4 w-4 text-green-600" />
-                        <div>
-                          <div className="text-xs text-green-700 font-semibold">✓ Als bezahlt markiert</div>
-                          {sale.paidAt && (
-                            <div className="text-xs text-green-600 mt-0.5">
-                              am {new Date(sale.paidAt).toLocaleDateString('de-CH')}
+                  {/* 7-Tage-Kontaktfrist Hinweis (Ricardo-Style) für Verkäufer */}
+                  {sale.status === 'pending' && sale.contactDeadline && (() => {
+                    const deadline = new Date(sale.contactDeadline)
+                    const now = new Date()
+                    const timeUntilDeadline = deadline.getTime() - now.getTime()
+                    const daysRemaining = Math.ceil(timeUntilDeadline / (1000 * 60 * 60 * 24))
+                    const isOverdue = timeUntilDeadline < 0
+                    const hasContacted = sale.sellerContactedAt !== null
+                    
+                    if (hasContacted) {
+                      return null // Keine Warnung wenn bereits kontaktiert
+                    }
+                    
+                    return (
+                      <div className={`mb-3 p-3 rounded-lg border-2 ${
+                        isOverdue || sale.contactDeadlineMissed
+                          ? 'bg-red-50 border-red-400'
+                          : daysRemaining <= 2
+                          ? 'bg-orange-50 border-orange-400'
+                          : 'bg-yellow-50 border-yellow-300'
+                      }`}>
+                        <div className="flex items-start gap-2">
+                          <AlertCircle className={`h-5 w-5 flex-shrink-0 mt-0.5 ${
+                            isOverdue || sale.contactDeadlineMissed
+                              ? 'text-red-600'
+                              : daysRemaining <= 2
+                              ? 'text-orange-600'
+                              : 'text-yellow-600'
+                          }`} />
+                          <div className="flex-1">
+                            <div className={`text-sm font-semibold mb-1 ${
+                              isOverdue || sale.contactDeadlineMissed
+                                ? 'text-red-900'
+                                : daysRemaining <= 2
+                                ? 'text-orange-900'
+                                : 'text-yellow-900'
+                            }`}>
+                              {isOverdue || sale.contactDeadlineMissed ? '❌ Kontaktfrist überschritten' : '⚠️ Kontaktaufnahme erforderlich'}
                             </div>
-                          )}
+                            <div className={`text-xs ${
+                              isOverdue || sale.contactDeadlineMissed
+                                ? 'text-red-800'
+                                : daysRemaining <= 2
+                                ? 'text-orange-800'
+                                : 'text-yellow-800'
+                            }`}>
+                              {isOverdue || sale.contactDeadlineMissed ? (
+                                <>Die 7-Tage-Kontaktfrist wurde überschritten. Der Käufer kann den Kauf jetzt stornieren. Bitte nehmen Sie umgehend Kontakt auf!</>
+                              ) : daysRemaining > 0 ? (
+                                <>Sie müssen innerhalb von <span className="font-bold">{daysRemaining} Tag{daysRemaining !== 1 ? 'en' : ''}</span> mit dem Käufer Kontakt aufnehmen, um Zahlungs- und Liefermodalitäten zu klären.</>
+                              ) : (
+                                <>Die Kontaktfrist läuft heute ab. Bitte nehmen Sie umgehend Kontakt mit dem Käufer auf.</>
+                              )}
+                            </div>
+                            {sale.contactWarningSentAt && (
+                              <div className="text-xs text-gray-600 mt-1 italic">
+                                Erinnerung gesendet am {new Date(sale.contactWarningSentAt).toLocaleDateString('de-CH')}
+                              </div>
+                            )}
+                            {/* Button zum Markieren, dass Kontakt aufgenommen wurde */}
+                            {!sale.sellerContactedAt && (
+                              <button
+                                onClick={async () => {
+                                  try {
+                                    const res = await fetch(`/api/purchases/${sale.id}/mark-contacted`, {
+                                      method: 'POST',
+                                      headers: { 'Content-Type': 'application/json' },
+                                      body: JSON.stringify({ role: 'seller' })
+                                    })
+                                    if (res.ok) {
+                                      toast.success('Kontaktaufnahme markiert!')
+                                      handleMarkPaid() // Refresh data
+                                    } else {
+                                      const data = await res.json()
+                                      toast.error(data.message || 'Fehler beim Markieren')
+                                    }
+                                  } catch (error) {
+                                    console.error('Error marking contact:', error)
+                                    toast.error('Fehler beim Markieren der Kontaktaufnahme')
+                                  }
+                                }}
+                                className="mt-2 px-3 py-1.5 bg-primary-600 text-white text-xs font-medium rounded hover:bg-primary-700 transition-colors"
+                              >
+                                ✓ Kontakt aufgenommen markieren
+                              </button>
+                            )}
+                            {sale.sellerContactedAt && (
+                              <div className="mt-2 text-xs text-green-700 font-medium">
+                                ✓ Kontakt aufgenommen am {new Date(sale.sellerContactedAt).toLocaleDateString('de-CH')}
+                              </div>
+                            )}
+                          </div>
                         </div>
                       </div>
-                    </div>
-                  )}
+                    )
+                  })()}
+
+                  {/* Status-Anzeige */}
+                  <div className="mb-3 p-2 rounded-lg border">
+                    {sale.status === 'completed' ? (
+                      <div className="flex items-center gap-2 text-green-700 bg-green-50 border-green-200">
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="text-xs font-medium">Abgeschlossen</span>
+                      </div>
+                    ) : sale.status === 'payment_confirmed' ? (
+                      <div className="flex items-center gap-2 text-blue-700 bg-blue-50 border-blue-200">
+                        <CreditCard className="h-4 w-4" />
+                        <span className="text-xs font-medium">Zahlung bestätigt - Warten auf Erhalt-Bestätigung</span>
+                      </div>
+                    ) : sale.status === 'item_received' ? (
+                      <div className="flex items-center gap-2 text-orange-700 bg-orange-50 border-orange-200">
+                        <PackageCheck className="h-4 w-4" />
+                        <span className="text-xs font-medium">Erhalt bestätigt - Warten auf Zahlungsbestätigung</span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 text-gray-700 bg-gray-50 border-gray-200">
+                        <Clock className="h-4 w-4" />
+                        <span className="text-xs font-medium">Ausstehend</span>
+                      </div>
+                    )}
+                  </div>
 
                   <div className="text-xs text-gray-600 mb-3">
                     Käufer: {sale.buyer.name || sale.buyer.email || 'Unbekannt'}
                   </div>
 
+                  {/* Käufer-Kontaktdaten anzeigen */}
+                  {sale.buyer.phone && (
+                    <div className="mb-3 p-2 bg-blue-50 border border-blue-200 rounded text-xs">
+                      <div className="font-semibold text-blue-900 mb-1">Käufer-Kontaktdaten:</div>
+                      <div className="text-blue-700">
+                        {sale.buyer.firstName && sale.buyer.lastName && (
+                          <div>{sale.buyer.firstName} {sale.buyer.lastName}</div>
+                        )}
+                        {sale.buyer.street && sale.buyer.streetNumber && (
+                          <div>{sale.buyer.street} {sale.buyer.streetNumber}</div>
+                        )}
+                        {sale.buyer.postalCode && sale.buyer.city && (
+                          <div>{sale.buyer.postalCode} {sale.buyer.city}</div>
+                        )}
+                        {sale.buyer.phone && (
+                          <div className="mt-1 font-medium">Tel: {sale.buyer.phone}</div>
+                        )}
+                        {sale.buyer.email && (
+                          <div>E-Mail: {sale.buyer.email}</div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
                   <div className="space-y-2">
+                    {/* Zahlung erhalten Button - nur wenn noch nicht bestätigt */}
+                    {!sale.paymentConfirmed && (
+                      <button
+                        onClick={() => handleConfirmPayment(sale.id)}
+                        className="w-full px-4 py-2 bg-green-600 text-white rounded text-center text-sm hover:bg-green-700 flex items-center justify-center gap-2 font-medium"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        Zahlung erhalten bestätigen
+                      </button>
+                    )}
+                    
+                    {sale.paymentConfirmed && (
+                      <div className="w-full px-4 py-2 bg-green-100 text-green-700 rounded text-center text-sm flex items-center justify-center gap-2">
+                        <CheckCircle className="h-4 w-4" />
+                        Zahlung bestätigt {sale.paymentConfirmedAt && new Date(sale.paymentConfirmedAt).toLocaleDateString('de-CH')}
+                      </div>
+                    )}
+
+                    {/* Versand-Informationen hinzufügen (nur wenn Zahlung bestätigt) */}
+                    {sale.paymentConfirmed && (
+                      <div className="mb-3">
+                        <ShippingInfoCard 
+                          purchaseId={sale.id} 
+                          isSeller={true}
+                          onShippingAdded={handleMarkPaid}
+                        />
+                      </div>
+                    )}
+
+                    {/* Dispute-Button */}
+                    {sale.status !== 'completed' && sale.status !== 'cancelled' && !sale.disputeOpenedAt && (
+                      <button
+                        onClick={() => {
+                          setDisputeSaleId(sale.id)
+                          setShowDisputeModal(true)
+                        }}
+                        className="w-full px-4 py-2 bg-red-50 text-red-700 border border-red-300 rounded text-center text-sm hover:bg-red-100 flex items-center justify-center gap-2"
+                      >
+                        <AlertCircle className="h-4 w-4" />
+                        Dispute eröffnen
+                      </button>
+                    )}
+
                     <button
                       onClick={() => {
                         setSelectedSale(sale)
@@ -246,7 +456,7 @@ export default function SoldPage() {
                       className="w-full px-4 py-2 bg-gray-100 text-gray-700 rounded text-center text-sm hover:bg-gray-200 flex items-center justify-center gap-2"
                     >
                       <User className="h-4 w-4" />
-                      Käuferinformationen
+                      Käufer-Kontakt
                     </button>
                     <Link
                       href={`/products/${sale.watch.id}`}
@@ -261,6 +471,22 @@ export default function SoldPage() {
           </div>
         )}
       </div>
+
+      {/* Dispute Modal */}
+      {disputeSaleId && (
+        <DisputeModal
+          isOpen={showDisputeModal}
+          onClose={() => {
+            setShowDisputeModal(false)
+            setDisputeSaleId(null)
+          }}
+          purchaseId={disputeSaleId}
+          onDisputeOpened={() => {
+            handleMarkPaid()
+          }}
+        />
+      )}
+
       <Footer />
       
       {/* Käuferinformationen Modal */}

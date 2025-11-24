@@ -24,22 +24,75 @@ async function checkAdmin(session: any): Promise<boolean> {
     })
   }
 
-  const userEmail = session.user.email?.toLowerCase()
-  const isAdminEmail = userEmail === 'admin@admin.ch'
   const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
 
-  return isAdminInDb || isAdminEmail
+  return isAdminInDb
 }
 
 export async function GET(request: NextRequest) {
   try {
     // Hole aktive Booster (für alle einsehbar, da Preise öffentlich sein sollen)
-    const boosters = await prisma.boosterPrice.findMany({
+    let boosters = await prisma.boosterPrice.findMany({
       where: {
         isActive: true
       },
       orderBy: { price: 'asc' }
     })
+
+    // Wenn keine Booster vorhanden sind, erstelle sie automatisch
+    if (boosters.length === 0) {
+      console.log('[admin/boosters] Keine Booster gefunden, erstelle Standard-Booster...')
+      
+      const defaultBoosters = [
+        {
+          code: 'none',
+          name: 'Kein Booster',
+          description: 'Das Angebot wird nicht besonders hervorgehoben',
+          price: 0.00,
+          isActive: true
+        },
+        {
+          code: 'boost',
+          name: 'Boost',
+          description: 'Das Angebot wird in einer Liste von ähnlichen Modellen fett hervorgehoben',
+          price: 10.00,
+          isActive: true
+        },
+        {
+          code: 'turbo-boost',
+          name: 'Turbo-Boost',
+          description: 'Das Angebot wird nicht nur hervorgehoben sondern erscheint teilweise auf der Hauptseite als "Turbo-Boost-Angebot"',
+          price: 25.00,
+          isActive: true
+        },
+        {
+          code: 'super-boost',
+          name: 'Super-Boost',
+          description: 'Das Angebot wird hervorgehoben, erscheint teilweise auf der Hauptseite und wird immer zuoberst in der Liste angezeigt',
+          price: 45.00,
+          isActive: true
+        }
+      ]
+
+      // Erstelle Booster mit upsert (erstellt wenn nicht vorhanden, aktualisiert wenn vorhanden)
+      for (const booster of defaultBoosters) {
+        await prisma.boosterPrice.upsert({
+          where: { code: booster.code },
+          update: booster,
+          create: booster
+        })
+      }
+
+      console.log('[admin/boosters] Standard-Booster erstellt')
+
+      // Lade die erstellten Booster
+      boosters = await prisma.boosterPrice.findMany({
+        where: {
+          isActive: true
+        },
+        orderBy: { price: 'asc' }
+      })
+    }
 
     return NextResponse.json(boosters)
   } catch (error: any) {

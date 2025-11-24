@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { unblockUserAccountAfterPayment } from '@/lib/invoice-reminders'
 
 export async function POST(
   request: NextRequest,
@@ -37,11 +38,9 @@ export async function POST(
     }
 
     // Nur der Verkäufer oder Admin kann manuell als bezahlt markieren
-    const userEmail = session.user.email?.toLowerCase()
-    const isAdminEmail = userEmail === 'admin@admin.ch'
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
     
-    if (invoice.sellerId !== session.user.id && !isAdminInSession && !isAdminEmail) {
+    if (invoice.sellerId !== session.user.id && !isAdminInSession) {
       return NextResponse.json(
         { message: 'Zugriff verweigert' },
         { status: 403 }
@@ -55,11 +54,20 @@ export async function POST(
         status: 'paid',
         paidAt: new Date(),
         paymentMethod: paymentMethod || null,
-        paymentReference: paymentReference || null
+        paymentReference: paymentReference || null,
+        paymentConfirmedAt: new Date()
       }
     })
 
     console.log(`[invoices/mark-paid] Rechnung ${invoice.invoiceNumber} als bezahlt markiert`)
+
+    // Prüfe ob Konto entsperrt werden kann (wenn alle Rechnungen bezahlt sind)
+    try {
+      await unblockUserAccountAfterPayment(invoice.sellerId)
+    } catch (error: any) {
+      console.error(`[invoices/mark-paid] Fehler beim Entsperren des Kontos:`, error)
+      // Fehler sollte nicht die Zahlungsbestätigung verhindern
+    }
 
     return NextResponse.json({
       message: 'Rechnung als bezahlt markiert',

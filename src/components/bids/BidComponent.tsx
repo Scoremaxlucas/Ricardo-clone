@@ -2,10 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Gavel, Zap, CheckCircle, AlertCircle, Loader2, Clock } from 'lucide-react'
 import Link from 'next/link'
 import { UserName } from '@/components/ui/UserName'
 import { getShippingCost, ShippingMethod, ShippingMethodArray } from '@/lib/shipping'
+import { BuyNowConfirmationModal } from './BuyNowConfirmationModal'
+import { VerificationModal } from '@/components/verification/VerificationModal'
 
 interface Bid {
   id: string
@@ -31,6 +34,7 @@ interface BidComponentProps {
 
 export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sellerId, shippingMethod }: BidComponentProps) {
   const { data: session } = useSession()
+  const router = useRouter()
   const [bidAmount, setBidAmount] = useState('')
   const [bids, setBids] = useState<Bid[]>([])
   const [loading, setLoading] = useState(false)
@@ -62,7 +66,12 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
   } | null>(null)
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
   const [verificationInProgress, setVerificationInProgress] = useState(false)
-  const [currentAuctionEnd, setCurrentAuctionEnd] = useState<Date | null>(auctionEnd)
+  // Konvertiere auctionEnd zu Date falls es ein String ist
+  const normalizedAuctionEnd = auctionEnd 
+    ? (auctionEnd instanceof Date ? auctionEnd : new Date(auctionEnd))
+    : null
+  
+  const [currentAuctionEnd, setCurrentAuctionEnd] = useState<Date | null>(normalizedAuctionEnd)
   const [timeLeft, setTimeLeft] = useState<{
     days: number
     hours: number
@@ -70,6 +79,9 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
     seconds: number
     total: number
   } | null>(null)
+  const [showBuyNowModal, setShowBuyNowModal] = useState(false)
+  const [showVerificationModal, setShowVerificationModal] = useState(false)
+  const [verificationAction, setVerificationAction] = useState<'buy' | 'offer' | 'bid'>('buy')
 
   const isSeller = session?.user?.id === sellerId
   const isAuctionActive = currentAuctionEnd ? new Date(currentAuctionEnd) > new Date() : true
@@ -77,7 +89,20 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
   // Aktualisiere currentAuctionEnd wenn Prop sich ändert
   useEffect(() => {
     if (auctionEnd) {
-      setCurrentAuctionEnd(new Date(auctionEnd))
+      try {
+        const date = auctionEnd instanceof Date ? auctionEnd : new Date(auctionEnd)
+        if (!isNaN(date.getTime())) {
+          setCurrentAuctionEnd(date)
+        } else {
+          console.error('Invalid auctionEnd date:', auctionEnd)
+          setCurrentAuctionEnd(null)
+        }
+      } catch (error) {
+        console.error('Error parsing auctionEnd:', error)
+        setCurrentAuctionEnd(null)
+      }
+    } else {
+      setCurrentAuctionEnd(null)
     }
   }, [auctionEnd])
 
@@ -153,17 +178,17 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
         const res = await fetch('/api/verification/get')
         if (res.ok) {
           const data = await res.json()
-          setIsVerified(data.verified || false)
-          // Prüfe ob Verifizierung in Bearbeitung ist
-          if (!data.verified && data.user && (
-            data.user.street || data.user.dateOfBirth || data.user.paymentMethods
-          )) {
-            setVerificationInProgress(true)
-          }
+          const isApproved = data.verified === true && data.verificationStatus === 'approved'
+          setIsVerified(isApproved)
+        } else {
+          setIsVerified(false)
         }
       } catch (error) {
         console.error('Error loading verification status:', error)
+        setIsVerified(false)
       }
+    } else {
+      setIsVerified(null)
     }
   }
 
@@ -199,6 +224,21 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
   const minBid = highestBid ? highestBid + 1.00 : startPrice
 
   const handleBid = async () => {
+    if (!session?.user) {
+      const currentUrl = typeof window !== 'undefined' 
+        ? window.location.pathname + window.location.search 
+        : '/'
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(currentUrl)}`
+      return
+    }
+
+    // Prüfe Verifizierung vor dem Bieten
+    if (isVerified === false) {
+      setVerificationAction('bid')
+      setShowVerificationModal(true)
+      return
+    }
+
     if (!bidAmount.trim()) {
       setError('Bitte geben Sie einen Betrag ein')
       return
@@ -263,18 +303,30 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
     }
   }
 
-  const handleBuyNow = async () => {
-    if (!buyNowPrice) return
-
-    const totalPrice = buyNowPrice + shippingCost
-    const confirmMessage = shippingCost > 0
-      ? `Möchten Sie diese Uhr für CHF ${new Intl.NumberFormat('de-CH').format(buyNowPrice)} + CHF ${new Intl.NumberFormat('de-CH').format(shippingCost)} Versandkosten (Total: CHF ${new Intl.NumberFormat('de-CH').format(totalPrice)}) sofort kaufen?\n\nDer Kauf ist verbindlich.`
-      : `Möchten Sie diese Uhr für CHF ${new Intl.NumberFormat('de-CH').format(buyNowPrice)} sofort kaufen?\n\nDer Kauf ist verbindlich.`
-
-    if (!confirm(confirmMessage)) {
+  const handleBuyNowClick = () => {
+    if (!session?.user) {
+      const currentUrl = typeof window !== 'undefined' 
+        ? window.location.pathname + window.location.search 
+        : '/'
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(currentUrl)}`
       return
     }
+    
+    // Prüfe Verifizierung vor dem Sofortkauf
+    if (isVerified === false) {
+      setVerificationAction('buy')
+      setShowVerificationModal(true)
+      return
+    }
+    
+    if (!buyNowPrice) return
+    setShowBuyNowModal(true)
+  }
 
+  const handleBuyNowConfirm = async () => {
+    if (!buyNowPrice) return
+
+    setShowBuyNowModal(false)
     setLoading(true)
     setError('')
     setSuccess('')
@@ -297,6 +349,10 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
         await loadBids()
         // Prüfe auch auf abgelaufene Auktionen (um Purchase zu erstellen)
         await fetch('/api/auctions/check-expired', { method: 'POST' })
+        
+        // Aktualisiere Benachrichtigungen sofort
+        window.dispatchEvent(new CustomEvent('notifications-update'))
+        
         setTimeout(() => setSuccess(''), 5000)
       } else {
         setError(data.message || 'Fehler beim Sofortkauf')
@@ -310,10 +366,13 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
   }
 
   if (!session?.user) {
+    const currentUrl = typeof window !== 'undefined' 
+      ? window.location.pathname + window.location.search 
+      : '/'
     return (
       <div className="bg-white rounded-lg shadow p-6 mt-8">
         <p className="text-gray-600 text-center">
-          Bitte <Link href="/login" className="text-primary-600 hover:underline">melden Sie sich an</Link>, um zu bieten oder sofort zu kaufen.
+          Bitte <Link href={`/login?callbackUrl=${encodeURIComponent(currentUrl)}`} className="text-primary-600 hover:underline">melden Sie sich an</Link>, um zu bieten oder sofort zu kaufen.
         </p>
       </div>
     )
@@ -484,22 +543,22 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
             <label className="block text-sm font-medium text-gray-700 mb-2">
               Ihr Gebot (mindestens CHF {minBid.toFixed(2)})
             </label>
-            <div className="flex gap-2">
+            <div className="flex gap-2 items-stretch">
               <input
                 type="text"
                 value={bidAmount}
                 onChange={(e) => setBidAmount(e.target.value)}
                 placeholder={`CHF ${minBid.toFixed(2)}`}
-                className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
                 disabled={isSeller}
               />
               <button
                 onClick={handleBid}
                 disabled={loading || !isAuctionActive || isSeller}
-                className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+                className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0 whitespace-nowrap"
               >
                 <Gavel className="h-4 w-4" />
-                Mitbieten
+                <span className="text-sm font-medium">Mitbieten</span>
               </button>
             </div>
           </div>
@@ -508,7 +567,7 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
           {buyNowPrice && (
             <div className="border-t pt-4">
               <button
-                onClick={handleBuyNow}
+                onClick={handleBuyNowClick}
                 disabled={loading || !isAuctionActive || isSeller}
                 className="w-full px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1 font-semibold"
               >
@@ -576,6 +635,28 @@ export function BidComponent({ watchId, startPrice, buyNowPrice, auctionEnd, sel
           </div>
         </div>
       )}
+
+      {/* Buy Now Confirmation Modal */}
+      {buyNowPrice && (
+        <BuyNowConfirmationModal
+          isOpen={showBuyNowModal}
+          onClose={() => setShowBuyNowModal(false)}
+          onConfirm={handleBuyNowConfirm}
+          buyNowPrice={buyNowPrice}
+          shippingCost={shippingCost}
+          isLoading={loading}
+        />
+      )}
+      
+      <VerificationModal
+        isOpen={showVerificationModal}
+        onClose={() => setShowVerificationModal(false)}
+        onVerify={() => {
+          setShowVerificationModal(false)
+          // Nach Verifizierung wird die Seite neu geladen und isVerified wird aktualisiert
+        }}
+        action={verificationAction}
+      />
     </div>
   )
 }

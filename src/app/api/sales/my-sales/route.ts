@@ -82,9 +82,30 @@ export async function GET(request: NextRequest) {
       return {
         id: purchase.id,
         soldAt: purchase.createdAt,
-        shippingMethod: watch.shippingMethod,
-        paid: purchase.paid || false,
-        paidAt: purchase.paidAt,
+        shippingMethod: purchase.shippingMethod || watch.shippingMethod,
+        paid: purchase.paymentConfirmed || purchase.paid || false,
+        paidAt: purchase.paymentConfirmedAt || purchase.paidAt,
+        status: purchase.status || 'pending',
+        itemReceived: purchase.itemReceived || false,
+        itemReceivedAt: purchase.itemReceivedAt,
+        paymentConfirmed: purchase.paymentConfirmed || false,
+        paymentConfirmedAt: purchase.paymentConfirmedAt,
+        // Kontaktfrist-Felder
+        contactDeadline: purchase.contactDeadline?.toISOString() || null,
+        sellerContactedAt: purchase.sellerContactedAt?.toISOString() || null,
+        buyerContactedAt: purchase.buyerContactedAt?.toISOString() || null,
+        contactWarningSentAt: purchase.contactWarningSentAt?.toISOString() || null,
+        contactDeadlineMissed: purchase.contactDeadlineMissed || false,
+        // Dispute-Felder
+        disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
+        disputeReason: purchase.disputeReason || null,
+        disputeStatus: purchase.disputeStatus || null,
+        disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
+        // Versand-Felder
+        trackingNumber: purchase.trackingNumber || null,
+        trackingProvider: purchase.trackingProvider || null,
+        shippedAt: purchase.shippedAt?.toISOString() || null,
+        estimatedDeliveryDate: purchase.estimatedDeliveryDate?.toISOString() || null,
         watch: {
           id: watch.id,
           title: watch.title,

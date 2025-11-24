@@ -2,22 +2,36 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, Menu, User, Heart, ShoppingCart, Bell, LogOut, ChevronDown } from 'lucide-react'
+import { Search, Menu, User, Heart, Bell, LogOut, ChevronDown, Gavel, Plus } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { UserName } from '@/components/ui/UserName'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { CategoryBar } from './CategoryBar'
 
 export function Header() {
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
+  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false)
+  const [isSellMenuOpen, setIsSellMenuOpen] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [userNickname, setUserNickname] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState<boolean>(false)
   const [isVerified, setIsVerified] = useState<boolean>(false)
+  const [favoritesCount, setFavoritesCount] = useState<number>(0)
+  const [unreadNotifications, setUnreadNotifications] = useState<number>(0)
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { language, setLanguage, t } = useLanguage()
+
+  const languages = [
+    { code: 'de' as const, name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'en' as const, name: 'English', flag: '🇬🇧' },
+    { code: 'fr' as const, name: 'Français', flag: '🇫🇷' },
+    { code: 'it' as const, name: 'Italiano', flag: '🇮🇹' }
+  ]
 
   // Lade Nickname und Admin-Status aus der DB, falls nicht in Session
   useEffect(() => {
@@ -35,13 +49,9 @@ export function Header() {
         setUserNickname(session.user.nickname)
       }
 
-      // Prüfe Admin-Status: Direkt per E-Mail oder über API
-      const userEmail = session.user.email?.toLowerCase()
-      const isAdminEmail = userEmail === 'admin@admin.ch'
-      
-      // Wenn E-Mail Admin@Admin.ch ist, setze direkt auf true
-      if (isAdminEmail) {
-        console.log('User is Admin based on email, setting isAdmin to true')
+      // Prüfe Admin-Status nur aus Session
+      if (session.user.isAdmin === true || session.user.isAdmin === 1) {
+        console.log('User is Admin based on session, setting isAdmin to true')
         setIsAdmin(true)
       } else {
         // Sonst versuche API-Aufruf
@@ -91,6 +101,79 @@ export function Header() {
     }
   }, [])
 
+  // Lade Favoriten-Anzahl
+  useEffect(() => {
+    const fetchFavoritesCount = async () => {
+      if (!session?.user) {
+        setFavoritesCount(0)
+        return
+      }
+      
+      try {
+        const response = await fetch('/api/favorites')
+        if (response.ok) {
+          const data = await response.json()
+          setFavoritesCount(data.favorites?.length || 0)
+        }
+      } catch (error) {
+        console.error('Error fetching favorites count:', error)
+      }
+    }
+    
+    fetchFavoritesCount()
+  }, [session?.user])
+
+  // Fetch unread notifications count
+  useEffect(() => {
+    const fetchUnreadCount = async () => {
+      if (!session?.user) {
+        setUnreadNotifications(0)
+        return
+      }
+      
+      try {
+        const response = await fetch('/api/notifications/unread-count')
+        if (response.ok) {
+          const data = await response.json()
+          setUnreadNotifications(data.count || 0)
+        }
+      } catch (error) {
+        console.error('Error fetching notifications count:', error)
+      }
+    }
+    
+    fetchUnreadCount()
+    
+    // Poll every 5 seconds for new notifications (schneller für bessere UX)
+    const interval = setInterval(fetchUnreadCount, 5000)
+    
+    // Aktualisiere auch wenn Seite wieder fokussiert wird
+    const handleFocus = () => {
+      fetchUnreadCount()
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        fetchUnreadCount()
+      }
+    }
+    
+    // Event-basierte Aktualisierung nach bestimmten Aktionen
+    const handleNotificationUpdate = () => {
+      fetchUnreadCount()
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('notifications-update', handleNotificationUpdate)
+    
+    return () => {
+      clearInterval(interval)
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('notifications-update', handleNotificationUpdate)
+    }
+  }, [session?.user])
+
   // Initialen aus Name extrahieren
   const getInitials = (name?: string | null) => {
     if (!name) return 'U'
@@ -109,17 +192,40 @@ export function Header() {
   }
 
   // Suchfunktion
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (searchQuery.trim()) {
-      router.push(`/search?q=${encodeURIComponent(searchQuery.trim())}`)
+    const query = searchQuery.trim()
+    if (!query) return
+    
+    // Prüfe ob es eine Artikelnummer ist (6-10 stellige Nummer)
+    const isNumericArticleNumber = /^\d{6,10}$/.test(query)
+    
+    if (isNumericArticleNumber) {
+      // Suche nach Artikelnummer
+      try {
+        const res = await fetch(`/api/watches/search?q=${encodeURIComponent(query)}&limit=1`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.watches && data.watches.length === 1) {
+            // Eindeutiger Treffer: Direkt zur Artikelseite
+            router.push(`/products/${data.watches[0].id}`)
+            return
+          }
+        }
+      } catch (error) {
+        console.error('Error searching by article number:', error)
+      }
     }
+    
+    // Normale Suche
+    router.push(`/search?q=${encodeURIComponent(query)}`)
   }
 
   return (
-    <header className="bg-white shadow-sm border-b">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex justify-between items-center h-16">
+    <header className="bg-white shadow-md border-b sticky top-0 z-50">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+        {/* ERSTE ZEILE: Logo, Navigation, User Actions */}
+        <div className="flex justify-between items-center h-12 py-1">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
@@ -127,66 +233,99 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Search Bar */}
-          <div className="flex-1 max-w-lg mx-8 hidden md:block">
-            <form onSubmit={handleSearch}>
-              <div className="relative">
-                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  placeholder="Suchen Sie nach Uhren..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
-                />
-              </div>
-            </form>
-          </div>
-
           {/* Navigation */}
-          <div className="hidden md:flex items-center space-x-4">
-            <Link href="/categories" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
-              Marken
-            </Link>
-            <Link href="/auctions" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
-              Auktionen
-            </Link>
-            <Link href="/sell" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
-              Uhr verkaufen
-            </Link>
-          </div>
-
-          {/* User Actions */}
-          <div className="flex items-center space-x-4">
-            <button className="p-2 text-gray-400 hover:text-gray-500">
-              <Bell className="h-6 w-6" />
-            </button>
-            {session && (
+          <div className="hidden md:flex items-center space-x-6 flex-1 justify-start ml-8">
+            {session ? (
               <Link 
-                href="/my-watches/buying"
-                className="p-2 text-gray-400 hover:text-primary-600 transition-colors"
-                title="Meine Favoriten"
+                href="/favorites" 
+                className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 relative transition-colors"
               >
-                <Heart className="h-6 w-6" />
+                <Heart className="h-4 w-4" />
+                {t.header.favorites}
+                {favoritesCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                    {favoritesCount > 9 ? '9+' : favoritesCount}
+                  </span>
+                )}
               </Link>
-            )}
-            {!session && (
-              <button className="p-2 text-gray-400 hover:text-gray-500">
-                <Heart className="h-6 w-6" />
+            ) : (
+              <button 
+                onClick={() => alert(t.header.pleaseLoginForFavorites)}
+                className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors"
+              >
+                <Heart className="h-4 w-4" />
+                {t.header.favorites}
               </button>
             )}
-            <button className="p-2 text-gray-400 hover:text-gray-500">
-              <ShoppingCart className="h-6 w-6" />
-            </button>
+            <Link 
+              href="/auctions" 
+              className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors"
+            >
+              <Gavel className="h-4 w-4" />
+              {t.header.auctions}
+            </Link>
+            {/* Verkaufen Dropdown */}
+            <div 
+              className="relative"
+              onMouseEnter={() => setIsSellMenuOpen(true)}
+              onMouseLeave={() => setIsSellMenuOpen(false)}
+            >
+              <Link 
+                href="/sell" 
+                className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors"
+              >
+                <Plus className="h-4 w-4" />
+                {t.header.sell}
+                <ChevronDown className="h-3 w-3" />
+              </Link>
+              
+              {/* Dropdown Menu */}
+              {isSellMenuOpen && (
+                <div className="absolute left-0 mt-1 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                  <div className="py-1">
+                    <Link
+                      href="/sell"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="font-medium">Einzelner Artikel</div>
+                      <div className="text-xs text-gray-500">Einen Artikel verkaufen</div>
+                    </Link>
+                    <Link
+                      href="/sell/bulk"
+                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                    >
+                      <div className="font-medium">Mehrere Artikel</div>
+                      <div className="text-xs text-gray-500">Bis zu 100 Artikel gleichzeitig</div>
+                    </Link>
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* User Actions - Rechts */}
+          <div className="flex items-center space-x-3">
+            <Link 
+              href="/notifications"
+              className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-primary-600 transition-colors relative"
+            >
+              <div className="relative">
+                <Bell className="h-5 w-5" />
+                {unreadNotifications > 0 && (
+                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                    {unreadNotifications > 9 ? '9+' : unreadNotifications}
+                  </span>
+                )}
+              </div>
+              <span className="hidden md:inline font-medium">{t.header.notifications}</span>
+            </Link>
             
             {/* User Menu */}
             <div className="relative flex items-center space-x-2">
               {session ? (
                 <>
                   <div className="hidden md:block text-sm text-gray-700 mr-2 flex items-center gap-1">
-                    Hallo, <UserName userId={session.user.id} userName={userNickname || session.user?.nickname || session.user?.name || 'Benutzer'} badgeSize="sm" />
+                    {t.header.hello}, <UserName userId={session.user.id} userName={userNickname || session.user?.nickname || session.user?.name || 'Benutzer'} badgeSize="sm" />
                   </div>
                   <div className="relative">
                     <button
@@ -220,11 +359,30 @@ export function Header() {
                     {isProfileMenuOpen && (
                       <>
                         <div
-                          className="fixed inset-0 z-10"
-                          onClick={() => setIsProfileMenuOpen(false)}
+                          className="fixed inset-0 z-[5]"
+                          onClick={(e) => {
+                            // Prüfe ob Klick auf Dropdown-Menü war
+                            const target = e.target as HTMLElement
+                            if (target.closest('[data-dropdown-menu]')) {
+                              return // Ignoriere Klicks auf Dropdown
+                            }
+                            setIsProfileMenuOpen(false)
+                          }}
+                          style={{ pointerEvents: 'auto' }}
                         />
-                        <div className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-20">
-                          <div className="py-1">
+                        <div 
+                          data-dropdown-menu
+                          className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[100]"
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            // Verhindere dass Overlay geschlossen wird
+                          }}
+                          onMouseDown={(e) => {
+                            e.stopPropagation()
+                          }}
+                          style={{ pointerEvents: 'auto' }}
+                        >
+                          <div className="py-1 relative" style={{ pointerEvents: 'auto' }}>
                             <div className="px-4 py-3 border-b border-gray-200">
                               <p className="text-sm font-medium text-gray-900 flex items-center gap-1">
                                 <UserName userId={session.user.id} userName={userNickname || session.user?.nickname || session.user?.name || 'Benutzer'} badgeSize="sm" />
@@ -233,55 +391,120 @@ export function Header() {
                                 {session.user?.email}
                               </p>
                             </div>
-                            <Link
+                            <a
                               href="/profile"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                setIsProfileMenuOpen(false)
+                                window.location.href = '/profile'
+                              }}
+                              onMouseDown={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                              }}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
+                              style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
-                              Mein Profil
-                            </Link>
-                            <Link
+                              {t.header.myProfile}
+                            </a>
+                            <a
                               href="/my-watches"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                setIsProfileMenuOpen(false)
+                                window.location.href = '/my-watches'
+                              }}
+                              onMouseDown={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                              }}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
+                              style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
-                              Mein Verkaufen
-                            </Link>
-                            <Link
+                              {t.header.mySelling}
+                            </a>
+                            <a
                               href="/my-watches/buying"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                setIsProfileMenuOpen(false)
+                                window.location.href = '/my-watches/buying'
+                              }}
+                              onMouseDown={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                              }}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
+                              style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
-                              Mein Kaufen
-                            </Link>
-                            <Link
+                              {t.header.myBuying}
+                            </a>
+                            <a
                               href="/my-watches/account"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                setIsProfileMenuOpen(false)
+                                window.location.href = '/my-watches/account'
+                              }}
+                              onMouseDown={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                              }}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
+                              style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
-                              Einstellungen
-                            </Link>
+                              {t.header.settings}
+                            </a>
                             <div className="border-t border-gray-200 my-1" />
-                            <div className="px-4 py-2">
-                              <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Gebühren</p>
-                            </div>
-                            <Link
+                            <a
                               href="/my-watches/selling/fees"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              onClick={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                                setIsProfileMenuOpen(false)
+                                // Verwende window.location für garantierte Navigation
+                                window.location.href = '/my-watches/selling/fees'
+                              }}
+                              onMouseDown={(e) => {
+                                e.preventDefault()
+                                e.stopPropagation()
+                              }}
+                              onMouseUp={(e) => {
+                                e.stopPropagation()
+                              }}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
+                              style={{ 
+                                pointerEvents: 'auto',
+                                zIndex: 1000,
+                                position: 'relative'
+                              }}
                             >
-                              Gebühren & Rechnungen
-                            </Link>
-                            {((isAdmin || session.user?.isAdmin === true || session.user?.isAdmin === 1) || session.user?.email?.toLowerCase() === 'admin@admin.ch') && (
+                              {t.header.feesAndInvoices}
+                            </a>
+                            {(isAdmin || session.user?.isAdmin === true || session.user?.isAdmin === 1) && (
                               <>
                                 <div className="border-t border-gray-200 my-1" />
-                                <Link
+                                <a
                                   href="/admin/dashboard"
-                                  onClick={() => setIsProfileMenuOpen(false)}
-                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-semibold text-primary-600"
+                                  onClick={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                    setIsProfileMenuOpen(false)
+                                    window.location.href = '/admin/dashboard'
+                                  }}
+                                  onMouseDown={(e) => {
+                                    e.preventDefault()
+                                    e.stopPropagation()
+                                  }}
+                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-semibold text-primary-600 cursor-pointer relative"
+                                  style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                                 >
-                                  Admin-Dashboard
-                                </Link>
+                                  {t.header.adminDashboard}
+                                </a>
                               </>
                             )}
                             <div className="border-t border-gray-200 my-1" />
@@ -300,7 +523,7 @@ export function Header() {
                             >
                               <div className="flex items-center">
                                 <LogOut className="h-4 w-4 mr-2" />
-                                Abmelden
+                                {t.header.logout}
                               </div>
                             </button>
                           </div>
@@ -316,8 +539,53 @@ export function Header() {
                   </button>
                   <div className="hidden md:block">
                     <Link href="/login" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
-                      Anmelden
+                      {t.header.login}
                     </Link>
+                  </div>
+                </>
+              )}
+            </div>
+
+            {/* Language Selector - Far Right */}
+            <div className="relative hidden md:block">
+              <button
+                onClick={() => setIsLanguageMenuOpen(!isLanguageMenuOpen)}
+                className="flex items-center gap-1 px-3 py-2 text-gray-700 hover:text-primary-600 rounded-md transition-colors font-medium"
+                title="Select language / Sprache wählen"
+              >
+                <span className="text-lg">{languages.find(l => l.code === language)?.flag}</span>
+                <span className="text-sm">{languages.find(l => l.code === language)?.code.toUpperCase()}</span>
+                <ChevronDown className={`h-4 w-4 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
+
+              {/* Language Dropdown */}
+              {isLanguageMenuOpen && (
+                <>
+                  <div
+                    className="fixed inset-0 z-10"
+                    onClick={() => setIsLanguageMenuOpen(false)}
+                  />
+                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-20">
+                    <div className="py-1">
+                      {languages.map((lang) => (
+                        <button
+                          key={lang.code}
+                          onClick={() => {
+                            setLanguage(lang.code)
+                            setIsLanguageMenuOpen(false)
+                          }}
+                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-3 ${
+                            language === lang.code ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'
+                          }`}
+                        >
+                          <span className="text-xl">{lang.flag}</span>
+                          <span>{lang.name}</span>
+                          {language === lang.code && (
+                            <span className="ml-auto text-primary-600">✓</span>
+                          )}
+                        </button>
+                      ))}
+                    </div>
                   </div>
                 </>
               )}
@@ -333,6 +601,38 @@ export function Header() {
           </div>
         </div>
 
+        {/* ZWEITE ZEILE: Suchleiste - ZENTRIERT */}
+        <div className="hidden md:block border-t border-gray-200 py-3">
+          <div className="flex items-center justify-center">
+            {/* Suchleiste - Zentriert */}
+            <div className="flex-1 max-w-3xl">
+              <form onSubmit={handleSearch}>
+                <div className="relative flex items-center">
+                  <div className="absolute left-4 flex items-center pointer-events-none">
+                    <Search className="h-5 w-5 text-gray-400" />
+                  </div>
+                  <input
+                    type="text"
+                    placeholder={t.header.searchPlaceholder}
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="block w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                  />
+                  <button
+                    type="submit"
+                    className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-r-lg transition-colors font-medium"
+                  >
+                    Suchen
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        {/* DRITTE ZEILE: CategoryBar mit Kategorien */}
+        <CategoryBar />
+
         {/* Mobile Search */}
         <div className="md:hidden pb-4">
           <form onSubmit={handleSearch}>
@@ -342,7 +642,7 @@ export function Header() {
               </div>
               <input
                 type="text"
-                placeholder="Suchen Sie nach Produkten..."
+                placeholder={t.header.searchPlaceholder}
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
@@ -356,14 +656,20 @@ export function Header() {
           <div className="md:hidden">
             <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
               <Link href="/categories" className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium">
-                Kategorien
+                {t.header.categories}
               </Link>
               <Link href="/auctions" className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium">
-                Auktionen
+                {t.header.auctions}
               </Link>
-              <Link href="/sell" className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium">
-                Verkaufen
-              </Link>
+              <div className="px-3 py-2">
+                <div className="text-gray-700 font-medium text-base mb-1">{t.header.sell}</div>
+                <Link href="/sell" className="block py-2 text-sm text-gray-600 hover:text-primary-600 pl-4">
+                  Einzelner Artikel
+                </Link>
+                <Link href="/sell/bulk" className="block py-2 text-sm text-gray-600 hover:text-primary-600 pl-4">
+                  Mehrere Artikel
+                </Link>
+              </div>
               {session ? (
                 <>
                   <div className="px-3 py-3 border-b border-gray-200 flex items-center space-x-3">
@@ -398,28 +704,28 @@ export function Header() {
                     onClick={() => setIsMenuOpen(false)}
                     className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
                   >
-                    Mein Profil
+                    {t.header.myProfile}
                   </Link>
                   <Link
                     href="/my-watches"
                     onClick={() => setIsMenuOpen(false)}
                     className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
                   >
-                    Mein Verkaufen
+                    {t.header.mySelling}
                   </Link>
                   <Link
                     href="/my-watches/buying"
                     onClick={() => setIsMenuOpen(false)}
                     className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
                   >
-                    Mein Kaufen
+                    {t.header.myBuying}
                   </Link>
                   <Link
                     href="/my-watches/account"
                     onClick={() => setIsMenuOpen(false)}
                     className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
                   >
-                    Einstellungen
+                    {t.header.settings}
                   </Link>
                   {(session?.user?.isAdmin || isAdmin) && (
                     <Link
@@ -427,7 +733,7 @@ export function Header() {
                       onClick={() => setIsMenuOpen(false)}
                       className="text-primary-600 hover:text-primary-700 block px-3 py-2 rounded-md text-base font-semibold"
                     >
-                      Admin-Dashboard
+                      {t.header.adminDashboard}
                     </Link>
                   )}
                               <button 
@@ -444,12 +750,12 @@ export function Header() {
                                 className="text-red-600 hover:text-red-700 block px-3 py-2 rounded-md text-base font-medium w-full text-left flex items-center"
                               >
                                 <LogOut className="h-5 w-5 mr-2" />
-                                Abmelden
+                                {t.header.logout}
                               </button>
                 </>
               ) : (
                 <Link href="/login" className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium">
-                  Anmelden
+                  {t.header.login}
                 </Link>
               )}
             </div>

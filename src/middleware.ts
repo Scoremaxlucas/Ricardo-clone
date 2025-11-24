@@ -1,5 +1,6 @@
 import { withAuth } from 'next-auth/middleware'
 import { NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
 
 export default withAuth(
   async function middleware(req) {
@@ -8,10 +9,21 @@ export default withAuth(
 
     // Wenn es eine Admin-Route ist, prüfe Admin-Rechte
     if (isAdminRoute) {
-      // Prüfe Admin-Status aus Token oder E-Mail
-      const isAdmin = token?.isAdmin === true || 
-                     token?.isAdmin === 1 ||
-                     (token?.email && token.email.toLowerCase() === 'admin@admin.ch')
+      // Prüfe Admin-Status aus Token
+      let isAdmin = token?.isAdmin === true || token?.isAdmin === 1
+      
+      // Falls nicht im Token, prüfe direkt in der Datenbank
+      if (!isAdmin && token?.id) {
+        try {
+          const user = await prisma.user.findUnique({
+            where: { id: token.id as string },
+            select: { isAdmin: true }
+          })
+          isAdmin = user?.isAdmin === true || user?.isAdmin === 1
+        } catch (error) {
+          console.error('[MIDDLEWARE] Error checking admin status:', error)
+        }
+      }
       
       if (!isAdmin) {
         return NextResponse.redirect(new URL('/', req.url))

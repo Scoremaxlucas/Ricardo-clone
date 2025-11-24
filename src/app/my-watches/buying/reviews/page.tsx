@@ -37,8 +37,8 @@ export default function PurchaseReviewsPage() {
   const [purchases, setPurchases] = useState<Purchase[]>([])
   const [loading, setLoading] = useState(true)
   const [reviewingId, setReviewingId] = useState<string | null>(null)
-  const [rating, setRating] = useState<'positive' | 'neutral' | 'negative' | ''>('')
-  const [comment, setComment] = useState('')
+  const [ratings, setRatings] = useState<Record<string, 'positive' | 'neutral' | 'negative' | ''>>({})
+  const [comments, setComments] = useState<Record<string, string>>({})
   const [submitting, setSubmitting] = useState(false)
 
   useEffect(() => {
@@ -88,6 +88,9 @@ export default function PurchaseReviewsPage() {
   }
 
   const handleSubmitReview = async (purchaseId: string) => {
+    const rating = ratings[purchaseId]
+    const comment = comments[purchaseId] || ''
+    
     if (!rating) return
 
     setSubmitting(true)
@@ -102,8 +105,16 @@ export default function PurchaseReviewsPage() {
         // Reload purchases
         await loadPurchases()
         setReviewingId(null)
-        setRating('')
-        setComment('')
+        setRatings(prev => {
+          const newRatings = { ...prev }
+          delete newRatings[purchaseId]
+          return newRatings
+        })
+        setComments(prev => {
+          const newComments = { ...prev }
+          delete newComments[purchaseId]
+          return newComments
+        })
       } else {
         const data = await res.json()
         alert(data.message || 'Fehler beim Absenden der Bewertung')
@@ -118,16 +129,16 @@ export default function PurchaseReviewsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <>
+      <div className="min-h-screen bg-gray-50 flex flex-col">
         <Header />
-        <div className="flex min-h-screen items-center justify-center">
+        <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
             <p className="mt-4 text-gray-600">Lädt...</p>
           </div>
         </div>
         <Footer />
-      </>
+      </div>
     )
   }
 
@@ -135,9 +146,9 @@ export default function PurchaseReviewsPage() {
   const completedReviews = purchases.filter(p => !p.canReview && p.review)
 
   return (
-    <>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
       <Header />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="flex-1 py-8">
         <div className="max-w-4xl mx-auto px-4">
           <Link href="/my-watches/buying" className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6">
             <ArrowLeft className="h-4 w-4 mr-2" />
@@ -178,9 +189,9 @@ export default function PurchaseReviewsPage() {
                           <div className="grid grid-cols-3 gap-4">
                             <button
                               type="button"
-                              onClick={() => setRating('positive')}
+                              onClick={() => setRatings(prev => ({ ...prev, [purchase.id]: 'positive' }))}
                               className={`p-4 border-2 rounded-lg transition-colors ${
-                                rating === 'positive'
+                                ratings[purchase.id] === 'positive'
                                   ? 'border-green-500 bg-green-50'
                                   : 'border-gray-200 hover:border-green-300'
                               }`}
@@ -191,9 +202,9 @@ export default function PurchaseReviewsPage() {
 
                             <button
                               type="button"
-                              onClick={() => setRating('neutral')}
+                              onClick={() => setRatings(prev => ({ ...prev, [purchase.id]: 'neutral' }))}
                               className={`p-4 border-2 rounded-lg transition-colors ${
-                                rating === 'neutral'
+                                ratings[purchase.id] === 'neutral'
                                   ? 'border-gray-500 bg-gray-50'
                                   : 'border-gray-200 hover:border-gray-300'
                               }`}
@@ -204,9 +215,9 @@ export default function PurchaseReviewsPage() {
 
                             <button
                               type="button"
-                              onClick={() => setRating('negative')}
+                              onClick={() => setRatings(prev => ({ ...prev, [purchase.id]: 'negative' }))}
                               className={`p-4 border-2 rounded-lg transition-colors ${
-                                rating === 'negative'
+                                ratings[purchase.id] === 'negative'
                                   ? 'border-red-500 bg-red-50'
                                   : 'border-gray-200 hover:border-red-300'
                               }`}
@@ -222,11 +233,12 @@ export default function PurchaseReviewsPage() {
                             Kommentar (optional)
                           </label>
                           <textarea
-                            value={comment}
-                            onChange={(e) => setComment(e.target.value)}
+                            value={comments[purchase.id] || ''}
+                            onChange={(e) => setComments(prev => ({ ...prev, [purchase.id]: e.target.value }))}
                             rows={4}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 resize-y"
                             placeholder="Teilen Sie Ihre Erfahrung mit diesem Verkäufer..."
+                            disabled={submitting}
                           />
                         </div>
 
@@ -235,17 +247,26 @@ export default function PurchaseReviewsPage() {
                             type="button"
                             onClick={() => {
                               setReviewingId(null)
-                              setRating('')
-                              setComment('')
+                              setRatings(prev => {
+                                const newRatings = { ...prev }
+                                delete newRatings[purchase.id]
+                                return newRatings
+                              })
+                              setComments(prev => {
+                                const newComments = { ...prev }
+                                delete newComments[purchase.id]
+                                return newComments
+                              })
                             }}
-                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                            disabled={submitting}
+                            className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             Abbrechen
                           </button>
                           <button
                             type="button"
                             onClick={() => handleSubmitReview(purchase.id)}
-                            disabled={!rating || submitting}
+                            disabled={!ratings[purchase.id] || submitting}
                             className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
                           >
                             {submitting ? 'Wird gesendet...' : 'Bewertung absenden'}
@@ -325,7 +346,7 @@ export default function PurchaseReviewsPage() {
         </div>
       </div>
       <Footer />
-    </>
+    </div>
   )
 }
 

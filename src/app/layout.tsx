@@ -7,8 +7,8 @@ import { Toaster } from 'react-hot-toast'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'watch-out.ch - Luxusuhren & Vintage Uhren',
-  description: 'Die führende Plattform für Luxusuhren, Vintage-Uhren und seltene Zeitmesser. Kaufen, verkaufen und entdecken Sie einzigartige Uhren.',
+  title: 'Helvenda.ch - Schweizer Online-Marktplatz',
+  description: 'Der Schweizer Online-Marktplatz für Private und Gewerbetreibende. Kaufen, verkaufen und handeln Sie einfach und sicher.',
 }
 
 export default function RootLayout({
@@ -17,11 +17,45 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="de">
-      <body className={inter.className}>
+    <html lang="de" className="h-full">
+      <body className={`${inter.className} h-full flex flex-col`}>
         <Providers>
-          {children}
-          <Toaster position="top-right" />
+          <div className="flex-1 flex flex-col min-h-0">
+            {children}
+          </div>
+          <Toaster 
+            position="top-right"
+            toastOptions={{
+              success: {
+                style: {
+                  background: '#10b981',
+                  color: '#fff',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                },
+                iconTheme: {
+                  primary: '#fff',
+                  secondary: '#10b981',
+                },
+              },
+              error: {
+                style: {
+                  background: '#ef4444',
+                  color: '#fff',
+                  borderRadius: '8px',
+                  padding: '16px',
+                  fontSize: '14px',
+                  fontWeight: '500',
+                },
+                iconTheme: {
+                  primary: '#fff',
+                  secondary: '#ef4444',
+                },
+              },
+            }}
+          />
         </Providers>
       </body>
     </html>

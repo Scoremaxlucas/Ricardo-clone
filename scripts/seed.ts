@@ -29,22 +29,37 @@ async function main() {
     },
   })
 
+  // Admin User erstellen
+  const adminUser = await prisma.user.upsert({
+    where: { email: 'admin@helvenda.ch' },
+    update: {
+      isAdmin: true,
+      password: hashedPassword,
+    },
+    create: {
+      email: 'admin@helvenda.ch',
+      name: 'Admin',
+      password: hashedPassword,
+      isAdmin: true,
+    },
+  })
+
   // Kategorien erstellen
   const categories = await Promise.all([
     prisma.category.upsert({
       where: { name: 'Rolex' },
       update: {},
-      create: { name: 'Rolex', description: 'Luxusuhren von Rolex' },
+      create: { name: 'Rolex', slug: 'rolex' },
     }),
     prisma.category.upsert({
       where: { name: 'Omega' },
       update: {},
-      create: { name: 'Omega', description: 'Schweizer Uhren von Omega' },
+      create: { name: 'Omega', slug: 'omega' },
     }),
     prisma.category.upsert({
       where: { name: 'Vintage' },
       update: {},
-      create: { name: 'Vintage', description: 'Vintage und antike Uhren' },
+      create: { name: 'Vintage', slug: 'vintage' },
     }),
   ])
 
@@ -118,6 +133,7 @@ async function main() {
   console.log('👤 Test Users:')
   console.log(`   - test@watch-out.ch (Password: test123)`)
   console.log(`   - seller@watch-out.ch (Password: test123)`)
+  console.log(`   - admin@helvenda.ch (Password: test123) [ADMIN]`)
   console.log('⌚ Test Watches:')
   console.log(`   - ${watch1.title} (Auktion)`)
   console.log(`   - ${watch2.title} (Sofortkauf)`)

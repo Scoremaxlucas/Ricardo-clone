@@ -100,12 +100,14 @@ export async function POST(
 
     newBoosterPrice = newBoosterRecord.price
 
-    // Berechne Differenz
+    // Berechne Differenz (kann auch negativ sein, wenn man downgradet)
     const priceDifference = newBoosterPrice - currentBoosterPrice
 
-    if (priceDifference <= 0) {
+    // Wenn bereits ein Booster vorhanden ist, muss der neue teurer sein (Upgrade)
+    // Wenn kein Booster vorhanden ist, kann jeder Booster hinzugefügt werden
+    if (currentBoosterCode && priceDifference <= 0) {
       return NextResponse.json(
-        { message: 'Der neue Booster muss teurer sein als der aktuelle Booster' },
+        { message: 'Der neue Booster muss teurer sein als der aktuelle Booster. Verwenden Sie die Bearbeitungsseite für Downgrades.' },
         { status: 400 }
       )
     }
@@ -118,13 +120,16 @@ export async function POST(
       }
     })
 
-    // Erstelle Rechnung für die Differenz
+    // Erstelle Rechnung für die Differenz (oder den vollen Preis, wenn kein Booster vorhanden war)
+    // Preis ist bereits inkl. MwSt - berechne Netto und MwSt-Betrag
     const vatRate = 0.081 // 8.1% MwSt
-    const subtotal = priceDifference
-    const vatAmount = subtotal * vatRate
+    const total = currentBoosterCode ? priceDifference : newBoosterPrice // Total ist der Preis inkl. MwSt
+    const subtotal = total / (1 + vatRate) // Netto-Preis ohne MwSt
+    const vatAmount = total - subtotal // MwSt-Betrag
     // Schweizer Rappenrundung auf 0.05
-    const totalBeforeRounding = subtotal + vatAmount
-    const total = Math.ceil(totalBeforeRounding * 20) / 20
+    const roundedSubtotal = Math.floor(subtotal * 20) / 20
+    const roundedVatAmount = Math.ceil(vatAmount * 20) / 20
+    const roundedTotal = roundedSubtotal + roundedVatAmount
 
     // Generiere Rechnungsnummer
     const year = new Date().getFullYear()
@@ -153,34 +158,45 @@ export async function POST(
         invoiceNumber,
         sellerId: watch.sellerId,
         saleId: null, // Kein Verkauf, nur Booster-Upgrade
-        subtotal,
+        subtotal: roundedSubtotal,
         vatRate,
-        vatAmount,
-        total,
+        vatAmount: roundedVatAmount,
+        total: roundedTotal,
         status: 'pending',
-        dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 Tage Frist
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist (wie Ricardo)
         items: {
           create: [{
             watchId: watch.id,
-            description: `Booster-Upgrade: ${newBoosterRecord.name} (Differenz)`,
+            description: currentBoosterCode 
+              ? `Booster-Upgrade: ${newBoosterRecord.name} (Differenz)`
+              : `Booster: ${newBoosterRecord.name}`,
             quantity: 1,
-            price: priceDifference,
-            total: priceDifference
+            price: roundedSubtotal,
+            total: roundedSubtotal
           }]
         }
       }
     })
 
-    console.log(`[upgrade-booster] Booster-Upgrade-Rechnung erstellt: ${invoiceNumber} für ${newBoosterRecord.name} (Differenz CHF ${total.toFixed(2)}) - Watch ${watch.id}`)
+    console.log(`[upgrade-booster] Booster-Rechnung erstellt: ${invoiceNumber} für ${newBoosterRecord.name} (${currentBoosterCode ? 'Differenz' : 'Vollpreis'} CHF ${roundedTotal.toFixed(2)} inkl. MwSt) - Watch ${watch.id}`)
+
+    // RICARDO-STYLE: Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
+    try {
+      const { sendInvoiceNotificationAndEmail } = await import('@/lib/invoice')
+      await sendInvoiceNotificationAndEmail(invoice)
+    } catch (notificationError: any) {
+      console.error('[upgrade-booster] Fehler bei Benachrichtigung:', notificationError)
+      // Fehler sollte nicht die Rechnungserstellung verhindern
+    }
 
     return NextResponse.json({
-      message: 'Booster erfolgreich upgegradet',
+      message: currentBoosterCode ? 'Booster erfolgreich upgegradet' : 'Booster erfolgreich hinzugefügt',
       invoice: {
         id: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
         total: invoice.total
       },
-      priceDifference
+      priceDifference: subtotal
     })
   } catch (error: any) {
     console.error('Error upgrading booster:', error)

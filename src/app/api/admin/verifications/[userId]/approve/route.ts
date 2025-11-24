@@ -64,6 +64,23 @@ export async function POST(
       }
     })
 
+    // Erstelle Benachrichtigung für den Benutzer
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: userId,
+          type: 'VERIFICATION_APPROVED',
+          title: 'Verifizierung erfolgreich',
+          message: 'Ihre Verifizierung wurde erfolgreich abgeschlossen. Sie können jetzt Artikel verkaufen!',
+          link: '/sell',
+        },
+      })
+      console.log(`[notifications] Verifizierungs-Benachrichtigung erstellt für Benutzer ${userId}`)
+    } catch (notifError) {
+      console.error('[notifications] Fehler beim Erstellen der Verifizierungs-Benachrichtigung:', notifError)
+      // Benachrichtigungs-Fehler sollte die Verifizierung nicht verhindern
+    }
+
     // E-Mail an Benutzer senden, dass Verifizierung genehmigt wurde
     try {
       const userName = user.nickname || user.firstName || user.name || 'Benutzer'

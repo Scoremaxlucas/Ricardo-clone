@@ -123,13 +123,11 @@ export default function AdminDashboard() {
         return
       }
 
-      const userEmail = session?.user?.email?.toLowerCase()
-      const isAdminEmail = userEmail === 'admin@admin.ch'
       const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
       
-      console.log('Dashboard: Admin check - Email:', userEmail, 'isAdminEmail:', isAdminEmail, 'isAdminInSession:', isAdminInSession)
+      console.log('Dashboard: Admin check - isAdminInSession:', isAdminInSession)
       
-      if (isAdminInSession || isAdminEmail) {
+      if (isAdminInSession) {
         console.log('Dashboard: Admin confirmed, loading stats...')
         await loadStats()
         clearTimeout(timeoutId)
@@ -195,9 +193,7 @@ export default function AdminDashboard() {
     )
   }
 
-  // Prüfe Admin-Status: Session, E-Mail oder State
-  const userEmail = session?.user?.email?.toLowerCase()
-  const isAdminEmail = userEmail === 'admin@admin.ch'
+  // Prüfe Admin-Status nur aus Session
   const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
   
   // Wenn keine Session, zeige Fehlermeldung (redirect sollte bereits passiert sein)
@@ -215,7 +211,7 @@ export default function AdminDashboard() {
   }
 
   // Wenn nicht Admin, zeige Fehlermeldung (redirect sollte bereits passiert sein)
-  if (!isAdminInSession && !isAdminEmail) {
+  if (!isAdminInSession) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

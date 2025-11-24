@@ -22,8 +22,8 @@ export default function DraftsPage() {
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-7xl mx-auto px-4">
         <Link
-          href="/my-watches/selling"
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          href="/my-watches"
+          className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6"
         >
           <ArrowLeft className="h-4 w-4 mr-2" />
           Zurück zu Mein Verkaufen

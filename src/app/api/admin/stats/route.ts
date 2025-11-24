@@ -40,19 +40,16 @@ export async function GET(request: NextRequest) {
       console.log('User found by email:', { email: user?.email, isAdmin: user?.isAdmin })
     }
 
-    // Prüfe Admin-Status: aus DB oder per E-Mail
-    const userEmail = session.user.email?.toLowerCase()
-    const isAdminEmail = userEmail === 'admin@admin.ch'
+    // Prüfe Admin-Status nur aus Datenbank
     const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
 
     console.log('Admin check:', { 
-      isAdminEmail, 
       isAdminInDb, 
       userIsAdmin: user?.isAdmin,
-      userEmail 
+      userEmail: session.user.email 
     })
 
-    if (!isAdminInDb && !isAdminEmail) {
+    if (!isAdminInDb) {
       console.log('Access denied - not admin')
       return NextResponse.json(
         { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },

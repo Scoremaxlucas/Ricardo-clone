@@ -1,6 +1,11 @@
-import { loadStripe } from '@stripe/stripe-js'
+import { loadStripe, Stripe } from '@stripe/stripe-js'
 
-const stripePromise = loadStripe(process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY!)
+// Stripe nur initialisieren, wenn der Key vorhanden ist
+const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
+
+const stripePromise: Promise<Stripe | null> = stripeKey && stripeKey.trim() !== ''
+  ? loadStripe(stripeKey)
+  : Promise.resolve(null)
 
 export default stripePromise
 

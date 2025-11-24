@@ -2,7 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
 import { Heart } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface FavoriteButtonProps {
   watchId: string
@@ -10,6 +12,8 @@ interface FavoriteButtonProps {
 
 export function FavoriteButton({ watchId }: FavoriteButtonProps) {
   const { data: session } = useSession()
+  const router = useRouter()
+  const { t } = useLanguage()
   const [isFavorite, setIsFavorite] = useState(false)
   const [loading, setLoading] = useState(true)
 
@@ -37,7 +41,15 @@ export function FavoriteButton({ watchId }: FavoriteButtonProps) {
   }, [watchId, session?.user])
 
   const toggleFavorite = async () => {
-    if (!session?.user || loading) return
+    if (!session?.user) {
+      const currentUrl = typeof window !== 'undefined' 
+        ? window.location.pathname + window.location.search 
+        : '/'
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`)
+      return
+    }
+
+    if (loading) return
 
     setLoading(true)
     try {
@@ -65,10 +77,6 @@ export function FavoriteButton({ watchId }: FavoriteButtonProps) {
     }
   }
 
-  if (!session?.user) {
-    return null // Nicht anzeigen wenn nicht eingeloggt
-  }
-
   return (
     <button
       onClick={toggleFavorite}
@@ -78,7 +86,13 @@ export function FavoriteButton({ watchId }: FavoriteButtonProps) {
           ? 'bg-red-500 text-white hover:bg-red-600'
           : 'bg-white text-gray-700 hover:bg-gray-100'
       } disabled:opacity-50 disabled:cursor-not-allowed`}
-      title={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
+      title={
+        !session?.user 
+          ? t.favorites.loginRequired
+          : isFavorite 
+          ? t.product.removeFromFavorites
+          : t.product.addToFavorites
+      }
     >
       <Heart className={`h-6 w-6 ${isFavorite ? 'fill-current' : ''}`} />
     </button>

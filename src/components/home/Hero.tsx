@@ -1,75 +1,45 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
-import { Search, ArrowRight } from 'lucide-react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export function Hero() {
-  const [searchQuery, setSearchQuery] = useState('')
-
-  const handleSearch = (e: React.FormEvent) => {
-    e.preventDefault()
-    // TODO: Implement search functionality
-    console.log('Searching for:', searchQuery)
-  }
-
+  const { t } = useLanguage()
+  
   return (
-    <section className="bg-gradient-to-r from-primary-600 to-primary-800 text-white">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center">
-          <h1 className="text-4xl md:text-6xl font-bold mb-6">
-            Verkaufen und Kaufen von
-            <span className="block text-yellow-300">Uhren leicht gemacht</span>
-          </h1>
-          <p className="text-xl md:text-2xl mb-8 text-primary-100">
-            Auktionen und Sofortpreise
-          </p>
-          
-          {/* Search Form */}
-          <form onSubmit={handleSearch} className="max-w-2xl mx-auto mb-8">
-            <div className="flex flex-col sm:flex-row gap-4">
-              <div className="flex-1 relative">
-                <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                  <Search className="h-5 w-5 text-gray-400" />
-                </div>
-                <input
-                  type="text"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  placeholder="Welche Uhr suchen Sie?"
-                  className="w-full pl-12 pr-4 py-4 text-gray-900 rounded-lg focus:outline-none focus:ring-2 focus:ring-yellow-300"
-                />
-              </div>
-              <button
-                type="submit"
-                className="bg-yellow-400 hover:bg-yellow-500 text-gray-900 font-semibold px-8 py-4 rounded-lg transition-colors flex items-center justify-center"
+    <section className="bg-primary-600 text-white">
+      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8 py-3 md:py-4">
+        <div className="flex flex-col md:flex-row items-center justify-between gap-4">
+          {/* Promo Box */}
+          <div className="flex-1 max-w-md">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg p-3 border border-white/20">
+              <h2 className="text-lg md:text-xl font-bold mb-1.5">
+                {t.home.hero.sellNow}
+              </h2>
+              <p className="text-primary-100 text-xs mb-3">
+                {t.home.hero.reachBuyers}
+              </p>
+              <Link
+                href="/sell"
+                className="inline-block bg-white text-primary-600 hover:bg-gray-50 font-bold px-6 py-3 rounded-lg transition-all text-base shadow-lg hover:shadow-xl hover:scale-105"
               >
-                Suchen
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </button>
+                {t.home.hero.offerItemNow}
+              </Link>
             </div>
-          </form>
+          </div>
 
-          {/* Quick Actions */}
-          <div className="flex flex-col sm:flex-row gap-4 justify-center">
-            <Link
-              href="/sell"
-              className="bg-white text-primary-600 hover:bg-gray-100 font-semibold px-8 py-3 rounded-lg transition-colors"
-            >
-              Uhr verkaufen
-            </Link>
-            <Link
-              href="/auctions"
-              className="border-2 border-white text-white hover:bg-white hover:text-primary-600 font-semibold px-8 py-3 rounded-lg transition-colors"
-            >
-              Uhren-Auktionen
-            </Link>
-            <Link
-              href="/search-alert"
-              className="bg-yellow-400 text-gray-900 hover:bg-yellow-500 font-semibold px-8 py-3 rounded-lg transition-colors"
-            >
-              Suchabo
-            </Link>
+          {/* Hero Image Placeholder */}
+          <div className="flex-1 max-w-2xl">
+            <div className="bg-white/10 backdrop-blur-sm rounded-lg border border-white/20 flex items-center justify-center py-5">
+              <div className="text-center px-4">
+                <h3 className="text-2xl md:text-3xl font-bold mb-1">
+                  {t.home.hero.title}
+                </h3>
+                <p className="text-primary-100 text-sm">
+                  {t.home.hero.subtitle}
+                </p>
+              </div>
+            </div>
           </div>
         </div>
       </div>

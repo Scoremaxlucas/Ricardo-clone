@@ -237,8 +237,9 @@ export async function POST(request: NextRequest) {
     })
 
     return NextResponse.json({
-      message: 'Verifizierung erfolgreich abgeschlossen',
-      verified: true
+      message: 'Ihre Verifizierung wurde eingereicht und wird nun von unserem Team geprüft. Sie erhalten eine Benachrichtigung, sobald die Verifizierung abgeschlossen ist.',
+      verified: false,
+      verificationStatus: 'pending'
     })
   } catch (error: any) {
     console.error('Error submitting verification:', error)

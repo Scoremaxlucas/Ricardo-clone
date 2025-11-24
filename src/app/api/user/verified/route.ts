@@ -1,16 +1,20 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 export async function GET(request: NextRequest) {
   try {
-    const userId = request.nextUrl.searchParams.get('userId')
+    const session = await getServerSession(authOptions)
     
-    if (!userId) {
+    if (!session?.user?.id) {
       return NextResponse.json(
-        { message: 'userId fehlt' },
-        { status: 400 }
+        { message: 'Nicht autorisiert' },
+        { status: 401 }
       )
     }
+
+    const userId = request.nextUrl.searchParams.get('userId') || session.user.id
 
     const user = await prisma.user.findUnique({
       where: { id: userId },

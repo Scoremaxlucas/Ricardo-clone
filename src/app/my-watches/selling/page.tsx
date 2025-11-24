@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Package, FileText, TrendingUp, CheckCircle, Wallet, Plus } from 'lucide-react'
+import { Package, FileText, TrendingUp, CheckCircle, Wallet, Plus, Tag } from 'lucide-react'
 
 export default function MySellingPage() {
   const { data: session, status } = useSession()
@@ -50,6 +50,14 @@ export default function MySellingPage() {
       href: '/my-watches/selling/fees',
       color: 'bg-yellow-100 text-yellow-600',
       count: 0
+    },
+    {
+      title: 'Preisvorschläge',
+      description: 'Erhaltene Preisvorschläge von Käufern',
+      icon: Tag,
+      href: '/my-watches/selling/offers',
+      color: 'bg-purple-100 text-purple-600',
+      count: 0
     }
   ]
 
@@ -91,7 +99,13 @@ export default function MySellingPage() {
               <Link
                 key={item.href}
                 href={item.href}
-                className="group bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
+                className="group bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow cursor-pointer relative"
+                onClick={(e) => {
+                  // Sicherstellen dass Link funktioniert
+                  if (!e.defaultPrevented) {
+                    router.push(item.href)
+                  }
+                }}
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className={`inline-flex p-3 rounded-lg ${item.color}`}>

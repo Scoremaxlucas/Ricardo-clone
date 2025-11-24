@@ -59,12 +59,10 @@ export default function AdminInvoicesPage() {
       return
     }
 
-    // Prüfe Admin-Status
-    const userEmail = session?.user?.email?.toLowerCase()
-    const isAdminEmail = userEmail === 'admin@admin.ch'
+    // Prüfe Admin-Status nur aus Session
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
 
-    if (!isAdminInSession && !isAdminEmail) {
+    if (!isAdminInSession) {
       router.push('/')
       return
     }

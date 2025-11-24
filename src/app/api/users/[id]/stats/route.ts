@@ -15,6 +15,30 @@ export async function GET(
       include: {
         purchases: true,
         sales: true,
+        watches: {
+          where: {
+            purchases: {
+              none: {} // Nur nicht verkaufte Artikel
+            }
+          },
+          include: {
+            bids: {
+              orderBy: {
+                amount: 'desc'
+              },
+              take: 1
+            },
+            categories: {
+              include: {
+                category: true
+              }
+            }
+          },
+          orderBy: {
+            createdAt: 'desc'
+          }
+          // Alle aktiven Angebote, nicht nur 10
+        },
         receivedReviews: {
           include: {
             reviewer: {
@@ -24,12 +48,34 @@ export async function GET(
                 image: true,
                 nickname: true
               }
+            },
+            purchase: {
+              select: {
+                id: true,
+                watch: {
+                  select: {
+                    id: true,
+                    title: true
+                  }
+                }
+              }
+            },
+            sale: {
+              select: {
+                id: true,
+                watch: {
+                  select: {
+                    id: true,
+                    title: true
+                  }
+                }
+              }
             }
           },
           orderBy: {
             createdAt: 'desc'
-          },
-          take: 10 // Letzte 10 Bewertungen
+          }
+          // Alle Bewertungen, nicht nur 10
         }
       }
     })
@@ -54,12 +100,58 @@ export async function GET(
       ? Math.round((positiveReviews.length / relevantReviews) * 100)
       : null // Keine Bewertungen oder nur neutrale
 
+    // Alle aktiven Angebote des Verkäufers
+    const activeWatches = user.watches.map(watch => {
+      const highestBid = watch.bids[0]
+      const currentPrice = highestBid ? highestBid.amount : watch.price
+      let images: string[] = []
+      try {
+        if (watch.images) {
+          images = JSON.parse(watch.images)
+        }
+      } catch (e) {
+        images = []
+      }
+      return {
+        id: watch.id,
+        title: watch.title,
+        price: currentPrice,
+        buyNowPrice: watch.buyNowPrice,
+        isAuction: watch.isAuction,
+        auctionEnd: watch.auctionEnd,
+        images: images,
+        createdAt: watch.createdAt,
+        categories: watch.categories.map(wc => wc.category.name)
+      }
+    })
+
+    // Bewertungen der letzten 12 Monate
+    const twelveMonthsAgo = new Date()
+    twelveMonthsAgo.setMonth(twelveMonthsAgo.getMonth() - 12)
+    const recentReviews = user.receivedReviews.filter(r => new Date(r.createdAt) >= twelveMonthsAgo)
+    const recentPositive = recentReviews.filter(r => r.rating === 'positive').length
+    const recentNeutral = recentReviews.filter(r => r.rating === 'neutral').length
+    const recentNegative = recentReviews.filter(r => r.rating === 'negative').length
+
     return NextResponse.json({
+      name: user.name,
+      verified: user.verified || false,
+      phoneVerified: user.phoneVerified || false,
+      activeListings: user.watches.length,
+      reviewStats: {
+        total: allReviews.length,
+        averageRating: positivePercentage ? positivePercentage / 20 : 5, // Konvertiere zu 0-5 Skala
+        positivePercentage: positivePercentage || 100
+      },
+      activeWatches: activeWatches,
       user: {
         id: user.id,
         name: user.name,
         nickname: user.nickname,
-        image: user.image
+        image: user.image,
+        city: user.city,
+        postalCode: user.postalCode,
+        createdAt: user.createdAt
       },
       stats: {
         totalPurchases: user.purchases.length,
@@ -68,14 +160,19 @@ export async function GET(
         positiveReviews: positiveReviews.length,
         neutralReviews: neutralReviews.length,
         negativeReviews: negativeReviews.length,
-        positivePercentage // null wenn keine relevanten Bewertungen
+        positivePercentage,
+        recentPositive,
+        recentNeutral,
+        recentNegative
       },
       recentReviews: user.receivedReviews.map(review => ({
         id: review.id,
         rating: review.rating,
         comment: review.comment,
         createdAt: review.createdAt,
-        reviewer: review.reviewer
+        reviewer: review.reviewer,
+        watchId: review.purchase?.watch?.id || review.sale?.watch?.id || null,
+        watchTitle: review.purchase?.watch?.title || review.sale?.watch?.title || null
       }))
     })
   } catch (error: any) {

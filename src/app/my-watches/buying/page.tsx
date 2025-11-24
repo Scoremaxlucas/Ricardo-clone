@@ -4,209 +4,267 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Package, Gavel, Tag, CheckCircle, Wallet, Heart, AlertCircle, Loader2 } from 'lucide-react'
+import { Package, Gavel, Tag, ShoppingBag, Star, Search, Settings } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 
-interface FavoriteWatch {
+interface Bid {
+  id: string
+  amount: number
+  createdAt: string
+  watch: {
   id: string
   title: string
   brand: string
   model: string
-  price: number
-  images: string[]
-  createdAt: string
+    images: string[]
+    auctionEnd: string | null
+    price: number
+  }
+}
+
+interface Purchase {
+  id: string
+  price?: number
+  purchasedAt?: string
+  createdAt?: string
+  watch: {
+    id: string
+    title: string
+    brand?: string
+    model?: string
+    images: string[]
+    price: number
+    finalPrice?: number
+  }
 }
 
 export default function MyBuyingPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const [favorites, setFavorites] = useState<FavoriteWatch[]>([])
-  const [loadingFavorites, setLoadingFavorites] = useState(true)
-  const [bidsCount, setBidsCount] = useState(0)
-  const [isVerified, setIsVerified] = useState<boolean | null>(null)
-  const [verificationInProgress, setVerificationInProgress] = useState(false)
-
-  if (status === 'loading') {
-    return <div className="flex min-h-screen items-center justify-center">Lädt...</div>
-  }
+  const [loading, setLoading] = useState(true)
+  const [stats, setStats] = useState({
+    bidding: 0,
+    offers: 0,
+    purchased: 0,
+    reviews: 0,
+    favorites: 0,
+    searches: 0
+  })
 
   useEffect(() => {
-    const loadFavorites = async () => {
-      if (!session?.user) return
+    if (status === 'unauthenticated') {
+      router.push('/login?redirect=/my-watches/buying')
+      return
+    }
+
+    if (status === 'authenticated' && session?.user) {
+      loadStats()
+    }
+  }, [status, session, router])
+
+  const loadStats = async () => {
+    try {
+      setLoading(true)
+      
+      // Lade Gebote
       try {
-        const res = await fetch('/api/favorites')
-        if (res.ok) {
-          const data = await res.json()
-          setFavorites((data.favorites || []).map((f: any) => f.watch))
+        const bidsRes = await fetch('/api/bids/my-bids')
+        if (bidsRes.ok) {
+          const bidsData = await bidsRes.json()
+          const activeBids = (bidsData.bids || []).filter((bid: any) => {
+            if (!bid.watch?.auctionEnd) return false
+            return new Date(bid.watch.auctionEnd) > new Date()
+          })
+          setStats(prev => ({ ...prev, bidding: activeBids.length }))
+        }
+      } catch (error) {
+        console.error('Error loading bids:', error)
+      }
+
+      // Lade Preisvorschläge
+      try {
+        const offersRes = await fetch('/api/offers?type=sent')
+        if (offersRes.ok) {
+          const offersData = await offersRes.json()
+          setStats(prev => ({ ...prev, offers: (offersData.offers || []).length }))
+        }
+      } catch (error) {
+        console.error('Error loading offers:', error)
+      }
+
+      // Lade gekaufte Artikel
+      try {
+        const purchasesRes = await fetch('/api/purchases/my-purchases')
+        if (purchasesRes.ok) {
+          const purchasesData = await purchasesRes.json()
+          setStats(prev => ({ ...prev, purchased: (purchasesData.purchases || []).length }))
+        }
+      } catch (error) {
+        console.error('Error loading purchases:', error)
+      }
+
+      // Lade Favoriten
+      try {
+        const favoritesRes = await fetch('/api/favorites')
+        if (favoritesRes.ok) {
+          const favoritesData = await favoritesRes.json()
+          setStats(prev => ({ ...prev, favorites: (favoritesData.favorites || []).length }))
         }
       } catch (error) {
         console.error('Error loading favorites:', error)
-      } finally {
-        setLoadingFavorites(false)
       }
-    }
 
-    const loadBidsCount = async () => {
-      if (!session?.user) return
+      // Lade Suchaufträge
       try {
-        const res = await fetch('/api/bids/my-bids')
-        if (res.ok) {
-          const data = await res.json()
-          // Zähle nur aktive Gebote (Auktion noch läuft)
-          const activeBids = (data.bids || []).filter((bid: any) => 
-            bid.watch.auctionActive
+        const subscriptionsRes = await fetch('/api/search-subscriptions')
+        if (subscriptionsRes.ok) {
+          const subscriptionsData = await subscriptionsRes.json()
+          const activeSubscriptions = (subscriptionsData.subscriptions || []).filter(
+            (sub: any) => sub.isActive
           )
-          setBidsCount(activeBids.length)
+          setStats(prev => ({ ...prev, searches: activeSubscriptions.length }))
         }
       } catch (error) {
-        console.error('Error loading bids count:', error)
-      }
-    }
-
-    const loadVerificationStatus = async () => {
-      if (!session?.user) return
-      try {
-        const res = await fetch('/api/verification/get')
-        if (res.ok) {
-          const data = await res.json()
-          setIsVerified(data.verified || false)
-          // Prüfe ob Verifizierung in Bearbeitung ist
-          if (!data.verified && data.user && (
-            data.user.street || data.user.dateOfBirth || data.user.paymentMethods
-          )) {
-            setVerificationInProgress(true)
-          }
-        }
-      } catch (error) {
-        console.error('Error loading verification status:', error)
-      }
-    }
-
-    if (session?.user) {
-      loadFavorites()
-      loadBidsCount()
-      loadVerificationStatus()
-    }
-  }, [session?.user])
-
-  const removeFavorite = async (watchId: string) => {
-    try {
-      const res = await fetch(`/api/favorites/${watchId}`, { method: 'DELETE' })
-      if (res.ok) {
-        setFavorites(prev => prev.filter(w => w.id !== watchId))
+        console.error('Error loading search subscriptions:', error)
       }
     } catch (error) {
-      console.error('Error removing favorite:', error)
+      console.error('Error loading stats:', error)
+    } finally {
+      setLoading(false)
     }
   }
 
   if (status === 'loading') {
-    return <div className="flex min-h-screen items-center justify-center">Lädt...</div>
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Lädt...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
-  if (!session) {
-    router.push('/login')
-    return null
+  if (status === 'unauthenticated') {
+    router.push('/login?redirect=/my-watches/buying')
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <p className="text-gray-600">Weiterleitung zur Anmeldung...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
+  if (!session || status !== 'authenticated') {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center py-20">
+          <div className="text-center">
+            <p className="text-gray-600">Bitte anmelden...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   const menuItems = [
     {
       title: 'Am Bieten',
-      description: 'Ihre laufenden Gebote',
+      description: 'Ihre aktiven Gebote',
       icon: Gavel,
       href: '/my-watches/buying/bidding',
-      color: 'bg-blue-100 text-blue-600',
-      count: bidsCount
+      color: 'bg-purple-100 text-purple-600',
+      count: stats.bidding
     },
     {
       title: 'Preisvorschläge',
-      description: 'Ihre gemachten Angebote',
+      description: 'Ihre abgegebenen Preisvorschläge',
       icon: Tag,
       href: '/my-watches/buying/offers',
-      color: 'bg-purple-100 text-purple-600',
-      count: 0
+      color: 'bg-blue-100 text-blue-600',
+      count: stats.offers
     },
     {
       title: 'Gekauft',
-      description: 'Ihre gekauften Uhren',
-      icon: CheckCircle,
+      description: 'Ihre gekauften Artikel',
+      icon: ShoppingBag,
       href: '/my-watches/buying/purchased',
       color: 'bg-green-100 text-green-600',
-      count: 0 // TODO: Anzahl der Purchases laden
+      count: stats.purchased
     },
     {
-      title: 'Gebühren',
-      description: 'Übersicht der fälligen Gebühren',
-      icon: Wallet,
-      href: '/my-watches/buying/fees',
+      title: 'Bewertungen',
+      description: 'Bewertungen für gekaufte Artikel',
+      icon: Star,
+      href: '/my-watches/buying/reviews',
+      color: 'bg-pink-100 text-pink-600',
+      count: stats.reviews
+    },
+    {
+      title: 'Beobachten',
+      description: 'Ihre beobachteten Artikel',
+      icon: Package,
+      href: '/favorites',
       color: 'bg-yellow-100 text-yellow-600',
-      count: 0
+      count: stats.favorites
+    },
+    {
+      title: 'Suchaufträge',
+      description: 'Gespeicherte Suchanfragen',
+      icon: Search,
+      href: '/my-watches/buying/search-subscriptions',
+      color: 'bg-indigo-100 text-indigo-600',
+      count: stats.searches
     }
   ]
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 py-12">
-        <div className="mb-6">
-          <Link
-            href="/"
-            className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium"
-          >
-            ← Zurück zur Hauptseite
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Breadcrumb */}
+        <div className="text-sm text-gray-600 mb-4">
+          <Link href="/" className="text-primary-600 hover:text-primary-700">
+            Startseite
           </Link>
+          <span className="mx-2">›</span>
+          <span>Mein Kaufen</span>
         </div>
 
-        <div className="flex items-center mb-8">
-          <Package className="h-8 w-8 mr-3 text-primary-600" />
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Mein Kaufen
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Verwalten Sie Ihre Käufe und Gebote
-            </p>
+        {/* Header */}
+        <div className="flex items-center justify-between mb-8">
+          <div className="flex items-center gap-3">
+            <div className="p-2 bg-primary-100 rounded-lg">
+              <Settings className="h-6 w-6 text-primary-600" />
+            </div>
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Mein Kaufen</h1>
+              <p className="text-gray-600 mt-1">Verwalten Sie Ihre Käufe und Gebote</p>
+            </div>
           </div>
         </div>
 
-        {/* Verifizierungs-Button */}
-        {(isVerified === false || isVerified === null) && (
-          <div className="mb-6">
-            {verificationInProgress ? (
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
-                <div className="flex items-center">
-                  <Loader2 className="h-5 w-5 text-yellow-600 mr-2 animate-spin" />
-                  <div>
-                    <p className="text-yellow-800 font-medium">
-                      Validierung in Bearbeitung
-                    </p>
-                    <p className="text-sm text-yellow-700 mt-1">
-                      Ihre Verifizierung wird derzeit bearbeitet.
-                    </p>
-                  </div>
-                </div>
-              </div>
-            ) : (
-              <Link
-                href="/verification"
-                className="inline-flex items-center px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium transition-colors"
-              >
-                <AlertCircle className="h-5 w-5 mr-2" />
-                Validierungsprozess starten
-              </Link>
-            )}
-          </div>
-        )}
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Dashboard Karten */}
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
           {menuItems.map((item) => {
             const Icon = item.icon
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="group bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-shadow"
+                className="group bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-all cursor-pointer relative border border-gray-200 hover:border-primary-300"
               >
                 <div className="flex items-start justify-between mb-4">
                   <div className={`inline-flex p-3 rounded-lg ${item.color}`}>
@@ -227,74 +285,6 @@ export default function MyBuyingPage() {
               </Link>
             )
           })}
-        </div>
-
-        {/* Favoriten-Sektion */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-8">
-          <div className="flex items-center mb-4">
-            <Heart className="h-6 w-6 mr-2 text-red-500" />
-            <h2 className="text-xl font-semibold text-gray-900">
-              Meine Favoriten
-            </h2>
-          </div>
-          {loadingFavorites ? (
-            <div className="text-center py-8 text-gray-500">Lädt Favoriten...</div>
-          ) : favorites.length === 0 ? (
-            <div className="text-center py-8 text-gray-500">
-              Noch keine Favoriten vorhanden. Durchstöbern Sie die <Link href="/" className="text-primary-600 hover:underline">Angebote</Link> und markieren Sie Uhren als Favorit.
-            </div>
-          ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {favorites.map((watch) => (
-                <div key={watch.id} className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow">
-                  {watch.images && watch.images.length > 0 ? (
-                    <img src={watch.images[0]} alt={watch.title} className="w-full h-48 object-cover" />
-                  ) : (
-                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">Kein Bild</div>
-                  )}
-                  <div className="p-4">
-                    <div className="text-sm text-primary-600">{watch.brand}</div>
-                    <div className="font-semibold text-gray-900 line-clamp-2">{watch.title}</div>
-                    <div className="text-gray-700 mt-1 font-semibold">CHF {new Intl.NumberFormat('de-CH').format(watch.price)}</div>
-                    <div className="mt-4 flex gap-2">
-                      <Link href={`/products/${watch.id}`} className="flex-1 px-3 py-2 bg-primary-600 text-white rounded text-center text-sm hover:bg-primary-700">
-                        Ansehen
-                      </Link>
-                      <button
-                        onClick={() => removeFavorite(watch.id)}
-                        className="px-3 py-2 bg-red-500 text-white rounded text-sm hover:bg-red-600"
-                        title="Aus Favoriten entfernen"
-                      >
-                        <Heart className="h-4 w-4 fill-current" />
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h2 className="text-xl font-semibold text-gray-900 mb-4">
-            Schnellzugriff
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <Link
-              href="/"
-              className="flex items-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-300 hover:bg-gray-50 transition-colors"
-            >
-              <Package className="h-5 w-5 mr-3 text-primary-600" />
-              <span className="font-medium text-gray-900">Uhren durchstöbern</span>
-            </Link>
-            <Link
-              href="/auctions"
-              className="flex items-center p-4 border-2 border-gray-200 rounded-lg hover:border-primary-300 hover:bg-gray-50 transition-colors"
-            >
-              <Gavel className="h-5 w-5 mr-3 text-primary-600" />
-              <span className="font-medium text-gray-900">Auktionen ansehen</span>
-            </Link>
-          </div>
         </div>
       </div>
       <Footer />

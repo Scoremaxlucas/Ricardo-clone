@@ -106,12 +106,15 @@ export async function POST(request: NextRequest) {
               })
 
               if (boosterPrice && boosterPrice.price > 0) {
+                // Preis ist bereits inkl. MwSt - berechne Netto und MwSt-Betrag
                 const vatRate = 0.081 // 8.1% MwSt
-                const subtotal = boosterPrice.price
-                const vatAmount = subtotal * vatRate
+                const total = boosterPrice.price // Total ist der Preis inkl. MwSt
+                const subtotal = total / (1 + vatRate) // Netto-Preis ohne MwSt
+                const vatAmount = total - subtotal // MwSt-Betrag
                 // Schweizer Rappenrundung auf 0.05
-                const totalBeforeRounding = subtotal + vatAmount
-                const total = Math.ceil(totalBeforeRounding * 20) / 20
+                const roundedSubtotal = Math.floor(subtotal * 20) / 20
+                const roundedVatAmount = Math.ceil(vatAmount * 20) / 20
+                const roundedTotal = roundedSubtotal + roundedVatAmount
 
                 // Generiere Rechnungsnummer
                 const year = new Date().getFullYear()
@@ -140,26 +143,35 @@ export async function POST(request: NextRequest) {
                     invoiceNumber,
                     sellerId: auction.sellerId,
                     saleId: null, // Kein Verkauf, nur Booster
-                    subtotal,
+                    subtotal: roundedSubtotal,
                     vatRate,
-                    vatAmount,
-                    total,
+                    vatAmount: roundedVatAmount,
+                    total: roundedTotal,
                     status: 'pending',
-                    dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000), // 30 Tage Frist
+                    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist (wie Ricardo)
                     items: {
                       create: [{
                         watchId: auction.id,
                         description: `Booster: ${boosterPrice.name} (Verlängerung)`,
                         quantity: 1,
-                        price: boosterPrice.price,
-                        total: boosterPrice.price
+                        price: roundedSubtotal,
+                        total: roundedSubtotal
                       }]
                     }
                   }
                 })
 
                 boosterInvoiceCount++
-                console.log(`[auto-renew] Booster-Rechnung erstellt: ${invoiceNumber} für ${boosterPrice.name} (CHF ${total.toFixed(2)}) - Auktion ${auction.id}`)
+                console.log(`[auto-renew] Booster-Rechnung erstellt: ${invoiceNumber} für ${boosterPrice.name} (CHF ${roundedTotal.toFixed(2)} inkl. MwSt) - Auktion ${auction.id}`)
+
+                // RICARDO-STYLE: Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
+                try {
+                  const { sendInvoiceNotificationAndEmail } = await import('@/lib/invoice')
+                  await sendInvoiceNotificationAndEmail(invoice)
+                } catch (notificationError: any) {
+                  console.error(`[auto-renew] Fehler bei Benachrichtigung für Auktion ${auction.id}:`, notificationError)
+                  // Fehler sollte nicht die Rechnungserstellung verhindern
+                }
               }
             }
           } catch (boosterError: any) {
