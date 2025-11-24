@@ -98,8 +98,17 @@ export default function AdminUsersPage() {
       
       const data = await res.json()
       console.log('Users data received:', data)
-      console.log('Number of users:', data.length)
-      setUsers(Array.isArray(data) ? data : [])
+      console.log('Number of users:', Array.isArray(data) ? data.length : 'Not an array')
+      console.log('First user:', Array.isArray(data) && data.length > 0 ? data[0] : 'No users')
+      
+      if (!Array.isArray(data)) {
+        console.error('API returned non-array data:', data)
+        alert('Fehler: API hat keine Liste zurückgegeben. Bitte Seite neu laden.')
+        setUsers([])
+        return
+      }
+      
+      setUsers(data)
     } catch (error: any) {
       console.error('Error loading users:', error)
       alert('Fehler beim Laden der Benutzer: ' + (error?.message || String(error)))
