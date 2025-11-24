@@ -30,6 +30,11 @@ interface Sale {
   buyerContactedAt: string | null
   contactWarningSentAt: string | null
   contactDeadlineMissed: boolean
+  // Dispute-Felder
+  disputeOpenedAt: string | null
+  disputeReason: string | null
+  disputeStatus: string | null
+  disputeResolvedAt: string | null
   watch: {
     id: string
     title: string
