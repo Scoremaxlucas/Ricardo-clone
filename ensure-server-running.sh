@@ -41,14 +41,43 @@ fi
 echo "🚀 Starte Server..."
 cd "$(dirname "$0")"
 
-# Stelle sicher, dass .env existiert
+# Stelle sicher, dass .env existiert und kritische Variablen gesetzt sind
 if [ ! -f .env ]; then
-    echo "📝 Erstelle .env Datei..."
+    echo "⚠️  .env Datei nicht gefunden. Erstelle Minimal-Konfiguration für Development..."
+    echo "   WICHTIG: Diese Konfiguration ist nur für Development gedacht!"
     cat > .env << EOF
+# Development-Konfiguration
+# WICHTIG: Für Production müssen diese Werte geändert werden!
 DATABASE_URL=file:./prisma/dev.db
 NEXTAUTH_SECRET=development-secret-key-change-in-production
 NEXTAUTH_URL=http://localhost:3002
 EOF
+    echo "✅ .env Datei erstellt (Development-Modus)"
+elif [ -f .env ]; then
+    # Prüfe ob kritische Variablen fehlen
+    MISSING_VARS=()
+    
+    if ! grep -q "^DATABASE_URL=" .env 2>/dev/null; then
+        MISSING_VARS+=("DATABASE_URL")
+    fi
+    
+    if ! grep -q "^NEXTAUTH_SECRET=" .env 2>/dev/null; then
+        MISSING_VARS+=("NEXTAUTH_SECRET")
+    fi
+    
+    if ! grep -q "^NEXTAUTH_URL=" .env 2>/dev/null; then
+        MISSING_VARS+=("NEXTAUTH_URL")
+    fi
+    
+    if [ ${#MISSING_VARS[@]} -gt 0 ]; then
+        echo "⚠️  Fehlende Umgebungsvariablen in .env: ${MISSING_VARS[*]}"
+        echo "   Bitte fügen Sie diese manuell hinzu oder verwenden Sie .env.example als Vorlage"
+    fi
+    
+    # Warnung wenn Development-Secret verwendet wird (nur Warnung, keine Änderung)
+    if grep -q "^NEXTAUTH_SECRET=development-secret-key-change-in-production" .env 2>/dev/null; then
+        echo "⚠️  WARNUNG: Development-Secret in .env erkannt. Für Production bitte ändern!"
+    fi
 fi
 
 # Starte Server im Hintergrund

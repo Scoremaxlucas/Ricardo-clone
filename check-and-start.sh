@@ -17,27 +17,36 @@ fi
 echo "⚠️  Server läuft nicht. Starte Server..."
 echo ""
 
-# Starte Server im Hintergrund
-./start-server.sh > /dev/null 2>&1 &
+# Starte Server direkt mit npm run dev im Hintergrund
+# (start-server.sh hat interaktive Prompts, die im Hintergrund nicht funktionieren)
+echo "🚀 Starte Development Server im Hintergrund..."
+nohup npm run dev > server.log 2>&1 &
+SERVER_PID=$!
 
 # Warte kurz bis Server gestartet wurde
 sleep 5
 
-# Prüfe ob Server gestartet wurde und hole die tatsächliche PID
+# Prüfe ob Server gestartet wurde
 if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    # Hole die tatsächliche PID des Prozesses auf Port 3002 (nur erste PID falls mehrere vorhanden)
-    SERVER_PID=$(lsof -ti:$PORT 2>/dev/null | head -1)
+    # Hole die tatsächliche PID des Prozesses auf Port 3002
+    ACTUAL_PID=$(lsof -ti:$PORT 2>/dev/null | head -1)
     echo ""
     echo "✅ Server erfolgreich gestartet!"
     echo "🌐 http://localhost:$PORT"
     echo ""
-    if [ -n "$SERVER_PID" ]; then
-        echo "PID: $SERVER_PID"
-        echo "Zum Beenden: kill $SERVER_PID"
+    if [ -n "$ACTUAL_PID" ]; then
+        echo "PID: $ACTUAL_PID"
+        echo "Zum Beenden: kill $ACTUAL_PID"
     fi
+    echo ""
+    echo "📋 Server-Logs: tail -f server.log"
 else
     echo ""
     echo "❌ Server konnte nicht gestartet werden"
+    echo ""
+    echo "📋 Letzte Log-Ausgabe:"
+    tail -20 server.log 2>/dev/null || echo "Keine Logs verfügbar"
+    echo ""
     echo "Bitte manuell starten: npm run dev"
     exit 1
 fi
