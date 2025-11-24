@@ -20,6 +20,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
+    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+    
     // Prüfe ob User Admin ist (per ID oder E-Mail)
     let user = null
     if (session.user.id) {
@@ -40,16 +43,20 @@ export async function GET(request: NextRequest) {
       console.log('User found by email:', { email: user?.email, isAdmin: user?.isAdmin })
     }
 
-    // Prüfe Admin-Status nur aus Datenbank
+    // Prüfe Admin-Status: Session ODER Datenbank
     const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
+    const isAdmin = isAdminInSession || isAdminInDb
 
     console.log('Admin check:', { 
-      isAdminInDb, 
+      isAdminInSession,
+      isAdminInDb,
+      isAdmin,
       userIsAdmin: user?.isAdmin,
-      userEmail: session.user.email 
+      userEmail: session.user.email,
+      sessionUserId: session.user.id
     })
 
-    if (!isAdminInDb) {
+    if (!isAdmin) {
       console.log('Access denied - not admin')
       return NextResponse.json(
         { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
