@@ -20,11 +20,17 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
+    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+    
     // Prüfe ob User Admin ist (per ID oder E-Mail)
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isAdmin: true, email: true }
-    })
+    let user = null
+    if (session.user.id) {
+      user = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { isAdmin: true, email: true }
+      })
+    }
 
     // Falls nicht gefunden per ID, versuche per E-Mail
     let adminUser = user
@@ -35,10 +41,11 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Prüfe Admin-Status nur aus Datenbank
+    // Prüfe Admin-Status: Session ODER Datenbank
     const isAdminInDb = adminUser?.isAdmin === true || adminUser?.isAdmin === 1
+    const isAdmin = isAdminInSession || isAdminInDb
 
-    if (!isAdminInDb) {
+    if (!isAdmin) {
       return NextResponse.json(
         { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
         { status: 403 }
