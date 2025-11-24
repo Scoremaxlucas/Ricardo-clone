@@ -54,7 +54,7 @@ const nextConfig = {
       config.resolve = config.resolve || {}
       const existingFallback = config.resolve.fallback
       config.resolve.fallback = {
-        ...(existingFallback && typeof existingFallback === 'object' ? existingFallback : {}),
+        ...(existingFallback !== null && typeof existingFallback === 'object' ? existingFallback : {}),
         fs: false,
         net: false,
         tls: false,
@@ -68,9 +68,9 @@ const nextConfig = {
       const existingCacheGroups = existingSplitChunks?.cacheGroups
       
       config.optimization.splitChunks = {
-        ...(existingSplitChunks && typeof existingSplitChunks === 'object' ? existingSplitChunks : {}),
+        ...(existingSplitChunks !== null && typeof existingSplitChunks === 'object' ? existingSplitChunks : {}),
         cacheGroups: {
-          ...(existingCacheGroups && typeof existingCacheGroups === 'object' ? existingCacheGroups : {}),
+          ...(existingCacheGroups !== null && typeof existingCacheGroups === 'object' ? existingCacheGroups : {}),
           tensorflow: {
             test: /[\\/]node_modules[\\/]@tensorflow[\\/]/,
             name: 'tensorflow',
