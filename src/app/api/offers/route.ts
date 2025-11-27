@@ -62,8 +62,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Angebot nicht gefunden' }, { status: 404 })
     }
 
-    // Prüfe ob bereits verkauft
-    if (watch.purchases.length > 0) {
+    // Prüfe ob bereits verkauft (nur aktive Purchases zählen)
+    // RICARDO-STYLE: Stornierte Purchases zählen nicht - Artikel kann wieder Preisangebote erhalten
+    const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
+    if (activePurchases.length > 0) {
       return NextResponse.json(
         { message: 'Dieses Angebot wurde bereits verkauft' },
         { status: 400 }

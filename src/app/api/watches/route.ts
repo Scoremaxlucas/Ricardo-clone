@@ -106,10 +106,22 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
 
     const where: any = {
-      // Verkaufte Uhren ausschließen
-      purchases: {
-        none: {}
-      }
+      // Verkaufte Uhren ausschließen (nur nicht-stornierte Purchases zählen als "verkauft")
+      // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
+      OR: [
+        {
+          purchases: {
+            none: {}
+          }
+        },
+        {
+          purchases: {
+            every: {
+              status: 'cancelled'
+            }
+          }
+        }
+      ]
       // seller wird automatisch durch Prisma gefiltert (nur existierende User)
     }
     
@@ -230,10 +242,21 @@ export async function GET(request: NextRequest) {
     const total = await prisma.watch.count({ 
       where: {
         ...where,
-        // Verkaufe Uhren ausschließen
-        purchases: {
-          none: {}
-        }
+        // Verkaufe Uhren ausschließen (nur nicht-stornierte Purchases zählen)
+        OR: [
+          {
+            purchases: {
+              none: {}
+            }
+          },
+          {
+            purchases: {
+              every: {
+                status: 'cancelled'
+              }
+            }
+          }
+        ]
       }
     })
 

@@ -6,6 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Camera, X } from 'lucide-react'
 import Image from 'next/image'
+import toast from 'react-hot-toast'
 
 export default function ProfilePage() {
   const { data: session, status, update } = useSession()
@@ -115,13 +116,13 @@ export default function ProfilePage() {
     if (file) {
       // Prüfe Dateityp
       if (!file.type.startsWith('image/')) {
-        alert('Bitte wählen Sie ein Bild aus')
+        toast.error('Bitte wählen Sie ein Bild aus')
         return
       }
 
       // Prüfe Dateigröße (max 5MB)
       if (file.size > 5 * 1024 * 1024) {
-        alert('Das Bild ist zu groß. Maximale Größe: 5MB')
+        toast.error('Das Bild ist zu groß. Maximale Größe: 5MB')
         return
       }
 
@@ -152,7 +153,7 @@ export default function ProfilePage() {
         localStorage.setItem('profileImage', base64Image)
       }
       
-      alert('Profilbild erfolgreich aktualisiert!')
+      toast.success('Profilbild erfolgreich aktualisiert!')
       setIsUploading(false)
     }
     reader.readAsDataURL(file)
@@ -167,7 +168,7 @@ export default function ProfilePage() {
       localStorage.removeItem('profileImage')
     }
     
-    alert('Profilbild entfernt')
+    toast.success('Profilbild entfernt')
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -179,7 +180,7 @@ export default function ProfilePage() {
 
   const handleSaveProfile = async () => {
     if (!formData.name.trim()) {
-      alert('Bitte geben Sie einen Namen ein')
+      toast.error('Bitte geben Sie einen Namen ein')
       return
     }
 
@@ -201,17 +202,17 @@ export default function ProfilePage() {
       if (response.ok) {
         // Session aktualisieren, damit nickname sofort verfügbar ist
         await update()
-        alert('Profil erfolgreich gespeichert!')
+        toast.success('Profil erfolgreich gespeichert!')
         // Kurz warten, dann zur Hauptseite
         setTimeout(() => {
           window.location.href = '/'
         }, 1000)
       } else {
-        alert(data.message || 'Ein Fehler ist aufgetreten')
+        toast.error(data.message || 'Ein Fehler ist aufgetreten')
       }
     } catch (error) {
       console.error('Error saving profile:', error)
-      alert('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
+      toast.error('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
     } finally {
       setIsSaving(false)
     }

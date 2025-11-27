@@ -39,7 +39,9 @@ export async function GET(
 
     const now = new Date()
     const auctionEndDate = watch.auctionEnd ? new Date(watch.auctionEnd) : null
-    const isSold = watch.purchases.length > 0
+    // RICARDO-STYLE: Nur nicht-stornierte Purchases zählen als "verkauft"
+    const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
+    const isSold = activePurchases.length > 0
     const isExpired = auctionEndDate ? auctionEndDate <= now : false
     const isActive = !isSold && (!auctionEndDate || auctionEndDate > now)
 
@@ -48,7 +50,7 @@ export async function GET(
       isExpired,
       isActive,
       auctionEnd: watch.auctionEnd,
-      purchase: watch.purchases[0] || null,
+      purchase: activePurchases[0] || null, // Nur nicht-stornierte Purchases
       highestBid: watch.bids[0] || null
     })
   } catch (error: any) {

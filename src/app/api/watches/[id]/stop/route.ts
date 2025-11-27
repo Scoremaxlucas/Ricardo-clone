@@ -43,8 +43,10 @@ export async function POST(
       )
     }
 
-    // Prüfe ob bereits ein Kauf oder Verkauf stattgefunden hat
-    if (watch.purchases.length > 0 || watch.sales.length > 0) {
+    // Prüfe ob bereits ein aktiver Kauf oder Verkauf stattgefunden hat
+    // RICARDO-STYLE: Stornierte Purchases zählen nicht
+    const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
+    if (activePurchases.length > 0 || watch.sales.length > 0) {
       return NextResponse.json(
         { message: 'Das Angebot kann nicht gestoppt werden, da bereits ein Kauf stattgefunden hat' },
         { status: 400 }

@@ -38,8 +38,10 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prüfe ob bereits ein Purchase für diese Uhr existiert (nur ein Kauf pro Uhr möglich)
-    if (watch.purchases.length > 0) {
+    // Prüfe ob bereits ein aktiver Purchase für diese Uhr existiert (nur ein Kauf pro Uhr möglich)
+    // RICARDO-STYLE: Stornierte Purchases zählen nicht - Artikel kann wieder gekauft werden
+    const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
+    if (activePurchases.length > 0) {
       return NextResponse.json(
         { message: 'Diese Uhr wurde bereits verkauft' },
         { status: 400 }

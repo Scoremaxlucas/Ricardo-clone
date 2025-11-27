@@ -9,7 +9,11 @@ export async function GET() {
 
     const watches = await prisma.watch.findMany({
       where: {
-        purchases: { none: {} },
+        // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
+        OR: [
+          { purchases: { none: {} } },
+          { purchases: { every: { status: 'cancelled' } } }
+        ],
         createdAt: {
           gte: sevenDaysAgo,
         },
@@ -40,7 +44,11 @@ export async function GET() {
 
     const previousWatches = await prisma.watch.findMany({
       where: {
-        purchases: { none: {} },
+        // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
+        OR: [
+          { purchases: { none: {} } },
+          { purchases: { every: { status: 'cancelled' } } }
+        ],
         createdAt: {
           gte: fourteenDaysAgo,
           lt: sevenDaysAgo,

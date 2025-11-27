@@ -62,7 +62,7 @@ export async function POST(
       )
     }
 
-    // Lade Purchase
+    // Lade Purchase mit allen relevanten Daten für Stornierung
     const purchase = await prisma.purchase.findUnique({
       where: { id },
       include: {
@@ -139,14 +139,31 @@ export async function POST(
     if (cancelPurchase) {
       updateData.status = 'cancelled'
       
-      // Storniere zugehörige Rechnung (falls vorhanden)
+      // 1. Storniere zugehörige Rechnung (falls vorhanden)
+      // Prüfe sowohl nach saleId als auch nach watchId in InvoiceItems
       try {
-        const invoice = await prisma.invoice.findFirst({
+        // Suche Invoice über saleId (Purchase-ID)
+        let invoice = await prisma.invoice.findFirst({
           where: {
             saleId: id,
             sellerId: purchase.watch.sellerId
           }
         })
+
+        // Falls nicht gefunden, suche über InvoiceItems mit watchId
+        if (!invoice) {
+          const invoiceItem = await prisma.invoiceItem.findFirst({
+            where: {
+              watchId: purchase.watchId
+            },
+            include: {
+              invoice: true
+            }
+          })
+          if (invoiceItem && invoiceItem.invoice.sellerId === purchase.watch.sellerId) {
+            invoice = invoiceItem.invoice
+          }
+        }
 
         if (invoice) {
           await prisma.invoice.update({
@@ -156,12 +173,61 @@ export async function POST(
               refundedAt: new Date()
             }
           })
-          console.log(`[dispute/resolve] Invoice ${invoice.id} wurde storniert`)
+          console.log(`[dispute/resolve] ✅ Invoice ${invoice.invoiceNumber} wurde storniert`)
         }
       } catch (invoiceError: any) {
-        console.error('[dispute/resolve] Fehler beim Stornieren der Invoice:', invoiceError)
+        console.error('[dispute/resolve] ❌ Fehler beim Stornieren der Invoice:', invoiceError)
         // Invoice-Fehler sollte nicht die Dispute-Lösung verhindern
       }
+
+      // 2. Lösche zugehörigen Sale (falls vorhanden)
+      try {
+        const sale = await prisma.sale.findFirst({
+          where: {
+            watchId: purchase.watchId,
+            sellerId: purchase.watch.sellerId,
+            buyerId: purchase.buyerId
+          }
+        })
+
+        if (sale) {
+          await prisma.sale.delete({
+            where: { id: sale.id }
+          })
+          console.log(`[dispute/resolve] ✅ Sale ${sale.id} wurde gelöscht`)
+        }
+      } catch (saleError: any) {
+        console.error('[dispute/resolve] ❌ Fehler beim Löschen des Sale:', saleError)
+        // Sale-Fehler sollte nicht die Dispute-Lösung verhindern
+      }
+
+      // 3. Stelle sicher, dass das Watch wieder verfügbar ist
+      // Prüfe ob es noch andere Purchases für dieses Watch gibt
+      try {
+        const otherPurchases = await prisma.purchase.findMany({
+          where: {
+            watchId: purchase.watchId,
+            id: { not: id }, // Andere Purchases ausschließen
+            status: { not: 'cancelled' } // Nur nicht-stornierte Purchases
+          }
+        })
+
+        // Wenn keine anderen aktiven Purchases existieren, ist das Watch wieder verfügbar
+        // Das Watch wird automatisch wieder verfügbar, da die Purchase-Beziehung entfernt wird
+        console.log(`[dispute/resolve] ℹ️  Watch ${purchase.watchId} ist wieder verfügbar (${otherPurchases.length} andere Purchases)`)
+      } catch (watchError: any) {
+        console.error('[dispute/resolve] ❌ Fehler beim Prüfen des Watch-Status:', watchError)
+      }
+
+      // 4. Setze Purchase-Felder zurück
+      updateData.paid = false
+      updateData.paidAt = null
+      updateData.paymentConfirmed = false
+      updateData.paymentConfirmedAt = null
+      updateData.itemReceived = false
+      updateData.itemReceivedAt = null
+      
+      console.log(`[dispute/resolve] ✅ Purchase ${id} wurde vollständig storniert`)
     }
 
     // Führe Update durch

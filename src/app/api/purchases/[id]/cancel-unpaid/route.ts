@@ -101,7 +101,13 @@ export async function POST(
     await prisma.purchase.update({
       where: { id },
       data: {
-        status: 'cancelled'
+        status: 'cancelled',
+        paid: false,
+        paidAt: null,
+        paymentConfirmed: false,
+        paymentConfirmedAt: null,
+        itemReceived: false,
+        itemReceivedAt: null
       }
     })
 
@@ -110,10 +116,28 @@ export async function POST(
       await prisma.invoice.update({
         where: { id: invoice.id },
         data: {
-          status: 'cancelled'
+          status: 'cancelled',
+          refundedAt: new Date()
         }
       })
       console.log(`[purchases/cancel-unpaid] ✅ Rechnung ${invoice.invoiceNumber} storniert (Rückerstattung der Kommission)`)
+    }
+
+    // RICARDO-STYLE: Watch wird automatisch wieder verfügbar
+    // Prüfe ob es noch andere aktive Purchases gibt
+    const otherActivePurchases = await prisma.purchase.findMany({
+      where: {
+        watchId: purchase.watchId,
+        id: { not: id },
+        status: { not: 'cancelled' }
+      }
+    })
+
+    if (otherActivePurchases.length === 0) {
+      console.log(`[purchases/cancel-unpaid] ✅ Watch ${purchase.watchId} ist wieder verfügbar (keine anderen aktiven Purchases)`)
+      
+      // Falls es eine Auktion war und autoRenew aktiv ist, könnte die Auktion verlängert werden
+      // Aber das sollte der Verkäufer selbst entscheiden, daher machen wir es hier nicht automatisch
     }
 
     // Benachrichtigung an Käufer

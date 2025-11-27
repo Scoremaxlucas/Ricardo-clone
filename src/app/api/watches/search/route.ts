@@ -37,10 +37,22 @@ export async function GET(request: NextRequest) {
     const now = new Date()
     
     // Intelligente Such-Logik: Hole alle verfügbaren Artikel
+    // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
     const whereClause: any = {
-      purchases: {
-        none: {} // Nur nicht verkaufte Produkte
-      }
+      OR: [
+        {
+          purchases: {
+            none: {} // Keine Purchases vorhanden
+          }
+        },
+        {
+          purchases: {
+            every: {
+              status: 'cancelled' // Alle Purchases sind storniert
+            }
+          }
+        }
+      ]
       // seller wird automatisch durch Prisma gefiltert (nur existierende User)
     }
     
@@ -311,15 +323,19 @@ export async function GET(request: NextRequest) {
     }
     
     // Filtere verkaufte Produkte raus (sicher mit Type-Check)
-    // WICHTIG: purchases wurde bereits durch whereClause gefiltert, daher sollten alle Watches purchases.length === 0 haben
+    // RICARDO-STYLE: Nur nicht-stornierte Purchases zählen als "verkauft"
     const beforePurchaseFilter = watches.length
     watches = watches.filter((watch: any) => {
       try {
-        const hasPurchases = watch.purchases && Array.isArray(watch.purchases) && watch.purchases.length > 0
-        if (hasPurchases) {
-          console.log(`[SEARCH] Filtering out watch ${watch.id} - has ${watch.purchases.length} purchases`)
+        if (!watch.purchases || !Array.isArray(watch.purchases)) {
+          return true // Keine Purchases = verfügbar
         }
-        return !hasPurchases
+        // Prüfe ob es aktive (nicht-stornierte) Purchases gibt
+        const activePurchases = watch.purchases.filter((p: any) => p.status !== 'cancelled')
+        if (activePurchases.length > 0) {
+          console.log(`[SEARCH] Filtering out watch ${watch.id} - has ${activePurchases.length} active purchases`)
+        }
+        return activePurchases.length === 0
       } catch (e) {
         console.error('Error filtering purchases:', e, 'watch:', watch?.id)
         return true // Bei Fehler: behalte das Produkt
@@ -644,7 +660,12 @@ export async function GET(request: NextRequest) {
       })
       const q = query.toLowerCase()
       watches = all
-        .filter(w => w.purchases.length === 0) // Nochmal filtern für Sicherheit
+        .filter(w => {
+          // RICARDO-STYLE: Nur nicht-stornierte Purchases zählen als "verkauft"
+          if (!w.purchases || !Array.isArray(w.purchases)) return true
+          const activePurchases = w.purchases.filter((p: any) => p.status !== 'cancelled')
+          return activePurchases.length === 0
+        })
         .filter(w => {
           // Wenn Kategorie angegeben, stelle sicher dass Produkt zur Kategorie gehört
           if (category) {

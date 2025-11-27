@@ -6,7 +6,9 @@
     <string>com.helvenda.watchdog</string>
     <key>ProgramArguments</key>
     <array>
-        <string>__PROJECT_DIR__/server-watchdog.sh</string>
+        <string>/bin/bash</string>
+        <string>-c</string>
+        <string>cd "__PROJECT_DIR__" && bash server-watchdog.sh</string>
     </array>
     <key>RunAtLoad</key>
     <true/>

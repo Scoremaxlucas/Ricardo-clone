@@ -43,8 +43,10 @@ export async function GET(_request: NextRequest) {
 
     const watchesWithImages = watches.map(w => {
       const images = w.images ? JSON.parse(w.images) : []
-      const isSold = w.purchases.length > 0
-      const buyer = isSold ? w.purchases[0].buyer : null
+      // RICARDO-STYLE: Nur nicht-stornierte Purchases zählen als "verkauft"
+      const activePurchases = w.purchases.filter(p => p.status !== 'cancelled')
+      const isSold = activePurchases.length > 0
+      const buyer = isSold ? activePurchases[0].buyer : null
       
       // Parse boosters
       let boosters: string[] = []
@@ -63,7 +65,7 @@ export async function GET(_request: NextRequest) {
       const highestBid = w.bids?.[0] // Höchstes Gebot
       
       if (isSold) {
-        finalPrice = highestBid?.amount || w.purchases[0].price || w.price
+        finalPrice = highestBid?.amount || activePurchases[0].price || w.price
       } else if (highestBid) {
         // Wenn noch nicht verkauft, aber Gebote vorhanden: zeige höchstes Gebot
         finalPrice = highestBid.amount

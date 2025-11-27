@@ -21,15 +21,14 @@ echo ""
 # (start-server.sh hat interaktive Prompts, die im Hintergrund nicht funktionieren)
 echo "🚀 Starte Development Server im Hintergrund..."
 nohup npm run dev > server.log 2>&1 &
-SERVER_PID=$!
 
 # Warte kurz bis Server gestartet wurde
 sleep 5
 
 # Prüfe ob Server gestartet wurde
 if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
-    # Hole die tatsächliche PID des Prozesses auf Port 3002
-    ACTUAL_PID=$(lsof -ti:$PORT 2>/dev/null | head -1)
+    # Hole die PID des Prozesses, der tatsächlich auf Port 3002 lauscht
+    ACTUAL_PID=$(lsof -Pti:$PORT -sTCP:LISTEN 2>/dev/null | head -1)
     echo ""
     echo "✅ Server erfolgreich gestartet!"
     echo "🌐 http://localhost:$PORT"

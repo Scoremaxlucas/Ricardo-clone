@@ -925,23 +925,61 @@ export async function POST(request: NextRequest) {
 
     // Suchabo-Matching: Prüfe ob der neue Artikel zu Suchabos passt
     try {
+      // Hole die Kategorien des Artikels aus der WatchCategory-Tabelle
+      const watchCategories = await prisma.watchCategory.findMany({
+        where: { watchId: watch.id },
+        include: { category: true }
+      })
+      
+      // Extrahiere die erste Kategorie-ID (für Kompatibilität)
+      const primaryCategoryId = watchCategories.length > 0 ? watchCategories[0].categoryId : null
+      
+      // Hole vollständige Watch-Daten für intelligente Suche
+      const fullWatch = await prisma.watch.findUnique({
+        where: { id: watch.id },
+        select: {
+          id: true,
+          title: true,
+          description: true,
+          brand: true,
+          model: true,
+          material: true,
+          movement: true,
+          referenceNumber: true,
+          price: true,
+          condition: true,
+          year: true,
+        }
+      })
+      
       const { checkSearchSubscriptions } = await import('@/lib/search-subscription-matcher')
       const matchCount = await checkSearchSubscriptions({
         id: watch.id,
-        title: watch.title,
+        title: fullWatch?.title || watch.title,
+        description: fullWatch?.description || null, // Beschreibung für intelligente Suche
         brand: watch.brand,
         model: watch.model,
+        material: fullWatch?.material || null,
+        movement: fullWatch?.movement || null,
+        referenceNumber: fullWatch?.referenceNumber || null,
         price: watch.price,
         condition: watch.condition,
         year: watch.year ? parseInt(watch.year.toString()) : null,
-        categoryId: watch.categoryId,
-        subcategoryId: watch.subcategoryId,
+        categoryId: primaryCategoryId,
+        subcategoryId: null, // subcategoryId wird aktuell nicht verwendet
+        categoryIds: watchCategories.map(wc => wc.categoryId), // Alle Kategorie-IDs für flexibleres Matching
       })
       if (matchCount > 0) {
         console.log(`[watches/create] ✓ ${matchCount} Suchabo-Match(es) gefunden und Benachrichtigungen gesendet`)
+      } else {
+        console.log(`[watches/create] ℹ️  Keine Suchabo-Matches gefunden für Artikel: ${watch.title}`)
       }
     } catch (matchError: any) {
       console.error('[watches/create] ❌ Fehler bei Suchabo-Matching:', matchError)
+      console.error('[watches/create] Match error details:', {
+        error: matchError.message,
+        stack: matchError.stack
+      })
       // Fehler sollte nicht die Watch-Erstellung verhindern
     }
 
