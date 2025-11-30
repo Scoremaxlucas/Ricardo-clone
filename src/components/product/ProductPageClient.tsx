@@ -49,18 +49,34 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
         <div className="lg:col-span-2 space-y-6">
           {/* Artikelbilder & Hauptinfos */}
           <div className="bg-white rounded-lg shadow-md p-6">
-            {/* Bild */}
+            {/* Bild oder Video */}
             <div className="relative mb-6">
-              {images.length > 0 ? (
-                <img src={images[0]} alt={watch.title} className="w-full h-96 object-cover rounded-lg" />
+              {watch.video ? (
+                <div className="relative">
+                  <video
+                    src={watch.video}
+                    controls
+                    className="w-full h-96 object-contain rounded-lg bg-black"
+                  />
+                  <div className="absolute top-4 right-4">
+                    <FavoriteButton watchId={watch.id} />
+                  </div>
+                </div>
+              ) : images.length > 0 ? (
+                <>
+                  <img src={images[0]} alt={watch.title} className="w-full h-96 object-cover rounded-lg" />
+                  <div className="absolute top-4 right-4">
+                    <FavoriteButton watchId={watch.id} />
+                  </div>
+                </>
               ) : (
-                <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400">
+                <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 relative">
                   {t.home.noImage}
+                  <div className="absolute top-4 right-4">
+                    <FavoriteButton watchId={watch.id} />
+                  </div>
                 </div>
               )}
-              <div className="absolute top-4 right-4">
-                <FavoriteButton watchId={watch.id} />
-              </div>
             </div>
 
             {/* Titel & Artikelnummer */}

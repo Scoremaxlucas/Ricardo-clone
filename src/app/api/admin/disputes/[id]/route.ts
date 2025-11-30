@@ -103,16 +103,36 @@ export async function GET(
       )
     }
 
-    if (!purchase.disputeOpenedAt) {
+    // Prüfe ob es ein Dispute oder Stornierungsantrag ist
+    const isDispute = purchase.disputeOpenedAt !== null
+    const isCancellation = purchase.cancellationRequestedAt !== null
+
+    if (!isDispute && !isCancellation) {
       return NextResponse.json(
-        { message: 'Für diesen Kauf wurde kein Dispute eröffnet' },
+        { message: 'Für diesen Kauf wurde weder ein Dispute noch ein Stornierungsantrag eröffnet' },
         { status: 400 }
       )
     }
 
-    // Dispute-Reason und Description sind jetzt getrennt gespeichert
-    const reason = purchase.disputeReason || 'unknown'
-    const description = purchase.disputeDescription || ''
+    // Verwende die entsprechenden Felder je nach Typ
+    const reason = isCancellation 
+      ? (purchase.cancellationRequestReason || 'unknown')
+      : (purchase.disputeReason || 'unknown')
+    const description = isCancellation
+      ? (purchase.cancellationRequestDescription || '')
+      : (purchase.disputeDescription || '')
+    const status = isCancellation
+      ? (purchase.cancellationRequestStatus || 'pending')
+      : (purchase.disputeStatus || 'pending')
+    const openedAt = isCancellation
+      ? purchase.cancellationRequestedAt
+      : purchase.disputeOpenedAt
+    const resolvedAt = isCancellation
+      ? purchase.cancellationRequestResolvedAt
+      : purchase.disputeResolvedAt
+    const resolvedBy = isCancellation
+      ? purchase.cancellationRequestResolvedBy
+      : purchase.disputeResolvedBy
 
     // Parse Status-Historie
     let statusHistory: any[] = []
@@ -171,10 +191,11 @@ export async function GET(
         },
         disputeReason: reason,
         disputeDescription: description,
-        disputeStatus: purchase.disputeStatus || 'pending',
-        disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
-        disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
-        disputeResolvedBy: purchase.disputeResolvedBy || null,
+        disputeStatus: status,
+        disputeOpenedAt: openedAt?.toISOString() || null,
+        disputeResolvedAt: resolvedAt?.toISOString() || null,
+        disputeResolvedBy: resolvedBy || null,
+        type: isCancellation ? 'cancellation' : 'dispute',
         purchaseStatus: purchase.status,
         purchasePrice: purchase.price,
         shippingMethod: purchase.shippingMethod,

@@ -6,8 +6,19 @@ import { useRouter, useParams } from 'next/navigation'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { Calendar, Upload, Clock, Shield, CheckCircle, Lock, Sparkles } from 'lucide-react'
+import { CategoryFields } from '@/components/forms/CategoryFieldsNew'
+import { Calendar, Upload, Clock, Shield, CheckCircle, Lock, Sparkles, AlertCircle, Loader2 } from 'lucide-react'
+import toast from 'react-hot-toast'
+import { getCategoryConfig } from '@/data/categories'
 
+/**
+ * RICARDO-STYLE: Bearbeitungsseite für Artikel
+ * 
+ * Regeln:
+ * - Wenn Gebote vorhanden: Nur Beschreibung, Bilder, Video können ergänzt werden
+ * - Wenn kein Kauf: Vollständige Bearbeitung möglich
+ * - Gleiche Maske wie beim Erstellen
+ */
 export default function EditWatchPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -17,14 +28,17 @@ export default function EditWatchPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
   const [error, setError] = useState('')
-  const [success, setSuccess] = useState('')
   const [hasBids, setHasBids] = useState(false)
-
+  const [hasActivePurchase, setHasActivePurchase] = useState(false)
+  
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
   const [titleImageIndex, setTitleImageIndex] = useState<number>(0)
   const [boosters, setBoosters] = useState<any[]>([])
   const [selectedBooster, setSelectedBooster] = useState<string>('none')
   const [currentBooster, setCurrentBooster] = useState<string>('none')
+  const [selectedCategory, setSelectedCategory] = useState<string>('')
+  const [selectedSubcategory, setSelectedSubcategory] = useState<string>('')
+  
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
@@ -37,7 +51,10 @@ export default function EditWatchPage() {
     price: '',
     buyNowPrice: '',
     isAuction: false,
+    auctionStart: '',
     auctionEnd: '',
+    auctionDuration: '',
+    autoRenew: false,
     lastRevision: '',
     accuracy: '',
     fullset: false,
@@ -55,109 +72,161 @@ export default function EditWatchPage() {
     description: '',
     images: [] as string[],
     video: null as string | null,
-    additionalInfo: ''
+    shippingMethods: [] as string[]
   })
 
+  // Lade Watch-Daten
   useEffect(() => {
     const loadWatch = async () => {
+      if (!watchId || !session?.user) return
+      
       try {
         setLoadingData(true)
         setError('')
+        
         const res = await fetch(`/api/watches/${watchId}`)
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}))
-          throw new Error(errorData.message || 'Uhr nicht gefunden')
+          throw new Error(errorData.message || 'Artikel nicht gefunden')
         }
+        
         const data = await res.json()
         const watch = data.watch
 
         if (!watch) {
-          throw new Error('Uhr nicht gefunden')
+          throw new Error('Artikel nicht gefunden')
         }
 
-        // Prüfe ob Gebote existieren
+        // Prüfe Status
         setHasBids(watch.bids && watch.bids.length > 0)
+        
+        // Prüfe ob aktiver Kauf vorhanden (lade zusätzlich Purchases und Sales)
+        try {
+          const resStatus = await fetch(`/api/watches/${watchId}/edit-status`)
+          if (resStatus.ok) {
+            const statusData = await resStatus.json()
+            setHasActivePurchase(statusData.hasActivePurchase || false)
+          }
+        } catch (err) {
+          console.error('Error checking purchase status:', err)
+          // Fallback: Prüfe direkt über Watch-Daten
+          // Wenn keine Purchases/Sales in der Antwort sind, nehmen wir an, dass keine vorhanden sind
+        }
 
-        // Parse images - watch.images ist bereits ein Array wenn von API zurückgegeben
+        // Lade Kategorie
+        if (watch.categories && Array.isArray(watch.categories) && watch.categories.length > 0) {
+          const primaryCategory = watch.categories[0]
+          setSelectedCategory(primaryCategory.slug || '')
+        }
+
+        // Parse Bilder
         const images = Array.isArray(watch.images) ? watch.images : (watch.images ? JSON.parse(watch.images) : [])
         
-        // Parse current booster
+        // Parse Booster
         let currentBoosterCode = 'none'
-        if ((watch as any).boosters) {
+        if (watch.boosters) {
           try {
-            const boosterArray = typeof (watch as any).boosters === 'string' 
-              ? JSON.parse((watch as any).boosters) 
-              : (watch as any).boosters
+            const boosterArray = typeof watch.boosters === 'string' 
+              ? JSON.parse(watch.boosters) 
+              : watch.boosters
             if (Array.isArray(boosterArray) && boosterArray.length > 0) {
-              currentBoosterCode = boosterArray[0] // Nimm ersten Booster
+              currentBoosterCode = boosterArray[0]
             }
           } catch (e) {
             console.error('Error parsing boosters:', e)
           }
         }
-        console.log('[Edit Watch] Current booster from watch:', currentBoosterCode, 'Raw boosters:', (watch as any).boosters)
         setCurrentBooster(currentBoosterCode)
         setSelectedBooster(currentBoosterCode)
 
+        // Parse Versandmethoden
+        let shippingMethods: string[] = []
+        if (watch.shippingMethod) {
+          try {
+            const parsed = typeof watch.shippingMethod === 'string' 
+              ? JSON.parse(watch.shippingMethod) 
+              : watch.shippingMethod
+            shippingMethods = Array.isArray(parsed) ? parsed : []
+          } catch (e) {
+            console.error('Error parsing shippingMethod:', e)
+          }
+        }
+
+        // Berechne Auktionsdauer
+        let auctionDuration = ''
+        if (watch.auctionStart && watch.auctionEnd) {
+          const start = new Date(watch.auctionStart)
+          const end = new Date(watch.auctionEnd)
+          const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
+          if (diffDays > 0 && diffDays <= 30) {
+            auctionDuration = diffDays.toString()
+          }
+        }
+
+        // Setze Formular-Daten
         setFormData({
           brand: watch.brand || '',
           model: watch.model || '',
-          referenceNumber: (watch as any).referenceNumber || '',
+          referenceNumber: watch.referenceNumber || '',
           year: watch.year ? watch.year.toString() : '',
           condition: watch.condition || '',
           material: watch.material || '',
           movement: watch.movement || '',
-          caseDiameter: (watch as any).caseDiameter ? (watch as any).caseDiameter.toString() : '',
+          caseDiameter: watch.caseDiameter ? watch.caseDiameter.toString() : '',
           price: watch.price ? watch.price.toString() : '',
           buyNowPrice: watch.buyNowPrice ? watch.buyNowPrice.toString() : '',
           isAuction: watch.isAuction || false,
+          auctionStart: watch.auctionStart ? new Date(watch.auctionStart).toISOString().slice(0, 16) : '',
           auctionEnd: watch.auctionEnd ? new Date(watch.auctionEnd).toISOString().slice(0, 16) : '',
+          auctionDuration: auctionDuration,
+          autoRenew: watch.autoRenew || false,
           lastRevision: watch.lastRevision ? new Date(watch.lastRevision).toISOString().slice(0, 10) : '',
           accuracy: watch.accuracy || '',
           fullset: watch.fullset || false,
-          onlyBox: (watch as any).box || false,
-          onlyPapers: (watch as any).papers || false,
-          onlyAllLinks: (watch as any).allLinks || false,
-          hasWarranty: !!(watch as any).warranty,
-          warrantyMonths: (watch as any).warrantyMonths ? (watch as any).warrantyMonths.toString() : '',
-          warrantyYears: (watch as any).warrantyYears ? (watch as any).warrantyYears.toString() : '',
-          hasSellerWarranty: !!(watch as any).warrantyNote,
-          sellerWarrantyMonths: '',
-          sellerWarrantyYears: '',
-          sellerWarrantyNote: (watch as any).warrantyNote || '',
+          onlyBox: watch.box || false,
+          onlyPapers: watch.papers || false,
+          onlyAllLinks: (watch.box && watch.papers) || false,
+          hasWarranty: !!watch.warranty,
+          warrantyMonths: watch.warrantyMonths ? watch.warrantyMonths.toString() : '',
+          warrantyYears: watch.warrantyYears ? watch.warrantyYears.toString() : '',
+          hasSellerWarranty: !!watch.warrantyNote,
+          sellerWarrantyMonths: watch.warrantyDescription?.match(/(\d+)\s*Monat/i)?.[1] || '',
+          sellerWarrantyYears: watch.warrantyDescription?.match(/(\d+)\s*Jahr/i)?.[1] || '',
+          sellerWarrantyNote: watch.warrantyNote || '',
           title: watch.title || '',
           description: watch.description || '',
           images: images,
           video: watch.video || null,
-          additionalInfo: ''
+          shippingMethods: shippingMethods
         })
+        
         setTitleImageIndex(0)
       } catch (err: any) {
         console.error('Error loading watch:', err)
         setError('Fehler beim Laden: ' + (err.message || 'Unbekannter Fehler'))
-        setLoadingData(false)
+        toast.error('Fehler beim Laden des Artikels')
       } finally {
         setLoadingData(false)
       }
     }
-    if (watchId && session?.user) {
-      loadWatch()
-    }
+    
+    loadWatch()
   }, [watchId, session?.user])
 
-  // Lade Booster-Preise
+  // Lade Booster
   useEffect(() => {
     const loadBoosters = async () => {
       try {
         const res = await fetch('/api/admin/boosters')
         if (res.ok) {
           const data = await res.json()
-          // API gibt direkt ein Array zurück, nicht ein Objekt mit boosters Property
           const boostersArray = Array.isArray(data) ? data : (data.boosters || [])
-          console.log('[Edit Watch] Loaded boosters:', boostersArray)
-          setBoosters(boostersArray)
-        } else {
-          console.error('[Edit Watch] Failed to load boosters, status:', res.status)
+          const filteredBoosters = boostersArray.filter((booster: any) => 
+            booster.code !== 'none' && 
+            booster.name?.toLowerCase() !== 'kein booster' &&
+            booster.name?.toLowerCase() !== 'no booster'
+          )
+          setBoosters(filteredBoosters)
         }
       } catch (error) {
         console.error('Error loading boosters:', error)
@@ -166,22 +235,12 @@ export default function EditWatchPage() {
     loadBoosters()
   }, [])
 
-  const setExclusiveSupply = (option: 'fullset' | 'onlyBox' | 'onlyPapers' | 'onlyAllLinks') => {
-    if (hasBids) return // Blockiert wenn Gebote
-    setFormData(prev => ({
-      ...prev,
-      fullset: option === 'fullset',
-      onlyBox: option === 'onlyBox',
-      onlyPapers: option === 'onlyPapers',
-      onlyAllLinks: option === 'onlyAllLinks'
-    }))
-  }
-
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value, type } = e.target
     
-    // Blockiere Preisfelder wenn Gebote existieren
-    if (hasBids && (name === 'price' || name === 'buyNowPrice')) {
+    // Blockiere gesperrte Felder bei Geboten
+    if (hasBids && ['price', 'buyNowPrice', 'isAuction', 'auctionDuration', 'auctionStart', 'auctionEnd', 'autoRenew', 'shippingMethods', 'brand', 'model', 'condition', 'title'].includes(name)) {
+      toast.error('Dieses Feld kann bei vorhandenen Geboten nicht geändert werden.')
       return
     }
     
@@ -196,6 +255,11 @@ export default function EditWatchPage() {
     const newImages: string[] = []
     
     files.forEach(file => {
+      if (file.size > 5 * 1024 * 1024) {
+        toast.error(`Bild ${file.name} ist zu groß (max. 5MB)`)
+        return
+      }
+      
       const reader = new FileReader()
       reader.onload = () => {
         newImages.push(reader.result as string)
@@ -204,6 +268,7 @@ export default function EditWatchPage() {
             ...prev,
             images: [...prev.images, ...newImages]
           }))
+          toast.success(`${newImages.length} Bild(er) hinzugefügt`)
         }
       }
       reader.readAsDataURL(file)
@@ -211,26 +276,104 @@ export default function EditWatchPage() {
   }
 
   const removeImage = (index: number) => {
-    if (hasBids) return // Keine Löschung wenn Gebote
+    if (hasBids) {
+      toast.error('Bilder können bei vorhandenen Geboten nicht entfernt werden')
+      return
+    }
+    
     setFormData(prev => ({
       ...prev,
       images: prev.images.filter((_, i) => i !== index)
     }))
+    
     if (selectedImageIndex >= index) {
       setSelectedImageIndex(Math.max(0, selectedImageIndex - 1))
     }
     if (titleImageIndex >= index) {
       setTitleImageIndex(Math.max(0, titleImageIndex - 1))
     }
+    
+    toast.success('Bild entfernt')
+  }
+
+  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      if (file.size > 50 * 1024 * 1024) {
+        toast.error('Das Video ist zu groß. Maximale Größe: 50MB')
+        return
+      }
+
+      if (!file.type.startsWith('video/')) {
+        toast.error('Bitte wählen Sie eine Video-Datei aus')
+        return
+      }
+
+      const reader = new FileReader()
+      reader.onload = () => {
+        setFormData(prev => ({
+          ...prev,
+          video: reader.result as string
+        }))
+        toast.success('Video erfolgreich hochgeladen')
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const removeVideo = () => {
+    setFormData(prev => ({
+      ...prev,
+      video: null
+    }))
+    toast.success('Video entfernt')
+  }
+
+  const setExclusiveSupply = (option: 'fullset' | 'onlyBox' | 'onlyPapers' | 'onlyAllLinks') => {
+    if (hasBids) {
+      toast.error('Lieferumfang kann bei vorhandenen Geboten nicht geändert werden')
+      return
+    }
+    
+    setFormData(prev => ({
+      ...prev,
+      fullset: option === 'fullset',
+      onlyBox: option === 'onlyBox',
+      onlyPapers: option === 'onlyPapers',
+      onlyAllLinks: option === 'onlyAllLinks'
+    }))
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
     setError('')
-    setSuccess('')
 
     try {
+      // Validierung
+      if (!hasBids) {
+        if (!formData.title || !formData.title.trim()) {
+          setError('Bitte geben Sie einen Titel ein')
+          setIsLoading(false)
+          return
+        }
+        if (!formData.description || !formData.description.trim()) {
+          setError('Bitte geben Sie eine Beschreibung ein')
+          setIsLoading(false)
+          return
+        }
+        if (!formData.condition) {
+          setError('Bitte wählen Sie einen Zustand aus')
+          setIsLoading(false)
+          return
+        }
+        if (!formData.price || parseFloat(formData.price) <= 0) {
+          setError('Bitte geben Sie einen gültigen Preis ein')
+          setIsLoading(false)
+          return
+        }
+      }
+
       const response = await fetch(`/api/watches/${watchId}/edit`, {
         method: 'PUT',
         headers: {
@@ -238,39 +381,44 @@ export default function EditWatchPage() {
         },
         body: JSON.stringify({
           ...formData,
-          booster: selectedBooster
+          booster: selectedBooster,
+          category: selectedCategory,
+          subcategory: selectedSubcategory
         }),
       })
 
       if (response.ok) {
-        const responseData = await response.json()
-        if (responseData.warning) {
-          setError(responseData.warning) // Zeige Warnung als Fehler, damit User sie sieht
-          setTimeout(() => {
-            router.push('/my-watches')
-            router.refresh() // Seite neu laden
-          }, 3000)
-        } else {
-          setSuccess('Angebot erfolgreich aktualisiert!')
-          setTimeout(() => {
-            router.push('/my-watches')
-            router.refresh() // Seite neu laden
-          }, 1500)
-        }
+        toast.success('Angebot erfolgreich aktualisiert!')
+        router.push('/my-watches')
+        router.refresh()
       } else {
         const errorData = await response.json()
-        setError(errorData.message || errorData.error || 'Ein Fehler ist aufgetreten')
+        const errorMessage = errorData.message || errorData.error || 'Ein Fehler ist aufgetreten'
+        setError(errorMessage)
+        toast.error(errorMessage)
       }
     } catch (err) {
       console.error('Error updating watch:', err)
       setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
+      toast.error('Fehler beim Aktualisieren')
     } finally {
       setIsLoading(false)
     }
   }
 
   if (status === 'loading' || loadingData) {
-    return <div className="flex min-h-screen items-center justify-center">Lädt...</div>
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex items-center justify-center min-h-[60vh]">
+          <div className="text-center">
+            <Loader2 className="h-12 w-12 text-primary-600 animate-spin mx-auto mb-4" />
+            <p className="text-gray-600">Lädt...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
   }
 
   if (!session) {
@@ -278,342 +426,367 @@ export default function EditWatchPage() {
     return null
   }
 
+  if (hasActivePurchase) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="max-w-4xl mx-auto px-4 py-8">
+          <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
+            <AlertCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
+            <h2 className="text-2xl font-bold text-gray-900 mb-4">
+              Bearbeitung nicht möglich
+            </h2>
+            <p className="text-gray-700 mb-6">
+              Das Angebot kann nicht mehr bearbeitet werden, da bereits ein Kauf stattgefunden hat.
+            </p>
+            <Link
+              href="/my-watches"
+              className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+            >
+              Zurück zu Meine Angebote
+            </Link>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    )
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="max-w-4xl mx-auto px-4 py-8">
+        <div className="mb-6">
+          <Link
+            href="/my-watches"
+            className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium text-sm"
+          >
+            ← Zurück zu Meine Angebote
+          </Link>
+        </div>
+
         <div className="mb-8">
-          <Link href="/my-watches" className="text-primary-600 hover:text-primary-700 mb-4 inline-block">← Zurück zu Mein Verkaufen</Link>
           <h1 className="text-3xl font-bold text-gray-900 mb-2">
             Angebot bearbeiten
           </h1>
-          {hasBids && (
-            <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md mb-4">
-              <strong>Wichtig:</strong> Es existieren bereits Gebote. Preise können nicht mehr geändert werden. Sie können nur zusätzliche Bilder hinzufügen und eine "Nachträgliche Information" erfassen.
-            </div>
-          )}
+          <p className="text-gray-600">
+            Bearbeiten Sie Ihr Angebot. {hasBids && 'Bei vorhandenen Geboten können nur Beschreibung, Bilder und Video ergänzt werden.'}
+          </p>
         </div>
 
-        {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md">
-            {error}
+        {hasBids && (
+          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+            <div className="flex items-start gap-3">
+              <Lock className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <p className="font-semibold text-yellow-800 mb-1">
+                  Wichtig: Gebote vorhanden
+                </p>
+                <p className="text-sm text-yellow-700">
+                  Es existieren bereits Gebote auf dieses Angebot. Sie können nur noch die Beschreibung ändern sowie zusätzliche Bilder und Videos hinzufügen. Preis, Auktionsdauer und andere wichtige Felder sind gesperrt.
+                </p>
+              </div>
+            </div>
           </div>
         )}
 
-        {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 text-green-700 px-4 py-3 rounded-md">
-            {success}
+        {error && (
+          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-center">
+            <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+            <span>{error}</span>
           </div>
         )}
 
         <div className="bg-white rounded-lg shadow-md p-8">
           <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Grunddaten */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <Clock className="h-5 w-5 mr-2" />
-                Grunddaten
-                {hasBids && <Lock className="h-4 w-4 ml-2 text-gray-400" />}
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Marke *
-                  </label>
-                  <input
-                    type="text"
-                    name="brand"
-                    required
-                    disabled={hasBids}
-                    value={formData.brand}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="z.B. Rolex, Omega, Patek Philippe"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Modell *
-                  </label>
-                  <input
-                    type="text"
-                    name="model"
-                    required
-                    disabled={hasBids}
-                    value={formData.model}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="z.B. Submariner, Speedmaster"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Referenznummer (Optional)
-                  </label>
-                  <input
-                    type="text"
-                    name="referenceNumber"
-                    disabled={hasBids}
-                    value={formData.referenceNumber}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="z.B. 126610LN"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Baujahr
-                  </label>
-                  <input
-                    type="number"
-                    name="year"
-                    disabled={hasBids}
-                    value={formData.year}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="z.B. 2020"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Zustand *
-                  </label>
-                  <select
-                    name="condition"
-                    required
-                    disabled={hasBids}
-                    value={formData.condition}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  >
-                    <option value="">Bitte wählen</option>
-                    <option value="fabrikneu-verklebt">Fabrikneu und verklebt</option>
-                    <option value="ungetragen">Ungetragen</option>
-                    <option value="leichte-tragespuren">Leichte Tragespuren</option>
-                    <option value="tragespuren">Tragespuren</option>
-                    <option value="stark-gebraucht">Stark gebraucht</option>
-                  </select>
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Material
-                  </label>
-                  <input
-                    type="text"
-                    name="material"
-                    disabled={hasBids}
-                    value={formData.material}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="z.B. Edelstahl, Gold"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Uhrwerk
-                  </label>
-                  <input
-                    type="text"
-                    name="movement"
-                    disabled={hasBids}
-                    value={formData.movement}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="z.B. Automatik, Quarz"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Gehäusedurchmesser (mm)
-                  </label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    name="caseDiameter"
-                    disabled={hasBids}
-                    value={formData.caseDiameter}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="z.B. 42.0"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Letzte Revision
-                  </label>
-                  <input
-                    type="date"
-                    name="lastRevision"
-                    disabled={hasBids}
-                    value={formData.lastRevision}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Ganggenauigkeit
-                  </label>
-                  <input
-                    type="text"
-                    name="accuracy"
-                    disabled={hasBids}
-                    value={formData.accuracy}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="z.B. +2/-1 Sekunden pro Tag"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Preis und Verkaufsart */}
-            <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <Shield className="h-5 w-5 mr-2" />
-                Preis und Verkaufsart
-                {hasBids && <Lock className="h-4 w-4 ml-2 text-red-500" />}
-              </h2>
-              {hasBids && (
-                <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-2 rounded-md mb-4">
-                  Diese Felder sind gesperrt, da bereits Gebote vorhanden sind.
-                </div>
-              )}
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Startpreis (CHF) *
-                  </label>
-                  <input
-                    type="number"
-                    name="price"
-                    required
-                    disabled={hasBids}
-                    value={formData.price}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="z.B. 5000"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Sofortkaufpreis (CHF)
-                  </label>
-                  <input
-                    type="number"
-                    name="buyNowPrice"
-                    disabled={hasBids}
-                    value={formData.buyNowPrice}
-                    onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                    placeholder="z.B. 8000"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Laufzeitende der Auktion
-                  </label>
-                  <input
-                    type="datetime-local"
-                    name="auctionEnd"
-                    disabled={hasBids}
-                    value={formData.auctionEnd}
-                    onChange={handleInputChange}
-                    min={new Date().toISOString().slice(0, 16)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Lieferumfang */}
+            {/* Titel und Beschreibung */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Lieferumfang (inkl. Uhr selbst)
+                Artikel-Informationen
               </h2>
-              {hasBids && (
-                <div className="bg-yellow-50 border border-yellow-200 text-yellow-700 px-4 py-2 rounded-md mb-4">
-                  Diese Felder sind gesperrt, da bereits Gebote vorhanden sind.
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Titel {!hasBids && '*'}
+                  </label>
+                  <input
+                    type="text"
+                    name="title"
+                    required={!hasBids}
+                    disabled={hasBids}
+                    value={formData.title}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    placeholder="z.B. Rolex Submariner Date, 2020"
+                  />
                 </div>
-              )}
-              <div className="space-y-3">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="fullset"
-                    disabled={hasBids}
-                    checked={formData.fullset}
-                    onChange={() => setExclusiveSupply('fullset')}
-                    className="mr-3"
+
+                <div className="md:col-span-2">
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Beschreibung {!hasBids && '*'}
+                    {hasBids && <span className="text-xs text-gray-500 font-normal ml-2">(kann ergänzt werden)</span>}
+                  </label>
+                  <textarea
+                    name="description"
+                    required={!hasBids}
+                    rows={6}
+                    value={formData.description}
+                    onChange={handleInputChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                    placeholder="Beschreiben Sie Ihren Artikel detailliert..."
                   />
-                  <span className="text-sm font-medium text-gray-700">Fullset (Box, Papiere, alle Glieder und Kaufbeleg)</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="onlyBox"
-                    disabled={hasBids}
-                    checked={formData.onlyBox}
-                    onChange={() => setExclusiveSupply('onlyBox')}
-                    className="mr-3"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Nur Box</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="onlyPapers"
-                    disabled={hasBids}
-                    checked={formData.onlyPapers}
-                    onChange={() => setExclusiveSupply('onlyPapers')}
-                    className="mr-3"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Nur Papiere</span>
-                </label>
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    name="onlyAllLinks"
-                    disabled={hasBids}
-                    checked={formData.onlyAllLinks}
-                    onChange={() => setExclusiveSupply('onlyAllLinks')}
-                    className="mr-3"
-                  />
-                  <span className="text-sm font-medium text-gray-700">Nur Box und Papiere</span>
-                </label>
+                </div>
               </div>
             </div>
 
-            {/* Garantie */}
+            {/* Kategorie-spezifische Felder */}
+            {selectedCategory && !hasBids && (
+              <CategoryFields
+                category={selectedCategory}
+                subcategory={selectedSubcategory}
+                formData={formData}
+                onChange={handleInputChange}
+                disabled={hasBids}
+              />
+            )}
+
+            {/* Preis und Verkaufsart */}
             {!hasBids && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
+                  <Shield className="h-5 w-5 mr-2" />
+                  Preis und Verkaufsart
+                </h2>
+                
+                <div className="mb-6">
+                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                    Verkaufsart *
+                  </label>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <label
+                      className={`relative flex cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                        formData.isAuction
+                          ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="saleType"
+                        checked={formData.isAuction}
+                        onChange={() => setFormData(prev => ({ ...prev, isAuction: true }))}
+                        className="sr-only"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                              <Clock className="h-5 w-5 text-primary-600" />
+                              Auktion
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Artikel wird versteigert
+                            </p>
+                          </div>
+                          {formData.isAuction && (
+                            <CheckCircle className="h-5 w-5 text-primary-600 ml-3" />
+                          )}
+                        </div>
+                      </div>
+                    </label>
+
+                    <label
+                      className={`relative flex cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                        !formData.isAuction
+                          ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
+                          : 'border-gray-300 bg-white hover:border-gray-400'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="saleType"
+                        checked={!formData.isAuction}
+                        onChange={() => setFormData(prev => ({ ...prev, isAuction: false, auctionDuration: '', auctionStart: '', autoRenew: false }))}
+                        className="sr-only"
+                      />
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div>
+                            <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                              Sofortkauf
+                            </p>
+                            <p className="text-sm text-gray-600 mt-1">
+                              Artikel wird zu einem festen Preis verkauft
+                            </p>
+                          </div>
+                          {!formData.isAuction && (
+                            <CheckCircle className="h-5 w-5 text-primary-600 ml-3" />
+                          )}
+                        </div>
+                      </div>
+                    </label>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      {formData.isAuction ? 'Startpreis (CHF) *' : 'Preis (CHF) *'}
+                    </label>
+                    <input
+                      type="number"
+                      name="price"
+                      required
+                      value={formData.price}
+                      onChange={handleInputChange}
+                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                      placeholder="z.B. 5000"
+                      step="0.01"
+                      min="0"
+                    />
+                  </div>
+
+                  {formData.isAuction && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Sofortkaufpreis (CHF)
+                      </label>
+                      <input
+                        type="number"
+                        name="buyNowPrice"
+                        value={formData.buyNowPrice}
+                        onChange={handleInputChange}
+                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                        placeholder="z.B. 8000"
+                        step="0.01"
+                        min="0"
+                      />
+                    </div>
+                  )}
+
+                  {formData.isAuction && (
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Auktionsdauer (Tage) *
+                        </label>
+                        <select
+                          name="auctionDuration"
+                          required={formData.isAuction}
+                          value={formData.auctionDuration}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                        >
+                          <option value="">Bitte wählen</option>
+                          {[1, 2, 3, 5, 7, 10, 14, 21, 30].map(days => (
+                            <option key={days} value={days}>{days} Tag{days > 1 ? 'e' : ''}</option>
+                          ))}
+                        </select>
+                      </div>
+
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Starttermin (optional)
+                        </label>
+                        <input
+                          type="datetime-local"
+                          name="auctionStart"
+                          value={formData.auctionStart}
+                          onChange={handleInputChange}
+                          min={new Date().toISOString().slice(0, 16)}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                        />
+                      </div>
+
+                      <div className="md:col-span-2">
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="autoRenew"
+                            checked={formData.autoRenew}
+                            onChange={handleInputChange}
+                            className="mr-3"
+                          />
+                          <span className="text-sm text-gray-700">
+                            Automatisch verlängern, wenn keine Gebote vorhanden sind
+                          </span>
+                        </label>
+                      </div>
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+
+            {/* Lieferumfang - NUR für Uhren */}
+            {!hasBids && selectedCategory === 'uhren-schmuck' && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Lieferumfang (inkl. Uhr selbst)
+                </h2>
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="fullset"
+                      checked={formData.fullset}
+                      onChange={() => setExclusiveSupply('fullset')}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Fullset (Box, Papiere, alle Glieder)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="onlyBox"
+                      checked={formData.onlyBox}
+                      onChange={() => setExclusiveSupply('onlyBox')}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Nur Box</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="onlyPapers"
+                      checked={formData.onlyPapers}
+                      onChange={() => setExclusiveSupply('onlyPapers')}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Nur Papiere</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="onlyAllLinks"
+                      checked={formData.onlyAllLinks}
+                      onChange={() => setExclusiveSupply('onlyAllLinks')}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Box und Papiere</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Garantie - NUR für Uhren */}
+            {!hasBids && selectedCategory === 'uhren-schmuck' && (
               <div>
                 <h2 className="text-xl font-semibold text-gray-900 mb-4">
                   Garantie
                 </h2>
                 <div className="space-y-4">
-                  <div>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="hasWarranty"
-                        checked={formData.hasWarranty}
-                        onChange={handleInputChange}
-                        className="mr-3"
-                      />
-                      <span className="text-sm font-medium text-gray-700">Herstellergarantie vorhanden</span>
-                    </label>
-                  </div>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="hasWarranty"
+                      checked={formData.hasWarranty}
+                      onChange={handleInputChange}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Herstellergarantie vorhanden</span>
+                  </label>
 
                   {formData.hasWarranty && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6">
@@ -626,11 +799,10 @@ export default function EditWatchPage() {
                           name="warrantyMonths"
                           value={formData.warrantyMonths}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
                           placeholder="z.B. 24"
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Garantie in Jahren
@@ -640,7 +812,7 @@ export default function EditWatchPage() {
                           name="warrantyYears"
                           value={formData.warrantyYears}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
                           placeholder="z.B. 2"
                         />
                       </div>
@@ -671,11 +843,10 @@ export default function EditWatchPage() {
                           name="sellerWarrantyMonths"
                           value={formData.sellerWarrantyMonths}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
                           placeholder="z.B. 12"
                         />
                       </div>
-
                       <div>
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Verkäufer-Garantie in Jahren
@@ -685,11 +856,10 @@ export default function EditWatchPage() {
                           name="sellerWarrantyYears"
                           value={formData.sellerWarrantyYears}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
                           placeholder="z.B. 1"
                         />
                       </div>
-
                       <div className="md:col-span-2">
                         <label className="block text-sm font-medium text-gray-700 mb-2">
                           Bemerkungen zur Verkäufer-Garantie
@@ -699,12 +869,86 @@ export default function EditWatchPage() {
                           value={formData.sellerWarrantyNote}
                           onChange={handleInputChange}
                           rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
                           placeholder="z.B. Garantie nur bei normaler Nutzung..."
                         />
                       </div>
                     </div>
                   )}
+                </div>
+              </div>
+            )}
+
+            {/* Versand */}
+            {!hasBids && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Versand
+                </h2>
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.shippingMethods.includes('pickup')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            shippingMethods: [...prev.shippingMethods, 'pickup']
+                          }))
+                        } else {
+                          setFormData(prev => ({
+                            ...prev,
+                            shippingMethods: prev.shippingMethods.filter(m => m !== 'pickup')
+                          }))
+                        }
+                      }}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Abholung</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.shippingMethods.includes('b-post')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            shippingMethods: [...prev.shippingMethods, 'b-post']
+                          }))
+                        } else {
+                          setFormData(prev => ({
+                            ...prev,
+                            shippingMethods: prev.shippingMethods.filter(m => m !== 'b-post')
+                          }))
+                        }
+                      }}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">B-Post</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      checked={formData.shippingMethods.includes('a-post')}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          setFormData(prev => ({
+                            ...prev,
+                            shippingMethods: [...prev.shippingMethods, 'a-post']
+                          }))
+                        } else {
+                          setFormData(prev => ({
+                            ...prev,
+                            shippingMethods: prev.shippingMethods.filter(m => m !== 'a-post')
+                          }))
+                        }
+                      }}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">A-Post</span>
+                  </label>
                 </div>
               </div>
             )}
@@ -736,7 +980,7 @@ export default function EditWatchPage() {
                     <div key={index} className="relative">
                       <img
                         src={image}
-                        alt={`Uhr ${index + 1}`}
+                        alt={`Bild ${index + 1}`}
                         className={`w-full h-32 object-cover rounded-lg cursor-pointer border-2 ${
                           index === titleImageIndex 
                             ? 'border-primary-500 ring-2 ring-primary-200' 
@@ -770,73 +1014,48 @@ export default function EditWatchPage() {
                   ))}
                 </div>
               )}
+
+              {/* Video */}
+              <div className="mt-8">
+                <h3 className="text-lg font-medium text-gray-900 mb-4">Video (Optional)</h3>
+                <div className="mb-4">
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={handleVideoUpload}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                  />
+                  <p className="mt-1 text-sm text-gray-500">
+                    Laden Sie ein Video hoch (MP4, AVI, MOV, max. 50MB)
+                  </p>
+                </div>
+
+                {formData.video && (
+                  <div className="relative">
+                    <video
+                      src={formData.video}
+                      controls
+                      className="w-full max-w-md h-64 object-cover rounded-lg"
+                    />
+                    <button
+                      type="button"
+                      onClick={removeVideo}
+                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                    >
+                      ×
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
-            {/* Nachträgliche Information (nur wenn Gebote) */}
-            {hasBids && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Nachträgliche Information
-                </h2>
-                <textarea
-                  name="additionalInfo"
-                  value={formData.additionalInfo}
-                  onChange={handleInputChange}
-                  rows={6}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-                  placeholder="Geben Sie hier nachträgliche Informationen ein, die dem System als 'Nachträgliche Information' gekennzeichnet werden..."
-                />
-              </div>
-            )}
-
-            {/* Beschreibung */}
-            {!hasBids && (
-              <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Beschreibung
-                </h2>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Titel *
-                    </label>
-                    <input
-                      type="text"
-                      name="title"
-                      required
-                      value={formData.title}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-                      placeholder="z.B. Rolex Submariner Date, 2020"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Beschreibung *
-                    </label>
-                    <textarea
-                      name="description"
-                      required
-                      rows={6}
-                      value={formData.description}
-                      onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-                      placeholder="Beschreiben Sie Ihre Uhr detailliert..."
-                    />
-                  </div>
-                </div>
-              </div>
-            )}
-
-            {/* Booster-Auswahl */}
+            {/* Booster */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
                 <Sparkles className="h-5 w-5 mr-2" />
                 Booster auswählen
               </h2>
               
-              {/* Aktueller Booster Anzeige */}
               {currentBooster !== 'none' && (
                 <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md mb-4">
                   <p className="text-sm font-medium">
@@ -845,32 +1064,6 @@ export default function EditWatchPage() {
                       <span className="ml-2">(CHF {boosters.find(b => b.code === currentBooster)!.price.toFixed(2)})</span>
                     )}
                   </p>
-                  <p className="text-xs mt-1 text-green-700">
-                    {boosters.find(b => b.code === currentBooster)?.description || `Aktiver Booster auf diesem Angebot (Code: ${currentBooster})`}
-                  </p>
-                  {!boosters.find(b => b.code === currentBooster) && (
-                    <p className="text-xs mt-1 text-yellow-700 italic">
-                      ⚠️ Dieser Booster ist aktuell nicht mehr verfügbar, bleibt aber auf diesem Angebot aktiv. Sie können einen anderen Booster auswählen.
-                    </p>
-                  )}
-                </div>
-              )}
-              
-              <div className="bg-blue-50 border border-blue-200 text-blue-800 px-4 py-3 rounded-md mb-4">
-                <p className="text-sm">
-                  {selectedBooster !== currentBooster && selectedBooster !== 'none' 
-                    ? 'Der ausgewählte Booster wird sofort aktiviert und berechnet, sobald Sie die Änderungen speichern.'
-                    : selectedBooster === 'none' && currentBooster !== 'none'
-                    ? 'Wenn Sie den Booster entfernen, wird keine Rückerstattung vorgenommen.'
-                    : currentBooster === 'none'
-                    ? 'Sie können einen Booster hinzufügen, um Ihr Angebot besser zu bewerben.'
-                    : 'Sie können jederzeit auf einen teureren Booster upgraden.'}
-                </p>
-              </div>
-              
-              {boosters.length === 0 && (
-                <div className="bg-yellow-50 border border-yellow-200 text-yellow-800 px-4 py-3 rounded-md mb-4">
-                  <p className="text-sm">Lade verfügbare Booster...</p>
                 </div>
               )}
               
@@ -892,80 +1085,53 @@ export default function EditWatchPage() {
                     <span className="font-semibold text-gray-900">Kein Booster</span>
                     <span className="text-sm text-gray-600">CHF 0.00</span>
                   </div>
-                  <p className="text-sm text-gray-600">Standard-Anzeige ohne zusätzliche Features</p>
+                  <p className="text-sm text-gray-600">Standard-Anzeige</p>
                 </label>
 
-                {boosters.length > 0 ? (
-                  boosters.map((booster) => {
-                    const isSelected = selectedBooster === booster.code
-                    const isCurrent = currentBooster === booster.code
-                    const currentBoosterPrice = boosters.find(b => b.code === currentBooster)?.price || 0
-                    const isUpgrade = booster.price > currentBoosterPrice
-                    const isDowngrade = booster.price < currentBoosterPrice && currentBooster !== 'none'
-                    
-                    return (
-                      <label
-                        key={booster.code}
-                        className={`relative flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                          isSelected
-                            ? 'border-primary-500 bg-primary-50'
-                            : isCurrent
-                            ? 'border-green-400 bg-green-50'
-                            : 'border-gray-200 hover:border-gray-300 bg-white'
-                        }`}
-                      >
-                        <input
-                          type="radio"
-                          name="booster"
-                          value={booster.code}
-                          checked={isSelected}
-                          onChange={(e) => setSelectedBooster(e.target.value)}
-                          className="sr-only"
-                        />
-                        <div className="flex items-center justify-between mb-2">
-                          <span className="font-semibold text-gray-900 flex items-center">
-                            {booster.name}
-                            {isCurrent && (
-                              <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
-                                AKTIV
-                              </span>
-                            )}
-                          </span>
-                          <span className="text-sm font-medium text-primary-600">
-                            CHF {booster.price.toFixed(2)}
-                          </span>
-                        </div>
-                        <p className="text-sm text-gray-600 mb-2">{booster.description}</p>
-                        {isCurrent && (
-                          <span className="text-xs text-green-600 font-medium">✓ Momentan auf diesem Angebot aktiv</span>
-                        )}
-                        {!isCurrent && isSelected && isUpgrade && (
-                          <span className="text-xs text-blue-600 font-medium">
-                            → Upgrade: Differenz von CHF {(booster.price - currentBoosterPrice).toFixed(2)} wird berechnet
-                          </span>
-                        )}
-                        {!isCurrent && isSelected && isDowngrade && (
-                          <span className="text-xs text-orange-600 font-medium">
-                            ⚠️ Downgrade: Keine Rückerstattung, neuer Booster wird aktiviert
-                          </span>
-                        )}
-                        {!isCurrent && isSelected && currentBooster === 'none' && (
-                          <span className="text-xs text-blue-600 font-medium">
-                            → Wird sofort aktiviert und berechnet (CHF {booster.price.toFixed(2)})
-                          </span>
-                        )}
-                      </label>
-                    )
-                  })
-                ) : (
-                  <div className="col-span-full text-center py-8 text-gray-500">
-                    <p>Keine Booster verfügbar</p>
-                  </div>
-                )}
+                {boosters.map((booster) => {
+                  const isSelected = selectedBooster === booster.code
+                  const isCurrent = currentBooster === booster.code
+                  
+                  return (
+                    <label
+                      key={booster.code}
+                      className={`relative flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                        isSelected
+                          ? 'border-primary-500 bg-primary-50'
+                          : isCurrent
+                          ? 'border-green-400 bg-green-50'
+                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="booster"
+                        value={booster.code}
+                        checked={isSelected}
+                        onChange={(e) => setSelectedBooster(e.target.value)}
+                        className="sr-only"
+                      />
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold text-gray-900 flex items-center">
+                          {booster.name}
+                          {isCurrent && (
+                            <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
+                              AKTIV
+                            </span>
+                          )}
+                        </span>
+                        <span className="text-sm font-medium text-primary-600">
+                          CHF {booster.price.toFixed(2)}
+                        </span>
+                      </div>
+                      <p className="text-sm text-gray-600">{booster.description}</p>
+                    </label>
+                  )
+                })}
               </div>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <div className="pt-6 border-t border-gray-200">
               <button
                 type="submit"
@@ -992,4 +1158,3 @@ export default function EditWatchPage() {
     </div>
   )
 }
-

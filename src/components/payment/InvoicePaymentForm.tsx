@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
 import {
   Elements,
@@ -8,15 +8,12 @@ import {
   useStripe,
   useElements
 } from '@stripe/react-stripe-js'
-import { CreditCard, Loader2, CheckCircle, AlertCircle } from 'lucide-react'
+import { CreditCard, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
 
-// Stripe immer initialisieren - wenn kein Key vorhanden ist, wird ein Fehler beim Payment Intent angezeigt
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
-const stripePromise = stripeKey.trim() !== '' 
-  ? loadStripe(stripeKey)
-  : Promise.resolve(null)
+const stripePromise = stripeKey.trim() !== '' ? loadStripe(stripeKey.trim()) : null
 
 interface InvoicePaymentFormProps {
   invoiceId: string
@@ -25,43 +22,12 @@ interface InvoicePaymentFormProps {
   onSuccess?: () => void
 }
 
-function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess }: InvoicePaymentFormProps) {
+function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess, clientSecret }: InvoicePaymentFormProps & { clientSecret: string }) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-
-  // Lade Payment Intent beim Mount
-  useEffect(() => {
-    const createPaymentIntent = async () => {
-      try {
-        const res = await fetch(`/api/invoices/${invoiceId}/create-payment-intent`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
-
-        if (res.ok) {
-          const data = await res.json()
-          setClientSecret(data.clientSecret)
-        } else {
-          const errorData = await res.json()
-          const errorMessage = errorData.message || 'Fehler beim Erstellen des Payment Intents'
-          setError(errorMessage)
-          toast.error(errorMessage)
-        }
-      } catch (err) {
-        const errorMessage = 'Fehler beim Laden der Zahlungsinformationen'
-        setError(errorMessage)
-        toast.error(errorMessage)
-      }
-    }
-
-    createPaymentIntent()
-  }, [invoiceId])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -81,7 +47,6 @@ function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess }: InvoicePa
         return
       }
 
-      // Bestätige Zahlung
       const { error: confirmError, paymentIntent } = await stripe.confirmPayment({
         elements,
         clientSecret,
@@ -97,12 +62,10 @@ function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess }: InvoicePa
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast.success('Zahlung erfolgreich!')
         
-        // Update Rechnung lokal
         if (onSuccess) {
           onSuccess()
         }
         
-        // Redirect nach kurzer Verzögerung
         setTimeout(() => {
           router.push(`/my-watches/selling/fees?invoice=${invoiceId}&payment=success`)
         }, 2000)
@@ -113,33 +76,6 @@ function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess }: InvoicePa
     } finally {
       setIsLoading(false)
     }
-  }
-
-  if (!clientSecret) {
-    if (error) {
-      return (
-        <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-            <div className="text-sm text-yellow-800">
-              <strong>Hinweis:</strong> {error}
-              <br />
-              <br />
-              Bitte verwenden Sie eine andere Zahlungsmethode (Banküberweisung, TWINT oder PayPal) oder kontaktieren Sie den Support.
-            </div>
-          </div>
-        </div>
-      )
-    }
-    
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="ml-2 text-gray-600">Lade Zahlungsformular...</span>
-        </div>
-      </div>
-    )
   }
 
   return (
@@ -193,11 +129,197 @@ function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess }: InvoicePa
 }
 
 export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess }: InvoicePaymentFormProps) {
-  // Stripe wird immer geladen - wenn kein Key vorhanden ist, wird ein Fehler beim Payment Intent angezeigt
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+  const [ready, setReady] = useState(false)
+
+  useEffect(() => {
+    // Prüfe Stripe Key
+    if (stripeKey.trim() === '') {
+      setError('Stripe ist nicht konfiguriert')
+      setLoading(false)
+      return
+    }
+
+    if (!stripePromise) {
+      setError('Stripe konnte nicht initialisiert werden')
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    const fetchPaymentIntent = async () => {
+      try {
+        const res = await fetch(`/api/invoices/${invoiceId}/create-payment-intent`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (cancelled) return
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}))
+          const errorMessage = errorData.message || 'Fehler beim Erstellen des Payment Intents'
+          setError(errorMessage)
+          setLoading(false)
+          return
+        }
+
+        const data = await res.json()
+        
+        if (cancelled) return
+
+        if (data.clientSecret && typeof data.clientSecret === 'string' && data.clientSecret.trim() !== '') {
+          const secret = data.clientSecret.trim()
+          setClientSecret(secret)
+          // Warte einen Moment, um sicherzustellen, dass alles bereit ist
+          setTimeout(() => {
+            if (!cancelled) {
+              setReady(true)
+              setLoading(false)
+            }
+          }, 100)
+        } else {
+          setError('Kein gültiges clientSecret erhalten')
+          setLoading(false)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError('Fehler beim Laden der Zahlungsinformationen')
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchPaymentIntent()
+
+    return () => {
+      cancelled = true
+    }
+  }, [invoiceId])
+
+  // Memoize options to prevent re-renders
+  const elementsOptions = useMemo(() => {
+    if (!clientSecret || typeof clientSecret !== 'string' || clientSecret.trim() === '') {
+      return null
+    }
+    return {
+      clientSecret: clientSecret.trim(),
+      appearance: {
+        theme: 'stripe' as const,
+      },
+    }
+  }, [clientSecret])
+
+  // Loading State
+  if (loading || !ready) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Lade Zahlungsformular...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // Error State
+  if (error) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-yellow-800">
+            <strong>Hinweis:</strong> {error}
+            <br />
+            <br />
+            Bitte verwenden Sie eine andere Zahlungsmethode (Banküberweisung, TWINT oder PayPal) oder kontaktieren Sie den Support.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Kein clientSecret
+  if (!clientSecret || typeof clientSecret !== 'string' || clientSecret.trim() === '') {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-red-800">
+            <strong>Fehler:</strong> Kein gültiges clientSecret verfügbar. Bitte laden Sie die Seite neu.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Kein stripePromise
+  if (!stripePromise) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-yellow-800">
+            <strong>Hinweis:</strong> Stripe ist nicht konfiguriert. Bitte verwenden Sie Banküberweisung.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // Keine gültigen Options
+  if (!elementsOptions) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-red-800">
+            <strong>Fehler:</strong> Ungültige Element-Optionen. Bitte laden Sie die Seite neu.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // FINALE PRÜFUNG: Alles muss vorhanden sein
+  if (!ready || !clientSecret || !stripePromise || !elementsOptions) {
+    return (
+      <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Bereite Zahlungsformular vor...</span>
+        </div>
+      </div>
+    )
+  }
+
+  // ABSOLUTE FINALE VALIDIERUNG
+  const finalClientSecret = typeof clientSecret === 'string' && clientSecret.trim() !== '' ? clientSecret.trim() : null
+  if (!finalClientSecret) {
+    return (
+      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-red-800">
+            <strong>Fehler:</strong> Kritischer Fehler: clientSecret ist ungültig.
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // JETZT erst Elements rendern - mit allen Checks
   return (
     <Elements
+      key={`elements-${finalClientSecret.substring(0, 20)}`}
       stripe={stripePromise}
       options={{
+        clientSecret: finalClientSecret,
         appearance: {
           theme: 'stripe',
         },
@@ -208,6 +330,7 @@ export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess
         invoiceNumber={invoiceNumber}
         amount={amount}
         onSuccess={onSuccess}
+        clientSecret={clientSecret}
       />
     </Elements>
   )

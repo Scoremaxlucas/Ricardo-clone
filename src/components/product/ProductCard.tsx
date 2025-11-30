@@ -177,7 +177,19 @@ export function ProductCard({
     return (
       <Link
         href={productHref}
-        className={`group bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 ${className}`}
+        className={`group bg-white rounded-[20px] overflow-hidden transition-all duration-300 ${className}`}
+        style={{
+          border: '1px solid rgba(20, 184, 166, 0.1)',
+          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)'
+          e.currentTarget.style.boxShadow = '0px 12px 40px rgba(20, 184, 166, 0.25)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'translateY(0) scale(1)'
+          e.currentTarget.style.boxShadow = '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)'
+        }}
       >
         <div className="relative aspect-[5/4] bg-gray-100 overflow-hidden">
           {mainImage && !imageError ? (
@@ -285,7 +297,17 @@ export function ProductCard({
     return (
       <Link
         href={productHref}
-        className={`bg-white rounded-lg border border-gray-200 hover:shadow-lg transition-shadow overflow-hidden flex group ${className}`}
+        className={`bg-white rounded-[20px] overflow-hidden flex group transition-all duration-300 ${className}`}
+        style={{
+          border: '1px solid rgba(20, 184, 166, 0.1)',
+          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)'
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.boxShadow = '0px 12px 40px rgba(20, 184, 166, 0.25)'
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.boxShadow = '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)'
+        }}
       >
         <div className="relative w-64 flex-shrink-0 bg-gray-100">
           <div className="aspect-[5/4]">
@@ -293,7 +315,7 @@ export function ProductCard({
               <img
                 src={mainImage}
                 alt={product.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
                 onError={() => setImageError(true)}
               />
             ) : (
@@ -392,14 +414,28 @@ export function ProductCard({
   return (
     <Link
       href={productHref}
-      className={`group bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-200 ${className}`}
+      className={`group bg-white rounded-[20px] overflow-hidden transition-all duration-300 animate-fade-in-up ${className}`}
+      style={{
+        border: '1px solid rgba(20, 184, 166, 0.1)',
+        boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)'
+      }}
+      onMouseEnter={(e) => {
+        e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)'
+        e.currentTarget.style.boxShadow = '0px 12px 40px rgba(20, 184, 166, 0.25)'
+        e.currentTarget.style.borderColor = 'rgba(20, 184, 166, 0.3)'
+      }}
+      onMouseLeave={(e) => {
+        e.currentTarget.style.transform = 'translateY(0) scale(1)'
+        e.currentTarget.style.boxShadow = '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)'
+        e.currentTarget.style.borderColor = 'rgba(20, 184, 166, 0.1)'
+      }}
     >
-      <div className="relative aspect-[5/4] bg-gray-100 overflow-hidden">
+      <div className="relative aspect-[5/4] bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
         {mainImage && !imageError ? (
           <img
             src={mainImage}
             alt={product.title}
-            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500 ease-out"
             onError={() => setImageError(true)}
           />
         ) : (

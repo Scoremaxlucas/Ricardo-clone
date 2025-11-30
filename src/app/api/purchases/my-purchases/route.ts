@@ -14,9 +14,12 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Hole alle Purchases des Users
+    // Hole alle Purchases des Users (ausgeschlossen stornierte)
     const purchases = await prisma.purchase.findMany({
-      where: { buyerId: session.user.id },
+      where: { 
+        buyerId: session.user.id,
+        status: { not: 'cancelled' } // Filtere stornierte Purchases aus
+      },
       include: {
         watch: {
           include: {

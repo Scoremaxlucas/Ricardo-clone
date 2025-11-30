@@ -3,7 +3,7 @@
 ## ✅ Backup erfolgreich erstellt!
 
 **Commit-Hash:** `513685d`  
-**Datum:** $(date)  
+**Datum:** 2024-12-20  
 **Branch:** `main`
 
 ---
@@ -80,17 +80,29 @@ Ein zusätzliches Backup-Verzeichnis wurde erstellt (falls gewünscht).
 
 #### Backup-Verzeichnis erstellen:
 ```bash
-# Erstelle ein Backup-Verzeichnis
-cp -r /Users/lucasrodrigues/ricardo-clone /Users/lucasrodrigues/ricardo-clone-backup-$(date +%Y%m%d)
+# Erstelle ein Backup-Verzeichnis (portabel - verwendet aktuelles Verzeichnis)
+PROJECT_DIR="$(pwd)"
+BACKUP_DIR="${PROJECT_DIR}-backup-$(date +%Y%m%d)"
+cp -r "$PROJECT_DIR" "$BACKUP_DIR"
+echo "Backup erstellt in: $BACKUP_DIR"
 ```
 
 #### Vom Backup-Verzeichnis wiederherstellen:
 ```bash
 # WICHTIG: Erstelle zuerst ein Backup des aktuellen Stands!
-cp -r /Users/lucasrodrigues/ricardo-clone /Users/lucasrodrigues/ricardo-clone-backup-vor-restore
+PROJECT_DIR="$(pwd)"
+BACKUP_BEFORE_RESTORE="${PROJECT_DIR}-backup-vor-restore"
+cp -r "$PROJECT_DIR" "$BACKUP_BEFORE_RESTORE"
 
-# Stelle vom Backup wiederher
-cp -r /Users/lucasrodrigues/ricardo-clone-backup-YYYYMMDD/* /Users/lucasrodrigues/ricardo-clone/
+# Stelle vom Backup wiederher (ersetze YYYYMMDD mit dem tatsächlichen Datum)
+BACKUP_DATE="YYYYMMDD"  # Beispiel: 20241220
+BACKUP_DIR="${PROJECT_DIR}-backup-${BACKUP_DATE}"
+if [ -d "$BACKUP_DIR" ]; then
+  cp -r "$BACKUP_DIR"/* "$PROJECT_DIR/"
+  echo "Wiederherstellung abgeschlossen von: $BACKUP_DIR"
+else
+  echo "Fehler: Backup-Verzeichnis nicht gefunden: $BACKUP_DIR"
+fi
 ```
 
 ---
@@ -186,7 +198,7 @@ Falls etwas schief läuft:
 
 ---
 
-**Erstellt am:** $(date)  
+**Erstellt am:** 2024-12-20  
 **Commit-Hash:** 513685d  
 **Status:** ✅ Backup erfolgreich erstellt
 

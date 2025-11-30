@@ -301,8 +301,16 @@ export default function AdminDashboard() {
             title="Angebote moderieren"
             description="Angebote prüfen und verwalten"
             icon={ShoppingBag}
-            href="/admin/watches"
+            href="/admin/moderate-watches"
             color="purple"
+          />
+          <ActionCard
+            title="Kontaktanfragen"
+            description="Support-Anfragen bearbeiten"
+            icon={AlertCircle}
+            href="/admin/contact-requests"
+            color="blue"
+            badge={0}
           />
           <ActionCard
             title="Statistiken"

@@ -20,11 +20,38 @@ export async function GET(request: NextRequest) {
     const boosterType = searchParams.get('type') || 'all' // 'turbo-boost', 'super-boost', 'all'
     const limit = parseInt(searchParams.get('limit') || '6')
 
+    const now = new Date()
+    
     // Basis-Where-Klausel: Nur aktive, nicht verkaufte Angebote
     const baseWhere = {
-      purchases: {
-        none: {} // Nicht verkauft
-      }
+      AND: [
+        {
+          purchases: {
+            none: {} // Nicht verkauft
+          }
+        },
+        {
+          // Beendete Auktionen ohne Purchase ausschließen
+          OR: [
+            { auctionEnd: null },
+            { auctionEnd: { gt: now } },
+            {
+              AND: [
+                { auctionEnd: { lte: now } },
+                {
+                  purchases: {
+                    some: {
+                      status: {
+                        not: 'cancelled'
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
     }
 
     // Erweitere Where-Klausel basierend auf Booster-Type

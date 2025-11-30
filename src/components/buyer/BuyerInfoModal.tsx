@@ -28,32 +28,9 @@ interface BuyerInfoModalProps {
 }
 
 export function BuyerInfoModal({ buyer, watchTitle, purchaseId, isPaid, isOpen, onClose, onMarkPaid }: BuyerInfoModalProps) {
-  const [isMarkingPaid, setIsMarkingPaid] = useState(false)
-
-  const handleMarkPaid = async () => {
-    if (!purchaseId || !onMarkPaid) return
-    
-    setIsMarkingPaid(true)
-    try {
-      const response = await fetch(`/api/purchases/${purchaseId}/mark-paid`, {
-        method: 'POST'
-      })
-      
-      if (response.ok) {
-        onMarkPaid()
-        onClose()
-      } else {
-        const errorData = await response.json()
-        console.error('Error response:', errorData)
-        alert('Fehler beim Markieren als bezahlt: ' + (errorData.message || 'Unbekannter Fehler'))
-      }
-    } catch (error) {
-      console.error('Error marking as paid:', error)
-      alert('Fehler beim Markieren als bezahlt')
-    } finally {
-      setIsMarkingPaid(false)
-    }
-  }
+  // WICHTIG: Verkäufer können keine Zahlungen als bezahlt markieren
+  // Nur der Käufer kann bestätigen, dass er bezahlt hat
+  // Die handleMarkPaid Funktion wurde entfernt, da sie ein Sicherheitsrisiko darstellt
 
   if (!isOpen) return null
 
@@ -212,19 +189,14 @@ export function BuyerInfoModal({ buyer, watchTitle, purchaseId, isPaid, isOpen, 
 
         <div className="sticky bottom-0 bg-gray-50 border-t border-gray-200 px-6 py-4">
           <div className="space-y-3">
-            {isPaid ? (
+            {/* Status-Anzeige wenn bereits bezahlt */}
+            {isPaid && (
               <div className="bg-green-50 border border-green-200 rounded-lg p-3 text-center">
                 <p className="text-sm font-semibold text-green-700">✓ Als bezahlt markiert</p>
               </div>
-            ) : purchaseId && onMarkPaid ? (
-              <button
-                onClick={handleMarkPaid}
-                disabled={isMarkingPaid}
-                className="w-full px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {isMarkingPaid ? 'Wird verarbeitet...' : 'Als bezahlt markieren'}
-              </button>
-            ) : null}
+            )}
+            {/* WICHTIG: Verkäufer können keine Zahlungen als bezahlt markieren - nur der Käufer kann das bestätigen */}
+            {/* Der "Als bezahlt markieren" Button wurde entfernt, da dies ein Sicherheitsrisiko darstellt */}
             <button
               onClick={onClose}
               className="w-full px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300 transition-colors"

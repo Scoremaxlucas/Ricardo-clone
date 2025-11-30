@@ -4,14 +4,13 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { CheckCircle, Clock, ShoppingBag, User, Package, PackageCheck, CreditCard, AlertCircle, CreditCard as PaymentIcon, AlertTriangle, X, Mail, Phone, MapPin, Calendar, TrendingUp, MessageSquare, FileText } from 'lucide-react'
+import { CheckCircle, Clock, ShoppingBag, User, Package, PackageCheck, CreditCard, AlertCircle, CreditCard as PaymentIcon, X, Mail, Phone, MapPin, Calendar, TrendingUp, MessageSquare, FileText } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { SellerInfoModal } from '@/components/seller/SellerInfoModal'
 import { PaymentModal } from '@/components/payment/PaymentModal'
 import { PaymentInfoCard } from '@/components/payment/PaymentInfoCard'
-import { DisputeModal } from '@/components/dispute/DisputeModal'
 import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
 import { getShippingLabels, getShippingCost } from '@/lib/shipping'
 
@@ -77,8 +76,6 @@ export default function MyPurchasedPage() {
   const [selectedPurchase, setSelectedPurchase] = useState<Purchase | null>(null)
   const [showSellerInfo, setShowSellerInfo] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
-  const [showDisputeModal, setShowDisputeModal] = useState(false)
-  const [disputePurchaseId, setDisputePurchaseId] = useState<string | null>(null)
   const [expandedPurchaseId, setExpandedPurchaseId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all') // all, pending, payment_confirmed, item_received, completed
 
@@ -142,7 +139,16 @@ export default function MyPurchasedPage() {
               finalPrice: p.watch.finalPrice
             })))
           }
-          setPurchases(data.purchases || [])
+          const loadedPurchases = data.purchases || []
+          setPurchases(loadedPurchases)
+          
+          // Markiere alle Purchases als gelesen
+          const readPurchases = JSON.parse(localStorage.getItem('readPurchases') || '[]')
+          const newReadPurchases = [...new Set([...readPurchases, ...loadedPurchases.map((p: any) => p.id)])]
+          localStorage.setItem('readPurchases', JSON.stringify(newReadPurchases))
+          
+          // Trigger event für Badge-Update
+          window.dispatchEvent(new CustomEvent('purchases-viewed'))
         } else {
           const errorData = await res.json().catch(() => ({}))
           console.error('[purchased-page] Fehler beim Laden:', res.status, res.statusText, errorData)
@@ -744,19 +750,6 @@ export default function MyPurchasedPage() {
                             Verkäufer kontaktieren
                     </button>
 
-                          {/* Dispute eröffnen */}
-                          {purchase.status !== 'completed' && purchase.status !== 'cancelled' && !purchase.disputeOpenedAt && (
-                            <button
-                              onClick={() => {
-                                setDisputePurchaseId(purchase.id)
-                                setShowDisputeModal(true)
-                              }}
-                              className="px-4 py-2 bg-red-50 text-red-700 border border-red-300 rounded-lg text-sm font-medium hover:bg-red-100 flex items-center gap-2"
-                            >
-                              <AlertTriangle className="h-4 w-4" />
-                              Dispute eröffnen
-                            </button>
-                          )}
 
                   </div>
                 </div>
@@ -769,20 +762,6 @@ export default function MyPurchasedPage() {
         )}
       </div>
 
-      {/* Dispute Modal */}
-      {disputePurchaseId && (
-        <DisputeModal
-          isOpen={showDisputeModal}
-          onClose={() => {
-            setShowDisputeModal(false)
-            setDisputePurchaseId(null)
-          }}
-          purchaseId={disputePurchaseId}
-          onDisputeOpened={() => {
-            handleMarkPaid()
-          }}
-        />
-      )}
 
       <Footer />
       

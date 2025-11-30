@@ -57,6 +57,14 @@ export default function OffersPage() {
       const data = await response.json()
       if (data.offers) {
         setOffers(data.offers)
+        
+        // Markiere alle Preisvorschläge als gelesen
+        const readOffers = JSON.parse(localStorage.getItem('readOffers') || '[]')
+        const newReadOffers = [...new Set([...readOffers, ...data.offers.map((o: PriceOffer) => o.id)])]
+        localStorage.setItem('readOffers', JSON.stringify(newReadOffers))
+        
+        // Trigger event für Badge-Update
+        window.dispatchEvent(new CustomEvent('offers-viewed'))
       }
     } catch (error) {
       console.error('Error fetching offers:', error)

@@ -1209,6 +1209,168 @@ export default function SellPage() {
               </div>
             </div>
 
+            {/* Lieferumfang - NUR für Uhren */}
+            {selectedCategory === 'uhren-schmuck' && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Lieferumfang (inkl. Uhr selbst)
+                </h2>
+                <div className="space-y-3">
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="fullset"
+                      checked={formData.fullset}
+                      onChange={() => setExclusiveSupply('fullset')}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Fullset (Box, Papiere, alle Glieder und Kaufbeleg)</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="onlyBox"
+                      checked={formData.onlyBox}
+                      onChange={() => setExclusiveSupply('onlyBox')}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Nur Box</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="onlyPapers"
+                      checked={formData.onlyPapers}
+                      onChange={() => setExclusiveSupply('onlyPapers')}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Nur Papiere</span>
+                  </label>
+                  <label className="flex items-center">
+                    <input
+                      type="checkbox"
+                      name="onlyAllLinks"
+                      checked={formData.onlyAllLinks}
+                      onChange={() => setExclusiveSupply('onlyAllLinks')}
+                      className="mr-3"
+                    />
+                    <span className="text-sm font-medium text-gray-700">Nur Box und Papiere</span>
+                  </label>
+                </div>
+              </div>
+            )}
+
+            {/* Garantie - NUR für Uhren */}
+            {selectedCategory === 'uhren-schmuck' && (
+              <div>
+                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                  Garantie
+                </h2>
+                <div className="space-y-4">
+                  <div>
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="hasWarranty"
+                        checked={formData.hasWarranty}
+                        onChange={handleInputChange}
+                        className="mr-3"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Herstellergarantie vorhanden</span>
+                    </label>
+                  </div>
+
+                  {formData.hasWarranty && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Garantie in Monaten
+                        </label>
+                        <input
+                          type="number"
+                          name="warrantyMonths"
+                          value={formData.warrantyMonths}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          placeholder="z.B. 24"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Garantie in Jahren
+                        </label>
+                        <input
+                          type="number"
+                          name="warrantyYears"
+                          value={formData.warrantyYears}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          placeholder="z.B. 2"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="pt-4 border-t border-gray-200">
+                    <label className="flex items-center">
+                      <input
+                        type="checkbox"
+                        name="hasSellerWarranty"
+                        checked={formData.hasSellerWarranty}
+                        onChange={handleInputChange}
+                        className="mr-3"
+                      />
+                      <span className="text-sm font-medium text-gray-700">Garantie durch Verkäufer</span>
+                    </label>
+                  </div>
+
+                  {formData.hasSellerWarranty && (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6">
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Verkäufer-Garantie in Monaten
+                        </label>
+                        <input
+                          type="number"
+                          name="sellerWarrantyMonths"
+                          value={formData.sellerWarrantyMonths}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          placeholder="z.B. 12"
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Verkäufer-Garantie in Jahren
+                        </label>
+                        <input
+                          type="number"
+                          name="sellerWarrantyYears"
+                          value={formData.sellerWarrantyYears}
+                          onChange={handleInputChange}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          placeholder="z.B. 1"
+                        />
+                      </div>
+                      <div className="md:col-span-2">
+                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                          Bemerkungen zur Verkäufer-Garantie
+                        </label>
+                        <textarea
+                          name="sellerWarrantyNote"
+                          value={formData.sellerWarrantyNote}
+                          onChange={handleInputChange}
+                          rows={3}
+                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          placeholder="z.B. Garantie nur bei normaler Nutzung..."
+                        />
+                      </div>
+                    </div>
+                  )}
+                </div>
+              </div>
+            )}
+
             {/* Lieferart */}
             <div>
               <h2 className="text-xl font-semibold text-gray-900 mb-4">

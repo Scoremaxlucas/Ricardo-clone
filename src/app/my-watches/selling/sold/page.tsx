@@ -10,7 +10,6 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
 import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
-import { DisputeModal } from '@/components/dispute/DisputeModal'
 import { getShippingLabels, getShippingCost } from '@/lib/shipping'
 
 interface Sale {
@@ -67,19 +66,39 @@ export default function SoldPage() {
   const [loading, setLoading] = useState(true)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [showBuyerInfo, setShowBuyerInfo] = useState(false)
-  const [showDisputeModal, setShowDisputeModal] = useState(false)
-  const [disputeSaleId, setDisputeSaleId] = useState<string | null>(null)
+
+  const loadSales = async () => {
+    if (!session?.user) return
+    
+    try {
+      setLoading(true)
+      
+      // Prüfe und verarbeite abgelaufene Auktionen automatisch
+      try {
+        await fetch('/api/auctions/check-expired', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      } catch (error) {
+        console.error('Error checking expired auctions:', error)
+        // Fehler ignorieren, da dies nicht kritisch ist
+      }
+      
+      // Lade Verkäufe
+      const res = await fetch(`/api/sales/my-sales?t=${Date.now()}`)
+      const data = await res.json()
+      setSales(data.sales || [])
+    } catch (error) {
+      console.error('Error loading sales:', error)
+      toast.error('Fehler beim Laden der Verkäufe')
+    } finally {
+      setLoading(false)
+    }
+  }
 
   const handleMarkPaid = () => {
     // Refresh sales data
-    if (session?.user) {
-      fetch(`/api/sales/my-sales?t=${Date.now()}`)
-        .then(res => res.json())
-        .then(data => {
-          setSales(data.sales || [])
-        })
-        .catch(error => console.error('Error loading sales:', error))
-    }
+    loadSales()
   }
 
   const handleConfirmPayment = async (purchaseId: string) => {
@@ -104,9 +123,22 @@ export default function SoldPage() {
   }
 
   useEffect(() => {
-    const loadSales = async () => {
+    const loadSalesData = async () => {
       if (!session?.user) return
       try {
+        setLoading(true)
+        
+        // Prüfe und verarbeite abgelaufene Auktionen automatisch
+        try {
+          await fetch('/api/auctions/check-expired', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' }
+          })
+        } catch (error) {
+          console.error('Error checking expired auctions:', error)
+          // Fehler ignorieren, da dies nicht kritisch ist
+        }
+        
         const res = await fetch(`/api/sales/my-sales?t=${Date.now()}`)
         if (res.ok) {
           const data = await res.json()
@@ -130,9 +162,9 @@ export default function SoldPage() {
       return
     }
 
-    loadSales()
+    loadSalesData()
     // Polling alle 5 Sekunden für Updates
-    const interval = setInterval(loadSales, 5000)
+    const interval = setInterval(loadSalesData, 5000)
     return () => clearInterval(interval)
   }, [session, status, router])
 
@@ -428,8 +460,8 @@ export default function SoldPage() {
                   )}
 
                   <div className="space-y-2">
-                    {/* Zahlung erhalten Button - nur wenn noch nicht bestätigt */}
-                    {!sale.paymentConfirmed && (
+                    {/* Zahlung erhalten Button - nur wenn Käufer bereits als bezahlt markiert hat */}
+                    {!sale.paymentConfirmed && sale.paid && (
                       <button
                         onClick={() => handleConfirmPayment(sale.id)}
                         className="w-full px-4 py-2 bg-green-600 text-white rounded text-center text-sm hover:bg-green-700 flex items-center justify-center gap-2 font-medium"
@@ -437,6 +469,14 @@ export default function SoldPage() {
                         <CreditCard className="h-4 w-4" />
                         Zahlung erhalten bestätigen
                       </button>
+                    )}
+                    
+                    {/* Hinweis wenn Käufer noch nicht bezahlt hat */}
+                    {!sale.paid && !sale.paymentConfirmed && (
+                      <div className="w-full px-4 py-2 bg-yellow-50 border border-yellow-200 rounded text-center text-sm text-yellow-700">
+                        <Clock className="h-4 w-4 inline mr-2" />
+                        Warten auf Käufer-Bestätigung der Zahlung
+                      </div>
                     )}
                     
                     {sale.paymentConfirmed && (
@@ -457,19 +497,6 @@ export default function SoldPage() {
                       </div>
                     )}
 
-                    {/* Dispute-Button */}
-                    {sale.status !== 'completed' && sale.status !== 'cancelled' && !sale.disputeOpenedAt && (
-                      <button
-                        onClick={() => {
-                          setDisputeSaleId(sale.id)
-                          setShowDisputeModal(true)
-                        }}
-                        className="w-full px-4 py-2 bg-red-50 text-red-700 border border-red-300 rounded text-center text-sm hover:bg-red-100 flex items-center justify-center gap-2"
-                      >
-                        <AlertCircle className="h-4 w-4" />
-                        Dispute eröffnen
-                      </button>
-                    )}
 
                     <button
                       onClick={() => {
@@ -495,21 +522,6 @@ export default function SoldPage() {
         )}
       </div>
 
-      {/* Dispute Modal */}
-      {disputeSaleId && (
-        <DisputeModal
-          isOpen={showDisputeModal}
-          onClose={() => {
-            setShowDisputeModal(false)
-            setDisputeSaleId(null)
-          }}
-          purchaseId={disputeSaleId}
-          isSeller={true}
-          onDisputeOpened={() => {
-            handleMarkPaid()
-          }}
-        />
-      )}
 
       <Footer />
       

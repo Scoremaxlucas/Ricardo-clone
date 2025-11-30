@@ -19,6 +19,11 @@ export async function GET(
             name: true,
             email: true
           }
+        },
+        categories: {
+          include: {
+            category: true
+          }
         }
       }
     })
@@ -56,6 +61,8 @@ export async function GET(
         isAuction: watch.isAuction,
         auctionStart: watch.auctionStart,
         auctionEnd: watch.auctionEnd,
+        auctionDuration: (watch as any).auctionDuration,
+        autoRenew: (watch as any).autoRenew || false,
         lastRevision: watch.lastRevision,
         accuracy: watch.accuracy,
         fullset: watch.fullset,
@@ -73,7 +80,12 @@ export async function GET(
         video: watch.video,
         bids: watch.bids || [],
         shippingMethod: (watch as any).shippingMethod,
-        boosters: (watch as any).boosters
+        boosters: (watch as any).boosters,
+        categories: watch.categories?.map((wc: any) => ({
+          id: wc.category.id,
+          name: wc.category.name,
+          slug: wc.category.slug
+        })) || []
       }
     })
   } catch (error: any) {
@@ -199,6 +211,63 @@ export async function PATCH(
     console.error('Error updating watch:', error)
     return NextResponse.json(
       { message: 'Fehler beim Aktualisieren: ' + error.message },
+      { status: 500 }
+    )
+  }
+}
+
+// DELETE: Angebot löschen (nur für Admins)
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const { id } = await params
+    const session = await getServerSession(authOptions)
+
+    if (!session?.user?.id) {
+      return NextResponse.json(
+        { message: 'Nicht autorisiert' },
+        { status: 401 }
+      )
+    }
+
+    // Prüfe Admin-Status
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { isAdmin: true },
+    })
+
+    if (!user?.isAdmin) {
+      return NextResponse.json(
+        { message: 'Nur Administratoren können Angebote löschen' },
+        { status: 403 }
+      )
+    }
+
+    const watch = await prisma.watch.findUnique({
+      where: { id },
+    })
+
+    if (!watch) {
+      return NextResponse.json(
+        { message: 'Angebot nicht gefunden' },
+        { status: 404 }
+      )
+    }
+
+    // Lösche das Angebot
+    await prisma.watch.delete({
+      where: { id },
+    })
+
+    return NextResponse.json({
+      message: 'Angebot erfolgreich gelöscht',
+    })
+  } catch (error: any) {
+    console.error('Error deleting watch:', error)
+    return NextResponse.json(
+      { message: 'Fehler beim Löschen des Angebots: ' + error.message },
       { status: 500 }
     )
   }

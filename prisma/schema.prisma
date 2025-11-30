@@ -112,6 +112,7 @@ model User {
   searchSubscriptions           SearchSubscription[]
   sessions                      Session[]
   watches                       Watch[]
+  conversations                 Conversation[]
 
   @@map("users")
 }
@@ -217,6 +218,12 @@ model Purchase {
   disputeStatus         String?
   disputeResolvedAt     DateTime?
   disputeResolvedBy     String?
+  cancellationRequestedAt DateTime?
+  cancellationRequestStatus String?
+  cancellationRequestReason String?
+  cancellationRequestDescription String?
+  cancellationRequestResolvedAt DateTime?
+  cancellationRequestResolvedBy String?
   statusHistory         String?
   paid                  Boolean      @default(false)
   paidAt                DateTime?
@@ -451,4 +458,46 @@ model SearchSubscription {
   @@index([userId, isActive])
   @@index([isActive])
   @@map("search_subscriptions")
+}
+
+model Conversation {
+  id        String               @id @default(cuid())
+  userId    String?
+  context   String?              // JSON string mit Kontext (productId, etc.)
+  createdAt DateTime             @default(now())
+  updatedAt DateTime             @updatedAt
+  messages  ConversationMessage[]
+  user      User?                @relation(fields: [userId], references: [id])
+
+  @@map("conversations")
+}
+
+model ConversationMessage {
+  id             String       @id @default(cuid())
+  conversationId String
+  role           String       // 'user' | 'assistant' | 'system'
+  content        String
+  createdAt      DateTime     @default(now())
+  conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
+
+  @@index([conversationId])
+  @@map("conversation_messages")
+}
+
+model ContactRequest {
+  id          String    @id @default(cuid())
+  category    String    // 'technical', 'account', 'payment', 'safety', 'general', 'feedback', 'other'
+  email       String
+  subject     String
+  message     String
+  status      String    @default("pending") // 'pending', 'in_progress', 'resolved', 'closed'
+  resolvedAt DateTime?
+  resolvedBy String?
+  notes       String?   // Admin-Notizen
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("contact_requests")
 }

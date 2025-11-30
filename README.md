@@ -73,7 +73,7 @@ npm run dev
 yarn dev
 ```
 
-Die App ist dann unter `http://localhost:3000` verfügbar.
+Die App ist dann unter `http://localhost:3002` verfügbar.
 
 ## 🎯 Hauptfunktionen
 
@@ -113,8 +113,8 @@ vercel --prod
 
 ### Docker
 ```bash
-docker build -t watchmarket .
-docker run -p 3000:3000 watchmarket
+docker build -t helvenda .
+docker run -p 3002:3002 helvenda
 ```
 
 ## 📁 Projektstruktur

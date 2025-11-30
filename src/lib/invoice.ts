@@ -173,3 +173,92 @@ export async function sendInvoiceNotificationAndEmail(invoice: any) {
     throw error
   }
 }
+
+/**
+ * Erstellt eine Korrektur-Abrechnung (Storno-Rechnung) für eine stornierte Rechnung
+ * Die Korrektur-Abrechnung hat negative Beträge und storniert die ursprüngliche Rechnung
+ */
+export async function createCreditNoteForInvoice(originalInvoiceId: string, reason: string) {
+  // Hole ursprüngliche Rechnung
+  const originalInvoice = await prisma.invoice.findUnique({
+    where: { id: originalInvoiceId },
+    include: {
+      items: true,
+      seller: true
+    }
+  })
+
+  if (!originalInvoice) {
+    throw new Error('Ursprüngliche Rechnung nicht gefunden')
+  }
+
+  // Generiere Korrektur-Rechnungsnummer (mit "KORR-" Präfix)
+  const year = new Date().getFullYear()
+  const lastCreditNote = await prisma.invoice.findFirst({
+    where: {
+      invoiceNumber: {
+        startsWith: `KORR-${year}-`
+      }
+    },
+    orderBy: {
+      invoiceNumber: 'desc'
+    }
+  })
+
+  let creditNoteNumber = `KORR-${year}-001`
+  if (lastCreditNote) {
+    const lastNumber = parseInt(lastCreditNote.invoiceNumber.split('-')[2])
+    if (!isNaN(lastNumber) && lastNumber > 0) {
+      creditNoteNumber = `KORR-${year}-${String(lastNumber + 1).padStart(3, '0')}`
+    }
+  }
+
+  // Erstelle Korrektur-Abrechnung mit negativen Beträgen
+  const creditNote = await prisma.invoice.create({
+    data: {
+      invoiceNumber: creditNoteNumber,
+      sellerId: originalInvoice.sellerId,
+      saleId: originalInvoice.saleId,
+      subtotal: -originalInvoice.subtotal, // Negativ
+      vatRate: originalInvoice.vatRate,
+      vatAmount: -originalInvoice.vatAmount, // Negativ
+      total: -originalInvoice.total, // Negativ
+      status: 'cancelled', // Korrektur-Abrechnung ist automatisch storniert
+      dueDate: new Date(), // Keine Fälligkeit für Korrektur-Abrechnung
+      refundedAt: new Date(),
+      items: {
+        create: originalInvoice.items.map(item => ({
+          watchId: item.watchId,
+          description: `Korrektur/Storno: ${item.description} (Grund: ${reason})`,
+          quantity: item.quantity,
+          price: -item.price, // Negativ
+          total: -item.total // Negativ
+        }))
+      }
+    },
+    include: {
+      items: true,
+      seller: true
+    }
+  })
+
+  console.log(`[invoice] Korrektur-Abrechnung erstellt: ${creditNoteNumber} für ursprüngliche Rechnung ${originalInvoice.invoiceNumber}, Total: CHF ${creditNote.total.toFixed(2)}`)
+
+  // Benachrichtigung an Verkäufer
+  try {
+    await prisma.notification.create({
+      data: {
+        userId: originalInvoice.sellerId,
+        type: 'NEW_INVOICE',
+        title: 'Korrektur-Abrechnung erstellt',
+        message: `Eine Korrektur-Abrechnung wurde für Sie erstellt: ${creditNoteNumber} (CHF ${creditNote.total.toFixed(2)}). Grund: ${reason}`,
+        link: `/my-watches/selling/fees?invoice=${creditNote.id}`
+      }
+    })
+    console.log(`[invoice] Benachrichtigung für Korrektur-Abrechnung erstellt für User ${originalInvoice.sellerId}`)
+  } catch (notificationError: any) {
+    console.error('[invoice] Fehler beim Erstellen der Notification für Korrektur-Abrechnung:', notificationError)
+  }
+
+  return creditNote
+}

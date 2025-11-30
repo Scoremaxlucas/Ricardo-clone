@@ -8,14 +8,41 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions)
     const userId = session?.user?.id
 
+    const now = new Date()
+    
     if (!userId) {
       // Wenn nicht eingeloggt, zeige beliebte Artikel
       const watches = await prisma.watch.findMany({
         where: {
-          // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
-          OR: [
-            { purchases: { none: {} } },
-            { purchases: { every: { status: 'cancelled' } } }
+          AND: [
+            {
+              // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
+              OR: [
+                { purchases: { none: {} } },
+                { purchases: { every: { status: 'cancelled' } } }
+              ]
+            },
+            {
+              // Beendete Auktionen ohne Purchase ausschließen
+              OR: [
+                { auctionEnd: null },
+                { auctionEnd: { gt: now } },
+                {
+                  AND: [
+                    { auctionEnd: { lte: now } },
+                    {
+                      purchases: {
+                        some: {
+                          status: {
+                            not: 'cancelled'
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            }
           ]
         },
         include: {
@@ -93,11 +120,38 @@ export async function GET(request: NextRequest) {
     if (topCategories.length > 0) {
       watches = await prisma.watch.findMany({
         where: {
-          purchases: { none: {} },
-          category: {
-            in: topCategories,
-          },
-          id: {
+          AND: [
+            {
+              purchases: { none: {} }
+            },
+            {
+              category: {
+                in: topCategories,
+              }
+            },
+            {
+              // Beendete Auktionen ohne Purchase ausschließen
+              OR: [
+                { auctionEnd: null },
+                { auctionEnd: { gt: now } },
+                {
+                  AND: [
+                    { auctionEnd: { lte: now } },
+                    {
+                      purchases: {
+                        some: {
+                          status: {
+                            not: 'cancelled'
+                          }
+                        }
+                      }
+                    }
+                  ]
+                }
+              ]
+            },
+            {
+              id: {
             notIn: favorites.map((f) => f.watchId),
           },
         },

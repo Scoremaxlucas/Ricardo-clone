@@ -38,9 +38,11 @@ export default async function ProductPage({ params }: Props) {
   
   if (!watch) {
     return (
-      <div className="min-h-screen bg-gray-50">
+      <div className="flex flex-col min-h-screen bg-gray-50">
         <Header />
-        <ProductPageClient watch={null} images={[]} conditionMap={{}} lieferumfang="" seller={null} />
+        <main className="flex-1 pb-8">
+          <ProductPageClient watch={null} images={[]} conditionMap={{}} lieferumfang="" seller={null} />
+        </main>
         <Footer />
       </div>
     );
@@ -55,14 +57,33 @@ export default async function ProductPage({ params }: Props) {
     if (!hasPurchase) {
       const highestBid = await prisma.bid.findFirst({
         where: { watchId: watch.id },
-        orderBy: { amount: 'desc' }
+        orderBy: { amount: 'desc' },
+        include: {
+          user: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              nickname: true
+            }
+          }
+        }
       });
       
       if (highestBid) {
+        // Erstelle Purchase für den Gewinner mit Kontaktfrist (7 Tage)
+        const contactDeadline = new Date()
+        contactDeadline.setDate(contactDeadline.getDate() + 7)
+        
         await prisma.purchase.create({
           data: {
             watchId: watch.id,
-            buyerId: highestBid.userId
+            buyerId: highestBid.userId,
+            price: highestBid.amount, // Setze den Preis auf das höchste Gebot
+            contactDeadline: contactDeadline,
+            status: 'pending'
           }
         });
       }
@@ -99,17 +120,22 @@ export default async function ProductPage({ params }: Props) {
   }
   
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-[1400px] mx-auto px-4 py-8">
-        <ProductPageClient 
-          watch={watch}
-          images={images}
-          conditionMap={conditionMap}
-          lieferumfang={lieferumfang}
-          seller={seller}
-        />
-      </div>
+      <main className="flex-1 pb-8">
+        <div className="max-w-[1400px] mx-auto px-4 py-8">
+          <ProductPageClient 
+            watch={{
+              ...watch,
+              video: watch.video || null
+            }}
+            images={images}
+            conditionMap={conditionMap}
+            lieferumfang={lieferumfang}
+            seller={seller}
+          />
+        </div>
+      </main>
       <Footer />
     </div>
   );

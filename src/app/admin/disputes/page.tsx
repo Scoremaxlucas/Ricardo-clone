@@ -40,6 +40,7 @@ interface Dispute {
   purchaseStatus: string
   purchasePrice: number | null
   createdAt: string
+  type?: 'dispute' | 'cancellation'
 }
 
 interface Stats {
@@ -56,6 +57,7 @@ export default function AdminDisputesPage() {
   const [disputes, setDisputes] = useState<Dispute[]>([])
   const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, resolved: 0, closed: 0 })
   const [filter, setFilter] = useState<'all' | 'pending' | 'resolved' | 'closed'>('all')
+  const [typeFilter, setTypeFilter] = useState<'all' | 'dispute' | 'cancellation'>('all')
   const [sortBy, setSortBy] = useState<'openedAt' | 'resolvedAt'>('openedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
 
@@ -76,13 +78,14 @@ export default function AdminDisputesPage() {
     }
 
     loadDisputes()
-  }, [session, status, router, filter, sortBy, sortOrder])
+  }, [session, status, router, filter, typeFilter, sortBy, sortOrder])
 
   const loadDisputes = async () => {
     setLoading(true)
     try {
       const params = new URLSearchParams()
       if (filter !== 'all') params.append('status', filter)
+      if (typeFilter !== 'all') params.append('type', typeFilter)
       params.append('sortBy', sortBy)
       params.append('sortOrder', sortOrder)
 
@@ -147,6 +150,7 @@ export default function AdminDisputesPage() {
       payment_not_confirmed: 'Zahlung nicht bestätigt',
       seller_not_responding: 'Verkäufer antwortet nicht',
       buyer_not_responding: 'Käufer antwortet nicht',
+      item_damaged_before_shipping: 'Artikel beschädigt vor Versand',
       other: 'Sonstiges'
     }
     return labels[reason] || reason
@@ -192,8 +196,8 @@ export default function AdminDisputesPage() {
 
         <div className="flex items-center justify-between mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Disputes verwalten</h1>
-            <p className="mt-2 text-gray-600">Übersicht und Verwaltung aller Streitfälle</p>
+            <h1 className="text-3xl font-bold text-gray-900">Disputes & Stornierungsanträge</h1>
+            <p className="mt-2 text-gray-600">Übersicht und Verwaltung aller Streitfälle und Stornierungsanträge</p>
           </div>
           <button
             onClick={loadDisputes}
@@ -249,7 +253,40 @@ export default function AdminDisputesPage() {
           <div className="flex flex-wrap items-center gap-4">
             <div className="flex items-center gap-2">
               <Filter className="h-4 w-4 text-gray-500" />
-              <span className="text-sm font-medium text-gray-700">Filter:</span>
+              <span className="text-sm font-medium text-gray-700">Typ:</span>
+            </div>
+            <button
+              onClick={() => setTypeFilter('all')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                typeFilter === 'all'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Alle
+            </button>
+            <button
+              onClick={() => setTypeFilter('dispute')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                typeFilter === 'dispute'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Disputes
+            </button>
+            <button
+              onClick={() => setTypeFilter('cancellation')}
+              className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                typeFilter === 'cancellation'
+                  ? 'bg-primary-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              Stornierungsanträge
+            </button>
+            <div className="ml-4 flex items-center gap-2">
+              <span className="text-sm font-medium text-gray-700">Status:</span>
             </div>
             <button
               onClick={() => setFilter('all')}
@@ -378,7 +415,14 @@ export default function AdminDisputesPage() {
                       </td>
                       <td className="px-6 py-4">
                         <div className="text-sm text-gray-900">
-                          <div className="font-medium">{getReasonLabel(dispute.disputeReason)}</div>
+                          <div className="flex items-center gap-2">
+                            {dispute.type === 'cancellation' && (
+                              <span className="px-2 py-0.5 bg-orange-100 text-orange-800 text-xs font-medium rounded">
+                                Stornierung
+                              </span>
+                            )}
+                            <span className="font-medium">{getReasonLabel(dispute.disputeReason)}</span>
+                          </div>
                           <div className="text-gray-500 truncate max-w-xs">
                             {dispute.disputeDescription}
                           </div>

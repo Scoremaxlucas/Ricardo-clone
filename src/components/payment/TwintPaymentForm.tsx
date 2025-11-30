@@ -22,39 +22,12 @@ interface TwintPaymentFormProps {
   onSuccess?: () => void
 }
 
-function TwintCheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess }: TwintPaymentFormProps) {
+function TwintCheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess, clientSecret }: TwintPaymentFormProps & { clientSecret: string }) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
-  const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
-
-  // Lade TWINT Payment Intent beim Mount
-  useEffect(() => {
-    const createTwintPaymentIntent = async () => {
-      try {
-        const res = await fetch(`/api/invoices/${invoiceId}/create-twint-payment`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json'
-          }
-        })
-
-        if (res.ok) {
-          const data = await res.json()
-          setClientSecret(data.clientSecret)
-        } else {
-          const errorData = await res.json()
-          setError(errorData.message || 'Fehler beim Erstellen des TWINT Payment Intents')
-        }
-      } catch (err) {
-        setError('Fehler beim Laden der TWINT-Zahlungsinformationen')
-      }
-    }
-
-    createTwintPaymentIntent()
-  }, [invoiceId])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -177,6 +150,64 @@ function TwintCheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess }: Twin
 }
 
 export function TwintPaymentForm({ invoiceId, invoiceNumber, amount, onSuccess }: TwintPaymentFormProps) {
+  const [clientSecret, setClientSecret] = useState<string | null>(null)
+  const [error, setError] = useState<string | null>(null)
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    if (!stripePromise) {
+      setError('Stripe ist nicht konfiguriert')
+      setLoading(false)
+      return
+    }
+
+    let cancelled = false
+
+    const fetchPaymentIntent = async () => {
+      try {
+        const res = await fetch(`/api/invoices/${invoiceId}/create-twint-payment`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json'
+          }
+        })
+
+        if (cancelled) return
+
+        if (!res.ok) {
+          const errorData = await res.json().catch(() => ({}))
+          const errorMessage = errorData.message || 'Fehler beim Erstellen des TWINT Payment Intents'
+          setError(errorMessage)
+          setLoading(false)
+          return
+        }
+
+        const data = await res.json()
+        
+        if (cancelled) return
+
+        if (data.clientSecret && typeof data.clientSecret === 'string' && data.clientSecret.trim() !== '') {
+          setClientSecret(data.clientSecret.trim())
+          setLoading(false)
+        } else {
+          setError('Kein gültiges clientSecret erhalten')
+          setLoading(false)
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError('Fehler beim Laden der TWINT-Zahlungsinformationen')
+          setLoading(false)
+        }
+      }
+    }
+
+    fetchPaymentIntent()
+
+    return () => {
+      cancelled = true
+    }
+  }, [invoiceId])
+
   if (!stripePromise) {
     return (
       <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
@@ -190,10 +221,33 @@ export function TwintPaymentForm({ invoiceId, invoiceNumber, amount, onSuccess }
     )
   }
 
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-green-600" />
+        <span className="ml-2 text-gray-600">Lade TWINT-Zahlungsformular...</span>
+      </div>
+    )
+  }
+
+  if (error || !clientSecret) {
+    return (
+      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <div className="text-sm text-yellow-800">
+            <strong>Hinweis:</strong> {error || 'Fehler beim Laden der TWINT-Zahlungsinformationen'}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   return (
     <Elements
       stripe={stripePromise}
       options={{
+        clientSecret: clientSecret,
         appearance: {
           theme: 'stripe',
         },
@@ -204,6 +258,7 @@ export function TwintPaymentForm({ invoiceId, invoiceNumber, amount, onSuccess }
         invoiceNumber={invoiceNumber}
         amount={amount}
         onSuccess={onSuccess}
+        clientSecret={clientSecret}
       />
     </Elements>
   )

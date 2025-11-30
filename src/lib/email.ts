@@ -434,6 +434,96 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   return { subject, html, text }
 }
 
+export function getCancelRequestEmail(
+  buyerName: string,
+  sellerName: string,
+  articleTitle: string,
+  reason: string,
+  description: string
+) {
+  const subject = `⚠️ Stornierungsantrag für "${articleTitle}"`
+  
+  const reasonLabels: Record<string, string> = {
+    'buyer_not_responding': 'Käufer antwortet nicht',
+    'payment_not_confirmed': 'Zahlung nicht bestätigt',
+    'item_damaged_before_shipping': 'Artikel beschädigt vor Versand',
+    'other': 'Sonstiges'
+  }
+  
+  const reasonLabel = reasonLabels[reason] || reason
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .warning { background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; }
+    .info-box { background: #fff; border: 1px solid #e5e7eb; padding: 15px; margin: 20px 0; border-radius: 8px; }
+    .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚠️ Stornierungsantrag gestellt</h1>
+    </div>
+    <div class="content">
+      <p>Hallo ${buyerName},</p>
+      
+      <div class="warning">
+        <strong>Wichtige Information:</strong> Der Verkäufer ${sellerName} hat einen Stornierungsantrag für den folgenden Artikel gestellt:
+      </div>
+      
+      <div class="info-box">
+        <p><strong>Artikel:</strong> ${articleTitle}</p>
+        <p><strong>Grund:</strong> ${reasonLabel}</p>
+        <p><strong>Beschreibung:</strong></p>
+        <p style="white-space: pre-wrap; margin-left: 20px;">${description}</p>
+      </div>
+      
+      <p><strong>Was bedeutet das?</strong></p>
+      <p>Ein Stornierungsantrag ist eine <strong>Anfrage</strong> des Verkäufers. Ein Admin wird den Antrag prüfen und entscheiden, ob die Stornierung genehmigt wird.</p>
+      
+      <p>Sie werden über die Entscheidung informiert, sobald der Admin den Antrag bearbeitet hat.</p>
+      
+      <p>Falls Sie Fragen haben, können Sie sich gerne an unseren Support wenden.</p>
+    </div>
+    <div class="footer">
+      <p>Diese E-Mail wurde automatisch von Helvenda.ch gesendet.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+  
+  const text = `
+Stornierungsantrag für "${articleTitle}"
+
+Hallo ${buyerName},
+
+Der Verkäufer ${sellerName} hat einen Stornierungsantrag für den folgenden Artikel gestellt:
+
+Artikel: ${articleTitle}
+Grund: ${reasonLabel}
+Beschreibung: ${description}
+
+Was bedeutet das?
+Ein Stornierungsantrag ist eine Anfrage des Verkäufers. Ein Admin wird den Antrag prüfen und entscheiden, ob die Stornierung genehmigt wird.
+
+Sie werden über die Entscheidung informiert, sobald der Admin den Antrag bearbeitet hat.
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+  
+  return { subject, html, text }
+}
+
 
 
 
@@ -528,6 +618,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
   return { subject, html, text }
 }
+
 
 
 
@@ -643,6 +734,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
   return { subject, html, text }
 }
+
 
 
 
@@ -927,6 +1019,7 @@ Helvenda - Ihr vertrauensvoller Marktplatz für den Kauf und Verkauf von Artikel
 
 
 
+
 export function getVerificationApprovalEmail(
   userName: string,
   userEmail: string
@@ -1200,6 +1293,7 @@ Sie erhalten diese E-Mail, weil Sie eine neue Bewertung erhalten haben.
 
 
 
+
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
@@ -1337,6 +1431,7 @@ Sie erhalten diese E-Mail, weil Sie erfolgreich ein Produkt gekauft haben.
 
   return { subject, html, text }
 }
+
 
 
 
@@ -1487,6 +1582,7 @@ Sie können Ihre E-Mail-Benachrichtigungen in Ihren Kontoeinstellungen verwalten
 
   return { subject, html, text }
 }
+
 
 
 
@@ -1642,6 +1738,7 @@ Sie erhalten diese E-Mail, weil die Kontaktfrist für einen Ihrer Käufe/Verkäu
 
 
 
+
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
@@ -1734,6 +1831,7 @@ Sie erhalten diese E-Mail, weil die Zahlungsfrist für einen Ihrer Käufe abläu
 
   return { subject, html, text }
 }
+
 
 
 
@@ -1831,6 +1929,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 
 
+
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
@@ -1845,9 +1944,18 @@ export function getDisputeResolvedEmail(
   otherPartyName: string,
   productTitle: string,
   resolution: string,
-  role: 'buyer' | 'seller'
+  role: 'buyer' | 'seller',
+  perspective: 'initiator' | 'loser' = 'initiator'
 ) {
-  const subject = `✓ Dispute gelöst - ${productTitle}`
+  const isSuccess = perspective === 'initiator'
+  const subject = isSuccess 
+    ? `✅ Dispute erfolgreich gelöst - ${productTitle}`
+    : `⚠️ Dispute gelöst - ${productTitle}`
+  
+  const headerColor = isSuccess ? '#0f766e' : '#f59e0b'
+  const headerBg = isSuccess ? '#0f766e' : '#f59e0b'
+  const boxColor = isSuccess ? '#f0fdfa' : '#fef3c7'
+  const boxBorder = isSuccess ? '#0f766e' : '#f59e0b'
   
   const html = `
 <!DOCTYPE html>
@@ -1857,26 +1965,26 @@ export function getDisputeResolvedEmail(
   <style>
     body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
     .container { max-width: 600px; margin: 0 auto; padding: 20px; }
-    .header { background: #0f766e; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .header { background: ${headerBg}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
     .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
-    .success { background: #f0fdfa; border-left: 4px solid #0f766e; padding: 15px; margin: 20px 0; }
-    .button { display: inline-block; background: #0f766e; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 16px; margin: 20px 0; font-weight: 600; }
+    .info-box { background: ${boxColor}; border-left: 4px solid ${boxBorder}; padding: 15px; margin: 20px 0; }
+    .button { display: inline-block; background: ${headerBg}; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 16px; margin: 20px 0; font-weight: 600; }
     .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
-      <h1>✓ Dispute gelöst</h1>
+      <h1>${isSuccess ? '✅ Dispute erfolgreich gelöst' : '⚠️ Dispute gelöst'}</h1>
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
       
-      <div class="success">
-        <strong>Gut zu wissen:</strong> Der Dispute für "${productTitle}" wurde gelöst.
+      <div class="info-box">
+        <strong>${isSuccess ? 'Gut zu wissen:' : 'Wichtige Information:'}</strong> Der Dispute für "${productTitle}" wurde gelöst.
       </div>
       
-      <p><strong>Lösung:</strong> ${resolution}</p>
+      <p><strong>${isSuccess ? 'Lösung:' : 'Entscheidung:'}</strong> ${resolution}</p>
       
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}" class="button">
@@ -1893,13 +2001,13 @@ export function getDisputeResolvedEmail(
   `.trim()
 
   const text = `
-✓ Dispute gelöst - ${productTitle}
+${isSuccess ? '✅ Dispute erfolgreich gelöst' : '⚠️ Dispute gelöst'} - ${productTitle}
 
 Hallo ${userName},
 
 Der Dispute für "${productTitle}" wurde gelöst.
 
-Lösung: ${resolution}
+${isSuccess ? 'Lösung:' : 'Entscheidung:'} ${resolution}
 
 Details ansehen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}
 
@@ -1909,6 +2017,80 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
   return { subject, html, text }
 }
+
+/**
+ * E-Mail-Template für abgelehnte Disputes
+ */
+export function getDisputeRejectedEmail(
+  userName: string,
+  productTitle: string,
+  rejectionReason: string
+) {
+  const subject = `❌ Dispute abgelehnt - ${productTitle}`
+  
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .info-box { background: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; }
+    .button { display: inline-block; background: #dc2626; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 16px; margin: 20px 0; font-weight: 600; }
+    .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>❌ Dispute abgelehnt</h1>
+    </div>
+    <div class="content">
+      <p>Hallo ${userName},</p>
+      
+      <div class="info-box">
+        <strong>Leider:</strong> Ihr Dispute für "${productTitle}" wurde abgelehnt.
+      </div>
+      
+      <p><strong>Ablehnungsgrund:</strong> ${rejectionReason}</p>
+      
+      <p>Falls Sie Fragen haben, können Sie sich gerne an unseren Support wenden.</p>
+      
+      <p style="margin-top: 30px;">
+        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches" class="button">
+          Zu meinen Angeboten →
+        </a>
+      </p>
+    </div>
+    <div class="footer">
+      <p>Diese E-Mail wurde automatisch von Helvenda.ch gesendet.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+❌ Dispute abgelehnt - ${productTitle}
+
+Hallo ${userName},
+
+Ihr Dispute für "${productTitle}" wurde abgelehnt.
+
+Ablehnungsgrund: ${rejectionReason}
+
+Falls Sie Fragen haben, können Sie sich gerne an unseren Support wenden.
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
 
 
 
@@ -2219,6 +2401,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 
 
+
 // Neue E-Mail-Templates - werden in email.ts integriert
 
 // Template für Überboten-Benachrichtigung (für Käufer)
@@ -2271,6 +2454,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   
   return { subject, html, text }
 }
+
 
 
 
@@ -2332,6 +2516,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 
 
+
 // Template für Auktionsende-Benachrichtigung (für Käufer - gewonnen)
 export function getAuctionEndWonEmail(
   buyerName: string,
@@ -2387,6 +2572,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 
 
+
 // Template für Auktionsende-Benachrichtigung (für Käufer - nicht gewonnen)
 export function getAuctionEndLostEmail(
   buyerName: string,
@@ -2436,6 +2622,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   
   return { subject, html, text }
 }
+
 
 
 
@@ -2498,6 +2685,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 
 
+
 // Template für Zahlungseingangsbestätigung (für Verkäufer)
 export function getPaymentReceivedEmail(
   sellerName: string,
@@ -2551,6 +2739,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   
   return { subject, html, text }
 }
+
 
 
 
@@ -2614,6 +2803,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 
 
+
 // Template für Versandaufforderung (für Verkäufer)
 export function getShippingReminderEmail(
   sellerName: string,
@@ -2664,6 +2854,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   
   return { subject, html, text }
 }
+
 
 
 
@@ -2725,6 +2916,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 
 
+
 // Template für Preisvorschlag akzeptiert (für Käufer)
 export function getPriceOfferAcceptedEmail(
   buyerName: string,
@@ -2776,6 +2968,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   
   return { subject, html, text }
 }
+
 
 
 
@@ -2834,6 +3027,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 
 
+
 // Template für Bewertungsaufforderung (für Käufer)
 export function getReviewRequestBuyerEmail(
   buyerName: string,
@@ -2888,6 +3082,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 
 
+
 // Template für Bewertungsaufforderung (für Verkäufer)
 export function getReviewRequestSellerEmail(
   sellerName: string,
@@ -2938,6 +3133,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   
   return { subject, html, text }
 }
+
 
 
 

@@ -3,6 +3,7 @@ import { Inter } from 'next/font/google'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { Toaster } from 'react-hot-toast'
+import { EmmaChat } from '@/components/emma/EmmaChat'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,9 +19,9 @@ export default function RootLayout({
 }) {
   return (
     <html lang="de" className="h-full">
-      <body className={`${inter.className} h-full flex flex-col`}>
+      <body className={`${inter.className} min-h-screen flex flex-col`}>
         <Providers>
-          <div className="flex-1 flex flex-col min-h-0">
+          <div className="flex-1 flex flex-col">
             {children}
           </div>
           <Toaster 
@@ -56,6 +57,8 @@ export default function RootLayout({
               },
             }}
           />
+          {/* Emma AI Assistant - Verfügbar auf allen Seiten */}
+          <EmmaChat />
         </Providers>
       </body>
     </html>

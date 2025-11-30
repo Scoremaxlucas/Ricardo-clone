@@ -35,7 +35,7 @@ interface InvoicePaymentMethodsProps {
   onPaymentSuccess?: () => void
 }
 
-type PaymentMethod = 'bank' | 'twint' | 'creditcard' | 'paypal'
+type PaymentMethod = 'bank' | 'card_or_twint' | 'paypal'
 
 export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaymentSuccess }: InvoicePaymentMethodsProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null)
@@ -77,32 +77,61 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
     return iban.replace(/(.{4})/g, '$1 ').trim()
   }
 
-  if (loading) {
-    return (
-      <div className="bg-white rounded-lg shadow-md p-6">
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="ml-2 text-gray-600">Lade Zahlungsmethoden...</span>
-        </div>
-      </div>
-    )
-  }
+        if (loading) {
+          return (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="flex items-center justify-center py-8">
+                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+                <span className="ml-2 text-gray-600">Lade Zahlungsmethoden...</span>
+              </div>
+            </div>
+          )
+        }
 
-  if (!paymentInfo) {
-    return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-        <div className="flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-          <div className="text-sm text-yellow-800">
-            Fehler beim Laden der Zahlungsinformationen
-          </div>
-        </div>
-      </div>
-    )
-  }
+        if (!paymentInfo) {
+          return (
+            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+              <div className="flex items-start gap-2">
+                <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+                <div className="text-sm text-yellow-800">
+                  Fehler beim Laden der Zahlungsinformationen
+                </div>
+              </div>
+            </div>
+          )
+        }
 
-  return (
-    <div className="space-y-6">
+        // Prüfe ob es eine Credit Note ist (keine IBAN = Credit Note)
+        const isCreditNote = !paymentInfo.iban || paymentInfo.invoiceNumber.startsWith('KORR-')
+
+        // Bei Credit Notes: Zeige Hinweis statt Zahlungsmethoden
+        if (isCreditNote) {
+          return (
+            <div className="bg-white rounded-lg shadow-md p-6">
+              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
+                  <div className="flex-1">
+                    <h3 className="text-lg font-semibold text-green-900 mb-2">
+                      Korrektur-Abrechnung / Gutschrift
+                    </h3>
+                    <p className="text-sm text-green-800 mb-3">
+                      Diese Korrektur-Abrechnung stellt eine Gutschrift dar. Es ist keine Zahlung erforderlich.
+                    </p>
+                    <div className="bg-white rounded-lg p-4 border border-green-200">
+                      <div className="text-sm text-gray-700 whitespace-pre-line">
+                        {paymentInfo.paymentInstructions || `Korrektur-Abrechnung ${paymentInfo.invoiceNumber}\n\nDer Betrag wird automatisch gutgeschrieben oder mit einer offenen Rechnung verrechnet.`}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )
+        }
+
+        return (
+          <div className="space-y-6">
       {/* Zahlungsmethoden-Auswahl */}
       {!selectedMethod && (
         <div className="bg-white rounded-lg shadow-md p-6">
@@ -111,12 +140,11 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
           </h3>
           <div className={`grid grid-cols-1 gap-4 ${
             // Berechne Anzahl der verfügbaren Zahlungsmethoden
-            // Kreditkarte ist immer verfügbar (1), Banküberweisung (1), TWINT (optional), PayPal (optional)
-            (paymentInfo.twintPhone ? 1 : 0) + 
+            // Banküberweisung (1), Kreditkarte/TWINT kombiniert (1), PayPal (optional)
             (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? 1 : 0) + 
-            2 // Banküberweisung + Kreditkarte sind immer verfügbar
-          } > 2 ? 'md:grid-cols-2 lg:grid-cols-4' : 
-            (paymentInfo.twintPhone || process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID) ? 'md:grid-cols-2' : 
+            2 // Banküberweisung + Kreditkarte/TWINT sind immer verfügbar
+          } > 2 ? 'md:grid-cols-2 lg:grid-cols-3' : 
+            (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID) ? 'md:grid-cols-2' : 
             'md:grid-cols-1'
           }`}>
             {/* Banküberweisung */}
@@ -131,27 +159,16 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
               </p>
             </button>
 
-            {/* TWINT */}
-            {paymentInfo.twintPhone && (
-              <button
-                onClick={() => setSelectedMethod('twint')}
-                className="p-6 border-2 border-gray-200 rounded-lg hover:border-green-500 hover:bg-green-50 transition-all text-left"
-              >
-                <Smartphone className="h-8 w-8 text-green-600 mb-3" />
-                <h4 className="font-semibold text-gray-900 mb-1">TWINT</h4>
-                <p className="text-sm text-gray-600">
-                  Schnell und einfach
-                </p>
-              </button>
-            )}
-
-            {/* Kreditkarte - immer verfügbar */}
+            {/* Kreditkarte / TWINT - kombiniert */}
             <button
-              onClick={() => setSelectedMethod('creditcard')}
+              onClick={() => setSelectedMethod('card_or_twint')}
               className="p-6 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all text-left"
             >
-              <CreditCard className="h-8 w-8 text-purple-600 mb-3" />
-              <h4 className="font-semibold text-gray-900 mb-1">Kreditkarte</h4>
+              <div className="flex items-center gap-2 mb-3">
+                <CreditCard className="h-8 w-8 text-purple-600" />
+                <Smartphone className="h-6 w-6 text-green-600" />
+              </div>
+              <h4 className="font-semibold text-gray-900 mb-1">Kreditkarte / TWINT</h4>
               <p className="text-sm text-gray-600">
                 Sofortige Zahlung
               </p>
@@ -316,13 +333,17 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
         </div>
       )}
 
-      {/* TWINT */}
-      {selectedMethod === 'twint' && paymentInfo.twintPhone && (
+      {/* Kreditkarte / TWINT - kombiniert */}
+      {selectedMethod === 'card_or_twint' && (
         <div className="bg-white rounded-lg shadow-md p-6">
           <div className="flex items-center justify-between mb-4">
             <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <Smartphone className="h-5 w-5 text-green-600" />
-              TWINT-Zahlung
+              <div className="flex items-center gap-2">
+                <CreditCard className="h-5 w-5 text-purple-600" />
+                <span className="text-gray-400">/</span>
+                <Smartphone className="h-5 w-5 text-green-600" />
+              </div>
+              Kreditkarte / TWINT
             </h3>
             <button
               onClick={() => setSelectedMethod(null)}
@@ -332,86 +353,33 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
             </button>
           </div>
 
-          <div className="space-y-4">
+          <div className="space-y-6">
             {/* Betrag */}
-            <div className="p-3 bg-green-50 rounded-lg border border-green-200">
+            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
               <div className="text-sm text-gray-600 mb-1">Zu zahlender Betrag</div>
-              <div className="text-2xl font-bold text-green-700">
+              <div className="text-2xl font-bold text-purple-700">
                 {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
               </div>
             </div>
 
-            {/* TWINT Payment Form über Stripe (automatische Bestätigung) */}
-            {stripePromise ? (
-              <TwintPaymentForm
+            {/* Kreditkarte / TWINT - Einheitliches Formular */}
+            <div className="border-t border-gray-200 pt-6">
+              <h4 className="text-md font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <div className="flex items-center gap-2">
+                  <CreditCard className="h-5 w-5 text-purple-600" />
+                  <span className="text-gray-400">/</span>
+                  <Smartphone className="h-5 w-5 text-green-600" />
+                </div>
+                Kreditkarte / TWINT
+              </h4>
+              <InvoicePaymentForm
                 invoiceId={invoiceId}
                 invoiceNumber={invoiceNumber}
-                amount={paymentInfo.amount}
+                amount={amount}
                 onSuccess={onPaymentSuccess}
               />
-            ) : (
-              <>
-                {/* Fallback: QR-Code und Deep Link wenn Stripe nicht verfügbar */}
-                {paymentInfo.twintDeepLink && (
-                  <div>
-                    <a
-                      href={paymentInfo.twintDeepLink}
-                      className="w-full flex items-center justify-center gap-3 px-6 py-4 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors text-lg"
-                    >
-                      <Smartphone className="h-6 w-6" />
-                      Mit TWINT bezahlen
-                    </a>
-                    <p className="text-xs text-gray-500 text-center mt-2">
-                      Öffnet die TWINT-App direkt mit dem korrekten Betrag
-                    </p>
-                  </div>
-                )}
-
-                {paymentInfo.twintQRCodeDataUrl && (
-                  <div>
-                    <div className="text-sm font-medium text-gray-700 mb-2 text-center">
-                      Oder scannen Sie den QR-Code mit Ihrer TWINT-App:
-                    </div>
-                    <div className="p-4 bg-white rounded-lg border-2 border-green-200 flex justify-center">
-                      <img
-                        src={paymentInfo.twintQRCodeDataUrl}
-                        alt="TWINT QR-Code für Zahlung"
-                        className="w-64 h-64"
-                      />
-                    </div>
-                    <p className="text-xs text-gray-500 text-center mt-2">
-                      Scannen Sie diesen QR-Code mit der TWINT-App auf Ihrem Smartphone
-                    </p>
-                  </div>
-                )}
-              </>
-            )}
+            </div>
           </div>
-        </div>
-      )}
-
-      {/* Kreditkarte */}
-      {selectedMethod === 'creditcard' && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
-              <CreditCard className="h-5 w-5 text-purple-600" />
-              Kreditkartenzahlung
-            </h3>
-            <button
-              onClick={() => setSelectedMethod(null)}
-              className="text-sm text-gray-600 hover:text-gray-900"
-            >
-              Zurück
-            </button>
-          </div>
-
-          <InvoicePaymentForm
-            invoiceId={invoiceId}
-            invoiceNumber={invoiceNumber}
-            amount={amount}
-            onSuccess={onPaymentSuccess}
-          />
         </div>
       )}
 

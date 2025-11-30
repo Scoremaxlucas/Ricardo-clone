@@ -7,7 +7,7 @@ import { addStatusHistory } from '@/lib/status-history'
 
 /**
  * POST: Dispute eröffnen
- * Kann sowohl von Käufer als auch Verkäufer aufgerufen werden
+ * Nur Verkäufer können Disputes eröffnen
  */
 export async function POST(
   request: NextRequest,
@@ -70,25 +70,22 @@ export async function POST(
       )
     }
 
-    // Prüfe Berechtigung (nur Käufer oder Verkäufer)
+    // Prüfe Berechtigung (nur Verkäufer kann Dispute eröffnen)
     const isSeller = purchase.watch.sellerId === session.user.id
-    const isBuyer = purchase.buyerId === session.user.id
 
-    if (!isSeller && !isBuyer) {
+    if (!isSeller) {
       return NextResponse.json(
-        { message: 'Sie sind nicht berechtigt, einen Dispute zu eröffnen' },
+        { message: 'Nur der Verkäufer kann einen Dispute eröffnen' },
         { status: 403 }
       )
     }
 
-    // RICARDO-STYLE: Validiere, dass der Dispute-Grund für die Rolle gültig ist
-    const buyerReasons = ['item_not_received', 'item_damaged', 'item_wrong', 'payment_not_confirmed', 'seller_not_responding', 'other']
+    // Validiere, dass der Dispute-Grund für Verkäufer gültig ist
     const sellerReasons = ['payment_not_confirmed', 'buyer_not_responding', 'other']
     
-    const validReasons = isSeller ? sellerReasons : buyerReasons
-    if (!validReasons.includes(reason)) {
+    if (!sellerReasons.includes(reason)) {
       return NextResponse.json(
-        { message: `Dieser Dispute-Grund ist für ${isSeller ? 'Verkäufer' : 'Käufer'} nicht gültig` },
+        { message: 'Dieser Dispute-Grund ist nicht gültig' },
         { status: 400 }
       )
     }
@@ -132,11 +129,9 @@ export async function POST(
       console.error('[dispute] Fehler beim Hinzufügen der Status-Historie:', error)
     }
 
-    // Benachrichtigung an die andere Partei
-    const otherParty = isSeller ? purchase.buyer : purchase.watch.seller
-    const openerName = isSeller 
-      ? (purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Verkäufer')
-      : (purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Käufer')
+    // Benachrichtigung an die andere Partei (Käufer)
+    const otherParty = purchase.buyer
+    const openerName = purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Verkäufer'
 
     try {
       await prisma.notification.create({
@@ -145,7 +140,7 @@ export async function POST(
           type: 'PURCHASE',
           title: '⚠️ Dispute eröffnet',
           message: `${openerName} hat einen Dispute für "${purchase.watch.title}" eröffnet. Grund: ${reason}`,
-          link: `/my-watches/${isSeller ? 'buying' : 'selling'}/${isSeller ? 'purchased' : 'sold'}`,
+          link: `/my-watches/buying/purchased`,
           watchId: purchase.watchId
         }
       })
@@ -162,7 +157,7 @@ export async function POST(
         purchase.watch.title,
         reason,
         description,
-        isSeller ? 'buyer' : 'seller'
+        'buyer'
       )
       
       await sendEmail({
@@ -198,7 +193,7 @@ export async function POST(
       console.error('[dispute] Fehler beim Erstellen der Admin-Benachrichtigungen:', error)
     }
 
-    console.log(`[dispute] Dispute eröffnet für Purchase ${id} von ${isSeller ? 'Verkäufer' : 'Käufer'}`)
+    console.log(`[dispute] Dispute eröffnet für Purchase ${id} von Verkäufer`)
 
     return NextResponse.json({
       message: 'Dispute erfolgreich eröffnet. Ein Admin wird sich in Kürze darum kümmern.',

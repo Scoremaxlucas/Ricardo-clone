@@ -395,7 +395,8 @@ export default function SearchPage() {
   return (
     <div className="flex flex-col min-h-screen bg-gray-50">
       <Header />
-      <div className="flex-1 max-w-[1400px] mx-auto px-4 py-8 w-full">
+      <main className="flex-1 pb-8">
+        <div className="max-w-[1400px] mx-auto px-4 py-8 w-full">
         {/* Breadcrumb */}
         <div className="text-sm text-gray-600 mb-4">
           <Link href="/" className="text-primary-600 hover:text-primary-700">{t.search.homepage}</Link>
@@ -1142,7 +1143,8 @@ export default function SearchPage() {
             ))}
           </div>
         )}
-      </div>
+        </div>
+      </main>
       <Footer />
     </div>
   )

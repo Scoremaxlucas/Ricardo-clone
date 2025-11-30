@@ -15,10 +15,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Hole alle Purchases, bei denen der eingeloggte User der Verkäufer ist
+    // WICHTIG: Nur nicht-stornierte Purchases zählen als "verkauft"
+    // Stornierte Purchases (z.B. durch Dispute) bedeuten, dass der Artikel wieder verfügbar ist
     const purchases = await prisma.purchase.findMany({
       where: {
         watch: {
           sellerId: session.user.id
+        },
+        // Nur nicht-stornierte Purchases - stornierte bedeuten, dass der Artikel wieder verfügbar ist
+        status: {
+          not: 'cancelled'
         }
       },
       include: {

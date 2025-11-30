@@ -33,6 +33,7 @@ export default function SearchSubscriptionsPage() {
   const [loading, setLoading] = useState(true)
   const [subscriptions, setSubscriptions] = useState<SearchSubscription[]>([])
   const [showCreateForm, setShowCreateForm] = useState(false)
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
   const [formData, setFormData] = useState({
     searchTerm: '',
     brand: '',
@@ -110,16 +111,21 @@ export default function SearchSubscriptionsPage() {
     }
   }
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Möchten Sie dieses Suchabo wirklich löschen?')) return
+  const handleDeleteClick = (id: string) => {
+    setDeleteConfirmId(id)
+  }
+
+  const handleDeleteConfirm = async () => {
+    if (!deleteConfirmId) return
 
     try {
-      const response = await fetch(`/api/search-subscriptions/${id}`, {
+      const response = await fetch(`/api/search-subscriptions/${deleteConfirmId}`, {
         method: 'DELETE',
       })
 
       if (response.ok) {
         toast.success('Suchabo gelöscht')
+        setDeleteConfirmId(null)
         loadSubscriptions()
       } else {
         toast.error('Fehler beim Löschen des Suchabos')
@@ -128,6 +134,10 @@ export default function SearchSubscriptionsPage() {
       console.error('Error deleting subscription:', error)
       toast.error('Fehler beim Löschen des Suchabos')
     }
+  }
+
+  const handleDeleteCancel = () => {
+    setDeleteConfirmId(null)
   }
 
   const handleToggleActive = async (id: string, currentStatus: boolean) => {
@@ -381,7 +391,7 @@ export default function SearchSubscriptionsPage() {
                       )}
                     </button>
                     <button
-                      onClick={() => handleDelete(sub.id)}
+                      onClick={() => handleDeleteClick(sub.id)}
                       className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
                       title="Löschen"
                     >
@@ -391,6 +401,34 @@ export default function SearchSubscriptionsPage() {
                 </div>
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Delete Confirmation Modal */}
+        {deleteConfirmId && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
+              <h3 className="text-xl font-semibold text-gray-900 mb-4">
+                Suchabo löschen?
+              </h3>
+              <p className="text-gray-600 mb-6">
+                Möchten Sie dieses Suchabo wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+              </p>
+              <div className="flex justify-end gap-3">
+                <button
+                  onClick={handleDeleteCancel}
+                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                >
+                  Abbrechen
+                </button>
+                <button
+                  onClick={handleDeleteConfirm}
+                  className="px-4 py-2 bg-[#ef4444] text-white rounded-lg hover:bg-[#dc2626] transition-colors"
+                >
+                  Löschen
+                </button>
+              </div>
+            </div>
           </div>
         )}
       </div>

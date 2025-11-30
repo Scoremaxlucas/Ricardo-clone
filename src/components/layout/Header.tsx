@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, Menu, User, Heart, Bell, LogOut, ChevronDown, Gavel, Plus } from 'lucide-react'
+import { Search, Menu, User, Heart, Bell, LogOut, ChevronDown, Gavel, Plus, X, Package, ShoppingBag, Settings, Wallet, Shield } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -159,6 +159,7 @@ export function Header() {
     
     // Event-basierte Aktualisierung nach bestimmten Aktionen
     const handleNotificationUpdate = () => {
+      console.log('[Header] notifications-update Event empfangen, aktualisiere unreadCount')
       fetchUnreadCount()
     }
     
@@ -391,90 +392,68 @@ export function Header() {
                                 {session.user?.email}
                               </p>
                             </div>
-                            <a
+                            <Link
                               href="/profile"
                               onClick={(e) => {
-                                e.preventDefault()
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
-                                window.location.href = '/profile'
-                              }}
-                              onMouseDown={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
                               }}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
                               style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
-                              {t.header.myProfile}
-                            </a>
-                            <a
+                              <div className="flex items-center">
+                                <User className="h-4 w-4 mr-2" />
+                                {t.header.myProfile}
+                              </div>
+                            </Link>
+                            <Link
                               href="/my-watches"
                               onClick={(e) => {
-                                e.preventDefault()
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
-                                window.location.href = '/my-watches'
-                              }}
-                              onMouseDown={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
                               }}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
                               style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
-                              {t.header.mySelling}
-                            </a>
-                            <a
+                              <div className="flex items-center">
+                                <Package className="h-4 w-4 mr-2" />
+                                {t.header.mySelling}
+                              </div>
+                            </Link>
+                            <Link
                               href="/my-watches/buying"
                               onClick={(e) => {
-                                e.preventDefault()
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
-                                window.location.href = '/my-watches/buying'
-                              }}
-                              onMouseDown={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
                               }}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
                               style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
-                              {t.header.myBuying}
-                            </a>
-                            <a
+                              <div className="flex items-center">
+                                <ShoppingBag className="h-4 w-4 mr-2" />
+                                {t.header.myBuying}
+                              </div>
+                            </Link>
+                            <Link
                               href="/my-watches/account"
                               onClick={(e) => {
-                                e.preventDefault()
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
-                                window.location.href = '/my-watches/account'
-                              }}
-                              onMouseDown={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
                               }}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
                               style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
-                              {t.header.settings}
-                            </a>
+                              <div className="flex items-center">
+                                <Settings className="h-4 w-4 mr-2" />
+                                {t.header.settings}
+                              </div>
+                            </Link>
                             <div className="border-t border-gray-200 my-1" />
-                            <a
+                            <Link
                               href="/my-watches/selling/fees"
                               onClick={(e) => {
-                                e.preventDefault()
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
-                                // Verwende window.location für garantierte Navigation
-                                window.location.href = '/my-watches/selling/fees'
-                              }}
-                              onMouseDown={(e) => {
-                                e.preventDefault()
-                                e.stopPropagation()
-                              }}
-                              onMouseUp={(e) => {
-                                e.stopPropagation()
                               }}
                               className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
                               style={{ 
@@ -483,28 +462,46 @@ export function Header() {
                                 position: 'relative'
                               }}
                             >
-                              {t.header.feesAndInvoices}
-                            </a>
+                              <div className="flex items-center">
+                                <Wallet className="h-4 w-4 mr-2" />
+                                {t.header.feesAndInvoices}
+                              </div>
+                            </Link>
+                            <Link
+                              href="/my-watches/selling/cancel-request"
+                              onClick={(e) => {
+                                e.stopPropagation()
+                                setIsProfileMenuOpen(false)
+                              }}
+                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
+                              style={{ 
+                                pointerEvents: 'auto',
+                                zIndex: 1000,
+                                position: 'relative'
+                              }}
+                            >
+                              <div className="flex items-center">
+                                <X className="h-4 w-4 mr-2" />
+                                Stornieren
+                              </div>
+                            </Link>
                             {(isAdmin || session.user?.isAdmin === true || session.user?.isAdmin === 1) && (
                               <>
                                 <div className="border-t border-gray-200 my-1" />
-                                <a
+                                <Link
                                   href="/admin/dashboard"
                                   onClick={(e) => {
-                                    e.preventDefault()
                                     e.stopPropagation()
                                     setIsProfileMenuOpen(false)
-                                    window.location.href = '/admin/dashboard'
-                                  }}
-                                  onMouseDown={(e) => {
-                                    e.preventDefault()
-                                    e.stopPropagation()
                                   }}
                                   className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-semibold text-primary-600 cursor-pointer relative"
                                   style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                                 >
-                                  {t.header.adminDashboard}
-                                </a>
+                                  <div className="flex items-center">
+                                    <Shield className="h-4 w-4 mr-2" />
+                                    {t.header.adminDashboard}
+                                  </div>
+                                </Link>
                               </>
                             )}
                             <div className="border-t border-gray-200 my-1" />
@@ -702,37 +699,58 @@ export function Header() {
                   <Link
                     href="/profile"
                     onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
+                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
                   >
+                    <User className="h-5 w-5 mr-2" />
                     {t.header.myProfile}
                   </Link>
                   <Link
                     href="/my-watches"
                     onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
+                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
                   >
+                    <Package className="h-5 w-5 mr-2" />
                     {t.header.mySelling}
                   </Link>
                   <Link
                     href="/my-watches/buying"
                     onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
+                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
                   >
+                    <ShoppingBag className="h-5 w-5 mr-2" />
                     {t.header.myBuying}
                   </Link>
                   <Link
                     href="/my-watches/account"
                     onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium"
+                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
                   >
+                    <Settings className="h-5 w-5 mr-2" />
                     {t.header.settings}
+                  </Link>
+                  <Link
+                    href="/my-watches/selling/fees"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
+                  >
+                    <Wallet className="h-5 w-5 mr-2" />
+                    {t.header.feesAndInvoices}
+                  </Link>
+                  <Link
+                    href="/my-watches/selling/cancel-request"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
+                  >
+                    <X className="h-5 w-5 mr-2" />
+                    Stornieren
                   </Link>
                   {(session?.user?.isAdmin || isAdmin) && (
                     <Link
                       href="/admin/dashboard"
                       onClick={() => setIsMenuOpen(false)}
-                      className="text-primary-600 hover:text-primary-700 block px-3 py-2 rounded-md text-base font-semibold"
+                      className="text-primary-600 hover:text-primary-700 block px-3 py-2 rounded-md text-base font-semibold flex items-center"
                     >
+                      <Shield className="h-5 w-5 mr-2" />
                       {t.header.adminDashboard}
                     </Link>
                   )}

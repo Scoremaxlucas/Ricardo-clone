@@ -65,6 +65,18 @@ export default function MyBuyingPage() {
 
     if (status === 'authenticated' && session?.user) {
       loadStats()
+      
+      // Höre auf Events für Badge-Updates
+      const handleOffersViewed = () => loadStats()
+      const handlePurchasesViewed = () => loadStats()
+      
+      window.addEventListener('offers-viewed', handleOffersViewed)
+      window.addEventListener('purchases-viewed', handlePurchasesViewed)
+      
+      return () => {
+        window.removeEventListener('offers-viewed', handleOffersViewed)
+        window.removeEventListener('purchases-viewed', handlePurchasesViewed)
+      }
     }
   }, [status, session, router])
 
@@ -87,23 +99,35 @@ export default function MyBuyingPage() {
         console.error('Error loading bids:', error)
       }
 
-      // Lade Preisvorschläge
+      // Lade Preisvorschläge - zähle nur ungelesene
       try {
         const offersRes = await fetch('/api/offers?type=sent')
         if (offersRes.ok) {
           const offersData = await offersRes.json()
-          setStats(prev => ({ ...prev, offers: (offersData.offers || []).length }))
+          const allOffers = offersData.offers || []
+          
+          // Lade gelesene Preisvorschläge aus localStorage
+          const readOffers = JSON.parse(localStorage.getItem('readOffers') || '[]')
+          const unreadOffers = allOffers.filter((offer: any) => !readOffers.includes(offer.id))
+          
+          setStats(prev => ({ ...prev, offers: unreadOffers.length }))
         }
       } catch (error) {
         console.error('Error loading offers:', error)
       }
 
-      // Lade gekaufte Artikel
+      // Lade gekaufte Artikel - zähle nur ungelesene
       try {
         const purchasesRes = await fetch('/api/purchases/my-purchases')
         if (purchasesRes.ok) {
           const purchasesData = await purchasesRes.json()
-          setStats(prev => ({ ...prev, purchased: (purchasesData.purchases || []).length }))
+          const allPurchases = purchasesData.purchases || []
+          
+          // Lade gelesene Purchases aus localStorage
+          const readPurchases = JSON.parse(localStorage.getItem('readPurchases') || '[]')
+          const unreadPurchases = allPurchases.filter((purchase: any) => !readPurchases.includes(purchase.id))
+          
+          setStats(prev => ({ ...prev, purchased: unreadPurchases.length }))
         }
       } catch (error) {
         console.error('Error loading purchases:', error)

@@ -14,11 +14,43 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { name, nickname } = await request.json()
+    const { name, nickname, phone, street, streetNumber, postalCode, city, country } = await request.json()
 
     if (!name || !name.trim()) {
       return NextResponse.json(
         { message: 'Name ist erforderlich' },
+        { status: 400 }
+      )
+    }
+
+    // Validierung: Adresse ist Pflichtfeld
+    if (!street || !street.trim()) {
+      return NextResponse.json(
+        { message: 'Strasse ist erforderlich' },
+        { status: 400 }
+      )
+    }
+    if (!streetNumber || !streetNumber.trim()) {
+      return NextResponse.json(
+        { message: 'Hausnummer ist erforderlich' },
+        { status: 400 }
+      )
+    }
+    if (!postalCode || !postalCode.trim()) {
+      return NextResponse.json(
+        { message: 'Postleitzahl ist erforderlich' },
+        { status: 400 }
+      )
+    }
+    if (!city || !city.trim()) {
+      return NextResponse.json(
+        { message: 'Ort ist erforderlich' },
+        { status: 400 }
+      )
+    }
+    if (!country || !country.trim()) {
+      return NextResponse.json(
+        { message: 'Land ist erforderlich' },
         { status: 400 }
       )
     }
@@ -29,9 +61,16 @@ export async function POST(request: NextRequest) {
       data: {
         name: name.trim(),
         nickname: nickname?.trim() || null,
+        phone: phone?.trim() || null,
         // Aktualisiere auch firstName und lastName falls möglich
         firstName: name.trim().split(' ')[0] || null,
         lastName: name.trim().split(' ').slice(1).join(' ') || null,
+        // Adressdaten
+        street: street.trim(),
+        streetNumber: streetNumber.trim(),
+        postalCode: postalCode.trim(),
+        city: city.trim(),
+        country: country.trim(),
       },
       select: {
         id: true,
@@ -41,6 +80,12 @@ export async function POST(request: NextRequest) {
         nickname: true,
         firstName: true,
         lastName: true,
+        phone: true,
+        street: true,
+        streetNumber: true,
+        postalCode: true,
+        city: true,
+        country: true,
       }
     })
 

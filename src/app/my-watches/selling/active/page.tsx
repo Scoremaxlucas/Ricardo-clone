@@ -38,10 +38,23 @@ export default function ActivePage() {
   const loadWatches = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/watches/mine?t=${Date.now()}`)
+      
+      // Prüfe und verarbeite abgelaufene Auktionen automatisch
+      try {
+        await fetch('/api/auctions/check-expired', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' }
+        })
+      } catch (error) {
+        console.error('Error checking expired auctions:', error)
+        // Fehler ignorieren, da dies nicht kritisch ist
+      }
+      
+      // Verwende activeOnly=true Parameter, um nur nicht-verkaufte Artikel zu erhalten
+      const res = await fetch(`/api/watches/mine?activeOnly=true&t=${Date.now()}`)
       const data = await res.json()
       const watchesList = Array.isArray(data.watches) ? data.watches : []
-      // Filtere nur aktive Verkäufe (nicht verkauft)
+      // API filtert bereits nach nicht-verkauften Artikeln, aber zusätzlicher Filter als Sicherheit
       const activeWatches = watchesList.filter((w: WatchItem) => !w.isSold)
       setWatches(activeWatches)
     } catch (error) {

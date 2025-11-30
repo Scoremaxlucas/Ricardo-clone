@@ -209,17 +209,15 @@ export default function SellingFeesPage() {
           Zurück zu Mein Verkaufen
         </Link>
 
-        <div className="flex items-center justify-between mb-8">
-          <div className="flex items-center">
-            <Wallet className="h-8 w-8 mr-3 text-primary-600" />
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Gebühren & Rechnungen
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Übersicht aller Verkaufsgebühren und Rechnungen
-              </p>
-            </div>
+        <div className="flex items-center mb-8">
+          <Wallet className="h-8 w-8 mr-3 text-primary-600" />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Gebühren & Rechnungen
+            </h1>
+            <p className="text-gray-600 mt-1">
+              Übersicht aller Verkaufsgebühren und Rechnungen
+            </p>
           </div>
         </div>
 
@@ -297,23 +295,41 @@ export default function SellingFeesPage() {
                       <h3 className="text-lg font-semibold text-gray-900">
                         {invoice.invoiceNumber}
                       </h3>
+                      {invoice.invoiceNumber.startsWith('KORR-') && (
+                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded">
+                          Korrektur-Abrechnung
+                        </span>
+                      )}
                       {getStatusBadge(invoice.status)}
                     </div>
-                    <p className="text-sm text-gray-600">
-                      Fälligkeitsdatum: {new Date(invoice.dueDate).toLocaleDateString('de-CH')}
-                    </p>
-                    {invoice.paidAt && (
-                      <p className="text-sm text-green-600 mt-1">
-                        Bezahlt am: {new Date(invoice.paidAt).toLocaleDateString('de-CH')}
+                    {invoice.invoiceNumber.startsWith('KORR-') ? (
+                      <p className="text-sm text-green-600 font-medium">
+                        Gutschrift - Keine Zahlung erforderlich
                       </p>
+                    ) : (
+                      <>
+                        <p className="text-sm text-gray-600">
+                          Fälligkeitsdatum: {new Date(invoice.dueDate).toLocaleDateString('de-CH')}
+                        </p>
+                        {invoice.paidAt && (
+                          <p className="text-sm text-green-600 mt-1">
+                            Bezahlt am: {new Date(invoice.paidAt).toLocaleDateString('de-CH')}
+                          </p>
+                        )}
+                      </>
                     )}
                   </div>
                   <div className="text-right">
-                    <p className="text-2xl font-bold text-gray-900">
-                      CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(invoice.total)}
+                    <p className={`text-2xl font-bold ${invoice.invoiceNumber.startsWith('KORR-') ? 'text-green-600' : 'text-gray-900'}`}>
+                      CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(invoice.total))}
                     </p>
+                    {invoice.invoiceNumber.startsWith('KORR-') && (
+                      <p className="text-xs text-green-600 mt-1">
+                        (Gutschrift)
+                      </p>
+                    )}
                     <div className="mt-2 flex gap-2">
-                      {invoice.status !== 'paid' && (
+                      {invoice.status !== 'paid' && !invoice.invoiceNumber.startsWith('KORR-') && (
                         <button
                           onClick={() => setSelectedInvoiceForPayment(invoice)}
                           className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"

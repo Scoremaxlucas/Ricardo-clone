@@ -23,6 +23,7 @@ dist/
 .env.development.local
 .env.test.local
 .env.production.local
+# Ignore all .env.* files, then explicitly allow .env.example
 .env.*
 !.env.example
 

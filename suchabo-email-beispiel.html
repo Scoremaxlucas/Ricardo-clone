@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Suchabo E-Mail Beispiel</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { 
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6; 
+      color: #1f2937;
+      background-color: #f3f4f6;
+      padding: 0;
+      margin: 0;
+    }
+    .email-wrapper {
+      background-color: #f3f4f6;
+      padding: 40px 20px;
+    }
+    .container { 
+      max-width: 600px; 
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .header {
+      background-color: #ffffff;
+      padding: 40px 30px 30px 30px;
+      text-align: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .logo-section {
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+    }
+    .logo-icon {
+      width: 40px;
+      height: 40px;
+      flex-shrink: 0;
+    }
+    .logo-icon svg {
+      width: 100%;
+      height: 100%;
+      display: block;
+    }
+    .logo-text {
+      display: flex;
+      align-items: baseline;
+      gap: 2px;
+    }
+    .logo-text-main {
+      font-size: 24px;
+      font-weight: 700;
+      color: #111827;
+      line-height: 1;
+    }
+    .logo-text-domain {
+      font-size: 14px;
+      color: #6b7280;
+      line-height: 1;
+      font-weight: 400;
+    }
+    .content {
+      padding: 40px 30px;
+      text-align: center;
+    }
+    .greeting {
+      font-size: 18px;
+      color: #1f2937;
+      margin-bottom: 20px;
+      font-weight: 500;
+    }
+    .title {
+      font-size: 24px;
+      font-weight: 700;
+      color: #1f2937;
+      margin-bottom: 16px;
+    }
+    .description {
+      font-size: 16px;
+      color: #6b7280;
+      margin-bottom: 40px;
+      line-height: 1.6;
+      text-align: left;
+    }
+    .button-container {
+      margin: 40px 0;
+    }
+    .button {
+      display: inline-block;
+      background-color: #0f766e;
+      color: #ffffff !important;
+      padding: 14px 32px;
+      text-decoration: none;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 16px;
+      transition: transform 0.2s, box-shadow 0.2s;
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
+    }
+    .button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(13, 148, 136, 0.5);
+      background-color: #0d9488;
+      color: #ffffff !important;
+    }
+    .footer {
+      background-color: #f9fafb;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer-text {
+      font-size: 14px;
+      color: #6b7280;
+      margin-bottom: 12px;
+    }
+    .footer-link {
+      color: #0f766e;
+      text-decoration: none;
+    }
+    .article-box {
+      background-color: #f0fdfa;
+      border-left: 4px solid #0f766e;
+      padding: 16px 20px;
+      margin: 20px 0;
+      border-radius: 4px;
+      text-align: left;
+    }
+    .article-title {
+      margin: 0;
+      font-size: 16px;
+      color: #134e4a;
+      font-weight: 600;
+      margin-bottom: 8px;
+    }
+    .article-price {
+      margin: 0;
+      font-size: 18px;
+      color: #0f766e;
+      font-weight: bold;
+    }
+    .criteria {
+      font-size: 14px;
+      color: #6b7280;
+      margin-top: 16px;
+    }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="container">
+      <div class="header">
+        <div class="logo-section">
+          <div class="logo-icon">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="8" fill="#0f766e"/>
+              <path
+                d="M12 12 L12 28 M12 20 L28 20 M28 12 L28 28"
+                stroke="white"
+                stroke-width="3.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </div>
+          <div class="logo-text">
+            <span class="logo-text-main">Helvenda</span>
+            <span class="logo-text-domain">.ch</span>
+          </div>
+        </div>
+      </div>
+      
+      <div class="content">
+        <div class="title">Neuer Artikel gefunden</div>
+        
+        <div class="greeting">Hallo Max Mustermann,</div>
+        
+        <div class="description">
+          <p>Wir haben einen Artikel gefunden, der zu Ihrem Suchabo passt:</p>
+          
+          <div class="article-box">
+            <p class="article-title">
+              Yamaha MT-07 2022, 5.000 km, Top Zustand
+            </p>
+            <p class="article-price">
+              CHF 7'500.00
+            </p>
+          </div>
+          
+          <p class="criteria">
+            <strong>Ihr Suchabo:</strong> Suchbegriff: "Yamaha Motorrad", Marke: Yamaha
+          </p>
+          
+          <p>Schauen Sie sich den Artikel jetzt an und nutzen Sie Ihre Chance!</p>
+        </div>
+        
+        <div class="button-container">
+          <a href="http://localhost:3002/products/example-id" class="button">
+            Artikel ansehen
+          </a>
+        </div>
+      </div>
+      
+      <div class="footer">
+        <p class="footer-text">
+          <a href="http://localhost:3002/my-watches/buying/search-subscriptions" class="footer-link">
+            Suchabos verwalten
+          </a>
+        </p>
+        <p class="footer-text" style="font-size: 12px; color: #9ca3af; margin-top: 20px;">
+          Diese E-Mail wurde automatisch von Helvenda.ch gesendet.<br>
+          Sie erhalten diese E-Mail, weil Sie ein aktives Suchabo haben.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+

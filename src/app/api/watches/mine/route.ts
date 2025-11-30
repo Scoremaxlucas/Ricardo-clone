@@ -3,15 +3,61 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(_request: NextRequest) {
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ watches: [] }, { status: 200 })
     }
 
+    // Query-Parameter für Filterung
+    const { searchParams } = new URL(request.url)
+    const activeOnly = searchParams.get('activeOnly') === 'true'
+
+    // Basis-Where-Klausel
+    const whereClause: any = { sellerId: session.user.id }
+    
+    // Wenn activeOnly=true, filtere nur nicht-verkaufte Watches
+    if (activeOnly) {
+      const now = new Date()
+      whereClause.AND = [
+        {
+          purchases: {
+            none: {
+              status: {
+                not: 'cancelled'
+              }
+            }
+          }
+        },
+        {
+          OR: [
+            // Keine Auktion (Sofortkauf)
+            { auctionEnd: null },
+            // Oder Auktion noch nicht abgelaufen
+            { auctionEnd: { gt: now } },
+            // Oder Auktion abgelaufen, aber bereits ein Purchase vorhanden
+            {
+              AND: [
+                { auctionEnd: { lte: now } },
+                {
+                  purchases: {
+                    some: {
+                      status: {
+                        not: 'cancelled'
+                      }
+                    }
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    }
+
     const watches = await prisma.watch.findMany({
-      where: { sellerId: session.user.id },
+      where: whereClause,
       include: {
         purchases: {
           take: 1, // Nur prüfen ob es ein Purchase gibt

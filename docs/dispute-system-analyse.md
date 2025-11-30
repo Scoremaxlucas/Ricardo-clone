@@ -672,8 +672,8 @@ getDisputeResolvedEmail(
 
 ---
 
-**Erstellt am:** $(date)
-**Letzte Aktualisierung:** $(date)
+**Erstellt am:** 2024-12-20
+**Letzte Aktualisierung:** 2024-12-20
 
 
 

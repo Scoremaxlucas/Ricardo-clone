@@ -57,6 +57,15 @@ export async function POST(
       )
     }
 
+    // WICHTIG: Verkäufer kann nur bestätigen, wenn der Käufer bereits als bezahlt markiert hat
+    // Dies verhindert, dass Verkäufer fälschlicherweise bestätigen, dass sie bezahlt wurden
+    if (!purchase.paid) {
+      return NextResponse.json(
+        { message: 'Der Käufer muss zuerst bestätigen, dass er bezahlt hat, bevor Sie die Zahlung bestätigen können.' },
+        { status: 400 }
+      )
+    }
+
     // Bestimme neuen Status
     const newStatus = purchase.itemReceived ? 'completed' : 'payment_confirmed'
 

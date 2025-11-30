@@ -1,7 +1,6 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { useSession } from 'next-auth/react'
@@ -101,18 +100,18 @@ export function FeaturedProducts() {
   }
 
   return (
-    <section className="py-8 bg-gray-50">
+    <section className="py-12 bg-[#FAFAFA]">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-6">
-          <h2 className="text-xl font-bold text-gray-900 mb-2">
+        <div className="text-center mb-10">
+          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
             {t.home.featured}
           </h2>
-          <p className="text-sm text-gray-600">
+          <p className="text-lg text-gray-600 leading-relaxed">
             {t.home.discoverLatest}
           </p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
           {watches.map((product) => (
             <ProductCard
               key={product.id}
@@ -134,18 +133,6 @@ export function FeaturedProducts() {
               }}
             />
           ))}
-        </div>
-
-        <div className="text-center mt-8">
-          <Link
-            href="/products"
-            className="inline-flex items-center bg-white text-primary-600 hover:text-primary-700 font-medium px-6 py-3 rounded-lg border border-primary-300 hover:border-primary-400 transition-colors"
-          >
-            {t.home.showAllItems}
-            <svg className="ml-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-            </svg>
-          </Link>
         </div>
       </div>
     </section>

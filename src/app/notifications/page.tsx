@@ -44,23 +44,84 @@ export default function NotificationsPage() {
     }
   }, [session?.user, filter])
 
+  // Aktualisiere Benachrichtigungen wenn Seite wieder fokussiert wird oder sichtbar wird
+  useEffect(() => {
+    const handleFocus = () => {
+      if (session?.user) {
+        console.log('[notifications] Seite fokussiert, lade Benachrichtigungen neu')
+        fetchNotifications()
+      }
+    }
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible' && session?.user) {
+        console.log('[notifications] Seite sichtbar, lade Benachrichtigungen neu')
+        fetchNotifications()
+      }
+    }
+    
+    // Aktualisiere auch beim Zurückkommen (popstate event)
+    const handlePopState = () => {
+      if (session?.user) {
+        console.log('[notifications] Zurück navigiert, lade Benachrichtigungen neu')
+        setTimeout(() => fetchNotifications(), 100)
+      }
+    }
+    
+    window.addEventListener('focus', handleFocus)
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('popstate', handlePopState)
+    
+    return () => {
+      window.removeEventListener('focus', handleFocus)
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('popstate', handlePopState)
+    }
+  }, [session?.user])
+
   const fetchNotifications = async () => {
     try {
       setLoading(true)
       const res = await fetch(`/api/notifications?unreadOnly=${filter === 'unread'}`)
       if (res.ok) {
         const data = await res.json()
+        const unreadCount = data.notifications?.filter((n: Notification) => !n.isRead).length || 0
+        console.log('[notifications] Benachrichtigungen geladen:', data.notifications?.length || 0, 'ungelesen:', unreadCount)
+        
+        // Aktualisiere State direkt von der API
         setNotifications(data.notifications || [])
+        
+        // Aktualisiere auch den unreadCount im Header
+        window.dispatchEvent(new CustomEvent('notifications-update'))
+      } else {
+        console.error('[notifications] Fehler beim Laden:', res.status)
       }
     } catch (error) {
-      console.error('Error fetching notifications:', error)
+      console.error('[notifications] Error fetching notifications:', error)
     } finally {
       setLoading(false)
     }
   }
 
-  const markAsRead = async (notificationId: string) => {
+  const markAsRead = async (notificationId: string): Promise<boolean> => {
     try {
+      console.log('[notifications] Markiere Benachrichtigung als gelesen:', notificationId)
+      
+      // Optimistic Update: Sofort State aktualisieren
+      const notification = notifications.find(n => n.id === notificationId)
+      const wasUnread = notification && !notification.isRead
+      
+      if (wasUnread) {
+        setNotifications(prev =>
+          prev.map(n =>
+            n.id === notificationId ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
+          )
+        )
+        
+        // Sofort Header-Badge aktualisieren
+        window.dispatchEvent(new CustomEvent('notifications-update'))
+      }
+      
+      // API-Anfrage
       const res = await fetch('/api/notifications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -68,14 +129,44 @@ export default function NotificationsPage() {
       })
       
       if (res.ok) {
-        setNotifications(prev =>
-          prev.map(n =>
-            n.id === notificationId ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
+        const data = await res.json()
+        console.log('[notifications] Benachrichtigung erfolgreich als gelesen markiert:', data)
+        
+        // Aktualisiere Header-Badge erneut (sicherheitshalber)
+        window.dispatchEvent(new CustomEvent('notifications-update'))
+        
+        return true
+      } else {
+        const errorData = await res.json().catch(() => ({}))
+        console.error('[notifications] Fehler beim Markieren als gelesen:', errorData)
+        
+        // Rollback bei Fehler
+        if (wasUnread && notification) {
+          setNotifications(prev =>
+            prev.map(n =>
+              n.id === notificationId ? { ...n, isRead: false, readAt: null } : n
+            )
           )
-        )
+          window.dispatchEvent(new CustomEvent('notifications-update'))
+        }
+        
+        return false
       }
     } catch (error) {
-      console.error('Error marking as read:', error)
+      console.error('[notifications] Error marking as read:', error)
+      
+      // Rollback bei Fehler
+      const notification = notifications.find(n => n.id === notificationId)
+      if (notification && !notification.isRead) {
+        setNotifications(prev =>
+          prev.map(n =>
+            n.id === notificationId ? { ...n, isRead: false, readAt: null } : n
+          )
+        )
+        window.dispatchEvent(new CustomEvent('notifications-update'))
+      }
+      
+      return false
     }
   }
 
@@ -89,6 +180,8 @@ export default function NotificationsPage() {
       
       if (res.ok) {
         fetchNotifications()
+        // Aktualisiere auch den unreadCount im Header
+        window.dispatchEvent(new CustomEvent('notifications-update'))
       }
     } catch (error) {
       console.error('Error marking all as read:', error)
@@ -263,19 +356,53 @@ export default function NotificationsPage() {
                       </div>
                       
                       {notification.link ? (
-                        <Link
+                        <a
                           href={notification.link}
-                          className="inline-block mt-2 text-sm font-medium text-primary-600 hover:text-primary-700"
-                          onClick={(e) => {
-                            if (!notification.isRead) {
-                              markAsRead(notification.id)
-                            }
+                          className="inline-block mt-2 text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer"
+                          onClick={async (e) => {
+                            e.preventDefault()
+                            
                             // Prüfe ob Link gültig ist
                             if (!notification.link || notification.link === 'undefined' || notification.link === 'null') {
-                              e.preventDefault()
                               console.error('Invalid notification link:', notification.link)
                               return
                             }
+                            
+                            // Markiere als gelesen, bevor navigiert wird
+                            if (!notification.isRead) {
+                              // Warte auf Abschluss der Markierung
+                              const success = await markAsRead(notification.id)
+                              if (!success) {
+                                console.error('[notifications] Fehler beim Markieren als gelesen, navigiere trotzdem')
+                              }
+                            }
+                            
+                            // Markiere auch das zugehörige Item (Purchase oder PriceOffer) als gelesen
+                            if (notification.link) {
+                              // Prüfe ob Link zu Purchases oder Offers führt
+                              if (notification.link.includes('/my-watches/buying/purchased')) {
+                                // Die purchased-Seite markiert bereits alle beim Laden
+                                // Trigger event für Badge-Update
+                                window.dispatchEvent(new CustomEvent('purchases-viewed'))
+                              } else if (notification.link.includes('/my-watches/buying/offers') || notification.link.includes('/offers')) {
+                                // Extrahiere Offer-ID aus Link falls möglich
+                                const offerIdMatch = notification.link.match(/offer[=:]([^&]+)/)
+                                if (offerIdMatch && offerIdMatch[1]) {
+                                  const readOffers = JSON.parse(localStorage.getItem('readOffers') || '[]')
+                                  if (!readOffers.includes(offerIdMatch[1])) {
+                                    readOffers.push(offerIdMatch[1])
+                                    localStorage.setItem('readOffers', JSON.stringify(readOffers))
+                                    window.dispatchEvent(new CustomEvent('offers-viewed'))
+                                  }
+                                } else {
+                                  // Wenn keine spezifische Offer-ID, markiere alle beim Laden der Seite
+                                  window.dispatchEvent(new CustomEvent('offers-viewed'))
+                                }
+                              }
+                            }
+                            
+                            // Navigiere nach Markieren (oder sofort wenn bereits gelesen)
+                            router.push(notification.link)
                           }}
                         >
                           {notification.type === 'NEW_INVOICE'
@@ -287,15 +414,27 @@ export default function NotificationsPage() {
                             : notification.watchId
                             ? 'Artikel ansehen →'
                             : 'Ansehen →'}
-                        </Link>
+                        </a>
                       ) : notification.watchId && (
-                        <Link
+                        <a
                           href={`/products/${notification.watchId}`}
-                          className="inline-block mt-2 text-sm font-medium text-primary-600 hover:text-primary-700"
-                          onClick={() => !notification.isRead && markAsRead(notification.id)}
+                          className="inline-block mt-2 text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer"
+                          onClick={async (e) => {
+                            e.preventDefault()
+                            
+                            if (!notification.isRead) {
+                              // Warte auf Abschluss der Markierung
+                              const success = await markAsRead(notification.id)
+                              if (!success) {
+                                console.error('[notifications] Fehler beim Markieren als gelesen, navigiere trotzdem')
+                              }
+                            }
+                            
+                            router.push(`/products/${notification.watchId}`)
+                          }}
                         >
                           Artikel ansehen →
-                        </Link>
+                        </a>
                       )}
                     </div>
                   </div>

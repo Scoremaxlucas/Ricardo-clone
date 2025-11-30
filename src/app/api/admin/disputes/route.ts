@@ -51,21 +51,31 @@ export async function GET(request: NextRequest) {
     // Filter-Parameter
     const searchParams = request.nextUrl.searchParams
     const status = searchParams.get('status') // pending, resolved, closed
+    const type = searchParams.get('type') || 'all' // all, dispute, cancellation
     const sortBy = searchParams.get('sortBy') || 'openedAt' // openedAt, resolvedAt
     const sortOrder = searchParams.get('sortOrder') || 'desc' // asc, desc
 
-    // Baue Where-Klausel
-    const where: any = {
+    // Baue Where-Klausel für Disputes
+    const disputeWhere: any = {
       disputeOpenedAt: { not: null }
     }
 
     if (status && status !== 'all') {
-      where.disputeStatus = status
+      disputeWhere.disputeStatus = status
     }
 
-    // Lade alle Disputes mit zugehörigen Daten
-    const purchases = await prisma.purchase.findMany({
-      where,
+    // Baue Where-Klausel für Stornierungsanträge
+    const cancellationWhere: any = {
+      cancellationRequestedAt: { not: null }
+    }
+
+    if (status && status !== 'all') {
+      cancellationWhere.cancellationRequestStatus = status
+    }
+
+    // Lade Disputes
+    const disputePurchases = type === 'all' || type === 'dispute' ? await prisma.purchase.findMany({
+      where: disputeWhere,
       include: {
         watch: {
           select: {
@@ -101,10 +111,50 @@ export async function GET(request: NextRequest) {
       orderBy: {
         [sortBy === 'openedAt' ? 'disputeOpenedAt' : 'disputeResolvedAt']: sortOrder === 'asc' ? 'asc' : 'desc'
       }
-    })
+    }) : []
 
-    // Formatiere Daten für Frontend
-    const disputes = purchases.map(purchase => {
+    // Lade Stornierungsanträge
+    const cancellationPurchases = type === 'all' || type === 'cancellation' ? await prisma.purchase.findMany({
+      where: cancellationWhere,
+      include: {
+        watch: {
+          select: {
+            id: true,
+            title: true,
+            brand: true,
+            model: true,
+            images: true,
+            price: true,
+            seller: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                nickname: true
+              }
+            }
+          }
+        },
+        buyer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            nickname: true
+          }
+        }
+      },
+      orderBy: {
+        cancellationRequestedAt: sortOrder === 'asc' ? 'asc' : 'desc'
+      }
+    }) : []
+
+    // Formatiere Disputes für Frontend
+    const disputes = disputePurchases.map(purchase => {
       const reason = purchase.disputeReason || 'unknown'
       const description = purchase.disputeDescription || ''
 
@@ -138,20 +188,71 @@ export async function GET(request: NextRequest) {
         disputeResolvedBy: purchase.disputeResolvedBy || null,
         purchaseStatus: purchase.status,
         purchasePrice: purchase.price,
-        createdAt: purchase.createdAt.toISOString()
+        createdAt: purchase.createdAt.toISOString(),
+        type: 'dispute'
       }
+    })
+
+    // Formatiere Stornierungsanträge für Frontend
+    const cancellations = cancellationPurchases.map(purchase => {
+      const reason = purchase.cancellationRequestReason || 'unknown'
+      const description = purchase.cancellationRequestDescription || ''
+
+      return {
+        id: purchase.id,
+        purchaseId: purchase.id,
+        watchId: purchase.watchId,
+        watch: {
+          id: purchase.watch.id,
+          title: purchase.watch.title,
+          brand: purchase.watch.brand,
+          model: purchase.watch.model,
+          images: purchase.watch.images ? JSON.parse(purchase.watch.images) : [],
+          price: purchase.watch.price
+        },
+        buyer: {
+          id: purchase.buyer.id,
+          name: purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Unbekannt',
+          email: purchase.buyer.email
+        },
+        seller: {
+          id: purchase.watch.seller.id,
+          name: purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Unbekannt',
+          email: purchase.watch.seller.email
+        },
+        disputeReason: reason,
+        disputeDescription: description,
+        disputeStatus: purchase.cancellationRequestStatus || 'pending',
+        disputeOpenedAt: purchase.cancellationRequestedAt?.toISOString() || null,
+        disputeResolvedAt: purchase.cancellationRequestResolvedAt?.toISOString() || null,
+        disputeResolvedBy: purchase.cancellationRequestResolvedBy || null,
+        purchaseStatus: purchase.status,
+        purchasePrice: purchase.price,
+        createdAt: purchase.createdAt.toISOString(),
+        type: 'cancellation'
+      }
+    })
+
+    // Kombiniere beide Listen
+    const allItems = [...disputes, ...cancellations]
+
+    // Sortiere kombiniert nach Datum
+    allItems.sort((a, b) => {
+      const dateA = a.disputeOpenedAt ? new Date(a.disputeOpenedAt).getTime() : 0
+      const dateB = b.disputeOpenedAt ? new Date(b.disputeOpenedAt).getTime() : 0
+      return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
     })
 
     // Statistiken
     const stats = {
-      total: disputes.length,
-      pending: disputes.filter(d => d.disputeStatus === 'pending').length,
-      resolved: disputes.filter(d => d.disputeStatus === 'resolved').length,
-      closed: disputes.filter(d => d.disputeStatus === 'closed').length
+      total: allItems.length,
+      pending: allItems.filter(d => d.disputeStatus === 'pending').length,
+      resolved: allItems.filter(d => d.disputeStatus === 'resolved').length,
+      closed: allItems.filter(d => d.disputeStatus === 'closed').length
     }
 
     return NextResponse.json({
-      disputes,
+      disputes: allItems,
       stats
     })
   } catch (error: any) {

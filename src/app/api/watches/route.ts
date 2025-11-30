@@ -105,21 +105,51 @@ export async function GET(request: NextRequest) {
     const category = searchParams.get('category')
     const search = searchParams.get('search')
 
+    const now = new Date()
+    
     const where: any = {
-      // Verkaufte Uhren ausschließen (nur nicht-stornierte Purchases zählen als "verkauft")
-      // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
-      OR: [
+      AND: [
         {
-          purchases: {
-            none: {}
-          }
+          // Verkaufte Uhren ausschließen (nur nicht-stornierte Purchases zählen als "verkauft")
+          // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
+          OR: [
+            {
+              purchases: {
+                none: {}
+              }
+            },
+            {
+              purchases: {
+                every: {
+                  status: 'cancelled'
+                }
+              }
+            }
+          ]
         },
         {
-          purchases: {
-            every: {
-              status: 'cancelled'
+          // Beendete Auktionen ohne Purchase ausschließen
+          OR: [
+            // Keine Auktion (Sofortkauf)
+            { auctionEnd: null },
+            // Oder Auktion noch nicht abgelaufen
+            { auctionEnd: { gt: now } },
+            // Oder Auktion abgelaufen, aber bereits ein Purchase vorhanden
+            {
+              AND: [
+                { auctionEnd: { lte: now } },
+                {
+                  purchases: {
+                    some: {
+                      status: {
+                        not: 'cancelled'
+                      }
+                    }
+                  }
+                }
+              ]
             }
-          }
+          ]
         }
       ]
       // seller wird automatisch durch Prisma gefiltert (nur existierende User)

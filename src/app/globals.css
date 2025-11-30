@@ -2,36 +2,170 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
 :root {
-  /* Helvenda Design System Colors */
-  --color-primary: #0f766e;
+  /* Helvenda Design System Colors - Wärmere Palette */
+  --color-primary: #14b8a6; /* Wärmeres Teal */
+  --color-primary-dark: #0f766e; /* Original für Kontraste */
+  --color-primary-light: #10b981; /* Grün-Türkis Mischung */
   --color-accent: #FFD95C;
-  --color-neutral-white: #FFFFFF;
-  --color-neutral-gray-light: #F4F4F4;
-  --color-neutral-gray-medium: #C6C6C6;
+  --color-accent-orange: #f97316;
+  --color-accent-pink: #ec4899;
+  --color-accent-green: #10b981;
+  
+  /* Wärmere Neutrale */
+  --color-neutral-white: #FAFAFA; /* Warmes Weiß */
+  --color-neutral-gray-light: #F8F9FA; /* Wärmeres Grau */
+  --color-neutral-gray-medium: #E9ECEF;
   --color-neutral-gray-dark: #3A3A3A;
   
-  /* Shadows */
-  --shadow-sm: 0px 1px 3px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0px 2px 8px rgba(0, 0, 0, 0.1);
-  --shadow-lg: 0px 4px 16px rgba(0, 0, 0, 0.1);
+  /* Weichere, wärmere Schatten */
+  --shadow-sm: 0px 2px 8px rgba(0, 0, 0, 0.08);
+  --shadow-md: 0px 4px 20px rgba(0, 0, 0, 0.1), 0px 2px 8px rgba(20, 184, 166, 0.1);
+  --shadow-lg: 0px 8px 30px rgba(0, 0, 0, 0.12), 0px 4px 12px rgba(20, 184, 166, 0.15);
+  --shadow-xl: 0px 12px 40px rgba(20, 184, 166, 0.25);
   --shadow-header: 0px 2px 12px rgba(0, 0, 0, 0.08);
+  --shadow-card-hover: 0px 10px 35px rgba(20, 184, 166, 0.3);
   
-  /* Border Radius */
-  --radius-sm: 8px;
-  --radius-md: 16px;
+  /* Border Radius - Größer und runder */
+  --radius-sm: 12px;
+  --radius-md: 20px; /* Größer */
   --radius-lg: 24px;
+  --radius-xl: 32px;
   --radius-full: 50px;
+  
+  /* Spacing System */
+  --space-xs: 4px;
+  --space-sm: 8px;
+  --space-md: 16px;
+  --space-lg: 24px;
+  --space-xl: 32px;
+  --space-2xl: 48px;
+  --space-3xl: 64px;
+  --space-4xl: 96px;
 }
 
 body {
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   color: var(--color-neutral-gray-dark);
-  background: var(--color-neutral-white);
+  background: var(--color-neutral-white); /* Warmes Weiß */
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  line-height: 1.7; /* Mehr Zeilenabstand */
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+html {
+  height: 100%;
+}
+
+/* Animationen */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.7;
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -1000px 0;
+  }
+  100% {
+    background-position: 1000px 0;
+  }
+}
+
+.animate-fade-in-up {
+  animation: fadeInUp 0.6s ease-out;
+}
+
+.animate-pulse-slow {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+
+/* Kuh-Maskottchen Animationen - Veepi-Style: Flüssig, natürlich, professionell */
+
+/* Idle-Animation: Sanftes Atmen */
+@keyframes cowIdle {
+  0%, 100% {
+    transform: translateY(0px) scale(1);
+  }
+  50% {
+    transform: translateY(-3px) scale(1.01);
+  }
+}
+
+/* Blinzeln - Natürlich und flüssig */
+@keyframes cowBlink {
+  0%, 90%, 100% {
+    transform: scaleY(1);
+  }
+  92%, 98% {
+    transform: scaleY(0.05);
+  }
+}
+
+/* Sanfte Kopfbewegung beim Winken */
+@keyframes cowWave {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(-6deg);
+  }
+  75% {
+    transform: rotate(6deg);
+  }
+}
+
+/* Glückliche Reaktion - Subtile Skalierung */
+@keyframes cowHappy {
+  0%, 100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.04);
+  }
+}
+
+/* Schwanz-Bewegung - Natürlich schwingend */
+@keyframes cowTailSway {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  25% {
+    transform: rotate(8deg);
+  }
+  75% {
+    transform: rotate(-8deg);
+  }
+}
+
+/* Ohr-Bewegung - Subtile Animation */
+@keyframes cowEarTwitch {
+  0%, 100% {
+    transform: rotate(0deg);
+  }
+  50% {
+    transform: rotate(5deg);
+  }
 }
 
 @layer base {
@@ -40,54 +174,117 @@ body {
   }
   
   h1, h2, h3, h4, h5, h6 {
-    @apply font-semibold;
+    @apply font-bold; /* Fetter für mehr Gewicht */
+    letter-spacing: -0.01em; /* Leicht enger für moderne Optik */
+  }
+  
+  h1 {
+    @apply text-4xl md:text-5xl; /* Größer */
+    line-height: 1.1;
+  }
+  
+  h2 {
+    @apply text-3xl md:text-4xl;
+    line-height: 1.2;
+  }
+  
+  h3 {
+    @apply text-2xl md:text-3xl;
+    line-height: 1.3;
   }
   
   body {
-    @apply bg-white text-gray-900;
+    @apply bg-[#FAFAFA] text-gray-900; /* Warmes Weiß */
   }
 }
 
 @layer components {
-  /* Buttons */
+  /* Buttons - Mit Gradienten und Animationen */
   .btn-primary {
-    @apply bg-[#0f766e] hover:bg-[#0d9488] text-white font-medium py-3 px-6 rounded-[16px] transition-all duration-200 shadow-sm hover:shadow-md;
+    background: linear-gradient(135deg, #14b8a6 0%, #10b981 100%);
+    @apply text-white font-bold py-3.5 px-8 rounded-[50px] transition-all duration-300 cursor-pointer;
+    box-shadow: 0px 4px 20px rgba(20, 184, 166, 0.3);
+    border: none;
+  }
+  
+  .btn-primary:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow: 0px 8px 30px rgba(20, 184, 166, 0.4);
+    background: linear-gradient(135deg, #10b981 0%, #14b8a6 100%);
+  }
+  
+  .btn-primary:active {
+    transform: translateY(0) scale(0.98);
   }
   
   .btn-secondary {
-    @apply bg-white hover:bg-[#F4F4F4] text-[#3A3A3A] font-medium py-3 px-6 rounded-[16px] border border-[#C6C6C6] transition-all duration-200;
+    @apply bg-white hover:bg-[#F8F9FA] text-[#3A3A3A] font-bold py-3.5 px-8 rounded-[50px] border-2 border-[#14b8a6] transition-all duration-300 cursor-pointer;
   }
   
-  /* Inputs */
+  .btn-secondary:hover {
+    @apply bg-[#14b8a6] text-white;
+    transform: translateY(-2px);
+    box-shadow: 0px 4px 20px rgba(20, 184, 166, 0.2);
+  }
+  
+  /* Inputs - Wärmer und einladender */
   .input-field {
-    @apply w-full px-4 py-3 border border-[#C6C6C6] rounded-[16px] focus:outline-none focus:ring-2 focus:ring-[#0f766e] focus:border-transparent transition-all duration-200;
+    @apply w-full px-5 py-3.5 border-2 border-gray-200 rounded-xl focus:outline-none focus:ring-0 transition-all duration-300;
+    background: white;
+  }
+  
+  .input-field:hover {
+    @apply border-[#14b8a6];
+  }
+  
+  .input-field:focus {
+    @apply border-[#14b8a6];
+    box-shadow: 0px 0px 0px 4px rgba(20, 184, 166, 0.1);
   }
   
   /* Filter Chips */
   .filter-chip {
-    @apply px-4 py-2 bg-white border border-[#C6C6C6] rounded-[50px] text-sm font-medium text-[#3A3A3A] hover:bg-[#F4F4F4] transition-all duration-200 cursor-pointer;
+    @apply px-5 py-2.5 bg-white border-2 border-gray-200 rounded-[50px] text-sm font-semibold text-[#3A3A3A] hover:bg-[#F8F9FA] transition-all duration-300 cursor-pointer;
+  }
+  
+  .filter-chip:hover {
+    @apply border-[#14b8a6];
   }
   
   .filter-chip-active {
-    @apply bg-[#0f766e] text-white border-[#0f766e] hover:bg-[#0d9488];
+    background: linear-gradient(135deg, #14b8a6 0%, #10b981 100%);
+    @apply text-white border-[#14b8a6] hover:opacity-90;
+    box-shadow: 0px 2px 8px rgba(20, 184, 166, 0.3);
   }
   
-  /* Cards */
+  /* Cards - Wärmere Schatten */
   .card {
-    @apply bg-white rounded-[16px] shadow-md border border-[#F4F4F4] p-6;
+    @apply bg-white rounded-[20px] border border-gray-100 p-6;
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1);
   }
   
   /* Category Tile */
   .category-tile {
-    @apply w-[100px] h-[100px] bg-white rounded-[16px] border border-[#F4F4F4] flex flex-col items-center justify-center gap-2 hover:shadow-lg transition-all duration-200 cursor-pointer;
+    @apply w-[100px] h-[100px] bg-white rounded-[20px] border border-gray-100 flex flex-col items-center justify-center gap-2 transition-all duration-300 cursor-pointer;
+    box-shadow: 0px 2px 8px rgba(0, 0, 0, 0.08);
   }
   
-  /* Product Card */
+  .category-tile:hover {
+    transform: translateY(-4px) scale(1.05);
+    box-shadow: 0px 8px 30px rgba(20, 184, 166, 0.2);
+    border-color: #14b8a6;
+  }
+  
+  /* Product Card - Verbessert mit Animationen */
   .product-card {
-    @apply bg-white rounded-[16px] border border-[#F4F4F4] overflow-hidden hover:shadow-lg transition-all duration-200;
+    @apply bg-white rounded-[20px] overflow-hidden transition-all duration-300;
+    border: 1px solid rgba(20, 184, 166, 0.1);
+    box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1);
   }
   
   .product-card:hover {
-    transform: scale(1.03);
+    transform: translateY(-4px) scale(1.02);
+    box-shadow: 0px 12px 40px rgba(20, 184, 166, 0.25);
+    border-color: rgba(20, 184, 166, 0.3);
   }
 }

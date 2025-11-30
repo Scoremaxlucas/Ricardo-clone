@@ -8,14 +8,19 @@ export async function POST(request: NextRequest) {
     
     console.log(`[check-expired] Prüfe abgelaufene Auktionen zum Zeitpunkt ${now.toISOString()}`)
 
-    // Finde alle abgelaufenen Auktionen ohne Purchase
+    // Finde alle abgelaufenen Auktionen ohne aktives Purchase
+    // Ein Purchase ist aktiv, wenn es nicht storniert wurde
     const expiredWatches = await prisma.watch.findMany({
       where: {
         auctionEnd: {
           lte: now // Abgelaufen
         },
         purchases: {
-          none: {} // Noch kein Purchase erstellt
+          none: {
+            status: {
+              not: 'cancelled' // Kein aktives (nicht-storniertes) Purchase
+            }
+          }
         },
         bids: {
           some: {} // Hat mindestens ein Gebot
@@ -57,10 +62,13 @@ export async function POST(request: NextRequest) {
       const highestBid = watch.bids[0]
       
       if (highestBid) {
-        // Prüfe ob bereits ein Purchase existiert
+        // Prüfe ob bereits ein aktives Purchase existiert (nicht storniert)
         const existingPurchase = await prisma.purchase.findFirst({
           where: {
-            watchId: watch.id
+            watchId: watch.id,
+            status: {
+              not: 'cancelled'
+            }
           }
         })
 
