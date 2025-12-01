@@ -56,16 +56,19 @@ export function CategorySpotlight() {
           color: string
         }> = []
 
+        let popularData: any = null
         if (popularResponse.ok) {
-          const popularData = await popularResponse.json()
+          popularData = await popularResponse.json()
           // Zeige nur die ersten 6 Kategorien (sortiert nach geboosteten Artikeln)
           // Begrenzt die Anzahl der API-Aufrufe für bessere Performance
-          categoriesToFetch = popularData.categories.slice(0, 6).map((cat: any) => ({
-            category: cat.category,
-            name: cat.name,
-            icon: cat.icon,
-            color: cat.color,
-          }))
+          if (popularData?.categories && Array.isArray(popularData.categories)) {
+            categoriesToFetch = popularData.categories.slice(0, 6).map((cat: any) => ({
+              category: cat.category,
+              name: cat.name,
+              icon: cat.icon,
+              color: cat.color,
+            }))
+          }
         }
 
         // Fallback: Falls API fehlschlägt ODER keine Kategorien mit Produkten zurückgegeben wurden,
