@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { generateArticleNumber } from '@/lib/article-number'
+import { moderateWatch } from '@/lib/auto-moderation'
 
 export async function POST(request: NextRequest) {
   try {
@@ -557,14 +558,14 @@ export async function POST(request: NextRequest) {
       watchData.autoRenew = (autoRenew === true || autoRenew === 'true') || false
     }
 
-    // Generiere eindeutige Artikelnummer
-    // WICHTIG: Temporär entfernt, bis Prisma Client vollständig synchronisiert ist
-    // try {
-    //   watchData.articleNumber = await generateArticleNumber()
-    // } catch (error) {
-    //   console.error('Error generating article number:', error)
-    //   // Weiter ohne Artikelnummer, wird später nachgeholt
-    // }
+    // Generiere eindeutige Artikelnummer (RICARDO-STYLE)
+    try {
+      watchData.articleNumber = await generateArticleNumber()
+      console.log(`[article-number] Neue Artikelnummer generiert: ${watchData.articleNumber}`)
+    } catch (error) {
+      console.error('[article-number] Fehler beim Generieren der Artikelnummer:', error)
+      // Weiter ohne Artikelnummer - sollte nicht passieren, aber sicherheitshalber
+    }
 
     // FINALE ABSOLUTE SICHERHEITSPRÜFUNG direkt vor Prisma-Call
     // Diese Funktion stellt sicher, dass description wirklich ein sauberer String ist
@@ -671,11 +672,69 @@ export async function POST(request: NextRequest) {
       imagesIsString: typeof watchData.images === 'string'
     })
 
+    // Automatische Moderation: Prüfe auf problematische Keywords
+    const moderationResult = moderateWatch({
+      title: watchData.title,
+      description: watchData.description,
+      brand: watchData.brand,
+      model: watchData.model,
+    })
+
+    // Wenn geflaggt, setze isActive auf false für manuelle Prüfung
+    if (moderationResult.flagged) {
+      console.log('[AUTO-MODERATION] Angebot wurde geflaggt:', {
+        reason: moderationResult.reason,
+        severity: moderationResult.severity,
+        keywords: moderationResult.keywords,
+      })
+      watchData.isActive = false
+      
+      // Erstelle automatische Admin-Notiz
+      // (wird nach dem Erstellen des Watches hinzugefügt)
+    }
+
     const watch = await prisma.watch.create({
       data: watchData
     })
     
     console.log('Watch created successfully:', watch.id)
+
+    // Wenn geflaggt, erstelle automatische Notiz und Report
+    if (moderationResult.flagged) {
+      try {
+        // Finde Admin-User für automatische Notiz
+        const adminUser = await prisma.user.findFirst({
+          where: { isAdmin: true },
+          select: { id: true },
+        })
+
+        if (adminUser) {
+          await prisma.adminNote.create({
+            data: {
+              watchId: watch.id,
+              adminId: adminUser.id,
+              note: `[AUTOMATISCH] Angebot wurde automatisch deaktiviert. Grund: ${moderationResult.reason}. Severity: ${moderationResult.severity}. Keywords: ${moderationResult.keywords.join(', ')}`,
+            },
+          })
+
+          await prisma.moderationHistory.create({
+            data: {
+              watchId: watch.id,
+              adminId: adminUser.id,
+              action: 'auto_moderated',
+              details: JSON.stringify({
+                reason: moderationResult.reason,
+                severity: moderationResult.severity,
+                keywords: moderationResult.keywords,
+              }),
+            },
+          })
+        }
+      } catch (error) {
+        console.error('Error creating auto-moderation note:', error)
+        // Fehler sollte nicht kritisch sein
+      }
+    }
 
     // Verknüpfe Kategorie, falls angegeben
     if (category && category.trim() !== '') {

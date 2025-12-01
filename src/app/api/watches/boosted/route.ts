@@ -26,6 +26,13 @@ export async function GET(request: NextRequest) {
     const baseWhere = {
       AND: [
         {
+          // WICHTIG: Manuell deaktivierte Artikel ausschließen
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { not: 'rejected' } }
+          ]
+        },
+        {
           purchases: {
             none: {} // Nicht verkauft
           }

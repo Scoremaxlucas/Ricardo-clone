@@ -5,7 +5,7 @@ import Link from 'next/link'
 import { Heart, Clock, Sparkles, Zap } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
-interface Watch {
+interface Item {
   id: string
   title: string
   brand: string
@@ -30,28 +30,28 @@ interface BoostedProductsProps {
 export function BoostedProducts({ boosterType }: BoostedProductsProps) {
   const { t } = useLanguage()
   const [favorites, setFavorites] = useState<string[]>([])
-  const [watches, setWatches] = useState<Watch[]>([])
+  const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchWatches = async () => {
+    const fetchItems = async () => {
       try {
         const response = await fetch(`/api/watches/boosted?type=${boosterType}&limit=6`)
         if (response.ok) {
           const data = await response.json()
-          setWatches(Array.isArray(data.watches) ? data.watches : [])
+          setItems(Array.isArray(data.watches) ? data.watches : []) // API verwendet noch 'watches'
         } else {
           console.error('API response not ok:', response.status)
-          setWatches([])
+          setItems([])
         }
       } catch (error) {
-        console.error('Error fetching boosted watches:', error)
-        setWatches([])
+        console.error('Error fetching boosted items:', error)
+        setItems([])
       } finally {
         setLoading(false)
       }
     }
-    fetchWatches()
+    fetchItems()
   }, [boosterType])
 
   const toggleFavorite = (productId: string) => {
@@ -76,10 +76,10 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
     const now = new Date()
     const diff = end.getTime() - now.getTime()
     
-    if (diff <= 0) return 'Beendet'
+    if (diff <= 0) return t.home.ended
     
     // Zeige genaues Datum und Uhrzeit
-    return `Endet: ${end.toLocaleString('de-CH', { 
+    return `${t.home.ended}: ${end.toLocaleString('de-CH', { 
       day: '2-digit', 
       month: '2-digit', 
       year: 'numeric',
@@ -92,7 +92,7 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
     return null
   }
 
-  if (watches.length === 0) {
+  if (items.length === 0) {
     return null
   }
 
@@ -114,7 +114,7 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
-          {watches.map((product) => {
+          {items.map((product) => {
             return (
               <div 
                 key={product.id} 

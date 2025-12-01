@@ -5,10 +5,11 @@ import Link from 'next/link'
 import { ChevronDown, Menu } from 'lucide-react'
 import { CategorySidebarNew } from './CategorySidebarNew'
 import { getCategoryConfig } from '@/data/categories'
+import { useLanguage } from '@/contexts/LanguageContext'
 
-const mainCategories = [
+// Main categories configuration - names will be translated in component
+const mainCategoriesConfig = [
   { 
-    name: 'Kleidung & Accessoires', 
     slug: 'kleidung-accessoires',
     subcategories: [
       'Damenbekleidung', 'Herrenbekleidung', 'Damenschuhe', 'Herrenschuhe',
@@ -18,7 +19,6 @@ const mainCategories = [
     ]
   },
   { 
-    name: 'Auto & Motorrad', 
     slug: 'auto-motorrad',
     subcategories: [
       'Autos', 'Motorräder & Roller', 'Wohnmobile & Wohnwagen', 'Boote & Wassersport',
@@ -27,7 +27,6 @@ const mainCategories = [
     ]
   },
   { 
-    name: 'Haushalt & Wohnen', 
     slug: 'haushalt-wohnen',
     subcategories: [
       'Möbel', 'Sofas & Sessel', 'Tische & Stühle', 'Betten & Matratzen',
@@ -37,7 +36,6 @@ const mainCategories = [
     ]
   },
   { 
-    name: 'Sport', 
     slug: 'sport',
     subcategories: [
       'Fahrräder', 'E-Bikes', 'Mountainbikes', 'Rennvelos', 'Fitnessgeräte',
@@ -46,7 +44,6 @@ const mainCategories = [
     ]
   },
   { 
-    name: 'Handwerk & Garten', 
     slug: 'handwerk-garten',
     subcategories: [
       'Gartenmöbel', 'Grills & Zubehör', 'Rasenmäher', 'Pflanzen & Samen',
@@ -55,7 +52,6 @@ const mainCategories = [
     ]
   },
   { 
-    name: 'Computer & Netzwerk', 
     slug: 'computer-netzwerk',
     subcategories: [
       'Notebooks & Laptops', 'Desktop-PCs', 'Tablets', 'Monitore & Displays',
@@ -92,6 +88,7 @@ const allCategories = [
 ]
 
 export function CategoryBar() {
+  const { t, translateSubcategory } = useLanguage()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
 
@@ -111,13 +108,15 @@ export function CategoryBar() {
               className="flex items-center gap-2 px-4 py-2 bg-primary-50 border border-primary-200 rounded-md hover:bg-primary-100 transition-colors whitespace-nowrap font-medium text-gray-900"
             >
               <Menu className="h-4 w-4" />
-              Alle Kategorien
+              {t.categoryBar.allCategories}
             </button>
 
             {/* Hauptkategorien mit Hover-Flyouts */}
-            {mainCategories.map((category) => {
+            {mainCategoriesConfig.map((category) => {
               const config = getCategoryConfig(category.slug)
               const IconComponent = config.icon
+              // Verwende Übersetzung für Kategorienamen
+              const categoryName = t.categories[category.slug as keyof typeof t.categories] || config.name
               return (
                 <div
                   key={category.slug}
@@ -135,7 +134,7 @@ export function CategoryBar() {
                     >
                       <IconComponent className="h-4 w-4 text-white" />
                     </div>
-                    {category.name}
+                    {categoryName}
                   </Link>
 
                 {/* Flyout für Unterkategorien */}
@@ -147,7 +146,7 @@ export function CategoryBar() {
                     onMouseLeave={() => setHoveredCategory(null)}
                   >
                     <h3 className="font-bold text-gray-900 mb-3 text-sm border-b border-gray-200 pb-2">
-                      {category.name}
+                      {categoryName}
                     </h3>
                     <div className="grid grid-cols-2 gap-2">
                       {category.subcategories.map((subcat) => (
@@ -156,7 +155,7 @@ export function CategoryBar() {
                           href={`/search?category=${category.slug}&subcategory=${encodeURIComponent(subcat)}`}
                           className="text-sm text-gray-700 hover:text-primary-600 py-1 transition-colors block"
                         >
-                          {subcat}
+                          {translateSubcategory(subcat)}
                         </Link>
                       ))}
                     </div>

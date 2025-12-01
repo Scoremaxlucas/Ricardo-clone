@@ -217,15 +217,19 @@ export default function NotificationsPage() {
     const now = new Date()
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
     
-    if (seconds < 60) return 'Gerade eben'
+    if (seconds < 60) return t.notifications.justNow
     const minutes = Math.floor(seconds / 60)
-    if (minutes < 60) return `vor ${minutes} Min.`
+    if (minutes < 60) return t.notifications.minutesAgo.replace('{minutes}', minutes.toString())
     const hours = Math.floor(minutes / 60)
-    if (hours < 24) return `vor ${hours} Std.`
+    if (hours < 24) return t.notifications.hoursAgo.replace('{hours}', hours.toString())
     const days = Math.floor(hours / 24)
-    if (days < 7) return `vor ${days} Tag${days > 1 ? 'en' : ''}`
+    if (days < 7) return days === 1 
+      ? t.notifications.daysAgo.replace('{days}', days.toString())
+      : t.notifications.daysAgoPlural.replace('{days}', days.toString())
     const weeks = Math.floor(days / 7)
-    return `vor ${weeks} Woche${weeks > 1 ? 'n' : ''}`
+    return weeks === 1
+      ? t.notifications.weeksAgo.replace('{weeks}', weeks.toString())
+      : t.notifications.weeksAgoPlural.replace('{weeks}', weeks.toString())
   }
 
   if (status === 'loading' || loading) {
@@ -235,7 +239,7 @@ export default function NotificationsPage() {
         <div className="flex items-center justify-center min-h-[60vh]">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Lädt Benachrichtigungen...</p>
+            <p className="text-gray-600">{t.notifications.loading}</p>
           </div>
         </div>
         <Footer />
@@ -258,7 +262,7 @@ export default function NotificationsPage() {
             <div className="flex items-center justify-between mb-4">
               <div className="flex items-center gap-3">
                 <Bell className="h-6 w-6 text-primary-600" />
-                <h1 className="text-2xl font-bold text-gray-900">Benachrichtigungen</h1>
+                <h1 className="text-2xl font-bold text-gray-900">{t.notifications.title}</h1>
               </div>
               
               {notifications.some(n => !n.isRead) && (
@@ -267,7 +271,7 @@ export default function NotificationsPage() {
                   className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-md transition-colors"
                 >
                   <CheckCheck className="h-4 w-4" />
-                  Alle als gelesen markieren
+                  {t.notifications.markAllAsRead}
                 </button>
               )}
             </div>
@@ -282,7 +286,7 @@ export default function NotificationsPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Alle ({notifications.length})
+                {t.notifications.all} ({notifications.length})
               </button>
               <button
                 onClick={() => setFilter('unread')}
@@ -292,7 +296,7 @@ export default function NotificationsPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Ungelesen ({notifications.filter(n => !n.isRead).length})
+                {t.notifications.unread} ({notifications.filter(n => !n.isRead).length})
               </button>
             </div>
           </div>
@@ -302,11 +306,11 @@ export default function NotificationsPage() {
             {filteredNotifications.length === 0 ? (
               <div className="p-12 text-center text-gray-500">
                 <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg font-medium mb-2">Keine Benachrichtigungen</p>
+                <p className="text-lg font-medium mb-2">{t.notifications.noNotifications}</p>
                 <p className="text-sm">
                   {filter === 'unread' 
-                    ? 'Sie haben keine ungelesenen Benachrichtigungen'
-                    : 'Sie haben noch keine Benachrichtigungen erhalten'}
+                    ? t.notifications.noUnreadNotifications
+                    : t.notifications.noNotificationsYet}
                 </p>
               </div>
             ) : (
@@ -338,7 +342,7 @@ export default function NotificationsPage() {
                             </div>
                             {!notification.isRead && (
                               <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
-                                Neu
+                                {t.notifications.new}
                               </span>
                             )}
                           </div>
@@ -348,7 +352,7 @@ export default function NotificationsPage() {
                           <button
                             onClick={() => markAsRead(notification.id)}
                             className="flex-shrink-0 p-1 text-gray-400 hover:text-primary-600 transition-colors"
-                            title="Als gelesen markieren"
+                            title={t.notifications.markAsRead}
                           >
                             <Check className="h-5 w-5" />
                           </button>
@@ -406,14 +410,14 @@ export default function NotificationsPage() {
                           }}
                         >
                           {notification.type === 'NEW_INVOICE'
-                            ? 'Rechnungen ansehen →'
+                            ? t.notifications.viewInvoices
                             : notification.type === 'PRICE_OFFER_RECEIVED' || notification.type === 'PRICE_OFFER_UPDATED'
-                            ? 'Preisvorschläge ansehen →'
+                            ? t.notifications.viewPriceOffers
                             : notification.type === 'PRICE_OFFER_ACCEPTED'
-                            ? 'Kauf ansehen →'
+                            ? t.notifications.viewPurchase
                             : notification.watchId
-                            ? 'Artikel ansehen →'
-                            : 'Ansehen →'}
+                            ? t.notifications.viewArticle
+                            : t.notifications.view}
                         </a>
                       ) : notification.watchId && (
                         <a
@@ -433,7 +437,7 @@ export default function NotificationsPage() {
                             router.push(`/products/${notification.watchId}`)
                           }}
                         >
-                          Artikel ansehen →
+                          {t.notifications.viewArticle}
                         </a>
                       )}
                     </div>

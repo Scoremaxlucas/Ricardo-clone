@@ -1,6 +1,8 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { FavoriteButton } from '@/components/favorites/FavoriteButton'
 import { BidComponent } from '@/components/bids/BidComponent'
@@ -9,6 +11,8 @@ import { SellerProfile } from '@/components/seller/SellerProfile'
 import { PickupMap } from '@/components/product/PickupMap'
 import { SimilarProducts } from '@/components/product/SimilarProducts'
 import { ProductQuestions } from '@/components/product/ProductQuestions'
+import { ReportModal } from '@/components/moderation/ReportModal'
+import { Flag } from 'lucide-react'
 
 interface ProductPageClientProps {
   watch: any
@@ -20,6 +24,15 @@ interface ProductPageClientProps {
 
 export function ProductPageClient({ watch, images, conditionMap, lieferumfang, seller }: ProductPageClientProps) {
   const { t } = useLanguage()
+  const { data: session } = useSession()
+  const [showReportModal, setShowReportModal] = useState(false)
+
+  // Track view
+  useEffect(() => {
+    if (watch?.id) {
+      fetch(`/api/watches/${watch.id}/view`, { method: 'POST' }).catch(() => {})
+    }
+  }, [watch?.id])
 
   if (!watch) {
     return (
@@ -206,6 +219,19 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
             sellerName={seller?.name || t.common.unknown}
             sellerEmail={seller?.email || ''}
           />
+
+          {/* Report-Button */}
+          {session?.user && session.user.id !== watch.sellerId && (
+            <div className="mt-4 pt-4 border-t border-gray-200">
+              <button
+                onClick={() => setShowReportModal(true)}
+                className="flex items-center gap-2 text-sm text-gray-600 hover:text-red-600 transition-colors"
+              >
+                <Flag className="h-4 w-4" />
+                Angebot melden
+              </button>
+            </div>
+          )}
         </div>
       </div>
 
@@ -215,6 +241,14 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
           <SimilarProducts brand={watch.brand} currentProductId={watch.id} />
         </div>
       )}
+
+      {/* Report Modal */}
+      <ReportModal
+        itemId={watch.id}
+        itemTitle={watch.title}
+        isOpen={showReportModal}
+        onClose={() => setShowReportModal(false)}
+      />
     </>
   )
 }

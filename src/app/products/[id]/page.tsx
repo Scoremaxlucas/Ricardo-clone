@@ -31,9 +31,14 @@ export default async function ProductPage({ params }: Props) {
     }
   });
   
-  // Wenn Artikelnummer gefunden, aber URL noch nicht korrekt, redirect
-  if (watch && isArticleNumber && watch.id !== params.id) {
-    redirect(`/products/${watch.id}`)
+  // RICARDO-STYLE: Wenn Artikelnummer gefunden, redirect zu Artikelnummer-URL
+  if (watch && isArticleNumber && watch.articleNumber && watch.articleNumber.toString() !== params.id) {
+    redirect(`/products/${watch.articleNumber}`)
+  }
+  
+  // Wenn CUID verwendet wurde, aber Artikelnummer vorhanden ist, redirect zu Artikelnummer
+  if (watch && !isArticleNumber && watch.articleNumber) {
+    redirect(`/products/${watch.articleNumber}`)
   }
   
   if (!watch) {

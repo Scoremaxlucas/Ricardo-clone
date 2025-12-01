@@ -18,12 +18,8 @@ dist/
 *.seed
 
 # Environment variables
+# Ignore .env file and all .env.* files, then explicitly allow .env.example
 .env
-.env.local
-.env.development.local
-.env.test.local
-.env.production.local
-# Ignore all .env.* files, then explicitly allow .env.example
 .env.*
 !.env.example
 
@@ -44,8 +40,9 @@ Thumbs.db
 
 # LaunchAgent plist files (use templates instead)
 *.plist
-!*.plist.template
-!**/*.plist.template
+# Explicitly allow plist template files (more reliable than wildcard negation)
+!com.helvenda.devserver.plist.template
+!com.helvenda.watchdog.plist.template
 
 # Expo
 .expo/

@@ -113,6 +113,10 @@ model User {
   sessions                      Session[]
   watches                       Watch[]
   conversations                 Conversation[]
+  reportsMade                   Report[]             @relation("ReportedBy")
+  reportsReviewed               Report[]             @relation("ReviewedBy")
+  adminNotes                    AdminNote[]
+  moderationHistory             ModerationHistory[]
 
   @@map("users")
 }
@@ -127,8 +131,8 @@ model VerificationToken {
 }
 
 model Watch {
-  id                  String          @id @default(cuid())
-  articleNumber       Int?            @unique
+  id                  String              @id @default(cuid())
+  articleNumber       Int?                @unique
   title               String
   description         String?
   brand               String
@@ -141,22 +145,22 @@ model Watch {
   caseDiameter        Float?
   price               Float
   buyNowPrice         Float?
-  isAuction           Boolean         @default(false)
+  isAuction           Boolean             @default(false)
   auctionStart        DateTime?
   auctionEnd          DateTime?
   auctionDuration     Int?
-  autoRenew           Boolean         @default(false)
+  autoRenew           Boolean             @default(false)
   lastBidAt           DateTime?
   images              String
   video               String?
-  createdAt           DateTime        @default(now())
-  updatedAt           DateTime        @updatedAt
+  createdAt           DateTime            @default(now())
+  updatedAt           DateTime            @updatedAt
   lastRevision        DateTime?
   accuracy            String?
-  fullset             Boolean         @default(false)
-  allLinks            Boolean         @default(false)
-  box                 Boolean         @default(false)
-  papers              Boolean         @default(false)
+  fullset             Boolean             @default(false)
+  allLinks            Boolean             @default(false)
+  box                 Boolean             @default(false)
+  papers              Boolean             @default(false)
   warranty            String?
   warrantyMonths      Int?
   warrantyYears       Int?
@@ -166,6 +170,10 @@ model Watch {
   shippingMethod      String?
   boosters            String?
   sellerId            String
+  moderationStatus   String?              @default("pending") // 'pending', 'approved', 'rejected', 'reviewing'
+  moderatedBy         String?
+  moderatedAt         DateTime?
+  moderationNotes     String?
   bids                Bid[]
   favorites           Favorite[]
   invoiceItems        InvoiceItem[]
@@ -174,8 +182,14 @@ model Watch {
   purchases           Purchase[]
   sales               Sale[]
   categories          WatchCategory[]
-  seller              User            @relation(fields: [sellerId], references: [id])
+  seller              User                @relation(fields: [sellerId], references: [id])
+  reports             Report[]
+  adminNotes          AdminNote[]
+  moderationHistory   ModerationHistory[]
+  views               WatchView[]
 
+  @@index([moderationStatus])
+  @@index([createdAt])
   @@map("watches")
 }
 
@@ -192,49 +206,49 @@ model Bid {
 }
 
 model Purchase {
-  id                    String       @id @default(cuid())
-  price                 Float?
-  shippingMethod        String?
-  status                String       @default("pending")
-  itemReceived          Boolean      @default(false)
-  itemReceivedAt        DateTime?
-  paymentConfirmed      Boolean      @default(false)
-  paymentConfirmedAt    DateTime?
-  contactDeadline       DateTime
-  sellerContactedAt     DateTime?
-  buyerContactedAt      DateTime?
-  contactWarningSentAt  DateTime?
-  contactDeadlineMissed Boolean      @default(false)
-  paymentDeadline       DateTime?
-  paymentReminderSentAt DateTime?
-  paymentDeadlineMissed Boolean      @default(false)
-  trackingNumber        String?
-  trackingProvider      String?
-  shippedAt             DateTime?
-  estimatedDeliveryDate DateTime?
-  disputeOpenedAt       DateTime?
-  disputeReason         String?
-  disputeDescription    String?
-  disputeStatus         String?
-  disputeResolvedAt     DateTime?
-  disputeResolvedBy     String?
-  cancellationRequestedAt DateTime?
-  cancellationRequestStatus String?
-  cancellationRequestReason String?
+  id                             String       @id @default(cuid())
+  price                          Float?
+  shippingMethod                 String?
+  status                         String       @default("pending")
+  itemReceived                   Boolean      @default(false)
+  itemReceivedAt                 DateTime?
+  paymentConfirmed               Boolean      @default(false)
+  paymentConfirmedAt             DateTime?
+  contactDeadline                DateTime
+  sellerContactedAt              DateTime?
+  buyerContactedAt               DateTime?
+  contactWarningSentAt           DateTime?
+  contactDeadlineMissed          Boolean      @default(false)
+  paymentDeadline                DateTime?
+  paymentReminderSentAt          DateTime?
+  paymentDeadlineMissed          Boolean      @default(false)
+  trackingNumber                 String?
+  trackingProvider               String?
+  shippedAt                      DateTime?
+  estimatedDeliveryDate          DateTime?
+  disputeOpenedAt                DateTime?
+  disputeReason                  String?
+  disputeDescription             String?
+  disputeStatus                  String?
+  disputeResolvedAt              DateTime?
+  disputeResolvedBy              String?
+  cancellationRequestedAt        DateTime?
+  cancellationRequestStatus      String?
+  cancellationRequestReason      String?
   cancellationRequestDescription String?
-  cancellationRequestResolvedAt DateTime?
-  cancellationRequestResolvedBy String?
-  statusHistory         String?
-  paid                  Boolean      @default(false)
-  paidAt                DateTime?
-  createdAt             DateTime     @default(now())
-  updatedAt             DateTime     @updatedAt
-  watchId               String
-  buyerId               String
-  priceOffers           PriceOffer[]
-  buyer                 User         @relation(fields: [buyerId], references: [id])
-  watch                 Watch        @relation(fields: [watchId], references: [id])
-  reviews               Review[]
+  cancellationRequestResolvedAt  DateTime?
+  cancellationRequestResolvedBy  String?
+  statusHistory                  String?
+  paid                           Boolean      @default(false)
+  paidAt                         DateTime?
+  createdAt                      DateTime     @default(now())
+  updatedAt                      DateTime     @updatedAt
+  watchId                        String
+  buyerId                        String
+  priceOffers                    PriceOffer[]
+  buyer                          User         @relation(fields: [buyerId], references: [id])
+  watch                          Watch        @relation(fields: [watchId], references: [id])
+  reviews                        Review[]
 
   @@map("purchases")
 }
@@ -461,13 +475,13 @@ model SearchSubscription {
 }
 
 model Conversation {
-  id        String               @id @default(cuid())
+  id        String                @id @default(cuid())
   userId    String?
-  context   String?              // JSON string mit Kontext (productId, etc.)
-  createdAt DateTime             @default(now())
-  updatedAt DateTime             @updatedAt
+  context   String? // JSON string mit Kontext (productId, etc.)
+  createdAt DateTime              @default(now())
+  updatedAt DateTime              @updatedAt
   messages  ConversationMessage[]
-  user      User?                @relation(fields: [userId], references: [id])
+  user      User?                 @relation(fields: [userId], references: [id])
 
   @@map("conversations")
 }
@@ -475,7 +489,7 @@ model Conversation {
 model ConversationMessage {
   id             String       @id @default(cuid())
   conversationId String
-  role           String       // 'user' | 'assistant' | 'system'
+  role           String // 'user' | 'assistant' | 'system'
   content        String
   createdAt      DateTime     @default(now())
   conversation   Conversation @relation(fields: [conversationId], references: [id], onDelete: Cascade)
@@ -485,19 +499,89 @@ model ConversationMessage {
 }
 
 model ContactRequest {
-  id          String    @id @default(cuid())
-  category    String    // 'technical', 'account', 'payment', 'safety', 'general', 'feedback', 'other'
-  email       String
-  subject     String
-  message     String
-  status      String    @default("pending") // 'pending', 'in_progress', 'resolved', 'closed'
+  id         String    @id @default(cuid())
+  category   String // 'technical', 'account', 'payment', 'safety', 'general', 'feedback', 'other'
+  email      String
+  subject    String
+  message    String
+  status     String    @default("pending") // 'pending', 'in_progress', 'resolved', 'closed'
   resolvedAt DateTime?
   resolvedBy String?
-  notes       String?   // Admin-Notizen
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  notes      String? // Admin-Notizen
+  createdAt  DateTime  @default(now())
+  updatedAt  DateTime  @updatedAt
 
   @@index([status])
   @@index([createdAt])
   @@map("contact_requests")
+}
+
+// Melde-System für Angebote
+model Report {
+  id          String    @id @default(cuid())
+  watchId     String
+  reportedBy  String // User-ID des Meldenden
+  reason      String // 'spam', 'fraud', 'wrong_category', 'inappropriate', 'duplicate', 'other'
+  description String? // Zusätzliche Beschreibung
+  status      String    @default("pending") // 'pending', 'reviewing', 'resolved', 'dismissed'
+  reviewedBy  String? // Admin-ID
+  reviewedAt  DateTime?
+  resolution  String? // Was wurde gemacht
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+  watch       Watch     @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  reporter    User      @relation("ReportedBy", fields: [reportedBy], references: [id])
+  reviewer    User?     @relation("ReviewedBy", fields: [reviewedBy], references: [id])
+
+  @@index([watchId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("reports")
+}
+
+// Admin-Notizen zu Angeboten
+model AdminNote {
+  id        String   @id @default(cuid())
+  watchId   String
+  adminId   String // Admin-ID
+  note      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  watch     Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  admin     User     @relation(fields: [adminId], references: [id])
+
+  @@index([watchId])
+  @@index([createdAt])
+  @@map("admin_notes")
+}
+
+// Moderation-Historie
+model ModerationHistory {
+  id        String   @id @default(cuid())
+  watchId   String
+  adminId   String // Admin-ID
+  action    String // 'activated', 'deactivated', 'deleted', 'edited', 'reported', 'note_added'
+  details   String? // JSON mit Details
+  createdAt DateTime @default(now())
+  watch     Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  admin     User     @relation(fields: [adminId], references: [id])
+
+  @@index([watchId])
+  @@index([createdAt])
+  @@map("moderation_history")
+}
+
+// Aufrufe-Tracking für Statistiken
+model WatchView {
+  id        String   @id @default(cuid())
+  watchId   String
+  userId    String? // Optional, falls angemeldet
+  ipAddress String?
+  userAgent String?
+  viewedAt  DateTime @default(now())
+  watch     Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
+
+  @@index([watchId])
+  @@index([viewedAt])
+  @@map("watch_views")
 }

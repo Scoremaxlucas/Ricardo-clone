@@ -1945,7 +1945,8 @@ export function getDisputeResolvedEmail(
   productTitle: string,
   resolution: string,
   role: 'buyer' | 'seller',
-  perspective: 'initiator' | 'loser' = 'initiator'
+  perspective: 'initiator' | 'loser' = 'initiator',
+  articleRelisted: boolean = false
 ) {
   const isSuccess = perspective === 'initiator'
   const subject = isSuccess 
@@ -1956,6 +1957,17 @@ export function getDisputeResolvedEmail(
   const headerBg = isSuccess ? '#0f766e' : '#f59e0b'
   const boxColor = isSuccess ? '#f0fdfa' : '#fef3c7'
   const boxBorder = isSuccess ? '#0f766e' : '#f59e0b'
+  
+  // Zusätzliche Information über Wiederaktivierung des Artikels
+  const relistInfo = articleRelisted ? `
+      <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <strong>ℹ️ Wichtige Information:</strong> Der Artikel "${productTitle}" steht automatisch wieder als aktiver Artikel zum Verkauf.
+      </div>
+  ` : ''
+  
+  const relistInfoText = articleRelisted ? `
+Wichtige Information: Der Artikel "${productTitle}" steht automatisch wieder als aktiver Artikel zum Verkauf.
+` : ''
   
   const html = `
 <!DOCTYPE html>
@@ -1986,6 +1998,8 @@ export function getDisputeResolvedEmail(
       
       <p><strong>${isSuccess ? 'Lösung:' : 'Entscheidung:'}</strong> ${resolution}</p>
       
+      ${relistInfo}
+      
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}" class="button">
           Details ansehen →
@@ -2009,6 +2023,7 @@ Der Dispute für "${productTitle}" wurde gelöst.
 
 ${isSuccess ? 'Lösung:' : 'Entscheidung:'} ${resolution}
 
+${relistInfoText}
 Details ansehen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}
 
 ---

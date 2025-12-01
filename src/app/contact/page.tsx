@@ -6,18 +6,10 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { Mail, MessageCircle, Phone, Send, CheckCircle, AlertCircle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
-
-const contactCategories = [
-  { value: 'technical', label: 'Technisches Problem' },
-  { value: 'account', label: 'Account-Frage' },
-  { value: 'payment', label: 'Zahlungsproblem' },
-  { value: 'safety', label: 'Sicherheitsproblem' },
-  { value: 'general', label: 'Allgemeine Frage' },
-  { value: 'feedback', label: 'Feedback & Vorschläge' },
-  { value: 'other', label: 'Sonstiges' },
-]
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function ContactPage() {
+  const { t } = useLanguage()
   const [formData, setFormData] = useState({
     category: '',
     subject: '',
@@ -27,11 +19,21 @@ export default function ContactPage() {
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
+  const contactCategories = [
+    { value: 'technical', label: t.contact.technical },
+    { value: 'account', label: t.contact.accountIssue },
+    { value: 'payment', label: t.contact.paymentIssue },
+    { value: 'safety', label: t.contact.safetyIssue },
+    { value: 'general', label: t.contact.generalQuestion },
+    { value: 'feedback', label: t.contact.feedback },
+    { value: 'other', label: t.contact.other },
+  ]
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     
     if (!formData.category || !formData.subject || !formData.message || !formData.email) {
-      toast.error('Bitte füllen Sie alle Felder aus')
+      toast.error(t.contact.fillAllFields)
       return
     }
 
@@ -46,15 +48,15 @@ export default function ContactPage() {
       const data = await res.json()
 
       if (res.ok) {
-        toast.success('Ihre Nachricht wurde erfolgreich gesendet! Wir melden uns in Kürze.')
+        toast.success(t.contact.successMessage)
         setSubmitted(true)
         setFormData({ category: '', subject: '', message: '', email: '' })
       } else {
-        toast.error(data.message || 'Fehler beim Senden der Nachricht. Bitte versuchen Sie es erneut.')
+        toast.error(data.message || t.contact.errorMessage)
       }
     } catch (error) {
       console.error('Error submitting contact form:', error)
-      toast.error('Fehler beim Senden der Nachricht. Bitte versuchen Sie es erneut.')
+      toast.error(t.contact.errorMessage)
     } finally {
       setSubmitting(false)
     }
@@ -67,22 +69,22 @@ export default function ContactPage() {
         <main className="flex-1 max-w-2xl mx-auto px-4 py-12 w-full">
           <div className="bg-white rounded-lg shadow-md p-8 text-center">
             <CheckCircle className="h-16 w-16 text-green-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">Nachricht gesendet!</h2>
+            <h2 className="text-2xl font-bold text-gray-900 mb-2">{t.contact.messageSent}</h2>
             <p className="text-gray-600 mb-6">
-              Vielen Dank für Ihre Nachricht. Unser Support-Team wird sich in Kürze bei Ihnen melden.
+              {t.contact.messageSentDesc}
             </p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
                 href="/"
                 className="px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
               >
-                Zur Startseite
+                {t.contact.backToHome}
               </Link>
               <button
                 onClick={() => setSubmitted(false)}
                 className="px-6 py-3 bg-white text-primary-600 border-2 border-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
               >
-                Weitere Nachricht senden
+                {t.contact.sendAnother}
               </button>
             </div>
           </div>
@@ -98,9 +100,9 @@ export default function ContactPage() {
       <main className="flex-1 max-w-4xl mx-auto px-4 py-12 w-full">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">Kontakt</h1>
+          <h1 className="text-4xl font-bold text-gray-900 mb-4">{t.contact.title}</h1>
           <p className="text-lg text-gray-600">
-            Haben Sie Fragen oder benötigen Sie Hilfe? Wir sind für Sie da!
+            {t.contact.subtitle}
           </p>
         </div>
 
@@ -108,33 +110,33 @@ export default function ContactPage() {
           {/* Contact Info */}
           <div className="lg:col-span-1 space-y-6">
             <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">Kontaktmöglichkeiten</h2>
+              <h2 className="text-xl font-bold text-gray-900 mb-4">{t.contact.contactMethods}</h2>
               
               <div className="space-y-4">
                 <div className="flex items-start gap-3">
                   <Mail className="h-5 w-5 text-primary-600 mt-1 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-gray-900">E-Mail</h3>
-                    <p className="text-gray-600 text-sm">support@helvenda.ch</p>
-                    <p className="text-gray-500 text-xs mt-1">Antwortzeit: 24-48 Stunden</p>
+                    <h3 className="font-semibold text-gray-900">{t.contact.email}</h3>
+                    <p className="text-gray-600 text-sm">{t.contact.emailAddress}</p>
+                    <p className="text-gray-500 text-xs mt-1">{t.contact.emailResponseTime}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <MessageCircle className="h-5 w-5 text-primary-600 mt-1 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-gray-900">Emma AI-Assistant</h3>
-                    <p className="text-gray-600 text-sm">Verfügbar auf allen Seiten</p>
-                    <p className="text-gray-500 text-xs mt-1">Unten rechts im Chat-Fenster</p>
+                    <h3 className="font-semibold text-gray-900">{t.contact.emmaAI}</h3>
+                    <p className="text-gray-600 text-sm">{t.contact.emmaAIAvailable}</p>
+                    <p className="text-gray-500 text-xs mt-1">{t.contact.emmaAILocation}</p>
                   </div>
                 </div>
 
                 <div className="flex items-start gap-3">
                   <Phone className="h-5 w-5 text-primary-600 mt-1 flex-shrink-0" />
                   <div>
-                    <h3 className="font-semibold text-gray-900">Telefon</h3>
-                    <p className="text-gray-600 text-sm">In Kürze verfügbar</p>
-                    <p className="text-gray-500 text-xs mt-1">Wir arbeiten daran</p>
+                    <h3 className="font-semibold text-gray-900">{t.contact.phone}</h3>
+                    <p className="text-gray-600 text-sm">{t.contact.phoneComingSoon}</p>
+                    <p className="text-gray-500 text-xs mt-1">{t.contact.phoneWorkingOnIt}</p>
                   </div>
                 </div>
               </div>
@@ -144,25 +146,25 @@ export default function ContactPage() {
               <div className="flex items-start gap-3">
                 <AlertCircle className="h-5 w-5 text-blue-600 mt-1 flex-shrink-0" />
                 <div>
-                  <h3 className="font-semibold text-blue-900 mb-2">Hinweis</h3>
+                  <h3 className="font-semibold text-blue-900 mb-2">{t.contact.note}</h3>
                   <p className="text-blue-800 text-sm">
-                    Für schnelle Antworten nutzen Sie bitte unseren AI-Assistant Emma oder durchsuchen Sie unser Hilfe-Center.
+                    {t.contact.noteText}
                   </p>
                 </div>
               </div>
             </div>
 
             <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
-              <h3 className="font-semibold text-gray-900 mb-3">Weitere Hilfe</h3>
+              <h3 className="font-semibold text-gray-900 mb-3">{t.contact.moreHelp}</h3>
               <ul className="space-y-2">
                 <li>
                   <Link href="/help" className="text-primary-600 hover:text-primary-700 text-sm">
-                    → Hilfe-Center
+                    {t.contact.helpCenter}
                   </Link>
                 </li>
                 <li>
                   <Link href="/faq" className="text-primary-600 hover:text-primary-700 text-sm">
-                    → Häufige Fragen (FAQ)
+                    {t.contact.faq}
                   </Link>
                 </li>
               </ul>
@@ -172,12 +174,12 @@ export default function ContactPage() {
           {/* Contact Form */}
           <div className="lg:col-span-2">
             <div className="bg-white rounded-lg shadow-md p-8 border border-gray-200">
-              <h2 className="text-2xl font-bold text-gray-900 mb-6">Nachricht senden</h2>
+              <h2 className="text-2xl font-bold text-gray-900 mb-6">{t.contact.sendMessage}</h2>
               
               <form onSubmit={handleSubmit} className="space-y-6">
                 <div>
                   <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                    Kategorie <span className="text-red-500">*</span>
+                    {t.contact.categoryRequired}
                   </label>
                   <select
                     id="category"
@@ -186,7 +188,7 @@ export default function ContactPage() {
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
                     required
                   >
-                    <option value="">Bitte wählen...</option>
+                    <option value="">{t.contact.pleaseSelect}</option>
                     {contactCategories.map(cat => (
                       <option key={cat.value} value={cat.value}>{cat.label}</option>
                     ))}
@@ -195,7 +197,7 @@ export default function ContactPage() {
 
                 <div>
                   <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-2">
-                    Ihre E-Mail-Adresse <span className="text-red-500">*</span>
+                    {t.contact.yourEmailRequired}
                   </label>
                   <input
                     type="email"
@@ -203,14 +205,14 @@ export default function ContactPage() {
                     value={formData.email}
                     onChange={(e) => setFormData({ ...formData, email: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="ihre.email@beispiel.ch"
+                    placeholder={t.contact.emailPlaceholder}
                     required
                   />
                 </div>
 
                 <div>
                   <label htmlFor="subject" className="block text-sm font-medium text-gray-700 mb-2">
-                    Betreff <span className="text-red-500">*</span>
+                    {t.contact.subjectRequired}
                   </label>
                   <input
                     type="text"
@@ -218,14 +220,14 @@ export default function ContactPage() {
                     value={formData.subject}
                     onChange={(e) => setFormData({ ...formData, subject: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Kurze Beschreibung Ihres Anliegens"
+                    placeholder={t.contact.subjectPlaceholder}
                     required
                   />
                 </div>
 
                 <div>
                   <label htmlFor="message" className="block text-sm font-medium text-gray-700 mb-2">
-                    Nachricht <span className="text-red-500">*</span>
+                    {t.contact.messageRequired}
                   </label>
                   <textarea
                     id="message"
@@ -233,7 +235,7 @@ export default function ContactPage() {
                     onChange={(e) => setFormData({ ...formData, message: e.target.value })}
                     rows={8}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
-                    placeholder="Beschreiben Sie Ihr Anliegen so detailliert wie möglich..."
+                    placeholder={t.contact.messagePlaceholder}
                     required
                   />
                 </div>
@@ -246,7 +248,7 @@ export default function ContactPage() {
                     required
                   />
                   <label htmlFor="privacy" className="text-sm text-gray-600">
-                    Ich stimme der <Link href="/privacy" className="text-primary-600 hover:text-primary-700">Datenschutzerklärung</Link> zu und erlaube die Verarbeitung meiner Daten für die Bearbeitung meiner Anfrage. <span className="text-red-500">*</span>
+                    {t.contact.privacyAgreement}
                   </label>
                 </div>
 
@@ -258,12 +260,12 @@ export default function ContactPage() {
                   {submitting ? (
                     <>
                       <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></div>
-                      Wird gesendet...
+                      {t.contact.sending}
                     </>
                   ) : (
                     <>
                       <Send className="h-5 w-5" />
-                      Nachricht senden
+                      {t.contact.send}
                     </>
                   )}
                 </button>

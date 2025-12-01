@@ -13,7 +13,8 @@ echo "========================================"
 echo ""
 
 # Prüfe ob Port bereits belegt ist
-if lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1 ; then
+# Korrekt: -i (lowercase) identifiziert Internet-Sockets, nicht -P (uppercase)
+if lsof -i:$PORT -sTCP:LISTEN >/dev/null 2>&1 ; then
     echo "⚠️  Port $PORT ist bereits belegt!"
     echo ""
     echo "Möchten Sie den bestehenden Prozess beenden? (j/n)"

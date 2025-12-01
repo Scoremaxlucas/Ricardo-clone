@@ -10,10 +10,12 @@ import { TrendingNow } from '@/components/home/TrendingNow'
 import { FeaturedProducts } from '@/components/home/FeaturedProducts'
 import { CategorySpotlight } from '@/components/home/CategorySpotlight'
 import { Footer } from '@/components/layout/Footer'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 export default function Home() {
   const searchParams = useSearchParams()
   const hasShownToast = useRef(false)
+  const { t } = useLanguage()
 
   useEffect(() => {
     // Prüfe ob Verifizierung gerade abgeschickt wurde
@@ -29,7 +31,7 @@ export default function Home() {
       
       // Zeige Erfolgs-Toast nur einmal
       toast.success(
-        'Ihre Verifizierung wurde eingereicht und wird nun von unserem Team geprüft. Sie erhalten eine Benachrichtigung, sobald die Verifizierung abgeschlossen ist.',
+        t.verification.submitted,
         {
           duration: 6000,
           icon: '✅',

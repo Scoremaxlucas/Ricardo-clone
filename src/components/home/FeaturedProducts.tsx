@@ -5,7 +5,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { useSession } from 'next-auth/react'
 
-interface Watch {
+interface Item {
   id: string
   title: string
   brand: string
@@ -27,28 +27,28 @@ export function FeaturedProducts() {
   const { t } = useLanguage()
   const { data: session } = useSession()
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
-  const [watches, setWatches] = useState<Watch[]>([])
+  const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    const fetchWatches = async () => {
+    const fetchItems = async () => {
       try {
         const response = await fetch('/api/watches/search?limit=6')
         if (response.ok) {
           const data = await response.json()
-          setWatches(Array.isArray(data.watches) ? data.watches : [])
+          setItems(Array.isArray(data.watches) ? data.watches : []) // API verwendet noch 'watches'
         } else {
           console.error('API response not ok:', response.status)
-          setWatches([])
+          setItems([])
         }
       } catch (error) {
-        console.error('Error fetching watches:', error)
-        setWatches([])
+        console.error('Error fetching items:', error)
+        setItems([])
       } finally {
         setLoading(false)
       }
     }
-    fetchWatches()
+    fetchItems()
   }, [])
 
   useEffect(() => {
@@ -82,7 +82,7 @@ export function FeaturedProducts() {
     )
   }
 
-  if (watches.length === 0) {
+  if (items.length === 0) {
     return (
       <section className="py-16 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -112,7 +112,7 @@ export function FeaturedProducts() {
         </div>
 
         <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-          {watches.map((product) => (
+          {items.map((product) => (
             <ProductCard
               key={product.id}
               {...product}

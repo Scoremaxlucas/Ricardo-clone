@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { Package, Gavel, Tag, ShoppingBag, Star, Search, Settings } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Bid {
   id: string
@@ -42,6 +43,7 @@ interface Purchase {
 export default function MyBuyingPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [stats, setStats] = useState({
     bidding: 0,
@@ -171,7 +173,7 @@ export default function MyBuyingPage() {
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
             <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
-            <p className="text-gray-600">Lädt...</p>
+            <p className="text-gray-600">{t.myBuying.loading}</p>
           </div>
         </div>
         <Footer />
@@ -186,7 +188,7 @@ export default function MyBuyingPage() {
         <Header />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <p className="text-gray-600">Weiterleitung zur Anmeldung...</p>
+            <p className="text-gray-600">{t.myBuying.redirecting}</p>
           </div>
         </div>
         <Footer />
@@ -200,7 +202,7 @@ export default function MyBuyingPage() {
         <Header />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <p className="text-gray-600">Bitte anmelden...</p>
+            <p className="text-gray-600">{t.myBuying.pleaseLogin}</p>
           </div>
         </div>
         <Footer />
@@ -210,48 +212,48 @@ export default function MyBuyingPage() {
 
   const menuItems = [
     {
-      title: 'Am Bieten',
-      description: 'Ihre aktiven Gebote',
+      title: t.myBuying.activeBids,
+      description: t.myBuying.activeBidsDesc,
       icon: Gavel,
       href: '/my-watches/buying/bidding',
       color: 'bg-purple-100 text-purple-600',
       count: stats.bidding
     },
     {
-      title: 'Preisvorschläge',
-      description: 'Ihre abgegebenen Preisvorschläge',
+      title: t.myBuying.priceOffers,
+      description: t.myBuying.priceOffersDesc,
       icon: Tag,
       href: '/my-watches/buying/offers',
       color: 'bg-blue-100 text-blue-600',
       count: stats.offers
     },
     {
-      title: 'Gekauft',
-      description: 'Ihre gekauften Artikel',
+      title: t.myBuying.purchased,
+      description: t.myBuying.purchasedDesc,
       icon: ShoppingBag,
       href: '/my-watches/buying/purchased',
       color: 'bg-green-100 text-green-600',
       count: stats.purchased
     },
     {
-      title: 'Bewertungen',
-      description: 'Bewertungen für gekaufte Artikel',
+      title: t.myBuying.reviews,
+      description: t.myBuying.reviewsDesc,
       icon: Star,
       href: '/my-watches/buying/reviews',
       color: 'bg-pink-100 text-pink-600',
       count: stats.reviews
     },
     {
-      title: 'Beobachten',
-      description: 'Ihre beobachteten Artikel',
+      title: t.myBuying.watchlist,
+      description: t.myBuying.watchlistDesc,
       icon: Package,
       href: '/favorites',
       color: 'bg-yellow-100 text-yellow-600',
       count: stats.favorites
     },
     {
-      title: 'Suchaufträge',
-      description: 'Gespeicherte Suchanfragen',
+      title: t.myBuying.searchSubscriptions,
+      description: t.myBuying.searchSubscriptionsDesc,
       icon: Search,
       href: '/my-watches/buying/search-subscriptions',
       color: 'bg-indigo-100 text-indigo-600',
@@ -266,10 +268,10 @@ export default function MyBuyingPage() {
         {/* Breadcrumb */}
         <div className="text-sm text-gray-600 mb-4">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
-            Startseite
+            {t.myBuying.homepage}
           </Link>
           <span className="mx-2">›</span>
-          <span>Mein Kaufen</span>
+          <span>{t.myBuying.title}</span>
         </div>
 
         {/* Header */}
@@ -279,8 +281,8 @@ export default function MyBuyingPage() {
               <Settings className="h-6 w-6 text-primary-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Mein Kaufen</h1>
-              <p className="text-gray-600 mt-1">Verwalten Sie Ihre Käufe und Gebote</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t.myBuying.title}</h1>
+              <p className="text-gray-600 mt-1">{t.myBuying.subtitle}</p>
             </div>
           </div>
         </div>

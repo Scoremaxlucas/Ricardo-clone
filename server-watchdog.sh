@@ -17,7 +17,8 @@ echo "$(date '+%Y-%m-%d %H:%M:%S') - Watchdog gestartet" >> "$LOG_FILE"
 # Funktion zum Prüfen ob Server läuft
 check_server() {
     # Prüfe ob Port belegt ist
-    if ! lsof -Pi :$PORT -sTCP:LISTEN -t >/dev/null 2>&1; then
+    # Korrekt: -i (lowercase) identifiziert Internet-Sockets, nicht -P (uppercase)
+    if ! lsof -i:$PORT -sTCP:LISTEN >/dev/null 2>&1; then
         return 1
     fi
     

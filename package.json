@@ -23,7 +23,8 @@
     "verify-existing-users": "tsx scripts/verify-existing-users.ts",
     "test-all-emails": "tsx scripts/test-all-emails.ts",
     "test-few-emails": "tsx scripts/test-few-emails.ts",
-    "test-emoji-fix": "tsx scripts/test-emoji-fix.ts"
+    "test-emoji-fix": "tsx scripts/test-emoji-fix.ts",
+    "migrate:article-numbers": "tsx scripts/migrate-article-numbers.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.0",

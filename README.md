@@ -78,23 +78,29 @@ Die App ist dann unter `http://localhost:3002` verfügbar.
 ## 🎯 Hauptfunktionen
 
 ### Für Käufer
-- Durchsuchen von Uhren nach Marke, Preis, Zustand
-- Teilnahme an Auktionen
+- Durchsuchen von Artikeln nach Kategorie, Marke, Preis, Zustand
+- Erweiterte Suchfunktion mit Filtern
+- Teilnahme an Auktionen oder Sofortkauf
+- Preisvorschläge für Artikel
 - Favoriten-System
-- Benachrichtigungen für interessante Uhren
+- Benachrichtigungen für interessante Artikel
+- Suchabonnements für automatische Benachrichtigungen
 
 ### Für Verkäufer
-- Einfaches Hochladen von Uhren
+- Einfaches Hochladen von Artikeln aller Kategorien
 - Auktions- oder Sofortkauf-Optionen
-- Detaillierte Uhren-Beschreibungen
-- Authentizitäts-Zertifikate
+- Detaillierte Artikel-Beschreibungen mit mehreren Bildern
+- Booster-System für erhöhte Sichtbarkeit
+- Verkaufsstatistiken und Übersicht
+- Automatische Rechnungsstellung nach Verkauf
 
-### Uhren-spezifische Features
-- **Marken-Filter**: Rolex, Patek Philippe, Omega, etc.
-- **Zustand-Bewertung**: Neu, Sehr gut, Gut, Vintage
-- **Jahrgang-Filter**: Von Vintage bis Neu
-- **Material-Filter**: Stahl, Gold, Titan, etc.
-- **Komplikationen**: Chronograph, GMT, Perpetual Calendar
+### Marktplatz-Features
+- **Kategorien**: Umfassende Produktkategorien (Kleidung, Elektronik, Fahrzeuge, Sport, etc.)
+- **Erweiterte Suche**: Filter nach Kategorie, Marke, Preis, Zustand, Standort
+- **Auktionssystem**: Automatische Verarbeitung bei Auktionsende
+- **Sicherheit**: Verifizierte Benutzer, Dispute-System, sichere Zahlungsabwicklung
+- **Zahlungsmethoden**: Banküberweisung, TWINT, Kreditkarte
+- **Versandoptionen**: Abholung, A-Post, B-Post mit Tracking
 
 ## 📱 Mobile App
 

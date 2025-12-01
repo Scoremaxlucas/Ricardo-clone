@@ -103,16 +103,87 @@ export async function PATCH(
       )
     }
 
-    const watch = await prisma.watch.update({
+    // Hole Watch mit Purchases
+    const watch = await prisma.watch.findUnique({
       where: { id },
-      data: { isActive },
+      include: {
+        purchases: {
+          where: {
+            status: { not: 'cancelled' }
+          }
+        }
+      }
     })
+
+    if (!watch) {
+      return NextResponse.json(
+        { message: 'Angebot nicht gefunden' },
+        { status: 404 }
+      )
+    }
+
+    // Da isActive dynamisch berechnet wird, müssen wir Purchases stornieren oder moderationStatus ändern
+    if (!isActive) {
+      // Deaktivieren: Storniere alle aktiven Purchases und setze moderationStatus auf 'rejected'
+      if (watch.purchases.length > 0) {
+        await prisma.purchase.updateMany({
+          where: {
+            watchId: id,
+            status: { not: 'cancelled' }
+          },
+          data: {
+            status: 'cancelled'
+          }
+        })
+      }
+      
+      await prisma.watch.update({
+        where: { id },
+        data: {
+          moderationStatus: 'rejected',
+          moderatedBy: session.user.id,
+          moderatedAt: new Date(),
+        },
+      })
+    } else {
+      // Aktivieren: Setze moderationStatus auf 'approved'
+      await prisma.watch.update({
+        where: { id },
+        data: {
+          moderationStatus: 'approved',
+          moderatedBy: session.user.id,
+          moderatedAt: new Date(),
+        },
+      })
+    }
+
+    // Berechne den neuen isActive Status
+    const updatedWatch = await prisma.watch.findUnique({
+      where: { id },
+      include: {
+        purchases: {
+          where: {
+            status: { not: 'cancelled' }
+          }
+        }
+      }
+    })
+
+    const now = new Date()
+    const auctionEndDate = updatedWatch?.auctionEnd ? new Date(updatedWatch.auctionEnd) : null
+    const isSold = (updatedWatch?.purchases.length || 0) > 0
+    const isExpired = auctionEndDate ? auctionEndDate <= now : false
+    
+    // WICHTIG: moderationStatus 'rejected' bedeutet deaktiviert
+    const isRejected = updatedWatch?.moderationStatus === 'rejected'
+    const calculatedIsActive = !isRejected && !isSold && (!auctionEndDate || !isExpired)
 
     return NextResponse.json({
       message: `Angebot erfolgreich ${isActive ? 'aktiviert' : 'deaktiviert'}`,
       watch: {
-        id: watch.id,
-        isActive: watch.isActive,
+        id: updatedWatch?.id,
+        isActive: calculatedIsActive,
+        moderationStatus: updatedWatch?.moderationStatus,
       },
     })
   } catch (error: any) {

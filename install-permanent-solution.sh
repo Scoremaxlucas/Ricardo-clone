@@ -33,6 +33,14 @@ TARGET_PLIST="$HOME/Library/LaunchAgents/$WATCHDOG_PLIST"
 if [ -f "${WATCHDOG_PLIST}.template" ]; then
     # Ersetze Platzhalter mit aktuellem Projekt-Verzeichnis
     sed "s|__PROJECT_DIR__|$PROJECT_DIR|g" "${WATCHDOG_PLIST}.template" > "$TARGET_PLIST"
+    
+    # Validiere dass Platzhalter ersetzt wurde
+    if grep -q "__PROJECT_DIR__" "$TARGET_PLIST" 2>/dev/null; then
+        echo "❌ Fehler: Platzhalter __PROJECT_DIR__ wurde nicht ersetzt!"
+        echo "   Bitte prüfen Sie die Template-Datei: ${WATCHDOG_PLIST}.template"
+        rm -f "$TARGET_PLIST"
+        exit 1
+    fi
 else
     # Fallback: Verwende normale Datei (für Rückwärtskompatibilität)
     if [ -f "$WATCHDOG_PLIST" ]; then

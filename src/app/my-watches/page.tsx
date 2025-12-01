@@ -9,6 +9,7 @@ import { toast } from 'react-hot-toast'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface BuyerInfo {
   id: string
@@ -24,7 +25,7 @@ interface BuyerInfo {
   paymentMethods: string | null
 }
 
-interface WatchItem {
+interface Item {
   id: string
   title: string
   brand: string
@@ -41,16 +42,17 @@ interface WatchItem {
 export default function MyWatchesPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
-  const [watches, setWatches] = useState<WatchItem[]>([])
+  const [items, setItems] = useState<Item[]>([])
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
   const [verificationInProgress, setVerificationInProgress] = useState(false)
   const [selectedBuyer, setSelectedBuyer] = useState<BuyerInfo | null>(null)
-  const [selectedWatchTitle, setSelectedWatchTitle] = useState<string>('')
+  const [selectedItemTitle, setSelectedItemTitle] = useState<string>('')
   const [showBuyerInfo, setShowBuyerInfo] = useState(false)
   const [boosters, setBoosters] = useState<any[]>([])
   const [showBoosterModal, setShowBoosterModal] = useState(false)
-  const [selectedWatchForBooster, setSelectedWatchForBooster] = useState<WatchItem | null>(null)
+  const [selectedItemForBooster, setSelectedItemForBooster] = useState<Item | null>(null)
   const [selectedBooster, setSelectedBooster] = useState<string>('')
   const [boosterLoading, setBoosterLoading] = useState(false)
   const [stats, setStats] = useState({
@@ -60,24 +62,24 @@ export default function MyWatchesPage() {
     offers: 0
   })
 
-  const loadWatches = async () => {
+  const loadItems = async () => {
     try {
       setLoading(true)
       // Cache-Busting hinzufügen
       const res = await fetch(`/api/watches/mine?t=${Date.now()}`)
       const data = await res.json()
-      const watchesList = Array.isArray(data.watches) ? data.watches : []
-      setWatches(watchesList)
+      const itemsList = Array.isArray(data.watches) ? data.watches : []
+      setItems(itemsList)
       
       // Berechne Statistiken
       setStats({
-        active: watchesList.filter((w: WatchItem) => !w.isSold).length,
-        sold: watchesList.filter((w: WatchItem) => w.isSold).length,
+        active: itemsList.filter((w: Item) => !w.isSold).length,
+        sold: itemsList.filter((w: Item) => w.isSold).length,
         drafts: 0, // TODO: Lade Entwürfe
         offers: 0 // TODO: Lade Preisvorschläge
       })
     } catch (error) {
-      console.error('Error loading watches:', error)
+      console.error('Error loading items:', error)
     } finally {
       setLoading(false)
     }
@@ -96,7 +98,7 @@ export default function MyWatchesPage() {
       return
     }
 
-    loadWatches()
+    loadItems()
     const loadVerificationStatus = async () => {
       if (session?.user?.id) {
         try {
@@ -135,20 +137,20 @@ export default function MyWatchesPage() {
     loadBoosters()
   }, [])
 
-  const handleAddBooster = (watch: WatchItem) => {
-    setSelectedWatchForBooster(watch)
+  const handleAddBooster = (item: Item) => {
+    setSelectedItemForBooster(item)
     setSelectedBooster('')
     setShowBoosterModal(true)
   }
 
   const handleBoosterSubmit = async () => {
-    if (!selectedWatchForBooster || !selectedBooster || selectedBooster === 'none') {
+    if (!selectedItemForBooster || !selectedBooster || selectedBooster === 'none') {
       return
     }
 
     setBoosterLoading(true)
     try {
-      const res = await fetch(`/api/watches/${selectedWatchForBooster.id}/upgrade-booster`, {
+      const res = await fetch(`/api/watches/${selectedItemForBooster.id}/upgrade-booster`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ newBooster: selectedBooster })
@@ -157,11 +159,11 @@ export default function MyWatchesPage() {
       const data = await res.json()
 
       if (res.ok) {
-        const currentBoosters = selectedWatchForBooster.boosters || []
+        const currentBoosters = selectedItemForBooster.boosters || []
         const currentBoosterCode = currentBoosters.length > 0 ? currentBoosters[0] : null
         const message = currentBoosterCode 
-          ? `Booster erfolgreich upgegradet! Rechnung: ${data.invoice.invoiceNumber} (CHF ${data.invoice.total.toFixed(2)} - Differenz)`
-          : `Booster erfolgreich hinzugefügt! Rechnung: ${data.invoice.invoiceNumber} (CHF ${data.invoice.total.toFixed(2)})`
+          ? t.myWatches.boosterSuccess.replace('{invoiceNumber}', data.invoice.invoiceNumber).replace('{amount}', data.invoice.total.toFixed(2))
+          : t.myWatches.boosterAdded.replace('{invoiceNumber}', data.invoice.invoiceNumber).replace('{amount}', data.invoice.total.toFixed(2))
         
         toast.success(message, {
           duration: 5000,
@@ -181,11 +183,11 @@ export default function MyWatchesPage() {
         })
         
         setShowBoosterModal(false)
-        setSelectedWatchForBooster(null)
+        setSelectedItemForBooster(null)
         setSelectedBooster('')
-        loadWatches() // Aktualisiere die Liste
+        loadItems() // Aktualisiere die Liste
       } else {
-        toast.error(`Fehler: ${data.message}`, {
+        toast.error(`${t.common.error}: ${data.message}`, {
           duration: 4000,
           style: {
             background: '#ef4444',
@@ -199,7 +201,7 @@ export default function MyWatchesPage() {
       }
     } catch (error) {
       console.error('Error adding booster:', error)
-      toast.error('Fehler beim Hinzufügen des Boosters', {
+      toast.error(t.myWatches.boosterError, {
         duration: 4000,
         style: {
           background: '#ef4444',
@@ -219,12 +221,12 @@ export default function MyWatchesPage() {
   useEffect(() => {
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
-        loadWatches()
+        loadItems()
       }
     }
 
     const handleFocus = () => {
-      loadWatches()
+      loadItems()
     }
 
     document.addEventListener('visibilitychange', handleVisibilityChange)
@@ -236,14 +238,14 @@ export default function MyWatchesPage() {
     }
   }, [])
 
-  if (status === 'loading') return <div className="p-6">Lädt...</div>
+  if (status === 'loading') return <div className="p-6">{t.myWatches.loading}</div>
   // Session-Check wird in useEffect behandelt, hier nur Loading zeigen wenn nicht authentifiziert
   if (status === 'unauthenticated' || !session) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="flex items-center justify-center min-h-screen">
-          <div className="text-gray-500">Weiterleitung zur Anmeldung...</div>
+          <div className="text-gray-500">{t.myWatches.redirecting}</div>
         </div>
         <Footer />
       </div>
@@ -252,32 +254,32 @@ export default function MyWatchesPage() {
 
   const menuItems = [
     {
-      title: 'Am Verkaufen',
-      description: 'Ihre aktiven Verkaufsanzeigen',
+      title: t.myWatches.currentlySelling,
+      description: t.myWatches.currentlySellingDesc,
       icon: TrendingUp,
       href: '/my-watches/selling/active',
       color: 'bg-green-100 text-green-600',
       count: stats.active
     },
     {
-      title: 'Verkauft',
-      description: 'Ihre erfolgreichen Verkäufe',
+      title: t.myWatches.sold,
+      description: t.myWatches.soldDesc,
       icon: CheckCircle,
       href: '/my-watches/selling/sold',
       color: 'bg-blue-100 text-blue-600',
       count: stats.sold
     },
     {
-      title: 'Gebühren',
-      description: 'Übersicht der fälligen Gebühren',
+      title: t.myWatches.fees,
+      description: t.myWatches.feesDesc,
       icon: Wallet,
       href: '/my-watches/selling/fees',
       color: 'bg-yellow-100 text-yellow-600',
       count: 0
     },
     {
-      title: 'Preisvorschläge',
-      description: 'Erhaltene Preisvorschläge von Käufern',
+      title: t.myWatches.priceOffers,
+      description: t.myWatches.priceOffersDesc,
       icon: Tag,
       href: '/my-watches/selling/offers',
       color: 'bg-purple-100 text-purple-600',
@@ -292,10 +294,10 @@ export default function MyWatchesPage() {
         {/* Breadcrumb */}
         <div className="text-sm text-gray-600 mb-4">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
-            Startseite
+            {t.myWatches.homepage}
           </Link>
           <span className="mx-2">›</span>
-          <span>Mein Verkaufen</span>
+          <span>{t.myWatches.title}</span>
         </div>
 
         {/* Header */}
@@ -305,14 +307,14 @@ export default function MyWatchesPage() {
               <Settings className="h-6 w-6 text-primary-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Mein Verkaufen</h1>
-              <p className="text-gray-600 mt-1">Verwalten Sie Ihre Verkaufsanzeigen</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t.myWatches.title}</h1>
+              <p className="text-gray-600 mt-1">{t.myWatches.subtitle}</p>
             </div>
           </div>
           {isVerified === true && (
             <div className="flex items-center px-4 py-2 bg-green-100 border border-green-300 rounded-lg">
               <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
-              <span className="text-green-800 font-medium">Verifiziert</span>
+              <span className="text-green-800 font-medium">{t.myWatches.verified}</span>
             </div>
           )}
         </div>
@@ -327,10 +329,10 @@ export default function MyWatchesPage() {
                   <Loader2 className="h-5 w-5 text-yellow-600 mr-2 animate-spin" />
                   <div>
                     <p className="text-yellow-800 font-medium">
-                      Validierung in Bearbeitung
+                      {t.myWatches.validationInProgress}
                     </p>
                     <p className="text-sm text-yellow-700 mt-1">
-                      Ihre Verifizierung wird derzeit bearbeitet.
+                      {t.myWatches.validationInProgressDesc}
                     </p>
                   </div>
                 </div>
@@ -341,7 +343,7 @@ export default function MyWatchesPage() {
                 className="inline-flex items-center px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium transition-colors"
               >
                 <AlertCircle className="h-5 w-5 mr-2" />
-                Validierungsprozess starten
+                {t.myWatches.startVerification}
               </Link>
             )}
           </div>
@@ -389,7 +391,7 @@ export default function MyWatchesPage() {
             className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-md hover:shadow-lg"
           >
             <Plus className="h-5 w-5 mr-2" />
-            Neuen Artikel verkaufen
+            {t.myWatches.sellNewItem}
           </Link>
         </div>
       </div>
@@ -399,19 +401,19 @@ export default function MyWatchesPage() {
       {selectedBuyer && (
         <BuyerInfoModal
           buyer={selectedBuyer}
-          watchTitle={selectedWatchTitle}
+          watchTitle={selectedItemTitle}
           isOpen={showBuyerInfo}
           onClose={() => {
             setShowBuyerInfo(false)
             setSelectedBuyer(null)
-            setSelectedWatchTitle('')
+            setSelectedItemTitle('')
           }}
         />
       )}
 
       {/* Booster Modal */}
-      {showBoosterModal && selectedWatchForBooster && (() => {
-        const currentBoosters = selectedWatchForBooster.boosters || []
+      {showBoosterModal && selectedItemForBooster && (() => {
+        const currentBoosters = selectedItemForBooster.boosters || []
         const currentBoosterCode = currentBoosters.length > 0 ? currentBoosters[0] : null
         const currentBooster = boosters.find((b: any) => b.code === currentBoosterCode)
         
@@ -421,22 +423,22 @@ export default function MyWatchesPage() {
             <div className="mb-6">
               <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
                 <Sparkles className="h-5 w-5 mr-2" />
-                {currentBooster ? 'Booster Upgrade' : 'Booster hinzufügen'}
+                {currentBooster ? t.myWatches.boosterUpgrade : t.myWatches.addBooster}
               </h2>
               <p className="text-sm text-gray-600 mb-4">
-                Wählen Sie einen Booster für: <strong className="text-gray-900">{selectedWatchForBooster.title}</strong>
+                {t.myWatches.selectBoosterFor} <strong className="text-gray-900">{selectedItemForBooster.title}</strong>
               </p>
               {currentBooster && (
                 <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-4">
                   <p className="text-sm font-medium text-green-800">
-                    ✓ Aktuell aktiver Booster: <strong>{currentBooster.name}</strong> (CHF {currentBooster.price.toFixed(2)})
+                    ✓ {t.myWatches.currentActiveBooster} <strong>{currentBooster.name}</strong> (CHF {currentBooster.price.toFixed(2)})
                   </p>
                 </div>
               )}
             </div>
             {boosters.length === 0 ? (
               <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-yellow-800">Booster-Optionen werden geladen...</p>
+                <p className="text-sm text-yellow-800">{t.myWatches.boosterOptionsLoading}</p>
               </div>
             ) : (
               <div className="grid grid-cols-1 gap-4 mb-6">
@@ -448,11 +450,11 @@ export default function MyWatchesPage() {
                         <div className="flex items-center justify-center gap-2 mb-1">
                           <CheckCircle className="h-5 w-5 text-green-600" />
                           <p className="text-base font-semibold text-green-800">
-                            Super-Boost ist bereits aktiv!
+                            {t.myWatches.superBoostActive}
                           </p>
                         </div>
                         <p className="text-xs text-green-700">
-                          Ihr Angebot hat bereits den höchsten Booster-Level.
+                          {t.myWatches.superBoostActiveDesc}
                         </p>
                       </div>
                     )
@@ -525,7 +527,7 @@ export default function MyWatchesPage() {
                       
                       {isCurrent && (
                         <div className="absolute top-2 right-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                          AKTIV
+                          {t.myWatches.active}
                         </div>
                       )}
                       
@@ -575,19 +577,19 @@ export default function MyWatchesPage() {
                         {currentBoosterCode && !isCurrent ? (
                           <div className="space-y-1">
                             <div className="flex items-baseline justify-between">
-                              <span className="text-[10px] text-gray-500 uppercase tracking-wide">Upgrade</span>
+                              <span className="text-[10px] text-gray-500 uppercase tracking-wide">{t.myWatches.upgrade}</span>
                               <div className={`text-lg font-bold ${priceStyles}`}>
                                 CHF {priceDifference.toFixed(2)}
                               </div>
                             </div>
                             <div className="flex items-center justify-between text-[10px]">
                               <span className="text-gray-400 line-through">CHF {booster.price.toFixed(2)}</span>
-                              <span className="text-green-600">Sie sparen CHF {(booster.price - priceDifference).toFixed(2)}</span>
+                              <span className="text-green-600">{t.myWatches.save} CHF {(booster.price - priceDifference).toFixed(2)}</span>
                             </div>
                           </div>
                         ) : (
                           <div className="flex items-baseline justify-between">
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wide">Preis</span>
+                            <span className="text-[10px] text-gray-500 uppercase tracking-wide">{t.myWatches.price}</span>
                             <div className={`text-lg font-bold ${priceStyles}`}>
                               CHF {booster.price.toFixed(2)}
                             </div>
@@ -609,20 +611,20 @@ export default function MyWatchesPage() {
               <button
                 onClick={() => {
                   setShowBoosterModal(false)
-                  setSelectedWatchForBooster(null)
+                  setSelectedItemForBooster(null)
                   setSelectedBooster('')
                 }}
                 className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
                 disabled={boosterLoading}
               >
-                Abbrechen
+                {t.myWatches.cancel}
               </button>
               <button
                 onClick={handleBoosterSubmit}
                 disabled={!selectedBooster || selectedBooster === 'none' || boosterLoading || selectedBooster === currentBoosterCode}
                 className="flex-1 px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
               >
-                {boosterLoading ? 'Wird verarbeitet...' : currentBoosterCode ? 'Upgrade durchführen' : 'Hinzufügen'}
+                {boosterLoading ? t.myWatches.processing : currentBoosterCode ? t.myWatches.performUpgrade : t.myWatches.add}
               </button>
             </div>
           </div>

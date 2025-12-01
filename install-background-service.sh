@@ -41,6 +41,14 @@ if [ -f "${PLIST_FILE}.template" ]; then
     # Ersetze Platzhalter mit aktuellem Projekt-Verzeichnis
     PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"
     sed "s|__PROJECT_DIR__|$PROJECT_DIR|g" "${PLIST_FILE}.template" > "$TARGET_PATH"
+    
+    # Validiere dass Platzhalter ersetzt wurde
+    if grep -q "__PROJECT_DIR__" "$TARGET_PATH" 2>/dev/null; then
+        echo "❌ Fehler: Platzhalter __PROJECT_DIR__ wurde nicht ersetzt!"
+        echo "   Bitte prüfen Sie die Template-Datei: ${PLIST_FILE}.template"
+        rm -f "$TARGET_PATH"
+        exit 1
+    fi
 else
     # Fallback: Verwende normale Datei (für Rückwärtskompatibilität)
     PROJECT_DIR="$(cd "$(dirname "$0")" && pwd)"

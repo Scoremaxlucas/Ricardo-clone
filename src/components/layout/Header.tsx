@@ -288,15 +288,15 @@ export function Header() {
                       href="/sell"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                     >
-                      <div className="font-medium">Einzelner Artikel</div>
-                      <div className="text-xs text-gray-500">Einen Artikel verkaufen</div>
+                      <div className="font-medium">{t.header.singleItem}</div>
+                      <div className="text-xs text-gray-500">{t.header.singleItemDesc}</div>
                     </Link>
                     <Link
                       href="/sell/bulk"
                       className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
                     >
-                      <div className="font-medium">Mehrere Artikel</div>
-                      <div className="text-xs text-gray-500">Bis zu 100 Artikel gleichzeitig</div>
+                      <div className="font-medium">{t.header.multipleItems}</div>
+                      <div className="text-xs text-gray-500">{t.header.multipleItemsDesc}</div>
                     </Link>
                   </div>
                 </div>
@@ -332,7 +332,7 @@ export function Header() {
                     <button
                       onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                       className="relative flex items-center justify-center gap-1 px-2 py-1 rounded-full bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
-                      title="Profilmenü"
+                      title={t.header.profileMenu}
                     >
                       <Link
                         href={session.user?.id ? `/users/${session.user.id}` : '/profile'}
@@ -342,7 +342,7 @@ export function Header() {
                         {getProfileImage() ? (
                           <img
                             src={getProfileImage()}
-                            alt={session.user?.name || 'Profil'}
+                            alt={session.user?.name || t.header.myProfile}
                             className="w-full h-full rounded-full object-cover"
                           />
                         ) : (
@@ -386,7 +386,7 @@ export function Header() {
                           <div className="py-1 relative" style={{ pointerEvents: 'auto' }}>
                             <div className="px-4 py-3 border-b border-gray-200">
                               <p className="text-sm font-medium text-gray-900 flex items-center gap-1">
-                                <UserName userId={session.user.id} userName={userNickname || session.user?.nickname || session.user?.name || 'Benutzer'} badgeSize="sm" />
+                                <UserName userId={session.user.id} userName={userNickname || session.user?.nickname || session.user?.name || t.header.user} badgeSize="sm" />
                               </p>
                               <p className="text-sm text-gray-500 truncate">
                                 {session.user?.email}
@@ -482,7 +482,7 @@ export function Header() {
                             >
                               <div className="flex items-center">
                                 <X className="h-4 w-4 mr-2" />
-                                Stornieren
+                                {t.header.cancel}
                               </div>
                             </Link>
                             {(isAdmin || session.user?.isAdmin === true || session.user?.isAdmin === 1) && (
@@ -548,7 +548,7 @@ export function Header() {
               <button
                 onClick={() => setIsLanguageMenuOpen(!isLanguageMenuOpen)}
                 className="flex items-center gap-1 px-3 py-2 text-gray-700 hover:text-primary-600 rounded-md transition-colors font-medium"
-                title="Select language / Sprache wählen"
+                title={t.header.selectLanguage}
               >
                 <span className="text-lg">{languages.find(l => l.code === language)?.flag}</span>
                 <span className="text-sm">{languages.find(l => l.code === language)?.code.toUpperCase()}</span>
@@ -619,7 +619,7 @@ export function Header() {
                     type="submit"
                     className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-r-lg transition-colors font-medium"
                   >
-                    Suchen
+                    {t.header.search}
                   </button>
                 </div>
               </form>
@@ -661,10 +661,10 @@ export function Header() {
               <div className="px-3 py-2">
                 <div className="text-gray-700 font-medium text-base mb-1">{t.header.sell}</div>
                 <Link href="/sell" className="block py-2 text-sm text-gray-600 hover:text-primary-600 pl-4">
-                  Einzelner Artikel
+                  {t.header.singleItem}
                 </Link>
                 <Link href="/sell/bulk" className="block py-2 text-sm text-gray-600 hover:text-primary-600 pl-4">
-                  Mehrere Artikel
+                  {t.header.multipleItems}
                 </Link>
               </div>
               {session ? (
@@ -678,7 +678,7 @@ export function Header() {
                       {getProfileImage() ? (
                         <img
                           src={getProfileImage()}
-                          alt={session.user?.name || 'Profil'}
+                          alt={session.user?.name || t.header.profile}
                           className="w-full h-full rounded-full object-cover"
                         />
                       ) : (
@@ -689,7 +689,7 @@ export function Header() {
                     </Link>
                     <div>
                       <p className="text-sm font-medium text-gray-900">
-                        {session.user?.name || 'Benutzer'}
+                        {session.user?.name || t.header.user}
                       </p>
                       <p className="text-xs text-gray-500 truncate">
                         {session.user?.email}
@@ -742,7 +742,7 @@ export function Header() {
                     className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
                   >
                     <X className="h-5 w-5 mr-2" />
-                    Stornieren
+                    {t.header.cancel}
                   </Link>
                   {(session?.user?.isAdmin || isAdmin) && (
                     <Link

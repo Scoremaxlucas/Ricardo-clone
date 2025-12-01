@@ -69,8 +69,8 @@ export function TrendingNow() {
               <Flame className="h-4 w-4 text-white" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-gray-900">Trending Now</h2>
-              <p className="text-xs text-gray-600">Was gerade angesagt ist</p>
+              <h2 className="text-lg font-bold text-gray-900">{t.home.trendingNow}</h2>
+              <p className="text-xs text-gray-600">{t.home.whatsTrending}</p>
             </div>
           </div>
         </div>

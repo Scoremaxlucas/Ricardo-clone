@@ -43,22 +43,22 @@ export function Footer() {
 
           {/* Für Käufer */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-[#FFD95C]">Für Käufer</h3>
+            <h3 className="text-lg font-bold mb-4 text-[#FFD95C]">{t.footer.forBuyers}</h3>
             <ul className="space-y-3">
               <li><Link href="/categories" className="text-white/90 hover:text-white transition-colors">{t.header.categories}</Link></li>
               <li><Link href="/auctions" className="text-white/90 hover:text-white transition-colors">{t.header.auctions}</Link></li>
               <li><Link href="/favorites" className="text-white/90 hover:text-white transition-colors">{t.header.favorites}</Link></li>
-              <li><Link href="/my-watches/buying" className="text-white/90 hover:text-white transition-colors">Mein Kaufen</Link></li>
+              <li><Link href="/my-watches/buying" className="text-white/90 hover:text-white transition-colors">{t.header.myBuying}</Link></li>
             </ul>
           </div>
 
           {/* Für Verkäufer */}
           <div>
-            <h3 className="text-lg font-bold mb-4 text-[#FFD95C]">Für Verkäufer</h3>
+            <h3 className="text-lg font-bold mb-4 text-[#FFD95C]">{t.footer.forSellers}</h3>
             <ul className="space-y-3">
               <li><Link href="/sell" className="text-white/90 hover:text-white transition-colors">{t.header.sell}</Link></li>
-              <li><Link href="/my-watches" className="text-white/90 hover:text-white transition-colors">Mein Verkaufen</Link></li>
-              <li><Link href="/my-watches/selling/fees" className="text-white/90 hover:text-white transition-colors">Gebühren & Rechnungen</Link></li>
+              <li><Link href="/my-watches" className="text-white/90 hover:text-white transition-colors">{t.header.mySelling}</Link></li>
+              <li><Link href="/my-watches/selling/fees" className="text-white/90 hover:text-white transition-colors">{t.header.feesAndInvoices}</Link></li>
             </ul>
           </div>
 
@@ -66,7 +66,7 @@ export function Footer() {
           <div>
             <h3 className="text-lg font-bold mb-4 text-[#FFD95C]">{t.footer.help}</h3>
             <ul className="space-y-3">
-              <li><Link href="/help" className="text-white/90 hover:text-white transition-colors">Hilfe-Center</Link></li>
+              <li><Link href="/help" className="text-white/90 hover:text-white transition-colors">{t.footer.helpCenter}</Link></li>
               <li><Link href="/faq" className="text-white/90 hover:text-white transition-colors">{t.footer.faq}</Link></li>
               <li><Link href="/contact" className="text-white/90 hover:text-white transition-colors">{t.footer.contactUs}</Link></li>
               <li><Link href="/help/shipping-options" className="text-white/90 hover:text-white transition-colors">{t.product.shipping}</Link></li>

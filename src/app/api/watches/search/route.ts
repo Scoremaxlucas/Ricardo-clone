@@ -301,6 +301,13 @@ export async function GET(request: NextRequest) {
     const whereClause: any = {
       AND: [
         {
+          // WICHTIG: Manuell deaktivierte Artikel ausschließen (moderationStatus === 'rejected')
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { not: 'rejected' } }
+          ]
+        },
+        {
           OR: [
             {
               purchases: {

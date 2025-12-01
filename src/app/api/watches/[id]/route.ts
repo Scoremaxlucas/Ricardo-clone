@@ -256,7 +256,23 @@ export async function DELETE(
       )
     }
 
-    // Lösche das Angebot
+    // Lösche zuerst alle abhängigen Daten
+    await prisma.bid.deleteMany({ where: { watchId: id } })
+    await prisma.favorite.deleteMany({ where: { watchId: id } })
+    await prisma.priceOffer.deleteMany({ where: { watchId: id } })
+    await prisma.purchase.deleteMany({ where: { watchId: id } })
+    await prisma.sale.deleteMany({ where: { watchId: id } })
+    await prisma.message.deleteMany({ where: { watchId: id } })
+    await prisma.watchCategory.deleteMany({ where: { watchId: id } })
+    await prisma.watchView.deleteMany({ where: { watchId: id } })
+    await prisma.report.deleteMany({ where: { watchId: id } })
+    await prisma.adminNote.deleteMany({ where: { watchId: id } })
+    await prisma.moderationHistory.deleteMany({ where: { watchId: id } })
+    await prisma.invoiceItem.deleteMany({ where: { watchId: id } })
+    await prisma.notification.deleteMany({ where: { watchId: id } })
+    await prisma.conversation.deleteMany({ where: { context: { contains: id } } })
+
+    // Lösche dann das Angebot
     await prisma.watch.delete({
       where: { id },
     })

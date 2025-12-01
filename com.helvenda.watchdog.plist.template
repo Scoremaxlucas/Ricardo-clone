@@ -1,4 +1,9 @@
 <?xml version="1.0" encoding="UTF-8"?>
+<!--
+  WICHTIG: Diese Datei ist eine TEMPLATE und darf NICHT direkt verwendet werden!
+  Der Platzhalter __PROJECT_DIR__ muss durch das tatsächliche Projekt-Verzeichnis ersetzt werden.
+  Verwenden Sie install-permanent-solution.sh zum Installieren, das diesen Ersatz automatisch durchführt.
+-->
 <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
 <plist version="1.0">
 <dict>

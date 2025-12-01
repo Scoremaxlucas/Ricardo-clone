@@ -16,6 +16,13 @@ export async function GET(request: NextRequest) {
         where: {
           AND: [
             {
+              // WICHTIG: Manuell deaktivierte Artikel ausschließen
+              OR: [
+                { moderationStatus: null },
+                { moderationStatus: { not: 'rejected' } }
+              ]
+            },
+            {
               // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
               OR: [
                 { purchases: { none: {} } },
@@ -122,6 +129,13 @@ export async function GET(request: NextRequest) {
         where: {
           AND: [
             {
+              // WICHTIG: Manuell deaktivierte Artikel ausschließen
+              OR: [
+                { moderationStatus: null },
+                { moderationStatus: { not: 'rejected' } }
+              ]
+            },
+            {
               purchases: { none: {} }
             },
             {
@@ -179,14 +193,27 @@ export async function GET(request: NextRequest) {
     if (!watches || watches.length < 8) {
       const additionalWatches = await prisma.watch.findMany({
         where: {
-          // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
-          OR: [
-            { purchases: { none: {} } },
-            { purchases: { every: { status: 'cancelled' } } }
-          ],
-          id: {
-            notIn: [...(watches?.map((w) => w.id) || []), ...favorites.map((f) => f.watchId)],
-          },
+          AND: [
+            {
+              // WICHTIG: Manuell deaktivierte Artikel ausschließen
+              OR: [
+                { moderationStatus: null },
+                { moderationStatus: { not: 'rejected' } }
+              ]
+            },
+            {
+              // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
+              OR: [
+                { purchases: { none: {} } },
+                { purchases: { every: { status: 'cancelled' } } }
+              ]
+            },
+            {
+              id: {
+                notIn: [...(watches?.map((w) => w.id) || []), ...favorites.map((f) => f.watchId)],
+              }
+            }
+          ]
         },
         include: {
           seller: {

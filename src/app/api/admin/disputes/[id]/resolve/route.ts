@@ -501,7 +501,8 @@ export async function POST(
     const generateInitiatorMessage = (resolution: string, cancelPurchase: boolean, refundBuyer: boolean, refundSeller: boolean) => {
       const typeLabel = isCancellation ? 'Stornierungsantrag' : 'Dispute'
       if (cancelPurchase) {
-        return `Ihr ${typeLabel} war erfolgreich. Der Kauf wurde storniert. ${resolution}`
+        const relistMessage = isCancellation ? ' Der Artikel steht automatisch wieder als aktiver Artikel zum Verkauf.' : ''
+        return `Ihr ${typeLabel} war erfolgreich. Der Kauf wurde storniert.${relistMessage} ${resolution}`
       } else if (refundBuyer && isInitiatedByBuyer) {
         return `Ihr ${typeLabel} war erfolgreich. Ihnen wurde eine Rückerstattung gewährt. ${resolution}`
       } else if (refundSeller && isInitiatedBySeller) {
@@ -569,7 +570,8 @@ export async function POST(
         purchase.watch.title,
         initiatorMessage,
         isInitiatedByBuyer ? 'buyer' : 'seller',
-        'initiator'
+        'initiator',
+        isCancellation && cancelPurchase // Artikel steht wieder zum Verkauf
       )
       const initiatorEmail = isInitiatedByBuyer ? purchase.buyer.email : purchase.watch.seller.email
       await sendEmail({
@@ -598,7 +600,8 @@ export async function POST(
           purchase.watch.title,
           loserMessage,
           isLoserBuyer ? 'buyer' : 'seller',
-          'loser'
+          'loser',
+          false // Verlierer bekommt keine Info über Wiederaktivierung
         )
         
         await sendEmail({
