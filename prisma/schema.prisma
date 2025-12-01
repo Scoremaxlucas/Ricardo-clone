@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "sqlite"
+  provider = "postgresql"
   url      = env("DATABASE_URL")
 }
 
@@ -121,6 +121,9 @@ model User {
   adminNotes                    AdminNote[]
   moderationHistory             ModerationHistory[]
   maxBids                       MaxBid[]
+  userAdminNotes                UserAdminNote[]      @relation("UserAdminNoteAdmin")
+  userAdminNotesForUser         UserAdminNote[]      @relation("UserAdminNoteUser")
+  userActivities                UserActivity[]
 
   @@map("users")
 }
@@ -634,4 +637,35 @@ model WatchView {
   @@index([watchId])
   @@index([viewedAt])
   @@map("watch_views")
+}
+
+// Admin-Notizen zu Benutzern
+model UserAdminNote {
+  id        String   @id @default(cuid())
+  userId    String
+  adminId   String // Admin-ID
+  note      String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  user      User     @relation("UserAdminNoteUser", fields: [userId], references: [id], onDelete: Cascade)
+  admin     User     @relation("UserAdminNoteAdmin", fields: [adminId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("user_admin_notes")
+}
+
+// User-Aktivitäts-Historie
+model UserActivity {
+  id        String   @id @default(cuid())
+  userId    String
+  action    String // 'watch_created', 'watch_sold', 'purchase_completed', 'user_reported', 'reported_user', 'contact_form_sent', 'verification_submitted', 'verification_approved', 'verification_rejected', 'blocked', 'unblocked', 'warned', 'admin_note_added', etc.
+  details   String? // JSON mit Details (z.B. watchId, purchaseId, etc.)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("user_activities")
 }

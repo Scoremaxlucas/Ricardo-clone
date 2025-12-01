@@ -20,10 +20,10 @@ dist/
 # Environment variables
 # Ignore .env file and all .env.* files, then explicitly allow .env.example
 .env
-# Allow .env.example first (negation must come before general rule)
-!.env.example
-# Then ignore all other .env.* files
+# Ignore all .env.* files first
 .env.*
+# Then allow .env.example (negation must come after general rule to override it)
+!.env.example
 
 # Database
 prisma/*.db
@@ -41,10 +41,10 @@ prisma/*.db-journal
 Thumbs.db
 
 # LaunchAgent plist files (use templates instead)
-# Allow all plist template files first (negation must come before general rule)
-!*.plist.template
-# Then ignore all other plist files
+# Ignore all plist files first
 *.plist
+# Then allow plist template files (negation must come after general rule to override it)
+!*.plist.template
 
 # Expo
 .expo/
@@ -53,3 +53,5 @@ Thumbs.db
 # Mobile app
 mobile-app/node_modules/
 mobile-app/.expo/
+.vercel
+.env*.local
