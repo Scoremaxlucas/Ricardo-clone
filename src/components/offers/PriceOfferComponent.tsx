@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
 import { MessageSquare, Send, Zap, ShoppingCart, Tag, Info, AlertCircle } from 'lucide-react'
 import { VerificationModal } from '@/components/verification/VerificationModal'
+import { ShippingMethodSelector } from '@/components/shipping/ShippingMethodSelector'
+import {
+  ShippingMethod,
+  ShippingMethodArray,
+  getShippingCostForMethod,
+} from '@/lib/shipping'
 
 interface PriceOfferComponentProps {
   watchId: string
@@ -15,7 +21,13 @@ interface PriceOfferComponentProps {
   shippingMethod?: string | null
 }
 
-export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shippingMethod }: PriceOfferComponentProps) {
+export function PriceOfferComponent({
+  watchId,
+  price,
+  sellerId,
+  buyNowPrice,
+  shippingMethod,
+}: PriceOfferComponentProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const [offerAmount, setOfferAmount] = useState('')
@@ -26,12 +38,31 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
   const [showVerificationModal, setShowVerificationModal] = useState(false)
   const [verificationAction, setVerificationAction] = useState<'buy' | 'offer' | 'bid'>('offer')
+  const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
+  const [availableShippingMethods, setAvailableShippingMethods] = useState<ShippingMethod[]>([])
 
   useEffect(() => {
     if (session?.user?.id === sellerId) {
       setIsSeller(true)
     }
   }, [session, sellerId])
+
+  // Parse verfügbare Liefermethoden
+  useEffect(() => {
+    if (shippingMethod) {
+      try {
+        const parsed =
+          typeof shippingMethod === 'string' ? JSON.parse(shippingMethod) : shippingMethod
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          setAvailableShippingMethods(parsed)
+          // Setze erste Methode als Standard nur wenn noch keine ausgewählt
+          setSelectedShippingMethod(prev => prev || parsed[0])
+        }
+      } catch (e) {
+        console.error('Error parsing shippingMethod:', e)
+      }
+    }
+  }, [shippingMethod])
 
   // Lade Verifizierungsstatus
   useEffect(() => {
@@ -79,6 +110,15 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
       return
     }
 
+    // Prüfe ob Liefermethode ausgewählt wurde (wenn Methoden verfügbar sind)
+    if (availableShippingMethods.length > 0 && !selectedShippingMethod) {
+      toast.error('Bitte wählen Sie eine Liefermethode aus.', {
+        position: 'top-right',
+        duration: 4000,
+      })
+      return
+    }
+
     setBuyNowLoading(true)
 
     try {
@@ -90,7 +130,7 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
         body: JSON.stringify({
           watchId,
           price,
-          shippingMethod: shippingMethod || null,
+          shippingMethod: selectedShippingMethod || null, // Nur die gewählte Methode, nicht das Array
         }),
       })
 
@@ -101,10 +141,10 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
       }
 
       toast.success('Kauf erfolgreich! Sie werden zur Kaufübersicht weitergeleitet.')
-      
+
       // Aktualisiere Benachrichtigungen sofort
       window.dispatchEvent(new CustomEvent('notifications-update'))
-      
+
       router.push('/my-watches/buying/purchased')
     } catch (error: any) {
       console.error('Error buying now:', error)
@@ -116,7 +156,7 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!session?.user?.id) {
       toast.error('Bitte melden Sie sich an, um einen Preisvorschlag zu machen.')
       return
@@ -143,13 +183,17 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
 
     // Client-seitige Validierung: Mindestens 60%
     if (amountFloat < minimumPrice) {
-      toast.error(`Ihr Preisvorschlag muss mindestens 60% des Verkaufspreises betragen (mindestens CHF ${minimumPrice.toFixed(2)}).`)
+      toast.error(
+        `Ihr Preisvorschlag muss mindestens 60% des Verkaufspreises betragen (mindestens CHF ${minimumPrice.toFixed(2)}).`
+      )
       return
     }
 
     // Client-seitige Validierung: Muss niedriger als Verkaufspreis sein
     if (amountFloat >= price) {
-      toast.error(`Ihr Preisvorschlag muss niedriger als der Verkaufspreis (CHF ${price.toFixed(2)}) sein.`)
+      toast.error(
+        `Ihr Preisvorschlag muss niedriger als der Verkaufspreis (CHF ${price.toFixed(2)}) sein.`
+      )
       return
     }
 
@@ -174,7 +218,9 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
         throw new Error(data.message || 'Fehler beim Erstellen des Preisvorschlags')
       }
 
-      toast.success('Preisvorschlag erfolgreich erstellt! Der Verkäufer hat 48 Stunden Zeit, darauf zu antworten.')
+      toast.success(
+        'Preisvorschlag erfolgreich erstellt! Der Verkäufer hat 48 Stunden Zeit, darauf zu antworten.'
+      )
       setOfferAmount('')
       setMessage('')
     } catch (error: any) {
@@ -187,15 +233,15 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
 
   if (isSeller) {
     return (
-      <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 bg-gray-100 rounded-lg">
+      <div className="rounded-lg border-2 border-gray-200 bg-white p-6 shadow-lg">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="rounded-lg bg-gray-100 p-2">
             <Tag className="h-5 w-5 text-gray-600" />
           </div>
           <h3 className="text-xl font-bold text-gray-900">Preisvorschläge</h3>
         </div>
-        <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
-          <p className="text-gray-600 text-sm flex items-center gap-2">
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+          <p className="flex items-center gap-2 text-sm text-gray-600">
             <Info className="h-4 w-4 text-gray-400" />
             Als Verkäufer können Sie keine Preisvorschläge machen.
           </p>
@@ -206,21 +252,19 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
 
   if (!session?.user?.id) {
     return (
-      <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200 p-6">
-        <div className="flex items-center gap-3 mb-6">
-          <div className="p-2 bg-primary-100 rounded-lg">
+      <div className="rounded-lg border-2 border-gray-200 bg-white p-6 shadow-lg">
+        <div className="mb-6 flex items-center gap-3">
+          <div className="rounded-lg bg-primary-100 p-2">
             <Tag className="h-5 w-5 text-primary-600" />
           </div>
           <h3 className="text-xl font-bold text-gray-900">Preisvorschlag machen</h3>
         </div>
-        
-        <div className="bg-yellow-50 border-2 border-yellow-200 rounded-lg p-4 mb-6">
+
+        <div className="mb-6 rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
             <div>
-              <p className="text-sm font-medium text-yellow-800 mb-1">
-                Anmeldung erforderlich
-              </p>
+              <p className="mb-1 text-sm font-medium text-yellow-800">Anmeldung erforderlich</p>
               <p className="text-sm text-yellow-700">
                 Bitte melden Sie sich an, um einen Preisvorschlag zu machen.
               </p>
@@ -229,9 +273,9 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
         </div>
 
         {/* Sofortkauf-Option auch für nicht angemeldete Benutzer */}
-        <div className="pt-6 border-t-2 border-gray-200">
-          <div className="bg-gray-50 rounded-lg p-4 mb-4 border border-gray-200">
-            <div className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+        <div className="border-t-2 border-gray-200 pt-6">
+          <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
               Sofortkauf
             </div>
             <div className="text-3xl font-bold text-primary-600">
@@ -240,12 +284,12 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
           </div>
           <button
             disabled
-            className="w-full px-6 py-3 bg-gray-300 text-gray-500 rounded-lg cursor-not-allowed flex items-center justify-center gap-2 font-semibold shadow-sm"
+            className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-gray-300 px-6 py-3 font-semibold text-gray-500 shadow-sm"
           >
             <ShoppingCart className="h-5 w-5" />
             Jetzt kaufen
           </button>
-          <p className="mt-3 text-xs text-gray-500 text-center">
+          <p className="mt-3 text-center text-xs text-gray-500">
             Bitte melden Sie sich an, um zu kaufen
           </p>
         </div>
@@ -254,15 +298,15 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-lg border-2 border-gray-200 p-6">
+    <div className="rounded-lg border-2 border-gray-200 bg-white p-6 shadow-lg">
       {/* Header */}
-      <div className="flex items-center gap-3 mb-6">
-        <div className="p-2 bg-primary-100 rounded-lg">
+      <div className="mb-6 flex items-center gap-3">
+        <div className="rounded-lg bg-primary-100 p-2">
           <Tag className="h-5 w-5 text-primary-600" />
         </div>
         <div>
           <h3 className="text-xl font-bold text-gray-900">Preisvorschlag machen</h3>
-          <p className="text-sm text-gray-500 mt-0.5">
+          <p className="mt-0.5 text-sm text-gray-500">
             Mindestens CHF {minimumPrice.toFixed(2)} (60% des Verkaufspreises)
           </p>
         </div>
@@ -271,40 +315,42 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
       <form onSubmit={handleSubmit} className="space-y-5">
         {/* Preisvorschlag Input */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="mb-2 block text-sm font-semibold text-gray-700">
             Ihr Preisvorschlag (CHF)
           </label>
           <div className="relative">
-            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-              <span className="text-gray-500 font-medium">CHF</span>
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+              <span className="font-medium text-gray-500">CHF</span>
             </div>
             <input
               type="text"
               value={offerAmount}
-              onChange={(e) => setOfferAmount(e.target.value)}
+              onChange={e => setOfferAmount(e.target.value)}
               placeholder={`z.B. ${minimumPrice.toFixed(2)}`}
-              className="w-full pl-16 pr-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 font-medium text-lg transition-all"
+              className="w-full rounded-lg border-2 border-gray-300 py-3 pl-16 pr-4 text-lg font-medium text-gray-900 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
               disabled={loading}
               required
             />
           </div>
           <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
             <Info className="h-3 w-3" />
-            <span>Gültigkeitsbereich: CHF {minimumPrice.toFixed(2)} - CHF {maximumPrice.toFixed(2)}</span>
+            <span>
+              Gültigkeitsbereich: CHF {minimumPrice.toFixed(2)} - CHF {maximumPrice.toFixed(2)}
+            </span>
           </div>
         </div>
 
         {/* Nachricht Input */}
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
-            Nachricht an den Verkäufer <span className="text-gray-400 font-normal">(optional)</span>
+          <label className="mb-2 block text-sm font-semibold text-gray-700">
+            Nachricht an den Verkäufer <span className="font-normal text-gray-400">(optional)</span>
           </label>
           <textarea
             value={message}
-            onChange={(e) => setMessage(e.target.value)}
+            onChange={e => setMessage(e.target.value)}
             placeholder="Teilen Sie dem Verkäufer mit, warum Sie diesen Preis vorschlagen..."
             rows={4}
-            className="w-full px-4 py-3 border-2 border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900 resize-y transition-all"
+            className="w-full resize-y rounded-lg border-2 border-gray-300 px-4 py-3 text-gray-900 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
             disabled={loading}
           />
         </div>
@@ -313,11 +359,11 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
         <button
           type="submit"
           disabled={loading || !offerAmount}
-          className="w-full px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold shadow-md hover:shadow-lg transition-all"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {loading ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
               Wird gesendet...
             </>
           ) : (
@@ -330,12 +376,12 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
       </form>
 
       {/* Info Box */}
-      <div className="mt-5 bg-blue-50 border-2 border-blue-200 rounded-lg p-4">
+      <div className="mt-5 rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
         <div className="flex items-start gap-2">
-          <Info className="h-4 w-4 text-blue-600 flex-shrink-0 mt-0.5" />
+          <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
           <div className="text-xs text-blue-800">
-            <p className="font-semibold mb-1">Wichtige Informationen:</p>
-            <ul className="list-disc list-inside space-y-0.5 text-blue-700">
+            <p className="mb-1 font-semibold">Wichtige Informationen:</p>
+            <ul className="list-inside list-disc space-y-0.5 text-blue-700">
               <li>Der Preisvorschlag ist 48 Stunden gültig</li>
               <li>Sie können maximal 3 aktive Preisvorschläge pro Artikel haben</li>
               <li>Der Verkäufer wird per E-Mail benachrichtigt</li>
@@ -345,29 +391,67 @@ export function PriceOfferComponent({ watchId, price, sellerId, buyNowPrice, shi
       </div>
 
       {/* Sofortkauf-Option */}
-      <div className="mt-6 pt-6 border-t-2 border-gray-200">
-        <div className="bg-gradient-to-br from-green-50 to-emerald-50 rounded-lg p-5 mb-4 border-2 border-green-200">
-          <div className="flex items-center justify-between mb-2">
-            <div className="text-xs font-semibold text-green-700 uppercase tracking-wide">
+      <div className="mt-6 border-t-2 border-gray-200 pt-6">
+        <div className="mb-4 rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5">
+          <div className="mb-2 flex items-center justify-between">
+            <div className="text-xs font-semibold uppercase tracking-wide text-green-700">
               Sofortkauf verfügbar
             </div>
             <Zap className="h-4 w-4 text-green-600" />
           </div>
-          <div className="text-3xl font-bold text-green-700 mb-1">
+          <div className="mb-1 text-3xl font-bold text-green-700">
             CHF {new Intl.NumberFormat('de-CH').format(price)}
           </div>
-          <p className="text-xs text-green-600">
-            Artikel sofort kaufen ohne Verhandlung
-          </p>
+          <p className="text-xs text-green-600">Artikel sofort kaufen ohne Verhandlung</p>
         </div>
+
+        {/* Liefermethoden-Auswahl */}
+        {availableShippingMethods.length > 0 && (
+          <div className="mb-4">
+            <ShippingMethodSelector
+              availableMethods={availableShippingMethods}
+              selectedMethod={selectedShippingMethod}
+              onMethodChange={setSelectedShippingMethod}
+              showCosts={true}
+            />
+            {selectedShippingMethod && (
+              <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Artikelpreis:</span>
+                  <span className="font-semibold text-gray-900">
+                    CHF {new Intl.NumberFormat('de-CH').format(price)}
+                  </span>
+                </div>
+                <div className="mt-1 flex items-center justify-between text-sm">
+                  <span className="text-gray-600">Versandkosten:</span>
+                  <span className="font-semibold text-gray-900">
+                    {getShippingCostForMethod(selectedShippingMethod) === 0
+                      ? 'Kostenlos'
+                      : `CHF ${getShippingCostForMethod(selectedShippingMethod).toFixed(2)}`}
+                  </span>
+                </div>
+                <div className="mt-2 flex items-center justify-between border-t border-gray-200 pt-2 text-base font-bold">
+                  <span className="text-gray-900">Gesamtpreis:</span>
+                  <span className="text-primary-600">
+                    CHF{' '}
+                    {new Intl.NumberFormat('de-CH').format(
+                      price + getShippingCostForMethod(selectedShippingMethod)
+                    )}
+                  </span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
         <button
           onClick={handleBuyNow}
           disabled={buyNowLoading || isSeller || !session?.user?.id}
-          className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 font-semibold shadow-md hover:shadow-lg transition-all"
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {buyNowLoading ? (
             <>
-              <div className="animate-spin rounded-full h-5 w-5 border-2 border-white border-t-transparent"></div>
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
               Wird verarbeitet...
             </>
           ) : (

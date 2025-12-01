@@ -30,6 +30,7 @@ RESEND_FROM_EMAIL=onboarding@resend.dev
 ```
 
 **Beispiel:**
+
 ```bash
 # Resend E-Mail-Konfiguration
 RESEND_API_KEY=re_abc123def456ghi789jkl012mno345pqr678stu901vwx234yz
@@ -37,6 +38,7 @@ RESEND_FROM_EMAIL=onboarding@resend.dev
 ```
 
 **Wichtig:**
+
 - Ersetzen Sie `re_xxxxxxxxxxxxx` mit Ihrem echten API Key
 - Für Tests können Sie `onboarding@resend.dev` verwenden
 - Für Produktion müssen Sie eine Domain verifizieren
@@ -56,26 +58,25 @@ npm run dev
 ## Troubleshooting
 
 ### Problem: E-Mail kommt nicht an
+
 - Überprüfen Sie den Spam-Ordner
 - Stellen Sie sicher, dass `RESEND_API_KEY` korrekt ist
 - Stellen Sie sicher, dass `RESEND_FROM_EMAIL` korrekt ist
 
 ### Problem: "Invalid API Key"
+
 - Überprüfen Sie, ob der API Key mit `re_` beginnt
 - Stellen Sie sicher, dass keine Leerzeichen im API Key sind
 - Erstellen Sie einen neuen API Key bei Resend
 
 ### Problem: "Domain not verified"
+
 - Für Tests verwenden Sie `onboarding@resend.dev`
 - Für Produktion müssen Sie eine Domain bei Resend verifizieren
 
 ## Hilfe
 
 Falls Sie Hilfe benötigen:
+
 - Resend Docs: https://resend.com/docs
 - Resend Support: support@resend.com
-
-
-
-
-

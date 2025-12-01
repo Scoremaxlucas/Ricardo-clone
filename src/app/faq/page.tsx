@@ -64,44 +64,45 @@ export default function FAQPage() {
     if (selectedCategory && category.id !== selectedCategory) return false
     if (!searchQuery) return true
     const query = searchQuery.toLowerCase()
-    return category.title.toLowerCase().includes(query) ||
-           category.questions.some(q => 
-             q.question.toLowerCase().includes(query) || 
-             q.answer.toLowerCase().includes(query)
-           )
+    return (
+      category.title.toLowerCase().includes(query) ||
+      category.questions.some(
+        q => q.question.toLowerCase().includes(query) || q.answer.toLowerCase().includes(query)
+      )
+    )
   })
 
-  const filteredQuestions = filteredCategories.map(category => ({
-    ...category,
-    questions: category.questions.filter(q => {
-      if (!searchQuery) return true
-      const query = searchQuery.toLowerCase()
-      return q.question.toLowerCase().includes(query) || q.answer.toLowerCase().includes(query)
-    })
-  })).filter(category => category.questions.length > 0)
+  const filteredQuestions = filteredCategories
+    .map(category => ({
+      ...category,
+      questions: category.questions.filter(q => {
+        if (!searchQuery) return true
+        const query = searchQuery.toLowerCase()
+        return q.question.toLowerCase().includes(query) || q.answer.toLowerCase().includes(query)
+      }),
+    }))
+    .filter(category => category.questions.length > 0)
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
-      <main className="flex-1 max-w-4xl mx-auto px-4 py-12 w-full">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">{t.faq.title}</h1>
-          <p className="text-lg text-gray-600">
-            {t.faq.subtitle}
-          </p>
+          <h1 className="mb-4 text-4xl font-bold text-gray-900">{t.faq.title}</h1>
+          <p className="text-lg text-gray-600">{t.faq.subtitle}</p>
         </div>
 
         {/* Search Bar */}
         <div className="mb-8">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
             <input
               type="text"
               placeholder={t.faq.searchPlaceholder}
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="w-full pl-12 pr-4 py-4 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-lg"
+              onChange={e => setSearchQuery(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 py-4 pl-12 pr-4 text-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
             />
           </div>
         </div>
@@ -110,10 +111,10 @@ export default function FAQPage() {
         <div className="mb-6 flex flex-wrap gap-2">
           <button
             onClick={() => setSelectedCategory(null)}
-            className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+            className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               selectedCategory === null
                 ? 'bg-primary-600 text-white'
-                : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
             }`}
           >
             {t.faq.all}
@@ -122,10 +123,10 @@ export default function FAQPage() {
             <button
               key={category.id}
               onClick={() => setSelectedCategory(category.id)}
-              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                 selectedCategory === category.id
                   ? 'bg-primary-600 text-white'
-                  : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                  : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
               }`}
             >
               {category.title}
@@ -135,29 +136,32 @@ export default function FAQPage() {
 
         {/* FAQ Items */}
         <div className="space-y-6">
-          {filteredQuestions.map((category) => (
-            <div key={category.id} className="bg-white rounded-lg shadow-md border border-gray-200">
+          {filteredQuestions.map(category => (
+            <div key={category.id} className="rounded-lg border border-gray-200 bg-white shadow-md">
               <div className="p-6">
-                <h2 className="text-2xl font-bold text-gray-900 mb-4">{category.title}</h2>
+                <h2 className="mb-4 text-2xl font-bold text-gray-900">{category.title}</h2>
                 <div className="space-y-4">
                   {category.questions.map((faq, index) => {
                     const key = `${category.id}-${index}`
                     const isOpen = openQuestions.has(key)
                     return (
-                      <div key={index} className="border-b border-gray-200 last:border-b-0 pb-4 last:pb-0">
+                      <div
+                        key={index}
+                        className="border-b border-gray-200 pb-4 last:border-b-0 last:pb-0"
+                      >
                         <button
                           onClick={() => toggleQuestion(category.id, index)}
-                          className="w-full flex items-center justify-between text-left py-2 hover:text-primary-600 transition-colors"
+                          className="flex w-full items-center justify-between py-2 text-left transition-colors hover:text-primary-600"
                         >
-                          <span className="font-semibold text-gray-900 pr-4">{faq.question}</span>
+                          <span className="pr-4 font-semibold text-gray-900">{faq.question}</span>
                           {isOpen ? (
-                            <ChevronUp className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                            <ChevronUp className="h-5 w-5 flex-shrink-0 text-gray-400" />
                           ) : (
-                            <ChevronDown className="h-5 w-5 text-gray-400 flex-shrink-0" />
+                            <ChevronDown className="h-5 w-5 flex-shrink-0 text-gray-400" />
                           )}
                         </button>
                         {isOpen && (
-                          <div className="mt-3 text-gray-600 leading-relaxed pl-0">
+                          <div className="mt-3 pl-0 leading-relaxed text-gray-600">
                             {faq.answer}
                           </div>
                         )}
@@ -172,20 +176,20 @@ export default function FAQPage() {
 
         {/* No Results */}
         {filteredQuestions.length === 0 && (
-          <div className="text-center py-12">
-            <HelpCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">{t.faq.noResults}</h3>
-            <p className="text-gray-600 mb-6">{t.faq.noResultsDesc}</p>
+          <div className="py-12 text-center">
+            <HelpCircle className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+            <h3 className="mb-2 text-xl font-semibold text-gray-900">{t.faq.noResults}</h3>
+            <p className="mb-6 text-gray-600">{t.faq.noResultsDesc}</p>
             <div className="flex flex-wrap justify-center gap-4">
               <Link
                 href="/help"
-                className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                className="inline-block rounded-lg bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
               >
                 {t.faq.helpCenter}
               </Link>
               <Link
                 href="/contact"
-                className="inline-block px-6 py-3 bg-white text-primary-600 border-2 border-primary-600 rounded-lg hover:bg-primary-50 transition-colors"
+                className="inline-block rounded-lg border-2 border-primary-600 bg-white px-6 py-3 text-primary-600 transition-colors hover:bg-primary-50"
               >
                 {t.faq.contactUs}
               </Link>
@@ -194,14 +198,12 @@ export default function FAQPage() {
         )}
 
         {/* Contact CTA */}
-        <div className="mt-12 bg-primary-50 border border-primary-200 rounded-lg p-8 text-center">
-          <h3 className="text-2xl font-bold text-gray-900 mb-2">{t.faq.questionNotFound}</h3>
-          <p className="text-gray-600 mb-6">
-            {t.faq.questionNotFoundDesc}
-          </p>
+        <div className="mt-12 rounded-lg border border-primary-200 bg-primary-50 p-8 text-center">
+          <h3 className="mb-2 text-2xl font-bold text-gray-900">{t.faq.questionNotFound}</h3>
+          <p className="mb-6 text-gray-600">{t.faq.questionNotFoundDesc}</p>
           <Link
             href="/contact"
-            className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors font-medium"
+            className="inline-block rounded-lg bg-primary-600 px-6 py-3 font-medium text-white transition-colors hover:bg-primary-700"
           >
             {t.faq.contactUs}
           </Link>
@@ -211,4 +213,3 @@ export default function FAQPage() {
     </div>
   )
 }
-

@@ -37,6 +37,7 @@
    - Der Key beginnt mit `pk_test_...` und ist etwa 100 Zeichen lang
 
 **Beispiel:**
+
 ```
 pk_test_YOUR_PUBLISHABLE_KEY_HERE
 ```
@@ -57,11 +58,13 @@ pk_test_YOUR_PUBLISHABLE_KEY_HERE
    - Oder markieren Sie den gesamten Key und kopieren Sie ihn (Cmd+C / Ctrl+C)
 
 **Beispiel:**
+
 ```
 sk_test_YOUR_SECRET_KEY_HERE
 ```
 
-⚠️ **WICHTIG:** 
+⚠️ **WICHTIG:**
+
 - Der Secret Key ist **geheim** - teilen Sie ihn **NIEMALS** öffentlich!
 - Speichern Sie ihn nur in der `.env` Datei (die nicht ins Git hochgeladen wird)
 - Falls der Key kompromittiert wird, können Sie ihn in Stripe sofort widerrufen
@@ -71,6 +74,7 @@ sk_test_YOUR_SECRET_KEY_HERE
 ## Schritt 6: Keys in .env Datei speichern
 
 1. Öffnen Sie die `.env` Datei im Projekt-Verzeichnis:
+
    ```bash
    # Im Terminal:
    nano .env
@@ -79,6 +83,7 @@ sk_test_YOUR_SECRET_KEY_HERE
    ```
 
 2. Fügen Sie am Ende der Datei hinzu:
+
    ```env
    # Stripe Configuration (für TWINT)
    STRIPE_SECRET_KEY=sk_test_IHR_SECRET_KEY_HIER_EINFÜGEN
@@ -94,6 +99,7 @@ sk_test_YOUR_SECRET_KEY_HERE
    - In VS Code: `Cmd+S` / `Ctrl+S`
 
 **Beispiel einer korrekten .env Datei:**
+
 ```env
 # Andere Konfigurationen...
 DATABASE_URL="file:./dev.db"
@@ -110,11 +116,13 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_PUBLISHABLE_KEY_HERE
 ## Schritt 7: Prüfen ob Keys korrekt gesetzt sind
 
 1. Im Terminal prüfen:
+
    ```bash
    cat .env | grep STRIPE
    ```
 
 2. Sie sollten beide Keys sehen:
+
    ```
    STRIPE_SECRET_KEY=sk_test_...
    NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_...
@@ -153,6 +161,7 @@ npm run dev
 ### Problem: "Stripe ist nicht konfiguriert"
 
 **Lösung:**
+
 1. Prüfen Sie die `.env` Datei:
    ```bash
    cat .env | grep STRIPE
@@ -164,6 +173,7 @@ npm run dev
 ### Problem: Keys werden nicht erkannt
 
 **Lösung:**
+
 1. Prüfen Sie, ob die Keys korrekt kopiert wurden (keine Leerzeichen)
 2. Stellen Sie sicher, dass die `.env` Datei im Projekt-Root liegt
 3. Prüfen Sie, ob die `.env` Datei nicht in `.gitignore` ist (sollte sie sein!)
@@ -171,6 +181,7 @@ npm run dev
 ### Problem: "Invalid API Key"
 
 **Lösung:**
+
 1. Prüfen Sie, ob Sie die richtigen Keys kopiert haben (Test vs. Live)
 2. Stellen Sie sicher, dass Sie im Test-Modus sind (für Entwicklung)
 3. Kopieren Sie die Keys erneut aus dem Stripe Dashboard
@@ -189,9 +200,9 @@ npm run dev
 ## Nächste Schritte
 
 Nachdem die Keys gesetzt sind:
+
 1. ✅ Server neu starten
 2. ✅ TWINT-Zahlung testen
 3. ✅ Webhook konfigurieren (optional, für automatische Bestätigung)
 
 **Fertig!** 🎉 Ihre Stripe-Keys sind jetzt konfiguriert!
-

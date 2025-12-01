@@ -5,6 +5,7 @@
 **TWINT und Kreditkarte verwenden beide den GLEICHEN Stripe Account!**
 
 Beide Zahlungsmethoden nutzen:
+
 - Den gleichen `STRIPE_SECRET_KEY`
 - Den gleichen `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY`
 - Den gleichen Stripe Account
@@ -12,11 +13,13 @@ Beide Zahlungsmethoden nutzen:
 ## Unterschiede
 
 ### Kreditkarte
+
 - ✅ Funktioniert standardmäßig in allen Stripe-Accounts
 - ✅ Keine zusätzliche Aktivierung nötig
 - ✅ Funktioniert weltweit
 
 ### TWINT
+
 - ⚠️ Nur für **Schweizer Stripe-Accounts** verfügbar
 - ⚠️ Muss in Stripe Dashboard **aktiviert** werden
 - ⚠️ Erfordert spezielle Konfiguration
@@ -39,14 +42,17 @@ Beide Zahlungsmethoden nutzen:
 Sie sehen einen von drei Status:
 
 #### ✅ Status 1: "Activated" (Aktiviert)
+
 - TWINT ist aktiviert und funktioniert
 - Sie können TWINT-Zahlungen akzeptieren
 
 #### ⚠️ Status 2: "Available" (Verfügbar)
+
 - TWINT ist verfügbar, aber noch nicht aktiviert
 - Klicken Sie auf **"Activate"** um TWINT zu aktivieren
 
 #### ❌ Status 3: "Not available" (Nicht verfügbar)
+
 - TWINT ist für Ihren Account nicht verfügbar
 - **Mögliche Gründe:**
   - Account ist nicht in der Schweiz registriert
@@ -86,6 +92,7 @@ Nach der Aktivierung:
 ### Problem: TWINT wird nicht angezeigt
 
 **Lösung:**
+
 1. Prüfen Sie, ob TWINT in Stripe aktiviert ist
 2. Prüfen Sie, ob Ihr Account in der Schweiz registriert ist
 3. Prüfen Sie die Stripe Dashboard Logs
@@ -93,6 +100,7 @@ Nach der Aktivierung:
 ### Problem: "TWINT is not available for your account"
 
 **Lösung:**
+
 1. Account-Land muss Schweiz sein
 2. Account muss vollständig verifiziert sein
 3. Kontaktieren Sie Stripe Support falls nötig
@@ -100,6 +108,7 @@ Nach der Aktivierung:
 ### Problem: TWINT funktioniert, aber Kreditkarte nicht
 
 **Lösung:**
+
 - Das sollte nicht passieren - beide nutzen den gleichen Account
 - Prüfen Sie die API Keys erneut
 - Prüfen Sie die Stripe Dashboard Logs
@@ -110,4 +119,3 @@ Nach der Aktivierung:
 - ⚠️ **TWINT:** Muss in Stripe aktiviert werden (nur Schweiz)
 - 🔑 **Beide:** Verwenden die gleichen Stripe Keys
 - 📍 **Wichtig:** Account muss in der Schweiz sein für TWINT
-

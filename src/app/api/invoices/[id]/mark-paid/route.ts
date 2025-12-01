@@ -4,18 +4,12 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { unblockUserAccountAfterPayment } from '@/lib/invoice-reminders'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -26,25 +20,19 @@ export async function POST(
     const invoice = await prisma.invoice.findUnique({
       where: { id },
       include: {
-        seller: true
-      }
+        seller: true,
+      },
     })
 
     if (!invoice) {
-      return NextResponse.json(
-        { message: 'Rechnung nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Rechnung nicht gefunden' }, { status: 404 })
     }
 
     // Nur der Verkäufer oder Admin kann manuell als bezahlt markieren
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
-    
+
     if (invoice.sellerId !== session.user.id && !isAdminInSession) {
-      return NextResponse.json(
-        { message: 'Zugriff verweigert' },
-        { status: 403 }
-      )
+      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
     }
 
     // Update Rechnung
@@ -55,8 +43,8 @@ export async function POST(
         paidAt: new Date(),
         paymentMethod: paymentMethod || null,
         paymentReference: paymentReference || null,
-        paymentConfirmedAt: new Date()
-      }
+        paymentConfirmedAt: new Date(),
+      },
     })
 
     console.log(`[invoices/mark-paid] Rechnung ${invoice.invoiceNumber} als bezahlt markiert`)
@@ -71,16 +59,10 @@ export async function POST(
 
     return NextResponse.json({
       message: 'Rechnung als bezahlt markiert',
-      invoice: updatedInvoice
+      invoice: updatedInvoice,
     })
   } catch (error: any) {
     console.error('Error marking invoice as paid:', error)
-    return NextResponse.json(
-      { message: 'Fehler beim Update: ' + error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler beim Update: ' + error.message }, { status: 500 })
   }
 }
-
-
-

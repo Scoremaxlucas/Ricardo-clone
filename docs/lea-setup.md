@@ -40,6 +40,7 @@ npm run dev
 **Problem:** `OPENAI_API_KEY` ist nicht gesetzt oder ungültig.
 
 **Lösung:**
+
 1. Prüfen Sie, ob `OPENAI_API_KEY` in `.env.local` vorhanden ist
 2. Stellen Sie sicher, dass der Key mit `sk-` beginnt
 3. Prüfen Sie, ob der Key in Ihrem OpenAI Account aktiv ist
@@ -48,11 +49,13 @@ npm run dev
 ### Lea antwortet nicht
 
 **Mögliche Ursachen:**
+
 1. OpenAI API Credits sind aufgebraucht
 2. API Key ist ungültig
 3. Netzwerkprobleme
 
 **Lösung:**
+
 1. Prüfen Sie Ihre OpenAI API Credits: https://platform.openai.com/usage
 2. Prüfen Sie die Server-Logs auf Fehler
 3. Testen Sie den API Key direkt mit curl:
@@ -67,6 +70,7 @@ curl https://api.openai.com/v1/models \
 **Problem:** Datenbank-Migration wurde nicht durchgeführt.
 
 **Lösung:**
+
 ```bash
 npx prisma db push
 npx prisma generate
@@ -81,6 +85,7 @@ npx prisma generate
 ## Fallback-Modus
 
 Wenn `OPENAI_API_KEY` nicht gesetzt ist, verwendet Lea einen Fallback-Modus:
+
 - Lea gibt eine Standard-Antwort zurück
 - Benutzer wird an den Support verwiesen
 - Keine AI-Funktionalität
@@ -88,4 +93,3 @@ Wenn `OPENAI_API_KEY` nicht gesetzt ist, verwendet Lea einen Fallback-Modus:
 ## Weitere Informationen
 
 Siehe `docs/lea-ai-assistant.md` für vollständige Dokumentation.
-

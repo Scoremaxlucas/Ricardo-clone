@@ -25,7 +25,7 @@ async function main() {
   try {
     // Prüfe ob Admin bereits existiert
     const existingAdmin = await prisma.user.findUnique({
-      where: { email: 'admin@admin.ch' }
+      where: { email: 'admin@admin.ch' },
     })
 
     const hashedPassword = await bcrypt.hash('admin123', 12)
@@ -39,7 +39,7 @@ async function main() {
           isAdmin: true,
           verified: true,
           verificationStatus: 'approved',
-        }
+        },
       })
       console.log('✅ Admin user updated successfully!')
     } else {
@@ -52,7 +52,7 @@ async function main() {
           isAdmin: true,
           verified: true,
           verificationStatus: 'approved',
-        }
+        },
       })
       console.log('✅ Admin user created successfully!')
     }
@@ -72,4 +72,3 @@ async function main() {
 main()
   .catch(console.error)
   .finally(() => prisma.$disconnect())
-

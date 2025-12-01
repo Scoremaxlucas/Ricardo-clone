@@ -11,15 +11,15 @@ export async function generateArticleNumber(): Promise<number> {
     const watchWithHighestNumber = await prisma.watch.findFirst({
       where: {
         articleNumber: {
-          not: null
-        }
+          not: null,
+        },
       },
       orderBy: {
-        articleNumber: 'desc'
+        articleNumber: 'desc',
       },
       select: {
-        articleNumber: true
-      }
+        articleNumber: true,
+      },
     })
 
     // Wenn keine Artikelnummer existiert, starte bei 10000000
@@ -44,9 +44,3 @@ export async function generateArticleNumber(): Promise<number> {
     return parseInt(timestamp.toString().slice(-8))
   }
 }
-
-
-
-
-
-

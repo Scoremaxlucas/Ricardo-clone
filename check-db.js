@@ -3,9 +3,9 @@ const { PrismaClient } = require('@prisma/client')
 const prisma = new PrismaClient({
   datasources: {
     db: {
-      url: "file:./dev.db"
-    }
-  }
+      url: 'file:./dev.db',
+    },
+  },
 })
 
 async function checkWatches() {
@@ -23,7 +23,3 @@ async function checkWatches() {
 }
 
 checkWatches()
-
-
-
-

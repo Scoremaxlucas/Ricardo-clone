@@ -3,6 +3,7 @@
 ## 📊 Vergleich: Ricardo vs. Helvenda Vorschlag
 
 ### ❌ Ricardo (Aktuell):
+
 - Statische Quick-Categories ("In meiner Nähe", "Kurz vor Ende")
 - Horizontale Kategorie-Buttons
 - Kategorien mit Artikeln darunter (vertikal)
@@ -16,11 +17,14 @@
 ## 🏗️ NEUE STRUKTUR:
 
 ### 1. **Hero Section** (bleibt)
+
 - Prominente CTA zum Verkaufen
 - Visuell ansprechend
 
 ### 2. **Smart Discovery Hub** ⭐ NEU
+
 **Was ist das?**
+
 - Personalisierte Empfehlungen basierend auf:
   - Browsing-Historie
   - Favoriten
@@ -29,7 +33,9 @@
 - **Unterschied zu Ricardo**: Personalisiert statt generisch
 
 ### 3. **Trending Now** 🔥 NEU
+
 **Was ist das?**
+
 - Was gerade angesagt ist (nicht nur "Beliebt")
 - Heat-Map Visualisierung
 - Kategorien mit steigendem Interesse
@@ -37,7 +43,9 @@
 - **Unterschied zu Ricardo**: Dynamisch statt statisch
 
 ### 4. **Quick Access Bar** ⚡ NEU
+
 **Was ist das?**
+
 - Moderne Filter-Leiste (nicht als Buttons)
 - Dropdowns für:
   - "In meiner Nähe" (mit Radius-Slider)
@@ -48,7 +56,9 @@
 - **Unterschied zu Ricardo**: Moderner, weniger überladen
 
 ### 5. **Category Spotlight** 🎯 NEU
+
 **Was ist das?**
+
 - Interaktive Kategorie-Showcases
 - Jede Kategorie zeigt:
   - Featured Item (groß)
@@ -58,7 +68,9 @@
 - **Unterschied zu Ricardo**: Interaktiv, nicht nur Liste
 
 ### 6. **Deals of the Day** ⏰ NEU
+
 **Was ist das?**
+
 - Zeitlich begrenzte Angebote
 - Countdown-Timer
 - "Nur heute" Badge
@@ -66,7 +78,9 @@
 - **Unterschied zu Ricardo**: Zeitliche Dringlichkeit
 
 ### 7. **Live Activity Feed** 👥 NEU (Optional)
+
 **Was ist das?**
+
 - "Andere kaufen gerade..."
 - "Neue Angebote in..."
 - Social Proof
@@ -99,25 +113,10 @@
 ## 🚀 IMPLEMENTIERUNG:
 
 Ich kann diese Struktur jetzt implementieren. Soll ich:
+
 1. ✅ Alle neuen Komponenten erstellen
 2. ✅ Homepage umstrukturieren
 3. ✅ API-Endpoints für personalisierte Daten
 4. ✅ Visuelle Verbesserungen
 
 **Soll ich mit der Implementierung beginnen?**
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -49,22 +49,25 @@ export function CategorySpotlight() {
       try {
         // Hole beliebte Kategorien (priorisiert nach Booster-Umsatz)
         const popularResponse = await fetch('/api/categories/popular')
-        let categoriesToFetch: Array<{ category: string; name: string; icon: string; color: string }> = []
-        
+        let categoriesToFetch: Array<{
+          category: string
+          name: string
+          icon: string
+          color: string
+        }> = []
+
         if (popularResponse.ok) {
           const popularData = await popularResponse.json()
           // Zeige nur die ersten 6 Kategorien (sortiert nach geboosteten Artikeln)
           // Begrenzt die Anzahl der API-Aufrufe für bessere Performance
-          categoriesToFetch = popularData.categories
-            .slice(0, 6)
-            .map((cat: any) => ({
-              category: cat.category,
-              name: cat.name,
-              icon: cat.icon,
-              color: cat.color,
-            }))
+          categoriesToFetch = popularData.categories.slice(0, 6).map((cat: any) => ({
+            category: cat.category,
+            name: cat.name,
+            icon: cat.icon,
+            color: cat.color,
+          }))
         }
-        
+
         // Fallback: Falls API fehlschlägt ODER keine Kategorien mit Produkten zurückgegeben wurden,
         // verwende Standard-Kategorien (auch wenn sie noch keine Produkte haben)
         // Begrenzt auf 6 Kategorien für bessere Performance
@@ -77,7 +80,7 @@ export function CategorySpotlight() {
             'kleidung-accessoires',
             'haushalt-wohnen',
           ]
-          categoriesToFetch = fallbackCategories.map((slug) => {
+          categoriesToFetch = fallbackCategories.map(slug => {
             const config = getCategoryConfig(slug)
             return {
               category: slug,
@@ -87,7 +90,7 @@ export function CategorySpotlight() {
             }
           })
         }
-        
+
         // WICHTIG: Zeige auch Kategorien OHNE Produkte, damit der Benutzer sieht, dass die Kategorie existiert
         // Filtere nur Kategorien heraus, die explizit 0 Produkte haben UND keine geboosteten Artikel
         // Aber zeige sie trotzdem, wenn sie im Fallback sind
@@ -98,9 +101,9 @@ export function CategorySpotlight() {
             // 1. Sie Produkte hat (productCount > 0)
             // 2. ODER sie geboostete Artikel hat (boostedCount > 0)
             // 3. ODER sie im Fallback ist (wird immer angezeigt)
-            return apiCategory ? (apiCategory.productCount > 0 || apiCategory.boostedCount > 0) : true
+            return apiCategory ? apiCategory.productCount > 0 || apiCategory.boostedCount > 0 : true
           })
-          
+
           // Wenn nach Filterung Kategorien übrig sind, verwende sie
           if (filteredCategories.length > 0) {
             categoriesToFetch = filteredCategories
@@ -109,32 +112,45 @@ export function CategorySpotlight() {
 
         // Limit to 6 categories max and reduce products per category for better performance
         const limitedCategories = categoriesToFetch.slice(0, 6)
-        const promises = limitedCategories.map(async (cat) => {
+        const promises = limitedCategories.map(async cat => {
           try {
             const url = `/api/watches/search?category=${encodeURIComponent(cat.category)}&limit=6`
-            console.log(`[CategorySpotlight] Fetching products for category: ${cat.category} (${cat.name})`)
-            
+            console.log(
+              `[CategorySpotlight] Fetching products for category: ${cat.category} (${cat.name})`
+            )
+
             const response = await fetch(url)
             if (!response.ok) {
               const errorText = await response.text().catch(() => 'Unknown error')
-              console.error(`[CategorySpotlight] Error fetching ${cat.category}:`, response.status, response.statusText, errorText)
+              console.error(
+                `[CategorySpotlight] Error fetching ${cat.category}:`,
+                response.status,
+                response.statusText,
+                errorText
+              )
               return { ...cat, featured: null, products: [] }
             }
-            
+
             const data = await response.json()
             const watches = data.watches || []
-            
-            console.log(`[CategorySpotlight] Category ${cat.category} (${cat.name}): Found ${watches.length} watches (total: ${data.total || 0})`)
+
+            console.log(
+              `[CategorySpotlight] Category ${cat.category} (${cat.name}): Found ${watches.length} watches (total: ${data.total || 0})`
+            )
             if (watches.length === 0) {
-              console.warn(`[CategorySpotlight] ⚠️ No watches found for category ${cat.category}! Check if products are linked to this category.`)
+              console.warn(
+                `[CategorySpotlight] ⚠️ No watches found for category ${cat.category}! Check if products are linked to this category.`
+              )
             } else {
-              console.log(`[CategorySpotlight] Sample watch: ${watches[0].title} (ID: ${watches[0].id})`)
+              console.log(
+                `[CategorySpotlight] Sample watch: ${watches[0].title} (ID: ${watches[0].id})`
+              )
             }
-            
+
             if (watches.length === 0) {
               return { ...cat, featured: null, products: [] }
             }
-            
+
             // Konvertiere Watches zu Product-Format
             const products: Product[] = watches.map((watch: any) => {
               // Parse images sicher
@@ -149,7 +165,7 @@ export function CategorySpotlight() {
               } catch (e) {
                 images = []
               }
-              
+
               // Parse boosters
               let boosters: string[] = []
               try {
@@ -163,7 +179,7 @@ export function CategorySpotlight() {
               } catch (e) {
                 boosters = []
               }
-              
+
               return {
                 id: watch.id,
                 title: watch.title || '',
@@ -177,10 +193,10 @@ export function CategorySpotlight() {
                 buyNowPrice: watch.buyNowPrice,
                 isAuction: watch.isAuction || false,
                 bids: watch.bids || [],
-                boosters: boosters
+                boosters: boosters,
               }
             })
-            
+
             return {
               ...cat,
               featured: products[0] || null,
@@ -195,10 +211,10 @@ export function CategorySpotlight() {
         const results = await Promise.all(promises)
         // Filtere Kategorien heraus, die keine Produkte haben
         // ABER: Zeige sie trotzdem, wenn sie im Fallback sind (damit Benutzer sehen, dass die Kategorie existiert)
-        const categoriesWithProducts = results.filter(cat => 
-          cat.featured !== null || cat.products.length > 0
+        const categoriesWithProducts = results.filter(
+          cat => cat.featured !== null || cat.products.length > 0
         )
-        
+
         // Wenn nach Filterung keine Kategorien übrig sind, zeige trotzdem die ersten 3 (auch wenn leer)
         // Das zeigt dem Benutzer, dass die Kategorien existieren, auch wenn noch keine Produkte vorhanden sind
         if (categoriesWithProducts.length === 0 && results.length > 0) {
@@ -206,22 +222,24 @@ export function CategorySpotlight() {
         } else {
           setCategories(categoriesWithProducts)
         }
-        
-        console.log(`CategorySpotlight: Showing ${categoriesWithProducts.length} categories with products out of ${results.length} total`)
+
+        console.log(
+          `CategorySpotlight: Showing ${categoriesWithProducts.length} categories with products out of ${results.length} total`
+        )
       } catch (error) {
         console.error('Error fetching category spotlights:', error)
       } finally {
         setLoading(false)
       }
     }
-    
+
     fetchCategorySpotlights()
   }, [])
 
   useEffect(() => {
     const fetchFavorites = async () => {
       if (!session?.user) return
-      
+
       try {
         const response = await fetch('/api/favorites')
         if (response.ok) {
@@ -232,18 +250,18 @@ export function CategorySpotlight() {
         console.error('Error fetching favorites:', error)
       }
     }
-    
+
     fetchFavorites()
   }, [session?.user])
-
 
   const checkScrollButtons = useCallback((categoryKey: string) => {
     const container = scrollRefs.current[categoryKey]
     if (!container) return
-    
+
     const canScrollLeftValue = container.scrollLeft > 0
-    const canScrollRightValue = container.scrollLeft < container.scrollWidth - container.clientWidth - 1
-    
+    const canScrollRightValue =
+      container.scrollLeft < container.scrollWidth - container.clientWidth - 1
+
     setCanScrollLeft(prev => {
       if (prev[categoryKey] === canScrollLeftValue) return prev
       return { ...prev, [categoryKey]: canScrollLeftValue }
@@ -257,21 +275,22 @@ export function CategorySpotlight() {
   const scroll = (categoryKey: string, direction: 'left' | 'right') => {
     const container = scrollRefs.current[categoryKey]
     if (!container) return
-    
+
     // Berechne die Scroll-Menge basierend auf der sichtbaren Container-Breite
     // Scrolle ca. 80% der sichtbaren Breite, damit mehr Artikel auf einmal angezeigt werden
     const containerWidth = container.clientWidth
     const scrollAmount = containerWidth * 0.8 // 80% der sichtbaren Breite
-    
-    const targetScroll = direction === 'left' 
-      ? container.scrollLeft - scrollAmount
-      : container.scrollLeft + scrollAmount
-    
+
+    const targetScroll =
+      direction === 'left'
+        ? container.scrollLeft - scrollAmount
+        : container.scrollLeft + scrollAmount
+
     container.scrollTo({
       left: targetScroll,
-      behavior: 'smooth'
+      behavior: 'smooth',
     })
-    
+
     // Check buttons after scroll animation
     setTimeout(() => checkScrollButtons(categoryKey), 300)
   }
@@ -284,14 +303,14 @@ export function CategorySpotlight() {
         checkScrollButtons(cat.category)
       })
     }, 100)
-    
+
     return () => clearTimeout(timer)
   }, [categories, checkScrollButtons])
 
   useEffect(() => {
     // Add scroll listeners with debounce
-    let scrollTimeouts: { [key: string]: NodeJS.Timeout } = {}
-    
+    const scrollTimeouts: { [key: string]: NodeJS.Timeout } = {}
+
     const handleScroll = (categoryKey: string) => () => {
       // Debounce scroll events
       if (scrollTimeouts[categoryKey]) {
@@ -331,24 +350,27 @@ export function CategorySpotlight() {
   }
 
   return (
-    <section className="py-6 bg-gray-50">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-6">
+    <section className="bg-gray-50 py-6">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <div className="mb-6 text-center">
           <h2 className="text-2xl font-bold text-gray-900">Kategorie-Highlights</h2>
         </div>
 
         <div className="space-y-6">
-          {categories.map((category) => (
-            <div key={category.category} className="bg-white rounded-lg border border-gray-200 shadow-sm">
+          {categories.map(category => (
+            <div
+              key={category.category}
+              className="rounded-lg border border-gray-200 bg-white shadow-sm"
+            >
               {/* Category Header */}
-              <div className="flex items-center justify-between p-4 border-b border-gray-200">
+              <div className="flex items-center justify-between border-b border-gray-200 p-4">
                 <div className="flex items-center gap-3">
                   {(() => {
                     const config = getCategoryConfig(category.category)
                     const IconComponent = config.icon
                     return (
-                      <div 
-                        className="w-12 h-12 rounded-lg flex items-center justify-center shadow-sm"
+                      <div
+                        className="flex h-12 w-12 items-center justify-center rounded-lg shadow-sm"
                         style={{ backgroundColor: '#0f766e' }}
                       >
                         <IconComponent className="h-7 w-7 text-white" />
@@ -359,7 +381,7 @@ export function CategorySpotlight() {
                 </div>
                 <Link
                   href={`/search?category=${category.category}`}
-                  className="flex items-center gap-1 text-primary-600 hover:text-primary-700 text-sm font-medium"
+                  className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
                 >
                   Weitere Artikel
                   <ArrowRight className="h-4 w-4" />
@@ -372,18 +394,18 @@ export function CategorySpotlight() {
                 {canScrollLeft[category.category] && (
                   <button
                     onClick={() => scroll(category.category, 'left')}
-                    className="absolute left-2 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full shadow-lg p-2 hover:bg-gray-50 transition-all duration-200 border border-gray-200"
+                    className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-gray-200 bg-white p-2 shadow-lg transition-all duration-200 hover:bg-gray-50"
                     aria-label="Nach links scrollen"
                   >
                     <ArrowLeft className="h-5 w-5 text-gray-700" />
                   </button>
                 )}
-                
+
                 {/* Right Arrow */}
                 {canScrollRight[category.category] && (
                   <button
                     onClick={() => scroll(category.category, 'right')}
-                    className="absolute right-2 top-1/2 -translate-y-1/2 z-10 bg-white rounded-full shadow-lg p-2 hover:bg-gray-50 transition-all duration-200 border border-gray-200"
+                    className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-gray-200 bg-white p-2 shadow-lg transition-all duration-200 hover:bg-gray-50"
                     aria-label="Nach rechts scrollen"
                   >
                     <ArrowRight className="h-5 w-5 text-gray-700" />
@@ -392,18 +414,18 @@ export function CategorySpotlight() {
 
                 {/* Scrollable Container */}
                 <div
-                  ref={(el) => {
+                  ref={el => {
                     scrollRefs.current[category.category] = el
                     if (el) {
                       checkScrollButtons(category.category)
                     }
                   }}
-                  className="flex gap-4 overflow-x-auto scrollbar-hide scroll-smooth"
+                  className="scrollbar-hide flex gap-4 overflow-x-auto scroll-smooth"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                   {/* Alle Produkte (inkl. Featured) */}
                   {category.featured && (
-                    <div className="flex-shrink-0 w-[200px]">
+                    <div className="w-[200px] flex-shrink-0">
                       <ProductCard
                         {...category.featured}
                         favorites={favorites}
@@ -424,8 +446,8 @@ export function CategorySpotlight() {
 
                   {/* Other Items */}
                   {category.products.length > 0 ? (
-                    category.products.map((product) => (
-                      <div key={product.id} className="flex-shrink-0 w-[200px]">
+                    category.products.map(product => (
+                      <div key={product.id} className="w-[200px] flex-shrink-0">
                         <ProductCard
                           {...product}
                           favorites={favorites}
@@ -445,7 +467,7 @@ export function CategorySpotlight() {
                     ))
                   ) : (
                     // Zeige Meldung wenn keine Produkte vorhanden
-                    <div className="flex-shrink-0 w-full text-center py-8 text-gray-500 text-sm px-4">
+                    <div className="w-full flex-shrink-0 px-4 py-8 text-center text-sm text-gray-500">
                       {category.featured ? null : 'Keine Produkte in dieser Kategorie'}
                     </div>
                   )}

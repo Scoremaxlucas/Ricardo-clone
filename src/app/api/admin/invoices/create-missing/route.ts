@@ -13,13 +13,13 @@ async function checkAdmin(session: any): Promise<boolean> {
   if (session.user.id) {
     user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
   if (!user && session.user.email) {
     user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
   const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
@@ -29,7 +29,7 @@ async function checkAdmin(session: any): Promise<boolean> {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!(await checkAdmin(session))) {
       return NextResponse.json(
         { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
@@ -40,15 +40,12 @@ export async function POST(request: NextRequest) {
     const { purchaseId } = await request.json()
 
     if (!purchaseId) {
-      return NextResponse.json(
-        { message: 'Purchase ID ist erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Purchase ID ist erforderlich' }, { status: 400 })
     }
 
     // Prüfe ob bereits eine Rechnung existiert
     const existingInvoice = await prisma.invoice.findFirst({
-      where: { saleId: purchaseId }
+      where: { saleId: purchaseId },
     })
 
     if (existingInvoice) {
@@ -57,8 +54,8 @@ export async function POST(request: NextRequest) {
         invoice: {
           id: existingInvoice.id,
           invoiceNumber: existingInvoice.invoiceNumber,
-          total: existingInvoice.total
-        }
+          total: existingInvoice.total,
+        },
       })
     }
 
@@ -70,17 +67,14 @@ export async function POST(request: NextRequest) {
           select: {
             id: true,
             sellerId: true,
-            title: true
-          }
-        }
-      }
+            title: true,
+          },
+        },
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Purchase nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Purchase nicht gefunden' }, { status: 404 })
     }
 
     // Erstelle Rechnung
@@ -93,8 +87,8 @@ export async function POST(request: NextRequest) {
         invoiceNumber: invoice.invoiceNumber,
         sellerId: invoice.sellerId,
         total: invoice.total,
-        status: invoice.status
-      }
+        status: invoice.status,
+      },
     })
   } catch (error: any) {
     console.error('Error creating missing invoice:', error)
@@ -104,5 +98,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-

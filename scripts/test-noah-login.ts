@@ -15,8 +15,8 @@ async function main() {
         email: true,
         name: true,
         password: true,
-        isBlocked: true
-      }
+        isBlocked: true,
+      },
     })
 
     if (!noah) {
@@ -43,21 +43,21 @@ async function main() {
       if (!isValid) {
         console.log('\n⚠️ Passwort stimmt nicht überein!')
         console.log('   Setze neues Passwort...')
-        
+
         const newHash = await bcrypt.hash(testPassword, 12)
         await prisma.user.update({
           where: { id: noah.id },
-          data: { password: newHash }
+          data: { password: newHash },
         })
-        
+
         console.log('✅ Neues Passwort gesetzt!')
-        
+
         // Teste erneut
         const updatedUser = await prisma.user.findUnique({
           where: { id: noah.id },
-          select: { password: true }
+          select: { password: true },
         })
-        
+
         if (updatedUser?.password) {
           const isValidNow = await bcrypt.compare(testPassword, updatedUser.password)
           console.log(`   Passwort jetzt gültig: ${isValidNow}`)
@@ -66,20 +66,19 @@ async function main() {
     } else {
       console.log('\n⚠️ Kein Passwort vorhanden!')
       console.log('   Setze neues Passwort...')
-      
+
       const newHash = await bcrypt.hash(testPassword, 12)
       await prisma.user.update({
         where: { id: noah.id },
-        data: { password: newHash }
+        data: { password: newHash },
       })
-      
+
       console.log('✅ Passwort gesetzt!')
     }
 
     console.log('\n📧 Login-Daten:')
     console.log(`   Email: ${noah.email}`)
     console.log(`   Passwort: ${testPassword}`)
-
   } catch (error: any) {
     console.error('❌ Fehler:', error.message)
     console.error(error.stack)
@@ -89,8 +88,3 @@ async function main() {
 }
 
 main()
-
-
-
-
-

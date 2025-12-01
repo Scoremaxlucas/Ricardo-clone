@@ -6,18 +6,15 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Hole alle Rechnungen für den eingeloggten Verkäufer
     const invoices = await prisma.invoice.findMany({
       where: {
-        sellerId: session.user.id
+        sellerId: session.user.id,
       },
       include: {
         items: {
@@ -28,15 +25,15 @@ export async function GET(request: NextRequest) {
                 title: true,
                 brand: true,
                 model: true,
-                images: true
-              }
-            }
-          }
-        }
+                images: true,
+              },
+            },
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     })
 
     // Format we Bilder für Frontend
@@ -44,15 +41,17 @@ export async function GET(request: NextRequest) {
       ...invoice,
       items: invoice.items.map(item => ({
         ...item,
-        watch: item.watch ? {
-          ...item.watch,
-          images: item.watch.images ? JSON.parse(item.watch.images) : []
-        } : null
-      }))
+        watch: item.watch
+          ? {
+              ...item.watch,
+              images: item.watch.images ? JSON.parse(item.watch.images) : [],
+            }
+          : null,
+      })),
     }))
 
     return NextResponse.json({
-      invoices: formattedInvoices
+      invoices: formattedInvoices,
     })
   } catch (error: any) {
     console.error('Error fetching invoices:', error)
@@ -62,6 +61,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
-
-

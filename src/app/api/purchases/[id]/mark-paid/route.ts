@@ -4,17 +4,11 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -25,18 +19,15 @@ export async function POST(
       include: {
         watch: {
           include: {
-            seller: true
-          }
+            seller: true,
+          },
         },
-        buyer: true
-      }
+        buyer: true,
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob der eingeloggte User der Käufer ist
@@ -52,12 +43,12 @@ export async function POST(
       where: { id },
       data: {
         paid: true,
-        paidAt: new Date()
+        paidAt: new Date(),
       },
       include: {
         watch: true,
-        buyer: true
-      }
+        buyer: true,
+      },
     })
 
     // Sende E-Mail an den Verkäufer (Bestätigung)
@@ -74,7 +65,7 @@ export async function POST(
             <li><strong>Betrag:</strong> CHF ${purchase.price}</li>
           </ul>
           <p>Sie können nun die Uhr versenden.</p>
-        `
+        `,
       })
       console.log('[mark-paid] Email result:', emailResult)
     } catch (emailError) {
@@ -89,8 +80,8 @@ export async function POST(
       purchase: {
         id: updatedPurchase.id,
         paid: updatedPurchase.paid,
-        paidAt: updatedPurchase.paidAt
-      }
+        paidAt: updatedPurchase.paidAt,
+      },
     })
   } catch (error: any) {
     console.error('Error marking purchase as paid:', error)
@@ -100,4 +91,3 @@ export async function POST(
     )
   }
 }
-

@@ -5,7 +5,7 @@ import { sendEmail } from '@/lib/email'
 /**
  * API-Route zur Überwachung der Zahlungsfrist (14-Tage-Regel)
  * Sollte regelmäßig von einem Cron-Job aufgerufen werden (z.B. täglich)
- * 
+ *
  * Prüft Purchases und:
  * - Sendet Erinnerung nach 7, 10, 13 Tagen
  * - Markiert als überschritten nach 14 Tagen
@@ -16,28 +16,25 @@ export async function POST(request: NextRequest) {
     // Optional: API-Key oder Secret-Check für Sicherheit
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET || 'your-secret-key'
-    
+
     if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
     const now = new Date()
-    
+
     console.log(`[check-payment-deadline] Prüfe Zahlungsfristen zum Zeitpunkt ${now.toISOString()}`)
 
     // Finde Purchases mit Zahlungsfrist die noch nicht bezahlt sind
     const purchasesWithPaymentDeadline = await prisma.purchase.findMany({
       where: {
         paymentDeadline: {
-          not: null
+          not: null,
         },
         paymentConfirmed: false, // Noch nicht bezahlt
         status: {
-          not: 'cancelled' // Nicht storniert
-        }
+          not: 'cancelled', // Nicht storniert
+        },
       },
       include: {
         watch: {
@@ -49,10 +46,10 @@ export async function POST(request: NextRequest) {
                 email: true,
                 firstName: true,
                 lastName: true,
-                nickname: true
-              }
-            }
-          }
+                nickname: true,
+              },
+            },
+          },
         },
         buyer: {
           select: {
@@ -61,13 +58,15 @@ export async function POST(request: NextRequest) {
             email: true,
             firstName: true,
             lastName: true,
-            nickname: true
-          }
-        }
-      }
+            nickname: true,
+          },
+        },
+      },
     })
 
-    console.log(`[check-payment-deadline] Gefunden: ${purchasesWithPaymentDeadline.length} Purchases mit Zahlungsfrist`)
+    console.log(
+      `[check-payment-deadline] Gefunden: ${purchasesWithPaymentDeadline.length} Purchases mit Zahlungsfrist`
+    )
 
     let remindersSent = 0
     let deadlinesMissed = 0
@@ -86,8 +85,8 @@ export async function POST(request: NextRequest) {
         await prisma.purchase.update({
           where: { id: purchase.id },
           data: {
-            paymentDeadlineMissed: true
-          }
+            paymentDeadlineMissed: true,
+          },
         })
 
         // Benachrichtigung an Käufer
@@ -99,37 +98,66 @@ export async function POST(request: NextRequest) {
               title: '❌ Zahlungsfrist überschritten',
               message: `Die 14-Tage-Zahlungsfrist für "${purchase.watch.title}" wurde überschritten. Bitte zahlen Sie umgehend.`,
               link: `/my-watches/buying/purchased`,
-              watchId: purchase.watchId
-            }
+              watchId: purchase.watchId,
+            },
           })
         } catch (error) {
-          console.error(`[check-payment-deadline] Fehler bei Benachrichtigung für Purchase ${purchase.id}:`, error)
+          console.error(
+            `[check-payment-deadline] Fehler bei Benachrichtigung für Purchase ${purchase.id}:`,
+            error
+          )
         }
 
         deadlinesMissed++
         continue
       }
 
-      // Prüfe ob Erinnerung gesendet werden muss (7, 10, 13 Tage)
-      const shouldSendReminder = 
-        (daysRemaining === 7 || daysRemaining === 10 || daysRemaining === 3) &&
-        !purchase.paymentReminderSentAt
+      // Prüfe ob Erinnerung gesendet werden muss (7, 10, 13 Tage nach Kontaktaufnahme)
+      // Berechne Tage seit Zahlungsfrist gesetzt wurde
+      const contactedAt = purchase.sellerContactedAt || purchase.buyerContactedAt
+      if (!contactedAt || !purchase.paymentDeadline) continue // Keine Kontaktaufnahme oder keine Zahlungsfrist, keine Zahlungserinnerung
+
+      const daysSinceContact = Math.floor(
+        (now.getTime() - new Date(contactedAt).getTime()) / (1000 * 60 * 60 * 24)
+      )
+      const reminderCount = purchase.paymentReminderCount || 0
+
+      // Sende Erinnerungen nach 7, 10, 13 Tagen (nur wenn noch nicht gesendet)
+      const shouldSendReminder =
+        ((daysSinceContact === 7 && reminderCount === 0) ||
+          (daysSinceContact === 10 && reminderCount === 1) ||
+          (daysSinceContact === 13 && reminderCount === 2)) &&
+        !isOverdue
 
       if (shouldSendReminder && !isOverdue) {
         try {
-          const buyerName = purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || purchase.buyer.email || 'Käufer'
-          const sellerName = purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Verkäufer'
-          
+          const buyerName =
+            purchase.buyer.nickname ||
+            purchase.buyer.firstName ||
+            purchase.buyer.name ||
+            purchase.buyer.email ||
+            'Käufer'
+          const sellerName =
+            purchase.watch.seller.nickname ||
+            purchase.watch.seller.firstName ||
+            purchase.watch.seller.name ||
+            'Verkäufer'
+
+          // Berechne verbleibende Tage bis Fristende
+          const daysUntilDeadline = Math.ceil(
+            (deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+          )
+
           // Plattform-Benachrichtigung
           await prisma.notification.create({
             data: {
               userId: purchase.buyerId,
               type: 'PURCHASE',
               title: '⚠️ Zahlungserinnerung',
-              message: `Sie haben noch ${daysRemaining} Tag${daysRemaining !== 1 ? 'e' : ''} Zeit, um für "${purchase.watch.title}" zu zahlen.`,
+              message: `Sie haben noch ${daysUntilDeadline} Tag${daysUntilDeadline !== 1 ? 'e' : ''} Zeit, um für "${purchase.watch.title}" zu zahlen.`,
               link: `/my-watches/buying/purchased`,
-              watchId: purchase.watchId
-            }
+              watchId: purchase.watchId,
+            },
           })
 
           // E-Mail-Benachrichtigung
@@ -139,26 +167,30 @@ export async function POST(request: NextRequest) {
               buyerName,
               sellerName,
               purchase.watch.title,
-              daysRemaining,
+              daysUntilDeadline,
               purchase.id
             )
-            
+
             await sendEmail({
               to: purchase.buyer.email,
               subject,
               html,
-              text
+              text,
             })
           } catch (emailError) {
-            console.error('[check-payment-deadline] Fehler beim Senden der Zahlungserinnerungs-E-Mail:', emailError)
+            console.error(
+              '[check-payment-deadline] Fehler beim Senden der Zahlungserinnerungs-E-Mail:',
+              emailError
+            )
           }
 
-          // Markiere Erinnerung als gesendet
+          // Markiere Erinnerung als gesendet und erhöhe Zähler
           await prisma.purchase.update({
             where: { id: purchase.id },
             data: {
-              paymentReminderSentAt: now
-            }
+              paymentReminderSentAt: now,
+              paymentReminderCount: { increment: 1 },
+            },
           })
 
           remindersSent++
@@ -172,7 +204,7 @@ export async function POST(request: NextRequest) {
       message: 'Zahlungsfristen geprüft',
       remindersSent,
       deadlinesMissed,
-      totalChecked: purchasesWithPaymentDeadline.length
+      totalChecked: purchasesWithPaymentDeadline.length,
     })
   } catch (error: any) {
     console.error('[check-payment-deadline] Fehler:', error)
@@ -182,10 +214,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-
-
-
-
-
-

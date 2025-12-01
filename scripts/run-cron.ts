@@ -2,7 +2,7 @@ import { processInvoiceReminders } from '../src/lib/invoice-reminders'
 
 /**
  * Script zum manuellen Ausführen des Mahnprozess-Cron-Jobs
- * 
+ *
  * Verwendung:
  *   npm run cron:reminders
  *   oder
@@ -12,15 +12,15 @@ async function main() {
   console.log('🚀 Starte Mahnprozess-Verarbeitung...')
   console.log(`⏰ Zeitpunkt: ${new Date().toISOString()}`)
   console.log('')
-  
+
   try {
     const result = await processInvoiceReminders()
-    
+
     console.log('')
     console.log('✅ Mahnprozess erfolgreich abgeschlossen!')
     console.log(`   Verarbeitet: ${result.processed} von ${result.total} Rechnungen`)
     console.log('')
-    
+
     process.exit(0)
   } catch (error: any) {
     console.error('')
@@ -32,14 +32,9 @@ async function main() {
       console.error(error.stack)
     }
     console.error('')
-    
+
     process.exit(1)
   }
 }
 
 main()
-
-
-
-
-

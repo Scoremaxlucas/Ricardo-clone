@@ -28,6 +28,7 @@ npx tsx scripts/migrate-article-numbers.ts
 ### Schritt 2: Prüfen
 
 Das Script zeigt:
+
 - Anzahl der Artikel ohne Artikelnummer
 - Startnummer
 - Erfolgreiche/fehlgeschlagene Zuweisungen
@@ -77,7 +78,7 @@ Die Suche unterstützt beide Formate:
 ```typescript
 // Finde höchste vorhandene Nummer
 const highest = await prisma.watch.findFirst({
-  orderBy: { articleNumber: 'desc' }
+  orderBy: { articleNumber: 'desc' },
 })
 
 // Nächste Nummer = höchste + 1
@@ -97,13 +98,13 @@ if (watch && !isArticleNumber && watch.articleNumber) {
 
 ## 📊 Vergleich mit Ricardo
 
-| Eigenschaft | Ricardo | Helvenda |
-|------------|---------|----------|
-| Artikelnummer | ✅ Ja | ✅ Ja |
-| Format | 6-8 stellig | 8 stellig |
-| URL | Artikelnummer | Artikelnummer (bevorzugt) |
-| Suche | Artikelnummer | Artikelnummer + CUID |
-| Automatisch | ✅ Ja | ✅ Ja |
+| Eigenschaft   | Ricardo       | Helvenda                  |
+| ------------- | ------------- | ------------------------- |
+| Artikelnummer | ✅ Ja         | ✅ Ja                     |
+| Format        | 6-8 stellig   | 8 stellig                 |
+| URL           | Artikelnummer | Artikelnummer (bevorzugt) |
+| Suche         | Artikelnummer | Artikelnummer + CUID      |
+| Automatisch   | ✅ Ja         | ✅ Ja                     |
 
 ---
 
@@ -118,4 +119,3 @@ if (watch && !isArticleNumber && watch.articleNumber) {
 
 **Status**: ✅ Aktiviert und funktionsfähig  
 **Erstellt**: 2024-12-20
-

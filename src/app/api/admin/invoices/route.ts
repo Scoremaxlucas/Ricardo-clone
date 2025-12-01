@@ -13,14 +13,14 @@ async function checkAdmin(session: any): Promise<boolean> {
   if (session.user.id) {
     user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
 
   if (!user && session.user.email) {
     user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
 
@@ -50,22 +50,22 @@ export async function GET(request: NextRequest) {
                 id: true,
                 title: true,
                 brand: true,
-                model: true
-              }
-            }
-          }
+                model: true,
+              },
+            },
+          },
         },
         seller: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     })
 
     return NextResponse.json({ invoices })
@@ -77,6 +77,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
-
-

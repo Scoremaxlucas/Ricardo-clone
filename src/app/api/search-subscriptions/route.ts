@@ -7,12 +7,9 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Nicht authentifiziert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
     }
 
     const subscriptions = await prisma.searchSubscription.findMany({
@@ -27,10 +24,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ subscriptions })
   } catch (error: any) {
     console.error('Error fetching search subscriptions:', error)
-    return NextResponse.json(
-      { error: 'Fehler beim Abrufen der Suchabos' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Fehler beim Abrufen der Suchabos' }, { status: 500 })
   }
 }
 
@@ -38,12 +32,9 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Nicht authentifiziert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -88,14 +79,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ subscription }, { status: 201 })
   } catch (error: any) {
     console.error('Error creating search subscription:', error)
-    return NextResponse.json(
-      { error: 'Fehler beim Erstellen des Suchabos' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Fehler beim Erstellen des Suchabos' }, { status: 500 })
   }
 }
-
-
-
-
-

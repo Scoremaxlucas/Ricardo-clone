@@ -8,17 +8,11 @@ import { addStatusHistory } from '@/lib/status-history'
  * POST: Versand-Informationen hinzufügen/aktualisieren
  * Nur Verkäufer kann Versand-Informationen hinzufügen
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -37,17 +31,14 @@ export async function POST(
       include: {
         watch: {
           select: {
-            sellerId: true
-          }
-        }
-      }
+            sellerId: true,
+          },
+        },
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob der User der Verkäufer ist
@@ -58,10 +49,13 @@ export async function POST(
       )
     }
 
-    // RICARDO-STYLE: Versandinformationen können nur hinzugefügt werden, wenn die Zahlung bestätigt wurde
+    // Versandinformationen können nur hinzugefügt werden, wenn die Zahlung bestätigt wurde
     if (!purchase.paymentConfirmed) {
       return NextResponse.json(
-        { message: 'Versand-Informationen können erst hinzugefügt werden, nachdem die Zahlung bestätigt wurde' },
+        {
+          message:
+            'Versand-Informationen können erst hinzugefügt werden, nachdem die Zahlung bestätigt wurde',
+        },
         { status: 400 }
       )
     }
@@ -69,12 +63,12 @@ export async function POST(
     // Update Purchase mit Versand-Informationen
     // Status wird auf "shipped" gesetzt, wenn noch nicht "completed"
     const newStatus = purchase.status === 'completed' ? 'completed' : 'shipped'
-    
+
     const updateData: any = {
       trackingNumber,
       trackingProvider,
       shippedAt: new Date(),
-      status: newStatus
+      status: newStatus,
     }
 
     if (estimatedDeliveryDate) {
@@ -89,15 +83,15 @@ export async function POST(
           select: {
             id: true,
             name: true,
-            email: true
-          }
+            email: true,
+          },
         },
         watch: {
           select: {
-            title: true
-          }
-        }
-      }
+            title: true,
+          },
+        },
+      },
     })
 
     // Füge Status-Historie hinzu
@@ -121,8 +115,8 @@ export async function POST(
           title: '📦 Artikel versandt',
           message: `Der Artikel "${updatedPurchase.watch.title}" wurde versandt. Tracking-Nummer: ${trackingNumber}`,
           link: `/my-watches/buying/purchased`,
-          watchId: purchase.watchId
-        }
+          watchId: purchase.watchId,
+        },
       })
     } catch (error) {
       console.error('[shipping] Fehler beim Erstellen der Benachrichtigung:', error)
@@ -132,7 +126,7 @@ export async function POST(
 
     return NextResponse.json({
       message: 'Versand-Informationen erfolgreich hinzugefügt',
-      purchase: updatedPurchase
+      purchase: updatedPurchase,
     })
   } catch (error: any) {
     console.error('Error adding shipping info:', error)
@@ -146,17 +140,11 @@ export async function POST(
 /**
  * GET: Versand-Informationen abrufen
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -170,18 +158,15 @@ export async function GET(
         estimatedDeliveryDate: true,
         watch: {
           select: {
-            sellerId: true
-          }
+            sellerId: true,
+          },
         },
-        buyerId: true
-      }
+        buyerId: true,
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe Berechtigung (Käufer, Verkäufer oder Admin)
@@ -201,8 +186,8 @@ export async function GET(
         trackingNumber: purchase.trackingNumber || null,
         trackingProvider: purchase.trackingProvider || null,
         shippedAt: purchase.shippedAt?.toISOString() || null,
-        estimatedDeliveryDate: purchase.estimatedDeliveryDate?.toISOString() || null
-      }
+        estimatedDeliveryDate: purchase.estimatedDeliveryDate?.toISOString() || null,
+      },
     })
   } catch (error: any) {
     console.error('Error fetching shipping info:', error)
@@ -212,4 +197,3 @@ export async function GET(
     )
   }
 }
-

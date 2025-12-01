@@ -10,11 +10,11 @@ const DEFAULT_PRICING = {
   minimumCommission: 0,
   maximumCommission: 220, // Maximum CHF 220.- für Plattform-Gebühr
   listingFee: 0,
-  transactionFee: 0
+  transactionFee: 0,
 }
 
 // In-Memory Store (später können wir das in eine Datenbank-Tabelle verschieben)
-let pricingSettings: typeof DEFAULT_PRICING = { ...DEFAULT_PRICING }
+const pricingSettings: typeof DEFAULT_PRICING = { ...DEFAULT_PRICING }
 
 // Helper function to check admin status
 async function checkAdmin(session: any): Promise<boolean> {
@@ -26,14 +26,14 @@ async function checkAdmin(session: any): Promise<boolean> {
   if (session.user.id) {
     user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
 
   if (!user && session.user.email) {
     user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
 
@@ -75,11 +75,22 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { platformMarginRate, vatRate, minimumCommission, maximumCommission, listingFee, transactionFee } = body
+    const {
+      platformMarginRate,
+      vatRate,
+      minimumCommission,
+      maximumCommission,
+      listingFee,
+      transactionFee,
+    } = body
 
     // Validierung
     if (platformMarginRate !== undefined) {
-      if (typeof platformMarginRate !== 'number' || platformMarginRate < 0 || platformMarginRate > 1) {
+      if (
+        typeof platformMarginRate !== 'number' ||
+        platformMarginRate < 0 ||
+        platformMarginRate > 1
+      ) {
         return NextResponse.json(
           { message: 'Plattform-Marge muss zwischen 0 und 1 liegen (0 = 0%, 1 = 100%)' },
           { status: 400 }
@@ -96,14 +107,17 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    if (minimumCommission !== undefined && (typeof minimumCommission !== 'number' || minimumCommission < 0)) {
-      return NextResponse.json(
-        { message: 'Minimale Kommission muss >= 0 sein' },
-        { status: 400 }
-      )
+    if (
+      minimumCommission !== undefined &&
+      (typeof minimumCommission !== 'number' || minimumCommission < 0)
+    ) {
+      return NextResponse.json({ message: 'Minimale Kommission muss >= 0 sein' }, { status: 400 })
     }
 
-    if (maximumCommission !== undefined && (typeof maximumCommission !== 'number' || maximumCommission < 0)) {
+    if (
+      maximumCommission !== undefined &&
+      (typeof maximumCommission !== 'number' || maximumCommission < 0)
+    ) {
       return NextResponse.json(
         { message: 'Maximale Kommission (Kostendach) muss >= 0 sein' },
         { status: 400 }
@@ -111,17 +125,14 @@ export async function POST(request: NextRequest) {
     }
 
     if (listingFee !== undefined && (typeof listingFee !== 'number' || listingFee < 0)) {
-      return NextResponse.json(
-        { message: 'Listing-Gebühr muss >= 0 sein' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Listing-Gebühr muss >= 0 sein' }, { status: 400 })
     }
 
-    if (transactionFee !== undefined && (typeof transactionFee !== 'number' || transactionFee < 0)) {
-      return NextResponse.json(
-        { message: 'Transaktionsgebühr muss >= 0 sein' },
-        { status: 400 }
-      )
+    if (
+      transactionFee !== undefined &&
+      (typeof transactionFee !== 'number' || transactionFee < 0)
+    ) {
+      return NextResponse.json({ message: 'Transaktionsgebühr muss >= 0 sein' }, { status: 400 })
     }
 
     // Update settings
@@ -136,7 +147,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: 'Pricing-Einstellungen erfolgreich gespeichert',
-      settings: pricingSettings
+      settings: pricingSettings,
     })
   } catch (error: any) {
     console.error('Error updating pricing settings:', error)
@@ -146,6 +157,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-
-

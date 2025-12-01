@@ -1,18 +1,19 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useLanguage } from '@/contexts/LanguageContext'
-import { useSession } from 'next-auth/react'
-import Link from 'next/link'
-import { FavoriteButton } from '@/components/favorites/FavoriteButton'
 import { BidComponent } from '@/components/bids/BidComponent'
-import { PriceOfferComponent } from '@/components/offers/PriceOfferComponent'
-import { SellerProfile } from '@/components/seller/SellerProfile'
-import { PickupMap } from '@/components/product/PickupMap'
-import { SimilarProducts } from '@/components/product/SimilarProducts'
-import { ProductQuestions } from '@/components/product/ProductQuestions'
+import { FavoriteButton } from '@/components/favorites/FavoriteButton'
 import { ReportModal } from '@/components/moderation/ReportModal'
-import { Flag } from 'lucide-react'
+import { PriceOfferComponent } from '@/components/offers/PriceOfferComponent'
+import { PickupMap } from '@/components/product/PickupMap'
+import { ProductQuestions } from '@/components/product/ProductQuestions'
+import { SimilarProducts } from '@/components/product/SimilarProducts'
+import { SellerProfile } from '@/components/seller/SellerProfile'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { ChevronLeft, ChevronRight, Flag } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useEffect, useRef, useState } from 'react'
 
 interface ProductPageClientProps {
   watch: any
@@ -22,10 +23,21 @@ interface ProductPageClientProps {
   seller: any
 }
 
-export function ProductPageClient({ watch, images, conditionMap, lieferumfang, seller }: ProductPageClientProps) {
+export function ProductPageClient({
+  watch,
+  images,
+  conditionMap,
+  lieferumfang,
+  seller,
+}: ProductPageClientProps) {
   const { t } = useLanguage()
   const { data: session } = useSession()
   const [showReportModal, setShowReportModal] = useState(false)
+  const [selectedImageIndex, setSelectedImageIndex] = useState(0)
+  const [isZoomed, setIsZoomed] = useState(false)
+  const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
+  const imageContainerRef = useRef<HTMLDivElement>(null)
+  const zoomImageRef = useRef<HTMLImageElement>(null)
 
   // Track view
   useEffect(() => {
@@ -37,9 +49,11 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
   if (!watch) {
     return (
       <div className="p-8">
-        <div className="max-w-3xl mx-auto">
+        <div className="mx-auto max-w-3xl">
           <p className="text-gray-700">{t.product.notFound}</p>
-          <Link href="/" className="text-primary-600 underline">{t.product.backToHome}</Link>
+          <Link href="/" className="text-primary-600 underline">
+            {t.product.backToHome}
+          </Link>
         </div>
       </div>
     )
@@ -48,20 +62,24 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
   return (
     <>
       {/* Breadcrumb */}
-      <div className="text-sm text-gray-600 mb-4">
-        <Link href="/" className="text-primary-600 hover:text-primary-700">{t.search.homepage}</Link>
+      <div className="mb-4 text-sm text-gray-600">
+        <Link href="/" className="text-primary-600 hover:text-primary-700">
+          {t.search.homepage}
+        </Link>
         <span className="mx-2">›</span>
-        <Link href="/search" className="text-primary-600 hover:text-primary-700">{t.search.title}</Link>
+        <Link href="/search" className="text-primary-600 hover:text-primary-700">
+          {t.search.title}
+        </Link>
         <span className="mx-2">›</span>
         <span className="line-clamp-1">{watch.title}</span>
       </div>
-      
+
       {/* Haupt-Grid: Links Bilder & Details, Rechts Sidebar */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
         {/* Linke Spalte: Bilder & Details */}
-        <div className="lg:col-span-2 space-y-6">
+        <div className="space-y-6 lg:col-span-2">
           {/* Artikelbilder & Hauptinfos */}
-          <div className="bg-white rounded-lg shadow-md p-6">
+          <div className="rounded-lg bg-white p-6 shadow-md">
             {/* Bild oder Video */}
             <div className="relative mb-6">
               {watch.video ? (
@@ -69,23 +87,143 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
                   <video
                     src={watch.video}
                     controls
-                    className="w-full h-96 object-contain rounded-lg bg-black"
+                    className="h-96 w-full rounded-lg bg-black object-contain"
                   />
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute right-4 top-4">
                     <FavoriteButton watchId={watch.id} />
                   </div>
                 </div>
               ) : images.length > 0 ? (
                 <>
-                  <img src={images[0]} alt={watch.title} className="w-full h-96 object-cover rounded-lg" />
-                  <div className="absolute top-4 right-4">
-                    <FavoriteButton watchId={watch.id} />
+                  {/* Hauptbild mit Zoom-Effekt */}
+                  <div
+                    ref={imageContainerRef}
+                    className="relative h-96 w-full overflow-hidden rounded-lg bg-gray-100"
+                    onMouseMove={(e) => {
+                      if (!imageContainerRef.current || !zoomImageRef.current) return
+                      const rect = imageContainerRef.current.getBoundingClientRect()
+                      const x = ((e.clientX - rect.left) / rect.width) * 100
+                      const y = ((e.clientY - rect.top) / rect.height) * 100
+                      setZoomPosition({ x, y })
+                      setIsZoomed(true)
+                    }}
+                    onMouseLeave={() => setIsZoomed(false)}
+                  >
+                    {/* Hauptbild */}
+                    {images[selectedImageIndex]?.startsWith('data:image/') ||
+                    images[selectedImageIndex]?.length > 1000 ? (
+                      <img
+                        ref={zoomImageRef}
+                        src={images[selectedImageIndex]}
+                        alt={watch.title}
+                        className={`h-full w-full object-contain transition-transform duration-200 ${
+                          isZoomed ? 'scale-[2]' : 'scale-100'
+                        }`}
+                        style={{
+                          transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                        }}
+                      />
+                    ) : (
+                      <Image
+                        ref={zoomImageRef}
+                        src={images[selectedImageIndex]}
+                        alt={watch.title}
+                        fill
+                        className={`object-contain transition-transform duration-200 ${
+                          isZoomed ? 'scale-[2]' : 'scale-100'
+                        }`}
+                        style={{
+                          transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                        }}
+                        sizes="(max-width: 768px) 100vw, 66vw"
+                      />
+                    )}
+
+                    {/* Zoom-Indikator */}
+                    {isZoomed && (
+                      <div className="pointer-events-none absolute inset-0 border-2 border-primary-500 bg-primary-500/10" />
+                    )}
+
+                    {/* Navigation Pfeile (wenn mehrere Bilder) */}
+                    {images.length > 1 && (
+                      <>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedImageIndex((prev) =>
+                              prev === 0 ? images.length - 1 : prev - 1
+                            )
+                          }}
+                          className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-lg transition-all hover:bg-white"
+                          aria-label="Vorheriges Bild"
+                        >
+                          <ChevronLeft className="h-6 w-6 text-gray-700" />
+                        </button>
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            setSelectedImageIndex((prev) =>
+                              prev === images.length - 1 ? 0 : prev + 1
+                            )
+                          }}
+                          className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-lg transition-all hover:bg-white"
+                          aria-label="Nächstes Bild"
+                        >
+                          <ChevronRight className="h-6 w-6 text-gray-700" />
+                        </button>
+                      </>
+                    )}
+
+                    {/* Bildnummer Anzeige */}
+                    {images.length > 1 && (
+                      <div className="absolute bottom-4 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-3 py-1 text-sm text-white">
+                        {selectedImageIndex + 1} / {images.length}
+                      </div>
+                    )}
+
+                    {/* Favorite Button */}
+                    <div className="absolute right-4 top-4">
+                      <FavoriteButton watchId={watch.id} />
+                    </div>
                   </div>
+
+                  {/* Thumbnail-Galerie */}
+                  {images.length > 1 && (
+                    <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
+                      {images.map((image, index) => (
+                        <button
+                          key={index}
+                          onClick={() => setSelectedImageIndex(index)}
+                          className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                            selectedImageIndex === index
+                              ? 'border-primary-600 ring-2 ring-primary-200'
+                              : 'border-gray-200 hover:border-gray-300'
+                          }`}
+                        >
+                          {image?.startsWith('data:image/') || image?.length > 1000 ? (
+                            <img
+                              src={image}
+                              alt={`${watch.title} - Bild ${index + 1}`}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <Image
+                              src={image}
+                              alt={`${watch.title} - Bild ${index + 1}`}
+                              fill
+                              className="object-cover"
+                              sizes="80px"
+                            />
+                          )}
+                        </button>
+                      ))}
+                    </div>
+                  )}
                 </>
               ) : (
-                <div className="w-full h-96 bg-gray-100 rounded-lg flex items-center justify-center text-gray-400 relative">
+                <div className="relative flex h-96 w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400">
                   {t.home.noImage}
-                  <div className="absolute top-4 right-4">
+                  <div className="absolute right-4 top-4">
                     <FavoriteButton watchId={watch.id} />
                   </div>
                 </div>
@@ -93,8 +231,8 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
             </div>
 
             {/* Titel & Artikelnummer */}
-            <div className="flex items-start justify-between mb-4">
-              <h1 className="text-3xl font-bold text-gray-900 flex-1">{watch.title}</h1>
+            <div className="mb-4 flex items-start justify-between">
+              <h1 className="flex-1 text-3xl font-bold text-gray-900">{watch.title}</h1>
               {watch.articleNumber && (
                 <div className="ml-4 text-sm text-gray-500">
                   <span className="font-medium">Artikelnummer:</span>{' '}
@@ -102,8 +240,8 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
                 </div>
               )}
             </div>
-            
-            <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+
+            <div className="mb-6 rounded-lg bg-gray-50 p-4">
               {watch.buyNowPrice ? (
                 <>
                   <div className="mb-3">
@@ -131,8 +269,8 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
 
             {/* Produktdetails */}
             <div className="space-y-3 border-t border-gray-200 pt-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-4">{t.product.details}</h2>
-              
+              <h2 className="mb-4 text-xl font-bold text-gray-900">{t.product.details}</h2>
+
               {watch.brand && (
                 <div className="flex">
                   <span className="w-1/3 font-semibold text-gray-700">{t.product.brand}:</span>
@@ -154,7 +292,9 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
               {watch.condition && (
                 <div className="flex">
                   <span className="w-1/3 font-semibold text-gray-700">{t.product.condition}:</span>
-                  <span className="w-2/3 text-gray-900">{conditionMap[watch.condition] || watch.condition}</span>
+                  <span className="w-2/3 text-gray-900">
+                    {conditionMap[watch.condition] || watch.condition}
+                  </span>
                 </div>
               )}
               {(watch as any).year && (
@@ -173,21 +313,24 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
 
             {/* Beschreibung */}
             {watch.description && (
-              <div className="border-t border-gray-200 pt-6 mt-6">
-                <h2 className="text-xl font-bold text-gray-900 mb-4">{t.product.description}</h2>
-                <p className="text-gray-700 whitespace-pre-line">{watch.description}</p>
+              <div className="mt-6 border-t border-gray-200 pt-6">
+                <h2 className="mb-4 text-xl font-bold text-gray-900">{t.product.description}</h2>
+                <p className="whitespace-pre-line text-gray-700">{watch.description}</p>
               </div>
             )}
 
-            {/* Karte für Abholort */}
-            {seller?.city && seller?.postalCode && (
-              <div className="border-t border-gray-200 pt-6 mt-6">
-                <PickupMap city={seller.city} postalCode={seller.postalCode} />
+            {/* Karte für Abholort - IMMER anzeigen wenn Seller vorhanden */}
+            {seller && (
+              <div className="mt-6 border-t border-gray-200 pt-6">
+                <PickupMap
+                  city={seller.city || 'Schweiz'}
+                  postalCode={seller.postalCode || ''}
+                />
               </div>
             )}
 
             {/* Fragen & Antworten */}
-            <div className="border-t border-gray-200 pt-6 mt-6">
+            <div className="mt-6 border-t border-gray-200 pt-6">
               <ProductQuestions watchId={watch.id} sellerId={watch.sellerId} />
             </div>
           </div>
@@ -214,7 +357,7 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
             />
           )}
 
-          <SellerProfile 
+          <SellerProfile
             sellerId={watch.sellerId}
             sellerName={seller?.name || t.common.unknown}
             sellerEmail={seller?.email || ''}
@@ -222,10 +365,10 @@ export function ProductPageClient({ watch, images, conditionMap, lieferumfang, s
 
           {/* Report-Button */}
           {session?.user && session.user.id !== watch.sellerId && (
-            <div className="mt-4 pt-4 border-t border-gray-200">
+            <div className="mt-4 border-t border-gray-200 pt-4">
               <button
                 onClick={() => setShowReportModal(true)}
-                className="flex items-center gap-2 text-sm text-gray-600 hover:text-red-600 transition-colors"
+                className="flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-red-600"
               >
                 <Flag className="h-4 w-4" />
                 Angebot melden

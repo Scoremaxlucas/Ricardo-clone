@@ -6,18 +6,19 @@ Helvenda verwendet jetzt einen professionellen E-Mail-Service (Resend), der die 
 
 ## Skalierbarkeit im Vergleich
 
-| Service | Kostenlos | Limit | Skalierbarkeit | Ricardo-Level |
-|---------|----------|-------|----------------|---------------|
-| **Resend** | ✅ Ja | 3.000/Monat kostenlos | ✅ Millionen/Tag möglich | ✅ Ja |
-| **SendGrid** | ✅ Ja | 100/Tag kostenlos | ✅ Millionen/Tag möglich | ✅ Ja |
-| **SMTP (Gmail)** | ✅ Ja | 500/Tag | ❌ Begrenzt | ❌ Nein |
-| **SMTP (Eigener Server)** | ⚠️ Abhängig | Unbegrenzt | ✅ Hoch | ✅ Ja |
+| Service                   | Kostenlos   | Limit                 | Skalierbarkeit           | Ricardo-Level |
+| ------------------------- | ----------- | --------------------- | ------------------------ | ------------- |
+| **Resend**                | ✅ Ja       | 3.000/Monat kostenlos | ✅ Millionen/Tag möglich | ✅ Ja         |
+| **SendGrid**              | ✅ Ja       | 100/Tag kostenlos     | ✅ Millionen/Tag möglich | ✅ Ja         |
+| **SMTP (Gmail)**          | ✅ Ja       | 500/Tag               | ❌ Begrenzt              | ❌ Nein       |
+| **SMTP (Eigener Server)** | ⚠️ Abhängig | Unbegrenzt            | ✅ Hoch                  | ✅ Ja         |
 
 ## Resend - Professioneller Service wie Ricardo
 
 ### Warum Resend?
 
 Resend ist ein moderner Transactional Email Service, der:
+
 - ✅ **Skalierbar** auf Millionen von E-Mails pro Tag
 - ✅ **Zuverlässig** mit 99.9% Uptime
 - ✅ **Professionell** mit Enterprise-Features
@@ -27,15 +28,18 @@ Resend ist ein moderner Transactional Email Service, der:
 ### Skalierbarkeit
 
 **Kostenlose Stufe:**
+
 - 3.000 E-Mails/Monat
 - Perfekt für Startups und kleine Plattformen
 
 **Paid Stufen:**
+
 - **Pro ($20/Monat):** 50.000 E-Mails/Monat
 - **Business ($80/Monat):** 200.000 E-Mails/Monat
 - **Enterprise:** Unbegrenzt, Millionen pro Tag
 
 **Ricardo-Level:**
+
 - Ricardo versendet wahrscheinlich Millionen von E-Mails pro Monat
 - Mit Resend Business/Enterprise ist das problemlos möglich
 - Gleiche Infrastruktur wie Ricardo
@@ -70,6 +74,7 @@ RESEND_FROM_EMAIL=noreply@ihre-domain.ch
 ```
 
 **Für Tests (ohne Domain-Verifizierung):**
+
 ```bash
 RESEND_API_KEY=re_xxxxxxxxxxxxx
 RESEND_FROM_EMAIL=onboarding@resend.dev
@@ -84,16 +89,19 @@ npm run dev
 ## Funktionalität wie Ricardo
 
 ### ✅ Automatischer E-Mail-Versand
+
 - E-Mail wird automatisch bei Registrierung versendet
 - Bestätigungslink funktioniert
 - Login nur nach Bestätigung möglich
 
 ### ✅ "E-Mail erneut senden" auf Login-Seite
+
 - Button erscheint automatisch bei `EMAIL_NOT_VERIFIED` Fehler
 - Funktioniert genau wie bei Ricardo
 - Zeigt Erfolgsmeldung nach Versand
 
 ### ✅ Skalierbarkeit
+
 - Kann Millionen von E-Mails pro Tag versenden
 - Professionelle Infrastruktur wie Ricardo
 - Enterprise-Features verfügbar
@@ -101,6 +109,7 @@ npm run dev
 ## Monitoring & Analytics
 
 Resend bietet (wie Ricardo):
+
 - ✅ **Delivery Tracking:** Sehen Sie, welche E-Mails zugestellt wurden
 - ✅ **Open Tracking:** Sehen Sie, welche E-Mails geöffnet wurden
 - ✅ **Click Tracking:** Sehen Sie, welche Links geklickt wurden
@@ -121,16 +130,19 @@ Die Migration ist nahtlos - Resend wird automatisch verwendet, wenn konfiguriert
 ## Kostenvergleich
 
 ### Resend (Empfohlen)
+
 - **Kostenlos:** 3.000 E-Mails/Monat
 - **Pro:** $20/Monat für 50.000 E-Mails
 - **Business:** $80/Monat für 200.000 E-Mails
 
 ### SendGrid (Alternative)
+
 - **Kostenlos:** 100 E-Mails/Tag (3.000/Monat)
 - **Essentials:** $19.95/Monat für 50.000 E-Mails
 - **Pro:** $89.95/Monat für 100.000 E-Mails
 
 ### SMTP (Gmail)
+
 - **Kostenlos:** 500 E-Mails/Tag
 - **Limit:** Nicht skalierbar für große Plattformen
 
@@ -149,10 +161,6 @@ Die Migration ist nahtlos - Resend wird automatisch verwendet, wenn konfiguriert
 ## Support
 
 Bei Fragen zur E-Mail-Konfiguration:
+
 - Resend Docs: https://resend.com/docs
 - Resend Support: support@resend.com
-
-
-
-
-

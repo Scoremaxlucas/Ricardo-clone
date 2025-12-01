@@ -13,7 +13,7 @@ export default function VerifyEmailPage() {
 
   useEffect(() => {
     const token = searchParams.get('token')
-    
+
     if (!token) {
       setStatus('error')
       setMessage('No confirmation token found')
@@ -48,19 +48,19 @@ export default function VerifyEmailPage() {
   }, [searchParams, router])
 
   return (
-    <div className="min-h-screen bg-black flex items-center justify-center px-4 sm:px-6 lg:px-8 relative overflow-hidden">
+    <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-black px-4 sm:px-6 lg:px-8">
       {/* Abstract background patterns */}
-      <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-0 right-0 w-96 h-96 bg-gradient-to-br from-gray-800 to-transparent rounded-full blur-3xl opacity-20"></div>
-        <div className="absolute bottom-0 left-0 w-96 h-96 bg-gradient-to-tr from-gray-800 to-transparent rounded-full blur-3xl opacity-20"></div>
+      <div className="pointer-events-none absolute inset-0 overflow-hidden">
+        <div className="absolute right-0 top-0 h-96 w-96 rounded-full bg-gradient-to-br from-gray-800 to-transparent opacity-20 blur-3xl"></div>
+        <div className="absolute bottom-0 left-0 h-96 w-96 rounded-full bg-gradient-to-tr from-gray-800 to-transparent opacity-20 blur-3xl"></div>
       </div>
 
-      <div className="max-w-md w-full relative z-10">
+      <div className="relative z-10 w-full max-w-md">
         <div className="text-center">
           {/* Logo/Icon */}
           <div className="mx-auto mb-8">
-            <div className="inline-flex items-center justify-center w-16 h-16 rounded-lg bg-white/10 backdrop-blur-sm">
-              <span className="text-white font-bold text-2xl">H</span>
+            <div className="inline-flex h-16 w-16 items-center justify-center rounded-lg bg-white/10 backdrop-blur-sm">
+              <span className="text-2xl font-bold text-white">H</span>
             </div>
           </div>
 
@@ -68,9 +68,9 @@ export default function VerifyEmailPage() {
           {status === 'loading' && (
             <div className="mx-auto mb-8 flex justify-center">
               <div className="relative">
-                <div className="absolute inset-0 bg-white/10 rounded-full blur-xl"></div>
-                <div className="relative bg-white/5 backdrop-blur-sm border border-white/10 rounded-full p-6">
-                  <Loader2 className="w-12 h-12 text-white animate-spin" strokeWidth={1.5} />
+                <div className="absolute inset-0 rounded-full bg-white/10 blur-xl"></div>
+                <div className="relative rounded-full border border-white/10 bg-white/5 p-6 backdrop-blur-sm">
+                  <Loader2 className="h-12 w-12 animate-spin text-white" strokeWidth={1.5} />
                 </div>
               </div>
             </div>
@@ -79,9 +79,9 @@ export default function VerifyEmailPage() {
           {status === 'success' && (
             <div className="mx-auto mb-8 flex justify-center">
               <div className="relative">
-                <div className="absolute inset-0 bg-green-500/20 rounded-full blur-xl"></div>
-                <div className="relative bg-green-500/10 backdrop-blur-sm border border-green-500/20 rounded-full p-6">
-                  <CheckCircle2 className="w-12 h-12 text-green-400" strokeWidth={1.5} />
+                <div className="absolute inset-0 rounded-full bg-green-500/20 blur-xl"></div>
+                <div className="relative rounded-full border border-green-500/20 bg-green-500/10 p-6 backdrop-blur-sm">
+                  <CheckCircle2 className="h-12 w-12 text-green-400" strokeWidth={1.5} />
                 </div>
               </div>
             </div>
@@ -90,9 +90,9 @@ export default function VerifyEmailPage() {
           {status === 'error' && (
             <div className="mx-auto mb-8 flex justify-center">
               <div className="relative">
-                <div className="absolute inset-0 bg-red-500/20 rounded-full blur-xl"></div>
-                <div className="relative bg-red-500/10 backdrop-blur-sm border border-red-500/20 rounded-full p-6">
-                  <XCircle className="w-12 h-12 text-red-400" strokeWidth={1.5} />
+                <div className="absolute inset-0 rounded-full bg-red-500/20 blur-xl"></div>
+                <div className="relative rounded-full border border-red-500/20 bg-red-500/10 p-6 backdrop-blur-sm">
+                  <XCircle className="h-12 w-12 text-red-400" strokeWidth={1.5} />
                 </div>
               </div>
             </div>
@@ -101,29 +101,21 @@ export default function VerifyEmailPage() {
           {/* Heading */}
           {status === 'loading' && (
             <>
-              <h1 className="text-3xl font-bold text-white mb-4">
-                Confirming your account
-              </h1>
-              <p className="text-gray-300 text-lg">
-                Please wait a moment...
-              </p>
+              <h1 className="mb-4 text-3xl font-bold text-white">Confirming your account</h1>
+              <p className="text-lg text-gray-300">Please wait a moment...</p>
             </>
           )}
 
           {status === 'success' && (
             <>
-              <h1 className="text-3xl font-bold text-white mb-4">
-                Account Confirmed
-              </h1>
-              <p className="text-gray-300 text-lg mb-8">
-                {message}
-              </p>
-              <p className="text-gray-500 text-sm mb-8">
+              <h1 className="mb-4 text-3xl font-bold text-white">Account Confirmed</h1>
+              <p className="mb-8 text-lg text-gray-300">{message}</p>
+              <p className="mb-8 text-sm text-gray-500">
                 You will be redirected to the login page shortly...
               </p>
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center w-full px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200"
+                className="inline-flex w-full items-center justify-center rounded-lg bg-white px-6 py-3 font-medium text-black transition-colors duration-200 hover:bg-gray-100"
               >
                 Go to login →
               </Link>
@@ -132,24 +124,17 @@ export default function VerifyEmailPage() {
 
           {status === 'error' && (
             <>
-              <h1 className="text-3xl font-bold text-white mb-4">
-                Error
-              </h1>
-              <p className="text-gray-300 text-lg mb-8">
-                {message}
-              </p>
+              <h1 className="mb-4 text-3xl font-bold text-white">Error</h1>
+              <p className="mb-8 text-lg text-gray-300">{message}</p>
               <Link
                 href="/login"
-                className="inline-flex items-center justify-center w-full px-6 py-3 bg-white text-black rounded-lg font-medium hover:bg-gray-100 transition-colors duration-200"
+                className="inline-flex w-full items-center justify-center rounded-lg bg-white px-6 py-3 font-medium text-black transition-colors duration-200 hover:bg-gray-100"
               >
                 Go to login →
               </Link>
               <p className="mt-6 text-sm text-gray-500">
                 If you have any issue confirming your account, please{' '}
-                <a 
-                  href="mailto:support@helvenda.ch" 
-                  className="text-white hover:underline"
-                >
+                <a href="mailto:support@helvenda.ch" className="text-white hover:underline">
                   contact support
                 </a>
                 .

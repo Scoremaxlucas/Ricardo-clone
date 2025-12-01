@@ -30,24 +30,10 @@ const SPAM_KEYWORDS = [
 ]
 
 // Unangemessene Keywords
-const INAPPROPRIATE_KEYWORDS = [
-  'porn',
-  'xxx',
-  'adult',
-  'explicit',
-  'nsfw',
-]
+const INAPPROPRIATE_KEYWORDS = ['porn', 'xxx', 'adult', 'explicit', 'nsfw']
 
 // Betrugs-Keywords
-const FRAUD_KEYWORDS = [
-  'fake',
-  'replica',
-  'counterfeit',
-  'knockoff',
-  'imitation',
-  'scam',
-  'fraud',
-]
+const FRAUD_KEYWORDS = ['fake', 'replica', 'counterfeit', 'knockoff', 'imitation', 'scam', 'fraud']
 
 export interface ModerationResult {
   flagged: boolean
@@ -122,17 +108,23 @@ export function moderateWatch(watch: {
   ]
 
   // Bestimme höchste Severity
-  const severities = [titleResult.severity, descriptionResult.severity, brandResult.severity, modelResult.severity]
+  const severities = [
+    titleResult.severity,
+    descriptionResult.severity,
+    brandResult.severity,
+    modelResult.severity,
+  ]
   const severityOrder = { low: 0, medium: 1, high: 2 }
-  const maxSeverity = severities.reduce((max, s) =>
-    severityOrder[s] > severityOrder[max] ? s : max
-  , 'low' as 'low' | 'medium' | 'high')
+  const maxSeverity = severities.reduce(
+    (max, s) => (severityOrder[s] > severityOrder[max] ? s : max),
+    'low' as 'low' | 'medium' | 'high'
+  )
 
   return {
     flagged: allKeywords.length > 0,
-    reason: titleResult.reason || descriptionResult.reason || brandResult.reason || modelResult.reason,
+    reason:
+      titleResult.reason || descriptionResult.reason || brandResult.reason || modelResult.reason,
     severity: maxSeverity,
     keywords: [...new Set(allKeywords)], // Entferne Duplikate
   }
 }
-

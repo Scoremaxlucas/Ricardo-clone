@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
@@ -46,9 +46,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Bilder verarbeiten
-    const imagesString = imageDataUrls && imageDataUrls.length > 0 
-      ? imageDataUrls.join(',') 
-      : ''
+    const imagesString = imageDataUrls && imageDataUrls.length > 0 ? imageDataUrls.join(',') : ''
 
     // Create watch
     const watch = await prisma.watch.create({
@@ -62,10 +60,13 @@ export async function POST(request: NextRequest) {
         material: 'Stahl', // Default
         movement: 'Automatik', // Default
         caseSize: 40.0, // Default
-        price: price ? parseFloat(price) : (buyNowPrice ? parseFloat(buyNowPrice) : 0),
+        price: price ? parseFloat(price) : buyNowPrice ? parseFloat(buyNowPrice) : 0,
         buyNowPrice: buyNowPrice ? parseFloat(buyNowPrice) : null,
         isAuction: isAuction || false,
-        auctionEnd: isAuction && auctionDays ? new Date(Date.now() + parseInt(auctionDays) * 24 * 60 * 60 * 1000) : null,
+        auctionEnd:
+          isAuction && auctionDays
+            ? new Date(Date.now() + parseInt(auctionDays) * 24 * 60 * 60 * 1000)
+            : null,
         images: imagesString,
         sellerId: session.user.id,
         // Additional fields for the detailed form
@@ -80,20 +81,19 @@ export async function POST(request: NextRequest) {
         warrantyYears: warrantyYears ? parseInt(warrantyYears) : null,
         warrantyNote: warrantyNote || '',
         warrantyDescription: warrantyDescription || '',
-      }
+      },
     })
 
-    return NextResponse.json({ 
-      message: 'Watch created successfully',
-      watch 
-    }, { status: 201 })
-
+    return NextResponse.json(
+      {
+        message: 'Watch created successfully',
+        watch,
+      },
+      { status: 201 }
+    )
   } catch (error) {
     console.error('Error creating watch:', error)
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
 
@@ -106,33 +106,30 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search')
 
     const now = new Date()
-    
+
     const where: any = {
       AND: [
         {
           // WICHTIG: Manuell deaktivierte Artikel ausschließen (moderationStatus === 'rejected')
-          OR: [
-            { moderationStatus: null },
-            { moderationStatus: { not: 'rejected' } }
-          ]
+          OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
         },
         {
-          // Verkaufte Uhren ausschließen (nur nicht-stornierte Purchases zählen als "verkauft")
-          // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
+          // Verkaufte Artikel ausschließen (nur nicht-stornierte Purchases zählen als "verkauft")
+          // Stornierte Purchases machen den Artikel wieder verfügbar
           OR: [
             {
               purchases: {
-                none: {}
-              }
+                none: {},
+              },
             },
             {
               purchases: {
                 every: {
-                  status: 'cancelled'
-                }
-              }
-            }
-          ]
+                  status: 'cancelled',
+                },
+              },
+            },
+          ],
         },
         {
           // Beendete Auktionen ohne Purchase ausschließen
@@ -149,19 +146,19 @@ export async function GET(request: NextRequest) {
                   purchases: {
                     some: {
                       status: {
-                        not: 'cancelled'
-                      }
-                    }
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                        not: 'cancelled',
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
       // seller wird automatisch durch Prisma gefiltert (nur existierende User)
     }
-    
+
     if (category) {
       // SQLite ist standardmäßig case-insensitive, daher kein 'mode: insensitive' nötig
       where.categories = {
@@ -173,10 +170,10 @@ export async function GET(request: NextRequest) {
               { slug: category.toUpperCase() },
               { name: category },
               { name: category.toLowerCase() },
-              { name: category.toUpperCase() }
-            ]
-          }
-        }
+              { name: category.toUpperCase() },
+            ],
+          },
+        },
       }
     }
 
@@ -184,12 +181,12 @@ export async function GET(request: NextRequest) {
       where.OR = [
         { title: { contains: search, mode: 'insensitive' } },
         { brand: { contains: search, mode: 'insensitive' } },
-        { model: { contains: search, mode: 'insensitive' } }
+        { model: { contains: search, mode: 'insensitive' } },
       ]
     }
 
     const now = new Date()
-    
+
     const watches = await prisma.watch.findMany({
       where,
       include: {
@@ -199,33 +196,33 @@ export async function GET(request: NextRequest) {
             name: true,
             email: true,
             city: true,
-            postalCode: true
-          }
+            postalCode: true,
+          },
         },
         categories: {
           include: {
-            category: true
-          }
+            category: true,
+          },
         },
         bids: {
           orderBy: {
-            amount: 'desc'
+            amount: 'desc',
           },
-          take: 1 // Nur das höchste Gebot
-        }
+          take: 1, // Nur das höchste Gebot
+        },
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
       skip: (page - 1) * limit,
-      take: limit
+      take: limit,
     })
 
     // Berechne aktuellen Preis für jede Uhr und füge Boosters hinzu
     let watchesWithCurrentPrice = watches.map(watch => {
       const highestBid = watch.bids[0]
       const currentPrice = highestBid ? highestBid.amount : watch.price
-      
+
       // Parse boosters
       let boosters: string[] = []
       try {
@@ -235,7 +232,7 @@ export async function GET(request: NextRequest) {
       } catch (e) {
         boosters = []
       }
-      
+
       // Parse images
       let images: string[] = []
       try {
@@ -245,14 +242,19 @@ export async function GET(request: NextRequest) {
       } catch (e) {
         images = []
       }
-      
+
       return {
         ...watch,
         price: currentPrice, // Überschreibe price mit aktuellem Preis
         images: images, // Geparste Bilder
         boosters: boosters,
         city: watch.seller?.city || null,
-        postalCode: watch.seller?.postalCode || null
+        postalCode: watch.seller?.postalCode || null,
+        buyNowPrice: watch.buyNowPrice || null,
+        isAuction: watch.isAuction || false,
+        auctionEnd: watch.auctionEnd || null,
+        createdAt: watch.createdAt,
+        bids: watch.bids || []
       }
     })
 
@@ -264,20 +266,20 @@ export async function GET(request: NextRequest) {
         if (boosters.includes('boost')) return 2
         return 1
       }
-      
+
       const priorityA = getBoostPriority(a.boosters || [])
       const priorityB = getBoostPriority(b.boosters || [])
-      
+
       if (priorityA !== priorityB) {
         return priorityB - priorityA // Höhere Priorität zuerst
       }
-      
+
       // Bei gleicher Priorität: nach Erstellungsdatum sortieren
       return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
     })
 
-    const total = await prisma.watch.count({ 
-      where
+    const total = await prisma.watch.count({
+      where,
     })
 
     return NextResponse.json({
@@ -286,15 +288,11 @@ export async function GET(request: NextRequest) {
         page,
         limit,
         total,
-        pages: Math.ceil(total / limit)
-      }
+        pages: Math.ceil(total / limit),
+      },
     })
-
   } catch (error) {
     console.error('Error fetching watches:', error)
-    return NextResponse.json(
-      { message: 'Internal server error' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }

@@ -7,10 +7,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const user = await prisma.user.findUnique({
@@ -37,15 +34,12 @@ export async function GET(request: NextRequest) {
         idDocumentPage1: true,
         idDocumentPage2: true,
         idDocumentType: true,
-        paymentMethods: true
-      }
+        paymentMethods: true,
+      },
     })
 
     if (!user) {
-      return NextResponse.json(
-        { message: 'Benutzer nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
     return NextResponse.json({
@@ -71,8 +65,8 @@ export async function GET(request: NextRequest) {
         idDocumentPage1: user.idDocumentPage1,
         idDocumentPage2: user.idDocumentPage2,
         idDocumentType: user.idDocumentType,
-        paymentMethods: user.paymentMethods
-      }
+        paymentMethods: user.paymentMethods,
+      },
     })
   } catch (error: any) {
     console.error('Error fetching verification data:', error)
@@ -82,4 +76,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

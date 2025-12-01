@@ -33,7 +33,14 @@ interface BidComponentProps {
   shippingMethod?: ShippingMethodArray | ShippingMethod | string | null
 }
 
-export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sellerId, shippingMethod }: BidComponentProps) {
+export function BidComponent({
+  itemId,
+  startPrice,
+  buyNowPrice,
+  auctionEnd,
+  sellerId,
+  shippingMethod,
+}: BidComponentProps) {
   const { data: session } = useSession()
   const router = useRouter()
   const { t } = useLanguage()
@@ -69,10 +76,12 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
   const [verificationInProgress, setVerificationInProgress] = useState(false)
   // Konvertiere auctionEnd zu Date falls es ein String ist
-  const normalizedAuctionEnd = auctionEnd 
-    ? (auctionEnd instanceof Date ? auctionEnd : new Date(auctionEnd))
+  const normalizedAuctionEnd = auctionEnd
+    ? auctionEnd instanceof Date
+      ? auctionEnd
+      : new Date(auctionEnd)
     : null
-  
+
   const [currentAuctionEnd, setCurrentAuctionEnd] = useState<Date | null>(normalizedAuctionEnd)
   const [timeLeft, setTimeLeft] = useState<{
     days: number
@@ -145,7 +154,7 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
       if (res.ok) {
         const data = await res.json()
         setItemStatus(data)
-        
+
         // Aktualisiere currentAuctionEnd mit der neuesten Zeit aus der DB
         if (data.auctionEnd) {
           setCurrentAuctionEnd(new Date(data.auctionEnd))
@@ -203,7 +212,7 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
       loadBids()
       loadItemStatus()
     }, 5000)
-    
+
     // Prüfe regelmäßig auf abgelaufene Auktionen
     const checkExpiredInterval = setInterval(async () => {
       if (currentAuctionEnd && new Date(currentAuctionEnd) <= new Date()) {
@@ -216,20 +225,19 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
         }
       }
     }, 10000) // Alle 10 Sekunden prüfen
-    
+
     return () => {
       clearInterval(interval)
       clearInterval(checkExpiredInterval)
     }
   }, [itemId, currentAuctionEnd])
 
-  const minBid = highestBid ? highestBid + 1.00 : startPrice
+  const minBid = highestBid ? highestBid + 1.0 : startPrice
 
   const handleBid = async () => {
     if (!session?.user) {
-      const currentUrl = typeof window !== 'undefined' 
-        ? window.location.pathname + window.location.search 
-        : '/'
+      const currentUrl =
+        typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
       window.location.href = `/login?callbackUrl=${encodeURIComponent(currentUrl)}`
       return
     }
@@ -259,7 +267,9 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
 
     // Prüfe, dass das Gebot nicht gleich dem aktuellen Höchstgebot ist
     if (highestBid && amount === highestBid) {
-      setError(`${t.product.bidMustBeHigher} CHF ${highestBid.toFixed(2)}. ${t.product.nextBidMustBe} CHF ${minBid.toFixed(2)} ${t.product.beAmount}.`)
+      setError(
+        `${t.product.bidMustBeHigher} CHF ${highestBid.toFixed(2)}. ${t.product.nextBidMustBe} CHF ${minBid.toFixed(2)} ${t.product.beAmount}.`
+      )
       return
     }
 
@@ -273,8 +283,8 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           watchId: itemId, // API verwendet noch watchId
-          amount
-        })
+          amount,
+        }),
       })
 
       const data = await res.json()
@@ -307,25 +317,24 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
 
   const handleBuyNowClick = () => {
     if (!session?.user) {
-      const currentUrl = typeof window !== 'undefined' 
-        ? window.location.pathname + window.location.search 
-        : '/'
+      const currentUrl =
+        typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
       window.location.href = `/login?callbackUrl=${encodeURIComponent(currentUrl)}`
       return
     }
-    
+
     // Prüfe Verifizierung vor dem Sofortkauf
     if (isVerified === false) {
       setVerificationAction('buy')
       setShowVerificationModal(true)
       return
     }
-    
+
     if (!buyNowPrice) return
     setShowBuyNowModal(true)
   }
 
-  const handleBuyNowConfirm = async () => {
+  const handleBuyNowConfirm = async (selectedShippingMethod: ShippingMethod | null) => {
     if (!buyNowPrice) return
 
     setShowBuyNowModal(false)
@@ -334,14 +343,14 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
     setSuccess('')
 
     try {
-      const res = await fetch('/api/bids', {
+      const res = await fetch('/api/purchases/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          watchId: itemId, // API verwendet noch watchId
-          amount: buyNowPrice,
-          isBuyNow: true
-        })
+          watchId: itemId,
+          price: buyNowPrice,
+          shippingMethod: selectedShippingMethod || null, // Nur die gewählte Methode, nicht das Array
+        }),
       })
 
       const data = await res.json()
@@ -351,11 +360,14 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
         await loadBids()
         // Prüfe auch auf abgelaufene Auktionen (um Purchase zu erstellen)
         await fetch('/api/auctions/check-expired', { method: 'POST' })
-        
+
         // Aktualisiere Benachrichtigungen sofort
         window.dispatchEvent(new CustomEvent('notifications-update'))
-        
-        setTimeout(() => setSuccess(''), 5000)
+
+        // Weiterleitung zur Kaufübersicht
+        setTimeout(() => {
+          window.location.href = '/my-watches/buying/purchased'
+        }, 1500)
       } else {
         setError(data.message || t.product.buyNowError)
       }
@@ -368,13 +380,19 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
   }
 
   if (!session?.user) {
-    const currentUrl = typeof window !== 'undefined' 
-      ? window.location.pathname + window.location.search 
-      : '/'
+    const currentUrl =
+      typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
     return (
-      <div className="bg-white rounded-lg shadow p-6 mt-8">
-        <p className="text-gray-600 text-center">
-          {t.product.pleaseLogin} <Link href={`/login?callbackUrl=${encodeURIComponent(currentUrl)}`} className="text-primary-600 hover:underline">{t.product.toPlaceBids}</Link> {t.product.toBidOrBuy}
+      <div className="mt-8 rounded-lg bg-white p-6 shadow">
+        <p className="text-center text-gray-600">
+          {t.product.pleaseLogin}{' '}
+          <Link
+            href={`/login?callbackUrl=${encodeURIComponent(currentUrl)}`}
+            className="text-primary-600 hover:underline"
+          >
+            {t.product.toPlaceBids}
+          </Link>{' '}
+          {t.product.toBidOrBuy}
         </p>
       </div>
     )
@@ -382,33 +400,42 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
 
   if (isSeller) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 mt-8">
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">{t.product.bids}</h2>
+      <div className="mt-8 rounded-lg bg-white p-6 shadow">
+        <h2 className="mb-4 text-xl font-semibold text-gray-900">{t.product.bids}</h2>
         {bids.length === 0 ? (
           <p className="text-gray-500">{t.product.noBidsYet}</p>
         ) : (
           <div className="space-y-2">
-            {bids.map((bid) => (
-              <div key={bid.id} className="flex justify-between items-center p-3 bg-gray-50 rounded">
-                <div className="flex items-center gap-2 flex-1">
+            {bids.map(bid => (
+              <div
+                key={bid.id}
+                className="flex items-center justify-between rounded bg-gray-50 p-3"
+              >
+                <div className="flex flex-1 items-center gap-2">
                   <span className="font-semibold text-gray-900">
                     CHF {new Intl.NumberFormat('de-CH').format(bid.amount)}
                   </span>
                   <span className="text-sm text-gray-600">von</span>
                   {/* Profilbild */}
-                  <div className="w-6 h-6 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-100">
                     {bid.user.image ? (
-                      <img src={bid.user.image} alt={bid.user.nickname || bid.user.name || ''} className="w-full h-full object-cover" />
+                      <img
+                        src={bid.user.image}
+                        alt={bid.user.nickname || bid.user.name || ''}
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <span className="text-xs font-semibold text-primary-600">
-                        {(bid.user.nickname || bid.user.name || bid.user.email || 'U').charAt(0).toUpperCase()}
+                        {(bid.user.nickname || bid.user.name || bid.user.email || 'U')
+                          .charAt(0)
+                          .toUpperCase()}
                       </span>
                     )}
                   </div>
                   {/* Nickname mit Verifizierungs-Badge */}
-                  <UserName 
-                    userId={bid.user.id} 
-                    userName={bid.user.nickname || bid.user.name || bid.user.email || 'Unbekannt'} 
+                  <UserName
+                    userId={bid.user.id}
+                    userName={bid.user.nickname || bid.user.name || bid.user.email || 'Unbekannt'}
                     badgeSize="sm"
                     className="text-sm text-gray-900"
                   />
@@ -428,24 +455,20 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
   if (itemStatus?.isSold) {
     const isCurrentUserBuyer = session?.user?.id === itemStatus.purchase?.buyerId
     return (
-      <div className="bg-white rounded-lg shadow p-6 mt-8">
+      <div className="mt-8 rounded-lg bg-white p-6 shadow">
         <div className="text-center">
-          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-green-100 mb-4">
+          <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
             <CheckCircle className="h-8 w-8 text-green-600" />
           </div>
-          <h2 className="text-xl font-semibold text-gray-900 mb-2">{t.product.sold}</h2>
+          <h2 className="mb-2 text-xl font-semibold text-gray-900">{t.product.sold}</h2>
           {isCurrentUserBuyer ? (
-            <p className="text-gray-600 mb-4">
-              {t.bid.congratulations}
-            </p>
+            <p className="mb-4 text-gray-600">{t.bid.congratulations}</p>
           ) : (
-            <p className="text-gray-600 mb-4">
-              {t.bid.alreadySold}
-            </p>
+            <p className="mb-4 text-gray-600">{t.bid.alreadySold}</p>
           )}
           {highestBid && (
-            <div className="bg-green-50 border border-green-200 rounded p-3 mb-4">
-              <div className="text-sm text-green-700 mb-1">{t.bid.salePrice}</div>
+            <div className="mb-4 rounded border border-green-200 bg-green-50 p-3">
+              <div className="mb-1 text-sm text-green-700">{t.bid.salePrice}</div>
               <div className="text-2xl font-bold text-green-700">
                 CHF {new Intl.NumberFormat('de-CH').format(highestBid)}
               </div>
@@ -458,48 +481,62 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
 
   if (!isAuctionActive && !buyNowPrice && !itemStatus?.isSold) {
     return (
-      <div className="bg-white rounded-lg shadow p-6 mt-8">
-        <p className="text-gray-600 text-center">{t.bid.auctionEnded}</p>
+      <div className="mt-8 rounded-lg bg-white p-6 shadow">
+        <p className="text-center text-gray-600">{t.bid.auctionEnded}</p>
       </div>
     )
   }
 
   return (
-    <div className="bg-white rounded-lg shadow p-6 mt-8">
-      <h2 className="text-xl font-semibold text-gray-900 mb-4">
+    <div className="mt-8 rounded-lg bg-white p-6 shadow">
+      <h2 className="mb-4 text-xl font-semibold text-gray-900">
         {highestBid ? t.bid.currentHighestBid : t.bid.startAuction}
       </h2>
 
       {/* Countdown */}
       {currentAuctionEnd && timeLeft && timeLeft.total > 0 && (
-        <div className="mb-4 p-4 bg-gradient-to-r from-yellow-50 to-orange-50 border border-yellow-200 rounded-lg">
-          <div className="flex items-center gap-2 mb-2">
+        <div className="mb-4 rounded-lg border border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 p-4">
+          <div className="mb-2 flex items-center gap-2">
             <Clock className="h-5 w-5 text-yellow-600" />
             <span className="text-sm font-semibold text-yellow-800">{t.bid.auctionEndsIn}:</span>
           </div>
           <div className="flex items-center gap-3">
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">{String(timeLeft.days).padStart(2, '0')}</div>
+              <div className="text-2xl font-bold text-yellow-700">
+                {String(timeLeft.days).padStart(2, '0')}
+              </div>
               <div className="text-xs text-yellow-600">Tag{timeLeft.days !== 1 ? 'e' : ''}</div>
             </div>
-            <span className="text-yellow-600 font-bold">:</span>
+            <span className="font-bold text-yellow-600">:</span>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">{String(timeLeft.hours).padStart(2, '0')}</div>
-              <div className="text-xs text-yellow-600">{timeLeft.hours !== 1 ? t.product.hours : t.product.hour}</div>
+              <div className="text-2xl font-bold text-yellow-700">
+                {String(timeLeft.hours).padStart(2, '0')}
+              </div>
+              <div className="text-xs text-yellow-600">
+                {timeLeft.hours !== 1 ? t.product.hours : t.product.hour}
+              </div>
             </div>
-            <span className="text-yellow-600 font-bold">:</span>
+            <span className="font-bold text-yellow-600">:</span>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">{String(timeLeft.minutes).padStart(2, '0')}</div>
-              <div className="text-xs text-yellow-600">{timeLeft.minutes !== 1 ? t.product.minutes : t.product.minute}</div>
+              <div className="text-2xl font-bold text-yellow-700">
+                {String(timeLeft.minutes).padStart(2, '0')}
+              </div>
+              <div className="text-xs text-yellow-600">
+                {timeLeft.minutes !== 1 ? t.product.minutes : t.product.minute}
+              </div>
             </div>
-            <span className="text-yellow-600 font-bold">:</span>
+            <span className="font-bold text-yellow-600">:</span>
             <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">{String(timeLeft.seconds).padStart(2, '0')}</div>
-              <div className="text-xs text-yellow-600">{timeLeft.seconds !== 1 ? t.product.seconds : t.product.second}</div>
+              <div className="text-2xl font-bold text-yellow-700">
+                {String(timeLeft.seconds).padStart(2, '0')}
+              </div>
+              <div className="text-xs text-yellow-600">
+                {timeLeft.seconds !== 1 ? t.product.seconds : t.product.second}
+              </div>
             </div>
           </div>
           {timeLeft.total < 3 * 60 * 1000 && (
-            <div className="mt-2 text-xs text-red-600 font-medium">
+            <div className="mt-2 text-xs font-medium text-red-600">
               ⚠️ {t.product.lastThreeMinutes}
             </div>
           )}
@@ -507,7 +544,7 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
       )}
 
       {currentAuctionEnd && timeLeft && timeLeft.total <= 0 && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
           <div className="flex items-center gap-2">
             <AlertCircle className="h-5 w-5 text-red-600" />
             <span className="text-sm font-semibold text-red-700">{t.product.auctionEnded}</span>
@@ -516,24 +553,24 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
       )}
 
       {highestBid && (
-        <div className="mb-4 p-3 bg-primary-50 rounded">
+        <div className="mb-4 rounded bg-primary-50 p-3">
           <div className="text-2xl font-bold text-primary-700">
             CHF {new Intl.NumberFormat('de-CH').format(highestBid)}
           </div>
-          <div className="text-sm text-gray-600 mt-1">
+          <div className="mt-1 text-sm text-gray-600">
             {bids.length} {bids.length === 1 ? t.product.bid_singular : t.product.bids}
           </div>
         </div>
       )}
 
       {error && (
-        <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-700 rounded text-sm">
+        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-4 p-3 bg-green-50 border border-green-200 text-green-700 rounded text-sm">
+        <div className="mb-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">
           {success}
         </div>
       )}
@@ -542,22 +579,22 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
         <div className="space-y-4">
           {/* Mitbieten */}
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               {t.product.yourBid} ({t.product.minimum} CHF {minBid.toFixed(2)})
             </label>
-            <div className="flex gap-2 items-stretch">
+            <div className="flex items-stretch gap-2">
               <input
                 type="text"
                 value={bidAmount}
-                onChange={(e) => setBidAmount(e.target.value)}
+                onChange={e => setBidAmount(e.target.value)}
                 placeholder={`CHF ${minBid.toFixed(2)}`}
-                className="flex-1 min-w-0 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                 disabled={isSeller}
               />
               <button
                 onClick={handleBid}
                 disabled={loading || !isAuctionActive || isSeller}
-                className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1.5 shrink-0 whitespace-nowrap"
+                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-primary-600 px-4 py-2 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <Gavel className="h-4 w-4" />
                 <span className="text-sm font-medium">{t.product.bid}</span>
@@ -571,18 +608,34 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
               <button
                 onClick={handleBuyNowClick}
                 disabled={loading || !isAuctionActive || isSeller}
-                className="w-full px-6 py-3 bg-green-600 text-white rounded-md hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex flex-col items-center gap-1 font-semibold"
+                className="flex w-full flex-col items-center gap-1 rounded-md bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <div className="flex items-center gap-2">
                   <Zap className="h-5 w-5" />
-                  <span>{t.product.buyNowFor} CHF {new Intl.NumberFormat('de-CH').format(buyNowPrice)}</span>
+                  <span>
+                    {t.product.buyNowFor} CHF {new Intl.NumberFormat('de-CH').format(buyNowPrice)}
+                  </span>
                 </div>
-                {shippingCost > 0 && (
+                {normalizedShippingMethods && normalizedShippingMethods.length > 0 && (
                   <div className="text-sm font-normal opacity-90">
-                    + CHF {new Intl.NumberFormat('de-CH').format(shippingCost)} {t.product.shippingCost}
-                    <span className="ml-2">
-                      ({t.product.total}: CHF {new Intl.NumberFormat('de-CH').format(buyNowPrice + shippingCost)})
-                    </span>
+                    {normalizedShippingMethods.length === 1 ? (
+                      <>
+                        {shippingCost > 0 ? (
+                          <>
+                            + CHF {new Intl.NumberFormat('de-CH').format(shippingCost)}{' '}
+                            {t.product.shippingCost}
+                            <span className="ml-2">
+                              ({t.product.total}: CHF{' '}
+                              {new Intl.NumberFormat('de-CH').format(buyNowPrice + shippingCost)})
+                            </span>
+                          </>
+                        ) : (
+                          <span className="text-white">+ Versandkosten wählbar</span>
+                        )}
+                      </>
+                    ) : (
+                      <span className="text-white">+ Versandmethode wählbar</span>
+                    )}
                   </div>
                 )}
               </button>
@@ -592,44 +645,48 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
       )}
 
       {isSeller && (
-        <div className="p-4 bg-blue-50 border border-blue-200 rounded-lg">
-          <p className="text-sm text-blue-800">
-            {t.product.cannotBidOwnItem}
-          </p>
+        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          <p className="text-sm text-blue-800">{t.product.cannotBidOwnItem}</p>
         </div>
       )}
 
       {/* Gebote-Liste */}
       {bids.length > 0 && (
-        <div className="mt-6 pt-6 border-t">
-          <h3 className="text-sm font-medium text-gray-700 mb-3">{t.product.bidsHistory}</h3>
-          <div className="space-y-2 max-h-48 overflow-y-auto">
-            {bids.slice(0, 5).map((bid) => (
-              <div key={bid.id} className="flex justify-between items-center text-sm gap-2">
-                <div className="flex items-center gap-2 flex-1 min-w-0">
+        <div className="mt-6 border-t pt-6">
+          <h3 className="mb-3 text-sm font-medium text-gray-700">{t.product.bidsHistory}</h3>
+          <div className="max-h-48 space-y-2 overflow-y-auto">
+            {bids.slice(0, 5).map(bid => (
+              <div key={bid.id} className="flex items-center justify-between gap-2 text-sm">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
                   <span className="font-semibold text-gray-900">
                     CHF {new Intl.NumberFormat('de-CH').format(bid.amount)}
                   </span>
                   <span className="text-gray-600">{t.product.by}</span>
                   {/* Profilbild */}
-                  <div className="w-5 h-5 rounded-full bg-primary-100 flex items-center justify-center overflow-hidden flex-shrink-0">
+                  <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-100">
                     {bid.user.image ? (
-                      <img src={bid.user.image} alt={bid.user.nickname || bid.user.name || ''} className="w-full h-full object-cover" />
+                      <img
+                        src={bid.user.image}
+                        alt={bid.user.nickname || bid.user.name || ''}
+                        className="h-full w-full object-cover"
+                      />
                     ) : (
                       <span className="text-xs font-semibold text-primary-600">
-                        {(bid.user.nickname || bid.user.name || bid.user.email || 'U').charAt(0).toUpperCase()}
+                        {(bid.user.nickname || bid.user.name || bid.user.email || 'U')
+                          .charAt(0)
+                          .toUpperCase()}
                       </span>
                     )}
                   </div>
                   {/* Nickname mit Verifizierungs-Badge */}
-                  <UserName 
-                    userId={bid.user.id} 
-                    userName={bid.user.nickname || bid.user.name || bid.user.email || 'Unbekannt'} 
+                  <UserName
+                    userId={bid.user.id}
+                    userName={bid.user.nickname || bid.user.name || bid.user.email || 'Unbekannt'}
                     badgeSize="sm"
-                    className="text-gray-900 text-xs"
+                    className="text-xs text-gray-900"
                   />
                 </div>
-                <span className="text-xs text-gray-500 flex-shrink-0">
+                <span className="flex-shrink-0 text-xs text-gray-500">
                   {new Date(bid.createdAt).toLocaleString('de-CH')}
                 </span>
               </div>
@@ -646,10 +703,11 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
           onConfirm={handleBuyNowConfirm}
           buyNowPrice={buyNowPrice}
           shippingCost={shippingCost}
+          availableShippingMethods={normalizedShippingMethods}
           isLoading={loading}
         />
       )}
-      
+
       <VerificationModal
         isOpen={showVerificationModal}
         onClose={() => setShowVerificationModal(false)}
@@ -662,4 +720,3 @@ export function BidComponent({ itemId, startPrice, buyNowPrice, auctionEnd, sell
     </div>
   )
 }
-

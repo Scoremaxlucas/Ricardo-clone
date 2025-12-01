@@ -8,10 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Hole alle Gebote des Users mit Watch-Details
@@ -24,17 +21,17 @@ export async function GET(request: NextRequest) {
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
+                email: true,
+              },
             },
             bids: {
               orderBy: { amount: 'desc' }, // Sortiere nach Betrag, nicht nach Datum
-              take: 1 // Nur das höchste Gebot
-            }
-          }
-        }
+              take: 1, // Nur das höchste Gebot
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     // Gruppiere Gebote nach Watch und finde das höchste Gebot pro Watch
@@ -61,8 +58,8 @@ export async function GET(request: NextRequest) {
           seller: watch.seller,
           highestBid: highestBid?.amount || watch.price,
           isMyBidHighest,
-          auctionActive
-        }
+          auctionActive,
+        },
       }
     })
 
@@ -80,4 +77,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

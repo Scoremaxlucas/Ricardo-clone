@@ -1,18 +1,11 @@
-import React, { useState } from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  FlatList,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
-import { Searchbar, Card, Title, Paragraph, Chip, Button } from 'react-native-paper';
-import { Ionicons } from '@expo/vector-icons';
+import React, { useState } from 'react'
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Image } from 'react-native'
+import { Searchbar, Card, Title, Paragraph, Chip, Button } from 'react-native-paper'
+import { Ionicons } from '@expo/vector-icons'
 
 const SearchScreen = ({ navigation }: any) => {
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedFilters, setSelectedFilters] = useState<string[]>([]);
+  const [searchQuery, setSearchQuery] = useState('')
+  const [selectedFilters, setSelectedFilters] = useState<string[]>([])
 
   const filters = [
     { id: 'rolex', name: 'Rolex', color: '#10b981' },
@@ -20,7 +13,7 @@ const SearchScreen = ({ navigation }: any) => {
     { id: 'patek', name: 'Patek Philippe', color: '#3b82f6' },
     { id: 'vintage', name: 'Vintage', color: '#f59e0b' },
     { id: 'auction', name: 'Auktion', color: '#8b5cf6' },
-  ];
+  ]
 
   const watches = [
     {
@@ -57,15 +50,13 @@ const SearchScreen = ({ navigation }: any) => {
       timeLeft: '5d 8h 15m',
       bids: 12,
     },
-  ];
+  ]
 
   const toggleFilter = (filterId: string) => {
     setSelectedFilters(prev =>
-      prev.includes(filterId)
-        ? prev.filter(id => id !== filterId)
-        : [...prev, filterId]
-    );
-  };
+      prev.includes(filterId) ? prev.filter(id => id !== filterId) : [...prev, filterId]
+    )
+  }
 
   const renderWatchItem = ({ item }: any) => (
     <TouchableOpacity
@@ -97,7 +88,7 @@ const SearchScreen = ({ navigation }: any) => {
         </Card.Content>
       </Card>
     </TouchableOpacity>
-  );
+  )
 
   return (
     <View style={styles.container}>
@@ -120,13 +111,13 @@ const SearchScreen = ({ navigation }: any) => {
               style={[
                 styles.filterChip,
                 selectedFilters.includes(filter.id) && styles.filterChipSelected,
-                { borderColor: filter.color }
+                { borderColor: filter.color },
               ]}
             >
               <Text
                 style={[
                   styles.filterText,
-                  selectedFilters.includes(filter.id) && { color: filter.color }
+                  selectedFilters.includes(filter.id) && { color: filter.color },
                 ]}
               >
                 {filter.name}
@@ -140,7 +131,9 @@ const SearchScreen = ({ navigation }: any) => {
         <Text style={styles.resultsCount}>{watches.length} Uhren gefunden</Text>
         <Button
           mode="outlined"
-          onPress={() => {/* Sort functionality */}}
+          onPress={() => {
+            /* Sort functionality */
+          }}
           style={styles.sortButton}
         >
           Sortieren
@@ -156,8 +149,8 @@ const SearchScreen = ({ navigation }: any) => {
         showsVerticalScrollIndicator={false}
       />
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -286,7 +279,6 @@ const styles = StyleSheet.create({
     color: '#666',
     marginLeft: 8,
   },
-});
+})
 
-export default SearchScreen;
-
+export default SearchScreen

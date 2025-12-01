@@ -19,10 +19,7 @@ export async function POST(request: NextRequest) {
     const signature = request.headers.get('stripe-signature')
 
     if (!signature) {
-      return NextResponse.json(
-        { message: 'Keine Signatur gefunden' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Keine Signatur gefunden' }, { status: 400 })
     }
 
     let event: Stripe.Event
@@ -31,10 +28,7 @@ export async function POST(request: NextRequest) {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
     } catch (err: any) {
       console.error('Webhook signature verification failed:', err.message)
-      return NextResponse.json(
-        { message: 'Ungültige Signatur' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Ungültige Signatur' }, { status: 400 })
     }
 
     console.log(`[stripe/webhook] Event empfangen: ${event.type}`)
@@ -52,7 +46,10 @@ export async function POST(request: NextRequest) {
       case 'payment_intent.amount_capturable_updated':
         // TWINT-Zahlungen können hier behandelt werden
         const paymentIntent = event.data.object as Stripe.PaymentIntent
-        if (paymentIntent.metadata?.type === 'invoice_payment_twint' && paymentIntent.status === 'succeeded') {
+        if (
+          paymentIntent.metadata?.type === 'invoice_payment_twint' &&
+          paymentIntent.status === 'succeeded'
+        ) {
           await handlePaymentSuccess(paymentIntent)
         }
         break
@@ -88,8 +85,9 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
     console.log(`[stripe/webhook] Zahlung erfolgreich für Rechnung ${invoiceNumber}`)
 
     // Bestimme Zahlungsmethode basierend auf Payment Intent Metadata
-    const paymentMethod = paymentIntent.metadata?.type === 'invoice_payment_twint' ? 'twint' : 'creditcard'
-    
+    const paymentMethod =
+      paymentIntent.metadata?.type === 'invoice_payment_twint' ? 'twint' : 'creditcard'
+
     // Update Rechnung
     const invoice = await prisma.invoice.update({
       where: { id: invoiceId },
@@ -98,8 +96,8 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
         paidAt: new Date(),
         paymentMethod: paymentMethod,
         paymentReference: paymentIntent.id,
-        paymentConfirmedAt: new Date()
-      }
+        paymentConfirmedAt: new Date(),
+      },
     })
 
     console.log(`[stripe/webhook] ✅ Rechnung ${invoiceNumber} als bezahlt markiert`)
@@ -122,8 +120,8 @@ async function handlePaymentSuccess(paymentIntent: Stripe.PaymentIntent) {
             type: 'PAYMENT_CONFIRMED',
             title: 'Zahlung bestätigt',
             message: `Ihre Rechnung ${invoiceNumber} wurde erfolgreich bezahlt.`,
-            link: `/my-watches/selling/fees?invoice=${invoiceId}`
-          }
+            link: `/my-watches/selling/fees?invoice=${invoiceId}`,
+          },
         })
       } catch (error: any) {
         console.error(`[stripe/webhook] Fehler beim Erstellen der Notification:`, error)
@@ -160,8 +158,8 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
             type: 'PAYMENT_FAILED',
             title: 'Zahlung fehlgeschlagen',
             message: `Die Zahlung für Rechnung ${invoiceNumber} ist fehlgeschlagen. Bitte versuchen Sie es erneut.`,
-            link: `/my-watches/selling/fees?invoice=${invoiceId}`
-          }
+            link: `/my-watches/selling/fees?invoice=${invoiceId}`,
+          },
         })
       } catch (error: any) {
         console.error(`[stripe/webhook] Fehler beim Erstellen der Notification:`, error)
@@ -172,4 +170,3 @@ async function handlePaymentFailed(paymentIntent: Stripe.PaymentIntent) {
     throw error
   }
 }
-

@@ -19,7 +19,7 @@ export default function AccountPage() {
     streetNumber: '',
     postalCode: '',
     city: '',
-    country: 'Schweiz'
+    country: 'Schweiz',
   })
 
   useEffect(() => {
@@ -53,7 +53,7 @@ export default function AccountPage() {
           streetNumber: data.streetNumber || '',
           postalCode: data.postalCode || '',
           city: data.city || '',
-          country: data.country || 'Schweiz'
+          country: data.country || 'Schweiz',
         })
       }
     } catch (error) {
@@ -63,7 +63,9 @@ export default function AccountPage() {
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value } = e.target
     setFormData(prev => ({ ...prev, [name]: value }))
   }
@@ -97,7 +99,7 @@ export default function AccountPage() {
       const res = await fetch('/api/profile/update', {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           name: formData.name,
@@ -106,8 +108,8 @@ export default function AccountPage() {
           streetNumber: formData.streetNumber.trim(),
           postalCode: formData.postalCode.trim(),
           city: formData.city.trim(),
-          country: formData.country.trim()
-        })
+          country: formData.country.trim(),
+        }),
       })
 
       const data = await res.json()
@@ -129,38 +131,36 @@ export default function AccountPage() {
     }
   }
 
-  const handlePasswordChange = async () => {
-    toast.error('Passwort ändern - Funktion kommt bald!')
-  }
-
   if (status === 'loading' || isLoading) {
     return <div className="flex min-h-screen items-center justify-center">Lädt...</div>
   }
 
   // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
   if (status === 'unauthenticated' || !session) {
-    return <div className="flex min-h-screen items-center justify-center">Weiterleitung zur Anmeldung...</div>
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Weiterleitung zur Anmeldung...
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="mx-auto max-w-4xl px-4">
         <Link
           href="/my-watches"
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          className="mb-6 inline-flex items-center text-gray-600 hover:text-gray-900"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Zurück zu Meine Uhren
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Zurück zu Mein Verkaufen
         </Link>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Benutzerkonto
-        </h1>
+        <h1 className="mb-8 text-3xl font-bold text-gray-900">Benutzerkonto</h1>
 
-        <div className="bg-white rounded-lg shadow-md p-8 space-y-6">
+        <div className="space-y-6 rounded-lg bg-white p-8 shadow-md">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <User className="inline h-4 w-4 mr-2" />
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              <User className="mr-2 inline h-4 w-4" />
               Name
             </label>
             <input
@@ -168,26 +168,26 @@ export default function AccountPage() {
               name="name"
               value={formData.name}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Mail className="inline h-4 w-4 mr-2" />
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              <Mail className="mr-2 inline h-4 w-4" />
               E-Mail
             </label>
             <input
               type="email"
               value={session.user?.email || ''}
               disabled
-              className="w-full px-3 py-2 border border-gray-300 rounded-md bg-gray-100 text-gray-600"
+              className="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600"
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              <Phone className="inline h-4 w-4 mr-2" />
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              <Phone className="mr-2 inline h-4 w-4" />
               Telefonnummer (optional)
             </label>
             <input
@@ -195,19 +195,17 @@ export default function AccountPage() {
               name="phone"
               value={formData.phone}
               onChange={handleInputChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
               placeholder="+41 79 123 45 67"
             />
           </div>
 
           <div className="border-t pt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Adresse
-            </h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Adresse</h3>
             <div className="space-y-4">
               <div className="grid grid-cols-3 gap-4">
                 <div className="col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Strasse <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -215,13 +213,13 @@ export default function AccountPage() {
                     name="street"
                     value={formData.street}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     placeholder="Musterstrasse"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Hausnummer <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -229,7 +227,7 @@ export default function AccountPage() {
                     name="streetNumber"
                     value={formData.streetNumber}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     placeholder="12"
                     required
                   />
@@ -238,7 +236,7 @@ export default function AccountPage() {
 
               <div className="grid grid-cols-2 gap-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Postleitzahl <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -246,13 +244,13 @@ export default function AccountPage() {
                     name="postalCode"
                     value={formData.postalCode}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     placeholder="8000"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Ort <span className="text-red-500">*</span>
                   </label>
                   <input
@@ -260,7 +258,7 @@ export default function AccountPage() {
                     name="city"
                     value={formData.city}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     placeholder="Zürich"
                     required
                   />
@@ -268,14 +266,14 @@ export default function AccountPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
                   Land <span className="text-red-500">*</span>
                 </label>
                 <select
                   name="country"
                   value={formData.country}
                   onChange={handleInputChange}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                   required
                 >
                   <option value="Schweiz">Schweiz</option>
@@ -292,42 +290,11 @@ export default function AccountPage() {
           <button
             onClick={handleSaveProfile}
             disabled={isSaving}
-            className="w-full bg-primary-600 text-white py-3 rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full rounded-md bg-primary-600 py-3 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {isSaving ? 'Wird gespeichert...' : 'Änderungen speichern'}
           </button>
 
-          <div className="border-t pt-6 mt-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Passwort ändern
-            </h3>
-            <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Aktuelles Passwort
-                </label>
-                <input
-                  type="password"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-                />
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Neues Passwort
-                </label>
-                <input
-                  type="password"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
-                />
-              </div>
-            </div>
-            <button
-              onClick={handlePasswordChange}
-              className="mt-4 w-full bg-gray-200 text-gray-800 py-3 rounded-md hover:bg-gray-300 transition-colors"
-            >
-              Passwort ändern
-            </button>
-          </div>
         </div>
       </div>
     </div>

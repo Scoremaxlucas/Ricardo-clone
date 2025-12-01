@@ -38,14 +38,14 @@ export function RecentlyViewed() {
         setLoading(false)
       }
     }
-    
+
     fetchProducts()
   }, [])
 
   useEffect(() => {
     const fetchFavorites = async () => {
       if (!session?.user) return
-      
+
       try {
         const response = await fetch('/api/favorites')
         if (response.ok) {
@@ -57,13 +57,13 @@ export function RecentlyViewed() {
         console.error('Error fetching favorites:', error)
       }
     }
-    
+
     fetchFavorites()
   }, [session?.user])
 
   const toggleFavorite = async (productId: string, e: React.MouseEvent) => {
     e.preventDefault()
-    
+
     if (!session?.user) {
       alert(t.favorites.loginRequired)
       return
@@ -85,7 +85,7 @@ export function RecentlyViewed() {
         const res = await fetch('/api/favorites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ watchId: productId })
+          body: JSON.stringify({ watchId: productId }),
         })
         if (res.ok) {
           setFavorites(prev => new Set(prev).add(productId))
@@ -106,13 +106,11 @@ export function RecentlyViewed() {
 
   return (
     <section className="bg-gray-50 py-12">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          {t.home.recentlyViewed}
-        </h2>
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+        <h2 className="mb-6 text-2xl font-bold text-gray-900">{t.home.recentlyViewed}</h2>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-3">
-          {products.map((product) => (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 md:gap-3 lg:grid-cols-5 xl:grid-cols-6">
+          {products.map(product => (
             <ProductCard
               key={product.id}
               {...product}
@@ -137,4 +135,3 @@ export function RecentlyViewed() {
     </section>
   )
 }
-

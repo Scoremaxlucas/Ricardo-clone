@@ -10,7 +10,7 @@ export function getOutbidNotificationEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Sie wurden überboten - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Sie wurden überboten`,
     `Hallo ${buyerName},`,
@@ -29,7 +29,7 @@ export function getOutbidNotificationEmail(
     'Jetzt höher bieten',
     articleUrl
   )
-  
+
   const text = `
 Sie wurden überboten - ${articleTitle}
 
@@ -47,7 +47,7 @@ Jetzt höher bieten: ${articleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -62,7 +62,7 @@ export function getBidNotificationEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Neues Gebot auf ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Neues Gebot erhalten`,
     `Hallo ${sellerName},`,
@@ -82,7 +82,7 @@ export function getBidNotificationEmail(
     'Artikel ansehen',
     articleUrl
   )
-  
+
   const text = `
 Neues Gebot auf ${articleTitle}
 
@@ -101,7 +101,7 @@ Artikel ansehen: ${articleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -116,7 +116,7 @@ export function getAuctionEndWonEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `🎉 Glückwunsch! Sie haben gewonnen - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Glückwunsch! Sie haben gewonnen`,
     `Hallo ${buyerName},`,
@@ -135,7 +135,7 @@ export function getAuctionEndWonEmail(
     'Kauf ansehen',
     purchaseUrl
   )
-  
+
   const text = `
 🎉 Glückwunsch! Sie haben gewonnen - ${articleTitle}
 
@@ -153,7 +153,7 @@ Kauf ansehen: ${purchaseUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -166,7 +166,7 @@ export function getAuctionEndLostEmail(
 ) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const subject = `Auktion beendet - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Auktion beendet`,
     `Hallo ${buyerName},`,
@@ -185,7 +185,7 @@ export function getAuctionEndLostEmail(
     'Weitere Angebote ansehen',
     `${baseUrl}/search`
   )
-  
+
   const text = `
 Auktion beendet - ${articleTitle}
 
@@ -203,7 +203,7 @@ Weitere Angebote ansehen: ${baseUrl}/search
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -219,7 +219,7 @@ export function getAuctionEndSellerEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Auktion beendet - ${articleTitle} wurde verkauft`
-  
+
   const html = getHelvendaEmailTemplate(
     `Ihr Artikel wurde verkauft`,
     `Hallo ${sellerName},`,
@@ -239,7 +239,7 @@ export function getAuctionEndSellerEmail(
     'Verkauf ansehen',
     saleUrl
   )
-  
+
   const text = `
 Auktion beendet - ${articleTitle} wurde verkauft
 
@@ -258,7 +258,7 @@ Verkauf ansehen: ${saleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -273,7 +273,7 @@ export function getPaymentReceivedEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Zahlung erhalten - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Zahlung erhalten`,
     `Hallo ${sellerName},`,
@@ -293,7 +293,7 @@ export function getPaymentReceivedEmail(
     'Verkauf ansehen',
     saleUrl
   )
-  
+
   const text = `
 Zahlung erhalten - ${articleTitle}
 
@@ -312,7 +312,7 @@ Verkauf ansehen: ${saleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -327,11 +327,11 @@ export function getShippingNotificationEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Versandbenachrichtigung - ${articleTitle}`
-  
-  const trackingInfo = trackingNumber 
+
+  const trackingInfo = trackingNumber
     ? `<p><strong>Tracking-Nummer:</strong> ${trackingNumber}${trackingProvider ? ` (${trackingProvider})` : ''}</p>`
     : '<p>Der Artikel wurde versendet. Sie erhalten keine Tracking-Informationen.</p>'
-  
+
   const html = getHelvendaEmailTemplate(
     `Ihr Artikel wurde versendet`,
     `Hallo ${buyerName},`,
@@ -350,7 +350,7 @@ export function getShippingNotificationEmail(
     'Kauf ansehen',
     purchaseUrl
   )
-  
+
   const text = `
 Versandbenachrichtigung - ${articleTitle}
 
@@ -368,7 +368,7 @@ Kauf ansehen: ${purchaseUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -382,7 +382,7 @@ export function getShippingReminderEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Versanderinnerung - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Versanderinnerung`,
     `Hallo ${sellerName},`,
@@ -401,7 +401,7 @@ export function getShippingReminderEmail(
     'Verkauf ansehen',
     saleUrl
   )
-  
+
   const text = `
 Versanderinnerung - ${articleTitle}
 
@@ -419,7 +419,7 @@ Verkauf ansehen: ${saleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -434,7 +434,7 @@ export function getPriceOfferReceivedEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const offersUrl = `${baseUrl}/my-watches/selling/offers`
   const subject = `Preisvorschlag erhalten - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Preisvorschlag erhalten`,
     `Hallo ${sellerName},`,
@@ -454,7 +454,7 @@ export function getPriceOfferReceivedEmail(
     'Preisvorschläge ansehen',
     offersUrl
   )
-  
+
   const text = `
 Preisvorschlag erhalten - ${articleTitle}
 
@@ -473,7 +473,7 @@ Preisvorschläge ansehen: ${offersUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -488,7 +488,7 @@ export function getPriceOfferAcceptedEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Preisvorschlag akzeptiert - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Ihr Preisvorschlag wurde akzeptiert`,
     `Hallo ${buyerName},`,
@@ -507,7 +507,7 @@ export function getPriceOfferAcceptedEmail(
     'Kauf ansehen',
     purchaseUrl
   )
-  
+
   const text = `
 Preisvorschlag akzeptiert - ${articleTitle}
 
@@ -525,7 +525,7 @@ Kauf ansehen: ${purchaseUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -539,7 +539,7 @@ export function getListingConfirmationEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Angebot erfolgreich erstellt - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Ihr Angebot wurde erstellt`,
     `Hallo ${sellerName},`,
@@ -558,7 +558,7 @@ export function getListingConfirmationEmail(
     'Angebot ansehen',
     articleUrl
   )
-  
+
   const text = `
 Angebot erfolgreich erstellt - ${articleTitle}
 
@@ -576,7 +576,7 @@ Angebot ansehen: ${articleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -590,7 +590,7 @@ export function getReviewRequestBuyerEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const reviewUrl = `${baseUrl}/my-watches/buying/purchased?review=${purchaseId}`
   const subject = `Bewerten Sie Ihren Kauf - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Bewerten Sie Ihren Kauf`,
     `Hallo ${buyerName},`,
@@ -609,7 +609,7 @@ export function getReviewRequestBuyerEmail(
     'Jetzt bewerten',
     reviewUrl
   )
-  
+
   const text = `
 Bewerten Sie Ihren Kauf - ${articleTitle}
 
@@ -627,7 +627,7 @@ Jetzt bewerten: ${reviewUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -641,7 +641,7 @@ export function getReviewRequestSellerEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const reviewUrl = `${baseUrl}/my-watches/selling/sold?review=${purchaseId}`
   const subject = `Bewerten Sie Ihren Verkauf - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Bewerten Sie Ihren Verkauf`,
     `Hallo ${sellerName},`,
@@ -660,7 +660,7 @@ export function getReviewRequestSellerEmail(
     'Jetzt bewerten',
     reviewUrl
   )
-  
+
   const text = `
 Bewerten Sie Ihren Verkauf - ${articleTitle}
 
@@ -678,11 +678,6 @@ Jetzt bewerten: ${reviewUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
-

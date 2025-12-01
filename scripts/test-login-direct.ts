@@ -22,17 +22,17 @@ async function main() {
         name: true,
         password: true,
         isBlocked: true,
-        isAdmin: true
-      }
+        isAdmin: true,
+      },
     })
 
     if (!user) {
       console.log('❌ User nicht gefunden!')
-      
+
       // Liste alle User
       const allUsers = await prisma.user.findMany({
         select: { email: true, name: true },
-        take: 10
+        take: 10,
       })
       console.log(`\nVorhandene User (${allUsers.length}):`)
       allUsers.forEach(u => console.log(`  - ${u.email} (${u.name})`))
@@ -49,13 +49,13 @@ async function main() {
     if (!user.password) {
       console.log('\n⚠️ Kein Passwort vorhanden!')
       console.log('   Setze neues Passwort...')
-      
+
       const newHash = await bcrypt.hash(password, 12)
       await prisma.user.update({
         where: { id: user.id },
-        data: { password: newHash }
+        data: { password: newHash },
       })
-      
+
       console.log('✅ Passwort gesetzt!')
       return
     }
@@ -72,21 +72,21 @@ async function main() {
     if (!isValid) {
       console.log('\n⚠️ Passwort stimmt nicht überein!')
       console.log('   Setze neues Passwort...')
-      
+
       const newHash = await bcrypt.hash(password, 12)
       await prisma.user.update({
         where: { id: user.id },
-        data: { password: newHash }
+        data: { password: newHash },
       })
-      
+
       console.log('✅ Neues Passwort gesetzt!')
-      
+
       // Teste erneut
       const updatedUser = await prisma.user.findUnique({
         where: { id: user.id },
-        select: { password: true }
+        select: { password: true },
       })
-      
+
       if (updatedUser?.password) {
         const isValidNow = await bcrypt.compare(password, updatedUser.password)
         console.log(`   Passwort jetzt gültig: ${isValidNow ? '✅ JA' : '❌ NEIN'}`)
@@ -99,7 +99,6 @@ async function main() {
     console.log('\n📧 Login-Daten:')
     console.log(`   Email: ${email}`)
     console.log(`   Passwort: ${password}`)
-
   } catch (error: any) {
     console.error('❌ Fehler:', error.message)
     console.error(error.stack)
@@ -109,8 +108,3 @@ async function main() {
 }
 
 main()
-
-
-
-
-

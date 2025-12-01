@@ -1,14 +1,7 @@
-import React from 'react';
-import {
-  View,
-  Text,
-  StyleSheet,
-  ScrollView,
-  TouchableOpacity,
-  Image,
-} from 'react-native';
-import { Card, Title, Paragraph, List, Button, Avatar } from 'react-native-paper';
-import { Ionicons } from '@expo/vector-icons';
+import React from 'react'
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native'
+import { Card, Title, Paragraph, List, Button, Avatar } from 'react-native-paper'
+import { Ionicons } from '@expo/vector-icons'
 
 const ProfileScreen = ({ navigation }: any) => {
   const [user] = useState({
@@ -18,7 +11,7 @@ const ProfileScreen = ({ navigation }: any) => {
     memberSince: '2023',
     rating: 4.8,
     reviews: 24,
-  });
+  })
 
   const menuItems = [
     {
@@ -61,24 +54,20 @@ const ProfileScreen = ({ navigation }: any) => {
       icon: 'help-circle-outline',
       onPress: () => navigation.navigate('Help'),
     },
-  ];
+  ]
 
   const stats = [
     { label: 'Verkauft', value: '12' },
     { label: 'Gekauft', value: '8' },
     { label: 'Bewertungen', value: user.reviews.toString() },
-  ];
+  ]
 
   return (
     <ScrollView style={styles.container}>
       {/* Profile Header */}
       <Card style={styles.profileCard}>
         <Card.Content style={styles.profileContent}>
-          <Avatar.Image
-            size={80}
-            source={{ uri: user.avatar }}
-            style={styles.avatar}
-          />
+          <Avatar.Image size={80} source={{ uri: user.avatar }} style={styles.avatar} />
           <View style={styles.profileInfo}>
             <Title style={styles.userName}>{user.name}</Title>
             <Paragraph style={styles.userEmail}>{user.email}</Paragraph>
@@ -110,11 +99,7 @@ const ProfileScreen = ({ navigation }: any) => {
       <Card style={styles.menuCard}>
         <Card.Content style={styles.menuContent}>
           {menuItems.map((item, index) => (
-            <TouchableOpacity
-              key={index}
-              style={styles.menuItem}
-              onPress={item.onPress}
-            >
+            <TouchableOpacity key={index} style={styles.menuItem} onPress={item.onPress}>
               <View style={styles.menuItemLeft}>
                 <Ionicons name={item.icon as any} size={24} color="#64748b" />
                 <Text style={styles.menuItemText}>{item.title}</Text>
@@ -137,8 +122,8 @@ const ProfileScreen = ({ navigation }: any) => {
         </Button>
       </View>
     </ScrollView>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -243,7 +228,6 @@ const styles = StyleSheet.create({
   logoutButton: {
     borderColor: '#ef4444',
   },
-});
+})
 
-export default ProfileScreen;
-
+export default ProfileScreen

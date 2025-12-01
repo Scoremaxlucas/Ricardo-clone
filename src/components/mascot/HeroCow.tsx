@@ -22,33 +22,28 @@ export function HeroCow() {
   }, [])
 
   return (
-    <div className="flex flex-col items-center justify-center gap-4 animate-fade-in-up">
+    <div className="animate-fade-in-up flex flex-col items-center justify-center gap-4">
       {/* Kuh - Ohne Glow und Sparkles */}
       <div className="relative">
-        <HelvendaCow 
-          variant={currentAnimation}
-          size="lg"
-          interactive={false}
-        />
+        <HelvendaCow variant={currentAnimation} size="lg" interactive={false} />
       </div>
 
       {/* Text mit Kuh */}
       <div className="text-center">
-        <h3 className="text-2xl md:text-3xl font-extrabold text-white mb-2">
+        <h3 className="mb-2 text-2xl font-extrabold text-white md:text-3xl">
           Willkommen bei Helvenda
         </h3>
-        <p className="text-white/90 text-lg mb-4">
+        <p className="mb-4 text-lg text-white/90">
           Dein Schweizer Marktplatz für Kaufen und Verkaufen
         </p>
         <Link
           href="/sell"
-          className="inline-flex items-center gap-2 bg-white text-primary-600 hover:bg-gray-50 font-bold px-6 py-3 rounded-[50px] transition-all duration-300 text-base shadow-xl hover:shadow-2xl hover:scale-105 hover:-translate-y-1"
+          className="inline-flex items-center gap-2 rounded-[50px] bg-white px-6 py-3 text-base font-bold text-primary-600 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-gray-50 hover:shadow-2xl"
         >
           Jetzt verkaufen
-          <ArrowRight className="w-5 h-5" />
+          <ArrowRight className="h-5 w-5" />
         </Link>
       </div>
     </div>
   )
 }
-

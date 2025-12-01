@@ -1,12 +1,22 @@
 'use client'
 
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import {
+  ArrowLeft,
+  CheckCircle,
+  Clock,
+  FileText,
+  Loader2,
+  Mail,
+  MapPin,
+  Phone,
+  User
+} from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { ArrowLeft, AlertTriangle, CheckCircle, Clock, User, Mail, Phone, MapPin, Package, CreditCard, Calendar, FileText, Loader2 } from 'lucide-react'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
 import { toast } from 'react-hot-toast'
 
 interface Dispute {
@@ -89,6 +99,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
     }
 
     loadDispute()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router, params.id])
 
   const loadDispute = async () => {
@@ -101,7 +112,9 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
         setDispute(data.dispute)
       } else {
         const errorData = await res.json().catch(() => ({ message: 'Unknown error' }))
-        toast.error('Fehler beim Laden des Disputes: ' + (errorData.message || 'Unbekannter Fehler'))
+        toast.error(
+          'Fehler beim Laden des Disputes: ' + (errorData.message || 'Unbekannter Fehler')
+        )
         router.push('/admin/disputes')
       }
     } catch (error) {
@@ -127,14 +140,14 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
       const res = await fetch(`/api/admin/disputes/${params.id}/resolve`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           resolution: resolution.trim(),
           refundBuyer,
           refundSeller,
-          cancelPurchase
-        })
+          cancelPurchase,
+        }),
       })
 
       const data = await res.json()
@@ -161,7 +174,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
       payment_not_confirmed: 'Zahlung nicht bestätigt',
       seller_not_responding: 'Verkäufer antwortet nicht',
       buyer_not_responding: 'Käufer antwortet nicht',
-      other: 'Sonstiges'
+      other: 'Sonstiges',
     }
     return labels[reason] || reason
   }
@@ -170,28 +183,28 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
     switch (status) {
       case 'pending':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
-            <Clock className="h-4 w-4 mr-1" />
+          <span className="inline-flex items-center rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-800">
+            <Clock className="mr-1 h-4 w-4" />
             Offen
           </span>
         )
       case 'resolved':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
-            <CheckCircle className="h-4 w-4 mr-1" />
+          <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
+            <CheckCircle className="mr-1 h-4 w-4" />
             Gelöst
           </span>
         )
       case 'closed':
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
-            <CheckCircle className="h-4 w-4 mr-1" />
+          <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">
+            <CheckCircle className="mr-1 h-4 w-4" />
             Geschlossen
           </span>
         )
       default:
         return (
-          <span className="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-800">
+          <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">
             {status}
           </span>
         )
@@ -202,7 +215,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
           <p className="mt-4 text-gray-600">Lädt...</p>
         </div>
       </div>
@@ -211,7 +224,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
 
   if (!dispute) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <p className="text-gray-600">Dispute nicht gefunden</p>
           <Link href="/admin/disputes" className="mt-4 text-primary-600 hover:text-primary-700">
@@ -227,7 +240,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
 
   if (!isAdminInSession) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <p className="text-gray-600">Sie haben keine Berechtigung für diese Seite.</p>
           <Link href="/" className="mt-4 text-primary-600 hover:text-primary-700">
@@ -241,12 +254,12 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="mx-auto max-w-7xl px-4 py-12">
         <Link
           href="/admin/disputes"
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          className="mb-6 inline-flex items-center text-gray-600 hover:text-gray-900"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Zurück zur Übersicht
         </Link>
 
@@ -260,12 +273,12 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Hauptinhalt */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             {/* Artikel-Informationen */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Artikel-Informationen</h2>
+            <div className="rounded-lg bg-white p-6 shadow">
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">Artikel-Informationen</h2>
               <div className="flex gap-4">
                 {dispute.watch.images && dispute.watch.images.length > 0 && (
                   <img
@@ -276,9 +289,11 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                 )}
                 <div className="flex-1">
                   <h3 className="text-lg font-medium text-gray-900">{dispute.watch.title}</h3>
-                  <p className="text-gray-600">{dispute.watch.brand} {dispute.watch.model}</p>
+                  <p className="text-gray-600">
+                    {dispute.watch.brand} {dispute.watch.model}
+                  </p>
                   {dispute.purchasePrice && (
-                    <p className="text-lg font-semibold text-gray-900 mt-2">
+                    <p className="mt-2 text-lg font-semibold text-gray-900">
                       CHF {dispute.purchasePrice.toFixed(2)}
                     </p>
                   )}
@@ -287,8 +302,8 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
             </div>
 
             {/* Dispute-Informationen */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Dispute-Informationen</h2>
+            <div className="rounded-lg bg-white p-6 shadow">
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">Dispute-Informationen</h2>
               <div className="space-y-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Grund</label>
@@ -296,7 +311,9 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Beschreibung</label>
-                  <p className="mt-1 text-gray-900 whitespace-pre-wrap">{dispute.disputeDescription}</p>
+                  <p className="mt-1 whitespace-pre-wrap text-gray-900">
+                    {dispute.disputeDescription}
+                  </p>
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div>
@@ -320,8 +337,8 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
             </div>
 
             {/* Kauf-Status */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Kauf-Status</h2>
+            <div className="rounded-lg bg-white p-6 shadow">
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">Kauf-Status</h2>
               <div className="grid grid-cols-2 gap-4">
                 <div>
                   <label className="text-sm font-medium text-gray-500">Status</label>
@@ -332,7 +349,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                   <p className="mt-1 text-gray-900">
                     {dispute.paymentConfirmed ? 'Ja' : 'Nein'}
                     {dispute.paymentConfirmedAt && (
-                      <span className="text-gray-500 text-sm ml-2">
+                      <span className="ml-2 text-sm text-gray-500">
                         ({new Date(dispute.paymentConfirmedAt).toLocaleDateString('de-CH')})
                       </span>
                     )}
@@ -343,7 +360,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                   <p className="mt-1 text-gray-900">
                     {dispute.itemReceived ? 'Ja' : 'Nein'}
                     {dispute.itemReceivedAt && (
-                      <span className="text-gray-500 text-sm ml-2">
+                      <span className="ml-2 text-sm text-gray-500">
                         ({new Date(dispute.itemReceivedAt).toLocaleDateString('de-CH')})
                       </span>
                     )}
@@ -366,18 +383,18 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
 
             {/* Lösung-Formular (nur wenn noch nicht gelöst) */}
             {dispute.disputeStatus === 'pending' && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">Dispute lösen</h2>
+              <div className="rounded-lg bg-white p-6 shadow">
+                <h2 className="mb-4 text-xl font-semibold text-gray-900">Dispute lösen</h2>
                 <form onSubmit={handleResolve} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Lösung <span className="text-red-500">*</span>
                     </label>
                     <textarea
                       value={resolution}
-                      onChange={(e) => setResolution(e.target.value)}
+                      onChange={e => setResolution(e.target.value)}
                       rows={6}
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
                       placeholder="Beschreiben Sie die Lösung des Disputes..."
                       required
                     />
@@ -388,8 +405,8 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                       <input
                         type="checkbox"
                         checked={cancelPurchase}
-                        onChange={(e) => setCancelPurchase(e.target.checked)}
-                        className="mr-2 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                        onChange={e => setCancelPurchase(e.target.checked)}
+                        className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       />
                       <span className="text-sm text-gray-700">Kauf stornieren</span>
                     </label>
@@ -397,8 +414,8 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                       <input
                         type="checkbox"
                         checked={refundBuyer}
-                        onChange={(e) => setRefundBuyer(e.target.checked)}
-                        className="mr-2 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                        onChange={e => setRefundBuyer(e.target.checked)}
+                        className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       />
                       <span className="text-sm text-gray-700">Rückerstattung an Käufer</span>
                     </label>
@@ -406,8 +423,8 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                       <input
                         type="checkbox"
                         checked={refundSeller}
-                        onChange={(e) => setRefundSeller(e.target.checked)}
-                        className="mr-2 h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                        onChange={e => setRefundSeller(e.target.checked)}
+                        className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       />
                       <span className="text-sm text-gray-700">Rückerstattung an Verkäufer</span>
                     </label>
@@ -416,7 +433,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                   <button
                     type="submit"
                     disabled={resolving}
-                    className="w-full px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     {resolving ? (
                       <>
@@ -438,13 +455,13 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
           {/* Sidebar */}
           <div className="space-y-6">
             {/* Käufer-Informationen */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <div className="rounded-lg bg-white p-6 shadow">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
                 <User className="h-5 w-5" />
                 Käufer
               </h2>
               <div className="space-y-2">
-                <p className="text-gray-900 font-medium">{dispute.buyer.name}</p>
+                <p className="font-medium text-gray-900">{dispute.buyer.name}</p>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Mail className="h-4 w-4" />
                   {dispute.buyer.email}
@@ -457,7 +474,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                 )}
                 {dispute.buyer.address && (
                   <div className="flex items-start gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mt-0.5" />
+                    <MapPin className="mt-0.5 h-4 w-4" />
                     {dispute.buyer.address}
                   </div>
                 )}
@@ -465,13 +482,13 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
             </div>
 
             {/* Verkäufer-Informationen */}
-            <div className="bg-white rounded-lg shadow p-6">
-              <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+            <div className="rounded-lg bg-white p-6 shadow">
+              <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
                 <User className="h-5 w-5" />
                 Verkäufer
               </h2>
               <div className="space-y-2">
-                <p className="text-gray-900 font-medium">{dispute.seller.name}</p>
+                <p className="font-medium text-gray-900">{dispute.seller.name}</p>
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <Mail className="h-4 w-4" />
                   {dispute.seller.email}
@@ -484,7 +501,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                 )}
                 {dispute.seller.address && (
                   <div className="flex items-start gap-2 text-sm text-gray-600">
-                    <MapPin className="h-4 w-4 mt-0.5" />
+                    <MapPin className="mt-0.5 h-4 w-4" />
                     {dispute.seller.address}
                   </div>
                 )}
@@ -493,8 +510,8 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
 
             {/* Status-Historie */}
             {dispute.statusHistory && dispute.statusHistory.length > 0 && (
-              <div className="bg-white rounded-lg shadow p-6">
-                <h2 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <div className="rounded-lg bg-white p-6 shadow">
+                <h2 className="mb-4 flex items-center gap-2 text-lg font-semibold text-gray-900">
                   <FileText className="h-5 w-5" />
                   Status-Historie
                 </h2>
@@ -507,9 +524,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                           {new Date(entry.timestamp).toLocaleString('de-CH')}
                         </p>
                       )}
-                      {entry.reason && (
-                        <p className="text-xs text-gray-600 mt-1">{entry.reason}</p>
-                      )}
+                      {entry.reason && <p className="mt-1 text-xs text-gray-600">{entry.reason}</p>}
                     </div>
                   ))}
                 </div>
@@ -522,4 +537,3 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
     </div>
   )
 }
-

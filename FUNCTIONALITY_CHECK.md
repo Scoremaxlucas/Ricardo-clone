@@ -3,6 +3,7 @@
 ## ✅ Durchgeführte Prüfungen
 
 ### 1. Authentifizierung & Benutzerverwaltung
+
 - [x] Login-Funktion
 - [x] Registrierung
 - [x] E-Mail-Verifizierung
@@ -11,6 +12,7 @@
 - [x] Admin-Login
 
 ### 2. Verkaufsprozess
+
 - [x] Anzeige erstellen (sell/page.tsx)
 - [x] Entwürfe verwalten (my-watches/selling/drafts)
 - [x] Aktive Verkäufe (my-watches/selling/active)
@@ -20,6 +22,7 @@
 - [x] Dispute eröffnen (Verkäufer)
 
 ### 3. Kaufprozess
+
 - [x] Artikel durchsuchen
 - [x] Auktionen
 - [x] Sofortkauf
@@ -30,6 +33,7 @@
 - [x] Dispute eröffnen (Käufer)
 
 ### 4. Admin-Funktionen
+
 - [x] Admin-Dashboard
 - [x] Benutzerverwaltung
 - [x] Disputes verwalten
@@ -38,6 +42,7 @@
 - [x] Statistiken
 
 ### 5. Weitere Funktionen
+
 - [x] Favoriten
 - [x] Suchaufträge
 - [x] Benachrichtigungen
@@ -70,6 +75,7 @@
 ## 📋 Zu prüfende Funktionen
 
 ### Kritische Funktionen (hohe Priorität)
+
 1. **Verkaufsprozess**
    - [ ] Anzeige erstellen funktioniert
    - [ ] Bilder hochladen funktioniert
@@ -90,6 +96,7 @@
    - [ ] Verifizierungen prüfen funktioniert
 
 ### Wichtige Funktionen (mittlere Priorität)
+
 4. **Benutzer-Funktionen**
    - [ ] Profil bearbeiten funktioniert
    - [ ] Favoriten hinzufügen/entfernen funktioniert
@@ -101,6 +108,7 @@
    - [ ] Bewertungen abgeben funktioniert
 
 ### Optionale Funktionen (niedrige Priorität)
+
 6. **Weitere Features**
    - [ ] Preisvorschläge funktionieren
    - [ ] Boosters funktionieren
@@ -122,19 +130,3 @@
 2. Alle kritischen Funktionen manuell testen
 3. Fehlerberichte sammeln und beheben
 4. Performance optimieren
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -11,10 +11,7 @@ export async function POST(request: NextRequest) {
     const { email, password } = await request.json()
 
     if (!email || !password) {
-      return NextResponse.json(
-        { error: 'Email und Passwort erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Email und Passwort erforderlich' }, { status: 400 })
     }
 
     const normalizedEmail = email.toLowerCase().trim()
@@ -30,8 +27,8 @@ export async function POST(request: NextRequest) {
         name: true,
         password: true,
         isBlocked: true,
-        isAdmin: true
-      }
+        isAdmin: true,
+      },
     })
 
     if (!user) {
@@ -40,8 +37,8 @@ export async function POST(request: NextRequest) {
         error: 'User nicht gefunden',
         debug: {
           searchedEmail: normalizedEmail,
-          userCount: await prisma.user.count()
-        }
+          userCount: await prisma.user.count(),
+        },
       })
     }
 
@@ -52,7 +49,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: 'User ist blockiert',
-        user: { email: user.email, isBlocked: user.isBlocked }
+        user: { email: user.email, isBlocked: user.isBlocked },
       })
     }
 
@@ -61,7 +58,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({
         success: false,
         error: 'Kein Passwort gesetzt',
-        user: { email: user.email }
+        user: { email: user.email },
       })
     }
 
@@ -77,24 +74,18 @@ export async function POST(request: NextRequest) {
         passwordLength: user.password.length,
         passwordStart: user.password.substring(0, 30),
         isBlocked: user.isBlocked,
-        passwordValid: isValid
-      }
+        passwordValid: isValid,
+      },
     })
-
   } catch (error: any) {
     console.error('[TEST-AUTH] Error:', error)
     return NextResponse.json(
       {
         success: false,
         error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }
     )
   }
 }
-
-
-
-
-

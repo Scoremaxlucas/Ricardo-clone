@@ -4,13 +4,10 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // POST - Verkäufer folgen
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 })
     }
@@ -27,9 +24,9 @@ export async function POST(
       where: {
         followerId_followingId: {
           followerId: session.user.id,
-          followingId: sellerId
-        }
-      }
+          followingId: sellerId,
+        },
+      },
     })
 
     if (existing) {
@@ -40,8 +37,8 @@ export async function POST(
     await prisma.follow.create({
       data: {
         followerId: session.user.id,
-        followingId: sellerId
-      }
+        followingId: sellerId,
+      },
     })
 
     return NextResponse.json({ message: 'Erfolgreich gefolgt', isFollowing: true })
@@ -52,13 +49,10 @@ export async function POST(
 }
 
 // DELETE - Verkäufer entfolgen
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 })
     }
@@ -68,8 +62,8 @@ export async function DELETE(
     await prisma.follow.deleteMany({
       where: {
         followerId: session.user.id,
-        followingId: sellerId
-      }
+        followingId: sellerId,
+      },
     })
 
     return NextResponse.json({ message: 'Erfolgreich entfolgt', isFollowing: false })
@@ -80,13 +74,10 @@ export async function DELETE(
 }
 
 // GET - Follow-Status prüfen
-export async function GET(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ isFollowing: false })
     }
@@ -97,9 +88,9 @@ export async function GET(
       where: {
         followerId_followingId: {
           followerId: session.user.id,
-          followingId: sellerId
-        }
-      }
+          followingId: sellerId,
+        },
+      },
     })
 
     return NextResponse.json({ isFollowing: !!follow })

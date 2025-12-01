@@ -30,55 +30,51 @@ export default function DraftsPage() {
 
   // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
   if (status === 'unauthenticated' || !session) {
-    return <div className="flex min-h-screen items-center justify-center">Weiterleitung zur Anmeldung...</div>
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Weiterleitung zur Anmeldung...
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="mx-auto max-w-7xl px-4">
         <Link
           href="/my-watches"
-          className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6"
+          className="mb-6 inline-flex items-center text-primary-600 hover:text-primary-700"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Zurück zu Mein Verkaufen
         </Link>
 
-        <div className="flex justify-between items-center mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center">
-            <FileText className="h-8 w-8 mr-3 text-primary-600" />
+            <FileText className="mr-3 h-8 w-8 text-primary-600" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Entwürfe
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Noch nicht veröffentlichte Anzeigen
-              </p>
+              <h1 className="text-3xl font-bold text-gray-900">Entwürfe</h1>
+              <p className="mt-1 text-gray-600">Noch nicht veröffentlichte Anzeigen</p>
             </div>
           </div>
           <Link
             href="/sell"
-            className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+            className="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700"
           >
-            <Plus className="h-4 w-4 mr-2" />
+            <Plus className="mr-2 h-4 w-4" />
             Neue Anzeige
           </Link>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <div className="text-center py-12">
-            <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Keine Entwürfe
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Sie haben noch keine gespeicherten Entwürfe.
-            </p>
+        <div className="rounded-lg bg-white p-8 shadow-md">
+          <div className="py-12 text-center">
+            <FileText className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">Keine Entwürfe</h3>
+            <p className="mb-6 text-gray-600">Sie haben noch keine gespeicherten Entwürfe.</p>
             <Link
               href="/sell"
-              className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+              className="inline-flex items-center rounded-md bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               Neue Anzeige erstellen
             </Link>
           </div>

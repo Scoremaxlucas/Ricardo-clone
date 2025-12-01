@@ -9,22 +9,17 @@ const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
   title: 'Helvenda.ch - Schweizer Online-Marktplatz',
-  description: 'Der Schweizer Online-Marktplatz für Private und Gewerbetreibende. Kaufen, verkaufen und handeln Sie einfach und sicher.',
+  description:
+    'Der Schweizer Online-Marktplatz für Private und Gewerbetreibende. Kaufen, verkaufen und handeln Sie einfach und sicher.',
 }
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
+export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de" className="h-full">
-      <body className={`${inter.className} min-h-screen flex flex-col`}>
+      <body className={`${inter.className} flex min-h-screen flex-col`}>
         <Providers>
-          <div className="flex-1 flex flex-col">
-            {children}
-          </div>
-          <Toaster 
+          <div className="flex flex-1 flex-col">{children}</div>
+          <Toaster
             position="top-right"
             toastOptions={{
               success: {

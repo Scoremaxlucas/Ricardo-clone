@@ -1,7 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { PayPalScriptProvider, PayPalButtons, usePayPalScriptReducer } from '@paypal/react-paypal-js'
+import {
+  PayPalScriptProvider,
+  PayPalButtons,
+  usePayPalScriptReducer,
+} from '@paypal/react-paypal-js'
 import { Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
@@ -67,7 +71,7 @@ function PayPalButton({ invoiceId, invoiceNumber, amount, onSuccess }: PayPalPay
       }
 
       const result = await response.json()
-      
+
       if (result.success) {
         toast.success('Zahlung erfolgreich!')
         onSuccess?.()
@@ -96,7 +100,7 @@ function PayPalButton({ invoiceId, invoiceNumber, amount, onSuccess }: PayPalPay
   if (isPending || isProcessing) {
     return (
       <div className="flex items-center justify-center py-8">
-        <Loader2 className="h-6 w-6 animate-spin text-blue-600 mr-2" />
+        <Loader2 className="mr-2 h-6 w-6 animate-spin text-blue-600" />
         <span className="text-gray-600">
           {isPending ? 'PayPal wird geladen...' : 'Zahlung wird verarbeitet...'}
         </span>
@@ -120,14 +124,20 @@ function PayPalButton({ invoiceId, invoiceNumber, amount, onSuccess }: PayPalPay
   )
 }
 
-export function PayPalPaymentForm({ invoiceId, invoiceNumber, amount, onSuccess }: PayPalPaymentFormProps) {
+export function PayPalPaymentForm({
+  invoiceId,
+  invoiceNumber,
+  amount,
+  onSuccess,
+}: PayPalPaymentFormProps) {
   if (!paypalClientId) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
         <div className="flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
           <div className="text-sm text-yellow-800">
-            <strong>Hinweis:</strong> PayPal ist nicht konfiguriert. Bitte verwenden Sie eine andere Zahlungsmethode.
+            <strong>Hinweis:</strong> PayPal ist nicht konfiguriert. Bitte verwenden Sie eine andere
+            Zahlungsmethode.
           </div>
         </div>
       </div>
@@ -151,8 +161,3 @@ export function PayPalPaymentForm({ invoiceId, invoiceNumber, amount, onSuccess 
     </PayPalScriptProvider>
   )
 }
-
-
-
-
-

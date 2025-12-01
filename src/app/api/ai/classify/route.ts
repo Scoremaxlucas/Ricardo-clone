@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * PROFI-KI BILDERKENNUNG
- * 
+ *
  * Diese API nutzt mehrere KI-Modelle und Cloud-Services für maximale Genauigkeit:
  * 1. Google Vision API (falls API-Key vorhanden)
  * 2. TensorFlow.js EfficientNet (Fallback)
@@ -14,10 +14,7 @@ export async function POST(request: NextRequest) {
     const { imageBase64 } = await request.json()
 
     if (!imageBase64) {
-      return NextResponse.json(
-        { error: 'Kein Bild bereitgestellt' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Kein Bild bereitgestellt' }, { status: 400 })
     }
 
     // Entferne Data-URL Prefix falls vorhanden
@@ -102,10 +99,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('KI-Klassifizierungsfehler:', error)
-    return NextResponse.json(
-      { error: 'Fehler bei der Bilderkennung' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Fehler bei der Bilderkennung' }, { status: 500 })
   }
 }
-

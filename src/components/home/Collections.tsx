@@ -38,28 +38,26 @@ const collections: Collection[] = [
 
 export function Collections() {
   return (
-    <section className="py-12 bg-[#F4F4F4]">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-semibold text-[#3A3A3A] mb-6">Entdecke Collections</h2>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-          {collections.map((collection) => (
+    <section className="bg-[#F4F4F4] py-12">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        <h2 className="mb-6 text-2xl font-semibold text-[#3A3A3A]">Entdecke Collections</h2>
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+          {collections.map(collection => (
             <Link
               key={collection.id}
               href={collection.href}
-              className="group relative w-full h-[250px] rounded-[16px] overflow-hidden"
+              className="group relative h-[250px] w-full overflow-hidden rounded-[16px]"
             >
               <img
                 src={collection.image}
                 alt={collection.title}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               />
               {/* Overlay */}
               <div className="absolute inset-0 bg-black/40"></div>
               {/* Text */}
               <div className="absolute bottom-0 left-0 right-0 p-6">
-                <h3 className="text-2xl font-semibold text-white">
-                  {collection.title}
-                </h3>
+                <h3 className="text-2xl font-semibold text-white">{collection.title}</h3>
               </div>
             </Link>
           ))}
@@ -68,7 +66,3 @@ export function Collections() {
     </section>
   )
 }
-
-
-
-

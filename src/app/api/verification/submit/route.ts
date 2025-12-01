@@ -7,10 +7,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const body = await request.json()
@@ -34,11 +31,20 @@ export async function POST(request: NextRequest) {
       idDocumentPage1,
       idDocumentPage2,
       idDocumentType,
-      paymentMethods
+      paymentMethods,
     } = body
 
     // Validierung
-    if (!title || !firstName || !lastName || !street || !streetNumber || !postalCode || !city || !country) {
+    if (
+      !title ||
+      !firstName ||
+      !lastName ||
+      !street ||
+      !streetNumber ||
+      !postalCode ||
+      !city ||
+      !country
+    ) {
       return NextResponse.json(
         { message: 'Bitte füllen Sie alle Pflichtfelder aus' },
         { status: 400 }
@@ -52,10 +58,14 @@ export async function POST(request: NextRequest) {
       isEmpty: !idDocumentType || idDocumentType === '',
       hasID: !!idDocument,
       hasPage1: !!idDocumentPage1,
-      hasPage2: !!idDocumentPage2
+      hasPage2: !!idDocumentPage2,
     })
-    
-    if (!idDocumentType || idDocumentType === '' || (idDocumentType !== 'ID' && idDocumentType !== 'Passport')) {
+
+    if (
+      !idDocumentType ||
+      idDocumentType === '' ||
+      (idDocumentType !== 'ID' && idDocumentType !== 'Passport')
+    ) {
       console.error('API - Ausweistyp fehlt oder ist ungültig:', idDocumentType)
       return NextResponse.json(
         { message: 'Bitte wählen Sie einen Ausweistyp aus' },
@@ -67,7 +77,10 @@ export async function POST(request: NextRequest) {
       // Für Identitätskarte: mindestens eine Seite muss hochgeladen sein
       if (!idDocumentPage1 && !idDocumentPage2) {
         return NextResponse.json(
-          { message: 'Bitte laden Sie mindestens eine Seite Ihrer Identitätskarte hoch (Seite 1 oder Seite 2)' },
+          {
+            message:
+              'Bitte laden Sie mindestens eine Seite Ihrer Identitätskarte hoch (Seite 1 oder Seite 2)',
+          },
           { status: 400 }
         )
       }
@@ -92,9 +105,18 @@ export async function POST(request: NextRequest) {
 
     // Lieferadresse validieren falls vorhanden
     if (hasDeliveryAddress) {
-      if (!deliveryStreet || !deliveryStreetNumber || !deliveryPostalCode || !deliveryCity || !deliveryCountry) {
+      if (
+        !deliveryStreet ||
+        !deliveryStreetNumber ||
+        !deliveryPostalCode ||
+        !deliveryCity ||
+        !deliveryCountry
+      ) {
         return NextResponse.json(
-          { message: 'Bitte füllen Sie alle Felder der Lieferadresse aus oder deaktivieren Sie die Option' },
+          {
+            message:
+              'Bitte füllen Sie alle Felder der Lieferadresse aus oder deaktivieren Sie die Option',
+          },
           { status: 400 }
         )
       }
@@ -107,10 +129,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!dateOfBirth) {
-      return NextResponse.json(
-        { message: 'Bitte geben Sie Ihr Geburtsdatum an' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Bitte geben Sie Ihr Geburtsdatum an' }, { status: 400 })
     }
 
     // Prüfe Geburtsdatum
@@ -126,8 +145,9 @@ export async function POST(request: NextRequest) {
     const today = new Date()
     const age = today.getFullYear() - birthDate.getFullYear()
     const monthDiff = today.getMonth() - birthDate.getMonth()
-    const actualAge = monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age
-    
+    const actualAge =
+      monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate()) ? age - 1 : age
+
     if (actualAge < 18) {
       return NextResponse.json(
         { message: 'Sie müssen mindestens 18 Jahre alt sein' },
@@ -165,20 +185,25 @@ export async function POST(request: NextRequest) {
       // IBAN-Format-Validierung (CH + 2 Prüfziffern + 17 alphanumerische Zeichen = 21 Zeichen total)
       // Entferne alle Leerzeichen und Bindestriche, konvertiere zu Großbuchstaben
       const ibanCleaned = bankMethod.iban.replace(/[\s-]/g, '').toUpperCase().trim()
-      
+
       // Schweizer IBAN Format: CH + 2 Ziffern + 17 alphanumerische Zeichen = 21 Zeichen total
       const ibanRegex = /^CH\d{2}[A-Z0-9]{17}$/
-      
+
       if (ibanCleaned.length !== 21) {
         return NextResponse.json(
-          { message: `Die IBAN hat eine ungültige Länge. Erwartet: 21 Zeichen (ohne Leerzeichen), gefunden: ${ibanCleaned.length} Zeichen. Format: CH12 3456 7890 1234 5678 9` },
+          {
+            message: `Die IBAN hat eine ungültige Länge. Erwartet: 21 Zeichen (ohne Leerzeichen), gefunden: ${ibanCleaned.length} Zeichen. Format: CH12 3456 7890 1234 5678 9`,
+          },
           { status: 400 }
         )
       }
-      
+
       if (!ibanRegex.test(ibanCleaned)) {
         return NextResponse.json(
-          { message: 'Die IBAN hat ein ungültiges Format. Bitte verwenden Sie das Format: CH12 3456 7890 1234 5678 9 (Schweizer IBAN: CH + 2 Ziffern + 17 alphanumerische Zeichen)' },
+          {
+            message:
+              'Die IBAN hat ein ungültiges Format. Bitte verwenden Sie das Format: CH12 3456 7890 1234 5678 9 (Schweizer IBAN: CH + 2 Ziffern + 17 alphanumerische Zeichen)',
+          },
           { status: 400 }
         )
       }
@@ -232,14 +257,15 @@ export async function POST(request: NextRequest) {
         // Verifizierung
         verified: true,
         verifiedAt: new Date(),
-        verificationStatus: 'pending' // Status auf "pending" setzen, bis Admin prüft
-      }
+        verificationStatus: 'pending', // Status auf "pending" setzen, bis Admin prüft
+      },
     })
 
     return NextResponse.json({
-      message: 'Ihre Verifizierung wurde eingereicht und wird nun von unserem Team geprüft. Sie erhalten eine Benachrichtigung, sobald die Verifizierung abgeschlossen ist.',
+      message:
+        'Ihre Verifizierung wurde eingereicht und wird nun von unserem Team geprüft. Sie erhalten eine Benachrichtigung, sobald die Verifizierung abgeschlossen ist.',
       verified: false,
-      verificationStatus: 'pending'
+      verificationStatus: 'pending',
     })
   } catch (error: any) {
     console.error('Error submitting verification:', error)
@@ -249,4 +275,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

@@ -45,7 +45,8 @@ TWINT wird über **Stripe** abgewickelt, was automatische Bestätigung ermöglic
    - **Publishable key** (beginnt mit `pk_live_...`)
    - **Secret key** (beginnt mit `sk_live_...`)
 
-⚠️ **WICHTIG:** 
+⚠️ **WICHTIG:**
+
 - Verwenden Sie **Test Keys** für Entwicklung
 - Verwenden Sie **Live Keys** nur für Produktion
 - Teilen Sie **NIEMALS** Ihren Secret Key öffentlich!
@@ -87,10 +88,12 @@ NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_IHR_PUBLISHABLE_KEY_HIER
 ```
 
 **Ersetzen Sie:**
+
 - `sk_test_IHR_SECRET_KEY_HIER` mit Ihrem **Secret Key** aus Stripe
 - `pk_test_IHR_PUBLISHABLE_KEY_HIER` mit Ihrem **Publishable Key** aus Stripe
 
 **Beispiel:**
+
 ```env
 STRIPE_SECRET_KEY=sk_test_YOUR_SECRET_KEY_HERE
 NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY=pk_test_YOUR_PUBLISHABLE_KEY_HERE
@@ -124,6 +127,7 @@ npm run dev
 Für TWINT können Sie keine Test-Karten verwenden. Sie müssen eine echte TWINT-App verwenden, aber im **Test-Modus** wird keine echte Zahlung durchgeführt.
 
 **Stripe Test-Modus für TWINT:**
+
 - Verwenden Sie eine echte TWINT-App
 - Die Zahlung wird im Test-Modus simuliert
 - Keine echten Gelder werden transferiert
@@ -173,6 +177,7 @@ Wenn Sie bereit für Produktion sind:
 ### Problem: TWINT wird nicht angezeigt
 
 **Lösung:**
+
 1. Prüfen Sie, ob Stripe Keys in `.env` gesetzt sind
 2. Prüfen Sie, ob der Server neu gestartet wurde
 3. Prüfen Sie die Browser-Konsole auf Fehler
@@ -180,6 +185,7 @@ Wenn Sie bereit für Produktion sind:
 ### Problem: "Stripe ist nicht konfiguriert"
 
 **Lösung:**
+
 1. Prüfen Sie die `.env` Datei:
    ```bash
    cat .env | grep STRIPE
@@ -190,6 +196,7 @@ Wenn Sie bereit für Produktion sind:
 ### Problem: TWINT-Zahlung schlägt fehl
 
 **Lösung:**
+
 1. Prüfen Sie die Stripe Dashboard Logs: **"Developers"** → **"Logs"**
 2. Prüfen Sie die Server-Logs im Terminal
 3. Stellen Sie sicher, dass TWINT in Stripe aktiviert ist
@@ -197,6 +204,7 @@ Wenn Sie bereit für Produktion sind:
 ### Problem: Webhook funktioniert nicht
 
 **Lösung:**
+
 1. Prüfen Sie die Webhook-URL in Stripe Dashboard
 2. Stellen Sie sicher, dass die URL öffentlich erreichbar ist
 3. Prüfen Sie die Webhook-Logs in Stripe Dashboard
@@ -226,4 +234,3 @@ Wenn Sie bereit für Produktion sind:
 ---
 
 **Fertig!** 🎉 TWINT sollte jetzt funktionieren!
-

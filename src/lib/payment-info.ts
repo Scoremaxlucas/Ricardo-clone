@@ -4,7 +4,7 @@ import QRCode from 'qrcode'
 
 /**
  * Generiert Zahlungsinformationen für einen Kauf
- * Ricardo-Style: Automatische IBAN, QR-Rechnung, Zahlungsanweisung
+ * Automatische IBAN, QR-Rechnung, Zahlungsanweisung
  */
 export interface PaymentInfo {
   iban: string
@@ -31,11 +31,11 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     include: {
       watch: {
         include: {
-          seller: true
-        }
+          seller: true,
+        },
       },
-      buyer: true
-    }
+      buyer: true,
+    },
   })
 
   if (!purchase) {
@@ -53,15 +53,19 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
   if (seller.paymentMethods) {
     try {
       const paymentMethods = JSON.parse(seller.paymentMethods)
-      
+
       // Suche nach Bank-Überweisung
       const bankMethod = paymentMethods.find((pm: any) => pm.type === 'bank')
       if (bankMethod?.iban) {
         sellerIban = bankMethod.iban.replace(/\s/g, '')
-        accountHolder = `${bankMethod.accountHolderFirstName || ''} ${bankMethod.accountHolderLastName || ''}`.trim() || seller.name || `${seller.firstName || ''} ${seller.lastName || ''}`.trim() || seller.email
+        accountHolder =
+          `${bankMethod.accountHolderFirstName || ''} ${bankMethod.accountHolderLastName || ''}`.trim() ||
+          seller.name ||
+          `${seller.firstName || ''} ${seller.lastName || ''}`.trim() ||
+          seller.email
         sellerBic = bankMethod.bic || PAYMENT_CONFIG.bic // BIC ist optional, Fallback
       }
-      
+
       // Suche nach TWINT
       const twintMethod = paymentMethods.find((pm: any) => pm.type === 'twint')
       if (twintMethod?.phone) {
@@ -75,18 +79,38 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
   // Wenn keine IBAN gefunden wurde, werfe einen Fehler
   // Der Verkäufer muss eigene Bankdaten hinterlegen
   if (!sellerIban) {
-    throw new Error('Der Verkäufer hat keine Bankdaten hinterlegt. Bitte kontaktieren Sie den Verkäufer direkt, um die Zahlungsmodalitäten zu klären.')
+    throw new Error(
+      'Der Verkäufer hat keine Bankdaten hinterlegt. Bitte kontaktieren Sie den Verkäufer direkt, um die Zahlungsmodalitäten zu klären.'
+    )
   }
 
   // Berechne Gesamtbetrag (Kaufpreis + Versand)
-  const { getShippingCost } = await import('./shipping')
+  const { getShippingCostForMethod } = await import('./shipping')
   let shippingCost = 0
   if (purchase.shippingMethod) {
     try {
-      const shippingMethods = typeof purchase.shippingMethod === 'string' 
-        ? JSON.parse(purchase.shippingMethod) 
-        : purchase.shippingMethod
-      shippingCost = getShippingCost(shippingMethods)
+      // shippingMethod kann jetzt ein einzelner String sein (gewählte Methode) oder ein Array (Legacy)
+      let method: string | null = null
+      if (typeof purchase.shippingMethod === 'string') {
+        // Prüfe ob es ein JSON-Array ist oder ein einzelner String
+        try {
+          const parsed = JSON.parse(purchase.shippingMethod)
+          if (Array.isArray(parsed) && parsed.length > 0) {
+            method = parsed[0] // Nimm erste Methode für Legacy-Kompatibilität
+          } else {
+            method = purchase.shippingMethod // Einzelner String
+          }
+        } catch {
+          // Kein JSON, also einzelner String
+          method = purchase.shippingMethod
+        }
+      } else if (Array.isArray(purchase.shippingMethod) && purchase.shippingMethod.length > 0) {
+        method = purchase.shippingMethod[0] // Legacy: Nimm erste Methode
+      }
+
+      if (method) {
+        shippingCost = getShippingCostForMethod(method as any)
+      }
     } catch (error) {
       console.error('[payment-info] Fehler beim Berechnen der Versandkosten:', error)
     }
@@ -109,16 +133,19 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
       streetNumber: seller.streetNumber || PAYMENT_CONFIG.address.streetNumber,
       postalCode: seller.postalCode || PAYMENT_CONFIG.address.postalCode,
       city: seller.city || PAYMENT_CONFIG.address.city,
-      country: seller.country || PAYMENT_CONFIG.address.country
+      country: seller.country || PAYMENT_CONFIG.address.country,
     },
-    debtorName: `${purchase.buyer.firstName || ''} ${purchase.buyer.lastName || ''}`.trim() || purchase.buyer.name || 'Käufer',
+    debtorName:
+      `${purchase.buyer.firstName || ''} ${purchase.buyer.lastName || ''}`.trim() ||
+      purchase.buyer.name ||
+      'Käufer',
     debtorAddress: {
       street: purchase.buyer.street || '',
       streetNumber: purchase.buyer.streetNumber || '',
       postalCode: purchase.buyer.postalCode || '',
       city: purchase.buyer.city || '',
-      country: purchase.buyer.country || 'CH'
-    }
+      country: purchase.buyer.country || 'CH',
+    },
   })
 
   // Generiere QR-Code als Data URL
@@ -128,7 +155,7 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
       errorCorrectionLevel: 'M',
       type: 'image/png',
       width: 300,
-      margin: 1
+      margin: 1,
     })
   } catch (error) {
     console.error('[payment-info] Fehler beim Generieren des QR-Codes:', error)
@@ -142,26 +169,26 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     bic: sellerBic,
     accountHolder: accountHolder,
     reference: reference,
-    productTitle: purchase.watch.title
+    productTitle: purchase.watch.title,
   })
 
   // Generiere TWINT QR-Code und Deep Link (falls TWINT vorhanden)
   let twintQRCodeDataUrl: string | null = null
   let twintDeepLink: string | null = null
-  
+
   if (twintPhone) {
     // Generiere TWINT Deep Link
     const twintAmount = totalAmount.toFixed(2)
     const twintMessage = `Kauf: ${purchase.watch.title}`
     twintDeepLink = `twint://pay?phone=${encodeURIComponent(twintPhone)}&amount=${twintAmount}&message=${encodeURIComponent(twintMessage)}&reference=${encodeURIComponent(reference)}`
-    
+
     // Generiere TWINT QR-Code
     try {
       twintQRCodeDataUrl = await QRCode.toDataURL(twintDeepLink, {
         errorCorrectionLevel: 'M',
         type: 'image/png',
         width: 300,
-        margin: 1
+        margin: 1,
       })
     } catch (error) {
       console.error('[payment-info] Fehler beim Generieren des TWINT QR-Codes:', error)
@@ -181,7 +208,7 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     twintPhone: twintPhone || null,
     twintQRCodeDataUrl,
     twintDeepLink,
-    hasSellerBankDetails: true // Immer true, da wir einen Fehler werfen, wenn keine IBAN vorhanden ist
+    hasSellerBankDetails: true, // Immer true, da wir einen Fehler werfen, wenn keine IBAN vorhanden ist
   }
 }
 
@@ -218,35 +245,35 @@ function generateQRCodeString(params: {
     creditorName,
     creditorAddress,
     debtorName,
-    debtorAddress
+    debtorAddress,
   } = params
 
   // Swiss QR-Bill Format (SPC = Swiss Payment Code)
   return [
-    'SPC',                    // QR-Type
-    '0200',                   // Version
-    '1',                      // Coding Type (UTF-8)
-    iban.replace(/\s/g, ''),  // Creditor IBAN (ohne Leerzeichen)
-    'K',                      // Creditor Address Type (K = structured)
+    'SPC', // QR-Type
+    '0200', // Version
+    '1', // Coding Type (UTF-8)
+    iban.replace(/\s/g, ''), // Creditor IBAN (ohne Leerzeichen)
+    'K', // Creditor Address Type (K = structured)
     creditorName.substring(0, 70), // Creditor Name (max 70 Zeichen)
     `${creditorAddress.street} ${creditorAddress.streetNumber}`.substring(0, 70), // Creditor Street
     `${creditorAddress.postalCode} ${creditorAddress.city}`.substring(0, 70), // Creditor City
-    creditorAddress.country,   // Creditor Country
-    '',                        // Ultimate creditor (optional)
-    '',                        // Ultimate creditor street (optional)
-    '',                        // Ultimate creditor city (optional)
-    '',                        // Ultimate creditor country (optional)
-    `${amount.toFixed(2)}`,    // Amount
-    currency,                  // Currency
-    'K',                      // Ultimate debtor Address Type
+    creditorAddress.country, // Creditor Country
+    '', // Ultimate creditor (optional)
+    '', // Ultimate creditor street (optional)
+    '', // Ultimate creditor city (optional)
+    '', // Ultimate creditor country (optional)
+    `${amount.toFixed(2)}`, // Amount
+    currency, // Currency
+    'K', // Ultimate debtor Address Type
     debtorName.substring(0, 70), // Debtor Name
     `${debtorAddress.street} ${debtorAddress.streetNumber}`.substring(0, 70), // Debtor Street
     `${debtorAddress.postalCode} ${debtorAddress.city}`.substring(0, 70), // Debtor City
-    debtorAddress.country,     // Debtor Country
-    'SCOR',                   // Reference Type (SCOR = Creditor Reference)
+    debtorAddress.country, // Debtor Country
+    'SCOR', // Reference Type (SCOR = Creditor Reference)
     reference.padEnd(25, ' ').substring(0, 25), // Reference (max 25 Zeichen)
-    '',                        // Additional information (optional)
-    'EPD'                      // Trailer (End of Payment Data)
+    '', // Additional information (optional)
+    'EPD', // Trailer (End of Payment Data)
   ].join('\n')
 }
 
@@ -294,8 +321,7 @@ export async function setPaymentDeadline(purchaseId: string, contactedAt: Date):
   await prisma.purchase.update({
     where: { id: purchaseId },
     data: {
-      paymentDeadline: paymentDeadline
-    }
+      paymentDeadline: paymentDeadline,
+    },
   })
 }
-

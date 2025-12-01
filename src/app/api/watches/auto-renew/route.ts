@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 /**
  * API-Route für automatische Verlängerung abgelaufener Auktionen
  * Diese Route sollte von einem Cron-Job regelmäßig aufgerufen werden (z.B. stündlich)
- * 
+ *
  * Verlängert Auktionen, die:
  * - abgelaufen sind (auctionEnd < now)
  * - autoRenew = true haben
@@ -15,45 +15,44 @@ export async function POST(request: NextRequest) {
     // Optional: API-Key oder Secret-Check für Sicherheit
     const authHeader = request.headers.get('authorization')
     const cronSecret = process.env.CRON_SECRET || 'your-secret-key'
-    
+
     if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json(
-        { message: 'Unauthorized' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
     const now = new Date()
-    
+
     // Finde alle abgelaufenen Auktionen mit autoRenew
     const expiredAuctions = await prisma.watch.findMany({
       where: {
         isAuction: true,
         autoRenew: true,
         auctionEnd: {
-          lt: now
+          lt: now,
         },
         auctionDuration: {
-          not: null
+          not: null,
         },
         // Keine Purchases oder Sales vorhanden
         purchases: {
-          none: {}
+          none: {},
         },
         sales: {
-          none: {}
-        }
+          none: {},
+        },
       },
       select: {
         id: true,
         auctionEnd: true,
         auctionDuration: true,
         boosters: true, // Booster-Informationen
-        sellerId: true  // Verkäufer-ID für Rechnungserstellung
-      }
+        sellerId: true, // Verkäufer-ID für Rechnungserstellung
+      },
     })
 
-    console.log(`[auto-renew] Gefundene abgelaufene Auktionen mit autoRenew: ${expiredAuctions.length}`)
+    console.log(
+      `[auto-renew] Gefundene abgelaufene Auktionen mit autoRenew: ${expiredAuctions.length}`
+    )
 
     let renewedCount = 0
     let boosterInvoiceCount = 0
@@ -66,31 +65,36 @@ export async function POST(request: NextRequest) {
           continue
         }
 
-        const newAuctionEnd = new Date(auction.auctionEnd!.getTime() + auction.auctionDuration * 24 * 60 * 60 * 1000)
+        const newAuctionEnd = new Date(
+          auction.auctionEnd!.getTime() + auction.auctionDuration * 24 * 60 * 60 * 1000
+        )
 
         // Verlängere die Auktion
         await prisma.watch.update({
           where: { id: auction.id },
           data: {
-            auctionEnd: newAuctionEnd
-          }
+            auctionEnd: newAuctionEnd,
+          },
         })
 
         renewedCount++
-        console.log(`[auto-renew] Auktion ${auction.id} verlängert bis ${newAuctionEnd.toISOString()}`)
+        console.log(
+          `[auto-renew] Auktion ${auction.id} verlängert bis ${newAuctionEnd.toISOString()}`
+        )
 
         // Prüfe, ob ein Booster vorhanden ist und erstelle Rechnung
         if (auction.boosters) {
           try {
             let boosterCodes: string[] = []
-            
+
             // Parse boosters (kann JSON-String oder bereits Array sein)
             if (typeof auction.boosters === 'string') {
               try {
                 boosterCodes = JSON.parse(auction.boosters)
               } catch (e) {
                 // Falls Parsing fehlschlägt, versuche es als einzelnen Code
-                boosterCodes = auction.boosters !== 'none' && auction.boosters ? [auction.boosters] : []
+                boosterCodes =
+                  auction.boosters !== 'none' && auction.boosters ? [auction.boosters] : []
               }
             } else if (Array.isArray(auction.boosters)) {
               boosterCodes = auction.boosters
@@ -102,7 +106,7 @@ export async function POST(request: NextRequest) {
             // Erstelle Rechnung für jeden Booster
             for (const boosterCode of boosterCodes) {
               const boosterPrice = await prisma.boosterPrice.findUnique({
-                where: { code: boosterCode }
+                where: { code: boosterCode },
               })
 
               if (boosterPrice && boosterPrice.price > 0) {
@@ -121,12 +125,12 @@ export async function POST(request: NextRequest) {
                 const lastInvoice = await prisma.invoice.findFirst({
                   where: {
                     invoiceNumber: {
-                      startsWith: `REV-${year}-`
-                    }
+                      startsWith: `REV-${year}-`,
+                    },
                   },
                   orderBy: {
-                    invoiceNumber: 'desc'
-                  }
+                    invoiceNumber: 'desc',
+                  },
                 })
 
                 let invoiceNumber = `REV-${year}-001`
@@ -148,28 +152,35 @@ export async function POST(request: NextRequest) {
                     vatAmount: roundedVatAmount,
                     total: roundedTotal,
                     status: 'pending',
-                    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist (wie Ricardo)
+                    dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist
                     items: {
-                      create: [{
-                        watchId: auction.id,
-                        description: `Booster: ${boosterPrice.name} (Verlängerung)`,
-                        quantity: 1,
-                        price: roundedSubtotal,
-                        total: roundedSubtotal
-                      }]
-                    }
-                  }
+                      create: [
+                        {
+                          watchId: auction.id,
+                          description: `Booster: ${boosterPrice.name} (Verlängerung)`,
+                          quantity: 1,
+                          price: roundedSubtotal,
+                          total: roundedSubtotal,
+                        },
+                      ],
+                    },
+                  },
                 })
 
                 boosterInvoiceCount++
-                console.log(`[auto-renew] Booster-Rechnung erstellt: ${invoiceNumber} für ${boosterPrice.name} (CHF ${roundedTotal.toFixed(2)} inkl. MwSt) - Auktion ${auction.id}`)
+                console.log(
+                  `[auto-renew] Booster-Rechnung erstellt: ${invoiceNumber} für ${boosterPrice.name} (CHF ${roundedTotal.toFixed(2)} inkl. MwSt) - Auktion ${auction.id}`
+                )
 
-                // RICARDO-STYLE: Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
+                // Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
                 try {
                   const { sendInvoiceNotificationAndEmail } = await import('@/lib/invoice')
                   await sendInvoiceNotificationAndEmail(invoice)
                 } catch (notificationError: any) {
-                  console.error(`[auto-renew] Fehler bei Benachrichtigung für Auktion ${auction.id}:`, notificationError)
+                  console.error(
+                    `[auto-renew] Fehler bei Benachrichtigung für Auktion ${auction.id}:`,
+                    notificationError
+                  )
                   // Fehler sollte nicht die Rechnungserstellung verhindern
                 }
               }
@@ -193,14 +204,14 @@ export async function POST(request: NextRequest) {
       renewed: renewedCount,
       boosterInvoices: boosterInvoiceCount,
       total: expiredAuctions.length,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     })
   } catch (error: any) {
     console.error('[auto-renew] Fehler:', error)
     return NextResponse.json(
-      { 
+      {
         message: 'Fehler bei Auto-Renew',
-        error: error.message 
+        error: error.message,
       },
       { status: 500 }
     )
@@ -211,6 +222,6 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   return NextResponse.json({
     message: 'Auto-Renew API',
-    usage: 'POST mit Authorization Header: Bearer {CRON_SECRET}'
+    usage: 'POST mit Authorization Header: Bearer {CRON_SECRET}',
   })
 }

@@ -31,6 +31,7 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 ```
 
 **Wichtig:**
+
 - `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` muss mit `NEXT_PUBLIC_` beginnen (wird im Browser verwendet)
 - `STRIPE_SECRET_KEY` darf **NICHT** mit `NEXT_PUBLIC_` beginnen (nur Server-seitig)
 - `STRIPE_WEBHOOK_SECRET` wird für Webhook-Verifizierung benötigt
@@ -66,10 +67,10 @@ STRIPE_WEBHOOK_SECRET=whsec_...
 
 Stripe bietet Test-Kreditkarten für Entwicklung:
 
-| Karte | Ergebnis |
-|-------|----------|
-| `4242 4242 4242 4242` | Erfolgreich |
-| `4000 0000 0000 0002` | Fehlgeschlagen |
+| Karte                 | Ergebnis               |
+| --------------------- | ---------------------- |
+| `4242 4242 4242 4242` | Erfolgreich            |
+| `4000 0000 0000 0002` | Fehlgeschlagen         |
 | `4000 0000 0000 9995` | 3D Secure erforderlich |
 
 **Weitere Test-Karten:** [Stripe Testing](https://stripe.com/docs/testing)
@@ -112,14 +113,17 @@ Stripe bietet Test-Kreditkarten für Entwicklung:
 ## 🐛 Troubleshooting
 
 ### "Stripe ist nicht konfiguriert"
+
 - Prüfen Sie ob `NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY` gesetzt ist
 - Server neu starten nach `.env` Änderungen
 
 ### "Webhook signature verification failed"
+
 - Prüfen Sie ob `STRIPE_WEBHOOK_SECRET` korrekt ist
 - Webhook Secret muss mit `whsec_` beginnen
 
 ### Zahlung wird nicht bestätigt
+
 - Prüfen Sie Webhook-Logs in Stripe Dashboard
 - Prüfen Sie Server-Logs für Fehler
 - Stellen Sie sicher, dass Webhook-Endpoint erreichbar ist
@@ -129,8 +133,3 @@ Stripe bietet Test-Kreditkarten für Entwicklung:
 - [Stripe Dokumentation](https://stripe.com/docs)
 - [Stripe Testing](https://stripe.com/docs/testing)
 - [Stripe Webhooks](https://stripe.com/docs/webhooks)
-
-
-
-
-

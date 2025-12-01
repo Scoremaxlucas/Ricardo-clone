@@ -54,7 +54,7 @@ export function FeaturedProducts() {
   useEffect(() => {
     const fetchFavorites = async () => {
       if (!session?.user) return
-      
+
       try {
         const response = await fetch('/api/favorites')
         if (response.ok) {
@@ -65,16 +65,16 @@ export function FeaturedProducts() {
         console.error('Error fetching favorites:', error)
       }
     }
-    
+
     fetchFavorites()
   }, [session?.user])
 
   if (loading) {
     return (
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-gray-50 py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
             <p className="mt-4 text-gray-600">{t.home.loading}</p>
           </div>
         </div>
@@ -84,15 +84,11 @@ export function FeaturedProducts() {
 
   if (items.length === 0) {
     return (
-      <section className="py-16 bg-gray-50">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-gray-50 py-16">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="text-3xl font-bold text-gray-900 mb-4">
-              {t.home.featured}
-            </h2>
-            <p className="text-lg text-gray-600">
-              {t.home.noItemsYet}
-            </p>
+            <h2 className="mb-4 text-3xl font-bold text-gray-900">{t.home.featured}</h2>
+            <p className="text-lg text-gray-600">{t.home.noItemsYet}</p>
           </div>
         </div>
       </section>
@@ -100,38 +96,38 @@ export function FeaturedProducts() {
   }
 
   return (
-    <section className="py-12 bg-[#FAFAFA]">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="text-center mb-10">
-          <h2 className="text-3xl md:text-4xl font-extrabold text-gray-900 mb-3">
+    <section className="bg-[#FAFAFA] py-12">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        <div className="mb-10 text-center">
+          <h2 className="mb-3 text-3xl font-extrabold text-gray-900 md:text-4xl">
             {t.home.featured}
           </h2>
-          <p className="text-lg text-gray-600 leading-relaxed">
-            {t.home.discoverLatest}
-          </p>
+          <p className="text-lg leading-relaxed text-gray-600">{t.home.discoverLatest}</p>
         </div>
 
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-6">
-          {items.map((product) => (
-            <ProductCard
-              key={product.id}
-              {...product}
-              showCondition={true}
-              showViewButton={true}
-              viewButtonText={t.home.viewOffer}
-              favorites={favorites}
-              onFavoriteToggle={(id, isFavorite) => {
-                setFavorites(prev => {
-                  const newSet = new Set(prev)
-                  if (isFavorite) {
-                    newSet.add(id)
-                  } else {
-                    newSet.delete(id)
-                  }
-                  return newSet
-                })
-              }}
-            />
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+          {items.map(product => (
+            <div key={product.id} className="flex h-full min-w-0">
+              <ProductCard
+                {...product}
+                showCondition={true}
+                showViewButton={true}
+                viewButtonText={t.home.viewOffer}
+                favorites={favorites}
+                className="w-full"
+                onFavoriteToggle={(id, isFavorite) => {
+                  setFavorites(prev => {
+                    const newSet = new Set(prev)
+                    if (isFavorite) {
+                      newSet.add(id)
+                    } else {
+                      newSet.delete(id)
+                    }
+                    return newSet
+                  })
+                }}
+              />
+            </div>
           ))}
         </div>
       </div>

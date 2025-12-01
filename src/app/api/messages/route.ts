@@ -12,22 +12,16 @@ export async function GET(request: NextRequest) {
     const watchId = searchParams.get('watchId')
 
     if (!watchId) {
-      return NextResponse.json(
-        { message: 'watchId fehlt' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'watchId fehlt' }, { status: 400 })
     }
 
     // Hole das Angebot, um sellerId zu bekommen
     const watch = await prisma.watch.findUnique({
-      where: { id: watchId }
+      where: { id: watchId },
     })
 
     if (!watch) {
-      return NextResponse.json(
-        { message: 'Angebot nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Angebot nicht gefunden' }, { status: 404 })
     }
 
     // Logik für private Nachrichten:
@@ -37,9 +31,9 @@ export async function GET(request: NextRequest) {
     //   2. Alle privaten Antworten des Verkäufers (die der Verkäufer an ihn geschickt hat)
     // - Andere User sehen private Nachrichten NICHT
     // - Öffentliche Nachrichten sind für alle sichtbar
-    
-    let whereClause: any = {
-      watchId
+
+    const whereClause: any = {
+      watchId,
     }
 
     if (session?.user?.id) {
@@ -48,30 +42,19 @@ export async function GET(request: NextRequest) {
 
       if (isSeller) {
         // Verkäufer sieht alle Nachrichten (öffentlich + privat)
-        whereClause.OR = [
-          { isPublic: true },
-          { isPublic: false }
-        ]
+        whereClause.OR = [{ isPublic: true }, { isPublic: false }]
       } else {
         // Für Anfragende: Finde alle privaten Nachrichten in seiner Konversation mit dem Verkäufer
         whereClause.OR = [
           { isPublic: true }, // Öffentliche Nachrichten
           // Private Nachrichten: User hat an Verkäufer geschickt
           {
-            AND: [
-              { isPublic: false },
-              { senderId: userId },
-              { receiverId: watch.sellerId }
-            ]
+            AND: [{ isPublic: false }, { senderId: userId }, { receiverId: watch.sellerId }],
           },
           // Private Nachrichten: Verkäufer hat an User geschickt
           {
-            AND: [
-              { isPublic: false },
-              { senderId: watch.sellerId },
-              { receiverId: userId }
-            ]
-          }
+            AND: [{ isPublic: false }, { senderId: watch.sellerId }, { receiverId: userId }],
+          },
         ]
       }
     } else {
@@ -79,7 +62,14 @@ export async function GET(request: NextRequest) {
       whereClause.isPublic = true
     }
 
-    console.log('Messages GET - userId:', session?.user?.id, 'sellerId:', watch.sellerId, 'isSeller:', session?.user?.id === watch.sellerId)
+    console.log(
+      'Messages GET - userId:',
+      session?.user?.id,
+      'sellerId:',
+      watch.sellerId,
+      'isSeller:',
+      session?.user?.id === watch.sellerId
+    )
     console.log('Where clause:', JSON.stringify(whereClause, null, 2))
 
     const messages = await prisma.message.findMany({
@@ -90,23 +80,25 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             email: true,
-            image: true
-          }
+            image: true,
+          },
         },
         receiver: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'asc' }
+      orderBy: { createdAt: 'asc' },
     })
 
     console.log('Messages found:', messages.length)
     messages.forEach((msg: any) => {
-      console.log(`Message ${msg.id}: sender=${msg.senderId}, receiver=${msg.receiverId}, isPublic=${msg.isPublic}`)
+      console.log(
+        `Message ${msg.id}: sender=${msg.senderId}, receiver=${msg.receiverId}, isPublic=${msg.isPublic}`
+      )
     })
 
     return NextResponse.json({ messages })
@@ -124,10 +116,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const data = await request.json()
@@ -142,14 +131,11 @@ export async function POST(request: NextRequest) {
 
     // Hole das Angebot, um sellerId zu bekommen
     const watch = await prisma.watch.findUnique({
-      where: { id: watchId }
+      where: { id: watchId },
     })
 
     if (!watch) {
-      return NextResponse.json(
-        { message: 'Angebot nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Angebot nicht gefunden' }, { status: 404 })
     }
 
     // Receiver-Logik:
@@ -163,26 +149,31 @@ export async function POST(request: NextRequest) {
         where: {
           watchId,
           senderId: { not: watch.sellerId }, // Nicht vom Verkäufer
-          receiverId: watch.sellerId // An den Verkäufer gerichtet
+          receiverId: watch.sellerId, // An den Verkäufer gerichtet
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       })
-      
+
       // Falls keine direkte Nachricht an den Verkäufer gefunden wurde, suche nach der letzten Nachricht vom Käufer
       if (!lastBuyerMessage) {
         const anyBuyerMessage = await prisma.message.findFirst({
           where: {
             watchId,
-            senderId: { not: watch.sellerId } // Nicht vom Verkäufer
+            senderId: { not: watch.sellerId }, // Nicht vom Verkäufer
           },
-          orderBy: { createdAt: 'desc' }
+          orderBy: { createdAt: 'desc' },
         })
         receiverId = anyBuyerMessage?.senderId || watch.sellerId // Fallback
       } else {
         receiverId = lastBuyerMessage.senderId
       }
-      
-      console.log('Verkäufer antwortet - receiverId:', receiverId, 'letzte Käufer-Nachricht:', lastBuyerMessage?.id)
+
+      console.log(
+        'Verkäufer antwortet - receiverId:',
+        receiverId,
+        'letzte Käufer-Nachricht:',
+        lastBuyerMessage?.id
+      )
     } else {
       // Käufer stellt Frage - Receiver ist der Verkäufer
       receiverId = watch.sellerId
@@ -195,7 +186,7 @@ export async function POST(request: NextRequest) {
         isPublic,
         watchId,
         senderId: session.user.id,
-        receiverId
+        receiverId,
       },
       include: {
         sender: {
@@ -203,17 +194,17 @@ export async function POST(request: NextRequest) {
             id: true,
             name: true,
             email: true,
-            image: true
-          }
+            image: true,
+          },
         },
         receiver: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
-      }
+            email: true,
+          },
+        },
+      },
     })
 
     // Wenn Verkäufer eine Antwort direkt als öffentlich erstellt, mache auch die Frage automatisch öffentlich
@@ -226,19 +217,21 @@ export async function POST(request: NextRequest) {
           receiverId: watch.sellerId, // An den Verkäufer gerichtet
           isPublic: false, // Noch privat
           createdAt: {
-            lt: message.createdAt // Vor dieser Antwort
-          }
+            lt: message.createdAt, // Vor dieser Antwort
+          },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       })
 
       // Wenn eine Frage gefunden wurde, mache sie auch öffentlich
       if (originalQuestion) {
         await prisma.message.update({
           where: { id: originalQuestion.id },
-          data: { isPublic: true }
+          data: { isPublic: true },
         })
-        console.log(`Frage ${originalQuestion.id} wurde automatisch öffentlich gemacht, da Antwort ${message.id} direkt als öffentlich erstellt wurde`)
+        console.log(
+          `Frage ${originalQuestion.id} wurde automatisch öffentlich gemacht, da Antwort ${message.id} direkt als öffentlich erstellt wurde`
+        )
       }
     }
 
@@ -248,13 +241,13 @@ export async function POST(request: NextRequest) {
         // Hole Empfänger-Details
         const receiver = await prisma.user.findUnique({
           where: { id: receiverId },
-          select: { name: true, email: true, firstName: true }
+          select: { name: true, email: true, firstName: true },
         })
 
         if (receiver && receiver.email) {
           const buyerName = receiver.firstName || receiver.name || 'Kunde'
           const sellerName = session.user.name || 'Verkäufer'
-          
+
           const emailContent = getAnswerNotificationEmail(
             buyerName,
             sellerName,
@@ -268,7 +261,7 @@ export async function POST(request: NextRequest) {
             to: receiver.email,
             subject: emailContent.subject,
             html: emailContent.html,
-            text: emailContent.text
+            text: emailContent.text,
           })
 
           console.log(`E-Mail-Benachrichtigung an ${receiver.email} gesendet`)
@@ -288,4 +281,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

@@ -41,22 +41,6 @@ export function useRequireAuth(redirectTo?: string) {
     session,
     isAuthorized,
     isLoading: isLoading || status === 'loading',
-    status
+    status,
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

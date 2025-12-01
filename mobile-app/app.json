@@ -11,9 +11,7 @@
       "resizeMode": "contain",
       "backgroundColor": "#0ea5e9"
     },
-    "assetBundlePatterns": [
-      "**/*"
-    ],
+    "assetBundlePatterns": ["**/*"],
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "com.watchmarket.mobile"
@@ -28,10 +26,6 @@
     "web": {
       "favicon": "./assets/favicon.png"
     },
-    "plugins": [
-      "expo-camera",
-      "expo-location",
-      "expo-notifications"
-    ]
+    "plugins": ["expo-camera", "expo-location", "expo-notifications"]
   }
 }

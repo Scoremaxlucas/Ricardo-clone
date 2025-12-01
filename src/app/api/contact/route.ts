@@ -2,7 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 
-const CONTACT_EMAIL = process.env.CONTACT_EMAIL || process.env.RESEND_FROM_EMAIL || 'support@helvenda.ch'
+const CONTACT_EMAIL =
+  process.env.CONTACT_EMAIL || process.env.RESEND_FROM_EMAIL || 'support@helvenda.ch'
 
 export async function POST(request: NextRequest) {
   try {
@@ -11,19 +12,13 @@ export async function POST(request: NextRequest) {
 
     // Validierung
     if (!category || !email || !subject || !message) {
-      return NextResponse.json(
-        { message: 'Bitte füllen Sie alle Felder aus' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Bitte füllen Sie alle Felder aus' }, { status: 400 })
     }
 
     // E-Mail-Validierung
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
     if (!emailRegex.test(email)) {
-      return NextResponse.json(
-        { message: 'Ungültige E-Mail-Adresse' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Ungültige E-Mail-Adresse' }, { status: 400 })
     }
 
     // Kategorie-Labels
@@ -52,7 +47,9 @@ export async function POST(request: NextRequest) {
           status: 'pending',
         },
       })
-      console.log(`[contact] ✅ Kontaktanfrage gespeichert: ID=${contactRequest.id}, Kategorie=${categoryLabel}`)
+      console.log(
+        `[contact] ✅ Kontaktanfrage gespeichert: ID=${contactRequest.id}, Kategorie=${categoryLabel}`
+      )
     } catch (dbError: any) {
       console.error('[contact] ❌ Fehler beim Speichern in Datenbank:', dbError)
       console.error('[contact] Error name:', dbError.name)
@@ -294,4 +291,3 @@ Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht direkt auf d
     )
   }
 }
-

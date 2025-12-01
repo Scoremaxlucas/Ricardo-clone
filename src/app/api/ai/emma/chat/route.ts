@@ -5,8 +5,8 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * EMMA AI ASSISTANT - Chat Endpoint
- * 
- * Emma ist der KI-Assistent von Helvenda, ähnlich wie bei Ricardo.ch
+ *
+ * Emma ist der KI-Assistent von Helvenda
  * Sie hilft Benutzern bei Fragen zu:
  * - Produkten und Artikeln
  * - Verkaufsprozess
@@ -35,17 +35,17 @@ interface EmmaContext {
 
 async function getEmmaContext(request: NextRequest, session: any): Promise<EmmaContext> {
   const context: LeaContext = {}
-  
+
   if (session?.user) {
     context.userId = session.user.id
     context.userName = session.user.name || session.user.email
     context.userRole = 'buyer' // Default, könnte erweitert werden
   }
-  
+
   // Versuche Produkt-ID aus URL oder Body zu extrahieren
   const url = new URL(request.url)
   const productId = url.searchParams.get('productId') || request.headers.get('x-product-id')
-  
+
   if (productId) {
     try {
       const product = await prisma.watch.findUnique({
@@ -54,12 +54,12 @@ async function getEmmaContext(request: NextRequest, session: any): Promise<EmmaC
           seller: {
             select: {
               name: true,
-              email: true
-            }
-          }
-        }
+              email: true,
+            },
+          },
+        },
       })
-      
+
       if (product) {
         context.productId = product.id
         context.productTitle = product.title
@@ -71,12 +71,12 @@ async function getEmmaContext(request: NextRequest, session: any): Promise<EmmaC
       console.error('[Emma] Fehler beim Laden des Produkts:', error)
     }
   }
-  
+
   return context
 }
 
 function buildSystemPrompt(context: EmmaContext): string {
-  return `Du bist Emma, der freundliche und hilfsbereite KI-Assistent von Helvenda.ch, einem Schweizer Online-Marktplatz (ähnlich wie Ricardo.ch).
+  return `Du bist Emma, der freundliche und hilfsbereite KI-Assistent von Helvenda.ch, einem Schweizer Online-Marktplatz.
 
 Deine Aufgabe ist es, Benutzern bei Fragen zu helfen und sie durch den Verkaufs- und Kaufprozess zu führen.
 
@@ -87,18 +87,26 @@ WICHTIGE INFORMATIONEN:
 - Versand: A-Post, B-Post, Abholung
 - Alle Preise sind in CHF (Schweizer Franken)
 
-${context.productId ? `
+${
+  context.productId
+    ? `
 AKTUELLES PRODUKT:
 - Titel: ${context.productTitle}
 - Preis: CHF ${context.productPrice?.toFixed(2)}
 - Zustand: ${context.productCondition}
 - Verkäufer: ${context.sellerName}
-` : ''}
+`
+    : ''
+}
 
-${context.userName ? `
+${
+  context.userName
+    ? `
 BENUTZER:
 - Name: ${context.userName}
-` : ''}
+`
+    : ''
+}
 
 DEIN STIL:
 - Freundlich, professionell und hilfsbereit
@@ -117,17 +125,16 @@ export async function POST(request: NextRequest) {
     const { message, conversationId, productId } = await request.json()
 
     if (!message || typeof message !== 'string' || message.trim().length === 0) {
-      return NextResponse.json(
-        { error: 'Nachricht ist erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Nachricht ist erforderlich' }, { status: 400 })
     }
 
     const openaiApiKey = process.env.OPENAI_API_KEY
     if (!openaiApiKey) {
       console.error('[Emma] OPENAI_API_KEY nicht konfiguriert')
       return NextResponse.json(
-        { error: 'OPENAI_API_KEY ist nicht konfiguriert. Bitte fügen Sie ihn zu .env.local hinzu.' },
+        {
+          error: 'OPENAI_API_KEY ist nicht konfiguriert. Bitte fügen Sie ihn zu .env.local hinzu.',
+        },
         { status: 500 }
       )
     }
@@ -147,15 +154,15 @@ export async function POST(request: NextRequest) {
           include: {
             messages: {
               orderBy: { createdAt: 'asc' },
-              take: 10 // Letzte 10 Nachrichten für Kontext
-            }
-          }
+              take: 10, // Letzte 10 Nachrichten für Kontext
+            },
+          },
         })
-        
+
         if (conversation) {
           conversationHistory = conversation.messages.map(msg => ({
             role: msg.role as 'user' | 'assistant',
-            content: msg.content
+            content: msg.content,
           }))
         }
       } catch (error) {
@@ -167,13 +174,13 @@ export async function POST(request: NextRequest) {
     const messages: ChatMessage[] = [
       {
         role: 'system',
-        content: buildSystemPrompt(context)
+        content: buildSystemPrompt(context),
       },
       ...conversationHistory,
       {
         role: 'user',
-        content: message.trim()
-      }
+        content: message.trim(),
+      },
     ]
 
     // Rufe OpenAI API auf
@@ -181,7 +188,7 @@ export async function POST(request: NextRequest) {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiApiKey}`,
+        Authorization: `Bearer ${openaiApiKey}`,
       },
       body: JSON.stringify({
         model: 'gpt-4o-mini', // Kostengünstig und schnell
@@ -204,7 +211,9 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await openaiResponse.json()
-    const assistantMessage = data.choices[0]?.message?.content?.trim() || 'Entschuldigung, ich konnte deine Frage nicht beantworten.'
+    const assistantMessage =
+      data.choices[0]?.message?.content?.trim() ||
+      'Entschuldigung, ich konnte deine Frage nicht beantworten.'
 
     // Speichere Conversation (optional - nur wenn Datenbank verfügbar)
     let finalConversationId = conversationId
@@ -214,7 +223,7 @@ export async function POST(request: NextRequest) {
           data: {
             userId: session?.user?.id || null,
             context: JSON.stringify(context),
-          }
+          },
         })
         finalConversationId = newConversation.id
       }
@@ -231,8 +240,8 @@ export async function POST(request: NextRequest) {
             conversationId: finalConversationId,
             role: 'assistant',
             content: assistantMessage,
-          }
-        ]
+          },
+        ],
       })
     } catch (dbError: any) {
       // Wenn Datenbank-Fehler, logge aber antworte trotzdem
@@ -246,7 +255,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: assistantMessage,
       conversationId: finalConversationId,
-      context: context
+      context: context,
     })
   } catch (error: any) {
     console.error('[Emma] Fehler:', error)
@@ -257,4 +266,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

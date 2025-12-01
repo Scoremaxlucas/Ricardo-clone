@@ -6,18 +6,15 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Prüfe ob User Admin ist
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true }
+      select: { isAdmin: true },
     })
 
     if (!user?.isAdmin) {
@@ -35,8 +32,8 @@ export async function GET(request: NextRequest) {
         OR: [
           { idDocument: { not: null } },
           { idDocumentPage1: { not: null } },
-          { idDocumentPage2: { not: null } }
-        ]
+          { idDocumentPage2: { not: null } },
+        ],
       },
       select: {
         id: true,
@@ -61,23 +58,16 @@ export async function GET(request: NextRequest) {
         idDocumentPage1: true,
         idDocumentPage2: true,
         idDocumentType: true,
-        createdAt: true
+        createdAt: true,
       },
       orderBy: {
-        verifiedAt: 'desc' // Neueste zuerst
-      }
+        verifiedAt: 'desc', // Neueste zuerst
+      },
     })
 
     return NextResponse.json(users)
   } catch (error: any) {
     console.error('Error fetching pending verifications:', error)
-    return NextResponse.json(
-      { message: 'Fehler beim Laden der Verifizierungen' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler beim Laden der Verifizierungen' }, { status: 500 })
   }
 }
-
-
-
-

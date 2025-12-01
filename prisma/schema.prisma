@@ -115,8 +115,12 @@ model User {
   conversations                 Conversation[]
   reportsMade                   Report[]             @relation("ReportedBy")
   reportsReviewed               Report[]             @relation("ReviewedBy")
+  userReportsMade               UserReport[]         @relation("UserReportedBy")
+  userReportsReviewed           UserReport[]         @relation("UserReportReviewedBy")
+  userReportsReceived           UserReport[]         @relation("ReportedUser")
   adminNotes                    AdminNote[]
   moderationHistory             ModerationHistory[]
+  maxBids                       MaxBid[]
 
   @@map("users")
 }
@@ -170,7 +174,7 @@ model Watch {
   shippingMethod      String?
   boosters            String?
   sellerId            String
-  moderationStatus   String?              @default("pending") // 'pending', 'approved', 'rejected', 'reviewing'
+  moderationStatus    String?             @default("pending") // 'pending', 'approved', 'rejected', 'reviewing'
   moderatedBy         String?
   moderatedAt         DateTime?
   moderationNotes     String?
@@ -187,6 +191,7 @@ model Watch {
   adminNotes          AdminNote[]
   moderationHistory   ModerationHistory[]
   views               WatchView[]
+  maxBids             MaxBid[]
 
   @@index([moderationStatus])
   @@index([createdAt])
@@ -205,6 +210,24 @@ model Bid {
   @@map("bids")
 }
 
+// Automatisches Gebot (Maximalgebot)
+model MaxBid {
+  id         String   @id @default(cuid())
+  watchId    String
+  userId     String
+  maxAmount  Float // Maximales Gebot
+  currentBid Float? // Aktuelles Gebot (wird automatisch erhöht)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  user       User     @relation(fields: [userId], references: [id])
+  watch      Watch    @relation(fields: [watchId], references: [id])
+
+  @@unique([watchId, userId]) // Ein MaxBid pro User pro Watch
+  @@index([watchId])
+  @@index([userId])
+  @@map("max_bids")
+}
+
 model Purchase {
   id                             String       @id @default(cuid())
   price                          Float?
@@ -221,6 +244,7 @@ model Purchase {
   contactDeadlineMissed          Boolean      @default(false)
   paymentDeadline                DateTime?
   paymentReminderSentAt          DateTime?
+  paymentReminderCount           Int          @default(0)
   paymentDeadlineMissed          Boolean      @default(false)
   trackingNumber                 String?
   trackingProvider               String?
@@ -375,6 +399,9 @@ model Invoice {
   createdAt            DateTime      @default(now())
   updatedAt            DateTime      @updatedAt
   refundedAt           DateTime?
+  originalInvoiceId    String? // Verknüpfung zur ursprünglichen Rechnung bei Korrektur-Rechnungen
+  originalInvoice      Invoice?      @relation("InvoiceCorrection", fields: [originalInvoiceId], references: [id])
+  correctionInvoices   Invoice[]     @relation("InvoiceCorrection")
   items                InvoiceItem[]
   seller               User          @relation(fields: [sellerId], references: [id])
 
@@ -537,6 +564,29 @@ model Report {
   @@index([status])
   @@index([createdAt])
   @@map("reports")
+}
+
+// User-Meldungen (ähnlich wie Report für Artikel)
+model UserReport {
+  id             String    @id @default(cuid())
+  reportedUserId String // User-ID des gemeldeten Users
+  reportedBy     String // User-ID des Meldenden
+  reason         String // 'spam', 'fraud', 'harassment', 'inappropriate', 'scam', 'fake_account', 'other'
+  description    String? // Zusätzliche Beschreibung
+  status         String    @default("pending") // 'pending', 'reviewing', 'resolved', 'dismissed'
+  reviewedBy     String? // Admin-ID
+  reviewedAt     DateTime?
+  resolution     String? // Was wurde gemacht (z.B. 'warned', 'blocked', 'dismissed')
+  createdAt      DateTime  @default(now())
+  updatedAt      DateTime  @updatedAt
+  reportedUser   User      @relation("ReportedUser", fields: [reportedUserId], references: [id], onDelete: Cascade)
+  reporter       User      @relation("UserReportedBy", fields: [reportedBy], references: [id])
+  reviewer       User?     @relation("UserReportReviewedBy", fields: [reviewedBy], references: [id])
+
+  @@index([reportedUserId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("user_reports")
 }
 
 // Admin-Notizen zu Angeboten

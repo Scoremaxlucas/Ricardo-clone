@@ -2,10 +2,10 @@
 
 /**
  * Migration Script: Weist allen bestehenden Artikeln ohne Artikelnummer eine zu
- * 
+ *
  * Verwendung:
  *   npx tsx scripts/migrate-article-numbers.ts
- * 
+ *
  * Oder mit npm:
  *   npm run migrate:article-numbers
  */
@@ -26,16 +26,16 @@ async function migrateArticleNumbers() {
     // Finde alle Artikel ohne Artikelnummer, sortiert nach Erstellungsdatum
     const watchesWithoutNumber = await prisma.watch.findMany({
       where: {
-        articleNumber: null
+        articleNumber: null,
       },
       orderBy: {
-        createdAt: 'asc' // Älteste zuerst
+        createdAt: 'asc', // Älteste zuerst
       },
       select: {
         id: true,
         title: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     })
 
     console.log(`📊 Gefunden: ${watchesWithoutNumber.length} Artikel ohne Artikelnummer`)
@@ -52,19 +52,19 @@ async function migrateArticleNumbers() {
     const watchWithHighestNumber = await prisma.watch.findFirst({
       where: {
         articleNumber: {
-          not: null
-        }
+          not: null,
+        },
       },
       orderBy: {
-        articleNumber: 'desc'
+        articleNumber: 'desc',
       },
       select: {
-        articleNumber: true
-      }
+        articleNumber: true,
+      },
     })
 
     // Starte bei 10000000 wenn keine existiert, sonst bei der höchsten + 1
-    let currentNumber = watchWithHighestNumber?.articleNumber 
+    let currentNumber = watchWithHighestNumber?.articleNumber
       ? watchWithHighestNumber.articleNumber + 1
       : 10000000
 
@@ -79,7 +79,7 @@ async function migrateArticleNumbers() {
       try {
         await prisma.watch.update({
           where: { id: watch.id },
-          data: { articleNumber: currentNumber }
+          data: { articleNumber: currentNumber },
         })
 
         console.log(`✅ ${currentNumber}: ${watch.title.substring(0, 50)}...`)
@@ -104,11 +104,10 @@ async function migrateArticleNumbers() {
     console.log(`   📈 Nächste verfügbare Nummer: ${currentNumber}`)
     console.log('')
     console.log('✅ Migration abgeschlossen!')
-    
+
     // Explizit beenden
     await prisma.$disconnect()
     process.exit(0)
-
   } catch (error: any) {
     console.error('')
     console.error('❌ Fehler bei Migration:')
@@ -125,4 +124,3 @@ async function migrateArticleNumbers() {
 }
 
 migrateArticleNumbers()
-

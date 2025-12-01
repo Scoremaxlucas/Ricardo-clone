@@ -52,7 +52,7 @@ async function main() {
     select: {
       id: true,
       images: true,
-    }
+    },
   })
 
   console.log(`📊 Gefunden: ${watches.length} Produkte\n`)
@@ -64,7 +64,7 @@ async function main() {
     try {
       // Prüfe ob Bilder bereits korrekt sind
       let needsUpdate = false
-      
+
       if (!watch.images || watch.images.trim() === '') {
         needsUpdate = true
       } else {
@@ -90,8 +90,8 @@ async function main() {
         await prisma.watch.update({
           where: { id: watch.id },
           data: {
-            images: getRandomImage()
-          }
+            images: getRandomImage(),
+          },
         })
         updated++
         if (updated % 50 === 0) {
@@ -115,24 +115,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error('❌ Fehler:', e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -3,6 +3,7 @@
 ## 📋 Übersicht
 
 Der Mahnprozess muss täglich um 2:00 Uhr ausgeführt werden, um:
+
 - Zahlungsaufforderungen zu senden (Tag 14)
 - Erinnerungen zu senden (Tag 30, 44, 58)
 - Mahnspesen hinzuzufügen (Tag 44)
@@ -39,27 +40,21 @@ export async function GET(request: NextRequest) {
   try {
     // Vercel Cron Jobs senden einen Authorization Header
     const authHeader = request.headers.get('authorization')
-    
+
     if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const result = await processInvoiceReminders()
-    
+
     return NextResponse.json({
       success: true,
       processed: result.processed,
-      total: result.total
+      total: result.total,
     })
   } catch (error: any) {
     console.error('Error processing reminders:', error)
-    return NextResponse.json(
-      { message: 'Fehler: ' + error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler: ' + error.message }, { status: 500 })
   }
 }
 ```
@@ -67,6 +62,7 @@ export async function GET(request: NextRequest) {
 3. **Environment Variable setzen:**
 
 Fügen Sie zu Ihrer `.env` hinzu:
+
 ```env
 CRON_SECRET=ihr-sicheres-secret-hier
 ```
@@ -87,7 +83,6 @@ Für andere Hosting-Plattformen können Sie einen externen Cron-Service verwende
    - [Cronitor](https://cronitor.io) (kostenlos)
 
 2. **Erstellen Sie einen neuen Cron-Job:**
-
    - **URL:** `https://ihre-domain.ch/api/invoices/process-reminders`
    - **Method:** `POST` oder `GET`
    - **Schedule:** `0 2 * * *` (täglich um 2:00 Uhr)
@@ -100,6 +95,7 @@ Für andere Hosting-Plattformen können Sie einen externen Cron-Service verwende
 3. **Environment Variable setzen:**
 
 Fügen Sie zu Ihrer `.env` hinzu:
+
 ```env
 CRON_SECRET=ihr-sicheres-secret-hier
 ```
@@ -117,7 +113,7 @@ import { processInvoiceReminders } from '../src/lib/invoice-reminders'
 
 async function main() {
   console.log('🚀 Starte Mahnprozess-Verarbeitung...')
-  
+
   try {
     const result = await processInvoiceReminders()
     console.log(`✅ Verarbeitet: ${result.processed} von ${result.total} Rechnungen`)
@@ -176,15 +172,15 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v3
-      
+
       - name: Setup Node.js
         uses: actions/setup-node@v3
         with:
           node-version: '18'
-      
+
       - name: Install dependencies
         run: npm ci
-      
+
       - name: Run cron job
         env:
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
@@ -260,6 +256,7 @@ Die API-Route loggt alle Aktivitäten:
 ### Erfolg prüfen
 
 Nach der Ausführung sollten Sie sehen:
+
 - E-Mails wurden gesendet
 - Rechnungen wurden aktualisiert
 - Konten wurden gesperrt (falls nötig)
@@ -322,8 +319,3 @@ Der Cron-Job sollte täglich um 2:00 Uhr ausgeführt werden:
 - [Vercel Cron Jobs](https://vercel.com/docs/cron-jobs)
 - [cron-job.org Dokumentation](https://cron-job.org/en/help/)
 - [Cron Expression Generator](https://crontab.guru/)
-
-
-
-
-

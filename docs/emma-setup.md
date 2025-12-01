@@ -20,6 +20,7 @@ OPENAI_API_KEY=sk-Ihr-API-Key-hier
 ```
 
 **Beispiel:**
+
 ```bash
 OPENAI_API_KEY=sk-proj-abc123def456ghi789jkl012mno345pqr678stu901vwx234yz
 ```
@@ -69,6 +70,7 @@ npm run dev:status
 **Ursache:** `OPENAI_API_KEY` ist nicht gesetzt oder ungültig.
 
 **Lösung:**
+
 1. Prüfen Sie `.env.local` - ist `OPENAI_API_KEY` vorhanden?
 2. Stellen Sie sicher, dass der Key mit `sk-` beginnt
 3. Prüfen Sie, dass keine Leerzeichen vor/nach dem Key sind
@@ -79,6 +81,7 @@ npm run dev:status
 **Ursache:** API Key ist ungültig oder OpenAI API ist nicht erreichbar.
 
 **Lösung:**
+
 1. Prüfen Sie Ihre OpenAI API Credits: https://platform.openai.com/usage
 2. Prüfen Sie, ob der API Key aktiv ist
 3. Testen Sie den API Key direkt:
@@ -91,13 +94,14 @@ curl https://api.openai.com/v1/models \
 ### Problem: Emma antwortet nicht
 
 **Mögliche Ursachen:**
+
 1. Server-Logs prüfen (im Terminal wo `npm run dev` läuft)
 2. Browser-Konsole prüfen (F12)
 3. Netzwerkprobleme
 
 ## 💰 Kosten
 
-- **OpenAI GPT-4o-mini**: 
+- **OpenAI GPT-4o-mini**:
   - Input: ~$0.15 pro 1M Tokens
   - Output: ~$0.60 pro 1M Tokens
 - **Geschätzte Kosten pro Conversation**: ~$0.001-0.01
@@ -106,4 +110,3 @@ curl https://api.openai.com/v1/models \
 ## 📝 Weitere Informationen
 
 Siehe `docs/lea-ai-assistant.md` für vollständige Dokumentation (wird zu `emma-ai-assistant.md` umbenannt).
-

@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
 
     const where: any = {
-      userId: session.user.id
+      userId: session.user.id,
     }
 
     if (unreadOnly) {
@@ -27,21 +27,21 @@ export async function GET(request: NextRequest) {
     const notifications = await prisma.notification.findMany({
       where,
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
-      take: limit
+      take: limit,
     })
 
     const unreadCount = await prisma.notification.count({
       where: {
         userId: session.user.id,
-        isRead: false
-      }
+        isRead: false,
+      },
     })
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       notifications,
-      unreadCount
+      unreadCount,
     })
   } catch (error) {
     console.error('Error fetching notifications:', error)
@@ -53,7 +53,7 @@ export async function GET(request: NextRequest) {
 export async function PATCH(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
@@ -65,19 +65,19 @@ export async function PATCH(request: NextRequest) {
       await prisma.notification.updateMany({
         where: {
           userId: session.user.id,
-          isRead: false
+          isRead: false,
         },
         data: {
           isRead: true,
-          readAt: new Date()
-        }
+          readAt: new Date(),
+        },
       })
-      
+
       return NextResponse.json({ message: 'All notifications marked as read' })
     } else if (notificationId) {
       // Einzelne als gelesen markieren
       const notification = await prisma.notification.findUnique({
-        where: { id: notificationId }
+        where: { id: notificationId },
       })
 
       if (!notification || notification.userId !== session.user.id) {
@@ -88,8 +88,8 @@ export async function PATCH(request: NextRequest) {
         where: { id: notificationId },
         data: {
           isRead: true,
-          readAt: new Date()
-        }
+          readAt: new Date(),
+        },
       })
 
       return NextResponse.json({ message: 'Notification marked as read' })
@@ -101,20 +101,3 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ message: 'Internal server error' }, { status: 500 })
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

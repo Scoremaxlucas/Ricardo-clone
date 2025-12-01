@@ -3,24 +3,18 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { userId: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Prüfe ob User Admin ist
     const admin = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true }
+      select: { isAdmin: true },
     })
 
     if (!admin?.isAdmin) {
@@ -46,22 +40,15 @@ export async function POST(
     await prisma.user.update({
       where: { id: userId },
       data: {
-        isAdmin: isAdmin || false
-      }
+        isAdmin: isAdmin || false,
+      },
     })
 
-    return NextResponse.json({ 
-      message: isAdmin ? 'Benutzer wurde als Admin gesetzt' : 'Admin-Rechte wurden entfernt' 
+    return NextResponse.json({
+      message: isAdmin ? 'Benutzer wurde als Admin gesetzt' : 'Admin-Rechte wurden entfernt',
     })
   } catch (error: any) {
     console.error('Error toggling admin:', error)
-    return NextResponse.json(
-      { message: 'Fehler beim Ändern der Admin-Rechte' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler beim Ändern der Admin-Rechte' }, { status: 500 })
   }
 }
-
-
-
-

@@ -1,58 +1,60 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
-// POST - Frage beantworten (nur Verkäufer)
+// POST - Antwort auf eine Frage erstellen (verwendet Message Model)
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
+    const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 })
     }
 
-    const questionId = params.id
     const body = await request.json()
-    const { answer, isPublic } = body
+    const { answer, isPublic = true } = body
 
     if (!answer) {
       return NextResponse.json({ error: 'Antwort erforderlich' }, { status: 400 })
     }
 
-    // Hole die Frage mit Produktinformationen
-    const question = await prisma.question.findUnique({
-      where: { id: questionId },
+    // Hole die ursprüngliche Frage (Message)
+    const questionMessage = await prisma.message.findUnique({
+      where: { id },
       include: {
-        watch: {
-          select: {
-            sellerId: true,
-          },
-        },
+        watch: true,
+        sender: true,
       },
     })
 
-    if (!question) {
+    if (!questionMessage) {
       return NextResponse.json({ error: 'Frage nicht gefunden' }, { status: 404 })
     }
 
-    // Prüfe ob der User der Verkäufer ist
-    if (question.watch.sellerId !== session.user.id) {
-      return NextResponse.json({ error: 'Nur der Verkäufer kann Fragen beantworten' }, { status: 403 })
+    // Prüfe ob der Benutzer der Verkäufer ist
+    if (questionMessage.watch.sellerId !== session.user.id) {
+      return NextResponse.json(
+        { error: 'Nur der Verkäufer kann Fragen beantworten' },
+        { status: 403 }
+      )
     }
 
-    // Aktualisiere die Frage mit der Antwort
-    const updatedQuestion = await prisma.question.update({
-      where: { id: questionId },
+    // Erstelle Antwort als neue Message
+    // Verkäufer antwortet an den Fragesteller
+    const answerMessage = await prisma.message.create({
       data: {
-        answer: answer,
-        answeredAt: new Date(),
-        isPublic: isPublic !== undefined ? isPublic : true, // Default: öffentlich
+        watchId: questionMessage.watchId,
+        senderId: session.user.id, // Verkäufer sendet Antwort
+        receiverId: questionMessage.senderId, // Antwort geht an Fragesteller
+        content: answer,
+        isPublic: isPublic, // Kann öffentlich oder privat sein
       },
       include: {
-        user: {
+        sender: {
           select: {
             id: true,
             name: true,
@@ -60,86 +62,53 @@ export async function POST(
             email: true,
           },
         },
-        watch: {
-          select: {
-            title: true,
-            sellerId: true
-          }
-        }
       },
     })
 
-    // Erstelle Benachrichtigung für Fragesteller
+    // Erstelle Benachrichtigung für den Fragesteller
     try {
+      // Hole Verkäufer-Daten für Benachrichtigung
+      const seller = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: {
+          name: true,
+          nickname: true,
+          email: true,
+        },
+      })
+      const sellerName = seller?.nickname || seller?.name || seller?.email || 'Verkäufer'
+
       await prisma.notification.create({
         data: {
-          userId: updatedQuestion.userId,
-          type: 'ANSWER',
+          userId: questionMessage.senderId, // Fragesteller erhält Benachrichtigung
+          type: 'QUESTION_ANSWERED',
           title: 'Ihre Frage wurde beantwortet',
-          message: `Der Verkäufer hat Ihre Frage zu "${updatedQuestion.watch.title}" beantwortet`,
-          watchId: updatedQuestion.watchId,
-          questionId: questionId
-        }
-      })
-    } catch (notifError) {
-      console.error('Error creating notification:', notifError)
-    }
-
-    return NextResponse.json({ question: updatedQuestion })
-  } catch (error) {
-    console.error('Fehler beim Beantworten der Frage:', error)
-    return NextResponse.json({ error: 'Fehler beim Beantworten der Frage' }, { status: 500 })
-  }
-}
-
-// DELETE - Antwort löschen (nur Verkäufer)
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
-  try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
-      return NextResponse.json({ error: 'Nicht angemeldet' }, { status: 401 })
-    }
-
-    const questionId = params.id
-
-    // Hole die Frage mit Produktinformationen
-    const question = await prisma.question.findUnique({
-      where: { id: questionId },
-      include: {
-        watch: {
-          select: {
-            sellerId: true,
-          },
+          message: `${sellerName} hat Ihre Frage zu "${questionMessage.watch.title}" beantwortet`,
+          watchId: questionMessage.watchId,
+          questionId: questionMessage.id,
         },
-      },
-    })
-
-    if (!question) {
-      return NextResponse.json({ error: 'Frage nicht gefunden' }, { status: 404 })
+      })
+    } catch (notifError: any) {
+      console.error('Error creating notification for question answer:', notifError)
+      // Fehler bei Benachrichtigung sollte nicht die Antwort-Erstellung blockieren
     }
 
-    // Prüfe ob der User der Verkäufer ist
-    if (question.watch.sellerId !== session.user.id) {
-      return NextResponse.json({ error: 'Nur der Verkäufer kann Antworten löschen' }, { status: 403 })
+    // Transformiere Message zu Question-Format für Kompatibilität
+    const updatedQuestion = {
+      id: questionMessage.id,
+      watchId: questionMessage.watchId,
+      userId: questionMessage.senderId,
+      question: questionMessage.content,
+      answer: answerMessage.content,
+      isPublic: answerMessage.isPublic,
+      createdAt: questionMessage.createdAt.toISOString(),
+      answeredAt: answerMessage.createdAt.toISOString(),
+      user: questionMessage.sender,
     }
 
-    // Entferne die Antwort (nicht die Frage selbst)
-    const updatedQuestion = await prisma.question.update({
-      where: { id: questionId },
-      data: {
-        answer: null,
-        answeredAt: null,
-        isPublic: true,
-      },
-    })
-
-    return NextResponse.json({ question: updatedQuestion })
-  } catch (error) {
-    console.error('Fehler beim Löschen der Antwort:', error)
-    return NextResponse.json({ error: 'Fehler beim Löschen der Antwort' }, { status: 500 })
+    return NextResponse.json({ question: updatedQuestion }, { status: 200 })
+  } catch (error: any) {
+    console.error('Fehler beim Erstellen der Antwort:', error)
+    return NextResponse.json({ error: 'Fehler beim Erstellen der Antwort: ' + error.message }, { status: 500 })
   }
 }
-

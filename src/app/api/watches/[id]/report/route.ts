@@ -4,10 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // POST: Angebot melden
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -41,7 +38,10 @@ export async function POST(
     })
 
     if (existingReport) {
-      return NextResponse.json({ message: 'Sie haben dieses Angebot bereits gemeldet' }, { status: 400 })
+      return NextResponse.json(
+        { message: 'Sie haben dieses Angebot bereits gemeldet' },
+        { status: 400 }
+      )
     }
 
     // Erstelle Meldung
@@ -75,10 +75,6 @@ export async function POST(
     return NextResponse.json({ message: 'Angebot erfolgreich gemeldet', report })
   } catch (error: any) {
     console.error('Error reporting watch:', error)
-    return NextResponse.json(
-      { message: 'Fehler beim Melden: ' + error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler beim Melden: ' + error.message }, { status: 500 })
   }
 }
-

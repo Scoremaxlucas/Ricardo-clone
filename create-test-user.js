@@ -5,17 +5,17 @@ const prisma = new PrismaClient()
 
 async function main() {
   const hashedPassword = await bcrypt.hash('test123', 10)
-  
+
   // Prüfe ob Testbenutzer existiert und aktualisiere, sonst erstelle neu
   try {
     const existing = await prisma.user.findUnique({
-      where: { email: 'test@example.com' }
+      where: { email: 'test@example.com' },
     })
-    
+
     if (existing) {
       await prisma.user.update({
         where: { email: 'test@example.com' },
-        data: { password: hashedPassword }
+        data: { password: hashedPassword },
       })
       console.log('✅ Passwort für test@example.com zurückgesetzt!')
     } else {
@@ -23,12 +23,12 @@ async function main() {
         data: {
           email: 'test@example.com',
           name: 'Test Benutzer',
-          password: hashedPassword
-        }
+          password: hashedPassword,
+        },
       })
       console.log('✅ Testbenutzer erstellt!')
     }
-    
+
     console.log('\n📧 Login-Daten:')
     console.log('   Email: test@example.com')
     console.log('   Passwort: test123')

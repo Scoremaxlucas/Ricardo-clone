@@ -10,10 +10,7 @@ export async function POST(request: NextRequest) {
     const userId = formData.get('userId') as string
 
     if (!file || !userId) {
-      return NextResponse.json(
-        { message: 'Datei und User ID erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Datei und User ID erforderlich' }, { status: 400 })
     }
 
     // Konvertiere File zu Base64
@@ -28,21 +25,18 @@ export async function POST(request: NextRequest) {
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: { image: base64Image },
-      select: { id: true, image: true }
+      select: { id: true, image: true },
     })
 
     console.log('Updated user:', updatedUser)
 
     return NextResponse.json({
       message: 'Profilbild erfolgreich hochgeladen',
-      imageUrl: base64Image
+      imageUrl: base64Image,
     })
   } catch (error) {
     console.error('Error uploading profile image:', error)
-    return NextResponse.json(
-      { message: 'Ein Fehler ist aufgetreten' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Ein Fehler ist aufgetreten' }, { status: 500 })
   }
 }
 
@@ -51,26 +45,20 @@ export async function DELETE(request: NextRequest) {
     const { userId } = await request.json()
 
     if (!userId) {
-      return NextResponse.json(
-        { message: 'User ID erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'User ID erforderlich' }, { status: 400 })
     }
 
     // Entferne Profilbild
     await prisma.user.update({
       where: { id: userId },
-      data: { image: null }
+      data: { image: null },
     })
 
     return NextResponse.json({
-      message: 'Profilbild erfolgreich entfernt'
+      message: 'Profilbild erfolgreich entfernt',
     })
   } catch (error) {
     console.error('Error removing profile image:', error)
-    return NextResponse.json(
-      { message: 'Ein Fehler ist aufgetreten' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Ein Fehler ist aufgetreten' }, { status: 500 })
   }
 }

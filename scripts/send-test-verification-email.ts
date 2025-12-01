@@ -2,7 +2,7 @@
 
 /**
  * Script zum Versenden einer Test-Verifizierungs-E-Mail
- * 
+ *
  * Verwendung:
  *   npm run test-verification-email -- --email lucasrodrigues.gafner@outlook.com
  */
@@ -13,65 +13,63 @@ import crypto from 'crypto'
 
 async function main() {
   const args = process.argv.slice(2)
-  
+
   let email: string | null = null
-  
+
   // Parse arguments
   for (let i = 0; i < args.length; i++) {
     if (args[i] === '--email' && args[i + 1]) {
       email = args[i + 1]
     }
   }
-  
+
   if (!email) {
     email = 'lucasrodrigues.gafner@outlook.com' // Default für Tests
   }
-  
+
   const normalizedEmail = email.toLowerCase().trim()
-  
+
   console.log('\n📧 TEST-VERIFIZIERUNGS-E-MAIL VERSENDEN\n')
   console.log('='.repeat(50))
   console.log(`Empfänger: ${normalizedEmail}`)
   console.log('='.repeat(50))
   console.log('')
-  
+
   // Generiere Test-Token
   const testToken = crypto.randomBytes(32).toString('hex')
-  const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'
+  const baseUrl =
+    process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'
   const verificationUrl = `${baseUrl}/verify-email?token=${testToken}`
-  
+
   console.log('🔧 Generiere Test-Verifizierungs-URL...')
   console.log(`   URL: ${verificationUrl}`)
   console.log('')
-  
+
   // Generiere E-Mail-Template
   const firstName = 'Lucas' // Test-Name
-  const { subject, html, text } = getEmailVerificationEmail(
-    firstName,
-    verificationUrl
-  )
-  
+  const { subject, html, text } = getEmailVerificationEmail(firstName, verificationUrl)
+
   console.log('📝 E-Mail-Template generiert:')
   console.log(`   Subject: ${subject}`)
   console.log(`   HTML Length: ${html.length} Zeichen`)
   console.log(`   Text Length: ${text.length} Zeichen`)
   console.log('')
-  
+
   console.log('📧 Versende Test-E-Mail...')
   console.log('')
-  
+
   // Versende E-Mail
   try {
     const emailResult = await sendEmail({
       to: normalizedEmail,
       subject,
       html,
-      text
+      text,
     })
-    
+
     console.log('')
     console.log('='.repeat(50))
-    
+
     if (emailResult.success) {
       console.log('✅ TEST-E-MAIL ERFOLGREICH VERSENDET!')
       console.log('')
@@ -100,7 +98,7 @@ async function main() {
       console.log('   → E-Mail-Adresse nicht erlaubt (nur eigene E-Mail im Testmodus)')
       console.log('   → Domain nicht verifiziert')
     }
-    
+
     console.log('='.repeat(50))
     console.log('')
   } catch (error: any) {
@@ -113,15 +111,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error('❌ Fehler:', e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-
-
-
-
-

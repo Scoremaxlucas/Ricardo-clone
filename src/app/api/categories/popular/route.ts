@@ -29,10 +29,10 @@ export async function GET() {
           include: {
             categories: {
               include: {
-                category: true
-              }
-            }
-          }
+                category: true,
+              },
+            },
+          },
         },
         invoice: {
           select: {
@@ -45,36 +45,35 @@ export async function GET() {
     // Berechne Anzahl der geboosteten Artikel pro Kategorie (aus aktiven Produkten)
     const boostedProductsByCategory: Record<string, number> = {}
     const categoryRevenue: Record<string, number> = {}
-    
+
     // Zähle aktive geboostete Produkte direkt (über Relation)
     const activeBoostedWatches = await prisma.watch.findMany({
       where: {
         purchases: {
-          none: {} // Nur nicht verkaufte Produkte
+          none: {}, // Nur nicht verkaufte Produkte
         },
         boosters: {
           not: null,
         },
         categories: {
-          some: {} // Hat mindestens eine Kategorie
-        }
+          some: {}, // Hat mindestens eine Kategorie
+        },
       },
       select: {
         boosters: true,
         categories: {
           include: {
-            category: true
-          }
-        }
+            category: true,
+          },
+        },
       },
     })
-    
-    activeBoostedWatches.forEach((watch) => {
+
+    activeBoostedWatches.forEach(watch => {
       try {
-        const boosters = typeof watch.boosters === 'string' 
-          ? JSON.parse(watch.boosters) 
-          : watch.boosters
-        
+        const boosters =
+          typeof watch.boosters === 'string' ? JSON.parse(watch.boosters) : watch.boosters
+
         if (Array.isArray(boosters) && boosters.length > 0 && boosters[0] !== 'none') {
           // Zähle für jede Kategorie des Produkts
           watch.categories.forEach((wc: any) => {
@@ -89,9 +88,9 @@ export async function GET() {
         // Ignore parsing errors
       }
     })
-    
+
     // Zusätzlich: Berechne Umsatz aus bezahlten Booster-Rechnungen
-    boosterInvoices.forEach((item) => {
+    boosterInvoices.forEach(item => {
       if (item.watch && item.invoice.status === 'paid') {
         item.watch.categories.forEach((wc: any) => {
           const categorySlug = wc.category.slug
@@ -107,24 +106,24 @@ export async function GET() {
     const activeWatches = await prisma.watch.findMany({
       where: {
         purchases: {
-          none: {} // Nur nicht verkaufte Produkte
+          none: {}, // Nur nicht verkaufte Produkte
         },
         categories: {
-          some: {} // Hat mindestens eine Kategorie
-        }
+          some: {}, // Hat mindestens eine Kategorie
+        },
       },
       include: {
         categories: {
           include: {
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     })
-    
+
     // Zähle Produkte pro Kategorie
     const activeProductsByCategory: Record<string, number> = {}
-    activeWatches.forEach((watch) => {
+    activeWatches.forEach(watch => {
       watch.categories.forEach((wc: any) => {
         const categorySlug = wc.category.slug
         if (!activeProductsByCategory[categorySlug]) {
@@ -135,7 +134,7 @@ export async function GET() {
     })
 
     // Kombiniere Daten: Kategorien mit geboosteten Artikeln, Umsatz und Produktanzahl
-    const categoriesWithData = Object.keys(categoryConfig).map((slug) => {
+    const categoriesWithData = Object.keys(categoryConfig).map(slug => {
       const metadata = getCategoryMetadata(slug)
       const boostedCount = boostedProductsByCategory[slug] || 0
       const revenue = categoryRevenue[slug] || 0
@@ -155,25 +154,26 @@ export async function GET() {
 
     // Sortiere nach Score (Anzahl geboosteter Artikel hat höchste Priorität)
     // Zeige ALLE Kategorien, auch wenn sie noch keine Produkte haben
-    const sortedCategories = categoriesWithData
-      .sort((a, b) => {
-        // Zuerst nach Produktanzahl (Kategorien mit Produkten zuerst)
-        if (a.productCount !== b.productCount) {
-          return b.productCount - a.productCount
-        }
-        // Dann nach geboosteten Artikeln
-        if (a.boostedCount !== b.boostedCount) {
-          return b.boostedCount - a.boostedCount
-        }
-        // Dann nach Score
-        return b.score - a.score
-      })
+    const sortedCategories = categoriesWithData.sort((a, b) => {
+      // Zuerst nach Produktanzahl (Kategorien mit Produkten zuerst)
+      if (a.productCount !== b.productCount) {
+        return b.productCount - a.productCount
+      }
+      // Dann nach geboosteten Artikeln
+      if (a.boostedCount !== b.boostedCount) {
+        return b.boostedCount - a.boostedCount
+      }
+      // Dann nach Score
+      return b.score - a.score
+    })
 
     // Debug-Logging
     console.log(`[categories/popular] Returning ${sortedCategories.length} categories`)
     const autoMotorrad = sortedCategories.find(c => c.category === 'auto-motorrad')
     if (autoMotorrad) {
-      console.log(`[categories/popular] auto-motorrad: ${autoMotorrad.productCount} products, ${autoMotorrad.boostedCount} boosted`)
+      console.log(
+        `[categories/popular] auto-motorrad: ${autoMotorrad.productCount} products, ${autoMotorrad.boostedCount} boosted`
+      )
     } else {
       console.warn(`[categories/popular] auto-motorrad NOT FOUND in results!`)
     }
@@ -183,10 +183,6 @@ export async function GET() {
     })
   } catch (error) {
     console.error('Error fetching popular categories:', error)
-    return NextResponse.json(
-      { error: 'Failed to fetch popular categories' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to fetch popular categories' }, { status: 500 })
   }
 }
-

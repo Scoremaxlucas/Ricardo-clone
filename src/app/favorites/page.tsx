@@ -44,7 +44,7 @@ export default function FavoritesPage() {
       if (response.ok) {
         const data = await response.json()
         const favoriteItems = data.favorites || []
-        
+
         // Hole Details für jeden Favoriten
         const productPromises = favoriteItems.map(async (fav: any) => {
           try {
@@ -52,7 +52,7 @@ export default function FavoritesPage() {
             if (res.ok) {
               const data = await res.json()
               const watch = data.watch || data // API kann { watch: {...} } oder direkt {...} zurückgeben
-              
+
               // Parse images falls sie als String kommen
               if (watch && typeof watch.images === 'string') {
                 try {
@@ -61,12 +61,12 @@ export default function FavoritesPage() {
                   watch.images = []
                 }
               }
-              
+
               // Stelle sicher, dass price existiert
               if (watch && !watch.price) {
                 watch.price = 0
               }
-              
+
               return watch
             }
           } catch (e) {
@@ -102,7 +102,7 @@ export default function FavoritesPage() {
         <Header />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
             <p className="text-gray-600">Lade Favoriten...</p>
           </div>
         </div>
@@ -114,9 +114,9 @@ export default function FavoritesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <div className="text-sm text-gray-600 mb-4">
+        <div className="mb-4 text-sm text-gray-600">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
             Startseite
           </Link>
@@ -125,12 +125,10 @@ export default function FavoritesPage() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <Heart className="h-8 w-8 text-red-500 fill-current" />
-            <h1 className="text-3xl font-bold text-gray-900">
-              Meine Favoriten
-            </h1>
+            <Heart className="h-8 w-8 fill-current text-red-500" />
+            <h1 className="text-3xl font-bold text-gray-900">Meine Favoriten</h1>
           </div>
           <div className="text-sm text-gray-600">
             {favorites.length} {favorites.length === 1 ? 'Artikel' : 'Artikel'}
@@ -139,70 +137,67 @@ export default function FavoritesPage() {
 
         {/* Content */}
         {favorites.length === 0 ? (
-          <div className="bg-white rounded-lg border border-gray-200 p-12 text-center">
-            <Heart className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-            <h2 className="text-xl font-semibold text-gray-900 mb-2">
-              Noch keine Favoriten
-            </h2>
-            <p className="text-gray-600 mb-6">
+          <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
+            <Heart className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+            <h2 className="mb-2 text-xl font-semibold text-gray-900">Noch keine Favoriten</h2>
+            <p className="mb-6 text-gray-600">
               Fügen Sie Artikel zu Ihren Favoriten hinzu, um sie später schnell wiederzufinden.
             </p>
             <Link
               href="/search"
-              className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium"
+              className="inline-block rounded-lg bg-primary-600 px-6 py-3 font-medium text-white hover:bg-primary-700"
             >
               Artikel durchstöbern
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {favorites.map((product) => (
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {favorites.map(product => (
               <div
                 key={product.id}
-                className="bg-white rounded-lg border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow"
+                className="overflow-hidden rounded-lg border border-gray-200 bg-white transition-shadow hover:shadow-lg"
               >
                 <Link href={`/products/${product.id}`}>
                   {product.images && product.images.length > 0 ? (
                     <img
                       src={product.images[0]}
                       alt={product.title}
-                      className="w-full h-48 object-cover"
+                      className="h-48 w-full object-cover"
                     />
                   ) : (
-                    <div className="w-full h-48 bg-gray-100 flex items-center justify-center">
-                      <Package className="w-12 h-12 text-gray-300" />
+                    <div className="flex h-48 w-full items-center justify-center bg-gray-100">
+                      <Package className="h-12 w-12 text-gray-300" />
                     </div>
                   )}
                 </Link>
                 <div className="p-4">
                   <Link href={`/products/${product.id}`}>
                     {product.brand && (
-                      <div className="text-sm text-primary-600 mb-1">{product.brand}</div>
+                      <div className="mb-1 text-sm text-primary-600">{product.brand}</div>
                     )}
-                    <div className="font-semibold text-gray-900 line-clamp-2 mb-2 hover:text-primary-600">
+                    <div className="mb-2 line-clamp-2 font-semibold text-gray-900 hover:text-primary-600">
                       {product.title}
                     </div>
                   </Link>
-                  <div className="flex items-center justify-between mb-3">
+                  <div className="mb-3 flex items-center justify-between">
                     <div className="text-lg font-bold text-gray-900">
-                      CHF {product.isAuction && product.currentBid
+                      CHF{' '}
+                      {product.isAuction && product.currentBid
                         ? product.currentBid.toFixed(2)
                         : (product.price || 0).toFixed(2)}
                     </div>
-                    {product.isAuction && (
-                      <div className="text-xs text-gray-500">Gebot</div>
-                    )}
+                    {product.isAuction && <div className="text-xs text-gray-500">Gebot</div>}
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <Link
                       href={`/products/${product.id}`}
-                      className="flex-1 text-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium text-sm"
+                      className="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-700"
                     >
                       Ansehen
                     </Link>
                     <button
                       onClick={() => removeFavorite(product.id)}
-                      className="px-4 py-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors"
+                      className="rounded-lg bg-red-500 px-4 py-2 text-white transition-colors hover:bg-red-600"
                       title="Aus Favoriten entfernen"
                     >
                       <Heart className="h-4 w-4 fill-current" />
@@ -218,4 +213,3 @@ export default function FavoritesPage() {
     </div>
   )
 }
-

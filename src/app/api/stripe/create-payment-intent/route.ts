@@ -10,11 +10,9 @@ export async function POST(request: NextRequest) {
     const { amount, currency = 'chf', metadata = {} } = await request.json()
 
     // Validate amount
-    if (!amount || amount < 50) { // Minimum 50 cents
-      return NextResponse.json(
-        { error: 'Invalid amount' },
-        { status: 400 }
-      )
+    if (!amount || amount < 50) {
+      // Minimum 50 cents
+      return NextResponse.json({ error: 'Invalid amount' }, { status: 400 })
     }
 
     // Create payment intent
@@ -32,10 +30,6 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('Stripe error:', error)
-    return NextResponse.json(
-      { error: 'Failed to create payment intent' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to create payment intent' }, { status: 500 })
   }
 }
-

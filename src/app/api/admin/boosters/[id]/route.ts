@@ -13,14 +13,14 @@ async function checkAdmin(session: any): Promise<boolean> {
   if (session.user.id) {
     user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
 
   if (!user && session.user.email) {
     user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
 
@@ -29,10 +29,7 @@ async function checkAdmin(session: any): Promise<boolean> {
   return isAdminInDb
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -45,14 +42,11 @@ export async function GET(
 
     const { id } = await params
     const booster = await prisma.boosterPrice.findUnique({
-      where: { id }
+      where: { id },
     })
 
     if (!booster) {
-      return NextResponse.json(
-        { message: 'Booster nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Booster nicht gefunden' }, { status: 404 })
     }
 
     return NextResponse.json(booster)
@@ -65,10 +59,7 @@ export async function GET(
   }
 }
 
-export async function PUT(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
 
@@ -85,31 +76,19 @@ export async function PUT(
 
     // Validierung
     if (code && typeof code !== 'string') {
-      return NextResponse.json(
-        { message: 'Code muss ein String sein' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Code muss ein String sein' }, { status: 400 })
     }
 
     if (name && typeof name !== 'string') {
-      return NextResponse.json(
-        { message: 'Name muss ein String sein' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Name muss ein String sein' }, { status: 400 })
     }
 
     if (price !== undefined && (typeof price !== 'number' || price < 0)) {
-      return NextResponse.json(
-        { message: 'Preis muss >= 0 sein' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Preis muss >= 0 sein' }, { status: 400 })
     }
 
     if (isActive !== undefined && typeof isActive !== 'boolean') {
-      return NextResponse.json(
-        { message: 'isActive muss ein Boolean sein' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'isActive muss ein Boolean sein' }, { status: 400 })
     }
 
     // Update booster
@@ -120,13 +99,13 @@ export async function PUT(
         ...(name && { name }),
         ...(description !== undefined && { description }),
         ...(price !== undefined && { price }),
-        ...(isActive !== undefined && { isActive })
-      }
+        ...(isActive !== undefined && { isActive }),
+      },
     })
 
     return NextResponse.json({
       message: 'Booster erfolgreich aktualisiert',
-      booster: updatedBooster
+      booster: updatedBooster,
     })
   } catch (error: any) {
     console.error('Error updating booster:', error)
@@ -153,11 +132,11 @@ export async function DELETE(
 
     const { id } = await params
     await prisma.boosterPrice.delete({
-      where: { id }
+      where: { id },
     })
 
     return NextResponse.json({
-      message: 'Booster erfolgreich gelöscht'
+      message: 'Booster erfolgreich gelöscht',
     })
   } catch (error: any) {
     console.error('Error deleting booster:', error)
@@ -167,6 +146,3 @@ export async function DELETE(
     )
   }
 }
-
-
-

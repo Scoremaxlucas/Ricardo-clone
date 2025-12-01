@@ -3,15 +3,16 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { 
-  Users, 
-  Search, 
-  Shield, 
-  Ban, 
+import {
+  Users,
+  Search,
+  Shield,
+  Ban,
   AlertTriangle,
   CheckCircle,
   XCircle,
-  UserCheck
+  UserCheck,
+  Flag,
 } from 'lucide-react'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
@@ -41,7 +42,7 @@ export default function AdminUsersPage() {
   const [users, setUsers] = useState<User[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filter, setFilter] = useState<'all' | 'active' | 'blocked' | 'pending'>('all')
+  const [filter, setFilter] = useState<'all' | 'reported' | 'blocked' | 'verified'>('all')
 
   useEffect(() => {
     if (status === 'loading') return
@@ -75,21 +76,20 @@ export default function AdminUsersPage() {
           router.push('/')
         }
       })
-      .catch((error) => {
+      .catch(error => {
         console.error('Error checking admin status:', error)
         setLoading(false)
         router.push('/')
       })
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session, status])
+  }, [session, status, filter])
 
   const loadUsers = async () => {
     setLoading(true)
     try {
-      console.log('Loading users...')
-      const res = await fetch('/api/admin/users')
-      console.log('Users API response status:', res.status)
-      
+      const filterParam = filter === 'reported' ? '?filter=reported' : ''
+      const res = await fetch(`/api/admin/users${filterParam}`)
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
         console.error('Users API error:', errorData)
@@ -98,16 +98,16 @@ export default function AdminUsersPage() {
         setLoading(false)
         return
       }
-      
+
       const data = await res.json()
-      
+
       if (!Array.isArray(data)) {
         console.error('API returned non-array data:', data)
         setUsers([])
         setLoading(false)
         return
       }
-      
+
       setUsers(data)
     } catch (error: any) {
       console.error('Error loading users:', error)
@@ -121,7 +121,7 @@ export default function AdminUsersPage() {
   const handleBlock = async (userId: string, block: boolean) => {
     try {
       const res = await fetch(`/api/admin/users/${userId}/${block ? 'block' : 'unblock'}`, {
-        method: 'POST'
+        method: 'POST',
       })
       if (res.ok) {
         toast.success(block ? 'Benutzer blockiert' : 'Benutzer entblockt')
@@ -139,7 +139,7 @@ export default function AdminUsersPage() {
   const handleWarn = async (userId: string) => {
     try {
       const res = await fetch(`/api/admin/users/${userId}/warn`, {
-        method: 'POST'
+        method: 'POST',
       })
       if (res.ok) {
         toast.success('Warnung wurde gesendet')
@@ -159,7 +159,7 @@ export default function AdminUsersPage() {
       const res = await fetch(`/api/admin/users/${userId}/admin`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isAdmin: makeAdmin })
+        body: JSON.stringify({ isAdmin: makeAdmin }),
       })
       if (res.ok) {
         toast.success(makeAdmin ? 'Admin-Rechte vergeben' : 'Admin-Rechte entfernt')
@@ -176,9 +176,9 @@ export default function AdminUsersPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
           <p className="mt-4 text-gray-600">Lädt...</p>
         </div>
       </div>
@@ -187,10 +187,10 @@ export default function AdminUsersPage() {
 
   // Prüfe Admin-Status nur aus Session
   const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
-  
+
   if (!session || !isAdminInSession) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <p className="text-gray-600">Sie haben keine Berechtigung für diese Seite.</p>
           <Link href="/" className="mt-4 text-primary-600 hover:text-primary-700">
@@ -203,12 +203,13 @@ export default function AdminUsersPage() {
 
   // Filter und Suche
   const filteredUsers = users.filter(user => {
-    const matchesSearch = !searchQuery || 
+    const matchesSearch =
+      !searchQuery ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.nickname?.toLowerCase().includes(searchQuery.toLowerCase())
-    
-    const matchesFilter = 
+
+    const matchesFilter =
       filter === 'all' ||
       (filter === 'active' && !user.isBlocked) ||
       (filter === 'blocked' && user.isBlocked) ||
@@ -220,7 +221,7 @@ export default function AdminUsersPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
@@ -228,15 +229,12 @@ export default function AdminUsersPage() {
               <p className="mt-2 text-gray-600">Verwalten Sie alle Benutzer der Plattform</p>
             </div>
             <div className="flex gap-4">
-              <Link
-                href="/"
-                className="text-primary-600 hover:text-primary-700 font-medium"
-              >
+              <Link href="/" className="font-medium text-primary-600 hover:text-primary-700">
                 ← Zurück zur Hauptseite
               </Link>
               <Link
                 href="/admin/dashboard"
-                className="text-gray-600 hover:text-gray-700 font-medium"
+                className="font-medium text-gray-600 hover:text-gray-700"
               >
                 Dashboard
               </Link>
@@ -245,22 +243,22 @@ export default function AdminUsersPage() {
         </div>
 
         {/* Filter und Suche */}
-        <div className="bg-white rounded-lg shadow p-6 mb-6">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div className="mb-6 rounded-lg bg-white p-6 shadow">
+          <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
             <div className="relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
               <input
                 type="text"
                 placeholder="Nach E-Mail, Name oder Nickname suchen..."
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                onChange={e => setSearchQuery(e.target.value)}
+                className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
             <div className="flex gap-2">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`rounded-lg px-4 py-2 font-medium transition-colors ${
                   filter === 'all'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -269,18 +267,23 @@ export default function AdminUsersPage() {
                 Alle
               </button>
               <button
-                onClick={() => setFilter('active')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filter === 'active'
-                    ? 'bg-primary-600 text-white'
+                onClick={() => setFilter('reported')}
+                className={`relative rounded-lg px-4 py-2 font-medium transition-colors ${
+                  filter === 'reported'
+                    ? 'bg-red-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Aktiv
+                Gemeldet
+                {users.filter(u => (u.pendingReports || 0) > 0).length > 0 && (
+                  <span className="ml-2 rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
+                    {users.filter(u => (u.pendingReports || 0) > 0).length}
+                  </span>
+                )}
               </button>
               <button
                 onClick={() => setFilter('blocked')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
+                className={`rounded-lg px-4 py-2 font-medium transition-colors ${
                   filter === 'blocked'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -289,54 +292,57 @@ export default function AdminUsersPage() {
                 Blockiert
               </button>
               <button
-                onClick={() => setFilter('pending')}
-                className={`px-4 py-2 rounded-lg font-medium transition-colors ${
-                  filter === 'pending'
+                onClick={() => setFilter('verified')}
+                className={`rounded-lg px-4 py-2 font-medium transition-colors ${
+                  filter === 'verified'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Ausstehend
+                Verifiziert
               </button>
             </div>
           </div>
         </div>
 
         {/* User Liste */}
-        <div className="bg-white rounded-lg shadow overflow-hidden">
+        <div className="overflow-hidden rounded-lg bg-white shadow">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Benutzer
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Status
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Verifizierung
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Warnungen
                   </th>
-                  <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Registriert
                   </th>
-                  <th className="px-6 py-3 text-right text-xs font-medium text-gray-500 uppercase tracking-wider">
+                  <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
                     Aktionen
                   </th>
                 </tr>
               </thead>
-              <tbody className="bg-white divide-y divide-gray-200">
-                {filteredUsers.map((user) => (
+              <tbody className="divide-y divide-gray-200 bg-white">
+                {filteredUsers.map(user => (
                   <tr key={user.id} className="hover:bg-gray-50">
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-6 py-4">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
-                          {user.name || `${user.firstName} ${user.lastName}` || user.nickname || 'Unbekannt'}
+                          {user.name ||
+                            `${user.firstName} ${user.lastName}` ||
+                            user.nickname ||
+                            'Unbekannt'}
                           {user.isAdmin && (
-                            <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-purple-100 text-purple-800">
+                            <span className="ml-2 inline-flex items-center rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
                               Admin
                             </span>
                           )}
@@ -347,38 +353,38 @@ export default function AdminUsersPage() {
                         )}
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-6 py-4">
                       {user.isBlocked ? (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          <Ban className="h-3 w-3 mr-1" />
+                        <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                          <Ban className="mr-1 h-3 w-3" />
                           Blockiert
                         </span>
                       ) : (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          <CheckCircle className="h-3 w-3 mr-1" />
+                        <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                          <CheckCircle className="mr-1 h-3 w-3" />
                           Aktiv
                         </span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
+                    <td className="whitespace-nowrap px-6 py-4">
                       {user.verificationStatus === 'pending' && (
                         <Link
                           href={`/admin/verifications?userId=${user.id}`}
-                          className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-800 hover:bg-orange-200"
+                          className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800 hover:bg-orange-200"
                         >
-                          <AlertTriangle className="h-3 w-3 mr-1" />
+                          <AlertTriangle className="mr-1 h-3 w-3" />
                           Zu prüfen
                         </Link>
                       )}
                       {user.verificationStatus === 'approved' && user.verified && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                          <CheckCircle className="h-3 w-3 mr-1" />
+                        <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                          <CheckCircle className="mr-1 h-3 w-3" />
                           Verifiziert
                         </span>
                       )}
                       {user.verificationStatus === 'rejected' && (
-                        <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-                          <XCircle className="h-3 w-3 mr-1" />
+                        <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                          <XCircle className="mr-1 h-3 w-3" />
                           Abgelehnt
                         </span>
                       )}
@@ -386,20 +392,30 @@ export default function AdminUsersPage() {
                         <span className="text-sm text-gray-500">Nicht gestartet</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                       {user.warningCount > 0 ? (
                         <span className="inline-flex items-center text-orange-600">
-                          <AlertTriangle className="h-4 w-4 mr-1" />
+                          <AlertTriangle className="mr-1 h-4 w-4" />
                           {user.warningCount}
                         </span>
                       ) : (
                         <span className="text-gray-400">0</span>
                       )}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                      {(user.pendingReports || 0) > 0 ? (
+                        <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                          <Flag className="mr-1 h-3 w-3" />
+                          {user.pendingReports}
+                        </span>
+                      ) : (
+                        <span className="text-gray-400">0</span>
+                      )}
+                    </td>
+                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                       {new Date(user.createdAt).toLocaleDateString('de-CH')}
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
                         {!user.isAdmin && (
                           <button
@@ -453,7 +469,7 @@ export default function AdminUsersPage() {
         </div>
 
         {filteredUsers.length === 0 && (
-          <div className="text-center py-12">
+          <div className="py-12 text-center">
             <Users className="mx-auto h-12 w-12 text-gray-400" />
             <h3 className="mt-2 text-sm font-medium text-gray-900">Keine Benutzer gefunden</h3>
             <p className="mt-1 text-sm text-gray-500">

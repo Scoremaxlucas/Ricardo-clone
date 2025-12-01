@@ -43,81 +43,75 @@ export default function ReviewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-3xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Bewertung abgeben
-        </h1>
+      <div className="mx-auto max-w-3xl px-4">
+        <h1 className="mb-8 text-3xl font-bold text-gray-900">Bewertung abgeben</h1>
 
-        <form onSubmit={handleSubmit} className="bg-white rounded-lg shadow-md p-8 space-y-6">
+        <form onSubmit={handleSubmit} className="space-y-6 rounded-lg bg-white p-8 shadow-md">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Bewertungstyp *
-            </label>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Bewertungstyp *</label>
             <div className="grid grid-cols-3 gap-4">
               <button
                 type="button"
                 onClick={() => setRating('positive')}
-                className={`p-4 border-2 rounded-lg transition-colors ${
+                className={`rounded-lg border-2 p-4 transition-colors ${
                   rating === 'positive'
                     ? 'border-green-500 bg-green-50'
                     : 'border-gray-200 hover:border-green-300'
                 }`}
               >
-                <Check className="h-8 w-8 mx-auto mb-2 text-green-600" />
+                <Check className="mx-auto mb-2 h-8 w-8 text-green-600" />
                 <div className="font-medium text-gray-900">Positiv</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setRating('neutral')}
-                className={`p-4 border-2 rounded-lg transition-colors ${
+                className={`rounded-lg border-2 p-4 transition-colors ${
                   rating === 'neutral'
                     ? 'border-gray-500 bg-gray-50'
                     : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <Minus className="h-8 w-8 mx-auto mb-2 text-gray-600" />
+                <Minus className="mx-auto mb-2 h-8 w-8 text-gray-600" />
                 <div className="font-medium text-gray-900">Neutral</div>
               </button>
 
               <button
                 type="button"
                 onClick={() => setRating('negative')}
-                className={`p-4 border-2 rounded-lg transition-colors ${
+                className={`rounded-lg border-2 p-4 transition-colors ${
                   rating === 'negative'
                     ? 'border-red-500 bg-red-50'
                     : 'border-gray-200 hover:border-red-300'
                 }`}
               >
-                <X className="h-8 w-8 mx-auto mb-2 text-red-600" />
+                <X className="mx-auto mb-2 h-8 w-8 text-red-600" />
                 <div className="font-medium text-gray-900">Negativ</div>
               </button>
             </div>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Benutzer-ID
-            </label>
+            <label className="mb-2 block text-sm font-medium text-gray-700">Benutzer-ID</label>
             <input
               type="text"
               value={reviewedUserId}
-              onChange={(e) => setReviewedUserId(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+              onChange={e => setReviewedUserId(e.target.value)}
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
               placeholder="Benutzer-ID eingeben"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Kommentar (Optional)
             </label>
             <textarea
               value={comment}
-              onChange={(e) => setComment(e.target.value)}
+              onChange={e => setComment(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
               placeholder="Schreiben Sie einen Kommentar zur Bewertung..."
             />
           </div>
@@ -125,7 +119,7 @@ export default function ReviewPage() {
           <button
             type="submit"
             disabled={!rating || !reviewedUserId || submitting}
-            className="w-full bg-primary-600 text-white py-3 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            className="w-full rounded-md bg-primary-600 py-3 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
           >
             {submitting ? 'Wird gesendet...' : 'Bewertung absenden'}
           </button>

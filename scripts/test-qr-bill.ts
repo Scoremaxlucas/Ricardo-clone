@@ -37,12 +37,14 @@ function generateQRCodeString(params: {
     creditorName,
     creditorAddress,
     debtorName,
-    debtorAddress
+    debtorAddress,
   } = params
 
   // Strukturierte Adressen
-  const creditorStreet = `${creditorAddress.street || ''} ${creditorAddress.streetNumber || ''}`.trim()
-  const creditorCityLine = `${creditorAddress.postalCode || ''} ${creditorAddress.city || ''}`.trim()
+  const creditorStreet =
+    `${creditorAddress.street || ''} ${creditorAddress.streetNumber || ''}`.trim()
+  const creditorCityLine =
+    `${creditorAddress.postalCode || ''} ${creditorAddress.city || ''}`.trim()
   const debtorStreet = `${debtorAddress.street || ''} ${debtorAddress.streetNumber || ''}`.trim()
   const debtorCityLine = `${debtorAddress.postalCode || ''} ${debtorAddress.city || ''}`.trim()
 
@@ -87,7 +89,7 @@ function generateQRCodeString(params: {
     'SCOR',
     formattedReference,
     '',
-    'EPD'
+    'EPD',
   ].join('\n')
 }
 
@@ -98,7 +100,7 @@ async function main() {
   console.log('='.repeat(60))
   console.log('TEST 1: Standard-Rechnung')
   console.log('='.repeat(60))
-  
+
   const testQRString1 = generateQRCodeString({
     iban: PAYMENT_CONFIG.getIbanWithoutSpaces(),
     amount: 123.45,
@@ -112,8 +114,8 @@ async function main() {
       streetNumber: '123',
       postalCode: '8000',
       city: 'Zürich',
-      country: 'CH'
-    }
+      country: 'CH',
+    },
   })
 
   const validation1 = validateQRBill(testQRString1)
@@ -125,7 +127,7 @@ async function main() {
       errorCorrectionLevel: 'M',
       type: 'image/png',
       width: 300,
-      margin: 2
+      margin: 2,
     })
     console.log('✅ QR-Code erfolgreich generiert')
     console.log(`📏 QR-Code Größe: ${qrCodeDataUrl.length} bytes`)
@@ -139,10 +141,10 @@ async function main() {
   console.log('='.repeat(60))
   console.log('TEST 2: Rechnung ohne Debtor-Info')
   console.log('='.repeat(60))
-  
+
   const testQRString2 = generateQRCodeString({
     iban: PAYMENT_CONFIG.getIbanWithoutSpaces(),
-    amount: 50.00,
+    amount: 50.0,
     currency: 'CHF',
     reference: 'REV-2024-002',
     creditorName: PAYMENT_CONFIG.creditorName,
@@ -153,8 +155,8 @@ async function main() {
       streetNumber: '',
       postalCode: '',
       city: '',
-      country: ''
-    }
+      country: '',
+    },
   })
 
   const validation2 = validateQRBill(testQRString2)
@@ -166,7 +168,7 @@ async function main() {
   console.log('='.repeat(60))
   console.log('TEST 3: Rechnung mit langer Referenz')
   console.log('='.repeat(60))
-  
+
   const testQRString3 = generateQRCodeString({
     iban: PAYMENT_CONFIG.getIbanWithoutSpaces(),
     amount: 999.99,
@@ -180,8 +182,8 @@ async function main() {
       streetNumber: '1',
       postalCode: '1000',
       city: 'Lausanne',
-      country: 'CH'
-    }
+      country: 'CH',
+    },
   })
 
   const validation3 = validateQRBill(testQRString3)
@@ -192,4 +194,3 @@ async function main() {
 }
 
 main().catch(console.error)
-

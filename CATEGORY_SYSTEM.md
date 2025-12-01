@@ -9,10 +9,12 @@ Das neue System ermöglicht es, **unterschiedliche Formulare** für verschiedene
 ## 📦 Neue Komponenten
 
 ### 1. **CategorySelector.tsx**
+
 - Zeigt alle Kategorien als auswählbare Karten
 - Nutzer wählt die Kategorie am Anfang des Verkaufsprozesses
 
 ### 2. **CategoryFields.tsx**
+
 - Rendert **kategorie-spezifische Felder**
 - Unterschiedliche Felder für Elektronik, Mode, Möbel, Fahrzeuge, etc.
 
@@ -23,12 +25,14 @@ Das neue System ermöglicht es, **unterschiedliche Formulare** für verschiedene
 Um das System zu integrieren, fügen Sie in `/src/app/sell/page.tsx` hinzu:
 
 ### **Schritt 1: Imports**
+
 ```typescript
 import { CategorySelector } from '@/components/forms/CategorySelector'
 import { CategoryFields } from '@/components/forms/CategoryFields'
 ```
 
 ### **Schritt 2: State für Kategorie**
+
 ```typescript
 const [selectedCategory, setSelectedCategory] = useState('')
 ```
@@ -36,8 +40,9 @@ const [selectedCategory, setSelectedCategory] = useState('')
 ### **Schritt 3: Im Formular einfügen**
 
 **VOR allen anderen Feldern:**
+
 ```tsx
-<CategorySelector 
+<CategorySelector
   selectedCategory={selectedCategory}
   onChange={setSelectedCategory}
 />
@@ -49,24 +54,24 @@ const [selectedCategory, setSelectedCategory] = useState('')
       <label>Titel *</label>
       <input name="title" ... />
     </div>
-    
+
     <div>
       <label>Beschreibung *</label>
       <textarea name="description" ... />
     </div>
-    
+
     <div>
       <label>Preis *</label>
       <input type="number" name="price" ... />
     </div>
-    
+
     {/* Kategorie-spezifische Felder */}
     <CategoryFields
       category={selectedCategory}
       formData={formData}
       onChange={handleInputChange}
     />
-    
+
     {/* Bilder, Versand, etc. */}
   </>
 )}
@@ -77,6 +82,7 @@ const [selectedCategory, setSelectedCategory] = useState('')
 ## 📋 Kategorie-spezifische Felder
 
 ### **Elektronik** (elektronik)
+
 - ✅ Hersteller/Marke
 - ✅ Modell
 - ✅ Farbe
@@ -85,6 +91,7 @@ const [selectedCategory, setSelectedCategory] = useState('')
 - ✅ Originalverpackung
 
 ### **Mode** (mode)
+
 - ✅ Marke
 - ✅ Größe
 - ✅ Farbe
@@ -92,6 +99,7 @@ const [selectedCategory, setSelectedCategory] = useState('')
 - ✅ Geschlecht (Damen/Herren/Unisex/Kinder)
 
 ### **Möbel/Haus & Garten** (haus-garten, moebel)
+
 - ✅ Material
 - ✅ Farbe
 - ✅ Maße (L x B x H)
@@ -99,6 +107,7 @@ const [selectedCategory, setSelectedCategory] = useState('')
 - ✅ Selbstabholung erforderlich?
 
 ### **Fahrzeuge** (fahrzeuge, autos)
+
 - ✅ Marke
 - ✅ Modell
 - ✅ Erstzulassung
@@ -107,11 +116,13 @@ const [selectedCategory, setSelectedCategory] = useState('')
 - ✅ Getriebe
 
 ### **Sammeln & Seltenes** (sammeln, kunst)
+
 - ✅ Künstler/Hersteller
 - ✅ Entstehungsjahr
 - ✅ Echtheitszertifikat
 
 ### **Sonstiges** (alle anderen)
+
 - ✅ Marke/Hersteller
 - ✅ Modell
 - ✅ Farbe
@@ -122,11 +133,13 @@ const [selectedCategory, setSelectedCategory] = useState('')
 ## 💡 Vorteile
 
 ### **Für Verkäufer:**
+
 - ✅ **Relevante Felder** - Nur was für die Kategorie wichtig ist
 - ✅ **Einfach** - Klar strukturiert
 - ✅ **Schnell** - Weniger irrelevante Felder
 
 ### **Für Käufer:**
+
 - ✅ **Bessere Infos** - Kategorie-spezifische Details
 - ✅ **Vergleichbar** - Einheitliche Felder pro Kategorie
 - ✅ **Professionell** - Strukturierte Anzeigen
@@ -154,6 +167,7 @@ Um neue Kategorien hinzuzufügen:
 2. **CategoryFields.tsx** - Neue if-Bedingung mit Feldern
 
 Beispiel:
+
 ```typescript
 if (category === 'neue-kategorie') {
   return (
@@ -172,10 +186,12 @@ if (category === 'neue-kategorie') {
 ## 📊 Datenbank
 
 Die Felder werden als JSON oder in flexiblen Feldern gespeichert:
+
 - Existierende Felder (`brand`, `model`, `year`, etc.) werden wiederverwendet
 - Neue Felder (wie `color`, `size`, `mileage`) können als zusätzliche Spalten oder in JSON gespeichert werden
 
 **Das aktuelle Watch-Schema funktioniert bereits** - Sie können die Felder einfach anders nutzen:
+
 - `brand` = Marke (für alles)
 - `model` = Modell (für alles)
 - `material` = Material (für alles)
@@ -190,4 +206,3 @@ Die Felder werden als JSON oder in flexiblen Feldern gespeichert:
 - ⏸️ **Integration in Sell-Page** - Bereit zur Implementierung
 
 Die Komponenten sind fertig und funktionsfähig. Sie können sie jetzt in die Sell-Page integrieren!
-

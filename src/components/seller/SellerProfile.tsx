@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { Star, CheckCircle, Package } from 'lucide-react'
+import { Star, CheckCircle, Package, CheckCircle2 } from 'lucide-react'
+import toast from 'react-hot-toast'
 
 interface SellerProfileProps {
   sellerId: string
@@ -52,7 +53,7 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
 
     const checkFollowStatus = () => {
       if (!session?.user) return
-      
+
       try {
         const currentFollows = JSON.parse(localStorage.getItem('seller_follows') || '[]')
         setIsFollowing(currentFollows.includes(sellerId))
@@ -67,7 +68,19 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
 
   const toggleFollow = async () => {
     if (!session?.user) {
-      alert('Bitte melden Sie sich an, um Verkäufern zu folgen.')
+      toast.error('Bitte melden Sie sich an, um Verkäufern zu folgen.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#fff',
+          color: '#374151',
+          borderRadius: '12px',
+          padding: '16px',
+          fontSize: '14px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #e5e7eb',
+        },
+      })
       return
     }
 
@@ -75,22 +88,69 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
     try {
       const followKey = `follow_${sellerId}`
       const currentFollows = JSON.parse(localStorage.getItem('seller_follows') || '[]')
-      
+
       if (isFollowing) {
         // Entfolgen
         const newFollows = currentFollows.filter((id: string) => id !== sellerId)
         localStorage.setItem('seller_follows', JSON.stringify(newFollows))
         setIsFollowing(false)
-        alert('Sie folgen diesem Verkäufer nicht mehr.')
+        toast.success('Sie folgen diesem Verkäufer nicht mehr.', {
+          position: 'top-right',
+          duration: 3000,
+          style: {
+            background: '#fff',
+            color: '#374151',
+            borderRadius: '12px',
+            padding: '16px',
+            fontSize: '14px',
+            boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+            border: '1px solid #e5e7eb',
+          },
+          icon: <CheckCircle2 className="h-5 w-5 text-gray-600" />,
+        })
       } else {
         // Folgen
         currentFollows.push(sellerId)
         localStorage.setItem('seller_follows', JSON.stringify(currentFollows))
         setIsFollowing(true)
-        alert('Sie folgen jetzt diesem Verkäufer! Sie werden benachrichtigt, wenn er neue Artikel einstellt.')
+        toast.success(
+          'Sie folgen jetzt diesem Verkäufer! Sie werden benachrichtigt, wenn er neue Artikel einstellt.',
+          {
+            position: 'top-right',
+            duration: 5000,
+            style: {
+              background: '#fff',
+              color: '#374151',
+              borderRadius: '12px',
+              padding: '20px',
+              fontSize: '14px',
+              boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+              border: '1px solid #e5e7eb',
+              maxWidth: '400px',
+            },
+            icon: (
+              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-100">
+                <CheckCircle2 className="h-5 w-5 text-primary-600" />
+              </div>
+            ),
+          }
+        )
       }
     } catch (error) {
       console.error('Error toggling follow:', error)
+      toast.error('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.', {
+        position: 'top-right',
+        duration: 4000,
+        style: {
+          background: '#fff',
+          color: '#374151',
+          borderRadius: '12px',
+          padding: '16px',
+          fontSize: '14px',
+          boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #e5e7eb',
+        },
+      })
     }
   }
 
@@ -104,10 +164,10 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      <div className="rounded-lg border border-gray-200 bg-white p-6">
         <div className="animate-pulse">
-          <div className="h-4 bg-gray-200 rounded w-1/3 mb-4"></div>
-          <div className="h-4 bg-gray-200 rounded w-1/2"></div>
+          <div className="mb-4 h-4 w-1/3 rounded bg-gray-200"></div>
+          <div className="h-4 w-1/2 rounded bg-gray-200"></div>
         </div>
       </div>
     )
@@ -116,38 +176,38 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
   const stats = sellerData?.reviewStats || { total: 0, positivePercentage: 100, averageRating: 5 }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
-      <h3 className="text-lg font-bold text-gray-900 mb-4">Verkäufer</h3>
-      
-      <div className="flex items-start gap-4 mb-4">
+    <div className="rounded-lg border border-gray-200 bg-white p-6">
+      <h3 className="mb-4 text-lg font-bold text-gray-900">Verkäufer</h3>
+
+      <div className="mb-4 flex items-start gap-4">
         {/* Verkäufer Avatar */}
-        <div className="w-16 h-16 rounded-full bg-primary-600 flex items-center justify-center text-white font-bold text-xl flex-shrink-0">
+        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-xl font-bold text-white">
           {getInitials(sellerName)}
         </div>
 
         <div className="flex-1">
           {/* Verkäufer Name */}
           <Link
-            href={`/profile/${sellerId}`}
-            className="text-lg font-semibold text-gray-900 hover:text-primary-600 block mb-1"
+            href={`/users/${sellerId}`}
+            className="mb-1 block text-lg font-semibold text-gray-900 hover:text-primary-600"
           >
             {sellerName}
           </Link>
 
           {/* Anzahl offener Angebote */}
-          <div className="text-sm text-gray-600 mb-2">
+          <div className="mb-2 text-sm text-gray-600">
             {sellerData?.activeListings || 0} offene Angebote
           </div>
 
           {/* Bewertungen */}
-          <div className="flex items-center gap-3 mb-2">
+          <div className="mb-2 flex items-center gap-3">
             {stats.total > 0 ? (
               <>
                 <div className="flex items-center gap-1">
                   <span className="text-lg font-bold text-gray-900">
                     {stats.positivePercentage}%
                   </span>
-                  <Star className="h-4 w-4 text-yellow-500 fill-current" />
+                  <Star className="h-4 w-4 fill-current text-yellow-500" />
                 </div>
                 <div className="text-sm text-gray-600">
                   {stats.total} Bewertung{stats.total !== 1 ? 'en' : ''}
@@ -160,7 +220,7 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
 
           {/* Verifizierungsstatus */}
           {sellerData?.verified && (
-            <div className="flex items-center gap-1 text-sm text-green-600 mb-3">
+            <div className="mb-3 flex items-center gap-1 text-sm text-green-600">
               <CheckCircle className="h-4 w-4" />
               <span>Ausweis verifiziert</span>
             </div>
@@ -169,7 +229,7 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
           {/* Folgen Button */}
           <button
             onClick={toggleFollow}
-            className={`w-full py-2 px-4 rounded-lg font-medium text-sm transition-colors ${
+            className={`w-full rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
               isFollowing
                 ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
                 : 'bg-primary-600 text-white hover:bg-primary-700'
@@ -182,27 +242,24 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
 
       {/* Andere Artikel des Verkäufers */}
       {sellerData?.otherItems && sellerData.otherItems.length > 0 && (
-        <div className="mt-6 pt-6 border-t border-gray-200">
-          <h4 className="text-sm font-semibold text-gray-900 mb-3">
+        <div className="mt-6 border-t border-gray-200 pt-6">
+          <h4 className="mb-3 text-sm font-semibold text-gray-900">
             Weitere Artikel dieses Verkäufers
           </h4>
           <div className="grid grid-cols-3 gap-2">
-            {sellerData.otherItems.slice(0, 3).map((item) => {
-              const images = typeof item.images === 'string' ? JSON.parse(item.images) : item.images || []
+            {sellerData.otherItems.slice(0, 3).map(item => {
+              const images =
+                typeof item.images === 'string' ? JSON.parse(item.images) : item.images || []
               return (
-                <Link
-                  key={item.id}
-                  href={`/products/${item.id}`}
-                  className="group"
-                >
+                <Link key={item.id} href={`/products/${item.id}`} className="group">
                   {images[0] ? (
                     <img
                       src={images[0]}
                       alt={item.title}
-                      className="w-full h-20 object-cover rounded border border-gray-200 group-hover:border-primary-400 transition-colors"
+                      className="h-20 w-full rounded border border-gray-200 object-cover transition-colors group-hover:border-primary-400"
                     />
                   ) : (
-                    <div className="w-full h-20 bg-gray-100 rounded border border-gray-200 flex items-center justify-center">
+                    <div className="flex h-20 w-full items-center justify-center rounded border border-gray-200 bg-gray-100">
                       <Package className="h-6 w-6 text-gray-300" />
                     </div>
                   )}
@@ -215,4 +272,3 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
     </div>
   )
 }
-

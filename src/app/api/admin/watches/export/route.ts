@@ -86,10 +86,10 @@ export async function GET(request: NextRequest) {
     ]
 
     // CSV-Zeilen
-    const rows = watches.map((watch) => {
-      const activePurchases = watch.purchases.filter((p) => p.status !== 'cancelled')
+    const rows = watches.map(watch => {
+      const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
       const isSold = activePurchases.length > 0
-      const pendingReports = watch.reports.filter((r) => r.status === 'pending').length
+      const pendingReports = watch.reports.filter(r => r.status === 'pending').length
 
       return [
         watch.articleNumber || '',
@@ -119,10 +119,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error exporting watches:', error)
-    return NextResponse.json(
-      { message: 'Fehler beim Export: ' + error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler beim Export: ' + error.message }, { status: 500 })
   }
 }
-

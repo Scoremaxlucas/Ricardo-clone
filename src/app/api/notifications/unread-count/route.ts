@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ count: 0 })
     }
@@ -14,8 +14,8 @@ export async function GET(request: NextRequest) {
     const count = await prisma.notification.count({
       where: {
         userId: session.user.id,
-        isRead: false
-      }
+        isRead: false,
+      },
     })
 
     return NextResponse.json({ count })
@@ -24,20 +24,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ count: 0 })
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

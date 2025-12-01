@@ -50,24 +50,22 @@ export default function WatchesPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4">
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Alle Uhren
-        </h1>
+      <div className="mx-auto max-w-7xl px-4">
+        <h1 className="mb-8 text-3xl font-bold text-gray-900">Alle Artikel</h1>
 
         {watches.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <p className="text-gray-600 mb-4">Noch keine Uhren verfügbar.</p>
+          <div className="rounded-lg bg-white p-12 text-center shadow-md">
+            <p className="mb-4 text-gray-600">Noch keine Artikel verfügbar.</p>
             <Link
               href="/sell"
-              className="inline-block bg-primary-600 text-white px-6 py-3 rounded-md hover:bg-primary-700"
+              className="inline-block rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700"
             >
               Erste Uhr verkaufen
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-            {watches.map((watch) => {
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {watches.map(watch => {
               const images = watch.images ? watch.images.split(',') : []
               const imageUrl = images[0] || '/placeholder-watch.jpg'
               const boosters = watch.boosters || []
@@ -79,39 +77,38 @@ export default function WatchesPage() {
                 <Link
                   key={watch.id}
                   href={`/products/${watch.id}`}
-                  className={`rounded-lg shadow-md overflow-hidden hover:shadow-xl transition-shadow ${
-                    hasSuperBoost 
-                      ? 'bg-gradient-to-br from-yellow-50 to-orange-50 border-2 border-yellow-400' 
+                  className={`overflow-hidden rounded-lg shadow-md transition-shadow hover:shadow-xl ${
+                    hasSuperBoost
+                      ? 'border-2 border-yellow-400 bg-gradient-to-br from-yellow-50 to-orange-50'
                       : hasTurboBoost
-                      ? 'bg-gradient-to-br from-blue-50 to-purple-50 border-2 border-blue-400'
-                      : hasBoost
-                      ? 'bg-white border-2 border-primary-400'
-                      : 'bg-white'
+                        ? 'border-2 border-blue-400 bg-gradient-to-br from-blue-50 to-purple-50'
+                        : hasBoost
+                          ? 'border-2 border-primary-400 bg-white'
+                          : 'bg-white'
                   }`}
                 >
                   <div className="relative aspect-square w-full">
-                    <Image
-                      src={imageUrl}
-                      alt={watch.title}
-                      fill
-                      className="object-cover"
-                    />
+                    <Image src={imageUrl} alt={watch.title} fill className="object-cover" />
                     {hasSuperBoost && (
-                      <div className="absolute top-2 left-2 bg-gradient-to-r from-yellow-400 to-orange-500 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                      <div className="absolute left-2 top-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 px-2 py-1 text-xs font-bold text-white shadow-lg">
                         ⭐
                       </div>
                     )}
                     {hasTurboBoost && !hasSuperBoost && (
-                      <div className="absolute top-2 left-2 bg-gradient-to-r from-blue-500 to-purple-600 text-white px-2 py-1 rounded-full text-xs font-bold shadow-lg">
+                      <div className="absolute left-2 top-2 rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-1 text-xs font-bold text-white shadow-lg">
                         🚀
                       </div>
                     )}
                   </div>
                   <div className="p-4">
-                    <h3 className={`font-semibold text-gray-900 mb-1 ${hasBoost || hasTurboBoost || hasSuperBoost ? 'font-bold' : ''}`}>
+                    <h3
+                      className={`mb-1 font-semibold text-gray-900 ${hasBoost || hasTurboBoost || hasSuperBoost ? 'font-bold' : ''}`}
+                    >
                       {watch.title}
                     </h3>
-                    <p className={`text-sm mb-2 ${hasSuperBoost ? 'text-orange-700' : hasTurboBoost ? 'text-purple-700' : hasBoost ? 'text-primary-700' : 'text-gray-600'}`}>
+                    <p
+                      className={`mb-2 text-sm ${hasSuperBoost ? 'text-orange-700' : hasTurboBoost ? 'text-purple-700' : hasBoost ? 'text-primary-700' : 'text-gray-600'}`}
+                    >
                       {watch.brand} {watch.model}
                     </p>
                     <div className="flex items-center justify-between">
@@ -119,12 +116,12 @@ export default function WatchesPage() {
                         CHF {watch.price.toFixed(2)}
                       </div>
                       {!hasSuperBoost && !hasTurboBoost && watch.isAuction && (
-                        <span className="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded">
+                        <span className="rounded bg-yellow-100 px-2 py-1 text-xs text-yellow-800">
                           Auktion
                         </span>
                       )}
                     </div>
-                    <p className="text-xs text-gray-500 mt-2">Von {watch.seller.name}</p>
+                    <p className="mt-2 text-xs text-gray-500">Von {watch.seller.name}</p>
                   </div>
                 </Link>
               )

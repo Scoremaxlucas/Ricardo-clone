@@ -19,7 +19,9 @@ export function SuggestedProducts() {
   const { data: session } = useSession()
   const { t } = useLanguage()
   const [products, setProducts] = useState<Product[]>([])
-  const [activeTab, setActiveTab] = useState<'near' | 'ending' | 'popular' | 'new' | 'cheap'>('popular')
+  const [activeTab, setActiveTab] = useState<'near' | 'ending' | 'popular' | 'new' | 'cheap'>(
+    'popular'
+  )
   const [loading, setLoading] = useState(true)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
 
@@ -38,14 +40,14 @@ export function SuggestedProducts() {
         setLoading(false)
       }
     }
-    
+
     fetchProducts()
   }, [])
 
   useEffect(() => {
     const fetchFavorites = async () => {
       if (!session?.user) return
-      
+
       try {
         const response = await fetch('/api/favorites')
         if (response.ok) {
@@ -57,13 +59,13 @@ export function SuggestedProducts() {
         console.error('Error fetching favorites:', error)
       }
     }
-    
+
     fetchFavorites()
   }, [session?.user])
 
   const toggleFavorite = async (productId: string, e: React.MouseEvent) => {
     e.preventDefault()
-    
+
     if (!session?.user) {
       alert(t.favorites.loginRequired)
       return
@@ -85,7 +87,7 @@ export function SuggestedProducts() {
         const res = await fetch('/api/favorites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ watchId: productId })
+          body: JSON.stringify({ watchId: productId }),
         })
         if (res.ok) {
           setFavorites(prev => new Set(prev).add(productId))
@@ -106,18 +108,16 @@ export function SuggestedProducts() {
 
   return (
     <section className="bg-white py-12">
-      <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
-        <h2 className="text-2xl font-bold text-gray-900 mb-6">
-          {t.home.currentlyOnHelvenda}
-        </h2>
+      <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
+        <h2 className="mb-6 text-2xl font-bold text-gray-900">{t.home.currentlyOnHelvenda}</h2>
 
         {/* Tabs */}
-        <div className="flex gap-4 mb-6 border-b border-gray-200 overflow-x-auto">
-          {tabs.map((tab) => (
+        <div className="mb-6 flex gap-4 overflow-x-auto border-b border-gray-200">
+          {tabs.map(tab => (
             <button
               key={tab.id}
               onClick={() => setActiveTab(tab.id as any)}
-              className={`pb-3 px-4 text-sm font-medium whitespace-nowrap transition-colors ${
+              className={`whitespace-nowrap px-4 pb-3 text-sm font-medium transition-colors ${
                 activeTab === tab.id
                   ? 'border-b-2 border-primary-600 text-primary-600'
                   : 'text-gray-600 hover:text-gray-900'
@@ -130,32 +130,30 @@ export function SuggestedProducts() {
 
         {/* Product Grid */}
         {loading ? (
-          <div className="text-center py-12 text-gray-500">
-            {t.home.loadingItems}
-          </div>
+          <div className="py-12 text-center text-gray-500">{t.home.loadingItems}</div>
         ) : products.length > 0 ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-6">
-            {products.map((product) => (
+          <div className="grid grid-cols-2 gap-6 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+            {products.map(product => (
               <Link
                 key={product.id}
                 href={`/products/${product.id}`}
-                className="group bg-white border border-gray-200 rounded-lg overflow-hidden hover:shadow-xl transition-all block"
+                className="group block overflow-hidden rounded-lg border border-gray-200 bg-white transition-all hover:shadow-xl"
               >
-                <div className="relative aspect-[5/4] bg-gray-100 overflow-hidden">
+                <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
                   {product.images?.[0] ? (
                     <img
                       src={product.images[0]}
                       alt={product.title}
-                      className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                      className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
                     />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center text-gray-400">
+                    <div className="flex h-full w-full items-center justify-center text-gray-400">
                       {t.home.noImage}
                     </div>
                   )}
                   <button
-                    onClick={(e) => toggleFavorite(product.id, e)}
-                    className={`absolute top-2 right-2 rounded-full p-2 shadow-md transition-colors ${
+                    onClick={e => toggleFavorite(product.id, e)}
+                    className={`absolute right-2 top-2 rounded-full p-2 shadow-md transition-colors ${
                       favorites.has(product.id)
                         ? 'bg-red-500 text-white hover:bg-red-600'
                         : 'bg-white text-gray-600 hover:bg-gray-50'
@@ -164,41 +162,43 @@ export function SuggestedProducts() {
                       !session?.user
                         ? t.favorites.loginRequired
                         : favorites.has(product.id)
-                        ? t.product.removeFromFavorites
-                        : t.product.addToFavorites
+                          ? t.product.removeFromFavorites
+                          : t.product.addToFavorites
                     }
                   >
-                    <Heart className={`h-4 w-4 ${favorites.has(product.id) ? 'fill-current' : ''}`} />
+                    <Heart
+                      className={`h-4 w-4 ${favorites.has(product.id) ? 'fill-current' : ''}`}
+                    />
                   </button>
                 </div>
                 <div className="p-3">
-                  <h3 className="text-sm font-medium text-gray-900 mb-2 line-clamp-2 group-hover:text-primary-600">
+                  <h3 className="mb-2 line-clamp-2 text-sm font-medium text-gray-900 group-hover:text-primary-600">
                     {product.title}
                   </h3>
                   <div className="text-base font-bold text-gray-900">
                     {product.isAuction && product.currentBid ? (
-                      <>{t.common.chf} {product.currentBid.toFixed(2)}</>
+                      <>
+                        {t.common.chf} {product.currentBid.toFixed(2)}
+                      </>
                     ) : (
-                      <>{t.common.chf} {product.price.toFixed(2)}</>
+                      <>
+                        {t.common.chf} {product.price.toFixed(2)}
+                      </>
                     )}
                   </div>
                   {product.isAuction && (
-                    <div className="text-xs text-gray-500 mt-1">
-                      {t.home.auction}
-                    </div>
+                    <div className="mt-1 text-xs text-gray-500">{t.home.auction}</div>
                   )}
                 </div>
               </Link>
             ))}
           </div>
         ) : (
-          <div className="text-center py-12">
-            <p className="text-gray-500 text-lg mb-4">
-              {t.home.noItemsAvailable}
-            </p>
-            <p className="text-gray-400 text-sm">
+          <div className="py-12 text-center">
+            <p className="mb-4 text-lg text-gray-500">{t.home.noItemsAvailable}</p>
+            <p className="text-sm text-gray-400">
               {t.home.beFirstToSell}{' '}
-              <Link href="/sell" className="text-primary-600 hover:text-primary-700 font-medium">
+              <Link href="/sell" className="font-medium text-primary-600 hover:text-primary-700">
                 {t.home.sellNowItem}
               </Link>
             </p>
@@ -208,4 +208,3 @@ export function SuggestedProducts() {
     </section>
   )
 }
-

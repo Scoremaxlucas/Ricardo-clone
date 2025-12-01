@@ -27,9 +27,9 @@ async function main() {
       name: true,
       isAdmin: true,
       emailVerified: true,
-      password: true
+      password: true,
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   })
 
   console.log(`📋 Alle User in der Datenbank (${users.length}):`)
@@ -46,26 +46,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error('Fehler:', e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

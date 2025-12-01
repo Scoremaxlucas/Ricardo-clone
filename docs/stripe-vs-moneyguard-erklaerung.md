@@ -66,11 +66,13 @@
 ### 1. Zahlungsfluss
 
 **Stripe:**
+
 ```
 Käufer → Stripe → Verkäufer (sofort)
 ```
 
 **MoneyGuard:**
+
 ```
 Käufer → Ricardo Treuhandkonto → [Warte auf Bestätigung] → Verkäufer
 ```
@@ -78,11 +80,13 @@ Käufer → Ricardo Treuhandkonto → [Warte auf Bestätigung] → Verkäufer
 ### 2. Käuferschutz
 
 **Stripe:**
+
 - Käufer kann Chargeback beantragen (bei Kreditkarte)
 - Kein automatischer Schutz bei Problemen
 - Käufer muss selbst aktiv werden
 
 **MoneyGuard:**
+
 - Automatischer Schutz durch Treuhandkonto
 - Geld wird erst nach Bestätigung freigegeben
 - Ricardo kann bei Problemen eingreifen
@@ -90,11 +94,13 @@ Käufer → Ricardo Treuhandkonto → [Warte auf Bestätigung] → Verkäufer
 ### 3. Verkäuferschutz
 
 **Stripe:**
+
 - Verkäufer erhält Geld sofort
 - Bei Chargeback kann Geld zurückgefordert werden
 - Verkäufer trägt Risiko
 
 **MoneyGuard:**
+
 - Verkäufer erhält Geld erst nach Bestätigung
 - Geld ist sicher auf Treuhandkonto
 - Ricardo garantiert Zahlung
@@ -102,10 +108,12 @@ Käufer → Ricardo Treuhandkonto → [Warte auf Bestätigung] → Verkäufer
 ### 4. Gebühren
 
 **Stripe:**
+
 - 2.9% + 0.30 CHF pro Transaktion
 - Zusätzlich zu Plattform-Gebühren
 
 **MoneyGuard:**
+
 - Teil der Plattform-Gebühren
 - Keine zusätzlichen Zahlungsgebühren
 - Ricardo trägt Kosten für Treuhandkonto
@@ -113,12 +121,14 @@ Käufer → Ricardo Treuhandkonto → [Warte auf Bestätigung] → Verkäufer
 ### 5. Zahlungsmethoden
 
 **Stripe:**
+
 - Kreditkarte (Visa, Mastercard, American Express)
 - Debitkarte
 - Apple Pay, Google Pay
 - **NICHT:** TWINT, Banküberweisung (direkt)
 
 **MoneyGuard:**
+
 - TWINT
 - Banküberweisung
 - Kreditkarte (über Adyen)
@@ -171,27 +181,29 @@ Käufer → Ricardo Treuhandkonto → [Warte auf Bestätigung] → Verkäufer
 
 ## 🎯 Vergleich: Ricardo vs. Helvenda
 
-| Feature | Ricardo (MoneyGuard) | Helvenda (Stripe) |
-|---------|----------------------|-------------------|
-| **Zahlungssystem** | Treuhandkonto | Payment Gateway |
-| **Käuferschutz** | ✅ Automatisch | ⚠️ Chargeback möglich |
-| **Verkäuferschutz** | ✅ Garantiert | ⚠️ Bei Chargeback riskant |
-| **Zahlungsmethoden** | TWINT, Bank, Kreditkarte | Kreditkarte (TWINT/Bank separat) |
-| **Gebühren** | In Plattform-Gebühren | 2.9% + 0.30 CHF zusätzlich |
-| **Automatisierung** | ⚠️ Teilweise | ✅ Vollständig |
-| **Komplexität** | ❌ Hoch | ✅ Niedrig |
-| **Entwicklungskosten** | ❌ Hoch | ✅ Niedrig |
+| Feature                | Ricardo (MoneyGuard)     | Helvenda (Stripe)                |
+| ---------------------- | ------------------------ | -------------------------------- |
+| **Zahlungssystem**     | Treuhandkonto            | Payment Gateway                  |
+| **Käuferschutz**       | ✅ Automatisch           | ⚠️ Chargeback möglich            |
+| **Verkäuferschutz**    | ✅ Garantiert            | ⚠️ Bei Chargeback riskant        |
+| **Zahlungsmethoden**   | TWINT, Bank, Kreditkarte | Kreditkarte (TWINT/Bank separat) |
+| **Gebühren**           | In Plattform-Gebühren    | 2.9% + 0.30 CHF zusätzlich       |
+| **Automatisierung**    | ⚠️ Teilweise             | ✅ Vollständig                   |
+| **Komplexität**        | ❌ Hoch                  | ✅ Niedrig                       |
+| **Entwicklungskosten** | ❌ Hoch                  | ✅ Niedrig                       |
 
 ---
 
 ## 📊 Fazit
 
 ### Ricardo's MoneyGuard:
+
 - **Vorteil:** Maximale Sicherheit für Käufer und Verkäufer
 - **Nachteil:** Hohe Entwicklungskosten, komplexe Implementierung
 - **Ideal für:** Große Plattformen mit vielen Transaktionen
 
 ### Helvenda's Stripe:
+
 - **Vorteil:** Einfache Integration, schnelle Implementierung
 - **Nachteil:** Zusätzliche Gebühren, weniger Käuferschutz
 - **Ideal für:** Kleinere Plattformen, schneller Markteintritt
@@ -226,8 +238,3 @@ Käufer → Ricardo Treuhandkonto → [Warte auf Bestätigung] → Verkäufer
 - [Stripe Dokumentation](https://stripe.com/docs)
 - [Ricardo MoneyGuard](https://help.ricardo.ch/hc/de/articles/360013129899-Käuferschutz-bei-Bezahlung-direkt-an-den-Verkäufer)
 - [Payment Gateway Vergleich](https://www.comparis.ch/finanzieren/kreditkarten/zahlungsdienstleister)
-
-
-
-
-

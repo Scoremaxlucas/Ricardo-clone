@@ -9,17 +9,11 @@ import { addStatusHistory } from '@/lib/status-history'
  * POST: Dispute eröffnen
  * Nur Verkäufer können Disputes eröffnen
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -45,10 +39,10 @@ export async function POST(
                 email: true,
                 firstName: true,
                 lastName: true,
-                nickname: true
-              }
-            }
-          }
+                nickname: true,
+              },
+            },
+          },
         },
         buyer: {
           select: {
@@ -57,17 +51,14 @@ export async function POST(
             email: true,
             firstName: true,
             lastName: true,
-            nickname: true
-          }
-        }
-      }
+            nickname: true,
+          },
+        },
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe Berechtigung (nur Verkäufer kann Dispute eröffnen)
@@ -82,7 +73,7 @@ export async function POST(
 
     // Validiere, dass der Dispute-Grund für Verkäufer gültig ist
     const sellerReasons = ['payment_not_confirmed', 'buyer_not_responding', 'other']
-    
+
     if (!sellerReasons.includes(reason)) {
       return NextResponse.json(
         { message: 'Dieser Dispute-Grund ist nicht gültig' },
@@ -113,8 +104,8 @@ export async function POST(
         disputeOpenedAt: new Date(),
         disputeStatus: 'pending',
         disputeReason: reason, // Nur der Grund (z.B. 'item_not_received')
-        disputeDescription: description // Detaillierte Beschreibung getrennt
-      }
+        disputeDescription: description, // Detaillierte Beschreibung getrennt
+      },
     })
 
     // Füge Status-Historie hinzu
@@ -131,7 +122,11 @@ export async function POST(
 
     // Benachrichtigung an die andere Partei (Käufer)
     const otherParty = purchase.buyer
-    const openerName = purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Verkäufer'
+    const openerName =
+      purchase.watch.seller.nickname ||
+      purchase.watch.seller.firstName ||
+      purchase.watch.seller.name ||
+      'Verkäufer'
 
     try {
       await prisma.notification.create({
@@ -141,8 +136,8 @@ export async function POST(
           title: '⚠️ Dispute eröffnet',
           message: `${openerName} hat einen Dispute für "${purchase.watch.title}" eröffnet. Grund: ${reason}`,
           link: `/my-watches/buying/purchased`,
-          watchId: purchase.watchId
-        }
+          watchId: purchase.watchId,
+        },
       })
     } catch (error) {
       console.error('[dispute] Fehler beim Erstellen der Benachrichtigung:', error)
@@ -159,12 +154,12 @@ export async function POST(
         description,
         'buyer'
       )
-      
+
       await sendEmail({
         to: otherParty.email,
         subject,
         html,
-        text
+        text,
       })
     } catch (emailError) {
       console.error('[dispute] Fehler beim Senden der Dispute-E-Mail:', emailError)
@@ -174,7 +169,7 @@ export async function POST(
     try {
       const admins = await prisma.user.findMany({
         where: { isAdmin: true },
-        select: { id: true }
+        select: { id: true },
       })
 
       for (const admin of admins) {
@@ -185,8 +180,8 @@ export async function POST(
             title: '🔔 Neuer Dispute',
             message: `Ein Dispute wurde für "${purchase.watch.title}" eröffnet. Grund: ${reason}`,
             link: `/admin/disputes/${id}`,
-            watchId: purchase.watchId
-          }
+            watchId: purchase.watchId,
+          },
         })
       }
     } catch (error) {
@@ -197,7 +192,7 @@ export async function POST(
 
     return NextResponse.json({
       message: 'Dispute erfolgreich eröffnet. Ein Admin wird sich in Kürze darum kümmern.',
-      purchase: updatedPurchase
+      purchase: updatedPurchase,
     })
   } catch (error: any) {
     console.error('Error opening dispute:', error)
@@ -211,17 +206,11 @@ export async function POST(
 /**
  * GET: Dispute-Informationen abrufen
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -237,18 +226,15 @@ export async function GET(
         disputeResolvedBy: true,
         watch: {
           select: {
-            sellerId: true
-          }
+            sellerId: true,
+          },
         },
-        buyerId: true
-      }
+        buyerId: true,
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe Berechtigung (Käufer, Verkäufer oder Admin)
@@ -269,8 +255,8 @@ export async function GET(
         reason: purchase.disputeReason || null,
         status: purchase.disputeStatus || null,
         resolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
-        resolvedBy: purchase.disputeResolvedBy || null
-      }
+        resolvedBy: purchase.disputeResolvedBy || null,
+      },
     })
   } catch (error: any) {
     console.error('Error fetching dispute:', error)
@@ -280,4 +266,3 @@ export async function GET(
     )
   }
 }
-

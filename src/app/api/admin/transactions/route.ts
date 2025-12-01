@@ -13,14 +13,14 @@ async function checkAdmin(session: any): Promise<boolean> {
   if (session.user.id) {
     user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
 
   if (!user && session.user.email) {
     user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
 
@@ -32,7 +32,7 @@ async function checkAdmin(session: any): Promise<boolean> {
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!(await checkAdmin(session))) {
       return NextResponse.json(
         { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
@@ -46,28 +46,28 @@ export async function GET(request: NextRequest) {
         buyer: {
           select: {
             name: true,
-            email: true
-          }
+            email: true,
+          },
         },
         watch: {
           select: {
             title: true,
             id: true,
             price: true,
-            sellerId: true
-          }
-        }
+            sellerId: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     })
 
     // Hole Seller-Infos separat für alle Purchases
     const sellerIds = [...new Set(purchases.map(p => p.watch.sellerId))]
     const sellers = await prisma.user.findMany({
       where: { id: { in: sellerIds } },
-      select: { id: true, name: true, email: true }
+      select: { id: true, name: true, email: true },
     })
     const sellerMap = new Map(sellers.map(s => [s.id, s]))
 
@@ -77,32 +77,32 @@ export async function GET(request: NextRequest) {
         seller: {
           select: {
             name: true,
-            email: true
-          }
+            email: true,
+          },
         },
         watch: {
           select: {
             title: true,
             id: true,
-            price: true
-          }
+            price: true,
+          },
         },
         buyer: {
           select: {
             name: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     })
 
     // Lade Pricing-Einstellungen (Standard: 10% Marge, max. CHF 220.-)
     const DEFAULT_PRICING = {
       platformMarginRate: 0.1,
-      maximumCommission: 220
+      maximumCommission: 220,
     }
     // TODO: Später aus Pricing-API laden, aktuell Default-Werte
     const pricing = DEFAULT_PRICING
@@ -113,7 +113,9 @@ export async function GET(request: NextRequest) {
         const price = p.price || p.watch.price || 0
         const seller = sellerMap.get(p.watch.sellerId)
         const calculatedMargin = price * pricing.platformMarginRate
-        const margin = pricing.maximumCommission ? Math.min(calculatedMargin, pricing.maximumCommission) : calculatedMargin
+        const margin = pricing.maximumCommission
+          ? Math.min(calculatedMargin, pricing.maximumCommission)
+          : calculatedMargin
         return {
           id: p.id,
           type: 'purchase' as const,
@@ -125,13 +127,15 @@ export async function GET(request: NextRequest) {
           sellerEmail: seller?.email || '',
           watchTitle: p.watch.title,
           watchId: p.watch.id,
-          createdAt: p.createdAt.toISOString()
+          createdAt: p.createdAt.toISOString(),
         }
       }),
       ...sales.map(s => {
         const price = s.price || s.watch.price || 0
         const calculatedMargin = price * pricing.platformMarginRate
-        const margin = pricing.maximumCommission ? Math.min(calculatedMargin, pricing.maximumCommission) : calculatedMargin
+        const margin = pricing.maximumCommission
+          ? Math.min(calculatedMargin, pricing.maximumCommission)
+          : calculatedMargin
         return {
           id: s.id,
           type: 'sale' as const,
@@ -143,9 +147,9 @@ export async function GET(request: NextRequest) {
           sellerEmail: s.seller.email,
           watchTitle: s.watch.title,
           watchId: s.watch.id,
-          createdAt: s.createdAt.toISOString()
+          createdAt: s.createdAt.toISOString(),
         }
-      })
+      }),
     ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
 
     // Berechne Statistiken
@@ -158,8 +162,8 @@ export async function GET(request: NextRequest) {
       stats: {
         totalRevenue,
         totalTransactions,
-        platformMargin
-      }
+        platformMargin,
+      },
     })
   } catch (error: any) {
     console.error('Error fetching transactions:', error)

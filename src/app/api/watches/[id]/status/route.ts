@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // Status eines Angebots abrufen (verkauft, aktiv, abgelaufen)
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const watch = await prisma.watch.findUnique({
@@ -18,28 +15,25 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
-            }
-          }
+                email: true,
+              },
+            },
+          },
         },
         bids: {
           orderBy: { amount: 'desc' },
-          take: 1
-        }
-      }
+          take: 1,
+        },
+      },
     })
 
     if (!watch) {
-      return NextResponse.json(
-        { message: 'Angebot nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Angebot nicht gefunden' }, { status: 404 })
     }
 
     const now = new Date()
     const auctionEndDate = watch.auctionEnd ? new Date(watch.auctionEnd) : null
-    // RICARDO-STYLE: Nur nicht-stornierte Purchases zählen als "verkauft"
+    // Nur nicht-stornierte Purchases zählen als "verkauft"
     const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
     const isSold = activePurchases.length > 0
     const isExpired = auctionEndDate ? auctionEndDate <= now : false
@@ -51,7 +45,7 @@ export async function GET(
       isActive,
       auctionEnd: watch.auctionEnd,
       purchase: activePurchases[0] || null, // Nur nicht-stornierte Purchases
-      highestBid: watch.bids[0] || null
+      highestBid: watch.bids[0] || null,
     })
   } catch (error: any) {
     console.error('Error fetching watch status:', error)
@@ -61,8 +55,3 @@ export async function GET(
     )
   }
 }
-
-
-
-
-

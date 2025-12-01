@@ -7,9 +7,11 @@ const globalForPrisma = globalThis as unknown as {
 // Erstelle neuen Prisma Client
 // WICHTIG: In Development wird der Client gecacht, daher muss der Server
 // nach Schema-Änderungen neu gestartet werden!
-export const prisma = globalForPrisma.prisma ?? new PrismaClient({
-  log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-})
+export const prisma =
+  globalForPrisma.prisma ??
+  new PrismaClient({
+    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
+  })
 
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma

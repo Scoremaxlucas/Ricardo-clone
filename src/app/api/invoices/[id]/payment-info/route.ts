@@ -6,18 +6,12 @@ import { generateInvoicePaymentInfo } from '@/lib/invoice-payment-info'
 /**
  * API-Route: Gibt Zahlungsinformationen für eine Rechnung zurück
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -25,7 +19,7 @@ export async function GET(
     const paymentInfo = await generateInvoicePaymentInfo(id)
 
     return NextResponse.json({
-      paymentInfo
+      paymentInfo,
     })
   } catch (error: any) {
     console.error('Error generating payment info:', error)
@@ -35,8 +29,3 @@ export async function GET(
     )
   }
 }
-
-
-
-
-

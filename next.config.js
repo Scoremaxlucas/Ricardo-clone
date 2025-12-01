@@ -50,13 +50,15 @@ const nextConfig = {
   },
   webpack: (config, { isServer }) => {
     // Hilfsfunktion: Prüft ob ein Wert ein plain object ist (nicht null, nicht Array, nicht function, etc.)
-    const isPlainObject = (value) => {
-      return value !== null && 
-             typeof value === 'object' && 
-             !Array.isArray(value) && 
-             Object.prototype.toString.call(value) === '[object Object]'
+    const isPlainObject = value => {
+      return (
+        value !== null &&
+        typeof value === 'object' &&
+        !Array.isArray(value) &&
+        Object.prototype.toString.call(value) === '[object Object]'
+      )
     }
-    
+
     // Fix for next-auth client-side imports
     if (!isServer) {
       config.resolve = config.resolve || {}
@@ -68,24 +70,24 @@ const nextConfig = {
         tls: false,
       }
     }
-    
+
     // Optimize bundle splitting - TensorFlow.js will be in a separate chunk
     if (!isServer) {
       config.optimization = config.optimization || {}
-      
+
       // Stelle sicher, dass splitChunks existiert (Next.js setzt es standardmäßig)
       // Wenn es nicht existiert, lass Next.js die Defaults verwenden und füge nur unsere Cache-Gruppe hinzu
       if (!config.optimization.splitChunks) {
         config.optimization.splitChunks = {}
       }
-      
+
       const existingSplitChunks = config.optimization.splitChunks
-      
+
       // Stelle sicher, dass cacheGroups existiert
       if (!existingSplitChunks.cacheGroups) {
         existingSplitChunks.cacheGroups = {}
       }
-      
+
       // Füge TensorFlow Cache-Gruppe zu den bestehenden Cache-Gruppen hinzu
       // Dies überschreibt keine Next.js Defaults, sondern erweitert sie nur
       existingSplitChunks.cacheGroups.tensorflow = {
@@ -95,7 +97,7 @@ const nextConfig = {
         priority: 10,
       }
     }
-    
+
     return config
   },
 }

@@ -65,15 +65,15 @@ export function ReportModal({ itemId, itemTitle, isOpen, onClose }: ReportModalP
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-        <div className="flex items-center justify-between p-6 border-b">
+      <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
+        <div className="flex items-center justify-between border-b p-6">
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-6 w-6 text-red-600" />
             <h2 className="text-xl font-bold text-gray-900">{t.moderation.reportOffer}</h2>
           </div>
           <button
             onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-gray-400 transition-colors hover:text-gray-600"
             aria-label={t.common.cancel}
             title={t.common.cancel}
           >
@@ -83,28 +83,24 @@ export function ReportModal({ itemId, itemTitle, isOpen, onClose }: ReportModalP
 
         <form onSubmit={handleSubmit} className="p-6">
           <div className="mb-4">
-            <p className="text-sm text-gray-600 mb-4">
-              {t.moderation.description}
-            </p>
-            <p className="text-sm font-medium text-gray-900 mb-2">
-              "{watchTitle}"
-            </p>
+            <p className="mb-4 text-sm text-gray-600">{t.moderation.description}</p>
+            <p className="mb-2 text-sm font-medium text-gray-900">"{itemTitle}"</p>
           </div>
 
           <div className="mb-4">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               {t.moderation.reason} *
             </label>
             <select
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              onChange={e => setReason(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
               required
               aria-label={t.moderation.reason}
               title={t.moderation.reason}
             >
               <option value="">{t.common.loading}...</option>
-              {REPORT_REASONS.map((r) => (
+              {REPORT_REASONS.map(r => (
                 <option key={r.value} value={r.value}>
                   {r.label}
                 </option>
@@ -113,14 +109,14 @@ export function ReportModal({ itemId, itemTitle, isOpen, onClose }: ReportModalP
           </div>
 
           <div className="mb-6">
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               {t.moderation.description} ({t.common.optional || 'Optional'})
             </label>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               rows={4}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
               placeholder={t.moderation.describeProblem}
             />
           </div>
@@ -129,14 +125,14 @@ export function ReportModal({ itemId, itemTitle, isOpen, onClose }: ReportModalP
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
             >
               {t.common.cancel}
             </button>
             <button
               type="submit"
               disabled={submitting || !reason}
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
             >
               {submitting ? t.moderation.submitting : t.moderation.submit}
             </button>
@@ -146,4 +142,3 @@ export function ReportModal({ itemId, itemTitle, isOpen, onClose }: ReportModalP
     </div>
   )
 }
-

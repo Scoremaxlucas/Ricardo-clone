@@ -9,16 +9,18 @@ Sowohl Ricardo als auch Helvenda verwenden Artikelnummern für ihre Inserate, je
 ## 🔍 Ricardo.ch
 
 ### Format
+
 - **Typ**: Numerische Artikelnummer
 - **Länge**: Typischerweise 6-8 stellig
 - **Format**: Sequenziell aufsteigend (z.B. `12345678`)
 - **Sichtbarkeit**: Wird auf der Artikel-Seite angezeigt
-- **Verwendung**: 
+- **Verwendung**:
   - Primäre Identifikation für Suche
   - Wird in URLs verwendet (z.B. `ricardo.ch/de/d/artikelnummer`)
   - Wird in E-Mails und Benachrichtigungen angezeigt
 
 ### Eigenschaften
+
 - ✅ Eindeutig pro Artikel
 - ✅ Benutzerfreundlich (einfach zu merken/teilen)
 - ✅ Sequenziell (chronologisch)
@@ -31,17 +33,20 @@ Sowohl Ricardo als auch Helvenda verwenden Artikelnummern für ihre Inserate, je
 ### Aktuelle Implementierung
 
 #### 1. **Doppelte ID-Struktur**
+
 Helvenda verwendet **zwei verschiedene Identifikatoren**:
 
 **a) Interne ID (CUID)**
+
 - **Typ**: String (CUID)
 - **Format**: `clxxxxxxxxxxxxx` (z.B. `clx1234567890abcdef`)
-- **Verwendung**: 
+- **Verwendung**:
   - Primärschlüssel in der Datenbank
   - Wird in URLs verwendet: `/products/[id]`
   - Technische Identifikation
 
 **b) Artikelnummer (articleNumber)**
+
 - **Typ**: Integer (optional)
 - **Format**: 8-stellige Nummer
 - **Startwert**: `10000000`
@@ -58,7 +63,7 @@ export async function generateArticleNumber(): Promise<number> {
   const watchWithHighestNumber = await prisma.watch.findFirst({
     where: { articleNumber: { not: null } },
     orderBy: { articleNumber: 'desc' },
-    select: { articleNumber: true }
+    select: { articleNumber: true },
   })
 
   // Starte bei 10000000 wenn keine existiert
@@ -116,16 +121,14 @@ model Watch {
 const isNumericArticleNumber = /^\d{6,10}$/.test(query)
 if (isNumericArticleNumber) {
   watch = await prisma.watch.findUnique({
-    where: { articleNumber: parseInt(query) }
+    where: { articleNumber: parseInt(query) },
   })
 }
 
 // URL-Zugriff
 const isArticleNumber = /^\d{6,10}$/.test(params.id)
 const watch = await prisma.watch.findUnique({
-  where: isArticleNumber 
-    ? { articleNumber: parseInt(params.id) }
-    : { id: params.id }
+  where: isArticleNumber ? { articleNumber: parseInt(params.id) } : { id: params.id },
 })
 ```
 
@@ -133,23 +136,24 @@ const watch = await prisma.watch.findUnique({
 
 ## 📊 Vergleich
 
-| Eigenschaft | Ricardo | Helvenda |
-|------------|---------|----------|
-| **Artikelnummer vorhanden** | ✅ Ja | ⚠️ Implementiert, aber deaktiviert |
-| **Format** | 6-8 stellig | 8 stellig (10000000-99999999) |
-| **Eindeutigkeit** | ✅ Eindeutig | ✅ Eindeutig (wenn aktiviert) |
-| **Sequenziell** | ✅ Ja | ✅ Ja |
-| **URL-Zugriff** | ✅ Ja | ✅ Ja (wenn aktiviert) |
-| **Suche** | ✅ Ja | ✅ Ja (wenn aktiviert) |
-| **Anzeige** | ✅ Ja | ✅ Ja (wenn vorhanden) |
-| **Interne ID** | ❓ Nicht bekannt | ✅ CUID (String) |
-| **Status** | ✅ Aktiv | ⚠️ Deaktiviert |
+| Eigenschaft                 | Ricardo          | Helvenda                           |
+| --------------------------- | ---------------- | ---------------------------------- |
+| **Artikelnummer vorhanden** | ✅ Ja            | ⚠️ Implementiert, aber deaktiviert |
+| **Format**                  | 6-8 stellig      | 8 stellig (10000000-99999999)      |
+| **Eindeutigkeit**           | ✅ Eindeutig     | ✅ Eindeutig (wenn aktiviert)      |
+| **Sequenziell**             | ✅ Ja            | ✅ Ja                              |
+| **URL-Zugriff**             | ✅ Ja            | ✅ Ja (wenn aktiviert)             |
+| **Suche**                   | ✅ Ja            | ✅ Ja (wenn aktiviert)             |
+| **Anzeige**                 | ✅ Ja            | ✅ Ja (wenn vorhanden)             |
+| **Interne ID**              | ❓ Nicht bekannt | ✅ CUID (String)                   |
+| **Status**                  | ✅ Aktiv         | ⚠️ Deaktiviert                     |
 
 ---
 
 ## 🔧 Empfehlungen für Helvenda
 
 ### 1. **Artikelnummer aktivieren**
+
 Die Artikelnummer-Funktionalität ist bereits implementiert, sollte aber aktiviert werden:
 
 ```typescript
@@ -163,25 +167,27 @@ try {
 ```
 
 ### 2. **Migration für bestehende Artikel**
+
 Bestehende Artikel ohne Artikelnummer sollten nachträglich nummeriert werden:
 
 ```typescript
 // Migration Script
 const watchesWithoutNumber = await prisma.watch.findMany({
   where: { articleNumber: null },
-  orderBy: { createdAt: 'asc' }
+  orderBy: { createdAt: 'asc' },
 })
 
 let currentNumber = 10000000
 for (const watch of watchesWithoutNumber) {
   await prisma.watch.update({
     where: { id: watch.id },
-    data: { articleNumber: currentNumber++ }
+    data: { articleNumber: currentNumber++ },
   })
 }
 ```
 
 ### 3. **URL-Struktur verbessern**
+
 Ricardo verwendet Artikelnummern direkt in URLs. Helvenda könnte dies ebenfalls tun:
 
 **Aktuell**: `/products/clx1234567890abcdef`  
@@ -189,6 +195,7 @@ Ricardo verwendet Artikelnummern direkt in URLs. Helvenda könnte dies ebenfalls
 **Empfehlung**: Beide unterstützen, aber Artikelnummer bevorzugen wenn vorhanden
 
 ### 4. **Konsistenz mit Ricardo**
+
 - ✅ Artikelnummer auf Produktseite prominent anzeigen
 - ✅ Artikelnummer in E-Mails und Benachrichtigungen verwenden
 - ✅ Artikelnummer in Suche bevorzugen (wenn numerisch)
@@ -217,4 +224,3 @@ Ricardo verwendet Artikelnummern direkt in URLs. Helvenda könnte dies ebenfalls
 
 **Erstellt**: 2024-12-20  
 **Status**: Analyse abgeschlossen, Implementierung empfohlen
-

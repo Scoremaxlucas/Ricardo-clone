@@ -75,23 +75,28 @@
 ## 📋 Neue API-Routen
 
 ### Zahlungsinformationen
+
 - `GET /api/purchases/[id]/payment-info` - Zahlungsinformationen abrufen
 
 ### Zahlungsfrist
+
 - `POST /api/purchases/check-payment-deadline` - Cron-Job für Zahlungsfrist-Überwachung
 
 ### Dispute
+
 - `POST /api/purchases/[id]/dispute` - Dispute eröffnen
 - `GET /api/purchases/[id]/dispute` - Dispute-Informationen abrufen
 - `POST /api/admin/disputes/[id]/resolve` - Dispute lösen (Admin)
 
 ### Versand
+
 - `POST /api/purchases/[id]/shipping` - Versand-Informationen hinzufügen
 - `GET /api/purchases/[id]/shipping` - Versand-Informationen abrufen
 
 ## 🗄️ Datenbank-Änderungen
 
 ### Purchase-Model (neue Felder)
+
 ```prisma
 // Zahlungsfrist
 paymentDeadline       DateTime?
@@ -176,6 +181,7 @@ statusHistory        String? // JSON Array
 ## 🚀 Nächste Schritte
 
 1. **Migration ausführen**
+
    ```bash
    npx prisma migrate deploy
    ```
@@ -196,10 +202,3 @@ statusHistory        String? // JSON Array
 - Alle Features sind Ricardo-ähnlich implementiert
 - Rückwärtskompatibilität mit bestehenden Purchases gewährleistet
 - Legacy-Felder (`paid`, `paidAt`) bleiben für Kompatibilität erhalten
-
-
-
-
-
-
-

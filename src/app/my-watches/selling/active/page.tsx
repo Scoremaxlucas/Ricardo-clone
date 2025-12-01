@@ -1,12 +1,13 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, TrendingUp, Clock, Edit, Eye, Gavel, Bell } from 'lucide-react'
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { ProductCard } from '@/components/ui/ProductCard'
+import { ArrowLeft, Clock, Edit, Eye, TrendingUp } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface WatchItem {
   id: string
@@ -38,18 +39,18 @@ export default function ActivePage() {
   const loadWatches = async () => {
     try {
       setLoading(true)
-      
+
       // Prüfe und verarbeite abgelaufene Auktionen automatisch
       try {
         await fetch('/api/auctions/check-expired', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         })
       } catch (error) {
         console.error('Error checking expired auctions:', error)
         // Fehler ignorieren, da dies nicht kritisch ist
       }
-      
+
       // Verwende activeOnly=true Parameter, um nur nicht-verkaufte Artikel zu erhalten
       const res = await fetch(`/api/watches/mine?activeOnly=true&t=${Date.now()}`)
       const data = await res.json()
@@ -82,11 +83,11 @@ export default function ActivePage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
             <p className="mt-4 text-gray-600">Lädt...</p>
           </div>
         </div>
@@ -98,9 +99,9 @@ export default function ActivePage() {
   // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
   if (status === 'unauthenticated' || !session) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <p className="text-gray-600">Weiterleitung zur Anmeldung...</p>
           </div>
@@ -111,145 +112,88 @@ export default function ActivePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
       <div className="flex-1 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <Link
             href="/my-watches"
-            className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6"
+            className="mb-6 inline-flex items-center text-primary-600 hover:text-primary-700"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Zurück zu Mein Verkaufen
           </Link>
 
-          <div className="flex items-center mb-8">
-            <TrendingUp className="h-8 w-8 mr-3 text-green-600" />
+          <div className="mb-8 flex items-center">
+            <TrendingUp className="mr-3 h-8 w-8 text-green-600" />
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">
-                Am Verkaufen
-              </h1>
-              <p className="text-gray-600 mt-1">
-                Ihre aktiven Verkaufsanzeigen
-              </p>
+              <h1 className="text-3xl font-bold text-gray-900">Am Verkaufen</h1>
+              <p className="mt-1 text-gray-600">Ihre aktiven Verkaufsanzeigen</p>
             </div>
           </div>
 
           {watches.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-8">
-              <div className="text-center py-12">
-                <Clock className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  Keine aktiven Verkäufe
-                </h3>
-                <p className="text-gray-600 mb-6">
+            <div className="rounded-lg bg-white p-8 shadow-md">
+              <div className="py-12 text-center">
+                <Clock className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">Keine aktiven Verkäufe</h3>
+                <p className="mb-6 text-gray-600">
                   Sie haben momentan keine aktiven Verkaufsanzeigen.
                 </p>
                 <Link
                   href="/sell"
-                  className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+                  className="inline-flex items-center rounded-md bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
                 >
                   Jetzt verkaufen
                 </Link>
               </div>
             </div>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {watches.map((watch) => {
+            <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              {watches.map(watch => {
                 const images = watch.images || []
-                const mainImage = images.length > 0 ? images[0] : null
-                const isAuction = watch.isAuction || watch.purchaseType === 'auction' || watch.purchaseType === 'both'
+                const isAuction =
+                  watch.isAuction ||
+                  watch.purchaseType === 'auction' ||
+                  watch.purchaseType === 'both'
                 const auctionEndDate = watch.auctionEnd ? new Date(watch.auctionEnd) : null
                 const isExpired = auctionEndDate ? auctionEndDate <= new Date() : false
 
                 return (
-                  <div key={watch.id} className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:border-primary-300 transition-all">
-                    {mainImage ? (
-                      <Link href={`/products/${watch.id}`}>
-                        <img
-                          src={mainImage}
-                          alt={watch.title}
-                          className="w-full h-48 object-cover hover:opacity-90 transition-opacity cursor-pointer"
-                        />
+                  <div key={watch.id} className="group relative flex h-full flex-col">
+                    <ProductCard
+                      id={watch.id}
+                      title={watch.title}
+                      brand={watch.brand}
+                      price={watch.highestBid?.amount || watch.price}
+                      images={images}
+                      buyNowPrice={watch.buyNowPrice}
+                      isAuction={isAuction && !isExpired}
+                      auctionEnd={watch.auctionEnd || undefined}
+                      city={(watch as any).city}
+                      postalCode={(watch as any).postalCode}
+                      condition={(watch as any).condition}
+                      boosters={[]}
+                      bids={watch.bidCount > 0 ? Array(watch.bidCount).fill(null) : []}
+                    />
+                    {/* Action Buttons - Overlay beim Hover */}
+                    <div className="absolute inset-0 z-20 flex items-center justify-center gap-2 rounded-lg bg-black/50 opacity-0 transition-opacity duration-200 group-hover:opacity-100">
+                      <Link
+                        href={`/products/${watch.id}`}
+                        className="rounded-full bg-white p-2 text-gray-700 transition-colors hover:bg-gray-100"
+                        title="Ansehen"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <Eye className="h-5 w-5" />
                       </Link>
-                    ) : (
-                      <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">
-                        Kein Bild
-                      </div>
-                    )}
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`text-xs px-2 py-1 rounded-full font-semibold ${
-                          isAuction && !isExpired
-                            ? 'bg-blue-100 text-blue-700'
-                            : 'bg-green-100 text-green-700'
-                        }`}>
-                          {isAuction && !isExpired ? 'Auktion' : 'Sofortkauf'}
-                        </div>
-                        {isAuction && auctionEndDate && !isExpired && (
-                          <div className="text-xs text-gray-500">
-                            Endet: {auctionEndDate.toLocaleDateString('de-CH')}
-                          </div>
-                        )}
-                      </div>
-                      <div className="text-sm text-primary-600 mb-1">{watch.brand} {watch.model}</div>
-                      <Link href={`/products/${watch.id}`}>
-                        <h3 className="font-semibold text-gray-900 line-clamp-2 mb-3 hover:text-primary-600 transition-colors cursor-pointer">
-                          {watch.title}
-                        </h3>
+                      <Link
+                        href={`/my-watches/edit/${watch.id}`}
+                        className="rounded-full bg-blue-100 p-2 text-blue-700 transition-colors hover:bg-blue-200"
+                        title="Bearbeiten"
+                        onClick={e => e.stopPropagation()}
+                      >
+                        <Edit className="h-5 w-5" />
                       </Link>
-                      <div className="flex items-center justify-between mb-4">
-                        <div className="flex-1">
-                          {watch.highestBid && watch.bidCount > 0 ? (
-                            <>
-                              <div className="flex items-center gap-2 mb-1">
-                                <Gavel className="h-4 w-4 text-primary-600" />
-                                <div className="text-lg font-bold text-primary-600">
-                                  CHF {watch.highestBid.amount.toFixed(2)}
-                                </div>
-                                <span className="text-xs bg-primary-100 text-primary-700 px-2 py-0.5 rounded-full font-semibold">
-                                  {watch.bidCount} {watch.bidCount === 1 ? 'Gebot' : 'Gebote'}
-                                </span>
-                              </div>
-                              <div className="text-xs text-gray-500">
-                                Startpreis: CHF {watch.price.toFixed(2)}
-                              </div>
-                            </>
-                          ) : (
-                            <>
-                              <div className="text-lg font-bold text-gray-900">
-                                CHF {watch.price.toFixed(2)}
-                              </div>
-                              {isAuction && !isExpired && (
-                                <div className="text-xs text-gray-500 mt-0.5">
-                                  Noch keine Gebote
-                                </div>
-                              )}
-                            </>
-                          )}
-                          {watch.buyNowPrice && watch.buyNowPrice !== watch.price && (
-                            <div className="text-sm text-gray-500 mt-1">
-                              Sofortkauf: CHF {watch.buyNowPrice.toFixed(2)}
-                            </div>
-                          )}
-                        </div>
-                      </div>
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/products/${watch.id}`}
-                          className="flex-1 px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors text-center text-sm flex items-center justify-center gap-2"
-                        >
-                          <Eye className="h-4 w-4" />
-                          Anzeigen
-                        </Link>
-                        <Link
-                          href={`/my-watches/edit/${watch.id}`}
-                          className="flex-1 px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors text-center text-sm flex items-center justify-center gap-2"
-                        >
-                          <Edit className="h-4 w-4" />
-                          Bearbeiten
-                        </Link>
-                      </div>
                     </div>
                   </div>
                 )

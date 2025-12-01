@@ -2,8 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 /**
- * PREISVORSCHLÄGE (wie Ricardo AI)
- * 
+ * PREISVORSCHLÄGE
+ *
  * Analysiert historische Verkaufsdaten um realistische Preisvorschläge zu geben
  */
 
@@ -12,40 +12,37 @@ export async function POST(request: NextRequest) {
     const { category, subcategory, brand, model, condition, year } = await request.json()
 
     if (!category) {
-      return NextResponse.json(
-        { error: 'Kategorie ist erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'Kategorie ist erforderlich' }, { status: 400 })
     }
 
     // Baue Where-Clause für ähnliche Artikel
     const whereClause: any = {
       purchases: {
-        some: {} // Nur verkaufte Artikel
-      }
+        some: {}, // Nur verkaufte Artikel
+      },
     }
 
     if (category) {
       whereClause.categories = {
         some: {
           category: {
-            slug: category
-          }
-        }
+            slug: category,
+          },
+        },
       }
     }
 
     if (brand) {
       whereClause.brand = {
         contains: brand,
-        mode: 'insensitive'
+        mode: 'insensitive',
       }
     }
 
     if (model) {
       whereClause.model = {
         contains: model,
-        mode: 'insensitive'
+        mode: 'insensitive',
       }
     }
 
@@ -64,14 +61,14 @@ export async function POST(request: NextRequest) {
         purchases: {
           take: 1,
           orderBy: {
-            createdAt: 'desc'
-          }
-        }
+            createdAt: 'desc',
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
-      take: 20 // Analysiere letzten 20 ähnlichen Verkäufe
+      take: 20, // Analysiere letzten 20 ähnlichen Verkäufe
     })
 
     if (similarSoldItems.length === 0) {
@@ -81,26 +78,26 @@ export async function POST(request: NextRequest) {
           categories: {
             some: {
               category: {
-                slug: category
-              }
-            }
+                slug: category,
+              },
+            },
           },
           purchases: {
-            some: {}
-          }
+            some: {},
+          },
         },
         include: {
           purchases: {
             take: 1,
             orderBy: {
-              createdAt: 'desc'
-            }
-          }
+              createdAt: 'desc',
+            },
+          },
         },
         orderBy: {
-          createdAt: 'desc'
+          createdAt: 'desc',
         },
-        take: 10
+        take: 10,
       })
 
       if (categoryItems.length === 0) {
@@ -109,7 +106,7 @@ export async function POST(request: NextRequest) {
           priceRange: null,
           confidence: 'low',
           message: 'Keine ähnlichen Verkäufe gefunden',
-          dataPoints: 0
+          dataPoints: 0,
         })
       }
 
@@ -128,7 +125,7 @@ export async function POST(request: NextRequest) {
           priceRange: null,
           confidence: 'low',
           message: 'Keine Preisinformationen verfügbar',
-          dataPoints: 0
+          dataPoints: 0,
         })
       }
 
@@ -140,11 +137,11 @@ export async function POST(request: NextRequest) {
         suggestedPrice: Math.round(avgPrice),
         priceRange: {
           min: Math.round(minPrice),
-          max: Math.round(maxPrice)
+          max: Math.round(maxPrice),
         },
         confidence: 'medium',
         message: `Basierend auf ${prices.length} ähnlichen Verkäufen in dieser Kategorie`,
-        dataPoints: prices.length
+        dataPoints: prices.length,
       })
     }
 
@@ -163,7 +160,7 @@ export async function POST(request: NextRequest) {
         priceRange: null,
         confidence: 'low',
         message: 'Keine Preisinformationen verfügbar',
-        dataPoints: 0
+        dataPoints: 0,
       })
     }
 
@@ -191,7 +188,7 @@ export async function POST(request: NextRequest) {
         min: Math.round(minPrice),
         max: Math.round(maxPrice),
         average: Math.round(avgPrice),
-        median: Math.round(medianPrice)
+        median: Math.round(medianPrice),
       },
       confidence,
       message: `Basierend auf ${prices.length} ähnlichen Verkäufen`,
@@ -200,30 +197,11 @@ export async function POST(request: NextRequest) {
         average: Math.round(avgPrice),
         median: Math.round(medianPrice),
         min: Math.round(minPrice),
-        max: Math.round(maxPrice)
-      }
+        max: Math.round(maxPrice),
+      },
     })
   } catch (error) {
     console.error('Fehler bei Preisvorschlag:', error)
-    return NextResponse.json(
-      { error: 'Fehler bei der Preisanalyse' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Fehler bei der Preisanalyse' }, { status: 500 })
   }
 }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

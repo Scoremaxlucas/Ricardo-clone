@@ -4,43 +4,34 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // Follow/Unfollow einen User
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id: followingId } = await params
     const followerId = session.user.id
 
     if (followerId === followingId) {
-      return NextResponse.json(
-        { message: 'Sie können sich nicht selbst folgen' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Sie können sich nicht selbst folgen' }, { status: 400 })
     }
 
     // Prüfe ob bereits gefolgt wird
     const existingFollow = await prisma.follow.findFirst({
       where: {
         followerId,
-        followingId
-      }
+        followingId,
+      },
     })
 
     if (existingFollow) {
       // Unfollow
       await prisma.follow.delete({
         where: {
-          id: existingFollow.id
-        }
+          id: existingFollow.id,
+        },
       })
       return NextResponse.json({ isFollowing: false, message: 'Nicht mehr folgen' })
     } else {
@@ -48,8 +39,8 @@ export async function POST(
       await prisma.follow.create({
         data: {
           followerId,
-          followingId
-        }
+          followingId,
+        },
       })
       return NextResponse.json({ isFollowing: true, message: 'Folgen' })
     }
@@ -63,10 +54,7 @@ export async function POST(
 }
 
 // Prüfe ob aktueller User diesem User folgt
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -79,8 +67,8 @@ export async function GET(
     const follow = await prisma.follow.findFirst({
       where: {
         followerId,
-        followingId
-      }
+        followingId,
+      },
     })
 
     return NextResponse.json({ isFollowing: !!follow })
@@ -89,4 +77,3 @@ export async function GET(
     return NextResponse.json({ isFollowing: false })
   }
 }
-

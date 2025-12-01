@@ -3,44 +3,37 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const watch = await prisma.watch.findUnique({
       where: { id },
-      include: { 
+      include: {
         bids: true,
         seller: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
+            email: true,
+          },
         },
         categories: {
           include: {
-            category: true
-          }
-        }
-      }
+            category: true,
+          },
+        },
+      },
     })
 
     if (!watch) {
-      return NextResponse.json(
-        { message: 'Uhr nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Uhr nicht gefunden' }, { status: 404 })
     }
 
     const images = watch.images ? JSON.parse(watch.images) : []
 
     // Berechne aktuellen Preis basierend auf Geboten
-    const highestBid = watch.bids && watch.bids.length > 0 
-      ? Math.max(...watch.bids.map((b: any) => b.amount))
-      : null
+    const highestBid =
+      watch.bids && watch.bids.length > 0 ? Math.max(...watch.bids.map((b: any) => b.amount)) : null
     const currentPrice = highestBid || watch.price || 0
 
     return NextResponse.json({
@@ -81,45 +74,34 @@ export async function GET(
         bids: watch.bids || [],
         shippingMethod: (watch as any).shippingMethod,
         boosters: (watch as any).boosters,
-        categories: watch.categories?.map((wc: any) => ({
-          id: wc.category.id,
-          name: wc.category.name,
-          slug: wc.category.slug
-        })) || []
-      }
+        categories:
+          watch.categories?.map((wc: any) => ({
+            id: wc.category.id,
+            name: wc.category.name,
+            slug: wc.category.slug,
+          })) || [],
+      },
     })
   } catch (error: any) {
-    return NextResponse.json(
-      { message: 'Fehler beim Laden: ' + error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler beim Laden: ' + error.message }, { status: 500 })
   }
 }
 
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const watch = await prisma.watch.findUnique({
       where: { id },
-      include: { bids: true }
+      include: { bids: true },
     })
 
     if (!watch) {
-      return NextResponse.json(
-        { message: 'Uhr nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Uhr nicht gefunden' }, { status: 404 })
     }
 
     if (watch.sellerId !== session.user.id) {
@@ -152,8 +134,10 @@ export async function PATCH(
       if (data.condition !== undefined) updateData.condition = data.condition
       if (data.material !== undefined) updateData.material = data.material
       if (data.movement !== undefined) updateData.movement = data.movement
-      if (data.caseDiameter !== undefined) updateData.caseDiameter = data.caseDiameter ? parseFloat(data.caseDiameter) : null
-      if (data.lastRevision !== undefined) updateData.lastRevision = data.lastRevision ? new Date(data.lastRevision) : null
+      if (data.caseDiameter !== undefined)
+        updateData.caseDiameter = data.caseDiameter ? parseFloat(data.caseDiameter) : null
+      if (data.lastRevision !== undefined)
+        updateData.lastRevision = data.lastRevision ? new Date(data.lastRevision) : null
       if (data.accuracy !== undefined) updateData.accuracy = data.accuracy
       if (data.title !== undefined) updateData.title = data.title
       if (data.description !== undefined) updateData.description = data.description
@@ -165,21 +149,29 @@ export async function PATCH(
         updateData.papers = data.onlyAllLinks
         updateData.allLinks = data.onlyAllLinks
       }
-      if (data.hasWarranty !== undefined) updateData.warranty = data.hasWarranty ? 'Herstellergarantie' : null
-      if (data.warrantyMonths !== undefined) updateData.warrantyMonths = data.warrantyMonths ? parseInt(data.warrantyMonths) : null
-      if (data.warrantyYears !== undefined) updateData.warrantyYears = data.warrantyYears ? parseInt(data.warrantyYears) : null
+      if (data.hasWarranty !== undefined)
+        updateData.warranty = data.hasWarranty ? 'Herstellergarantie' : null
+      if (data.warrantyMonths !== undefined)
+        updateData.warrantyMonths = data.warrantyMonths ? parseInt(data.warrantyMonths) : null
+      if (data.warrantyYears !== undefined)
+        updateData.warrantyYears = data.warrantyYears ? parseInt(data.warrantyYears) : null
       if (data.hasSellerWarranty !== undefined && data.sellerWarrantyNote !== undefined) {
         updateData.warrantyNote = data.sellerWarrantyNote
         updateData.warrantyDescription = `Verkäufer-Garantie: ${data.sellerWarrantyMonths || 0} Monate, ${data.sellerWarrantyYears || 0} Jahre`
       }
       if (data.price !== undefined) updateData.price = parseFloat(data.price)
-      if (data.buyNowPrice !== undefined) updateData.buyNowPrice = data.buyNowPrice ? parseFloat(data.buyNowPrice) : null
-      if (data.auctionEnd !== undefined) updateData.auctionEnd = data.auctionEnd ? new Date(data.auctionEnd) : null
+      if (data.buyNowPrice !== undefined)
+        updateData.buyNowPrice = data.buyNowPrice ? parseFloat(data.buyNowPrice) : null
+      if (data.auctionEnd !== undefined)
+        updateData.auctionEnd = data.auctionEnd ? new Date(data.auctionEnd) : null
       if (data.images !== undefined) {
         const currentImages = watch.images ? JSON.parse(watch.images) : []
         const newImages = Array.isArray(data.images) ? data.images : []
         // Zusätzliche Bilder hinzufügen (nicht ersetzen)
-        updateData.images = JSON.stringify([...currentImages, ...newImages.filter(img => !currentImages.includes(img))])
+        updateData.images = JSON.stringify([
+          ...currentImages,
+          ...newImages.filter(img => !currentImages.includes(img)),
+        ])
       }
       if (data.video !== undefined) updateData.video = data.video
     } else {
@@ -188,7 +180,10 @@ export async function PATCH(
         const currentImages = watch.images ? JSON.parse(watch.images) : []
         const newImages = Array.isArray(data.images) ? data.images : []
         // Nur zusätzliche Bilder hinzufügen
-        updateData.images = JSON.stringify([...currentImages, ...newImages.filter(img => !currentImages.includes(img))])
+        updateData.images = JSON.stringify([
+          ...currentImages,
+          ...newImages.filter(img => !currentImages.includes(img)),
+        ])
       }
       if (data.additionalInfo !== undefined) {
         // Nachträgliche Information speichern
@@ -200,12 +195,12 @@ export async function PATCH(
 
     const updatedWatch = await prisma.watch.update({
       where: { id },
-      data: updateData
+      data: updateData,
     })
 
     return NextResponse.json({
       message: 'Angebot erfolgreich aktualisiert',
-      watch: updatedWatch
+      watch: updatedWatch,
     })
   } catch (error: any) {
     console.error('Error updating watch:', error)
@@ -226,10 +221,7 @@ export async function DELETE(
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Prüfe Admin-Status
@@ -250,10 +242,7 @@ export async function DELETE(
     })
 
     if (!watch) {
-      return NextResponse.json(
-        { message: 'Angebot nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Angebot nicht gefunden' }, { status: 404 })
     }
 
     // Lösche zuerst alle abhängigen Daten

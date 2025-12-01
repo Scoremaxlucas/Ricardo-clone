@@ -7,29 +7,26 @@ import { checkAdmin } from '@/lib/auth-utils'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
-    console.log('Stats API called, session:', { 
-      userId: session?.user?.id, 
-      email: session?.user?.email 
+
+    console.log('Stats API called, session:', {
+      userId: session?.user?.id,
+      email: session?.user?.email,
     })
-    
+
     if (!session?.user?.id && !session?.user?.email) {
       console.log('No session user id or email')
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
-    
+
     // Prüfe ob User Admin ist (per ID oder E-Mail)
     let user = null
     if (session.user.id) {
       user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { isAdmin: true, email: true }
+        select: { isAdmin: true, email: true },
       })
       console.log('User found by ID:', { email: user?.email, isAdmin: user?.isAdmin })
     }
@@ -39,7 +36,7 @@ export async function GET(request: NextRequest) {
       console.log('User not found by ID, trying email:', session.user.email)
       user = await prisma.user.findUnique({
         where: { email: session.user.email },
-        select: { isAdmin: true, email: true }
+        select: { isAdmin: true, email: true },
       })
       console.log('User found by email:', { email: user?.email, isAdmin: user?.isAdmin })
     }
@@ -48,13 +45,13 @@ export async function GET(request: NextRequest) {
     const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
     const isAdmin = isAdminInSession || isAdminInDb
 
-    console.log('Admin check:', { 
+    console.log('Admin check:', {
       isAdminInSession,
       isAdminInDb,
       isAdmin,
       userIsAdmin: user?.isAdmin,
       userEmail: session.user.email,
-      sessionUserId: session.user.id
+      sessionUserId: session.user.id,
     })
 
     if (!isAdmin) {
@@ -77,7 +74,7 @@ export async function GET(request: NextRequest) {
       purchases,
       verifiedUsers,
       pendingVerifications,
-      pendingDisputes
+      pendingDisputes,
     ] = await Promise.all([
       // Benutzer-Statistiken
       prisma.user.count(),
@@ -85,31 +82,33 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where: { isBlocked: true } }),
       // Angebots-Statistiken
       prisma.watch.count(),
-      // Alle Uhren mit Purchases zum Filtern
+      // Alle Artikel mit Purchases zum Filtern
       prisma.watch.findMany({
         select: {
           id: true,
           auctionEnd: true,
           purchases: {
             select: {
-              id: true
-            }
-          }
-        }
+              id: true,
+            },
+          },
+        },
       }),
       // Transaktions-Statistiken
       prisma.purchase.findMany({
         include: {
           watch: {
-            select: { price: true }
-          }
-        }
+            select: { price: true },
+          },
+        },
       }),
       // Verifizierungs-Statistiken
       prisma.user.count({ where: { verified: true, verificationStatus: 'approved' } }),
       prisma.user.count({ where: { verificationStatus: 'pending' } }),
       // Dispute-Statistiken
-      prisma.purchase.count({ where: { disputeStatus: 'pending', disputeOpenedAt: { not: null } } })
+      prisma.purchase.count({
+        where: { disputeStatus: 'pending', disputeOpenedAt: { not: null } },
+      }),
     ])
 
     // Berechne aktive und verkaufte Angebote aus den Watch-Daten
@@ -119,7 +118,7 @@ export async function GET(request: NextRequest) {
       const isNotExpired = !watch.auctionEnd || new Date(watch.auctionEnd) > now
       return hasNoPurchase && isNotExpired
     }).length
-    
+
     const soldWatches = watches.filter(watch => {
       return watch.purchases && watch.purchases.length > 0
     }).length
@@ -128,7 +127,7 @@ export async function GET(request: NextRequest) {
     const totalRevenue = purchases.reduce((sum, purchase) => {
       return sum + (purchase.price || purchase.watch?.price || 0)
     }, 0)
-    
+
     // Platform-Marge - verwende Default, Pricing wird später aus Datenbank geladen
     // TODO: Pricing-Einstellungen aus Datenbank laden
     const platformMarginRate = 0.05
@@ -145,32 +144,32 @@ export async function GET(request: NextRequest) {
       platformMargin: platformMargin || 0,
       verifiedUsers: verifiedUsers || 0,
       pendingVerifications: pendingVerifications || 0,
-      pendingDisputes: pendingDisputes || 0
+      pendingDisputes: pendingDisputes || 0,
     }
-    
+
     console.log('Stats calculated:', result)
     console.log('Total users from DB:', totalUsers)
     console.log('Active users from DB:', activeUsers)
-    
+
     return NextResponse.json(result)
   } catch (error: any) {
     console.error('Error fetching admin stats:', error)
     console.error('Error name:', error?.name)
     console.error('Error message:', error?.message)
     console.error('Error stack:', error?.stack)
-    
+
     // Prüfe ob es ein Prisma-Fehler ist
     if (error?.code) {
       console.error('Prisma error code:', error.code)
     }
-    
+
     return NextResponse.json(
-      { 
+      {
         message: 'Fehler beim Laden der Statistiken',
         error: error?.message || 'Unbekannter Fehler',
         errorName: error?.name,
         errorCode: error?.code,
-        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined
+        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
       },
       { status: 500 }
     )

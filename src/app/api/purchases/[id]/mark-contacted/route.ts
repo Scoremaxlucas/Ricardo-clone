@@ -8,17 +8,11 @@ import { setPaymentDeadline } from '@/lib/payment-info'
  * API-Route zum Markieren, dass Kontakt aufgenommen wurde
  * Kann sowohl von Verkäufer als auch Käufer aufgerufen werden
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -30,17 +24,14 @@ export async function POST(
       include: {
         watch: {
           select: {
-            sellerId: true
-          }
-        }
-      }
+            sellerId: true,
+          },
+        },
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe Berechtigung
@@ -57,7 +48,7 @@ export async function POST(
     // Aktualisiere entsprechend der Rolle
     const updateData: any = {}
     const now = new Date()
-    
+
     if (role === 'seller' && isSeller) {
       if (!purchase.sellerContactedAt) {
         updateData.sellerContactedAt = now
@@ -84,14 +75,14 @@ export async function POST(
     // Update Purchase
     const updatedPurchase = await prisma.purchase.update({
       where: { id },
-      data: updateData
+      data: updateData,
     })
 
     console.log(`[purchases/mark-contacted] ${role} hat Kontakt für Purchase ${id} markiert`)
 
     return NextResponse.json({
       message: 'Kontakt erfolgreich markiert',
-      purchase: updatedPurchase
+      purchase: updatedPurchase,
     })
   } catch (error: any) {
     console.error('Error marking contact:', error)
@@ -101,4 +92,3 @@ export async function POST(
     )
   }
 }
-

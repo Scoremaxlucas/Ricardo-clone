@@ -101,7 +101,10 @@ export default function SellingFeesPage() {
       }
     } catch (error) {
       console.error('[fees] Error loading invoices:', error)
-      alert('Fehler beim Laden der Rechnungen: ' + (error instanceof Error ? error.message : 'Unbekannter Fehler'))
+      alert(
+        'Fehler beim Laden der Rechnungen: ' +
+          (error instanceof Error ? error.message : 'Unbekannter Fehler')
+      )
     } finally {
       setLoading(false)
     }
@@ -137,7 +140,7 @@ export default function SellingFeesPage() {
     try {
       const res = await fetch(`/api/invoices/${invoiceId}/mark-paid`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' }
+        headers: { 'Content-Type': 'application/json' },
       })
 
       if (res.ok) {
@@ -156,21 +159,21 @@ export default function SellingFeesPage() {
     switch (status) {
       case 'paid':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            <CheckCircle className="h-3 w-3 mr-1" />
+          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+            <CheckCircle className="mr-1 h-3 w-3" />
             Bezahlt
           </span>
         )
       case 'overdue':
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
+          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
             Überfällig
           </span>
         )
       default:
         return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">
-            <Clock className="h-3 w-3 mr-1" />
+          <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+            <Clock className="mr-1 h-3 w-3" />
             Offen
           </span>
         )
@@ -181,7 +184,7 @@ export default function SellingFeesPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
           <p className="mt-4 text-gray-600">Lädt...</p>
         </div>
       </div>
@@ -192,7 +195,7 @@ export default function SellingFeesPage() {
   const totalPending = invoices
     .filter(inv => inv.status === 'pending' || inv.status === 'overdue')
     .reduce((sum, inv) => sum + inv.total, 0)
-  
+
   const totalPaid = invoices
     .filter(inv => inv.status === 'paid')
     .reduce((sum, inv) => sum + inv.total, 0)
@@ -200,64 +203,66 @@ export default function SellingFeesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="mx-auto max-w-7xl px-4 py-12">
         <Link
           href="/my-watches"
-          className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6"
+          className="mb-6 inline-flex items-center text-primary-600 hover:text-primary-700"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Zurück zu Mein Verkaufen
         </Link>
 
-        <div className="flex items-center mb-8">
-          <Wallet className="h-8 w-8 mr-3 text-primary-600" />
+        <div className="mb-8 flex items-center">
+          <Wallet className="mr-3 h-8 w-8 text-primary-600" />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Gebühren & Rechnungen
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Übersicht aller Verkaufsgebühren und Rechnungen
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">Gebühren & Rechnungen</h1>
+            <p className="mt-1 text-gray-600">Übersicht aller Verkaufsgebühren und Rechnungen</p>
           </div>
         </div>
 
         {/* Statistiken */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-          <div className="bg-white rounded-lg shadow p-6">
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+          <div className="rounded-lg bg-white p-6 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Offene Rechnungen</p>
-                <p className="text-2xl font-bold text-gray-900 mt-2">
-                  CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalPending)}
+                <p className="mt-2 text-2xl font-bold text-gray-900">
+                  CHF{' '}
+                  {new Intl.NumberFormat('de-CH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }).format(totalPending)}
                 </p>
               </div>
-              <div className="bg-yellow-100 rounded-full p-3">
+              <div className="rounded-full bg-yellow-100 p-3">
                 <Clock className="h-6 w-6 text-yellow-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="rounded-lg bg-white p-6 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Bezahlte Beträge</p>
-                <p className="text-2xl font-bold text-gray-900 mt-2">
-                  CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(totalPaid)}
+                <p className="mt-2 text-2xl font-bold text-gray-900">
+                  CHF{' '}
+                  {new Intl.NumberFormat('de-CH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }).format(totalPaid)}
                 </p>
               </div>
-              <div className="bg-green-100 rounded-full p-3">
+              <div className="rounded-full bg-green-100 p-3">
                 <CheckCircle className="h-6 w-6 text-green-600" />
               </div>
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-6">
+          <div className="rounded-lg bg-white p-6 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Gesamt Rechnungen</p>
-                <p className="text-2xl font-bold text-gray-900 mt-2">
-                  {invoices.length}
-                </p>
+                <p className="mt-2 text-2xl font-bold text-gray-900">{invoices.length}</p>
               </div>
-              <div className="bg-blue-100 rounded-full p-3">
+              <div className="rounded-full bg-blue-100 p-3">
                 <FileText className="h-6 w-6 text-blue-600" />
               </div>
             </div>
@@ -266,44 +271,42 @@ export default function SellingFeesPage() {
 
         {/* Rechnungsliste */}
         {invoices.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-12">
+          <div className="rounded-lg bg-white p-12 shadow-md">
             <div className="text-center">
-              <FileText className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                Keine Rechnungen
-              </h3>
-              <p className="text-gray-600">
-                Sie haben noch keine Rechnungen erhalten.
-              </p>
+              <FileText className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+              <h3 className="mb-2 text-lg font-semibold text-gray-900">Keine Rechnungen</h3>
+              <p className="text-gray-600">Sie haben noch keine Rechnungen erhalten.</p>
             </div>
           </div>
         ) : (
           <div className="space-y-4">
-            {invoices.map((invoice) => (
-              <div 
-                key={invoice.id} 
-                ref={(el) => { invoiceRefs.current[invoice.id] = el }}
-                className={`bg-white rounded-lg shadow-md p-6 transition-all duration-500 ${
-                  highlightedInvoiceId === invoice.id 
-                    ? 'ring-4 ring-primary-500 ring-offset-2 bg-primary-50' 
+            {invoices.map(invoice => (
+              <div
+                key={invoice.id}
+                ref={el => {
+                  invoiceRefs.current[invoice.id] = el
+                }}
+                className={`rounded-lg bg-white p-6 shadow-md transition-all duration-500 ${
+                  highlightedInvoiceId === invoice.id
+                    ? 'bg-primary-50 ring-4 ring-primary-500 ring-offset-2'
                     : ''
                 }`}
               >
-                <div className="flex items-start justify-between mb-4">
+                <div className="mb-4 flex items-start justify-between">
                   <div>
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="mb-2 flex items-center gap-3">
                       <h3 className="text-lg font-semibold text-gray-900">
                         {invoice.invoiceNumber}
                       </h3>
                       {invoice.invoiceNumber.startsWith('KORR-') && (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded">
+                        <span className="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
                           Korrektur-Abrechnung
                         </span>
                       )}
                       {getStatusBadge(invoice.status)}
                     </div>
                     {invoice.invoiceNumber.startsWith('KORR-') ? (
-                      <p className="text-sm text-green-600 font-medium">
+                      <p className="text-sm font-medium text-green-600">
                         Gutschrift - Keine Zahlung erforderlich
                       </p>
                     ) : (
@@ -312,7 +315,7 @@ export default function SellingFeesPage() {
                           Fälligkeitsdatum: {new Date(invoice.dueDate).toLocaleDateString('de-CH')}
                         </p>
                         {invoice.paidAt && (
-                          <p className="text-sm text-green-600 mt-1">
+                          <p className="mt-1 text-sm text-green-600">
                             Bezahlt am: {new Date(invoice.paidAt).toLocaleDateString('de-CH')}
                           </p>
                         )}
@@ -320,29 +323,33 @@ export default function SellingFeesPage() {
                     )}
                   </div>
                   <div className="text-right">
-                    <p className={`text-2xl font-bold ${invoice.invoiceNumber.startsWith('KORR-') ? 'text-green-600' : 'text-gray-900'}`}>
-                      CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Math.abs(invoice.total))}
+                    <p
+                      className={`text-2xl font-bold ${invoice.invoiceNumber.startsWith('KORR-') ? 'text-green-600' : 'text-gray-900'}`}
+                    >
+                      CHF{' '}
+                      {new Intl.NumberFormat('de-CH', {
+                        minimumFractionDigits: 2,
+                        maximumFractionDigits: 2,
+                      }).format(Math.abs(invoice.total))}
                     </p>
                     {invoice.invoiceNumber.startsWith('KORR-') && (
-                      <p className="text-xs text-green-600 mt-1">
-                        (Gutschrift)
-                      </p>
+                      <p className="mt-1 text-xs text-green-600">(Gutschrift)</p>
                     )}
                     <div className="mt-2 flex gap-2">
                       {invoice.status !== 'paid' && !invoice.invoiceNumber.startsWith('KORR-') && (
                         <button
                           onClick={() => setSelectedInvoiceForPayment(invoice)}
-                          className="inline-flex items-center px-3 py-1.5 bg-green-600 text-white text-sm rounded hover:bg-green-700 transition-colors"
+                          className="inline-flex items-center rounded bg-green-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-green-700"
                         >
-                          <CreditCard className="h-4 w-4 mr-2" />
+                          <CreditCard className="mr-2 h-4 w-4" />
                           Jetzt bezahlen
                         </button>
                       )}
                       <button
                         onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}
-                        className="inline-flex items-center px-3 py-1.5 bg-primary-600 text-white text-sm rounded hover:bg-primary-700 transition-colors"
+                        className="inline-flex items-center rounded bg-primary-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-primary-700"
                       >
-                        <Download className="h-4 w-4 mr-2" />
+                        <Download className="mr-2 h-4 w-4" />
                         PDF
                       </button>
                     </div>
@@ -352,53 +359,82 @@ export default function SellingFeesPage() {
                 {/* Rechnungsposten */}
                 <div className="border-t pt-4">
                   <div className="space-y-3">
-                    {invoice.items.map((item) => {
+                    {invoice.items.map(item => {
                       const itemVat = item.price * invoice.vatRate
                       const itemTotal = item.price + itemVat
                       return (
-                        <div key={item.id} className="border-b border-gray-100 pb-3 last:border-b-0">
-                          <div className="flex justify-between text-sm mb-1">
+                        <div
+                          key={item.id}
+                          className="border-b border-gray-100 pb-3 last:border-b-0"
+                        >
+                          <div className="mb-1 flex justify-between text-sm">
                             <div>
-                              <span className="text-gray-700 font-medium">{item.description}</span>
+                              <span className="font-medium text-gray-700">{item.description}</span>
                               {item.watch && (
-                                <span className="text-gray-500 ml-2">
+                                <span className="ml-2 text-gray-500">
                                   ({item.watch.brand} {item.watch.model})
                                 </span>
                               )}
                             </div>
                           </div>
-                          <div className="flex justify-between text-xs text-gray-600 ml-2">
+                          <div className="ml-2 flex justify-between text-xs text-gray-600">
                             <div className="flex gap-4">
-                              <span>Netto: CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.price)}</span>
-                              <span>MwSt: CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(itemVat)}</span>
+                              <span>
+                                Netto: CHF{' '}
+                                {new Intl.NumberFormat('de-CH', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(item.price)}
+                              </span>
+                              <span>
+                                MwSt: CHF{' '}
+                                {new Intl.NumberFormat('de-CH', {
+                                  minimumFractionDigits: 2,
+                                  maximumFractionDigits: 2,
+                                }).format(itemVat)}
+                              </span>
                             </div>
                             <span className="font-semibold text-gray-900">
-                              CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(itemTotal)}
+                              CHF{' '}
+                              {new Intl.NumberFormat('de-CH', {
+                                minimumFractionDigits: 2,
+                                maximumFractionDigits: 2,
+                              }).format(itemTotal)}
                             </span>
                           </div>
                         </div>
                       )
                     })}
                   </div>
-                  <div className="border-t mt-4 pt-4 space-y-1">
+                  <div className="mt-4 space-y-1 border-t pt-4">
                     <div className="flex justify-between text-sm">
                       <span className="text-gray-600">Zwischensumme:</span>
                       <span className="font-medium">
-                        CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(invoice.subtotal)}
+                        CHF{' '}
+                        {new Intl.NumberFormat('de-CH', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(invoice.subtotal)}
                       </span>
                     </div>
                     <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">
-                        MwSt ({invoice.vatRate * 100}%):
-                      </span>
+                      <span className="text-gray-600">MwSt ({invoice.vatRate * 100}%):</span>
                       <span className="font-medium">
-                        CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(invoice.vatAmount)}
+                        CHF{' '}
+                        {new Intl.NumberFormat('de-CH', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(invoice.vatAmount)}
                       </span>
                     </div>
-                    <div className="flex justify-between text-lg font-semibold pt-2 border-t">
+                    <div className="flex justify-between border-t pt-2 text-lg font-semibold">
                       <span>Total:</span>
                       <span className="text-primary-600">
-                        CHF {new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(invoice.total)}
+                        CHF{' '}
+                        {new Intl.NumberFormat('de-CH', {
+                          minimumFractionDigits: 2,
+                          maximumFractionDigits: 2,
+                        }).format(invoice.total)}
                       </span>
                     </div>
                   </div>

@@ -13,7 +13,10 @@ if (fs.existsSync(envPath)) {
         const key = match[1].trim()
         let value = match[2].trim()
         // Entferne Anführungszeichen
-        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
           value = value.slice(1, -1)
         }
         process.env[key] = value
@@ -23,7 +26,12 @@ if (fs.existsSync(envPath)) {
 }
 
 // Debug: Zeige RESEND_API_KEY Status
-console.log('RESEND_API_KEY geladen:', process.env.RESEND_API_KEY ? 'Ja (' + process.env.RESEND_API_KEY.substring(0, 10) + '...)' : 'Nein')
+console.log(
+  'RESEND_API_KEY geladen:',
+  process.env.RESEND_API_KEY
+    ? 'Ja (' + process.env.RESEND_API_KEY.substring(0, 10) + '...)'
+    : 'Nein'
+)
 console.log('')
 
 // Jetzt importieren, nachdem die Umgebungsvariablen geladen wurden
@@ -83,16 +91,16 @@ async function testAllEmails() {
     purchaseId: 'test-purchase-id-456',
     invoiceId: 'test-invoice-id-789',
     invoiceNumber: 'REV-2024-001',
-    bidAmount: 1500.00,
-    currentHighestBid: 1600.00,
-    winningBid: 1700.00,
-    paymentAmount: 1500.00,
-    total: 165.00,
+    bidAmount: 1500.0,
+    currentHighestBid: 1600.0,
+    winningBid: 1700.0,
+    paymentAmount: 1500.0,
+    total: 165.0,
     dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    lateFeeAmount: 10.00,
+    lateFeeAmount: 10.0,
     trackingNumber: 'CH123456789',
     trackingProvider: 'Post',
-    offerAmount: 1400.00,
+    offerAmount: 1400.0,
     verificationUrl: `${BASE_URL}/verify-email?token=test-token-123`,
     answerContent: 'Ja, der Artikel ist noch verfügbar und in sehr gutem Zustand.',
     reviewRating: 5,
@@ -102,7 +110,7 @@ async function testAllEmails() {
 
   // Test alle E-Mails (wie vorher)
   // ... (rest of the code bleibt gleich)
-  
+
   console.log('\n✅ Test abgeschlossen!')
 }
 

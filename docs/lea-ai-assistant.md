@@ -63,7 +63,7 @@ Lea ist auf allen Seiten verfügbar als **floating Chat-Button** (unten rechts).
 import { LeaChat } from '@/components/lea/LeaChat'
 
 // In einer Produktseite
-<LeaChat productId={watch.id} />
+;<LeaChat productId={watch.id} />
 ```
 
 #### Lea API direkt verwenden
@@ -73,13 +73,13 @@ const response = await fetch('/api/ai/lea/chat', {
   method: 'POST',
   headers: {
     'Content-Type': 'application/json',
-    'x-product-id': productId // Optional: für Produkt-Kontext
+    'x-product-id': productId, // Optional: für Produkt-Kontext
   },
   body: JSON.stringify({
     message: 'Wie funktioniert der Versand?',
     conversationId: conversationId, // Optional: für History
-    productId: productId // Optional: für Produkt-Kontext
-  })
+    productId: productId, // Optional: für Produkt-Kontext
+  }),
 })
 
 const data = await response.json()
@@ -168,7 +168,7 @@ Der System-Prompt sollte explizit "ANTWORTE IMMER AUF DEUTSCH!" enthalten. Prüf
 ## Support
 
 Bei Fragen oder Problemen:
+
 - Prüfen Sie die Server-Logs
 - Prüfen Sie die OpenAI API Dokumentation
 - Kontaktieren Sie den System-Administrator
-

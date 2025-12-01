@@ -7,6 +7,7 @@
 **Beschreibung:** Backup: ensure-server-running.sh Environment-Variable-Handling verbessert
 
 **Enthaltene Änderungen:**
+
 - `ensure-server-running.sh` Environment-Variable-Handling verbessert
 - Validierung bestehender `.env` Konfigurationen
 - Warnungen bei fehlenden kritischen Variablen
@@ -23,6 +24,7 @@
 **Beschreibung:** Backup: Redirect-Probleme behoben - Konsistente Session-Behandlung und Navigation
 
 **Enthaltene Änderungen:**
+
 - Alle Redirect-Probleme behoben
 - Konsistente Session-Behandlung auf allen Seiten
 - Login-Seite verwendet jetzt Client-Side Navigation
@@ -37,16 +39,19 @@
 ## 🚀 Schnelle Wiederherstellung
 
 ### Option 1: Script verwenden (Empfohlen)
+
 ```bash
 ./restore-backup.sh
 ```
 
 ### Option 2: Manuell mit Git
+
 ```bash
 git reset --hard e67339b
 ```
 
 ### Option 3: Als neuen Branch erstellen (Änderungen bleiben erhalten)
+
 ```bash
 git checkout -b restore-backup e67339b
 ```

@@ -4,24 +4,18 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendEmail, getVerificationApprovalEmail } from '@/lib/email'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: { userId: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Prüfe ob User Admin ist
     const admin = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true }
+      select: { isAdmin: true },
     })
 
     if (!admin?.isAdmin) {
@@ -41,15 +35,12 @@ export async function POST(
         name: true,
         firstName: true,
         lastName: true,
-        nickname: true
-      }
+        nickname: true,
+      },
     })
 
     if (!user) {
-      return NextResponse.json(
-        { message: 'Benutzer nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
     // Genehmige Verifizierung
@@ -60,8 +51,8 @@ export async function POST(
         verificationReviewedAt: new Date(),
         verificationReviewedBy: session.user.id,
         verified: true, // Stelle sicher, dass verified true ist
-        verifiedAt: new Date()
-      }
+        verifiedAt: new Date(),
+      },
     })
 
     // Erstelle Benachrichtigung für den Benutzer
@@ -71,29 +62,30 @@ export async function POST(
           userId: userId,
           type: 'VERIFICATION_APPROVED',
           title: 'Verifizierung erfolgreich',
-          message: 'Ihre Verifizierung wurde erfolgreich abgeschlossen. Sie können jetzt Artikel verkaufen!',
+          message:
+            'Ihre Verifizierung wurde erfolgreich abgeschlossen. Sie können jetzt Artikel verkaufen!',
           link: '/sell',
         },
       })
       console.log(`[notifications] Verifizierungs-Benachrichtigung erstellt für Benutzer ${userId}`)
     } catch (notifError) {
-      console.error('[notifications] Fehler beim Erstellen der Verifizierungs-Benachrichtigung:', notifError)
+      console.error(
+        '[notifications] Fehler beim Erstellen der Verifizierungs-Benachrichtigung:',
+        notifError
+      )
       // Benachrichtigungs-Fehler sollte die Verifizierung nicht verhindern
     }
 
     // E-Mail an Benutzer senden, dass Verifizierung genehmigt wurde
     try {
       const userName = user.nickname || user.firstName || user.name || 'Benutzer'
-      const { subject, html, text } = getVerificationApprovalEmail(
-        userName,
-        user.email
-      )
+      const { subject, html, text } = getVerificationApprovalEmail(userName, user.email)
 
       const emailResult = await sendEmail({
         to: user.email,
         subject,
         html,
-        text
+        text,
       })
 
       if (emailResult.success) {

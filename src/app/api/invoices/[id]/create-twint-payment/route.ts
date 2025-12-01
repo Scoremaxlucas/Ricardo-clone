@@ -12,18 +12,12 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY || '', {
  * Erstellt einen Stripe Payment Intent für TWINT-Zahlung einer Rechnung
  * TWINT wird über Stripe abgewickelt, was automatische Bestätigung ermöglicht
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -32,39 +26,27 @@ export async function POST(
     const invoice = await prisma.invoice.findUnique({
       where: { id },
       include: {
-        seller: true
-      }
+        seller: true,
+      },
     })
 
     if (!invoice) {
-      return NextResponse.json(
-        { message: 'Rechnung nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Rechnung nicht gefunden' }, { status: 404 })
     }
 
     // Nur der Verkäufer kann die Rechnung bezahlen
     if (invoice.sellerId !== session.user.id) {
-      return NextResponse.json(
-        { message: 'Zugriff verweigert' },
-        { status: 403 }
-      )
+      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
     }
 
     // Prüfe ob Rechnung bereits bezahlt ist
     if (invoice.status === 'paid') {
-      return NextResponse.json(
-        { message: 'Rechnung ist bereits bezahlt' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Rechnung ist bereits bezahlt' }, { status: 400 })
     }
 
     // Prüfe ob Stripe konfiguriert ist
     if (!process.env.STRIPE_SECRET_KEY) {
-      return NextResponse.json(
-        { message: 'Stripe ist nicht konfiguriert' },
-        { status: 500 }
-      )
+      return NextResponse.json({ message: 'Stripe ist nicht konfiguriert' }, { status: 500 })
     }
 
     // Berechne Betrag in Rappen (CHF * 100)
@@ -72,10 +54,7 @@ export async function POST(
 
     // Minimum: 50 Rappen
     if (amountInRappen < 50) {
-      return NextResponse.json(
-        { message: 'Betrag zu gering (Minimum: CHF 0.50)' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Betrag zu gering (Minimum: CHF 0.50)' }, { status: 400 })
     }
 
     // Erstelle Payment Intent mit TWINT als bevorzugte Zahlungsmethode
@@ -86,17 +65,19 @@ export async function POST(
         invoiceId: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
         sellerId: invoice.sellerId,
-        type: 'invoice_payment_twint'
+        type: 'invoice_payment_twint',
       },
       payment_method_types: ['twint'],
       description: `Rechnung ${invoice.invoiceNumber}`,
     })
 
-    console.log(`[invoices/create-twint-payment] TWINT Payment Intent erstellt: ${paymentIntent.id} für Rechnung ${invoice.invoiceNumber}`)
+    console.log(
+      `[invoices/create-twint-payment] TWINT Payment Intent erstellt: ${paymentIntent.id} für Rechnung ${invoice.invoiceNumber}`
+    )
 
     return NextResponse.json({
       clientSecret: paymentIntent.client_secret,
-      paymentIntentId: paymentIntent.id
+      paymentIntentId: paymentIntent.id,
     })
   } catch (error: any) {
     console.error('Error creating TWINT payment intent:', error)
@@ -106,8 +87,3 @@ export async function POST(
     )
   }
 }
-
-
-
-
-

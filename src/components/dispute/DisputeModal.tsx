@@ -19,17 +19,23 @@ const BUYER_DISPUTE_REASONS = [
   { value: 'item_wrong', label: 'Falscher Artikel geliefert' },
   { value: 'payment_not_confirmed', label: 'Zahlung nicht bestätigt' },
   { value: 'seller_not_responding', label: 'Verkäufer antwortet nicht' },
-  { value: 'other', label: 'Sonstiges' }
+  { value: 'other', label: 'Sonstiges' },
 ]
 
 // Dispute-Gründe für Verkäufer
 const SELLER_DISPUTE_REASONS = [
   { value: 'payment_not_confirmed', label: 'Zahlung nicht bestätigt' },
   { value: 'buyer_not_responding', label: 'Käufer antwortet nicht' },
-  { value: 'other', label: 'Sonstiges' }
+  { value: 'other', label: 'Sonstiges' },
 ]
 
-export function DisputeModal({ isOpen, onClose, purchaseId, onDisputeOpened, isSeller = false }: DisputeModalProps) {
+export function DisputeModal({
+  isOpen,
+  onClose,
+  purchaseId,
+  onDisputeOpened,
+  isSeller = false,
+}: DisputeModalProps) {
   // Wähle die passenden Gründe basierend auf der Rolle
   const DISPUTE_REASONS = isSeller ? SELLER_DISPUTE_REASONS : BUYER_DISPUTE_REASONS
   const [reason, setReason] = useState<string>('')
@@ -51,12 +57,12 @@ export function DisputeModal({ isOpen, onClose, purchaseId, onDisputeOpened, isS
       const res = await fetch(`/api/purchases/${purchaseId}/dispute`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
         },
         body: JSON.stringify({
           reason,
-          description: description.trim()
-        })
+          description: description.trim(),
+        }),
       })
 
       const data = await res.json()
@@ -79,41 +85,42 @@ export function DisputeModal({ isOpen, onClose, purchaseId, onDisputeOpened, isS
   }
 
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl">
+        <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <div className="flex items-center gap-2">
             <AlertTriangle className="h-6 w-6 text-red-600" />
             <h2 className="text-xl font-semibold text-gray-900">Dispute eröffnen</h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            className="rounded-full p-2 transition-colors hover:bg-gray-100"
           >
             <X className="h-5 w-5 text-gray-500" />
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-6">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+        <form onSubmit={handleSubmit} className="space-y-6 p-6">
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
             <p className="text-sm text-yellow-800">
-              <strong>Wichtig:</strong> Ein Dispute sollte nur eröffnet werden, wenn Sie ein Problem haben, das nicht durch direkte Kommunikation gelöst werden kann. 
-              Ein Admin wird sich in Kürze um Ihren Dispute kümmern.
+              <strong>Wichtig:</strong> Ein Dispute sollte nur eröffnet werden, wenn Sie ein Problem
+              haben, das nicht durch direkte Kommunikation gelöst werden kann. Ein Admin wird sich
+              in Kürze um Ihren Dispute kümmern.
             </p>
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Grund für den Dispute <span className="text-red-500">*</span>
             </label>
             <select
               value={reason}
-              onChange={(e) => setReason(e.target.value)}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              onChange={e => setReason(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
               required
             >
               <option value="">Bitte wählen...</option>
-              {DISPUTE_REASONS.map((r) => (
+              {DISPUTE_REASONS.map(r => (
                 <option key={r.value} value={r.value}>
                   {r.label}
                 </option>
@@ -122,14 +129,14 @@ export function DisputeModal({ isOpen, onClose, purchaseId, onDisputeOpened, isS
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Beschreibung <span className="text-red-500">*</span>
             </label>
             <textarea
               value={description}
-              onChange={(e) => setDescription(e.target.value)}
+              onChange={e => setDescription(e.target.value)}
               rows={6}
-              className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
               placeholder="Bitte beschreiben Sie das Problem im Detail..."
               required
             />
@@ -138,18 +145,18 @@ export function DisputeModal({ isOpen, onClose, purchaseId, onDisputeOpened, isS
             </p>
           </div>
 
-          <div className="flex gap-3 pt-4 border-t border-gray-200">
+          <div className="flex gap-3 border-t border-gray-200 pt-4">
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+              className="flex-1 rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
               disabled={loading}
             >
               Abbrechen
             </button>
             <button
               type="submit"
-              className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors flex items-center justify-center gap-2"
+              className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700"
               disabled={loading}
             >
               {loading ? (
@@ -167,10 +174,3 @@ export function DisputeModal({ isOpen, onClose, purchaseId, onDisputeOpened, isS
     </div>
   )
 }
-
-
-
-
-
-
-

@@ -8,28 +8,22 @@ import { addStatusHistory } from '@/lib/status-history'
 /**
  * POST: Dispute durch Admin lösen
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id && !session?.user?.email) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Prüfe Admin-Status
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
-    
+
     // Prüfe ob User Admin ist (per ID oder E-Mail)
     let user = null
     if (session.user.id) {
       user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { isAdmin: true, email: true }
+        select: { isAdmin: true, email: true },
       })
     }
 
@@ -37,7 +31,7 @@ export async function POST(
     if (!user && session.user.email) {
       user = await prisma.user.findUnique({
         where: { email: session.user.email },
-        select: { isAdmin: true, email: true }
+        select: { isAdmin: true, email: true },
       })
     }
 
@@ -53,22 +47,17 @@ export async function POST(
     }
 
     const { id } = await params
-    const { resolution, refundBuyer, refundSeller, cancelPurchase, rejected, rejectionReason } = await request.json()
+    const { resolution, refundBuyer, refundSeller, cancelPurchase, rejected, rejectionReason } =
+      await request.json()
 
     // Prüfe ob Dispute abgelehnt wird
     if (rejected === true) {
       if (!rejectionReason) {
-        return NextResponse.json(
-          { message: 'Ablehnungsgrund ist erforderlich' },
-          { status: 400 }
-        )
+        return NextResponse.json({ message: 'Ablehnungsgrund ist erforderlich' }, { status: 400 })
       }
     } else {
       if (!resolution) {
-        return NextResponse.json(
-          { message: 'Lösung ist erforderlich' },
-          { status: 400 }
-        )
+        return NextResponse.json({ message: 'Lösung ist erforderlich' }, { status: 400 })
       }
     }
 
@@ -88,10 +77,10 @@ export async function POST(
                 email: true,
                 firstName: true,
                 lastName: true,
-                nickname: true
-              }
-            }
-          }
+                nickname: true,
+              },
+            },
+          },
         },
         buyer: {
           select: {
@@ -100,17 +89,14 @@ export async function POST(
             email: true,
             firstName: true,
             lastName: true,
-            nickname: true
-          }
-        }
-      }
+            nickname: true,
+          },
+        },
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob es ein Dispute oder Stornierungsantrag ist
@@ -125,15 +111,12 @@ export async function POST(
     }
 
     // Verwende die entsprechenden Status-Felder je nach Typ
-    const currentStatus = isCancellation 
-      ? (purchase.cancellationRequestStatus || 'pending')
-      : (purchase.disputeStatus || 'pending')
+    const currentStatus = isCancellation
+      ? purchase.cancellationRequestStatus || 'pending'
+      : purchase.disputeStatus || 'pending'
 
     if (currentStatus === 'resolved') {
-      return NextResponse.json(
-        { message: 'Dieser Antrag wurde bereits gelöst' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Dieser Antrag wurde bereits gelöst' }, { status: 400 })
     }
 
     // Bestimme wer den Antrag initiiert hat
@@ -143,7 +126,7 @@ export async function POST(
     let isInitiatedBySeller: boolean
     let disputeReason: string
     let existingDescription: string
-    
+
     if (isCancellation) {
       // Stornierungsanträge kommen immer vom Verkäufer
       isInitiatedByBuyer = false
@@ -152,21 +135,28 @@ export async function POST(
       existingDescription = purchase.cancellationRequestDescription || ''
     } else {
       // Disputes können von beiden kommen
-      const buyerReasons = ['item_not_received', 'item_damaged', 'item_wrong', 'payment_not_confirmed', 'seller_not_responding', 'other']
+      const buyerReasons = [
+        'item_not_received',
+        'item_damaged',
+        'item_wrong',
+        'payment_not_confirmed',
+        'seller_not_responding',
+        'other',
+      ]
       const sellerReasons = ['payment_not_confirmed', 'buyer_not_responding', 'other']
       disputeReason = purchase.disputeReason || ''
       isInitiatedByBuyer = buyerReasons.includes(disputeReason)
       isInitiatedBySeller = sellerReasons.includes(disputeReason)
       existingDescription = purchase.disputeDescription || ''
     }
-    
+
     // Prüfe ob Antrag abgelehnt wird
     if (rejected === true) {
       const adminRejection = `\n\n--- ADMIN-ABLEHNUNG ---\n${rejectionReason}`
       const newDescription = existingDescription + adminRejection
-      
+
       const updateData: any = {}
-      
+
       if (isCancellation) {
         updateData.cancellationRequestStatus = 'rejected'
         updateData.cancellationRequestResolvedAt = new Date()
@@ -178,20 +168,25 @@ export async function POST(
         updateData.disputeResolvedBy = session.user.id
         updateData.disputeDescription = newDescription
       }
-      
+
       const updatedPurchase = await prisma.purchase.update({
         where: { id },
-        data: updateData
+        data: updateData,
       })
-      
+
       // Benachrichtigungen für Ablehnung
-      const sellerName = purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Verkäufer'
-      const buyerName = purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Käufer'
-      
+      const sellerName =
+        purchase.watch.seller.nickname ||
+        purchase.watch.seller.firstName ||
+        purchase.watch.seller.name ||
+        'Verkäufer'
+      const buyerName =
+        purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Käufer'
+
       // Benachrichtigung an Initiator (Antrag wurde abgelehnt)
       const initiatorId = isInitiatedByBuyer ? purchase.buyerId : purchase.watch.sellerId
       const initiatorName = isInitiatedByBuyer ? buyerName : sellerName
-      
+
       try {
         await prisma.notification.create({
           data: {
@@ -200,46 +195,48 @@ export async function POST(
             title: '❌ Antrag abgelehnt',
             message: `Ihr ${isCancellation ? 'Stornierungsantrag' : 'Dispute'} für "${purchase.watch.title}" wurde abgelehnt. Grund: ${rejectionReason}`,
             link: isInitiatedByBuyer ? `/my-watches/buying/purchased` : `/my-watches/selling/sold`,
-            watchId: purchase.watchId
-          }
+            watchId: purchase.watchId,
+          },
         })
       } catch (error) {
         console.error('[dispute/resolve] Fehler bei Initiator-Benachrichtigung (Ablehnung):', error)
       }
-      
+
       // E-Mail an Initiator
       try {
         const { getDisputeRejectedEmail } = await import('@/lib/email')
-        const initiatorEmail = isInitiatedByBuyer ? purchase.buyer.email : purchase.watch.seller.email
-        
+        const initiatorEmail = isInitiatedByBuyer
+          ? purchase.buyer.email
+          : purchase.watch.seller.email
+
         const { subject, html, text } = getDisputeRejectedEmail(
           initiatorName,
           purchase.watch.title,
           rejectionReason
         )
-        
+
         await sendEmail({
           to: initiatorEmail,
           subject,
           html,
-          text
+          text,
         })
       } catch (emailError) {
         console.error('[dispute/resolve] Fehler beim Senden der Ablehnungs-E-Mail:', emailError)
       }
-      
+
       return NextResponse.json({
         message: `${isCancellation ? 'Stornierungsantrag' : 'Dispute'} erfolgreich abgelehnt`,
-        purchase: updatedPurchase
+        purchase: updatedPurchase,
       })
     }
-    
+
     // Verwende die entsprechenden Felder je nach Typ (existingDescription und disputeReason wurden bereits oben gesetzt)
     const adminResolution = `\n\n--- ADMIN-LÖSUNG ---\n${resolution}`
     const newDescription = existingDescription + adminResolution
 
     const updateData: any = {
-      status: purchase.status
+      status: purchase.status,
     }
 
     // Setze die entsprechenden Felder je nach Typ
@@ -269,7 +266,7 @@ export async function POST(
     // Storniere Purchase falls gewünscht
     if (cancelPurchase) {
       updateData.status = 'cancelled'
-      
+
       // 1. Storniere zugehörige Rechnung (falls vorhanden)
       // Prüfe sowohl nach saleId als auch nach watchId in InvoiceItems
       try {
@@ -277,19 +274,19 @@ export async function POST(
         let invoice = await prisma.invoice.findFirst({
           where: {
             saleId: id,
-            sellerId: purchase.watch.sellerId
-          }
+            sellerId: purchase.watch.sellerId,
+          },
         })
 
         // Falls nicht gefunden, suche über InvoiceItems mit watchId
         if (!invoice) {
           const invoiceItem = await prisma.invoiceItem.findFirst({
             where: {
-              watchId: purchase.watchId
+              watchId: purchase.watchId,
             },
             include: {
-              invoice: true
-            }
+              invoice: true,
+            },
           })
           if (invoiceItem && invoiceItem.invoice.sellerId === purchase.watch.sellerId) {
             invoice = invoiceItem.invoice
@@ -302,11 +299,11 @@ export async function POST(
             where: { id: invoice.id },
             data: {
               status: 'cancelled',
-              refundedAt: new Date()
-            }
+              refundedAt: new Date(),
+            },
           })
           console.log(`[dispute/resolve] ✅ Invoice ${invoice.invoiceNumber} wurde storniert`)
-          
+
           // Erstelle Korrektur-Abrechnung (Storno-Rechnung)
           try {
             const { createCreditNoteForInvoice } = await import('@/lib/invoice')
@@ -314,9 +311,14 @@ export async function POST(
               invoice.id,
               `Dispute-Storno: ${purchase.disputeReason || 'Unbekannt'}`
             )
-            console.log(`[dispute/resolve] ✅ Korrektur-Abrechnung erstellt: ${creditNote.invoiceNumber}`)
+            console.log(
+              `[dispute/resolve] ✅ Korrektur-Abrechnung erstellt: ${creditNote.invoiceNumber}`
+            )
           } catch (creditNoteError: any) {
-            console.error('[dispute/resolve] ❌ Fehler beim Erstellen der Korrektur-Abrechnung:', creditNoteError)
+            console.error(
+              '[dispute/resolve] ❌ Fehler beim Erstellen der Korrektur-Abrechnung:',
+              creditNoteError
+            )
             // Fehler sollte nicht die Dispute-Lösung verhindern
           }
         }
@@ -331,13 +333,13 @@ export async function POST(
           where: {
             watchId: purchase.watchId,
             sellerId: purchase.watch.sellerId,
-            buyerId: purchase.buyerId
-          }
+            buyerId: purchase.buyerId,
+          },
         })
 
         if (sale) {
           await prisma.sale.delete({
-            where: { id: sale.id }
+            where: { id: sale.id },
           })
           console.log(`[dispute/resolve] ✅ Sale ${sale.id} wurde gelöscht`)
         }
@@ -353,55 +355,63 @@ export async function POST(
           where: {
             watchId: purchase.watchId,
             id: { not: id }, // Andere Purchases ausschließen
-            status: { not: 'cancelled' } // Nur nicht-stornierte Purchases
-          }
+            status: { not: 'cancelled' }, // Nur nicht-stornierte Purchases
+          },
         })
 
         // Wenn keine anderen aktiven Purchases existieren, mache das Watch wieder verfügbar
         if (otherPurchases.length === 0) {
           const watch = await prisma.watch.findUnique({
             where: { id: purchase.watchId },
-            select: { 
-              id: true, 
-              auctionEnd: true, 
+            select: {
+              id: true,
+              auctionEnd: true,
               auctionDuration: true,
               isAuction: true,
-              createdAt: true
-            }
+              createdAt: true,
+            },
           })
 
           if (watch) {
             // Wenn es eine Auktion ist und bereits abgelaufen war, verlängere sie
             if (watch.isAuction && watch.auctionDuration) {
               const now = new Date()
-              const newAuctionEnd = new Date(now.getTime() + watch.auctionDuration * 24 * 60 * 60 * 1000)
-              
+              const newAuctionEnd = new Date(
+                now.getTime() + watch.auctionDuration * 24 * 60 * 60 * 1000
+              )
+
               await prisma.watch.update({
                 where: { id: purchase.watchId },
                 data: {
-                  auctionEnd: newAuctionEnd
-                }
+                  auctionEnd: newAuctionEnd,
+                },
               })
-              console.log(`[dispute/resolve] ✅ Watch ${purchase.watchId} wurde wieder aktiviert (Auktion verlängert bis ${newAuctionEnd.toISOString()})`)
+              console.log(
+                `[dispute/resolve] ✅ Watch ${purchase.watchId} wurde wieder aktiviert (Auktion verlängert bis ${newAuctionEnd.toISOString()})`
+              )
             } else if (!watch.isAuction) {
               // Für Sofortkauf: Setze auctionEnd auf null oder in die Zukunft
               const futureDate = new Date()
               futureDate.setFullYear(futureDate.getFullYear() + 1) // 1 Jahr in die Zukunft
-              
+
               await prisma.watch.update({
                 where: { id: purchase.watchId },
                 data: {
-                  auctionEnd: futureDate
-                }
+                  auctionEnd: futureDate,
+                },
               })
-              console.log(`[dispute/resolve] ✅ Watch ${purchase.watchId} wurde wieder aktiviert (Sofortkauf)`)
+              console.log(
+                `[dispute/resolve] ✅ Watch ${purchase.watchId} wurde wieder aktiviert (Sofortkauf)`
+              )
             } else {
               // Falls auctionEnd bereits in der Zukunft liegt, ist es bereits aktiv
               console.log(`[dispute/resolve] ℹ️  Watch ${purchase.watchId} ist bereits aktiv`)
             }
           }
         } else {
-          console.log(`[dispute/resolve] ℹ️  Watch ${purchase.watchId} bleibt verkauft (${otherPurchases.length} andere aktive Purchases)`)
+          console.log(
+            `[dispute/resolve] ℹ️  Watch ${purchase.watchId} bleibt verkauft (${otherPurchases.length} andere aktive Purchases)`
+          )
         }
       } catch (watchError: any) {
         console.error('[dispute/resolve] ❌ Fehler beim Aktivieren des Watch:', watchError)
@@ -414,7 +424,7 @@ export async function POST(
       updateData.paymentConfirmedAt = null
       updateData.itemReceived = false
       updateData.itemReceivedAt = null
-      
+
       console.log(`[dispute/resolve] ✅ Purchase ${id} wurde vollständig storniert`)
     } else {
       // Wenn nicht storniert, aber refundBuyer oder refundSeller, setze entsprechende Felder zurück
@@ -433,7 +443,7 @@ export async function POST(
     // Führe Update durch
     const updatedPurchase = await prisma.purchase.update({
       where: { id },
-      data: updateData
+      data: updateData,
     })
 
     // Füge Status-Historie hinzu
@@ -449,9 +459,14 @@ export async function POST(
     }
 
     // Bestimme wer den Dispute initiiert hat und wer "verliert"
-    const sellerName = purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Verkäufer'
-    const buyerName = purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Käufer'
-    
+    const sellerName =
+      purchase.watch.seller.nickname ||
+      purchase.watch.seller.firstName ||
+      purchase.watch.seller.name ||
+      'Verkäufer'
+    const buyerName =
+      purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Käufer'
+
     // Bestimme Verlierer basierend auf Lösung und Dispute-Grund
     // Wenn cancelPurchase = true, verliert der Verkäufer (Kauf wird storniert, keine Kommission)
     // Wenn refundBuyer = true, verliert der Verkäufer (Rückerstattung an Käufer)
@@ -459,10 +474,19 @@ export async function POST(
     // Wenn cancelPurchase = true UND Antrag wurde vom Käufer initiiert, verliert der Käufer nicht (er bekommt sein Geld zurück)
     // Wenn cancelPurchase = true UND Antrag wurde vom Verkäufer initiiert, verliert der Verkäufer (er verliert den Verkauf)
     const isLoserBuyer = refundSeller === true || (cancelPurchase && isInitiatedBySeller)
-    const isLoserSeller = refundBuyer === true || (cancelPurchase && isInitiatedByBuyer) || (cancelPurchase && !isInitiatedByBuyer && !isInitiatedBySeller)
-    
+    const isLoserSeller =
+      refundBuyer === true ||
+      (cancelPurchase && isInitiatedByBuyer) ||
+      (cancelPurchase && !isInitiatedByBuyer && !isInitiatedBySeller)
+
     // Generiere generische Nachricht für Verlierer
-    const generateLoserMessage = (disputeReason: string, resolution: string, cancelPurchase: boolean, refundBuyer: boolean, refundSeller: boolean) => {
+    const generateLoserMessage = (
+      disputeReason: string,
+      resolution: string,
+      cancelPurchase: boolean,
+      refundBuyer: boolean,
+      refundSeller: boolean
+    ) => {
       let reasonText = ''
       switch (disputeReason) {
         case 'item_not_received':
@@ -486,7 +510,7 @@ export async function POST(
         default:
           reasonText = 'Ihr Dispute-Grund'
       }
-      
+
       if (cancelPurchase) {
         return `Weil ${reasonText}, wurde der Kauf storniert. ${resolution}`
       } else if (refundBuyer) {
@@ -496,12 +520,19 @@ export async function POST(
       }
       return `Weil ${reasonText}, wurde folgende Lösung beschlossen: ${resolution}`
     }
-    
+
     // Generiere Nachricht für Initiator (Erfolg)
-    const generateInitiatorMessage = (resolution: string, cancelPurchase: boolean, refundBuyer: boolean, refundSeller: boolean) => {
+    const generateInitiatorMessage = (
+      resolution: string,
+      cancelPurchase: boolean,
+      refundBuyer: boolean,
+      refundSeller: boolean
+    ) => {
       const typeLabel = isCancellation ? 'Stornierungsantrag' : 'Dispute'
       if (cancelPurchase) {
-        const relistMessage = isCancellation ? ' Der Artikel steht automatisch wieder als aktiver Artikel zum Verkauf.' : ''
+        const relistMessage = isCancellation
+          ? ' Der Artikel steht automatisch wieder als aktiver Artikel zum Verkauf.'
+          : ''
         return `Ihr ${typeLabel} war erfolgreich. Der Kauf wurde storniert.${relistMessage} ${resolution}`
       } else if (refundBuyer && isInitiatedByBuyer) {
         return `Ihr ${typeLabel} war erfolgreich. Ihnen wurde eine Rückerstattung gewährt. ${resolution}`
@@ -514,8 +545,13 @@ export async function POST(
     // Benachrichtigung an Initiator (Erfolg)
     const initiatorId = isInitiatedByBuyer ? purchase.buyerId : purchase.watch.sellerId
     const initiatorName = isInitiatedByBuyer ? buyerName : sellerName
-    const initiatorMessage = generateInitiatorMessage(resolution, cancelPurchase || false, refundBuyer || false, refundSeller || false)
-    
+    const initiatorMessage = generateInitiatorMessage(
+      resolution,
+      cancelPurchase || false,
+      refundBuyer || false,
+      refundSeller || false
+    )
+
     try {
       await prisma.notification.create({
         data: {
@@ -524,8 +560,8 @@ export async function POST(
           title: `✅ ${isCancellation ? 'Stornierungsantrag' : 'Dispute'} erfolgreich gelöst`,
           message: initiatorMessage,
           link: isInitiatedByBuyer ? `/my-watches/buying/purchased` : `/my-watches/selling/sold`,
-          watchId: purchase.watchId
-        }
+          watchId: purchase.watchId,
+        },
       })
     } catch (error) {
       console.error('[dispute/resolve] Fehler bei Initiator-Benachrichtigung:', error)
@@ -542,7 +578,7 @@ export async function POST(
         refundBuyer || false,
         refundSeller || false
       )
-      
+
       try {
         await prisma.notification.create({
           data: {
@@ -551,8 +587,8 @@ export async function POST(
             title: `⚠️ ${isCancellation ? 'Stornierungsantrag' : 'Dispute'} gelöst`,
             message: loserMessage,
             link: isLoserBuyer ? `/my-watches/buying/purchased` : `/my-watches/selling/sold`,
-            watchId: purchase.watchId
-          }
+            watchId: purchase.watchId,
+          },
         })
       } catch (error) {
         console.error('[dispute/resolve] Fehler bei Verlierer-Benachrichtigung:', error)
@@ -562,7 +598,7 @@ export async function POST(
     // E-Mail-Benachrichtigungen
     try {
       const { getDisputeResolvedEmail } = await import('@/lib/email')
-      
+
       // E-Mail an Initiator (Erfolg)
       const initiatorEmailData = getDisputeResolvedEmail(
         initiatorName,
@@ -578,7 +614,7 @@ export async function POST(
         to: initiatorEmail,
         subject: initiatorEmailData.subject,
         html: initiatorEmailData.html,
-        text: initiatorEmailData.text
+        text: initiatorEmailData.text,
       })
 
       // E-Mail an Verlierer (falls vorhanden)
@@ -593,7 +629,7 @@ export async function POST(
           refundBuyer || false,
           refundSeller || false
         )
-        
+
         const loserEmailData = getDisputeResolvedEmail(
           loserName,
           isLoserBuyer ? sellerName : buyerName,
@@ -603,23 +639,25 @@ export async function POST(
           'loser',
           false // Verlierer bekommt keine Info über Wiederaktivierung
         )
-        
+
         await sendEmail({
           to: loserEmail,
           subject: loserEmailData.subject,
           html: loserEmailData.html,
-          text: loserEmailData.text
+          text: loserEmailData.text,
         })
       }
     } catch (emailError) {
       console.error('[dispute/resolve] Fehler beim Senden der E-Mails:', emailError)
     }
 
-    console.log(`[dispute/resolve] Admin ${session.user.id} hat ${isCancellation ? 'Stornierungsantrag' : 'Dispute'} für Purchase ${id} gelöst`)
-    
+    console.log(
+      `[dispute/resolve] Admin ${session.user.id} hat ${isCancellation ? 'Stornierungsantrag' : 'Dispute'} für Purchase ${id} gelöst`
+    )
+
     return NextResponse.json({
       message: `${isCancellation ? 'Stornierungsantrag' : 'Dispute'} erfolgreich gelöst`,
-      purchase: updatedPurchase
+      purchase: updatedPurchase,
     })
   } catch (error: any) {
     console.error('Error resolving dispute:', error)
@@ -629,4 +667,3 @@ export async function POST(
     )
   }
 }
-

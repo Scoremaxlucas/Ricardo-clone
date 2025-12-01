@@ -3,9 +3,9 @@ const prisma = new PrismaClient()
 
 async function main() {
   const watch = await prisma.watch.findFirst({
-    where: { id: 'cmhc6o6vq0001lhcodyevd1r2' }
+    where: { id: 'cmhc6o6vq0001lhcodyevd1r2' },
   })
-  
+
   console.log('\n📊 Gespeicherte Daten:')
   console.log('Images:', watch?.images?.substring(0, 100) + '...')
   console.log('Description:', watch?.description)

@@ -4,7 +4,26 @@ import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Upload, Plus, X, Trash2, Download, Save, Loader2, AlertCircle, CheckCircle, Image as ImageIcon, Copy, ChevronRight, FileText, Eye, EyeOff, Sparkles, Zap, Flame } from 'lucide-react'
+import {
+  Upload,
+  Plus,
+  X,
+  Trash2,
+  Download,
+  Save,
+  Loader2,
+  AlertCircle,
+  CheckCircle,
+  Image as ImageIcon,
+  Copy,
+  ChevronRight,
+  FileText,
+  Eye,
+  EyeOff,
+  Sparkles,
+  Zap,
+  Flame,
+} from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { categoryConfig } from '@/data/categories'
@@ -38,7 +57,7 @@ export default function BulkUploadPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
-  
+
   const [currentStep, setCurrentStep] = useState<Step>('articles')
   const [products, setProducts] = useState<ProductForm[]>([])
   const [isLoading, setIsLoading] = useState(false)
@@ -48,7 +67,7 @@ export default function BulkUploadPage() {
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null)
   const [isCheckingVerification, setIsCheckingVerification] = useState(true)
   const [boosters, setBoosters] = useState<any[]>([])
-  
+
   // Gemeinsame Einstellungen (Schritt 2)
   const [commonSettings, setCommonSettings] = useState({
     price: '',
@@ -60,7 +79,7 @@ export default function BulkUploadPage() {
     subcategory: '',
     shippingMethods: ['pickup'] as string[],
     isAuction: false,
-    auctionDuration: '7'
+    auctionDuration: '7',
   })
 
   // Ausgewählte Artikel für Veröffentlichung
@@ -87,7 +106,7 @@ export default function BulkUploadPage() {
         setIsCheckingVerification(false)
       }
     }
-    
+
     const loadBoosters = async () => {
       try {
         const res = await fetch('/api/admin/boosters')
@@ -99,7 +118,7 @@ export default function BulkUploadPage() {
         console.error('Error loading boosters:', error)
       }
     }
-    
+
     loadVerificationStatus()
     loadBoosters()
   }, [session?.user?.id])
@@ -108,9 +127,9 @@ export default function BulkUploadPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 text-primary-600 animate-spin mx-auto mb-4" />
+            <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
             <p className="text-gray-600">Lädt...</p>
           </div>
         </div>
@@ -128,23 +147,23 @@ export default function BulkUploadPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+        <div className="mx-auto max-w-4xl px-4 py-8">
+          <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-6">
             <div className="flex items-start">
-              <AlertCircle className="h-6 w-6 text-yellow-600 mr-3 mt-0.5" />
+              <AlertCircle className="mr-3 mt-0.5 h-6 w-6 text-yellow-600" />
               <div>
-                <h3 className="text-lg font-semibold text-yellow-900 mb-2">
+                <h3 className="mb-2 text-lg font-semibold text-yellow-900">
                   Verifizierung erforderlich
                 </h3>
-                <p className="text-yellow-800 mb-4">
-                  {verificationStatus === 'pending' 
+                <p className="mb-4 text-yellow-800">
+                  {verificationStatus === 'pending'
                     ? 'Ihre Verifizierung wird derzeit geprüft. Sie können Artikel verkaufen, sobald die Verifizierung abgeschlossen ist.'
                     : 'Sie müssen sich zuerst verifizieren, bevor Sie Artikel verkaufen können.'}
                 </p>
                 {verificationStatus !== 'pending' && (
                   <Link
                     href="/verification"
-                    className="inline-block px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors"
+                    className="inline-block rounded-md bg-yellow-600 px-4 py-2 text-white transition-colors hover:bg-yellow-700"
                   >
                     Jetzt verifizieren
                   </Link>
@@ -163,7 +182,7 @@ export default function BulkUploadPage() {
       setError('Maximal 100 Artikel können gleichzeitig erstellt werden.')
       return
     }
-    
+
     const newProduct: ProductForm = {
       id: `product-${Date.now()}-${Math.random()}`,
       title: '',
@@ -172,30 +191,30 @@ export default function BulkUploadPage() {
       images: [],
       imagePreviews: [],
       booster: undefined,
-      errors: []
+      errors: [],
     }
-    
+
     setProducts([...products, newProduct])
   }
 
   const duplicateProduct = (id: string) => {
     const product = products.find(p => p.id === id)
     if (!product) return
-    
+
     if (products.length >= 100) {
       setError('Maximal 100 Artikel können gleichzeitig erstellt werden.')
       return
     }
-    
+
     const duplicated: ProductForm = {
       ...product,
       id: `product-${Date.now()}-${Math.random()}`,
       title: product.title + ' (Kopie)',
       images: [],
       imagePreviews: [],
-      booster: undefined
+      booster: undefined,
     }
-    
+
     setProducts([...products, duplicated])
     setSuccess('Artikel dupliziert!')
     setTimeout(() => setSuccess(''), 2000)
@@ -204,12 +223,12 @@ export default function BulkUploadPage() {
   const duplicateMultiple = (id: string, count: number) => {
     const product = products.find(p => p.id === id)
     if (!product) return
-    
+
     if (products.length + count > 100) {
       setError(`Sie können maximal ${100 - products.length} weitere Artikel hinzufügen.`)
       return
     }
-    
+
     const duplicates: ProductForm[] = []
     for (let i = 0; i < count; i++) {
       duplicates.push({
@@ -217,10 +236,10 @@ export default function BulkUploadPage() {
         id: `product-${Date.now()}-${Math.random()}-${i}`,
         title: `${product.title} ${i + 1}`,
         images: [],
-        imagePreviews: []
+        imagePreviews: [],
       })
     }
-    
+
     setProducts([...products, ...duplicates])
     setSuccess(`${count} Artikel dupliziert!`)
     setTimeout(() => setSuccess(''), 2000)
@@ -236,53 +255,53 @@ export default function BulkUploadPage() {
   }
 
   const updateProduct = (id: string, field: keyof ProductForm, value: any) => {
-    setProducts(prevProducts => prevProducts.map(p => 
-      p.id === id ? { ...p, [field]: value } : p
-    ))
+    setProducts(prevProducts => prevProducts.map(p => (p.id === id ? { ...p, [field]: value } : p)))
   }
 
   const handleImageUpload = (productId: string, files: FileList | null) => {
     if (!files) return
-    
+
     const fileArray = Array.from(files).filter(file => file.type.startsWith('image/'))
     if (fileArray.length === 0) return
-    
+
     const product = products.find(p => p.id === productId)
     if (!product) return
-    
+
     // Erstelle Previews synchron, bevor wir den State aktualisieren
     const previewPromises = fileArray.map(file => {
-      return new Promise<string>((resolve) => {
+      return new Promise<string>(resolve => {
         const reader = new FileReader()
-        reader.onload = (e) => {
+        reader.onload = e => {
           resolve(e.target?.result as string)
         }
         reader.onerror = () => resolve('')
         reader.readAsDataURL(file)
       })
     })
-    
+
     // Warte auf alle Previews, dann aktualisiere State einmal
     Promise.all(previewPromises).then(previews => {
-      setProducts(currentProducts => currentProducts.map(p => {
-        if (p.id === productId) {
-          // Filtere leere Previews heraus
-          const validPreviews = previews.filter(p => p !== '')
-          return {
-            ...p,
-            images: [...p.images, ...fileArray],
-            imagePreviews: [...p.imagePreviews, ...validPreviews]
+      setProducts(currentProducts =>
+        currentProducts.map(p => {
+          if (p.id === productId) {
+            // Filtere leere Previews heraus
+            const validPreviews = previews.filter(p => p !== '')
+            return {
+              ...p,
+              images: [...p.images, ...fileArray],
+              imagePreviews: [...p.imagePreviews, ...validPreviews],
+            }
           }
-        }
-        return p
-      }))
+          return p
+        })
+      )
     })
   }
 
   const removeImage = (productId: string, index: number) => {
     const product = products.find(p => p.id === productId)
     if (!product) return
-    
+
     const newImages = product.images.filter((_, i) => i !== index)
     const newPreviews = product.imagePreviews.filter((_, i) => i !== index)
     updateProduct(productId, 'images', newImages)
@@ -305,18 +324,18 @@ export default function BulkUploadPage() {
       if (p.images.length === 0 && p.imagePreviews.length === 0) {
         errors.push('Mindestens ein Bild erforderlich')
       }
-      
+
       if (errors.length > 0) hasErrors = true
       return { ...p, errors }
     })
-    
+
     setProducts(validatedProducts)
-    
+
     if (hasErrors) {
       setError('Bitte beheben Sie zuerst alle Fehler.')
       return false
     }
-    
+
     return true
   }
 
@@ -328,19 +347,24 @@ export default function BulkUploadPage() {
   }
 
   const applyCommonSettings = () => {
-    setProducts(products.map(p => ({
-      ...p,
-      price: commonSettings.price || p.price,
-      buyNowPrice: commonSettings.buyNowPrice || p.buyNowPrice,
-      brand: commonSettings.brand || p.brand,
-      model: commonSettings.model || p.model,
-      year: commonSettings.year || p.year,
-      category: commonSettings.category || p.category,
-      subcategory: commonSettings.subcategory || p.subcategory,
-      shippingMethods: commonSettings.shippingMethods.length > 0 ? [...commonSettings.shippingMethods] : p.shippingMethods,
-      isAuction: commonSettings.isAuction !== undefined ? commonSettings.isAuction : p.isAuction,
-      auctionDuration: commonSettings.auctionDuration || p.auctionDuration
-    })))
+    setProducts(
+      products.map(p => ({
+        ...p,
+        price: commonSettings.price || p.price,
+        buyNowPrice: commonSettings.buyNowPrice || p.buyNowPrice,
+        brand: commonSettings.brand || p.brand,
+        model: commonSettings.model || p.model,
+        year: commonSettings.year || p.year,
+        category: commonSettings.category || p.category,
+        subcategory: commonSettings.subcategory || p.subcategory,
+        shippingMethods:
+          commonSettings.shippingMethods.length > 0
+            ? [...commonSettings.shippingMethods]
+            : p.shippingMethods,
+        isAuction: commonSettings.isAuction !== undefined ? commonSettings.isAuction : p.isAuction,
+        auctionDuration: commonSettings.auctionDuration || p.auctionDuration,
+      }))
+    )
     setSuccess('Einstellungen auf alle Artikel angewendet!')
     setTimeout(() => setSuccess(''), 3000)
   }
@@ -381,14 +405,16 @@ export default function BulkUploadPage() {
     }
 
     const productsToPublish = products.filter(p => selectedProducts.has(p.id))
-    
+
     // Validierung
-    const invalidProducts = productsToPublish.filter(p => 
-      !p.price || isNaN(parseFloat(p.price)) || parseFloat(p.price) <= 0 || !p.category
+    const invalidProducts = productsToPublish.filter(
+      p => !p.price || isNaN(parseFloat(p.price)) || parseFloat(p.price) <= 0 || !p.category
     )
-    
+
     if (invalidProducts.length > 0) {
-      setError('Bitte stellen Sie sicher, dass alle ausgewählten Artikel einen Preis und eine Kategorie haben.')
+      setError(
+        'Bitte stellen Sie sicher, dass alle ausgewählten Artikel einen Preis und eine Kategorie haben.'
+      )
       return
     }
 
@@ -399,17 +425,17 @@ export default function BulkUploadPage() {
     try {
       // Konvertiere Bilder zu Base64
       const productsWithImages = await Promise.all(
-        productsToPublish.map(async (product) => {
+        productsToPublish.map(async product => {
           const imageBase64s = await Promise.all(
             product.images.map(file => {
-              return new Promise<string>((resolve) => {
+              return new Promise<string>(resolve => {
                 const reader = new FileReader()
                 reader.onload = () => resolve(reader.result as string)
                 reader.readAsDataURL(file)
               })
             })
           )
-          
+
           return {
             title: product.title,
             description: product.description,
@@ -423,11 +449,14 @@ export default function BulkUploadPage() {
             subcategory: product.subcategory || undefined,
             images: imageBase64s,
             shippingMethods: product.shippingMethods || commonSettings.shippingMethods,
-            isAuction: product.isAuction !== undefined ? product.isAuction : commonSettings.isAuction,
-            auctionDuration: (product.isAuction !== undefined ? product.isAuction : commonSettings.isAuction) 
-              ? (product.auctionDuration || commonSettings.auctionDuration) 
+            isAuction:
+              product.isAuction !== undefined ? product.isAuction : commonSettings.isAuction,
+            auctionDuration: (
+              product.isAuction !== undefined ? product.isAuction : commonSettings.isAuction
+            )
+              ? product.auctionDuration || commonSettings.auctionDuration
               : undefined,
-            booster: product.booster && product.booster !== 'none' ? product.booster : undefined
+            booster: product.booster && product.booster !== 'none' ? product.booster : undefined,
           }
         })
       )
@@ -435,7 +464,7 @@ export default function BulkUploadPage() {
       const response = await fetch('/api/watches/bulk-create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ products: productsWithImages })
+        body: JSON.stringify({ products: productsWithImages }),
       })
 
       const data = await response.json()
@@ -445,11 +474,11 @@ export default function BulkUploadPage() {
       }
 
       setSuccess(`${data.created} Artikel erfolgreich veröffentlicht!`)
-      
+
       // Entferne veröffentlichte Artikel
       setProducts(products.filter(p => !selectedProducts.has(p.id)))
       setSelectedProducts(new Set())
-      
+
       setTimeout(() => {
         router.push('/my-watches/selling/active')
       }, 2000)
@@ -470,7 +499,7 @@ export default function BulkUploadPage() {
     }
 
     const reader = new FileReader()
-    reader.onload = (e) => {
+    reader.onload = e => {
       const text = e.target?.result as string
       parseCSV(text)
     }
@@ -481,10 +510,10 @@ export default function BulkUploadPage() {
     const result: string[] = []
     let current = ''
     let inQuotes = false
-    
+
     for (let i = 0; i < line.length; i++) {
       const char = line[i]
-      
+
       if (char === '"') {
         if (inQuotes && line[i + 1] === '"') {
           current += '"'
@@ -499,7 +528,7 @@ export default function BulkUploadPage() {
         current += char
       }
     }
-    
+
     result.push(current.trim())
     return result
   }
@@ -515,17 +544,17 @@ export default function BulkUploadPage() {
       const headers = parseCSVLine(lines[0]).map(h => h.replace(/^"|"$/g, '').trim().toLowerCase())
       const requiredHeaders = ['titel', 'beschreibung', 'zustand']
       const missingHeaders = requiredHeaders.filter(h => !headers.includes(h))
-      
+
       if (missingHeaders.length > 0) {
         setError(`Fehlende Spalten: ${missingHeaders.join(', ')}`)
         return
       }
 
       const parsedProducts: ProductForm[] = []
-      
+
       for (let i = 1; i < lines.length && parsedProducts.length < 100; i++) {
         const values = parseCSVLine(lines[i]).map(v => v.replace(/^"|"$/g, '').trim())
-        
+
         const product: ProductForm = {
           id: `csv-${i}-${Date.now()}`,
           title: '',
@@ -533,12 +562,12 @@ export default function BulkUploadPage() {
           condition: '',
           images: [],
           imagePreviews: [],
-          errors: []
+          errors: [],
         }
 
         headers.forEach((header, index) => {
           const value = values[index] || ''
-          
+
           switch (header) {
             case 'titel':
               product.title = value
@@ -567,7 +596,7 @@ export default function BulkUploadPage() {
   const downloadTemplate = () => {
     const headers = ['Titel', 'Beschreibung', 'Zustand']
     const example = ['Beispiel Artikel', 'Dies ist eine Beispielbeschreibung', 'Sehr gut']
-    
+
     const csv = [headers.join(','), example.join(',')].join('\n')
     const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
     const link = document.createElement('a')
@@ -579,24 +608,24 @@ export default function BulkUploadPage() {
   // Lade Kategorien für Dropdown
   const categories = Object.keys(categoryConfig).map(slug => ({
     slug,
-    name: categoryConfig[slug].name
+    name: categoryConfig[slug].name,
   }))
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="mb-6">
           <Link
             href="/sell"
-            className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium text-sm"
+            className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700"
           >
             ← Zurück zum Verkaufen
           </Link>
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
+          <h1 className="mb-2 text-3xl font-bold text-gray-900">
             Mehrere Artikel gleichzeitig hochladen
           </h1>
           <p className="text-gray-600">
@@ -604,26 +633,38 @@ export default function BulkUploadPage() {
           </p>
         </div>
 
-        {/* Schritt-Anzeige (wie Ricardo) */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-8">
+        {/* Schritt-Anzeige */}
+        <div className="mb-8 rounded-lg bg-white p-6 shadow-md">
           <div className="flex items-center justify-between">
-            <div className="flex items-center gap-4 flex-1">
-              <div className={`flex items-center gap-2 ${currentStep === 'articles' ? 'text-primary-600' : currentStep === 'settings' || currentStep === 'review' ? 'text-green-600' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${currentStep === 'articles' ? 'bg-primary-600 text-white' : currentStep === 'settings' || currentStep === 'review' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+            <div className="flex flex-1 items-center gap-4">
+              <div
+                className={`flex items-center gap-2 ${currentStep === 'articles' ? 'text-primary-600' : currentStep === 'settings' || currentStep === 'review' ? 'text-green-600' : 'text-gray-400'}`}
+              >
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${currentStep === 'articles' ? 'bg-primary-600 text-white' : currentStep === 'settings' || currentStep === 'review' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}
+                >
                   1
                 </div>
                 <span className="font-medium">Artikel-Details</span>
               </div>
               <ChevronRight className="h-5 w-5 text-gray-400" />
-              <div className={`flex items-center gap-2 ${currentStep === 'settings' ? 'text-primary-600' : currentStep === 'review' ? 'text-green-600' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${currentStep === 'settings' ? 'bg-primary-600 text-white' : currentStep === 'review' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+              <div
+                className={`flex items-center gap-2 ${currentStep === 'settings' ? 'text-primary-600' : currentStep === 'review' ? 'text-green-600' : 'text-gray-400'}`}
+              >
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${currentStep === 'settings' ? 'bg-primary-600 text-white' : currentStep === 'review' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}
+                >
                   2
                 </div>
                 <span className="font-medium">Angebotsdetails</span>
               </div>
               <ChevronRight className="h-5 w-5 text-gray-400" />
-              <div className={`flex items-center gap-2 ${currentStep === 'review' ? 'text-primary-600' : 'text-gray-400'}`}>
-                <div className={`w-8 h-8 rounded-full flex items-center justify-center font-bold ${currentStep === 'review' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'}`}>
+              <div
+                className={`flex items-center gap-2 ${currentStep === 'review' ? 'text-primary-600' : 'text-gray-400'}`}
+              >
+                <div
+                  className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${currentStep === 'review' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'}`}
+                >
                   3
                 </div>
                 <span className="font-medium">Veröffentlichen</span>
@@ -633,8 +674,8 @@ export default function BulkUploadPage() {
         </div>
 
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 rounded-lg p-4 flex items-start">
-            <AlertCircle className="h-5 w-5 text-red-600 mr-3 mt-0.5 flex-shrink-0" />
+          <div className="mb-6 flex items-start rounded-lg border border-red-200 bg-red-50 p-4">
+            <AlertCircle className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
             <div className="flex-1">
               <p className="text-red-800">{error}</p>
             </div>
@@ -645,8 +686,8 @@ export default function BulkUploadPage() {
         )}
 
         {success && (
-          <div className="mb-6 bg-green-50 border border-green-200 rounded-lg p-4 flex items-start">
-            <CheckCircle className="h-5 w-5 text-green-600 mr-3 mt-0.5 flex-shrink-0" />
+          <div className="mb-6 flex items-start rounded-lg border border-green-200 bg-green-50 p-4">
+            <CheckCircle className="mr-3 mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
             <div className="flex-1">
               <p className="text-green-800">{success}</p>
             </div>
@@ -659,18 +700,22 @@ export default function BulkUploadPage() {
         {/* SCHRITT 1: Artikel-Details */}
         {currentStep === 'articles' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Schritt 1: Artikel-Details eingeben</h2>
-              <p className="text-gray-600 mb-6">
-                Geben Sie für jeden Artikel Titel, Beschreibung, Zustand und Fotos ein. 
-                Diese werden als Entwürfe gespeichert.
+            <div className="rounded-lg bg-white p-6 shadow-md">
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">
+                Schritt 1: Artikel-Details eingeben
+              </h2>
+              <p className="mb-6 text-gray-600">
+                Geben Sie für jeden Artikel Titel, Beschreibung, Zustand und Fotos ein. Diese werden
+                als Entwürfe gespeichert.
               </p>
 
               {/* CSV Upload Option */}
-              <div className="mb-6 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+              <div className="mb-6 rounded-lg border-2 border-dashed border-gray-300 p-4">
                 <div className="flex items-center justify-between">
                   <div>
-                    <p className="text-sm font-medium text-gray-700 mb-1">Oder laden Sie eine CSV-Datei hoch</p>
+                    <p className="mb-1 text-sm font-medium text-gray-700">
+                      Oder laden Sie eine CSV-Datei hoch
+                    </p>
                     <p className="text-xs text-gray-500">Spalten: Titel, Beschreibung, Zustand</p>
                   </div>
                   <div className="flex gap-2">
@@ -683,16 +728,16 @@ export default function BulkUploadPage() {
                     />
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+                      className="flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
                     >
-                      <Upload className="h-4 w-4 mr-2" />
+                      <Upload className="mr-2 h-4 w-4" />
                       CSV hochladen
                     </button>
                     <button
                       onClick={downloadTemplate}
-                      className="flex items-center px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors text-sm"
+                      className="flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
                     >
-                      <Download className="h-4 w-4 mr-2" />
+                      <Download className="mr-2 h-4 w-4" />
                       Vorlage
                     </button>
                   </div>
@@ -700,27 +745,27 @@ export default function BulkUploadPage() {
               </div>
 
               {/* Artikel-Liste */}
-              <div className="space-y-4 mb-6">
+              <div className="mb-6 space-y-4">
                 {products.map((product, index) => (
-                  <div key={product.id} className="border border-gray-200 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-4">
+                  <div key={product.id} className="rounded-lg border border-gray-200 p-4">
+                    <div className="mb-4 flex items-center justify-between">
                       <h3 className="font-medium text-gray-900">Artikel {index + 1}</h3>
                       <div className="flex items-center gap-2">
-                        <div className="relative group">
+                        <div className="group relative">
                           <button
-                            className="p-2 text-gray-600 hover:text-primary-600 transition-colors"
+                            className="p-2 text-gray-600 transition-colors hover:text-primary-600"
                             title="Duplizieren"
                           >
                             <Copy className="h-4 w-4" />
                           </button>
-                          <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                          <div className="invisible absolute right-0 top-full z-10 mt-1 rounded-md border border-gray-200 bg-white opacity-0 shadow-lg transition-all group-hover:visible group-hover:opacity-100">
                             <div className="p-2">
-                              <div className="text-xs text-gray-600 mb-2">Anzahl:</div>
+                              <div className="mb-2 text-xs text-gray-600">Anzahl:</div>
                               {[1, 2, 3, 4, 5, 10].map(count => (
                                 <button
                                   key={count}
                                   onClick={() => duplicateMultiple(product.id, count)}
-                                  className="block w-full text-left px-3 py-1 text-sm hover:bg-gray-100 rounded"
+                                  className="block w-full rounded px-3 py-1 text-left text-sm hover:bg-gray-100"
                                 >
                                   {count} {count === 1 ? 'Kopie' : 'Kopien'}
                                 </button>
@@ -730,14 +775,14 @@ export default function BulkUploadPage() {
                         </div>
                         <button
                           onClick={() => duplicateProduct(product.id)}
-                          className="p-2 text-gray-600 hover:text-primary-600 transition-colors"
+                          className="p-2 text-gray-600 transition-colors hover:text-primary-600"
                           title="Einmal duplizieren"
                         >
                           <Copy className="h-4 w-4" />
                         </button>
                         <button
                           onClick={() => removeProduct(product.id)}
-                          className="p-2 text-red-600 hover:text-red-800 transition-colors"
+                          className="p-2 text-red-600 transition-colors hover:text-red-800"
                         >
                           <Trash2 className="h-4 w-4" />
                         </button>
@@ -745,8 +790,8 @@ export default function BulkUploadPage() {
                     </div>
 
                     {product.errors && product.errors.length > 0 && (
-                      <div className="mb-4 bg-red-50 border border-red-200 rounded p-3">
-                        <ul className="list-disc list-inside text-sm text-red-700">
+                      <div className="mb-4 rounded border border-red-200 bg-red-50 p-3">
+                        <ul className="list-inside list-disc text-sm text-red-700">
                           {product.errors.map((err, i) => (
                             <li key={i}>{err}</li>
                           ))}
@@ -754,41 +799,41 @@ export default function BulkUploadPage() {
                       </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="mb-1 block text-sm font-medium text-gray-700">
                           Titel <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
                           value={product.title}
-                          onChange={(e) => updateProduct(product.id, 'title', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                          onChange={e => updateProduct(product.id, 'title', e.target.value)}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                           placeholder="z.B. iPhone 13 Pro"
                         />
                       </div>
 
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="mb-1 block text-sm font-medium text-gray-700">
                           Beschreibung <span className="text-red-500">*</span>
                         </label>
                         <textarea
                           value={product.description}
-                          onChange={(e) => updateProduct(product.id, 'description', e.target.value)}
+                          onChange={e => updateProduct(product.id, 'description', e.target.value)}
                           rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                           placeholder="Beschreiben Sie den Artikel..."
                         />
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="mb-1 block text-sm font-medium text-gray-700">
                           Zustand <span className="text-red-500">*</span>
                         </label>
                         <select
                           value={product.condition}
-                          onChange={(e) => updateProduct(product.id, 'condition', e.target.value)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                          onChange={e => updateProduct(product.id, 'condition', e.target.value)}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                         >
                           <option value="">Bitte wählen</option>
                           <option value="Neu">Neu</option>
@@ -800,7 +845,7 @@ export default function BulkUploadPage() {
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-1">
+                        <label className="mb-1 block text-sm font-medium text-gray-700">
                           Bilder <span className="text-red-500">*</span>
                         </label>
                         <div className="flex items-center gap-4">
@@ -808,19 +853,19 @@ export default function BulkUploadPage() {
                             type="file"
                             accept="image/*"
                             multiple
-                            onChange={(e) => handleImageUpload(product.id, e.target.files)}
+                            onChange={e => handleImageUpload(product.id, e.target.files)}
                             className="hidden"
                             id={`image-upload-${product.id}`}
                           />
                           <label
                             htmlFor={`image-upload-${product.id}`}
-                            className="flex items-center px-4 py-2 border border-gray-300 rounded-md cursor-pointer hover:bg-gray-50 transition-colors text-sm"
+                            className="flex cursor-pointer items-center rounded-md border border-gray-300 px-4 py-2 text-sm transition-colors hover:bg-gray-50"
                           >
-                            <ImageIcon className="h-4 w-4 mr-2" />
+                            <ImageIcon className="mr-2 h-4 w-4" />
                             Bilder auswählen
                           </label>
                           {product.imagePreviews.length > 0 && (
-                            <div className="flex gap-2 flex-wrap">
+                            <div className="flex flex-wrap gap-2">
                               {product.imagePreviews.map((preview, imgIndex) => {
                                 // Sicherstellen, dass nur gültige Previews angezeigt werden
                                 if (!preview || preview === '') return null
@@ -829,11 +874,11 @@ export default function BulkUploadPage() {
                                     <img
                                       src={preview}
                                       alt={`Preview ${imgIndex + 1}`}
-                                      className="w-16 h-16 object-cover rounded border border-gray-300"
+                                      className="h-16 w-16 rounded border border-gray-300 object-cover"
                                     />
                                     <button
                                       onClick={() => removeImage(product.id, imgIndex)}
-                                      className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                                      className="absolute -right-2 -top-2 rounded-full bg-red-500 p-1 text-white hover:bg-red-600"
                                     >
                                       <X className="h-3 w-3" />
                                     </button>
@@ -843,8 +888,10 @@ export default function BulkUploadPage() {
                             </div>
                           )}
                           {product.imagePreviews.length === 0 && product.images.length > 0 && (
-                            <div className="text-xs text-gray-500 mt-1">
-                              {product.images.length} {product.images.length === 1 ? 'Bild' : 'Bilder'} werden verarbeitet...
+                            <div className="mt-1 text-xs text-gray-500">
+                              {product.images.length}{' '}
+                              {product.images.length === 1 ? 'Bild' : 'Bilder'} werden
+                              verarbeitet...
                             </div>
                           )}
                         </div>
@@ -858,19 +905,19 @@ export default function BulkUploadPage() {
                 <button
                   onClick={addProduct}
                   disabled={products.length >= 100}
-                  className="flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  className="flex items-center rounded-md bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   Artikel hinzufügen ({products.length}/100)
                 </button>
 
                 <button
                   onClick={goToStep2}
                   disabled={products.length === 0}
-                  className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="flex items-center rounded-md bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   Weiter zu Schritt 2
-                  <ChevronRight className="h-4 w-4 ml-2" />
+                  <ChevronRight className="ml-2 h-4 w-4" />
                 </button>
               </div>
             </div>
@@ -880,93 +927,111 @@ export default function BulkUploadPage() {
         {/* SCHRITT 2: Angebotsdetails */}
         {currentStep === 'settings' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Schritt 2: Angebotsdetails festlegen</h2>
-              <p className="text-gray-600 mb-6">
-                Legen Sie Angebotstyp, Preis, Lieferart und weitere Details fest, 
-                die auf ein oder mehrere Angebote angewendet werden sollen.
+            <div className="rounded-lg bg-white p-6 shadow-md">
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">
+                Schritt 2: Angebotsdetails festlegen
+              </h2>
+              <p className="mb-6 text-gray-600">
+                Legen Sie Angebotstyp, Preis, Lieferart und weitere Details fest, die auf ein oder
+                mehrere Angebote angewendet werden sollen.
               </p>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
+              <div className="mb-6 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Kategorie <span className="text-red-500">*</span></label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Kategorie <span className="text-red-500">*</span>
+                  </label>
                   <select
                     value={commonSettings.category}
-                    onChange={(e) => setCommonSettings(prev => ({ ...prev, category: e.target.value, subcategory: '' }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                    onChange={e =>
+                      setCommonSettings(prev => ({
+                        ...prev,
+                        category: e.target.value,
+                        subcategory: '',
+                      }))
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Bitte wählen</option>
                     {categories.map(cat => (
-                      <option key={cat.slug} value={cat.slug}>{cat.name}</option>
+                      <option key={cat.slug} value={cat.slug}>
+                        {cat.name}
+                      </option>
                     ))}
                   </select>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Preis (CHF) <span className="text-red-500">*</span></label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Preis (CHF) <span className="text-red-500">*</span>
+                  </label>
                   <input
                     type="number"
                     step="0.05"
                     value={commonSettings.price}
-                    onChange={(e) => setCommonSettings(prev => ({ ...prev, price: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                    onChange={e => setCommonSettings(prev => ({ ...prev, price: e.target.value }))}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                     placeholder="100.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Sofortkaufpreis (CHF)</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Sofortkaufpreis (CHF)
+                  </label>
                   <input
                     type="number"
                     step="0.05"
                     value={commonSettings.buyNowPrice}
-                    onChange={(e) => setCommonSettings(prev => ({ ...prev, buyNowPrice: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                    onChange={e =>
+                      setCommonSettings(prev => ({ ...prev, buyNowPrice: e.target.value }))
+                    }
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                     placeholder="120.00"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Marke</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Marke</label>
                   <input
                     type="text"
                     value={commonSettings.brand}
-                    onChange={(e) => setCommonSettings(prev => ({ ...prev, brand: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                    onChange={e => setCommonSettings(prev => ({ ...prev, brand: e.target.value }))}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                     placeholder="z.B. Apple"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Modell</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Modell</label>
                   <input
                     type="text"
                     value={commonSettings.model}
-                    onChange={(e) => setCommonSettings(prev => ({ ...prev, model: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                    onChange={e => setCommonSettings(prev => ({ ...prev, model: e.target.value }))}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                     placeholder="z.B. iPhone 13 Pro"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Jahr</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Jahr</label>
                   <input
                     type="number"
                     value={commonSettings.year}
-                    onChange={(e) => setCommonSettings(prev => ({ ...prev, year: e.target.value }))}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-primary-500"
+                    onChange={e => setCommonSettings(prev => ({ ...prev, year: e.target.value }))}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                     placeholder="z.B. 2020"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Lieferart</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Lieferart</label>
                   <div className="space-y-2">
                     <label className="flex items-center text-sm">
                       <input
                         type="checkbox"
                         checked={commonSettings.shippingMethods.includes('pickup')}
-                        onChange={(e) => {
+                        onChange={e => {
                           const methods = e.target.checked
                             ? [...commonSettings.shippingMethods, 'pickup']
                             : commonSettings.shippingMethods.filter(m => m !== 'pickup')
@@ -980,7 +1045,7 @@ export default function BulkUploadPage() {
                       <input
                         type="checkbox"
                         checked={commonSettings.shippingMethods.includes('b-post')}
-                        onChange={(e) => {
+                        onChange={e => {
                           const methods = e.target.checked
                             ? [...commonSettings.shippingMethods, 'b-post']
                             : commonSettings.shippingMethods.filter(m => m !== 'b-post')
@@ -994,7 +1059,7 @@ export default function BulkUploadPage() {
                       <input
                         type="checkbox"
                         checked={commonSettings.shippingMethods.includes('a-post')}
-                        onChange={(e) => {
+                        onChange={e => {
                           const methods = e.target.checked
                             ? [...commonSettings.shippingMethods, 'a-post']
                             : commonSettings.shippingMethods.filter(m => m !== 'a-post')
@@ -1008,7 +1073,9 @@ export default function BulkUploadPage() {
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Angebotstyp</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
+                    Angebotstyp
+                  </label>
                   <div className="space-y-2">
                     <label className="flex items-center">
                       <input
@@ -1036,36 +1103,38 @@ export default function BulkUploadPage() {
                         min="1"
                         max="30"
                         value={commonSettings.auctionDuration}
-                        onChange={(e) => setCommonSettings(prev => ({ ...prev, auctionDuration: e.target.value }))}
+                        onChange={e =>
+                          setCommonSettings(prev => ({ ...prev, auctionDuration: e.target.value }))
+                        }
                         placeholder="Dauer (Tage)"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md mt-2"
+                        className="mt-2 w-full rounded-md border border-gray-300 px-3 py-2"
                       />
                     )}
                   </div>
                 </div>
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t">
+              <div className="flex items-center justify-between border-t pt-4">
                 <button
                   onClick={() => setCurrentStep('articles')}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
                 >
                   Zurück
                 </button>
                 <div className="flex gap-4">
                   <button
                     onClick={applyCommonSettings}
-                    className="px-4 py-2 bg-gray-100 text-gray-700 rounded-md hover:bg-gray-200 transition-colors"
+                    className="rounded-md bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
                   >
                     Auf alle anwenden
                   </button>
                   <button
                     onClick={goToStep3}
                     disabled={!commonSettings.price || !commonSettings.category}
-                    className="flex items-center px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                    className="flex items-center rounded-md bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     Weiter zu Schritt 3
-                    <ChevronRight className="h-4 w-4 ml-2" />
+                    <ChevronRight className="ml-2 h-4 w-4" />
                   </button>
                 </div>
               </div>
@@ -1076,8 +1145,8 @@ export default function BulkUploadPage() {
         {/* SCHRITT 3: Veröffentlichen */}
         {currentStep === 'review' && (
           <div className="space-y-6">
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-between mb-6">
+            <div className="rounded-lg bg-white p-6 shadow-md">
+              <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Schritt 3: Veröffentlichen</h2>
                 <div className="flex items-center gap-2">
                   <button
@@ -1096,21 +1165,23 @@ export default function BulkUploadPage() {
                 </div>
               </div>
 
-              <p className="text-gray-600 mb-6">
-                Wählen Sie die Artikel aus, die Sie veröffentlichen möchten. 
-                Sie können einzelne oder mehrere gleichzeitig veröffentlichen.
+              <p className="mb-6 text-gray-600">
+                Wählen Sie die Artikel aus, die Sie veröffentlichen möchten. Sie können einzelne
+                oder mehrere gleichzeitig veröffentlichen.
               </p>
 
-              <div className="space-y-3 mb-6">
+              <div className="mb-6 space-y-3">
                 {products.map((product, index) => {
                   const isSelected = selectedProducts.has(product.id)
                   const hasAllSettings = product.price || commonSettings.price
-                  
+
                   return (
                     <div
                       key={product.id}
-                      className={`border-2 rounded-lg p-4 cursor-pointer transition-all ${
-                        isSelected ? 'border-primary-600 bg-primary-50' : 'border-gray-200 hover:border-gray-300'
+                      className={`cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                        isSelected
+                          ? 'border-primary-600 bg-primary-50'
+                          : 'border-gray-200 hover:border-gray-300'
                       }`}
                       onClick={() => toggleProductSelection(product.id)}
                     >
@@ -1119,38 +1190,43 @@ export default function BulkUploadPage() {
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleProductSelection(product.id)}
-                          onClick={(e) => e.stopPropagation()}
+                          onClick={e => e.stopPropagation()}
                           className="mt-1"
                         />
                         <div className="flex-1">
-                          <div className="flex items-center justify-between mb-2">
+                          <div className="mb-2 flex items-center justify-between">
                             <h3 className="font-semibold text-gray-900">
                               Artikel {index + 1}: {product.title || 'Ohne Titel'}
                             </h3>
                             {!hasAllSettings && (
-                              <span className="text-xs text-red-600 bg-red-50 px-2 py-1 rounded">
+                              <span className="rounded bg-red-50 px-2 py-1 text-xs text-red-600">
                                 Unvollständig
                               </span>
                             )}
                           </div>
-                          <div className="grid grid-cols-2 md:grid-cols-4 gap-2 text-sm text-gray-600">
+                          <div className="grid grid-cols-2 gap-2 text-sm text-gray-600 md:grid-cols-4">
                             <div>
-                              <span className="font-medium">Preis:</span> {product.price || commonSettings.price || 'Nicht gesetzt'} CHF
+                              <span className="font-medium">Preis:</span>{' '}
+                              {product.price || commonSettings.price || 'Nicht gesetzt'} CHF
                             </div>
                             <div>
-                              <span className="font-medium">Kategorie:</span> {product.category || commonSettings.category || 'Nicht gesetzt'}
+                              <span className="font-medium">Kategorie:</span>{' '}
+                              {product.category || commonSettings.category || 'Nicht gesetzt'}
                             </div>
                             <div>
-                              <span className="font-medium">Bilder:</span> {product.imagePreviews.length || product.images.length}
+                              <span className="font-medium">Bilder:</span>{' '}
+                              {product.imagePreviews.length || product.images.length}
                             </div>
                             <div>
-                              <span className="font-medium">Booster:</span> {product.booster && product.booster !== 'none'
-                                ? boosters.find(b => b.code === product.booster)?.name || product.booster
+                              <span className="font-medium">Booster:</span>{' '}
+                              {product.booster && product.booster !== 'none'
+                                ? boosters.find(b => b.code === product.booster)?.name ||
+                                  product.booster
                                 : 'Keiner'}
                             </div>
                           </div>
                           {product.imagePreviews.length > 0 && (
-                            <div className="flex gap-2 mt-3">
+                            <div className="mt-3 flex gap-2">
                               {product.imagePreviews.slice(0, 3).map((preview, imgIndex) => {
                                 if (!preview || preview === '') return null
                                 return (
@@ -1158,61 +1234,67 @@ export default function BulkUploadPage() {
                                     key={`${product.id}-preview-${imgIndex}`}
                                     src={preview}
                                     alt={`Preview ${imgIndex + 1}`}
-                                    className="w-16 h-16 object-cover rounded border border-gray-300"
+                                    className="h-16 w-16 rounded border border-gray-300 object-cover"
                                   />
                                 )
                               })}
                               {product.imagePreviews.length > 3 && (
-                                <div className="w-16 h-16 bg-gray-100 rounded border border-gray-300 flex items-center justify-center text-xs text-gray-600">
+                                <div className="flex h-16 w-16 items-center justify-center rounded border border-gray-300 bg-gray-100 text-xs text-gray-600">
                                   +{product.imagePreviews.length - 3}
                                 </div>
                               )}
                             </div>
                           )}
-                          
+
                           {/* Booster-Auswahl pro Artikel */}
-                          <div className="mt-4 pt-4 border-t border-gray-200">
-                            <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <div className="mt-4 border-t border-gray-200 pt-4">
+                            <label className="mb-2 block text-sm font-medium text-gray-700">
                               Booster für diesen Artikel
                             </label>
                             <div className="flex flex-wrap gap-2">
                               <button
                                 type="button"
-                                onClick={(e) => {
+                                onClick={e => {
                                   e.stopPropagation()
                                   updateProduct(product.id, 'booster', 'none')
                                 }}
-                                className={`px-3 py-1.5 text-xs rounded-md border transition-colors ${
+                                className={`rounded-md border px-3 py-1.5 text-xs transition-colors ${
                                   !product.booster || product.booster === 'none'
-                                    ? 'bg-gray-100 border-gray-400 text-gray-900 font-semibold'
-                                    : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
+                                    ? 'border-gray-400 bg-gray-100 font-semibold text-gray-900'
+                                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                                 }`}
                               >
                                 Keiner
                               </button>
-                              {boosters.filter((b: any) => b.code !== 'none').map((booster: any) => {
-                                const isSelected = product.booster === booster.code
-                                return (
-                                  <button
-                                    key={booster.id}
-                                    type="button"
-                                    onClick={(e) => {
-                                      e.stopPropagation()
-                                      updateProduct(product.id, 'booster', booster.code)
-                                    }}
-                                    className={`px-3 py-1.5 text-xs rounded-md border transition-colors flex items-center gap-1 ${
-                                      isSelected
-                                        ? 'bg-primary-100 border-primary-400 text-primary-900 font-semibold'
-                                        : 'bg-white border-gray-300 text-gray-700 hover:bg-gray-50'
-                                    }`}
-                                  >
-                                    {booster.code === 'super-boost' && <Sparkles className="h-3 w-3" />}
-                                    {booster.code === 'turbo-boost' && <Zap className="h-3 w-3" />}
-                                    {booster.code === 'boost' && <Flame className="h-3 w-3" />}
-                                    {booster.name} (CHF {booster.price.toFixed(2)})
-                                  </button>
-                                )
-                              })}
+                              {boosters
+                                .filter((b: any) => b.code !== 'none')
+                                .map((booster: any) => {
+                                  const isSelected = product.booster === booster.code
+                                  return (
+                                    <button
+                                      key={booster.id}
+                                      type="button"
+                                      onClick={e => {
+                                        e.stopPropagation()
+                                        updateProduct(product.id, 'booster', booster.code)
+                                      }}
+                                      className={`flex items-center gap-1 rounded-md border px-3 py-1.5 text-xs transition-colors ${
+                                        isSelected
+                                          ? 'border-primary-400 bg-primary-100 font-semibold text-primary-900'
+                                          : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                      }`}
+                                    >
+                                      {booster.code === 'super-boost' && (
+                                        <Sparkles className="h-3 w-3" />
+                                      )}
+                                      {booster.code === 'turbo-boost' && (
+                                        <Zap className="h-3 w-3" />
+                                      )}
+                                      {booster.code === 'boost' && <Flame className="h-3 w-3" />}
+                                      {booster.name} (CHF {booster.price.toFixed(2)})
+                                    </button>
+                                  )
+                                })}
                             </div>
                           </div>
                         </div>
@@ -1222,26 +1304,26 @@ export default function BulkUploadPage() {
                 })}
               </div>
 
-              <div className="flex items-center justify-between pt-4 border-t">
+              <div className="flex items-center justify-between border-t pt-4">
                 <button
                   onClick={() => setCurrentStep('settings')}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
                 >
                   Zurück
                 </button>
                 <button
                   onClick={handlePublish}
                   disabled={isLoading || selectedProducts.size === 0}
-                  className="flex items-center px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed font-medium"
+                  className="flex items-center rounded-md bg-green-600 px-6 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                 >
                   {isLoading ? (
                     <>
-                      <Loader2 className="h-4 w-4 mr-2 animate-spin" />
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                       Veröffentliche...
                     </>
                   ) : (
                     <>
-                      <Save className="h-4 w-4 mr-2" />
+                      <Save className="mr-2 h-4 w-4" />
                       {selectedProducts.size} Artikel veröffentlichen
                     </>
                   )}

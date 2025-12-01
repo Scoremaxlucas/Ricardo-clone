@@ -7,30 +7,30 @@ export default function DebugPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-8">
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="bg-white shadow-lg rounded-lg p-8">
-          <h1 className="text-2xl font-bold text-gray-900 mb-6">Debug Session</h1>
-          
+      <div className="mx-auto max-w-4xl px-4 sm:px-6 lg:px-8">
+        <div className="rounded-lg bg-white p-8 shadow-lg">
+          <h1 className="mb-6 text-2xl font-bold text-gray-900">Debug Session</h1>
+
           <div className="space-y-4">
             <div>
               <strong>Status:</strong> {status}
             </div>
-            
+
             <div>
               <strong>Session:</strong>
-              <pre className="bg-gray-100 p-4 rounded mt-2 overflow-auto">
+              <pre className="mt-2 overflow-auto rounded bg-gray-100 p-4">
                 {JSON.stringify(session, null, 2)}
               </pre>
             </div>
-            
+
             <div>
               <strong>User ID:</strong> {session?.user?.id || 'Nicht verfügbar'}
             </div>
-            
+
             <div>
               <strong>Email:</strong> {session?.user?.email || 'Nicht verfügbar'}
             </div>
-            
+
             <div>
               <strong>Name:</strong> {session?.user?.name || 'Nicht verfügbar'}
             </div>
@@ -40,4 +40,3 @@ export default function DebugPage() {
     </div>
   )
 }
-

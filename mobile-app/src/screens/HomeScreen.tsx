@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from 'react'
 import {
   View,
   Text,
@@ -7,12 +7,12 @@ import {
   TouchableOpacity,
   Image,
   RefreshControl,
-} from 'react-native';
-import { Card, Title, Paragraph, Chip, FAB } from 'react-native-paper';
-import { Ionicons } from '@expo/vector-icons';
+} from 'react-native'
+import { Card, Title, Paragraph, Chip, FAB } from 'react-native-paper'
+import { Ionicons } from '@expo/vector-icons'
 
 const HomeScreen = ({ navigation }: any) => {
-  const [refreshing, setRefreshing] = useState(false);
+  const [refreshing, setRefreshing] = useState(false)
   const [featuredWatches] = useState([
     {
       id: 1,
@@ -48,7 +48,7 @@ const HomeScreen = ({ navigation }: any) => {
       timeLeft: '5d 8h 15m',
       bids: 12,
     },
-  ]);
+  ])
 
   const [categories] = useState([
     { name: 'Rolex', icon: 'diamond-outline', color: '#10b981' },
@@ -56,15 +56,15 @@ const HomeScreen = ({ navigation }: any) => {
     { name: 'Patek Philippe', icon: 'star-outline', color: '#3b82f6' },
     { name: 'Vintage', icon: 'time-outline', color: '#f59e0b' },
     { name: 'Smartwatches', icon: 'phone-portrait-outline', color: '#8b5cf6' },
-  ]);
+  ])
 
   const onRefresh = React.useCallback(() => {
-    setRefreshing(true);
+    setRefreshing(true)
     // Simulate API call
     setTimeout(() => {
-      setRefreshing(false);
-    }, 2000);
-  }, []);
+      setRefreshing(false)
+    }, 2000)
+  }, [])
 
   const renderWatchCard = (watch: any) => (
     <TouchableOpacity
@@ -97,15 +97,13 @@ const HomeScreen = ({ navigation }: any) => {
         </Card.Content>
       </Card>
     </TouchableOpacity>
-  );
+  )
 
   return (
     <View style={styles.container}>
       <ScrollView
         style={styles.scrollView}
-        refreshControl={
-          <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
-        }
+        refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} />}
       >
         {/* Hero Section */}
         <View style={styles.heroSection}>
@@ -146,14 +144,10 @@ const HomeScreen = ({ navigation }: any) => {
       </ScrollView>
 
       {/* Floating Action Button */}
-      <FAB
-        style={styles.fab}
-        icon="plus"
-        onPress={() => navigation.navigate('Sell')}
-      />
+      <FAB style={styles.fab} icon="plus" onPress={() => navigation.navigate('Sell')} />
     </View>
-  );
-};
+  )
+}
 
 const styles = StyleSheet.create({
   container: {
@@ -294,7 +288,6 @@ const styles = StyleSheet.create({
     bottom: 0,
     backgroundColor: '#0ea5e9',
   },
-});
+})
 
-export default HomeScreen;
-
+export default HomeScreen

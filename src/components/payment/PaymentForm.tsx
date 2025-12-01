@@ -2,21 +2,14 @@
 
 import { useState } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
-import {
-  Elements,
-  CardElement,
-  useStripe,
-  useElements
-} from '@stripe/react-stripe-js'
+import { Elements, CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { Button } from '@/components/ui/Button'
 import { toast } from 'react-hot-toast'
 import { AlertCircle } from 'lucide-react'
 
 // Stripe nur initialisieren, wenn der Key vorhanden ist
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-const stripePromise = stripeKey && stripeKey.trim() !== ''
-  ? loadStripe(stripeKey)
-  : null
+const stripePromise = stripeKey && stripeKey.trim() !== '' ? loadStripe(stripeKey) : null
 
 interface PaymentFormProps {
   amount: number
@@ -57,14 +50,11 @@ function CheckoutForm({ amount, onSuccess, onError }: PaymentFormProps) {
       const { clientSecret } = await response.json()
 
       // Confirm payment
-      const { error, paymentIntent } = await stripe.confirmCardPayment(
-        clientSecret,
-        {
-          payment_method: {
-            card: elements.getElement(CardElement)!,
-          },
-        }
-      )
+      const { error, paymentIntent } = await stripe.confirmCardPayment(clientSecret, {
+        payment_method: {
+          card: elements.getElement(CardElement)!,
+        },
+      })
 
       if (error) {
         onError(error.message || 'Payment failed')
@@ -81,7 +71,7 @@ function CheckoutForm({ amount, onSuccess, onError }: PaymentFormProps) {
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
-      <div className="p-4 border border-gray-300 rounded-lg">
+      <div className="rounded-lg border border-gray-300 p-4">
         <CardElement
           options={{
             style: {
@@ -100,21 +90,14 @@ function CheckoutForm({ amount, onSuccess, onError }: PaymentFormProps) {
         />
       </div>
 
-      <div className="bg-gray-50 p-4 rounded-lg">
-        <div className="flex justify-between items-center">
+      <div className="rounded-lg bg-gray-50 p-4">
+        <div className="flex items-center justify-between">
           <span className="text-lg font-medium">Gesamtbetrag:</span>
-          <span className="text-xl font-bold text-primary-600">
-            CHF {amount.toLocaleString()}
-          </span>
+          <span className="text-xl font-bold text-primary-600">CHF {amount.toLocaleString()}</span>
         </div>
       </div>
 
-      <Button
-        type="submit"
-        disabled={!stripe || isLoading}
-        className="w-full"
-        loading={isLoading}
-      >
+      <Button type="submit" disabled={!stripe || isLoading} className="w-full" loading={isLoading}>
         {isLoading ? 'Wird verarbeitet...' : `CHF ${amount.toLocaleString()} bezahlen`}
       </Button>
     </form>
@@ -124,11 +107,12 @@ function CheckoutForm({ amount, onSuccess, onError }: PaymentFormProps) {
 export function PaymentForm({ amount, onSuccess, onError }: PaymentFormProps) {
   if (!stripePromise) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
         <div className="flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
           <div className="text-sm text-yellow-800">
-            <strong>Hinweis:</strong> Stripe ist nicht konfiguriert. Bitte verwenden Sie eine andere Zahlungsmethode.
+            <strong>Hinweis:</strong> Stripe ist nicht konfiguriert. Bitte verwenden Sie eine andere
+            Zahlungsmethode.
           </div>
         </div>
       </div>
@@ -137,12 +121,7 @@ export function PaymentForm({ amount, onSuccess, onError }: PaymentFormProps) {
 
   return (
     <Elements stripe={stripePromise}>
-      <CheckoutForm
-        amount={amount}
-        onSuccess={onSuccess}
-        onError={onError}
-      />
+      <CheckoutForm amount={amount} onSuccess={onSuccess} onError={onError} />
     </Elements>
   )
 }
-

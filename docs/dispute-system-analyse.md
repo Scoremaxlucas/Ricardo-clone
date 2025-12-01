@@ -25,6 +25,7 @@ Ein **Dispute** (Streitfall) ist ein formelles Verfahren zur Lösung von Problem
 ### Wann wird ein Dispute eingesetzt?
 
 **Typische Dispute-Gründe:**
+
 1. **Artikel nicht erhalten** - Käufer hat bezahlt, aber Artikel nicht erhalten
 2. **Artikel beschädigt** - Artikel kam beschädigt an
 3. **Falscher Artikel** - Artikel entspricht nicht der Beschreibung
@@ -41,15 +42,18 @@ Ein **Dispute** (Streitfall) ist ein formelles Verfahren zur Lösung von Problem
 #### 1. **Dispute-Eröffnung**
 
 **Wer kann eröffnen:**
+
 - ✅ **Käufer**: Bei Problemen mit Artikel oder Verkäufer
 - ✅ **Verkäufer**: Bei Problemen mit Zahlung oder Käufer
 
 **Wann kann eröffnet werden:**
+
 - Nach Kaufabschluss
 - Wenn direkte Kommunikation fehlgeschlagen ist
 - Innerhalb bestimmter Fristen (meist 30-60 Tage nach Kauf)
 
 **Prozess:**
+
 1. Benutzer klickt auf "Dispute eröffnen" im Kaufprozess
 2. Wählt Dispute-Grund aus vordefinierten Kategorien
 3. Beschreibt das Problem im Detail
@@ -58,12 +62,14 @@ Ein **Dispute** (Streitfall) ist ein formelles Verfahren zur Lösung von Problem
 #### 2. **Dispute-Verarbeitung**
 
 **Ricardo's Support-Team:**
+
 - Prüft alle verfügbaren Informationen
 - Kontaktiert beide Parteien
 - Sammelt Beweise (Nachrichten, Fotos, etc.)
 - Entscheidet über Lösung
 
 **Typische Lösungen:**
+
 - **Rückerstattung an Käufer** - Wenn Artikel nicht geliefert oder falsch
 - **Zahlung an Verkäufer** - Wenn Käufer nicht zahlt
 - **Teilweise Rückerstattung** - Bei beschädigtem Artikel
@@ -73,6 +79,7 @@ Ein **Dispute** (Streitfall) ist ein formelles Verfahren zur Lösung von Problem
 #### 3. **Dispute-Status**
 
 **Status-Übergänge:**
+
 - `pending` → Dispute eröffnet, wird bearbeitet
 - `under_review` → Support prüft den Fall
 - `resolved` → Dispute gelöst
@@ -81,12 +88,14 @@ Ein **Dispute** (Streitfall) ist ein formelles Verfahren zur Lösung von Problem
 #### 4. **Automatische Maßnahmen**
 
 **Bei Dispute-Eröffnung:**
+
 - ✅ Kaufprozess wird "eingefroren"
 - ✅ Zahlung wird zurückgehalten (falls Escrow)
 - ✅ Beide Parteien werden benachrichtigt
 - ✅ Support-Team wird alarmiert
 
 **Nach Dispute-Lösung:**
+
 - ✅ Status wird aktualisiert
 - ✅ Zahlungen werden freigegeben/storniert
 - ✅ Beide Parteien werden informiert
@@ -133,23 +142,26 @@ Tag 22+: Dispute kann eröffnet werden (wenn Probleme auftreten)
 #### ✅ 1. Dispute-Eröffnung
 
 **Komponente:** `DisputeModal.tsx`
+
 - Modal-Dialog für Dispute-Eröffnung
 - Dropdown mit Dispute-Gründen
 - Textfeld für Beschreibung
 - Validierung vor Absenden
 
 **Dispute-Gründe:**
+
 ```typescript
-- item_not_received      // Artikel nicht erhalten
-- item_damaged           // Artikel beschädigt
-- item_wrong            // Falscher Artikel geliefert
-- payment_not_confirmed // Zahlung nicht bestätigt
-- seller_not_responding // Verkäufer antwortet nicht
-- buyer_not_responding  // Käufer antwortet nicht
-- other                 // Sonstiges
+;-item_not_received - // Artikel nicht erhalten
+  item_damaged - // Artikel beschädigt
+  item_wrong - // Falscher Artikel geliefert
+  payment_not_confirmed - // Zahlung nicht bestätigt
+  seller_not_responding - // Verkäufer antwortet nicht
+  buyer_not_responding - // Käufer antwortet nicht
+  other // Sonstiges
 ```
 
 **API-Route:** `/api/purchases/[id]/dispute` (POST)
+
 - Prüft Berechtigung (Käufer oder Verkäufer)
 - Prüft ob bereits Dispute existiert
 - Prüft ob Kauf abgeschlossen ist
@@ -160,6 +172,7 @@ Tag 22+: Dispute kann eröffnet werden (wenn Probleme auftreten)
 #### ✅ 2. Dispute-Datenmodell
 
 **Schema (Prisma):**
+
 ```prisma
 model Purchase {
   // Dispute-Felder
@@ -174,11 +187,13 @@ model Purchase {
 #### ✅ 3. Dispute-Anzeige in UI
 
 **Käufer-Seite:** `/my-watches/buying/purchased`
+
 - Button "Dispute eröffnen" (nur wenn Status nicht `completed` oder `cancelled`)
 - Dispute-Status-Anzeige (wenn Dispute eröffnet)
 - Dispute-Informationen (Grund, Status, Datum)
 
 **Verkäufer-Seite:** `/my-watches/selling/sold`
+
 - Button "Dispute eröffnen" (nur wenn Status nicht `completed` oder `cancelled`)
 - Dispute-Status-Anzeige (wenn Dispute eröffnet)
 - Dispute-Informationen (Grund, Status, Datum)
@@ -186,6 +201,7 @@ model Purchase {
 #### ✅ 4. Admin-Dispute-Verwaltung
 
 **API-Route:** `/api/admin/disputes/[id]/resolve` (POST)
+
 - Nur Admins können Disputes lösen
 - Lösung mit Beschreibung
 - Optionale Rückerstattung
@@ -196,12 +212,14 @@ model Purchase {
 #### ✅ 5. Benachrichtigungen
 
 **Bei Dispute-Eröffnung:**
+
 - ✅ In-App-Benachrichtigung an andere Partei
 - ✅ E-Mail-Benachrichtigung an andere Partei
 - ✅ In-App-Benachrichtigung an alle Admins
 - ✅ Status-Historie wird aktualisiert
 
 **Bei Dispute-Lösung:**
+
 - ✅ In-App-Benachrichtigung an beide Parteien
 - ✅ E-Mail-Benachrichtigung an beide Parteien
 - ✅ Status-Historie wird aktualisiert
@@ -241,19 +259,19 @@ model Purchase {
 
 ### Vergleichstabelle
 
-| Feature | Ricardo | Helvenda | Status |
-|---------|---------|----------|--------|
-| **Dispute-Eröffnung** | ✅ | ✅ | ✅ Implementiert |
-| **Dispute-Gründe** | ✅ (7+ Kategorien) | ✅ (7 Kategorien) | ✅ Ähnlich |
-| **Dispute-Status** | ✅ (4 Status) | ✅ (3 Status) | ⚠️ Teilweise |
-| **Admin-Verwaltung** | ✅ (UI + API) | ⚠️ (Nur API) | ❌ UI fehlt |
-| **Automatische Maßnahmen** | ✅ | ❌ | ❌ Nicht implementiert |
-| **Dispute-Historie** | ✅ | ⚠️ (Nur Status-Historie) | ⚠️ Teilweise |
-| **Datei-Uploads** | ✅ | ❌ | ❌ Nicht implementiert |
-| **Fristen** | ✅ | ❌ | ❌ Nicht implementiert |
-| **Escrow** | ✅ | ❌ | ❌ Nicht implementiert |
-| **Benachrichtigungen** | ✅ | ✅ | ✅ Implementiert |
-| **E-Mail-Benachrichtigungen** | ✅ | ✅ | ✅ Implementiert |
+| Feature                       | Ricardo            | Helvenda                 | Status                 |
+| ----------------------------- | ------------------ | ------------------------ | ---------------------- |
+| **Dispute-Eröffnung**         | ✅                 | ✅                       | ✅ Implementiert       |
+| **Dispute-Gründe**            | ✅ (7+ Kategorien) | ✅ (7 Kategorien)        | ✅ Ähnlich             |
+| **Dispute-Status**            | ✅ (4 Status)      | ✅ (3 Status)            | ⚠️ Teilweise           |
+| **Admin-Verwaltung**          | ✅ (UI + API)      | ⚠️ (Nur API)             | ❌ UI fehlt            |
+| **Automatische Maßnahmen**    | ✅                 | ❌                       | ❌ Nicht implementiert |
+| **Dispute-Historie**          | ✅                 | ⚠️ (Nur Status-Historie) | ⚠️ Teilweise           |
+| **Datei-Uploads**             | ✅                 | ❌                       | ❌ Nicht implementiert |
+| **Fristen**                   | ✅                 | ❌                       | ❌ Nicht implementiert |
+| **Escrow**                    | ✅                 | ❌                       | ❌ Nicht implementiert |
+| **Benachrichtigungen**        | ✅                 | ✅                       | ✅ Implementiert       |
+| **E-Mail-Benachrichtigungen** | ✅                 | ✅                       | ✅ Implementiert       |
 
 ### Stärken von Helvenda's Implementierung
 
@@ -301,9 +319,11 @@ model Purchase {
 ### Frontend-Komponenten
 
 #### 1. `DisputeModal.tsx`
+
 **Pfad:** `src/components/dispute/DisputeModal.tsx`
 
 **Funktionen:**
+
 - Modal-Dialog für Dispute-Eröffnung
 - Dropdown mit Dispute-Gründen
 - Textfeld für Beschreibung
@@ -311,6 +331,7 @@ model Purchase {
 - API-Aufruf zum Erstellen des Disputes
 
 **Props:**
+
 ```typescript
 interface DisputeModalProps {
   isOpen: boolean
@@ -321,17 +342,20 @@ interface DisputeModalProps {
 ```
 
 **Verwendung:**
+
 - In `/my-watches/buying/purchased` (Käufer)
 - In `/my-watches/selling/sold` (Verkäufer)
 
 #### 2. Dispute-Anzeige in Purchase/Sale-Listen
 
 **Käufer-Seite:** `src/app/my-watches/buying/purchased/page.tsx`
+
 - Button "Dispute eröffnen" (Zeile 730-741)
 - Dispute-Status-Anzeige
 - Dispute-Informationen
 
 **Verkäufer-Seite:** `src/app/my-watches/selling/sold/page.tsx`
+
 - Button "Dispute eröffnen" (Zeile 437-449)
 - Dispute-Status-Anzeige
 - Dispute-Informationen
@@ -339,9 +363,11 @@ interface DisputeModalProps {
 ### Backend-API-Routes
 
 #### 1. `/api/purchases/[id]/dispute` (POST)
+
 **Pfad:** `src/app/api/purchases/[id]/dispute/route.ts`
 
 **Funktionen:**
+
 - Dispute eröffnen
 - Berechtigung prüfen (Käufer oder Verkäufer)
 - Validierung (kein Dispute bereits vorhanden, nicht abgeschlossen)
@@ -351,14 +377,16 @@ interface DisputeModalProps {
 - Status-Historie aktualisieren
 
 **Request Body:**
+
 ```typescript
 {
-  reason: string        // Dispute-Grund
-  description: string   // Beschreibung
+  reason: string // Dispute-Grund
+  description: string // Beschreibung
 }
 ```
 
 **Response:**
+
 ```typescript
 {
   message: string
@@ -367,13 +395,16 @@ interface DisputeModalProps {
 ```
 
 #### 2. `/api/purchases/[id]/dispute` (GET)
+
 **Pfad:** `src/app/api/purchases/[id]/dispute/route.ts`
 
 **Funktionen:**
+
 - Dispute-Informationen abrufen
 - Berechtigung prüfen (Käufer, Verkäufer oder Admin)
 
 **Response:**
+
 ```typescript
 {
   dispute: {
@@ -387,9 +418,11 @@ interface DisputeModalProps {
 ```
 
 #### 3. `/api/admin/disputes/[id]/resolve` (POST)
+
 **Pfad:** `src/app/api/admin/disputes/[id]/resolve/route.ts`
 
 **Funktionen:**
+
 - Dispute durch Admin lösen
 - Nur Admins können lösen
 - Lösung mit Beschreibung
@@ -400,6 +433,7 @@ interface DisputeModalProps {
 - Status-Historie aktualisieren
 
 **Request Body:**
+
 ```typescript
 {
   resolution: string      // Lösung-Beschreibung
@@ -410,6 +444,7 @@ interface DisputeModalProps {
 ```
 
 **Response:**
+
 ```typescript
 {
   message: string
@@ -429,7 +464,7 @@ model Purchase {
   disputeStatus     String?   // pending, resolved, closed
   disputeResolvedAt DateTime? // Zeitpunkt der Dispute-Lösung
   disputeResolvedBy String?   // ID des Admin-Users der gelöst hat
-  
+
   // Status-Historie
   statusHistory String? // JSON Array: [{status, timestamp, changedBy, reason}]
 }
@@ -438,15 +473,18 @@ model Purchase {
 ### E-Mail-Templates
 
 #### 1. `getDisputeOpenedEmail()`
+
 **Pfad:** `src/lib/email.ts`
 
 **Funktionen:**
+
 - E-Mail an andere Partei senden
 - Dispute-Grund anzeigen
 - Beschreibung anzeigen
 - Link zu Dispute-Seite
 
 **Parameter:**
+
 ```typescript
 getDisputeOpenedEmail(
   userName: string,
@@ -459,14 +497,17 @@ getDisputeOpenedEmail(
 ```
 
 #### 2. `getDisputeResolvedEmail()`
+
 **Pfad:** `src/lib/email.ts`
 
 **Funktionen:**
+
 - E-Mail an beide Parteien senden
 - Lösung anzeigen
 - Link zu Kauf-Seite
 
 **Parameter:**
+
 ```typescript
 getDisputeResolvedEmail(
   userName: string,
@@ -482,10 +523,12 @@ getDisputeResolvedEmail(
 #### 1. In-App-Benachrichtigungen
 
 **Bei Dispute-Eröffnung:**
+
 - Benachrichtigung an andere Partei
 - Benachrichtigung an alle Admins
 
 **Bei Dispute-Lösung:**
+
 - Benachrichtigung an beide Parteien
 
 **Typ:** `PURCHASE`
@@ -500,12 +543,14 @@ getDisputeResolvedEmail(
 #### 1. Admin-UI für Disputes
 
 **Was fehlt:**
+
 - Übersichtsseite für alle Disputes
 - Dispute-Detailseite für Admins
 - Filterung/Sortierung nach Status, Datum, etc.
 - Dispute-Lösung direkt in UI
 
 **Implementierung:**
+
 ```typescript
 // Neue Route: /admin/disputes
 - Liste aller Disputes
@@ -518,11 +563,13 @@ getDisputeResolvedEmail(
 #### 2. Automatische Maßnahmen bei Dispute
 
 **Was fehlt:**
+
 - Kaufprozess "einfrieren" bei Dispute
 - Zahlungsrückhaltung (falls Escrow)
 - Automatische Erinnerungen
 
 **Implementierung:**
+
 ```typescript
 // Bei Dispute-Eröffnung:
 - Status auf "dispute_opened" setzen
@@ -533,11 +580,13 @@ getDisputeResolvedEmail(
 #### 3. Fristen für Dispute
 
 **Was fehlt:**
+
 - Frist für Dispute-Eröffnung (z.B. 30 Tage nach Kauf)
 - Frist für Dispute-Lösung (z.B. 14 Tage nach Eröffnung)
 - Automatische Erinnerungen
 
 **Implementierung:**
+
 ```typescript
 // Dispute-Fristen:
 - Eröffnung: Max. 30 Tage nach Kauf
@@ -550,11 +599,13 @@ getDisputeResolvedEmail(
 #### 4. Dispute-Historie erweitern
 
 **Was fehlt:**
+
 - Vollständige Historie aller Dispute-Aktionen
 - Kommentare/Nachrichten im Dispute
 - Datei-Uploads (Beweise)
 
 **Implementierung:**
+
 ```typescript
 // Neue Tabelle: DisputeHistory
 - action: string (opened, commented, resolved, etc.)
@@ -567,11 +618,13 @@ getDisputeResolvedEmail(
 #### 5. Escrow-Funktionalität
 
 **Was fehlt:**
+
 - Zahlungen zurückhalten bis Dispute gelöst
 - Automatische Rückerstattung bei berechtigten Fällen
 - Automatische Freigabe bei Lösung
 
 **Implementierung:**
+
 ```typescript
 // Escrow-System:
 - Zahlungen werden zurückgehalten
@@ -582,11 +635,13 @@ getDisputeResolvedEmail(
 #### 6. Dispute-Statistiken
 
 **Was fehlt:**
+
 - Übersicht über alle Disputes
 - Statistiken (Anzahl, Status, etc.)
 - Performance-Metriken
 
 **Implementierung:**
+
 ```typescript
 // Admin-Dashboard:
 - Anzahl offener Disputes
@@ -600,10 +655,12 @@ getDisputeResolvedEmail(
 #### 7. Dispute-Vorlagen
 
 **Was fehlt:**
+
 - Vordefinierte Lösungen für häufige Fälle
 - Automatische Lösungsvorschläge
 
 **Implementierung:**
+
 ```typescript
 // Dispute-Vorlagen:
 - "Artikel nicht erhalten" → Rückerstattung an Käufer
@@ -614,10 +671,12 @@ getDisputeResolvedEmail(
 #### 8. Dispute-Rating
 
 **Was fehlt:**
+
 - Bewertung der Dispute-Lösung
 - Feedback-System
 
 **Implementierung:**
+
 ```typescript
 // Dispute-Rating:
 - Bewertung der Lösung (1-5 Sterne)
@@ -674,19 +733,3 @@ getDisputeResolvedEmail(
 
 **Erstellt am:** 2024-12-20
 **Letzte Aktualisierung:** 2024-12-20
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

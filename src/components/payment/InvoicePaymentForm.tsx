@@ -2,12 +2,7 @@
 
 import { useState, useEffect, useMemo } from 'react'
 import { loadStripe } from '@stripe/stripe-js'
-import {
-  Elements,
-  PaymentElement,
-  useStripe,
-  useElements
-} from '@stripe/react-stripe-js'
+import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { CreditCard, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { useRouter } from 'next/navigation'
@@ -22,7 +17,13 @@ interface InvoicePaymentFormProps {
   onSuccess?: () => void
 }
 
-function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess, clientSecret }: InvoicePaymentFormProps & { clientSecret: string }) {
+function CheckoutForm({
+  invoiceId,
+  invoiceNumber,
+  amount,
+  onSuccess,
+  clientSecret,
+}: InvoicePaymentFormProps & { clientSecret: string }) {
   const stripe = useStripe()
   const elements = useElements()
   const router = useRouter()
@@ -52,8 +53,8 @@ function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess, clientSecre
         clientSecret,
         redirect: 'if_required',
         confirmParams: {
-          return_url: `${window.location.origin}/my-watches/selling/fees?invoice=${invoiceId}&payment=success`
-        }
+          return_url: `${window.location.origin}/my-watches/selling/fees?invoice=${invoiceId}&payment=success`,
+        },
       })
 
       if (confirmError) {
@@ -61,11 +62,11 @@ function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess, clientSecre
         toast.error('Zahlung fehlgeschlagen: ' + confirmError.message)
       } else if (paymentIntent && paymentIntent.status === 'succeeded') {
         toast.success('Zahlung erfolgreich!')
-        
+
         if (onSuccess) {
           onSuccess()
         }
-        
+
         setTimeout(() => {
           router.push(`/my-watches/selling/fees?invoice=${invoiceId}&payment=success`)
         }, 2000)
@@ -81,9 +82,9 @@ function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess, clientSecre
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
       {error && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+        <div className="rounded-lg border border-red-200 bg-red-50 p-4">
           <div className="flex items-start gap-2">
-            <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
             <div className="text-sm text-red-800">
               <strong>Fehler:</strong> {error}
             </div>
@@ -91,21 +92,19 @@ function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess, clientSecre
         </div>
       )}
 
-      <div className="bg-gray-50 rounded-lg p-4">
+      <div className="rounded-lg bg-gray-50 p-4">
         <PaymentElement />
       </div>
 
-      <div className="flex items-center justify-between pt-4 border-t">
+      <div className="flex items-center justify-between border-t pt-4">
         <div>
           <p className="text-sm text-gray-600">Gesamtbetrag</p>
-          <p className="text-2xl font-bold text-gray-900">
-            CHF {amount.toFixed(2)}
-          </p>
+          <p className="text-2xl font-bold text-gray-900">CHF {amount.toFixed(2)}</p>
         </div>
         <button
           type="submit"
           disabled={!stripe || isLoading}
-          className="px-6 py-3 bg-primary-600 text-white rounded-lg font-medium hover:bg-primary-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+          className="flex items-center gap-2 rounded-lg bg-primary-600 px-6 py-3 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {isLoading ? (
             <>
@@ -121,14 +120,20 @@ function CheckoutForm({ invoiceId, invoiceNumber, amount, onSuccess, clientSecre
         </button>
       </div>
 
-      <p className="text-xs text-gray-500 text-center">
-        Ihre Zahlung wird sicher über Stripe verarbeitet. Ihre Kreditkartendaten werden nicht auf unseren Servern gespeichert.
+      <p className="text-center text-xs text-gray-500">
+        Ihre Zahlung wird sicher über Stripe verarbeitet. Ihre Kreditkartendaten werden nicht auf
+        unseren Servern gespeichert.
       </p>
     </form>
   )
 }
 
-export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess }: InvoicePaymentFormProps) {
+export function InvoicePaymentForm({
+  invoiceId,
+  invoiceNumber,
+  amount,
+  onSuccess,
+}: InvoicePaymentFormProps) {
   const [clientSecret, setClientSecret] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
@@ -155,8 +160,8 @@ export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess
         const res = await fetch(`/api/invoices/${invoiceId}/create-payment-intent`, {
           method: 'POST',
           headers: {
-            'Content-Type': 'application/json'
-          }
+            'Content-Type': 'application/json',
+          },
         })
 
         if (cancelled) return
@@ -170,10 +175,14 @@ export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess
         }
 
         const data = await res.json()
-        
+
         if (cancelled) return
 
-        if (data.clientSecret && typeof data.clientSecret === 'string' && data.clientSecret.trim() !== '') {
+        if (
+          data.clientSecret &&
+          typeof data.clientSecret === 'string' &&
+          data.clientSecret.trim() !== ''
+        ) {
           const secret = data.clientSecret.trim()
           setClientSecret(secret)
           // Warte einen Moment, um sicherzustellen, dass alles bereit ist
@@ -218,7 +227,7 @@ export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess
   // Loading State
   if (loading || !ready) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="rounded-lg bg-white p-6 shadow-md">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
           <span className="ml-2 text-gray-600">Lade Zahlungsformular...</span>
@@ -230,14 +239,15 @@ export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess
   // Error State
   if (error) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
         <div className="flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
           <div className="text-sm text-yellow-800">
             <strong>Hinweis:</strong> {error}
             <br />
             <br />
-            Bitte verwenden Sie eine andere Zahlungsmethode (Banküberweisung, TWINT oder PayPal) oder kontaktieren Sie den Support.
+            Bitte verwenden Sie eine andere Zahlungsmethode (Banküberweisung, TWINT oder PayPal)
+            oder kontaktieren Sie den Support.
           </div>
         </div>
       </div>
@@ -247,11 +257,12 @@ export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess
   // Kein clientSecret
   if (!clientSecret || typeof clientSecret !== 'string' || clientSecret.trim() === '') {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
         <div className="flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
           <div className="text-sm text-red-800">
-            <strong>Fehler:</strong> Kein gültiges clientSecret verfügbar. Bitte laden Sie die Seite neu.
+            <strong>Fehler:</strong> Kein gültiges clientSecret verfügbar. Bitte laden Sie die Seite
+            neu.
           </div>
         </div>
       </div>
@@ -261,11 +272,12 @@ export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess
   // Kein stripePromise
   if (!stripePromise) {
     return (
-      <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
         <div className="flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
           <div className="text-sm text-yellow-800">
-            <strong>Hinweis:</strong> Stripe ist nicht konfiguriert. Bitte verwenden Sie Banküberweisung.
+            <strong>Hinweis:</strong> Stripe ist nicht konfiguriert. Bitte verwenden Sie
+            Banküberweisung.
           </div>
         </div>
       </div>
@@ -275,9 +287,9 @@ export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess
   // Keine gültigen Options
   if (!elementsOptions) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
         <div className="flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
           <div className="text-sm text-red-800">
             <strong>Fehler:</strong> Ungültige Element-Optionen. Bitte laden Sie die Seite neu.
           </div>
@@ -289,7 +301,7 @@ export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess
   // FINALE PRÜFUNG: Alles muss vorhanden sein
   if (!ready || !clientSecret || !stripePromise || !elementsOptions) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6">
+      <div className="rounded-lg bg-white p-6 shadow-md">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
           <span className="ml-2 text-gray-600">Bereite Zahlungsformular vor...</span>
@@ -299,12 +311,13 @@ export function InvoicePaymentForm({ invoiceId, invoiceNumber, amount, onSuccess
   }
 
   // ABSOLUTE FINALE VALIDIERUNG
-  const finalClientSecret = typeof clientSecret === 'string' && clientSecret.trim() !== '' ? clientSecret.trim() : null
+  const finalClientSecret =
+    typeof clientSecret === 'string' && clientSecret.trim() !== '' ? clientSecret.trim() : null
   if (!finalClientSecret) {
     return (
-      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
         <div className="flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
           <div className="text-sm text-red-800">
             <strong>Fehler:</strong> Kritischer Fehler: clientSecret ist ungültig.
           </div>

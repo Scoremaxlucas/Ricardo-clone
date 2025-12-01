@@ -14,6 +14,7 @@ Resend ist ein moderner E-Mail-Service, der sehr einfach zu konfigurieren ist.
    - Gehen Sie zu "API Keys" und erstellen Sie einen neuen API Key
 
 2. **Umgebungsvariablen setzen:**
+
    ```bash
    RESEND_API_KEY=re_xxxxxxxxxxxxx
    RESEND_FROM_EMAIL=noreply@ihre-domain.com
@@ -30,6 +31,7 @@ Falls Sie einen eigenen SMTP-Server verwenden möchten:
 ### Setup:
 
 1. **Umgebungsvariablen setzen:**
+
    ```bash
    SMTP_HOST=smtp.gmail.com
    SMTP_PORT=587
@@ -66,6 +68,7 @@ Nach der Konfiguration können Sie die E-Mail-Funktion testen:
 ### E-Mail wird nicht versendet:
 
 1. **Prüfen Sie die Umgebungsvariablen:**
+
    ```bash
    echo $RESEND_API_KEY
    echo $SMTP_USER
@@ -93,10 +96,6 @@ Nach der Konfiguration können Sie die E-Mail-Funktion testen:
 ## Produktion
 
 Für Produktion empfehlen wir:
+
 - Resend mit verifizierter Domain
 - Oder professioneller SMTP-Service (z.B. SendGrid, Mailgun)
-
-
-
-
-

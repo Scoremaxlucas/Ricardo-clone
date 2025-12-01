@@ -13,7 +13,10 @@ if (fs.existsSync(envPath)) {
         const key = match[1].trim()
         let value = match[2].trim()
         // Entferne Anführungszeichen
-        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
           value = value.slice(1, -1)
         }
         if (!process.env[key]) {
@@ -84,16 +87,16 @@ async function testAllEmails() {
     purchaseId: 'test-purchase-id-456',
     invoiceId: 'test-invoice-id-789',
     invoiceNumber: 'REV-2024-001',
-    bidAmount: 1500.00,
-    currentHighestBid: 1600.00,
-    winningBid: 1700.00,
-    paymentAmount: 1500.00,
-    total: 165.00,
+    bidAmount: 1500.0,
+    currentHighestBid: 1600.0,
+    winningBid: 1700.0,
+    paymentAmount: 1500.0,
+    total: 165.0,
     dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    lateFeeAmount: 10.00,
+    lateFeeAmount: 10.0,
     trackingNumber: 'CH123456789',
     trackingProvider: 'Post',
-    offerAmount: 1400.00,
+    offerAmount: 1400.0,
     verificationUrl: `${BASE_URL}/verify-email?token=test-token-123`,
     answerContent: 'Ja, der Artikel ist noch verfügbar und in sehr gutem Zustand.',
     reviewRating: 5,
@@ -107,14 +110,14 @@ async function testAllEmails() {
       testData.userName,
       testData.verificationUrl
     )
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'E-Mail-Verifizierung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ E-Mail-Verifizierung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
   } catch (error: any) {
@@ -134,14 +137,14 @@ async function testAllEmails() {
       testData.watchId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Verkaufsbenachrichtigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Verkaufsbenachrichtigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -161,14 +164,14 @@ async function testAllEmails() {
       false
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Antwort-Benachrichtigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Antwort-Benachrichtigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -184,20 +187,20 @@ async function testAllEmails() {
       testData.sellerName,
       testData.articleTitle,
       testData.paymentAmount,
-      5.00, // shippingCost
+      5.0, // shippingCost
       'buy-now',
       testData.purchaseId,
       testData.watchId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Kaufbestätigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Kaufbestätigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -216,14 +219,14 @@ async function testAllEmails() {
       testData.invoiceId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Zahlungsaufforderung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Zahlungsaufforderung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -242,14 +245,14 @@ async function testAllEmails() {
       testData.invoiceId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Erste Zahlungserinnerung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Erste Zahlungserinnerung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -269,14 +272,14 @@ async function testAllEmails() {
       testData.invoiceId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Zweite Zahlungserinnerung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Zweite Zahlungserinnerung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -296,14 +299,14 @@ async function testAllEmails() {
       testData.invoiceId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Finale Mahnung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Finale Mahnung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -322,28 +325,28 @@ async function testAllEmails() {
         {
           description: 'Verkaufsgebühr - Rolex Submariner 2020',
           quantity: 1,
-          price: 150.00,
-          total: 150.00
+          price: 150.0,
+          total: 150.0,
         },
         {
           description: 'MwSt. (7.7%)',
           quantity: 1,
           price: 11.55,
-          total: 11.55
-        }
+          total: 11.55,
+        },
       ],
       testData.dueDate,
       testData.invoiceId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Rechnungsbenachrichtigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Rechnungsbenachrichtigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -354,18 +357,16 @@ async function testAllEmails() {
 
   // 10. Verifizierungs-Bestätigung
   try {
-    const { subject, html, text } = getVerificationApprovalEmail(
-      testData.userName
-    )
+    const { subject, html, text } = getVerificationApprovalEmail(testData.userName)
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Verifizierungs-Bestätigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Verifizierungs-Bestätigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -385,14 +386,14 @@ async function testAllEmails() {
       testData.watchId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Bewertungsbenachrichtigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Bewertungsbenachrichtigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -409,14 +410,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Kontaktfrist-Warnung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Kontaktfrist-Warnung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -434,14 +435,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Zahlungserinnerung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Zahlungserinnerung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -460,14 +461,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Dispute eröffnet', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Dispute eröffnet gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -486,14 +487,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Dispute gelöst', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Dispute gelöst gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -511,14 +512,14 @@ async function testAllEmails() {
       testData.watchId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Gebotsbestätigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Gebotsbestätigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -536,14 +537,14 @@ async function testAllEmails() {
       testData.watchId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Überboten-Benachrichtigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Überboten-Benachrichtigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -562,14 +563,14 @@ async function testAllEmails() {
       testData.watchId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Gebotsbenachrichtigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Gebotsbenachrichtigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -588,14 +589,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Auktionsende-Gewonnen', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Auktionsende-Gewonnen gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -613,14 +614,14 @@ async function testAllEmails() {
       testData.watchId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Auktionsende-Nicht-Gewonnen', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Auktionsende-Nicht-Gewonnen gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -640,14 +641,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Auktionsende-Verkäufer', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Auktionsende-Verkäufer gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -666,14 +667,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Zahlungseingangsbestätigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Zahlungseingangsbestätigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -692,14 +693,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Versandbenachrichtigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Versandbenachrichtigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -717,14 +718,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Versandaufforderung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Versandaufforderung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -743,14 +744,14 @@ async function testAllEmails() {
       testData.watchId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Preisvorschlag erhalten', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Preisvorschlag erhalten gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -769,14 +770,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Preisvorschlag akzeptiert', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Preisvorschlag akzeptiert gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -794,14 +795,14 @@ async function testAllEmails() {
       testData.watchId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Angebotsbestätigung', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Angebotsbestätigung gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -819,14 +820,14 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Bewertungsaufforderung (Käufer)', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Bewertungsaufforderung (Käufer) gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
@@ -844,19 +845,23 @@ async function testAllEmails() {
       testData.purchaseId
     )
     // Nächste E-Mail
-        await sendEmail({
+    await sendEmail({
       to: TEST_EMAIL,
       subject,
       html,
       text,
     })
     results.push({ name: 'Bewertungsaufforderung (Verkäufer)', success: true })
-        await delay(600)
+    await delay(600)
     console.log('✅ Bewertungsaufforderung (Verkäufer) gesendet')
     await delay(600) // Rate-Limit: 2/Sekunde
     // Nächste E-Mail
   } catch (error: any) {
-    results.push({ name: 'Bewertungsaufforderung (Verkäufer)', success: false, error: error.message })
+    results.push({
+      name: 'Bewertungsaufforderung (Verkäufer)',
+      success: false,
+      error: error.message,
+    })
     console.error('❌ Bewertungsaufforderung (Verkäufer):', error.message)
   }
 
@@ -864,20 +869,22 @@ async function testAllEmails() {
   console.log('\n' + '='.repeat(60))
   console.log('📊 ZUSAMMENFASSUNG')
   console.log('='.repeat(60))
-  
+
   const successful = results.filter(r => r.success).length
   const failed = results.filter(r => !r.success).length
-  
+
   console.log(`\n✅ Erfolgreich: ${successful}/${results.length}`)
   console.log(`❌ Fehlgeschlagen: ${failed}/${results.length}\n`)
-  
+
   if (failed > 0) {
     console.log('Fehlgeschlagene E-Mails:')
-    results.filter(r => !r.success).forEach(r => {
-      console.log(`  ❌ ${r.name}: ${r.error}`)
-    })
+    results
+      .filter(r => !r.success)
+      .forEach(r => {
+        console.log(`  ❌ ${r.name}: ${r.error}`)
+      })
   }
-  
+
   console.log('\n📧 Alle E-Mails wurden an', TEST_EMAIL, 'gesendet!')
   console.log('='.repeat(60) + '\n')
 }
@@ -888,8 +895,7 @@ testAllEmails()
     console.log('✅ Test abgeschlossen!')
     process.exit(0)
   })
-  .catch((error) => {
+  .catch(error => {
     console.error('❌ Fehler beim Test:', error)
     process.exit(1)
   })
-

@@ -36,18 +36,12 @@ export async function POST(request: NextRequest) {
     const { watchId, amount, message } = body
 
     if (!watchId || amount === undefined) {
-      return NextResponse.json(
-        { message: 'watchId und Betrag sind erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'watchId und Betrag sind erforderlich' }, { status: 400 })
     }
 
     const amountFloat = parseFloat(String(amount))
     if (isNaN(amountFloat) || amountFloat <= 0) {
-      return NextResponse.json(
-        { message: 'Ungültiger Betrag' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Ungültiger Betrag' }, { status: 400 })
     }
 
     const watch = await prisma.watch.findUnique({
@@ -63,7 +57,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prüfe ob bereits verkauft (nur aktive Purchases zählen)
-    // RICARDO-STYLE: Stornierte Purchases zählen nicht - Artikel kann wieder Preisangebote erhalten
+    // Stornierte Purchases zählen nicht - Artikel kann wieder Preisangebote erhalten
     const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
     if (activePurchases.length > 0) {
       return NextResponse.json(
@@ -92,15 +86,19 @@ export async function POST(request: NextRequest) {
     const minimumPrice = watch.price * 0.6
     if (amountFloat < minimumPrice) {
       return NextResponse.json(
-        { message: `Ihr Preisvorschlag muss mindestens 60% des Verkaufspreises betragen (mindestens CHF ${minimumPrice.toFixed(2)}).` },
+        {
+          message: `Ihr Preisvorschlag muss mindestens 60% des Verkaufspreises betragen (mindestens CHF ${minimumPrice.toFixed(2)}).`,
+        },
         { status: 400 }
       )
     }
 
-    // Ricardo-Regel: Preisvorschlag muss niedriger als Verkaufspreis sein
+    // Preisvorschlag muss niedriger als Verkaufspreis sein
     if (amountFloat >= watch.price) {
       return NextResponse.json(
-        { message: `Ihr Preisvorschlag muss niedriger als der Verkaufspreis (CHF ${watch.price.toFixed(2)}) sein.` },
+        {
+          message: `Ihr Preisvorschlag muss niedriger als der Verkaufspreis (CHF ${watch.price.toFixed(2)}) sein.`,
+        },
         { status: 400 }
       )
     }
@@ -115,11 +113,11 @@ export async function POST(request: NextRequest) {
 
     // Zähle aktive Preisvorschläge (pending oder accepted)
     const activeOffersCount = allOffersByBuyer.filter(
-      (offer) => offer.status === 'pending' || offer.status === 'accepted'
+      offer => offer.status === 'pending' || offer.status === 'accepted'
     ).length
 
     // Prüfe ob bereits ein pending Preisvorschlag existiert
-    const existingPendingOffer = allOffersByBuyer.find((offer) => offer.status === 'pending')
+    const existingPendingOffer = allOffersByBuyer.find(offer => offer.status === 'pending')
 
     if (existingPendingOffer) {
       // Update des bestehenden pending Preisvorschlags
@@ -129,7 +127,7 @@ export async function POST(request: NextRequest) {
           amount: amountFloat,
           message: message || null,
           status: 'pending',
-          expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 Stunden (Ricardo-Regel)
+          expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 Stunden Gültigkeit
         },
         include: {
           watch: {
@@ -144,7 +142,8 @@ export async function POST(request: NextRequest) {
       // Benachrichtigung nur wenn sich der Betrag geändert hat
       if (existingPendingOffer.amount !== amountFloat) {
         try {
-          const buyerName = session.user.name || session.user.nickname || session.user.email || 'Ein Käufer'
+          const buyerName =
+            session.user.name || session.user.nickname || session.user.email || 'Ein Käufer'
           await prisma.notification.create({
             data: {
               userId: watch.sellerId,
@@ -156,9 +155,14 @@ export async function POST(request: NextRequest) {
               priceOfferId: updatedOffer.id,
             },
           })
-          console.log(`[notifications] Preisvorschlag-Update-Benachrichtigung erstellt für Verkäufer ${watch.sellerId}`)
+          console.log(
+            `[notifications] Preisvorschlag-Update-Benachrichtigung erstellt für Verkäufer ${watch.sellerId}`
+          )
         } catch (notifError) {
-          console.error('[notifications] Fehler beim Erstellen der Update-Benachrichtigung:', notifError)
+          console.error(
+            '[notifications] Fehler beim Erstellen der Update-Benachrichtigung:',
+            notifError
+          )
         }
       }
 
@@ -168,10 +172,13 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Ricardo-Regel: Maximal 3 aktive Preisvorschläge pro Käufer pro Artikel
+    // Maximal 3 aktive Preisvorschläge pro Käufer pro Artikel
     if (activeOffersCount >= 3) {
       return NextResponse.json(
-        { message: 'Sie haben bereits 3 Preisvorschläge für dieses Angebot gemacht. Bitte warten Sie auf eine Antwort des Verkäufers.' },
+        {
+          message:
+            'Sie haben bereits 3 Preisvorschläge für dieses Angebot gemacht. Bitte warten Sie auf eine Antwort des Verkäufers.',
+        },
         { status: 400 }
       )
     }
@@ -184,7 +191,7 @@ export async function POST(request: NextRequest) {
         amount: amountFloat,
         message: message || null,
         status: 'pending',
-        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 Stunden (Ricardo-Regel)
+        expiresAt: new Date(Date.now() + 48 * 60 * 60 * 1000), // 48 Stunden Gültigkeit
       },
       include: {
         watch: {
@@ -199,8 +206,17 @@ export async function POST(request: NextRequest) {
     // E-Mail: Preisvorschlag erhalten an Verkäufer
     try {
       const { sendEmail, getPriceOfferReceivedEmail } = await import('@/lib/email')
-      const sellerName = priceOffer.watch.seller.nickname || priceOffer.watch.seller.firstName || priceOffer.watch.seller.name || 'Verkäufer'
-      const buyerName = priceOffer.buyer.nickname || priceOffer.buyer.firstName || priceOffer.buyer.name || priceOffer.buyer.email || 'Ein Käufer'
+      const sellerName =
+        priceOffer.watch.seller.nickname ||
+        priceOffer.watch.seller.firstName ||
+        priceOffer.watch.seller.name ||
+        'Verkäufer'
+      const buyerName =
+        priceOffer.buyer.nickname ||
+        priceOffer.buyer.firstName ||
+        priceOffer.buyer.name ||
+        priceOffer.buyer.email ||
+        'Ein Käufer'
       const { subject, html, text } = getPriceOfferReceivedEmail(
         sellerName,
         priceOffer.watch.title,
@@ -212,16 +228,22 @@ export async function POST(request: NextRequest) {
         to: priceOffer.watch.seller.email,
         subject,
         html,
-        text
+        text,
       })
-      console.log(`[offers] ✅ Preisvorschlag-Erhalten-E-Mail gesendet an Verkäufer ${priceOffer.watch.seller.email}`)
+      console.log(
+        `[offers] ✅ Preisvorschlag-Erhalten-E-Mail gesendet an Verkäufer ${priceOffer.watch.seller.email}`
+      )
     } catch (emailError: any) {
-      console.error('[offers] ❌ Fehler beim Senden der Preisvorschlag-Erhalten-E-Mail:', emailError)
+      console.error(
+        '[offers] ❌ Fehler beim Senden der Preisvorschlag-Erhalten-E-Mail:',
+        emailError
+      )
     }
 
     // Benachrichtigung für den Verkäufer
     try {
-      const buyerName = session.user.name || session.user.nickname || session.user.email || 'Ein Käufer'
+      const buyerName =
+        session.user.name || session.user.nickname || session.user.email || 'Ein Käufer'
       await prisma.notification.create({
         data: {
           userId: watch.sellerId,
@@ -233,9 +255,14 @@ export async function POST(request: NextRequest) {
           priceOfferId: priceOffer.id,
         },
       })
-      console.log(`[notifications] Preisvorschlag-Benachrichtigung erstellt für Verkäufer ${watch.sellerId}`)
+      console.log(
+        `[notifications] Preisvorschlag-Benachrichtigung erstellt für Verkäufer ${watch.sellerId}`
+      )
     } catch (notifError) {
-      console.error('[notifications] Fehler beim Erstellen der Preisvorschlag-Benachrichtigung:', notifError)
+      console.error(
+        '[notifications] Fehler beim Erstellen der Preisvorschlag-Benachrichtigung:',
+        notifError
+      )
       // Fehler wird geloggt, aber Preisvorschlag wird trotzdem erstellt
     }
 
@@ -255,10 +282,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (error.code === 'P2025') {
-      return NextResponse.json(
-        { message: 'Angebot nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Angebot nicht gefunden' }, { status: 404 })
     }
 
     return NextResponse.json(

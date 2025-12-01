@@ -4,10 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // POST: Aufruf tracken
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     const { id } = await params
@@ -22,19 +19,17 @@ export async function POST(
     }
 
     // Hole IP und User-Agent
-    const ipAddress = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
+    const ipAddress =
+      request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown'
     const userAgent = request.headers.get('user-agent') || 'unknown'
 
     // Tracke Aufruf (nur wenn nicht in den letzten 5 Minuten vom gleichen User/IP)
     const fiveMinutesAgo = new Date(Date.now() - 5 * 60 * 1000)
-    
+
     const recentView = await prisma.watchView.findFirst({
       where: {
         watchId: id,
-        OR: [
-          session?.user?.id ? { userId: session.user.id } : {},
-          { ipAddress },
-        ],
+        OR: [session?.user?.id ? { userId: session.user.id } : {}, { ipAddress }],
         viewedAt: {
           gte: fiveMinutesAgo,
         },
@@ -59,4 +54,3 @@ export async function POST(
     return NextResponse.json({ message: 'OK' })
   }
 }
-

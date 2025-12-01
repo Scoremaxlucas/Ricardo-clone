@@ -36,10 +36,10 @@ export function SmartDiscoveryHub() {
       setLoading(true)
       try {
         // Hole personalisierte Empfehlungen
-        const url = session?.user 
+        const url = session?.user
           ? `/api/watches/recommended?userId=${session.user.id}`
           : '/api/watches?limit=8&sort=popular'
-        
+
         const response = await fetch(url)
         if (response.ok) {
           const data = await response.json()
@@ -57,14 +57,14 @@ export function SmartDiscoveryHub() {
         setLoading(false)
       }
     }
-    
+
     fetchPersonalizedProducts()
   }, [session?.user?.id])
 
   useEffect(() => {
     const fetchFavorites = async () => {
       if (!session?.user) return
-      
+
       try {
         const response = await fetch('/api/favorites')
         if (response.ok) {
@@ -75,14 +75,14 @@ export function SmartDiscoveryHub() {
         console.error('Error fetching favorites:', error)
       }
     }
-    
+
     fetchFavorites()
   }, [session?.user])
 
   const toggleFavorite = async (watchId: string, e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
-    
+
     if (!session?.user) {
       alert('Bitte melden Sie sich an, um Favoriten hinzuzufügen')
       return
@@ -91,7 +91,7 @@ export function SmartDiscoveryHub() {
     try {
       const method = favorites.has(watchId) ? 'DELETE' : 'POST'
       const response = await fetch(`/api/favorites/${watchId}`, { method })
-      
+
       if (response.ok) {
         setFavorites(prev => {
           const newSet = new Set(prev)
@@ -110,10 +110,10 @@ export function SmartDiscoveryHub() {
 
   if (loading) {
     return (
-      <section className="py-8 bg-primary-50">
-        <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+      <section className="bg-primary-50 py-8">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600 mx-auto mb-2"></div>
+            <div className="mx-auto mb-2 h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
             <p className="text-sm text-gray-600">Lade...</p>
           </div>
         </div>
@@ -126,28 +126,26 @@ export function SmartDiscoveryHub() {
   }
 
   return (
-    <section className="py-8 bg-gradient-to-br from-primary-50 via-white to-purple-50">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+    <section className="bg-gradient-to-br from-primary-50 via-white to-purple-50 py-8">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
-        <div className="flex items-center justify-between mb-4">
+        <div className="mb-4 flex items-center justify-between">
           <div className="flex items-center gap-2">
-            <div className="p-2 bg-primary-600 rounded-lg shadow-md">
+            <div className="rounded-lg bg-primary-600 p-2 shadow-md">
               <Sparkles className="h-4 w-4 text-white" />
             </div>
             <div>
               <h2 className="text-xl font-bold text-gray-900">
                 {session?.user ? 'Für Sie empfohlen' : 'Beliebte Artikel'}
               </h2>
-              <p className="text-xs text-gray-600 mt-0.5">
-                {session?.user 
-                  ? 'Basierend auf Ihren Interessen'
-                  : 'Die beliebtesten Artikel'}
+              <p className="mt-0.5 text-xs text-gray-600">
+                {session?.user ? 'Basierend auf Ihren Interessen' : 'Die beliebtesten Artikel'}
               </p>
             </div>
           </div>
-          <Link 
+          <Link
             href="/search"
-            className="hidden md:flex items-center gap-1 text-primary-600 hover:text-primary-700 text-sm font-medium"
+            className="hidden items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700 md:flex"
           >
             Alle anzeigen
             <TrendingUp className="h-4 w-4" />
@@ -155,8 +153,8 @@ export function SmartDiscoveryHub() {
         </div>
 
         {/* Products Grid - Kompakter, mehr Spalten */}
-        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2 md:gap-3">
-          {products.map((product) => (
+        <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 md:gap-3 lg:grid-cols-5 xl:grid-cols-6">
+          {products.map(product => (
             <ProductCard
               key={product.id}
               {...product}

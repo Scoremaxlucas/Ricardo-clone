@@ -8,7 +8,7 @@ const DEFAULT_PRICING = {
   vatRate: 0.081, // 8.1% MwSt
   minimumCommission: 0,
   listingFee: 0,
-  transactionFee: 0
+  transactionFee: 0,
 }
 
 async function calculateInvoiceForPurchase(purchaseId: string) {
@@ -17,11 +17,11 @@ async function calculateInvoiceForPurchase(purchaseId: string) {
     include: {
       watch: {
         include: {
-          seller: true
-        }
+          seller: true,
+        },
       },
-      buyer: true
-    }
+      buyer: true,
+    },
   })
 
   if (!purchase || !purchase.watch) {
@@ -41,7 +41,7 @@ async function calculateInvoiceForPurchase(purchaseId: string) {
   }
 
   const boosterPrices = await prisma.boosterPrice.findMany({
-    where: { isActive: true }
+    where: { isActive: true },
   })
 
   const items: Array<{
@@ -56,7 +56,7 @@ async function calculateInvoiceForPurchase(purchaseId: string) {
     description: `Plattform-Gebühr (${(DEFAULT_PRICING.platformMarginRate * 100).toFixed(2)}%)`,
     quantity: 1,
     price: platformFee,
-    total: platformFee
+    total: platformFee,
   })
 
   for (const boosterCode of selectedBoosters) {
@@ -66,7 +66,7 @@ async function calculateInvoiceForPurchase(purchaseId: string) {
         description: `Booster: ${booster.name}`,
         quantity: 1,
         price: booster.price,
-        total: booster.price
+        total: booster.price,
       })
       console.log(`   Added booster: ${booster.name} (CHF ${booster.price})`)
     }
@@ -82,12 +82,12 @@ async function calculateInvoiceForPurchase(purchaseId: string) {
   const lastInvoice = await prisma.invoice.findFirst({
     where: {
       invoiceNumber: {
-        startsWith: `REV-${year}-`
-      }
+        startsWith: `REV-${year}-`,
+      },
     },
     orderBy: {
-      invoiceNumber: 'desc'
-    }
+      invoiceNumber: 'desc',
+    },
   })
 
   let invoiceNumber = `REV-${year}-001`
@@ -113,13 +113,13 @@ async function calculateInvoiceForPurchase(purchaseId: string) {
           description: item.description,
           quantity: item.quantity,
           price: item.price,
-          total: item.total
-        }))
-      }
+          total: item.total,
+        })),
+      },
     },
     include: {
-      items: true
-    }
+      items: true,
+    },
   })
 
   return invoice
@@ -127,19 +127,19 @@ async function calculateInvoiceForPurchase(purchaseId: string) {
 
 async function main() {
   console.log('🔄 Erstelle Rechnungen für bestehende Purchases...\n')
-  
+
   const purchases = await prisma.purchase.findMany({
     include: {
       watch: {
         include: {
-          seller: true
-        }
+          seller: true,
+        },
       },
-      buyer: true
+      buyer: true,
     },
     orderBy: {
-      createdAt: 'desc'
-    }
+      createdAt: 'desc',
+    },
   })
 
   console.log(`📋 Gefundene Purchases: ${purchases.length}\n`)
@@ -147,7 +147,7 @@ async function main() {
   for (const purchase of purchases) {
     try {
       const existingInvoice = await prisma.invoice.findFirst({
-        where: { saleId: purchase.id }
+        where: { saleId: purchase.id },
       })
 
       if (existingInvoice) {
@@ -161,7 +161,7 @@ async function main() {
       console.log(`   Price: CHF ${purchase.price || purchase.watch.price}`)
 
       const invoice = await calculateInvoiceForPurchase(purchase.id)
-      
+
       console.log(`✅ Rechnung erstellt: ${invoice.invoiceNumber}`)
       console.log(`   Total: CHF ${invoice.total.toFixed(2)}\n`)
     } catch (error: any) {
@@ -173,11 +173,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error('Error:', e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-

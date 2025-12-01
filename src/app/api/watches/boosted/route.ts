@@ -3,11 +3,11 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * API-Endpoint für geboostete Produkte (Turbo-Boost und Super-Boost)
- * 
+ *
  * Query-Parameter:
  * - type: 'turbo-boost' | 'super-boost' | 'all' (default: 'all')
  * - limit: Anzahl der Produkte (default: 6)
- * 
+ *
  * Algorithmus:
  * - Super-Boost hat höchste Priorität
  * - Turbo-Boost hat zweithöchste Priorität
@@ -21,21 +21,30 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '6')
 
     const now = new Date()
-    
+
     // Basis-Where-Klausel: Nur aktive, nicht verkaufte Angebote
     const baseWhere = {
       AND: [
         {
           // WICHTIG: Manuell deaktivierte Artikel ausschließen
-          OR: [
-            { moderationStatus: null },
-            { moderationStatus: { not: 'rejected' } }
-          ]
+          OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
         },
         {
-          purchases: {
-            none: {} // Nicht verkauft
-          }
+          // Artikel die nicht verkauft sind ODER nur stornierte Purchases haben
+          OR: [
+            {
+              purchases: {
+                none: {}, // Keine Purchases vorhanden
+              },
+            },
+            {
+              purchases: {
+                every: {
+                  status: 'cancelled', // Alle Purchases sind storniert
+                },
+              },
+            },
+          ],
         },
         {
           // Beendete Auktionen ohne Purchase ausschließen
@@ -49,43 +58,40 @@ export async function GET(request: NextRequest) {
                   purchases: {
                     some: {
                       status: {
-                        not: 'cancelled'
-                      }
-                    }
-                  }
-                }
-              ]
-            }
-          ]
-        }
-      ]
+                        not: 'cancelled',
+                      },
+                    },
+                  },
+                },
+              ],
+            },
+          ],
+        },
+      ],
     }
 
     // Erweitere Where-Klausel basierend auf Booster-Type
     // Da boosters ein JSON-String ist (z.B. '["super-boost"]'), suchen wir nach dem String
-    let where: any = { ...baseWhere }
+    const where: any = { ...baseWhere }
 
     if (boosterType === 'super-boost') {
       // Nur Super-Boost - suche nach "super-boost" im JSON-String
       where.boosters = {
-        contains: 'super-boost'
+        contains: 'super-boost',
       }
     } else if (boosterType === 'turbo-boost') {
       // Nur Turbo-Boost (aber keine Super-Boost)
       where.AND = [
         { boosters: { contains: 'turbo-boost' } },
-        { 
-          OR: [
-            { boosters: { not: { contains: 'super-boost' } } },
-            { boosters: null }
-          ]
-        }
+        {
+          OR: [{ boosters: { not: { contains: 'super-boost' } } }, { boosters: null }],
+        },
       ]
     } else if (boosterType === 'all') {
       // Turbo-Boost ODER Super-Boost
       where.OR = [
         { boosters: { contains: 'turbo-boost' } },
-        { boosters: { contains: 'super-boost' } }
+        { boosters: { contains: 'super-boost' } },
       ]
     }
 
@@ -99,25 +105,25 @@ export async function GET(request: NextRequest) {
             name: true,
             city: true,
             postalCode: true,
-            verified: true
-          }
+            verified: true,
+          },
         },
         bids: {
           orderBy: {
-            amount: 'desc'
+            amount: 'desc',
           },
-          take: 1
+          take: 1,
         },
         categories: {
           include: {
-            category: true
-          }
-        }
+            category: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
+        createdAt: 'desc',
       },
-      take: limit * 2 // Hole mehr, um nach Sortierung zu filtern
+      take: limit * 2, // Hole mehr, um nach Sortierung zu filtern
     })
 
     // Parse boosters und berechne aktuellen Preis
@@ -162,11 +168,16 @@ export async function GET(request: NextRequest) {
         images: images,
         boosters: boosters,
         city: watch.seller?.city || null,
-        postalCode: watch.seller?.postalCode || null
+        postalCode: watch.seller?.postalCode || null,
+        buyNowPrice: watch.buyNowPrice || null,
+        isAuction: watch.isAuction || false,
+        auctionEnd: watch.auctionEnd || null,
+        createdAt: watch.createdAt,
+        bids: watch.bids || []
       }
     })
 
-    // Sortiere nach Booster-Priorität (wie bei Ricardo)
+    // Sortiere nach Booster-Priorität
     // Algorithmus: Super-Boost > Turbo-Boost > Erstellungsdatum
     watchesWithBoosters = watchesWithBoosters.sort((a, b) => {
       const getBoostPriority = (boosters: string[]): number => {
@@ -194,9 +205,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       watches: watchesWithBoosters,
       count: watchesWithBoosters.length,
-      boosterType: boosterType
+      boosterType: boosterType,
     })
-
   } catch (error: any) {
     console.error('[watches/boosted] Error:', error)
     return NextResponse.json(
@@ -205,4 +215,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

@@ -10,6 +10,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
+    "lint:fix": "next lint --fix",
+    "format": "prettier --write \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
+    "format:check": "prettier --check \"**/*.{ts,tsx,js,jsx,json,css,scss,md}\"",
     "db:push": "prisma db push",
     "db:seed": "tsx scripts/seed.ts",
     "cron:reminders": "tsx scripts/run-cron.ts",
@@ -72,6 +75,8 @@
   "devDependencies": {
     "@types/bcryptjs": "^2.4.0",
     "@types/jsonwebtoken": "^9.0.0",
+    "prettier": "^3.7.3",
+    "prettier-plugin-tailwindcss": "^0.7.1",
     "tsx": "^4.20.6"
   }
 }

@@ -5,21 +5,15 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * Prüft ob ein Artikel bearbeitet werden kann
- * RICARDO-STYLE: Artikel kann nicht bearbeitet werden wenn bereits ein aktiver Kauf stattgefunden hat
+ * Artikel kann nicht bearbeitet werden wenn bereits ein aktiver Kauf stattgefunden hat
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const watch = await prisma.watch.findUnique({
@@ -27,33 +21,27 @@ export async function GET(
       include: {
         purchases: {
           where: {
-            status: { not: 'cancelled' }
-          }
+            status: { not: 'cancelled' },
+          },
         },
-        sales: true
-      }
+        sales: true,
+      },
     })
 
     if (!watch) {
-      return NextResponse.json(
-        { message: 'Artikel nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Artikel nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe Berechtigung
     if (watch.sellerId !== session.user.id) {
-      return NextResponse.json(
-        { message: 'Sie sind nicht berechtigt' },
-        { status: 403 }
-      )
+      return NextResponse.json({ message: 'Sie sind nicht berechtigt' }, { status: 403 })
     }
 
     const hasActivePurchase = watch.purchases.length > 0 || watch.sales.length > 0
 
     return NextResponse.json({
       hasActivePurchase,
-      canEdit: !hasActivePurchase
+      canEdit: !hasActivePurchase,
     })
   } catch (error: any) {
     console.error('[watches/edit-status] Error:', error)
@@ -65,19 +53,13 @@ export async function GET(
 }
 
 // PATCH: Status eines Angebots aktualisieren (für Admin)
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Prüfe Admin-Status
@@ -97,10 +79,7 @@ export async function PATCH(
     const { isActive } = body
 
     if (typeof isActive !== 'boolean') {
-      return NextResponse.json(
-        { message: 'isActive muss ein Boolean sein' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'isActive muss ein Boolean sein' }, { status: 400 })
     }
 
     // Hole Watch mit Purchases
@@ -109,17 +88,14 @@ export async function PATCH(
       include: {
         purchases: {
           where: {
-            status: { not: 'cancelled' }
-          }
-        }
-      }
+            status: { not: 'cancelled' },
+          },
+        },
+      },
     })
 
     if (!watch) {
-      return NextResponse.json(
-        { message: 'Angebot nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Angebot nicht gefunden' }, { status: 404 })
     }
 
     // Da isActive dynamisch berechnet wird, müssen wir Purchases stornieren oder moderationStatus ändern
@@ -129,14 +105,14 @@ export async function PATCH(
         await prisma.purchase.updateMany({
           where: {
             watchId: id,
-            status: { not: 'cancelled' }
+            status: { not: 'cancelled' },
           },
           data: {
-            status: 'cancelled'
-          }
+            status: 'cancelled',
+          },
         })
       }
-      
+
       await prisma.watch.update({
         where: { id },
         data: {
@@ -163,17 +139,17 @@ export async function PATCH(
       include: {
         purchases: {
           where: {
-            status: { not: 'cancelled' }
-          }
-        }
-      }
+            status: { not: 'cancelled' },
+          },
+        },
+      },
     })
 
     const now = new Date()
     const auctionEndDate = updatedWatch?.auctionEnd ? new Date(updatedWatch.auctionEnd) : null
     const isSold = (updatedWatch?.purchases.length || 0) > 0
     const isExpired = auctionEndDate ? auctionEndDate <= now : false
-    
+
     // WICHTIG: moderationStatus 'rejected' bedeutet deaktiviert
     const isRejected = updatedWatch?.moderationStatus === 'rejected'
     const calculatedIsActive = !isRejected && !isSold && (!auctionEndDate || !isExpired)
@@ -194,4 +170,3 @@ export async function PATCH(
     )
   }
 }
-

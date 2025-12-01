@@ -1,7 +1,7 @@
 /**
- * RICARDO-STYLE: Helper-Funktion für Artikel-URLs
- * 
- * Verwendet bevorzugt Artikelnummer (wie Ricardo), falls vorhanden,
+ * Helper-Funktion für Artikel-URLs
+ *
+ * Verwendet bevorzugt Artikelnummer, falls vorhanden,
  * sonst fällt zurück auf CUID (interne ID)
  */
 
@@ -11,7 +11,7 @@
  * @returns URL mit Artikelnummer (falls vorhanden) oder CUID
  */
 export function getArticleUrl(watch: { id: string; articleNumber?: number | null }): string {
-  // RICARDO-STYLE: Bevorzuge Artikelnummer wenn vorhanden
+  // Bevorzuge Artikelnummer wenn vorhanden
   if (watch.articleNumber) {
     return `/products/${watch.articleNumber}`
   }
@@ -27,4 +27,3 @@ export function getArticleUrl(watch: { id: string; articleNumber?: number | null
 export function getArticleUrlById(id: string | number): string {
   return `/products/${id}`
 }
-

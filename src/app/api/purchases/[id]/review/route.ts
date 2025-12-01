@@ -5,19 +5,13 @@ import { prisma } from '@/lib/prisma'
 import { sendReviewNotificationEmail } from '@/lib/email'
 
 // GET: Bewertung für einen Purchase abrufen
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Hole Purchase mit Bewertungen
@@ -31,10 +25,10 @@ export async function GET(
                 id: true,
                 name: true,
                 image: true,
-                nickname: true
-              }
-            }
-          }
+                nickname: true,
+              },
+            },
+          },
         },
         watch: {
           include: {
@@ -42,27 +36,21 @@ export async function GET(
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
-            }
-          }
-        }
-      }
+                email: true,
+              },
+            },
+          },
+        },
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob User der Käufer ist
     if (purchase.buyerId !== session.user.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 403 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 403 })
     }
 
     // Finde Bewertung des aktuellen Users (falls vorhanden)
@@ -71,10 +59,10 @@ export async function GET(
     return NextResponse.json({
       purchase: {
         id: purchase.id,
-        watch: purchase.watch
+        watch: purchase.watch,
       },
       review: userReview || null,
-      canReview: !userReview // Kann nur bewerten, wenn noch keine Bewertung vorhanden
+      canReview: !userReview, // Kann nur bewerten, wenn noch keine Bewertung vorhanden
     })
   } catch (error: any) {
     console.error('[purchases/review] Error:', error)
@@ -86,29 +74,20 @@ export async function GET(
 }
 
 // POST: Bewertung für einen Purchase abgeben
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { rating, comment } = await request.json()
 
     // Validierung
     if (!rating || !['positive', 'neutral', 'negative'].includes(rating)) {
-      return NextResponse.json(
-        { message: 'Ungültige Bewertung' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Ungültige Bewertung' }, { status: 400 })
     }
 
     // Hole Purchase mit Watch und Seller
@@ -117,22 +96,19 @@ export async function POST(
       include: {
         watch: {
           include: {
-            seller: true
-          }
+            seller: true,
+          },
         },
         reviews: {
           where: {
-            reviewerId: session.user.id
-          }
-        }
-      }
+            reviewerId: session.user.id,
+          },
+        },
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob User der Käufer ist
@@ -158,7 +134,7 @@ export async function POST(
         comment: comment || null,
         reviewerId: session.user.id,
         reviewedUserId: purchase.watch.sellerId,
-        purchaseId: id
+        purchaseId: id,
       },
       include: {
         reviewer: {
@@ -166,10 +142,10 @@ export async function POST(
             id: true,
             name: true,
             image: true,
-            nickname: true
-          }
-        }
-      }
+            nickname: true,
+          },
+        },
+      },
     })
 
     // Sende E-Mail-Benachrichtigung an den Verkäufer
@@ -185,13 +161,16 @@ export async function POST(
       // E-Mail-Fehler soll nicht die Bewertung verhindern
     }
 
-    return NextResponse.json({
-      message: 'Bewertung erfolgreich abgegeben',
-      review
-    }, { status: 201 })
+    return NextResponse.json(
+      {
+        message: 'Bewertung erfolgreich abgegeben',
+        review,
+      },
+      { status: 201 }
+    )
   } catch (error: any) {
     console.error('[purchases/review] Error:', error)
-    
+
     // Prüfe ob es ein Duplikat-Fehler ist
     if (error.code === 'P2002') {
       return NextResponse.json(
@@ -206,4 +185,3 @@ export async function POST(
     )
   }
 }
-

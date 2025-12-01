@@ -1,8 +1,8 @@
-import { prisma } from './prisma'
 import { sendInvoiceNotificationEmail } from './email'
+import { prisma } from './prisma'
 
 const DEFAULT_PRICING = {
-  commissionRate: 0.10, // 10% Kommission
+  commissionRate: 0.1, // 10% Kommission
   vatRate: 0.081, // 8.1% MwSt
 }
 
@@ -17,12 +17,12 @@ export async function calculateInvoiceForSale(purchaseId: string) {
           seller: true,
           categories: {
             include: {
-              category: true
-            }
-          }
-        }
-      }
-    }
+              category: true,
+            },
+          },
+        },
+      },
+    },
   })
 
   if (!purchase) {
@@ -41,12 +41,12 @@ export async function calculateInvoiceForSale(purchaseId: string) {
   const lastInvoice = await prisma.invoice.findFirst({
     where: {
       invoiceNumber: {
-        startsWith: `REV-${year}-`
-      }
+        startsWith: `REV-${year}-`,
+      },
     },
     orderBy: {
-      invoiceNumber: 'desc'
-    }
+      invoiceNumber: 'desc',
+    },
   })
 
   let invoiceNumber = `REV-${year}-001`
@@ -68,26 +68,30 @@ export async function calculateInvoiceForSale(purchaseId: string) {
       vatAmount,
       total,
       status: 'pending',
-      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist (wie Ricardo)
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist
       items: {
-        create: [{
-          watchId: purchase.watchId,
-          description: `Kommission: ${purchase.watch.title}`,
-          quantity: 1,
-          price: subtotal,
-          total: subtotal
-        }]
-      }
+        create: [
+          {
+            watchId: purchase.watchId,
+            description: `Kommission: ${purchase.watch.title}`,
+            quantity: 1,
+            price: subtotal,
+            total: subtotal,
+          },
+        ],
+      },
     },
     include: {
       items: true,
-      seller: true
-    }
+      seller: true,
+    },
   })
 
-  console.log(`[invoice] Rechnung erstellt: ${invoiceNumber} für Seller ${purchase.watch.sellerId}, Total: CHF ${total.toFixed(2)}`)
+  console.log(
+    `[invoice] Rechnung erstellt: ${invoiceNumber} für Seller ${purchase.watch.sellerId}, Total: CHF ${total.toFixed(2)}`
+  )
 
-  // RICARDO-STYLE: Erstelle nur Plattform-Benachrichtigung (E-Mail wird nach 14 Tagen gesendet)
+  // Erstelle nur Plattform-Benachrichtigung (E-Mail wird nach 14 Tagen gesendet)
   // Die erste Zahlungsaufforderung wird nach 14 Tagen über den Mahnprozess gesendet
   try {
     await prisma.notification.create({
@@ -96,8 +100,8 @@ export async function calculateInvoiceForSale(purchaseId: string) {
         type: 'NEW_INVOICE',
         title: 'Neue Rechnung erstellt',
         message: `Eine neue Rechnung wurde für Sie erstellt: ${invoiceNumber} (CHF ${total.toFixed(2)}). Die Zahlungsaufforderung erhalten Sie in 14 Tagen.`,
-        link: `/my-watches/selling/fees?invoice=${invoice.id}`
-      }
+        link: `/my-watches/selling/fees?invoice=${invoice.id}`,
+      },
     })
     console.log(`[invoice] Plattform-Benachrichtigung für User ${purchase.watch.sellerId} erstellt`)
   } catch (notificationError: any) {
@@ -116,8 +120,8 @@ export async function sendInvoiceNotificationAndEmail(invoice: any) {
       where: { id: invoice.id },
       include: {
         items: true,
-        seller: true
-      }
+        seller: true,
+      },
     })
 
     if (!invoiceWithItems || !invoiceWithItems.seller) {
@@ -130,10 +134,10 @@ export async function sendInvoiceNotificationAndEmail(invoice: any) {
       description: item.description,
       quantity: item.quantity,
       price: item.price,
-      total: item.total
+      total: item.total,
     }))
 
-    // 1. E-Mail-Benachrichtigung (wie Ricardo)
+    // 1. E-Mail-Benachrichtigung
     if (seller.email) {
       try {
         await sendInvoiceNotificationEmail(
@@ -152,7 +156,7 @@ export async function sendInvoiceNotificationAndEmail(invoice: any) {
       }
     }
 
-    // 2. Plattform-Benachrichtigung (wie Ricardo)
+    // 2. Plattform-Benachrichtigung
     try {
       await prisma.notification.create({
         data: {
@@ -160,8 +164,8 @@ export async function sendInvoiceNotificationAndEmail(invoice: any) {
           type: 'NEW_INVOICE',
           title: 'Neue Rechnung erstellt',
           message: `Eine neue Rechnung wurde für Sie erstellt: ${invoiceWithItems.invoiceNumber} (CHF ${invoiceWithItems.total.toFixed(2)})`,
-          link: `/my-watches/selling/fees?invoice=${invoiceWithItems.id}`
-        }
+          link: `/my-watches/selling/fees?invoice=${invoiceWithItems.id}`,
+        },
       })
       console.log(`[invoice] Plattform-Benachrichtigung für User ${seller.id} erstellt`)
     } catch (notificationError: any) {
@@ -184,8 +188,8 @@ export async function createCreditNoteForInvoice(originalInvoiceId: string, reas
     where: { id: originalInvoiceId },
     include: {
       items: true,
-      seller: true
-    }
+      seller: true,
+    },
   })
 
   if (!originalInvoice) {
@@ -197,12 +201,12 @@ export async function createCreditNoteForInvoice(originalInvoiceId: string, reas
   const lastCreditNote = await prisma.invoice.findFirst({
     where: {
       invoiceNumber: {
-        startsWith: `KORR-${year}-`
-      }
+        startsWith: `KORR-${year}-`,
+      },
     },
     orderBy: {
-      invoiceNumber: 'desc'
-    }
+      invoiceNumber: 'desc',
+    },
   })
 
   let creditNoteNumber = `KORR-${year}-001`
@@ -214,6 +218,7 @@ export async function createCreditNoteForInvoice(originalInvoiceId: string, reas
   }
 
   // Erstelle Korrektur-Abrechnung mit negativen Beträgen
+  // WICHTIG: Die ursprüngliche Rechnung bleibt erhalten (wird nur auf 'cancelled' gesetzt, nicht gelöscht)
   const creditNote = await prisma.invoice.create({
     data: {
       invoiceNumber: creditNoteNumber,
@@ -226,23 +231,33 @@ export async function createCreditNoteForInvoice(originalInvoiceId: string, reas
       status: 'cancelled', // Korrektur-Abrechnung ist automatisch storniert
       dueDate: new Date(), // Keine Fälligkeit für Korrektur-Abrechnung
       refundedAt: new Date(),
+      originalInvoiceId: originalInvoiceId, // Verknüpfung zur ursprünglichen Rechnung
       items: {
         create: originalInvoice.items.map(item => ({
           watchId: item.watchId,
-          description: `Korrektur/Storno: ${item.description} (Grund: ${reason})`,
+          description: `Korrektur/Storno: ${item.description}`,
           quantity: item.quantity,
           price: -item.price, // Negativ
-          total: -item.total // Negativ
-        }))
-      }
+          total: -item.total, // Negativ
+        })),
+      },
     },
     include: {
       items: true,
-      seller: true
-    }
+      seller: true,
+      originalInvoice: {
+        select: {
+          id: true,
+          invoiceNumber: true,
+          createdAt: true,
+        },
+      },
+    },
   })
 
-  console.log(`[invoice] Korrektur-Abrechnung erstellt: ${creditNoteNumber} für ursprüngliche Rechnung ${originalInvoice.invoiceNumber}, Total: CHF ${creditNote.total.toFixed(2)}`)
+  console.log(
+    `[invoice] Korrektur-Abrechnung erstellt: ${creditNoteNumber} für ursprüngliche Rechnung ${originalInvoice.invoiceNumber}, Total: CHF ${creditNote.total.toFixed(2)}`
+  )
 
   // Benachrichtigung an Verkäufer
   try {
@@ -252,12 +267,17 @@ export async function createCreditNoteForInvoice(originalInvoiceId: string, reas
         type: 'NEW_INVOICE',
         title: 'Korrektur-Abrechnung erstellt',
         message: `Eine Korrektur-Abrechnung wurde für Sie erstellt: ${creditNoteNumber} (CHF ${creditNote.total.toFixed(2)}). Grund: ${reason}`,
-        link: `/my-watches/selling/fees?invoice=${creditNote.id}`
-      }
+        link: `/my-watches/selling/fees?invoice=${creditNote.id}`,
+      },
     })
-    console.log(`[invoice] Benachrichtigung für Korrektur-Abrechnung erstellt für User ${originalInvoice.sellerId}`)
+    console.log(
+      `[invoice] Benachrichtigung für Korrektur-Abrechnung erstellt für User ${originalInvoice.sellerId}`
+    )
   } catch (notificationError: any) {
-    console.error('[invoice] Fehler beim Erstellen der Notification für Korrektur-Abrechnung:', notificationError)
+    console.error(
+      '[invoice] Fehler beim Erstellen der Notification für Korrektur-Abrechnung:',
+      notificationError
+    )
   }
 
   return creditNote

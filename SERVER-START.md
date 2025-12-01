@@ -54,6 +54,7 @@ npm run dev
 ## 🔧 Was die Scripts machen
 
 ### `start-server.sh`
+
 - ✅ Prüft ob Port 3002 bereits belegt ist
 - ✅ Erstellt `.env` falls nicht vorhanden
 - ✅ Installiert Dependencies falls nötig
@@ -61,11 +62,13 @@ npm run dev
 - ✅ Startet den Server
 
 ### `check-and-start.sh`
+
 - ✅ Prüft ob Server bereits läuft
 - ✅ Startet Server automatisch falls nicht
 - ✅ Zeigt Status und PID
 
 ### `server-status.sh`
+
 - ✅ Zeigt Server-Status
 - ✅ Zeigt PID und URL
 - ✅ Gibt Anweisungen zum Beenden
@@ -121,6 +124,7 @@ tail -f server.error.log
 ```
 
 **Vorteile:**
+
 - ✅ Startet automatisch beim Login
 - ✅ Läuft im Hintergrund
 - ✅ Startet automatisch neu bei Fehlern
@@ -138,12 +142,14 @@ cd /Users/lucasrodrigues/ricardo-clone && ./check-and-start.sh > /dev/null 2>&1 
 ## 📝 Troubleshooting
 
 ### Port bereits belegt
+
 ```bash
 # Beende alle Prozesse auf Port 3002
 lsof -ti:3002 | xargs kill -9
 ```
 
 ### Server startet nicht
+
 ```bash
 # Prüfe Logs
 npm run dev
@@ -156,6 +162,7 @@ npm install
 ```
 
 ### Datenbank-Probleme
+
 ```bash
 # Generiere Prisma Client neu
 npx prisma generate
@@ -163,4 +170,3 @@ npx prisma generate
 # Prüfe Datenbank
 npx prisma studio
 ```
-

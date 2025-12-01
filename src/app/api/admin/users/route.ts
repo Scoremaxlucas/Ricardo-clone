@@ -6,29 +6,26 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
-    console.log('Users API called, session:', { 
-      userId: session?.user?.id, 
-      email: session?.user?.email 
+
+    console.log('Users API called, session:', {
+      userId: session?.user?.id,
+      email: session?.user?.email,
     })
-    
+
     if (!session?.user?.id && !session?.user?.email) {
       console.log('No session user id or email')
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
-    
+
     // Prüfe ob User Admin ist (per ID oder E-Mail)
     let user = null
     if (session.user.id) {
       user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { isAdmin: true, email: true }
+        select: { isAdmin: true, email: true },
       })
     }
 
@@ -37,7 +34,7 @@ export async function GET(request: NextRequest) {
     if (!adminUser && session.user.email) {
       adminUser = await prisma.user.findUnique({
         where: { email: session.user.email },
-        select: { isAdmin: true, email: true }
+        select: { isAdmin: true, email: true },
       })
     }
 
@@ -54,8 +51,12 @@ export async function GET(request: NextRequest) {
 
     // Alle Benutzer laden - verwende queryRaw um ALLE User zu bekommen
     console.log('Fetching all users from database...')
-    
-    // Zuerst mit Prisma Standard-Methode
+
+    // Hole Filter-Parameter
+    const { searchParams } = new URL(request.url)
+    const filterParam = searchParams.get('filter') || 'all'
+
+    // Hole alle User
     let users = await prisma.user.findMany({
       select: {
         id: true,
@@ -71,69 +72,65 @@ export async function GET(request: NextRequest) {
         verificationStatus: true,
         warningCount: true,
         lastWarnedAt: true,
-        createdAt: true
+        createdAt: true,
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     })
 
-    console.log('Users fetched via Prisma:', users.length)
-    
-    // Verwende IMMER queryRaw um sicherzustellen, dass alle User gefunden werden
-    console.log('⚠️  Verwende queryRaw um alle User zu finden...')
-    const rawUsers = await prisma.$queryRaw<Array<{
-      id: string
-      email: string
-      name: string | null
-      firstName: string | null
-      lastName: string | null
-      nickname: string | null
-      isAdmin: number | boolean
-      isBlocked: number | boolean
-      verified: number | boolean
-      verificationStatus: string | null
-      createdAt: Date
-    }>>`
-      SELECT id, email, name, firstName, lastName, nickname, 
-             isAdmin, isBlocked, verified, verificationStatus, createdAt
-      FROM users
-      WHERE email NOT IN ('test@watch-out.ch', 'seller@watch-out.ch')
-      ORDER BY createdAt DESC
-    `
-    
-    console.log('Users fetched via queryRaw:', rawUsers.length)
-    
-    // Konvertiere raw Users zu Prisma-Format
-    users = rawUsers.map(u => ({
-      id: u.id,
-      email: u.email,
-      name: u.name,
-      firstName: u.firstName,
-      lastName: u.lastName,
-      nickname: u.nickname,
-      isAdmin: u.isAdmin === 1 || u.isAdmin === true,
-      isBlocked: u.isBlocked === 1 || u.isBlocked === true,
-      blockedAt: null,
-      verified: u.verified === 1 || u.verified === true,
-      verificationStatus: u.verificationStatus,
-      warningCount: 0,
-      lastWarnedAt: null,
-      createdAt: u.createdAt
+    // Berechne pendingReports für jeden User
+    // Verwende einfachen Ansatz: Hole alle pending Reports und zähle pro User
+    const pendingReportsMap = new Map<string, number>()
+
+    try {
+      // Versuche alle pending Reports zu holen
+      const allPendingReports = await prisma.userReport.findMany({
+        where: {
+          status: 'pending',
+        },
+        select: {
+          reportedUserId: true,
+        },
+      })
+
+      // Zähle Reports pro User
+      allPendingReports.forEach(report => {
+        const currentCount = pendingReportsMap.get(report.reportedUserId) || 0
+        pendingReportsMap.set(report.reportedUserId, currentCount + 1)
+      })
+    } catch (reportError: any) {
+      // Falls UserReport Tabelle noch nicht existiert, ignoriere Fehler
+      console.warn('Could not load user reports (table might not exist yet):', reportError.message)
+    }
+
+    // Füge pendingReports zu jedem User hinzu
+    const usersWithReports = users.map(user => ({
+      ...user,
+      pendingReports: pendingReportsMap.get(user.id) || 0,
     }))
 
-    console.log('Total users to return:', users.length)
-    console.log('First user:', users[0])
+    // Filtere nach gemeldeten Usern, wenn Filter gesetzt ist
+    let filteredUsers = usersWithReports
+    if (filterParam === 'reported') {
+      filteredUsers = usersWithReports.filter(u => u.pendingReports > 0)
+    }
 
-    return NextResponse.json(users)
+    console.log('Users fetched via Prisma:', users.length)
+    console.log('Total users to return:', filteredUsers.length)
+    if (filterParam === 'reported') {
+      console.log('Filtered to reported users:', filteredUsers.length)
+    }
+
+    return NextResponse.json(filteredUsers)
   } catch (error: any) {
     console.error('Error fetching users:', error)
     console.error('Error stack:', error.stack)
     return NextResponse.json(
-      { 
+      {
         message: 'Fehler beim Laden der Benutzer',
         error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }
     )

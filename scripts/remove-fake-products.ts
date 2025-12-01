@@ -6,11 +6,7 @@ async function main() {
   console.log('🔍 Suche nach Fake-Artikeln...')
 
   // Test-User E-Mails identifizieren
-  const testUserEmails = [
-    'test@watch-out.ch',
-    'seller@watch-out.ch',
-    'test@example.com'
-  ]
+  const testUserEmails = ['test@watch-out.ch', 'seller@watch-out.ch', 'test@example.com']
 
   // Finde alle Test-User
   const testUsers = await prisma.user.findMany({
@@ -19,14 +15,14 @@ async function main() {
         { email: { in: testUserEmails } },
         { id: 'test-user-123' },
         { email: { contains: 'test' } },
-        { name: { contains: 'Test' } }
-      ]
+        { name: { contains: 'Test' } },
+      ],
     },
     select: {
       id: true,
       email: true,
-      name: true
-    }
+      name: true,
+    },
   })
 
   console.log(`\n📋 Gefundene Test-User (${testUsers.length}):`)
@@ -44,19 +40,19 @@ async function main() {
   // Finde alle Artikel von Test-Usern
   const fakeWatches = await prisma.watch.findMany({
     where: {
-      sellerId: { in: testUserIds }
+      sellerId: { in: testUserIds },
     },
     include: {
       seller: {
         select: {
           email: true,
-          name: true
-        }
+          name: true,
+        },
       },
       bids: true,
       purchases: true,
-      favorites: true
-    }
+      favorites: true,
+    },
   })
 
   console.log(`\n📦 Gefundene Fake-Artikel (${fakeWatches.length}):`)
@@ -75,67 +71,67 @@ async function main() {
   // Bestätigung
   console.log(`\n⚠️  WARNUNG: Es werden ${fakeWatches.length} Artikel gelöscht!`)
   console.log('   Dies kann nicht rückgängig gemacht werden.')
-  
+
   // Lösche zuerst abhängige Daten
   const watchIds = fakeWatches.map(w => w.id)
 
   // Lösche Gebote
   const deletedBids = await prisma.bid.deleteMany({
-    where: { watchId: { in: watchIds } }
+    where: { watchId: { in: watchIds } },
   })
   console.log(`\n🗑️  ${deletedBids.count} Gebote gelöscht`)
 
   // Lösche Favoriten
   const deletedFavorites = await prisma.favorite.deleteMany({
-    where: { watchId: { in: watchIds } }
+    where: { watchId: { in: watchIds } },
   })
   console.log(`🗑️  ${deletedFavorites.count} Favoriten gelöscht`)
 
   // Lösche Nachrichten
   const deletedMessages = await prisma.message.deleteMany({
-    where: { watchId: { in: watchIds } }
+    where: { watchId: { in: watchIds } },
   })
   console.log(`🗑️  ${deletedMessages.count} Nachrichten gelöscht`)
 
   // Lösche Preisvorschläge
   const deletedPriceOffers = await prisma.priceOffer.deleteMany({
-    where: { watchId: { in: watchIds } }
+    where: { watchId: { in: watchIds } },
   })
   console.log(`🗑️  ${deletedPriceOffers.count} Preisvorschläge gelöscht`)
 
   // Lösche Fragen
   const deletedQuestions = await prisma.question.deleteMany({
-    where: { watchId: { in: watchIds } }
+    where: { watchId: { in: watchIds } },
   })
   console.log(`🗑️  ${deletedQuestions.count} Fragen gelöscht`)
 
   // Lösche Watch-Kategorien-Verknüpfungen
   const deletedWatchCategories = await prisma.watchCategory.deleteMany({
-    where: { watchId: { in: watchIds } }
+    where: { watchId: { in: watchIds } },
   })
   console.log(`🗑️  ${deletedWatchCategories.count} Kategorie-Verknüpfungen gelöscht`)
 
   // Lösche Invoice Items (falls vorhanden)
   const deletedInvoiceItems = await prisma.invoiceItem.deleteMany({
-    where: { watchId: { in: watchIds } }
+    where: { watchId: { in: watchIds } },
   })
   console.log(`🗑️  ${deletedInvoiceItems.count} Rechnungsposten gelöscht`)
 
   // Lösche Purchases (Käufe)
   const deletedPurchases = await prisma.purchase.deleteMany({
-    where: { watchId: { in: watchIds } }
+    where: { watchId: { in: watchIds } },
   })
   console.log(`🗑️  ${deletedPurchases.count} Käufe gelöscht`)
 
   // Lösche Sales (Verkäufe)
   const deletedSales = await prisma.sale.deleteMany({
-    where: { watchId: { in: watchIds } }
+    where: { watchId: { in: watchIds } },
   })
   console.log(`🗑️  ${deletedSales.count} Verkäufe gelöscht`)
 
   // Lösche die Artikel selbst
   const deletedWatches = await prisma.watch.deleteMany({
-    where: { sellerId: { in: testUserIds } }
+    where: { sellerId: { in: testUserIds } },
   })
 
   console.log(`\n✅ ${deletedWatches.count} Fake-Artikel erfolgreich gelöscht!`)
@@ -151,11 +147,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error('❌ Fehler:', e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-

@@ -60,7 +60,7 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
   // Frage stellen
   const handleSubmitQuestion = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!session?.user?.id) {
       setError('Bitte melden Sie sich an, um Fragen zu stellen.')
       return
@@ -151,9 +151,9 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
   }
 
   return (
-    <div className="bg-white rounded-lg border border-gray-200 p-6">
+    <div className="rounded-lg border border-gray-200 bg-white p-6">
       {/* Header */}
-      <div className="flex items-center gap-2 mb-6">
+      <div className="mb-6 flex items-center gap-2">
         <MessageCircle className="h-5 w-5 text-primary-600" />
         <h3 className="text-lg font-bold text-gray-900">Fragen und Antworten</h3>
         {questions.length > 0 && (
@@ -165,46 +165,48 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
 
       {/* Frage-Formular */}
       {!isSeller && (
-        <div className="mb-6 p-4 bg-gray-50 rounded-lg">
+        <div className="mb-6 rounded-lg bg-gray-50 p-4">
           <form onSubmit={handleSubmitQuestion}>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
               Eine Frage stellen
             </label>
             <textarea
               value={questionText}
-              onChange={(e) => setQuestionText(e.target.value)}
-              className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+              onChange={e => setQuestionText(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
               placeholder="Stellen Sie dem Verkäufer eine Frage zu diesem Artikel..."
               rows={3}
               maxLength={800}
               disabled={!session?.user?.id}
             />
-            <div className="flex items-center justify-between mt-2">
-              <span className="text-xs text-gray-500">
-                {questionText.length}/800 Zeichen
-              </span>
+            <div className="mt-2 flex items-center justify-between">
+              <span className="text-xs text-gray-500">{questionText.length}/800 Zeichen</span>
               {!session?.user?.id && (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <AlertCircle className="h-4 w-4" />
                   <span>
-                    <Link href="/login" className="text-primary-600 hover:text-primary-700 font-medium">
+                    <Link
+                      href="/login"
+                      className="font-medium text-primary-600 hover:text-primary-700"
+                    >
                       Anmelden
-                    </Link>, um Fragen zu stellen
+                    </Link>
+                    , um Fragen zu stellen
                   </span>
                 </div>
               )}
             </div>
-            
+
             {error && (
-              <div className="mt-3 p-3 bg-red-50 border border-red-200 rounded-lg flex items-center gap-2">
-                <AlertCircle className="h-4 w-4 text-red-600 flex-shrink-0" />
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 p-3">
+                <AlertCircle className="h-4 w-4 flex-shrink-0 text-red-600" />
                 <span className="text-sm text-red-800">{error}</span>
               </div>
             )}
-            
+
             {success && (
-              <div className="mt-3 p-3 bg-green-50 border border-green-200 rounded-lg flex items-center gap-2">
-                <CheckCircle className="h-4 w-4 text-green-600 flex-shrink-0" />
+              <div className="mt-3 flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-3">
+                <CheckCircle className="h-4 w-4 flex-shrink-0 text-green-600" />
                 <span className="text-sm text-green-800">{success}</span>
               </div>
             )}
@@ -212,7 +214,7 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
             <button
               type="submit"
               disabled={!session?.user?.id || !questionText.trim() || isSubmitting}
-              className="mt-3 w-full sm:w-auto px-6 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center justify-center gap-2 font-medium"
+              className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-300 sm:w-auto"
             >
               <Send className="h-4 w-4" />
               {isSubmitting ? 'Wird gesendet...' : 'Frage senden'}
@@ -224,37 +226,35 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
       {/* Fragen-Liste */}
       <div className="space-y-4">
         {questions.length === 0 ? (
-          <div className="text-center py-8 text-gray-500">
-            <MessageCircle className="h-12 w-12 mx-auto mb-3 text-gray-300" />
+          <div className="py-8 text-center text-gray-500">
+            <MessageCircle className="mx-auto mb-3 h-12 w-12 text-gray-300" />
             <p>Noch keine Fragen gestellt.</p>
             {!isSeller && (
-              <p className="text-sm mt-1">Seien Sie der Erste und stellen Sie eine Frage!</p>
+              <p className="mt-1 text-sm">Seien Sie der Erste und stellen Sie eine Frage!</p>
             )}
           </div>
         ) : (
-          questions.map((q) => {
+          questions.map(q => {
             const isOwnQuestion = q.user.id === session?.user?.id
             const canAnswer = isSeller && !q.answer
-            
+
             return (
-              <div key={q.id} className="border border-gray-200 rounded-lg p-4">
+              <div key={q.id} className="rounded-lg border border-gray-200 p-4">
                 {/* Frage */}
-                <div className="flex items-start gap-3 mb-3">
-                  <div className="flex-shrink-0 w-8 h-8 rounded-full bg-primary-100 flex items-center justify-center">
+                <div className="mb-3 flex items-start gap-3">
+                  <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-primary-100">
                     <span className="text-sm font-semibold text-primary-700">
                       {(q.user.nickname || q.user.name || 'U').charAt(0).toUpperCase()}
                     </span>
                   </div>
                   <div className="flex-1">
-                    <div className="flex items-center gap-2 mb-1">
+                    <div className="mb-1 flex items-center gap-2">
                       <span className="font-medium text-gray-900">
                         {q.user.nickname || q.user.name || 'Benutzer'}
                       </span>
-                      <span className="text-xs text-gray-500">
-                        {formatDate(q.createdAt)}
-                      </span>
+                      <span className="text-xs text-gray-500">{formatDate(q.createdAt)}</span>
                       {isOwnQuestion && (
-                        <span className="text-xs bg-blue-100 text-blue-700 px-2 py-0.5 rounded">
+                        <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
                           Ihre Frage
                         </span>
                       )}
@@ -265,9 +265,11 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
 
                 {/* Antwort (falls vorhanden) */}
                 {q.answer && (
-                  <div className="ml-11 pl-4 border-l-2 border-primary-200 bg-primary-50 rounded-r-lg p-3">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="text-sm font-semibold text-primary-700">Verkäufer-Antwort</span>
+                  <div className="ml-11 rounded-r-lg border-l-2 border-primary-200 bg-primary-50 p-3 pl-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <span className="text-sm font-semibold text-primary-700">
+                        Verkäufer-Antwort
+                      </span>
                       {!q.isPublic && (
                         <div className="flex items-center gap-1 text-xs text-gray-600">
                           <Lock className="h-3 w-3" />
@@ -292,58 +294,66 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
 
                 {/* Antwort-Formular (nur für Verkäufer bei unbeantworteten Fragen) */}
                 {canAnswer && (
-                  <div className="ml-11 mt-3 p-3 bg-yellow-50 border border-yellow-200 rounded-lg">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <div className="ml-11 mt-3 rounded-lg border border-yellow-200 bg-yellow-50 p-3">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Ihre Antwort
                     </label>
                     <textarea
                       value={answerText[q.id] || ''}
-                      onChange={(e) => setAnswerText(prev => ({ ...prev, [q.id]: e.target.value }))}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                      onChange={e => setAnswerText(prev => ({ ...prev, [q.id]: e.target.value }))}
+                      className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                       placeholder="Beantworten Sie die Frage..."
                       rows={3}
                       maxLength={800}
                     />
-                    
+
                     {/* Sichtbarkeit wählen */}
                     <div className="mt-3 flex items-center justify-between">
                       <div className="flex items-center gap-4">
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className="flex cursor-pointer items-center gap-2">
                           <input
                             type="radio"
                             name={`visibility-${q.id}`}
                             checked={answerVisibility[q.id] !== false}
-                            onChange={() => setAnswerVisibility(prev => ({ ...prev, [q.id]: true }))}
-                            className="w-4 h-4 text-primary-600"
+                            onChange={() =>
+                              setAnswerVisibility(prev => ({ ...prev, [q.id]: true }))
+                            }
+                            className="h-4 w-4 text-primary-600"
                           />
                           <Globe className="h-4 w-4 text-gray-600" />
-                          <span className="text-sm text-gray-700">Öffentlich (für alle sichtbar)</span>
+                          <span className="text-sm text-gray-700">
+                            Öffentlich (für alle sichtbar)
+                          </span>
                         </label>
-                        <label className="flex items-center gap-2 cursor-pointer">
+                        <label className="flex cursor-pointer items-center gap-2">
                           <input
                             type="radio"
                             name={`visibility-${q.id}`}
                             checked={answerVisibility[q.id] === false}
-                            onChange={() => setAnswerVisibility(prev => ({ ...prev, [q.id]: false }))}
-                            className="w-4 h-4 text-primary-600"
+                            onChange={() =>
+                              setAnswerVisibility(prev => ({ ...prev, [q.id]: false }))
+                            }
+                            className="h-4 w-4 text-primary-600"
                           />
                           <Lock className="h-4 w-4 text-gray-600" />
-                          <span className="text-sm text-gray-700">Privat (nur für Fragesteller)</span>
+                          <span className="text-sm text-gray-700">
+                            Privat (nur für Fragesteller)
+                          </span>
                         </label>
                       </div>
-                      
+
                       <button
                         onClick={() => handleSubmitAnswer(q.id)}
                         disabled={!answerText[q.id]?.trim()}
-                        className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors flex items-center gap-2 text-sm font-medium"
+                        className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-300"
                       >
                         <Send className="h-4 w-4" />
                         Antwort senden
                       </button>
                     </div>
-                    
+
                     <p className="mt-2 text-xs text-gray-600">
-                      {answerVisibility[q.id] === false 
+                      {answerVisibility[q.id] === false
                         ? '🔒 Diese Antwort wird nur für den Fragesteller sichtbar sein.'
                         : '🌍 Diese Antwort wird für alle Besucher sichtbar sein.'}
                     </p>
@@ -357,4 +367,3 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
     </div>
   )
 }
-

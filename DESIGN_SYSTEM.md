@@ -3,13 +3,16 @@
 ## Farben
 
 ### Primär
+
 - **Primary**: `#137A5F` - Hauptfarbe für Buttons, Links, Akzente
 - **Primary Hover**: `#0f5f4a` - Hover-Zustand
 
 ### Akzent
+
 - **Accent**: `#FFD95C` - Für Highlights, Badges, Warnungen
 
 ### Neutral
+
 - **White**: `#FFFFFF` - Hintergrund
 - **Gray Light**: `#F4F4F4` - Subtile Hintergründe, Borders
 - **Gray Medium**: `#C6C6C6` - Icons, Placeholder-Text
@@ -18,10 +21,12 @@
 ## Typografie
 
 ### Schriftart
+
 - **Font Family**: Inter (Google Fonts)
 - **Weights**: 300 (Light), 400 (Regular), 500 (Medium), 600 (Semibold), 700 (Bold)
 
 ### Schriftgrößen
+
 - **Headings**: Semibold (600)
   - H1: 48px (Hero)
   - H2: 32px (Sections)
@@ -37,6 +42,7 @@
 ## Komponenten
 
 ### Header
+
 - **Höhe**: 80px (h-20)
 - **Sticky**: `sticky top-0 z-50`
 - **Shadow**: `0px 2px 12px rgba(0,0,0,0.08)`
@@ -44,6 +50,7 @@
 - **Border**: `border-b border-[#F4F4F4]`
 
 ### Kategorie-Kacheln
+
 - **Größe**: 100 × 100px
 - **Radius**: 16px
 - **Icon**: 40px
@@ -51,6 +58,7 @@
 - **Hover**: Shadow-lg
 
 ### Produktkarten
+
 - **Bild**: 260 × 260px (aspect-square)
 - **Titel**: 15px, Medium
 - **Preis**: 17px, Bold
@@ -59,7 +67,8 @@
 - **Hover**: Scale 1.03 + Shadow-lg
 
 ### Buttons
-- **Primary**: 
+
+- **Primary**:
   - Background: `#137A5F`
   - Text: White
   - Radius: 16px
@@ -71,17 +80,20 @@
   - Radius: 16px
 
 ### Inputs
+
 - **Radius**: 16px
 - **Border**: `#C6C6C6`
 - **Focus**: Ring `#137A5F`
 - **Padding**: `px-4 py-3`
 
 ### Filter Chips
+
 - **Radius**: 50px (vollständig gerundet)
 - **Padding**: `px-4 py-2`
 - **Active**: Background `#137A5F`, Text White
 
 ### Collections
+
 - **Größe**: 400 × 250px
 - **Radius**: 16px
 - **Overlay**: Gradient `from-black/60 via-black/20 to-transparent`
@@ -123,17 +135,3 @@
 4. **Typografie**: Halte die Schriftgrößen konsistent
 5. **Radius**: 16px für Karten, 50px für Pills
 6. **Shadows**: Subtile Schatten für Tiefe
-
-
-
-
-
-
-
-
-
-
-
-
-
-

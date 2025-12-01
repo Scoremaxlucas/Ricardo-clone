@@ -8,20 +8,14 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ success: false, message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('userId')
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, message: 'User ID fehlt' },
-        { status: 400 }
-      )
+      return NextResponse.json({ success: false, message: 'User ID fehlt' }, { status: 400 })
     }
 
     // Prüfe, ob der aktuelle User eine Purchase mit diesem Verkäufer hat
@@ -29,9 +23,9 @@ export async function GET(request: NextRequest) {
       where: {
         buyerId: session.user.id,
         watch: {
-          sellerId: userId
-        }
-      }
+          sellerId: userId,
+        },
+      },
     })
 
     if (!hasPurchase) {
@@ -55,8 +49,8 @@ export async function GET(request: NextRequest) {
         postalCode: true,
         city: true,
         phone: true,
-        paymentMethods: true
-      }
+        paymentMethods: true,
+      },
     })
 
     if (!seller) {
@@ -68,7 +62,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      seller
+      seller,
     })
   } catch (error: any) {
     console.error('Error fetching seller info:', error)
@@ -78,8 +72,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-
-
-
-
-

@@ -3,19 +3,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Hole die Uhr und prüfe Berechtigung
@@ -24,15 +18,12 @@ export async function POST(
       include: {
         purchases: { take: 1 },
         sales: { take: 1 },
-        bids: { take: 1 } // Prüfe ob bereits Gebote vorhanden sind
-      }
+        bids: { take: 1 }, // Prüfe ob bereits Gebote vorhanden sind
+      },
     })
 
     if (!watch) {
-      return NextResponse.json(
-        { message: 'Uhr nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Uhr nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob User der Verkäufer ist
@@ -44,11 +35,13 @@ export async function POST(
     }
 
     // Prüfe ob bereits ein aktiver Kauf oder Verkauf stattgefunden hat
-    // RICARDO-STYLE: Stornierte Purchases zählen nicht
+    // Stornierte Purchases zählen nicht
     const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
     if (activePurchases.length > 0 || watch.sales.length > 0) {
       return NextResponse.json(
-        { message: 'Das Angebot kann nicht gestoppt werden, da bereits ein Kauf stattgefunden hat' },
+        {
+          message: 'Das Angebot kann nicht gestoppt werden, da bereits ein Kauf stattgefunden hat',
+        },
         { status: 400 }
       )
     }
@@ -57,7 +50,10 @@ export async function POST(
     // Auktionen enden nur automatisch nach Ablauf der Frist
     if (watch.isAuction) {
       return NextResponse.json(
-        { message: 'Auktionen können nicht manuell beendet werden. Die Auktion endet automatisch nach Ablauf der festgelegten Frist.' },
+        {
+          message:
+            'Auktionen können nicht manuell beendet werden. Die Auktion endet automatisch nach Ablauf der festgelegten Frist.',
+        },
         { status: 400 }
       )
     }
@@ -68,24 +64,22 @@ export async function POST(
       where: { id },
       data: {
         auctionEnd: now,
-        autoRenew: false // Deaktiviere Auto-Renew beim Stoppen
-      }
+        autoRenew: false, // Deaktiviere Auto-Renew beim Stoppen
+      },
     })
 
     return NextResponse.json({
       message: 'Angebot erfolgreich gestoppt',
-      watch: updatedWatch
+      watch: updatedWatch,
     })
   } catch (error: any) {
     console.error('Error stopping watch:', error)
     return NextResponse.json(
       {
         message: 'Fehler beim Stoppen des Angebots',
-        error: error.message
+        error: error.message,
       },
       { status: 500 }
     )
   }
 }
-
-

@@ -11,7 +11,7 @@ export const authOptions = {
       name: 'credentials',
       credentials: {
         email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' }
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
         try {
@@ -31,7 +31,7 @@ export const authOptions = {
           try {
             user = await prisma.user.findUnique({
               where: {
-                email: normalizedEmail
+                email: normalizedEmail,
               },
               select: {
                 id: true,
@@ -45,7 +45,7 @@ export const authOptions = {
                 isAdmin: true,
                 isBlocked: true,
                 emailVerified: true,
-              }
+              },
             })
           } catch (dbError: any) {
             console.error('[AUTH] Database query error:', dbError)
@@ -61,29 +61,44 @@ export const authOptions = {
             return null
           }
 
-          console.log('[AUTH] User found:', { 
-            id: user.id, 
-            email: user.email, 
-            hasPassword: !!user.password, 
-            isAdmin: user.isAdmin, 
+          console.log('[AUTH] User found:', {
+            id: user.id,
+            email: user.email,
+            hasPassword: !!user.password,
+            isAdmin: user.isAdmin,
             isBlocked: user.isBlocked,
-            emailVerified: user.emailVerified
+            emailVerified: user.emailVerified,
           })
 
-          // Prüfe ob E-Mail bestätigt ist (RICARDO-STYLE: E-Mail-Bestätigung erforderlich)
+          // Prüfe ob E-Mail bestätigt ist (E-Mail-Bestätigung erforderlich)
           // AUSNAHME: Admins können sich auch ohne E-Mail-Verifizierung einloggen
           const isAdmin = user.isAdmin === true || user.isAdmin === 1
-          if (!user.emailVerified && !isAdmin) {
-            console.log('[AUTH] Email not verified:', normalizedEmail)
+
+          // Prüfe emailVerified explizit auf true, 1, oder String 'true'
+          const emailVerified =
+            user.emailVerified === true ||
+            user.emailVerified === 1 ||
+            user.emailVerified === '1' ||
+            user.emailVerified === 'true'
+
+          if (!emailVerified && !isAdmin) {
+            console.log('[AUTH] Email not verified:', normalizedEmail, 'emailVerified value:', user.emailVerified)
             throw new Error('EMAIL_NOT_VERIFIED')
           }
-          
+
           if (isAdmin && !user.emailVerified) {
             console.log('[AUTH] Admin login without email verification - allowed')
           }
 
           // Prüfe ob Benutzer blockiert ist
-          if (user.isBlocked === true || user.isBlocked === 1) {
+          // Prüfe explizit auf true, 1, oder String 'true'
+          const isBlocked =
+            user.isBlocked === true ||
+            user.isBlocked === 1 ||
+            user.isBlocked === '1' ||
+            user.isBlocked === 'true'
+
+          if (isBlocked) {
             console.log('[AUTH] User is blocked:', normalizedEmail)
             return null
           }
@@ -124,18 +139,18 @@ export const authOptions = {
             message: error.message,
             code: error.code,
             name: error.name,
-            stack: error.stack?.substring(0, 500) // Limit stack trace
+            stack: error.stack?.substring(0, 500), // Limit stack trace
           })
-          
+
           // Wenn es ein EMAIL_NOT_VERIFIED Error ist, werfe ihn weiter
           if (error.message === 'EMAIL_NOT_VERIFIED' || error.name === 'EmailNotVerified') {
             throw error
           }
-          
+
           return null
         }
-      }
-    })
+      },
+    }),
   ],
   session: {
     strategy: 'jwt' as const,
@@ -149,9 +164,13 @@ export const authOptions = {
         token.nickname = user.nickname
         token.isAdmin = user.isAdmin === true || user.isAdmin === 1 || false
         token.email = user.email
-        console.log('[AUTH] JWT callback - User logged in:', { id: user.id, email: user.email, isAdmin: token.isAdmin })
+        console.log('[AUTH] JWT callback - User logged in:', {
+          id: user.id,
+          email: user.email,
+          isAdmin: token.isAdmin,
+        })
       }
-      
+
       // Token zurückgeben (keine DB-Abfrage bei jedem Request)
       return token
     },
@@ -160,7 +179,7 @@ export const authOptions = {
         session.user.id = token.id as string
         session.user.image = token.image as string
         session.user.nickname = token.nickname as string | null
-        session.user.isAdmin = token.isAdmin as boolean || false
+        session.user.isAdmin = (token.isAdmin as boolean) || false
       }
       return session
     },

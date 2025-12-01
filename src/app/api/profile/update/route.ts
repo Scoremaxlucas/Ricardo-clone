@@ -8,51 +8,31 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    const { name, nickname, phone, street, streetNumber, postalCode, city, country } = await request.json()
+    const { name, nickname, phone, street, streetNumber, postalCode, city, country } =
+      await request.json()
 
     if (!name || !name.trim()) {
-      return NextResponse.json(
-        { message: 'Name ist erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Name ist erforderlich' }, { status: 400 })
     }
 
     // Validierung: Adresse ist Pflichtfeld
     if (!street || !street.trim()) {
-      return NextResponse.json(
-        { message: 'Strasse ist erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Strasse ist erforderlich' }, { status: 400 })
     }
     if (!streetNumber || !streetNumber.trim()) {
-      return NextResponse.json(
-        { message: 'Hausnummer ist erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Hausnummer ist erforderlich' }, { status: 400 })
     }
     if (!postalCode || !postalCode.trim()) {
-      return NextResponse.json(
-        { message: 'Postleitzahl ist erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Postleitzahl ist erforderlich' }, { status: 400 })
     }
     if (!city || !city.trim()) {
-      return NextResponse.json(
-        { message: 'Ort ist erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Ort ist erforderlich' }, { status: 400 })
     }
     if (!country || !country.trim()) {
-      return NextResponse.json(
-        { message: 'Land ist erforderlich' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Land ist erforderlich' }, { status: 400 })
     }
 
     // Aktualisiere den Benutzer in der Datenbank
@@ -86,18 +66,15 @@ export async function POST(request: NextRequest) {
         postalCode: true,
         city: true,
         country: true,
-      }
+      },
     })
 
     return NextResponse.json({
       message: 'Profil erfolgreich aktualisiert',
-      user: updatedUser
+      user: updatedUser,
     })
   } catch (error) {
     console.error('Error updating profile:', error)
-    return NextResponse.json(
-      { message: 'Ein Fehler ist aufgetreten' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Ein Fehler ist aufgetreten' }, { status: 500 })
   }
 }

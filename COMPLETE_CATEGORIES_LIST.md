@@ -3,6 +3,7 @@
 ## 🎯 ALLE HAUPTKATEGORIEN (40+)
 
 ### BESTEHEND (24):
+
 1. auto-motorrad
 2. fahrzeugzubehoer
 3. computer-netzwerk
@@ -29,6 +30,7 @@
 24. buero-gewerbe
 
 ### NEU HINZUFÜGEN (16+):
+
 25. immobilien
 26. jobs-karriere
 27. dienstleistungen
@@ -49,6 +51,7 @@
 ## 📋 ALLE SUBKATEGORIEN (ERWEITERT)
 
 ### AUTO & MOTORRAD:
+
 - Autos
 - Motorräder & Roller
 - Nutzfahrzeuge
@@ -57,6 +60,7 @@
 - Hybrid-Fahrzeuge
 
 ### FAHRZEUGZUBEHÖR:
+
 - Felgen & Reifen
 - Dachboxen & Trägersysteme
 - Ersatzteile
@@ -65,6 +69,7 @@
 - Sicherheit & Alarmanlagen
 
 ### COMPUTER & NETZWERK:
+
 - Notebooks & Laptops
 - Gaming-Laptops
 - Desktop-PCs
@@ -101,6 +106,7 @@
 - Smart Speaker
 
 ### HANDY, FESTNETZ & FUNK:
+
 - Smartphones
 - iPhones
 - iPods
@@ -108,6 +114,7 @@
 - Smartwatches (auch in Uhren & Schmuck)
 
 ### FOTO & OPTIK:
+
 - Spiegelreflexkameras
 - Digitalkameras
 - Analoge Kameras
@@ -122,6 +129,7 @@
 - Kamerazubehör
 
 ### GAMES & SPIELKONSOLEN:
+
 - Spielkonsolen
 - PlayStation
 - Xbox
@@ -132,6 +140,7 @@
 - PC-Spiele
 
 ### KLEIDUNG & ACCESSOIRES:
+
 - Sneakers Herren
 - Sneakers Damen
 - Herrenschuhe
@@ -169,6 +178,7 @@
 - Trachten & Kostüme
 
 ### UHREN & SCHMUCK:
+
 - Armbanduhren Herren
 - Armbanduhren Damen
 - Wanduhren
@@ -187,6 +197,7 @@
 - Uhrenzubehör
 
 ### KOSMETIK & PFLEGE:
+
 - Parfüm
 - Hautpflege
 - Make-up
@@ -195,6 +206,7 @@
 - Nagelpflege
 
 ### HAUSHALT & WOHNEN:
+
 - Sofas & Sessel
 - Stühle
 - Tische & Stühle
@@ -240,6 +252,7 @@
 - Küchenzubehör
 
 ### HANDWERK & GARTEN:
+
 - Elektrowerkzeuge
 - Handwerkzeuge
 - Rasenmäher
@@ -253,6 +266,7 @@
 - Gartendeko
 
 ### SPORT:
+
 - Fahrräder
 - E-Bikes
 - Mountainbikes
@@ -288,6 +302,7 @@
 - Tennis
 
 ### KIND & BABY:
+
 - Kinderwagen
 - Babybetten
 - Hochstühle
@@ -301,6 +316,7 @@
 - Stillen & Ernährung
 
 ### BÜCHER:
+
 - Romane & Erzählungen
 - Sachbücher
 - Kochbücher
@@ -314,10 +330,12 @@
 - E-Books
 
 ### FILME & SERIEN:
+
 - DVDs & Blu-rays
 - Streaming-Geräte
 
 ### MUSIK & MUSIKINSTRUMENTE:
+
 - Gitarren
 - E-Gitarren
 - Akustikgitarren
@@ -341,18 +359,21 @@
 - Recording Equipment
 
 ### SAMMELN & SELTENES:
+
 - Antiquitäten
 - Kunst
 - Briefmarken
 - Münzen (separate Kategorie)
 
 ### MÜNZEN:
+
 - Münzen
 - Goldmünzen
 - Silbermünzen
 - Gedenkmünzen
 
 ### SPIELZEUG & BASTELN:
+
 - Kuscheltiere
 - Puppen
 - Actionfiguren
@@ -364,12 +385,14 @@
 - Kartenspiele
 
 ### MODELLBAU & HOBBY:
+
 - Modellautos
 - Modellbahnen
 - RC-Modelle
 - Basteln & Kreativ
 
 ### TIERZUBEHÖR:
+
 - Hundezubehör
 - Katzenzubehör
 - Transportboxen
@@ -382,6 +405,7 @@
 - Training & Erziehung
 
 ### WEIN & GENUSS:
+
 - Rotwein
 - Weisswein
 - Roséwein
@@ -393,11 +417,13 @@
 - Delikatessen
 
 ### TICKETS & GUTSCHEINE:
+
 - Konzert Tickets
 - Sport Events
 - Gutscheine
 
 ### BÜRO & GEWERBE:
+
 - Bürostühle
 - Aktenschränke
 - Bürobedarf
@@ -410,6 +436,7 @@
 ### NEUE KATEGORIEN:
 
 #### IMMOBILIEN:
+
 - Wohnungen
 - Häuser
 - Gewerbeimmobilien
@@ -417,11 +444,13 @@
 - Ferienimmobilien
 
 #### JOBS & KARRIERE:
+
 - Stellenangebote
 - Bewerbungen
 - Karriere-Services
 
 #### DIENSTLEISTUNGEN:
+
 - Handwerk
 - Beratung
 - Reparatur
@@ -431,6 +460,7 @@
 - Sonstiges
 
 #### CAMPING & OUTDOOR:
+
 - Zelte
 - Camping-Ausrüstung
 - Rucksäcke & Taschen
@@ -439,6 +469,7 @@
 - Outdoor-Kleidung
 
 #### WELLNESS & GESUNDHEIT:
+
 - Massagegeräte
 - Sauna
 - Infrarot
@@ -446,12 +477,14 @@
 - Wellness-Zubehör
 
 #### REISE & URLAUB:
+
 - Reiseführer
 - Koffer & Reisetaschen
 - Reisezubehör
 - Reiseangebote
 
 #### GARTEN & PFLANZEN:
+
 - Pflanzen
 - Samen
 - Gartendeko
@@ -459,6 +492,7 @@
 - Gartengeräte
 
 #### BOOTE & SCHIFFE:
+
 - Segelyachten
 - Motoryachten
 - Sportboote
@@ -468,6 +502,7 @@
 - Bootszubehör
 
 #### TIERE:
+
 - Hunde
 - Katzen
 - Pferde
@@ -478,6 +513,7 @@
 - Sonstiges
 
 #### LEBENSMITTEL:
+
 - Bio-Produkte
 - Regionale Produkte
 - Delikatessen
@@ -485,17 +521,20 @@
 - Sonstiges
 
 #### MEDIZIN & GESUNDHEIT:
+
 - Hilfsmittel
 - Pflegeprodukte
 - Fitness-Equipment
 - Sonstiges
 
 #### FLUGZEUGE:
+
 - Flugzeuge
 - Flugzeugzubehör
 - Drohnen (auch in Foto & Optik)
 
 #### SMART HOME:
+
 - Smart Home Systeme
 - Smart Lights
 - Smart Thermostate
@@ -503,33 +542,20 @@
 - Smart Security
 
 #### ELEKTROGERÄTE:
+
 - Küchengeräte (erweitert)
 - Haushaltsgeräte (erweitert)
 - Elektronik (allgemein)
 
 #### BAUSTOFFE:
+
 - Baustoffe
 - Dämmstoffe
 - Dachmaterial
 - Fassadenmaterial
 
 #### KUNST & HANDWERK:
+
 - Kunstwerke
 - Handwerkskunst
 - DIY-Materialien
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

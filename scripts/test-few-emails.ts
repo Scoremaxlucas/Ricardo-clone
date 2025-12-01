@@ -13,7 +13,10 @@ if (fs.existsSync(envPath)) {
         const key = match[1].trim()
         let value = match[2].trim()
         // Entferne Anführungszeichen
-        if ((value.startsWith('"') && value.endsWith('"')) || (value.startsWith("'") && value.endsWith("'"))) {
+        if (
+          (value.startsWith('"') && value.endsWith('"')) ||
+          (value.startsWith("'") && value.endsWith("'"))
+        ) {
           value = value.slice(1, -1)
         }
         process.env[key] = value
@@ -55,16 +58,16 @@ async function testFewEmails() {
     purchaseId: 'test-purchase-id-456',
     invoiceId: 'test-invoice-id-789',
     invoiceNumber: 'REV-2024-001',
-    bidAmount: 1500.00,
-    currentHighestBid: 1600.00,
-    winningBid: 1700.00,
-    paymentAmount: 1500.00,
-    total: 165.00,
+    bidAmount: 1500.0,
+    currentHighestBid: 1600.0,
+    winningBid: 1700.0,
+    paymentAmount: 1500.0,
+    total: 165.0,
     dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
-    lateFeeAmount: 10.00,
+    lateFeeAmount: 10.0,
     trackingNumber: 'CH123456789',
     trackingProvider: 'Post',
-    offerAmount: 1400.00,
+    offerAmount: 1400.0,
     verificationUrl: `${BASE_URL}/verify-email?token=test-token-123`,
     answerContent: 'Ja, der Artikel ist noch verfügbar und in sehr gutem Zustand.',
     reviewRating: 5,
@@ -97,10 +100,7 @@ async function testFewEmails() {
 
   // 2. Verifizierungs-Bestätigung
   try {
-    const { subject, html, text } = getVerificationApprovalEmail(
-      testData.userName,
-      TEST_EMAIL
-    )
+    const { subject, html, text } = getVerificationApprovalEmail(testData.userName, TEST_EMAIL)
     await sendEmail({
       to: TEST_EMAIL,
       subject,
@@ -121,7 +121,7 @@ async function testFewEmails() {
       testData.sellerName,
       testData.articleTitle,
       testData.paymentAmount,
-      5.00, // shippingCost
+      5.0, // shippingCost
       'buy-now',
       testData.purchaseId,
       testData.watchId
@@ -193,12 +193,7 @@ testFewEmails()
     console.log('✅ Test abgeschlossen!')
     process.exit(0)
   })
-  .catch((error) => {
+  .catch(error => {
     console.error('❌ Fehler beim Test:', error)
     process.exit(1)
   })
-
-
-
-
-

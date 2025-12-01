@@ -4,7 +4,22 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { AlertCircle, CheckCircle, Loader2, User, Sparkles, Zap, Flame, Package, FileText, TrendingUp, Wallet, Tag, Plus, Settings } from 'lucide-react'
+import {
+  AlertCircle,
+  CheckCircle,
+  Loader2,
+  User,
+  Sparkles,
+  Zap,
+  Flame,
+  Package,
+  FileText,
+  TrendingUp,
+  Wallet,
+  Tag,
+  Plus,
+  Settings,
+} from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
@@ -59,7 +74,7 @@ export default function MyWatchesPage() {
     active: 0,
     sold: 0,
     drafts: 0,
-    offers: 0
+    offers: 0,
   })
 
   const loadItems = async () => {
@@ -70,13 +85,13 @@ export default function MyWatchesPage() {
       const data = await res.json()
       const itemsList = Array.isArray(data.watches) ? data.watches : []
       setItems(itemsList)
-      
+
       // Berechne Statistiken
       setStats({
         active: itemsList.filter((w: Item) => !w.isSold).length,
         sold: itemsList.filter((w: Item) => w.isSold).length,
         drafts: 0, // TODO: Lade Entwürfe
-        offers: 0 // TODO: Lade Preisvorschläge
+        offers: 0, // TODO: Lade Preisvorschläge
       })
     } catch (error) {
       console.error('Error loading items:', error)
@@ -107,9 +122,11 @@ export default function MyWatchesPage() {
             const data = await res.json()
             setIsVerified(data.verified || false)
             // Prüfe ob Verifizierung in Bearbeitung ist
-            if (!data.verified && data.user && (
-              data.user.street || data.user.dateOfBirth || data.user.paymentMethods
-            )) {
+            if (
+              !data.verified &&
+              data.user &&
+              (data.user.street || data.user.dateOfBirth || data.user.paymentMethods)
+            ) {
               setVerificationInProgress(true)
             }
           }
@@ -153,7 +170,7 @@ export default function MyWatchesPage() {
       const res = await fetch(`/api/watches/${selectedItemForBooster.id}/upgrade-booster`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ newBooster: selectedBooster })
+        body: JSON.stringify({ newBooster: selectedBooster }),
       })
 
       const data = await res.json()
@@ -161,10 +178,14 @@ export default function MyWatchesPage() {
       if (res.ok) {
         const currentBoosters = selectedItemForBooster.boosters || []
         const currentBoosterCode = currentBoosters.length > 0 ? currentBoosters[0] : null
-        const message = currentBoosterCode 
-          ? t.myWatches.boosterSuccess.replace('{invoiceNumber}', data.invoice.invoiceNumber).replace('{amount}', data.invoice.total.toFixed(2))
-          : t.myWatches.boosterAdded.replace('{invoiceNumber}', data.invoice.invoiceNumber).replace('{amount}', data.invoice.total.toFixed(2))
-        
+        const message = currentBoosterCode
+          ? t.myWatches.boosterSuccess
+              .replace('{invoiceNumber}', data.invoice.invoiceNumber)
+              .replace('{amount}', data.invoice.total.toFixed(2))
+          : t.myWatches.boosterAdded
+              .replace('{invoiceNumber}', data.invoice.invoiceNumber)
+              .replace('{amount}', data.invoice.total.toFixed(2))
+
         toast.success(message, {
           duration: 5000,
           icon: '✅',
@@ -181,7 +202,7 @@ export default function MyWatchesPage() {
             secondary: '#10b981',
           },
         })
-        
+
         setShowBoosterModal(false)
         setSelectedItemForBooster(null)
         setSelectedBooster('')
@@ -244,7 +265,7 @@ export default function MyWatchesPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex min-h-screen items-center justify-center">
           <div className="text-gray-500">{t.myWatches.redirecting}</div>
         </div>
         <Footer />
@@ -259,7 +280,7 @@ export default function MyWatchesPage() {
       icon: TrendingUp,
       href: '/my-watches/selling/active',
       color: 'bg-green-100 text-green-600',
-      count: stats.active
+      count: stats.active,
     },
     {
       title: t.myWatches.sold,
@@ -267,7 +288,7 @@ export default function MyWatchesPage() {
       icon: CheckCircle,
       href: '/my-watches/selling/sold',
       color: 'bg-blue-100 text-blue-600',
-      count: stats.sold
+      count: stats.sold,
     },
     {
       title: t.myWatches.fees,
@@ -275,7 +296,7 @@ export default function MyWatchesPage() {
       icon: Wallet,
       href: '/my-watches/selling/fees',
       color: 'bg-yellow-100 text-yellow-600',
-      count: 0
+      count: 0,
     },
     {
       title: t.myWatches.priceOffers,
@@ -283,16 +304,16 @@ export default function MyWatchesPage() {
       icon: Tag,
       href: '/my-watches/selling/offers',
       color: 'bg-purple-100 text-purple-600',
-      count: stats.offers
-    }
+      count: stats.offers,
+    },
   ]
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <div className="text-sm text-gray-600 mb-4">
+        <div className="mb-4 text-sm text-gray-600">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
             {t.myWatches.homepage}
           </Link>
@@ -301,20 +322,20 @@ export default function MyWatchesPage() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-100 rounded-lg">
+            <div className="rounded-lg bg-primary-100 p-2">
               <Settings className="h-6 w-6 text-primary-600" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{t.myWatches.title}</h1>
-              <p className="text-gray-600 mt-1">{t.myWatches.subtitle}</p>
+              <p className="mt-1 text-gray-600">{t.myWatches.subtitle}</p>
             </div>
           </div>
           {isVerified === true && (
-            <div className="flex items-center px-4 py-2 bg-green-100 border border-green-300 rounded-lg">
-              <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
-              <span className="text-green-800 font-medium">{t.myWatches.verified}</span>
+            <div className="flex items-center rounded-lg border border-green-300 bg-green-100 px-4 py-2">
+              <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
+              <span className="font-medium text-green-800">{t.myWatches.verified}</span>
             </div>
           )}
         </div>
@@ -324,14 +345,14 @@ export default function MyWatchesPage() {
         {isVerified === false && (
           <div className="mb-6">
             {verificationInProgress ? (
-              <div className="p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+              <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
                 <div className="flex items-center">
-                  <Loader2 className="h-5 w-5 text-yellow-600 mr-2 animate-spin" />
+                  <Loader2 className="mr-2 h-5 w-5 animate-spin text-yellow-600" />
                   <div>
-                    <p className="text-yellow-800 font-medium">
+                    <p className="font-medium text-yellow-800">
                       {t.myWatches.validationInProgress}
                     </p>
-                    <p className="text-sm text-yellow-700 mt-1">
+                    <p className="mt-1 text-sm text-yellow-700">
                       {t.myWatches.validationInProgressDesc}
                     </p>
                   </div>
@@ -340,9 +361,9 @@ export default function MyWatchesPage() {
             ) : (
               <Link
                 href="/verification"
-                className="inline-flex items-center px-6 py-3 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 font-medium transition-colors"
+                className="inline-flex items-center rounded-lg bg-yellow-600 px-6 py-3 font-medium text-white transition-colors hover:bg-yellow-700"
               >
-                <AlertCircle className="h-5 w-5 mr-2" />
+                <AlertCircle className="mr-2 h-5 w-5" />
                 {t.myWatches.startVerification}
               </Link>
             )}
@@ -350,35 +371,33 @@ export default function MyWatchesPage() {
         )}
 
         {/* Dashboard Karten */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {menuItems.map((item) => {
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {menuItems.map(item => {
             const Icon = item.icon
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="group bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-all cursor-pointer relative border border-gray-200 hover:border-primary-300"
-                onClick={(e) => {
+                className="group relative cursor-pointer rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary-300 hover:shadow-xl"
+                onClick={e => {
                   e.preventDefault()
                   router.push(item.href)
                 }}
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`inline-flex p-3 rounded-lg ${item.color}`}>
+                <div className="mb-4 flex items-start justify-between">
+                  <div className={`inline-flex rounded-lg p-3 ${item.color}`}>
                     <Icon className="h-6 w-6" />
                   </div>
                   {item.count > 0 && (
-                    <span className="bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    <span className="rounded-full bg-primary-600 px-2 py-1 text-xs font-bold text-white">
                       {item.count}
                     </span>
                   )}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                <h3 className="mb-2 text-xl font-semibold text-gray-900 transition-colors group-hover:text-primary-600">
                   {item.title}
                 </h3>
-                <p className="text-gray-600 text-sm">
-                  {item.description}
-                </p>
+                <p className="text-sm text-gray-600">{item.description}</p>
               </Link>
             )
           })}
@@ -388,15 +407,15 @@ export default function MyWatchesPage() {
         <div className="mb-8">
           <Link
             href="/sell"
-            className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 font-medium transition-colors shadow-md hover:shadow-lg"
+            className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary-700 hover:shadow-lg"
           >
-            <Plus className="h-5 w-5 mr-2" />
+            <Plus className="mr-2 h-5 w-5" />
             {t.myWatches.sellNewItem}
           </Link>
         </div>
       </div>
       <Footer />
-      
+
       {/* Käuferinformationen Modal */}
       {selectedBuyer && (
         <BuyerInfoModal
@@ -412,225 +431,266 @@ export default function MyWatchesPage() {
       )}
 
       {/* Booster Modal */}
-      {showBoosterModal && selectedItemForBooster && (() => {
-        const currentBoosters = selectedItemForBooster.boosters || []
-        const currentBoosterCode = currentBoosters.length > 0 ? currentBoosters[0] : null
-        const currentBooster = boosters.find((b: any) => b.code === currentBoosterCode)
-        
-        return (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-lg p-6 max-w-3xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
-            <div className="mb-6">
-              <h2 className="text-2xl font-semibold text-gray-900 mb-4 flex items-center">
-                <Sparkles className="h-5 w-5 mr-2" />
-                {currentBooster ? t.myWatches.boosterUpgrade : t.myWatches.addBooster}
-              </h2>
-              <p className="text-sm text-gray-600 mb-4">
-                {t.myWatches.selectBoosterFor} <strong className="text-gray-900">{selectedItemForBooster.title}</strong>
-              </p>
-              {currentBooster && (
-                <div className="bg-green-50 border border-green-200 rounded-lg px-4 py-3 mb-4">
-                  <p className="text-sm font-medium text-green-800">
-                    ✓ {t.myWatches.currentActiveBooster} <strong>{currentBooster.name}</strong> (CHF {currentBooster.price.toFixed(2)})
+      {showBoosterModal &&
+        selectedItemForBooster &&
+        (() => {
+          const currentBoosters = selectedItemForBooster.boosters || []
+          const currentBoosterCode = currentBoosters.length > 0 ? currentBoosters[0] : null
+          const currentBooster = boosters.find((b: any) => b.code === currentBoosterCode)
+
+          return (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+              <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-2xl">
+                <div className="mb-6">
+                  <h2 className="mb-4 flex items-center text-2xl font-semibold text-gray-900">
+                    <Sparkles className="mr-2 h-5 w-5" />
+                    {currentBooster ? t.myWatches.boosterUpgrade : t.myWatches.addBooster}
+                  </h2>
+                  <p className="mb-4 text-sm text-gray-600">
+                    {t.myWatches.selectBoosterFor}{' '}
+                    <strong className="text-gray-900">{selectedItemForBooster.title}</strong>
                   </p>
-                </div>
-              )}
-            </div>
-            {boosters.length === 0 ? (
-              <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-6">
-                <p className="text-sm text-yellow-800">{t.myWatches.boosterOptionsLoading}</p>
-              </div>
-            ) : (
-              <div className="grid grid-cols-1 gap-4 mb-6">
-                {(() => {
-                  // Wenn Super-Boost bereits aktiv ist, zeige keine Upgrade-Optionen mehr
-                  if (currentBoosterCode === 'super-boost') {
-                    return (
-                      <div className="col-span-full bg-green-50 border border-green-200 rounded-lg p-4 text-center">
-                        <div className="flex items-center justify-center gap-2 mb-1">
-                          <CheckCircle className="h-5 w-5 text-green-600" />
-                          <p className="text-base font-semibold text-green-800">
-                            {t.myWatches.superBoostActive}
-                          </p>
-                        </div>
-                        <p className="text-xs text-green-700">
-                          {t.myWatches.superBoostActiveDesc}
-                        </p>
-                      </div>
-                    )
-                  }
-                  
-                  return boosters.filter((b: any) => {
-                    // Filtere "none" und zeige nur Upgrades (teurere Booster) wenn bereits ein Booster vorhanden ist
-                    if (b.code === 'none') return false
-                    if (!currentBoosterCode) return true // Kein Booster vorhanden, zeige alle
-                    const currentPrice = currentBooster?.price || 0
-                    return b.price > currentPrice // Nur teurere Booster als Upgrade
-                  }).map((booster: any) => {
-                  const isSelected = selectedBooster === booster.code
-                  const isCurrent = booster.code === currentBoosterCode
-                  const isSuperBoost = booster.code === 'super-boost'
-                  const isTurboBoost = booster.code === 'turbo-boost'
-                  const isBoost = booster.code === 'boost'
-                  
-                  // Berechne Differenz
-                  const currentPrice = currentBooster?.price || 0
-                  const priceDifference = booster.price - currentPrice
-                  
-                  // Gaming-ähnliche Styles für jeden Booster (helles Design)
-                  let cardStyles = ''
-                  let badgeStyles = ''
-                  let priceStyles = ''
-                  
-                  if (isSuperBoost) {
-                    cardStyles = isSelected
-                      ? 'border-2 border-yellow-400 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 shadow-lg ring-2 ring-yellow-200/50'
-                      : isCurrent
-                      ? 'border-2 border-yellow-300 bg-gradient-to-br from-yellow-50/80 via-orange-50/80 to-red-50/80'
-                      : 'border-2 border-yellow-300 bg-gradient-to-br from-yellow-50/50 via-orange-50/50 to-red-50/50 hover:border-yellow-400 hover:shadow-md'
-                    badgeStyles = 'bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white'
-                    priceStyles = 'text-yellow-600'
-                  } else if (isTurboBoost) {
-                    cardStyles = isSelected
-                      ? 'border-2 border-purple-500 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 shadow-lg ring-2 ring-purple-200/50'
-                      : isCurrent
-                      ? 'border-2 border-purple-300 bg-gradient-to-br from-purple-50/80 via-blue-50/80 to-indigo-50/80'
-                      : 'border-2 border-purple-300 bg-gradient-to-br from-purple-50/50 via-blue-50/50 to-indigo-50/50 hover:border-purple-400 hover:shadow-md'
-                    badgeStyles = 'bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 text-white'
-                    priceStyles = 'text-purple-600'
-                  } else if (isBoost) {
-                    cardStyles = isSelected
-                      ? 'border-2 border-emerald-500 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 shadow-lg ring-2 ring-emerald-200/50'
-                      : isCurrent
-                      ? 'border-2 border-emerald-300 bg-gradient-to-br from-emerald-50/80 via-green-50/80 to-teal-50/80'
-                      : 'border-2 border-emerald-300 bg-gradient-to-br from-emerald-50/50 via-green-50/50 to-teal-50/50 hover:border-emerald-400 hover:shadow-md'
-                    badgeStyles = 'bg-gradient-to-r from-emerald-500 via-green-500 to-teal-600 text-white'
-                    priceStyles = 'text-blue-600'
-                  }
-                  
-                  return (
-                    <label
-                      key={booster.id}
-                      className={`relative flex flex-col p-3 rounded-lg cursor-pointer transition-all ${
-                        isSelected ? 'scale-[1.02]' : 'hover:scale-[1.01]'
-                      } ${cardStyles}`}
-                    >
-                      <input
-                        type="radio"
-                        name="booster"
-                        value={booster.code}
-                        checked={isSelected}
-                        onChange={(e) => setSelectedBooster(e.target.value)}
-                        className="sr-only"
-                        disabled={isCurrent}
-                      />
-                      
-                      {isCurrent && (
-                        <div className="absolute top-2 right-2 bg-green-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">
-                          {t.myWatches.active}
-                        </div>
-                      )}
-                      
-                      {/* Badge/Tier Indicator */}
-                      <div className="flex items-center justify-between mb-2">
-                        <div className={`px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wide flex items-center gap-1 ${badgeStyles}`}>
-                          {isSuperBoost ? (
-                            <>
-                              <Sparkles className="h-3 w-3" />
-                              <span>Premium</span>
-                            </>
-                          ) : isTurboBoost ? (
-                            <>
-                              <Zap className="h-3 w-3" />
-                              <span>Turbo</span>
-                            </>
-                          ) : (
-                            <>
-                              <Flame className="h-3 w-3" />
-                              <span>Boost</span>
-                            </>
-                          )}
-                        </div>
-                        {isSelected && !isCurrent && (
-                          <div className="w-5 h-5 rounded-full bg-green-500 flex items-center justify-center shadow-md">
-                            <svg className="w-3 h-3 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={3} d="M5 13l4 4L19 7" />
-                            </svg>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Booster Name */}
-                      <div className="mb-1">
-                        <h3 className={`font-bold text-base mb-0.5 ${isSuperBoost ? 'text-orange-900' : isTurboBoost ? 'text-purple-900' : 'text-blue-900'}`}>
-                          {booster.name}
-                        </h3>
-                      </div>
-                      
-                      {/* Description */}
-                      <p className="text-xs text-gray-700 leading-relaxed mb-2 flex-1">
-                        {booster.description}
+                  {currentBooster && (
+                    <div className="mb-4 rounded-lg border border-green-200 bg-green-50 px-4 py-3">
+                      <p className="text-sm font-medium text-green-800">
+                        ✓ {t.myWatches.currentActiveBooster} <strong>{currentBooster.name}</strong>{' '}
+                        (CHF {currentBooster.price.toFixed(2)})
                       </p>
-                      
-                      {/* Price Section */}
-                      <div className="mt-auto pt-2 border-t border-gray-200/50">
-                        {currentBoosterCode && !isCurrent ? (
-                          <div className="space-y-1">
-                            <div className="flex items-baseline justify-between">
-                              <span className="text-[10px] text-gray-500 uppercase tracking-wide">{t.myWatches.upgrade}</span>
-                              <div className={`text-lg font-bold ${priceStyles}`}>
-                                CHF {priceDifference.toFixed(2)}
+                    </div>
+                  )}
+                </div>
+                {boosters.length === 0 ? (
+                  <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                    <p className="text-sm text-yellow-800">{t.myWatches.boosterOptionsLoading}</p>
+                  </div>
+                ) : (
+                  <div className="mb-6 grid grid-cols-1 gap-4">
+                    {(() => {
+                      // Wenn Super-Boost bereits aktiv ist, zeige keine Upgrade-Optionen mehr
+                      if (currentBoosterCode === 'super-boost') {
+                        return (
+                          <div className="col-span-full rounded-lg border border-green-200 bg-green-50 p-4 text-center">
+                            <div className="mb-1 flex items-center justify-center gap-2">
+                              <CheckCircle className="h-5 w-5 text-green-600" />
+                              <p className="text-base font-semibold text-green-800">
+                                {t.myWatches.superBoostActive}
+                              </p>
+                            </div>
+                            <p className="text-xs text-green-700">
+                              {t.myWatches.superBoostActiveDesc}
+                            </p>
+                          </div>
+                        )
+                      }
+
+                      return boosters
+                        .filter((b: any) => {
+                          // Filtere "none" und zeige nur Upgrades (teurere Booster) wenn bereits ein Booster vorhanden ist
+                          if (b.code === 'none') return false
+                          if (!currentBoosterCode) return true // Kein Booster vorhanden, zeige alle
+                          const currentPrice = currentBooster?.price || 0
+                          return b.price > currentPrice // Nur teurere Booster als Upgrade
+                        })
+                        .map((booster: any) => {
+                          const isSelected = selectedBooster === booster.code
+                          const isCurrent = booster.code === currentBoosterCode
+                          const isSuperBoost = booster.code === 'super-boost'
+                          const isTurboBoost = booster.code === 'turbo-boost'
+                          const isBoost = booster.code === 'boost'
+
+                          // Berechne Differenz
+                          const currentPrice = currentBooster?.price || 0
+                          const priceDifference = booster.price - currentPrice
+
+                          // Gaming-ähnliche Styles für jeden Booster (helles Design)
+                          let cardStyles = ''
+                          let badgeStyles = ''
+                          let priceStyles = ''
+
+                          if (isSuperBoost) {
+                            cardStyles = isSelected
+                              ? 'border-2 border-yellow-400 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 shadow-lg ring-2 ring-yellow-200/50'
+                              : isCurrent
+                                ? 'border-2 border-yellow-300 bg-gradient-to-br from-yellow-50/80 via-orange-50/80 to-red-50/80'
+                                : 'border-2 border-yellow-300 bg-gradient-to-br from-yellow-50/50 via-orange-50/50 to-red-50/50 hover:border-yellow-400 hover:shadow-md'
+                            badgeStyles =
+                              'bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white'
+                            priceStyles = 'text-yellow-600'
+                          } else if (isTurboBoost) {
+                            cardStyles = isSelected
+                              ? 'border-2 border-purple-500 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 shadow-lg ring-2 ring-purple-200/50'
+                              : isCurrent
+                                ? 'border-2 border-purple-300 bg-gradient-to-br from-purple-50/80 via-blue-50/80 to-indigo-50/80'
+                                : 'border-2 border-purple-300 bg-gradient-to-br from-purple-50/50 via-blue-50/50 to-indigo-50/50 hover:border-purple-400 hover:shadow-md'
+                            badgeStyles =
+                              'bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 text-white'
+                            priceStyles = 'text-purple-600'
+                          } else if (isBoost) {
+                            cardStyles = isSelected
+                              ? 'border-2 border-emerald-500 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 shadow-lg ring-2 ring-emerald-200/50'
+                              : isCurrent
+                                ? 'border-2 border-emerald-300 bg-gradient-to-br from-emerald-50/80 via-green-50/80 to-teal-50/80'
+                                : 'border-2 border-emerald-300 bg-gradient-to-br from-emerald-50/50 via-green-50/50 to-teal-50/50 hover:border-emerald-400 hover:shadow-md'
+                            badgeStyles =
+                              'bg-gradient-to-r from-emerald-500 via-green-500 to-teal-600 text-white'
+                            priceStyles = 'text-blue-600'
+                          }
+
+                          return (
+                            <label
+                              key={booster.id}
+                              className={`relative flex cursor-pointer flex-col rounded-lg p-3 transition-all ${
+                                isSelected ? 'scale-[1.02]' : 'hover:scale-[1.01]'
+                              } ${cardStyles}`}
+                            >
+                              <input
+                                type="radio"
+                                name="booster"
+                                value={booster.code}
+                                checked={isSelected}
+                                onChange={e => setSelectedBooster(e.target.value)}
+                                className="sr-only"
+                                disabled={isCurrent}
+                              />
+
+                              {isCurrent && (
+                                <div className="absolute right-2 top-2 rounded-full bg-green-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                                  {t.myWatches.active}
+                                </div>
+                              )}
+
+                              {/* Badge/Tier Indicator */}
+                              <div className="mb-2 flex items-center justify-between">
+                                <div
+                                  className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${badgeStyles}`}
+                                >
+                                  {isSuperBoost ? (
+                                    <>
+                                      <Sparkles className="h-3 w-3" />
+                                      <span>Premium</span>
+                                    </>
+                                  ) : isTurboBoost ? (
+                                    <>
+                                      <Zap className="h-3 w-3" />
+                                      <span>Turbo</span>
+                                    </>
+                                  ) : (
+                                    <>
+                                      <Flame className="h-3 w-3" />
+                                      <span>Boost</span>
+                                    </>
+                                  )}
+                                </div>
+                                {isSelected && !isCurrent && (
+                                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 shadow-md">
+                                    <svg
+                                      className="h-3 w-3 text-white"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={3}
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                  </div>
+                                )}
                               </div>
-                            </div>
-                            <div className="flex items-center justify-between text-[10px]">
-                              <span className="text-gray-400 line-through">CHF {booster.price.toFixed(2)}</span>
-                              <span className="text-green-600">{t.myWatches.save} CHF {(booster.price - priceDifference).toFixed(2)}</span>
-                            </div>
-                          </div>
-                        ) : (
-                          <div className="flex items-baseline justify-between">
-                            <span className="text-[10px] text-gray-500 uppercase tracking-wide">{t.myWatches.price}</span>
-                            <div className={`text-lg font-bold ${priceStyles}`}>
-                              CHF {booster.price.toFixed(2)}
-                            </div>
-                          </div>
-                        )}
-                      </div>
-                      
-                      {/* Special glow effect for Super-Boost when selected */}
-                      {isSuperBoost && isSelected && (
-                        <div className="absolute inset-0 rounded-lg bg-gradient-to-r from-yellow-400/15 via-orange-400/15 to-red-400/15 animate-pulse pointer-events-none" />
-                      )}
-                    </label>
-                  )
-                })
-                })()}
+
+                              {/* Booster Name */}
+                              <div className="mb-1">
+                                <h3
+                                  className={`mb-0.5 text-base font-bold ${isSuperBoost ? 'text-orange-900' : isTurboBoost ? 'text-purple-900' : 'text-blue-900'}`}
+                                >
+                                  {booster.name}
+                                </h3>
+                              </div>
+
+                              {/* Description */}
+                              <p className="mb-2 flex-1 text-xs leading-relaxed text-gray-700">
+                                {booster.description}
+                              </p>
+
+                              {/* Price Section */}
+                              <div className="mt-auto border-t border-gray-200/50 pt-2">
+                                {currentBoosterCode && !isCurrent ? (
+                                  <div className="space-y-1">
+                                    <div className="flex items-baseline justify-between">
+                                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                                        {t.myWatches.upgrade}
+                                      </span>
+                                      <div className={`text-lg font-bold ${priceStyles}`}>
+                                        CHF {priceDifference.toFixed(2)}
+                                      </div>
+                                    </div>
+                                    <div className="flex items-center justify-between text-[10px]">
+                                      <span className="text-gray-400 line-through">
+                                        CHF {booster.price.toFixed(2)}
+                                      </span>
+                                      <span className="text-green-600">
+                                        {t.myWatches.save} CHF{' '}
+                                        {(booster.price - priceDifference).toFixed(2)}
+                                      </span>
+                                    </div>
+                                  </div>
+                                ) : (
+                                  <div className="flex items-baseline justify-between">
+                                    <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                                      {t.myWatches.price}
+                                    </span>
+                                    <div className={`text-lg font-bold ${priceStyles}`}>
+                                      CHF {booster.price.toFixed(2)}
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Special glow effect for Super-Boost when selected */}
+                              {isSuperBoost && isSelected && (
+                                <div className="pointer-events-none absolute inset-0 animate-pulse rounded-lg bg-gradient-to-r from-yellow-400/15 via-orange-400/15 to-red-400/15" />
+                              )}
+                            </label>
+                          )
+                        })
+                    })()}
+                  </div>
+                )}
+                <div className="flex gap-3 border-t border-gray-200 pt-4">
+                  <button
+                    onClick={() => {
+                      setShowBoosterModal(false)
+                      setSelectedItemForBooster(null)
+                      setSelectedBooster('')
+                    }}
+                    className="flex-1 rounded bg-gray-200 px-4 py-2 text-gray-800 hover:bg-gray-300"
+                    disabled={boosterLoading}
+                  >
+                    {t.myWatches.cancel}
+                  </button>
+                  <button
+                    onClick={handleBoosterSubmit}
+                    disabled={
+                      !selectedBooster ||
+                      selectedBooster === 'none' ||
+                      boosterLoading ||
+                      selectedBooster === currentBoosterCode
+                    }
+                    className="flex-1 rounded bg-primary-600 px-4 py-2 text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-300 disabled:text-gray-500"
+                  >
+                    {boosterLoading
+                      ? t.myWatches.processing
+                      : currentBoosterCode
+                        ? t.myWatches.performUpgrade
+                        : t.myWatches.add}
+                  </button>
+                </div>
               </div>
-            )}
-            <div className="flex gap-3 pt-4 border-t border-gray-200">
-              <button
-                onClick={() => {
-                  setShowBoosterModal(false)
-                  setSelectedItemForBooster(null)
-                  setSelectedBooster('')
-                }}
-                className="flex-1 px-4 py-2 bg-gray-200 text-gray-800 rounded hover:bg-gray-300"
-                disabled={boosterLoading}
-              >
-                {t.myWatches.cancel}
-              </button>
-              <button
-                onClick={handleBoosterSubmit}
-                disabled={!selectedBooster || selectedBooster === 'none' || boosterLoading || selectedBooster === currentBoosterCode}
-                className="flex-1 px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 disabled:bg-gray-300 disabled:text-gray-500 disabled:cursor-not-allowed"
-              >
-                {boosterLoading ? t.myWatches.processing : currentBoosterCode ? t.myWatches.performUpgrade : t.myWatches.add}
-              </button>
             </div>
-          </div>
-        </div>
-        )
-      })()}
+          )
+        })()}
     </div>
   )
 }

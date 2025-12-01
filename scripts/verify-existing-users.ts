@@ -2,10 +2,10 @@
 
 /**
  * Script zum automatischen Bestätigen aller bestehenden User
- * 
+ *
  * Dieses Script markiert alle User, die bereits ein Passwort haben,
  * als E-Mail-verifiziert, da sie sich vorher schon anmelden konnten.
- * 
+ *
  * Verwendung:
  *   npm run verify-existing-users
  */
@@ -15,12 +15,12 @@ import { prisma } from '../src/lib/prisma'
 async function main() {
   console.log('\n🔍 Suche nach bestehenden Usern ohne E-Mail-Bestätigung...')
   console.log('')
-  
+
   // Finde alle User, die ein Passwort haben aber nicht verifiziert sind
   const unverifiedUsers = await prisma.user.findMany({
     where: {
       emailVerified: false,
-      password: { not: null } // Nur User mit Passwort (können sich anmelden)
+      password: { not: null }, // Nur User mit Passwort (können sich anmelden)
     },
     select: {
       id: true,
@@ -29,32 +29,32 @@ async function main() {
       firstName: true,
       lastName: true,
       emailVerified: true,
-      createdAt: true
-    }
+      createdAt: true,
+    },
   })
-  
+
   console.log(`📊 Gefunden: ${unverifiedUsers.length} User ohne E-Mail-Bestätigung`)
   console.log('')
-  
+
   if (unverifiedUsers.length === 0) {
     console.log('✅ Alle User sind bereits verifiziert!')
     return
   }
-  
+
   console.log('📋 User die verifiziert werden:')
   unverifiedUsers.forEach((user, index) => {
     const name = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.email
     console.log(`   ${index + 1}. ${name} (${user.email})`)
   })
   console.log('')
-  
+
   console.log('🔧 Bestätige E-Mail-Adressen...')
-  
+
   // Bestätige alle User
   const result = await prisma.user.updateMany({
     where: {
       emailVerified: false,
-      password: { not: null }
+      password: { not: null },
     },
     data: {
       emailVerified: true,
@@ -62,9 +62,9 @@ async function main() {
       // Setze Token zurück (falls vorhanden)
       emailVerificationToken: null,
       emailVerificationTokenExpires: null,
-    }
+    },
   })
-  
+
   console.log(`✅ ${result.count} User erfolgreich verifiziert!`)
   console.log('')
   console.log('💡 Diese User können sich jetzt wieder anmelden.')
@@ -76,15 +76,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error('❌ Fehler:', e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-
-
-
-
-

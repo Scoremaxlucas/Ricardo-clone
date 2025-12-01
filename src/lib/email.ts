@@ -27,20 +27,23 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   console.log(`[sendEmail] Empfänger: ${to}`)
   console.log(`[sendEmail] Betreff: ${subject}`)
   console.log(`[sendEmail] Resend Client vorhanden: ${resend ? '✅ Ja' : '❌ Nein'}`)
-  console.log(`[sendEmail] RESEND_API_KEY vorhanden: ${process.env.RESEND_API_KEY ? '✅ Ja' : '❌ Nein'}`)
-  
-  // Priorität 1: Resend (professionell, skalierbar, wie Ricardo)
+  console.log(
+    `[sendEmail] RESEND_API_KEY vorhanden: ${process.env.RESEND_API_KEY ? '✅ Ja' : '❌ Nein'}`
+  )
+
+  // Priorität 1: Resend (professionell, skalierbar)
   // Resend kann Millionen von E-Mails pro Tag versenden
   if (resend) {
     try {
-      const fromEmail = process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM || 'onboarding@resend.dev'
-      
+      const fromEmail =
+        process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM || 'onboarding@resend.dev'
+
       console.log(`[sendEmail] Versende E-Mail via Resend:`)
       console.log(`  From: ${fromEmail}`)
       console.log(`  To: ${to}`)
       console.log(`  Subject: ${subject}`)
       console.log(`  HTML Length: ${html.length} Zeichen`)
-      
+
       const result = await resend.emails.send({
         from: fromEmail,
         to: [to],
@@ -75,14 +78,16 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
     }
   } else {
     console.warn('⚠️ Resend Client nicht initialisiert. Prüfe RESEND_API_KEY in .env')
-    console.log(`   RESEND_API_KEY Wert: ${process.env.RESEND_API_KEY ? 'Vorhanden (Länge: ' + process.env.RESEND_API_KEY.length + ')' : 'NICHT VORHANDEN'}`)
+    console.log(
+      `   RESEND_API_KEY Wert: ${process.env.RESEND_API_KEY ? 'Vorhanden (Länge: ' + process.env.RESEND_API_KEY.length + ')' : 'NICHT VORHANDEN'}`
+    )
   }
 
   // Priorität 2: SMTP (wenn Resend nicht verfügbar oder fehlgeschlagen)
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
       const info = await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@ricardo-clone.ch',
+        from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@helvenda.ch',
         to,
         subject,
         text: text || html.replace(/<[^>]*>/g, ''), // Fallback zu Text ohne HTML
@@ -103,11 +108,12 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   console.log('An:', to)
   console.log('Betreff:', subject)
   console.log('Inhalt:', text || html)
-  
-  return { 
-    success: false, 
-    error: 'Keine E-Mail-Konfiguration gefunden. Bitte RESEND_API_KEY oder SMTP_USER/SMTP_PASS konfigurieren.',
-    method: 'none'
+
+  return {
+    success: false,
+    error:
+      'Keine E-Mail-Konfiguration gefunden. Bitte RESEND_API_KEY oder SMTP_USER/SMTP_PASS konfigurieren.',
+    method: 'none',
   }
 }
 
@@ -199,7 +205,7 @@ export function getSearchMatchFoundEmail(
 ) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const subscriptionsUrl = `${baseUrl}/my-watches/buying/search-subscriptions`
-  
+
   // Erstelle Beschreibung der Suchkriterien
   const criteria: string[] = []
   if (subscription.searchTerm) criteria.push(`Suchbegriff: "${subscription.searchTerm}"`)
@@ -220,7 +226,7 @@ export function getSearchMatchFoundEmail(
     `Hallo ${userName},`,
     `
       <p>Wir haben einen Artikel gefunden, der zu Ihrem Suchabo passt:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 16px; color: #134e4a; font-weight: 600; margin-bottom: 8px;">
           ${articleTitle}
@@ -229,17 +235,17 @@ export function getSearchMatchFoundEmail(
           CHF ${new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(articlePrice)}
         </p>
       </div>
-      
+
       <p style="font-size: 14px; color: #6b7280; margin-top: 16px;">
         <strong>Ihr Suchabo:</strong> ${criteriaText}
       </p>
-      
+
       <p>Schauen Sie sich den Artikel jetzt an und nutzen Sie Ihre Chance!</p>
     `,
     'Artikel ansehen',
     articleUrl
   )
-  
+
   const text = `
 Neuer Artikel gefunden: ${articleTitle}
 
@@ -259,7 +265,7 @@ Suchabos verwalten: ${subscriptionsUrl}
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 Sie erhalten diese E-Mail, weil Sie ein aktives Suchabo haben.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
@@ -274,7 +280,7 @@ export function getPaymentRequestEmail(
   const subject = `Zahlungsaufforderung - Rechnung ${invoiceNumber}`
   const formattedDate = new Date(dueDate).toLocaleDateString('de-CH')
   const formattedTotal = total.toFixed(2)
-  
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -298,23 +304,23 @@ export function getPaymentRequestEmail(
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
-      
+
       <div class="info">
         <strong>Ihre Rechnung ist fällig</strong>
       </div>
-      
+
       <p><strong>Rechnungsnummer:</strong> ${invoiceNumber}</p>
       <p><strong>Fälligkeitsdatum:</strong> ${formattedDate}</p>
       <p class="amount">Betrag: CHF ${formattedTotal}</p>
-      
+
       <p>Bitte begleichen Sie diese Rechnung innerhalb der nächsten Tage.</p>
-      
+
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
           Rechnung ansehen und bezahlen →
         </a>
       </p>
-      
+
       <p><strong>Verfügbare Zahlungsmethoden:</strong></p>
       <ul>
         <li>Banküberweisung (mit QR-Code)</li>
@@ -363,7 +369,7 @@ export function getFirstReminderEmail(
   const subject = `Erinnerung: Zahlung ausstehend - Rechnung ${invoiceNumber}`
   const formattedDate = new Date(dueDate).toLocaleDateString('de-CH')
   const formattedTotal = total.toFixed(2)
-  
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -387,17 +393,17 @@ export function getFirstReminderEmail(
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
-      
+
       <div class="warning">
         <strong>Erinnerung:</strong> Ihre Rechnung ${invoiceNumber} ist noch offen.
       </div>
-      
+
       <p><strong>Rechnungsnummer:</strong> ${invoiceNumber}</p>
       <p><strong>Fälligkeitsdatum:</strong> ${formattedDate}</p>
       <p class="amount">Betrag: CHF ${formattedTotal}</p>
-      
+
       <p>Bitte begleichen Sie diese Rechnung umgehend.</p>
-      
+
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
           Jetzt bezahlen →
@@ -442,16 +448,16 @@ export function getCancelRequestEmail(
   description: string
 ) {
   const subject = `⚠️ Stornierungsantrag für "${articleTitle}"`
-  
+
   const reasonLabels: Record<string, string> = {
-    'buyer_not_responding': 'Käufer antwortet nicht',
-    'payment_not_confirmed': 'Zahlung nicht bestätigt',
-    'item_damaged_before_shipping': 'Artikel beschädigt vor Versand',
-    'other': 'Sonstiges'
+    buyer_not_responding: 'Käufer antwortet nicht',
+    payment_not_confirmed: 'Zahlung nicht bestätigt',
+    item_damaged_before_shipping: 'Artikel beschädigt vor Versand',
+    other: 'Sonstiges',
   }
-  
+
   const reasonLabel = reasonLabels[reason] || reason
-  
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -474,23 +480,23 @@ export function getCancelRequestEmail(
     </div>
     <div class="content">
       <p>Hallo ${buyerName},</p>
-      
+
       <div class="warning">
         <strong>Wichtige Information:</strong> Der Verkäufer ${sellerName} hat einen Stornierungsantrag für den folgenden Artikel gestellt:
       </div>
-      
+
       <div class="info-box">
         <p><strong>Artikel:</strong> ${articleTitle}</p>
         <p><strong>Grund:</strong> ${reasonLabel}</p>
         <p><strong>Beschreibung:</strong></p>
         <p style="white-space: pre-wrap; margin-left: 20px;">${description}</p>
       </div>
-      
+
       <p><strong>Was bedeutet das?</strong></p>
       <p>Ein Stornierungsantrag ist eine <strong>Anfrage</strong> des Verkäufers. Ein Admin wird den Antrag prüfen und entscheiden, ob die Stornierung genehmigt wird.</p>
-      
+
       <p>Sie werden über die Entscheidung informiert, sobald der Admin den Antrag bearbeitet hat.</p>
-      
+
       <p>Falls Sie Fragen haben, können Sie sich gerne an unseren Support wenden.</p>
     </div>
     <div class="footer">
@@ -500,7 +506,7 @@ export function getCancelRequestEmail(
 </body>
 </html>
   `.trim()
-  
+
   const text = `
 Stornierungsantrag für "${articleTitle}"
 
@@ -520,12 +526,9 @@ Sie werden über die Entscheidung informiert, sobald der Admin den Antrag bearbe
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
 
 // Template für zweite Erinnerung mit Mahnspesen (Tag 44)
 export function getSecondReminderEmail(
@@ -540,7 +543,7 @@ export function getSecondReminderEmail(
   const formattedDate = new Date(dueDate).toLocaleDateString('de-CH')
   const formattedTotal = total.toFixed(2)
   const formattedLateFee = lateFeeAmount.toFixed(2)
-  
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -565,22 +568,22 @@ export function getSecondReminderEmail(
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
-      
+
       <div class="warning">
         <strong>WICHTIG:</strong> Ihre Rechnung ${invoiceNumber} ist überfällig.
       </div>
-      
+
       <p><strong>Rechnungsnummer:</strong> ${invoiceNumber}</p>
       <p><strong>Fälligkeitsdatum:</strong> ${formattedDate}</p>
-      
+
       <div class="late-fee">
         <p><strong>Mahnspesen hinzugefügt:</strong> CHF ${formattedLateFee}</p>
       </div>
-      
+
       <p class="amount">Gesamtbetrag: CHF ${formattedTotal}</p>
-      
+
       <p><strong>Hinweis:</strong> Bei weiterer Nichtzahlung wird Ihr Konto nach 58 Tagen gesperrt.</p>
-      
+
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
           Jetzt bezahlen →
@@ -619,10 +622,6 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   return { subject, html, text }
 }
 
-
-
-
-
 // Template für letzte Erinnerung mit Konto-Sperre (Tag 58)
 export function getFinalReminderEmail(
   userName: string,
@@ -636,7 +635,7 @@ export function getFinalReminderEmail(
   const formattedDate = new Date(dueDate).toLocaleDateString('de-CH')
   const formattedTotal = total.toFixed(2)
   const formattedLateFee = lateFeeAmount.toFixed(2)
-  
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -661,22 +660,22 @@ export function getFinalReminderEmail(
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
-      
+
       <div class="critical">
         <strong>KRITISCH:</strong> Ihr Konto wird aufgrund nicht bezahlter Gebühren gesperrt.
       </div>
-      
+
       <p><strong>Rechnungsnummer:</strong> ${invoiceNumber}</p>
       <p><strong>Fälligkeitsdatum:</strong> ${formattedDate}</p>
-      
+
       <div class="late-fee">
         <p><strong>Mahnspesen:</strong> CHF ${formattedLateFee}</p>
       </div>
-      
+
       <p class="amount">Gesamtbetrag: CHF ${formattedTotal}</p>
-      
+
       <p><strong>[!] WICHTIG:</strong> Dies ist Ihre letzte Möglichkeit zur Zahlung. Nach dieser Erinnerung wird Ihr Konto automatisch gesperrt.</p>
-      
+
       <p>Nach der Sperre können Sie nicht mehr:</p>
       <ul>
         <li>Artikel verkaufen</li>
@@ -684,13 +683,13 @@ export function getFinalReminderEmail(
         <li>Gebote abgeben</li>
         <li>Preisvorschläge machen</li>
       </ul>
-      
+
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
           JETZT BEZAHLEN →
         </a>
       </p>
-      
+
       <p style="color: #dc2626; font-weight: bold;">
         Nach Zahlung wird Ihr Konto automatisch entsperrt.
       </p>
@@ -735,19 +734,12 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   return { subject, html, text }
 }
 
-
-
-
-
 // Template für Verifizierungs-Bestätigung
 // Template für E-Mail-Bestätigung bei Registrierung
 // Template für E-Mail-Verifizierung (Helvenda-Style: Professionelles Design mit Button)
-export function getEmailVerificationEmail(
-  userName: string,
-  verificationUrl: string
-) {
+export function getEmailVerificationEmail(userName: string, verificationUrl: string) {
   const subject = 'E-Mail-Adresse bestätigen - Helvenda'
-  
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -756,9 +748,9 @@ export function getEmailVerificationEmail(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
+    body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6; 
+      line-height: 1.6;
       color: #1f2937;
       background-color: #f3f4f6;
       padding: 0;
@@ -768,8 +760,8 @@ export function getEmailVerificationEmail(
       background-color: #f3f4f6;
       padding: 40px 20px;
     }
-    .container { 
-      max-width: 600px; 
+    .container {
+      max-width: 600px;
       margin: 0 auto;
       background-color: #ffffff;
       border-radius: 12px;
@@ -954,31 +946,31 @@ export function getEmailVerificationEmail(
         </div>
         <p class="header-subtitle" style="font-size: 14px; color: #6b7280; font-weight: 400; margin-top: 8px;">Schweizer Online-Marktplatz</p>
       </div>
-      
+
       <div class="content">
         <p class="greeting">Hallo ${userName},</p>
-        
+
         <h2 class="title">E-Mail-Adresse bestätigen</h2>
-        
+
         <p class="description">
           Willkommen bei Helvenda! Bitte bestätigen Sie Ihre E-Mail-Adresse, um Ihr Konto zu aktivieren und loszulegen.
         </p>
-        
+
         <div class="button-container">
           <a href="${verificationUrl}" class="button" style="color: #ffffff !important; background-color: #0f766e; text-decoration: none; padding: 14px 32px; border-radius: 16px; font-weight: 600; font-size: 16px; display: inline-block;">E-Mail-Adresse bestätigen</a>
         </div>
-        
+
         <div class="info-box">
           <p class="info-text">
             <strong>Wichtig:</strong> Dieser Link ist 24 Stunden gültig. Falls Sie sich nicht bei Helvenda registriert haben, können Sie diese E-Mail ignorieren.
           </p>
         </div>
-        
+
         <p class="support-text">
           Falls Sie Probleme bei der Bestätigung haben, kontaktieren Sie uns bitte unter <a href="mailto:support@helvenda.ch" class="support-link">support@helvenda.ch</a>.
         </p>
       </div>
-      
+
       <div class="footer">
         <p class="footer-text">
           Diese E-Mail wurde automatisch von <a href="https://helvenda.ch" class="footer-link">Helvenda.ch</a> gesendet.
@@ -992,7 +984,7 @@ export function getEmailVerificationEmail(
 </body>
 </html>
   `.trim()
-  
+
   const text = `
 E-Mail-Adresse bestätigen - Helvenda
 
@@ -1012,18 +1004,11 @@ Falls Sie Probleme bei der Bestätigung haben, kontaktieren Sie uns bitte unter 
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 Helvenda - Ihr vertrauensvoller Marktplatz für den Kauf und Verkauf von Artikeln in der Schweiz.
   `.trim()
-  
+
   return { subject, html, text }
 }
 
-
-
-
-
-export function getVerificationApprovalEmail(
-  userName: string,
-  userEmail: string
-) {
+export function getVerificationApprovalEmail(userName: string, userEmail: string) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const profileUrl = `${baseUrl}/profile`
 
@@ -1099,25 +1084,25 @@ Zu Ihrem Profil: ${profileUrl}
        Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
        Sie erhalten diese E-Mail, weil Ihr Konto erfolgreich verifiziert wurde.
          `.trim()
-       
-         return { subject, html, text }
-       }
 
-       // Template für Verkaufsbenachrichtigung
-       export function getSaleNotificationEmail(
-         sellerName: string,
-         buyerName: string,
-         watchTitle: string,
-         finalPrice: number,
-         purchaseType: 'auction' | 'buy-now',
-         watchId: string
-       ) {
-         const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
-         const salesUrl = `${baseUrl}/my-watches/selling/sold`
-       
-         const subject = `Ihre Uhr wurde verkauft: ${watchTitle}`
-       
-         const html = `
+  return { subject, html, text }
+}
+
+// Template für Verkaufsbenachrichtigung
+export function getSaleNotificationEmail(
+  sellerName: string,
+  buyerName: string,
+  watchTitle: string,
+  finalPrice: number,
+  purchaseType: 'auction' | 'buy-now',
+  watchId: string
+) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const salesUrl = `${baseUrl}/my-watches/selling/sold`
+
+  const subject = `Ihre Uhr wurde verkauft: ${watchTitle}`
+
+  const html = `
            <!DOCTYPE html>
            <html>
            <head>
@@ -1146,7 +1131,7 @@ Zu Ihrem Profil: ${profileUrl}
                      ✓ Glückwunsch! Ihre Uhr wurde erfolgreich verkauft!
                    </h2>
                  </div>
-                 
+
                  <div class="price-box">
                    <div style="font-size: 12px; color: #059669; margin-bottom: 5px;">Verkaufspreis</div>
                    <div style="font-size: 32px; font-weight: bold; color: #047857;">
@@ -1156,17 +1141,17 @@ Zu Ihrem Profil: ${profileUrl}
                      ${purchaseType === 'buy-now' ? 'Sofortkauf' : 'Auktion'}
                    </div>
                  </div>
-                 
+
                  <div style="margin: 20px 0;">
                    <p><strong>Verkaufte Uhr:</strong> ${watchTitle}</p>
                    <p><strong>Käufer:</strong> ${buyerName}</p>
                  </div>
-                 
+
                  <div class="buyer-info">
                    <p style="margin-top: 0;"><strong>Nächste Schritte:</strong></p>
                    <p>Die Käuferinformationen (Name, Adresse, Kontaktdaten, Zahlungsmethoden) finden Sie in Ihrem Verkäufer-Bereich unter "Verkauft".</p>
                  </div>
-                 
+
                  <p style="margin-top: 20px;">
                    <a href="${salesUrl}" class="button">Zu Ihren Verkäufen</a>
                  </p>
@@ -1179,28 +1164,28 @@ Zu Ihrem Profil: ${profileUrl}
            </body>
            </html>
          `
-       
-         const text = `
+
+  const text = `
        Hallo ${sellerName},
-       
+
        ✓ Glückwunsch! Ihre Uhr wurde erfolgreich verkauft!
-       
+
        Verkaufte Uhr: ${watchTitle}
        Käufer: ${buyerName}
        Verkaufspreis: CHF ${new Intl.NumberFormat('de-CH').format(finalPrice)}
        Art: ${purchaseType === 'buy-now' ? 'Sofortkauf' : 'Auktion'}
-       
+
        Die Käuferinformationen (Name, Adresse, Kontaktdaten, Zahlungsmethoden) finden Sie in Ihrem Verkäufer-Bereich unter "Verkauft".
-       
+
        Zu Ihren Verkäufen: ${salesUrl}
-       
+
        ---
        Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
        Sie erhalten diese E-Mail, weil eine Ihrer Uhren erfolgreich verkauft wurde.
          `.trim()
-       
-         return { subject, html, text }
-       }
+
+  return { subject, html, text }
+}
 
 // Template für Bewertungs-Benachrichtigung
 export function getReviewNotificationEmail(
@@ -1214,7 +1199,7 @@ export function getReviewNotificationEmail(
   const ratingLabels: Record<string, { label: string; color: string; emoji: string }> = {
     positive: { label: 'positive', color: '#0f766e', emoji: '[+]' },
     neutral: { label: 'neutrale', color: '#6b7280', emoji: '[=]' },
-    negative: { label: 'negative', color: '#ef4444', emoji: '[-]' }
+    negative: { label: 'negative', color: '#ef4444', emoji: '[-]' },
   }
 
   const ratingInfo = ratingLabels[rating] || ratingLabels.neutral
@@ -1254,7 +1239,7 @@ export function getReviewNotificationEmail(
             </p>
           </div>
           <p>
-            Bewertungen helfen anderen Nutzern, sich ein Bild von Ihrer Zuverlässigkeit zu machen. 
+            Bewertungen helfen anderen Nutzern, sich ein Bild von Ihrer Zuverlässigkeit zu machen.
             Sie können alle Ihre Bewertungen in Ihrem Profil einsehen.
           </p>
           <p style="margin-top: 20px;">
@@ -1277,7 +1262,7 @@ Sie haben eine neue ${ratingInfo.label} Bewertung erhalten!
 
 ${reviewerName} hat Ihnen eine ${ratingInfo.label} Bewertung gegeben ${ratingInfo.emoji}
 
-Bewertungen helfen anderen Nutzern, sich ein Bild von Ihrer Zuverlässigkeit zu machen. 
+Bewertungen helfen anderen Nutzern, sich ein Bild von Ihrer Zuverlässigkeit zu machen.
 Sie können alle Ihre Bewertungen in Ihrem Profil einsehen.
 
 Bewertungen ansehen: ${profileUrl}
@@ -1290,10 +1275,6 @@ Sie erhalten diese E-Mail, weil Sie eine neue Bewertung erhalten haben.
   return { subject, html, text }
 }
 
-
-
-
-
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
@@ -1302,7 +1283,7 @@ Sie erhalten diese E-Mail, weil Sie eine neue Bewertung erhalten haben.
 
 // Template für letzte Erinnerung mit Konto-Sperre (Tag 58)
 
-// Template für Kaufbestätigung an Käufer (Ricardo-Style)
+// Template für Kaufbestätigung an Käufer
 export function getPurchaseConfirmationEmail(
   buyerName: string,
   sellerName: string,
@@ -1311,7 +1292,8 @@ export function getPurchaseConfirmationEmail(
   shippingCost: number,
   purchaseType: 'auction' | 'buy-now',
   purchaseId: string,
-  watchId: string
+  watchId: string,
+  paymentInfo?: any | null // Zahlungsinformationen (optional)
 ) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
@@ -1351,7 +1333,7 @@ export function getPurchaseConfirmationEmail(
             </h2>
             <p>Ihr Kauf wurde erfolgreich abgeschlossen. Sie finden alle Details und Kontaktdaten des Verkäufers unten.</p>
           </div>
-          
+
           <div class="price-box">
             <div style="font-size: 12px; color: #0f766e; margin-bottom: 5px;">Gekauftes Produkt</div>
             <div style="font-size: 20px; font-weight: bold; color: #047857; margin: 10px 0;">
@@ -1371,21 +1353,49 @@ export function getPurchaseConfirmationEmail(
             </p>
           </div>
 
+          ${
+            paymentInfo
+              ? `
+          <div style="background-color: #f0fdfa; padding: 20px; border-radius: 8px; border: 2px solid #0f766e; margin: 20px 0;">
+            <h3 style="color: #0f766e; margin-top: 0;">💳 Zahlungsinformationen</h3>
+            <p style="margin-bottom: 15px;"><strong>Empfänger:</strong> ${paymentInfo.accountHolder}</p>
+            <p style="margin-bottom: 15px;"><strong>IBAN:</strong> ${paymentInfo.iban.replace(/(.{4})/g, '$1 ').trim()}</p>
+            <p style="margin-bottom: 15px;"><strong>BIC:</strong> ${paymentInfo.bic}</p>
+            <p style="margin-bottom: 15px;"><strong>Betrag:</strong> CHF ${new Intl.NumberFormat('de-CH').format(paymentInfo.amount)}</p>
+            <p style="margin-bottom: 15px;"><strong>Referenz:</strong> ${paymentInfo.reference}</p>
+            ${paymentInfo.qrCodeDataUrl ? `<p style="text-align: center; margin-top: 15px;"><img src="${paymentInfo.qrCodeDataUrl}" alt="QR-Code" style="max-width: 200px; border: 1px solid #ddd; border-radius: 8px;" /></p>` : ''}
+            ${paymentInfo.twintPhone ? `<p style="margin-top: 15px;"><strong>TWINT:</strong> ${paymentInfo.twintPhone}</p>` : ''}
+            <p style="margin-top: 15px; font-size: 12px; color: #666;">Bitte überweisen Sie den Betrag innerhalb von 14 Tagen nach Kontaktaufnahme. Verwenden Sie die Referenz bei der Überweisung.</p>
+          </div>
+          `
+              : `
           <div class="info-box">
             <p style="margin-top: 0;"><strong>[!] Wichtig:</strong></p>
             <p>Sie müssen innerhalb von <span class="deadline">7 Tagen</span> nach dem Kauf mit dem Verkäufer Kontakt aufnehmen, um die Zahlungsmodalitäten oder einen Abholtermin zu vereinbaren.</p>
           </div>
+          `
+          }
 
           <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
             <p style="margin-top: 0;"><strong>Nächste Schritte:</strong></p>
             <ol style="margin-left: 20px; margin-top: 10px;">
+              ${
+                paymentInfo
+                  ? `
+              <li>Überweisen Sie den Betrag innerhalb von 14 Tagen nach Kontaktaufnahme auf das oben angegebene Konto</li>
+              <li>Verwenden Sie die Referenz bei der Überweisung</li>
+              <li>Alternativ können Sie den QR-Code mit Ihrer Banking-App scannen</li>
+              `
+                  : `
               <li>Klicken Sie auf "Jetzt Artikel bezahlen" um die Kontaktdaten des Verkäufers zu sehen</li>
               <li>Nehmen Sie Kontakt mit dem Verkäufer auf (E-Mail oder Telefon)</li>
               <li>Vereinbaren Sie die Zahlung oder einen Abholtermin</li>
+              `
+              }
               <li>Bestätigen Sie den Erhalt des Artikels nach Lieferung</li>
             </ol>
           </div>
-          
+
           <p style="text-align: center; margin-top: 30px;">
             <a href="${purchaseUrl}" class="button">Jetzt Artikel bezahlen</a>
           </p>
@@ -1413,6 +1423,21 @@ Kaufpreis: CHF ${new Intl.NumberFormat('de-CH').format(finalPrice)}
 ${shippingCost > 0 ? `Versandkosten: CHF ${new Intl.NumberFormat('de-CH').format(shippingCost)}\n` : ''}Total: CHF ${new Intl.NumberFormat('de-CH').format(totalPrice)}
 Art: ${purchaseType === 'buy-now' ? 'Sofortkauf' : 'Auktion'}
 
+${
+  paymentInfo
+    ? `
+[!] ZAHLUNGSINFORMATIONEN:
+Empfänger: ${paymentInfo.accountHolder}
+IBAN: ${paymentInfo.iban.replace(/(.{4})/g, '$1 ').trim()}
+BIC: ${paymentInfo.bic}
+Betrag: CHF ${new Intl.NumberFormat('de-CH').format(paymentInfo.amount)}
+Referenz: ${paymentInfo.reference}
+
+Bitte überweisen Sie den Betrag innerhalb von 14 Tagen nach Kontaktaufnahme auf das oben angegebene Konto.
+Verwenden Sie die Referenz bei der Überweisung, damit die Zahlung zugeordnet werden kann.
+Alternativ können Sie den QR-Code mit Ihrer Banking-App scannen.
+`
+    : `
 [!] WICHTIG:
 Sie müssen innerhalb von 7 Tagen nach dem Kauf mit dem Verkäufer Kontakt aufnehmen, um die Zahlungsmodalitäten oder einen Abholtermin zu vereinbaren.
 
@@ -1421,6 +1446,8 @@ Nächste Schritte:
 2. Nehmen Sie Kontakt mit dem Verkäufer auf (E-Mail oder Telefon)
 3. Vereinbaren Sie die Zahlung oder einen Abholtermin
 4. Bestätigen Sie den Erhalt des Artikels nach Lieferung
+`
+}
 
 Jetzt Artikel bezahlen: ${purchaseUrl}
 
@@ -1432,10 +1459,6 @@ Sie erhalten diese E-Mail, weil Sie erfolgreich ein Produkt gekauft haben.
   return { subject, html, text }
 }
 
-
-
-
-
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
@@ -1444,7 +1467,7 @@ Sie erhalten diese E-Mail, weil Sie erfolgreich ein Produkt gekauft haben.
 
 // Template für letzte Erinnerung mit Konto-Sperre (Tag 58)
 
-// Template für Rechnungs-Benachrichtigung (Ricardo-Style)
+// Template für Rechnungs-Benachrichtigung
 export function getInvoiceNotificationEmail(
   userName: string,
   invoiceNumber: string,
@@ -1492,7 +1515,7 @@ export function getInvoiceNotificationEmail(
             </h2>
             <p>Eine neue Rechnung wurde für Sie erstellt. Sie können die Rechnung in Ihrem Gebühren-Bereich einsehen und herunterladen.</p>
           </div>
-          
+
           <div class="total-box">
             <div style="font-size: 12px; color: #0f766e; margin-bottom: 5px;">Rechnungsnummer</div>
             <div style="font-size: 20px; font-weight: bold; color: #047857; margin: 10px 0;">
@@ -1515,14 +1538,18 @@ export function getInvoiceNotificationEmail(
                 </tr>
               </thead>
               <tbody>
-                ${invoiceItems.map(item => `
+                ${invoiceItems
+                  .map(
+                    item => `
                   <tr>
                     <td>${item.description}</td>
                     <td style="text-align: right;">${item.quantity}</td>
                     <td style="text-align: right;">CHF ${new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.price)}</td>
                     <td style="text-align: right; font-weight: bold;">CHF ${new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.total)}</td>
                   </tr>
-                `).join('')}
+                `
+                  )
+                  .join('')}
               </tbody>
             </table>
           </div>
@@ -1537,7 +1564,7 @@ export function getInvoiceNotificationEmail(
             <p style="margin-top: 0;"><strong>Hinweis:</strong></p>
             <p>Diese Rechnung enthält keine Rechnung im Anhang. Sie können die Rechnung jederzeit in Ihrem Gebühren-Bereich einsehen und als PDF herunterladen.</p>
           </div>
-          
+
           <p style="text-align: center; margin-top: 30px;">
             <a href="${invoicesUrl}" class="button">Zu meinen Rechnungen</a>
           </p>
@@ -1583,10 +1610,6 @@ Sie können Ihre E-Mail-Benachrichtigungen in Ihren Kontoeinstellungen verwalten
   return { subject, html, text }
 }
 
-
-
-
-
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
@@ -1607,7 +1630,7 @@ export async function sendReviewNotificationEmail(
     to: userEmail,
     subject: emailContent.subject,
     html: emailContent.html,
-    text: emailContent.text
+    text: emailContent.text,
   })
 }
 
@@ -1633,7 +1656,7 @@ export async function sendInvoiceNotificationEmail(
     to: userEmail,
     subject: emailContent.subject,
     html: emailContent.html,
-    text: emailContent.text
+    text: emailContent.text,
   })
 }
 
@@ -1646,15 +1669,17 @@ export function getContactDeadlineWarningEmail(
   role: 'seller' | 'buyer'
 ) {
   const subject = `[!] Kontaktfrist läuft ab - ${productTitle}`
-  
-  const roleText = role === 'seller' 
-    ? 'Als Verkäufer müssen Sie den Käufer innerhalb von 7 Tagen kontaktieren'
-    : 'Als Käufer müssen Sie den Verkäufer innerhalb von 7 Tagen kontaktieren'
-  
-  const actionText = role === 'seller'
-    ? 'Bitte kontaktieren Sie den Käufer umgehend, um Zahlungs- und Liefermodalitäten zu klären.'
-    : 'Bitte kontaktieren Sie den Verkäufer umgehend, um Zahlungsdetails zu erhalten.'
-  
+
+  const roleText =
+    role === 'seller'
+      ? 'Als Verkäufer müssen Sie den Käufer innerhalb von 7 Tagen kontaktieren'
+      : 'Als Käufer müssen Sie den Verkäufer innerhalb von 7 Tagen kontaktieren'
+
+  const actionText =
+    role === 'seller'
+      ? 'Bitte kontaktieren Sie den Käufer umgehend, um Zahlungs- und Liefermodalitäten zu klären.'
+      : 'Bitte kontaktieren Sie den Verkäufer umgehend, um Zahlungsdetails zu erhalten.'
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -1677,25 +1702,25 @@ export function getContactDeadlineWarningEmail(
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
-      
+
       <div class="warning">
         <strong>Wichtig:</strong> Die Kontaktfrist für den Kauf von "${productTitle}" läuft in ${daysRemaining} Tag(en) ab.
       </div>
-      
+
       <p>${roleText}.</p>
-      
+
       <p>${actionText}</p>
-      
+
       <p><strong>Andere Partei:</strong> ${otherPartyName}</p>
-      
+
       <p><strong>Artikel:</strong> ${productTitle}</p>
-      
+
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}${role === 'seller' ? '/my-watches/selling/sold' : '/my-watches/buying/purchased'}" class="button">
           Jetzt kontaktieren →
         </a>
       </p>
-      
+
       <p style="color: #dc2626; font-weight: bold;">
         [!] Wenn Sie die Frist nicht einhalten, kann die andere Partei den Kauf stornieren.
       </p>
@@ -1735,10 +1760,6 @@ Sie erhalten diese E-Mail, weil die Kontaktfrist für einen Ihrer Käufe/Verkäu
   return { subject, html, text }
 }
 
-
-
-
-
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
@@ -1756,7 +1777,7 @@ export function getPaymentReminderEmail(
   purchaseId: string
 ) {
   const subject = `[!] Zahlungserinnerung - ${productTitle}`
-  
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -1779,22 +1800,22 @@ export function getPaymentReminderEmail(
     </div>
     <div class="content">
       <p>Hallo ${buyerName},</p>
-      
+
       <div class="warning">
         <strong>Wichtig:</strong> Sie haben noch ${daysRemaining} Tag${daysRemaining !== 1 ? 'e' : ''} Zeit, um für "${productTitle}" zu zahlen.
       </div>
-      
+
       <p>Bitte überweisen Sie den Betrag innerhalb der nächsten ${daysRemaining} Tag${daysRemaining !== 1 ? 'e' : ''} auf das Konto des Verkäufers.</p>
-      
+
       <p><strong>Verkäufer:</strong> ${sellerName}</p>
       <p><strong>Artikel:</strong> ${productTitle}</p>
-      
+
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/buying/purchased" class="button">
           Zahlungsinformationen ansehen →
         </a>
       </p>
-      
+
       <p style="color: #dc2626; font-weight: bold;">
         [!] Wenn Sie nicht innerhalb von 14 Tagen zahlen, kann der Verkäufer den Kauf stornieren.
       </p>
@@ -1832,10 +1853,6 @@ Sie erhalten diese E-Mail, weil die Zahlungsfrist für einen Ihrer Käufe abläu
   return { subject, html, text }
 }
 
-
-
-
-
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
@@ -1854,11 +1871,12 @@ export function getDisputeOpenedEmail(
   role: 'buyer' | 'seller'
 ) {
   const subject = `[!] Dispute eröffnet - ${productTitle}`
-  
-  const roleText = role === 'seller'
-    ? 'Der Käufer hat einen Dispute eröffnet'
-    : 'Der Verkäufer hat einen Dispute eröffnet'
-  
+
+  const roleText =
+    role === 'seller'
+      ? 'Der Käufer hat einen Dispute eröffnet'
+      : 'Der Verkäufer hat einen Dispute eröffnet'
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -1881,16 +1899,16 @@ export function getDisputeOpenedEmail(
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
-      
+
       <div class="warning">
         <strong>Wichtig:</strong> ${roleText} für "${productTitle}".
       </div>
-      
+
       <p><strong>Grund:</strong> ${reason}</p>
       <p><strong>Beschreibung:</strong> ${description}</p>
-      
+
       <p>Ein Admin wird sich in Kürze um diesen Dispute kümmern und eine Lösung finden.</p>
-      
+
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}" class="button">
           Details ansehen →
@@ -1926,10 +1944,6 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   return { subject, html, text }
 }
 
-
-
-
-
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
@@ -1949,26 +1963,30 @@ export function getDisputeResolvedEmail(
   articleRelisted: boolean = false
 ) {
   const isSuccess = perspective === 'initiator'
-  const subject = isSuccess 
+  const subject = isSuccess
     ? `✅ Dispute erfolgreich gelöst - ${productTitle}`
     : `⚠️ Dispute gelöst - ${productTitle}`
-  
+
   const headerColor = isSuccess ? '#0f766e' : '#f59e0b'
   const headerBg = isSuccess ? '#0f766e' : '#f59e0b'
   const boxColor = isSuccess ? '#f0fdfa' : '#fef3c7'
   const boxBorder = isSuccess ? '#0f766e' : '#f59e0b'
-  
+
   // Zusätzliche Information über Wiederaktivierung des Artikels
-  const relistInfo = articleRelisted ? `
+  const relistInfo = articleRelisted
+    ? `
       <div style="background: #ecfdf5; border-left: 4px solid #10b981; padding: 15px; margin: 20px 0; border-radius: 4px;">
         <strong>ℹ️ Wichtige Information:</strong> Der Artikel "${productTitle}" steht automatisch wieder als aktiver Artikel zum Verkauf.
       </div>
-  ` : ''
-  
-  const relistInfoText = articleRelisted ? `
+  `
+    : ''
+
+  const relistInfoText = articleRelisted
+    ? `
 Wichtige Information: Der Artikel "${productTitle}" steht automatisch wieder als aktiver Artikel zum Verkauf.
-` : ''
-  
+`
+    : ''
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -1991,15 +2009,15 @@ Wichtige Information: Der Artikel "${productTitle}" steht automatisch wieder als
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
-      
+
       <div class="info-box">
         <strong>${isSuccess ? 'Gut zu wissen:' : 'Wichtige Information:'}</strong> Der Dispute für "${productTitle}" wurde gelöst.
       </div>
-      
+
       <p><strong>${isSuccess ? 'Lösung:' : 'Entscheidung:'}</strong> ${resolution}</p>
-      
+
       ${relistInfo}
-      
+
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}" class="button">
           Details ansehen →
@@ -2042,7 +2060,7 @@ export function getDisputeRejectedEmail(
   rejectionReason: string
 ) {
   const subject = `❌ Dispute abgelehnt - ${productTitle}`
-  
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -2065,15 +2083,15 @@ export function getDisputeRejectedEmail(
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
-      
+
       <div class="info-box">
         <strong>Leider:</strong> Ihr Dispute für "${productTitle}" wurde abgelehnt.
       </div>
-      
+
       <p><strong>Ablehnungsgrund:</strong> ${rejectionReason}</p>
-      
+
       <p>Falls Sie Fragen haben, können Sie sich gerne an unseren Support wenden.</p>
-      
+
       <p style="margin-top: 30px;">
         <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches" class="button">
           Zu meinen Angeboten →
@@ -2106,10 +2124,6 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   return { subject, html, text }
 }
 
-
-
-
-
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
@@ -2131,7 +2145,7 @@ function getHelvendaEmailTemplate(
   buttonUrl?: string
 ): string {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
-  
+
   return `
 <!DOCTYPE html>
 <html>
@@ -2140,9 +2154,9 @@ function getHelvendaEmailTemplate(
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <style>
     * { margin: 0; padding: 0; box-sizing: border-box; }
-    body { 
+    body {
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-      line-height: 1.6; 
+      line-height: 1.6;
       color: #1f2937;
       background-color: #f3f4f6;
       padding: 0;
@@ -2152,8 +2166,8 @@ function getHelvendaEmailTemplate(
       background-color: #f3f4f6;
       padding: 40px 20px;
     }
-    .container { 
-      max-width: 600px; 
+    .container {
+      max-width: 600px;
       margin: 0 auto;
       background-color: #ffffff;
       border-radius: 12px;
@@ -2325,27 +2339,31 @@ function getHelvendaEmailTemplate(
         </div>
         <p class="header-subtitle" style="font-size: 14px; color: #6b7280; font-weight: 400; margin-top: 8px;">Schweizer Online-Marktplatz</p>
       </div>
-      
+
       <div class="content">
         <p class="greeting">${greeting}</p>
-        
+
         <h2 class="title">${title}</h2>
-        
+
         <div class="description">
           ${content}
         </div>
-        
-        ${buttonText && buttonUrl ? `
+
+        ${
+          buttonText && buttonUrl
+            ? `
         <div class="button-container">
           <a href="${buttonUrl}" class="button" style="color: #ffffff !important; background-color: #0f766e; text-decoration: none; padding: 14px 32px; border-radius: 16px; font-weight: 600; font-size: 16px; display: inline-block;">${buttonText}</a>
         </div>
-        ` : ''}
-        
+        `
+            : ''
+        }
+
         <p class="support-text">
           Falls Sie Fragen haben, kontaktieren Sie uns bitte unter <a href="mailto:support@helvenda.ch" class="support-link">support@helvenda.ch</a>.
         </p>
       </div>
-      
+
       <div class="footer">
         <p class="footer-text">
           Diese E-Mail wurde automatisch von <a href="${baseUrl}" class="footer-link">Helvenda.ch</a> gesendet.
@@ -2361,7 +2379,6 @@ function getHelvendaEmailTemplate(
   `.trim()
 }
 
-
 // Template für Gebotsbestätigung (für Käufer nach Gebot)
 export function getBidConfirmationEmail(
   buyerName: string,
@@ -2372,26 +2389,26 @@ export function getBidConfirmationEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Gebotsbestätigung - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Gebotsbestätigung`,
     `Hallo ${buyerName},`,
     `
       <p>Ihr Gebot wurde erfolgreich abgegeben!</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Ihr Gebot:</strong> CHF ${bidAmount.toFixed(2)}
         </p>
       </div>
-      
+
       <p>Sie werden per E-Mail benachrichtigt, wenn Sie überboten werden oder wenn die Auktion endet.</p>
     `,
     'Artikel ansehen',
     articleUrl
   )
-  
+
   const text = `
 Gebotsbestätigung - ${articleTitle}
 
@@ -2409,13 +2426,9 @@ Artikel ansehen: ${articleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Neue E-Mail-Templates - werden in email.ts integriert
 
@@ -2429,26 +2442,26 @@ export function getOutbidNotificationEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Sie wurden überboten - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Sie wurden überboten`,
     `Hallo ${buyerName},`,
     `
       <p>Ein anderes Mitglied hat ein höheres Gebot auf den Artikel abgegeben:</p>
-      
+
       <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #92400e; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Aktuelles Höchstgebot:</strong> CHF ${currentHighestBid.toFixed(2)}
         </p>
       </div>
-      
+
       <p>Sie können jetzt ein neues, höheres Gebot abgeben, um Ihre Chance zu erhöhen, diesen Artikel zu gewinnen.</p>
     `,
     'Jetzt höher bieten',
     articleUrl
   )
-  
+
   const text = `
 Sie wurden überboten - ${articleTitle}
 
@@ -2466,13 +2479,9 @@ Jetzt höher bieten: ${articleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Gebotsbenachrichtigung (für Verkäufer)
 export function getBidNotificationEmail(
@@ -2485,13 +2494,13 @@ export function getBidNotificationEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Neues Gebot auf ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Neues Gebot erhalten`,
     `Hallo ${sellerName},`,
     `
       <p>Es wurde ein neues Gebot auf Ihren Artikel abgegeben:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
@@ -2499,13 +2508,13 @@ export function getBidNotificationEmail(
           <strong>Bieter:</strong> ${bidderName}
         </p>
       </div>
-      
+
       <p>Sie werden weiterhin über neue Gebote informiert.</p>
     `,
     'Artikel ansehen',
     articleUrl
   )
-  
+
   const text = `
 Neues Gebot auf ${articleTitle}
 
@@ -2524,13 +2533,9 @@ Artikel ansehen: ${articleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Auktionsende-Benachrichtigung (für Käufer - gewonnen)
 export function getAuctionEndWonEmail(
@@ -2543,26 +2548,26 @@ export function getAuctionEndWonEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `✓ Glückwunsch! Sie haben gewonnen - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Glückwunsch! Sie haben gewonnen`,
     `Hallo ${buyerName},`,
     `
       <p>Herzlichen Glückwunsch! Sie haben die Auktion gewonnen:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #065f46; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Ihr Gewinngebot:</strong> CHF ${winningBid.toFixed(2)}
         </p>
       </div>
-      
+
       <p>Bitte kontaktieren Sie den Verkäufer innerhalb von 7 Tagen und begleichen Sie die Zahlung innerhalb von 14 Tagen nach Kontaktaufnahme.</p>
     `,
     'Kauf ansehen',
     purchaseUrl
   )
-  
+
   const text = `
 ✓ Glückwunsch! Sie haben gewonnen - ${articleTitle}
 
@@ -2580,13 +2585,9 @@ Kauf ansehen: ${purchaseUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Auktionsende-Benachrichtigung (für Käufer - nicht gewonnen)
 export function getAuctionEndLostEmail(
@@ -2597,26 +2598,26 @@ export function getAuctionEndLostEmail(
 ) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const subject = `Auktion beendet - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Auktion beendet`,
     `Hallo ${buyerName},`,
     `
       <p>Die Auktion für den folgenden Artikel ist beendet:</p>
-      
+
       <div style="background-color: #f3f4f6; border-left: 4px solid #6b7280; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #374151; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Höchstgebot:</strong> CHF ${winningBid.toFixed(2)}
         </p>
       </div>
-      
+
       <p>Leider haben Sie diese Auktion nicht gewonnen. Schauen Sie sich gerne unsere anderen Angebote an!</p>
     `,
     'Weitere Angebote ansehen',
     `${baseUrl}/search`
   )
-  
+
   const text = `
 Auktion beendet - ${articleTitle}
 
@@ -2634,13 +2635,9 @@ Weitere Angebote ansehen: ${baseUrl}/search
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Auktionsende-Benachrichtigung (für Verkäufer)
 export function getAuctionEndSellerEmail(
@@ -2654,13 +2651,13 @@ export function getAuctionEndSellerEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Auktion beendet - ${articleTitle} wurde verkauft`
-  
+
   const html = getHelvendaEmailTemplate(
     `Ihr Artikel wurde verkauft`,
     `Hallo ${sellerName},`,
     `
       <p>Ihre Auktion ist beendet und der Artikel wurde verkauft:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #065f46; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
@@ -2668,13 +2665,13 @@ export function getAuctionEndSellerEmail(
           <strong>Käufer:</strong> ${buyerName}
         </p>
       </div>
-      
+
       <p>Bitte kontaktieren Sie den Käufer innerhalb von 7 Tagen. Der Käufer hat 14 Tage Zeit, die Zahlung zu begleichen.</p>
     `,
     'Verkauf ansehen',
     saleUrl
   )
-  
+
   const text = `
 Auktion beendet - ${articleTitle} wurde verkauft
 
@@ -2693,13 +2690,9 @@ Verkauf ansehen: ${saleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Zahlungseingangsbestätigung (für Verkäufer)
 export function getPaymentReceivedEmail(
@@ -2712,13 +2705,13 @@ export function getPaymentReceivedEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Zahlung erhalten - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Zahlung erhalten`,
     `Hallo ${sellerName},`,
     `
       <p>Sie haben eine Zahlung erhalten:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #065f46; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
@@ -2726,13 +2719,13 @@ export function getPaymentReceivedEmail(
           <strong>Käufer:</strong> ${buyerName}
         </p>
       </div>
-      
+
       <p>Bitte versenden Sie den Artikel nun an den Käufer.</p>
     `,
     'Verkauf ansehen',
     saleUrl
   )
-  
+
   const text = `
 Zahlung erhalten - ${articleTitle}
 
@@ -2751,13 +2744,9 @@ Verkauf ansehen: ${saleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Versandbenachrichtigung (für Käufer)
 export function getShippingNotificationEmail(
@@ -2770,30 +2759,30 @@ export function getShippingNotificationEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Versandbenachrichtigung - ${articleTitle}`
-  
-  const trackingInfo = trackingNumber 
+
+  const trackingInfo = trackingNumber
     ? `<p><strong>Tracking-Nummer:</strong> ${trackingNumber}${trackingProvider ? ` (${trackingProvider})` : ''}</p>`
     : '<p>Der Artikel wurde versendet. Sie erhalten keine Tracking-Informationen.</p>'
-  
+
   const html = getHelvendaEmailTemplate(
     `Ihr Artikel wurde versendet`,
     `Hallo ${buyerName},`,
     `
       <p>Gute Nachrichten! Ihr Artikel wurde versendet:</p>
-      
+
       <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #1e40af; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           ${trackingInfo}
         </p>
       </div>
-      
+
       <p>Sie können den Versandstatus jederzeit in Ihrem Konto verfolgen.</p>
     `,
     'Kauf ansehen',
     purchaseUrl
   )
-  
+
   const text = `
 Versandbenachrichtigung - ${articleTitle}
 
@@ -2811,13 +2800,9 @@ Kauf ansehen: ${purchaseUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Versandaufforderung (für Verkäufer)
 export function getShippingReminderEmail(
@@ -2829,26 +2814,26 @@ export function getShippingReminderEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Versanderinnerung - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Versanderinnerung`,
     `Hallo ${sellerName},`,
     `
       <p>Bitte versenden Sie den folgenden Artikel:</p>
-      
+
       <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #92400e; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Käufer:</strong> ${buyerName}
         </p>
       </div>
-      
+
       <p>Der Käufer hat bereits gezahlt. Bitte versenden Sie den Artikel so schnell wie möglich.</p>
     `,
     'Verkauf ansehen',
     saleUrl
   )
-  
+
   const text = `
 Versanderinnerung - ${articleTitle}
 
@@ -2866,13 +2851,9 @@ Verkauf ansehen: ${saleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Preisvorschlag erhalten (für Verkäufer)
 export function getPriceOfferReceivedEmail(
@@ -2885,13 +2866,13 @@ export function getPriceOfferReceivedEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const offersUrl = `${baseUrl}/my-watches/selling/offers`
   const subject = `Preisvorschlag erhalten - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Preisvorschlag erhalten`,
     `Hallo ${sellerName},`,
     `
       <p>Sie haben einen Preisvorschlag erhalten:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
@@ -2899,13 +2880,13 @@ export function getPriceOfferReceivedEmail(
           <strong>Von:</strong> ${buyerName}
         </p>
       </div>
-      
+
       <p>Sie können den Preisvorschlag annehmen oder ablehnen.</p>
     `,
     'Preisvorschläge ansehen',
     offersUrl
   )
-  
+
   const text = `
 Preisvorschlag erhalten - ${articleTitle}
 
@@ -2924,13 +2905,9 @@ Preisvorschläge ansehen: ${offersUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Preisvorschlag akzeptiert (für Käufer)
 export function getPriceOfferAcceptedEmail(
@@ -2943,26 +2920,26 @@ export function getPriceOfferAcceptedEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Preisvorschlag akzeptiert - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Ihr Preisvorschlag wurde akzeptiert`,
     `Hallo ${buyerName},`,
     `
       <p>Gute Nachrichten! Ihr Preisvorschlag wurde akzeptiert:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #065f46; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Vereinbarter Preis:</strong> CHF ${offerAmount.toFixed(2)}
         </p>
       </div>
-      
+
       <p>Bitte kontaktieren Sie den Verkäufer innerhalb von 7 Tagen und begleichen Sie die Zahlung innerhalb von 14 Tagen nach Kontaktaufnahme.</p>
     `,
     'Kauf ansehen',
     purchaseUrl
   )
-  
+
   const text = `
 Preisvorschlag akzeptiert - ${articleTitle}
 
@@ -2980,13 +2957,9 @@ Kauf ansehen: ${purchaseUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Angebotsbestätigung (für Verkäufer)
 export function getListingConfirmationEmail(
@@ -2998,26 +2971,26 @@ export function getListingConfirmationEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Angebot erfolgreich erstellt - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Ihr Angebot wurde erstellt`,
     `Hallo ${sellerName},`,
     `
       <p>Ihr Angebot wurde erfolgreich erstellt:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Artikelnummer:</strong> ${articleNumber}
         </p>
       </div>
-      
+
       <p>Ihr Angebot ist jetzt auf Helvenda sichtbar. Sie werden per E-Mail benachrichtigt, wenn Gebote eingehen oder wenn jemand kauft.</p>
     `,
     'Angebot ansehen',
     articleUrl
   )
-  
+
   const text = `
 Angebot erfolgreich erstellt - ${articleTitle}
 
@@ -3035,13 +3008,9 @@ Angebot ansehen: ${articleUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Bewertungsaufforderung (für Käufer)
 export function getReviewRequestBuyerEmail(
@@ -3053,26 +3022,26 @@ export function getReviewRequestBuyerEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const reviewUrl = `${baseUrl}/my-watches/buying/purchased?review=${purchaseId}`
   const subject = `Bewerten Sie Ihren Kauf - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Bewerten Sie Ihren Kauf`,
     `Hallo ${buyerName},`,
     `
       <p>Wie war Ihre Erfahrung mit dem Kauf?</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Verkäufer:</strong> ${sellerName}
         </p>
       </div>
-      
+
       <p>Ihre Bewertung hilft anderen Käufern und Verkäufern auf Helvenda.</p>
     `,
     'Jetzt bewerten',
     reviewUrl
   )
-  
+
   const text = `
 Bewerten Sie Ihren Kauf - ${articleTitle}
 
@@ -3090,13 +3059,9 @@ Jetzt bewerten: ${reviewUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
 
 // Template für Bewertungsaufforderung (für Verkäufer)
 export function getReviewRequestSellerEmail(
@@ -3108,26 +3073,26 @@ export function getReviewRequestSellerEmail(
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const reviewUrl = `${baseUrl}/my-watches/selling/sold?review=${purchaseId}`
   const subject = `Bewerten Sie Ihren Verkauf - ${articleTitle}`
-  
+
   const html = getHelvendaEmailTemplate(
     `Bewerten Sie Ihren Verkauf`,
     `Hallo ${sellerName},`,
     `
       <p>Wie war Ihre Erfahrung mit dem Verkauf?</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Käufer:</strong> ${buyerName}
         </p>
       </div>
-      
+
       <p>Ihre Bewertung hilft anderen Käufern und Verkäufern auf Helvenda.</p>
     `,
     'Jetzt bewerten',
     reviewUrl
   )
-  
+
   const text = `
 Bewerten Sie Ihren Verkauf - ${articleTitle}
 
@@ -3145,11 +3110,6 @@ Jetzt bewerten: ${reviewUrl}
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
-  
+
   return { subject, html, text }
 }
-
-
-
-
-

@@ -11,37 +11,37 @@ async function main() {
       code: 'top',
       name: 'Top-Anzeige',
       description: 'Ihre Anzeige erscheint als erstes in den Suchergebnissen',
-      price: 50.00,
-      isActive: true
+      price: 50.0,
+      isActive: true,
     },
     {
       code: 'homepage',
       name: 'Homepage-Feature',
       description: 'Prominente Platzierung auf der Homepage',
-      price: 100.00,
-      isActive: true
+      price: 100.0,
+      isActive: true,
     },
     {
       code: 'highlighted',
       name: 'Hervorgehoben',
       description: 'Ihre Anzeige wird optisch hervorgehoben',
-      price: 25.00,
-      isActive: true
+      price: 25.0,
+      isActive: true,
     },
     {
       code: 'featured',
       name: 'Featured',
       description: 'Ihre Anzeige erscheint in der Featured-Sektion',
-      price: 75.00,
-      isActive: true
-    }
+      price: 75.0,
+      isActive: true,
+    },
   ]
 
   for (const booster of boosters) {
     await prisma.boosterPrice.upsert({
       where: { code: booster.code },
       update: booster,
-      create: booster
+      create: booster,
     })
     console.log(`✓ Seeded: ${booster.name}`)
   }
@@ -50,13 +50,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error(e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-
-
-

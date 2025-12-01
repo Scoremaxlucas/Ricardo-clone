@@ -87,11 +87,21 @@ export default function VerificationPage() {
               setPostalCode(data.user.postalCode || '')
               setCity(data.user.city || '')
               setCountry(data.user.country || '')
-              setDateOfBirth(data.user.dateOfBirth ? new Date(data.user.dateOfBirth).toISOString().split('T')[0] : '')
+              setDateOfBirth(
+                data.user.dateOfBirth
+                  ? new Date(data.user.dateOfBirth).toISOString().split('T')[0]
+                  : ''
+              )
               setIdDocumentType((data.user.idDocumentType as 'ID' | 'Passport') || '')
-              
+
               // Lade Ausweiskopie-Vorschau falls vorhanden
-              const loadDocumentPreview = (base64String: string | null, setPreview: (preview: string | null) => void, setFile: (file: File | null) => void, setBase64: (base64: string | null) => void, filename: string) => {
+              const loadDocumentPreview = (
+                base64String: string | null,
+                setPreview: (preview: string | null) => void,
+                setFile: (file: File | null) => void,
+                setBase64: (base64: string | null) => void,
+                filename: string
+              ) => {
                 if (!base64String) return
                 // Setze Base64-String
                 setBase64(base64String)
@@ -110,22 +120,40 @@ export default function VerificationPage() {
                   setPreview(null)
                 }
               }
-              
+
               // Reisepass (einzelnes Dokument)
               if (data.user.idDocument) {
-                loadDocumentPreview(data.user.idDocument, setIdDocumentPreview, setIdDocument, setIdDocumentBase64, 'passport.jpg')
+                loadDocumentPreview(
+                  data.user.idDocument,
+                  setIdDocumentPreview,
+                  setIdDocument,
+                  setIdDocumentBase64,
+                  'passport.jpg'
+                )
               }
-              
+
               // Identitätskarte Seite 1
               if (data.user.idDocumentPage1) {
-                loadDocumentPreview(data.user.idDocumentPage1, setIdDocumentPage1Preview, setIdDocumentPage1, setIdDocumentPage1Base64, 'id-page1.jpg')
+                loadDocumentPreview(
+                  data.user.idDocumentPage1,
+                  setIdDocumentPage1Preview,
+                  setIdDocumentPage1,
+                  setIdDocumentPage1Base64,
+                  'id-page1.jpg'
+                )
               }
-              
+
               // Identitätskarte Seite 2
               if (data.user.idDocumentPage2) {
-                loadDocumentPreview(data.user.idDocumentPage2, setIdDocumentPage2Preview, setIdDocumentPage2, setIdDocumentPage2Base64, 'id-page2.jpg')
+                loadDocumentPreview(
+                  data.user.idDocumentPage2,
+                  setIdDocumentPage2Preview,
+                  setIdDocumentPage2,
+                  setIdDocumentPage2Base64,
+                  'id-page2.jpg'
+                )
               }
-              
+
               if (data.user.deliveryStreet) {
                 setHasDeliveryAddress(true)
                 setDeliveryStreet(data.user.deliveryStreet || '')
@@ -172,10 +200,10 @@ export default function VerificationPage() {
   const formatIBAN = (value: string): string => {
     // Entferne alle Leerzeichen, Bindestriche und andere Leerzeichen, konvertiere zu Großbuchstaben
     const cleaned = value.replace(/[\s\-]/g, '').toUpperCase()
-    
+
     // Begrenze auf 21 Zeichen (CH + 2 Ziffern + 19 alphanumerische Zeichen)
     const limited = cleaned.slice(0, 21)
-    
+
     // Füge Leerzeichen alle 4 Zeichen ein (CH12 ist der erste Block mit 4 Zeichen)
     let formatted = ''
     for (let i = 0; i < limited.length; i++) {
@@ -184,18 +212,20 @@ export default function VerificationPage() {
       }
       formatted += limited[i]
     }
-    
+
     return formatted.trim()
   }
 
   const updatePaymentMethod = (type: PaymentMethodType, data: Partial<PaymentMethod>) => {
-    setSelectedPaymentMethods(prev =>
-      prev.map(pm =>
-        pm.type === type ? { ...pm, ...data } : pm
-      )
-    )
+    setSelectedPaymentMethods(prev => prev.map(pm => (pm.type === type ? { ...pm, ...data } : pm)))
     // Setze Fehler zurück, wenn IBAN oder andere Zahlungsmittel-Daten geändert werden
-    if (type === 'bank' && (data.iban !== undefined || data.accountHolderFirstName !== undefined || data.accountHolderLastName !== undefined || data.bank !== undefined)) {
+    if (
+      type === 'bank' &&
+      (data.iban !== undefined ||
+        data.accountHolderFirstName !== undefined ||
+        data.accountHolderLastName !== undefined ||
+        data.bank !== undefined)
+    ) {
       setError('')
     }
     if (type === 'twint' && data.phone !== undefined) {
@@ -208,15 +238,24 @@ export default function VerificationPage() {
     setLoading(true)
     setError('')
     setSuccess('')
-    
+
     console.log('Form Submit - Ausweistyp vor Validierung:', {
       idDocumentType: idDocumentType,
       value: idDocumentType,
-      isEmpty: !idDocumentType || idDocumentType === ''
+      isEmpty: !idDocumentType || idDocumentType === '',
     })
 
     // Validierung
-    if (!title || !firstName || !lastName || !street || !streetNumber || !postalCode || !city || !country) {
+    if (
+      !title ||
+      !firstName ||
+      !lastName ||
+      !street ||
+      !streetNumber ||
+      !postalCode ||
+      !city ||
+      !country
+    ) {
       setError('Bitte füllen Sie alle Pflichtfelder aus')
       setLoading(false)
       return
@@ -263,8 +302,16 @@ export default function VerificationPage() {
 
     // Validierung Lieferadresse
     if (hasDeliveryAddress) {
-      if (!deliveryStreet || !deliveryStreetNumber || !deliveryPostalCode || !deliveryCity || !deliveryCountry) {
-        setError('Bitte füllen Sie alle Felder der Lieferadresse aus oder deaktivieren Sie die Option')
+      if (
+        !deliveryStreet ||
+        !deliveryStreetNumber ||
+        !deliveryPostalCode ||
+        !deliveryCity ||
+        !deliveryCountry
+      ) {
+        setError(
+          'Bitte füllen Sie alle Felder der Lieferadresse aus oder deaktivieren Sie die Option'
+        )
         setLoading(false)
         return
       }
@@ -284,11 +331,16 @@ export default function VerificationPage() {
       isEmpty: !idDocumentType || idDocumentType === '',
       isID: idDocumentType === 'ID',
       isPassport: idDocumentType === 'Passport',
-      strictCheck: idDocumentType !== 'ID' && idDocumentType !== 'Passport'
+      strictCheck: idDocumentType !== 'ID' && idDocumentType !== 'Passport',
     })
-    
+
     // Prüfe ob ein gültiger Ausweistyp gewählt wurde
-    if (!idDocumentType || idDocumentType === '' || idDocumentType.trim() === '' || (idDocumentType !== 'ID' && idDocumentType !== 'Passport')) {
+    if (
+      !idDocumentType ||
+      idDocumentType === '' ||
+      idDocumentType.trim() === '' ||
+      (idDocumentType !== 'ID' && idDocumentType !== 'Passport')
+    ) {
       setError('Bitte wählen Sie einen Ausweistyp aus')
       setLoading(false)
       return
@@ -298,11 +350,13 @@ export default function VerificationPage() {
     if (idDocumentType === 'ID') {
       // Für Identitätskarte: Seite 1 und Seite 2 sind optional, aber mindestens eine Seite muss hochgeladen sein
       if (!idDocumentPage1 && !idDocumentPage2) {
-        setError('Bitte laden Sie mindestens eine Seite Ihrer Identitätskarte hoch (Seite 1 oder Seite 2)')
+        setError(
+          'Bitte laden Sie mindestens eine Seite Ihrer Identitätskarte hoch (Seite 1 oder Seite 2)'
+        )
         setLoading(false)
         return
       }
-      
+
       // Validierung Seite 1 falls hochgeladen
       if (idDocumentPage1) {
         if (idDocumentPage1.size > 5 * 1024 * 1024) {
@@ -317,7 +371,7 @@ export default function VerificationPage() {
           return
         }
       }
-      
+
       // Validierung Seite 2 falls hochgeladen
       if (idDocumentPage2) {
         if (idDocumentPage2.size > 5 * 1024 * 1024) {
@@ -339,13 +393,13 @@ export default function VerificationPage() {
         setLoading(false)
         return
       }
-      
+
       if (idDocument.size > 5 * 1024 * 1024) {
         setError('Die Ausweiskopie darf maximal 5 MB groß sein')
         setLoading(false)
         return
       }
-      
+
       const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
       if (!allowedTypes.includes(idDocument.type)) {
         setError('Die Ausweiskopie muss im Format JPG, PNG oder PDF vorliegen')
@@ -381,10 +435,13 @@ export default function VerificationPage() {
       // IBAN-Format-Validierung (CH + 2 Prüfziffern + 17 alphanumerische Zeichen = 21 Zeichen total)
       // Stelle sicher, dass die IBAN formatiert ist
       const ibanFormatted = formatIBAN(bankMethod.iban)
-      
+
       // Entferne alle Leerzeichen, Bindestriche und andere Leerzeichen, konvertiere zu Großbuchstaben
-      const ibanCleaned = ibanFormatted.replace(/[\s\-]/g, '').toUpperCase().trim()
-      
+      const ibanCleaned = ibanFormatted
+        .replace(/[\s\-]/g, '')
+        .toUpperCase()
+        .trim()
+
       console.log('IBAN Validierung:', {
         original: bankMethod.iban,
         formatted: ibanFormatted,
@@ -392,68 +449,80 @@ export default function VerificationPage() {
         length: ibanCleaned.length,
         afterCH: ibanCleaned.substring(4),
         afterCHLength: ibanCleaned.substring(4).length,
-        matchesPattern: /^CH\d{2}[A-Z0-9]{17}$/.test(ibanCleaned)
+        matchesPattern: /^CH\d{2}[A-Z0-9]{17}$/.test(ibanCleaned),
       })
-      
+
       // Schweizer IBAN Format: CH + 2 Ziffern + 17 alphanumerische Zeichen = 21 Zeichen total
       const ibanRegex = /^CH\d{2}[A-Z0-9]{17}$/
-      
+
       // Prüfe ob mit CH beginnt
       if (!ibanCleaned.startsWith('CH')) {
         setError(`Die IBAN muss mit "CH" beginnen. Eingegeben: "${bankMethod.iban}"`)
         setLoading(false)
         return
       }
-      
+
       // Prüfe Gesamtlänge zuerst
       if (ibanCleaned.length < 21) {
         const missingChars = 21 - ibanCleaned.length
         const afterCH = ibanCleaned.substring(4)
         const afterCHLength = afterCH.length
-        setError(`Die IBAN ist unvollständig. Erwartet: 21 Zeichen (ohne Leerzeichen), gefunden: ${ibanCleaned.length} Zeichen. Nach "CH" und 2 Prüfziffern sollten 17 Zeichen folgen, gefunden: ${afterCHLength} Zeichen. Es fehlen ${missingChars} Zeichen. Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`)
+        setError(
+          `Die IBAN ist unvollständig. Erwartet: 21 Zeichen (ohne Leerzeichen), gefunden: ${ibanCleaned.length} Zeichen. Nach "CH" und 2 Prüfziffern sollten 17 Zeichen folgen, gefunden: ${afterCHLength} Zeichen. Es fehlen ${missingChars} Zeichen. Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`
+        )
         setLoading(false)
         return
       }
-      
+
       if (ibanCleaned.length > 21) {
-        setError(`Die IBAN ist zu lang. Erwartet: 21 Zeichen (ohne Leerzeichen), gefunden: ${ibanCleaned.length} Zeichen. Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`)
+        setError(
+          `Die IBAN ist zu lang. Erwartet: 21 Zeichen (ohne Leerzeichen), gefunden: ${ibanCleaned.length} Zeichen. Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`
+        )
         setLoading(false)
         return
       }
-      
+
       // Prüfe Format: CH + 2 Ziffern + 17 alphanumerische Zeichen
       if (!/^CH/.test(ibanCleaned)) {
         setError(`Die IBAN muss mit "CH" beginnen. Eingegeben: "${bankMethod.iban}"`)
         setLoading(false)
         return
       }
-      
+
       if (!/^CH\d{2}/.test(ibanCleaned)) {
-        setError(`Nach "CH" müssen 2 Ziffern folgen (Prüfziffern). Eingegeben: "${bankMethod.iban}"`)
+        setError(
+          `Nach "CH" müssen 2 Ziffern folgen (Prüfziffern). Eingegeben: "${bankMethod.iban}"`
+        )
         setLoading(false)
         return
       }
-      
+
       const afterCH = ibanCleaned.substring(4)
       if (afterCH.length !== 17) {
-        setError(`Nach "CH" und den 2 Prüfziffern müssen genau 17 alphanumerische Zeichen folgen. Gefunden: ${afterCH.length} Zeichen. Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`)
+        setError(
+          `Nach "CH" und den 2 Prüfziffern müssen genau 17 alphanumerische Zeichen folgen. Gefunden: ${afterCH.length} Zeichen. Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`
+        )
         setLoading(false)
         return
       }
-      
+
       if (!/^[A-Z0-9]{17}$/.test(afterCH)) {
-        setError(`Nach "CH" und den 2 Prüfziffern dürfen nur alphanumerische Zeichen (A-Z, 0-9) folgen. Gefunden: "${afterCH}". Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`)
+        setError(
+          `Nach "CH" und den 2 Prüfziffern dürfen nur alphanumerische Zeichen (A-Z, 0-9) folgen. Gefunden: "${afterCH}". Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`
+        )
         setLoading(false)
         return
       }
-      
+
       // Finale Regex-Validierung
       if (!ibanRegex.test(ibanCleaned)) {
-        setError(`Die IBAN hat ein ungültiges Format. Gefunden: "${ibanCleaned}". Erwartetes Format: CH12 3456 7890 1234 5678 9 (Schweizer IBAN: CH + 2 Ziffern + 17 alphanumerische Zeichen). Eingegeben: "${bankMethod.iban}"`)
+        setError(
+          `Die IBAN hat ein ungültiges Format. Gefunden: "${ibanCleaned}". Erwartetes Format: CH12 3456 7890 1234 5678 9 (Schweizer IBAN: CH + 2 Ziffern + 17 alphanumerische Zeichen). Eingegeben: "${bankMethod.iban}"`
+        )
         setLoading(false)
         return
       }
-      
+
       // Aktualisiere die IBAN mit der formatierten Version
       updatePaymentMethod('bank', { iban: ibanFormatted })
 
@@ -499,8 +568,8 @@ export default function VerificationPage() {
           idDocumentPage2: idDocumentPage2Base64,
           idDocumentType: idDocumentType || null,
           // Zahlungsmittel
-          paymentMethods: selectedPaymentMethods
-        })
+          paymentMethods: selectedPaymentMethods,
+        }),
       })
 
       console.log('API Response Status:', res.status)
@@ -514,7 +583,7 @@ export default function VerificationPage() {
         console.error('API Error Response:', {
           status: res.status,
           message: data.message,
-          data: data
+          data: data,
         })
         setError(data.message || 'Ein Fehler ist aufgetreten')
       }
@@ -523,7 +592,7 @@ export default function VerificationPage() {
       console.error('Error details:', {
         message: error.message,
         stack: error.stack,
-        name: error.name
+        name: error.name,
       })
       setError(`Ein Fehler ist aufgetreten: ${error.message || 'Bitte versuchen Sie es erneut.'}`)
     } finally {
@@ -535,9 +604,7 @@ export default function VerificationPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-4xl mx-auto px-4 py-12 text-center text-gray-600">
-          Lädt...
-        </div>
+        <div className="mx-auto max-w-4xl px-4 py-12 text-center text-gray-600">Lädt...</div>
         <Footer />
       </div>
     )
@@ -551,31 +618,29 @@ export default function VerificationPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="mx-auto max-w-4xl px-4 py-12">
         <div className="mb-6">
           <Link
             href="/"
-            className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium"
+            className="inline-flex items-center font-medium text-primary-600 hover:text-primary-700"
           >
             ← Zurück zur Hauptseite
           </Link>
         </div>
 
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="rounded-lg bg-white p-8 shadow-md">
           <div className="mb-6">
-            <h1 className="text-3xl font-bold text-gray-900 mb-2">
-              Verifizierung
-            </h1>
+            <h1 className="mb-2 text-3xl font-bold text-gray-900">Verifizierung</h1>
             <p className="text-gray-600">
               Um kaufen und verkaufen zu können, benötigen wir Ihre Verifizierungsdaten.
             </p>
           </div>
 
           {isVerified && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
               <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
-                <span className="text-green-800 font-medium">
+                <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
+                <span className="font-medium text-green-800">
                   Sie sind bereits verifiziert! Sie können Ihre Daten hier aktualisieren.
                 </span>
               </div>
@@ -583,13 +648,13 @@ export default function VerificationPage() {
           )}
 
           {success && (
-            <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+            <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
               <p className="text-green-800">{success}</p>
             </div>
           )}
 
           {error && (
-            <div className="mb-6 p-4 bg-red-50 border border-red-200 rounded-lg">
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
               <p className="text-red-800">{error}</p>
             </div>
           )}
@@ -597,16 +662,14 @@ export default function VerificationPage() {
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Persönliche Daten */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Persönliche Daten</h2>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">Persönliche Daten</h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Anrede *
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Anrede *</label>
                   <select
                     value={title}
-                    onChange={(e) => setTitle(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    onChange={e => setTitle(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     required
                   >
                     <option value="">Bitte wählen</option>
@@ -616,26 +679,22 @@ export default function VerificationPage() {
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Vorname *
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Vorname *</label>
                   <input
                     type="text"
                     value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    onChange={e => setFirstName(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     required
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Nachname *
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Nachname *</label>
                   <input
                     type="text"
                     value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    onChange={e => setLastName(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     required
                   />
                 </div>
@@ -644,67 +703,61 @@ export default function VerificationPage() {
 
             {/* Wohnadresse */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Wohnadresse</h2>
-              <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">Wohnadresse</h2>
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                 <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Strasse *
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Strasse *</label>
                   <input
                     type="text"
                     value={street}
-                    onChange={(e) => setStreet(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    onChange={e => setStreet(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     required
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Strassen-Nr. *
                   </label>
                   <input
                     type="text"
                     value={streetNumber}
-                    onChange={(e) => setStreetNumber(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    onChange={e => setStreetNumber(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     required
                   />
                 </div>
                 <div className="md:col-span-1"></div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    PLZ *
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">PLZ *</label>
                   <input
                     type="text"
                     value={postalCode}
-                    onChange={(e) => setPostalCode(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    onChange={e => setPostalCode(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     required
                   />
                 </div>
                 <div className="md:col-span-3">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Ortschaft *
                   </label>
                   <input
                     type="text"
                     value={city}
-                    onChange={(e) => setCity(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    onChange={e => setCity(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     required
                   />
                 </div>
                 <div className="md:col-span-1"></div>
                 <div className="md:col-span-4">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Land *
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Land *</label>
                   <input
                     type="text"
                     value={country}
-                    onChange={(e) => setCountry(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    onChange={e => setCountry(e.target.value)}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     placeholder="z.B. Schweiz"
                     required
                   />
@@ -714,76 +767,73 @@ export default function VerificationPage() {
 
             {/* Lieferadresse */}
             <div>
-              <div className="flex items-center mb-4">
+              <div className="mb-4 flex items-center">
                 <input
                   type="checkbox"
                   id="hasDeliveryAddress"
                   checked={hasDeliveryAddress}
-                  onChange={(e) => setHasDeliveryAddress(e.target.checked)}
-                  className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                  onChange={e => setHasDeliveryAddress(e.target.checked)}
+                  className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                 />
-                <label htmlFor="hasDeliveryAddress" className="ml-2 text-sm font-medium text-gray-700">
+                <label
+                  htmlFor="hasDeliveryAddress"
+                  className="ml-2 text-sm font-medium text-gray-700"
+                >
                   Abweichende Lieferadresse
                 </label>
               </div>
 
               {hasDeliveryAddress && (
-                <div className="grid grid-cols-1 md:grid-cols-5 gap-4 bg-gray-50 p-4 rounded-lg">
+                <div className="grid grid-cols-1 gap-4 rounded-lg bg-gray-50 p-4 md:grid-cols-5">
                   <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Strasse
-                    </label>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">Strasse</label>
                     <input
                       type="text"
                       value={deliveryStreet}
-                      onChange={(e) => setDeliveryStreet(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                      onChange={e => setDeliveryStreet(e.target.value)}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     />
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Strassen-Nr.
                     </label>
                     <input
                       type="text"
                       value={deliveryStreetNumber}
-                      onChange={(e) => setDeliveryStreetNumber(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                      onChange={e => setDeliveryStreetNumber(e.target.value)}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     />
                   </div>
                   <div className="md:col-span-1"></div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      PLZ
-                    </label>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">PLZ</label>
                     <input
                       type="text"
                       value={deliveryPostalCode}
-                      onChange={(e) => setDeliveryPostalCode(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                      onChange={e => setDeliveryPostalCode(e.target.value)}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     />
                   </div>
                   <div className="md:col-span-3">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Ortschaft
                     </label>
                     <input
                       type="text"
                       value={deliveryCity}
-                      onChange={(e) => setDeliveryCity(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                      onChange={e => setDeliveryCity(e.target.value)}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     />
                   </div>
                   <div className="md:col-span-1"></div>
                   <div className="md:col-span-4">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Land
-                    </label>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">Land</label>
                     <input
                       type="text"
                       value={deliveryCountry}
-                      onChange={(e) => setDeliveryCountry(e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                      onChange={e => setDeliveryCountry(e.target.value)}
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                       placeholder="z.B. Schweiz"
                     />
                   </div>
@@ -793,13 +843,13 @@ export default function VerificationPage() {
 
             {/* Geburtsdatum */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Geburtsdatum *</h2>
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">Geburtsdatum *</h2>
               <input
                 type="date"
                 value={dateOfBirth}
-                onChange={(e) => setDateOfBirth(e.target.value)}
+                onChange={e => setDateOfBirth(e.target.value)}
                 max={new Date().toISOString().split('T')[0]}
-                className="w-full md:w-auto px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500 md:w-auto"
                 required
               />
               <p className="mt-2 text-sm text-gray-600">
@@ -809,19 +859,20 @@ export default function VerificationPage() {
 
             {/* Ausweiskopie */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Ausweiskopie *</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Bitte laden Sie eine Kopie Ihres gültigen Ausweises hoch (Identitätskarte oder Reisepass). Max. 5 MB, Format: JPG, PNG oder PDF.
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">Ausweiskopie *</h2>
+              <p className="mb-4 text-sm text-gray-600">
+                Bitte laden Sie eine Kopie Ihres gültigen Ausweises hoch (Identitätskarte oder
+                Reisepass). Max. 5 MB, Format: JPG, PNG oder PDF.
               </p>
-              
+
               <div className="space-y-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Ausweistyp *
                   </label>
                   <select
                     value={idDocumentType}
-                    onChange={(e) => {
+                    onChange={e => {
                       const selectedValue = e.target.value as 'ID' | 'Passport' | ''
                       console.log('Ausweistyp geändert:', selectedValue)
                       setIdDocumentType(selectedValue)
@@ -839,7 +890,7 @@ export default function VerificationPage() {
                       // Setze Fehler zurück
                       setError('')
                     }}
-                    className="w-full md:w-1/2 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500 md:w-1/2"
                     required
                   >
                     <option value="">Bitte wählen</option>
@@ -851,13 +902,13 @@ export default function VerificationPage() {
                 {/* Reisepass: Einzelnes Dokument */}
                 {idDocumentType === 'Passport' && (
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       Reisepass hochladen *
                     </label>
                     <input
                       type="file"
                       accept="image/jpeg,image/png,image/jpg,application/pdf"
-                      onChange={(e) => {
+                      onChange={e => {
                         const file = e.target.files?.[0]
                         if (file) {
                           setIdDocument(file)
@@ -875,23 +926,24 @@ export default function VerificationPage() {
                           reader.readAsDataURL(file)
                         }
                       }}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                       required
                     />
                     {idDocumentPreview && (
                       <div className="mt-4">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Vorschau:</p>
+                        <p className="mb-2 text-sm font-medium text-gray-700">Vorschau:</p>
                         <img
                           src={idDocumentPreview}
                           alt="Reisepass Vorschau"
-                          className="max-w-md border border-gray-300 rounded-md"
+                          className="max-w-md rounded-md border border-gray-300"
                         />
                       </div>
                     )}
                     {idDocument && !idDocumentPreview && (
-                      <div className="mt-4 p-3 bg-gray-50 border border-gray-300 rounded-md">
+                      <div className="mt-4 rounded-md border border-gray-300 bg-gray-50 p-3">
                         <p className="text-sm text-gray-700">
-                          <span className="font-semibold">Datei:</span> {idDocument.name} ({(idDocument.size / 1024).toFixed(2)} KB)
+                          <span className="font-semibold">Datei:</span> {idDocument.name} (
+                          {(idDocument.size / 1024).toFixed(2)} KB)
                         </p>
                       </div>
                     )}
@@ -902,13 +954,13 @@ export default function VerificationPage() {
                 {idDocumentType === 'ID' && (
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
                         Identitätskarte - Seite 1
                       </label>
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/jpg,application/pdf"
-                        onChange={(e) => {
+                        onChange={e => {
                           const file = e.target.files?.[0]
                           if (file) {
                             setIdDocumentPage1(file)
@@ -926,35 +978,38 @@ export default function VerificationPage() {
                             reader.readAsDataURL(file)
                           }
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                       />
                       {idDocumentPage1Preview && (
                         <div className="mt-4">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Vorschau Seite 1:</p>
+                          <p className="mb-2 text-sm font-medium text-gray-700">
+                            Vorschau Seite 1:
+                          </p>
                           <img
                             src={idDocumentPage1Preview}
                             alt="ID Seite 1 Vorschau"
-                            className="max-w-md border border-gray-300 rounded-md"
+                            className="max-w-md rounded-md border border-gray-300"
                           />
                         </div>
                       )}
                       {idDocumentPage1 && !idDocumentPage1Preview && (
-                        <div className="mt-4 p-3 bg-gray-50 border border-gray-300 rounded-md">
+                        <div className="mt-4 rounded-md border border-gray-300 bg-gray-50 p-3">
                           <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Datei:</span> {idDocumentPage1.name} ({(idDocumentPage1.size / 1024).toFixed(2)} KB)
+                            <span className="font-semibold">Datei:</span> {idDocumentPage1.name} (
+                            {(idDocumentPage1.size / 1024).toFixed(2)} KB)
                           </p>
                         </div>
                       )}
                     </div>
 
                     <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
                         Identitätskarte - Seite 2
                       </label>
                       <input
                         type="file"
                         accept="image/jpeg,image/png,image/jpg,application/pdf"
-                        onChange={(e) => {
+                        onChange={e => {
                           const file = e.target.files?.[0]
                           if (file) {
                             setIdDocumentPage2(file)
@@ -972,29 +1027,32 @@ export default function VerificationPage() {
                             reader.readAsDataURL(file)
                           }
                         }}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-md file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                       />
                       {idDocumentPage2Preview && (
                         <div className="mt-4">
-                          <p className="text-sm font-medium text-gray-700 mb-2">Vorschau Seite 2:</p>
+                          <p className="mb-2 text-sm font-medium text-gray-700">
+                            Vorschau Seite 2:
+                          </p>
                           <img
                             src={idDocumentPage2Preview}
                             alt="ID Seite 2 Vorschau"
-                            className="max-w-md border border-gray-300 rounded-md"
+                            className="max-w-md rounded-md border border-gray-300"
                           />
                         </div>
                       )}
                       {idDocumentPage2 && !idDocumentPage2Preview && (
-                        <div className="mt-4 p-3 bg-gray-50 border border-gray-300 rounded-md">
+                        <div className="mt-4 rounded-md border border-gray-300 bg-gray-50 p-3">
                           <p className="text-sm text-gray-700">
-                            <span className="font-semibold">Datei:</span> {idDocumentPage2.name} ({(idDocumentPage2.size / 1024).toFixed(2)} KB)
+                            <span className="font-semibold">Datei:</span> {idDocumentPage2.name} (
+                            {(idDocumentPage2.size / 1024).toFixed(2)} KB)
                           </p>
                         </div>
                       )}
                     </div>
-                    
-                    {(!idDocumentPage1 && !idDocumentPage2) && (
-                      <p className="text-sm text-gray-500 italic">
+
+                    {!idDocumentPage1 && !idDocumentPage2 && (
+                      <p className="text-sm italic text-gray-500">
                         Bitte laden Sie mindestens eine Seite der Identitätskarte hoch.
                       </p>
                     )}
@@ -1005,79 +1063,83 @@ export default function VerificationPage() {
 
             {/* Zahlungsmittel */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">Zahlungsmittel *</h2>
-              <p className="text-sm text-gray-600 mb-4">
-                Wählen Sie mindestens ein Zahlungsmittel aus und füllen Sie die entsprechenden Informationen aus:
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">Zahlungsmittel *</h2>
+              <p className="mb-4 text-sm text-gray-600">
+                Wählen Sie mindestens ein Zahlungsmittel aus und füllen Sie die entsprechenden
+                Informationen aus:
               </p>
 
               <div className="space-y-4">
                 {/* TWINT */}
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center mb-3">
+                <div className="rounded-lg border border-gray-200 p-4">
+                  <div className="mb-3 flex items-center">
                     <input
                       type="checkbox"
                       id="payment-twint"
                       checked={selectedPaymentMethods.some(pm => pm.type === 'twint')}
                       onChange={() => togglePaymentMethod('twint')}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <label htmlFor="payment-twint" className="ml-3 flex items-center">
-                      <Smartphone className="h-5 w-5 text-blue-600 mr-2" />
+                      <Smartphone className="mr-2 h-5 w-5 text-blue-600" />
                       <span className="font-medium text-gray-900">TWINT</span>
                     </label>
                   </div>
                   {selectedPaymentMethods.some(pm => pm.type === 'twint') && (
                     <div className="ml-7 mt-3">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
                         Telefonnummer *
                       </label>
                       <input
                         type="tel"
                         value={selectedPaymentMethods.find(pm => pm.type === 'twint')?.phone || ''}
-                        onChange={(e) => updatePaymentMethod('twint', { phone: e.target.value })}
+                        onChange={e => updatePaymentMethod('twint', { phone: e.target.value })}
                         placeholder="+41 79 123 45 67"
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                        className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                       />
                     </div>
                   )}
                 </div>
 
                 {/* Banküberweisung */}
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center mb-3">
+                <div className="rounded-lg border border-gray-200 p-4">
+                  <div className="mb-3 flex items-center">
                     <input
                       type="checkbox"
                       id="payment-bank"
                       checked={selectedPaymentMethods.some(pm => pm.type === 'bank')}
                       onChange={() => togglePaymentMethod('bank')}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <label htmlFor="payment-bank" className="ml-3 flex items-center">
-                      <Building2 className="h-5 w-5 text-green-600 mr-2" />
+                      <Building2 className="mr-2 h-5 w-5 text-green-600" />
                       <span className="font-medium text-gray-900">Banküberweisung</span>
                     </label>
                   </div>
                   {selectedPaymentMethods.some(pm => pm.type === 'bank') && (
                     <div className="ml-7 mt-3 space-y-3">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
                           IBAN *
                         </label>
                         <input
                           type="text"
                           value={selectedPaymentMethods.find(pm => pm.type === 'bank')?.iban || ''}
-                          onChange={(e) => {
+                          onChange={e => {
                             // Setze Fehler sofort zurück, wenn der Benutzer tippt
                             setError('')
                             // Formatiere IBAN automatisch mit Leerzeichen
                             const formatted = formatIBAN(e.target.value)
                             updatePaymentMethod('bank', { iban: formatted })
                           }}
-                          onBlur={(e) => {
+                          onBlur={e => {
                             // Optional: Validiere beim Verlassen des Feldes (nur für Feedback, keine Blockade)
                             const ibanValue = e.target.value
                             if (ibanValue) {
-                              const ibanCleaned = ibanValue.replace(/[\s\-]/g, '').toUpperCase().trim()
+                              const ibanCleaned = ibanValue
+                                .replace(/[\s\-]/g, '')
+                                .toUpperCase()
+                                .trim()
                               const ibanRegex = /^CH\d{2}[A-Z0-9]{19}$/
                               if (ibanCleaned.length === 21 && ibanRegex.test(ibanCleaned)) {
                                 // IBAN ist korrekt - keine Fehlermeldung
@@ -1086,44 +1148,56 @@ export default function VerificationPage() {
                             }
                           }}
                           placeholder="CH12 3456 7890 1234 5678 9"
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                           style={{ letterSpacing: '0.05em' }}
                         />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="mb-2 block text-sm font-medium text-gray-700">
                             Vorname Kontoinhaber *
                           </label>
                           <input
                             type="text"
-                            value={selectedPaymentMethods.find(pm => pm.type === 'bank')?.accountHolderFirstName || ''}
-                            onChange={(e) => updatePaymentMethod('bank', { accountHolderFirstName: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                            value={
+                              selectedPaymentMethods.find(pm => pm.type === 'bank')
+                                ?.accountHolderFirstName || ''
+                            }
+                            onChange={e =>
+                              updatePaymentMethod('bank', {
+                                accountHolderFirstName: e.target.value,
+                              })
+                            }
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                           />
                         </div>
                         <div>
-                          <label className="block text-sm font-medium text-gray-700 mb-2">
+                          <label className="mb-2 block text-sm font-medium text-gray-700">
                             Nachname Kontoinhaber *
                           </label>
                           <input
                             type="text"
-                            value={selectedPaymentMethods.find(pm => pm.type === 'bank')?.accountHolderLastName || ''}
-                            onChange={(e) => updatePaymentMethod('bank', { accountHolderLastName: e.target.value })}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                            value={
+                              selectedPaymentMethods.find(pm => pm.type === 'bank')
+                                ?.accountHolderLastName || ''
+                            }
+                            onChange={e =>
+                              updatePaymentMethod('bank', { accountHolderLastName: e.target.value })
+                            }
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                           />
                         </div>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
                           Bank *
                         </label>
                         <input
                           type="text"
                           value={selectedPaymentMethods.find(pm => pm.type === 'bank')?.bank || ''}
-                          onChange={(e) => updatePaymentMethod('bank', { bank: e.target.value })}
+                          onChange={e => updatePaymentMethod('bank', { bank: e.target.value })}
                           placeholder="z.B. UBS, Credit Suisse, etc."
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                         />
                       </div>
                     </div>
@@ -1131,23 +1205,23 @@ export default function VerificationPage() {
                 </div>
 
                 {/* Kreditkarte */}
-                <div className="border border-gray-200 rounded-lg p-4">
-                  <div className="flex items-center mb-3">
+                <div className="rounded-lg border border-gray-200 p-4">
+                  <div className="mb-3 flex items-center">
                     <input
                       type="checkbox"
                       id="payment-creditcard"
                       checked={selectedPaymentMethods.some(pm => pm.type === 'creditcard')}
                       onChange={() => togglePaymentMethod('creditcard')}
-                      className="h-4 w-4 text-primary-600 focus:ring-primary-500 border-gray-300 rounded"
+                      className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                     />
                     <label htmlFor="payment-creditcard" className="ml-3 flex items-center">
-                      <CreditCard className="h-5 w-5 text-purple-600 mr-2" />
+                      <CreditCard className="mr-2 h-5 w-5 text-purple-600" />
                       <span className="font-medium text-gray-900">Kreditkarte</span>
                     </label>
                   </div>
                   {selectedPaymentMethods.some(pm => pm.type === 'creditcard') && (
                     <div className="ml-7 mt-3">
-                      <div className="p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                      <div className="rounded-md border border-yellow-200 bg-yellow-50 p-3">
                         <p className="text-sm text-yellow-800">
                           Die Kreditkarten-Funktion wird zu einem späteren Zeitpunkt verfügbar sein.
                         </p>
@@ -1158,19 +1232,23 @@ export default function VerificationPage() {
               </div>
             </div>
 
-            <div className="flex justify-end space-x-4 pt-4 border-t">
+            <div className="flex justify-end space-x-4 border-t pt-4">
               <Link
                 href="/"
-                className="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                className="rounded-md border border-gray-300 px-6 py-2 text-gray-700 hover:bg-gray-50"
               >
                 Abbrechen
               </Link>
               <button
                 type="submit"
                 disabled={loading}
-                className="px-6 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                className="rounded-md bg-primary-600 px-6 py-2 text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                {loading ? 'Wird gespeichert...' : isVerified ? 'Aktualisieren' : 'Verifizierung abschliessen'}
+                {loading
+                  ? 'Wird gespeichert...'
+                  : isVerified
+                    ? 'Aktualisieren'
+                    : 'Verifizierung abschliessen'}
               </button>
             </div>
           </form>
@@ -1180,4 +1258,3 @@ export default function VerificationPage() {
     </div>
   )
 }
-

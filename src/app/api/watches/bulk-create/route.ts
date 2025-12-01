@@ -7,7 +7,7 @@ import { generateArticleNumber } from '@/lib/article-number'
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     // Prüfe Verifizierungsstatus
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { verificationStatus: true, verified: true }
+      select: { verificationStatus: true, verified: true },
     })
 
     if (!user || user.verificationStatus !== 'approved' || !user.verified) {
@@ -76,14 +76,18 @@ export async function POST(request: NextRequest) {
         }
 
         // Shipping Methods
-        const shippingMethods = product.shippingMethods && Array.isArray(product.shippingMethods) && product.shippingMethods.length > 0
-          ? product.shippingMethods
-          : ['pickup'] // Fallback
+        const shippingMethods =
+          product.shippingMethods &&
+          Array.isArray(product.shippingMethods) &&
+          product.shippingMethods.length > 0
+            ? product.shippingMethods
+            : ['pickup'] // Fallback
 
         // Bilder verarbeiten (Base64 Strings)
-        const images = product.images && Array.isArray(product.images) && product.images.length > 0
-          ? product.images
-          : []
+        const images =
+          product.images && Array.isArray(product.images) && product.images.length > 0
+            ? product.images
+            : []
 
         // Jahr konvertieren
         const yearInt = product.year ? parseInt(product.year) : null
@@ -123,30 +127,30 @@ export async function POST(request: NextRequest) {
         }
 
         const created = await prisma.watch.create({
-          data: watchData
+          data: watchData,
         })
 
         // Kategorien zuweisen falls vorhanden
         if (product.category) {
           // Normalisiere den Category-Slug
           const categorySlug = product.category.toLowerCase().replace(/\s+/g, '-')
-          
+
           const category = await prisma.category.findFirst({
             where: {
               OR: [
                 { slug: categorySlug },
                 { slug: product.category },
-                { name: { equals: product.category, mode: 'insensitive' } }
-              ]
-            }
+                { name: { equals: product.category, mode: 'insensitive' } },
+              ],
+            },
           })
 
           if (category) {
             await prisma.watchCategory.create({
               data: {
                 watchId: created.id,
-                categoryId: category.id
-              }
+                categoryId: category.id,
+              },
             })
           } else {
             console.warn(`Kategorie nicht gefunden: ${product.category}`)
@@ -163,7 +167,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       message: `${createdProducts.length} Artikel erfolgreich erstellt.`,
       created: createdProducts.length,
-      errors: errors.length > 0 ? errors : undefined
+      errors: errors.length > 0 ? errors : undefined,
     })
   } catch (error: any) {
     console.error('Bulk create error:', error)
@@ -173,4 +177,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

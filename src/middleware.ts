@@ -11,20 +11,20 @@ export default withAuth(
     if (isAdminRoute) {
       // Prüfe Admin-Status aus Token
       let isAdmin = token?.isAdmin === true || token?.isAdmin === 1
-      
+
       // Falls nicht im Token, prüfe direkt in der Datenbank
       if (!isAdmin && token?.id) {
         try {
           const user = await prisma.user.findUnique({
             where: { id: token.id as string },
-            select: { isAdmin: true }
+            select: { isAdmin: true },
           })
           isAdmin = user?.isAdmin === true || user?.isAdmin === 1
         } catch (error) {
           console.error('[MIDDLEWARE] Error checking admin status:', error)
         }
       }
-      
+
       if (!isAdmin) {
         return NextResponse.redirect(new URL('/', req.url))
       }
@@ -36,19 +36,19 @@ export default withAuth(
     callbacks: {
       authorized: ({ token, req }) => {
         const isAdminRoute = req.nextUrl.pathname.startsWith('/admin')
-        
+
         // Für Admin-Routes muss der User eingeloggt sein
         if (isAdminRoute) {
           return !!token
         }
-        
+
         // Für andere Routes ist es OK wenn kein Token vorhanden ist
         return true
-      }
-    }
+      },
+    },
   }
 )
 
 export const config = {
-  matcher: ['/admin/:path*']
+  matcher: ['/admin/:path*'],
 }

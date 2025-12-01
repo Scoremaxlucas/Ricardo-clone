@@ -3,10 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
@@ -19,10 +16,7 @@ export async function POST(
     const { content, receiverId, isPublic } = body
 
     if (!content || !receiverId) {
-      return NextResponse.json(
-        { message: 'Missing required fields' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
     }
 
     const message = await prisma.message.create({
@@ -54,17 +48,11 @@ export async function POST(
     return NextResponse.json(message, { status: 201 })
   } catch (error) {
     console.error('Error creating message:', error)
-    return NextResponse.json(
-      { message: 'Failed to create message' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Failed to create message' }, { status: 500 })
   }
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
@@ -109,9 +97,6 @@ export async function GET(
     return NextResponse.json(messages, { status: 200 })
   } catch (error) {
     console.error('Error fetching messages:', error)
-    return NextResponse.json(
-      { message: 'Failed to fetch messages' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Failed to fetch messages' }, { status: 500 })
   }
 }

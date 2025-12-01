@@ -12,20 +12,3 @@ export const translations = {
 
 export type Language = keyof typeof translations
 export type { Translation } from './de'
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

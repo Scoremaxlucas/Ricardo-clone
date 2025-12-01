@@ -20,31 +20,31 @@ export async function GET(request: NextRequest) {
               select: {
                 id: true,
                 name: true,
-                email: true
-              }
+                email: true,
+              },
             },
             bids: {
               orderBy: { amount: 'desc' },
-              take: 1 // Nur das höchste Gebot
-            }
-          }
-        }
+              take: 1, // Nur das höchste Gebot
+            },
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     // Parse images und berechne aktuellen Preis
     const favoritesWithImages = favorites.map(fav => {
       const highestBid = fav.watch.bids[0]
       const currentPrice = highestBid ? highestBid.amount : fav.watch.price
-      
+
       return {
         ...fav,
         watch: {
           ...fav.watch,
           price: currentPrice, // Überschreibe price mit aktuellem Preis
-          images: fav.watch.images ? JSON.parse(fav.watch.images) : []
-        }
+          images: fav.watch.images ? JSON.parse(fav.watch.images) : [],
+        },
       }
     })
 
@@ -63,20 +63,14 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const data = await request.json()
     const { watchId } = data
 
     if (!watchId) {
-      return NextResponse.json(
-        { message: 'watchId fehlt' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'watchId fehlt' }, { status: 400 })
     }
 
     // Prüfe ob bereits Favorit
@@ -84,9 +78,9 @@ export async function POST(request: NextRequest) {
       where: {
         watchId_userId: {
           watchId,
-          userId: session.user.id
-        }
-      }
+          userId: session.user.id,
+        },
+      },
     })
 
     if (existing) {
@@ -96,11 +90,11 @@ export async function POST(request: NextRequest) {
     const favorite = await prisma.favorite.create({
       data: {
         watchId,
-        userId: session.user.id
+        userId: session.user.id,
       },
       include: {
-        watch: true
-      }
+        watch: true,
+      },
     })
 
     return NextResponse.json({ favorite })
@@ -112,4 +106,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-

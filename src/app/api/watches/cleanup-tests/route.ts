@@ -8,9 +8,9 @@ export async function DELETE(_request: NextRequest) {
       where: {
         OR: [
           { title: { contains: 'Test Rolex Submariner' } },
-          { description: { contains: 'Testeintrag' } }
-        ]
-      }
+          { description: { contains: 'Testeintrag' } },
+        ],
+      },
     })
 
     return NextResponse.json({ deleted: result.count })
@@ -18,5 +18,3 @@ export async function DELETE(_request: NextRequest) {
     return NextResponse.json({ message: 'Cleanup Fehler: ' + error.message }, { status: 500 })
   }
 }
-
-

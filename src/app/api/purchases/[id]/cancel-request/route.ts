@@ -8,17 +8,11 @@ import { sendEmail } from '@/lib/email'
  * POST: Stornierungsantrag stellen
  * Nur Verkäufer können Stornierungsanträge stellen
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -44,10 +38,10 @@ export async function POST(
                 email: true,
                 firstName: true,
                 lastName: true,
-                nickname: true
-              }
-            }
-          }
+                nickname: true,
+              },
+            },
+          },
         },
         buyer: {
           select: {
@@ -56,17 +50,14 @@ export async function POST(
             email: true,
             firstName: true,
             lastName: true,
-            nickname: true
-          }
-        }
-      }
+            nickname: true,
+          },
+        },
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe Berechtigung (nur Verkäufer)
@@ -89,10 +80,7 @@ export async function POST(
 
     // Prüfe ob Kauf bereits storniert oder abgeschlossen ist
     if (purchase.status === 'cancelled') {
-      return NextResponse.json(
-        { message: 'Dieser Kauf wurde bereits storniert' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Dieser Kauf wurde bereits storniert' }, { status: 400 })
     }
 
     if (purchase.status === 'completed') {
@@ -103,7 +91,12 @@ export async function POST(
     }
 
     // Validiere Stornierungsgründe
-    const validReasons = ['buyer_not_responding', 'payment_not_confirmed', 'item_damaged_before_shipping', 'other']
+    const validReasons = [
+      'buyer_not_responding',
+      'payment_not_confirmed',
+      'item_damaged_before_shipping',
+      'other',
+    ]
     if (!validReasons.includes(reason)) {
       return NextResponse.json(
         { message: 'Dieser Stornierungsgrund ist nicht gültig' },
@@ -118,8 +111,8 @@ export async function POST(
         cancellationRequestedAt: new Date(),
         cancellationRequestStatus: 'pending',
         cancellationRequestReason: reason,
-        cancellationRequestDescription: description
-      }
+        cancellationRequestDescription: description,
+      },
     })
 
     // Benachrichtigung an Käufer
@@ -131,8 +124,8 @@ export async function POST(
           title: '⚠️ Stornierungsantrag gestellt',
           message: `Der Verkäufer hat einen Stornierungsantrag für "${purchase.watch.title}" gestellt. Ein Admin wird sich darum kümmern.`,
           link: `/my-watches/buying/purchased`,
-          watchId: purchase.watchId
-        }
+          watchId: purchase.watchId,
+        },
       })
     } catch (error) {
       console.error('[cancel-request] Fehler beim Erstellen der Käufer-Benachrichtigung:', error)
@@ -141,7 +134,11 @@ export async function POST(
     // E-Mail-Benachrichtigung an Käufer
     try {
       const { getCancelRequestEmail } = await import('@/lib/email')
-      const sellerName = purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Verkäufer'
+      const sellerName =
+        purchase.watch.seller.nickname ||
+        purchase.watch.seller.firstName ||
+        purchase.watch.seller.name ||
+        'Verkäufer'
       const { subject, html, text } = getCancelRequestEmail(
         purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Nutzer',
         sellerName,
@@ -149,12 +146,12 @@ export async function POST(
         reason,
         description
       )
-      
+
       await sendEmail({
         to: purchase.buyer.email,
         subject,
         html,
-        text
+        text,
       })
     } catch (emailError) {
       console.error('[cancel-request] Fehler beim Senden der E-Mail:', emailError)
@@ -164,7 +161,7 @@ export async function POST(
     try {
       const admins = await prisma.user.findMany({
         where: { isAdmin: true },
-        select: { id: true }
+        select: { id: true },
       })
 
       for (const admin of admins) {
@@ -175,8 +172,8 @@ export async function POST(
             title: '🔔 Neuer Stornierungsantrag',
             message: `Ein Stornierungsantrag wurde für "${purchase.watch.title}" gestellt. Grund: ${reason}`,
             link: `/admin/disputes/${id}`,
-            watchId: purchase.watchId
-          }
+            watchId: purchase.watchId,
+          },
         })
       }
     } catch (error) {
@@ -186,8 +183,9 @@ export async function POST(
     console.log(`[cancel-request] Stornierungsantrag gestellt für Purchase ${id} von Verkäufer`)
 
     return NextResponse.json({
-      message: 'Stornierungsantrag erfolgreich gestellt. Ein Admin wird sich in Kürze darum kümmern.',
-      purchase: updatedPurchase
+      message:
+        'Stornierungsantrag erfolgreich gestellt. Ein Admin wird sich in Kürze darum kümmern.',
+      purchase: updatedPurchase,
     })
   } catch (error: any) {
     console.error('Error submitting cancel request:', error)
@@ -197,4 +195,3 @@ export async function POST(
     )
   }
 }
-

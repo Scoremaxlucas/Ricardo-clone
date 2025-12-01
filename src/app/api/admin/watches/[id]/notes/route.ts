@@ -14,10 +14,7 @@ async function checkAdmin(session: any): Promise<boolean> {
 }
 
 // GET: Notizen abrufen
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!(await checkAdmin(session))) {
@@ -52,10 +49,7 @@ export async function GET(
 }
 
 // POST: Notiz hinzufügen
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!(await checkAdmin(session))) {
@@ -107,4 +101,3 @@ export async function POST(
     )
   }
 }
-

@@ -7,7 +7,7 @@ const brands = [
   { name: 'Patek Philippe', slug: 'patek-philippe', textLogo: 'P.P.' },
   { name: 'Audemars Piguet', slug: 'audemars-piguet', textLogo: 'AP' },
   { name: 'Richard Mille', slug: 'richard-mille', textLogo: 'RM' },
-  
+
   // Schweizer Luxusmarken
   { name: 'Breitling', slug: 'breitling', textLogo: 'BREITLING' },
   { name: 'Tag Heuer', slug: 'tag-heuer', textLogo: 'TAG HEUER' },
@@ -21,7 +21,7 @@ const brands = [
   { name: 'Hublot', slug: 'hublot', textLogo: 'HUBLOT' },
   { name: 'Bell & Ross', slug: 'bell-ross', textLogo: 'B&R' },
   { name: 'Zenith', slug: 'zenith', textLogo: 'ZENITH' },
-  
+
   // Schweizer Mikrobrands
   { name: 'Fortis', slug: 'fortis', textLogo: 'FORTIS' },
   { name: 'Frederique Constant', slug: 'frederique-constant', textLogo: 'FC' },
@@ -34,13 +34,13 @@ const brands = [
   { name: 'Oris', slug: 'oris', textLogo: 'ORIS' },
   { name: 'Maurice Lacroix', slug: 'maurice-lacroix', textLogo: 'M.L' },
   { name: 'Revue Thommen', slug: 'revue-thommen', textLogo: 'R.T.' },
-  
+
   // Französische Marken
   { name: 'Yema', slug: 'yema', textLogo: 'YEMA' },
   { name: 'Louis Erard', slug: 'louis-erard', textLogo: 'L.E.' },
   { name: 'Lip', slug: 'lip', textLogo: 'LIP' },
   { name: 'Breguet', slug: 'breguet', textLogo: 'BREGUET' },
-  
+
   // Deutsche Marken
   { name: 'Sinn', slug: 'sinn', textLogo: 'SINN' },
   { name: 'Steinhart', slug: 'steinhart', textLogo: 'STEINHART' },
@@ -52,13 +52,13 @@ const brands = [
   { name: 'Mühle-Glashütte', slug: 'muhle-glashutte', textLogo: 'MÜHLE' },
   { name: 'Nomos', slug: 'nomos', textLogo: 'NOMOS' },
   { name: 'Stowa', slug: 'stowa', textLogo: 'STOWA' },
-  
+
   // Japanische Marken
   { name: 'Grand Seiko', slug: 'grand-seiko', textLogo: 'GRAND SEIKO' },
   { name: 'Seiko', slug: 'seiko', textLogo: 'SEIKO' },
   { name: 'Citizen', slug: 'citizen', textLogo: 'CITIZEN' },
   { name: 'Casio', slug: 'casio', textLogo: 'CASIO' },
-  
+
   // Smartwatches
   { name: 'Apple Watch', slug: 'apple', textLogo: 'APPLE' },
   { name: 'Samsung Galaxy Watch', slug: 'samsung', textLogo: 'SAMSUNG' },
@@ -67,30 +67,26 @@ const brands = [
 export default function BrandsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16">
-        <div className="text-center mb-12">
-          <h1 className="text-4xl font-bold text-gray-900 mb-4">
-            Uhrenmarken
-          </h1>
+      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+        <div className="mb-12 text-center">
+          <h1 className="mb-4 text-4xl font-bold text-gray-900">Marken</h1>
           <p className="text-lg text-gray-600">
-            Entdecken Sie Uhren von den weltweit führenden Marken
+            Entdecken Sie Artikel von den weltweit führenden Marken
           </p>
         </div>
 
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 gap-6">
-          {brands.map((brand) => (
+        <div className="grid grid-cols-2 gap-6 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+          {brands.map(brand => (
             <Link
               key={brand.slug}
               href={`/categories/${brand.slug}`}
-              className="group flex flex-col items-center justify-center p-6 rounded-lg border-2 border-gray-200 hover:border-primary-500 hover:shadow-lg transition-all duration-200 bg-white min-h-[140px]"
+              className="group flex min-h-[140px] flex-col items-center justify-center rounded-lg border-2 border-gray-200 bg-white p-6 transition-all duration-200 hover:border-primary-500 hover:shadow-lg"
             >
               <div className="text-center">
-                <div className="text-2xl font-bold text-gray-800 mb-2 group-hover:text-primary-600 transition-colors">
+                <div className="mb-2 text-2xl font-bold text-gray-800 transition-colors group-hover:text-primary-600">
                   {brand.textLogo}
                 </div>
-                <div className="text-xs text-gray-600">
-                  {brand.name}
-                </div>
+                <div className="text-xs text-gray-600">{brand.name}</div>
               </div>
             </Link>
           ))}

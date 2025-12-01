@@ -16,8 +16,8 @@ async function main() {
       name: true,
       password: true,
       emailVerified: true,
-      isAdmin: true
-    }
+      isAdmin: true,
+    },
   })
 
   console.log(`📋 Gefundene User: ${users.length}\n`)
@@ -27,7 +27,7 @@ async function main() {
     data: {
       password: hashedPassword, // Setze Passwort auf test123 für alle
       emailVerified: true, // E-Mail als verifiziert markieren
-    }
+    },
   })
 
   console.log(`✅ ${updateResult.count} User wurden aktualisiert!`)
@@ -41,8 +41,8 @@ async function main() {
         data: {
           isAdmin: true,
           verified: true,
-          verificationStatus: 'approved'
-        }
+          verificationStatus: 'approved',
+        },
       })
     }
     console.log(`✅ ${adminUsers.length} Admin-User zusätzlich konfiguriert`)
@@ -54,9 +54,9 @@ async function main() {
       email: true,
       name: true,
       isAdmin: true,
-      emailVerified: true
+      emailVerified: true,
     },
-    orderBy: { createdAt: 'desc' }
+    orderBy: { createdAt: 'desc' },
   })
 
   console.log(`\n📋 Alle User in der Datenbank (${allUsers.length}):`)
@@ -77,11 +77,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error(e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-

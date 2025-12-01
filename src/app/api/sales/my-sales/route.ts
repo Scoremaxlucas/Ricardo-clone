@@ -8,10 +8,7 @@ export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Hole alle Purchases, bei denen der eingeloggte User der Verkäufer ist
@@ -20,21 +17,21 @@ export async function GET(request: NextRequest) {
     const purchases = await prisma.purchase.findMany({
       where: {
         watch: {
-          sellerId: session.user.id
+          sellerId: session.user.id,
         },
         // Nur nicht-stornierte Purchases - stornierte bedeuten, dass der Artikel wieder verfügbar ist
         status: {
-          not: 'cancelled'
-        }
+          not: 'cancelled',
+        },
       },
       include: {
         watch: {
           include: {
             bids: {
               orderBy: { amount: 'desc' },
-              take: 1
-            }
-          }
+              take: 1,
+            },
+          },
         },
         buyer: {
           select: {
@@ -48,18 +45,18 @@ export async function GET(request: NextRequest) {
             postalCode: true,
             city: true,
             phone: true,
-            paymentMethods: true
-          }
-        }
+            paymentMethods: true,
+          },
+        },
       },
-      orderBy: { createdAt: 'desc' }
+      orderBy: { createdAt: 'desc' },
     })
 
     // Formatiere Daten
     const salesWithDetails = purchases.map(purchase => {
       const watch = purchase.watch as any
       let images: string[] = []
-      
+
       // Parse images safely
       try {
         if (watch.images) {
@@ -77,13 +74,13 @@ export async function GET(request: NextRequest) {
         console.error(`[my-sales] Fehler beim Parsen der Bilder für Watch ${watch.id}:`, imgError)
         images = []
       }
-      
+
       const winningBid = watch.bids?.[0]
 
       // Bestimme finalPrice und purchaseType
       const finalPrice = winningBid?.amount || purchase.price || watch.price
       const isBuyNow = watch.buyNowPrice && winningBid && winningBid.amount === watch.buyNowPrice
-      const purchaseType = isBuyNow ? 'buy-now' : (winningBid ? 'auction' : 'buy-now')
+      const purchaseType = isBuyNow ? 'buy-now' : winningBid ? 'auction' : 'buy-now'
 
       return {
         id: purchase.id,
@@ -120,9 +117,9 @@ export async function GET(request: NextRequest) {
           images: images,
           price: watch.price,
           finalPrice: finalPrice,
-          purchaseType: purchaseType
+          purchaseType: purchaseType,
         },
-        buyer: purchase.buyer
+        buyer: purchase.buyer,
       }
     })
 
@@ -135,4 +132,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

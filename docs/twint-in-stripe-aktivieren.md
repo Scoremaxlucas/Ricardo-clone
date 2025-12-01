@@ -30,14 +30,17 @@ TWINT muss in Ihrem Stripe Dashboard aktiviert werden, damit TWINT-Zahlungen fun
 3. Sie sehen einen der folgenden Status:
 
 ### Status A: "Activated" ✅
+
 - **Bedeutung:** TWINT ist bereits aktiviert
 - **Aktion:** Keine weitere Aktion nötig - TWINT funktioniert bereits!
 
 ### Status B: "Available" ⚠️
+
 - **Bedeutung:** TWINT ist verfügbar, aber noch nicht aktiviert
 - **Aktion:** Weiter zu Schritt 4
 
 ### Status C: "Not available" ❌
+
 - **Bedeutung:** TWINT ist für Ihren Account nicht verfügbar
 - **Mögliche Gründe:**
   - Account ist nicht in der Schweiz registriert
@@ -75,6 +78,7 @@ TWINT ist nur für **Schweizer Stripe-Accounts** verfügbar:
 3. Muss **"Switzerland"** oder **"Schweiz"** sein
 
 **Falls nicht:**
+
 - Kontaktieren Sie Stripe Support
 - Oder erstellen Sie einen neuen Stripe Account mit Schweiz als Land
 
@@ -85,6 +89,7 @@ TWINT ist nur für **Schweizer Stripe-Accounts** verfügbar:
 Nach der Aktivierung:
 
 1. **Server neu starten** (falls noch nicht geschehen):
+
    ```bash
    cd /Users/lucasrodrigues/ricardo-clone && npm run dev
    ```
@@ -102,6 +107,7 @@ Nach der Aktivierung:
 ### Problem: TWINT wird nicht angezeigt in Payment Methods
 
 **Lösung:**
+
 1. Prüfen Sie, ob Ihr Account in der Schweiz registriert ist
 2. Prüfen Sie, ob Ihr Account vollständig verifiziert ist
 3. Kontaktieren Sie Stripe Support falls nötig
@@ -109,6 +115,7 @@ Nach der Aktivierung:
 ### Problem: "TWINT is not available for your account"
 
 **Lösung:**
+
 1. **Account-Land prüfen:**
    - Settings → Account → Country
    - Muss "Switzerland" sein
@@ -123,6 +130,7 @@ Nach der Aktivierung:
 ### Problem: TWINT ist aktiviert, aber funktioniert nicht
 
 **Lösung:**
+
 1. Prüfen Sie die Stripe Dashboard Logs:
    - Developers → Logs
    - Prüfen Sie auf Fehler
@@ -138,6 +146,7 @@ Nach der Aktivierung:
 ### Problem: "Invalid API Key" Fehler
 
 **Lösung:**
+
 1. Prüfen Sie die `.env` Datei:
    ```bash
    cat .env | grep STRIPE
@@ -183,4 +192,3 @@ Nach der Aktivierung:
 ---
 
 **Fertig!** 🎉 Nach der Aktivierung sollte TWINT funktionieren!
-

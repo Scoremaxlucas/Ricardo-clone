@@ -13,13 +13,13 @@ interface UserNameProps {
   linkToProfile?: boolean
 }
 
-export function UserName({ 
-  userId, 
-  userName, 
+export function UserName({
+  userId,
+  userName,
   className = '',
   showVerifiedBadge = true,
   badgeSize = 'sm',
-  linkToProfile = true
+  linkToProfile = true,
 }: UserNameProps) {
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
 
@@ -41,31 +41,20 @@ export function UserName({
   const content = (
     <>
       {userName}
-      {showVerifiedBadge && isVerified === true && (
-        <VerifiedBadge size={badgeSize} />
-      )}
+      {showVerifiedBadge && isVerified === true && <VerifiedBadge size={badgeSize} />}
     </>
   )
 
   if (linkToProfile) {
     return (
-      <Link 
+      <Link
         href={`/users/${userId}`}
-        className={`inline-flex items-center gap-1 hover:text-primary-600 transition-colors ${className}`}
+        className={`inline-flex items-center gap-1 transition-colors hover:text-primary-600 ${className}`}
       >
         {content}
       </Link>
     )
   }
 
-  return (
-    <span className={`inline-flex items-center gap-1 ${className}`}>
-      {content}
-    </span>
-  )
+  return <span className={`inline-flex items-center gap-1 ${className}`}>{content}</span>
 }
-
-
-
-
-

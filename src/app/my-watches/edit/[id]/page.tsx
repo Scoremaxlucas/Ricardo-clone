@@ -7,13 +7,23 @@ import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { CategoryFields } from '@/components/forms/CategoryFieldsNew'
-import { Calendar, Upload, Clock, Shield, CheckCircle, Lock, Sparkles, AlertCircle, Loader2 } from 'lucide-react'
+import {
+  Calendar,
+  Upload,
+  Clock,
+  Shield,
+  CheckCircle,
+  Lock,
+  Sparkles,
+  AlertCircle,
+  Loader2,
+} from 'lucide-react'
 import toast from 'react-hot-toast'
 import { getCategoryConfig } from '@/data/categories'
 
 /**
- * RICARDO-STYLE: Bearbeitungsseite für Artikel
- * 
+ * Bearbeitungsseite für Artikel
+ *
  * Regeln:
  * - Wenn Gebote vorhanden: Nur Beschreibung, Bilder, Video können ergänzt werden
  * - Wenn kein Kauf: Vollständige Bearbeitung möglich
@@ -30,7 +40,7 @@ export default function EditWatchPage() {
   const [error, setError] = useState('')
   const [hasBids, setHasBids] = useState(false)
   const [hasActivePurchase, setHasActivePurchase] = useState(false)
-  
+
   const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
   const [titleImageIndex, setTitleImageIndex] = useState<number>(0)
   const [boosters, setBoosters] = useState<any[]>([])
@@ -38,7 +48,7 @@ export default function EditWatchPage() {
   const [currentBooster, setCurrentBooster] = useState<string>('none')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('')
-  
+
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
@@ -72,24 +82,24 @@ export default function EditWatchPage() {
     description: '',
     images: [] as string[],
     video: null as string | null,
-    shippingMethods: [] as string[]
+    shippingMethods: [] as string[],
   })
 
   // Lade Watch-Daten
   useEffect(() => {
     const loadWatch = async () => {
       if (!watchId || !session?.user) return
-      
+
       try {
         setLoadingData(true)
         setError('')
-        
+
         const res = await fetch(`/api/watches/${watchId}`)
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}))
           throw new Error(errorData.message || 'Artikel nicht gefunden')
         }
-        
+
         const data = await res.json()
         const watch = data.watch
 
@@ -99,7 +109,7 @@ export default function EditWatchPage() {
 
         // Prüfe Status
         setHasBids(watch.bids && watch.bids.length > 0)
-        
+
         // Prüfe ob aktiver Kauf vorhanden (lade zusätzlich Purchases und Sales)
         try {
           const resStatus = await fetch(`/api/watches/${watchId}/edit-status`)
@@ -120,15 +130,18 @@ export default function EditWatchPage() {
         }
 
         // Parse Bilder
-        const images = Array.isArray(watch.images) ? watch.images : (watch.images ? JSON.parse(watch.images) : [])
-        
+        const images = Array.isArray(watch.images)
+          ? watch.images
+          : watch.images
+            ? JSON.parse(watch.images)
+            : []
+
         // Parse Booster
         let currentBoosterCode = 'none'
         if (watch.boosters) {
           try {
-            const boosterArray = typeof watch.boosters === 'string' 
-              ? JSON.parse(watch.boosters) 
-              : watch.boosters
+            const boosterArray =
+              typeof watch.boosters === 'string' ? JSON.parse(watch.boosters) : watch.boosters
             if (Array.isArray(boosterArray) && boosterArray.length > 0) {
               currentBoosterCode = boosterArray[0]
             }
@@ -143,9 +156,10 @@ export default function EditWatchPage() {
         let shippingMethods: string[] = []
         if (watch.shippingMethod) {
           try {
-            const parsed = typeof watch.shippingMethod === 'string' 
-              ? JSON.parse(watch.shippingMethod) 
-              : watch.shippingMethod
+            const parsed =
+              typeof watch.shippingMethod === 'string'
+                ? JSON.parse(watch.shippingMethod)
+                : watch.shippingMethod
             shippingMethods = Array.isArray(parsed) ? parsed : []
           } catch (e) {
             console.error('Error parsing shippingMethod:', e)
@@ -176,11 +190,15 @@ export default function EditWatchPage() {
           price: watch.price ? watch.price.toString() : '',
           buyNowPrice: watch.buyNowPrice ? watch.buyNowPrice.toString() : '',
           isAuction: watch.isAuction || false,
-          auctionStart: watch.auctionStart ? new Date(watch.auctionStart).toISOString().slice(0, 16) : '',
+          auctionStart: watch.auctionStart
+            ? new Date(watch.auctionStart).toISOString().slice(0, 16)
+            : '',
           auctionEnd: watch.auctionEnd ? new Date(watch.auctionEnd).toISOString().slice(0, 16) : '',
           auctionDuration: auctionDuration,
           autoRenew: watch.autoRenew || false,
-          lastRevision: watch.lastRevision ? new Date(watch.lastRevision).toISOString().slice(0, 10) : '',
+          lastRevision: watch.lastRevision
+            ? new Date(watch.lastRevision).toISOString().slice(0, 10)
+            : '',
           accuracy: watch.accuracy || '',
           fullset: watch.fullset || false,
           onlyBox: watch.box || false,
@@ -197,9 +215,9 @@ export default function EditWatchPage() {
           description: watch.description || '',
           images: images,
           video: watch.video || null,
-          shippingMethods: shippingMethods
+          shippingMethods: shippingMethods,
         })
-        
+
         setTitleImageIndex(0)
       } catch (err: any) {
         console.error('Error loading watch:', err)
@@ -209,7 +227,7 @@ export default function EditWatchPage() {
         setLoadingData(false)
       }
     }
-    
+
     loadWatch()
   }, [watchId, session?.user])
 
@@ -220,11 +238,12 @@ export default function EditWatchPage() {
         const res = await fetch('/api/admin/boosters')
         if (res.ok) {
           const data = await res.json()
-          const boostersArray = Array.isArray(data) ? data : (data.boosters || [])
-          const filteredBoosters = boostersArray.filter((booster: any) => 
-            booster.code !== 'none' && 
-            booster.name?.toLowerCase() !== 'kein booster' &&
-            booster.name?.toLowerCase() !== 'no booster'
+          const boostersArray = Array.isArray(data) ? data : data.boosters || []
+          const filteredBoosters = boostersArray.filter(
+            (booster: any) =>
+              booster.code !== 'none' &&
+              booster.name?.toLowerCase() !== 'kein booster' &&
+              booster.name?.toLowerCase() !== 'no booster'
           )
           setBoosters(filteredBoosters)
         }
@@ -235,38 +254,56 @@ export default function EditWatchPage() {
     loadBoosters()
   }, [])
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
     const { name, value, type } = e.target
-    
+
     // Blockiere gesperrte Felder bei Geboten
-    if (hasBids && ['price', 'buyNowPrice', 'isAuction', 'auctionDuration', 'auctionStart', 'auctionEnd', 'autoRenew', 'shippingMethods', 'brand', 'model', 'condition', 'title'].includes(name)) {
+    if (
+      hasBids &&
+      [
+        'price',
+        'buyNowPrice',
+        'isAuction',
+        'auctionDuration',
+        'auctionStart',
+        'auctionEnd',
+        'autoRenew',
+        'shippingMethods',
+        'brand',
+        'model',
+        'condition',
+        'title',
+      ].includes(name)
+    ) {
       toast.error('Dieses Feld kann bei vorhandenen Geboten nicht geändert werden.')
       return
     }
-    
+
     setFormData(prev => ({
       ...prev,
-      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value
+      [name]: type === 'checkbox' ? (e.target as HTMLInputElement).checked : value,
     }))
   }
 
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     const newImages: string[] = []
-    
+
     files.forEach(file => {
       if (file.size > 5 * 1024 * 1024) {
         toast.error(`Bild ${file.name} ist zu groß (max. 5MB)`)
         return
       }
-      
+
       const reader = new FileReader()
       reader.onload = () => {
         newImages.push(reader.result as string)
         if (newImages.length === files.length) {
           setFormData(prev => ({
             ...prev,
-            images: [...prev.images, ...newImages]
+            images: [...prev.images, ...newImages],
           }))
           toast.success(`${newImages.length} Bild(er) hinzugefügt`)
         }
@@ -280,19 +317,19 @@ export default function EditWatchPage() {
       toast.error('Bilder können bei vorhandenen Geboten nicht entfernt werden')
       return
     }
-    
+
     setFormData(prev => ({
       ...prev,
-      images: prev.images.filter((_, i) => i !== index)
+      images: prev.images.filter((_, i) => i !== index),
     }))
-    
+
     if (selectedImageIndex >= index) {
       setSelectedImageIndex(Math.max(0, selectedImageIndex - 1))
     }
     if (titleImageIndex >= index) {
       setTitleImageIndex(Math.max(0, titleImageIndex - 1))
     }
-    
+
     toast.success('Bild entfernt')
   }
 
@@ -313,7 +350,7 @@ export default function EditWatchPage() {
       reader.onload = () => {
         setFormData(prev => ({
           ...prev,
-          video: reader.result as string
+          video: reader.result as string,
         }))
         toast.success('Video erfolgreich hochgeladen')
       }
@@ -324,7 +361,7 @@ export default function EditWatchPage() {
   const removeVideo = () => {
     setFormData(prev => ({
       ...prev,
-      video: null
+      video: null,
     }))
     toast.success('Video entfernt')
   }
@@ -334,13 +371,13 @@ export default function EditWatchPage() {
       toast.error('Lieferumfang kann bei vorhandenen Geboten nicht geändert werden')
       return
     }
-    
+
     setFormData(prev => ({
       ...prev,
       fullset: option === 'fullset',
       onlyBox: option === 'onlyBox',
       onlyPapers: option === 'onlyPapers',
-      onlyAllLinks: option === 'onlyAllLinks'
+      onlyAllLinks: option === 'onlyAllLinks',
     }))
   }
 
@@ -368,7 +405,26 @@ export default function EditWatchPage() {
           return
         }
         if (!formData.price || parseFloat(formData.price) <= 0) {
-          setError('Bitte geben Sie einen gültigen Preis ein')
+          toast.error('Bitte geben Sie einen gültigen Preis ein', {
+            position: 'top-right',
+            duration: 4000,
+          })
+          setIsLoading(false)
+          return
+        }
+
+        // Validierung: Sofortkaufpreis muss höher sein als Verkaufspreis (falls angegeben)
+        if (
+          formData.buyNowPrice &&
+          formData.price &&
+          parseFloat(formData.buyNowPrice) > 0 &&
+          parseFloat(formData.price) > 0 &&
+          parseFloat(formData.buyNowPrice) <= parseFloat(formData.price)
+        ) {
+          toast.error('Der Sofortkaufpreis muss höher sein als der Verkaufspreis', {
+            position: 'top-right',
+            duration: 4000,
+          })
           setIsLoading(false)
           return
         }
@@ -383,7 +439,7 @@ export default function EditWatchPage() {
           ...formData,
           booster: selectedBooster,
           category: selectedCategory,
-          subcategory: selectedSubcategory
+          subcategory: selectedSubcategory,
         }),
       })
 
@@ -410,9 +466,9 @@ export default function EditWatchPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <Loader2 className="h-12 w-12 text-primary-600 animate-spin mx-auto mb-4" />
+            <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
             <p className="text-gray-600">Lädt...</p>
           </div>
         </div>
@@ -430,18 +486,16 @@ export default function EditWatchPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-4xl mx-auto px-4 py-8">
-          <div className="bg-red-50 border border-red-200 rounded-lg p-8 text-center">
-            <AlertCircle className="h-16 w-16 text-red-600 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Bearbeitung nicht möglich
-            </h2>
-            <p className="text-gray-700 mb-6">
+        <div className="mx-auto max-w-4xl px-4 py-8">
+          <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
+            <AlertCircle className="mx-auto mb-4 h-16 w-16 text-red-600" />
+            <h2 className="mb-4 text-2xl font-bold text-gray-900">Bearbeitung nicht möglich</h2>
+            <p className="mb-6 text-gray-700">
               Das Angebot kann nicht mehr bearbeitet werden, da bereits ein Kauf stattgefunden hat.
             </p>
             <Link
               href="/my-watches"
-              className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-3 text-white hover:bg-primary-700"
             >
               Zurück zu Meine Angebote
             </Link>
@@ -455,35 +509,35 @@ export default function EditWatchPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-6">
           <Link
             href="/my-watches"
-            className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium text-sm"
+            className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700"
           >
             ← Zurück zu Meine Angebote
           </Link>
         </div>
 
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">
-            Angebot bearbeiten
-          </h1>
+          <h1 className="mb-2 text-3xl font-bold text-gray-900">Angebot bearbeiten</h1>
           <p className="text-gray-600">
-            Bearbeiten Sie Ihr Angebot. {hasBids && 'Bei vorhandenen Geboten können nur Beschreibung, Bilder und Video ergänzt werden.'}
+            Bearbeiten Sie Ihr Angebot.{' '}
+            {hasBids &&
+              'Bei vorhandenen Geboten können nur Beschreibung, Bilder und Video ergänzt werden.'}
           </p>
         </div>
 
         {hasBids && (
-          <div className="mb-6 bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
             <div className="flex items-start gap-3">
-              <Lock className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
+              <Lock className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
               <div>
-                <p className="font-semibold text-yellow-800 mb-1">
-                  Wichtig: Gebote vorhanden
-                </p>
+                <p className="mb-1 font-semibold text-yellow-800">Wichtig: Gebote vorhanden</p>
                 <p className="text-sm text-yellow-700">
-                  Es existieren bereits Gebote auf dieses Angebot. Sie können nur noch die Beschreibung ändern sowie zusätzliche Bilder und Videos hinzufügen. Preis, Auktionsdauer und andere wichtige Felder sind gesperrt.
+                  Es existieren bereits Gebote auf dieses Angebot. Sie können nur noch die
+                  Beschreibung ändern sowie zusätzliche Bilder und Videos hinzufügen. Preis,
+                  Auktionsdauer und andere wichtige Felder sind gesperrt.
                 </p>
               </div>
             </div>
@@ -491,22 +545,20 @@ export default function EditWatchPage() {
         )}
 
         {error && (
-          <div className="mb-6 bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-md flex items-center">
-            <AlertCircle className="h-5 w-5 mr-2 flex-shrink-0" />
+          <div className="mb-6 flex items-center rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700">
+            <AlertCircle className="mr-2 h-5 w-5 flex-shrink-0" />
             <span>{error}</span>
           </div>
         )}
 
-        <div className="bg-white rounded-lg shadow-md p-8">
+        <div className="rounded-lg bg-white p-8 shadow-md">
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Titel und Beschreibung */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                Artikel-Informationen
-              </h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">Artikel-Informationen</h2>
+              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Titel {!hasBids && '*'}
                   </label>
                   <input
@@ -516,15 +568,19 @@ export default function EditWatchPage() {
                     disabled={hasBids}
                     value={formData.title}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900 disabled:bg-gray-100 disabled:cursor-not-allowed"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-gray-100"
                     placeholder="z.B. Rolex Submariner Date, 2020"
                   />
                 </div>
 
                 <div className="md:col-span-2">
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Beschreibung {!hasBids && '*'}
-                    {hasBids && <span className="text-xs text-gray-500 font-normal ml-2">(kann ergänzt werden)</span>}
+                    {hasBids && (
+                      <span className="ml-2 text-xs font-normal text-gray-500">
+                        (kann ergänzt werden)
+                      </span>
+                    )}
                   </label>
                   <textarea
                     name="description"
@@ -532,7 +588,7 @@ export default function EditWatchPage() {
                     rows={6}
                     value={formData.description}
                     onChange={handleInputChange}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="Beschreiben Sie Ihren Artikel detailliert..."
                   />
                 </div>
@@ -553,16 +609,16 @@ export default function EditWatchPage() {
             {/* Preis und Verkaufsart */}
             {!hasBids && (
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                  <Shield className="h-5 w-5 mr-2" />
+                <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
+                  <Shield className="mr-2 h-5 w-5" />
                   Preis und Verkaufsart
                 </h2>
-                
+
                 <div className="mb-6">
-                  <label className="block text-sm font-medium text-gray-700 mb-3">
+                  <label className="mb-3 block text-sm font-medium text-gray-700">
                     Verkaufsart *
                   </label>
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                     <label
                       className={`relative flex cursor-pointer rounded-lg border-2 p-4 transition-all ${
                         formData.isAuction
@@ -580,16 +636,14 @@ export default function EditWatchPage() {
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                            <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
                               <Clock className="h-5 w-5 text-primary-600" />
                               Auktion
                             </p>
-                            <p className="text-sm text-gray-600 mt-1">
-                              Artikel wird versteigert
-                            </p>
+                            <p className="mt-1 text-sm text-gray-600">Artikel wird versteigert</p>
                           </div>
                           {formData.isAuction && (
-                            <CheckCircle className="h-5 w-5 text-primary-600 ml-3" />
+                            <CheckCircle className="ml-3 h-5 w-5 text-primary-600" />
                           )}
                         </div>
                       </div>
@@ -606,22 +660,30 @@ export default function EditWatchPage() {
                         type="radio"
                         name="saleType"
                         checked={!formData.isAuction}
-                        onChange={() => setFormData(prev => ({ ...prev, isAuction: false, auctionDuration: '', auctionStart: '', autoRenew: false }))}
+                        onChange={() =>
+                          setFormData(prev => ({
+                            ...prev,
+                            isAuction: false,
+                            auctionDuration: '',
+                            auctionStart: '',
+                            autoRenew: false,
+                          }))
+                        }
                         className="sr-only"
                       />
                       <div className="flex-1">
                         <div className="flex items-center justify-between">
                           <div>
-                            <p className="text-sm font-semibold text-gray-900 flex items-center gap-2">
+                            <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
                               <CheckCircle className="h-5 w-5 text-green-600" />
                               Sofortkauf
                             </p>
-                            <p className="text-sm text-gray-600 mt-1">
+                            <p className="mt-1 text-sm text-gray-600">
                               Artikel wird zu einem festen Preis verkauft
                             </p>
                           </div>
                           {!formData.isAuction && (
-                            <CheckCircle className="h-5 w-5 text-primary-600 ml-3" />
+                            <CheckCircle className="ml-3 h-5 w-5 text-primary-600" />
                           )}
                         </div>
                       </div>
@@ -629,9 +691,9 @@ export default function EditWatchPage() {
                   </div>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
                       {formData.isAuction ? 'Startpreis (CHF) *' : 'Preis (CHF) *'}
                     </label>
                     <input
@@ -640,35 +702,59 @@ export default function EditWatchPage() {
                       required
                       value={formData.price}
                       onChange={handleInputChange}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                       placeholder="z.B. 5000"
                       step="0.01"
                       min="0"
                     />
                   </div>
 
-                  {formData.isAuction && (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Sofortkaufpreis (CHF)
-                      </label>
-                      <input
-                        type="number"
-                        name="buyNowPrice"
-                        value={formData.buyNowPrice}
-                        onChange={handleInputChange}
-                        className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
-                        placeholder="z.B. 8000"
-                        step="0.01"
-                        min="0"
-                      />
-                    </div>
-                  )}
+                  <div>
+                    <label className="mb-2 block text-sm font-medium text-gray-700">
+                      Sofortkaufpreis (CHF){' '}
+                      <span className="text-xs font-normal text-gray-400">(Optional)</span>
+                    </label>
+                    <input
+                      type="number"
+                      name="buyNowPrice"
+                      value={formData.buyNowPrice}
+                      onChange={handleInputChange}
+                      disabled={hasBids}
+                      className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
+                        hasBids
+                          ? 'cursor-not-allowed bg-gray-100 border-gray-300'
+                          : formData.buyNowPrice &&
+                            formData.price &&
+                            parseFloat(formData.buyNowPrice) > 0 &&
+                            parseFloat(formData.price) > 0 &&
+                            parseFloat(formData.buyNowPrice) <= parseFloat(formData.price)
+                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:ring-primary-500'
+                      }`}
+                      placeholder={formData.isAuction ? 'z.B. 8000 (optional)' : 'z.B. 8000'}
+                      step="0.01"
+                      min="0"
+                    />
+                    <p className="mt-1 text-xs text-gray-500">
+                      {formData.isAuction
+                        ? 'Falls leer gelassen, gibt es keinen Sofortkaufpreis. Käufer können nur bieten.'
+                        : 'Optional: Falls leer, wird nur der normale Preis angezeigt.'}
+                      {formData.buyNowPrice &&
+                        parseFloat(formData.buyNowPrice) > 0 &&
+                        formData.price &&
+                        parseFloat(formData.price) > 0 &&
+                        parseFloat(formData.buyNowPrice) <= parseFloat(formData.price) && (
+                          <span className="mt-1 block text-red-600">
+                            Der Sofortkaufpreis muss höher sein als der Verkaufspreis.
+                          </span>
+                        )}
+                    </p>
+                  </div>
 
                   {formData.isAuction && (
                     <>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
                           Auktionsdauer (Tage) *
                         </label>
                         <select
@@ -676,17 +762,19 @@ export default function EditWatchPage() {
                           required={formData.isAuction}
                           value={formData.auctionDuration}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                         >
                           <option value="">Bitte wählen</option>
                           {[1, 2, 3, 5, 7, 10, 14, 21, 30].map(days => (
-                            <option key={days} value={days}>{days} Tag{days > 1 ? 'e' : ''}</option>
+                            <option key={days} value={days}>
+                              {days} Tag{days > 1 ? 'e' : ''}
+                            </option>
                           ))}
                         </select>
                       </div>
 
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
                           Starttermin (optional)
                         </label>
                         <input
@@ -695,7 +783,7 @@ export default function EditWatchPage() {
                           value={formData.auctionStart}
                           onChange={handleInputChange}
                           min={new Date().toISOString().slice(0, 16)}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                         />
                       </div>
 
@@ -719,10 +807,10 @@ export default function EditWatchPage() {
               </div>
             )}
 
-            {/* Lieferumfang - NUR für Uhren */}
+            {/* Lieferumfang - NUR für Uhren & Schmuck */}
             {!hasBids && selectedCategory === 'uhren-schmuck' && (
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                <h2 className="mb-4 text-xl font-semibold text-gray-900">
                   Lieferumfang (inkl. Uhr selbst)
                 </h2>
                 <div className="space-y-3">
@@ -734,7 +822,9 @@ export default function EditWatchPage() {
                       onChange={() => setExclusiveSupply('fullset')}
                       className="mr-3"
                     />
-                    <span className="text-sm font-medium text-gray-700">Fullset (Box, Papiere, alle Glieder)</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Fullset (Box, Papiere, alle Glieder)
+                    </span>
                   </label>
                   <label className="flex items-center">
                     <input
@@ -770,12 +860,10 @@ export default function EditWatchPage() {
               </div>
             )}
 
-            {/* Garantie - NUR für Uhren */}
+            {/* Garantie - NUR für Uhren & Schmuck */}
             {!hasBids && selectedCategory === 'uhren-schmuck' && (
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Garantie
-                </h2>
+                <h2 className="mb-4 text-xl font-semibold text-gray-900">Garantie</h2>
                 <div className="space-y-4">
                   <label className="flex items-center">
                     <input
@@ -785,13 +873,15 @@ export default function EditWatchPage() {
                       onChange={handleInputChange}
                       className="mr-3"
                     />
-                    <span className="text-sm font-medium text-gray-700">Herstellergarantie vorhanden</span>
+                    <span className="text-sm font-medium text-gray-700">
+                      Herstellergarantie vorhanden
+                    </span>
                   </label>
 
                   {formData.hasWarranty && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6">
+                    <div className="grid grid-cols-1 gap-6 pl-6 md:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
                           Garantie in Monaten
                         </label>
                         <input
@@ -799,12 +889,12 @@ export default function EditWatchPage() {
                           name="warrantyMonths"
                           value={formData.warrantyMonths}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           placeholder="z.B. 24"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
                           Garantie in Jahren
                         </label>
                         <input
@@ -812,14 +902,14 @@ export default function EditWatchPage() {
                           name="warrantyYears"
                           value={formData.warrantyYears}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           placeholder="z.B. 2"
                         />
                       </div>
                     </div>
                   )}
 
-                  <div className="pt-4 border-t border-gray-200">
+                  <div className="border-t border-gray-200 pt-4">
                     <label className="flex items-center">
                       <input
                         type="checkbox"
@@ -828,14 +918,16 @@ export default function EditWatchPage() {
                         onChange={handleInputChange}
                         className="mr-3"
                       />
-                      <span className="text-sm font-medium text-gray-700">Garantie durch Verkäufer</span>
+                      <span className="text-sm font-medium text-gray-700">
+                        Garantie durch Verkäufer
+                      </span>
                     </label>
                   </div>
 
                   {formData.hasSellerWarranty && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pl-6">
+                    <div className="grid grid-cols-1 gap-6 pl-6 md:grid-cols-2">
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
                           Verkäufer-Garantie in Monaten
                         </label>
                         <input
@@ -843,12 +935,12 @@ export default function EditWatchPage() {
                           name="sellerWarrantyMonths"
                           value={formData.sellerWarrantyMonths}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           placeholder="z.B. 12"
                         />
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
                           Verkäufer-Garantie in Jahren
                         </label>
                         <input
@@ -856,12 +948,12 @@ export default function EditWatchPage() {
                           name="sellerWarrantyYears"
                           value={formData.sellerWarrantyYears}
                           onChange={handleInputChange}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           placeholder="z.B. 1"
                         />
                       </div>
                       <div className="md:col-span-2">
-                        <label className="block text-sm font-medium text-gray-700 mb-2">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
                           Bemerkungen zur Verkäufer-Garantie
                         </label>
                         <textarea
@@ -869,7 +961,7 @@ export default function EditWatchPage() {
                           value={formData.sellerWarrantyNote}
                           onChange={handleInputChange}
                           rows={3}
-                          className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 text-gray-900"
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
                           placeholder="z.B. Garantie nur bei normaler Nutzung..."
                         />
                       </div>
@@ -882,24 +974,22 @@ export default function EditWatchPage() {
             {/* Versand */}
             {!hasBids && (
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Versand
-                </h2>
+                <h2 className="mb-4 text-xl font-semibold text-gray-900">Versand</h2>
                 <div className="space-y-3">
                   <label className="flex items-center">
                     <input
                       type="checkbox"
                       checked={formData.shippingMethods.includes('pickup')}
-                      onChange={(e) => {
+                      onChange={e => {
                         if (e.target.checked) {
                           setFormData(prev => ({
                             ...prev,
-                            shippingMethods: [...prev.shippingMethods, 'pickup']
+                            shippingMethods: [...prev.shippingMethods, 'pickup'],
                           }))
                         } else {
                           setFormData(prev => ({
                             ...prev,
-                            shippingMethods: prev.shippingMethods.filter(m => m !== 'pickup')
+                            shippingMethods: prev.shippingMethods.filter(m => m !== 'pickup'),
                           }))
                         }
                       }}
@@ -911,16 +1001,16 @@ export default function EditWatchPage() {
                     <input
                       type="checkbox"
                       checked={formData.shippingMethods.includes('b-post')}
-                      onChange={(e) => {
+                      onChange={e => {
                         if (e.target.checked) {
                           setFormData(prev => ({
                             ...prev,
-                            shippingMethods: [...prev.shippingMethods, 'b-post']
+                            shippingMethods: [...prev.shippingMethods, 'b-post'],
                           }))
                         } else {
                           setFormData(prev => ({
                             ...prev,
-                            shippingMethods: prev.shippingMethods.filter(m => m !== 'b-post')
+                            shippingMethods: prev.shippingMethods.filter(m => m !== 'b-post'),
                           }))
                         }
                       }}
@@ -932,16 +1022,16 @@ export default function EditWatchPage() {
                     <input
                       type="checkbox"
                       checked={formData.shippingMethods.includes('a-post')}
-                      onChange={(e) => {
+                      onChange={e => {
                         if (e.target.checked) {
                           setFormData(prev => ({
                             ...prev,
-                            shippingMethods: [...prev.shippingMethods, 'a-post']
+                            shippingMethods: [...prev.shippingMethods, 'a-post'],
                           }))
                         } else {
                           setFormData(prev => ({
                             ...prev,
-                            shippingMethods: prev.shippingMethods.filter(m => m !== 'a-post')
+                            shippingMethods: prev.shippingMethods.filter(m => m !== 'a-post'),
                           }))
                         }
                       }}
@@ -955,57 +1045,63 @@ export default function EditWatchPage() {
 
             {/* Bilder */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <Upload className="h-5 w-5 mr-2" />
+              <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
+                <Upload className="mr-2 h-5 w-5" />
                 Bilder
-                {hasBids && <span className="ml-2 text-sm text-gray-500">(Nur zusätzliche Bilder möglich)</span>}
+                {hasBids && (
+                  <span className="ml-2 text-sm text-gray-500">
+                    (Nur zusätzliche Bilder möglich)
+                  </span>
+                )}
               </h2>
-              
+
               <div className="mb-4">
                 <input
                   type="file"
                   multiple
                   accept="image/*"
                   onChange={handleImageUpload}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                  className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
                 />
                 <p className="mt-1 text-sm text-gray-500">
-                  {hasBids ? 'Laden Sie zusätzliche Bilder hoch' : 'Laden Sie bis zu 10 Bilder hoch (JPG, PNG, max. 5MB pro Bild)'}
+                  {hasBids
+                    ? 'Laden Sie zusätzliche Bilder hoch'
+                    : 'Laden Sie bis zu 10 Bilder hoch (JPG, PNG, max. 5MB pro Bild)'}
                 </p>
               </div>
 
               {formData.images.length > 0 && (
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
                   {formData.images.map((image, index) => (
                     <div key={index} className="relative">
                       <img
                         src={image}
                         alt={`Bild ${index + 1}`}
-                        className={`w-full h-32 object-cover rounded-lg cursor-pointer border-2 ${
-                          index === titleImageIndex 
-                            ? 'border-primary-500 ring-2 ring-primary-200' 
+                        className={`h-32 w-full cursor-pointer rounded-lg border-2 object-cover ${
+                          index === titleImageIndex
+                            ? 'border-primary-500 ring-2 ring-primary-200'
                             : 'border-gray-200 hover:border-gray-300'
                         }`}
                         onClick={() => setSelectedImageIndex(index)}
                       />
-                      
+
                       <button
                         type="button"
                         onClick={() => setTitleImageIndex(index)}
-                        className={`absolute top-2 left-2 px-2 py-1 rounded text-xs font-medium ${
+                        className={`absolute left-2 top-2 rounded px-2 py-1 text-xs font-medium ${
                           index === titleImageIndex
                             ? 'bg-primary-500 text-white'
-                            : 'bg-white text-gray-700 border border-gray-300 hover:bg-gray-50'
+                            : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
                         }`}
                       >
                         {index === titleImageIndex ? 'Titelbild' : 'Als Titelbild'}
                       </button>
-                      
+
                       {!hasBids && (
                         <button
                           type="button"
                           onClick={() => removeImage(index)}
-                          className="absolute top-2 right-2 bg-white text-black rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-gray-100 border border-gray-300 shadow-sm"
+                          className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 bg-white text-sm text-black shadow-sm hover:bg-gray-100"
                         >
                           ×
                         </button>
@@ -1017,13 +1113,13 @@ export default function EditWatchPage() {
 
               {/* Video */}
               <div className="mt-8">
-                <h3 className="text-lg font-medium text-gray-900 mb-4">Video (Optional)</h3>
+                <h3 className="mb-4 text-lg font-medium text-gray-900">Video (Optional)</h3>
                 <div className="mb-4">
                   <input
                     type="file"
                     accept="video/*"
                     onChange={handleVideoUpload}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-sm file:font-semibold file:bg-primary-50 file:text-primary-700 hover:file:bg-primary-100"
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
                   />
                   <p className="mt-1 text-sm text-gray-500">
                     Laden Sie ein Video hoch (MP4, AVI, MOV, max. 50MB)
@@ -1035,12 +1131,12 @@ export default function EditWatchPage() {
                     <video
                       src={formData.video}
                       controls
-                      className="w-full max-w-md h-64 object-cover rounded-lg"
+                      className="h-64 w-full max-w-md rounded-lg object-cover"
                     />
                     <button
                       type="button"
                       onClick={removeVideo}
-                      className="absolute top-2 right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                      className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-sm text-white hover:bg-red-600"
                     >
                       ×
                     </button>
@@ -1051,56 +1147,63 @@ export default function EditWatchPage() {
 
             {/* Booster */}
             <div>
-              <h2 className="text-xl font-semibold text-gray-900 mb-4 flex items-center">
-                <Sparkles className="h-5 w-5 mr-2" />
+              <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
+                <Sparkles className="mr-2 h-5 w-5" />
                 Booster auswählen
               </h2>
-              
+
               {currentBooster !== 'none' && (
-                <div className="bg-green-50 border border-green-200 text-green-800 px-4 py-3 rounded-md mb-4">
+                <div className="mb-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-green-800">
                   <p className="text-sm font-medium">
-                    ✓ Aktuell aktiver Booster: <strong>{boosters.find(b => b.code === currentBooster)?.name || currentBooster}</strong>
+                    ✓ Aktuell aktiver Booster:{' '}
+                    <strong>
+                      {boosters.find(b => b.code === currentBooster)?.name || currentBooster}
+                    </strong>
                     {boosters.find(b => b.code === currentBooster) && (
-                      <span className="ml-2">(CHF {boosters.find(b => b.code === currentBooster)!.price.toFixed(2)})</span>
+                      <span className="ml-2">
+                        (CHF {boosters.find(b => b.code === currentBooster)!.price.toFixed(2)})
+                      </span>
                     )}
                   </p>
                 </div>
               )}
-              
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                <label className={`relative flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all ${
-                  selectedBooster === 'none'
-                    ? 'border-primary-500 bg-primary-50'
-                    : 'border-gray-200 hover:border-gray-300 bg-white'
-                }`}>
+
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
+                <label
+                  className={`relative flex cursor-pointer flex-col rounded-lg border-2 p-4 transition-all ${
+                    selectedBooster === 'none'
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-gray-200 bg-white hover:border-gray-300'
+                  }`}
+                >
                   <input
                     type="radio"
                     name="booster"
                     value="none"
                     checked={selectedBooster === 'none'}
-                    onChange={(e) => setSelectedBooster(e.target.value)}
+                    onChange={e => setSelectedBooster(e.target.value)}
                     className="sr-only"
                   />
-                  <div className="flex items-center justify-between mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <span className="font-semibold text-gray-900">Kein Booster</span>
                     <span className="text-sm text-gray-600">CHF 0.00</span>
                   </div>
                   <p className="text-sm text-gray-600">Standard-Anzeige</p>
                 </label>
 
-                {boosters.map((booster) => {
+                {boosters.map(booster => {
                   const isSelected = selectedBooster === booster.code
                   const isCurrent = currentBooster === booster.code
-                  
+
                   return (
                     <label
                       key={booster.code}
-                      className={`relative flex flex-col p-4 rounded-lg border-2 cursor-pointer transition-all ${
+                      className={`relative flex cursor-pointer flex-col rounded-lg border-2 p-4 transition-all ${
                         isSelected
                           ? 'border-primary-500 bg-primary-50'
                           : isCurrent
-                          ? 'border-green-400 bg-green-50'
-                          : 'border-gray-200 hover:border-gray-300 bg-white'
+                            ? 'border-green-400 bg-green-50'
+                            : 'border-gray-200 bg-white hover:border-gray-300'
                       }`}
                     >
                       <input
@@ -1108,14 +1211,14 @@ export default function EditWatchPage() {
                         name="booster"
                         value={booster.code}
                         checked={isSelected}
-                        onChange={(e) => setSelectedBooster(e.target.value)}
+                        onChange={e => setSelectedBooster(e.target.value)}
                         className="sr-only"
                       />
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-gray-900 flex items-center">
+                      <div className="mb-2 flex items-center justify-between">
+                        <span className="flex items-center font-semibold text-gray-900">
                           {booster.name}
                           {isCurrent && (
-                            <span className="ml-2 text-xs bg-green-600 text-white px-2 py-0.5 rounded-full">
+                            <span className="ml-2 rounded-full bg-green-600 px-2 py-0.5 text-xs text-white">
                               AKTIV
                             </span>
                           )}
@@ -1132,20 +1235,20 @@ export default function EditWatchPage() {
             </div>
 
             {/* Submit */}
-            <div className="pt-6 border-t border-gray-200">
+            <div className="border-t border-gray-200 pt-6">
               <button
                 type="submit"
                 disabled={isLoading}
-                className="w-full bg-primary-600 text-white py-3 px-4 rounded-md hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                className="flex w-full items-center justify-center rounded-md bg-primary-600 px-4 py-3 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {isLoading ? (
                   <>
-                    <Clock className="h-5 w-5 mr-2 animate-spin" />
+                    <Clock className="mr-2 h-5 w-5 animate-spin" />
                     Wird gespeichert...
                   </>
                 ) : (
                   <>
-                    <CheckCircle className="h-5 w-5 mr-2" />
+                    <CheckCircle className="mr-2 h-5 w-5" />
                     Änderungen speichern
                   </>
                 )}

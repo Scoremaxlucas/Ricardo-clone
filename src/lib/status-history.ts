@@ -18,7 +18,7 @@ export async function addStatusHistory(
 ): Promise<void> {
   const purchase = await prisma.purchase.findUnique({
     where: { id: purchaseId },
-    select: { statusHistory: true }
+    select: { statusHistory: true },
   })
 
   if (!purchase) {
@@ -41,7 +41,7 @@ export async function addStatusHistory(
     status,
     timestamp: new Date(),
     changedBy,
-    reason
+    reason,
   }
 
   history.push(newEntry)
@@ -50,8 +50,8 @@ export async function addStatusHistory(
   await prisma.purchase.update({
     where: { id: purchaseId },
     data: {
-      statusHistory: JSON.stringify(history)
-    }
+      statusHistory: JSON.stringify(history),
+    },
   })
 }
 
@@ -61,7 +61,7 @@ export async function addStatusHistory(
 export async function getStatusHistory(purchaseId: string): Promise<StatusHistoryEntry[]> {
   const purchase = await prisma.purchase.findUnique({
     where: { id: purchaseId },
-    select: { statusHistory: true }
+    select: { statusHistory: true },
   })
 
   if (!purchase || !purchase.statusHistory) {
@@ -72,17 +72,10 @@ export async function getStatusHistory(purchaseId: string): Promise<StatusHistor
     const history = JSON.parse(purchase.statusHistory) as StatusHistoryEntry[]
     return history.map(entry => ({
       ...entry,
-      timestamp: new Date(entry.timestamp)
+      timestamp: new Date(entry.timestamp),
     }))
   } catch (error) {
     console.error('[status-history] Fehler beim Parsen der Historie:', error)
     return []
   }
 }
-
-
-
-
-
-
-

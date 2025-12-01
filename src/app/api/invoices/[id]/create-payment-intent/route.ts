@@ -9,18 +9,12 @@ import Stripe from 'stripe'
 /**
  * Erstellt einen Stripe Payment Intent für eine Rechnung
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -29,37 +23,31 @@ export async function POST(
     const invoice = await prisma.invoice.findUnique({
       where: { id },
       include: {
-        seller: true
-      }
+        seller: true,
+      },
     })
 
     if (!invoice) {
-      return NextResponse.json(
-        { message: 'Rechnung nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Rechnung nicht gefunden' }, { status: 404 })
     }
 
     // Nur der Verkäufer kann die Rechnung bezahlen
     if (invoice.sellerId !== session.user.id) {
-      return NextResponse.json(
-        { message: 'Zugriff verweigert' },
-        { status: 403 }
-      )
+      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
     }
 
     // Prüfe ob Rechnung bereits bezahlt ist
     if (invoice.status === 'paid') {
-      return NextResponse.json(
-        { message: 'Rechnung ist bereits bezahlt' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Rechnung ist bereits bezahlt' }, { status: 400 })
     }
 
     // Prüfe ob Stripe konfiguriert ist
     if (!process.env.STRIPE_SECRET_KEY || process.env.STRIPE_SECRET_KEY.trim() === '') {
       return NextResponse.json(
-        { message: 'Stripe ist nicht konfiguriert. Bitte setzen Sie STRIPE_SECRET_KEY in der .env Datei. Sie erhalten Test-Keys unter https://dashboard.stripe.com/test/apikeys' },
+        {
+          message:
+            'Stripe ist nicht konfiguriert. Bitte setzen Sie STRIPE_SECRET_KEY in der .env Datei. Sie erhalten Test-Keys unter https://dashboard.stripe.com/test/apikeys',
+        },
         { status: 500 }
       )
     }
@@ -69,10 +57,7 @@ export async function POST(
 
     // Minimum: 50 Rappen
     if (amountInRappen < 50) {
-      return NextResponse.json(
-        { message: 'Betrag zu gering (Minimum: CHF 0.50)' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Betrag zu gering (Minimum: CHF 0.50)' }, { status: 400 })
     }
 
     // Erstelle Stripe Client
@@ -85,7 +70,10 @@ export async function POST(
     }
 
     // Debug: Log Key-Präfix (nicht den vollständigen Key!)
-    const keyPrefix = stripeSecretKey.substring(0, 7) + '...' + stripeSecretKey.substring(stripeSecretKey.length - 4)
+    const keyPrefix =
+      stripeSecretKey.substring(0, 7) +
+      '...' +
+      stripeSecretKey.substring(stripeSecretKey.length - 4)
     console.log(`[invoices/create-payment-intent] Verwende Stripe Key: ${keyPrefix}`)
 
     const stripe = new Stripe(stripeSecretKey, {
@@ -101,7 +89,7 @@ export async function POST(
           invoiceId: invoice.id,
           invoiceNumber: invoice.invoiceNumber,
           sellerId: invoice.sellerId,
-          type: 'invoice_payment'
+          type: 'invoice_payment',
         },
         automatic_payment_methods: {
           enabled: true,
@@ -109,42 +97,44 @@ export async function POST(
         description: `Rechnung ${invoice.invoiceNumber}`,
       })
 
-      console.log(`[invoices/create-payment-intent] Payment Intent erstellt: ${paymentIntent.id} für Rechnung ${invoice.invoiceNumber}`)
+      console.log(
+        `[invoices/create-payment-intent] Payment Intent erstellt: ${paymentIntent.id} für Rechnung ${invoice.invoiceNumber}`
+      )
 
       return NextResponse.json({
         clientSecret: paymentIntent.client_secret,
-        paymentIntentId: paymentIntent.id
+        paymentIntentId: paymentIntent.id,
       })
     } catch (stripeError: any) {
       console.error('[invoices/create-payment-intent] Stripe API Fehler:', stripeError)
       // Detailliertere Fehlermeldung
       if (stripeError.type === 'StripeAuthenticationError') {
         return NextResponse.json(
-          { message: `Stripe Authentifizierungsfehler: Bitte prüfen Sie Ihren STRIPE_SECRET_KEY in der .env Datei. Key-Präfix: ${keyPrefix}` },
+          {
+            message: `Stripe Authentifizierungsfehler: Bitte prüfen Sie Ihren STRIPE_SECRET_KEY in der .env Datei. Key-Präfix: ${keyPrefix}`,
+          },
           { status: 500 }
         )
       }
       throw stripeError // Weiterwerfen für allgemeines Error-Handling
     }
-
   } catch (error: any) {
-    console.error('[invoices/create-payment-intent] Fehler beim Erstellen des Payment Intents:', error)
-    
+    console.error(
+      '[invoices/create-payment-intent] Fehler beim Erstellen des Payment Intents:',
+      error
+    )
+
     // Detailliertere Fehlermeldung für den Benutzer
     let errorMessage = 'Fehler beim Erstellen des Payment Intents'
-    
+
     if (error.message) {
       errorMessage += ': ' + error.message
     }
-    
+
     if (error.type === 'StripeAuthenticationError') {
       errorMessage += ' (Stripe Authentifizierungsfehler - bitte prüfen Sie Ihre API Keys)'
     }
-    
-    return NextResponse.json(
-      { message: errorMessage },
-      { status: 500 }
-    )
+
+    return NextResponse.json({ message: errorMessage }, { status: 500 })
   }
 }
-

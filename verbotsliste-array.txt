@@ -1,0 +1,4 @@
+  File "<string>", line 24
+    escaped = line.replace('\', '\\').replace("'", "\\'").replace('"', '\\"')
+                                                                            ^
+SyntaxError: unexpected character after line continuation character

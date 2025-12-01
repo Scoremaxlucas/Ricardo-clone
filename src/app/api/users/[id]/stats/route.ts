@@ -2,10 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 // GET: Statistiken für einen User abrufen (öffentlich)
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
 
@@ -17,27 +14,72 @@ export async function GET(
         sales: true,
         watches: {
           where: {
-            purchases: {
-              none: {} // Nur nicht verkaufte Artikel
-            }
+            AND: [
+              {
+                // WICHTIG: Manuell deaktivierte Artikel ausschließen (moderationStatus === 'rejected')
+                OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
+              },
+              {
+                // Zeige Artikel die:
+                // 1. Keine Purchases haben ODER
+                // 2. Nur stornierte Purchases haben (Artikel ist wieder verfügbar)
+                OR: [
+                  {
+                    purchases: {
+                      none: {}, // Keine Purchases vorhanden
+                    },
+                  },
+                  {
+                    purchases: {
+                      every: {
+                        status: 'cancelled', // Alle Purchases sind storniert
+                      },
+                    },
+                  },
+                ],
+              },
+              {
+                // Zeige alle aktiven Artikel (Auktionen und Sofortkauf)
+                // Für Auktionen: Nur wenn noch nicht abgelaufen
+                // Für Sofortkauf: Immer anzeigen (keine Ablaufzeit)
+                OR: [
+                  {
+                    // Sofortkauf-Angebote (keine Auktion) - immer anzeigen
+                    isAuction: false,
+                  },
+                  {
+                    // Auktionen die noch nicht abgelaufen sind
+                    isAuction: true,
+                    auctionEnd: {
+                      gt: new Date(), // Auktion endet in der Zukunft
+                    },
+                  },
+                  {
+                    // Auktionen ohne Enddatum (sollten nicht vorkommen, aber sicherheitshalber)
+                    isAuction: true,
+                    auctionEnd: null,
+                  },
+                ],
+              },
+            ],
           },
           include: {
             bids: {
               orderBy: {
-                amount: 'desc'
+                amount: 'desc',
               },
-              take: 1
+              take: 1,
             },
             categories: {
               include: {
-                category: true
-              }
-            }
+                category: true,
+              },
+            },
           },
           orderBy: {
-            createdAt: 'desc'
-          }
-          // Alle aktiven Angebote, nicht nur 10
+            createdAt: 'desc',
+          },
+          // Alle aktiven Angebote (Auktionen und Sofortkauf)
         },
         receivedReviews: {
           include: {
@@ -46,8 +88,8 @@ export async function GET(
                 id: true,
                 name: true,
                 image: true,
-                nickname: true
-              }
+                nickname: true,
+              },
             },
             purchase: {
               select: {
@@ -55,10 +97,10 @@ export async function GET(
                 watch: {
                   select: {
                     id: true,
-                    title: true
-                  }
-                }
-              }
+                    title: true,
+                  },
+                },
+              },
             },
             sale: {
               select: {
@@ -66,25 +108,22 @@ export async function GET(
                 watch: {
                   select: {
                     id: true,
-                    title: true
-                  }
-                }
-              }
-            }
+                    title: true,
+                  },
+                },
+              },
+            },
           },
           orderBy: {
-            createdAt: 'desc'
-          }
+            createdAt: 'desc',
+          },
           // Alle Bewertungen, nicht nur 10
-        }
-      }
+        },
+      },
     })
 
     if (!user) {
-      return NextResponse.json(
-        { message: 'User nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'User nicht gefunden' }, { status: 404 })
     }
 
     // Berechne Bewertungsstatistiken
@@ -96,9 +135,8 @@ export async function GET(
     // Berechne Bewertungsprozentzahl (nur positive und negative zählen)
     // Formel: (positive / (positive + negative)) * 100
     const relevantReviews = positiveReviews.length + negativeReviews.length
-    const positivePercentage = relevantReviews > 0
-      ? Math.round((positiveReviews.length / relevantReviews) * 100)
-      : null // Keine Bewertungen oder nur neutrale
+    const positivePercentage =
+      relevantReviews > 0 ? Math.round((positiveReviews.length / relevantReviews) * 100) : null // Keine Bewertungen oder nur neutrale
 
     // Alle aktiven Angebote des Verkäufers
     const activeWatches = user.watches.map(watch => {
@@ -121,7 +159,7 @@ export async function GET(
         auctionEnd: watch.auctionEnd,
         images: images,
         createdAt: watch.createdAt,
-        categories: watch.categories.map(wc => wc.category.name)
+        categories: watch.categories.map(wc => wc.category.name),
       }
     })
 
@@ -141,7 +179,7 @@ export async function GET(
       reviewStats: {
         total: allReviews.length,
         averageRating: positivePercentage ? positivePercentage / 20 : 5, // Konvertiere zu 0-5 Skala
-        positivePercentage: positivePercentage || 100
+        positivePercentage: positivePercentage || 100,
       },
       activeWatches: activeWatches,
       user: {
@@ -151,7 +189,9 @@ export async function GET(
         image: user.image,
         city: user.city,
         postalCode: user.postalCode,
-        createdAt: user.createdAt
+        createdAt: user.createdAt,
+        bio: user.bio,
+        specialization: user.specialization,
       },
       stats: {
         totalPurchases: user.purchases.length,
@@ -163,7 +203,7 @@ export async function GET(
         positivePercentage,
         recentPositive,
         recentNeutral,
-        recentNegative
+        recentNegative,
       },
       recentReviews: user.receivedReviews.map(review => ({
         id: review.id,
@@ -172,8 +212,8 @@ export async function GET(
         createdAt: review.createdAt,
         reviewer: review.reviewer,
         watchId: review.purchase?.watch?.id || review.sale?.watch?.id || null,
-        watchTitle: review.purchase?.watch?.title || review.sale?.watch?.title || null
-      }))
+        watchTitle: review.purchase?.watch?.title || review.sale?.watch?.title || null,
+      })),
     })
   } catch (error: any) {
     console.error('[users/stats] Error:', error)
@@ -183,4 +223,3 @@ export async function GET(
     )
   }
 }
-

@@ -4,7 +4,20 @@ import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { Package, FileText, TrendingUp, CheckCircle, Wallet, Plus, Tag, Search, Eye, Edit, Trash2, X } from 'lucide-react'
+import {
+  Package,
+  FileText,
+  TrendingUp,
+  CheckCircle,
+  Wallet,
+  Plus,
+  Tag,
+  Search,
+  Eye,
+  Edit,
+  Trash2,
+  X,
+} from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { getArticleUrl } from '@/lib/article-url'
@@ -44,12 +57,12 @@ export default function MySellingPage() {
   const [stats, setStats] = useState({
     total: 0,
     active: 0,
-    inactive: 0
+    inactive: 0,
   })
 
   // Berechne ob ein Artikel aktiv ist
   // WICHTIG: Verwende isActive von API wenn vorhanden, sonst berechne es selbst
-  // RICARDO-STYLE: Artikel ist aktiv wenn:
+  // Artikel ist aktiv wenn:
   // 1. Nicht verkauft (keine nicht-stornierten Purchases) - isSold = false bedeutet alle Purchases sind storniert
   // 2. UND (keine Auktion ODER Auktion noch nicht abgelaufen)
   const isItemActive = (item: Item): boolean => {
@@ -57,11 +70,11 @@ export default function MySellingPage() {
     if (item.isActive !== undefined) {
       return item.isActive
     }
-    
+
     // Fallback: Berechne selbst (sollte nicht nötig sein, aber sicherheitshalber)
     // Wenn verkauft (nicht-stornierte Purchases vorhanden), dann inaktiv
     if (item.isSold) return false
-    
+
     // Wenn Auktion abgelaufen, dann inaktiv
     if (item.isAuction && item.auctionEnd) {
       const auctionEndDate = new Date(item.auctionEnd)
@@ -70,38 +83,38 @@ export default function MySellingPage() {
         return false
       }
     }
-    
+
     return true
   }
 
   const loadItems = async () => {
     try {
       setLoading(true)
-      
+
       // Prüfe und verarbeite abgelaufene Auktionen automatisch
       try {
         await fetch('/api/auctions/check-expired', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' }
+          headers: { 'Content-Type': 'application/json' },
         })
       } catch (error) {
         console.error('Error checking expired auctions:', error)
       }
-      
+
       // Lade ALLE Artikel (nicht nur aktive)
       const res = await fetch(`/api/watches/mine?t=${Date.now()}`)
       const data = await res.json()
       const itemsList = Array.isArray(data.watches) ? data.watches : []
       setItems(itemsList)
-      
+
       // Berechne Statistiken
       const activeCount = itemsList.filter((w: Item) => isItemActive(w)).length
       const inactiveCount = itemsList.length - activeCount
-      
+
       setStats({
         total: itemsList.length,
         active: activeCount,
-        inactive: inactiveCount
+        inactive: inactiveCount,
       })
     } catch (error) {
       console.error('Error loading items:', error)
@@ -124,29 +137,29 @@ export default function MySellingPage() {
   }, [session, status, router])
 
   // Filtere Artikel basierend auf Filter und Suche
-  const filteredItems = items.filter((item) => {
+  const filteredItems = items.filter(item => {
     // Filter nach Status
     const isActive = isItemActive(item)
     if (filter === 'active' && !isActive) return false
     if (filter === 'inactive' && isActive) return false
-    
+
     // Filter nach Suche
     if (searchQuery.trim()) {
       const query = searchQuery.toLowerCase().trim()
-      
+
       // Suche nach Artikelnummer
       if (item.articleNumber && item.articleNumber.toString().includes(query)) {
         return true
       }
-      
+
       // Suche nach Titel, Marke, Modell
       const titleMatch = item.title.toLowerCase().includes(query)
       const brandMatch = item.brand?.toLowerCase().includes(query)
       const modelMatch = item.model?.toLowerCase().includes(query)
-      
+
       return titleMatch || brandMatch || modelMatch
     }
-    
+
     return true
   })
 
@@ -157,7 +170,7 @@ export default function MySellingPage() {
 
     try {
       const res = await fetch(`/api/watches/${itemId}`, {
-        method: 'DELETE'
+        method: 'DELETE',
       })
 
       if (res.ok) {
@@ -174,11 +187,11 @@ export default function MySellingPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
             <p className="mt-4 text-gray-600">Lädt...</p>
           </div>
         </div>
@@ -189,9 +202,9 @@ export default function MySellingPage() {
 
   if (!session || status === 'unauthenticated') {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
-        <div className="flex-1 flex items-center justify-center">
+        <div className="flex flex-1 items-center justify-center">
           <p className="text-gray-600">Weiterleitung zur Anmeldung...</p>
         </div>
         <Footer />
@@ -200,118 +213,118 @@ export default function MySellingPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
       <div className="flex-1 py-8">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
-          <div className="text-sm text-gray-600 mb-4">
+          <div className="mb-4 text-sm text-gray-600">
             <Link href="/my-watches" className="text-primary-600 hover:text-primary-700">
-              Meine Uhren
+              Mein Verkaufen
             </Link>
             <span className="mx-2">›</span>
             <span>Mein Verkaufen</span>
           </div>
 
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
+          <div className="mb-8 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-primary-100 rounded-lg">
+              <div className="rounded-lg bg-primary-100 p-2">
                 <Package className="h-6 w-6 text-primary-600" />
               </div>
               <div>
                 <h1 className="text-3xl font-bold text-gray-900">{t.header.mySelling}</h1>
-                <p className="text-gray-600 mt-1">{t.myWatches.manageListings}</p>
+                <p className="mt-1 text-gray-600">{t.myWatches.manageListings}</p>
               </div>
             </div>
             <Link
               href="/sell"
-              className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+              className="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700"
             >
-              <Plus className="h-4 w-4 mr-2" />
+              <Plus className="mr-2 h-4 w-4" />
               {t.myWatches.offerItem}
             </Link>
           </div>
 
           {/* Statistik-Karten */}
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+          <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-md">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">{t.myWatches.total}</p>
+                  <p className="mb-1 text-sm text-gray-600">{t.myWatches.total}</p>
                   <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
                 </div>
-                <div className="p-3 bg-gray-100 rounded-lg">
+                <div className="rounded-lg bg-gray-100 p-3">
                   <Package className="h-6 w-6 text-gray-600" />
                 </div>
               </div>
             </div>
-            
-            <div className="bg-white rounded-lg shadow-md p-6 border border-gray-200">
+
+            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-md">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm text-gray-600 mb-1">{t.myWatches.active}</p>
+                  <p className="mb-1 text-sm text-gray-600">{t.myWatches.active}</p>
                   <p className="text-3xl font-bold text-green-600">{stats.active}</p>
                 </div>
-                <div className="p-3 bg-green-100 rounded-lg">
+                <div className="rounded-lg bg-green-100 p-3">
                   <CheckCircle className="h-6 w-6 text-green-600" />
                 </div>
               </div>
             </div>
-            
-            <div className={`bg-white rounded-lg shadow-md p-6 border-2 ${
-              filter === 'inactive' 
-                ? 'border-red-500' 
-                : 'border-gray-200'
-            }`}>
+
+            <div
+              className={`rounded-lg border-2 bg-white p-6 shadow-md ${
+                filter === 'inactive' ? 'border-red-500' : 'border-gray-200'
+              }`}
+            >
               <div className="flex items-center justify-between">
                 <div>
-                  <p className={`text-sm mb-1 ${
-                    filter === 'inactive' 
-                      ? 'text-red-600 font-semibold' 
-                      : 'text-gray-600'
-                  }`}>{t.myWatches.inactive}</p>
-                  <p className={`text-3xl font-bold ${
-                    filter === 'inactive' 
-                      ? 'text-red-600' 
-                      : 'text-red-500'
-                  }`}>{stats.inactive}</p>
+                  <p
+                    className={`mb-1 text-sm ${
+                      filter === 'inactive' ? 'font-semibold text-red-600' : 'text-gray-600'
+                    }`}
+                  >
+                    {t.myWatches.inactive}
+                  </p>
+                  <p
+                    className={`text-3xl font-bold ${
+                      filter === 'inactive' ? 'text-red-600' : 'text-red-500'
+                    }`}
+                  >
+                    {stats.inactive}
+                  </p>
                 </div>
-                <div className={`p-3 rounded-lg ${
-                  filter === 'inactive' 
-                    ? 'bg-red-100' 
-                    : 'bg-red-50'
-                }`}>
-                  <X className={`h-6 w-6 ${
-                    filter === 'inactive' 
-                      ? 'text-red-600' 
-                      : 'text-red-500'
-                  }`} />
+                <div
+                  className={`rounded-lg p-3 ${filter === 'inactive' ? 'bg-red-100' : 'bg-red-50'}`}
+                >
+                  <X
+                    className={`h-6 w-6 ${filter === 'inactive' ? 'text-red-600' : 'text-red-500'}`}
+                  />
                 </div>
               </div>
             </div>
           </div>
 
           {/* Suchleiste und Filter */}
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <div className="flex flex-col md:flex-row gap-4">
+          <div className="mb-6 rounded-lg bg-white p-6 shadow-md">
+            <div className="flex flex-col gap-4 md:flex-row">
               {/* Suchleiste */}
-              <div className="flex-1 relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+              <div className="relative flex-1">
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
                 <input
                   type="text"
                   placeholder={t.myWatches.searchPlaceholder}
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-4 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500"
                 />
               </div>
-              
+
               {/* Filter-Buttons */}
               <div className="flex gap-2">
                 <button
                   onClick={() => setFilter('all')}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  className={`rounded-md px-4 py-2 font-medium transition-colors ${
                     filter === 'all'
                       ? 'bg-primary-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -321,7 +334,7 @@ export default function MySellingPage() {
                 </button>
                 <button
                   onClick={() => setFilter('active')}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  className={`rounded-md px-4 py-2 font-medium transition-colors ${
                     filter === 'active'
                       ? 'bg-primary-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -331,7 +344,7 @@ export default function MySellingPage() {
                 </button>
                 <button
                   onClick={() => setFilter('inactive')}
-                  className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                  className={`rounded-md px-4 py-2 font-medium transition-colors ${
                     filter === 'inactive'
                       ? 'bg-primary-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -345,71 +358,69 @@ export default function MySellingPage() {
 
           {/* Artikel-Liste */}
           {filteredItems.length === 0 ? (
-            <div className="bg-white rounded-lg shadow-md p-12 text-center">
-              <Package className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                {t.myWatches.noItems}
-              </h3>
-              <p className="text-gray-600 mb-6">
-                {searchQuery 
-                  ? t.search.tryDifferent
-                  : t.myWatches.noItemsDesc}
+            <div className="rounded-lg bg-white p-12 text-center shadow-md">
+              <Package className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+              <h3 className="mb-2 text-lg font-semibold text-gray-900">{t.myWatches.noItems}</h3>
+              <p className="mb-6 text-gray-600">
+                {searchQuery ? t.search.tryDifferent : t.myWatches.noItemsDesc}
               </p>
               {!searchQuery && (
                 <Link
                   href="/sell"
-                  className="inline-flex items-center px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700 transition-colors"
+                  className="inline-flex items-center rounded-md bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
                 >
-                  <Plus className="h-4 w-4 mr-2" />
+                  <Plus className="mr-2 h-4 w-4" />
                   {t.myWatches.offerFirstItem}
                 </Link>
               )}
             </div>
           ) : (
             <div className="space-y-4">
-              {filteredItems.map((item) => {
+              {filteredItems.map(item => {
                 const isActive = isItemActive(item)
                 const images = item.images || []
                 const mainImage = images.length > 0 ? images[0] : null
                 const articleUrl = getArticleUrl(item)
-                
+
                 return (
                   <div
                     key={item.id}
-                    className="bg-white rounded-lg shadow-md overflow-hidden border border-gray-200 hover:shadow-lg transition-shadow"
+                    className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-md transition-shadow hover:shadow-lg"
                   >
                     <div className="flex flex-col md:flex-row">
                       {/* Bild */}
-                      <div className="md:w-48 h-48 md:h-auto flex-shrink-0">
+                      <div className="h-48 flex-shrink-0 md:h-auto md:w-48">
                         {mainImage ? (
                           <Link href={articleUrl}>
                             <img
                               src={mainImage}
                               alt={item.title}
-                              className="w-full h-full object-cover hover:opacity-90 transition-opacity cursor-pointer"
+                              className="h-full w-full cursor-pointer object-cover transition-opacity hover:opacity-90"
                             />
                           </Link>
                         ) : (
-                          <div className="w-full h-full bg-gray-200 flex items-center justify-center text-gray-500">
+                          <div className="flex h-full w-full items-center justify-center bg-gray-200 text-gray-500">
                             {t.home.noImage}
                           </div>
                         )}
                       </div>
-                      
+
                       {/* Inhalt */}
                       <div className="flex-1 p-6">
-                        <div className="flex items-start justify-between mb-3">
+                        <div className="mb-3 flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2">
-                              <span className={`text-xs px-2 py-1 rounded-full font-semibold ${
-                                isActive
-                                  ? 'bg-green-100 text-green-700'
-                                  : 'bg-red-100 text-red-700'
-                              }`}>
+                            <div className="mb-2 flex items-center gap-3">
+                              <span
+                                className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                                  isActive
+                                    ? 'bg-green-100 text-green-700'
+                                    : 'bg-red-100 text-red-700'
+                                }`}
+                              >
                                 {isActive ? t.myWatches.active : t.myWatches.inactive}
                               </span>
                               {item.articleNumber && (
-                                <span className="text-xs text-gray-500 font-mono">
+                                <span className="font-mono text-xs text-gray-500">
                                   #{item.articleNumber}
                                 </span>
                               )}
@@ -417,47 +428,48 @@ export default function MySellingPage() {
                                 {new Date(item.createdAt).toLocaleDateString('de-CH')}
                               </span>
                             </div>
-                            
+
                             <Link href={articleUrl}>
-                              <h3 className="text-lg font-semibold text-gray-900 mb-1 hover:text-primary-600 transition-colors cursor-pointer">
+                              <h3 className="mb-1 cursor-pointer text-lg font-semibold text-gray-900 transition-colors hover:text-primary-600">
                                 {item.title}
                               </h3>
                             </Link>
-                            
-                            <p className="text-sm text-gray-600 mb-2">
+
+                            <p className="mb-2 text-sm text-gray-600">
                               {item.brand} {item.model}
                             </p>
-                            
+
                             <p className="text-lg font-bold text-gray-900">
                               CHF {item.finalPrice.toFixed(2)}
                             </p>
-                            
+
                             {item.isAuction && item.highestBid && (
-                              <p className="text-xs text-gray-500 mt-1">
-                                {item.bidCount} {item.bidCount === 1 ? t.product.bid_singular : t.product.bids}
+                              <p className="mt-1 text-xs text-gray-500">
+                                {item.bidCount}{' '}
+                                {item.bidCount === 1 ? t.product.bid_singular : t.product.bids}
                               </p>
                             )}
                           </div>
-                          
+
                           {/* Aktionen */}
-                          <div className="flex gap-2 ml-4">
+                          <div className="ml-4 flex gap-2">
                             <Link
                               href={articleUrl}
-                              className="p-2 bg-green-100 text-green-700 rounded-full hover:bg-green-200 transition-colors"
+                              className="rounded-full bg-green-100 p-2 text-green-700 transition-colors hover:bg-green-200"
                               title={t.myWatches.view}
                             >
                               <Eye className="h-5 w-5" />
                             </Link>
                             <Link
                               href={`/my-watches/edit/${item.id}`}
-                              className="p-2 bg-blue-100 text-blue-700 rounded-full hover:bg-blue-200 transition-colors"
+                              className="rounded-full bg-blue-100 p-2 text-blue-700 transition-colors hover:bg-blue-200"
                               title={t.myWatches.edit}
                             >
                               <Edit className="h-5 w-5" />
                             </Link>
                             <button
                               onClick={() => handleDelete(item.id)}
-                              className="p-2 bg-red-100 text-red-700 rounded-full hover:bg-red-200 transition-colors"
+                              className="rounded-full bg-red-100 p-2 text-red-700 transition-colors hover:bg-red-200"
                               title={t.myWatches.delete}
                             >
                               <Trash2 className="h-5 w-5" />

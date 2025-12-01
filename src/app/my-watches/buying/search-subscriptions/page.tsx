@@ -74,7 +74,7 @@ export default function SearchSubscriptionsPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    
+
     if (!formData.searchTerm && !formData.brand && !formData.model) {
       toast.error('Bitte geben Sie mindestens einen Suchbegriff, eine Marke oder ein Modell an')
       return
@@ -191,7 +191,7 @@ export default function SearchSubscriptionsPage() {
         <Header />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
             <p className="text-gray-600">Lädt...</p>
           </div>
         </div>
@@ -205,11 +205,11 @@ export default function SearchSubscriptionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
-      <div className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 w-full">
+      <div className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <div className="text-sm text-gray-600 mb-4">
+        <div className="mb-4 text-sm text-gray-600">
           <Link href="/my-watches/buying" className="text-primary-600 hover:text-primary-700">
             Mein Kaufen
           </Link>
@@ -218,22 +218,24 @@ export default function SearchSubscriptionsPage() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-6">
+        <div className="mb-6 flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link
               href="/my-watches/buying"
-              className="p-2 hover:bg-gray-100 rounded-lg transition-colors"
+              className="rounded-lg p-2 transition-colors hover:bg-gray-100"
             >
               <ArrowLeft className="h-5 w-5 text-gray-600" />
             </Link>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Suchaufträge</h1>
-              <p className="text-gray-600 mt-1">Erhalten Sie Benachrichtigungen bei neuen passenden Artikeln</p>
+              <p className="mt-1 text-gray-600">
+                Erhalten Sie Benachrichtigungen bei neuen passenden Artikeln
+              </p>
             </div>
           </div>
           <button
             onClick={() => setShowCreateForm(!showCreateForm)}
-            className="flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+            className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700"
           >
             <Plus className="h-5 w-5" />
             Neues Suchabo
@@ -242,67 +244,63 @@ export default function SearchSubscriptionsPage() {
 
         {/* Create Form */}
         {showCreateForm && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-            <h2 className="text-xl font-semibold mb-4">Neues Suchabo erstellen</h2>
+          <div className="mb-6 rounded-lg bg-white p-6 shadow-md">
+            <h2 className="mb-4 text-xl font-semibold">Neues Suchabo erstellen</h2>
             <form onSubmit={handleSubmit} className="space-y-4">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
                     Suchbegriff
                   </label>
                   <input
                     type="text"
                     value={formData.searchTerm}
-                    onChange={(e) => setFormData({ ...formData, searchTerm: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    onChange={e => setFormData({ ...formData, searchTerm: e.target.value })}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     placeholder="z.B. Rolex Submariner"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Marke
-                  </label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Marke</label>
                   <input
                     type="text"
                     value={formData.brand}
-                    onChange={(e) => setFormData({ ...formData, brand: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    onChange={e => setFormData({ ...formData, brand: e.target.value })}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     placeholder="z.B. Rolex"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    Modell
-                  </label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Modell</label>
                   <input
                     type="text"
                     value={formData.model}
-                    onChange={(e) => setFormData({ ...formData, model: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    onChange={e => setFormData({ ...formData, model: e.target.value })}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     placeholder="z.B. Submariner"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
                     Preis von (CHF)
                   </label>
                   <input
                     type="number"
                     value={formData.minPrice}
-                    onChange={(e) => setFormData({ ...formData, minPrice: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    onChange={e => setFormData({ ...formData, minPrice: e.target.value })}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     placeholder="1000"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                  <label className="mb-1 block text-sm font-medium text-gray-700">
                     Preis bis (CHF)
                   </label>
                   <input
                     type="number"
                     value={formData.maxPrice}
-                    onChange={(e) => setFormData({ ...formData, maxPrice: e.target.value })}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500"
+                    onChange={e => setFormData({ ...formData, maxPrice: e.target.value })}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     placeholder="50000"
                   />
                 </div>
@@ -311,13 +309,13 @@ export default function SearchSubscriptionsPage() {
                 <button
                   type="button"
                   onClick={() => setShowCreateForm(false)}
-                  className="px-4 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50"
+                  className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 hover:bg-gray-50"
                 >
                   Abbrechen
                 </button>
                 <button
                   type="submit"
-                  className="px-4 py-2 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+                  className="rounded-md bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
                 >
                   Erstellen
                 </button>
@@ -328,15 +326,16 @@ export default function SearchSubscriptionsPage() {
 
         {/* Subscriptions List */}
         {subscriptions.length === 0 ? (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <Search className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Noch keine Suchaufträge</h3>
-            <p className="text-gray-600 mb-6">
-              Erstellen Sie Ihr erstes Suchabo und erhalten Sie Benachrichtigungen bei neuen passenden Artikeln.
+          <div className="rounded-lg bg-white p-12 text-center shadow-md">
+            <Search className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+            <h3 className="mb-2 text-xl font-semibold text-gray-900">Noch keine Suchaufträge</h3>
+            <p className="mb-6 text-gray-600">
+              Erstellen Sie Ihr erstes Suchabo und erhalten Sie Benachrichtigungen bei neuen
+              passenden Artikeln.
             </p>
             <button
               onClick={() => setShowCreateForm(true)}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+              className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
             >
               <Plus className="h-5 w-5" />
               Erstes Suchabo erstellen
@@ -344,40 +343,40 @@ export default function SearchSubscriptionsPage() {
           </div>
         ) : (
           <div className="space-y-4">
-            {subscriptions.map((sub) => (
+            {subscriptions.map(sub => (
               <div
                 key={sub.id}
-                className="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow"
+                className="rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
               >
                 <div className="flex items-start justify-between">
                   <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-2">
+                    <div className="mb-2 flex items-center gap-3">
                       <Search className="h-5 w-5 text-primary-600" />
                       <h3 className="text-lg font-semibold text-gray-900">
                         {getCriteriaText(sub)}
                       </h3>
                       {sub.isActive ? (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded">
+                        <span className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
                           Aktiv
                         </span>
                       ) : (
-                        <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded">
+                        <span className="rounded bg-gray-100 px-2 py-1 text-xs font-medium text-gray-800">
                           Inaktiv
                         </span>
                       )}
                     </div>
-                    <div className="text-sm text-gray-600 space-y-1">
+                    <div className="space-y-1 text-sm text-gray-600">
                       <p>Erstellt: {formatDate(sub.createdAt)}</p>
-                      <p>Gefundene Artikel: <strong>{sub.matchesFound}</strong></p>
-                      {sub.lastMatchAt && (
-                        <p>Letzter Match: {formatDate(sub.lastMatchAt)}</p>
-                      )}
+                      <p>
+                        Gefundene Artikel: <strong>{sub.matchesFound}</strong>
+                      </p>
+                      {sub.lastMatchAt && <p>Letzter Match: {formatDate(sub.lastMatchAt)}</p>}
                     </div>
                   </div>
                   <div className="flex items-center gap-2">
                     <button
                       onClick={() => handleToggleActive(sub.id, sub.isActive)}
-                      className={`p-2 rounded-lg transition-colors ${
+                      className={`rounded-lg p-2 transition-colors ${
                         sub.isActive
                           ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
                           : 'bg-green-100 text-green-700 hover:bg-green-200'
@@ -392,7 +391,7 @@ export default function SearchSubscriptionsPage() {
                     </button>
                     <button
                       onClick={() => handleDeleteClick(sub.id)}
-                      className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                      className="rounded-lg bg-red-100 p-2 text-red-700 transition-colors hover:bg-red-200"
                       title="Löschen"
                     >
                       <Trash2 className="h-5 w-5" />
@@ -406,24 +405,23 @@ export default function SearchSubscriptionsPage() {
 
         {/* Delete Confirmation Modal */}
         {deleteConfirmId && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg shadow-xl p-6 max-w-md w-full mx-4">
-              <h3 className="text-xl font-semibold text-gray-900 mb-4">
-                Suchabo löschen?
-              </h3>
-              <p className="text-gray-600 mb-6">
-                Möchten Sie dieses Suchabo wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
+            <div className="mx-4 w-full max-w-md rounded-lg bg-white p-6 shadow-xl">
+              <h3 className="mb-4 text-xl font-semibold text-gray-900">Suchabo löschen?</h3>
+              <p className="mb-6 text-gray-600">
+                Möchten Sie dieses Suchabo wirklich löschen? Diese Aktion kann nicht rückgängig
+                gemacht werden.
               </p>
               <div className="flex justify-end gap-3">
                 <button
                   onClick={handleDeleteCancel}
-                  className="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
                 >
                   Abbrechen
                 </button>
                 <button
                   onClick={handleDeleteConfirm}
-                  className="px-4 py-2 bg-[#ef4444] text-white rounded-lg hover:bg-[#dc2626] transition-colors"
+                  className="rounded-lg bg-[#ef4444] px-4 py-2 text-white transition-colors hover:bg-[#dc2626]"
                 >
                   Löschen
                 </button>
@@ -436,8 +434,3 @@ export default function SearchSubscriptionsPage() {
     </div>
   )
 }
-
-
-
-
-

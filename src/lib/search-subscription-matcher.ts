@@ -24,7 +24,9 @@ interface WatchData {
  */
 export async function checkSearchSubscriptions(watch: WatchData) {
   try {
-    console.log(`[search-subscription-matcher] Prüfe Suchabos für Artikel: ${watch.title} (ID: ${watch.id})`)
+    console.log(
+      `[search-subscription-matcher] Prüfe Suchabos für Artikel: ${watch.title} (ID: ${watch.id})`
+    )
     console.log(`[search-subscription-matcher] Artikel-Daten:`, {
       brand: watch.brand,
       model: watch.model,
@@ -33,9 +35,9 @@ export async function checkSearchSubscriptions(watch: WatchData) {
       price: watch.price,
       condition: watch.condition,
       hasDescription: !!watch.description,
-      descriptionLength: watch.description?.length || 0
+      descriptionLength: watch.description?.length || 0,
     })
-    
+
     // Hole alle aktiven Suchabos
     const subscriptions = await prisma.searchSubscription.findMany({
       where: {
@@ -66,7 +68,7 @@ export async function checkSearchSubscriptions(watch: WatchData) {
           searchTerm: subscription.searchTerm,
           brand: subscription.brand,
           model: subscription.model,
-          categoryId: subscription.categoryId
+          categoryId: subscription.categoryId,
         })
         matches.push({
           subscriptionId: subscription.id,
@@ -74,7 +76,7 @@ export async function checkSearchSubscriptions(watch: WatchData) {
         })
       }
     }
-    
+
     console.log(`[search-subscription-matcher] Gesamt: ${matches.length} Match(es) gefunden`)
 
     // Für jeden Match: Benachrichtigung senden und Counter aktualisieren
@@ -94,16 +96,21 @@ export async function checkSearchSubscriptions(watch: WatchData) {
           watchUrl,
           subscription
         )
-        
+
         await sendEmail({
           to: user.email,
           subject,
           html,
           text,
         })
-        console.log(`[search-subscription-matcher] ✓ E-Mail-Benachrichtigung gesendet an ${user.email}`)
+        console.log(
+          `[search-subscription-matcher] ✓ E-Mail-Benachrichtigung gesendet an ${user.email}`
+        )
       } catch (error) {
-        console.error(`[search-subscription-matcher] ❌ Fehler beim Senden der E-Mail an ${user.email}:`, error)
+        console.error(
+          `[search-subscription-matcher] ❌ Fehler beim Senden der E-Mail an ${user.email}:`,
+          error
+        )
       }
 
       // In-App-Benachrichtigung erstellen
@@ -119,9 +126,14 @@ export async function checkSearchSubscriptions(watch: WatchData) {
             isRead: false,
           },
         })
-        console.log(`[search-subscription-matcher] ✓ In-App-Benachrichtigung erstellt für User ${user.id}`)
+        console.log(
+          `[search-subscription-matcher] ✓ In-App-Benachrichtigung erstellt für User ${user.id}`
+        )
       } catch (error) {
-        console.error(`[search-subscription-matcher] ❌ Fehler beim Erstellen der Benachrichtigung für User ${user.id}:`, error)
+        console.error(
+          `[search-subscription-matcher] ❌ Fehler beim Erstellen der Benachrichtigung für User ${user.id}:`,
+          error
+        )
       }
 
       // Counter aktualisieren
@@ -175,7 +187,10 @@ function matchesSearchSubscription(
     watch.material,
     watch.movement,
     watch.referenceNumber,
-  ].filter(Boolean).join(' ').toLowerCase()
+  ]
+    .filter(Boolean)
+    .join(' ')
+    .toLowerCase()
 
   // Prüfe alle Kriterien - alle müssen passen (AND-Logik)
   // Aber: searchTerm ist flexibler - wenn andere Kriterien (Brand, Model, Kategorie) passen,
@@ -186,34 +201,40 @@ function matchesSearchSubscription(
   if (subscription.searchTerm) {
     const searchLower = subscription.searchTerm.toLowerCase().trim()
     const searchWords = searchLower.split(/\s+/).filter(w => w.length > 0)
-    
+
     if (searchWords.length > 1) {
       // Mehrere Wörter: Intelligente Suche
       // Strategie 1: Prüfe ob alle Wörter im kombinierten Text vorkommen (beste Übereinstimmung)
       const allWordsMatch = searchWords.every(word => watchText.includes(word))
-      
+
       if (allWordsMatch) {
         // Perfekte Übereinstimmung - alle Wörter gefunden
         // Weiter mit anderen Kriterien prüfen
       } else {
         // Strategie 2: Mindestens ein Wort muss passen
         const atLeastOneWordMatches = searchWords.some(word => watchText.includes(word))
-        
+
         if (!atLeastOneWordMatches) {
           // Strategie 3: Prüfe ob Brand/Model/Material mit einem Wort übereinstimmt
-          const brandMatchesAnyWord = watch.brand && searchWords.some(word => {
-            const watchBrandLower = watch.brand!.toLowerCase()
-            return watchBrandLower.includes(word) || word.includes(watchBrandLower)
-          })
-          const modelMatchesAnyWord = watch.model && searchWords.some(word => {
-            const watchModelLower = watch.model!.toLowerCase()
-            return watchModelLower.includes(word) || word.includes(watchModelLower)
-          })
-          const materialMatchesAnyWord = watch.material && searchWords.some(word => {
-            const watchMaterialLower = watch.material!.toLowerCase()
-            return watchMaterialLower.includes(word) || word.includes(watchMaterialLower)
-          })
-          
+          const brandMatchesAnyWord =
+            watch.brand &&
+            searchWords.some(word => {
+              const watchBrandLower = watch.brand!.toLowerCase()
+              return watchBrandLower.includes(word) || word.includes(watchBrandLower)
+            })
+          const modelMatchesAnyWord =
+            watch.model &&
+            searchWords.some(word => {
+              const watchModelLower = watch.model!.toLowerCase()
+              return watchModelLower.includes(word) || word.includes(watchModelLower)
+            })
+          const materialMatchesAnyWord =
+            watch.material &&
+            searchWords.some(word => {
+              const watchMaterialLower = watch.material!.toLowerCase()
+              return watchMaterialLower.includes(word) || word.includes(watchMaterialLower)
+            })
+
           // Wenn weder Text noch Brand/Model/Material passt, schlage fehl
           if (!brandMatchesAnyWord && !modelMatchesAnyWord && !materialMatchesAnyWord) {
             return false
@@ -223,7 +244,7 @@ function matchesSearchSubscription(
     } else {
       // Einzelnes Wort: Teilstring-Matching in ALLEN Feldern
       const searchWord = searchWords[0]
-      
+
       // Prüfe in allen Textfeldern
       const titleMatch = watch.title?.toLowerCase().includes(searchWord) || false
       const descriptionMatch = watch.description?.toLowerCase().includes(searchWord) || false
@@ -232,10 +253,17 @@ function matchesSearchSubscription(
       const materialMatch = watch.material?.toLowerCase().includes(searchWord) || false
       const movementMatch = watch.movement?.toLowerCase().includes(searchWord) || false
       const referenceMatch = watch.referenceNumber?.toLowerCase().includes(searchWord) || false
-      
+
       // Mindestens ein Feld muss passen
-      if (!titleMatch && !descriptionMatch && !brandMatch && !modelMatch && 
-          !materialMatch && !movementMatch && !referenceMatch) {
+      if (
+        !titleMatch &&
+        !descriptionMatch &&
+        !brandMatch &&
+        !modelMatch &&
+        !materialMatch &&
+        !movementMatch &&
+        !referenceMatch
+      ) {
         return false
       }
     }
@@ -248,9 +276,13 @@ function matchesSearchSubscription(
     }
     const subscriptionBrand = subscription.brand.toLowerCase().trim()
     const watchBrand = watch.brand.toLowerCase().trim()
-    
+
     // Exakte Übereinstimmung ODER Teilstring-Matching
-    if (watchBrand !== subscriptionBrand && !watchBrand.includes(subscriptionBrand) && !subscriptionBrand.includes(watchBrand)) {
+    if (
+      watchBrand !== subscriptionBrand &&
+      !watchBrand.includes(subscriptionBrand) &&
+      !subscriptionBrand.includes(watchBrand)
+    ) {
       return false
     }
   }
@@ -262,9 +294,13 @@ function matchesSearchSubscription(
     }
     const subscriptionModel = subscription.model.toLowerCase().trim()
     const watchModel = watch.model.toLowerCase().trim()
-    
+
     // Exakte Übereinstimmung ODER Teilstring-Matching
-    if (watchModel !== subscriptionModel && !watchModel.includes(subscriptionModel) && !subscriptionModel.includes(watchModel)) {
+    if (
+      watchModel !== subscriptionModel &&
+      !watchModel.includes(subscriptionModel) &&
+      !subscriptionModel.includes(watchModel)
+    ) {
       return false
     }
   }
@@ -319,8 +355,3 @@ function matchesSearchSubscription(
   // Alle Kriterien passen
   return true
 }
-
-
-
-
-

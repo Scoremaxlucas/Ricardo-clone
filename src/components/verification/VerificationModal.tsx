@@ -53,39 +53,37 @@ export function VerificationModal({ isOpen, onClose, onVerify, action }: Verific
     buy: {
       title: 'Verifizierung erforderlich',
       message: 'Um Artikel zu kaufen, müssen Sie sich zuerst verifizieren.',
-      button: 'Jetzt verifizieren'
+      button: 'Jetzt verifizieren',
     },
     offer: {
       title: 'Verifizierung erforderlich',
       message: 'Um Preisvorschläge zu machen, müssen Sie sich zuerst verifizieren.',
-      button: 'Jetzt verifizieren'
+      button: 'Jetzt verifizieren',
     },
     bid: {
       title: 'Verifizierung erforderlich',
       message: 'Um bei Auktionen zu bieten, müssen Sie sich zuerst verifizieren.',
-      button: 'Jetzt verifizieren'
-    }
+      button: 'Jetzt verifizieren',
+    },
   }
 
   const texts = actionTexts[action]
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
+      <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
         <div className="p-6">
           {/* Header */}
-          <div className="flex items-center justify-between mb-4">
+          <div className="mb-4 flex items-center justify-between">
             <div className="flex items-center gap-3">
-              <div className="p-2 bg-yellow-100 rounded-full">
+              <div className="rounded-full bg-yellow-100 p-2">
                 <Shield className="h-6 w-6 text-yellow-600" />
               </div>
-              <h2 className="text-xl font-bold text-gray-900">
-                {texts.title}
-              </h2>
+              <h2 className="text-xl font-bold text-gray-900">{texts.title}</h2>
             </div>
             <button
               onClick={onClose}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 transition-colors hover:text-gray-600"
             >
               <X className="h-5 w-5" />
             </button>
@@ -93,14 +91,13 @@ export function VerificationModal({ isOpen, onClose, onVerify, action }: Verific
 
           {/* Content */}
           <div className="mb-6">
-            <div className="flex items-start gap-3 mb-4">
-              <AlertCircle className="h-5 w-5 text-yellow-600 mt-0.5 flex-shrink-0" />
-              <p className="text-gray-700">
-                {texts.message}
-              </p>
+            <div className="mb-4 flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
+              <p className="text-gray-700">{texts.message}</p>
             </div>
             <p className="text-sm text-gray-600">
-              Die Verifizierung dauert nur wenige Minuten und ist notwendig, um sicherzustellen, dass alle Transaktionen sicher abgewickelt werden.
+              Die Verifizierung dauert nur wenige Minuten und ist notwendig, um sicherzustellen,
+              dass alle Transaktionen sicher abgewickelt werden.
             </p>
           </div>
 
@@ -108,13 +105,13 @@ export function VerificationModal({ isOpen, onClose, onVerify, action }: Verific
           <div className="flex gap-3">
             <button
               onClick={onClose}
-              className="flex-1 px-4 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50 transition-colors font-medium"
+              className="flex-1 rounded-md border border-gray-300 px-4 py-2 font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
               Abbrechen
             </button>
             <button
               onClick={handleVerifyClick}
-              className="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-md hover:bg-yellow-700 transition-colors font-medium flex items-center justify-center gap-2"
+              className="flex flex-1 items-center justify-center gap-2 rounded-md bg-yellow-600 px-4 py-2 font-medium text-white transition-colors hover:bg-yellow-700"
             >
               <Shield className="h-4 w-4" />
               {texts.button}
@@ -125,9 +122,3 @@ export function VerificationModal({ isOpen, onClose, onVerify, action }: Verific
     </div>
   )
 }
-
-
-
-
-
-

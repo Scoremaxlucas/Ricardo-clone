@@ -116,6 +116,7 @@ export default function AdminModerateWatchesPage() {
     }
 
     loadWatches()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router, filter, selectedCategory, selectedSellerVerified, dateFrom, dateTo])
 
   const loadWatches = async () => {
@@ -179,13 +180,19 @@ export default function AdminModerateWatchesPage() {
       const data = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
 
       if (res.ok) {
-        toast.success(data.message || (!currentStatus ? t.admin.offerActivated : t.admin.offerDeactivated))
+        toast.success(
+          data.message || (!currentStatus ? t.admin.offerActivated : t.admin.offerDeactivated)
+        )
         // Aktualisiere den Watch-State direkt mit den neuen Daten
         if (data.watch) {
-          setWatches((prevWatches) =>
+          setWatches(prevWatches =>
             prevWatches.map((w: any) =>
               w.id === watchId
-                ? { ...w, isActive: data.watch.isActive, moderationStatus: data.watch.moderationStatus }
+                ? {
+                    ...w,
+                    isActive: data.watch.isActive,
+                    moderationStatus: data.watch.moderationStatus,
+                  }
                 : w
             )
           )
@@ -212,7 +219,11 @@ export default function AdminModerateWatchesPage() {
   }
 
   const deleteWatch = async (watchId: string) => {
-    if (!confirm('Möchten Sie dieses Angebot wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.')) {
+    if (
+      !confirm(
+        'Möchten Sie dieses Angebot wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.'
+      )
+    ) {
       return
     }
 
@@ -271,7 +282,10 @@ export default function AdminModerateWatchesPage() {
       return
     }
 
-    if (action === 'delete' && !confirm(`Möchten Sie wirklich ${selectedWatches.size} Angebote löschen?`)) {
+    if (
+      action === 'delete' &&
+      !confirm(`Möchten Sie wirklich ${selectedWatches.size} Angebote löschen?`)
+    ) {
       return
     }
 
@@ -336,11 +350,11 @@ export default function AdminModerateWatchesPage() {
     if (selectedWatches.size === filteredWatches.length) {
       setSelectedWatches(new Set())
     } else {
-      setSelectedWatches(new Set(filteredWatches.map((w) => w.id)))
+      setSelectedWatches(new Set(filteredWatches.map(w => w.id)))
     }
   }
 
-  const filteredWatches = watches.filter((watch) => {
+  const filteredWatches = watches.filter(watch => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       return (
@@ -356,17 +370,17 @@ export default function AdminModerateWatchesPage() {
 
   const stats = {
     total: watches.length,
-    active: watches.filter((w) => w.isActive).length,
-    inactive: watches.filter((w) => !w.isActive).length,
-    reported: watches.filter((w) => (w.pendingReports || 0) > 0).length,
-    pending: watches.filter((w) => !w.isActive && (w as any).moderationStatus === 'pending').length,
+    active: watches.filter(w => w.isActive).length,
+    inactive: watches.filter(w => !w.isActive).length,
+    reported: watches.filter(w => (w.pendingReports || 0) > 0).length,
+    pending: watches.filter(w => !w.isActive && (w as any).moderationStatus === 'pending').length,
   }
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
           <p className="mt-4 text-gray-600">Lädt...</p>
         </div>
       </div>
@@ -381,7 +395,7 @@ export default function AdminModerateWatchesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
@@ -391,14 +405,14 @@ export default function AdminModerateWatchesPage() {
             <div className="flex gap-3">
               <button
                 onClick={exportCSV}
-                className="flex items-center gap-2 px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors"
+                className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-white transition-colors hover:bg-green-700"
               >
                 <Download className="h-4 w-4" />
                 CSV Export
               </button>
               <Link
                 href="/admin/dashboard"
-                className="text-primary-600 hover:text-primary-700 font-medium"
+                className="font-medium text-primary-600 hover:text-primary-700"
               >
                 ← Zurück zum Dashboard
               </Link>
@@ -407,8 +421,8 @@ export default function AdminModerateWatchesPage() {
         </div>
 
         {/* Statistiken */}
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-5">
+          <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Gesamt</p>
@@ -417,7 +431,7 @@ export default function AdminModerateWatchesPage() {
               <Package className="h-8 w-8 text-gray-400" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Ausstehend</p>
@@ -426,7 +440,7 @@ export default function AdminModerateWatchesPage() {
               <AlertTriangle className="h-8 w-8 text-yellow-400" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Aktiv</p>
@@ -435,7 +449,7 @@ export default function AdminModerateWatchesPage() {
               <CheckCircle className="h-8 w-8 text-green-400" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Inaktiv</p>
@@ -444,7 +458,7 @@ export default function AdminModerateWatchesPage() {
               <XCircle className="h-8 w-8 text-red-400" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Gemeldet</p>
@@ -456,27 +470,27 @@ export default function AdminModerateWatchesPage() {
         </div>
 
         {/* Filter und Suche */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
+        <div className="mb-6 rounded-lg bg-white p-4 shadow">
           <div className="flex flex-col gap-4">
-            <div className="flex flex-col md:flex-row gap-4">
+            <div className="flex flex-col gap-4 md:flex-row">
               <div className="flex-1">
                 <div className="relative">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                  <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
                   <input
                     type="text"
                     placeholder="Suchen nach Titel, Marke, Modell, Verkäufer oder Artikelnummer..."
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
               </div>
-              <div className="flex gap-2 flex-wrap">
-                {['all', 'pending', 'active', 'inactive', 'reported'].map((filterOption) => (
+              <div className="flex flex-wrap gap-2">
+                {['all', 'pending', 'active', 'inactive', 'reported'].map(filterOption => (
                   <button
                     key={filterOption}
                     onClick={() => setFilter(filterOption as any)}
-                    className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                    className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                       filter === filterOption
                         ? 'bg-primary-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -485,18 +499,18 @@ export default function AdminModerateWatchesPage() {
                     {filterOption === 'all'
                       ? 'Alle'
                       : filterOption === 'pending'
-                      ? 'Ausstehend'
-                      : filterOption === 'active'
-                      ? 'Aktiv'
-                      : filterOption === 'inactive'
-                      ? 'Inaktiv'
-                      : 'Gemeldet'}
+                        ? 'Ausstehend'
+                        : filterOption === 'active'
+                          ? 'Aktiv'
+                          : filterOption === 'inactive'
+                            ? 'Inaktiv'
+                            : 'Gemeldet'}
                   </button>
                 ))}
               </div>
               <button
                 onClick={() => setShowFilters(!showFilters)}
-                className="flex items-center gap-2 px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+                className="flex items-center gap-2 rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:bg-gray-50"
               >
                 <Filter className="h-4 w-4" />
                 Filter
@@ -505,13 +519,13 @@ export default function AdminModerateWatchesPage() {
 
             {/* Erweiterte Filter */}
             {showFilters && (
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-4 pt-4 border-t border-gray-200">
+              <div className="grid grid-cols-1 gap-4 border-t border-gray-200 pt-4 md:grid-cols-4">
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Kategorie</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Kategorie</label>
                   <select
                     value={selectedCategory}
-                    onChange={(e) => setSelectedCategory(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    onChange={e => setSelectedCategory(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Alle</option>
                     <option value="auto-motorrad">Auto & Motorrad</option>
@@ -528,11 +542,11 @@ export default function AdminModerateWatchesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Verkäufer</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Verkäufer</label>
                   <select
                     value={selectedSellerVerified}
-                    onChange={(e) => setSelectedSellerVerified(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    onChange={e => setSelectedSellerVerified(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                   >
                     <option value="">Alle</option>
                     <option value="true">Verifiziert</option>
@@ -540,21 +554,21 @@ export default function AdminModerateWatchesPage() {
                   </select>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Von Datum</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Von Datum</label>
                   <input
                     type="date"
                     value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    onChange={e => setDateFrom(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Bis Datum</label>
+                  <label className="mb-1 block text-sm font-medium text-gray-700">Bis Datum</label>
                   <input
                     type="date"
                     value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                    onChange={e => setDateTo(e.target.value)}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                   />
                 </div>
               </div>
@@ -564,7 +578,7 @@ export default function AdminModerateWatchesPage() {
 
         {/* Bulk-Aktionen */}
         {selectedWatches.size > 0 && (
-          <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 mb-6">
+          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <CheckSquare className="h-5 w-5 text-blue-600" />
@@ -575,25 +589,25 @@ export default function AdminModerateWatchesPage() {
               <div className="flex gap-2">
                 <button
                   onClick={() => handleBulkAction('activate')}
-                  className="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors text-sm"
+                  className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white transition-colors hover:bg-green-700"
                 >
                   Aktivieren
                 </button>
                 <button
                   onClick={() => handleBulkAction('deactivate')}
-                  className="px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 transition-colors text-sm"
+                  className="rounded-lg bg-yellow-600 px-4 py-2 text-sm text-white transition-colors hover:bg-yellow-700"
                 >
                   Deaktivieren
                 </button>
                 <button
                   onClick={() => handleBulkAction('delete')}
-                  className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors text-sm"
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700"
                 >
                   Löschen
                 </button>
                 <button
                   onClick={() => setSelectedWatches(new Set())}
-                  className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors text-sm"
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm transition-colors hover:bg-gray-50"
                 >
                   Abbrechen
                 </button>
@@ -603,7 +617,7 @@ export default function AdminModerateWatchesPage() {
         )}
 
         {/* Liste der Angebote */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="rounded-lg bg-white shadow">
           {filteredWatches.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               {searchQuery ? 'Keine Ergebnisse gefunden' : 'Keine Angebote vorhanden'}
@@ -611,11 +625,13 @@ export default function AdminModerateWatchesPage() {
           ) : (
             <div className="divide-y divide-gray-200">
               {/* Select All */}
-              <div className="p-4 border-b border-gray-200">
-                <label className="flex items-center gap-2 cursor-pointer">
+              <div className="border-b border-gray-200 p-4">
+                <label className="flex cursor-pointer items-center gap-2">
                   <input
                     type="checkbox"
-                    checked={selectedWatches.size === filteredWatches.length && filteredWatches.length > 0}
+                    checked={
+                      selectedWatches.size === filteredWatches.length && filteredWatches.length > 0
+                    }
                     onChange={toggleSelectAll}
                     className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                   />
@@ -623,60 +639,56 @@ export default function AdminModerateWatchesPage() {
                 </label>
               </div>
 
-              {filteredWatches.map((watch) => {
+              {filteredWatches.map(watch => {
                 const images = Array.isArray(watch.images)
                   ? watch.images
                   : watch.images
-                  ? JSON.parse(watch.images)
-                  : []
+                    ? JSON.parse(watch.images)
+                    : []
                 const mainImage = images[0] || '/placeholder-watch.jpg'
                 const isSelected = selectedWatches.has(watch.id)
 
                 return (
                   <div
                     key={watch.id}
-                    className={`p-6 hover:bg-gray-50 transition-colors ${isSelected ? 'bg-blue-50' : ''}`}
+                    className={`p-6 transition-colors hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
                   >
                     <div className="flex gap-6">
-                      <div className="flex-shrink-0 flex items-start pt-1">
+                      <div className="flex flex-shrink-0 items-start pt-1">
                         <input
                           type="checkbox"
                           checked={isSelected}
                           onChange={() => toggleWatchSelection(watch.id)}
-                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500 mt-1"
+                          className="mt-1 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                         />
                       </div>
                       <div className="flex-shrink-0">
-                        <div className="relative w-24 h-24 bg-gray-200 rounded-lg overflow-hidden">
-                          <Image
-                            src={mainImage}
-                            alt={watch.title}
-                            fill
-                            className="object-cover"
-                          />
+                        <div className="relative h-24 w-24 overflow-hidden rounded-lg bg-gray-200">
+                          <Image src={mainImage} alt={watch.title} fill className="object-cover" />
                         </div>
                       </div>
                       <div className="flex-1">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
-                            <div className="flex items-center gap-3 mb-2 flex-wrap">
+                            <div className="mb-2 flex flex-wrap items-center gap-3">
                               {watch.isActive ? (
-                                <span className="px-2 py-1 bg-green-100 text-green-800 rounded text-xs font-medium">
+                                <span className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
                                   Aktiv
                                 </span>
                               ) : (
-                                <span className="px-2 py-1 bg-red-100 text-red-800 rounded text-xs font-medium">
+                                <span className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
                                   Inaktiv
                                 </span>
                               )}
                               {watch.pendingReports && watch.pendingReports > 0 && (
-                                <span className="px-2 py-1 bg-orange-100 text-orange-800 rounded text-xs font-medium flex items-center gap-1">
+                                <span className="flex items-center gap-1 rounded bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800">
                                   <Flag className="h-3 w-3" />
-                                  {watch.pendingReports} Meldung{watch.pendingReports !== 1 ? 'en' : ''}
+                                  {watch.pendingReports} Meldung
+                                  {watch.pendingReports !== 1 ? 'en' : ''}
                                 </span>
                               )}
                               {watch.articleNumber && (
-                                <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs font-mono">
+                                <span className="rounded bg-gray-100 px-2 py-1 font-mono text-xs text-gray-700">
                                   #{watch.articleNumber}
                                 </span>
                               )}
@@ -684,22 +696,24 @@ export default function AdminModerateWatchesPage() {
                                 {new Date(watch.createdAt).toLocaleDateString('de-CH')}
                               </span>
                             </div>
-                            <h3 className="text-lg font-semibold text-gray-900 mb-1">{watch.title}</h3>
-                            <p className="text-sm text-gray-600 mb-2">
+                            <h3 className="mb-1 text-lg font-semibold text-gray-900">
+                              {watch.title}
+                            </h3>
+                            <p className="mb-2 text-sm text-gray-600">
                               {watch.brand} {watch.model} • {watch.condition}
                             </p>
                             {watch.categories && watch.categories.length > 0 && (
-                              <div className="flex items-center gap-2 mb-2">
+                              <div className="mb-2 flex items-center gap-2">
                                 <Tag className="h-3 w-3 text-gray-400" />
                                 <span className="text-xs text-gray-500">
-                                  {watch.categories.map((c) => c.name).join(', ')}
+                                  {watch.categories.map(c => c.name).join(', ')}
                                 </span>
                               </div>
                             )}
-                            <p className="text-lg font-bold text-primary-600 mb-2">
+                            <p className="mb-2 text-lg font-bold text-primary-600">
                               CHF {new Intl.NumberFormat('de-CH').format(watch.price)}
                             </p>
-                            <div className="flex items-center gap-4 text-sm text-gray-500 mb-2">
+                            <div className="mb-2 flex items-center gap-4 text-sm text-gray-500">
                               <div className="flex items-center gap-1">
                                 <Eye className="h-4 w-4" />
                                 {watch.viewCount || 0} Aufrufe
@@ -735,7 +749,7 @@ export default function AdminModerateWatchesPage() {
                                 loadWatchNotes(watch.id)
                                 setShowNotesModal(true)
                               }}
-                              className="p-2 bg-blue-100 text-blue-700 rounded-lg hover:bg-blue-200 transition-colors"
+                              className="rounded-lg bg-blue-100 p-2 text-blue-700 transition-colors hover:bg-blue-200"
                               title="Notizen"
                             >
                               <MessageSquare className="h-5 w-5" />
@@ -746,33 +760,37 @@ export default function AdminModerateWatchesPage() {
                                 loadWatchHistory(watch.id)
                                 setShowHistoryModal(true)
                               }}
-                              className="p-2 bg-purple-100 text-purple-700 rounded-lg hover:bg-purple-200 transition-colors"
+                              className="rounded-lg bg-purple-100 p-2 text-purple-700 transition-colors hover:bg-purple-200"
                               title="Historie"
                             >
                               <History className="h-5 w-5" />
                             </button>
                             <button
                               onClick={() => toggleWatchStatus(watch.id, watch.isActive)}
-                              className={`p-2 rounded-lg transition-colors ${
+                              className={`rounded-lg p-2 transition-colors ${
                                 watch.isActive
                                   ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
                                   : 'bg-green-100 text-green-700 hover:bg-green-200'
                               }`}
                               title={watch.isActive ? 'Deaktivieren' : 'Aktivieren'}
                             >
-                              {watch.isActive ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
+                              {watch.isActive ? (
+                                <EyeOff className="h-5 w-5" />
+                              ) : (
+                                <Eye className="h-5 w-5" />
+                              )}
                             </button>
                             <Link
                               href={`/products/${watch.id}`}
                               target="_blank"
-                              className="p-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition-colors"
+                              className="rounded-lg bg-gray-100 p-2 text-gray-700 transition-colors hover:bg-gray-200"
                               title="Angebot ansehen"
                             >
                               <Eye className="h-5 w-5" />
                             </Link>
                             <button
                               onClick={() => deleteWatch(watch.id)}
-                              className="p-2 bg-red-100 text-red-700 rounded-lg hover:bg-red-200 transition-colors"
+                              className="rounded-lg bg-red-100 p-2 text-red-700 transition-colors hover:bg-red-200"
                               title="Löschen"
                             >
                               <Trash2 className="h-5 w-5" />
@@ -792,8 +810,8 @@ export default function AdminModerateWatchesPage() {
       {/* Notizen Modal */}
       {showNotesModal && selectedWatch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b">
+          <div className="mx-4 flex max-h-[80vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b p-6">
               <h2 className="text-xl font-bold text-gray-900">Notizen: {selectedWatch.title}</h2>
               <button
                 onClick={() => {
@@ -810,25 +828,25 @@ export default function AdminModerateWatchesPage() {
               <div className="mb-4">
                 <textarea
                   value={newNote}
-                  onChange={(e) => setNewNote(e.target.value)}
+                  onChange={e => setNewNote(e.target.value)}
                   placeholder="Neue Notiz hinzufügen..."
                   rows={3}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500"
+                  className="w-full rounded-lg border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                 />
                 <button
                   onClick={() => addNote(selectedWatch.id)}
-                  className="mt-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+                  className="mt-2 rounded-lg bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700"
                 >
                   Notiz hinzufügen
                 </button>
               </div>
               <div className="space-y-3">
                 {selectedWatchNotes.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">Keine Notizen vorhanden</p>
+                  <p className="py-8 text-center text-gray-500">Keine Notizen vorhanden</p>
                 ) : (
-                  selectedWatchNotes.map((note) => (
-                    <div key={note.id} className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-1">
+                  selectedWatchNotes.map(note => (
+                    <div key={note.id} className="rounded-lg bg-gray-50 p-3">
+                      <div className="mb-1 flex items-center justify-between">
                         <span className="text-sm font-medium text-gray-700">
                           {note.admin.nickname || note.admin.name || note.admin.email}
                         </span>
@@ -849,8 +867,8 @@ export default function AdminModerateWatchesPage() {
       {/* Historie Modal */}
       {showHistoryModal && selectedWatch && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-          <div className="bg-white rounded-lg shadow-xl max-w-2xl w-full mx-4 max-h-[80vh] flex flex-col">
-            <div className="flex items-center justify-between p-6 border-b">
+          <div className="mx-4 flex max-h-[80vh] w-full max-w-2xl flex-col rounded-lg bg-white shadow-xl">
+            <div className="flex items-center justify-between border-b p-6">
               <h2 className="text-xl font-bold text-gray-900">Historie: {selectedWatch.title}</h2>
               <button
                 onClick={() => {
@@ -865,40 +883,202 @@ export default function AdminModerateWatchesPage() {
             <div className="flex-1 overflow-y-auto p-6">
               <div className="space-y-3">
                 {selectedWatchHistory.length === 0 ? (
-                  <p className="text-gray-500 text-center py-8">Keine Historie vorhanden</p>
+                  <p className="py-8 text-center text-gray-500">Keine Historie vorhanden</p>
                 ) : (
-                  selectedWatchHistory.map((item) => (
-                    <div key={item.id} className="p-3 bg-gray-50 rounded-lg">
-                      <div className="flex items-center justify-between mb-1">
-                        <span className="text-sm font-medium text-gray-700">
-                          {item.action === 'activated'
-                            ? 'Aktiviert'
-                            : item.action === 'deactivated'
-                            ? 'Deaktiviert'
-                            : item.action === 'deleted'
-                            ? 'Gelöscht'
-                            : item.action === 'reported'
-                            ? 'Gemeldet'
-                            : item.action === 'note_added'
-                            ? 'Notiz hinzugefügt'
-                            : item.action}
-                        </span>
-                        <span className="text-xs text-gray-500">
-                          {new Date(item.createdAt).toLocaleString('de-CH')}
-                        </span>
-                      </div>
-                      <div className="text-xs text-gray-600">
-                        von {item.admin.nickname || item.admin.name || 'Unbekannt'}
-                      </div>
-                      {item.details && (
-                        <div className="mt-2 text-xs text-gray-500">
-                          {JSON.parse(item.details).reason && (
-                            <span>Grund: {JSON.parse(item.details).reason}</span>
+                  selectedWatchHistory.map(item => {
+                    let detailsObj: any = null
+                    try {
+                      detailsObj = item.details ? JSON.parse(item.details) : null
+                    } catch (e) {
+                      // Ignoriere Parse-Fehler
+                    }
+
+                    const getActionLabel = () => {
+                      switch (item.action) {
+                        case 'activated':
+                          return 'Aktiviert'
+                        case 'deactivated':
+                          return 'Deaktiviert'
+                        case 'deleted':
+                          return 'Gelöscht'
+                        case 'reported':
+                          return 'Gemeldet'
+                        case 'note_added':
+                          return 'Notiz hinzugefügt'
+                        case 'edited':
+                          return 'Bearbeitet'
+                        case 'created':
+                          return 'Erstellt'
+                        case 'updated':
+                          return 'Aktualisiert'
+                        default:
+                          return item.action
+                      }
+                    }
+
+                    const getActorLabel = () => {
+                      if (detailsObj?.editedBy === 'seller' || detailsObj?.createdBy === 'seller' || detailsObj?.updatedBy === 'seller') {
+                        return 'Verkäufer'
+                      }
+                      return item.admin?.nickname || item.admin?.name || 'Unbekannt'
+                    }
+
+                    return (
+                      <div key={item.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                        <div className="mb-2 flex items-center justify-between">
+                          <span className="text-sm font-semibold text-gray-900">
+                            {getActionLabel()}
+                          </span>
+                          <span className="text-xs text-gray-500">
+                            {new Date(item.createdAt).toLocaleString('de-CH', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </span>
+                        </div>
+                        <div className="mb-2 text-xs text-gray-600">
+                          von <span className="font-medium">{getActorLabel()}</span>
+                          {detailsObj?.sellerName && detailsObj?.sellerName !== getActorLabel() && (
+                            <span> ({detailsObj.sellerName})</span>
                           )}
                         </div>
-                      )}
-                    </div>
-                  ))
+
+                        {/* Zeige Änderungsdetails bei Bearbeitungen */}
+                        {(item.action === 'edited' || item.action === 'updated') && detailsObj?.changes && Object.keys(detailsObj.changes).length > 0 && (
+                          <div className="mt-3 space-y-2 rounded-md bg-blue-50 p-3">
+                            <div className="text-xs font-semibold text-blue-900">
+                              Geänderte Felder ({Object.keys(detailsObj.changes).length}):
+                            </div>
+                            {Object.entries(detailsObj.changes).map(([field, change]: [string, any]) => {
+                              const fieldLabels: Record<string, string> = {
+                                title: 'Titel',
+                                description: 'Beschreibung',
+                                price: 'Preis',
+                                buyNowPrice: 'Sofortkaufpreis',
+                                brand: 'Marke',
+                                model: 'Modell',
+                                condition: 'Zustand',
+                                isAuction: 'Auktionsart',
+                                auctionDuration: 'Auktionsdauer',
+                                auctionEnd: 'Auktionsende',
+                                images: 'Bilder',
+                                video: 'Video',
+                                shippingMethods: 'Versandmethoden',
+                                shippingMethod: 'Versandmethode',
+                                category: 'Kategorie',
+                                subcategory: 'Unterkategorie',
+                                material: 'Material',
+                                movement: 'Werk',
+                                caseDiameter: 'Gehäusedurchmesser',
+                                year: 'Jahr',
+                                referenceNumber: 'Referenznummer',
+                                autoRenew: 'Automatische Verlängerung',
+                                lastRevision: 'Letzte Revision',
+                                accuracy: 'Genauigkeit',
+                                fullset: 'Vollständiges Set',
+                                box: 'Box',
+                                papers: 'Papiere',
+                                warranty: 'Garantie',
+                                warrantyMonths: 'Garantie (Monate)',
+                                warrantyYears: 'Garantie (Jahre)',
+                                warrantyNote: 'Garantie-Notiz',
+                                warrantyDescription: 'Garantie-Beschreibung',
+                                boosters: 'Booster',
+                              }
+
+                              const formatValue = (value: any) => {
+                                if (value === null || value === undefined) return 'Nicht gesetzt'
+                                if (typeof value === 'boolean') return value ? 'Ja' : 'Nein'
+                                if (typeof value === 'object') {
+                                  try {
+                                    return JSON.stringify(value)
+                                  } catch {
+                                    return String(value)
+                                  }
+                                }
+                                if (field === 'price' || field === 'buyNowPrice') {
+                                  const numValue = parseFloat(value)
+                                  if (isNaN(numValue)) return String(value)
+                                  return `CHF ${numValue.toFixed(2)}`
+                                }
+                                if (field === 'images') {
+                                  try {
+                                    const images = typeof value === 'string' ? JSON.parse(value) : value
+                                    if (Array.isArray(images)) {
+                                      return `${images.length} Bild(er)`
+                                    }
+                                    return String(value)
+                                  } catch {
+                                    return String(value)
+                                  }
+                                }
+                                if (field === 'auctionEnd' || field === 'auctionStart' || field === 'lastRevision') {
+                                  try {
+                                    const date = new Date(value)
+                                    return date.toLocaleString('de-CH', {
+                                      day: '2-digit',
+                                      month: '2-digit',
+                                      year: 'numeric',
+                                      hour: '2-digit',
+                                      minute: '2-digit',
+                                    })
+                                  } catch {
+                                    return String(value)
+                                  }
+                                }
+                                return String(value)
+                              }
+
+                              const oldValue = formatValue(change.old)
+                              const newValue = formatValue(change.new)
+
+                              return (
+                                <div key={field} className="flex flex-col gap-1 rounded-md bg-white/60 p-2 text-xs">
+                                  <div className="font-semibold text-blue-900">
+                                    {fieldLabels[field] || field}
+                                  </div>
+                                  <div className="flex items-center gap-2 text-blue-800">
+                                    <span className="line-through text-red-600">{oldValue}</span>
+                                    <span className="text-gray-400">→</span>
+                                    <span className="font-semibold text-green-700">{newValue}</span>
+                                  </div>
+                                </div>
+                              )
+                            })}
+                            {detailsObj.hasBids && (
+                              <div className="mt-2 rounded-md bg-yellow-100 p-2 text-xs text-yellow-800">
+                                ⚠️ Bearbeitung mit vorhandenen Geboten (nur Beschreibung/Bilder/Video)
+                              </div>
+                            )}
+                          </div>
+                        )}
+
+                        {/* Zeige Hinweis wenn "updated" ohne Details */}
+                        {item.action === 'updated' && (!detailsObj?.changes || Object.keys(detailsObj.changes || {}).length === 0) && (
+                          <div className="mt-3 rounded-md bg-gray-50 p-3">
+                            <div className="text-xs text-gray-600">
+                              {detailsObj?.note || 'Automatische Aktualisierung (keine Details verfügbar)'}
+                            </div>
+                          </div>
+                        )}
+
+                        {/* Zeige andere Details */}
+                        {detailsObj?.reason && (
+                          <div className="mt-2 text-xs text-gray-500">
+                            <span className="font-medium">Grund:</span> {detailsObj.reason}
+                          </div>
+                        )}
+                        {detailsObj?.note && (
+                          <div className="mt-2 rounded-md bg-gray-100 p-2 text-xs text-gray-700">
+                            {detailsObj.note}
+                          </div>
+                        )}
+                      </div>
+                    )
+                  })
                 )}
               </div>
             </div>

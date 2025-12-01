@@ -41,7 +41,10 @@ export default function MyBiddingPage() {
   const [processingBuyNow, setProcessingBuyNow] = useState<string | null>(null)
   const [buyNowError, setBuyNowError] = useState<string | null>(null)
   const [buyNowSuccess, setBuyNowSuccess] = useState<string | null>(null)
-  const [showBuyNowModal, setShowBuyNowModal] = useState<{ watchId: string; buyNowPrice: number } | null>(null)
+  const [showBuyNowModal, setShowBuyNowModal] = useState<{
+    watchId: string
+    buyNowPrice: number
+  } | null>(null)
 
   const handleBuyNow = async (watchId: string, buyNowPrice: number) => {
     setShowBuyNowModal({ watchId, buyNowPrice })
@@ -63,8 +66,8 @@ export default function MyBiddingPage() {
         body: JSON.stringify({
           watchId,
           amount: buyNowPrice,
-          isBuyNow: true
-        })
+          isBuyNow: true,
+        }),
       })
 
       const data = await res.json()
@@ -111,16 +114,16 @@ export default function MyBiddingPage() {
       loadBids()
       // Polling alle 5 Sekunden für Updates
       const interval = setInterval(loadBids, 5000)
-      
+
       // Auch aktualisieren wenn die Seite wieder sichtbar wird
       const handleVisibilityChange = () => {
         if (document.visibilityState === 'visible') {
           loadBids()
         }
       }
-      
+
       document.addEventListener('visibilitychange', handleVisibilityChange)
-      
+
       return () => {
         clearInterval(interval)
         document.removeEventListener('visibilitychange', handleVisibilityChange)
@@ -146,7 +149,7 @@ export default function MyBiddingPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex min-h-screen items-center justify-center">
           <div className="text-gray-500">Lädt...</div>
         </div>
         <Footer />
@@ -159,7 +162,7 @@ export default function MyBiddingPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center min-h-screen">
+        <div className="flex min-h-screen items-center justify-center">
           <div className="text-gray-500">Weiterleitung zur Anmeldung...</div>
         </div>
         <Footer />
@@ -174,36 +177,32 @@ export default function MyBiddingPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 py-12">
+      <div className="mx-auto max-w-7xl px-4 py-12">
         <div className="mb-6">
           <Link
             href="/my-watches/buying"
-            className="inline-flex items-center text-primary-600 hover:text-primary-700 font-medium"
+            className="inline-flex items-center font-medium text-primary-600 hover:text-primary-700"
           >
             ← Zurück zu Mein Kaufen
           </Link>
         </div>
 
-        <div className="flex items-center mb-8">
-          <Gavel className="h-8 w-8 mr-3 text-primary-600" />
+        <div className="mb-8 flex items-center">
+          <Gavel className="mr-3 h-8 w-8 text-primary-600" />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Am Bieten
-            </h1>
-            <p className="text-gray-600 mt-1">
-              Ihre laufenden Gebote und Auktionen
-            </p>
+            <h1 className="text-3xl font-bold text-gray-900">Am Bieten</h1>
+            <p className="mt-1 text-gray-600">Ihre laufenden Gebote und Auktionen</p>
           </div>
         </div>
 
         {/* Erfolgs- und Fehlermeldungen */}
         {buyNowSuccess && (
-          <div className="mb-6 p-4 bg-green-50 border border-green-200 text-green-700 rounded-lg">
+          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4 text-green-700">
             {buyNowSuccess}
           </div>
         )}
         {buyNowError && (
-          <div className="mb-6 p-4 bg-red-50 border border-red-200 text-red-700 rounded-lg">
+          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-red-700">
             {buyNowError}
           </div>
         )}
@@ -211,38 +210,55 @@ export default function MyBiddingPage() {
         {/* Aktive Gebote (Höchstbietender) */}
         {activeBids.length > 0 && (
           <div className="mb-8">
-            <div className="flex items-center mb-4">
-              <TrendingUp className="h-5 w-5 mr-2 text-green-600" />
+            <div className="mb-4 flex items-center">
+              <TrendingUp className="mr-2 h-5 w-5 text-green-600" />
               <h2 className="text-xl font-semibold text-gray-900">
                 Sie haben das Höchstgebot ({activeBids.length})
               </h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {activeBids.map((bid) => (
-                <div key={bid.id} className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-green-500">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {activeBids.map(bid => (
+                <div
+                  key={bid.id}
+                  className="overflow-hidden rounded-lg border-2 border-green-500 bg-white shadow-md"
+                >
                   {bid.watch.images && bid.watch.images.length > 0 ? (
-                    <img src={bid.watch.images[0]} alt={bid.watch.title} className="w-full h-48 object-cover" />
+                    <img
+                      src={bid.watch.images[0]}
+                      alt={bid.watch.title}
+                      className="h-48 w-full object-cover"
+                    />
                   ) : (
-                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">Kein Bild</div>
+                    <div className="flex h-48 w-full items-center justify-center bg-gray-200 text-gray-500">
+                      Kein Bild
+                    </div>
                   )}
                   <div className="p-4">
-                    <div className="text-sm text-primary-600">{bid.watch.brand} {bid.watch.model}</div>
-                    <div className="font-semibold text-gray-900 line-clamp-2 mb-2">{bid.watch.title}</div>
-                    <div className="bg-green-50 border border-green-200 rounded p-2 mb-3">
-                      <div className="text-xs text-green-700 mb-1">Höchstes Gebot</div>
-                      <div className="text-lg font-bold text-green-700">CHF {new Intl.NumberFormat('de-CH').format(bid.watch.highestBid)}</div>
-                      <div className="text-xs text-gray-600 mt-1">Ihr Gebot: CHF {new Intl.NumberFormat('de-CH').format(bid.amount)}</div>
+                    <div className="text-sm text-primary-600">
+                      {bid.watch.brand} {bid.watch.model}
+                    </div>
+                    <div className="mb-2 line-clamp-2 font-semibold text-gray-900">
+                      {bid.watch.title}
+                    </div>
+                    <div className="mb-3 rounded border border-green-200 bg-green-50 p-2">
+                      <div className="mb-1 text-xs text-green-700">Höchstes Gebot</div>
+                      <div className="text-lg font-bold text-green-700">
+                        CHF {new Intl.NumberFormat('de-CH').format(bid.watch.highestBid)}
+                      </div>
+                      <div className="mt-1 text-xs text-gray-600">
+                        Ihr Gebot: CHF {new Intl.NumberFormat('de-CH').format(bid.amount)}
+                      </div>
                     </div>
                     {bid.watch.auctionEnd && (
-                      <div className="flex items-center text-xs text-gray-500 mb-3">
-                        <Clock className="h-3 w-3 mr-1" />
+                      <div className="mb-3 flex items-center text-xs text-gray-500">
+                        <Clock className="mr-1 h-3 w-3" />
                         Endet: {new Date(bid.watch.auctionEnd).toLocaleString('de-CH')}
                       </div>
                     )}
                     <div className="space-y-2">
                       <Link
                         href={`/products/${bid.watch.id}`}
-                        className="block w-full px-4 py-2 bg-primary-600 text-white rounded text-center text-sm hover:bg-primary-700"
+                        className="block w-full rounded bg-primary-600 px-4 py-2 text-center text-sm text-white hover:bg-primary-700"
                       >
                         Angebot ansehen
                       </Link>
@@ -250,10 +266,12 @@ export default function MyBiddingPage() {
                         <button
                           onClick={() => handleBuyNow(bid.watch.id, bid.watch.buyNowPrice!)}
                           disabled={processingBuyNow === bid.watch.id}
-                          className="w-full px-4 py-2 bg-green-600 text-white rounded text-center text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          className="flex w-full items-center justify-center gap-2 rounded bg-green-600 px-4 py-2 text-center text-sm text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Zap className="h-4 w-4" />
-                          {processingBuyNow === bid.watch.id ? 'Wird verarbeitet...' : `Sofortkauf CHF ${new Intl.NumberFormat('de-CH').format(bid.watch.buyNowPrice)}`}
+                          {processingBuyNow === bid.watch.id
+                            ? 'Wird verarbeitet...'
+                            : `Sofortkauf CHF ${new Intl.NumberFormat('de-CH').format(bid.watch.buyNowPrice)}`}
                         </button>
                       )}
                     </div>
@@ -267,45 +285,63 @@ export default function MyBiddingPage() {
         {/* Überbotene Gebote */}
         {outbidBids.length > 0 && (
           <div className="mb-8">
-            <div className="flex items-center mb-4">
-              <AlertCircle className="h-5 w-5 mr-2 text-orange-600" />
+            <div className="mb-4 flex items-center">
+              <AlertCircle className="mr-2 h-5 w-5 text-orange-600" />
               <h2 className="text-xl font-semibold text-gray-900">
                 Sie wurden überboten ({outbidBids.length})
               </h2>
             </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {outbidBids.map((bid) => (
-                <div key={bid.id} className="bg-white rounded-lg shadow-md overflow-hidden border-2 border-orange-300">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {outbidBids.map(bid => (
+                <div
+                  key={bid.id}
+                  className="overflow-hidden rounded-lg border-2 border-orange-300 bg-white shadow-md"
+                >
                   {bid.watch.images && bid.watch.images.length > 0 ? (
-                    <img src={bid.watch.images[0]} alt={bid.watch.title} className="w-full h-48 object-cover opacity-75" />
+                    <img
+                      src={bid.watch.images[0]}
+                      alt={bid.watch.title}
+                      className="h-48 w-full object-cover opacity-75"
+                    />
                   ) : (
-                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">Kein Bild</div>
+                    <div className="flex h-48 w-full items-center justify-center bg-gray-200 text-gray-500">
+                      Kein Bild
+                    </div>
                   )}
                   <div className="p-4">
-                    <div className="text-sm text-primary-600">{bid.watch.brand} {bid.watch.model}</div>
-                    <div className="font-semibold text-gray-900 line-clamp-2 mb-2">{bid.watch.title}</div>
-                    <div className="bg-orange-50 border-2 border-orange-400 rounded p-3 mb-3">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="text-xs font-semibold text-orange-700 uppercase">Ihr Gebot</div>
-                        <div className="bg-orange-600 text-white text-xs px-2 py-1 rounded-full font-semibold">
+                    <div className="text-sm text-primary-600">
+                      {bid.watch.brand} {bid.watch.model}
+                    </div>
+                    <div className="mb-2 line-clamp-2 font-semibold text-gray-900">
+                      {bid.watch.title}
+                    </div>
+                    <div className="mb-3 rounded border-2 border-orange-400 bg-orange-50 p-3">
+                      <div className="mb-2 flex items-center justify-between">
+                        <div className="text-xs font-semibold uppercase text-orange-700">
+                          Ihr Gebot
+                        </div>
+                        <div className="rounded-full bg-orange-600 px-2 py-1 text-xs font-semibold text-white">
                           ÜBERBOTEN
                         </div>
                       </div>
-                      <div className="text-lg font-bold text-orange-700">CHF {new Intl.NumberFormat('de-CH').format(bid.amount)}</div>
-                      <div className="text-xs text-orange-600 mt-2 pt-2 border-t border-orange-200">
-                        <span className="font-semibold">Aktuelles Höchstgebot:</span> CHF {new Intl.NumberFormat('de-CH').format(bid.watch.highestBid)}
+                      <div className="text-lg font-bold text-orange-700">
+                        CHF {new Intl.NumberFormat('de-CH').format(bid.amount)}
+                      </div>
+                      <div className="mt-2 border-t border-orange-200 pt-2 text-xs text-orange-600">
+                        <span className="font-semibold">Aktuelles Höchstgebot:</span> CHF{' '}
+                        {new Intl.NumberFormat('de-CH').format(bid.watch.highestBid)}
                       </div>
                     </div>
                     {bid.watch.auctionEnd && (
-                      <div className="flex items-center text-xs text-gray-500 mb-3">
-                        <Clock className="h-3 w-3 mr-1" />
+                      <div className="mb-3 flex items-center text-xs text-gray-500">
+                        <Clock className="mr-1 h-3 w-3" />
                         Endet: {new Date(bid.watch.auctionEnd).toLocaleString('de-CH')}
                       </div>
                     )}
                     <div className="space-y-2">
                       <Link
                         href={`/products/${bid.watch.id}`}
-                        className="block w-full px-4 py-2 bg-primary-600 text-white rounded text-center text-sm hover:bg-primary-700"
+                        className="block w-full rounded bg-primary-600 px-4 py-2 text-center text-sm text-white hover:bg-primary-700"
                       >
                         Erneut bieten
                       </Link>
@@ -313,10 +349,12 @@ export default function MyBiddingPage() {
                         <button
                           onClick={() => handleBuyNow(bid.watch.id, bid.watch.buyNowPrice!)}
                           disabled={processingBuyNow === bid.watch.id}
-                          className="w-full px-4 py-2 bg-green-600 text-white rounded text-center text-sm hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                          className="flex w-full items-center justify-center gap-2 rounded bg-green-600 px-4 py-2 text-center text-sm text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                         >
                           <Zap className="h-4 w-4" />
-                          {processingBuyNow === bid.watch.id ? 'Wird verarbeitet...' : `Sofortkauf CHF ${new Intl.NumberFormat('de-CH').format(bid.watch.buyNowPrice)}`}
+                          {processingBuyNow === bid.watch.id
+                            ? 'Wird verarbeitet...'
+                            : `Sofortkauf CHF ${new Intl.NumberFormat('de-CH').format(bid.watch.buyNowPrice)}`}
                         </button>
                       )}
                     </div>
@@ -330,27 +368,42 @@ export default function MyBiddingPage() {
         {/* Beendete Auktionen */}
         {endedBids.length > 0 && (
           <div className="mb-8">
-            <h2 className="text-xl font-semibold text-gray-900 mb-4">
+            <h2 className="mb-4 text-xl font-semibold text-gray-900">
               Beendete Auktionen ({endedBids.length})
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {endedBids.map((bid) => (
-                <div key={bid.id} className="bg-white rounded-lg shadow-md overflow-hidden opacity-75">
+            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+              {endedBids.map(bid => (
+                <div
+                  key={bid.id}
+                  className="overflow-hidden rounded-lg bg-white opacity-75 shadow-md"
+                >
                   {bid.watch.images && bid.watch.images.length > 0 ? (
-                    <img src={bid.watch.images[0]} alt={bid.watch.title} className="w-full h-48 object-cover" />
+                    <img
+                      src={bid.watch.images[0]}
+                      alt={bid.watch.title}
+                      className="h-48 w-full object-cover"
+                    />
                   ) : (
-                    <div className="w-full h-48 bg-gray-200 flex items-center justify-center text-gray-500">Kein Bild</div>
+                    <div className="flex h-48 w-full items-center justify-center bg-gray-200 text-gray-500">
+                      Kein Bild
+                    </div>
                   )}
                   <div className="p-4">
-                    <div className="text-sm text-primary-600">{bid.watch.brand} {bid.watch.model}</div>
-                    <div className="font-semibold text-gray-900 line-clamp-2 mb-2">{bid.watch.title}</div>
-                    <div className="bg-gray-50 border border-gray-200 rounded p-2 mb-3">
-                      <div className="text-xs text-gray-700 mb-1">Ihr Gebot</div>
-                      <div className="text-lg font-bold text-gray-700">CHF {new Intl.NumberFormat('de-CH').format(bid.amount)}</div>
+                    <div className="text-sm text-primary-600">
+                      {bid.watch.brand} {bid.watch.model}
+                    </div>
+                    <div className="mb-2 line-clamp-2 font-semibold text-gray-900">
+                      {bid.watch.title}
+                    </div>
+                    <div className="mb-3 rounded border border-gray-200 bg-gray-50 p-2">
+                      <div className="mb-1 text-xs text-gray-700">Ihr Gebot</div>
+                      <div className="text-lg font-bold text-gray-700">
+                        CHF {new Intl.NumberFormat('de-CH').format(bid.amount)}
+                      </div>
                     </div>
                     <Link
                       href={`/products/${bid.watch.id}`}
-                      className="block w-full px-4 py-2 bg-gray-600 text-white rounded text-center text-sm hover:bg-gray-700"
+                      className="block w-full rounded bg-gray-600 px-4 py-2 text-center text-sm text-white hover:bg-gray-700"
                     >
                       Angebot ansehen
                     </Link>
@@ -363,15 +416,16 @@ export default function MyBiddingPage() {
 
         {/* Keine Gebote */}
         {bids.length === 0 && (
-          <div className="bg-white rounded-lg shadow-md p-12 text-center">
-            <Gavel className="h-16 w-16 mx-auto text-gray-400 mb-4" />
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">Noch keine Gebote</h3>
-            <p className="text-gray-600 mb-6">
-              Sie haben noch keine Gebote abgegeben. Durchstöbern Sie die Angebote und machen Sie Ihr erstes Gebot!
+          <div className="rounded-lg bg-white p-12 text-center shadow-md">
+            <Gavel className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+            <h3 className="mb-2 text-xl font-semibold text-gray-900">Noch keine Gebote</h3>
+            <p className="mb-6 text-gray-600">
+              Sie haben noch keine Gebote abgegeben. Durchstöbern Sie die Angebote und machen Sie
+              Ihr erstes Gebot!
             </p>
             <Link
               href="/"
-              className="inline-block px-6 py-3 bg-primary-600 text-white rounded-md hover:bg-primary-700"
+              className="inline-block rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700"
             >
               Angebote durchstöbern
             </Link>

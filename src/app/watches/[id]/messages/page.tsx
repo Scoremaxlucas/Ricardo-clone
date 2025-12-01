@@ -112,44 +112,34 @@ export default function WatchMessagesPage({ params }: { params: { id: string } }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="mx-auto max-w-4xl px-4">
         <button
           onClick={() => router.back()}
           className="mb-6 inline-flex items-center text-gray-600 hover:text-gray-900"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Zurück
         </button>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">
-          Nachrichten zu dieser Uhr
-        </h1>
-        {watch && (
-          <p className="text-gray-600 mb-8">
-            {watch.title}
-          </p>
-        )}
+        <h1 className="mb-2 text-3xl font-bold text-gray-900">Nachrichten zu dieser Uhr</h1>
+        {watch && <p className="mb-8 text-gray-600">{watch.title}</p>}
 
         {/* Nachrichten-Liste */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
+        <div className="mb-6 rounded-lg bg-white p-6 shadow-md">
           {messages.length === 0 ? (
-            <div className="text-center py-12 text-gray-500">
-              Noch keine Nachrichten vorhanden.
-            </div>
+            <div className="py-12 text-center text-gray-500">Noch keine Nachrichten vorhanden.</div>
           ) : (
             <div className="space-y-4">
-              {messages.map((message) => (
+              {messages.map(message => (
                 <div
                   key={message.id}
-                  className={`p-4 rounded-lg ${
-                    message.isPublic ? 'bg-blue-50 border-l-4 border-blue-500' : 'bg-gray-50'
+                  className={`rounded-lg p-4 ${
+                    message.isPublic ? 'border-l-4 border-blue-500 bg-blue-50' : 'bg-gray-50'
                   }`}
                 >
-                  <div className="flex items-start justify-between mb-2">
+                  <div className="mb-2 flex items-start justify-between">
                     <div className="flex items-center space-x-2">
-                      <span className="font-semibold text-gray-900">
-                        {message.sender.name}
-                      </span>
+                      <span className="font-semibold text-gray-900">{message.sender.name}</span>
                       <span className="text-gray-500">→</span>
                       <span className="text-gray-700">{message.receiver.name}</span>
                       {message.isPublic && (
@@ -165,7 +155,7 @@ export default function WatchMessagesPage({ params }: { params: { id: string } }
                         month: '2-digit',
                         year: 'numeric',
                         hour: '2-digit',
-                        minute: '2-digit'
+                        minute: '2-digit',
                       })}
                     </span>
                   </div>
@@ -178,20 +168,18 @@ export default function WatchMessagesPage({ params }: { params: { id: string } }
 
         {/* Nachricht senden (nur für eingeloggte Nutzer) */}
         {session && (
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <h2 className="text-lg font-semibold text-gray-900 mb-4">
-              Nachricht senden
-            </h2>
+          <div className="rounded-lg bg-white p-6 shadow-md">
+            <h2 className="mb-4 text-lg font-semibold text-gray-900">Nachricht senden</h2>
             <form onSubmit={handleSendMessage}>
               <textarea
                 value={newMessage}
-                onChange={(e) => setNewMessage(e.target.value)}
+                onChange={e => setNewMessage(e.target.value)}
                 placeholder="Schreiben Sie eine Nachricht..."
                 rows={4}
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                 required
               />
-              
+
               {/* Nur Verkäufer kann öffentlich machen */}
               {isSeller && (
                 <div className="mt-4 flex items-center">
@@ -199,11 +187,14 @@ export default function WatchMessagesPage({ params }: { params: { id: string } }
                     type="checkbox"
                     id="isPublic"
                     checked={isPublic}
-                    onChange={(e) => setIsPublic(e.target.checked)}
+                    onChange={e => setIsPublic(e.target.checked)}
                     className="mr-2 h-4 w-4 text-primary-600"
                   />
-                  <label htmlFor="isPublic" className="text-sm text-gray-700 flex items-center cursor-pointer">
-                    <Globe className="h-4 w-4 mr-1" />
+                  <label
+                    htmlFor="isPublic"
+                    className="flex cursor-pointer items-center text-sm text-gray-700"
+                  >
+                    <Globe className="mr-1 h-4 w-4" />
                     Diese Nachricht öffentlich anzeigen
                   </label>
                 </div>
@@ -212,9 +203,9 @@ export default function WatchMessagesPage({ params }: { params: { id: string } }
               <button
                 type="submit"
                 disabled={sending || !newMessage.trim()}
-                className="mt-4 w-full bg-primary-600 text-white py-3 rounded-md hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed transition-colors flex items-center justify-center"
+                className="mt-4 flex w-full items-center justify-center rounded-md bg-primary-600 py-3 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Send className="h-4 w-4 mr-2" />
+                <Send className="mr-2 h-4 w-4" />
                 {sending ? 'Wird gesendet...' : 'Nachricht senden'}
               </button>
             </form>
@@ -222,9 +213,13 @@ export default function WatchMessagesPage({ params }: { params: { id: string } }
         )}
 
         {!session && (
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4 text-center">
+          <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 text-center">
             <p className="text-gray-700">
-              Bitte <a href="/login" className="text-primary-600 hover:underline">melden Sie sich an</a>, um Nachrichten zu senden.
+              Bitte{' '}
+              <a href="/login" className="text-primary-600 hover:underline">
+                melden Sie sich an
+              </a>
+              , um Nachrichten zu senden.
             </p>
           </div>
         )}

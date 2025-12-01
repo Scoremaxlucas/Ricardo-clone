@@ -5,13 +5,16 @@
 Resend erlaubt im **Testmodus** nur E-Mails an Ihre **eigene E-Mail-Adresse** (die mit der Sie sich bei Resend registriert haben).
 
 **Erlaubt:**
+
 - ✅ `lucasrodrigues.gafner@outlook.com` (Ihre Resend-Registrierungs-E-Mail)
 
 **Blockiert:**
+
 - ❌ `Lucas.helvenda@outlook.com` (andere E-Mail-Adressen)
 - ❌ Alle anderen E-Mail-Adressen
 
 **Fehlermeldung:**
+
 ```
 You can only send testing emails to your own email address.
 To send emails to other recipients, please verify a domain at resend.com/domains
@@ -47,6 +50,7 @@ Value: [CNAME Record von Resend]
 ```
 
 **So fügen Sie DNS-Records hinzu:**
+
 1. Loggen Sie sich bei Ihrem Domain-Provider ein (z.B. Namecheap, GoDaddy, etc.)
 2. Gehen Sie zu DNS-Verwaltung
 3. Fügen Sie die Records hinzu
@@ -82,9 +86,11 @@ Für Tests können Sie sich mit `lucasrodrigues.gafner@outlook.com` registrieren
 ## Zusammenfassung
 
 **Für Entwicklung/Test:**
+
 - Verwenden Sie `lucasrodrigues.gafner@outlook.com` (funktioniert ohne Domain)
 
 **Für Produktion:**
+
 - Domain bei Resend verifizieren
 - `RESEND_FROM_EMAIL` auf `noreply@ihre-domain.ch` setzen
 - Alle E-Mail-Adressen funktionieren dann
@@ -94,8 +100,3 @@ Für Tests können Sie sich mit `lucasrodrigues.gafner@outlook.com` registrieren
 - Resend Docs: https://resend.com/docs
 - Domain Setup: https://resend.com/domains
 - Support: support@resend.com
-
-
-
-
-

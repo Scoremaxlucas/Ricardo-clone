@@ -30,49 +30,45 @@ export default function FeesPage() {
 
   // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
   if (status === 'unauthenticated' || !session) {
-    return <div className="flex min-h-screen items-center justify-center">Weiterleitung zur Anmeldung...</div>
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Weiterleitung zur Anmeldung...
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-7xl mx-auto px-4">
+      <div className="mx-auto max-w-7xl px-4">
         <Link
           href="/my-watches"
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          className="mb-6 inline-flex items-center text-gray-600 hover:text-gray-900"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Zurück zu Meine Uhren
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Zurück zu Mein Verkaufen
         </Link>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Gebühren
-        </h1>
+        <h1 className="mb-8 text-3xl font-bold text-gray-900">Gebühren</h1>
 
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <div className="text-center py-12">
-            <Wallet className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">
-              Keine Gebühren
-            </h3>
-            <p className="text-gray-600 mb-6">
-              Aktuell haben Sie keine fälligen Gebühren.
-            </p>
+        <div className="rounded-lg bg-white p-8 shadow-md">
+          <div className="py-12 text-center">
+            <Wallet className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+            <h3 className="mb-2 text-lg font-semibold text-gray-900">Keine Gebühren</h3>
+            <p className="mb-6 text-gray-600">Aktuell haben Sie keine fälligen Gebühren.</p>
           </div>
 
           <div className="mt-8 border-t pt-8">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">
-              Gebührenübersicht
-            </h3>
+            <h3 className="mb-4 text-lg font-semibold text-gray-900">Gebührenübersicht</h3>
             <div className="space-y-4 text-sm text-gray-600">
-              <div className="flex justify-between py-2 border-b">
+              <div className="flex justify-between border-b py-2">
                 <span>Verkaufsgebühr (bei erfolgreichem Verkauf)</span>
                 <span className="font-medium">5%</span>
               </div>
-              <div className="flex justify-between py-2 border-b">
+              <div className="flex justify-between border-b py-2">
                 <span>Zusätzliche Kampagnen</span>
                 <span className="font-medium">ab CHF 5.-</span>
               </div>
-              <div className="flex justify-between py-2 border-b">
+              <div className="flex justify-between border-b py-2">
                 <span>Sofortkaufoption</span>
                 <span className="font-medium">kostenlos</span>
               </div>

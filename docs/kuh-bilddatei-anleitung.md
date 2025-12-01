@@ -3,6 +3,7 @@
 ## Wo finde ich eine passende Kuh-Illustration?
 
 ### Option 1: Kostenlose Ressourcen
+
 1. **Unsplash** (https://unsplash.com)
    - Suche nach "cow illustration" oder "cow mascot"
    - Hochwertige, kostenlose Bilder
@@ -20,6 +21,7 @@
    - Einige kostenlos, Premium für kommerzielle Nutzung
 
 ### Option 2: KI-generierte Bilder
+
 1. **Midjourney** (https://www.midjourney.com)
    - Prompt: "stylized realistic cow mascot, friendly, professional, Veepi style, white background, high quality illustration"
 
@@ -30,6 +32,7 @@
    - Ähnliche Prompts wie oben
 
 ### Option 3: Professionelle Designer beauftragen
+
 1. **Fiverr** (https://www.fiverr.com)
    - Suche nach "mascot design" oder "character illustration"
    - Preise: $20-100+
@@ -45,8 +48,9 @@
 ## Bildanforderungen
 
 ### Technische Spezifikationen:
+
 - **Format**: PNG mit transparentem Hintergrund (empfohlen) oder SVG
-- **Auflösung**: 
+- **Auflösung**:
   - Minimum: 400x400px
   - Empfohlen: 800x800px oder höher (für Retina-Displays)
 - **Hintergrund**: Transparent (Alpha-Kanal)
@@ -54,6 +58,7 @@
 - **Farben**: Schwarz-Weiß Kuh mit freundlichem Ausdruck
 
 ### Stil-Richtlinien (basierend auf Veepi):
+
 - ✅ Stilisiert-realistisch (Balance zwischen Realismus und Stilisierung)
 - ✅ Freundlicher, einladender Ausdruck
 - ✅ Große, ausdrucksstarke Augen
@@ -66,6 +71,7 @@
 ## Installation
 
 1. **Bilddatei platzieren**:
+
    ```
    public/images/helvenda-cow.png
    ```
@@ -74,18 +80,20 @@
 
 3. **Falls anderer Dateiname**: Ändere in `HelvendaCow.tsx` die Zeile:
    ```typescript
-   src="/images/helvenda-cow.png"
+   src = '/images/helvenda-cow.png'
    ```
    zu deinem Dateinamen.
 
 ## Beispiel-Prompts für KI-Generierung
 
 ### Midjourney:
+
 ```
 stylized realistic cow mascot character, friendly expression, large expressive eyes, black and white Holstein cow pattern, professional illustration style similar to Veepi mascot, soft shadows, high quality, white background, transparent background --ar 1:1 --v 6
 ```
 
 ### DALL-E:
+
 ```
 A stylized realistic cow mascot character illustration. Friendly expression with large expressive brown eyes. Black and white Holstein cow pattern. Professional quality similar to Veepi style. Soft lighting, subtle shadows. White background, transparent. High resolution.
 ```
@@ -93,6 +101,7 @@ A stylized realistic cow mascot character illustration. Friendly expression with
 ## Temporäre Lösung
 
 Falls du noch keine Bilddatei hast, kannst du:
+
 1. Eine temporäre Platzhalter-Kuh von einer der oben genannten Quellen verwenden
 2. Die SVG-Version vorübergehend wieder aktivieren
 3. Ein einfaches Kuh-Icon als Platzhalter verwenden
@@ -105,4 +114,3 @@ Falls du noch keine Bilddatei hast, kannst du:
 4. Die Komponente wird automatisch das Bild verwenden
 
 Falls du Hilfe beim Finden oder Erstellen der Bilddatei brauchst, lass es mich wissen!
-

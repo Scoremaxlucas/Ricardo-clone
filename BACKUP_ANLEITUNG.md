@@ -15,6 +15,7 @@
 Der aktuelle Stand wurde als Git-Commit gespeichert. Sie können jederzeit zu diesem Stand zurückkehren.
 
 #### Zum Backup zurückkehren:
+
 ```bash
 # Zeige alle Commits
 git log --oneline
@@ -27,6 +28,7 @@ git checkout -b backup-restore 513685d
 ```
 
 #### Aktuellen Stand mit Backup vergleichen:
+
 ```bash
 # Zeige Unterschiede zum Backup
 git diff 513685d
@@ -36,6 +38,7 @@ git diff --name-only 513685d
 ```
 
 #### Backup wiederherstellen (ACHTUNG: Überschreibt aktuelle Änderungen):
+
 ```bash
 # Zurück zum Backup-Commit
 git reset --hard 513685d
@@ -51,6 +54,7 @@ git checkout 513685d -- pfad/zur/datei.ts
 **WICHTIG:** Das Backup wurde noch NICHT zum Remote-Repository gepusht!
 
 #### Backup zum Remote-Repository pushen:
+
 ```bash
 # Push zum Remote-Repository
 git push origin main
@@ -61,6 +65,7 @@ git push origin backup-$(date +%Y%m%d)
 ```
 
 #### Vom Remote-Repository wiederherstellen:
+
 ```bash
 # Hole neueste Änderungen
 git fetch origin
@@ -79,6 +84,7 @@ git merge origin/backup-YYYYMMDD
 Ein zusätzliches Backup-Verzeichnis wurde erstellt (falls gewünscht).
 
 #### Backup-Verzeichnis erstellen:
+
 ```bash
 # Erstelle ein Backup-Verzeichnis (portabel - verwendet aktuelles Verzeichnis)
 PROJECT_DIR="$(pwd)"
@@ -88,6 +94,7 @@ echo "Backup erstellt in: $BACKUP_DIR"
 ```
 
 #### Vom Backup-Verzeichnis wiederherstellen:
+
 ```bash
 # WICHTIG: Erstelle zuerst ein Backup des aktuellen Stands!
 PROJECT_DIR="$(pwd)"
@@ -110,12 +117,14 @@ fi
 ## 🔍 Backup-Status prüfen
 
 ### Aktueller Git-Status:
+
 ```bash
 git status
 git log --oneline -5
 ```
 
 ### Backup-Commit anzeigen:
+
 ```bash
 git show 513685d --stat
 ```
@@ -127,6 +136,7 @@ git show 513685d --stat
 1. **Sensible Dateien:** Die `.env` Datei ist NICHT im Git-Repository gespeichert (aus Sicherheitsgründen). Stellen Sie sicher, dass Sie Ihre Umgebungsvariablen separat sichern!
 
 2. **Datenbank:** Die Datenbank (`prisma/dev.db`) ist ebenfalls nicht im Git-Repository. Für ein vollständiges Backup sollten Sie auch die Datenbank sichern:
+
    ```bash
    cp prisma/dev.db prisma/dev.db.backup
    ```
@@ -141,16 +151,19 @@ git show 513685d --stat
 ## 🚀 Schnellzugriff auf Backup
 
 ### Zurück zum letzten Backup:
+
 ```bash
 git reset --hard 513685d
 ```
 
 ### Backup als neuen Branch erstellen:
+
 ```bash
 git checkout -b restore-backup 513685d
 ```
 
 ### Aktuelle Änderungen behalten, aber Backup als Referenz:
+
 ```bash
 git branch backup-reference 513685d
 ```
@@ -160,11 +173,13 @@ git branch backup-reference 513685d
 ## 📝 Nächste Schritte
 
 1. **Backup zum Remote pushen** (empfohlen):
+
    ```bash
    git push origin main
    ```
 
 2. **Umgebungsvariablen sichern**:
+
    ```bash
    cp .env .env.backup-$(date +%Y%m%d)
    ```
@@ -181,12 +196,14 @@ git branch backup-reference 513685d
 Falls etwas schief läuft:
 
 1. **Ungespeicherte Änderungen verloren?**
+
    ```bash
    git reflog  # Zeigt alle Git-Aktionen
    git checkout <commit-hash>  # Gehe zu einem früheren Zustand
    ```
 
 2. **Falsche Dateien committed?**
+
    ```bash
    git reset --soft HEAD~1  # Entfernt letzten Commit, behält Änderungen
    ```
@@ -201,19 +218,3 @@ Falls etwas schief läuft:
 **Erstellt am:** 2024-12-20  
 **Commit-Hash:** 513685d  
 **Status:** ✅ Backup erfolgreich erstellt
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

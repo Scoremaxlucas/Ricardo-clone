@@ -6,17 +6,11 @@ import { addStatusHistory } from '@/lib/status-history'
 import { calculateInvoiceForSale } from '@/lib/invoice'
 
 // Verkäufer bestätigt Zahlung
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -27,18 +21,15 @@ export async function POST(
       include: {
         watch: {
           include: {
-            seller: true
-          }
+            seller: true,
+          },
         },
-        buyer: true
-      }
+        buyer: true,
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob der Benutzer der Verkäufer ist
@@ -51,17 +42,17 @@ export async function POST(
 
     // Prüfe ob bereits bestätigt
     if (purchase.paymentConfirmed) {
-      return NextResponse.json(
-        { message: 'Zahlung wurde bereits bestätigt' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Zahlung wurde bereits bestätigt' }, { status: 400 })
     }
 
     // WICHTIG: Verkäufer kann nur bestätigen, wenn der Käufer bereits als bezahlt markiert hat
     // Dies verhindert, dass Verkäufer fälschlicherweise bestätigen, dass sie bezahlt wurden
     if (!purchase.paid) {
       return NextResponse.json(
-        { message: 'Der Käufer muss zuerst bestätigen, dass er bezahlt hat, bevor Sie die Zahlung bestätigen können.' },
+        {
+          message:
+            'Der Käufer muss zuerst bestätigen, dass er bezahlt hat, bevor Sie die Zahlung bestätigen können.',
+        },
         { status: 400 }
       )
     }
@@ -77,32 +68,32 @@ export async function POST(
         paymentConfirmedAt: new Date(),
         paid: true, // Legacy-Feld für Rückwärtskompatibilität
         paidAt: new Date(), // Legacy-Feld für Rückwärtskompatibilität
-        status: newStatus
-      }
+        status: newStatus,
+      },
     })
 
     // Füge Status-Historie hinzu
     try {
-      await addStatusHistory(
-        id,
-        newStatus,
-        session.user.id,
-        'Zahlung durch Verkäufer bestätigt'
-      )
+      await addStatusHistory(id, newStatus, session.user.id, 'Zahlung durch Verkäufer bestätigt')
     } catch (error) {
-      console.error('[purchases/confirm-payment] Fehler beim Hinzufügen der Status-Historie:', error)
+      console.error(
+        '[purchases/confirm-payment] Fehler beim Hinzufügen der Status-Historie:',
+        error
+      )
     }
 
-    console.log(`[purchases/confirm-payment] Verkäufer ${session.user.email} hat Zahlung bestätigt für Purchase ${id}`)
+    console.log(
+      `[purchases/confirm-payment] Verkäufer ${session.user.email} hat Zahlung bestätigt für Purchase ${id}`
+    )
 
-    // RICARDO-STYLE: Rechnung wurde bereits bei Purchase-Erstellung erstellt
+    // Rechnung wurde bereits bei Purchase-Erstellung erstellt
     // Hier nur Status aktualisieren, keine neue Rechnung erstellen
-    
+
     // Wenn Käufer bereits Erhalt bestätigt hat, setze Status auf "completed"
     if (purchase.itemReceived) {
       await prisma.purchase.update({
         where: { id },
-        data: { status: 'completed' }
+        data: { status: 'completed' },
       })
       await addStatusHistory(
         id,
@@ -125,12 +116,15 @@ export async function POST(
         },
       })
     } catch (notifError) {
-      console.error('[purchases/confirm-payment] Fehler beim Erstellen der Benachrichtigung:', notifError)
+      console.error(
+        '[purchases/confirm-payment] Fehler beim Erstellen der Benachrichtigung:',
+        notifError
+      )
     }
 
     return NextResponse.json({
       message: 'Zahlung erfolgreich bestätigt',
-      purchase: updatedPurchase
+      purchase: updatedPurchase,
     })
   } catch (error: any) {
     console.error('Error confirming payment:', error)
@@ -140,6 +134,3 @@ export async function POST(
     )
   }
 }
-
-
-

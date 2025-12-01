@@ -9,7 +9,7 @@ export async function GET(request: NextRequest) {
     const userId = session?.user?.id
 
     const now = new Date()
-    
+
     if (!userId) {
       // Wenn nicht eingeloggt, zeige beliebte Artikel
       const watches = await prisma.watch.findMany({
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
               ]
             },
             {
-              // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
+              // Stornierte Purchases machen den Artikel wieder verfügbar
               OR: [
                 { purchases: { none: {} } },
                 { purchases: { every: { status: 'cancelled' } } }
@@ -75,14 +75,41 @@ export async function GET(request: NextRequest) {
       const watchesWithData = watches.map(watch => {
         const highestBid = watch.bids[0]
         const currentPrice = highestBid ? highestBid.amount : watch.price
-        
+
+        // Parse images
+        let images: string[] = []
+        try {
+          if (watch.images) {
+            images = JSON.parse(watch.images)
+          }
+        } catch (e) {
+          if (typeof watch.images === 'string') {
+            images = watch.images.split(',').filter((img: string) => img.trim().length > 0)
+          }
+        }
+
+        // Parse boosters
+        let boosters: string[] = []
+        try {
+          if (watch.boosters) {
+            boosters = JSON.parse(watch.boosters)
+          }
+        } catch (e) {
+          boosters = []
+        }
+
         return {
           ...watch,
           price: currentPrice,
-          images: watch.images ? JSON.parse(watch.images) : [],
-          city: watch.seller?.city,
-          postalCode: watch.seller?.postalCode,
-          bids: watch.bids || []
+          images: images,
+          city: watch.seller?.city || null,
+          postalCode: watch.seller?.postalCode || null,
+          buyNowPrice: watch.buyNowPrice || null,
+          isAuction: watch.isAuction || false,
+          auctionEnd: watch.auctionEnd || null,
+          createdAt: watch.createdAt,
+          bids: watch.bids || [],
+          boosters: boosters
         }
       })
 
@@ -166,8 +193,10 @@ export async function GET(request: NextRequest) {
             },
             {
               id: {
-            notIn: favorites.map((f) => f.watchId),
-          },
+                notIn: favorites.map((f) => f.watchId),
+              },
+            },
+          ],
         },
         include: {
           seller: {
@@ -202,7 +231,7 @@ export async function GET(request: NextRequest) {
               ]
             },
             {
-              // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
+              // Stornierte Purchases machen den Artikel wieder verfügbar
               OR: [
                 { purchases: { none: {} } },
                 { purchases: { every: { status: 'cancelled' } } }
@@ -241,13 +270,41 @@ export async function GET(request: NextRequest) {
     const watchesWithData = (watches || []).map(watch => {
       const highestBid = watch.bids?.[0]
       const currentPrice = highestBid ? highestBid.amount : watch.price
-      
+
+      // Parse images
+      let images: string[] = []
+      try {
+        if (watch.images) {
+          images = JSON.parse(watch.images)
+        }
+      } catch (e) {
+        if (typeof watch.images === 'string') {
+          images = watch.images.split(',').filter((img: string) => img.trim().length > 0)
+        }
+      }
+
+      // Parse boosters
+      let boosters: string[] = []
+      try {
+        if (watch.boosters) {
+          boosters = JSON.parse(watch.boosters)
+        }
+      } catch (e) {
+        boosters = []
+      }
+
       return {
         ...watch,
         price: currentPrice,
-        images: watch.images ? JSON.parse(watch.images) : [],
-        city: watch.seller?.city,
-        bids: watch.bids || []
+        images: images,
+        city: watch.seller?.city || null,
+        postalCode: watch.seller?.postalCode || null,
+        buyNowPrice: watch.buyNowPrice || null,
+        isAuction: watch.isAuction || false,
+        auctionEnd: watch.auctionEnd || null,
+        createdAt: watch.createdAt,
+        bids: watch.bids || [],
+        boosters: boosters
       }
     })
 

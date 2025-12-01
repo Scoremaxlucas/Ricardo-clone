@@ -12,14 +12,14 @@ async function main() {
     // Finde eine Rechnung
     const invoice = await prisma.invoice.findFirst({
       where: {
-        status: { in: ['pending', 'overdue'] }
+        status: { in: ['pending', 'overdue'] },
       },
       include: {
-        seller: true
+        seller: true,
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     })
 
     if (!invoice) {
@@ -47,7 +47,6 @@ async function main() {
     console.log(`   IBAN: ${paymentInfo.iban}`)
     console.log(`   QR-Code vorhanden: ${!!paymentInfo.qrCodeDataUrl}`)
     console.log('')
-
   } catch (error: any) {
     console.error('❌ Fehler:', error.message)
     if (error.stack) {
@@ -59,4 +58,3 @@ async function main() {
 }
 
 main()
-

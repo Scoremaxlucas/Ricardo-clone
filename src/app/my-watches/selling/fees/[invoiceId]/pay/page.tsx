@@ -67,7 +67,7 @@ export default function InvoicePaymentPage() {
     return (
       <div className="flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-primary-600 mx-auto mb-4" />
+          <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
           <p className="text-gray-600">Lädt...</p>
         </div>
       </div>
@@ -78,18 +78,18 @@ export default function InvoicePaymentPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-7xl mx-auto px-4 py-12">
-          <div className="bg-white rounded-lg shadow-md p-6">
+        <div className="mx-auto max-w-7xl px-4 py-12">
+          <div className="rounded-lg bg-white p-6 shadow-md">
             <div className="flex items-start gap-2">
-              <AlertCircle className="h-5 w-5 text-red-600 flex-shrink-0 mt-0.5" />
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
               <div>
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Fehler</h3>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">Fehler</h3>
                 <p className="text-gray-600">{error || 'Rechnung nicht gefunden'}</p>
                 <Link
                   href="/my-watches/selling/fees"
                   className="mt-4 inline-flex items-center text-primary-600 hover:text-primary-700"
                 >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  <ArrowLeft className="mr-2 h-4 w-4" />
                   Zurück zu Rechnungen
                 </Link>
               </div>
@@ -105,29 +105,27 @@ export default function InvoicePaymentPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="max-w-7xl mx-auto px-4 py-12">
+        <div className="mx-auto max-w-7xl px-4 py-12">
           <Link
             href="/my-watches/selling/fees"
-            className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6"
+            className="mb-6 inline-flex items-center text-primary-600 hover:text-primary-700"
           >
-            <ArrowLeft className="h-4 w-4 mr-2" />
+            <ArrowLeft className="mr-2 h-4 w-4" />
             Zurück zu Rechnungen
           </Link>
 
-          <div className="bg-white rounded-lg shadow-md p-6">
-            <div className="text-center py-8">
-              <div className="bg-green-100 rounded-full p-4 w-16 h-16 mx-auto mb-4 flex items-center justify-center">
+          <div className="rounded-lg bg-white p-6 shadow-md">
+            <div className="py-8 text-center">
+              <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100 p-4">
                 <CreditCard className="h-8 w-8 text-green-600" />
               </div>
-              <h2 className="text-2xl font-bold text-gray-900 mb-2">
-                Rechnung bereits bezahlt
-              </h2>
-              <p className="text-gray-600 mb-6">
+              <h2 className="mb-2 text-2xl font-bold text-gray-900">Rechnung bereits bezahlt</h2>
+              <p className="mb-6 text-gray-600">
                 Die Rechnung {invoice.invoiceNumber} wurde bereits bezahlt.
               </p>
               <Link
                 href="/my-watches/selling/fees"
-                className="inline-flex items-center px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700"
+                className="inline-flex items-center rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
               >
                 Zurück zu Rechnungen
               </Link>
@@ -142,19 +140,17 @@ export default function InvoicePaymentPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <div className="mx-auto max-w-4xl px-4 py-12">
         <Link
           href="/my-watches/selling/fees"
-          className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6"
+          className="mb-6 inline-flex items-center text-primary-600 hover:text-primary-700"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Zurück zu Rechnungen
         </Link>
 
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <h1 className="text-2xl font-bold text-gray-900 mb-2">
-            Rechnung bezahlen
-          </h1>
+        <div className="mb-6 rounded-lg bg-white p-6 shadow-md">
+          <h1 className="mb-2 text-2xl font-bold text-gray-900">Rechnung bezahlen</h1>
           <p className="text-gray-600">
             Rechnung: <strong>{invoice.invoiceNumber}</strong>
           </p>
@@ -170,11 +166,11 @@ export default function InvoicePaymentPage() {
           onPaymentSuccess={handlePaymentSuccess}
         />
 
-        <div className="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+        <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm text-blue-800">
-            <strong>Hinweis:</strong> Ihre Zahlung wird sicher über Stripe verarbeitet. 
-            Nach erfolgreicher Zahlung wird die Rechnung automatisch als bezahlt markiert 
-            und Ihr Konto wird entsperrt (falls gesperrt).
+            <strong>Hinweis:</strong> Ihre Zahlung wird sicher über Stripe verarbeitet. Nach
+            erfolgreicher Zahlung wird die Rechnung automatisch als bezahlt markiert und Ihr Konto
+            wird entsperrt (falls gesperrt).
           </p>
         </div>
       </div>
@@ -182,4 +178,3 @@ export default function InvoicePaymentPage() {
     </div>
   )
 }
-

@@ -4,7 +4,18 @@ import { useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, Globe, Star, TrendingUp, Calendar, ShoppingCart, Package, CheckCircle, XCircle, Minus } from 'lucide-react'
+import {
+  ArrowLeft,
+  Globe,
+  Star,
+  TrendingUp,
+  Calendar,
+  ShoppingCart,
+  Package,
+  CheckCircle,
+  XCircle,
+  Minus,
+} from 'lucide-react'
 
 export default function PublicProfilePage() {
   const { data: session, status } = useSession()
@@ -30,7 +41,11 @@ export default function PublicProfilePage() {
 
   // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
   if (status === 'unauthenticated' || !session) {
-    return <div className="flex min-h-screen items-center justify-center">Weiterleitung zur Anmeldung...</div>
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        Weiterleitung zur Anmeldung...
+      </div>
+    )
   }
 
   // Mock data - später aus der Datenbank laden
@@ -44,25 +59,23 @@ export default function PublicProfilePage() {
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
-      <div className="max-w-4xl mx-auto px-4">
+      <div className="mx-auto max-w-4xl px-4">
         <Link
           href="/my-watches"
-          className="inline-flex items-center text-gray-600 hover:text-gray-900 mb-6"
+          className="mb-6 inline-flex items-center text-gray-600 hover:text-gray-900"
         >
-          <ArrowLeft className="h-4 w-4 mr-2" />
-          Zurück zu Meine Uhren
+          <ArrowLeft className="mr-2 h-4 w-4" />
+          Zurück zu Mein Verkaufen
         </Link>
 
-        <h1 className="text-3xl font-bold text-gray-900 mb-8">
-          Öffentliches Profil
-        </h1>
+        <h1 className="mb-8 text-3xl font-bold text-gray-900">Öffentliches Profil</h1>
 
         {/* Profil-Header */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-6">
+        <div className="mb-6 rounded-lg bg-white p-8 shadow-md">
           <div className="flex items-start justify-between">
             <div className="flex-1">
-              <div className="flex items-center space-x-4 mb-4">
-                <div className="w-20 h-20 bg-primary-100 rounded-full flex items-center justify-center">
+              <div className="mb-4 flex items-center space-x-4">
+                <div className="flex h-20 w-20 items-center justify-center rounded-full bg-primary-100">
                   <span className="text-2xl font-bold text-primary-600">
                     {session.user?.name?.charAt(0) || 'U'}
                   </span>
@@ -71,29 +84,31 @@ export default function PublicProfilePage() {
                   <h2 className="text-2xl font-bold text-gray-900">
                     {session.user?.name || 'Benutzer'}
                   </h2>
-                  <p className="text-gray-600 flex items-center mt-1">
-                    <Calendar className="h-4 w-4 mr-1" />
+                  <p className="mt-1 flex items-center text-gray-600">
+                    <Calendar className="mr-1 h-4 w-4" />
                     Mitglied seit {memberSince}
                   </p>
                 </div>
               </div>
 
               {/* Statistiken */}
-              <div className="grid grid-cols-3 gap-4 mt-6 pt-6 border-t">
+              <div className="mt-6 grid grid-cols-3 gap-4 border-t pt-6">
                 <div className="text-center">
-                  <ShoppingCart className="h-6 w-6 text-blue-600 mx-auto mb-2" />
+                  <ShoppingCart className="mx-auto mb-2 h-6 w-6 text-blue-600" />
                   <div className="text-2xl font-bold text-gray-900">{itemsBought}</div>
                   <div className="text-sm text-gray-600">Gekauft</div>
                 </div>
                 <div className="text-center">
-                  <Package className="h-6 w-6 text-green-600 mx-auto mb-2" />
+                  <Package className="mx-auto mb-2 h-6 w-6 text-green-600" />
                   <div className="text-2xl font-bold text-gray-900">{itemsSold}</div>
                   <div className="text-sm text-gray-600">Verkauft</div>
                 </div>
                 <div className="text-center">
-                  <Star className="h-6 w-6 text-yellow-500 mx-auto mb-2" />
+                  <Star className="mx-auto mb-2 h-6 w-6 text-yellow-500" />
                   <div className="text-2xl font-bold text-gray-900">
-                    {totalReviews > 0 ? `${Math.round((positiveReviews / totalReviews) * 100)}%` : '---'}
+                    {totalReviews > 0
+                      ? `${Math.round((positiveReviews / totalReviews) * 100)}%`
+                      : '---'}
                   </div>
                   <div className="text-sm text-gray-600">Positive</div>
                 </div>
@@ -103,32 +118,32 @@ export default function PublicProfilePage() {
         </div>
 
         {/* Bewertungsübersicht */}
-        <div className="bg-white rounded-lg shadow-md p-8 mb-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Star className="h-5 w-5 mr-2" />
+        <div className="mb-6 rounded-lg bg-white p-8 shadow-md">
+          <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
+            <Star className="mr-2 h-5 w-5" />
             Bewertungen ({totalReviews})
           </h3>
-          
+
           <div className="space-y-3">
-            <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+            <div className="flex items-center justify-between rounded-lg bg-green-50 p-3">
               <div className="flex items-center">
-                <CheckCircle className="h-5 w-5 text-green-600 mr-2" />
+                <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
                 <span className="font-medium text-gray-900">Positiv</span>
               </div>
               <span className="font-bold text-green-600">{positiveReviews}</span>
             </div>
-            
-            <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+
+            <div className="flex items-center justify-between rounded-lg bg-gray-50 p-3">
               <div className="flex items-center">
-                <Minus className="h-5 w-5 text-gray-600 mr-2" />
+                <Minus className="mr-2 h-5 w-5 text-gray-600" />
                 <span className="font-medium text-gray-900">Neutral</span>
               </div>
               <span className="font-bold text-gray-600">{neutralReviews}</span>
             </div>
-            
-            <div className="flex items-center justify-between p-3 bg-red-50 rounded-lg">
+
+            <div className="flex items-center justify-between rounded-lg bg-red-50 p-3">
               <div className="flex items-center">
-                <XCircle className="h-5 w-5 text-red-600 mr-2" />
+                <XCircle className="mr-2 h-5 w-5 text-red-600" />
                 <span className="font-medium text-gray-900">Negativ</span>
               </div>
               <span className="font-bold text-red-600">{negativeReviews}</span>
@@ -137,50 +152,50 @@ export default function PublicProfilePage() {
         </div>
 
         {/* Profil bearbeiten */}
-        <div className="bg-white rounded-lg shadow-md p-8">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-            <Globe className="h-5 w-5 mr-2" />
+        <div className="rounded-lg bg-white p-8 shadow-md">
+          <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
+            <Globe className="mr-2 h-5 w-5" />
             Profil bearbeiten
           </h3>
-          
+
           <div className="space-y-4">
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Profilbild URL (optional)
               </label>
               <input
                 type="url"
                 placeholder="https://..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Kurzbeschreibung (optional)
               </label>
               <textarea
                 rows={3}
                 placeholder="Beschreiben Sie sich in wenigen Sätzen..."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
+              <label className="mb-2 block text-sm font-medium text-gray-700">
                 Spezialisierung (optional)
               </label>
               <input
                 type="text"
-                placeholder="z.B. Vintage Rolex, Sportuhren, etc."
-                className="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                placeholder="z.B. Elektronik, Möbel, Kleidung, etc."
+                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
               />
             </div>
           </div>
 
           <button
             onClick={() => alert('Profil speichern - Funktion kommt bald!')}
-            className="mt-6 w-full bg-primary-600 text-white py-3 rounded-md hover:bg-primary-700 transition-colors"
+            className="mt-6 w-full rounded-md bg-primary-600 py-3 text-white transition-colors hover:bg-primary-700"
           >
             Profil speichern
           </button>

@@ -1,23 +1,23 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import { 
-  Users, 
-  ShoppingBag, 
-  TrendingUp, 
-  DollarSign, 
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import {
   AlertCircle,
   AlertTriangle,
-  FileCheck,
-  Shield,
   BarChart3,
-  Receipt
+  DollarSign,
+  FileCheck,
+  Receipt,
+  Shield,
+  ShoppingBag,
+  TrendingUp,
+  Users,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface Stats {
   totalUsers: number
@@ -42,32 +42,19 @@ export default function AdminDashboard() {
   const loadStats = async () => {
     setLoading(true)
     try {
-      console.log('Loading stats...')
       const res = await fetch('/api/admin/stats')
-      console.log('Stats API response status:', res.status)
-      
+
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: 'Unknown error' }))
         console.error('Stats API error:', errorData)
-        console.error('Error details:', {
-          status: res.status,
-          statusText: res.statusText,
-          error: errorData.error,
-          errorName: errorData.errorName,
-          errorCode: errorData.errorCode
-        })
         const errorMsg = errorData.error || errorData.message || 'Unbekannter Fehler'
         alert('Fehler beim Laden der Statistiken: ' + errorMsg)
         setLoading(false)
         return
       }
-      
+
       const data = await res.json()
-      console.log('Stats data received:', data)
-      console.log('Total users in data:', data.totalUsers)
-      console.log('Data type:', typeof data)
-      console.log('Full data object:', JSON.stringify(data, null, 2))
-      
+
       // Stelle sicher, dass alle Werte Zahlen sind
       const cleanedData = {
         totalUsers: Number(data.totalUsers) || 0,
@@ -80,10 +67,9 @@ export default function AdminDashboard() {
         platformMargin: Number(data.platformMargin) || 0,
         verifiedUsers: Number(data.verifiedUsers) || 0,
         pendingVerifications: Number(data.pendingVerifications) || 0,
-        pendingDisputes: Number(data.pendingDisputes) || 0
+        pendingDisputes: Number(data.pendingDisputes) || 0,
       }
-      
-      console.log('Cleaned stats data:', cleanedData)
+
       setStats(cleanedData)
     } catch (error: any) {
       console.error('Error loading stats:', error)
@@ -98,25 +84,19 @@ export default function AdminDashboard() {
     // Timeout: Wenn Session zu lange lädt (10 Sekunden), weiterleiten
     const timeoutId = setTimeout(() => {
       if (status === 'loading') {
-        console.warn('Dashboard: Session timeout, redirecting to login...')
         setLoading(false)
         router.push('/login')
       }
     }, 10000)
 
     if (status === 'loading') {
-      console.log('Dashboard: Session is loading...')
       setLoading(true)
       return () => clearTimeout(timeoutId)
     }
 
-    // Session ist fertig geladen
-    console.log('Dashboard: Session status:', status, 'User:', session?.user?.email)
-
     // Prüfe Admin-Status und lade Statistiken
     const checkAdminAndLoad = async () => {
       if (!session?.user) {
-        console.log('Dashboard: No user in session')
         if (status === 'unauthenticated') {
           setLoading(false)
           const currentPath = window.location.pathname
@@ -128,11 +108,8 @@ export default function AdminDashboard() {
       }
 
       const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
-      
-      console.log('Dashboard: Admin check - isAdminInSession:', isAdminInSession)
-      
+
       if (isAdminInSession) {
-        console.log('Dashboard: Admin confirmed, loading stats...')
         await loadStats()
         clearTimeout(timeoutId)
         return
@@ -140,16 +117,11 @@ export default function AdminDashboard() {
 
       // Falls nicht in Session, prüfe in DB
       try {
-        console.log('Dashboard: Checking admin status via API...')
         const res = await fetch('/api/user/admin-status')
-        console.log('Admin status API response:', res.status)
         const data = await res.json()
-        console.log('Admin status data:', data)
         if (data.isAdmin) {
-          console.log('Dashboard: Admin confirmed via API, loading stats...')
           await loadStats()
         } else {
-          console.log('Dashboard: Not admin, redirecting...')
           setLoading(false)
           router.push('/')
         }
@@ -163,7 +135,7 @@ export default function AdminDashboard() {
     }
 
     checkAdminAndLoad()
-    
+
     return () => clearTimeout(timeoutId)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status])
@@ -171,13 +143,13 @@ export default function AdminDashboard() {
   // Zeige Ladebildschirm während Session oder Daten geladen werden
   if (status === 'loading') {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
           <p className="mt-4 text-gray-600">Session wird geladen...</p>
-          <Link 
-            href="/" 
-            className="mt-6 inline-block text-primary-600 hover:text-primary-700 underline"
+          <Link
+            href="/"
+            className="mt-6 inline-block text-primary-600 underline hover:text-primary-700"
           >
             Zur Hauptseite (falls Session zu lange lädt)
           </Link>
@@ -188,9 +160,9 @@ export default function AdminDashboard() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
           <p className="mt-4 text-gray-600">Daten werden geladen...</p>
         </div>
       </div>
@@ -199,11 +171,11 @@ export default function AdminDashboard() {
 
   // Prüfe Admin-Status nur aus Session
   const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
-  
+
   // Wenn keine Session, zeige Fehlermeldung (redirect sollte bereits passiert sein)
   if (!session?.user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <p className="text-gray-600">Bitte melden Sie sich an, um das Dashboard zu verwenden.</p>
           <Link href="/login" className="mt-4 text-primary-600 hover:text-primary-700">
@@ -217,7 +189,7 @@ export default function AdminDashboard() {
   // Wenn nicht Admin, zeige Fehlermeldung (redirect sollte bereits passiert sein)
   if (!isAdminInSession) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <p className="text-gray-600">Sie haben keine Berechtigung für diese Seite.</p>
           <Link href="/" className="mt-4 text-primary-600 hover:text-primary-700">
@@ -231,14 +203,14 @@ export default function AdminDashboard() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
           <h1 className="text-3xl font-bold text-gray-900">Admin-Dashboard</h1>
           <p className="mt-2 text-gray-600">Übersicht und Verwaltung der Plattform</p>
         </div>
 
         {/* Statistiken */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
           <StatCard
             title="Benutzer"
             value={stats?.totalUsers || 0}
@@ -274,7 +246,7 @@ export default function AdminDashboard() {
         </div>
 
         {/* Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           <ActionCard
             title="Benutzerverwaltung"
             description="Benutzer verwalten, blockieren, mahnen"
@@ -356,14 +328,14 @@ export default function AdminDashboard() {
   )
 }
 
-function StatCard({ 
-  title, 
-  value, 
-  subtitle, 
-  icon: Icon, 
-  color, 
-  href 
-}: { 
+function StatCard({
+  title,
+  value,
+  subtitle,
+  icon: Icon,
+  color,
+  href,
+}: {
   title: string
   value: string | number
   subtitle: string
@@ -379,7 +351,7 @@ function StatCard({
   }
 
   const content = (
-    <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+    <div className="rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-md">
       <div className="flex items-center justify-between">
         <div>
           <p className="text-sm font-medium text-gray-600">{title}</p>
@@ -394,11 +366,7 @@ function StatCard({
   )
 
   if (href) {
-    return (
-      <Link href={href}>
-        {content}
-      </Link>
-    )
+    return <Link href={href}>{content}</Link>
   }
 
   return content
@@ -410,7 +378,7 @@ function ActionCard({
   icon: Icon,
   href,
   color,
-  badge
+  badge,
 }: {
   title: string
   description: string
@@ -431,7 +399,7 @@ function ActionCard({
 
   return (
     <Link href={href} className="block">
-      <div className="bg-white rounded-lg shadow p-6 hover:shadow-md transition-shadow">
+      <div className="rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-md">
         <div className="flex items-start justify-between">
           <div className="flex-1">
             <div className="flex items-center gap-3">
@@ -440,7 +408,7 @@ function ActionCard({
               </div>
               <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
               {badge !== undefined && badge > 0 && (
-                <span className="ml-auto bg-red-500 text-white text-xs font-semibold px-2 py-1 rounded-full">
+                <span className="ml-auto rounded-full bg-red-500 px-2 py-1 text-xs font-semibold text-white">
                   {badge}
                 </span>
               )}

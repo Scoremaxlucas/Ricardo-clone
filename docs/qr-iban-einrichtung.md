@@ -9,6 +9,7 @@ Eine **QR-IBAN** ist eine spezielle IBAN für QR-Rechnungen (Swiss QR-Bill). Sie
 Eine QR-IBAN erkennen Sie daran, dass an der **5. und 6. Stelle** die Zahlen **"30"** oder **"31"** stehen.
 
 **Beispiel:**
+
 - ✅ QR-IBAN: `CH30 8080 8005 4832 7893 1` (Position 5-6 = "30")
 - ✅ QR-IBAN: `CH31 8080 8005 4832 7893 1` (Position 5-6 = "31")
 - ❌ Normale IBAN: `CH07 8080 8005 4832 7893 1` (Position 5-6 = "07")
@@ -26,30 +27,36 @@ Sie müssen die QR-IBAN **direkt bei Ihrer Bank beantragen**. Die QR-IBAN ist ko
 ### Schritt 2: Beantragung bei verschiedenen Banken
 
 #### Raiffeisen Bank
+
 - **Kontakt:** Ihre Raiffeisen-Bankfiliale oder Online-Banking
 - **Kosten:** Je nach Bank unterschiedlich (meist zwischen CHF 50-200 pro Jahr)
 - **Bearbeitungszeit:** 1-2 Wochen
 
 #### UBS
+
 - **Kontakt:** UBS Business Banking oder Ihre Filiale
 - **Online:** UBS e-banking → Zahlungsverkehr → QR-Rechnungen
 - **Kosten:** Abhängig vom Kontotyp
 
 #### PostFinance
+
 - **Kontakt:** PostFinance Business Banking
 - **Online:** PostFinance E-Finance → Zahlungsverkehr → QR-Rechnungen
 - **Kosten:** Abhängig vom Kontotyp
 
 #### ZKB (Zürcher Kantonalbank)
+
 - **Kontakt:** ZKB Business Banking oder Ihre Filiale
 - **Kosten:** Abhängig vom Kontotyp
 
 #### Andere Banken
+
 Kontaktieren Sie Ihre Bank direkt und fragen Sie nach einer **QR-IBAN für QR-Rechnungen**.
 
 ### Schritt 3: Informationen für die Beantragung
 
 Bei der Beantragung benötigen Sie:
+
 - Firmenname (wie er auf den Rechnungen erscheinen soll)
 - Firmenadresse (vollständig)
 - BIC/SWIFT-Code Ihrer Bank
@@ -108,6 +115,7 @@ console.log('Ist QR-IBAN:', isQRIban ? '✅ JA' : '❌ NEIN');
 ## Kosten
 
 Die Kosten für eine QR-IBAN variieren je nach Bank:
+
 - **Raiffeisen:** CHF 50-200 pro Jahr
 - **UBS:** Abhängig vom Kontotyp
 - **PostFinance:** Abhängig vom Kontotyp
@@ -128,11 +136,13 @@ Die Kosten für eine QR-IBAN variieren je nach Bank:
 ### QR-Code wird als ungültig erkannt
 
 **Mögliche Ursachen:**
+
 1. ❌ Keine QR-IBAN verwendet (normale IBAN statt QR-IBAN)
 2. ❌ QR-IBAN nicht korrekt konfiguriert
 3. ❌ IBAN-Format falsch (Leerzeichen, falsche Länge)
 
 **Lösung:**
+
 1. Prüfen Sie, ob Position 5-6 der IBAN "30" oder "31" ist
 2. Stellen Sie sicher, dass die IBAN in `.env.local` korrekt eingetragen ist
 3. Prüfen Sie die Server-Logs auf Validierungsfehler
@@ -140,11 +150,13 @@ Die Kosten für eine QR-IBAN variieren je nach Bank:
 ### QR-IBAN wird nicht akzeptiert
 
 **Mögliche Ursachen:**
+
 1. ❌ QR-IBAN wurde nicht bei der Bank aktiviert
 2. ❌ QR-IBAN ist abgelaufen oder gesperrt
 3. ❌ Falsche BIC/SWIFT-Code
 
 **Lösung:**
+
 1. Kontaktieren Sie Ihre Bank und prüfen Sie den Status der QR-IBAN
 2. Stellen Sie sicher, dass die QR-IBAN aktiviert ist
 3. Prüfen Sie den BIC/SWIFT-Code
@@ -158,6 +170,6 @@ Die Kosten für eine QR-IBAN variieren je nach Bank:
 ## Support
 
 Bei Fragen zur QR-IBAN wenden Sie sich bitte an:
+
 - Ihre Bank (für Beantragung und Aktivierung)
 - System-Administrator (für technische Konfiguration)
-

@@ -8,20 +8,14 @@ export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const data = await request.json()
     const { currentPassword, newPassword } = data
 
     if (!currentPassword || !newPassword) {
-      return NextResponse.json(
-        { message: 'Bitte füllen Sie alle Felder aus' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Bitte füllen Sie alle Felder aus' }, { status: 400 })
     }
 
     // Validierung des neuen Passworts
@@ -49,14 +43,11 @@ export async function POST(request: NextRequest) {
     // Hole den User aus der Datenbank
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, password: true }
+      select: { id: true, password: true },
     })
 
     if (!user) {
-      return NextResponse.json(
-        { message: 'Benutzer nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe das alte Passwort
@@ -69,10 +60,7 @@ export async function POST(request: NextRequest) {
 
     const isPasswordValid = await bcrypt.compare(currentPassword, user.password)
     if (!isPasswordValid) {
-      return NextResponse.json(
-        { message: 'Das aktuelle Passwort ist falsch' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Das aktuelle Passwort ist falsch' }, { status: 400 })
     }
 
     // Prüfe, ob das neue Passwort dasselbe wie das alte ist
@@ -90,11 +78,11 @@ export async function POST(request: NextRequest) {
     // Aktualisiere das Passwort
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { password: hashedPassword }
+      data: { password: hashedPassword },
     })
 
     return NextResponse.json({
-      message: 'Passwort erfolgreich geändert'
+      message: 'Passwort erfolgreich geändert',
     })
   } catch (error: any) {
     console.error('Error changing password:', error)
@@ -104,8 +92,3 @@ export async function POST(request: NextRequest) {
     )
   }
 }
-
-
-
-
-

@@ -4,14 +4,14 @@ import { prisma } from '@/lib/prisma'
 export async function POST(request: NextRequest) {
   try {
     console.log('Test watch creation API called')
-    
+
     // Erstelle einen einfachen User
     let tempUser
     try {
       tempUser = await prisma.user.findUnique({
-        where: { id: 'test-user-123' }
+        where: { id: 'test-user-123' },
       })
-      
+
       if (!tempUser) {
         tempUser = await prisma.user.create({
           data: {
@@ -20,8 +20,8 @@ export async function POST(request: NextRequest) {
             name: 'Test User',
             firstName: 'Test',
             lastName: 'User',
-            password: 'test123'
-          }
+            password: 'test123',
+          },
         })
         console.log('User created')
       } else {
@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
         throw new Error('No users found in database')
       }
     }
-    
+
     console.log('User created/found:', tempUser.id)
 
     // Erstelle eine einfache Uhr
@@ -49,10 +49,10 @@ export async function POST(request: NextRequest) {
         condition: 'Sehr gut',
         price: 5000,
         images: JSON.stringify(['test-image']),
-        sellerId: tempUser.id
-      }
+        sellerId: tempUser.id,
+      },
     })
-    
+
     console.log('Watch created successfully:', watch.id)
 
     return NextResponse.json({
@@ -61,14 +61,11 @@ export async function POST(request: NextRequest) {
         id: watch.id,
         title: watch.title,
         brand: watch.brand,
-        model: watch.model
-      }
+        model: watch.model,
+      },
     })
   } catch (error) {
     console.error('Test watch creation error:', error)
-    return NextResponse.json(
-      { message: 'Test Fehler: ' + error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Test Fehler: ' + error.message }, { status: 500 })
   }
 }

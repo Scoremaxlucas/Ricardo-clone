@@ -4,18 +4,12 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // DELETE: Suchabo löschen
-export async function DELETE(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Nicht authentifiziert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
     }
 
     const subscription = await prisma.searchSubscription.findUnique({
@@ -23,17 +17,11 @@ export async function DELETE(
     })
 
     if (!subscription) {
-      return NextResponse.json(
-        { error: 'Suchabo nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Suchabo nicht gefunden' }, { status: 404 })
     }
 
     if (subscription.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'Nicht berechtigt' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 })
     }
 
     await prisma.searchSubscription.delete({
@@ -43,26 +31,17 @@ export async function DELETE(
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('Error deleting search subscription:', error)
-    return NextResponse.json(
-      { error: 'Fehler beim Löschen des Suchabos' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Fehler beim Löschen des Suchabos' }, { status: 500 })
   }
 }
 
 // PATCH: Suchabo aktualisieren (z.B. aktivieren/deaktivieren)
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: { id: string } }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { error: 'Nicht authentifiziert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ error: 'Nicht authentifiziert' }, { status: 401 })
     }
 
     const subscription = await prisma.searchSubscription.findUnique({
@@ -70,17 +49,11 @@ export async function PATCH(
     })
 
     if (!subscription) {
-      return NextResponse.json(
-        { error: 'Suchabo nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Suchabo nicht gefunden' }, { status: 404 })
     }
 
     if (subscription.userId !== session.user.id) {
-      return NextResponse.json(
-        { error: 'Nicht berechtigt' },
-        { status: 403 }
-      )
+      return NextResponse.json({ error: 'Nicht berechtigt' }, { status: 403 })
     }
 
     const body = await request.json()
@@ -92,14 +65,6 @@ export async function PATCH(
     return NextResponse.json({ subscription: updated })
   } catch (error: any) {
     console.error('Error updating search subscription:', error)
-    return NextResponse.json(
-      { error: 'Fehler beim Aktualisieren des Suchabos' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Fehler beim Aktualisieren des Suchabos' }, { status: 500 })
   }
 }
-
-
-
-
-

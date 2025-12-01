@@ -2,7 +2,7 @@
 
 /**
  * Stripe Setup Script
- * 
+ *
  * Dieses Script hilft beim Einrichten von Stripe für Kreditkartenzahlungen.
  * Es prüft ob Stripe-Keys vorhanden sind und gibt Anweisungen falls nicht.
  */
@@ -21,14 +21,14 @@ interface StripeConfig {
 
 function readEnvFile(): Map<string, string> {
   const env = new Map<string, string>()
-  
+
   if (!existsSync(ENV_FILE)) {
     return env
   }
-  
+
   const content = readFileSync(ENV_FILE, 'utf-8')
   const lines = content.split('\n')
-  
+
   for (const line of lines) {
     const trimmed = line.trim()
     if (trimmed && !trimmed.startsWith('#')) {
@@ -39,18 +39,18 @@ function readEnvFile(): Map<string, string> {
       }
     }
   }
-  
+
   return env
 }
 
 function writeEnvFile(env: Map<string, string>) {
   const lines: string[] = []
-  
+
   // Behalte bestehende Zeilen bei
   if (existsSync(ENV_FILE)) {
     const content = readFileSync(ENV_FILE, 'utf-8')
     const existingLines = content.split('\n')
-    
+
     for (const line of existingLines) {
       const trimmed = line.trim()
       if (trimmed && !trimmed.startsWith('#')) {
@@ -68,51 +68,59 @@ function writeEnvFile(env: Map<string, string>) {
       }
     }
   }
-  
+
   // Füge neue Keys hinzu
   for (const [key, value] of env.entries()) {
     if (!lines.some(line => line.startsWith(`${key}=`))) {
       lines.push(`${key}=${value}`)
     }
   }
-  
+
   writeFileSync(ENV_FILE, lines.join('\n') + '\n', 'utf-8')
 }
 
 function getStripeConfig(): StripeConfig {
   const env = readEnvFile()
-  
+
   return {
     publishableKey: env.get('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY'),
     secretKey: env.get('STRIPE_SECRET_KEY'),
-    webhookSecret: env.get('STRIPE_WEBHOOK_SECRET')
+    webhookSecret: env.get('STRIPE_WEBHOOK_SECRET'),
   }
 }
 
 function checkStripeKeys(): { configured: boolean; missing: string[] } {
   const config = getStripeConfig()
   const missing: string[] = []
-  
-  if (!config.publishableKey || config.publishableKey.trim() === '' || config.publishableKey.includes('placeholder')) {
+
+  if (
+    !config.publishableKey ||
+    config.publishableKey.trim() === '' ||
+    config.publishableKey.includes('placeholder')
+  ) {
     missing.push('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY')
   }
-  
-  if (!config.secretKey || config.secretKey.trim() === '' || config.secretKey.includes('placeholder')) {
+
+  if (
+    !config.secretKey ||
+    config.secretKey.trim() === '' ||
+    config.secretKey.includes('placeholder')
+  ) {
     missing.push('STRIPE_SECRET_KEY')
   }
-  
+
   return {
     configured: missing.length === 0,
-    missing
+    missing,
   }
 }
 
 async function main() {
   console.log('\n🔧 Stripe Setup für Helvenda\n')
-  console.log('=' .repeat(50))
-  
+  console.log('='.repeat(50))
+
   const { configured, missing } = checkStripeKeys()
-  
+
   if (configured) {
     console.log('\n✅ Stripe ist bereits konfiguriert!')
     const config = getStripeConfig()
@@ -125,10 +133,10 @@ async function main() {
     console.log('\n✅ Kreditkartenzahlung sollte funktionieren!')
     return
   }
-  
+
   console.log('\n⚠️  Stripe ist noch nicht konfiguriert.')
   console.log(`\n📋 Fehlende Keys: ${missing.join(', ')}`)
-  
+
   console.log('\n' + '='.repeat(50))
   console.log('\n📝 SCHNELLANLEITUNG:\n')
   console.log('1. Gehen Sie zu: https://dashboard.stripe.com/test/apikeys')
@@ -143,23 +151,23 @@ async function main() {
   console.log('4. Führen Sie dieses Script erneut aus mit:')
   console.log('   npm run setup:stripe -- --keys PK_TEST_KEY SK_TEST_KEY')
   console.log('\n' + '='.repeat(50))
-  
+
   // Prüfe ob Keys als Argumente übergeben wurden
   const args = process.argv.slice(2)
   if (args.includes('--keys') || args.includes('-k')) {
     const keyIndex = args.indexOf('--keys') !== -1 ? args.indexOf('--keys') : args.indexOf('-k')
     const publishableKey = args[keyIndex + 1]
     const secretKey = args[keyIndex + 2]
-    
+
     if (publishableKey && secretKey) {
       console.log('\n🔧 Konfiguriere Stripe-Keys...')
-      
+
       const env = readEnvFile()
       env.set('NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY', publishableKey)
       env.set('STRIPE_SECRET_KEY', secretKey)
-      
+
       writeEnvFile(env)
-      
+
       console.log('✅ Stripe-Keys wurden gespeichert!')
       console.log('\n⚠️  WICHTIG:')
       console.log('   1. Starten Sie den Server neu: npm run dev')
@@ -177,7 +185,7 @@ async function main() {
     console.log('   STRIPE_SECRET_KEY=sk_test_...')
     console.log('\n   Dann starten Sie den Server neu: npm run dev')
   }
-  
+
   console.log('\n' + '='.repeat(50))
   console.log('\n📚 Weitere Informationen:')
   console.log('   → Dokumentation: docs/stripe-konfiguration.md')
@@ -187,8 +195,3 @@ async function main() {
 }
 
 main().catch(console.error)
-
-
-
-
-

@@ -2,9 +2,9 @@
 
 /**
  * Setup-Script für Resend E-Mail-Konfiguration
- * 
+ *
  * Dieses Script hilft Ihnen beim Setup von Resend für Helvenda.
- * 
+ *
  * Verwendung:
  *   npm run setup:resend
  */
@@ -15,7 +15,7 @@ import * as path from 'path'
 
 const rl = readline.createInterface({
   input: process.stdin,
-  output: process.stdout
+  output: process.stdout,
 })
 
 function question(query: string): Promise<string> {
@@ -24,7 +24,7 @@ function question(query: string): Promise<string> {
 
 async function main() {
   console.log('\n📧 RESEND E-MAIL-SETUP FÜR HELVENDA\n')
-  console.log('=' .repeat(50))
+  console.log('='.repeat(50))
   console.log('Dieses Script hilft Ihnen beim Setup von Resend.')
   console.log('Resend ist ein professioneller E-Mail-Service wie Ricardo verwendet.\n')
   console.log('✅ Vorteile:')
@@ -32,7 +32,7 @@ async function main() {
   console.log('   → Kostenlos bis 3.000 E-Mails/Monat')
   console.log('   → Einfach zu konfigurieren')
   console.log('   → Professionelle Zustellung\n')
-  console.log('=' .repeat(50))
+  console.log('='.repeat(50))
   console.log('')
 
   // Schritt 1: Account erstellen
@@ -41,9 +41,14 @@ async function main() {
   console.log('2. Klicken Sie auf "Sign Up"')
   console.log('3. Erstellen Sie ein kostenloses Konto')
   console.log('4. Bestätigen Sie Ihre E-Mail-Adresse\n')
-  
+
   const step1Done = await question('Haben Sie bereits ein Resend-Konto? (j/n): ')
-  if (step1Done.toLowerCase() !== 'j' && step1Done.toLowerCase() !== 'ja' && step1Done.toLowerCase() !== 'y' && step1Done.toLowerCase() !== 'yes') {
+  if (
+    step1Done.toLowerCase() !== 'j' &&
+    step1Done.toLowerCase() !== 'ja' &&
+    step1Done.toLowerCase() !== 'y' &&
+    step1Done.toLowerCase() !== 'yes'
+  ) {
     console.log('\n⚠️  Bitte erstellen Sie zuerst ein Resend-Konto.')
     console.log('   Gehen Sie zu: https://resend.com\n')
     rl.close()
@@ -60,9 +65,9 @@ async function main() {
   console.log('6. Klicken Sie auf "Add"')
   console.log('7. Kopieren Sie den API Key (beginnt mit "re_")\n')
   console.log('⚠️  WICHTIG: Kopieren Sie den Key sofort - er wird nur einmal angezeigt!\n')
-  
+
   const apiKey = await question('Fügen Sie hier Ihren Resend API Key ein: ')
-  
+
   if (!apiKey || !apiKey.startsWith('re_')) {
     console.log('\n❌ Ungültiger API Key. Der Key muss mit "re_" beginnen.')
     rl.close()
@@ -73,9 +78,11 @@ async function main() {
   console.log('\n📝 SCHRITT 3: Absender-E-Mail-Adresse\n')
   console.log('Für Tests können Sie verwenden: onboarding@resend.dev')
   console.log('Für Produktion müssen Sie eine Domain verifizieren.\n')
-  
-  const fromEmail = await question('Absender-E-Mail-Adresse (z.B. onboarding@resend.dev oder noreply@ihre-domain.ch): ')
-  
+
+  const fromEmail = await question(
+    'Absender-E-Mail-Adresse (z.B. onboarding@resend.dev oder noreply@ihre-domain.ch): '
+  )
+
   if (!fromEmail || !fromEmail.includes('@')) {
     console.log('\n❌ Ungültige E-Mail-Adresse.')
     rl.close()
@@ -84,10 +91,10 @@ async function main() {
 
   // Schritt 4: .env Datei aktualisieren
   console.log('\n📝 SCHRITT 4: .env Datei aktualisieren\n')
-  
+
   const envPath = path.join(process.cwd(), '.env')
   let envContent = ''
-  
+
   if (fs.existsSync(envPath)) {
     envContent = fs.readFileSync(envPath, 'utf-8')
   }
@@ -95,37 +102,42 @@ async function main() {
   // Entferne alte Resend-Einträge
   envContent = envContent.replace(/RESEND_API_KEY=.*/g, '')
   envContent = envContent.replace(/RESEND_FROM_EMAIL=.*/g, '')
-  
+
   // Füge neue Einträge hinzu
   if (!envContent.endsWith('\n') && envContent.length > 0) {
     envContent += '\n'
   }
-  
+
   envContent += `# Resend E-Mail-Konfiguration\n`
   envContent += `RESEND_API_KEY=${apiKey}\n`
   envContent += `RESEND_FROM_EMAIL=${fromEmail}\n`
 
   // Schreibe .env Datei
   fs.writeFileSync(envPath, envContent, 'utf-8')
-  
+
   console.log('✅ .env Datei wurde aktualisiert!\n')
 
   // Schritt 5: Test
   console.log('📝 SCHRITT 5: Test\n')
   console.log('Möchten Sie jetzt einen Test-E-Mail-Versand durchführen?')
   const runTest = await question('Test-E-Mail senden? (j/n): ')
-  
-  if (runTest.toLowerCase() === 'j' || runTest.toLowerCase() === 'ja' || runTest.toLowerCase() === 'y' || runTest.toLowerCase() === 'yes') {
+
+  if (
+    runTest.toLowerCase() === 'j' ||
+    runTest.toLowerCase() === 'ja' ||
+    runTest.toLowerCase() === 'y' ||
+    runTest.toLowerCase() === 'yes'
+  ) {
     const testEmail = await question('Test-E-Mail-Adresse: ')
-    
+
     if (testEmail && testEmail.includes('@')) {
       console.log('\n📧 Sende Test-E-Mail...')
-      
+
       try {
         // Dynamisch Resend importieren
         const { Resend } = await import('resend')
         const resend = new Resend(apiKey)
-        
+
         const result = await resend.emails.send({
           from: fromEmail,
           to: [testEmail],
@@ -177,14 +189,8 @@ async function main() {
   rl.close()
 }
 
-main()
-  .catch((error) => {
-    console.error('\n❌ Fehler:', error)
-    rl.close()
-    process.exit(1)
-  })
-
-
-
-
-
+main().catch(error => {
+  console.error('\n❌ Fehler:', error)
+  rl.close()
+  process.exit(1)
+})

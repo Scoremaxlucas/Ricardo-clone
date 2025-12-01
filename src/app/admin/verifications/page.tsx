@@ -3,17 +3,17 @@
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { 
-  FileCheck, 
-  CheckCircle, 
-  XCircle, 
+import {
+  FileCheck,
+  CheckCircle,
+  XCircle,
   AlertCircle,
   User,
   Calendar,
   MapPin,
   Mail,
   Phone,
-  ArrowLeft
+  ArrowLeft,
 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -62,7 +62,7 @@ export default function AdminVerificationsPage() {
     }
 
     loadPendingVerifications()
-    
+
     // Wenn userId-Parameter vorhanden, User direkt laden
     if (userIdParam) {
       loadUserForReview(userIdParam)
@@ -103,7 +103,7 @@ export default function AdminVerificationsPage() {
     setReviewing(true)
     try {
       const res = await fetch(`/api/admin/verifications/${userId}/approve`, {
-        method: 'POST'
+        method: 'POST',
       })
       if (res.ok) {
         loadPendingVerifications()
@@ -130,7 +130,7 @@ export default function AdminVerificationsPage() {
       const res = await fetch(`/api/admin/verifications/${userId}/reject`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason })
+        body: JSON.stringify({ reason }),
       })
       if (res.ok) {
         loadPendingVerifications()
@@ -150,9 +150,9 @@ export default function AdminVerificationsPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
           <p className="mt-4 text-gray-600">Lädt...</p>
         </div>
       </div>
@@ -167,60 +167,66 @@ export default function AdminVerificationsPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Verifizierungen prüfen</h1>
               <p className="mt-2 text-gray-600">
-                {pendingUsers.length} ausstehende Verifizierung{pendingUsers.length !== 1 ? 'en' : ''}
+                {pendingUsers.length} ausstehende Verifizierung
+                {pendingUsers.length !== 1 ? 'en' : ''}
               </p>
             </div>
             <Link
               href="/admin/dashboard"
-              className="text-primary-600 hover:text-primary-700 font-medium"
+              className="font-medium text-primary-600 hover:text-primary-700"
             >
               ← Zurück zum Dashboard
             </Link>
           </div>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Liste der ausstehenden Verifizierungen */}
           <div className="lg:col-span-1">
-            <div className="bg-white rounded-lg shadow">
-              <div className="p-4 border-b border-gray-200">
+            <div className="rounded-lg bg-white shadow">
+              <div className="border-b border-gray-200 p-4">
                 <h2 className="text-lg font-semibold text-gray-900">Ausstehend</h2>
               </div>
-              <div className="divide-y divide-gray-200 max-h-[600px] overflow-y-auto">
+              <div className="max-h-[600px] divide-y divide-gray-200 overflow-y-auto">
                 {pendingUsers.length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
-                    <FileCheck className="mx-auto h-8 w-8 text-gray-400 mb-2" />
+                    <FileCheck className="mx-auto mb-2 h-8 w-8 text-gray-400" />
                     <p>Keine ausstehenden Verifizierungen</p>
                   </div>
                 ) : (
-                  pendingUsers.map((user) => (
+                  pendingUsers.map(user => (
                     <button
                       key={user.id}
                       onClick={() => {
                         setSelectedUser(user)
                         router.push(`/admin/verifications?userId=${user.id}`, { scroll: false })
                       }}
-                      className={`w-full p-4 text-left hover:bg-gray-50 transition-colors ${
-                        selectedUser?.id === user.id ? 'bg-primary-50 border-l-4 border-primary-600' : ''
+                      className={`w-full p-4 text-left transition-colors hover:bg-gray-50 ${
+                        selectedUser?.id === user.id
+                          ? 'border-l-4 border-primary-600 bg-primary-50'
+                          : ''
                       }`}
                     >
                       <div className="flex items-start justify-between">
                         <div>
                           <p className="font-medium text-gray-900">
-                            {user.name || `${user.firstName} ${user.lastName}` || user.nickname || 'Unbekannt'}
+                            {user.name ||
+                              `${user.firstName} ${user.lastName}` ||
+                              user.nickname ||
+                              'Unbekannt'}
                           </p>
                           <p className="text-sm text-gray-500">{user.email}</p>
-                          <p className="text-xs text-gray-400 mt-1">
+                          <p className="mt-1 text-xs text-gray-400">
                             {new Date(user.createdAt).toLocaleDateString('de-CH')}
                           </p>
                         </div>
-                        <AlertCircle className="h-5 w-5 text-orange-500 flex-shrink-0" />
+                        <AlertCircle className="h-5 w-5 flex-shrink-0 text-orange-500" />
                       </div>
                     </button>
                   ))
@@ -232,12 +238,10 @@ export default function AdminVerificationsPage() {
           {/* Detail-Ansicht */}
           <div className="lg:col-span-2">
             {selectedUser ? (
-              <div className="bg-white rounded-lg shadow">
-                <div className="p-6 border-b border-gray-200">
+              <div className="rounded-lg bg-white shadow">
+                <div className="border-b border-gray-200 p-6">
                   <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold text-gray-900">
-                      Verifizierung prüfen
-                    </h2>
+                    <h2 className="text-xl font-semibold text-gray-900">Verifizierung prüfen</h2>
                     <button
                       onClick={() => {
                         setSelectedUser(null)
@@ -250,10 +254,10 @@ export default function AdminVerificationsPage() {
                   </div>
                 </div>
 
-                <div className="p-6 space-y-6">
+                <div className="space-y-6 p-6">
                   {/* Persönliche Daten */}
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Persönliche Daten</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">Persönliche Daten</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Name</label>
@@ -270,9 +274,11 @@ export default function AdminVerificationsPage() {
                         <p className="mt-1 text-sm text-gray-900">{selectedUser.nickname || '-'}</p>
                       </div>
                       <div>
-                        <label className="block text-sm font-medium text-gray-700">Geburtsdatum</label>
+                        <label className="block text-sm font-medium text-gray-700">
+                          Geburtsdatum
+                        </label>
                         <p className="mt-1 text-sm text-gray-900">
-                          {selectedUser.dateOfBirth 
+                          {selectedUser.dateOfBirth
                             ? new Date(selectedUser.dateOfBirth).toLocaleDateString('de-CH')
                             : '-'}
                         </p>
@@ -282,7 +288,7 @@ export default function AdminVerificationsPage() {
 
                   {/* Adresse */}
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Adresse</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">Adresse</h3>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <label className="block text-sm font-medium text-gray-700">Strasse</label>
@@ -305,31 +311,36 @@ export default function AdminVerificationsPage() {
 
                   {/* Ausweiskopie */}
                   <div>
-                    <h3 className="text-lg font-medium text-gray-900 mb-4">Ausweiskopie</h3>
+                    <h3 className="mb-4 text-lg font-medium text-gray-900">Ausweiskopie</h3>
                     <div className="mb-4">
-                      <label className="block text-sm font-medium text-gray-700 mb-2">
-                        Ausweistyp: {selectedUser.idDocumentType === 'ID' ? 'Identitätskarte' : 'Reisepass'}
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Ausweistyp:{' '}
+                        {selectedUser.idDocumentType === 'ID' ? 'Identitätskarte' : 'Reisepass'}
                       </label>
-                      
+
                       {selectedUser.idDocumentType === 'ID' ? (
                         <div className="grid grid-cols-2 gap-4">
                           {selectedUser.idDocumentPage1 && (
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Seite 1</label>
+                              <label className="mb-2 block text-sm font-medium text-gray-700">
+                                Seite 1
+                              </label>
                               <img
                                 src={selectedUser.idDocumentPage1}
                                 alt="ID Seite 1"
-                                className="w-full border border-gray-300 rounded-lg"
+                                className="w-full rounded-lg border border-gray-300"
                               />
                             </div>
                           )}
                           {selectedUser.idDocumentPage2 && (
                             <div>
-                              <label className="block text-sm font-medium text-gray-700 mb-2">Seite 2</label>
+                              <label className="mb-2 block text-sm font-medium text-gray-700">
+                                Seite 2
+                              </label>
                               <img
                                 src={selectedUser.idDocumentPage2}
                                 alt="ID Seite 2"
-                                className="w-full border border-gray-300 rounded-lg"
+                                className="w-full rounded-lg border border-gray-300"
                               />
                             </div>
                           )}
@@ -340,7 +351,7 @@ export default function AdminVerificationsPage() {
                             <img
                               src={selectedUser.idDocument}
                               alt="Reisepass"
-                              className="w-full border border-gray-300 rounded-lg"
+                              className="w-full rounded-lg border border-gray-300"
                             />
                           </div>
                         )
@@ -349,11 +360,11 @@ export default function AdminVerificationsPage() {
                   </div>
 
                   {/* Aktionen */}
-                  <div className="flex gap-4 pt-4 border-t border-gray-200">
+                  <div className="flex gap-4 border-t border-gray-200 pt-4">
                     <button
                       onClick={() => handleApprove(selectedUser.id)}
                       disabled={reviewing}
-                      className="flex-1 bg-green-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-medium text-white hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <CheckCircle className="h-5 w-5" />
                       Genehmigen
@@ -361,7 +372,7 @@ export default function AdminVerificationsPage() {
                     <button
                       onClick={() => handleReject(selectedUser.id)}
                       disabled={reviewing}
-                      className="flex-1 bg-red-600 text-white px-4 py-2 rounded-lg font-medium hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                      className="flex flex-1 items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 font-medium text-white hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
                     >
                       <XCircle className="h-5 w-5" />
                       Ablehnen
@@ -370,9 +381,9 @@ export default function AdminVerificationsPage() {
                 </div>
               </div>
             ) : (
-              <div className="bg-white rounded-lg shadow p-12 text-center">
-                <FileCheck className="mx-auto h-12 w-12 text-gray-400 mb-4" />
-                <h3 className="text-lg font-medium text-gray-900 mb-2">
+              <div className="rounded-lg bg-white p-12 text-center shadow">
+                <FileCheck className="mx-auto mb-4 h-12 w-12 text-gray-400" />
+                <h3 className="mb-2 text-lg font-medium text-gray-900">
                   Wählen Sie eine Verifizierung aus
                 </h3>
                 <p className="text-gray-500">
@@ -386,7 +397,3 @@ export default function AdminVerificationsPage() {
     </div>
   )
 }
-
-
-
-

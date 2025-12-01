@@ -14,6 +14,7 @@ Bei Ricardo gibt es folgende Angebotsoptionen:
 ## ✅ Was in Helvenda implementiert ist
 
 ### 1. Auktionen ✅
+
 - **Status**: Vollständig implementiert
 - **Datenbank**: `isAuction: Boolean` im Watch-Model
 - **Features**:
@@ -26,6 +27,7 @@ Bei Ricardo gibt es folgende Angebotsoptionen:
   - UI: `BidComponent` für Gebote
 
 ### 2. Sofortkauf ✅
+
 - **Status**: Vollständig implementiert
 - **Datenbank**: `isAuction: false` + `price` (fester Preis)
 - **Features**:
@@ -34,6 +36,7 @@ Bei Ricardo gibt es folgende Angebotsoptionen:
   - UI: Kauf-Button auf Produktseite
 
 ### 3. Kombination (Auktion + Sofortkaufpreis) ✅
+
 - **Status**: Vollständig implementiert
 - **Datenbank**: `isAuction: true` + `buyNowPrice: Float?`
 - **Features**:
@@ -43,6 +46,7 @@ Bei Ricardo gibt es folgende Angebotsoptionen:
   - UI: Beide Optionen in `BidComponent` verfügbar
 
 ### 4. AI-Preisvorschlag für Verkäufer ✅
+
 - **Status**: Implementiert
 - **API**: `/api/ai/suggest-price` (POST)
 - **Features**:
@@ -61,7 +65,7 @@ Bei Ricardo gibt es folgende Angebotsoptionen:
 
 **Was fehlt:**
 
-1. **Datenbank-Model**: 
+1. **Datenbank-Model**:
    - ❌ Kein `PriceOffer` Model im Schema
    - ❌ Keine Relation zwischen Käufer, Verkäufer und Angebot für Preisvorschläge
 
@@ -98,6 +102,7 @@ Bei Ricardo gibt es folgende Angebotsoptionen:
 ```
 
 **Übersetzungen vorhanden, aber nicht verwendet:**
+
 - `makeOffer: 'Preisvorschlag'` (de.ts)
 - `makeOffer: 'Make offer'` (en.ts)
 - `makeOffer: 'Faire une offre'` (fr.ts)
@@ -107,13 +112,13 @@ Bei Ricardo gibt es folgende Angebotsoptionen:
 
 ## 🔍 Vergleich: Ricardo vs. Helvenda
 
-| Feature | Ricardo | Helvenda | Status |
-|---------|---------|----------|--------|
-| Auktionen | ✅ | ✅ | ✅ Implementiert |
-| Sofortkauf | ✅ | ✅ | ✅ Implementiert |
-| Auktion + Sofortkaufpreis | ✅ | ✅ | ✅ Implementiert |
-| Preisvorschlag (Käufer → Verkäufer) | ✅ | ❌ | ❌ **FEHLT** |
-| AI-Preisvorschlag (für Verkäufer) | ✅ | ✅ | ✅ Implementiert |
+| Feature                             | Ricardo | Helvenda | Status           |
+| ----------------------------------- | ------- | -------- | ---------------- |
+| Auktionen                           | ✅      | ✅       | ✅ Implementiert |
+| Sofortkauf                          | ✅      | ✅       | ✅ Implementiert |
+| Auktion + Sofortkaufpreis           | ✅      | ✅       | ✅ Implementiert |
+| Preisvorschlag (Käufer → Verkäufer) | ✅      | ❌       | ❌ **FEHLT**     |
+| AI-Preisvorschlag (für Verkäufer)   | ✅      | ✅       | ✅ Implementiert |
 
 ---
 
@@ -134,16 +139,3 @@ Die **Preisvorschlag-Funktion für Käufer** ist eine wichtige Funktion bei Rica
 **Erstellt am**: 2024-11-17
 **Analysiert von**: AI Assistant
 **Codebase-Version**: Aktuell
-
-
-
-
-
-
-
-
-
-
-
-
-

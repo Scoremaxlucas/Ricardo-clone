@@ -11,10 +11,7 @@ export async function DELETE(
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { watchId } = await params
@@ -23,9 +20,9 @@ export async function DELETE(
       where: {
         watchId_userId: {
           watchId,
-          userId: session.user.id
-        }
-      }
+          userId: session.user.id,
+        },
+      },
     })
 
     return NextResponse.json({ message: 'Favorit entfernt' })
@@ -37,8 +34,3 @@ export async function DELETE(
     )
   }
 }
-
-
-
-
-

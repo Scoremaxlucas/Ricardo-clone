@@ -10,10 +10,7 @@ interface FloatingCowProps {
   showChat?: boolean
 }
 
-export function FloatingCow({ 
-  position = 'bottom-right',
-  showChat = true
-}: FloatingCowProps) {
+export function FloatingCow({ position = 'bottom-right', showChat = true }: FloatingCowProps) {
   const [isVisible, setIsVisible] = useState(true)
   const [isExpanded, setIsExpanded] = useState(false)
   const [currentAnimation, setCurrentAnimation] = useState<'idle' | 'wave' | 'happy'>('idle')
@@ -36,7 +33,7 @@ export function FloatingCow({
     'bottom-right': 'bottom-6 right-6',
     'bottom-left': 'bottom-6 left-6',
     'top-right': 'top-6 right-6',
-    'top-left': 'top-6 left-6'
+    'top-left': 'top-6 left-6',
   }
 
   const handleCowClick = () => {
@@ -56,56 +53,49 @@ export function FloatingCow({
     <div className={`fixed ${positionClasses[position]} z-50 flex flex-col items-end gap-3`}>
       {/* Chat-Bubble (wenn erweitert) */}
       {isExpanded && showChat && (
-        <div 
-          className="bg-white rounded-2xl shadow-2xl p-4 mb-2 animate-fade-in-up"
+        <div
+          className="animate-fade-in-up mb-2 rounded-2xl bg-white p-4 shadow-2xl"
           style={{
             boxShadow: '0px 8px 30px rgba(20, 184, 166, 0.3)',
             minWidth: '200px',
-            maxWidth: '250px'
+            maxWidth: '250px',
           }}
         >
-          <div className="flex items-start justify-between mb-2">
+          <div className="mb-2 flex items-start justify-between">
             <div className="flex items-center gap-2">
-              <span className="font-bold text-gray-900 text-sm">Helvenda Kuh</span>
+              <span className="text-sm font-bold text-gray-900">Helvenda Kuh</span>
             </div>
             <button
               onClick={() => setIsExpanded(false)}
-              className="text-gray-400 hover:text-gray-600 transition-colors"
+              className="text-gray-400 transition-colors hover:text-gray-600"
             >
-              <X className="w-4 h-4" />
+              <X className="h-4 w-4" />
             </button>
           </div>
-          <p className="text-sm text-gray-700 mb-3">
+          <p className="mb-3 text-sm text-gray-700">
             Willkommen bei Helvenda! Kann ich dir helfen?
           </p>
           <button
             onClick={handleChatClick}
-            className="w-full bg-primary-500 hover:bg-primary-600 text-white font-bold py-2 px-4 rounded-xl transition-all duration-300 flex items-center justify-center gap-2 text-sm"
+            className="flex w-full items-center justify-center gap-2 rounded-xl bg-primary-500 px-4 py-2 text-sm font-bold text-white transition-all duration-300 hover:bg-primary-600"
             style={{
               background: 'linear-gradient(135deg, #14b8a6 0%, #10b981 100%)',
-              boxShadow: '0px 4px 20px rgba(20, 184, 166, 0.3)'
+              boxShadow: '0px 4px 20px rgba(20, 184, 166, 0.3)',
             }}
           >
-            <MessageCircle className="w-4 h-4" />
+            <MessageCircle className="h-4 w-4" />
             Hilfe anzeigen
           </button>
         </div>
       )}
 
       {/* Kuh-Maskottchen */}
-      <div
-        className="relative cursor-pointer group"
-        onClick={handleCowClick}
-      >
-        <HelvendaCow 
-          variant={currentAnimation}
-          size="md"
-          interactive={true}
-        />
-        
+      <div className="group relative cursor-pointer" onClick={handleCowClick}>
+        <HelvendaCow variant={currentAnimation} size="md" interactive={true} />
+
         {/* Badge für neue Nachrichten (optional) */}
         {showChat && !isExpanded && (
-          <div className="absolute -top-1 -right-1 bg-red-500 text-white rounded-full w-5 h-5 flex items-center justify-center text-xs font-bold">
+          <div className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
             !
           </div>
         )}
@@ -113,4 +103,3 @@ export function FloatingCow({
     </div>
   )
 }
-

@@ -14,10 +14,10 @@ interface Bid {
   amount: number
   createdAt: string
   watch: {
-  id: string
-  title: string
-  brand: string
-  model: string
+    id: string
+    title: string
+    brand: string
+    model: string
     images: string[]
     auctionEnd: string | null
     price: number
@@ -51,7 +51,7 @@ export default function MyBuyingPage() {
     purchased: 0,
     reviews: 0,
     favorites: 0,
-    searches: 0
+    searches: 0,
   })
 
   useEffect(() => {
@@ -67,14 +67,14 @@ export default function MyBuyingPage() {
 
     if (status === 'authenticated' && session?.user) {
       loadStats()
-      
+
       // Höre auf Events für Badge-Updates
       const handleOffersViewed = () => loadStats()
       const handlePurchasesViewed = () => loadStats()
-      
+
       window.addEventListener('offers-viewed', handleOffersViewed)
       window.addEventListener('purchases-viewed', handlePurchasesViewed)
-      
+
       return () => {
         window.removeEventListener('offers-viewed', handleOffersViewed)
         window.removeEventListener('purchases-viewed', handlePurchasesViewed)
@@ -85,7 +85,7 @@ export default function MyBuyingPage() {
   const loadStats = async () => {
     try {
       setLoading(true)
-      
+
       // Lade Gebote
       try {
         const bidsRes = await fetch('/api/bids/my-bids')
@@ -107,11 +107,11 @@ export default function MyBuyingPage() {
         if (offersRes.ok) {
           const offersData = await offersRes.json()
           const allOffers = offersData.offers || []
-          
+
           // Lade gelesene Preisvorschläge aus localStorage
           const readOffers = JSON.parse(localStorage.getItem('readOffers') || '[]')
           const unreadOffers = allOffers.filter((offer: any) => !readOffers.includes(offer.id))
-          
+
           setStats(prev => ({ ...prev, offers: unreadOffers.length }))
         }
       } catch (error) {
@@ -124,11 +124,13 @@ export default function MyBuyingPage() {
         if (purchasesRes.ok) {
           const purchasesData = await purchasesRes.json()
           const allPurchases = purchasesData.purchases || []
-          
+
           // Lade gelesene Purchases aus localStorage
           const readPurchases = JSON.parse(localStorage.getItem('readPurchases') || '[]')
-          const unreadPurchases = allPurchases.filter((purchase: any) => !readPurchases.includes(purchase.id))
-          
+          const unreadPurchases = allPurchases.filter(
+            (purchase: any) => !readPurchases.includes(purchase.id)
+          )
+
           setStats(prev => ({ ...prev, purchased: unreadPurchases.length }))
         }
       } catch (error) {
@@ -172,7 +174,7 @@ export default function MyBuyingPage() {
         <Header />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
             <p className="text-gray-600">{t.myBuying.loading}</p>
           </div>
         </div>
@@ -217,7 +219,7 @@ export default function MyBuyingPage() {
       icon: Gavel,
       href: '/my-watches/buying/bidding',
       color: 'bg-purple-100 text-purple-600',
-      count: stats.bidding
+      count: stats.bidding,
     },
     {
       title: t.myBuying.priceOffers,
@@ -225,7 +227,7 @@ export default function MyBuyingPage() {
       icon: Tag,
       href: '/my-watches/buying/offers',
       color: 'bg-blue-100 text-blue-600',
-      count: stats.offers
+      count: stats.offers,
     },
     {
       title: t.myBuying.purchased,
@@ -233,7 +235,7 @@ export default function MyBuyingPage() {
       icon: ShoppingBag,
       href: '/my-watches/buying/purchased',
       color: 'bg-green-100 text-green-600',
-      count: stats.purchased
+      count: stats.purchased,
     },
     {
       title: t.myBuying.reviews,
@@ -241,7 +243,7 @@ export default function MyBuyingPage() {
       icon: Star,
       href: '/my-watches/buying/reviews',
       color: 'bg-pink-100 text-pink-600',
-      count: stats.reviews
+      count: stats.reviews,
     },
     {
       title: t.myBuying.watchlist,
@@ -249,7 +251,7 @@ export default function MyBuyingPage() {
       icon: Package,
       href: '/favorites',
       color: 'bg-yellow-100 text-yellow-600',
-      count: stats.favorites
+      count: stats.favorites,
     },
     {
       title: t.myBuying.searchSubscriptions,
@@ -257,16 +259,16 @@ export default function MyBuyingPage() {
       icon: Search,
       href: '/my-watches/buying/search-subscriptions',
       color: 'bg-indigo-100 text-indigo-600',
-      count: stats.searches
-    }
+      count: stats.searches,
+    },
   ]
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
-        <div className="text-sm text-gray-600 mb-4">
+        <div className="mb-4 text-sm text-gray-600">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
             {t.myBuying.homepage}
           </Link>
@@ -275,44 +277,42 @@ export default function MyBuyingPage() {
         </div>
 
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="mb-8 flex items-center justify-between">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-primary-100 rounded-lg">
+            <div className="rounded-lg bg-primary-100 p-2">
               <Settings className="h-6 w-6 text-primary-600" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{t.myBuying.title}</h1>
-              <p className="text-gray-600 mt-1">{t.myBuying.subtitle}</p>
+              <p className="mt-1 text-gray-600">{t.myBuying.subtitle}</p>
             </div>
           </div>
         </div>
 
         {/* Dashboard Karten */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-          {menuItems.map((item) => {
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {menuItems.map(item => {
             const Icon = item.icon
             return (
               <Link
                 key={item.href}
                 href={item.href}
-                className="group bg-white rounded-lg shadow-md p-6 hover:shadow-xl transition-all cursor-pointer relative border border-gray-200 hover:border-primary-300"
+                className="group relative cursor-pointer rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary-300 hover:shadow-xl"
               >
-                <div className="flex items-start justify-between mb-4">
-                  <div className={`inline-flex p-3 rounded-lg ${item.color}`}>
+                <div className="mb-4 flex items-start justify-between">
+                  <div className={`inline-flex rounded-lg p-3 ${item.color}`}>
                     <Icon className="h-6 w-6" />
                   </div>
                   {item.count > 0 && (
-                    <span className="bg-primary-600 text-white text-xs font-bold px-2 py-1 rounded-full">
+                    <span className="rounded-full bg-primary-600 px-2 py-1 text-xs font-bold text-white">
                       {item.count}
                     </span>
                   )}
                 </div>
-                <h3 className="text-xl font-semibold text-gray-900 mb-2 group-hover:text-primary-600 transition-colors">
+                <h3 className="mb-2 text-xl font-semibold text-gray-900 transition-colors group-hover:text-primary-600">
                   {item.title}
                 </h3>
-                <p className="text-gray-600 text-sm">
-                  {item.description}
-                </p>
+                <p className="text-sm text-gray-600">{item.description}</p>
               </Link>
             )
           })}

@@ -3,21 +3,25 @@
 ## Begründung der Kontaktfrist
 
 ### 1. **Rechtliche Sicherheit & Vertragsbindung**
+
 - Nach Auktionsende entsteht ein **bindender Kaufvertrag** zwischen Verkäufer und Käufer
 - Die Kontaktfrist stellt sicher, dass beide Parteien ihre **Vertragspflichten** erfüllen
 - Sie schützt beide Seiten vor unklaren Situationen und Streitigkeiten
 
 ### 2. **Transaktionssicherheit**
+
 - **Verkäufer-Schutz**: Verhindert, dass Käufer "verschwinden" ohne zu zahlen
 - **Käufer-Schutz**: Verhindert, dass Verkäufer nicht reagieren und Artikel nicht liefern
 - Beide Parteien wissen, dass sie innerhalb von 7 Tagen handeln müssen
 
 ### 3. **Plattform-Reputation**
+
 - Schnelle Kommunikation erhöht die **Zufriedenheit** aller Nutzer
 - Verhindert negative Bewertungen durch Missverständnisse
 - Stärkt das **Vertrauen** in die Plattform
 
 ### 4. **Effizienz & Klarheit**
+
 - Klare Fristen schaffen **Erwartungssicherheit**
 - Verhindert endloses Warten auf Reaktionen
 - Beschleunigt den **Zahlungs- und Versandprozess**
@@ -62,6 +66,7 @@
 ## Rechtliche Grundlage
 
 Die 7-Tage-Frist basiert auf:
+
 - **Schweizer Obligationenrecht (OR)**: Vertragserfüllungspflichten
 - **AGB von Ricardo.ch**: Standardisierte Transaktionsregeln
 - **Best Practices** im E-Commerce
@@ -69,10 +74,3 @@ Die 7-Tage-Frist basiert auf:
 ## Fazit
 
 Die Kontaktfrist ist **keine Strafe**, sondern ein **Schutzmechanismus** für beide Parteien. Sie stellt sicher, dass Transaktionen reibungslos abgewickelt werden und beide Seiten ihre Verpflichtungen erfüllen.
-
-
-
-
-
-
-

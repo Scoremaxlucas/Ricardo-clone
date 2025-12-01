@@ -7,9 +7,7 @@ import { LanguageProvider } from '@/contexts/LanguageContext'
 export function Providers({ children }: { children: ReactNode }) {
   return (
     <SessionProvider>
-      <LanguageProvider>
-        {children}
-      </LanguageProvider>
+      <LanguageProvider>{children}</LanguageProvider>
     </SessionProvider>
   )
 }

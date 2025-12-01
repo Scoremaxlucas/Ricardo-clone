@@ -9,55 +9,108 @@ import { useLanguage } from '@/contexts/LanguageContext'
 
 // Main categories configuration - names will be translated in component
 const mainCategoriesConfig = [
-  { 
+  {
     slug: 'kleidung-accessoires',
     subcategories: [
-      'Damenbekleidung', 'Herrenbekleidung', 'Damenschuhe', 'Herrenschuhe',
-      'Taschen & Handtaschen', 'Rucksäcke', 'Koffer & Reisegepäck',
-      'Gürtel', 'Schals & Tücher', 'Mützen & Caps', 'Handschuhe',
-      'Sonnenbrillen', 'Uhren Damen', 'Uhren Herren', 'Schmuck'
-    ]
+      'Damenbekleidung',
+      'Herrenbekleidung',
+      'Damenschuhe',
+      'Herrenschuhe',
+      'Taschen & Handtaschen',
+      'Rucksäcke',
+      'Koffer & Reisegepäck',
+      'Gürtel',
+      'Schals & Tücher',
+      'Mützen & Caps',
+      'Handschuhe',
+      'Sonnenbrillen',
+      'Uhren Damen',
+      'Uhren Herren',
+      'Schmuck',
+    ],
   },
-  { 
+  {
     slug: 'auto-motorrad',
     subcategories: [
-      'Autos', 'Motorräder & Roller', 'Wohnmobile & Wohnwagen', 'Boote & Wassersport',
-      'Nutzfahrzeuge', 'Oldtimer', 'Auto-Ersatzteile', 'Motorrad-Ersatzteile',
-      'Felgen & Reifen', 'Autoteile allgemein'
-    ]
+      'Autos',
+      'Motorräder & Roller',
+      'Wohnmobile & Wohnwagen',
+      'Boote & Wassersport',
+      'Nutzfahrzeuge',
+      'Oldtimer',
+      'Auto-Ersatzteile',
+      'Motorrad-Ersatzteile',
+      'Felgen & Reifen',
+      'Autoteile allgemein',
+    ],
   },
-  { 
+  {
     slug: 'haushalt-wohnen',
     subcategories: [
-      'Möbel', 'Sofas & Sessel', 'Tische & Stühle', 'Betten & Matratzen',
-      'Schränke & Regale', 'Lampen & Leuchten', 'Teppiche', 'Gardinen & Vorhänge',
-      'Küchengeräte', 'Haushaltsgeräte', 'Staubsauger', 'Waschmaschinen',
-      'Kühlschränke', 'Geschirr & Besteck', 'Deko & Accessoires'
-    ]
+      'Möbel',
+      'Sofas & Sessel',
+      'Tische & Stühle',
+      'Betten & Matratzen',
+      'Schränke & Regale',
+      'Lampen & Leuchten',
+      'Teppiche',
+      'Gardinen & Vorhänge',
+      'Küchengeräte',
+      'Haushaltsgeräte',
+      'Staubsauger',
+      'Waschmaschinen',
+      'Kühlschränke',
+      'Geschirr & Besteck',
+      'Deko & Accessoires',
+    ],
   },
-  { 
+  {
     slug: 'sport',
     subcategories: [
-      'Fahrräder', 'E-Bikes', 'Mountainbikes', 'Rennvelos', 'Fitnessgeräte',
-      'Laufband & Crosstrainer', 'Ski & Snowboard', 'Skischuhe', 'Wintersport',
-      'Fussball', 'Tennis', 'Golf', 'Camping & Outdoor'
-    ]
+      'Fahrräder',
+      'E-Bikes',
+      'Mountainbikes',
+      'Rennvelos',
+      'Fitnessgeräte',
+      'Laufband & Crosstrainer',
+      'Ski & Snowboard',
+      'Skischuhe',
+      'Wintersport',
+      'Fussball',
+      'Tennis',
+      'Golf',
+      'Camping & Outdoor',
+    ],
   },
-  { 
+  {
     slug: 'handwerk-garten',
     subcategories: [
-      'Gartenmöbel', 'Grills & Zubehör', 'Rasenmäher', 'Pflanzen & Samen',
-      'Gartengeräte', 'Elektrowerkzeuge', 'Handwerkzeuge', 'Leitern & Gerüste',
-      'Gartendeko', 'Pool & Teich'
-    ]
+      'Gartenmöbel',
+      'Grills & Zubehör',
+      'Rasenmäher',
+      'Pflanzen & Samen',
+      'Gartengeräte',
+      'Elektrowerkzeuge',
+      'Handwerkzeuge',
+      'Leitern & Gerüste',
+      'Gartendeko',
+      'Pool & Teich',
+    ],
   },
-  { 
+  {
     slug: 'computer-netzwerk',
     subcategories: [
-      'Notebooks & Laptops', 'Desktop-PCs', 'Tablets', 'Monitore & Displays',
-      'Drucker & Scanner', 'Tastaturen & Mäuse', 'PC-Komponenten', 'Netzwerk-Hardware',
-      'Gaming-PCs', 'Apple Mac'
-    ]
+      'Notebooks & Laptops',
+      'Desktop-PCs',
+      'Tablets',
+      'Monitore & Displays',
+      'Drucker & Scanner',
+      'Tastaturen & Mäuse',
+      'PC-Komponenten',
+      'Netzwerk-Hardware',
+      'Gaming-PCs',
+      'Apple Mac',
+    ],
   },
 ]
 
@@ -94,29 +147,27 @@ export function CategoryBar() {
 
   return (
     <>
-      <CategorySidebarNew 
-        isOpen={isSidebarOpen} 
-        onClose={() => setIsSidebarOpen(false)} 
-      />
-      
-      <div className="bg-white border-b border-gray-200 shadow-sm">
-        <div className="max-w-[1400px] mx-auto px-4 sm:px-6 lg:px-8">
+      <CategorySidebarNew isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+
+      <div className="border-b border-gray-200 bg-white shadow-sm">
+        <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
           <div className="flex items-center gap-4 py-3">
             {/* Alle Kategorien Button */}
             <button
               onClick={() => setIsSidebarOpen(true)}
-              className="flex items-center gap-2 px-4 py-2 bg-primary-50 border border-primary-200 rounded-md hover:bg-primary-100 transition-colors whitespace-nowrap font-medium text-gray-900"
+              className="flex items-center gap-2 whitespace-nowrap rounded-md border border-primary-200 bg-primary-50 px-4 py-2 font-medium text-gray-900 transition-colors hover:bg-primary-100"
             >
               <Menu className="h-4 w-4" />
               {t.categoryBar.allCategories}
             </button>
 
             {/* Hauptkategorien mit Hover-Flyouts */}
-            {mainCategoriesConfig.map((category) => {
+            {mainCategoriesConfig.map(category => {
               const config = getCategoryConfig(category.slug)
               const IconComponent = config.icon
               // Verwende Übersetzung für Kategorienamen
-              const categoryName = t.categories[category.slug as keyof typeof t.categories] || config.name
+              const categoryName =
+                t.categories[category.slug as keyof typeof t.categories] || config.name
               return (
                 <div
                   key={category.slug}
@@ -126,10 +177,10 @@ export function CategoryBar() {
                 >
                   <Link
                     href={`/search?category=${category.slug}`}
-                    className="flex items-center gap-2 px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary-600 transition-colors whitespace-nowrap"
+                    className="flex items-center gap-2 whitespace-nowrap px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-primary-600"
                   >
-                    <div 
-                      className="w-6 h-6 rounded flex items-center justify-center"
+                    <div
+                      className="flex h-6 w-6 items-center justify-center rounded"
                       style={{ backgroundColor: '#0f766e' }}
                     >
                       <IconComponent className="h-4 w-4 text-white" />
@@ -137,32 +188,34 @@ export function CategoryBar() {
                     {categoryName}
                   </Link>
 
-                {/* Flyout für Unterkategorien */}
-                {hoveredCategory === category.slug && category.subcategories && category.subcategories.length > 0 && (
-                  <div
-                    className="absolute left-0 top-full mt-1 bg-white border border-gray-200 rounded-lg shadow-2xl p-4 w-[450px] max-h-[500px] overflow-y-auto"
-                    style={{ zIndex: 9999 }}
-                    onMouseEnter={() => setHoveredCategory(category.slug)}
-                    onMouseLeave={() => setHoveredCategory(null)}
-                  >
-                    <h3 className="font-bold text-gray-900 mb-3 text-sm border-b border-gray-200 pb-2">
-                      {categoryName}
-                    </h3>
-                    <div className="grid grid-cols-2 gap-2">
-                      {category.subcategories.map((subcat) => (
-                        <Link
-                          key={subcat}
-                          href={`/search?category=${category.slug}&subcategory=${encodeURIComponent(subcat)}`}
-                          className="text-sm text-gray-700 hover:text-primary-600 py-1 transition-colors block"
-                        >
-                          {translateSubcategory(subcat)}
-                        </Link>
-                      ))}
-                    </div>
-                  </div>
-                )}
-              </div>
-            )
+                  {/* Flyout für Unterkategorien */}
+                  {hoveredCategory === category.slug &&
+                    category.subcategories &&
+                    category.subcategories.length > 0 && (
+                      <div
+                        className="absolute left-0 top-full mt-1 max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
+                        style={{ zIndex: 9999 }}
+                        onMouseEnter={() => setHoveredCategory(category.slug)}
+                        onMouseLeave={() => setHoveredCategory(null)}
+                      >
+                        <h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">
+                          {categoryName}
+                        </h3>
+                        <div className="grid grid-cols-2 gap-2">
+                          {category.subcategories.map(subcat => (
+                            <Link
+                              key={subcat}
+                              href={`/search?category=${category.slug}&subcategory=${encodeURIComponent(subcat)}`}
+                              className="block py-1 text-sm text-gray-700 transition-colors hover:text-primary-600"
+                            >
+                              {translateSubcategory(subcat)}
+                            </Link>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+                </div>
+              )
             })}
           </div>
         </div>
@@ -170,4 +223,3 @@ export function CategoryBar() {
     </>
   )
 }
-

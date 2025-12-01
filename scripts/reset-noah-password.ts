@@ -7,7 +7,7 @@ async function main() {
   try {
     // Finde Noah
     const noah = await prisma.user.findUnique({
-      where: { email: 'noah@test.com' }
+      where: { email: 'noah@test.com' },
     })
 
     if (!noah) {
@@ -32,8 +32,8 @@ async function main() {
         password: hashedPassword,
         isBlocked: false, // Stelle sicher, dass er nicht blockiert ist
         blockedAt: null,
-        blockedReason: null
-      }
+        blockedReason: null,
+      },
     })
 
     console.log('\n✅ Noah Passwort zurückgesetzt!')
@@ -42,7 +42,6 @@ async function main() {
     console.log(`   Passwort: ${newPassword}`)
     console.log('\n✅ Account ist nicht blockiert')
     console.log('✅ Login sollte jetzt funktionieren!')
-
   } catch (error: any) {
     console.error('❌ Fehler:', error)
   } finally {
@@ -51,8 +50,3 @@ async function main() {
 }
 
 main()
-
-
-
-
-

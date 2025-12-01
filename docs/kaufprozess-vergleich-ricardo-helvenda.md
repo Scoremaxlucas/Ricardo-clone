@@ -4,15 +4,15 @@
 
 ### ✅ Gemeinsamkeiten
 
-| Feature | Ricardo | Helvenda | Status |
-|---------|---------|----------|--------|
-| 7-Tage-Kontaktfrist | ✅ | ✅ | ✅ Implementiert |
-| Automatische Rechnungserstellung | ✅ | ✅ | ✅ Implementiert |
-| Benachrichtigungen | ✅ | ✅ | ✅ Implementiert |
-| E-Mail-Benachrichtigungen | ✅ | ✅ | ✅ Implementiert |
-| Bewertungssystem | ✅ | ✅ | ✅ Implementiert |
-| Status-Tracking | ✅ | ✅ | ✅ Implementiert |
-| Stornierung bei Nichteinhaltung | ✅ | ✅ | ✅ Implementiert |
+| Feature                          | Ricardo | Helvenda | Status           |
+| -------------------------------- | ------- | -------- | ---------------- |
+| 7-Tage-Kontaktfrist              | ✅      | ✅       | ✅ Implementiert |
+| Automatische Rechnungserstellung | ✅      | ✅       | ✅ Implementiert |
+| Benachrichtigungen               | ✅      | ✅       | ✅ Implementiert |
+| E-Mail-Benachrichtigungen        | ✅      | ✅       | ✅ Implementiert |
+| Bewertungssystem                 | ✅      | ✅       | ✅ Implementiert |
+| Status-Tracking                  | ✅      | ✅       | ✅ Implementiert |
+| Stornierung bei Nichteinhaltung  | ✅      | ✅       | ✅ Implementiert |
 
 ---
 
@@ -21,14 +21,16 @@
 ### 1. **Zahlungsabwicklung**
 
 #### Ricardo:
+
 - ✅ **Klare Zahlungsfrist**: 14 Tage nach Erhalt der Zahlungsinformationen
 - ✅ **Zahlungsmethoden**: Banküberweisung, Barzahlung bei Abholung
 - ✅ **Zahlungsinformationen**: Automatisch im Benutzerkonto verfügbar
 - ✅ **Zahlungserinnerungen**: Automatische Erinnerungen bei Fristablauf
 
 #### Helvenda:
+
 - ❌ **Keine klare Zahlungsfrist**: Nur 7-Tage-Kontaktfrist, keine explizite Zahlungsfrist
-- ⚠️ **Stripe vorhanden, aber nicht vollständig integriert**: 
+- ⚠️ **Stripe vorhanden, aber nicht vollständig integriert**:
   - Stripe-Code existiert (`PaymentForm.tsx`, `create-payment-intent`)
   - Wird aber nicht im normalen Kaufprozess verwendet
   - Käufer muss manuell bezahlen und Verkäufer muss manuell bestätigen
@@ -42,11 +44,13 @@
 ### 2. **Käuferschutz**
 
 #### Ricardo:
+
 - ✅ **Käuferschutz verfügbar**: Bei Problemen kann Käufer Antrag stellen
 - ✅ **Dispute-System**: Streitigkeiten werden von Ricardo moderiert
 - ✅ **Rückerstattung**: Automatisch bei berechtigten Fällen
 
 #### Helvenda:
+
 - ❌ **Kein Käuferschutz**: Keine Dispute-Funktion vorhanden
 - ❌ **Keine Streitbeilegung**: Keine Möglichkeit, Probleme zu melden
 - ❌ **Keine automatische Rückerstattung**: Nur manuelle Stornierung
@@ -58,11 +62,13 @@
 ### 3. **Versand & Tracking**
 
 #### Ricardo:
+
 - ✅ **Versand-Tracking**: Integration mit Versanddienstleistern
 - ✅ **Tracking-Nummern**: Automatisch verfügbar
 - ✅ **Versandstatus**: Automatisch aktualisiert
 
 #### Helvenda:
+
 - ❌ **Keine Versand-Tracking-Integration**: Keine automatische Tracking-Funktion
 - ❌ **Keine Tracking-Nummern**: Manuell einzutragen (falls überhaupt vorhanden)
 - ❌ **Kein Versandstatus**: Keine automatische Aktualisierung
@@ -74,11 +80,13 @@
 ### 4. **Zahlungsinformationen & Details**
 
 #### Ricardo:
+
 - ✅ **Automatische Zahlungsinformationen**: Sofort nach Kauf verfügbar
 - ✅ **IBAN/Bankdaten**: Automatisch angezeigt
 - ✅ **Zahlungsanweisung**: Klare Anweisungen für Käufer
 
 #### Helvenda:
+
 - ⚠️ **Manuelle Kontaktdaten**: Käufer muss Verkäufer kontaktieren
 - ❌ **Keine automatischen Zahlungsinformationen**: Keine IBAN/Bankdaten automatisch verfügbar
 - ❌ **Keine Zahlungsanweisung**: Käufer muss selbst herausfinden, wie er zahlt
@@ -90,11 +98,13 @@
 ### 5. **Automatische Erinnerungen & Fristen**
 
 #### Ricardo:
+
 - ✅ **Zahlungserinnerungen**: Automatisch nach 7, 10, 14 Tagen
 - ✅ **Fristen-Tracking**: Automatische Überwachung aller Fristen
 - ✅ **E-Mail-Erinnerungen**: Regelmäßige Erinnerungen
 
 #### Helvenda:
+
 - ⚠️ **Nur Kontaktfrist-Erinnerungen**: Nach 5 Tagen (neu implementiert)
 - ❌ **Keine Zahlungserinnerungen**: Keine automatischen Erinnerungen für Zahlung
 - ❌ **Keine Fristen-Tracking**: Nur Kontaktfrist wird überwacht
@@ -106,12 +116,14 @@
 ### 6. **Status-Management**
 
 #### Ricardo:
-- ✅ **Klare Status-Übergänge**: 
+
+- ✅ **Klare Status-Übergänge**:
   - Kontakt aufgenommen → Zahlung erhalten → Versandt → Erhalten → Abgeschlossen
 - ✅ **Automatische Status-Updates**: Bei bestimmten Aktionen
 - ✅ **Status-Historie**: Vollständige Historie aller Statusänderungen
 
 #### Helvenda:
+
 - ⚠️ **Status vorhanden, aber unvollständig**:
   - `pending` → `payment_confirmed` → `item_received` → `completed`
 - ❌ **Keine automatischen Status-Updates**: Alles manuell
@@ -124,11 +136,13 @@
 ### 7. **Kommunikation**
 
 #### Ricardo:
+
 - ✅ **Integriertes Messaging**: Direkt im Kaufprozess
 - ✅ **Automatische Benachrichtigungen**: Bei wichtigen Ereignissen
 - ✅ **Nachrichten-Historie**: Vollständige Kommunikationshistorie
 
 #### Helvenda:
+
 - ✅ **Messaging vorhanden**: `ProductChat` Komponente
 - ⚠️ **Nicht vollständig integriert**: Nicht direkt im Kaufprozess verlinkt
 - ✅ **Benachrichtigungen**: Vorhanden
@@ -249,20 +263,20 @@
 
 ## 📊 Funktionalitäts-Matrix
 
-| Feature | Ricardo | Helvenda | Priorität |
-|---------|---------|----------|-----------|
-| 7-Tage-Kontaktfrist | ✅ | ✅ | ✅ |
-| Automatische Zahlungsinformationen | ✅ | ❌ | 🔴 HOCH |
-| Zahlungsfrist (14 Tage) | ✅ | ❌ | 🔴 HOCH |
-| Zahlungserinnerungen | ✅ | ❌ | 🔴 HOCH |
-| Käuferschutz | ✅ | ❌ | 🔴 HOCH |
-| Dispute-System | ✅ | ❌ | 🔴 HOCH |
-| Versand-Tracking | ✅ | ❌ | 🟡 MITTEL |
-| Stripe-Integration | N/A | ⚠️ Teilweise | 🟡 MITTEL |
-| Status-Automatisierung | ✅ | ❌ | 🟡 MITTEL |
-| Bewertungssystem | ✅ | ✅ | ✅ |
-| Stornierung | ✅ | ✅ | ✅ |
-| E-Mail-Benachrichtigungen | ✅ | ✅ | ✅ |
+| Feature                            | Ricardo | Helvenda     | Priorität |
+| ---------------------------------- | ------- | ------------ | --------- |
+| 7-Tage-Kontaktfrist                | ✅      | ✅           | ✅        |
+| Automatische Zahlungsinformationen | ✅      | ❌           | 🔴 HOCH   |
+| Zahlungsfrist (14 Tage)            | ✅      | ❌           | 🔴 HOCH   |
+| Zahlungserinnerungen               | ✅      | ❌           | 🔴 HOCH   |
+| Käuferschutz                       | ✅      | ❌           | 🔴 HOCH   |
+| Dispute-System                     | ✅      | ❌           | 🔴 HOCH   |
+| Versand-Tracking                   | ✅      | ❌           | 🟡 MITTEL |
+| Stripe-Integration                 | N/A     | ⚠️ Teilweise | 🟡 MITTEL |
+| Status-Automatisierung             | ✅      | ❌           | 🟡 MITTEL |
+| Bewertungssystem                   | ✅      | ✅           | ✅        |
+| Stornierung                        | ✅      | ✅           | ✅        |
+| E-Mail-Benachrichtigungen          | ✅      | ✅           | ✅        |
 
 ---
 
@@ -276,10 +290,3 @@
 4. **Automatisierung**: Viele manuelle Schritte, die automatisiert werden könnten
 
 **Empfehlung**: Fokus auf die **HOCH-Priorität** Features, um mit Ricardo konkurrenzfähig zu sein.
-
-
-
-
-
-
-

@@ -1,4 +1,4 @@
-import { MD3LightTheme } from 'react-native-paper';
+import { MD3LightTheme } from 'react-native-paper'
 
 export const theme = {
   ...MD3LightTheme,
@@ -17,5 +17,4 @@ export const theme = {
     onSurface: '#0f172a',
     onBackground: '#0f172a',
   },
-};
-
+}

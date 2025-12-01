@@ -9,11 +9,8 @@ export async function GET() {
 
     const watches = await prisma.watch.findMany({
       where: {
-        // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
-        OR: [
-          { purchases: { none: {} } },
-          { purchases: { every: { status: 'cancelled' } } }
-        ],
+        // Stornierte Purchases machen den Artikel wieder verfügbar
+        OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
         createdAt: {
           gte: sevenDaysAgo,
         },
@@ -21,15 +18,15 @@ export async function GET() {
       include: {
         categories: {
           include: {
-            category: true
-          }
-        }
+            category: true,
+          },
+        },
       },
     })
 
     // Zähle Artikel pro Kategorie
     const categoryCounts: Record<string, number> = {}
-    watches.forEach((watch) => {
+    watches.forEach(watch => {
       watch.categories.forEach((wc: any) => {
         const categorySlug = wc.category?.slug
         if (categorySlug) {
@@ -44,11 +41,8 @@ export async function GET() {
 
     const previousWatches = await prisma.watch.findMany({
       where: {
-        // RICARDO-STYLE: Stornierte Purchases machen das Watch wieder verfügbar
-        OR: [
-          { purchases: { none: {} } },
-          { purchases: { every: { status: 'cancelled' } } }
-        ],
+        // Stornierte Purchases machen den Artikel wieder verfügbar
+        OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
         createdAt: {
           gte: fourteenDaysAgo,
           lt: sevenDaysAgo,
@@ -57,14 +51,14 @@ export async function GET() {
       include: {
         categories: {
           include: {
-            category: true
-          }
-        }
+            category: true,
+          },
+        },
       },
     })
 
     const previousCounts: Record<string, number> = {}
-    previousWatches.forEach((watch) => {
+    previousWatches.forEach(watch => {
       watch.categories.forEach((wc: any) => {
         const categorySlug = wc.category?.slug
         if (categorySlug) {
@@ -77,12 +71,12 @@ export async function GET() {
     const categoryNames: Record<string, string> = {
       'auto-motorrad': 'Auto & Motorrad',
       'computer-netzwerk': 'Computer & Netzwerk',
-      'sport': 'Sport',
+      sport: 'Sport',
       'uhren-schmuck': 'Uhren & Schmuck',
       'kleidung-accessoires': 'Kleidung & Accessoires',
       'haushalt-wohnen': 'Haushalt & Wohnen',
       'kind-baby': 'Kind & Baby',
-      'buecher': 'Bücher',
+      buecher: 'Bücher',
       'games-konsolen': 'Games & Konsolen',
       'sammeln-seltenes': 'Sammeln & Seltenes',
     }
@@ -90,12 +84,12 @@ export async function GET() {
     const categoryIcons: Record<string, string> = {
       'auto-motorrad': '🚗',
       'computer-netzwerk': '💻',
-      'sport': '⚽',
+      sport: '⚽',
       'uhren-schmuck': '⌚',
       'kleidung-accessoires': '👗',
       'haushalt-wohnen': '🏠',
       'kind-baby': '👶',
-      'buecher': '📚',
+      buecher: '📚',
       'games-konsolen': '🎮',
       'sammeln-seltenes': '✨',
     }
@@ -103,12 +97,12 @@ export async function GET() {
     const categoryColors: Record<string, string> = {
       'auto-motorrad': 'bg-blue-500',
       'computer-netzwerk': 'bg-purple-500',
-      'sport': 'bg-green-500',
+      sport: 'bg-green-500',
       'uhren-schmuck': 'bg-yellow-500',
       'kleidung-accessoires': 'bg-pink-500',
       'haushalt-wohnen': 'bg-emerald-500',
       'kind-baby': 'bg-orange-500',
-      'buecher': 'bg-indigo-500',
+      buecher: 'bg-indigo-500',
       'games-konsolen': 'bg-red-500',
       'sammeln-seltenes': 'bg-rose-500',
     }
@@ -127,7 +121,7 @@ export async function GET() {
           color: categoryColors[category] || 'bg-gray-500',
         }
       })
-      .filter((item) => item.count > 0)
+      .filter(item => item.count > 0)
       .sort((a, b) => b.growth - a.growth)
       .slice(0, 4)
 

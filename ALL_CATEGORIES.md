@@ -3,6 +3,7 @@
 ## 🎯 ZIEL: Alle Kategorien von Ricardo + zusätzliche moderne Kategorien
 
 ### AKTUELLE HELVENDA KATEGORIEN (24):
+
 1. auto-motorrad
 2. fahrzeugzubehoer
 3. computer-netzwerk
@@ -29,6 +30,7 @@
 24. buero-gewerbe
 
 ### FEHLENDE HAUPTKATEGORIEN (zu ergänzen):
+
 25. **immobilien** - Immobilien (Wohnungen, Häuser, Grundstücke, Gewerbeimmobilien)
 26. **jobs-karriere** - Jobs & Karriere (Stellenangebote, Bewerbungen, Karriere-Services)
 27. **dienstleistungen** - Dienstleistungen (Handwerker, Beratung, Reparaturen, etc.)
@@ -49,6 +51,7 @@
 ### ERWEITERTE SUBKATEGORIEN FÜR BESTEHENDE KATEGORIEN:
 
 #### COMPUTER & NETZWERK (erweitern):
+
 - Smart Home & IoT
 - VR/AR Headsets
 - Smart TVs
@@ -57,6 +60,7 @@
 - Wearables (außer Smartwatches)
 
 #### HAUSHALT & WOHNEN (erweitern):
+
 - Bad & Sanitär
 - Heizung & Klima
 - Sicherheit & Alarmanlagen
@@ -65,6 +69,7 @@
 - Küchenzubehör (erweitert)
 
 #### SPORT (erweitern):
+
 - Wassersport
 - Wintersport (erweitert)
 - Kampfsport
@@ -74,6 +79,7 @@
 - Tennis (erweitert)
 
 #### KLEIDUNG & ACCESSOIRES (erweitern):
+
 - Damenmode (erweitert)
 - Herrenmode (erweitert)
 - Kindermode
@@ -83,6 +89,7 @@
 - Trachten & Kostüme
 
 #### UHREN & SCHMUCK (erweitern):
+
 - Vintage Uhren
 - Luxusuhren (erweitert)
 - Schmuck (erweitert)
@@ -90,6 +97,7 @@
 - Uhrenzubehör
 
 #### KIND & BABY (erweitern):
+
 - Spielzeug (erweitert)
 - Lernspielzeug
 - Fahrzeuge für Kinder
@@ -97,6 +105,7 @@
 - Stillen & Ernährung
 
 #### BÜCHER (erweitern):
+
 - Fachbücher
 - Schulbücher
 - Hörbücher
@@ -104,12 +113,14 @@
 - Zeitschriften (erweitert)
 
 #### MUSIK & INSTRUMENTE (erweitern):
+
 - Musikzubehör
 - Noten & Partituren
 - Musiksoftware
 - Recording Equipment
 
 #### HANDWERK & GARTEN (erweitern):
+
 - Baustoffe
 - Malerbedarf
 - Sanitär & Heizung
@@ -119,12 +130,14 @@
 - Gartendeko
 
 #### WEIN & GENUSS (erweitern):
+
 - Spirituosen (erweitert)
 - Zigarren & Tabak
 - Kaffee & Tee
 - Delikatessen
 
 #### TIERZUBEHÖR (erweitern):
+
 - Futter & Leckerlis
 - Spielzeug
 - Transport
@@ -132,23 +145,8 @@
 - Training & Erziehung
 
 #### BÜRO & GEWERBE (erweitern):
+
 - Büromöbel
 - Präsentationstechnik
 - Lager & Logistik
 - Werkstattausrüstung
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-

@@ -36,19 +36,22 @@ Das Script führt Sie durch den Setup-Prozess. Weitere Informationen finden Sie 
 ## 📦 Installation
 
 ### Voraussetzungen
-- Node.js 18+ 
+
+- Node.js 18+
 - npm oder yarn
 - PostgreSQL (für Produktion)
 
 ### Setup
 
 1. **Repository klonen**
+
 ```bash
 git clone <repository-url>
-cd ricardo-clone
+cd helvenda
 ```
 
 2. **Dependencies installieren**
+
 ```bash
 npm install
 # oder
@@ -56,17 +59,20 @@ yarn install
 ```
 
 3. **Umgebungsvariablen konfigurieren**
+
 ```bash
 cp .env.example .env.local
 ```
 
 4. **Datenbank einrichten**
+
 ```bash
 npx prisma generate
 npx prisma db push
 ```
 
 5. **Entwicklungsserver starten**
+
 ```bash
 npm run dev
 # oder
@@ -78,6 +84,7 @@ Die App ist dann unter `http://localhost:3002` verfügbar.
 ## 🎯 Hauptfunktionen
 
 ### Für Käufer
+
 - Durchsuchen von Artikeln nach Kategorie, Marke, Preis, Zustand
 - Erweiterte Suchfunktion mit Filtern
 - Teilnahme an Auktionen oder Sofortkauf
@@ -87,6 +94,7 @@ Die App ist dann unter `http://localhost:3002` verfügbar.
 - Suchabonnements für automatische Benachrichtigungen
 
 ### Für Verkäufer
+
 - Einfaches Hochladen von Artikeln aller Kategorien
 - Auktions- oder Sofortkauf-Optionen
 - Detaillierte Artikel-Beschreibungen mit mehreren Bildern
@@ -95,6 +103,7 @@ Die App ist dann unter `http://localhost:3002` verfügbar.
 - Automatische Rechnungsstellung nach Verkauf
 
 ### Marktplatz-Features
+
 - **Kategorien**: Umfassende Produktkategorien (Kleidung, Elektronik, Fahrzeuge, Sport, etc.)
 - **Erweiterte Suche**: Filter nach Kategorie, Marke, Preis, Zustand, Standort
 - **Auktionssystem**: Automatische Verarbeitung bei Auktionsende
@@ -105,6 +114,7 @@ Die App ist dann unter `http://localhost:3002` verfügbar.
 ## 📱 Mobile App
 
 Die App ist vorbereitet für eine React Native Mobile App:
+
 - Geteilte Komponenten zwischen Web und Mobile
 - Responsive Design für alle Bildschirmgrößen
 - Touch-optimierte Navigation
@@ -112,12 +122,14 @@ Die App ist vorbereitet für eine React Native Mobile App:
 ## 🚀 Deployment
 
 ### Vercel (Empfohlen)
+
 ```bash
 npm run build
 vercel --prod
 ```
 
 ### Docker
+
 ```bash
 docker build -t helvenda .
 docker run -p 3002:3002 helvenda
@@ -142,17 +154,20 @@ src/
 ## 🔧 Entwicklung
 
 ### Code-Qualität
+
 - ESLint für Code-Linting
 - Prettier für Code-Formatierung
 - TypeScript für Typsicherheit
 
 ### Testing
+
 ```bash
 npm run test
 npm run test:watch
 ```
 
 ### Build
+
 ```bash
 npm run build
 npm run start
@@ -161,6 +176,7 @@ npm run start
 ## 📞 Support
 
 Bei Fragen oder Problemen:
+
 - GitHub Issues erstellen
 - Dokumentation durchlesen
 - Community-Forum besuchen
@@ -172,4 +188,3 @@ MIT License - siehe LICENSE Datei für Details.
 ---
 
 **Helvenda** - Der Schweizer Online-Marktplatz für alle.
-

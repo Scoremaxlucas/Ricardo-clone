@@ -5,19 +5,13 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * API-Route für Käufer: Stornierung wenn Verkäufer nicht innerhalb von 7 Tagen kontaktiert hat
- * Ricardo-Style: Käufer-Schutz bei Nichteinhaltung der Kontaktfrist
+ * Käufer-Schutz bei Nichteinhaltung der Kontaktfrist
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -28,18 +22,15 @@ export async function POST(
       include: {
         watch: {
           include: {
-            seller: true
-          }
+            seller: true,
+          },
         },
-        buyer: true
-      }
+        buyer: true,
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob der Benutzer der Käufer ist
@@ -64,26 +55,27 @@ export async function POST(
     const now = new Date()
     const contactDeadline = purchase.contactDeadline ? new Date(purchase.contactDeadline) : null
     const hasSellerContacted = purchase.sellerContactedAt !== null
-    
+
     // Prüfe ob Kontaktfrist überschritten
     if (!contactDeadline || contactDeadline > now) {
-      const daysRemaining = contactDeadline 
+      const daysRemaining = contactDeadline
         ? Math.ceil((contactDeadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
         : 7
       return NextResponse.json(
-        { 
+        {
           message: `Die Kontaktfrist läuft noch ${daysRemaining} Tag(e). Bitte warten Sie auf Kontakt vom Verkäufer.`,
-          daysRemaining
+          daysRemaining,
         },
         { status: 400 }
       )
     }
-    
+
     // Prüfe ob Verkäufer kontaktiert hat
     if (hasSellerContacted) {
       return NextResponse.json(
-        { 
-          message: 'Der Kauf kann nicht storniert werden, da der Verkäufer bereits Kontakt aufgenommen hat.',
+        {
+          message:
+            'Der Kauf kann nicht storniert werden, da der Verkäufer bereits Kontakt aufgenommen hat.',
         },
         { status: 400 }
       )
@@ -93,8 +85,8 @@ export async function POST(
     const invoice = await prisma.invoice.findFirst({
       where: {
         saleId: id,
-        sellerId: purchase.watch.sellerId
-      }
+        sellerId: purchase.watch.sellerId,
+      },
     })
 
     // Storniere Purchase
@@ -108,35 +100,39 @@ export async function POST(
         paymentConfirmed: false,
         paymentConfirmedAt: null,
         itemReceived: false,
-        itemReceivedAt: null
-      }
+        itemReceivedAt: null,
+      },
     })
 
-    // Storniere Rechnung (RICARDO-STYLE: Rückerstattung der Kommission)
+    // Storniere Rechnung (Rückerstattung der Kommission)
     if (invoice) {
       await prisma.invoice.update({
         where: { id: invoice.id },
         data: {
           status: 'cancelled',
-          refundedAt: new Date()
-        }
+          refundedAt: new Date(),
+        },
       })
-      console.log(`[purchases/cancel-by-buyer] ✅ Rechnung ${invoice.invoiceNumber} storniert (Rückerstattung der Kommission)`)
+      console.log(
+        `[purchases/cancel-by-buyer] ✅ Rechnung ${invoice.invoiceNumber} storniert (Rückerstattung der Kommission)`
+      )
     }
 
-    // RICARDO-STYLE: Watch wird automatisch wieder verfügbar
+    // Artikel wird automatisch wieder verfügbar
     // Prüfe ob es noch andere aktive Purchases gibt
     const otherActivePurchases = await prisma.purchase.findMany({
       where: {
         watchId: purchase.watchId,
         id: { not: id },
-        status: { not: 'cancelled' }
-      }
+        status: { not: 'cancelled' },
+      },
     })
 
     if (otherActivePurchases.length === 0) {
-      console.log(`[purchases/cancel-by-buyer] ✅ Watch ${purchase.watchId} ist wieder verfügbar (keine anderen aktiven Purchases)`)
-      
+      console.log(
+        `[purchases/cancel-by-buyer] ✅ Watch ${purchase.watchId} ist wieder verfügbar (keine anderen aktiven Purchases)`
+      )
+
       // Falls es eine Auktion war und autoRenew aktiv ist, könnte die Auktion verlängert werden
       // Aber das sollte der Verkäufer selbst entscheiden, daher machen wir es hier nicht automatisch
     }
@@ -154,22 +150,29 @@ export async function POST(
         },
       })
     } catch (notifError) {
-      console.error('[purchases/cancel-by-buyer] Fehler beim Erstellen der Benachrichtigung:', notifError)
+      console.error(
+        '[purchases/cancel-by-buyer] Fehler beim Erstellen der Benachrichtigung:',
+        notifError
+      )
     }
 
-    console.log(`[purchases/cancel-by-buyer] Käufer ${session.user.email} hat Purchase ${id} storniert (Kontaktfrist nicht eingehalten)`)
+    console.log(
+      `[purchases/cancel-by-buyer] Käufer ${session.user.email} hat Purchase ${id} storniert (Kontaktfrist nicht eingehalten)`
+    )
 
     return NextResponse.json({
       message: 'Kauf erfolgreich storniert. Die Kommission wurde zurückerstattet.',
       purchase: {
         id,
-        status: 'cancelled'
+        status: 'cancelled',
       },
-      invoice: invoice ? {
-        id: invoice.id,
-        invoiceNumber: invoice.invoiceNumber,
-        status: 'cancelled'
-      } : null
+      invoice: invoice
+        ? {
+            id: invoice.id,
+            invoiceNumber: invoice.invoiceNumber,
+            status: 'cancelled',
+          }
+        : null,
     })
   } catch (error: any) {
     console.error('Error cancelling purchase by buyer:', error)
@@ -179,10 +182,3 @@ export async function POST(
     )
   }
 }
-
-
-
-
-
-
-

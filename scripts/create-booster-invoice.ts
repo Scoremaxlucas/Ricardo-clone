@@ -4,15 +4,15 @@ const prisma = new PrismaClient()
 
 async function main() {
   console.log('🔄 Erstelle Booster-Rechnung für vorhandene Uhr...\n')
-  
+
   // Finde Uhr mit Booster
   const watch = await prisma.watch.findFirst({
     where: {
-      boosters: { not: null }
+      boosters: { not: null },
     },
     include: {
-      seller: true
-    }
+      seller: true,
+    },
   })
 
   if (!watch) {
@@ -31,10 +31,10 @@ async function main() {
       items: {
         some: {
           watchId: watch.id,
-          description: { startsWith: 'Booster:' }
-        }
-      }
-    }
+          description: { startsWith: 'Booster:' },
+        },
+      },
+    },
   })
 
   if (existingInvoice) {
@@ -55,7 +55,7 @@ async function main() {
 
   // Hole Booster-Preise
   const boosterPrices = await prisma.boosterPrice.findMany({
-    where: { isActive: true }
+    where: { isActive: true },
   })
 
   for (const boosterCode of selectedBoosters) {
@@ -72,12 +72,12 @@ async function main() {
       const lastInvoice = await prisma.invoice.findFirst({
         where: {
           invoiceNumber: {
-            startsWith: `REV-${year}-`
-          }
+            startsWith: `REV-${year}-`,
+          },
         },
         orderBy: {
-          invoiceNumber: 'desc'
-        }
+          invoiceNumber: 'desc',
+        },
       })
 
       let invoiceNumber = `REV-${year}-001`
@@ -99,15 +99,17 @@ async function main() {
           status: 'pending',
           dueDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000),
           items: {
-            create: [{
-              watchId: watch.id,
-              description: `Booster: ${booster.name}`,
-              quantity: 1,
-              price: booster.price,
-              total: booster.price
-            }]
-          }
-        }
+            create: [
+              {
+                watchId: watch.id,
+                description: `Booster: ${booster.name}`,
+                quantity: 1,
+                price: booster.price,
+                total: booster.price,
+              },
+            ],
+          },
+        },
       })
 
       console.log(`✅ Booster-Rechnung erstellt: ${invoice.invoiceNumber}`)
@@ -121,13 +123,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error('Error:', e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-
-
-

@@ -4,17 +4,11 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
 // isPublic Status einer Nachricht ändern (nur Verkäufer)
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -27,17 +21,14 @@ export async function PATCH(
       include: {
         watch: {
           select: {
-            sellerId: true
-          }
-        }
-      }
+            sellerId: true,
+          },
+        },
+      },
     })
 
     if (!message) {
-      return NextResponse.json(
-        { message: 'Nachricht nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Nachricht nicht gefunden' }, { status: 404 })
     }
 
     // Nur der Verkäufer kann isPublic ändern
@@ -59,19 +50,21 @@ export async function PATCH(
           receiverId: message.watch.sellerId, // An den Verkäufer gerichtet
           isPublic: false, // Noch privat
           createdAt: {
-            lt: message.createdAt // Vor dieser Antwort
-          }
+            lt: message.createdAt, // Vor dieser Antwort
+          },
         },
-        orderBy: { createdAt: 'desc' }
+        orderBy: { createdAt: 'desc' },
       })
 
       // Wenn eine Frage gefunden wurde, mache sie auch öffentlich
       if (originalQuestion) {
         await prisma.message.update({
           where: { id: originalQuestion.id },
-          data: { isPublic: true }
+          data: { isPublic: true },
         })
-        console.log(`Frage ${originalQuestion.id} wurde automatisch öffentlich gemacht, da Antwort ${message.id} öffentlich wurde`)
+        console.log(
+          `Frage ${originalQuestion.id} wurde automatisch öffentlich gemacht, da Antwort ${message.id} öffentlich wurde`
+        )
       }
     }
 
@@ -84,17 +77,17 @@ export async function PATCH(
             id: true,
             name: true,
             email: true,
-            image: true
-          }
+            image: true,
+          },
         },
         receiver: {
           select: {
             id: true,
             name: true,
-            email: true
-          }
-        }
-      }
+            email: true,
+          },
+        },
+      },
     })
 
     return NextResponse.json({ message: updatedMessage })
@@ -106,4 +99,3 @@ export async function PATCH(
     )
   }
 }
-

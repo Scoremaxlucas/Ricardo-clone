@@ -1,7 +1,17 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { CreditCard, Building2, Smartphone, Copy, CheckCircle, QrCode, Loader2, AlertCircle, Wallet } from 'lucide-react'
+import {
+  CreditCard,
+  Building2,
+  Smartphone,
+  Copy,
+  CheckCircle,
+  QrCode,
+  Loader2,
+  AlertCircle,
+  Wallet,
+} from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { InvoicePaymentForm } from './InvoicePaymentForm'
 import { TwintPaymentForm } from './TwintPaymentForm'
@@ -37,7 +47,12 @@ interface InvoicePaymentMethodsProps {
 
 type PaymentMethod = 'bank' | 'card_or_twint' | 'paypal'
 
-export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaymentSuccess }: InvoicePaymentMethodsProps) {
+export function InvoicePaymentMethods({
+  invoiceId,
+  invoiceNumber,
+  amount,
+  onPaymentSuccess,
+}: InvoicePaymentMethodsProps) {
   const [selectedMethod, setSelectedMethod] = useState<PaymentMethod | null>(null)
   const [paymentInfo, setPaymentInfo] = useState<InvoicePaymentInfo | null>(null)
   const [loading, setLoading] = useState(true)
@@ -77,114 +92,104 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
     return iban.replace(/(.{4})/g, '$1 ').trim()
   }
 
-        if (loading) {
-          return (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="flex items-center justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-                <span className="ml-2 text-gray-600">Lade Zahlungsmethoden...</span>
-              </div>
-            </div>
-          )
-        }
+  if (loading) {
+    return (
+      <div className="rounded-lg bg-white p-6 shadow-md">
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
+          <span className="ml-2 text-gray-600">Lade Zahlungsmethoden...</span>
+        </div>
+      </div>
+    )
+  }
 
-        if (!paymentInfo) {
-          return (
-            <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-              <div className="flex items-start gap-2">
-                <AlertCircle className="h-5 w-5 text-yellow-600 flex-shrink-0 mt-0.5" />
-                <div className="text-sm text-yellow-800">
-                  Fehler beim Laden der Zahlungsinformationen
+  if (!paymentInfo) {
+    return (
+      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+        <div className="flex items-start gap-2">
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
+          <div className="text-sm text-yellow-800">Fehler beim Laden der Zahlungsinformationen</div>
+        </div>
+      </div>
+    )
+  }
+
+  // Prüfe ob es eine Credit Note ist (keine IBAN = Credit Note)
+  const isCreditNote = !paymentInfo.iban || paymentInfo.invoiceNumber.startsWith('KORR-')
+
+  // Bei Credit Notes: Zeige Hinweis statt Zahlungsmethoden
+  if (isCreditNote) {
+    return (
+      <div className="rounded-lg bg-white p-6 shadow-md">
+        <div className="rounded-lg border border-green-200 bg-green-50 p-6">
+          <div className="flex items-start gap-3">
+            <CheckCircle className="mt-0.5 h-6 w-6 flex-shrink-0 text-green-600" />
+            <div className="flex-1">
+              <h3 className="mb-2 text-lg font-semibold text-green-900">
+                Korrektur-Abrechnung / Gutschrift
+              </h3>
+              <p className="mb-3 text-sm text-green-800">
+                Diese Korrektur-Abrechnung stellt eine Gutschrift dar. Es ist keine Zahlung
+                erforderlich.
+              </p>
+              <div className="rounded-lg border border-green-200 bg-white p-4">
+                <div className="whitespace-pre-line text-sm text-gray-700">
+                  {paymentInfo.paymentInstructions ||
+                    `Korrektur-Abrechnung ${paymentInfo.invoiceNumber}\n\nDer Betrag wird automatisch gutgeschrieben oder mit einer offenen Rechnung verrechnet.`}
                 </div>
               </div>
             </div>
-          )
-        }
+          </div>
+        </div>
+      </div>
+    )
+  }
 
-        // Prüfe ob es eine Credit Note ist (keine IBAN = Credit Note)
-        const isCreditNote = !paymentInfo.iban || paymentInfo.invoiceNumber.startsWith('KORR-')
-
-        // Bei Credit Notes: Zeige Hinweis statt Zahlungsmethoden
-        if (isCreditNote) {
-          return (
-            <div className="bg-white rounded-lg shadow-md p-6">
-              <div className="bg-green-50 border border-green-200 rounded-lg p-6">
-                <div className="flex items-start gap-3">
-                  <CheckCircle className="h-6 w-6 text-green-600 flex-shrink-0 mt-0.5" />
-                  <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-green-900 mb-2">
-                      Korrektur-Abrechnung / Gutschrift
-                    </h3>
-                    <p className="text-sm text-green-800 mb-3">
-                      Diese Korrektur-Abrechnung stellt eine Gutschrift dar. Es ist keine Zahlung erforderlich.
-                    </p>
-                    <div className="bg-white rounded-lg p-4 border border-green-200">
-                      <div className="text-sm text-gray-700 whitespace-pre-line">
-                        {paymentInfo.paymentInstructions || `Korrektur-Abrechnung ${paymentInfo.invoiceNumber}\n\nDer Betrag wird automatisch gutgeschrieben oder mit einer offenen Rechnung verrechnet.`}
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          )
-        }
-
-        return (
-          <div className="space-y-6">
+  return (
+    <div className="space-y-6">
       {/* Zahlungsmethoden-Auswahl */}
       {!selectedMethod && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <h3 className="text-lg font-semibold text-gray-900 mb-4">
-            Zahlungsmethode wählen
-          </h3>
-          <div className={`grid grid-cols-1 gap-4 ${
-            // Berechne Anzahl der verfügbaren Zahlungsmethoden
-            // Banküberweisung (1), Kreditkarte/TWINT kombiniert (1), PayPal (optional)
-            (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? 1 : 0) + 
-            2 // Banküberweisung + Kreditkarte/TWINT sind immer verfügbar
-          } > 2 ? 'md:grid-cols-2 lg:grid-cols-3' : 
-            (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID) ? 'md:grid-cols-2' : 
-            'md:grid-cols-1'
-          }`}>
+        <div className="rounded-lg bg-white p-6 shadow-md">
+          <h3 className="mb-4 text-lg font-semibold text-gray-900">Zahlungsmethode wählen</h3>
+          <div
+            className={`grid grid-cols-1 gap-4 ${
+              // Berechne Anzahl der verfügbaren Zahlungsmethoden
+              // Banküberweisung (1), Kreditkarte/TWINT kombiniert (1), PayPal (optional)
+              (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? 1 : 0) + 2 // Banküberweisung + Kreditkarte/TWINT sind immer verfügbar
+            } > 2 ? 'md:grid-cols-2 lg:grid-cols-3' : (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID) ? 'md:grid-cols-2' : 'md:grid-cols-1' }`}
+          >
             {/* Banküberweisung */}
             <button
               onClick={() => setSelectedMethod('bank')}
-              className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+              className="rounded-lg border-2 border-gray-200 p-6 text-left transition-all hover:border-blue-500 hover:bg-blue-50"
             >
-              <Building2 className="h-8 w-8 text-blue-600 mb-3" />
-              <h4 className="font-semibold text-gray-900 mb-1">Banküberweisung</h4>
-              <p className="text-sm text-gray-600">
-                Mit QR-Code oder manuell
-              </p>
+              <Building2 className="mb-3 h-8 w-8 text-blue-600" />
+              <h4 className="mb-1 font-semibold text-gray-900">Banküberweisung</h4>
+              <p className="text-sm text-gray-600">Mit QR-Code oder manuell</p>
             </button>
 
             {/* Kreditkarte / TWINT - kombiniert */}
             <button
               onClick={() => setSelectedMethod('card_or_twint')}
-              className="p-6 border-2 border-gray-200 rounded-lg hover:border-purple-500 hover:bg-purple-50 transition-all text-left"
+              className="rounded-lg border-2 border-gray-200 p-6 text-left transition-all hover:border-purple-500 hover:bg-purple-50"
             >
-              <div className="flex items-center gap-2 mb-3">
+              <div className="mb-3 flex items-center gap-2">
                 <CreditCard className="h-8 w-8 text-purple-600" />
                 <Smartphone className="h-6 w-6 text-green-600" />
               </div>
-              <h4 className="font-semibold text-gray-900 mb-1">Kreditkarte / TWINT</h4>
-              <p className="text-sm text-gray-600">
-                Sofortige Zahlung
-              </p>
+              <h4 className="mb-1 font-semibold text-gray-900">Kreditkarte / TWINT</h4>
+              <p className="text-sm text-gray-600">Sofortige Zahlung</p>
             </button>
 
             {/* PayPal */}
             {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
               <button
                 onClick={() => setSelectedMethod('paypal')}
-                className="p-6 border-2 border-gray-200 rounded-lg hover:border-blue-500 hover:bg-blue-50 transition-all text-left"
+                className="rounded-lg border-2 border-gray-200 p-6 text-left transition-all hover:border-blue-500 hover:bg-blue-50"
               >
-                <Wallet className="h-8 w-8 text-blue-600 mb-3" />
-                <h4 className="font-semibold text-gray-900 mb-1">PayPal</h4>
-                <p className="text-sm text-gray-600">
-                  Schnell und sicher
-                </p>
+                <Wallet className="mb-3 h-8 w-8 text-blue-600" />
+                <h4 className="mb-1 font-semibold text-gray-900">PayPal</h4>
+                <p className="text-sm text-gray-600">Schnell und sicher</p>
               </button>
             )}
           </div>
@@ -193,9 +198,9 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
 
       {/* Banküberweisung */}
       {selectedMethod === 'bank' && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <div className="rounded-lg bg-white p-6 shadow-md">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
               <Building2 className="h-5 w-5 text-blue-600" />
               Banküberweisung
             </h3>
@@ -209,8 +214,8 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
 
           <div className="space-y-4">
             {/* Betrag */}
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-sm text-gray-600 mb-1">Zu zahlender Betrag</div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <div className="mb-1 text-sm text-gray-600">Zu zahlender Betrag</div>
               <div className="text-2xl font-bold text-blue-700">
                 {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
               </div>
@@ -224,7 +229,7 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
                   <span className="text-gray-900">{paymentInfo.accountHolder}</span>
                   <button
                     onClick={() => copyToClipboard(paymentInfo.accountHolder, 'Empfänger')}
-                    className="p-1 hover:bg-gray-100 rounded"
+                    className="rounded p-1 hover:bg-gray-100"
                   >
                     {copied === 'Empfänger' ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -241,7 +246,7 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
                   <span className="font-mono text-gray-900">{formatIban(paymentInfo.iban)}</span>
                   <button
                     onClick={() => copyToClipboard(paymentInfo.iban.replace(/\s/g, ''), 'IBAN')}
-                    className="p-1 hover:bg-gray-100 rounded"
+                    className="rounded p-1 hover:bg-gray-100"
                   >
                     {copied === 'IBAN' ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -258,7 +263,7 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
                   <span className="font-mono text-gray-900">{paymentInfo.bic}</span>
                   <button
                     onClick={() => copyToClipboard(paymentInfo.bic, 'BIC')}
-                    className="p-1 hover:bg-gray-100 rounded"
+                    className="rounded p-1 hover:bg-gray-100"
                   >
                     {copied === 'BIC' ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -275,7 +280,7 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
                   <span className="font-mono text-gray-900">{paymentInfo.reference}</span>
                   <button
                     onClick={() => copyToClipboard(paymentInfo.reference, 'Referenz')}
-                    className="p-1 hover:bg-gray-100 rounded"
+                    className="rounded p-1 hover:bg-gray-100"
                   >
                     {copied === 'Referenz' ? (
                       <CheckCircle className="h-4 w-4 text-green-600" />
@@ -284,7 +289,7 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
                     )}
                   </button>
                 </div>
-                <p className="text-xs text-gray-500 mt-1">
+                <p className="mt-1 text-xs text-gray-500">
                   Bitte verwenden Sie diese Referenz bei der Überweisung
                 </p>
               </div>
@@ -295,17 +300,17 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
               <div>
                 <button
                   onClick={() => setShowQR(!showQR)}
-                  className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium mb-2"
+                  className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
                 >
                   <QrCode className="h-4 w-4" />
                   {showQR ? 'QR-Code ausblenden' : 'QR-Code anzeigen'}
                 </button>
                 {showQR && (
-                  <div className="p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-center">
+                  <div className="flex justify-center rounded-lg border border-gray-200 bg-gray-50 p-4">
                     <img
                       src={paymentInfo.qrCodeDataUrl}
                       alt="QR-Code für Zahlung"
-                      className="w-48 h-48"
+                      className="h-48 w-48"
                     />
                   </div>
                 )}
@@ -313,19 +318,20 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
             )}
 
             {/* Zahlungsanweisung */}
-            <div className="p-3 bg-gray-50 rounded-lg border border-gray-200">
-              <div className="text-sm text-gray-700 whitespace-pre-line">
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+              <div className="whitespace-pre-line text-sm text-gray-700">
                 {paymentInfo.paymentInstructions}
               </div>
             </div>
 
             {/* Hinweis */}
-            <div className="p-3 bg-blue-50 border border-blue-200 rounded-lg">
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
               <div className="flex items-start gap-2">
-                <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
                 <div className="text-sm text-blue-800">
-                  <strong>Wichtig:</strong> Bitte überweisen Sie den Betrag bis zum Fälligkeitsdatum.
-                  Verwenden Sie die Referenz bei der Überweisung, damit die Zahlung zugeordnet werden kann.
+                  <strong>Wichtig:</strong> Bitte überweisen Sie den Betrag bis zum
+                  Fälligkeitsdatum. Verwenden Sie die Referenz bei der Überweisung, damit die
+                  Zahlung zugeordnet werden kann.
                 </div>
               </div>
             </div>
@@ -335,9 +341,9 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
 
       {/* Kreditkarte / TWINT - kombiniert */}
       {selectedMethod === 'card_or_twint' && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <div className="rounded-lg bg-white p-6 shadow-md">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
               <div className="flex items-center gap-2">
                 <CreditCard className="h-5 w-5 text-purple-600" />
                 <span className="text-gray-400">/</span>
@@ -355,8 +361,8 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
 
           <div className="space-y-6">
             {/* Betrag */}
-            <div className="p-3 bg-purple-50 rounded-lg border border-purple-200">
-              <div className="text-sm text-gray-600 mb-1">Zu zahlender Betrag</div>
+            <div className="rounded-lg border border-purple-200 bg-purple-50 p-3">
+              <div className="mb-1 text-sm text-gray-600">Zu zahlender Betrag</div>
               <div className="text-2xl font-bold text-purple-700">
                 {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
               </div>
@@ -364,7 +370,7 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
 
             {/* Kreditkarte / TWINT - Einheitliches Formular */}
             <div className="border-t border-gray-200 pt-6">
-              <h4 className="text-md font-semibold text-gray-900 mb-4 flex items-center gap-2">
+              <h4 className="text-md mb-4 flex items-center gap-2 font-semibold text-gray-900">
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-purple-600" />
                   <span className="text-gray-400">/</span>
@@ -385,9 +391,9 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
 
       {/* PayPal */}
       {selectedMethod === 'paypal' && process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
-        <div className="bg-white rounded-lg shadow-md p-6">
-          <div className="flex items-center justify-between mb-4">
-            <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+        <div className="rounded-lg bg-white p-6 shadow-md">
+          <div className="mb-4 flex items-center justify-between">
+            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
               <Wallet className="h-5 w-5 text-blue-600" />
               PayPal-Zahlung
             </h3>
@@ -401,8 +407,8 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
 
           <div className="space-y-4">
             {/* Betrag */}
-            <div className="p-3 bg-blue-50 rounded-lg border border-blue-200">
-              <div className="text-sm text-gray-600 mb-1">Zu zahlender Betrag</div>
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+              <div className="mb-1 text-sm text-gray-600">Zu zahlender Betrag</div>
               <div className="text-2xl font-bold text-blue-700">
                 {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
               </div>
@@ -421,4 +427,3 @@ export function InvoicePaymentMethods({ invoiceId, invoiceNumber, amount, onPaym
     </div>
   )
 }
-

@@ -8,7 +8,7 @@ async function main() {
 
   // Lösche veraltete watch-out Benutzer und deren Daten
   console.log('🗑️  Lösche veraltete watch-out Benutzer...')
-  
+
   // Finde die Benutzer zuerst
   const watchOutUsers = await prisma.user.findMany({
     where: {
@@ -21,14 +21,14 @@ async function main() {
 
   if (watchOutUsers.length > 0) {
     const userIds = watchOutUsers.map(u => u.id)
-    
+
     // Finde alle Watches dieser Benutzer
     const watches = await prisma.watch.findMany({
       where: { sellerId: { in: userIds } },
       select: { id: true },
     })
     const watchIds = watches.map(w => w.id)
-    
+
     // Lösche zuerst alle abhängigen Daten der Watches
     if (watchIds.length > 0) {
       await prisma.bid.deleteMany({ where: { watchId: { in: watchIds } } })
@@ -44,10 +44,10 @@ async function main() {
       await prisma.moderationHistory.deleteMany({ where: { watchId: { in: watchIds } } })
       await prisma.invoiceItem.deleteMany({ where: { watchId: { in: watchIds } } })
     }
-    
+
     // Lösche dann die Watches
     await prisma.watch.deleteMany({ where: { sellerId: { in: userIds } } })
-    
+
     // Lösche alle anderen abhängigen Daten der Benutzer
     await prisma.bid.deleteMany({ where: { userId: { in: userIds } } })
     await prisma.favorite.deleteMany({ where: { userId: { in: userIds } } })
@@ -66,7 +66,7 @@ async function main() {
     await prisma.report.deleteMany({ where: { reviewedBy: { in: userIds } } })
     await prisma.adminNote.deleteMany({ where: { adminId: { in: userIds } } })
     await prisma.moderationHistory.deleteMany({ where: { adminId: { in: userIds } } })
-    
+
     // Lösche dann die Benutzer
     await prisma.user.deleteMany({
       where: {
@@ -164,14 +164,15 @@ async function main() {
 
   // Test Uhren erstellen (falls noch keine vorhanden)
   const existingWatches = await prisma.watch.count()
-  
+
   if (existingWatches === 0) {
     console.log('📦 Erstelle Test-Artikel...')
-    
+
     const watch1 = await prisma.watch.create({
       data: {
         title: 'Rolex Submariner Date 116610LN',
-        description: 'Klassische Rolex Submariner in sehr gutem Zustand. Komplett mit Original-Box und Papiere.',
+        description:
+          'Klassische Rolex Submariner in sehr gutem Zustand. Komplett mit Original-Box und Papiere.',
         brand: 'Rolex',
         model: 'Submariner Date',
         year: 2020,
@@ -182,14 +183,13 @@ async function main() {
         price: 8500,
         isAuction: true,
         auctionEnd: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 Tage
-        images: JSON.stringify(['https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800']),
+        images: JSON.stringify([
+          'https://images.unsplash.com/photo-1523275335684-37898b6baf30?w=800',
+        ]),
         sellerId: gregor.id,
         categories: {
-          create: [
-            { categoryId: categories[0].id },
-            { categoryId: categories[2].id }
-          ]
-        }
+          create: [{ categoryId: categories[0].id }, { categoryId: categories[2].id }],
+        },
       },
     })
 
@@ -206,13 +206,13 @@ async function main() {
         caseDiameter: 42.0,
         price: 3200,
         isAuction: false,
-        images: JSON.stringify(['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800']),
+        images: JSON.stringify([
+          'https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800',
+        ]),
         sellerId: noah.id,
         categories: {
-          create: [
-            { categoryId: categories[1].id }
-          ]
-        }
+          create: [{ categoryId: categories[1].id }],
+        },
       },
     })
 
@@ -248,7 +248,7 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error(e)
     process.exit(1)
   })

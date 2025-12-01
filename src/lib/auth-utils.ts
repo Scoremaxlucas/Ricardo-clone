@@ -12,13 +12,13 @@ export async function checkAdmin(session: Session | null): Promise<boolean> {
 
   // Prüfe Admin-Status aus Session
   const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
-  
+
   // Prüfe ob User Admin ist (per ID oder E-Mail)
   let user = null
   if (session.user.id) {
     user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
 
@@ -26,7 +26,7 @@ export async function checkAdmin(session: Session | null): Promise<boolean> {
   if (!user && session.user.email) {
     user = await prisma.user.findUnique({
       where: { email: session.user.email },
-      select: { isAdmin: true, email: true }
+      select: { isAdmin: true, email: true },
     })
   }
 

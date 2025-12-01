@@ -15,12 +15,14 @@ Gmail bietet einen kostenlosen SMTP-Server, den Sie für bis zu 500 E-Mails pro 
 **Wichtig:** Sie können NICHT einfach Ihr normales Gmail-Passwort verwenden. Sie müssen ein "App-Passwort" erstellen.
 
 **Schritt 1: Zwei-Faktor-Authentifizierung aktivieren**
+
 - Gehen Sie zu [Google Account](https://myaccount.google.com/)
 - Klicken Sie auf "Sicherheit" (Security)
 - Scrollen Sie zu "Zwei-Faktor-Authentifizierung" (2-Step Verification)
 - Aktivieren Sie die Zwei-Faktor-Authentifizierung, falls noch nicht aktiviert
 
 **Schritt 2: App-Passwort erstellen**
+
 - Gehen Sie zurück zu "Sicherheit"
 - Scrollen Sie zu "App-Passwörter" (App passwords)
 - Falls Sie "App-Passwörter" nicht sehen:
@@ -49,6 +51,7 @@ SMTP_FROM=ihre-email@gmail.com
 ```
 
 **Beispiel:**
+
 ```bash
 SMTP_HOST=smtp.gmail.com
 SMTP_PORT=587
@@ -59,6 +62,7 @@ SMTP_FROM=max.mustermann@gmail.com
 ```
 
 **Wichtig:**
+
 - `SMTP_USER`: Ihre vollständige Gmail-Adresse
 - `SMTP_PASS`: Das App-Passwort (16 Zeichen, OHNE Leerzeichen)
 - `SMTP_FROM`: Kann gleich wie `SMTP_USER` sein oder eine andere Adresse
@@ -121,25 +125,30 @@ SMTP_FROM=noreply@ihre-domain.com
 ## Häufige Probleme
 
 ### Problem 1: "Invalid login credentials"
+
 - **Lösung:** Stellen Sie sicher, dass Sie ein App-Passwort verwenden, nicht Ihr normales Gmail-Passwort
 - **Lösung:** Überprüfen Sie, dass Zwei-Faktor-Authentifizierung aktiviert ist
 
 ### Problem 2: "Connection timeout"
+
 - **Lösung:** Überprüfen Sie, ob Port 587 nicht von Ihrer Firewall blockiert wird
 - **Lösung:** Versuchen Sie Port 465 mit `SMTP_SECURE=true`
 
 ### Problem 3: "E-Mail wird nicht empfangen"
+
 - **Lösung:** Überprüfen Sie den Spam-Ordner
 - **Lösung:** Stellen Sie sicher, dass `SMTP_FROM` korrekt gesetzt ist
 - **Lösung:** Überprüfen Sie die Server-Logs auf Fehler
 
 ### Problem 4: "Too many emails sent"
+
 - **Gmail Limit:** 500 E-Mails pro Tag
 - **Lösung:** Verwenden Sie Resend für höhere Limits
 
 ## Sicherheit
 
 ⚠️ **WICHTIG:**
+
 - Speichern Sie niemals Passwörter im Code
 - Verwenden Sie immer Umgebungsvariablen (`.env`)
 - Fügen Sie `.env` zu `.gitignore` hinzu
@@ -148,20 +157,15 @@ SMTP_FROM=noreply@ihre-domain.com
 
 ## Vergleich: SMTP vs. Resend
 
-| Feature | SMTP (Gmail) | Resend |
-|--------|--------------|--------|
-| Kostenlos | ✅ Ja | ✅ Ja (bis 3.000/Monat) |
-| Setup-Aufwand | ⚠️ Mittel (App-Passwort) | ✅ Einfach (nur API Key) |
-| Tägliches Limit | 500 E-Mails | 3.000 E-Mails/Monat |
-| Zuverlässigkeit | ⚠️ Abhängig von Gmail | ✅ Professioneller Service |
-| Spam-Filter | ⚠️ Kann in Spam landen | ✅ Bessere Zustellung |
+| Feature         | SMTP (Gmail)             | Resend                     |
+| --------------- | ------------------------ | -------------------------- |
+| Kostenlos       | ✅ Ja                    | ✅ Ja (bis 3.000/Monat)    |
+| Setup-Aufwand   | ⚠️ Mittel (App-Passwort) | ✅ Einfach (nur API Key)   |
+| Tägliches Limit | 500 E-Mails              | 3.000 E-Mails/Monat        |
+| Zuverlässigkeit | ⚠️ Abhängig von Gmail    | ✅ Professioneller Service |
+| Spam-Filter     | ⚠️ Kann in Spam landen   | ✅ Bessere Zustellung      |
 
 ## Empfehlung
 
 - **Für Entwicklung/Test:** SMTP mit Gmail ist ausreichend
 - **Für Produktion:** Resend wird empfohlen (bessere Zustellung, höhere Limits)
-
-
-
-
-

@@ -3,19 +3,13 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { newBooster } = await request.json()
@@ -33,15 +27,12 @@ export async function POST(
       include: {
         bids: true,
         purchases: { take: 1 },
-        sales: { take: 1 }
-      }
+        sales: { take: 1 },
+      },
     })
 
     if (!watch) {
-      return NextResponse.json(
-        { message: 'Uhr nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Uhr nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob User der Verkäufer ist
@@ -55,7 +46,10 @@ export async function POST(
     // Prüfe ob bereits Gebote vorhanden sind
     if (watch.bids.length > 0) {
       return NextResponse.json(
-        { message: 'Der Booster kann nicht mehr geändert werden, da bereits Gebote abgegeben wurden' },
+        {
+          message:
+            'Der Booster kann nicht mehr geändert werden, da bereits Gebote abgegeben wurden',
+        },
         { status: 400 }
       )
     }
@@ -80,7 +74,7 @@ export async function POST(
 
     if (currentBoosterCode) {
       const currentBooster = await prisma.boosterPrice.findUnique({
-        where: { code: currentBoosterCode }
+        where: { code: currentBoosterCode },
       })
       if (currentBooster) {
         currentBoosterPrice = currentBooster.price
@@ -88,14 +82,11 @@ export async function POST(
     }
 
     const newBoosterRecord = await prisma.boosterPrice.findUnique({
-      where: { code: newBooster }
+      where: { code: newBooster },
     })
 
     if (!newBoosterRecord) {
-      return NextResponse.json(
-        { message: 'Booster nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Booster nicht gefunden' }, { status: 404 })
     }
 
     newBoosterPrice = newBoosterRecord.price
@@ -107,7 +98,10 @@ export async function POST(
     // Wenn kein Booster vorhanden ist, kann jeder Booster hinzugefügt werden
     if (currentBoosterCode && priceDifference <= 0) {
       return NextResponse.json(
-        { message: 'Der neue Booster muss teurer sein als der aktuelle Booster. Verwenden Sie die Bearbeitungsseite für Downgrades.' },
+        {
+          message:
+            'Der neue Booster muss teurer sein als der aktuelle Booster. Verwenden Sie die Bearbeitungsseite für Downgrades.',
+        },
         { status: 400 }
       )
     }
@@ -116,8 +110,8 @@ export async function POST(
     await prisma.watch.update({
       where: { id },
       data: {
-        boosters: JSON.stringify([newBooster])
-      }
+        boosters: JSON.stringify([newBooster]),
+      },
     })
 
     // Erstelle Rechnung für die Differenz (oder den vollen Preis, wenn kein Booster vorhanden war)
@@ -136,12 +130,12 @@ export async function POST(
     const lastInvoice = await prisma.invoice.findFirst({
       where: {
         invoiceNumber: {
-          startsWith: `REV-${year}-`
-        }
+          startsWith: `REV-${year}-`,
+        },
       },
       orderBy: {
-        invoiceNumber: 'desc'
-      }
+        invoiceNumber: 'desc',
+      },
     })
 
     let invoiceNumber = `REV-${year}-001`
@@ -163,24 +157,28 @@ export async function POST(
         vatAmount: roundedVatAmount,
         total: roundedTotal,
         status: 'pending',
-        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist (wie Ricardo)
+        dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist
         items: {
-          create: [{
-            watchId: watch.id,
-            description: currentBoosterCode 
-              ? `Booster-Upgrade: ${newBoosterRecord.name} (Differenz)`
-              : `Booster: ${newBoosterRecord.name}`,
-            quantity: 1,
-            price: roundedSubtotal,
-            total: roundedSubtotal
-          }]
-        }
-      }
+          create: [
+            {
+              watchId: watch.id,
+              description: currentBoosterCode
+                ? `Booster-Upgrade: ${newBoosterRecord.name} (Differenz)`
+                : `Booster: ${newBoosterRecord.name}`,
+              quantity: 1,
+              price: roundedSubtotal,
+              total: roundedSubtotal,
+            },
+          ],
+        },
+      },
     })
 
-    console.log(`[upgrade-booster] Booster-Rechnung erstellt: ${invoiceNumber} für ${newBoosterRecord.name} (${currentBoosterCode ? 'Differenz' : 'Vollpreis'} CHF ${roundedTotal.toFixed(2)} inkl. MwSt) - Watch ${watch.id}`)
+    console.log(
+      `[upgrade-booster] Booster-Rechnung erstellt: ${invoiceNumber} für ${newBoosterRecord.name} (${currentBoosterCode ? 'Differenz' : 'Vollpreis'} CHF ${roundedTotal.toFixed(2)} inkl. MwSt) - Watch ${watch.id}`
+    )
 
-    // RICARDO-STYLE: Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
+    // Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
     try {
       const { sendInvoiceNotificationAndEmail } = await import('@/lib/invoice')
       await sendInvoiceNotificationAndEmail(invoice)
@@ -190,24 +188,24 @@ export async function POST(
     }
 
     return NextResponse.json({
-      message: currentBoosterCode ? 'Booster erfolgreich upgegradet' : 'Booster erfolgreich hinzugefügt',
+      message: currentBoosterCode
+        ? 'Booster erfolgreich upgegradet'
+        : 'Booster erfolgreich hinzugefügt',
       invoice: {
         id: invoice.id,
         invoiceNumber: invoice.invoiceNumber,
-        total: invoice.total
+        total: invoice.total,
       },
-      priceDifference: subtotal
+      priceDifference: subtotal,
     })
   } catch (error: any) {
     console.error('Error upgrading booster:', error)
     return NextResponse.json(
       {
         message: 'Fehler beim Upgraden des Boosters',
-        error: error.message
+        error: error.message,
       },
       { status: 500 }
     )
   }
 }
-
-

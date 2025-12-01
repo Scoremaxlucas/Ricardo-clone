@@ -7,7 +7,7 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     console.log('[contact-requests] GET request received')
-    
+
     const session = await getServerSession(authOptions)
     if (!session?.user) {
       console.log('[contact-requests] No session found')
@@ -45,15 +45,19 @@ export async function GET(request: NextRequest) {
     // Prüfe ob contactRequest Modell verfügbar ist (wichtig nach Schema-Änderungen!)
     if (!prisma.contactRequest) {
       console.error('[contact-requests] ❌ contactRequest Modell nicht verfügbar im Prisma Client!')
-      console.error('[contact-requests] Der Server verwendet eine gecachte Version des Prisma Clients.')
-      console.error('[contact-requests] Lösung: Server stoppen, .next Cache löschen, Server neu starten')
+      console.error(
+        '[contact-requests] Der Server verwendet eine gecachte Version des Prisma Clients.'
+      )
+      console.error(
+        '[contact-requests] Lösung: Server stoppen, .next Cache löschen, Server neu starten'
+      )
       console.error('[contact-requests] Oder verwende: ./scripts/fix-prisma-cache.sh')
-      
+
       return NextResponse.json(
-        { 
+        {
           message: 'ContactRequest Modell nicht verfügbar. Der Server muss neu gestartet werden.',
           error: 'MODEL_NOT_AVAILABLE',
-          hint: 'Bitte führen Sie aus: ./scripts/fix-prisma-cache.sh oder manuell: Server stoppen → rm -rf .next → npm run dev'
+          hint: 'Bitte führen Sie aus: ./scripts/fix-prisma-cache.sh oder manuell: Server stoppen → rm -rf .next → npm run dev',
         },
         { status: 500 }
       )
@@ -70,7 +74,10 @@ export async function GET(request: NextRequest) {
       prisma.contactRequest.count({ where }),
     ])
 
-    console.log('[contact-requests] Successfully fetched:', { count: contactRequests.length, total })
+    console.log('[contact-requests] Successfully fetched:', {
+      count: contactRequests.length,
+      total,
+    })
 
     return NextResponse.json({
       contactRequests,
@@ -84,15 +91,14 @@ export async function GET(request: NextRequest) {
     console.error('[contact-requests] Error stack:', error.stack)
     console.error('[contact-requests] Error name:', error.name)
     console.error('[contact-requests] Error message:', error.message)
-    
+
     return NextResponse.json(
-      { 
+      {
         message: 'Fehler beim Laden der Kontaktanfragen: ' + (error.message || String(error)),
         error: error.name,
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }
     )
   }
 }
-

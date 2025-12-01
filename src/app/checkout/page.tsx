@@ -44,7 +44,7 @@ export default function CheckoutPage() {
         if (data.watch) {
           const images = data.watch.images ? JSON.parse(data.watch.images) : []
           setWatch({ ...data.watch, images })
-          
+
           // Parse shipping methods und setze ersten als Standard
           if (data.watch.shippingMethod) {
             const shippingMethods = JSON.parse(data.watch.shippingMethod)
@@ -65,7 +65,7 @@ export default function CheckoutPage() {
 
   const handlePaymentSuccess = async (paymentIntent: any) => {
     setIsProcessing(true)
-    
+
     // Erstelle Purchase-Record
     if (watch && selectedShipping) {
       try {
@@ -77,10 +77,10 @@ export default function CheckoutPage() {
           body: JSON.stringify({
             watchId: watch.id,
             shippingMethod: selectedShipping,
-            price: watch.buyNowPrice || watch.price
-          })
+            price: watch.buyNowPrice || watch.price,
+          }),
         })
-        
+
         if (!response.ok) {
           console.error('Error creating purchase:', await response.text())
         }
@@ -88,7 +88,7 @@ export default function CheckoutPage() {
         console.error('Error creating purchase:', error)
       }
     }
-    
+
     // Redirect to success page
     router.push(`/checkout/success?payment_intent=${paymentIntent.id}`)
   }
@@ -100,7 +100,7 @@ export default function CheckoutPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-gray-500">Lädt...</div>
       </div>
     )
@@ -108,7 +108,7 @@ export default function CheckoutPage() {
 
   if (error || !watch) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-red-600">{error || 'Uhr nicht gefunden'}</div>
       </div>
     )
@@ -132,38 +132,37 @@ export default function CheckoutPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="max-w-4xl mx-auto px-4 py-8">
+      <div className="mx-auto max-w-4xl px-4 py-8">
         {/* Header */}
-        <div className="flex items-center mb-8">
-          <button
-            onClick={() => router.back()}
-            className="p-2 hover:bg-gray-100 rounded-lg mr-4"
-          >
+        <div className="mb-8 flex items-center">
+          <button onClick={() => router.back()} className="mr-4 rounded-lg p-2 hover:bg-gray-100">
             <ArrowLeft className="h-5 w-5" />
           </button>
           <h1 className="text-2xl font-bold text-gray-900">Kasse</h1>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
           {/* Order Summary */}
           <div className="space-y-6">
             <Card>
               <div className="p-6">
-                <h2 className="text-lg font-semibold mb-4">Bestellübersicht</h2>
-                
-                <div className="flex items-center space-x-4 mb-4">
+                <h2 className="mb-4 text-lg font-semibold">Bestellübersicht</h2>
+
+                <div className="mb-4 flex items-center space-x-4">
                   {watch.images && watch.images.length > 0 ? (
                     <img
                       src={watch.images[0]}
                       alt={watch.title}
-                      className="w-16 h-16 object-cover rounded-lg"
+                      className="h-16 w-16 rounded-lg object-cover"
                     />
                   ) : (
-                    <div className="w-16 h-16 bg-gray-200 rounded-lg" />
+                    <div className="h-16 w-16 rounded-lg bg-gray-200" />
                   )}
                   <div className="flex-1">
                     <h3 className="font-medium text-gray-900">{watch.title}</h3>
-                    <p className="text-sm text-gray-500">{watch.brand} {watch.model}</p>
+                    <p className="text-sm text-gray-500">
+                      {watch.brand} {watch.model}
+                    </p>
                     <p className="text-sm text-gray-500">{watch.condition}</p>
                     {watch.year && <p className="text-sm text-gray-500">{watch.year}</p>}
                   </div>
@@ -176,23 +175,36 @@ export default function CheckoutPage() {
 
                 {/* Versandauswahl */}
                 {shippingMethods.length > 0 && (
-                  <div className="border-t pt-4 mb-4">
-                    <h3 className="text-sm font-medium text-gray-900 mb-3">Lieferart</h3>
+                  <div className="mb-4 border-t pt-4">
+                    <h3 className="mb-3 text-sm font-medium text-gray-900">Lieferart</h3>
                     <div className="space-y-2">
-                      {shippingMethods.map((method) => (
-                        <label key={method} className="flex items-center p-3 border border-gray-300 rounded-lg hover:bg-gray-50 cursor-pointer">
+                      {shippingMethods.map(method => (
+                        <label
+                          key={method}
+                          className="flex cursor-pointer items-center rounded-lg border border-gray-300 p-3 hover:bg-gray-50"
+                        >
                           <input
                             type="radio"
                             name="shipping"
                             value={method}
                             checked={selectedShipping === method}
-                            onChange={(e) => setSelectedShipping(e.target.value)}
+                            onChange={e => setSelectedShipping(e.target.value)}
                             className="mr-3"
                           />
                           <div className="flex-1">
-                            {method === 'pickup' && <span className="text-sm text-gray-700">Abholung (kostenlos)</span>}
-                            {method === 'b-post' && <span className="text-sm text-gray-700">Versand als Paket B-Post, bis 2 KG (CHF 8.50)</span>}
-                            {method === 'a-post' && <span className="text-sm text-gray-700">Versand als Paket A-Post, bis 2 KG (CHF 12.50)</span>}
+                            {method === 'pickup' && (
+                              <span className="text-sm text-gray-700">Abholung (kostenlos)</span>
+                            )}
+                            {method === 'b-post' && (
+                              <span className="text-sm text-gray-700">
+                                Versand als Paket B-Post, bis 2 KG (CHF 8.50)
+                              </span>
+                            )}
+                            {method === 'a-post' && (
+                              <span className="text-sm text-gray-700">
+                                Versand als Paket A-Post, bis 2 KG (CHF 12.50)
+                              </span>
+                            )}
                           </div>
                         </label>
                       ))}
@@ -201,16 +213,18 @@ export default function CheckoutPage() {
                 )}
 
                 <div className="border-t pt-4">
-                  <div className="flex justify-between items-center mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <span className="text-gray-600">Zwischensumme</span>
-                    <span className="text-gray-900">CHF {(watch.buyNowPrice || watch.price).toLocaleString()}</span>
+                    <span className="text-gray-900">
+                      CHF {(watch.buyNowPrice || watch.price).toLocaleString()}
+                    </span>
                   </div>
-                  <div className="flex justify-between items-center mb-2">
+                  <div className="mb-2 flex items-center justify-between">
                     <span className="text-gray-600">Versand</span>
                     <span className="text-gray-900">CHF {shippingCost.toFixed(2)}</span>
                   </div>
                   <div className="border-t pt-2">
-                    <div className="flex justify-between items-center">
+                    <div className="flex items-center justify-between">
                       <span className="text-lg font-semibold text-gray-900">Gesamt</span>
                       <span className="text-lg font-bold text-primary-600">
                         CHF {totalPrice.toFixed(2)}
@@ -224,11 +238,11 @@ export default function CheckoutPage() {
             {/* Security Info */}
             <Card>
               <div className="p-6">
-                <div className="flex items-center space-x-3 mb-4">
+                <div className="mb-4 flex items-center space-x-3">
                   <Shield className="h-5 w-5 text-green-600" />
                   <h3 className="font-semibold text-gray-900">Sichere Zahlung</h3>
                 </div>
-                <ul className="text-sm text-gray-600 space-y-2">
+                <ul className="space-y-2 text-sm text-gray-600">
                   <li>• SSL-verschlüsselte Übertragung</li>
                   <li>• Stripe PCI DSS konform</li>
                   <li>• 30-Tage Geld-zurück-Garantie</li>
@@ -242,7 +256,7 @@ export default function CheckoutPage() {
           <div>
             <Card>
               <div className="p-6">
-                <div className="flex items-center space-x-3 mb-6">
+                <div className="mb-6 flex items-center space-x-3">
                   <CreditCard className="h-5 w-5 text-primary-600" />
                   <h2 className="text-lg font-semibold">Zahlungsinformationen</h2>
                 </div>
@@ -260,4 +274,3 @@ export default function CheckoutPage() {
     </div>
   )
 }
-

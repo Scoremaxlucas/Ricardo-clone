@@ -6,7 +6,7 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { Mail, Clock, CheckCircle, XCircle, AlertCircle, Search, MessageSquare, FileText } from 'lucide-react'
+import { Mail, Clock, CheckCircle, XCircle, AlertCircle, Search } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
 interface ContactRequest {
@@ -73,20 +73,17 @@ export default function AdminContactRequestsPage() {
     }
 
     loadContactRequests()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status, router, filterStatus])
 
   const loadContactRequests = async () => {
     try {
       setLoading(true)
       const url = `/api/admin/contact-requests?status=${filterStatus}`
-      console.log('[contact-requests-page] Loading from:', url)
       const res = await fetch(url)
-      console.log('[contact-requests-page] Response status:', res.status)
-      
+
       if (res.ok) {
         const data = await res.json()
-        console.log('[contact-requests-page] Data received:', data)
-        console.log('[contact-requests-page] Contact requests count:', data.contactRequests?.length || 0)
         setContactRequests(data.contactRequests || [])
       } else {
         const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
@@ -98,7 +95,7 @@ export default function AdminContactRequestsPage() {
       console.error('[contact-requests-page] Error details:', {
         name: error.name,
         message: error.message,
-        stack: error.stack
+        stack: error.stack,
       })
       toast.error(`Fehler beim Laden der Kontaktanfragen: ${error.message || 'Unbekannter Fehler'}`)
     } finally {
@@ -157,7 +154,7 @@ export default function AdminContactRequestsPage() {
     }
   }
 
-  const filteredRequests = contactRequests.filter((req) => {
+  const filteredRequests = contactRequests.filter(req => {
     if (searchQuery) {
       const query = searchQuery.toLowerCase()
       return (
@@ -171,16 +168,16 @@ export default function AdminContactRequestsPage() {
 
   const stats = {
     total: contactRequests.length,
-    pending: contactRequests.filter((r) => r.status === 'pending').length,
-    in_progress: contactRequests.filter((r) => r.status === 'in_progress').length,
-    resolved: contactRequests.filter((r) => r.status === 'resolved').length,
+    pending: contactRequests.filter(r => r.status === 'pending').length,
+    in_progress: contactRequests.filter(r => r.status === 'in_progress').length,
+    resolved: contactRequests.filter(r => r.status === 'resolved').length,
   }
 
   if (status === 'loading' || loading) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto"></div>
+          <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
           <p className="mt-4 text-gray-600">Lädt...</p>
         </div>
       </div>
@@ -195,7 +192,7 @@ export default function AdminContactRequestsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
@@ -204,7 +201,7 @@ export default function AdminContactRequestsPage() {
             </div>
             <Link
               href="/admin/dashboard"
-              className="text-primary-600 hover:text-primary-700 font-medium"
+              className="font-medium text-primary-600 hover:text-primary-700"
             >
               ← Zurück zum Dashboard
             </Link>
@@ -212,8 +209,8 @@ export default function AdminContactRequestsPage() {
         </div>
 
         {/* Statistiken */}
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6">
-          <div className="bg-white rounded-lg shadow p-4">
+        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-4">
+          <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Gesamt</p>
@@ -222,7 +219,7 @@ export default function AdminContactRequestsPage() {
               <Mail className="h-8 w-8 text-gray-400" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Ausstehend</p>
@@ -231,7 +228,7 @@ export default function AdminContactRequestsPage() {
               <Clock className="h-8 w-8 text-yellow-400" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">In Bearbeitung</p>
@@ -240,7 +237,7 @@ export default function AdminContactRequestsPage() {
               <AlertCircle className="h-8 w-8 text-blue-400" />
             </div>
           </div>
-          <div className="bg-white rounded-lg shadow p-4">
+          <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-gray-600">Gelöst</p>
@@ -252,26 +249,26 @@ export default function AdminContactRequestsPage() {
         </div>
 
         {/* Filter und Suche */}
-        <div className="bg-white rounded-lg shadow p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
+        <div className="mb-6 rounded-lg bg-white p-4 shadow">
+          <div className="flex flex-col gap-4 md:flex-row">
             <div className="flex-1">
               <div className="relative">
-                <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
                 <input
                   type="text"
                   placeholder="Suchen nach Betreff, Nachricht oder E-Mail..."
                   value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                  onChange={e => setSearchQuery(e.target.value)}
+                  className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
                 />
               </div>
             </div>
             <div className="flex gap-2">
-              {['all', 'pending', 'in_progress', 'resolved', 'closed'].map((statusOption) => (
+              {['all', 'pending', 'in_progress', 'resolved', 'closed'].map(statusOption => (
                 <button
                   key={statusOption}
                   onClick={() => setFilterStatus(statusOption)}
-                  className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                  className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
                     filterStatus === statusOption
                       ? 'bg-primary-600 text-white'
                       : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -285,17 +282,17 @@ export default function AdminContactRequestsPage() {
         </div>
 
         {/* Liste der Kontaktanfragen */}
-        <div className="bg-white rounded-lg shadow">
+        <div className="rounded-lg bg-white shadow">
           {filteredRequests.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               {searchQuery ? 'Keine Ergebnisse gefunden' : 'Keine Kontaktanfragen vorhanden'}
             </div>
           ) : (
             <div className="divide-y divide-gray-200">
-              {filteredRequests.map((request) => (
+              {filteredRequests.map(request => (
                 <div
                   key={request.id}
-                  className="p-6 hover:bg-gray-50 transition-colors cursor-pointer"
+                  className="cursor-pointer p-6 transition-colors hover:bg-gray-50"
                   onClick={() => {
                     setSelectedRequest(request)
                     setNotes(request.notes || '')
@@ -303,8 +300,10 @@ export default function AdminContactRequestsPage() {
                 >
                   <div className="flex items-start justify-between">
                     <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <span className={`px-2 py-1 rounded text-xs font-medium ${statusColors[request.status]}`}>
+                      <div className="mb-2 flex items-center gap-3">
+                        <span
+                          className={`rounded px-2 py-1 text-xs font-medium ${statusColors[request.status]}`}
+                        >
                           {statusLabels[request.status]}
                         </span>
                         <span className="text-sm text-gray-500">
@@ -320,9 +319,11 @@ export default function AdminContactRequestsPage() {
                           })}
                         </span>
                       </div>
-                      <h3 className="text-lg font-semibold text-gray-900 mb-1">{request.subject}</h3>
-                      <p className="text-sm text-gray-600 mb-2">{request.email}</p>
-                      <p className="text-gray-700 line-clamp-2">{request.message}</p>
+                      <h3 className="mb-1 text-lg font-semibold text-gray-900">
+                        {request.subject}
+                      </h3>
+                      <p className="mb-2 text-sm text-gray-600">{request.email}</p>
+                      <p className="line-clamp-2 text-gray-700">{request.message}</p>
                     </div>
                   </div>
                 </div>
@@ -333,9 +334,9 @@ export default function AdminContactRequestsPage() {
 
         {/* Detail-Modal */}
         {selectedRequest && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg shadow-xl max-w-3xl w-full max-h-[90vh] overflow-y-auto">
-              <div className="sticky top-0 bg-white border-b border-gray-200 px-6 py-4 flex items-center justify-between">
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
+            <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white shadow-xl">
+              <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
                 <h2 className="text-xl font-bold text-gray-900">Kontaktanfrage Details</h2>
                 <button
                   onClick={() => {
@@ -347,17 +348,19 @@ export default function AdminContactRequestsPage() {
                   <XCircle className="h-6 w-6" />
                 </button>
               </div>
-              <div className="p-6 space-y-6">
+              <div className="space-y-6 p-6">
                 <div>
-                  <div className="flex items-center gap-3 mb-4">
-                    <span className={`px-3 py-1 rounded text-sm font-medium ${statusColors[selectedRequest.status]}`}>
+                  <div className="mb-4 flex items-center gap-3">
+                    <span
+                      className={`rounded px-3 py-1 text-sm font-medium ${statusColors[selectedRequest.status]}`}
+                    >
                       {statusLabels[selectedRequest.status]}
                     </span>
                     <span className="text-sm text-gray-500">
                       {categoryLabels[selectedRequest.category] || selectedRequest.category}
                     </span>
                   </div>
-                  <div className="grid grid-cols-2 gap-4 mb-4">
+                  <div className="mb-4 grid grid-cols-2 gap-4">
                     <div>
                       <p className="text-sm text-gray-500">E-Mail</p>
                       <p className="font-medium">{selectedRequest.email}</p>
@@ -370,48 +373,46 @@ export default function AdminContactRequestsPage() {
                     </div>
                   </div>
                   <div className="mb-4">
-                    <p className="text-sm text-gray-500 mb-1">Betreff</p>
+                    <p className="mb-1 text-sm text-gray-500">Betreff</p>
                     <p className="font-medium">{selectedRequest.subject}</p>
                   </div>
                   <div className="mb-4">
-                    <p className="text-sm text-gray-500 mb-1">Nachricht</p>
-                    <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+                    <p className="mb-1 text-sm text-gray-500">Nachricht</p>
+                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
                       <p className="whitespace-pre-wrap">{selectedRequest.message}</p>
                     </div>
                   </div>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Notizen
-                  </label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">Notizen</label>
                   <textarea
                     value={notes}
-                    onChange={(e) => setNotes(e.target.value)}
+                    onChange={e => setNotes(e.target.value)}
                     rows={4}
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500"
+                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
                     placeholder="Interne Notizen zu dieser Anfrage..."
                   />
                   <button
                     onClick={() => updateNotes(selectedRequest.id)}
                     disabled={updating}
-                    className="mt-2 px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors disabled:opacity-50"
+                    className="mt-2 rounded-lg bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700 disabled:opacity-50"
                   >
                     Notizen speichern
                   </button>
                 </div>
 
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Status ändern
                   </label>
                   <div className="flex gap-2">
-                    {['pending', 'in_progress', 'resolved', 'closed'].map((statusOption) => (
+                    {['pending', 'in_progress', 'resolved', 'closed'].map(statusOption => (
                       <button
                         key={statusOption}
                         onClick={() => updateStatus(selectedRequest.id, statusOption)}
                         disabled={updating || selectedRequest.status === statusOption}
-                        className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors disabled:opacity-50 ${
+                        className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
                           selectedRequest.status === statusOption
                             ? 'bg-primary-600 text-white'
                             : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -431,4 +432,3 @@ export default function AdminContactRequestsPage() {
     </div>
   )
 }
-

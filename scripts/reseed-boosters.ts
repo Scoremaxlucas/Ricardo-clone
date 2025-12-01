@@ -11,30 +11,32 @@ async function main() {
       code: 'none',
       name: 'Kein Booster',
       description: 'Das Angebot wird nicht besonders hervorgehoben',
-      price: 0.00,
-      isActive: true
+      price: 0.0,
+      isActive: true,
     },
     {
       code: 'boost',
       name: 'Boost',
       description: 'Das Angebot wird in einer Liste von ähnlichen Modellen fett hervorgehoben',
-      price: 10.00,
-      isActive: true
+      price: 10.0,
+      isActive: true,
     },
     {
       code: 'turbo-boost',
       name: 'Turbo-Boost',
-      description: 'Das Angebot wird nicht nur hervorgehoben sondern erscheint teilweise auf der Hauptseite als "Turbo-Boost-Angebot"',
-      price: 25.00,
-      isActive: true
+      description:
+        'Das Angebot wird nicht nur hervorgehoben sondern erscheint teilweise auf der Hauptseite als "Turbo-Boost-Angebot"',
+      price: 25.0,
+      isActive: true,
     },
     {
       code: 'super-boost',
       name: 'Super-Boost',
-      description: 'Das Angebot wird hervorgehoben, erscheint teilweise auf der Hauptseite und wird immer zuoberst in der Liste angezeigt',
-      price: 45.00,
-      isActive: true
-    }
+      description:
+        'Das Angebot wird hervorgehoben, erscheint teilweise auf der Hauptseite und wird immer zuoberst in der Liste angezeigt',
+      price: 45.0,
+      isActive: true,
+    },
   ]
 
   // Lösche alte Booster
@@ -44,7 +46,7 @@ async function main() {
   // Erstelle neue Booster
   for (const booster of boosters) {
     await prisma.boosterPrice.create({
-      data: booster
+      data: booster,
     })
     console.log(`✓ Created: ${booster.name} (${booster.price} CHF)`)
   }
@@ -53,13 +55,10 @@ async function main() {
 }
 
 main()
-  .catch((e) => {
+  .catch(e => {
     console.error(e)
     process.exit(1)
   })
   .finally(async () => {
     await prisma.$disconnect()
   })
-
-
-

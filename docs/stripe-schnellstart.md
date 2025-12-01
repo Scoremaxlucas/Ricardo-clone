@@ -58,10 +58,10 @@ Die Kreditkartenzahlung sollte jetzt funktionieren!
 
 ## 🧪 Test-Kreditkarten
 
-| Karte | Ergebnis |
-|-------|----------|
-| `4242 4242 4242 4242` | ✅ Erfolgreich |
-| `4000 0000 0000 0002` | ❌ Fehlgeschlagen |
+| Karte                 | Ergebnis                  |
+| --------------------- | ------------------------- |
+| `4242 4242 4242 4242` | ✅ Erfolgreich            |
+| `4000 0000 0000 0002` | ❌ Fehlgeschlagen         |
 | `4000 0000 0000 9995` | 🔒 3D Secure erforderlich |
 
 ## 🆘 Hilfe
@@ -69,8 +69,3 @@ Die Kreditkartenzahlung sollte jetzt funktionieren!
 - **"Stripe ist nicht konfiguriert"**: Prüfen Sie ob die Keys in `.env` stehen
 - **Server neu starten**: Nach `.env` Änderungen immer Server neu starten
 - **Weitere Hilfe**: Siehe `docs/stripe-konfiguration.md`
-
-
-
-
-

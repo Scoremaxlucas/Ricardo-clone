@@ -1,7 +1,15 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { CreditCard, Copy, CheckCircle, QrCode, AlertCircle, Loader2, Smartphone } from 'lucide-react'
+import {
+  CreditCard,
+  Copy,
+  CheckCircle,
+  QrCode,
+  AlertCircle,
+  Loader2,
+  Smartphone,
+} from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
 interface PaymentInfo {
@@ -73,7 +81,7 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
 
   if (loading) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 border-2 border-blue-200">
+      <div className="rounded-lg border-2 border-blue-200 bg-white p-6 shadow-md">
         <div className="flex items-center justify-center py-8">
           <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
           <span className="ml-2 text-gray-600">Lade Zahlungsinformationen...</span>
@@ -85,13 +93,13 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
   if (!paymentInfo) {
     if (error) {
       return (
-        <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+        <div className="rounded-lg border-2 border-yellow-300 bg-yellow-50 p-4">
           <div className="flex items-start gap-2 text-yellow-800">
-            <AlertCircle className="h-5 w-5 flex-shrink-0 mt-0.5" />
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0" />
             <div className="text-sm">
               <strong>Hinweis:</strong> {error}
               <br />
-              <span className="text-xs mt-1 block">
+              <span className="mt-1 block text-xs">
                 Bitte kontaktieren Sie den Verkäufer direkt, um die Zahlungsmodalitäten zu klären.
               </span>
             </div>
@@ -100,7 +108,7 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
       )
     }
     return (
-      <div className="bg-yellow-50 border-2 border-yellow-300 rounded-lg p-4">
+      <div className="rounded-lg border-2 border-yellow-300 bg-yellow-50 p-4">
         <div className="flex items-center gap-2 text-yellow-800">
           <AlertCircle className="h-5 w-5" />
           <span className="text-sm">Zahlungsinformationen werden vorbereitet...</span>
@@ -110,29 +118,29 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6 border-2 border-blue-200">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="rounded-lg border-2 border-blue-200 bg-white p-6 shadow-md">
+      <div className="mb-4 flex items-center gap-2">
         <CreditCard className="h-5 w-5 text-blue-600" />
         <h3 className="text-lg font-semibold text-gray-900">Zahlungsinformationen</h3>
       </div>
 
       {/* Betrag */}
-      <div className="mb-4 p-3 bg-blue-50 rounded-lg border border-blue-200">
-        <div className="text-sm text-gray-600 mb-1">Zu zahlender Betrag</div>
+      <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+        <div className="mb-1 text-sm text-gray-600">Zu zahlender Betrag</div>
         <div className="text-2xl font-bold text-blue-700">
           {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
         </div>
       </div>
 
       {/* Bankverbindung */}
-      <div className="space-y-3 mb-4">
+      <div className="mb-4 space-y-3">
         <div>
           <label className="text-sm font-medium text-gray-700">Empfänger</label>
           <div className="mt-1 flex items-center gap-2">
             <span className="text-gray-900">{paymentInfo.accountHolder}</span>
             <button
               onClick={() => copyToClipboard(paymentInfo.accountHolder, 'Empfänger')}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="rounded p-1 hover:bg-gray-100"
             >
               {copied === 'Empfänger' ? (
                 <CheckCircle className="h-4 w-4 text-green-600" />
@@ -149,7 +157,7 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
             <span className="font-mono text-gray-900">{formatIban(paymentInfo.iban)}</span>
             <button
               onClick={() => copyToClipboard(paymentInfo.iban.replace(/\s/g, ''), 'IBAN')}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="rounded p-1 hover:bg-gray-100"
             >
               {copied === 'IBAN' ? (
                 <CheckCircle className="h-4 w-4 text-green-600" />
@@ -166,7 +174,7 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
             <span className="font-mono text-gray-900">{paymentInfo.bic}</span>
             <button
               onClick={() => copyToClipboard(paymentInfo.bic, 'BIC')}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="rounded p-1 hover:bg-gray-100"
             >
               {copied === 'BIC' ? (
                 <CheckCircle className="h-4 w-4 text-green-600" />
@@ -183,7 +191,7 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
             <span className="font-mono text-gray-900">{paymentInfo.reference}</span>
             <button
               onClick={() => copyToClipboard(paymentInfo.reference, 'Referenz')}
-              className="p-1 hover:bg-gray-100 rounded"
+              className="rounded p-1 hover:bg-gray-100"
             >
               {copied === 'Referenz' ? (
                 <CheckCircle className="h-4 w-4 text-green-600" />
@@ -192,7 +200,7 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
               )}
             </button>
           </div>
-          <p className="text-xs text-gray-500 mt-1">
+          <p className="mt-1 text-xs text-gray-500">
             Bitte verwenden Sie diese Referenz bei der Überweisung
           </p>
         </div>
@@ -200,23 +208,23 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
 
       {/* TWINT-Zahlung */}
       {paymentInfo.twintPhone && (
-        <div className="mb-4 p-4 bg-green-50 rounded-lg border-2 border-green-300">
-          <div className="flex items-center gap-2 mb-3">
+        <div className="mb-4 rounded-lg border-2 border-green-300 bg-green-50 p-4">
+          <div className="mb-3 flex items-center gap-2">
             <Smartphone className="h-5 w-5 text-green-700" />
             <span className="text-lg font-bold text-green-700">TWINT-Zahlung</span>
           </div>
-          
+
           {/* TWINT Deep Link Button (für mobile Nutzer) */}
           {paymentInfo.twintDeepLink && (
             <div className="mb-4">
               <a
                 href={paymentInfo.twintDeepLink}
-                className="w-full flex items-center justify-center gap-2 px-4 py-3 bg-green-600 text-white rounded-lg font-semibold hover:bg-green-700 transition-colors"
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-green-700"
               >
                 <Smartphone className="h-5 w-5" />
                 Mit TWINT bezahlen
               </a>
-              <p className="text-xs text-gray-600 text-center mt-2">
+              <p className="mt-2 text-center text-xs text-gray-600">
                 Öffnet die TWINT-App direkt mit dem korrekten Betrag
               </p>
             </div>
@@ -225,42 +233,40 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
           {/* TWINT QR-Code (für Desktop-Nutzer) */}
           {paymentInfo.twintQRCodeDataUrl && (
             <div className="mb-4">
-              <div className="text-sm font-medium text-gray-700 mb-2 text-center">
+              <div className="mb-2 text-center text-sm font-medium text-gray-700">
                 Oder scannen Sie den QR-Code:
               </div>
-              <div className="p-3 bg-white rounded-lg border border-green-200 flex justify-center">
+              <div className="flex justify-center rounded-lg border border-green-200 bg-white p-3">
                 <img
                   src={paymentInfo.twintQRCodeDataUrl}
                   alt="TWINT QR-Code für Zahlung"
-                  className="w-48 h-48"
+                  className="h-48 w-48"
                 />
               </div>
-              <p className="text-xs text-gray-600 text-center mt-2">
+              <p className="mt-2 text-center text-xs text-gray-600">
                 Scannen Sie diesen QR-Code mit der TWINT-App auf Ihrem Smartphone
               </p>
             </div>
           )}
-
         </div>
       )}
-
 
       {/* QR-Code */}
       {showQRCode && paymentInfo.qrCodeDataUrl && (
         <div className="mb-4">
           <button
             onClick={() => setShowQR(!showQR)}
-            className="flex items-center gap-2 text-blue-600 hover:text-blue-700 text-sm font-medium"
+            className="flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
           >
             <QrCode className="h-4 w-4" />
             {showQR ? 'QR-Code ausblenden' : 'QR-Code anzeigen'}
           </button>
           {showQR && (
-            <div className="mt-3 p-4 bg-gray-50 rounded-lg border border-gray-200 flex justify-center">
+            <div className="mt-3 flex justify-center rounded-lg border border-gray-200 bg-gray-50 p-4">
               <img
                 src={paymentInfo.qrCodeDataUrl}
                 alt="QR-Code für Zahlung"
-                className="w-48 h-48"
+                className="h-48 w-48"
               />
             </div>
           )}
@@ -268,23 +274,23 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
       )}
 
       {/* Zahlungsanweisung */}
-      <div className="mt-4 p-3 bg-gray-50 rounded-lg border border-gray-200">
-        <div className="text-sm text-gray-700 whitespace-pre-line">
+      <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+        <div className="whitespace-pre-line text-sm text-gray-700">
           {paymentInfo.paymentInstructions}
         </div>
       </div>
 
       {/* Hinweis */}
-      <div className="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
         <div className="flex items-start gap-2">
-          <AlertCircle className="h-5 w-5 text-blue-600 flex-shrink-0 mt-0.5" />
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
           <div className="text-sm text-blue-800">
-            <strong>Wichtig:</strong> Bitte überweisen Sie den Betrag innerhalb von 14 Tagen nach Kontaktaufnahme.
-            Verwenden Sie die Referenz bei der Überweisung, damit die Zahlung zugeordnet werden kann.
+            <strong>Wichtig:</strong> Bitte überweisen Sie den Betrag innerhalb von 14 Tagen nach
+            Kontaktaufnahme. Verwenden Sie die Referenz bei der Überweisung, damit die Zahlung
+            zugeordnet werden kann.
           </div>
         </div>
       </div>
     </div>
   )
 }
-

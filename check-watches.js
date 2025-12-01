@@ -9,26 +9,26 @@ async function main() {
         seller: {
           select: {
             name: true,
-            email: true
-          }
-        }
+            email: true,
+          },
+        },
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     })
-    
-    console.log(`\n📊 Gefundene Uhren: ${watches.length}\n`)
-    
+
+    console.log(`\n📊 Gefundene Artikel: ${watches.length}\n`)
+
     if (watches.length === 0) {
-      console.log('⚠️  Keine Uhren gefunden. Bitte erstellen Sie zuerst eine Uhr über /sell')
+      console.log('⚠️  Keine Artikel gefunden. Bitte erstellen Sie zuerst einen Artikel über /sell')
     } else {
       watches.forEach((watch, index) => {
         console.log(`${index + 1}. ${watch.title}`)
         console.log(`   ID: ${watch.id}`)
         console.log(`   Marke: ${watch.brand} | Modell: ${watch.model}`)
         console.log(`   Preis: CHF ${watch.price}`)
-        console.log(`   Link: http://localhost:3000/watches/${watch.id}`)
+        console.log(`   Link: http://localhost:3002/products/${watch.id}`)
         console.log('')
       })
     }
@@ -41,5 +41,4 @@ async function main() {
   }
 }
 
-main()
-  .finally(() => prisma.$disconnect())
+main().finally(() => prisma.$disconnect())

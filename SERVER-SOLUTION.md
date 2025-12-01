@@ -7,17 +7,20 @@ Die Seite lädt nicht mehr oder Safari kann keine Verbindung herstellen? Diese L
 ## 🚀 Was wurde installiert
 
 ### 1. **Watchdog-Service** (Automatische Überwachung)
+
 - Prüft **alle 30 Sekunden** ob der Server läuft
 - Startet Server automatisch neu bei Fehlern
 - Health-Check mit HTTP-Anfrage (nicht nur Port-Check)
 - Maximale 5 Neustart-Versuche, dann 5 Minuten Pause
 
 ### 2. **Robuste Start-Scripts**
+
 - `ensure-server-running.sh` - Startet Server sicher und prüft ob er antwortet
 - `server-watchdog.sh` - Überwacht Server kontinuierlich
 - Automatische Port-Bereinigung vor dem Start
 
 ### 3. **macOS LaunchAgent**
+
 - Startet automatisch beim Login
 - Läuft im Hintergrund
 - Startet bei Fehlern automatisch neu
@@ -25,33 +28,41 @@ Die Seite lädt nicht mehr oder Safari kann keine Verbindung herstellen? Diese L
 ## 📋 Verfügbare Befehle
 
 ### Server-Status prüfen
+
 ```bash
 ./check-and-start.sh
 ```
+
 Prüft ob Server läuft und startet ihn bei Bedarf.
 
 ### Server sicher neu starten
+
 ```bash
 ./ensure-server-running.sh
 ```
+
 Beendet alle Prozesse, startet Server neu und prüft ob er antwortet.
 
 ### Watchdog-Logs ansehen
+
 ```bash
 tail -f watchdog.log
 ```
 
 ### Server-Logs ansehen
+
 ```bash
 tail -f server.log
 ```
 
 ### Watchdog beenden (falls nötig)
+
 ```bash
 launchctl unload ~/Library/LaunchAgents/com.helvenda.watchdog.plist
 ```
 
 ### Watchdog neu starten
+
 ```bash
 launchctl load ~/Library/LaunchAgents/com.helvenda.watchdog.plist
 ```
@@ -95,22 +106,26 @@ Der Server läuft jetzt **permanent** und startet automatisch neu bei Problemen.
 ## 🔍 Troubleshooting
 
 ### Server läuft nicht?
+
 ```bash
 ./ensure-server-running.sh
 ```
 
 ### Watchdog läuft nicht?
+
 ```bash
 launchctl list | grep helvenda
 ```
 
 ### Port ist belegt?
+
 ```bash
 lsof -ti:3002 | xargs kill -9
 ./ensure-server-running.sh
 ```
 
 ### Alles zurücksetzen?
+
 ```bash
 # Watchdog beenden
 launchctl unload ~/Library/LaunchAgents/com.helvenda.watchdog.plist
@@ -121,4 +136,3 @@ lsof -ti:3002 | xargs kill -9
 # Neu installieren
 ./install-permanent-solution.sh
 ```
-

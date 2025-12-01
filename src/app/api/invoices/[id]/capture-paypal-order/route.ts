@@ -4,17 +4,11 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { unblockUserAccountAfterPayment } from '@/lib/invoice-reminders'
 
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -23,36 +17,27 @@ export async function POST(
     // Prüfe ob Rechnung existiert und dem User gehört
     const invoice = await prisma.invoice.findUnique({
       where: { id },
-      include: { seller: true }
+      include: { seller: true },
     })
 
     if (!invoice) {
-      return NextResponse.json(
-        { message: 'Rechnung nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Rechnung nicht gefunden' }, { status: 404 })
     }
 
     if (invoice.sellerId !== session.user.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 403 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 403 })
     }
 
     if (invoice.status === 'paid') {
-      return NextResponse.json(
-        { success: true, message: 'Rechnung wurde bereits bezahlt' }
-      )
+      return NextResponse.json({ success: true, message: 'Rechnung wurde bereits bezahlt' })
     }
 
     // Capture PayPal Order via REST API
     const clientId = process.env.PAYPAL_CLIENT_ID
     const clientSecret = process.env.PAYPAL_CLIENT_SECRET
     const environment = process.env.PAYPAL_ENVIRONMENT || 'sandbox'
-    const baseUrl = environment === 'production' 
-      ? 'https://api-m.paypal.com'
-      : 'https://api-m.sandbox.paypal.com'
+    const baseUrl =
+      environment === 'production' ? 'https://api-m.paypal.com' : 'https://api-m.sandbox.paypal.com'
 
     if (!clientId || !clientSecret) {
       throw new Error('PayPal credentials not configured')
@@ -63,10 +48,10 @@ export async function POST(
     const tokenResponse = await fetch(`${baseUrl}/v1/oauth2/token`, {
       method: 'POST',
       headers: {
-        'Accept': 'application/json',
+        Accept: 'application/json',
         'Accept-Language': 'en_US',
         'Content-Type': 'application/x-www-form-urlencoded',
-        'Authorization': `Basic ${credentials}`,
+        Authorization: `Basic ${credentials}`,
       },
       body: 'grant_type=client_credentials',
     })
@@ -83,7 +68,7 @@ export async function POST(
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${accessToken}`,
+        Authorization: `Bearer ${accessToken}`,
       },
     })
 
@@ -96,7 +81,9 @@ export async function POST(
     const captureId = captureData.id
     const status = captureData.status
 
-    console.log(`[paypal] Order captured: ${captureId}, Status: ${status} für Rechnung ${invoiceNumber}`)
+    console.log(
+      `[paypal] Order captured: ${captureId}, Status: ${status} für Rechnung ${invoiceNumber}`
+    )
 
     if (status === 'COMPLETED') {
       // Markiere Rechnung als bezahlt
@@ -134,4 +121,3 @@ export async function POST(
     )
   }
 }
-

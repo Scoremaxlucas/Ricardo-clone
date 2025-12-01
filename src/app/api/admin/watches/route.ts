@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
 
     // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
-    
+
     // Prüfe ob User Admin ist (per ID oder E-Mail)
     let user = null
     if (session.user.id) {
@@ -51,21 +51,18 @@ export async function GET(request: NextRequest) {
 
     // WICHTIG: Lade ALLE Watches (kein Filter auf DB-Ebene), da wir isActive berechnen müssen
     const where: any = {}
-    
+
     // Erweiterte Filter
     if (category) {
       where.categories = {
         some: {
           category: {
-            OR: [
-              { slug: category },
-              { name: category },
-            ],
+            OR: [{ slug: category }, { name: category }],
           },
         },
       }
     }
-    
+
     if (dateFrom || dateTo) {
       where.createdAt = {}
       if (dateFrom) {
@@ -75,7 +72,7 @@ export async function GET(request: NextRequest) {
         where.createdAt.lte = new Date(dateTo)
       }
     }
-    
+
     if (sellerVerified === 'true' || sellerVerified === 'false') {
       where.seller = {
         verified: sellerVerified === 'true',
@@ -86,7 +83,7 @@ export async function GET(request: NextRequest) {
     // Falls neue Relationen noch nicht existieren, verwende Fallback
     let allWatches: any[]
     let totalCount: number
-    
+
     try {
       const result = await Promise.all([
         prisma.watch.findMany({
@@ -191,30 +188,31 @@ export async function GET(request: NextRequest) {
     const now = new Date()
     const watchesWithCalculatedStatus = allWatches.map((watch: any) => {
       const images = watch.images ? JSON.parse(watch.images) : []
-      
-      // RICARDO-STYLE: Berechne isActive basierend auf Purchase-Status und Auktion-Status
+
+      // Berechne isActive basierend auf Purchase-Status und Auktion-Status
       // Nur nicht-stornierte Purchases zählen als "verkauft"
       const activePurchases = (watch.purchases || []).filter((p: any) => p.status !== 'cancelled')
       const isSold = activePurchases.length > 0
-      
+
       const auctionEndDate = watch.auctionEnd ? new Date(watch.auctionEnd) : null
       const isExpired = auctionEndDate ? auctionEndDate <= now : false
       const hasAnyPurchases = (watch.purchases || []).length > 0
-      
+
       // WICHTIG: moderationStatus 'rejected' bedeutet deaktiviert (Admin hat es manuell deaktiviert)
       const isRejected = watch.moderationStatus === 'rejected'
-      
+
       // Artikel ist aktiv wenn:
       // - Nicht manuell deaktiviert (moderationStatus !== 'rejected')
       // - UND nicht verkauft (isSold = false)
       // - UND (keine Auktion ODER Auktion noch nicht abgelaufen ODER alle Purchases wurden storniert)
-      const calculatedIsActive = !isRejected && !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
-      
+      const calculatedIsActive =
+        !isRejected && !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
+
       const pendingReports = (watch.reports || []).filter((r: any) => r.status === 'pending').length
       const viewCount = (watch.views || []).length
       const favoriteCount = (watch.favorites || []).length
       const noteCount = (watch.adminNotes || []).length
-      
+
       return {
         ...watch,
         images,
@@ -230,14 +228,14 @@ export async function GET(request: NextRequest) {
     // Filtere basierend auf berechneter Aktivität, Reports und Moderation-Status
     let filteredWatches = watchesWithCalculatedStatus
     if (filter === 'active') {
-      filteredWatches = watchesWithCalculatedStatus.filter((w) => w.isActive)
+      filteredWatches = watchesWithCalculatedStatus.filter(w => w.isActive)
     } else if (filter === 'inactive') {
-      filteredWatches = watchesWithCalculatedStatus.filter((w) => !w.isActive)
+      filteredWatches = watchesWithCalculatedStatus.filter(w => !w.isActive)
     } else if (filter === 'reported') {
       filteredWatches = watchesWithCalculatedStatus.filter((w: any) => w.pendingReports > 0)
     } else if (filter === 'pending') {
-      filteredWatches = watchesWithCalculatedStatus.filter((w: any) => 
-        !w.isActive && ((w.moderationStatus === 'pending') || !w.moderationStatus)
+      filteredWatches = watchesWithCalculatedStatus.filter(
+        (w: any) => !w.isActive && (w.moderationStatus === 'pending' || !w.moderationStatus)
       )
     }
 
@@ -261,4 +259,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

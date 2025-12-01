@@ -39,12 +39,14 @@ function generateQRCodeString(params: {
     creditorName,
     creditorAddress,
     debtorName,
-    debtorAddress
+    debtorAddress,
   } = params
 
   // Strukturierte Adressen
-  const creditorStreet = `${creditorAddress.street || ''} ${creditorAddress.streetNumber || ''}`.trim()
-  const creditorCityLine = `${creditorAddress.postalCode || ''} ${creditorAddress.city || ''}`.trim()
+  const creditorStreet =
+    `${creditorAddress.street || ''} ${creditorAddress.streetNumber || ''}`.trim()
+  const creditorCityLine =
+    `${creditorAddress.postalCode || ''} ${creditorAddress.city || ''}`.trim()
   const debtorStreet = `${debtorAddress.street || ''} ${debtorAddress.streetNumber || ''}`.trim()
   const debtorCityLine = `${debtorAddress.postalCode || ''} ${debtorAddress.city || ''}`.trim()
 
@@ -88,16 +90,16 @@ function generateQRCodeString(params: {
     'SCOR',
     formattedReference,
     '',
-    'EPD'
+    'EPD',
   ].join('\n')
 }
 
 async function main() {
   console.log('🔍 Debug QR-Code Generierung\n')
-  
+
   const qrString = generateQRCodeString({
     iban: PAYMENT_CONFIG.getIbanWithoutSpaces(),
-    amount: 20.00,
+    amount: 20.0,
     currency: 'CHF',
     reference: 'REV2025008',
     creditorName: PAYMENT_CONFIG.creditorName,
@@ -108,8 +110,8 @@ async function main() {
       streetNumber: '69',
       postalCode: '8009',
       city: 'Schliere',
-      country: 'CH'
-    }
+      country: 'CH',
+    },
   })
 
   console.log('QR-String (alle 24 Zeilen):')
@@ -134,7 +136,7 @@ async function main() {
       errorCorrectionLevel: 'M',
       type: 'image/png',
       width: 500, // Größere Größe für bessere Qualität
-      margin: 4 // Größerer Margin für bessere Erkennbarkeit
+      margin: 4, // Größerer Margin für bessere Erkennbarkeit
     })
 
     // Speichere QR-Code als Datei
@@ -142,7 +144,7 @@ async function main() {
     const buffer = Buffer.from(base64Data, 'base64')
     const outputPath = path.join(process.cwd(), 'qr-code-debug.png')
     fs.writeFileSync(outputPath, buffer)
-    
+
     console.log('✅ QR-Code generiert und gespeichert:', outputPath)
     console.log('   Größe:', buffer.length, 'bytes')
     console.log('   Error Correction Level: M')
@@ -156,4 +158,3 @@ async function main() {
 }
 
 main().catch(console.error)
-

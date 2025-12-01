@@ -7,17 +7,11 @@ import { generatePaymentInfo } from '@/lib/payment-info'
  * API-Route zum Abrufen der Zahlungsinformationen für einen Purchase
  * Nur der Käufer kann die Zahlungsinformationen abrufen
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     const { id } = await params
@@ -27,15 +21,12 @@ export async function GET(
     const purchase = await prisma.purchase.findUnique({
       where: { id },
       select: {
-        buyerId: true
-      }
+        buyerId: true,
+      },
     })
 
     if (!purchase) {
-      return NextResponse.json(
-        { message: 'Kauf nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
     if (purchase.buyerId !== session.user.id) {
@@ -49,7 +40,7 @@ export async function GET(
     const paymentInfo = await generatePaymentInfo(id)
 
     return NextResponse.json({
-      paymentInfo
+      paymentInfo,
     })
   } catch (error: any) {
     console.error('Error fetching payment info:', error)
@@ -59,10 +50,3 @@ export async function GET(
     )
   }
 }
-
-
-
-
-
-
-

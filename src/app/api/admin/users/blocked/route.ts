@@ -9,23 +9,20 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id && !session?.user?.email) {
-      return NextResponse.json(
-        { message: 'Nicht autorisiert' },
-        { status: 401 }
-      )
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
     // Prüfe Admin-Status
     const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
-    
+
     // Prüfe ob User Admin ist (per ID oder E-Mail)
     let user = null
     if (session.user.id) {
       user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { isAdmin: true, email: true }
+        select: { isAdmin: true, email: true },
       })
     }
 
@@ -33,7 +30,7 @@ export async function GET(request: NextRequest) {
     if (!user && session.user.email) {
       user = await prisma.user.findUnique({
         where: { email: session.user.email },
-        select: { isAdmin: true, email: true }
+        select: { isAdmin: true, email: true },
       })
     }
 
@@ -51,7 +48,7 @@ export async function GET(request: NextRequest) {
     // Nur geblockte Benutzer laden
     const blockedUsers = await prisma.user.findMany({
       where: {
-        isBlocked: true
+        isBlocked: true,
       },
       select: {
         id: true,
@@ -67,11 +64,11 @@ export async function GET(request: NextRequest) {
         verificationStatus: true,
         warningCount: true,
         lastWarnedAt: true,
-        createdAt: true
+        createdAt: true,
       },
       orderBy: {
-        createdAt: 'desc'
-      }
+        createdAt: 'desc',
+      },
     })
 
     // Konvertiere zu einheitlichem Format
@@ -89,7 +86,7 @@ export async function GET(request: NextRequest) {
       verificationStatus: u.verificationStatus,
       warningCount: u.warningCount || 0,
       lastWarnedAt: u.lastWarnedAt?.toISOString() || null,
-      createdAt: u.createdAt.toISOString()
+      createdAt: u.createdAt.toISOString(),
     }))
 
     return NextResponse.json(users)
@@ -101,4 +98,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

@@ -2,7 +2,23 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { Search, Menu, User, Heart, Bell, LogOut, ChevronDown, Gavel, Plus, X, Package, ShoppingBag, Settings, Wallet, Shield } from 'lucide-react'
+import {
+  Search,
+  Menu,
+  User,
+  Heart,
+  Bell,
+  LogOut,
+  ChevronDown,
+  Gavel,
+  Plus,
+  X,
+  Package,
+  ShoppingBag,
+  Settings,
+  Wallet,
+  Shield,
+} from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { useSession, signOut } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
@@ -30,7 +46,7 @@ export function Header() {
     { code: 'de' as const, name: 'Deutsch', flag: '🇩🇪' },
     { code: 'en' as const, name: 'English', flag: '🇬🇧' },
     { code: 'fr' as const, name: 'Français', flag: '🇫🇷' },
-    { code: 'it' as const, name: 'Italiano', flag: '🇮🇹' }
+    { code: 'it' as const, name: 'Italiano', flag: '🇮🇹' },
   ]
 
   // Lade Nickname und Admin-Status aus der DB, falls nicht in Session
@@ -66,7 +82,8 @@ export function Header() {
           })
           .then(data => {
             console.log('Admin status from API:', data)
-            const adminValue = data.isAdmin === true || data.isAdmin === 1 || data.isAdmin === 'true'
+            const adminValue =
+              data.isAdmin === true || data.isAdmin === 1 || data.isAdmin === 'true'
             console.log('Setting isAdmin to:', adminValue)
             setIsAdmin(adminValue)
           })
@@ -108,7 +125,7 @@ export function Header() {
         setFavoritesCount(0)
         return
       }
-      
+
       try {
         const response = await fetch('/api/favorites')
         if (response.ok) {
@@ -119,7 +136,7 @@ export function Header() {
         console.error('Error fetching favorites count:', error)
       }
     }
-    
+
     fetchFavoritesCount()
   }, [session?.user])
 
@@ -130,7 +147,7 @@ export function Header() {
         setUnreadNotifications(0)
         return
       }
-      
+
       try {
         const response = await fetch('/api/notifications/unread-count')
         if (response.ok) {
@@ -141,12 +158,12 @@ export function Header() {
         console.error('Error fetching notifications count:', error)
       }
     }
-    
+
     fetchUnreadCount()
-    
+
     // Poll every 5 seconds for new notifications (schneller für bessere UX)
     const interval = setInterval(fetchUnreadCount, 5000)
-    
+
     // Aktualisiere auch wenn Seite wieder fokussiert wird
     const handleFocus = () => {
       fetchUnreadCount()
@@ -156,17 +173,17 @@ export function Header() {
         fetchUnreadCount()
       }
     }
-    
+
     // Event-basierte Aktualisierung nach bestimmten Aktionen
     const handleNotificationUpdate = () => {
       console.log('[Header] notifications-update Event empfangen, aktualisiere unreadCount')
       fetchUnreadCount()
     }
-    
+
     window.addEventListener('focus', handleFocus)
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('notifications-update', handleNotificationUpdate)
-    
+
     return () => {
       clearInterval(interval)
       window.removeEventListener('focus', handleFocus)
@@ -197,10 +214,10 @@ export function Header() {
     e.preventDefault()
     const query = searchQuery.trim()
     if (!query) return
-    
+
     // Prüfe ob es eine Artikelnummer ist (6-10 stellige Nummer)
     const isNumericArticleNumber = /^\d{6,10}$/.test(query)
-    
+
     if (isNumericArticleNumber) {
       // Suche nach Artikelnummer
       try {
@@ -217,16 +234,16 @@ export function Header() {
         console.error('Error searching by article number:', error)
       }
     }
-    
+
     // Normale Suche
     router.push(`/search?q=${encodeURIComponent(query)}`)
   }
 
   return (
-    <header className="bg-white shadow-md border-b sticky top-0 z-50">
-      <div className="max-w-[1600px] mx-auto px-4 sm:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b bg-white shadow-md">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         {/* ERSTE ZEILE: Logo, Navigation, User Actions */}
-        <div className="flex justify-between items-center h-12 py-1">
+        <div className="flex h-12 items-center justify-between py-1">
           {/* Logo */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
@@ -235,65 +252,65 @@ export function Header() {
           </div>
 
           {/* Navigation */}
-          <div className="hidden md:flex items-center space-x-6 flex-1 justify-start ml-8">
+          <div className="ml-8 hidden flex-1 items-center justify-start space-x-6 md:flex">
             {session ? (
-              <Link 
-                href="/favorites" 
-                className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 relative transition-colors"
+              <Link
+                href="/favorites"
+                className="relative flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-primary-600"
               >
                 <Heart className="h-4 w-4" />
                 {t.header.favorites}
                 {favoritesCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                     {favoritesCount > 9 ? '9+' : favoritesCount}
                   </span>
                 )}
               </Link>
             ) : (
-              <button 
+              <button
                 onClick={() => alert(t.header.pleaseLoginForFavorites)}
-                className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors"
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-primary-600"
               >
                 <Heart className="h-4 w-4" />
                 {t.header.favorites}
               </button>
             )}
-            <Link 
-              href="/auctions" 
-              className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors"
+            <Link
+              href="/auctions"
+              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-primary-600"
             >
               <Gavel className="h-4 w-4" />
               {t.header.auctions}
             </Link>
             {/* Verkaufen Dropdown */}
-            <div 
+            <div
               className="relative"
               onMouseEnter={() => setIsSellMenuOpen(true)}
               onMouseLeave={() => setIsSellMenuOpen(false)}
             >
-              <Link 
-                href="/sell" 
-                className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium flex items-center gap-2 transition-colors"
+              <Link
+                href="/sell"
+                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-primary-600"
               >
                 <Plus className="h-4 w-4" />
                 {t.header.sell}
                 <ChevronDown className="h-3 w-3" />
               </Link>
-              
+
               {/* Dropdown Menu */}
               {isSellMenuOpen && (
-                <div className="absolute left-0 mt-1 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50">
+                <div className="absolute left-0 z-50 mt-1 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
                   <div className="py-1">
                     <Link
                       href="/sell"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
                     >
                       <div className="font-medium">{t.header.singleItem}</div>
                       <div className="text-xs text-gray-500">{t.header.singleItemDesc}</div>
                     </Link>
                     <Link
                       href="/sell/bulk"
-                      className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 transition-colors"
+                      className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
                     >
                       <div className="font-medium">{t.header.multipleItems}</div>
                       <div className="text-xs text-gray-500">{t.header.multipleItemsDesc}</div>
@@ -306,44 +323,51 @@ export function Header() {
 
           {/* User Actions - Rechts */}
           <div className="flex items-center space-x-3">
-            <Link 
+            <Link
               href="/notifications"
-              className="flex items-center gap-2 px-3 py-2 text-gray-700 hover:text-primary-600 transition-colors relative"
+              className="relative flex items-center gap-2 px-3 py-2 text-gray-700 transition-colors hover:text-primary-600"
             >
               <div className="relative">
                 <Bell className="h-5 w-5" />
                 {unreadNotifications > 0 && (
-                  <span className="absolute -top-2 -right-2 bg-red-500 text-white text-xs rounded-full h-5 w-5 flex items-center justify-center font-bold">
+                  <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
                     {unreadNotifications > 9 ? '9+' : unreadNotifications}
                   </span>
                 )}
               </div>
-              <span className="hidden md:inline font-medium">{t.header.notifications}</span>
+              <span className="hidden font-medium md:inline">{t.header.notifications}</span>
             </Link>
-            
+
             {/* User Menu */}
             <div className="relative flex items-center space-x-2">
               {session ? (
                 <>
-                  <div className="hidden md:block text-sm text-gray-700 mr-2 flex items-center gap-1">
-                    {t.header.hello}, <UserName userId={session.user.id} userName={userNickname || session.user?.nickname || session.user?.name || 'Benutzer'} badgeSize="sm" />
+                  <div className="mr-2 flex hidden items-center gap-1 text-sm text-gray-700 md:block">
+                    {t.header.hello},{' '}
+                    <UserName
+                      userId={session.user.id}
+                      userName={
+                        userNickname || session.user?.nickname || session.user?.name || 'Benutzer'
+                      }
+                      badgeSize="sm"
+                    />
                   </div>
                   <div className="relative">
                     <button
                       onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                      className="relative flex items-center justify-center gap-1 px-2 py-1 rounded-full bg-primary-600 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 transition-colors"
+                      className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 px-2 py-1 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                       title={t.header.profileMenu}
                     >
                       <Link
                         href={session.user?.id ? `/users/${session.user.id}` : '/profile'}
-                        className="flex items-center justify-center w-8 h-8 rounded-full bg-primary-700 hover:opacity-80 transition-opacity"
-                        onClick={(e) => e.stopPropagation()}
+                        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-700 transition-opacity hover:opacity-80"
+                        onClick={e => e.stopPropagation()}
                       >
                         {getProfileImage() ? (
                           <img
                             src={getProfileImage()}
                             alt={session.user?.name || t.header.myProfile}
-                            className="w-full h-full rounded-full object-cover"
+                            className="h-full w-full rounded-full object-cover"
                           />
                         ) : (
                           <span className="text-xs font-semibold">
@@ -351,7 +375,7 @@ export function Header() {
                           </span>
                         )}
                       </Link>
-                      <ChevronDown 
+                      <ChevronDown
                         className={`h-4 w-4 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
@@ -361,7 +385,7 @@ export function Header() {
                       <>
                         <div
                           className="fixed inset-0 z-[5]"
-                          onClick={(e) => {
+                          onClick={e => {
                             // Prüfe ob Klick auf Dropdown-Menü war
                             const target = e.target as HTMLElement
                             if (target.closest('[data-dropdown-menu]')) {
@@ -371,140 +395,155 @@ export function Header() {
                           }}
                           style={{ pointerEvents: 'auto' }}
                         />
-                        <div 
+                        <div
                           data-dropdown-menu
-                          className="absolute right-0 mt-2 w-56 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-[100]"
-                          onClick={(e) => {
+                          className="absolute right-0 z-[100] mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                          onClick={e => {
                             e.stopPropagation()
                             // Verhindere dass Overlay geschlossen wird
                           }}
-                          onMouseDown={(e) => {
+                          onMouseDown={e => {
                             e.stopPropagation()
                           }}
                           style={{ pointerEvents: 'auto' }}
                         >
-                          <div className="py-1 relative" style={{ pointerEvents: 'auto' }}>
-                            <div className="px-4 py-3 border-b border-gray-200">
-                              <p className="text-sm font-medium text-gray-900 flex items-center gap-1">
-                                <UserName userId={session.user.id} userName={userNickname || session.user?.nickname || session.user?.name || t.header.user} badgeSize="sm" />
+                          <div className="relative py-1" style={{ pointerEvents: 'auto' }}>
+                            <div className="border-b border-gray-200 px-4 py-3">
+                              <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                                <UserName
+                                  userId={session.user.id}
+                                  userName={
+                                    userNickname ||
+                                    session.user?.nickname ||
+                                    session.user?.name ||
+                                    t.header.user
+                                  }
+                                  badgeSize="sm"
+                                />
                               </p>
-                              <p className="text-sm text-gray-500 truncate">
+                              <p className="truncate text-sm text-gray-500">
                                 {session.user?.email}
                               </p>
                             </div>
                             <Link
                               href="/profile"
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
                               }}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
+                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
                               <div className="flex items-center">
-                                <User className="h-4 w-4 mr-2" />
+                                <User className="mr-2 h-4 w-4" />
                                 {t.header.myProfile}
                               </div>
                             </Link>
                             <Link
                               href="/my-watches"
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
                               }}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
+                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
                               <div className="flex items-center">
-                                <Package className="h-4 w-4 mr-2" />
+                                <Package className="mr-2 h-4 w-4" />
                                 {t.header.mySelling}
                               </div>
                             </Link>
                             <Link
                               href="/my-watches/buying"
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
                               }}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
+                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
                               <div className="flex items-center">
-                                <ShoppingBag className="h-4 w-4 mr-2" />
+                                <ShoppingBag className="mr-2 h-4 w-4" />
                                 {t.header.myBuying}
                               </div>
                             </Link>
                             <Link
                               href="/my-watches/account"
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
                               }}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
+                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
                               style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
                             >
                               <div className="flex items-center">
-                                <Settings className="h-4 w-4 mr-2" />
+                                <Settings className="mr-2 h-4 w-4" />
                                 {t.header.settings}
                               </div>
                             </Link>
-                            <div className="border-t border-gray-200 my-1" />
+                            <div className="my-1 border-t border-gray-200" />
                             <Link
                               href="/my-watches/selling/fees"
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
                               }}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
-                              style={{ 
+                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              style={{
                                 pointerEvents: 'auto',
                                 zIndex: 1000,
-                                position: 'relative'
+                                position: 'relative',
                               }}
                             >
                               <div className="flex items-center">
-                                <Wallet className="h-4 w-4 mr-2" />
+                                <Wallet className="mr-2 h-4 w-4" />
                                 {t.header.feesAndInvoices}
                               </div>
                             </Link>
                             <Link
                               href="/my-watches/selling/cancel-request"
-                              onClick={(e) => {
+                              onClick={e => {
                                 e.stopPropagation()
                                 setIsProfileMenuOpen(false)
                               }}
-                              className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 cursor-pointer relative"
-                              style={{ 
+                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                              style={{
                                 pointerEvents: 'auto',
                                 zIndex: 1000,
-                                position: 'relative'
+                                position: 'relative',
                               }}
                             >
                               <div className="flex items-center">
-                                <X className="h-4 w-4 mr-2" />
+                                <X className="mr-2 h-4 w-4" />
                                 {t.header.cancel}
                               </div>
                             </Link>
-                            {(isAdmin || session.user?.isAdmin === true || session.user?.isAdmin === 1) && (
+                            {(isAdmin ||
+                              session.user?.isAdmin === true ||
+                              session.user?.isAdmin === 1) && (
                               <>
-                                <div className="border-t border-gray-200 my-1" />
+                                <div className="my-1 border-t border-gray-200" />
                                 <Link
                                   href="/admin/dashboard"
-                                  onClick={(e) => {
+                                  onClick={e => {
                                     e.stopPropagation()
                                     setIsProfileMenuOpen(false)
                                   }}
-                                  className="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 font-semibold text-primary-600 cursor-pointer relative"
-                                  style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
+                                  className="relative block cursor-pointer px-4 py-2 text-sm font-semibold text-gray-700 text-primary-600 hover:bg-gray-100"
+                                  style={{
+                                    pointerEvents: 'auto',
+                                    zIndex: 1000,
+                                    position: 'relative',
+                                  }}
                                 >
                                   <div className="flex items-center">
-                                    <Shield className="h-4 w-4 mr-2" />
+                                    <Shield className="mr-2 h-4 w-4" />
                                     {t.header.adminDashboard}
                                   </div>
                                 </Link>
                               </>
                             )}
-                            <div className="border-t border-gray-200 my-1" />
+                            <div className="my-1 border-t border-gray-200" />
                             <button
                               onClick={async () => {
                                 setIsProfileMenuOpen(false)
@@ -516,10 +555,10 @@ export function Header() {
                                   window.location.href = '/'
                                 }
                               }}
-                              className="block w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-gray-100"
+                              className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
                             >
                               <div className="flex items-center">
-                                <LogOut className="h-4 w-4 mr-2" />
+                                <LogOut className="mr-2 h-4 w-4" />
                                 {t.header.logout}
                               </div>
                             </button>
@@ -535,7 +574,10 @@ export function Header() {
                     <User className="h-6 w-6" />
                   </button>
                   <div className="hidden md:block">
-                    <Link href="/login" className="text-gray-700 hover:text-primary-600 px-3 py-2 rounded-md text-sm font-medium">
+                    <Link
+                      href="/login"
+                      className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary-600"
+                    >
                       {t.header.login}
                     </Link>
                   </div>
@@ -547,12 +589,16 @@ export function Header() {
             <div className="relative hidden md:block">
               <button
                 onClick={() => setIsLanguageMenuOpen(!isLanguageMenuOpen)}
-                className="flex items-center gap-1 px-3 py-2 text-gray-700 hover:text-primary-600 rounded-md transition-colors font-medium"
+                className="flex items-center gap-1 rounded-md px-3 py-2 font-medium text-gray-700 transition-colors hover:text-primary-600"
                 title={t.header.selectLanguage}
               >
                 <span className="text-lg">{languages.find(l => l.code === language)?.flag}</span>
-                <span className="text-sm">{languages.find(l => l.code === language)?.code.toUpperCase()}</span>
-                <ChevronDown className={`h-4 w-4 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`} />
+                <span className="text-sm">
+                  {languages.find(l => l.code === language)?.code.toUpperCase()}
+                </span>
+                <ChevronDown
+                  className={`h-4 w-4 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`}
+                />
               </button>
 
               {/* Language Dropdown */}
@@ -562,17 +608,19 @@ export function Header() {
                     className="fixed inset-0 z-10"
                     onClick={() => setIsLanguageMenuOpen(false)}
                   />
-                  <div className="absolute right-0 mt-2 w-48 rounded-md shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-20">
+                  <div className="absolute right-0 z-20 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
                     <div className="py-1">
-                      {languages.map((lang) => (
+                      {languages.map(lang => (
                         <button
                           key={lang.code}
                           onClick={() => {
                             setLanguage(lang.code)
                             setIsLanguageMenuOpen(false)
                           }}
-                          className={`w-full text-left px-4 py-2 text-sm hover:bg-gray-100 flex items-center gap-3 ${
-                            language === lang.code ? 'bg-primary-50 text-primary-600 font-medium' : 'text-gray-700'
+                          className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                            language === lang.code
+                              ? 'bg-primary-50 font-medium text-primary-600'
+                              : 'text-gray-700'
                           }`}
                         >
                           <span className="text-xl">{lang.flag}</span>
@@ -591,7 +639,7 @@ export function Header() {
             {/* Mobile menu button */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="md:hidden p-2 text-gray-400 hover:text-gray-500"
+              className="p-2 text-gray-400 hover:text-gray-500 md:hidden"
             >
               <Menu className="h-6 w-6" />
             </button>
@@ -599,25 +647,25 @@ export function Header() {
         </div>
 
         {/* ZWEITE ZEILE: Suchleiste - ZENTRIERT */}
-        <div className="hidden md:block border-t border-gray-200 py-3">
+        <div className="hidden border-t border-gray-200 py-3 md:block">
           <div className="flex items-center justify-center">
             {/* Suchleiste - Zentriert */}
-            <div className="flex-1 max-w-3xl">
+            <div className="max-w-3xl flex-1">
               <form onSubmit={handleSearch}>
                 <div className="relative flex items-center">
-                  <div className="absolute left-4 flex items-center pointer-events-none">
+                  <div className="pointer-events-none absolute left-4 flex items-center">
                     <Search className="h-5 w-5 text-gray-400" />
                   </div>
                   <input
                     type="text"
                     placeholder={t.header.searchPlaceholder}
                     value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="block w-full pl-11 pr-4 py-2.5 border border-gray-300 rounded-l-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-primary-500 text-gray-900"
+                    onChange={e => setSearchQuery(e.target.value)}
+                    className="block w-full rounded-l-lg border border-gray-300 py-2.5 pl-11 pr-4 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   />
                   <button
                     type="submit"
-                    className="bg-primary-600 hover:bg-primary-700 text-white px-6 py-2.5 rounded-r-lg transition-colors font-medium"
+                    className="rounded-r-lg bg-primary-600 px-6 py-2.5 font-medium text-white transition-colors hover:bg-primary-700"
                   >
                     {t.header.search}
                   </button>
@@ -631,18 +679,18 @@ export function Header() {
         <CategoryBar />
 
         {/* Mobile Search */}
-        <div className="md:hidden pb-4">
+        <div className="pb-4 md:hidden">
           <form onSubmit={handleSearch}>
             <div className="relative">
-              <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
                 <Search className="h-5 w-5 text-gray-400" />
               </div>
               <input
                 type="text"
                 placeholder={t.header.searchPlaceholder}
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="block w-full pl-10 pr-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent text-gray-900"
+                onChange={e => setSearchQuery(e.target.value)}
+                className="block w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </form>
@@ -651,35 +699,47 @@ export function Header() {
         {/* Mobile Menu */}
         {isMenuOpen && (
           <div className="md:hidden">
-            <div className="px-2 pt-2 pb-3 space-y-1 sm:px-3 border-t">
-              <Link href="/categories" className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium">
+            <div className="space-y-1 border-t px-2 pb-3 pt-2 sm:px-3">
+              <Link
+                href="/categories"
+                className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
+              >
                 {t.header.categories}
               </Link>
-              <Link href="/auctions" className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium">
+              <Link
+                href="/auctions"
+                className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
+              >
                 {t.header.auctions}
               </Link>
               <div className="px-3 py-2">
-                <div className="text-gray-700 font-medium text-base mb-1">{t.header.sell}</div>
-                <Link href="/sell" className="block py-2 text-sm text-gray-600 hover:text-primary-600 pl-4">
+                <div className="mb-1 text-base font-medium text-gray-700">{t.header.sell}</div>
+                <Link
+                  href="/sell"
+                  className="block py-2 pl-4 text-sm text-gray-600 hover:text-primary-600"
+                >
                   {t.header.singleItem}
                 </Link>
-                <Link href="/sell/bulk" className="block py-2 text-sm text-gray-600 hover:text-primary-600 pl-4">
+                <Link
+                  href="/sell/bulk"
+                  className="block py-2 pl-4 text-sm text-gray-600 hover:text-primary-600"
+                >
                   {t.header.multipleItems}
                 </Link>
               </div>
               {session ? (
                 <>
-                  <div className="px-3 py-3 border-b border-gray-200 flex items-center space-x-3">
+                  <div className="flex items-center space-x-3 border-b border-gray-200 px-3 py-3">
                     <Link
                       href={session.user?.id ? `/users/${session.user.id}` : '/profile'}
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center justify-center w-10 h-10 rounded-full bg-primary-600 text-white cursor-pointer hover:opacity-80 transition-opacity"
+                      className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-primary-600 text-white transition-opacity hover:opacity-80"
                     >
                       {getProfileImage() ? (
                         <img
                           src={getProfileImage()}
                           alt={session.user?.name || t.header.profile}
-                          className="w-full h-full rounded-full object-cover"
+                          className="h-full w-full rounded-full object-cover"
                         />
                       ) : (
                         <span className="text-sm font-semibold">
@@ -691,88 +751,89 @@ export function Header() {
                       <p className="text-sm font-medium text-gray-900">
                         {session.user?.name || t.header.user}
                       </p>
-                      <p className="text-xs text-gray-500 truncate">
-                        {session.user?.email}
-                      </p>
+                      <p className="truncate text-xs text-gray-500">{session.user?.email}</p>
                     </div>
                   </div>
                   <Link
                     href="/profile"
                     onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
+                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
                   >
-                    <User className="h-5 w-5 mr-2" />
+                    <User className="mr-2 h-5 w-5" />
                     {t.header.myProfile}
                   </Link>
                   <Link
                     href="/my-watches"
                     onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
+                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
                   >
-                    <Package className="h-5 w-5 mr-2" />
+                    <Package className="mr-2 h-5 w-5" />
                     {t.header.mySelling}
                   </Link>
                   <Link
                     href="/my-watches/buying"
                     onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
+                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
                   >
-                    <ShoppingBag className="h-5 w-5 mr-2" />
+                    <ShoppingBag className="mr-2 h-5 w-5" />
                     {t.header.myBuying}
                   </Link>
                   <Link
                     href="/my-watches/account"
                     onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
+                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
                   >
-                    <Settings className="h-5 w-5 mr-2" />
+                    <Settings className="mr-2 h-5 w-5" />
                     {t.header.settings}
                   </Link>
                   <Link
                     href="/my-watches/selling/fees"
                     onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
+                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
                   >
-                    <Wallet className="h-5 w-5 mr-2" />
+                    <Wallet className="mr-2 h-5 w-5" />
                     {t.header.feesAndInvoices}
                   </Link>
                   <Link
                     href="/my-watches/selling/cancel-request"
                     onClick={() => setIsMenuOpen(false)}
-                    className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium flex items-center"
+                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
                   >
-                    <X className="h-5 w-5 mr-2" />
+                    <X className="mr-2 h-5 w-5" />
                     {t.header.cancel}
                   </Link>
                   {(session?.user?.isAdmin || isAdmin) && (
                     <Link
                       href="/admin/dashboard"
                       onClick={() => setIsMenuOpen(false)}
-                      className="text-primary-600 hover:text-primary-700 block px-3 py-2 rounded-md text-base font-semibold flex items-center"
+                      className="block flex items-center rounded-md px-3 py-2 text-base font-semibold text-primary-600 hover:text-primary-700"
                     >
-                      <Shield className="h-5 w-5 mr-2" />
+                      <Shield className="mr-2 h-5 w-5" />
                       {t.header.adminDashboard}
                     </Link>
                   )}
-                              <button 
-                                onClick={async () => {
-                                  setIsMenuOpen(false)
-                                  try {
-                                    await signOut({ callbackUrl: '/' })
-                                  } catch (error) {
-                                    console.error('Error signing out:', error)
-                                    // Fallback: manuell zur Hauptseite
-                                    window.location.href = '/'
-                                  }
-                                }}
-                                className="text-red-600 hover:text-red-700 block px-3 py-2 rounded-md text-base font-medium w-full text-left flex items-center"
-                              >
-                                <LogOut className="h-5 w-5 mr-2" />
-                                {t.header.logout}
-                              </button>
+                  <button
+                    onClick={async () => {
+                      setIsMenuOpen(false)
+                      try {
+                        await signOut({ callbackUrl: '/' })
+                      } catch (error) {
+                        console.error('Error signing out:', error)
+                        // Fallback: manuell zur Hauptseite
+                        window.location.href = '/'
+                      }
+                    }}
+                    className="block flex w-full items-center rounded-md px-3 py-2 text-left text-base font-medium text-red-600 hover:text-red-700"
+                  >
+                    <LogOut className="mr-2 h-5 w-5" />
+                    {t.header.logout}
+                  </button>
                 </>
               ) : (
-                <Link href="/login" className="text-gray-700 hover:text-primary-600 block px-3 py-2 rounded-md text-base font-medium">
+                <Link
+                  href="/login"
+                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
+                >
                   {t.header.login}
                 </Link>
               )}

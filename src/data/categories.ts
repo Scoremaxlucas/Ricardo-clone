@@ -65,7 +65,7 @@ export const categoryConfig: Record<string, CategoryConfig> = {
     color: colors.primary,
     slug: 'computer-netzwerk',
   },
-  'sport': {
+  sport: {
     name: 'Sport',
     icon: Dumbbell,
     color: colors.primaryLight,
@@ -95,7 +95,7 @@ export const categoryConfig: Record<string, CategoryConfig> = {
     color: colors.accent,
     slug: 'kind-baby',
   },
-  'buecher': {
+  buecher: {
     name: 'Bücher',
     icon: BookOpen,
     color: colors.primaryDark,
@@ -113,7 +113,7 @@ export const categoryConfig: Record<string, CategoryConfig> = {
     color: colors.accentDark,
     slug: 'sammeln-seltenes',
   },
-  'immobilien': {
+  immobilien: {
     name: 'Immobilien',
     icon: Building2,
     color: colors.primaryDark,
@@ -125,7 +125,7 @@ export const categoryConfig: Record<string, CategoryConfig> = {
     color: colors.primary,
     slug: 'jobs-karriere',
   },
-  'dienstleistungen': {
+  dienstleistungen: {
     name: 'Dienstleistungen',
     icon: Wrench,
     color: colors.primaryLight,
@@ -179,19 +179,19 @@ export const categoryConfig: Record<string, CategoryConfig> = {
     color: colors.primaryLight,
     slug: 'tiere-zubehoer',
   },
-  'tiere': {
+  tiere: {
     name: 'Tiere',
     icon: Dog,
     color: colors.primaryLight,
     slug: 'tiere',
   },
-  'elektronik': {
+  elektronik: {
     name: 'Elektronik',
     icon: Smartphone,
     color: colors.primary,
     slug: 'elektronik',
   },
-  'moebel': {
+  moebel: {
     name: 'Möbel',
     icon: Sofa,
     color: colors.primaryDark,
@@ -215,7 +215,7 @@ export const categoryConfig: Record<string, CategoryConfig> = {
     color: colors.primaryLight,
     slug: 'lebensmittel-getraenke',
   },
-  'lebensmittel': {
+  lebensmittel: {
     name: 'Lebensmittel',
     icon: Apple,
     color: colors.primaryLight,
@@ -227,7 +227,7 @@ export const categoryConfig: Record<string, CategoryConfig> = {
     color: colors.primary,
     slug: 'medizin-gesundheit',
   },
-  'flugzeuge': {
+  flugzeuge: {
     name: 'Flugzeuge',
     icon: Plane,
     color: colors.primaryDark,
@@ -239,19 +239,19 @@ export const categoryConfig: Record<string, CategoryConfig> = {
     color: colors.primary,
     slug: 'smart-home',
   },
-  'elektrogeraete': {
+  elektrogeraete: {
     name: 'Elektrogeräte',
     icon: Zap,
     color: colors.accent,
     slug: 'elektrogeraete',
   },
-  'baustoffe': {
+  baustoffe: {
     name: 'Baustoffe',
     icon: Square,
     color: colors.primaryDark,
     slug: 'baustoffe',
   },
-  'fahrzeugzubehoer': {
+  fahrzeugzubehoer: {
     name: 'Fahrzeugzubehör',
     icon: Wrench,
     color: colors.primaryLight,
@@ -287,7 +287,7 @@ export const categoryConfig: Record<string, CategoryConfig> = {
     color: colors.primaryLight,
     slug: 'modellbau-hobby',
   },
-  'muenzen': {
+  muenzen: {
     name: 'Münzen',
     icon: CircleDollarSign,
     color: colors.accent,
@@ -305,7 +305,7 @@ export const categoryConfig: Record<string, CategoryConfig> = {
     color: colors.primary,
     slug: 'tickets-gutscheine',
   },
-  'tierzubehoer': {
+  tierzubehoer: {
     name: 'Tierzubehör',
     icon: Dog,
     color: colors.primaryLight,
@@ -352,4 +352,3 @@ export function getCategoryIcon(slug: string) {
 export function getCategoryColor(slug: string) {
   return getCategoryConfig(slug).color
 }
-

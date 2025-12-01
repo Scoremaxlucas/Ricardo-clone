@@ -1,14 +1,11 @@
- import { NextRequest, NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { calculateInvoiceForSale } from '@/lib/invoice'
 
 // PATCH - Preisvorschlag akzeptieren oder ablehnen
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     if (!prisma) {
       console.error('Prisma client is not initialized')
@@ -66,8 +63,7 @@ export async function PATCH(
     }
 
     if (action === 'accept') {
-      // Bei Ricardo müssen Käufer ihre Handynummer verifizieren, um Artikel kaufen zu können
-      // ABER: Verifizierung ist primär für VERKÄUFER zwingend notwendig
+      // Verifizierung ist primär für VERKÄUFER zwingend notwendig
       // Für Käufer ist Verifizierung empfohlen, aber nicht zwingend für Preisvorschläge
       // Daher entfernen wir die Verifizierungsprüfung für Käufer hier komplett
 
@@ -77,8 +73,8 @@ export async function PATCH(
 
       // Verwende Transaktion, damit beide Operationen atomar sind
       // Falls das Update fehlschlägt, wird der Purchase auch nicht erstellt
-      const result = await prisma.$transaction(async (tx) => {
-        // Erstelle einen Purchase (Ricardo-Prozess)
+      const result = await prisma.$transaction(async tx => {
+        // Erstelle einen Purchase
         const purchase = await tx.purchase.create({
           data: {
             watchId: priceOffer.watchId,
@@ -94,7 +90,7 @@ export async function PATCH(
         console.log('[offers] Purchase erstellt:', {
           purchaseId: purchase.id,
           watchId: priceOffer.watchId,
-          buyerId: priceOffer.buyerId
+          buyerId: priceOffer.buyerId,
         })
 
         // Aktualisiere den Preisvorschlag
@@ -114,7 +110,7 @@ export async function PATCH(
         console.log('[offers] PriceOffer aktualisiert:', {
           offerId: updatedOffer.id,
           purchaseId: purchase.id,
-          status: updatedOffer.status
+          status: updatedOffer.status,
         })
 
         return { purchase, updatedOffer }
@@ -125,7 +121,12 @@ export async function PATCH(
       // E-Mail: Preisvorschlag akzeptiert an Käufer
       try {
         const { sendEmail, getPriceOfferAcceptedEmail } = await import('@/lib/email')
-        const buyerName = priceOffer.buyer.nickname || priceOffer.buyer.firstName || priceOffer.buyer.name || priceOffer.buyer.email || 'Käufer'
+        const buyerName =
+          priceOffer.buyer.nickname ||
+          priceOffer.buyer.firstName ||
+          priceOffer.buyer.name ||
+          priceOffer.buyer.email ||
+          'Käufer'
         const { subject, html, text } = getPriceOfferAcceptedEmail(
           buyerName,
           priceOffer.watch.title,
@@ -137,11 +138,16 @@ export async function PATCH(
           to: priceOffer.buyer.email,
           subject,
           html,
-          text
+          text,
         })
-        console.log(`[offers] ✅ Preisvorschlag-Akzeptiert-E-Mail gesendet an Käufer ${priceOffer.buyer.email}`)
+        console.log(
+          `[offers] ✅ Preisvorschlag-Akzeptiert-E-Mail gesendet an Käufer ${priceOffer.buyer.email}`
+        )
       } catch (emailError: any) {
-        console.error('[offers] ❌ Fehler beim Senden der Preisvorschlag-Akzeptiert-E-Mail:', emailError)
+        console.error(
+          '[offers] ❌ Fehler beim Senden der Preisvorschlag-Akzeptiert-E-Mail:',
+          emailError
+        )
       }
 
       // Benachrichtigung für den Käufer
@@ -157,15 +163,21 @@ export async function PATCH(
             priceOfferId: priceOffer.id,
           },
         })
-        console.log(`[notifications] Preisvorschlag-Akzeptiert-Benachrichtigung erstellt für Käufer ${priceOffer.buyerId}`)
+        console.log(
+          `[notifications] Preisvorschlag-Akzeptiert-Benachrichtigung erstellt für Käufer ${priceOffer.buyerId}`
+        )
       } catch (notifError) {
-        console.error('[notifications] Fehler beim Erstellen der Akzeptiert-Benachrichtigung:', notifError)
+        console.error(
+          '[notifications] Fehler beim Erstellen der Akzeptiert-Benachrichtigung:',
+          notifError
+        )
       }
 
-      // RICARDO-STYLE: Erstelle Benachrichtigung für Verkäufer
+      // Erstelle Benachrichtigung für Verkäufer
       try {
         const buyer = priceOffer.buyer
-        const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Ein Käufer'
+        const buyerName =
+          buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Ein Käufer'
         await prisma.notification.create({
           data: {
             userId: priceOffer.watch.sellerId,
@@ -173,45 +185,54 @@ export async function PATCH(
             title: 'Ihr Artikel wurde verkauft',
             message: `${buyerName} hat "${priceOffer.watch.title}" für CHF ${priceOffer.amount.toFixed(2)} gekauft`,
             watchId: priceOffer.watchId,
-            link: `/my-watches/selling/sold`
-          }
+            link: `/my-watches/selling/sold`,
+          },
         })
-        console.log(`[offers] ✅ Verkaufs-Benachrichtigung für Seller ${priceOffer.watch.sellerId} erstellt`)
+        console.log(
+          `[offers] ✅ Verkaufs-Benachrichtigung für Seller ${priceOffer.watch.sellerId} erstellt`
+        )
       } catch (notificationError: any) {
-        console.error('[offers] ❌ Fehler beim Erstellen der Verkaufs-Benachrichtigung:', notificationError)
+        console.error(
+          '[offers] ❌ Fehler beim Erstellen der Verkaufs-Benachrichtigung:',
+          notificationError
+        )
         // Fehler sollte den Kauf nicht verhindern
       }
 
-      // RICARDO-STYLE: Erstelle Rechnung SOFORT nach erfolgreichem Verkauf
+      // Erstelle Rechnung SOFORT nach erfolgreichem Verkauf
       try {
         const invoice = await calculateInvoiceForSale(purchase.id)
-        console.log(`[offers] ✅ Rechnung erstellt: ${invoice.invoiceNumber} für Seller ${priceOffer.watch.sellerId}, Total: CHF ${invoice.total.toFixed(2)} (Ricardo-Style: sofort nach Verkauf)`)
+        console.log(
+          `[offers] ✅ Rechnung erstellt: ${invoice.invoiceNumber} für Seller ${priceOffer.watch.sellerId}, Total: CHF ${invoice.total.toFixed(2)} (sofort nach Verkauf)`
+        )
       } catch (invoiceError) {
         console.error('[offers] ❌ Fehler beim Erstellen der Rechnung:', invoiceError)
         // Fehler wird geloggt, aber Purchase bleibt erfolgreich
       }
 
-      // RICARDO-STYLE: Sende Bestätigungs-E-Mail an Käufer
+      // Sende Bestätigungs-E-Mail an Käufer
       try {
         const { sendEmail, getPurchaseConfirmationEmail } = await import('@/lib/email')
         const { getShippingCost } = await import('@/lib/shipping')
         const buyer = priceOffer.buyer
         const seller = priceOffer.watch.seller
         const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
-        const sellerName = seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
-        
+        const sellerName =
+          seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
+
         // Berechne Versandkosten
         const shippingMethod = priceOffer.watch.shippingMethod
         let shippingMethods: any = null
         try {
           if (shippingMethod) {
-            shippingMethods = typeof shippingMethod === 'string' ? JSON.parse(shippingMethod) : shippingMethod
+            shippingMethods =
+              typeof shippingMethod === 'string' ? JSON.parse(shippingMethod) : shippingMethod
           }
         } catch {
           shippingMethods = null
         }
         const shippingCost = getShippingCost(shippingMethods)
-        
+
         const { subject, html, text } = getPurchaseConfirmationEmail(
           buyerName,
           sellerName,
@@ -222,14 +243,14 @@ export async function PATCH(
           purchase.id,
           priceOffer.watchId
         )
-        
+
         await sendEmail({
           to: buyer.email,
           subject,
           html,
-          text
+          text,
         })
-        
+
         console.log(`[offers] ✅ Kaufbestätigungs-E-Mail gesendet an Käufer ${buyer.email}`)
       } catch (emailError: any) {
         console.error('[offers] ❌ Fehler beim Senden der Kaufbestätigungs-E-Mail:', emailError)
@@ -267,9 +288,14 @@ export async function PATCH(
             priceOfferId: priceOffer.id,
           },
         })
-        console.log(`[notifications] Preisvorschlag-Abgelehnt-Benachrichtigung erstellt für Käufer ${priceOffer.buyerId}`)
+        console.log(
+          `[notifications] Preisvorschlag-Abgelehnt-Benachrichtigung erstellt für Käufer ${priceOffer.buyerId}`
+        )
       } catch (notifError) {
-        console.error('[notifications] Fehler beim Erstellen der Abgelehnt-Benachrichtigung:', notifError)
+        console.error(
+          '[notifications] Fehler beim Erstellen der Abgelehnt-Benachrichtigung:',
+          notifError
+        )
       }
 
       return NextResponse.json({
@@ -280,7 +306,10 @@ export async function PATCH(
   } catch (error: any) {
     console.error('Error updating price offer:', error)
     return NextResponse.json(
-      { message: 'Fehler beim Aktualisieren des Preisvorschlags: ' + (error.message || String(error)) },
+      {
+        message:
+          'Fehler beim Aktualisieren des Preisvorschlags: ' + (error.message || String(error)),
+      },
       { status: 500 }
     )
   }

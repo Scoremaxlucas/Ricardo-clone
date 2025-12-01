@@ -16,16 +16,18 @@ export default function HelpArticlePage() {
 
   if (!article) {
     return (
-      <div className="min-h-screen bg-gray-50 flex flex-col">
+      <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
-        <main className="flex-1 max-w-4xl mx-auto px-4 py-12 w-full">
-          <div className="bg-white rounded-lg shadow-md p-8 text-center">
-            <AlertCircle className="h-16 w-16 text-gray-400 mx-auto mb-4" />
-            <h2 className="text-2xl font-bold text-gray-900 mb-2">{t.helpArticle.articleNotFound}</h2>
-            <p className="text-gray-600 mb-6">{t.helpArticle.articleNotFoundDesc}</p>
+        <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
+          <div className="rounded-lg bg-white p-8 text-center shadow-md">
+            <AlertCircle className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+            <h2 className="mb-2 text-2xl font-bold text-gray-900">
+              {t.helpArticle.articleNotFound}
+            </h2>
+            <p className="mb-6 text-gray-600">{t.helpArticle.articleNotFoundDesc}</p>
             <Link
               href="/help"
-              className="inline-block px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors"
+              className="inline-block rounded-lg bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
             >
               {t.helpArticle.backToHelpCenter}
             </Link>
@@ -37,23 +39,25 @@ export default function HelpArticlePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
-      <main className="flex-1 max-w-4xl mx-auto px-4 py-12 w-full">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
         {/* Back Button */}
         <Link
           href="/help"
-          className="inline-flex items-center text-primary-600 hover:text-primary-700 mb-6"
+          className="mb-6 inline-flex items-center text-primary-600 hover:text-primary-700"
         >
-          <ArrowLeft className="h-5 w-5 mr-2" />
+          <ArrowLeft className="mr-2 h-5 w-5" />
           {t.helpArticle.backToHelpCenter}
         </Link>
 
         {/* Article */}
-        <article className="bg-white rounded-lg shadow-md border border-gray-200 p-8">
+        <article className="rounded-lg border border-gray-200 bg-white p-8 shadow-md">
           {/* Header */}
-          <div className="mb-6 pb-6 border-b border-gray-200">
-            <div className="text-sm text-gray-500 mb-2">{t.help[article.category.toLowerCase() as keyof typeof t.help] || article.category}</div>
+          <div className="mb-6 border-b border-gray-200 pb-6">
+            <div className="mb-2 text-sm text-gray-500">
+              {t.help[article.category.toLowerCase() as keyof typeof t.help] || article.category}
+            </div>
             <h1 className="text-3xl font-bold text-gray-900">{article.title}</h1>
           </div>
 
@@ -61,7 +65,7 @@ export default function HelpArticlePage() {
           <div className="prose max-w-none">
             <div className="space-y-4">
               {article.content.map((paragraph, index) => (
-                <p key={index} className="text-gray-700 leading-relaxed">
+                <p key={index} className="leading-relaxed text-gray-700">
                   {paragraph}
                 </p>
               ))}
@@ -69,12 +73,12 @@ export default function HelpArticlePage() {
 
             {/* Tips */}
             {article.tips && article.tips.length > 0 && (
-              <div className="mt-8 bg-blue-50 border-l-4 border-blue-500 p-4 rounded">
+              <div className="mt-8 rounded border-l-4 border-blue-500 bg-blue-50 p-4">
                 <div className="flex items-start gap-3">
-                  <Info className="h-5 w-5 text-blue-600 mt-0.5 flex-shrink-0" />
+                  <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
                   <div>
-                    <h3 className="font-semibold text-blue-900 mb-2">{t.helpArticle.tips}</h3>
-                    <ul className="list-disc list-inside space-y-1 text-blue-800">
+                    <h3 className="mb-2 font-semibold text-blue-900">{t.helpArticle.tips}</h3>
+                    <ul className="list-inside list-disc space-y-1 text-blue-800">
                       {article.tips.map((tip, index) => (
                         <li key={index}>{tip}</li>
                       ))}
@@ -86,12 +90,12 @@ export default function HelpArticlePage() {
 
             {/* Warnings */}
             {article.warnings && article.warnings.length > 0 && (
-              <div className="mt-6 bg-red-50 border-l-4 border-red-500 p-4 rounded">
+              <div className="mt-6 rounded border-l-4 border-red-500 bg-red-50 p-4">
                 <div className="flex items-start gap-3">
-                  <AlertCircle className="h-5 w-5 text-red-600 mt-0.5 flex-shrink-0" />
+                  <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
                   <div>
-                    <h3 className="font-semibold text-red-900 mb-2">{t.helpArticle.important}</h3>
-                    <ul className="list-disc list-inside space-y-1 text-red-800">
+                    <h3 className="mb-2 font-semibold text-red-900">{t.helpArticle.important}</h3>
+                    <ul className="list-inside list-disc space-y-1 text-red-800">
                       {article.warnings.map((warning, index) => (
                         <li key={index}>{warning}</li>
                       ))}
@@ -103,20 +107,18 @@ export default function HelpArticlePage() {
           </div>
 
           {/* Footer */}
-          <div className="mt-8 pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-600 mb-4">
-              {t.helpArticle.wasHelpful}
-            </p>
+          <div className="mt-8 border-t border-gray-200 pt-6">
+            <p className="mb-4 text-sm text-gray-600">{t.helpArticle.wasHelpful}</p>
             <div className="flex flex-wrap gap-4">
               <Link
                 href="/contact"
-                className="px-4 py-2 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition-colors text-sm"
+                className="rounded-lg bg-primary-600 px-4 py-2 text-sm text-white transition-colors hover:bg-primary-700"
               >
                 {t.helpArticle.contactUs}
               </Link>
               <Link
                 href="/faq"
-                className="px-4 py-2 bg-white text-primary-600 border-2 border-primary-600 rounded-lg hover:bg-primary-50 transition-colors text-sm"
+                className="rounded-lg border-2 border-primary-600 bg-white px-4 py-2 text-sm text-primary-600 transition-colors hover:bg-primary-50"
               >
                 {t.helpArticle.moreQuestions}
               </Link>
@@ -128,4 +130,3 @@ export default function HelpArticlePage() {
     </div>
   )
 }
-

@@ -58,7 +58,7 @@ export default function NotificationsPage() {
         fetchNotifications()
       }
     }
-    
+
     // Aktualisiere auch beim Zurückkommen (popstate event)
     const handlePopState = () => {
       if (session?.user) {
@@ -66,11 +66,11 @@ export default function NotificationsPage() {
         setTimeout(() => fetchNotifications(), 100)
       }
     }
-    
+
     window.addEventListener('focus', handleFocus)
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('popstate', handlePopState)
-    
+
     return () => {
       window.removeEventListener('focus', handleFocus)
       document.removeEventListener('visibilitychange', handleVisibilityChange)
@@ -85,11 +85,16 @@ export default function NotificationsPage() {
       if (res.ok) {
         const data = await res.json()
         const unreadCount = data.notifications?.filter((n: Notification) => !n.isRead).length || 0
-        console.log('[notifications] Benachrichtigungen geladen:', data.notifications?.length || 0, 'ungelesen:', unreadCount)
-        
+        console.log(
+          '[notifications] Benachrichtigungen geladen:',
+          data.notifications?.length || 0,
+          'ungelesen:',
+          unreadCount
+        )
+
         // Aktualisiere State direkt von der API
         setNotifications(data.notifications || [])
-        
+
         // Aktualisiere auch den unreadCount im Header
         window.dispatchEvent(new CustomEvent('notifications-update'))
       } else {
@@ -105,67 +110,63 @@ export default function NotificationsPage() {
   const markAsRead = async (notificationId: string): Promise<boolean> => {
     try {
       console.log('[notifications] Markiere Benachrichtigung als gelesen:', notificationId)
-      
+
       // Optimistic Update: Sofort State aktualisieren
       const notification = notifications.find(n => n.id === notificationId)
       const wasUnread = notification && !notification.isRead
-      
+
       if (wasUnread) {
         setNotifications(prev =>
           prev.map(n =>
             n.id === notificationId ? { ...n, isRead: true, readAt: new Date().toISOString() } : n
           )
         )
-        
+
         // Sofort Header-Badge aktualisieren
         window.dispatchEvent(new CustomEvent('notifications-update'))
       }
-      
+
       // API-Anfrage
       const res = await fetch('/api/notifications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ notificationId })
+        body: JSON.stringify({ notificationId }),
       })
-      
+
       if (res.ok) {
         const data = await res.json()
         console.log('[notifications] Benachrichtigung erfolgreich als gelesen markiert:', data)
-        
+
         // Aktualisiere Header-Badge erneut (sicherheitshalber)
         window.dispatchEvent(new CustomEvent('notifications-update'))
-        
+
         return true
       } else {
         const errorData = await res.json().catch(() => ({}))
         console.error('[notifications] Fehler beim Markieren als gelesen:', errorData)
-        
+
         // Rollback bei Fehler
         if (wasUnread && notification) {
           setNotifications(prev =>
-            prev.map(n =>
-              n.id === notificationId ? { ...n, isRead: false, readAt: null } : n
-            )
+            prev.map(n => (n.id === notificationId ? { ...n, isRead: false, readAt: null } : n))
           )
           window.dispatchEvent(new CustomEvent('notifications-update'))
         }
-        
+
         return false
       }
     } catch (error) {
       console.error('[notifications] Error marking as read:', error)
-      
+
       // Rollback bei Fehler
       const notification = notifications.find(n => n.id === notificationId)
       if (notification && !notification.isRead) {
         setNotifications(prev =>
-          prev.map(n =>
-            n.id === notificationId ? { ...n, isRead: false, readAt: null } : n
-          )
+          prev.map(n => (n.id === notificationId ? { ...n, isRead: false, readAt: null } : n))
         )
         window.dispatchEvent(new CustomEvent('notifications-update'))
       }
-      
+
       return false
     }
   }
@@ -175,9 +176,9 @@ export default function NotificationsPage() {
       const res = await fetch('/api/notifications', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ markAllAsRead: true })
+        body: JSON.stringify({ markAllAsRead: true }),
       })
-      
+
       if (res.ok) {
         fetchNotifications()
         // Aktualisiere auch den unreadCount im Header
@@ -216,16 +217,17 @@ export default function NotificationsPage() {
     const date = new Date(dateString)
     const now = new Date()
     const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
-    
+
     if (seconds < 60) return t.notifications.justNow
     const minutes = Math.floor(seconds / 60)
     if (minutes < 60) return t.notifications.minutesAgo.replace('{minutes}', minutes.toString())
     const hours = Math.floor(minutes / 60)
     if (hours < 24) return t.notifications.hoursAgo.replace('{hours}', hours.toString())
     const days = Math.floor(hours / 24)
-    if (days < 7) return days === 1 
-      ? t.notifications.daysAgo.replace('{days}', days.toString())
-      : t.notifications.daysAgoPlural.replace('{days}', days.toString())
+    if (days < 7)
+      return days === 1
+        ? t.notifications.daysAgo.replace('{days}', days.toString())
+        : t.notifications.daysAgoPlural.replace('{days}', days.toString())
     const weeks = Math.floor(days / 7)
     return weeks === 1
       ? t.notifications.weeksAgo.replace('{weeks}', weeks.toString())
@@ -236,9 +238,9 @@ export default function NotificationsPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex items-center justify-center min-h-[60vh]">
+        <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-600 mx-auto mb-4"></div>
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
             <p className="text-gray-600">{t.notifications.loading}</p>
           </div>
         </div>
@@ -247,28 +249,27 @@ export default function NotificationsPage() {
     )
   }
 
-  const filteredNotifications = filter === 'unread' 
-    ? notifications.filter(n => !n.isRead)
-    : notifications
+  const filteredNotifications =
+    filter === 'unread' ? notifications.filter(n => !n.isRead) : notifications
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
-      <div className="max-w-4xl mx-auto px-4 py-8">
-        <div className="bg-white rounded-lg shadow-sm border border-gray-200">
+
+      <div className="mx-auto max-w-4xl px-4 py-8">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
           {/* Header */}
-          <div className="p-6 border-b border-gray-200">
-            <div className="flex items-center justify-between mb-4">
+          <div className="border-b border-gray-200 p-6">
+            <div className="mb-4 flex items-center justify-between">
               <div className="flex items-center gap-3">
                 <Bell className="h-6 w-6 text-primary-600" />
                 <h1 className="text-2xl font-bold text-gray-900">{t.notifications.title}</h1>
               </div>
-              
+
               {notifications.some(n => !n.isRead) && (
                 <button
                   onClick={markAllAsRead}
-                  className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-primary-600 hover:bg-primary-50 rounded-md transition-colors"
+                  className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50"
                 >
                   <CheckCheck className="h-4 w-4" />
                   {t.notifications.markAllAsRead}
@@ -280,7 +281,7 @@ export default function NotificationsPage() {
             <div className="flex gap-2">
               <button
                 onClick={() => setFilter('all')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   filter === 'all'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -290,7 +291,7 @@ export default function NotificationsPage() {
               </button>
               <button
                 onClick={() => setFilter('unread')}
-                className={`px-4 py-2 rounded-md text-sm font-medium transition-colors ${
+                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                   filter === 'unread'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -305,82 +306,84 @@ export default function NotificationsPage() {
           <div className="divide-y divide-gray-200">
             {filteredNotifications.length === 0 ? (
               <div className="p-12 text-center text-gray-500">
-                <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
-                <p className="text-lg font-medium mb-2">{t.notifications.noNotifications}</p>
+                <Bell className="mx-auto mb-4 h-12 w-12 text-gray-300" />
+                <p className="mb-2 text-lg font-medium">{t.notifications.noNotifications}</p>
                 <p className="text-sm">
-                  {filter === 'unread' 
+                  {filter === 'unread'
                     ? t.notifications.noUnreadNotifications
                     : t.notifications.noNotificationsYet}
                 </p>
               </div>
             ) : (
-              filteredNotifications.map((notification) => (
+              filteredNotifications.map(notification => (
                 <div
                   key={notification.id}
-                  className={`p-4 hover:bg-gray-50 transition-colors ${
+                  className={`p-4 transition-colors hover:bg-gray-50 ${
                     !notification.isRead ? 'bg-blue-50 hover:bg-blue-100' : ''
                   }`}
                 >
                   <div className="flex items-start gap-4">
-                    <div className="flex-shrink-0 mt-1">
-                      {getIcon(notification.type)}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
+                    <div className="mt-1 flex-shrink-0">{getIcon(notification.type)}</div>
+
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-2">
                         <div className="flex-1">
-                          <h3 className="text-sm font-semibold text-gray-900 mb-1">
+                          <h3 className="mb-1 text-sm font-semibold text-gray-900">
                             {notification.title}
                           </h3>
-                          <p className="text-sm text-gray-600 mb-2">
-                            {notification.message}
-                          </p>
+                          <p className="mb-2 text-sm text-gray-600">{notification.message}</p>
                           <div className="flex items-center gap-4 text-xs text-gray-500">
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />
                               {getTimeAgo(notification.createdAt)}
                             </div>
                             {!notification.isRead && (
-                              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800">
+                              <span className="inline-flex items-center rounded-full bg-blue-100 px-2 py-0.5 text-xs font-medium text-blue-800">
                                 {t.notifications.new}
                               </span>
                             )}
                           </div>
                         </div>
-                        
+
                         {!notification.isRead && (
                           <button
                             onClick={() => markAsRead(notification.id)}
-                            className="flex-shrink-0 p-1 text-gray-400 hover:text-primary-600 transition-colors"
+                            className="flex-shrink-0 p-1 text-gray-400 transition-colors hover:text-primary-600"
                             title={t.notifications.markAsRead}
                           >
                             <Check className="h-5 w-5" />
                           </button>
                         )}
                       </div>
-                      
+
                       {notification.link ? (
                         <a
                           href={notification.link}
-                          className="inline-block mt-2 text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer"
-                          onClick={async (e) => {
+                          className="mt-2 inline-block cursor-pointer text-sm font-medium text-primary-600 hover:text-primary-700"
+                          onClick={async e => {
                             e.preventDefault()
-                            
+
                             // Prüfe ob Link gültig ist
-                            if (!notification.link || notification.link === 'undefined' || notification.link === 'null') {
+                            if (
+                              !notification.link ||
+                              notification.link === 'undefined' ||
+                              notification.link === 'null'
+                            ) {
                               console.error('Invalid notification link:', notification.link)
                               return
                             }
-                            
+
                             // Markiere als gelesen, bevor navigiert wird
                             if (!notification.isRead) {
                               // Warte auf Abschluss der Markierung
                               const success = await markAsRead(notification.id)
                               if (!success) {
-                                console.error('[notifications] Fehler beim Markieren als gelesen, navigiere trotzdem')
+                                console.error(
+                                  '[notifications] Fehler beim Markieren als gelesen, navigiere trotzdem'
+                                )
                               }
                             }
-                            
+
                             // Markiere auch das zugehörige Item (Purchase oder PriceOffer) als gelesen
                             if (notification.link) {
                               // Prüfe ob Link zu Purchases oder Offers führt
@@ -388,11 +391,16 @@ export default function NotificationsPage() {
                                 // Die purchased-Seite markiert bereits alle beim Laden
                                 // Trigger event für Badge-Update
                                 window.dispatchEvent(new CustomEvent('purchases-viewed'))
-                              } else if (notification.link.includes('/my-watches/buying/offers') || notification.link.includes('/offers')) {
+                              } else if (
+                                notification.link.includes('/my-watches/buying/offers') ||
+                                notification.link.includes('/offers')
+                              ) {
                                 // Extrahiere Offer-ID aus Link falls möglich
                                 const offerIdMatch = notification.link.match(/offer[=:]([^&]+)/)
                                 if (offerIdMatch && offerIdMatch[1]) {
-                                  const readOffers = JSON.parse(localStorage.getItem('readOffers') || '[]')
+                                  const readOffers = JSON.parse(
+                                    localStorage.getItem('readOffers') || '[]'
+                                  )
                                   if (!readOffers.includes(offerIdMatch[1])) {
                                     readOffers.push(offerIdMatch[1])
                                     localStorage.setItem('readOffers', JSON.stringify(readOffers))
@@ -404,41 +412,46 @@ export default function NotificationsPage() {
                                 }
                               }
                             }
-                            
+
                             // Navigiere nach Markieren (oder sofort wenn bereits gelesen)
                             router.push(notification.link)
                           }}
                         >
                           {notification.type === 'NEW_INVOICE'
                             ? t.notifications.viewInvoices
-                            : notification.type === 'PRICE_OFFER_RECEIVED' || notification.type === 'PRICE_OFFER_UPDATED'
-                            ? t.notifications.viewPriceOffers
-                            : notification.type === 'PRICE_OFFER_ACCEPTED'
-                            ? t.notifications.viewPurchase
-                            : notification.watchId
-                            ? t.notifications.viewArticle
-                            : t.notifications.view}
+                            : notification.type === 'PRICE_OFFER_RECEIVED' ||
+                                notification.type === 'PRICE_OFFER_UPDATED'
+                              ? t.notifications.viewPriceOffers
+                              : notification.type === 'PRICE_OFFER_ACCEPTED'
+                                ? t.notifications.viewPurchase
+                                : notification.watchId
+                                  ? t.notifications.viewArticle
+                                  : t.notifications.view}
                         </a>
-                      ) : notification.watchId && (
-                        <a
-                          href={`/products/${notification.watchId}`}
-                          className="inline-block mt-2 text-sm font-medium text-primary-600 hover:text-primary-700 cursor-pointer"
-                          onClick={async (e) => {
-                            e.preventDefault()
-                            
-                            if (!notification.isRead) {
-                              // Warte auf Abschluss der Markierung
-                              const success = await markAsRead(notification.id)
-                              if (!success) {
-                                console.error('[notifications] Fehler beim Markieren als gelesen, navigiere trotzdem')
+                      ) : (
+                        notification.watchId && (
+                          <a
+                            href={`/products/${notification.watchId}`}
+                            className="mt-2 inline-block cursor-pointer text-sm font-medium text-primary-600 hover:text-primary-700"
+                            onClick={async e => {
+                              e.preventDefault()
+
+                              if (!notification.isRead) {
+                                // Warte auf Abschluss der Markierung
+                                const success = await markAsRead(notification.id)
+                                if (!success) {
+                                  console.error(
+                                    '[notifications] Fehler beim Markieren als gelesen, navigiere trotzdem'
+                                  )
+                                }
                               }
-                            }
-                            
-                            router.push(`/products/${notification.watchId}`)
-                          }}
-                        >
-                          {t.notifications.viewArticle}
-                        </a>
+
+                              router.push(`/products/${notification.watchId}`)
+                            }}
+                          >
+                            {t.notifications.viewArticle}
+                          </a>
+                        )
                       )}
                     </div>
                   </div>
@@ -453,7 +466,3 @@ export default function NotificationsPage() {
     </div>
   )
 }
-
-
-
-
