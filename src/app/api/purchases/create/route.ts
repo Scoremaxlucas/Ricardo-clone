@@ -202,27 +202,27 @@ export async function POST(request: NextRequest) {
         seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
 
       // Berechne Versandkosten basierend auf gewählter Methode
-      const shippingMethod: string | string[] | null = purchase.shippingMethod || watch.shippingMethod
+      const rawShippingMethod = purchase.shippingMethod || watch.shippingMethod
       let shippingCost = 0
-      if (shippingMethod) {
+      if (rawShippingMethod) {
         try {
           // shippingMethod kann jetzt ein einzelner String sein (gewählte Methode) oder ein Array (Legacy)
           let method: string | null = null
-          if (typeof shippingMethod === 'string') {
+          if (typeof rawShippingMethod === 'string') {
             // Prüfe ob es ein JSON-Array ist oder ein einzelner String
             try {
-              const parsed = JSON.parse(shippingMethod)
+              const parsed = JSON.parse(rawShippingMethod)
               if (Array.isArray(parsed) && parsed.length > 0) {
                 method = parsed[0] // Legacy: Nimm erste Methode
               } else {
-                method = shippingMethod // Einzelner String
+                method = rawShippingMethod // Einzelner String
               }
             } catch {
               // Kein JSON, also einzelner String
-              method = shippingMethod
+              method = rawShippingMethod
             }
-          } else if (Array.isArray(shippingMethod) && shippingMethod.length > 0) {
-            method = shippingMethod[0] // Legacy: Nimm erste Methode
+          } else if (Array.isArray(rawShippingMethod) && rawShippingMethod.length > 0) {
+            method = rawShippingMethod[0] // Legacy: Nimm erste Methode
           }
 
           if (method) {
