@@ -281,6 +281,7 @@ export function CategoryBar() {
                             }}
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
+                              animation: hoveredCategory === category.slug ? 'dropdownFadeIn 0.15s ease-out' : 'none',
                               left: typeof window !== 'undefined'
                                 ? Math.max(
                                     10, // Minimum 10px from left edge
