@@ -51,6 +51,7 @@ interface Watch {
     verified: boolean
   }
   isActive: boolean
+  moderationStatus?: string | null
   viewCount?: number
   favoriteCount?: number
   pendingReports?: number
