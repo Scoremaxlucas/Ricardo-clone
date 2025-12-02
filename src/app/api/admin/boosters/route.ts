@@ -24,7 +24,7 @@ async function checkAdmin(session: any): Promise<boolean> {
     })
   }
 
-  const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
+  const isAdminInDb = user?.isAdmin === true || user?.isAdmin === true
 
   return isAdminInDb
 }

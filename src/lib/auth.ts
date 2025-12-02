@@ -72,7 +72,7 @@ export const authOptions = {
 
           // Prüfe ob E-Mail bestätigt ist (E-Mail-Bestätigung erforderlich)
           // AUSNAHME: Admins können sich auch ohne E-Mail-Verifizierung einloggen
-          const isAdmin = user.isAdmin === true || user.isAdmin === 1
+          const isAdmin = user.isAdmin === true || user.isAdmin === true
 
           // Prüfe emailVerified explizit auf true, 1, oder String 'true'
           const emailVerified =
@@ -131,7 +131,7 @@ export const authOptions = {
             name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
             nickname: user.nickname,
             image: user.image,
-            isAdmin: user.isAdmin === true || user.isAdmin === 1,
+            isAdmin: user.isAdmin === true || user.isAdmin === true,
           }
         } catch (error: any) {
           console.error('[AUTH] Error during authorization:', error)
@@ -162,7 +162,7 @@ export const authOptions = {
         token.id = user.id
         token.image = user.image
         token.nickname = user.nickname
-        token.isAdmin = user.isAdmin === true || user.isAdmin === 1 || false
+        token.isAdmin = user.isAdmin === true || user.isAdmin === true || false
         token.email = user.email
         console.log('[AUTH] JWT callback - User logged in:', {
           id: user.id,

@@ -29,7 +29,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Nur der Verkäufer oder Admin kann manuell als bezahlt markieren
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
 
     if (invoice.sellerId !== session.user.id && !isAdminInSession) {
       return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })

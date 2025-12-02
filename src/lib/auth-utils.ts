@@ -11,7 +11,7 @@ export async function checkAdmin(session: Session | null): Promise<boolean> {
   }
 
   // Prüfe Admin-Status aus Session
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
 
   // Prüfe ob User Admin ist (per ID oder E-Mail)
   let user = null
@@ -31,7 +31,7 @@ export async function checkAdmin(session: Session | null): Promise<boolean> {
   }
 
   // Prüfe Admin-Status: Session ODER Datenbank
-  const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
+  const isAdminInDb = user?.isAdmin === true || user?.isAdmin === true
   const isAdmin = isAdminInSession || isAdminInDb
 
   return isAdmin

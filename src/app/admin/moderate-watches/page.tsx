@@ -75,8 +75,10 @@ interface ModerationHistoryItem {
   details: string | null
   createdAt: string
   admin: {
+    id: string
     name: string | null
     nickname: string | null
+    email: string | null
   }
 }
 
@@ -109,7 +111,7 @@ export default function AdminModerateWatchesPage() {
       return
     }
 
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
     if (!isAdminInSession) {
       router.push('/')
       return
@@ -387,7 +389,7 @@ export default function AdminModerateWatchesPage() {
     )
   }
 
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
   if (!isAdminInSession) {
     return null
   }
@@ -920,7 +922,9 @@ export default function AdminModerateWatchesPage() {
                       if (detailsObj?.editedBy === 'seller' || detailsObj?.createdBy === 'seller' || detailsObj?.updatedBy === 'seller') {
                         return 'Verkäufer'
                       }
-                      return item.admin?.nickname || item.admin?.name || 'Unbekannt'
+                      const adminName = item.admin?.nickname || item.admin?.name || 'Unbekannt'
+                      const adminEmail = item.admin?.email
+                      return adminEmail ? `${adminName} (${adminEmail})` : adminName
                     }
 
                     return (

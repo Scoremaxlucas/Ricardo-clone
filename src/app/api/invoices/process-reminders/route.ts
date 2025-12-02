@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
       }
     } else {
       // Prüfe ob User Admin ist (nur aus Session)
-      const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+      const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
 
       if (!isAdminInSession) {
         return NextResponse.json(

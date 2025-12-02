@@ -1,22 +1,28 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { UserActivityModal } from '@/components/admin/UserActivityModal'
+import { UserNotesModal } from '@/components/admin/UserNotesModal'
+import { UserReportsModal } from '@/components/admin/UserReportsModal'
+import { WarnUserModal } from '@/components/admin/WarnUserModal'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
 import {
-  Users,
+  AlertTriangle,
+  Ban,
+  CheckCircle,
+  FileText,
+  Flag,
+  History,
   Search,
   Shield,
-  Ban,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
   UserCheck,
-  Flag,
+  Users,
+  XCircle,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface User {
@@ -34,6 +40,7 @@ interface User {
   warningCount: number
   lastWarnedAt: string | null
   createdAt: string
+  pendingReports?: number
 }
 
 export default function AdminUsersPage() {
@@ -43,6 +50,14 @@ export default function AdminUsersPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   const [filter, setFilter] = useState<'all' | 'reported' | 'blocked' | 'verified'>('all')
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null)
+  const [selectedUserName, setSelectedUserName] = useState<string | null>(null)
+  const [showReportsModal, setShowReportsModal] = useState(false)
+  const [showNotesModal, setShowNotesModal] = useState(false)
+  const [showActivityModal, setShowActivityModal] = useState(false)
+  const [showWarnModal, setShowWarnModal] = useState(false)
+  const [warnUserId, setWarnUserId] = useState<string | null>(null)
+  const [warnUserName, setWarnUserName] = useState<string | null>(null)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -56,7 +71,7 @@ export default function AdminUsersPage() {
     }
 
     // Prüfe Admin-Status nur aus Session
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
 
     if (isAdminInSession) {
       console.log('Admin confirmed, loading users...')
@@ -87,7 +102,7 @@ export default function AdminUsersPage() {
   const loadUsers = async () => {
     setLoading(true)
     try {
-      const filterParam = filter === 'reported' ? '?filter=reported' : ''
+      const filterParam = filter !== 'all' ? `?filter=${filter}` : ''
       const res = await fetch(`/api/admin/users${filterParam}`)
 
       if (!res.ok) {
@@ -136,22 +151,21 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleWarn = async (userId: string) => {
-    try {
-      const res = await fetch(`/api/admin/users/${userId}/warn`, {
-        method: 'POST',
-      })
-      if (res.ok) {
-        toast.success('Warnung wurde gesendet')
-        loadUsers()
-      } else {
-        const data = await res.json()
-        toast.error(data.message || 'Fehler beim Senden der Warnung')
-      }
-    } catch (error) {
-      console.error('Error warning user:', error)
-      toast.error('Fehler beim Senden der Warnung')
-    }
+  const handleWarn = (userId: string) => {
+    const user = users.find(u => u.id === userId)
+    setWarnUserId(userId)
+    setWarnUserName(
+      user?.name ||
+        `${user?.firstName} ${user?.lastName}` ||
+        user?.nickname ||
+        user?.email ||
+        'Benutzer'
+    )
+    setShowWarnModal(true)
+  }
+
+  const handleWarned = () => {
+    loadUsers()
   }
 
   const handleToggleAdmin = async (userId: string, makeAdmin: boolean) => {
@@ -186,7 +200,7 @@ export default function AdminUsersPage() {
   }
 
   // Prüfe Admin-Status nur aus Session
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
 
   if (!session || !isAdminInSession) {
     return (
@@ -201,21 +215,17 @@ export default function AdminUsersPage() {
     )
   }
 
-  // Filter und Suche
+  // Suche (Filterung erfolgt bereits im Backend)
   const filteredUsers = users.filter(user => {
     const matchesSearch =
       !searchQuery ||
       user.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
       user.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      user.nickname?.toLowerCase().includes(searchQuery.toLowerCase())
+      user.nickname?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.firstName?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      user.lastName?.toLowerCase().includes(searchQuery.toLowerCase())
 
-    const matchesFilter =
-      filter === 'all' ||
-      (filter === 'active' && !user.isBlocked) ||
-      (filter === 'blocked' && user.isBlocked) ||
-      (filter === 'pending' && user.verificationStatus === 'pending')
-
-    return matchesSearch && matchesFilter
+    return matchesSearch
   })
 
   return (
@@ -324,6 +334,9 @@ export default function AdminUsersPage() {
                     Warnungen
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Meldungen
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Registriert
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -404,10 +417,23 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
                       {(user.pendingReports || 0) > 0 ? (
-                        <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                        <button
+                          onClick={() => {
+                            setSelectedUserId(user.id)
+                            setSelectedUserName(
+                              user.name ||
+                                `${user.firstName} ${user.lastName}` ||
+                                user.nickname ||
+                                user.email
+                            )
+                            setShowReportsModal(true)
+                          }}
+                          className="inline-flex cursor-pointer items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 hover:bg-red-200"
+                          title="Meldungen anzeigen"
+                        >
                           <Flag className="mr-1 h-3 w-3" />
                           {user.pendingReports}
-                        </span>
+                        </button>
                       ) : (
                         <span className="text-gray-400">0</span>
                       )}
@@ -417,6 +443,54 @@ export default function AdminUsersPage() {
                     </td>
                     <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
+                        <button
+                          onClick={() => {
+                            setSelectedUserId(user.id)
+                            setSelectedUserName(
+                              user.name ||
+                                `${user.firstName} ${user.lastName}` ||
+                                user.nickname ||
+                                user.email
+                            )
+                            setShowReportsModal(true)
+                          }}
+                          className="text-red-600 hover:text-red-900"
+                          title="Meldungen anzeigen"
+                        >
+                          <Flag className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedUserId(user.id)
+                            setSelectedUserName(
+                              user.name ||
+                                `${user.firstName} ${user.lastName}` ||
+                                user.nickname ||
+                                user.email
+                            )
+                            setShowNotesModal(true)
+                          }}
+                          className="text-blue-600 hover:text-blue-900"
+                          title="Notizen"
+                        >
+                          <FileText className="h-5 w-5" />
+                        </button>
+                        <button
+                          onClick={() => {
+                            setSelectedUserId(user.id)
+                            setSelectedUserName(
+                              user.name ||
+                                `${user.firstName} ${user.lastName}` ||
+                                user.nickname ||
+                                user.email
+                            )
+                            setShowActivityModal(true)
+                          }}
+                          className="text-purple-600 hover:text-purple-900"
+                          title="Aktivitäts-Historie"
+                        >
+                          <History className="h-5 w-5" />
+                        </button>
                         {!user.isAdmin && (
                           <button
                             onClick={() => handleToggleAdmin(user.id, true)}
@@ -479,6 +553,61 @@ export default function AdminUsersPage() {
         )}
       </div>
       <Footer />
+
+      {/* Modals */}
+      {selectedUserId && (
+        <>
+          <UserReportsModal
+            isOpen={showReportsModal}
+            onClose={() => {
+              setShowReportsModal(false)
+              setSelectedUserId(null)
+              setSelectedUserName(null)
+            }}
+            userId={selectedUserId}
+            userName={selectedUserName}
+            onReportRemoved={() => {
+              // Lade User-Liste neu, um aktualisierte Report-Anzahl zu erhalten
+              loadUsers()
+            }}
+          />
+          <UserNotesModal
+            isOpen={showNotesModal}
+            onClose={() => {
+              setShowNotesModal(false)
+              setSelectedUserId(null)
+              setSelectedUserName(null)
+            }}
+            userId={selectedUserId}
+            userName={selectedUserName}
+          />
+          <UserActivityModal
+            isOpen={showActivityModal}
+            onClose={() => {
+              setShowActivityModal(false)
+              setSelectedUserId(null)
+              setSelectedUserName(null)
+            }}
+            userId={selectedUserId}
+            userName={selectedUserName}
+          />
+        </>
+      )}
+
+      {/* Warn User Modal */}
+      {warnUserId && (
+        <WarnUserModal
+          isOpen={showWarnModal}
+          onClose={() => {
+            setShowWarnModal(false)
+            setWarnUserId(null)
+            setWarnUserName(null)
+          }}
+          userId={warnUserId}
+          userName={warnUserName}
+          onWarned={handleWarned}
+        />
+      )}
     </div>
   )
 }

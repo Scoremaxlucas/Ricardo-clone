@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
   try {
@@ -26,6 +26,19 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
 
     const userId = params.userId
 
+    // Hole Admin-Informationen
+    const adminUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        firstName: true,
+        lastName: true,
+        nickname: true,
+      },
+    })
+
     // Entblockiere User
     await prisma.user.update({
       where: { id: userId },
@@ -35,6 +48,32 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
         blockedBy: null,
       },
     })
+
+    // Erstelle Activity-Eintrag
+    try {
+      if (prisma.userActivity && adminUser) {
+        const adminName =
+          adminUser.name ||
+          `${adminUser.firstName} ${adminUser.lastName}` ||
+          adminUser.nickname ||
+          adminUser.email
+
+        await prisma.userActivity.create({
+          data: {
+            userId: userId,
+            action: 'user_unblocked',
+            details: JSON.stringify({
+              unblockedBy: session.user.id,
+              unblockedByEmail: adminUser.email,
+              unblockedByName: adminName,
+              unblockedAt: new Date().toISOString(),
+            }),
+          },
+        })
+      }
+    } catch (activityError) {
+      console.warn('Could not create activity entry:', activityError)
+    }
 
     return NextResponse.json({ message: 'Benutzer wurde entblockiert' })
   } catch (error: any) {

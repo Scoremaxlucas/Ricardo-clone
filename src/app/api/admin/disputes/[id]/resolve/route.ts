@@ -16,7 +16,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Prüfe Admin-Status
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
 
     // Prüfe ob User Admin ist (per ID oder E-Mail)
     let user = null
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Prüfe Admin-Status: Session ODER Datenbank
-    const isAdminInDb = user?.isAdmin === true || user?.isAdmin === 1
+    const isAdminInDb = user?.isAdmin === true || user?.isAdmin === true
     const isAdmin = isAdminInSession || isAdminInDb
 
     if (!isAdmin) {

@@ -184,7 +184,7 @@ export default function AdminContactRequestsPage() {
     )
   }
 
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
   if (!isAdminInSession) {
     return null
   }

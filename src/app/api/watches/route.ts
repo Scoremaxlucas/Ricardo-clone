@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -252,7 +252,7 @@ export async function GET(request: NextRequest) {
         isAuction: watch.isAuction || false,
         auctionEnd: watch.auctionEnd || null,
         createdAt: watch.createdAt,
-        bids: watch.bids || []
+        bids: watch.bids || [],
       }
     })
 

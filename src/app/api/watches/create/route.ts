@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { generateArticleNumber } from '@/lib/article-number'
+import { authOptions } from '@/lib/auth'
 import { moderateWatch } from '@/lib/auto-moderation'
+import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -1099,6 +1099,23 @@ export async function POST(request: NextRequest) {
         stack: matchError.stack,
       })
       // Fehler sollte nicht die Watch-Erstellung verhindern
+    }
+
+    // Erstelle Activity-Eintrag für Watch-Erstellung
+    try {
+      await prisma.userActivity.create({
+        data: {
+          userId: session.user.id,
+          action: 'watch_created',
+          details: JSON.stringify({
+            watchId: watch.id,
+            title: watch.title,
+            articleNumber: watch.articleNumber,
+          }),
+        },
+      })
+    } catch (activityError) {
+      console.warn('Could not create activity entry:', activityError)
     }
 
     return NextResponse.json({

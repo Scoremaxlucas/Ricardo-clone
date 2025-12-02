@@ -1,13 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 // POST: User melden
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -33,10 +30,7 @@ export async function POST(
 
     // Prüfe ob User sich nicht selbst meldet
     if (session.user.id === id) {
-      return NextResponse.json(
-        { message: 'Sie können sich nicht selbst melden' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Sie können sich nicht selbst melden' }, { status: 400 })
     }
 
     // Prüfe ob bereits gemeldet (verhindere Duplikate)
@@ -44,9 +38,14 @@ export async function POST(
     try {
       // Prüfe ob userReport verfügbar ist
       if (!prisma.userReport) {
-        console.error('prisma.userReport is not available. Prisma Client may need to be regenerated.')
+        console.error(
+          'prisma.userReport is not available. Prisma Client may need to be regenerated.'
+        )
         return NextResponse.json(
-          { message: 'Die UserReport-Funktion ist noch nicht verfügbar. Bitte kontaktieren Sie den Support.' },
+          {
+            message:
+              'Die UserReport-Funktion ist noch nicht verfügbar. Bitte kontaktieren Sie den Support.',
+          },
           { status: 503 }
         )
       }
@@ -77,7 +76,10 @@ export async function POST(
       if (!prisma.userReport) {
         console.error('prisma.userReport is not available when creating report.')
         return NextResponse.json(
-          { message: 'Die UserReport-Funktion ist noch nicht verfügbar. Bitte kontaktieren Sie den Support.' },
+          {
+            message:
+              'Die UserReport-Funktion ist noch nicht verfügbar. Bitte kontaktieren Sie den Support.',
+          },
           { status: 503 }
         )
       }
@@ -114,7 +116,10 @@ export async function POST(
       // Prüfe ob es ein Prisma-Fehler ist (z.B. Tabelle existiert nicht)
       if (createError.code === 'P2001' || createError.message?.includes('does not exist')) {
         return NextResponse.json(
-          { message: 'Die UserReport-Funktion ist noch nicht verfügbar. Bitte kontaktieren Sie den Support.' },
+          {
+            message:
+              'Die UserReport-Funktion ist noch nicht verfügbar. Bitte kontaktieren Sie den Support.',
+          },
           { status: 503 }
         )
       }
@@ -143,10 +148,43 @@ export async function POST(
       console.warn('Could not create admin notifications:', notificationError)
     }
 
+    // Erstelle Activity-Einträge für beide User
+    try {
+      // Activity für Reporter (reported_user)
+      await prisma.userActivity.create({
+        data: {
+          userId: session.user.id,
+          action: 'reported_user',
+          details: JSON.stringify({
+            reportId: report.id,
+            reportedUserId: id,
+            reason,
+            description: description || null,
+          }),
+        },
+      })
+
+      // Activity für gemeldeten User (user_reported)
+      await prisma.userActivity.create({
+        data: {
+          userId: id,
+          action: 'user_reported',
+          details: JSON.stringify({
+            reportId: report.id,
+            reporterId: session.user.id,
+            reason,
+            description: description || null,
+            status: 'pending',
+          }),
+        },
+      })
+    } catch (activityError) {
+      console.warn('Could not create activity entries:', activityError)
+    }
+
     return NextResponse.json({ message: 'User erfolgreich gemeldet', report })
   } catch (error: any) {
     console.error('Error reporting user:', error)
     return NextResponse.json({ message: 'Fehler beim Melden: ' + error.message }, { status: 500 })
   }
 }
-

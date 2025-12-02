@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
   try {
@@ -36,6 +36,19 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
       )
     }
 
+    // Hole Admin-Informationen
+    const adminUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        firstName: true,
+        lastName: true,
+        nickname: true,
+      },
+    })
+
     // Setze Admin-Status
     await prisma.user.update({
       where: { id: userId },
@@ -43,6 +56,32 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
         isAdmin: isAdmin || false,
       },
     })
+
+    // Erstelle Activity-Eintrag
+    try {
+      if (prisma.userActivity && adminUser) {
+        const adminName =
+          adminUser.name ||
+          `${adminUser.firstName} ${adminUser.lastName}` ||
+          adminUser.nickname ||
+          adminUser.email
+
+        await prisma.userActivity.create({
+          data: {
+            userId: userId,
+            action: isAdmin ? 'admin_rights_granted' : 'admin_rights_removed',
+            details: JSON.stringify({
+              changedBy: session.user.id,
+              changedByEmail: adminUser.email,
+              changedByName: adminName,
+              changedAt: new Date().toISOString(),
+            }),
+          },
+        })
+      }
+    } catch (activityError) {
+      console.warn('Could not create activity entry:', activityError)
+    }
 
     return NextResponse.json({
       message: isAdmin ? 'Benutzer wurde als Admin gesetzt' : 'Admin-Rechte wurden entfernt',

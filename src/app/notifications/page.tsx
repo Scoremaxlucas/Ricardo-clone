@@ -1,13 +1,22 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { WarningDetailModal } from '@/components/user/WarningDetailModal'
+import { useLanguage } from '@/contexts/LanguageContext'
+import {
+  AlertTriangle,
+  Bell,
+  Check,
+  CheckCheck,
+  Clock,
+  Gavel,
+  MessageCircle,
+  Package,
+} from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
-import { Bell, Check, CheckCheck, Package, MessageCircle, Gavel, User, Clock } from 'lucide-react'
-import { useLanguage } from '@/contexts/LanguageContext'
+import { useEffect, useState } from 'react'
 
 interface Notification {
   id: string
@@ -31,6 +40,7 @@ export default function NotificationsPage() {
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
   const [filter, setFilter] = useState<'all' | 'unread'>('all')
+  const [selectedWarning, setSelectedWarning] = useState<Notification | null>(null)
 
   useEffect(() => {
     if (status === 'unauthenticated') {
@@ -208,6 +218,8 @@ export default function NotificationsPage() {
         return <Check className="h-5 w-5 text-green-600" />
       case 'PRICE_OFFER_REJECTED':
         return <Clock className="h-5 w-5 text-red-500" />
+      case 'WARNING':
+        return <AlertTriangle className="h-5 w-5 text-orange-600" />
       default:
         return <Bell className="h-5 w-5 text-gray-500" />
     }
@@ -356,7 +368,21 @@ export default function NotificationsPage() {
                         )}
                       </div>
 
-                      {notification.link ? (
+                      {notification.type === 'WARNING' ? (
+                        <button
+                          onClick={async () => {
+                            // Markiere als gelesen
+                            if (!notification.isRead) {
+                              await markAsRead(notification.id)
+                            }
+                            // Öffne Warning-Detail-Modal
+                            setSelectedWarning(notification)
+                          }}
+                          className="mt-2 inline-block cursor-pointer text-sm font-medium text-orange-600 hover:text-orange-700"
+                        >
+                          Details anzeigen
+                        </button>
+                      ) : notification.link ? (
                         <a
                           href={notification.link}
                           className="mt-2 inline-block cursor-pointer text-sm font-medium text-primary-600 hover:text-primary-700"
@@ -463,6 +489,22 @@ export default function NotificationsPage() {
       </div>
 
       <Footer />
+
+      {/* Warning Detail Modal */}
+      {selectedWarning && (
+        <WarningDetailModal
+          isOpen={!!selectedWarning}
+          onClose={() => setSelectedWarning(null)}
+          warning={{
+            title: selectedWarning.title,
+            message: selectedWarning.message,
+            createdAt: selectedWarning.createdAt,
+            reason: selectedWarning.message.includes('Grund:')
+              ? selectedWarning.message.split('Grund:')[1]?.trim() || undefined
+              : undefined,
+          }}
+        />
+      )}
     </div>
   )
 }

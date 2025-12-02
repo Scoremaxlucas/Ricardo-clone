@@ -44,3 +44,4 @@ export function useRequireAuth(redirectTo?: string) {
     status,
   }
 }
+

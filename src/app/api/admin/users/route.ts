@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
 
     // Prüfe ob User Admin ist (per ID oder E-Mail)
     let user = null
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Prüfe Admin-Status: Session ODER Datenbank
-    const isAdminInDb = adminUser?.isAdmin === true || adminUser?.isAdmin === 1
+    const isAdminInDb = adminUser?.isAdmin === true || adminUser?.isAdmin === true
     const isAdmin = isAdminInSession || isAdminInDb
 
     if (!isAdmin) {
@@ -110,10 +110,16 @@ export async function GET(request: NextRequest) {
       pendingReports: pendingReportsMap.get(user.id) || 0,
     }))
 
-    // Filtere nach gemeldeten Usern, wenn Filter gesetzt ist
+    // Filtere nach verschiedenen Kriterien, wenn Filter gesetzt ist
     let filteredUsers = usersWithReports
     if (filterParam === 'reported') {
       filteredUsers = usersWithReports.filter(u => u.pendingReports > 0)
+    } else if (filterParam === 'blocked') {
+      filteredUsers = usersWithReports.filter(u => u.isBlocked)
+    } else if (filterParam === 'verified') {
+      filteredUsers = usersWithReports.filter(
+        u => u.verified && u.verificationStatus === 'approved'
+      )
     }
 
     console.log('Users fetched via Prisma:', users.length)
