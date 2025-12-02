@@ -221,8 +221,6 @@ export async function POST(request: NextRequest) {
               // Kein JSON, also einzelner String
               method = rawShippingMethod
             }
-          } else if (Array.isArray(rawShippingMethod) && rawShippingMethod.length > 0) {
-            method = rawShippingMethod[0] // Legacy: Nimm erste Methode
           }
 
           if (method) {
