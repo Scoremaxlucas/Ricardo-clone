@@ -1257,7 +1257,7 @@ function getPluralSingularVariants(word: string): string[] {
     variants.push(word.slice(0, -3) + 'y') // cities -> city
   }
 
-  return [...new Set(variants)]
+  return Array.from(new Set(variants))
 }
 
 // Hilfsfunktion: Erweitert Suchbegriffe um Synonyme, Plural/Singular, Umlaute
