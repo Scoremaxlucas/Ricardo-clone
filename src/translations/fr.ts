@@ -351,6 +351,20 @@ export const fr: Translation = {
       'Votre vérification a été soumise et est maintenant examinée par notre équipe. Vous recevrez une notification une fois la vérification terminée.',
   },
 
+  // Check Email
+  checkEmail: {
+    title: 'Vérifiez votre e-mail',
+    description: 'Nous venons d\'envoyer un lien de vérification à',
+    sent: '.',
+    nextSteps: 'Prochaines étapes:',
+    step1: 'Vérifiez votre boîte de réception (et le dossier spam)',
+    step2: 'Cliquez sur le bouton "Confirmer le compte" dans l\'e-mail',
+    step3: 'Revenez ici pour vous connecter',
+    goToLogin: 'Aller à la connexion',
+    contactSupport: 'contacter le support',
+    supportText: 'Si vous avez des problèmes pour confirmer votre compte, veuillez',
+  },
+
   common: {
     loading: 'Chargement...',
     error: 'Erreur',

@@ -350,6 +350,20 @@ export const it: Translation = {
       'La tua verifica è stata inviata ed è ora in fase di revisione dal nostro team. Riceverai una notifica una volta completata la verifica.',
   },
 
+  // Check Email
+  checkEmail: {
+    title: 'Controlla la tua email',
+    description: 'Abbiamo appena inviato un link di verifica a',
+    sent: '.',
+    nextSteps: 'Prossimi passi:',
+    step1: 'Controlla la tua casella di posta (e la cartella spam)',
+    step2: 'Clicca sul pulsante "Conferma account" nell\'email',
+    step3: 'Torna qui per accedere',
+    goToLogin: 'Vai al login',
+    contactSupport: 'contattare il supporto',
+    supportText: 'Se hai problemi a confermare il tuo account, per favore',
+  },
+
   common: {
     loading: 'Caricamento...',
     error: 'Errore',

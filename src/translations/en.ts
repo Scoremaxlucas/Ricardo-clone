@@ -360,6 +360,20 @@ export const en: Translation = {
       'Your verification has been submitted and is now being reviewed by our team. You will receive a notification once the verification is complete.',
   },
 
+  // Check Email
+  checkEmail: {
+    title: 'Check your email',
+    description: 'We just sent a verification link to',
+    sent: '.',
+    nextSteps: 'Next steps:',
+    step1: 'Check your inbox (and spam folder)',
+    step2: 'Click the "Confirm Account" button in the email',
+    step3: 'Return here to log in',
+    goToLogin: 'Go to login',
+    contactSupport: 'contact support',
+    supportText: 'If you have any issue confirming your account, please',
+  },
+
   // Common
   common: {
     loading: 'Loading...',

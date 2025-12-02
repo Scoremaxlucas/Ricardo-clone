@@ -361,6 +361,20 @@ export const de = {
       'Ihre Verifizierung wurde eingereicht und wird nun von unserem Team geprüft. Sie erhalten eine Benachrichtigung, sobald die Verifizierung abgeschlossen ist.',
   },
 
+  // Check Email
+  checkEmail: {
+    title: 'E-Mail prüfen',
+    description: 'Wir haben Ihnen gerade einen Bestätigungslink an',
+    sent: 'gesendet.',
+    nextSteps: 'Nächste Schritte:',
+    step1: 'Prüfen Sie Ihr Postfach (und den Spam-Ordner)',
+    step2: 'Klicken Sie auf die Schaltfläche "Konto bestätigen" in der E-Mail',
+    step3: 'Kehren Sie hier zurück, um sich anzumelden',
+    goToLogin: 'Zur Anmeldung',
+    contactSupport: 'Support kontaktieren',
+    supportText: 'Wenn Sie Probleme bei der Kontobestätigung haben, bitte',
+  },
+
   // Common
   common: {
     loading: 'Laden...',
