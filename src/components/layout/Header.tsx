@@ -35,6 +35,7 @@ export function Header() {
   const languageButtonRef = useRef<HTMLButtonElement>(null)
   const profileMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const languageMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const sellMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [userNickname, setUserNickname] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState<boolean>(false)
@@ -221,6 +222,9 @@ export function Header() {
       if (languageMenuTimeoutRef.current) {
         clearTimeout(languageMenuTimeoutRef.current)
       }
+      if (sellMenuTimeoutRef.current) {
+        clearTimeout(sellMenuTimeoutRef.current)
+      }
     }
   }, [])
 
@@ -251,6 +255,21 @@ export function Header() {
   const handleLanguageMenuLeave = useCallback(() => {
     languageMenuTimeoutRef.current = setTimeout(() => {
       setIsLanguageMenuOpen(false)
+    }, 150) // 150ms delay before closing
+  }, [])
+
+  // Sell menu handlers with delay
+  const handleSellMenuEnter = useCallback(() => {
+    if (sellMenuTimeoutRef.current) {
+      clearTimeout(sellMenuTimeoutRef.current)
+      sellMenuTimeoutRef.current = null
+    }
+    setIsSellMenuOpen(true)
+  }, [])
+
+  const handleSellMenuLeave = useCallback(() => {
+    sellMenuTimeoutRef.current = setTimeout(() => {
+      setIsSellMenuOpen(false)
     }, 150) // 150ms delay before closing
   }, [])
 
@@ -337,8 +356,8 @@ export function Header() {
             {/* Verkaufen Dropdown - Icon auf Mobile, Icon + Text auf Desktop */}
             <div
               className="relative"
-              onMouseEnter={() => setIsSellMenuOpen(true)}
-              onMouseLeave={() => setIsSellMenuOpen(false)}
+              onMouseEnter={handleSellMenuEnter}
+              onMouseLeave={handleSellMenuLeave}
             >
               <Link
                 href="/sell"
@@ -347,23 +366,36 @@ export function Header() {
               >
                 <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
                 <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
-                <ChevronDown className="hidden h-3 w-3 sm:block" />
+                <ChevronDown className={`hidden h-3 w-3 transition-transform sm:block ${isSellMenuOpen ? 'rotate-180' : ''}`} />
               </Link>
 
               {/* Dropdown Menu */}
               {isSellMenuOpen && (
-                <div className="absolute left-0 z-50 mt-1 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+                <div 
+                  className="absolute left-0 top-full z-[9999] w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                  onMouseEnter={handleSellMenuEnter}
+                  onMouseLeave={handleSellMenuLeave}
+                  style={{ 
+                    display: 'block',
+                    visibility: 'visible',
+                    opacity: 1,
+                    pointerEvents: 'auto',
+                    marginTop: '4px' // Smaller gap - 4px instead of mt-1 (8px)
+                  }}
+                >
                   <div className="py-1">
                     <Link
                       href="/sell"
-                      className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
+                      onClick={() => setIsSellMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                     >
                       <div className="font-medium">{t.header.singleItem}</div>
                       <div className="text-xs text-gray-500">{t.header.singleItemDesc}</div>
                     </Link>
                     <Link
                       href="/sell/bulk"
-                      className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-100"
+                      onClick={() => setIsSellMenuOpen(false)}
+                      className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                     >
                       <div className="font-medium">{t.header.multipleItems}</div>
                       <div className="text-xs text-gray-500">{t.header.multipleItemsDesc}</div>
@@ -447,7 +479,7 @@ export function Header() {
                         className="absolute right-0 top-full z-[9999] w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
                         onMouseEnter={handleProfileMenuEnter}
                         onMouseLeave={handleProfileMenuLeave}
-                        style={{ 
+                        style={{
                           display: 'block',
                           visibility: 'visible',
                           opacity: 1,
@@ -589,7 +621,7 @@ export function Header() {
             </div>
 
             {/* Language Selector - Far Right - Hover-based like Ricardo */}
-            <div 
+            <div
               className="relative flex-shrink-0"
               onMouseEnter={handleLanguageMenuEnter}
               onMouseLeave={handleLanguageMenuLeave}
@@ -613,7 +645,7 @@ export function Header() {
                   className="absolute right-0 top-full z-[9999] w-48 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
                   onMouseEnter={handleLanguageMenuEnter}
                   onMouseLeave={handleLanguageMenuLeave}
-                  style={{ 
+                  style={{
                     display: 'block',
                     visibility: 'visible',
                     opacity: 1,
