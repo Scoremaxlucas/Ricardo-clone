@@ -176,7 +176,7 @@ export function CategoryBar() {
                 return (
                   <div
                     key={category.slug}
-                    ref={el => categoryRefs.current[category.slug] = el}
+                    ref={el => { categoryRefs.current[category.slug] = el }}
                     className="relative z-50"
                     onMouseEnter={() => setHoveredCategory(category.slug)}
                     onMouseLeave={() => setHoveredCategory(null)}
