@@ -172,7 +172,7 @@ export function CategoryBar() {
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 250)
+    }, 400) // Längerer Delay verhindert Flackern
   }, [])
 
   const handleBridgeEnter = useCallback((slug: string) => {
@@ -187,7 +187,7 @@ export function CategoryBar() {
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 250)
+    }, 400) // Längerer Delay verhindert Flackern
   }, [])
 
   const handleDropdownEnter = useCallback((slug: string) => {
@@ -202,7 +202,7 @@ export function CategoryBar() {
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 250)
+    }, 400) // Längerer Delay verhindert Flackern
   }, [])
 
   const handleOverlayClick = useCallback(() => {
@@ -218,7 +218,7 @@ export function CategoryBar() {
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 250)
+    }, 400) // Längerer Delay verhindert Flackern
   }, [])
 
   // Calculate dropdown position with useMemo
@@ -230,13 +230,16 @@ export function CategoryBar() {
     const rect = categoryRefs.current[hoveredCategory]!.getBoundingClientRect()
     const dropdownWidth = 450
     const margin = 20
+    const gap = 4 // Gap zwischen Button und Dropdown
 
     return {
-      top: rect.bottom + 4,
+      top: rect.bottom + gap,
       left: Math.max(
         10,
         Math.min(rect.left, window.innerWidth - dropdownWidth - margin)
       ),
+      bridgeTop: rect.bottom, // Brücke startet direkt am Button
+      bridgeHeight: gap + 36, // Brücke deckt Gap + extra Raum ab
     }
   }, [hoveredCategory])
 
@@ -315,17 +318,17 @@ export function CategoryBar() {
                             aria-hidden="true"
                           />
                           {/* Unsichtbare Brücke zwischen Button und Dropdown - verhindert Flackern */}
-                          {dropdownPosition && categoryRefs.current[category.slug] && (
+                          {dropdownPosition && calculatedPosition && categoryRefs.current[category.slug] && (
                             <div
                               className="fixed z-[10000] bg-transparent"
                               style={{
-                                top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
+                                top: calculatedPosition.bridgeTop || categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
                                 left: dropdownPosition.left,
                                 width: Math.max(
                                   categoryRefs.current[category.slug]!.getBoundingClientRect().width,
                                   450
                                 ),
-                                height: '32px',
+                                height: `${calculatedPosition.bridgeHeight || 40}px`, // Dynamische Höhe deckt alles ab
                                 pointerEvents: 'auto',
                               }}
                               onMouseEnter={() => handleBridgeEnter(category.slug)}
