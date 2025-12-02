@@ -245,7 +245,7 @@ export function CategoryBar() {
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
                               left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
                               width: categoryRefs.current[category.slug]!.getBoundingClientRect().width,
-                              height: '8px', // Höher für besseren Schutz vor Flackern
+                              height: '12px', // Höher für besseren Schutz vor Flackern
                               pointerEvents: 'auto',
                             }}
                             onMouseEnter={() => {
@@ -257,10 +257,10 @@ export function CategoryBar() {
                               setHoveredCategory(category.slug)
                             }}
                             onMouseLeave={() => {
-                              // Sehr kurzer Delay auch für Brücke
+                              // Längerer Delay für Brücke
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 100)
+                              }, 200)
                             }}
                           />
                           <div
