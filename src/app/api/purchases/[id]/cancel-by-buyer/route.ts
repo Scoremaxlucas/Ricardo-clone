@@ -94,7 +94,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       where: { id },
       data: {
         status: 'cancelled',
-        cancelReason: 'Kontaktfrist nicht eingehalten (Verkäufer)',
+        cancellationRequestReason: 'Kontaktfrist nicht eingehalten (Verkäufer)',
         paid: false,
         paidAt: null,
         paymentConfirmed: false,
