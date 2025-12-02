@@ -174,9 +174,15 @@ export async function GET(request: NextRequest) {
               purchases: { none: {} }
             },
             {
-              category: {
-                in: topCategories,
-              }
+              categories: {
+                some: {
+                  category: {
+                    slug: {
+                      in: topCategories,
+                    },
+                  },
+                },
+              },
             },
             {
               // Beendete Auktionen ohne Purchase ausschließen
