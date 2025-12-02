@@ -38,9 +38,23 @@ export function UserName({
       })
   }, [userId, showVerifiedBadge])
 
+  // Kürze sehr lange Namen um Layout-Probleme zu vermeiden (z.B. "Looool" bleibt, aber "VeryLongName" → "VeryLong...")
+  const getDisplayName = () => {
+    if (!userName) return 'Benutzer'
+    // Kürze Namen die länger als 10 Zeichen sind
+    if (userName.length > 10) {
+      return `${userName.substring(0, 8)}...`
+    }
+    return userName
+  }
+
+  const displayName = getDisplayName()
+
   const content = (
     <>
-      {userName}
+      <span className="block truncate" title={userName}>
+        {displayName}
+      </span>
       {showVerifiedBadge && isVerified === true && <VerifiedBadge size={badgeSize} />}
     </>
   )

@@ -243,7 +243,7 @@ export function Header() {
     <header className="sticky top-0 z-50 border-b bg-white shadow-md">
       <div className="mx-auto max-w-[1600px] px-2 sm:px-4 md:px-6 lg:px-8">
         {/* ERSTE ZEILE: Logo, Navigation, User Actions */}
-        <div className="flex h-12 items-center justify-between py-1 md:h-14">
+        <div className="flex h-12 min-w-0 items-center justify-between py-1 md:h-14">
           {/* Logo - Mobile kleiner */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
@@ -254,7 +254,7 @@ export function Header() {
 
           {/* Navigation - Responsive: Icons auf Mobile, Text auf Desktop */}
           {/* Verstecke auf sehr kleinen Bildschirmen (wird durch Hamburger-Menü ersetzt) */}
-          <div className="ml-2 hidden flex-1 items-center justify-start space-x-1 sm:flex sm:space-x-2 md:ml-8 md:space-x-6">
+          <div className="ml-1 hidden min-w-0 flex-1 items-center justify-start space-x-0.5 overflow-hidden sm:flex sm:ml-2 sm:space-x-1 md:ml-8 md:space-x-4 lg:space-x-6">
             {/* Favoriten - Icon auf Mobile, Icon + Text auf Desktop */}
             {session ? (
               <Link
@@ -329,8 +329,8 @@ export function Header() {
             </div>
           </div>
 
-          {/* User Actions - Rechts - IMMER SICHTBAR */}
-          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
+          {/* User Actions - Rechts - IMMER SICHTBAR - Overflow verhindern */}
+          <div className="flex flex-shrink-0 items-center space-x-0.5 sm:space-x-1 md:space-x-2 lg:space-x-3">
             {/* Notifications - Icon auf Mobile, Icon + Text auf Desktop */}
             <Link
               href="/notifications"
@@ -352,16 +352,20 @@ export function Header() {
             <div className="relative flex items-center space-x-1 sm:space-x-2">
               {session ? (
                 <>
-                  {/* Begrüßung - Versteckt auf sehr kleinen Bildschirmen */}
-                  <div className="mr-1 hidden items-center gap-1 text-xs text-gray-700 sm:flex md:text-sm">
+                  {/* Begrüßung - Versteckt auf sehr kleinen Bildschirmen, gekürzter Name */}
+                  <div className="mr-0.5 hidden min-w-0 items-center gap-0.5 overflow-hidden text-xs text-gray-700 sm:flex md:mr-1 md:gap-1 md:text-sm">
                     <span className="hidden lg:inline">{t.header.hello},</span>
-                    <UserName
-                      userId={session.user.id}
-                      userName={
-                        userNickname || session.user?.nickname || session.user?.name || 'Benutzer'
-                      }
-                      badgeSize="sm"
-                    />
+                    {/* Gekürzter Name mit max-width um Overflow zu verhindern */}
+                    <div className="max-w-[40px] truncate sm:max-w-[55px] md:max-w-[70px] lg:max-w-[90px] xl:max-w-[120px]">
+                      <UserName
+                        userId={session.user.id}
+                        userName={
+                          userNickname || session.user?.nickname || session.user?.name || 'Benutzer'
+                        }
+                        badgeSize="sm"
+                        className="truncate"
+                      />
+                    </div>
                   </div>
                   <div className="relative">
                     <button
