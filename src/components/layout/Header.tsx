@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import {
@@ -370,8 +370,8 @@ export function Header() {
                   </div>
                   <div
                     className="relative"
-                    onMouseEnter={() => setIsProfileMenuOpen(true)}
-                    onMouseLeave={() => setIsProfileMenuOpen(false)}
+                    onMouseEnter={handleProfileMenuEnter}
+                    onMouseLeave={handleProfileMenuLeave}
                   >
                     <button
                       ref={profileButtonRef}
@@ -400,14 +400,15 @@ export function Header() {
                     {/* Dropdown Menu - Hover-based like Ricardo with smooth animations */}
                     {isProfileMenuOpen && (
                       <div
-                        className="absolute right-0 top-full z-[9999] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
-                        onMouseEnter={() => setIsProfileMenuOpen(true)}
-                        onMouseLeave={() => setIsProfileMenuOpen(false)}
+                        className="absolute right-0 top-full z-[9999] w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                        onMouseEnter={handleProfileMenuEnter}
+                        onMouseLeave={handleProfileMenuLeave}
                         style={{ 
                           display: 'block',
                           visibility: 'visible',
                           opacity: 1,
-                          pointerEvents: 'auto'
+                          pointerEvents: 'auto',
+                          marginTop: '4px' // Smaller gap - 4px instead of mt-1 (8px)
                         }}
                       >
                           <div className="relative py-1">
@@ -546,14 +547,8 @@ export function Header() {
             {/* Language Selector - Far Right - Hover-based like Ricardo */}
             <div 
               className="relative flex-shrink-0"
-              onMouseEnter={() => {
-                console.log('Language hover enter')
-                setIsLanguageMenuOpen(true)
-              }}
-              onMouseLeave={() => {
-                console.log('Language hover leave')
-                setIsLanguageMenuOpen(false)
-              }}
+              onMouseEnter={handleLanguageMenuEnter}
+              onMouseLeave={handleLanguageMenuLeave}
             >
               <button
                 ref={languageButtonRef}
@@ -571,14 +566,15 @@ export function Header() {
               {/* Language Dropdown - Hover-based like Ricardo with smooth animations */}
               {isLanguageMenuOpen && (
                 <div
-                  className="absolute right-0 top-full z-[9999] mt-1 w-48 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
-                  onMouseEnter={() => setIsLanguageMenuOpen(true)}
-                  onMouseLeave={() => setIsLanguageMenuOpen(false)}
+                  className="absolute right-0 top-full z-[9999] w-48 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                  onMouseEnter={handleLanguageMenuEnter}
+                  onMouseLeave={handleLanguageMenuLeave}
                   style={{ 
                     display: 'block',
                     visibility: 'visible',
                     opacity: 1,
-                    pointerEvents: 'auto'
+                    pointerEvents: 'auto',
+                    marginTop: '4px' // Smaller gap - 4px instead of mt-1 (8px)
                   }}
                 >
                     <div className="py-1">
