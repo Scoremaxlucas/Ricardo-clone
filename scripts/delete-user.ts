@@ -114,8 +114,11 @@ async function main() {
         }
         await prisma.watch.deleteMany({ where: { sellerId: user.id } })
         await prisma.bid.deleteMany({ where: { userId: user.id } })
-        await prisma.offer.deleteMany({ where: { buyerId: user.id } })
-        await prisma.offer.deleteMany({ where: { sellerId: user.id } })
+        await prisma.priceOffer.deleteMany({ where: { buyerId: user.id } })
+        // Lösche PriceOffers, bei denen der User Verkäufer ist (über watch.sellerId)
+        if (watchIds.length > 0) {
+          await prisma.priceOffer.deleteMany({ where: { watchId: { in: watchIds } } })
+        }
         await prisma.message.deleteMany({ where: { senderId: user.id } })
         await prisma.message.deleteMany({ where: { receiverId: user.id } })
         await prisma.notification.deleteMany({ where: { userId: user.id } })
