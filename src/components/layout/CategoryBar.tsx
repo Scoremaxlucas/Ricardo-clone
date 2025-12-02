@@ -189,10 +189,10 @@ export function CategoryBar() {
                       setHoveredCategory(category.slug)
                     }}
                     onMouseLeave={() => {
-                      // Sehr kurzer Delay - ermöglicht horizontale Bewegung zu nächster Kategorie
+                      // Kurzer Delay - ermöglicht horizontale Bewegung zu nächster Kategorie
                       categoryMenuTimeoutRef.current = setTimeout(() => {
                         setHoveredCategory(null)
-                      }, 50) // Sehr kurzer Delay (50ms) für horizontale Bewegung
+                      }, 100) // Delay für horizontale Bewegung
                     }}
                   >
                     <div className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm">
@@ -231,12 +231,31 @@ export function CategoryBar() {
                               setHoveredCategory(null)
                             }}
                             onMouseEnter={() => {
-                              // Sehr kurzer Delay beim Verlassen - ermöglicht horizontale Bewegung
+                              // Delay beim Verlassen - ermöglicht horizontale Bewegung
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 50)
+                              }, 100)
                             }}
                             style={{ pointerEvents: 'auto' }}
+                          />
+                          {/* Unsichtbare Brücke zwischen Button und Dropdown - verhindert Flackern */}
+                          <div
+                            className="fixed z-[10000] bg-transparent"
+                            style={{
+                              top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
+                              left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
+                              width: categoryRefs.current[category.slug]!.getBoundingClientRect().width,
+                              height: '4px', // Sehr schmal - nur um Flackern zu verhindern
+                              pointerEvents: 'auto',
+                            }}
+                            onMouseEnter={() => {
+                              // Dropdown bleibt offen wenn Maus über Brücke ist
+                              if (categoryMenuTimeoutRef.current) {
+                                clearTimeout(categoryMenuTimeoutRef.current)
+                                categoryMenuTimeoutRef.current = null
+                              }
+                              setHoveredCategory(category.slug)
+                            }}
                           />
                           <div
                             className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl dropdown-enter"
@@ -249,10 +268,10 @@ export function CategoryBar() {
                               setHoveredCategory(category.slug)
                             }}
                             onMouseLeave={() => {
-                              // Sehr kurzer Delay für horizontale Bewegung zu nächster Kategorie
+                              // Delay für horizontale Bewegung zu nächster Kategorie
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 50)
+                              }, 100)
                             }}
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
