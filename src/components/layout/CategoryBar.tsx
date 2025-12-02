@@ -239,13 +239,17 @@ export function CategoryBar() {
                             style={{ pointerEvents: 'auto' }}
                           />
                           {/* Unsichtbare Brücke zwischen Button und Dropdown - verhindert Flackern */}
+                          {/* Brücke direkt an Dropdown anschließen lassen - keine Lücke */}
                           <div
                             className="fixed z-[10000] bg-transparent"
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
                               left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
-                              width: categoryRefs.current[category.slug]!.getBoundingClientRect().width,
-                              height: '24px', // Höher für besseren Schutz vor Flackern - deckt Lücke komplett ab
+                              width: Math.max(
+                                categoryRefs.current[category.slug]!.getBoundingClientRect().width,
+                                450 // Mindestens so breit wie Dropdown
+                              ),
+                              height: '28px', // Höher für besseren Schutz - deckt Lücke komplett ab
                               pointerEvents: 'auto',
                             }}
                             onMouseEnter={() => {
@@ -260,7 +264,7 @@ export function CategoryBar() {
                               // Längerer Delay für Brücke
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 250)
+                              }, 300)
                             }}
                           />
                           <div
