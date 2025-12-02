@@ -106,7 +106,12 @@ async function main() {
       try {
         // Lösche abhängige Daten manuell
         await prisma.purchase.deleteMany({ where: { buyerId: user.id } })
-        await prisma.purchase.deleteMany({ where: { sellerId: user.id } })
+        // Lösche Purchases, bei denen der User Verkäufer ist (über watch.sellerId)
+        const watchesByUser = await prisma.watch.findMany({ where: { sellerId: user.id }, select: { id: true } })
+        const watchIds = watchesByUser.map(w => w.id)
+        if (watchIds.length > 0) {
+          await prisma.purchase.deleteMany({ where: { watchId: { in: watchIds } } })
+        }
         await prisma.watch.deleteMany({ where: { sellerId: user.id } })
         await prisma.bid.deleteMany({ where: { userId: user.id } })
         await prisma.offer.deleteMany({ where: { buyerId: user.id } })
