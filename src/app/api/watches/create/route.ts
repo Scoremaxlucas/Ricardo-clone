@@ -216,7 +216,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Entferne Duplikate
-    allImages = [...new Set(allImages)]
+    allImages = Array.from(new Set(allImages))
 
     console.log('Data cleanup:', {
       originalDescriptionType: typeof rawData.description,
