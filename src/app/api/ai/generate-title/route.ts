@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * KI-TITEL-GENERIERUNG BASIEREND AUF BILD
  *
  * Nutzt GPT-4 Vision um einen präzisen, verkaufsfördernden Titel zu generieren
- * Ähnlich wie bei Ricardo: Nur Vorschlag, keine automatische Ausfüllung
+ * Ähnlich wie bei Helvenda: Nur Vorschlag, keine automatische Ausfüllung
  */
 
 export async function POST(request: NextRequest) {
