@@ -142,8 +142,13 @@ export async function GET(request: NextRequest) {
     // Finde häufigste Kategorien in Favoriten
     const categoryCounts: Record<string, number> = {}
     favorites.forEach((fav) => {
-      if (fav.watch?.category) {
-        categoryCounts[fav.watch.category] = (categoryCounts[fav.watch.category] || 0) + 1
+      if (fav.watch?.categories && fav.watch.categories.length > 0) {
+        fav.watch.categories.forEach((wc) => {
+          const categorySlug = wc.category?.slug || ''
+          if (categorySlug) {
+            categoryCounts[categorySlug] = (categoryCounts[categorySlug] || 0) + 1
+          }
+        })
       }
     })
 
