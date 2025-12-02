@@ -378,6 +378,13 @@ export function Header() {
                         e.preventDefault()
                         e.stopPropagation()
                         console.log('Profile button clicked, current state:', isProfileMenuOpen)
+                        if (profileButtonRef.current) {
+                          const rect = profileButtonRef.current.getBoundingClientRect()
+                          setProfileDropdownPosition({
+                            top: rect.bottom + 8,
+                            right: window.innerWidth - rect.right
+                          })
+                        }
                         setIsProfileMenuOpen(!isProfileMenuOpen)
                       }}
                       className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 p-1 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:px-2 sm:py-1"
@@ -417,7 +424,7 @@ export function Header() {
                             console.log('Dropdown clicked, isProfileMenuOpen:', isProfileMenuOpen)
                             e.stopPropagation()
                           }}
-                          style={{ 
+                          style={{
                             display: 'block',
                             visibility: 'visible',
                             opacity: 1,
