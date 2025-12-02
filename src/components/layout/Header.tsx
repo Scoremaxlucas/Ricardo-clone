@@ -359,50 +359,55 @@ export function Header() {
               onMouseEnter={handleSellMenuEnter}
               onMouseLeave={handleSellMenuLeave}
             >
-              <div className="flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2">
-                <Link
-                  href="/sell"
-                  className="flex items-center gap-1 sm:gap-2"
-                  title={t.header.sell}
-                >
-                  <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
-                  <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
-                </Link>
+              <button
+                type="button"
+                className="flex w-full items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+                title={t.header.sell}
+              >
+                <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
+                <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
                 <ChevronDown className={`h-3 w-3 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`} />
-              </div>
+              </button>
 
               {/* Dropdown Menu */}
               {isSellMenuOpen && (
-                <div
-                  className="absolute left-0 top-full z-[9999] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
-                  onMouseEnter={handleSellMenuEnter}
-                  onMouseLeave={handleSellMenuLeave}
-                  style={{
-                    display: 'block',
-                    visibility: 'visible',
-                    opacity: 1,
-                    pointerEvents: 'auto',
-                  }}
-                >
-                  <div className="py-1">
-                    <Link
-                      href="/sell"
-                      onClick={() => setIsSellMenuOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                    >
-                      <div className="font-medium">{t.header.singleItem}</div>
-                      <div className="text-xs text-gray-500">{t.header.singleItemDesc}</div>
-                    </Link>
-                    <Link
-                      href="/sell/bulk"
-                      onClick={() => setIsSellMenuOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                    >
-                      <div className="font-medium">{t.header.multipleItems}</div>
-                      <div className="text-xs text-gray-500">{t.header.multipleItemsDesc}</div>
-                    </Link>
+                <>
+                  {/* Unsichtbare Brücke zwischen Button und Dropdown */}
+                  <div
+                    className="absolute left-0 top-full z-[9998] h-1 w-full bg-transparent"
+                    onMouseEnter={handleSellMenuEnter}
+                  />
+                  <div
+                    className="absolute left-0 top-full z-[9999] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                    onMouseEnter={handleSellMenuEnter}
+                    onMouseLeave={handleSellMenuLeave}
+                    style={{
+                      display: 'block',
+                      visibility: 'visible',
+                      opacity: 1,
+                      pointerEvents: 'auto',
+                    }}
+                  >
+                    <div className="py-1">
+                      <Link
+                        href="/sell"
+                        onClick={() => setIsSellMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="font-medium">{t.header.singleItem}</div>
+                        <div className="text-xs text-gray-500">{t.header.singleItemDesc}</div>
+                      </Link>
+                      <Link
+                        href="/sell/bulk"
+                        onClick={() => setIsSellMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="font-medium">{t.header.multipleItems}</div>
+                        <div className="text-xs text-gray-500">{t.header.multipleItemsDesc}</div>
+                      </Link>
+                    </div>
                   </div>
-                </div>
+                </>
               )}
             </div>
           </div>

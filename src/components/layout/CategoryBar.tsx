@@ -217,6 +217,7 @@ export function CategoryBar() {
                       categoryRefs.current[category.slug] &&
                       createPortal(
                         <>
+                          {/* Overlay nur zum Schließen bei Klick außerhalb */}
                           <div
                             className="fixed inset-0 z-[9999] bg-transparent"
                             onClick={() => {
@@ -226,10 +227,27 @@ export function CategoryBar() {
                               }
                               setHoveredCategory(null)
                             }}
+                            style={{ pointerEvents: 'auto' }}
+                          />
+                          {/* Unsichtbare Brücke zwischen Button und Dropdown - verhindert Blinken */}
+                          <div
+                            className="fixed z-[9999] bg-transparent"
+                            style={{
+                              top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
+                              left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
+                              width: Math.max(categoryRefs.current[category.slug]!.getBoundingClientRect().width, 450),
+                              height: '6px',
+                              pointerEvents: 'auto',
+                            }}
                             onMouseEnter={() => {
-                              categoryMenuTimeoutRef.current = setTimeout(() => {
-                                setHoveredCategory(null)
-                              }, 200)
+                              if (categoryMenuTimeoutRef.current) {
+                                clearTimeout(categoryMenuTimeoutRef.current)
+                                categoryMenuTimeoutRef.current = null
+                              }
+                              setHoveredCategory(category.slug)
+                            }}
+                            onMouseLeave={() => {
+                              // Kein Timeout hier - direkt weiter zum Dropdown
                             }}
                           />
                           <div
@@ -249,6 +267,7 @@ export function CategoryBar() {
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
                               left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
+                              pointerEvents: 'auto',
                             }}
                           >
                             <h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">
