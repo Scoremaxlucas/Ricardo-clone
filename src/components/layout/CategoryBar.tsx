@@ -146,6 +146,7 @@ export function CategoryBar() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
+  const categoryMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   return (
     <>
@@ -178,8 +179,18 @@ export function CategoryBar() {
                     key={category.slug}
                     ref={el => { categoryRefs.current[category.slug] = el }}
                     className="relative z-50"
-                    onMouseEnter={() => setHoveredCategory(category.slug)}
-                    onMouseLeave={() => setHoveredCategory(null)}
+                    onMouseEnter={() => {
+                      if (categoryMenuTimeoutRef.current) {
+                        clearTimeout(categoryMenuTimeoutRef.current)
+                        categoryMenuTimeoutRef.current = null
+                      }
+                      setHoveredCategory(category.slug)
+                    }}
+                    onMouseLeave={() => {
+                      categoryMenuTimeoutRef.current = setTimeout(() => {
+                        setHoveredCategory(null)
+                      }, 150) // 150ms delay before closing
+                    }}
                   >
                     <Link
                       href={`/search?category=${category.slug}`}
@@ -205,13 +216,33 @@ export function CategoryBar() {
                         <>
                           <div
                             className="fixed inset-0 z-[9999] bg-transparent"
-                            onClick={() => setHoveredCategory(null)}
-                            onMouseEnter={() => setHoveredCategory(null)}
+                            onClick={() => {
+                              if (categoryMenuTimeoutRef.current) {
+                                clearTimeout(categoryMenuTimeoutRef.current)
+                                categoryMenuTimeoutRef.current = null
+                              }
+                              setHoveredCategory(null)
+                            }}
+                            onMouseEnter={() => {
+                              categoryMenuTimeoutRef.current = setTimeout(() => {
+                                setHoveredCategory(null)
+                              }, 150)
+                            }}
                           />
                           <div
                             className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
-                            onMouseEnter={() => setHoveredCategory(category.slug)}
-                            onMouseLeave={() => setHoveredCategory(null)}
+                            onMouseEnter={() => {
+                              if (categoryMenuTimeoutRef.current) {
+                                clearTimeout(categoryMenuTimeoutRef.current)
+                                categoryMenuTimeoutRef.current = null
+                              }
+                              setHoveredCategory(category.slug)
+                            }}
+                            onMouseLeave={() => {
+                              categoryMenuTimeoutRef.current = setTimeout(() => {
+                                setHoveredCategory(null)
+                              }, 150)
+                            }}
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
                               left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,

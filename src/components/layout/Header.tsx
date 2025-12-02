@@ -310,7 +310,7 @@ export function Header() {
         <div className="flex h-12 min-w-0 items-center justify-between py-1 md:h-14">
           {/* Logo - Mobile kleiner */}
           <div className="flex-shrink-0">
-            <Link href="/" className="flex items-center">
+            <Link href="/" className="inline-flex items-center">
               <Logo size="sm" className="md:hidden" />
               <Logo size="md" className="hidden md:block" />
             </Link>
@@ -359,15 +359,15 @@ export function Header() {
               onMouseEnter={handleSellMenuEnter}
               onMouseLeave={handleSellMenuLeave}
             >
-              <Link
-                href="/sell"
-                className="flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+              <button
+                type="button"
+                className="flex w-full items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
                 title={t.header.sell}
               >
                 <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
                 <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
-                <ChevronDown className={`hidden h-3 w-3 transition-transform sm:block ${isSellMenuOpen ? 'rotate-180' : ''}`} />
-              </Link>
+                <ChevronDown className={`h-3 w-3 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`} />
+              </button>
 
               {/* Dropdown Menu */}
               {isSellMenuOpen && (
