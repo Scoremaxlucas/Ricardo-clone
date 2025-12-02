@@ -94,7 +94,7 @@ export default function AdminStatisticsPage() {
       return
     }
 
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+    const isAdminInSession = session?.user?.isAdmin === true
 
     if (isAdminInSession) {
       loadStatistics()
@@ -154,7 +154,7 @@ export default function AdminStatisticsPage() {
     )
   }
 
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+  const isAdminInSession = session?.user?.isAdmin === true
 
   if (!session || !isAdminInSession) {
     return (

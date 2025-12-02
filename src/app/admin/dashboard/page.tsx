@@ -107,7 +107,7 @@ export default function AdminDashboard() {
         return
       }
 
-      const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+      const isAdminInSession = session?.user?.isAdmin === true
 
       if (isAdminInSession) {
         await loadStats()
@@ -170,7 +170,7 @@ export default function AdminDashboard() {
   }
 
   // Prüfe Admin-Status nur aus Session
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+  const isAdminInSession = session?.user?.isAdmin === true
 
   // Wenn keine Session, zeige Fehlermeldung (redirect sollte bereits passiert sein)
   if (!session?.user) {

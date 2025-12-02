@@ -71,7 +71,7 @@ export default function AdminUsersPage() {
     }
 
     // Prüfe Admin-Status nur aus Session
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+    const isAdminInSession = session?.user?.isAdmin === true
 
     if (isAdminInSession) {
       console.log('Admin confirmed, loading users...')
@@ -200,7 +200,7 @@ export default function AdminUsersPage() {
   }
 
   // Prüfe Admin-Status nur aus Session
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+  const isAdminInSession = session?.user?.isAdmin === true
 
   if (!session || !isAdminInSession) {
     return (

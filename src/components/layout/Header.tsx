@@ -66,7 +66,7 @@ export function Header() {
       }
 
       // Prüfe Admin-Status nur aus Session
-      if (session.user.isAdmin === true || session.user.isAdmin === true) {
+      if (session.user.isAdmin === true) {
         console.log('User is Admin based on session, setting isAdmin to true')
         setIsAdmin(true)
       } else {
@@ -83,14 +83,14 @@ export function Header() {
           .then(data => {
             console.log('Admin status from API:', data)
             const adminValue =
-              data.isAdmin === true || data.isAdmin === true || data.isAdmin === 'true'
+              data.isAdmin === true || data.isAdmin === 'true'
             console.log('Setting isAdmin to:', adminValue)
             setIsAdmin(adminValue)
           })
           .catch(err => {
             console.error('Error loading admin status:', err)
             // Fallback: Verwende Session-Wert
-            const fallbackValue = session.user.isAdmin === true || session.user.isAdmin === true
+            const fallbackValue = session.user.isAdmin === true
             console.log('Using fallback admin value:', fallbackValue)
             setIsAdmin(fallbackValue)
           })

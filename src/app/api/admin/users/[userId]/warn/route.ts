@@ -16,7 +16,7 @@ export async function POST(
     }
 
     // Prüfe ob User Admin ist
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+    const isAdminInSession = session?.user?.isAdmin === true
     const admin = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { isAdmin: true, email: true, name: true, firstName: true, lastName: true },

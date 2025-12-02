@@ -55,7 +55,7 @@ export default function AdminPricingPage() {
     }
 
     // Prüfe Admin-Status nur aus Session
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+    const isAdminInSession = session?.user?.isAdmin === true
 
     if (isAdminInSession) {
       loadPricing()
@@ -190,7 +190,7 @@ export default function AdminPricingPage() {
   }
 
   // Prüfe Admin-Status nur aus Session
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+  const isAdminInSession = session?.user?.isAdmin === true
 
   if (!session || !isAdminInSession) {
     return (

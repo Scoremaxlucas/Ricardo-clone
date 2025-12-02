@@ -42,7 +42,7 @@ export default function AdminTransactionsPage() {
     }
 
     // Prüfe Admin-Status nur aus Session
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+    const isAdminInSession = session?.user?.isAdmin === true
 
     if (!isAdminInSession) {
       router.push('/')
@@ -89,7 +89,7 @@ export default function AdminTransactionsPage() {
   }
 
   // Prüfe Admin-Status erneut für UI
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+  const isAdminInSession = session?.user?.isAdmin === true
 
   if (!isAdminInSession) {
     return null

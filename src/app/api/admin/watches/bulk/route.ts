@@ -10,7 +10,7 @@ async function checkAdmin(session: any): Promise<boolean> {
     where: { id: session.user.id },
     select: { isAdmin: true },
   })
-  return user?.isAdmin === true || user?.isAdmin === true
+  return user?.isAdmin === true
 }
 
 // POST: Bulk-Aktionen

@@ -18,7 +18,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+    const isAdminInSession = session?.user?.isAdmin === true
 
     // Prüfe ob User Admin ist (per ID oder E-Mail)
     let user = null
@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Prüfe Admin-Status: Session ODER Datenbank
-    const isAdminInDb = adminUser?.isAdmin === true || adminUser?.isAdmin === true
+    const isAdminInDb = adminUser?.isAdmin === true
     const isAdmin = isAdminInSession || isAdminInDb
 
     if (!isAdmin) {

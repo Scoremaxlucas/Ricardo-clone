@@ -22,7 +22,7 @@ async function checkAdmin(session: any): Promise<boolean> {
       select: { isAdmin: true, email: true },
     })
   }
-  const isAdminInDb = user?.isAdmin === true || user?.isAdmin === true
+  const isAdminInDb = user?.isAdmin === true
   return isAdminInDb
 }
 

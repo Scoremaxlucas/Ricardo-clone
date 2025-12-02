@@ -16,7 +16,7 @@ export async function DELETE(
     }
 
     // Prüfe Admin-Status
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+    const isAdminInSession = session?.user?.isAdmin === true
     const adminUser = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { isAdmin: true, email: true, name: true, firstName: true, lastName: true },

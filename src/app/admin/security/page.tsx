@@ -54,7 +54,7 @@ export default function AdminSecurityPage() {
     }
 
     // Prüfe Admin-Status nur aus Session
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+    const isAdminInSession = session?.user?.isAdmin === true
 
     if (isAdminInSession) {
       loadBlockedUsers()
@@ -159,7 +159,7 @@ export default function AdminSecurityPage() {
   }
 
   // Prüfe Admin-Status nur aus Session
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+  const isAdminInSession = session?.user?.isAdmin === true
 
   if (!session || !isAdminInSession) {
     return (

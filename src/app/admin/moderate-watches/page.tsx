@@ -111,7 +111,7 @@ export default function AdminModerateWatchesPage() {
       return
     }
 
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+    const isAdminInSession = session?.user?.isAdmin === true
     if (!isAdminInSession) {
       router.push('/')
       return
@@ -389,7 +389,7 @@ export default function AdminModerateWatchesPage() {
     )
   }
 
-  const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === true
+  const isAdminInSession = session?.user?.isAdmin === true
   if (!isAdminInSession) {
     return null
   }

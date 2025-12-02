@@ -10,7 +10,7 @@ export default withAuth(
     // Wenn es eine Admin-Route ist, prüfe Admin-Rechte
     if (isAdminRoute) {
       // Prüfe Admin-Status aus Token
-      let isAdmin = token?.isAdmin === true || token?.isAdmin === true
+      let isAdmin = token?.isAdmin === true
 
       // Falls nicht im Token, prüfe direkt in der Datenbank
       if (!isAdmin && token?.id) {
@@ -19,7 +19,7 @@ export default withAuth(
             where: { id: token.id as string },
             select: { isAdmin: true },
           })
-          isAdmin = user?.isAdmin === true || user?.isAdmin === true
+          isAdmin = user?.isAdmin === true
         } catch (error) {
           console.error('[MIDDLEWARE] Error checking admin status:', error)
         }
