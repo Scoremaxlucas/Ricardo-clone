@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
           case 'activate':
             await prisma.watch.update({
               where: { id: watchId },
-              data: { isActive: true },
+              data: { moderationStatus: 'approved' },
             })
             await prisma.moderationHistory.create({
               data: {
@@ -57,7 +57,7 @@ export async function POST(request: NextRequest) {
           case 'deactivate':
             await prisma.watch.update({
               where: { id: watchId },
-              data: { isActive: false },
+              data: { moderationStatus: 'rejected' },
             })
             await prisma.moderationHistory.create({
               data: {
