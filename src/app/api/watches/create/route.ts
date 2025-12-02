@@ -986,7 +986,7 @@ export async function POST(request: NextRequest) {
         const { subject, html, text } = getListingConfirmationEmail(
           sellerName,
           watch.title,
-          watch.articleNumber,
+          watch.articleNumber?.toString() || '',
           watch.id
         )
         await sendEmail({
