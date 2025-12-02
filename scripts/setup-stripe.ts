@@ -70,7 +70,7 @@ function writeEnvFile(env: Map<string, string>) {
   }
 
   // Füge neue Keys hinzu
-  for (const [key, value] of env.entries()) {
+  for (const [key, value] of Array.from(env.entries())) {
     if (!lines.some(line => line.startsWith(`${key}=`))) {
       lines.push(`${key}=${value}`)
     }
