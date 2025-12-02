@@ -320,11 +320,11 @@ html {
     scrollbar-width: none;
   }
 
-  /* Dropdown Animationen - Smooth fade-in und slide-down */
+  /* Dropdown Animationen - Smooth fade-in und slide-down - Schneller für bessere Reaktivität */
   @keyframes dropdownFadeIn {
     from {
       opacity: 0;
-      transform: translateY(-8px);
+      transform: translateY(-6px);
     }
     to {
       opacity: 1;
@@ -333,6 +333,6 @@ html {
   }
 
   .dropdown-enter {
-    animation: dropdownFadeIn 0.2s ease-out;
+    animation: dropdownFadeIn 0.15s ease-out;
   }
 }

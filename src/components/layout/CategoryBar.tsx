@@ -180,16 +180,19 @@ export function CategoryBar() {
                     ref={el => { categoryRefs.current[category.slug] = el }}
                     className="relative z-50"
                     onMouseEnter={() => {
+                      // Sofortiges Schließen des alten Dropdowns und Öffnen des neuen
                       if (categoryMenuTimeoutRef.current) {
                         clearTimeout(categoryMenuTimeoutRef.current)
                         categoryMenuTimeoutRef.current = null
                       }
+                      // Sofort setzen - kein Delay beim Wechsel zwischen Kategorien
                       setHoveredCategory(category.slug)
                     }}
                     onMouseLeave={() => {
+                      // Delay nur beim Verlassen aller Kategorien
                       categoryMenuTimeoutRef.current = setTimeout(() => {
                         setHoveredCategory(null)
-                      }, 200) // 200ms delay before closing for better UX
+                      }, 150) // Kürzerer Delay für bessere Reaktivität
                     }}
                   >
                     <div className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm">
@@ -228,18 +231,35 @@ export function CategoryBar() {
                               setHoveredCategory(null)
                             }}
                             onMouseEnter={(e) => {
-                              // Schließe nur wenn Maus wirklich außerhalb von Button, Brücke und Dropdown
-                              const rect = categoryRefs.current[category.slug]!.getBoundingClientRect()
-                              const mouseX = e.clientX
-                              const mouseY = e.clientY
+                              // Prüfe ob Maus über einer anderen Kategorie ist
+                              let isOverAnotherCategory = false
+                              Object.keys(categoryRefs.current).forEach(slug => {
+                                if (slug !== category.slug && categoryRefs.current[slug]) {
+                                  const rect = categoryRefs.current[slug]!.getBoundingClientRect()
+                                  const mouseX = e.clientX
+                                  const mouseY = e.clientY
+                                  
+                                  if (mouseX >= rect.left && mouseX <= rect.right && 
+                                      mouseY >= rect.top && mouseY <= rect.bottom) {
+                                    isOverAnotherCategory = true
+                                  }
+                                }
+                              })
 
-                              // Prüfe ob Maus außerhalb des Button-Bereichs ist
-                              const isOutsideButton = mouseX < rect.left || mouseX > rect.right || mouseY < rect.top || mouseY > rect.bottom + 10
-
-                              if (isOutsideButton) {
-                                categoryMenuTimeoutRef.current = setTimeout(() => {
-                                  setHoveredCategory(null)
-                                }, 100)
+                              // Nur schließen wenn nicht über einer anderen Kategorie
+                              if (!isOverAnotherCategory) {
+                                const rect = categoryRefs.current[category.slug]!.getBoundingClientRect()
+                                const mouseX = e.clientX
+                                const mouseY = e.clientY
+                                
+                                // Prüfe ob Maus außerhalb des Button-Bereichs ist
+                                const isOutsideButton = mouseX < rect.left || mouseX > rect.right || mouseY < rect.top || mouseY > rect.bottom + 10
+                                
+                                if (isOutsideButton) {
+                                  categoryMenuTimeoutRef.current = setTimeout(() => {
+                                    setHoveredCategory(null)
+                                  }, 100)
+                                }
                               }
                             }}
                             style={{ pointerEvents: 'auto' }}
@@ -272,13 +292,14 @@ export function CategoryBar() {
                               setHoveredCategory(category.slug)
                             }}
                             onMouseLeave={() => {
+                              // Kürzerer Delay für bessere Reaktivität
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 200)
+                              }, 150)
                             }}
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
-                              left: typeof window !== 'undefined' 
+                              left: typeof window !== 'undefined'
                                 ? Math.max(
                                     10, // Minimum 10px from left edge
                                     Math.min(
