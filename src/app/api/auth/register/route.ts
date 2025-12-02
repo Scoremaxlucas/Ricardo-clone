@@ -87,12 +87,16 @@ export async function POST(request: NextRequest) {
     console.log(`[register] Base URL: ${baseUrl}`)
 
     let emailSent = false
+    let emailError: string | null = null
+    
     try {
       const { subject, html, text } = getEmailVerificationEmail(firstName, verificationUrl)
 
       console.log(`[register] E-Mail-Template generiert:`)
       console.log(`  Subject: ${subject}`)
       console.log(`  HTML Length: ${html.length} Zeichen`)
+      console.log(`  To Email: ${normalizedEmail}`)
+      console.log(`  Verification URL: ${verificationUrl}`)
 
       const emailResult = await sendEmail({
         to: normalizedEmail,
@@ -111,14 +115,18 @@ export async function POST(request: NextRequest) {
         emailSent = true
         console.log(`[register] ✅ E-Mail-Bestätigung erfolgreich gesendet an ${normalizedEmail}`)
       } else {
+        emailError = emailResult.error || 'Unbekannter Fehler'
         console.error(`[register] ❌ Fehler beim Senden der E-Mail-Bestätigung:`)
-        console.error(`  Error: ${emailResult.error}`)
+        console.error(`  Error: ${emailError}`)
         console.error(`  Method: ${emailResult.method}`)
+        // Versuche trotzdem fortzufahren, aber logge den Fehler
       }
-    } catch (emailError: any) {
+    } catch (emailErrorException: any) {
+      emailError = emailErrorException.message || 'Unbekannte Exception'
       console.error('[register] ❌ Exception beim Senden der E-Mail-Bestätigung:')
-      console.error(`  Message: ${emailError.message}`)
-      console.error(`  Stack: ${emailError.stack}`)
+      console.error(`  Message: ${emailErrorException.message}`)
+      console.error(`  Stack: ${emailErrorException.stack}`)
+      // Versuche trotzdem fortzufahren
     }
 
     console.log(`[register] Email Sent Flag: ${emailSent}`)
@@ -135,12 +143,13 @@ export async function POST(request: NextRequest) {
       {
         message: emailSent
           ? 'Benutzer erfolgreich erstellt. Bitte überprüfen Sie Ihr E-Mail-Postfach und klicken Sie auf den Bestätigungslink.'
-          : 'Benutzer erfolgreich erstellt. Bitte bestätigen Sie Ihre E-Mail-Adresse.',
+          : 'Benutzer erfolgreich erstellt. Bitte überprüfen Sie Ihr E-Mail-Postfach. Falls keine E-Mail ankommt, kontaktieren Sie bitte den Support.',
         user: userWithoutPassword,
         // Token zurückgeben wenn E-Mail nicht versendet werden konnte (für manuelle Verifizierung)
         verificationToken: shouldReturnToken ? verificationToken : undefined,
         verificationUrl: shouldReturnToken ? verificationUrl : undefined,
         emailSent: emailSent,
+        emailError: emailError || undefined,
       },
       { status: 201 }
     )
