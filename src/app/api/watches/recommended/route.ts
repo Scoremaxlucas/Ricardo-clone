@@ -128,9 +128,12 @@ export async function GET(request: NextRequest) {
       },
       include: {
         watch: {
-          select: {
-            category: true,
-            subcategory: true,
+          include: {
+            categories: {
+              include: {
+                category: true,
+              },
+            },
           },
         },
       },
