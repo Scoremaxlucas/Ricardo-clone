@@ -185,8 +185,6 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const now = new Date()
-
     const watches = await prisma.watch.findMany({
       where,
       include: {
