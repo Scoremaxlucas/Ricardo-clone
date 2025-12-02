@@ -43,7 +43,7 @@ export function Header() {
   const { language, setLanguage, t } = useLanguage()
 
   const languages = [
-    { code: 'de' as const, name: 'Deutsch', flag: '🇩🇪' },
+    { code: 'de' as const, name: 'Deutsch', flag: '🇨🇭' }, // Schweizer Flagge für Deutsch
     { code: 'en' as const, name: 'English', flag: '🇬🇧' },
     { code: 'fr' as const, name: 'Français', flag: '🇫🇷' },
     { code: 'it' as const, name: 'Italiano', flag: '🇮🇹' },
@@ -329,8 +329,8 @@ export function Header() {
             </div>
           </div>
 
-          {/* User Actions - Rechts - IMMER SICHTBAR - Overflow verhindern */}
-          <div className="flex flex-shrink-0 items-center space-x-0.5 sm:space-x-1 md:space-x-2 lg:space-x-3">
+            {/* User Actions - Rechts - IMMER SICHTBAR - Overflow verhindern - NO BRANCHING OUT */}
+          <div className="flex flex-shrink-0 items-center gap-0.5 overflow-hidden sm:gap-1 md:gap-1.5 lg:gap-2">
             {/* Notifications - Icon auf Mobile, Icon + Text auf Desktop */}
             <Link
               href="/notifications"
@@ -355,8 +355,8 @@ export function Header() {
                   {/* Begrüßung - Versteckt auf sehr kleinen Bildschirmen, gekürzter Name */}
                   <div className="mr-0.5 hidden min-w-0 items-center gap-0.5 overflow-hidden text-xs text-gray-700 sm:flex md:mr-1 md:gap-1 md:text-sm">
                     <span className="hidden lg:inline">{t.header.hello},</span>
-                    {/* Gekürzter Name mit max-width um Overflow zu verhindern */}
-                    <div className="max-w-[40px] truncate sm:max-w-[55px] md:max-w-[70px] lg:max-w-[90px] xl:max-w-[120px]">
+                    {/* Gekürzter Name mit max-width um Overflow zu verhindern - NO OVERFLOW */}
+                    <div className="max-w-[35px] truncate sm:max-w-[50px] md:max-w-[65px] lg:max-w-[85px] xl:max-w-[110px]">
                       <UserName
                         userId={session.user.id}
                         userName={
@@ -596,19 +596,17 @@ export function Header() {
               )}
             </div>
 
-            {/* Language Selector - Far Right - Icon auf Mobile */}
-            <div className="relative">
+            {/* Language Selector - Far Right - Nur Flagge, kein Text um Overflow zu vermeiden */}
+            <div className="relative flex-shrink-0">
               <button
                 onClick={() => setIsLanguageMenuOpen(!isLanguageMenuOpen)}
-                className="flex items-center gap-1 rounded-md p-2 font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-1 sm:px-3 sm:py-2"
-                title={t.header.selectLanguage}
+                className="flex items-center justify-center rounded-md p-1.5 font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:p-2"
+                title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
               >
-                <span className="text-base sm:text-lg">{languages.find(l => l.code === language)?.flag}</span>
-                <span className="hidden text-xs sm:inline sm:text-sm">
-                  {languages.find(l => l.code === language)?.code.toUpperCase()}
-                </span>
+                {/* Nur Flagge anzeigen, kein Text um Overflow zu vermeiden */}
+                <span className="text-lg sm:text-xl">{languages.find(l => l.code === language)?.flag}</span>
                 <ChevronDown
-                  className={`hidden h-3 w-3 transition-transform sm:block sm:h-4 sm:w-4 ${isLanguageMenuOpen ? 'rotate-180' : ''}`}
+                  className={`ml-0.5 h-3 w-3 transition-transform sm:h-4 sm:w-4 ${isLanguageMenuOpen ? 'rotate-180' : ''}`}
                 />
               </button>
 
