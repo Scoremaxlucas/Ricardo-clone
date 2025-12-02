@@ -192,7 +192,7 @@ export function CategoryBar() {
                       // Längerer Delay - verhindert Flackern beim Bewegen zum Dropdown
                       categoryMenuTimeoutRef.current = setTimeout(() => {
                         setHoveredCategory(null)
-                      }, 200) // Längerer Delay verhindert Flackern
+                      }, 250) // Längerer Delay verhindert Flackern
                     }}
                   >
                     <div className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm">
@@ -234,7 +234,7 @@ export function CategoryBar() {
                               // Längerer Delay beim Verlassen - verhindert Flackern
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 200)
+                              }, 250)
                             }}
                             style={{ pointerEvents: 'auto' }}
                           />
@@ -277,7 +277,7 @@ export function CategoryBar() {
                               // Längerer Delay - verhindert Flackern
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 200)
+                              }, 250)
                             }}
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
