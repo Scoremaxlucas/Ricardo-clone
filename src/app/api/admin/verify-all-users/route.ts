@@ -6,7 +6,7 @@ import { prisma } from '@/lib/prisma'
 /**
  * API endpoint to verify all users (set emailVerified: true)
  * This is a one-time operation to disable email verification requirement
- * 
+ *
  * Requires admin authentication
  */
 export async function POST(request: NextRequest) {
