@@ -15,9 +15,6 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [showResendEmail, setShowResendEmail] = useState(false)
-  const [resendLoading, setResendLoading] = useState(false)
-  const [resendMessage, setResendMessage] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
   const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/'
@@ -47,18 +44,7 @@ export default function LoginPage() {
 
       if (result?.error) {
         console.error('Login error:', result.error)
-
-        // Spezielle Fehlermeldung für nicht bestätigte E-Mail
-        if (result.error === 'EMAIL_NOT_VERIFIED' || result.error.includes('EMAIL_NOT_VERIFIED')) {
-          setError(
-            'Ihre E-Mail-Adresse wurde noch nicht bestätigt. Bitte überprüfen Sie Ihr E-Mail-Postfach und klicken Sie auf den Bestätigungslink.'
-          )
-          setShowResendEmail(true) // Zeige "E-Mail erneut senden" Button
-        } else {
-          setError(`Fehler: ${result.error}. Bitte überprüfen Sie E-Mail und Passwort.`)
-          setShowResendEmail(false)
-        }
-
+        setError(`Fehler: ${result.error}. Bitte überprüfen Sie E-Mail und Passwort.`)
         setIsLoading(false)
         return
       }
@@ -93,41 +79,6 @@ export default function LoginPage() {
     }
   }
 
-  const handleResendVerificationEmail = async () => {
-    if (!email || !email.trim()) {
-      setResendMessage('Bitte geben Sie Ihre E-Mail-Adresse ein.')
-      return
-    }
-
-    setResendLoading(true)
-    setResendMessage('')
-
-    try {
-      const response = await fetch('/api/auth/resend-verification', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ email: email.trim() }),
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        setResendMessage(data.message || 'Eine neue Verifizierungs-E-Mail wurde gesendet.')
-        if (data.verificationUrl) {
-          // Falls E-Mail nicht versendet werden konnte, zeige Link
-          setResendMessage(`${data.message} Link: ${data.verificationUrl}`)
-        }
-      } else {
-        setResendMessage(data.message || 'Fehler beim Versenden der E-Mail.')
-      }
-    } catch (error: any) {
-      setResendMessage('Ein Fehler ist aufgetreten. Bitte versuchen Sie es später erneut.')
-    } finally {
-      setResendLoading(false)
-    }
-  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -157,30 +108,6 @@ export default function LoginPage() {
               {error && (
                 <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
                   {error}
-                  {showResendEmail && (
-                    <div className="mt-3 border-t border-red-200 pt-3">
-                      <button
-                        type="button"
-                        onClick={handleResendVerificationEmail}
-                        disabled={resendLoading}
-                        className="text-sm font-medium text-primary-600 underline hover:text-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {resendLoading ? 'Wird gesendet...' : 'E-Mail erneut senden'}
-                      </button>
-                    </div>
-                  )}
-                </div>
-              )}
-
-              {resendMessage && (
-                <div
-                  className={`rounded-lg px-4 py-3 text-sm ${
-                    resendMessage.includes('erfolgreich') || resendMessage.includes('gesendet')
-                      ? 'border border-green-200 bg-green-50 text-green-700'
-                      : 'border border-yellow-200 bg-yellow-50 text-yellow-700'
-                  }`}
-                >
-                  {resendMessage}
                 </div>
               )}
 
