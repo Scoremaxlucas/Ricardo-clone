@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
           const purchase = item.purchases[0]
           if (!purchase) return null
           // Für Auktionen: Nutze den finalen Preis, sonst den Kaufpreis
-          return purchase.amount || item.price
+          return purchase.price || item.price
         })
         .filter((p): p is number => p !== null && p > 0)
 
