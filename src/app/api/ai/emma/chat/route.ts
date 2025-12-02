@@ -34,7 +34,7 @@ interface EmmaContext {
 }
 
 async function getEmmaContext(request: NextRequest, session: any): Promise<EmmaContext> {
-  const context: LeaContext = {}
+  const context: EmmaContext = {}
 
   if (session?.user) {
     context.userId = session.user.id
