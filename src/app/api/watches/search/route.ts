@@ -1303,7 +1303,7 @@ function expandSearchTerms(queryWords: string[]): string[] {
   }
 
   // Entferne Duplikate und kurze Wörter
-  return [...new Set(expanded)].filter(w => w.length >= 2)
+  return Array.from(new Set(expanded)).filter(w => w.length >= 2)
 }
 
 export async function GET(request: NextRequest) {
