@@ -100,7 +100,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         const oldImages = watch.images ? JSON.parse(watch.images) : []
         const newImages = Array.isArray(data.images) ? data.images : []
         // Entferne Duplikate
-        const combinedImages = [...new Set([...oldImages, ...newImages])]
+        const combinedImages = Array.from(new Set([...oldImages, ...newImages]))
         updateData.images = JSON.stringify(combinedImages)
       }
 
