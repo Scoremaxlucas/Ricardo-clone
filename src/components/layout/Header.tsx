@@ -368,7 +368,7 @@ export function Header() {
                       />
                     </div>
                   </div>
-                  <div 
+                  <div
                     className="relative"
                     onMouseEnter={() => setIsProfileMenuOpen(true)}
                     onMouseLeave={() => setIsProfileMenuOpen(false)}
@@ -400,9 +400,10 @@ export function Header() {
                     {/* Dropdown Menu - Hover-based like Ricardo with smooth animations */}
                     {isProfileMenuOpen && (
                       <div
-                        className="absolute right-0 top-full z-[60] mt-1 w-56 animate-in fade-in slide-in-from-top-2 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                        className="absolute right-0 top-full z-[60] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
                         onMouseEnter={() => setIsProfileMenuOpen(true)}
                         onMouseLeave={() => setIsProfileMenuOpen(false)}
+                        style={{ display: 'block' }}
                       >
                           <div className="relative py-1">
                             <div className="border-b border-gray-100 px-4 py-3">
@@ -538,7 +539,7 @@ export function Header() {
             </div>
 
             {/* Language Selector - Far Right - Hover-based like Ricardo */}
-            <div 
+            <div
               className="relative flex-shrink-0"
               onMouseEnter={() => setIsLanguageMenuOpen(true)}
               onMouseLeave={() => setIsLanguageMenuOpen(false)}
@@ -559,9 +560,10 @@ export function Header() {
               {/* Language Dropdown - Hover-based like Ricardo with smooth animations */}
               {isLanguageMenuOpen && (
                 <div
-                  className="absolute right-0 top-full z-[60] mt-1 w-48 animate-in fade-in slide-in-from-top-2 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                  className="absolute right-0 top-full z-[60] mt-1 w-48 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
                   onMouseEnter={() => setIsLanguageMenuOpen(true)}
                   onMouseLeave={() => setIsLanguageMenuOpen(false)}
+                  style={{ display: 'block' }}
                 >
                     <div className="py-1">
                       {languages.map(lang => (
