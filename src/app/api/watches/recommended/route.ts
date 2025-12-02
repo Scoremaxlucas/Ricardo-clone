@@ -158,7 +158,7 @@ export async function GET(request: NextRequest) {
       .map(([category]) => category)
 
     // Hole Artikel aus diesen Kategorien
-    let watches
+    let watches: any[] = []
     if (topCategories.length > 0) {
       watches = await prisma.watch.findMany({
         where: {
