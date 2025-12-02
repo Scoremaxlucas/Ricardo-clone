@@ -10,11 +10,11 @@ import { prisma } from '@/lib/prisma'
  * Requires admin authentication
  * Supports both GET and POST methods for easier access
  */
-export async function POST(request: NextRequest) {
+export async function POST(_request: NextRequest) {
   return verifyAllUsers()
 }
 
-export async function GET(request: NextRequest) {
+export async function GET(_request: NextRequest) {
   return verifyAllUsers()
 }
 
@@ -40,12 +40,10 @@ async function verifyAllUsers() {
     }
 
     // Finde alle Benutzer mit emailVerified: false oder null
-    const unverifiedUsers = await prisma.user.findMany({
+    // Verwende separate Queries, da Prisma null nicht direkt in OR unterstützt
+    const unverifiedUsersFalse = await prisma.user.findMany({
       where: {
-        OR: [
-          { emailVerified: false },
-          { emailVerified: null },
-        ],
+        emailVerified: false,
       },
       select: {
         id: true,
@@ -54,9 +52,22 @@ async function verifyAllUsers() {
       },
     })
 
-    console.log(`[verify-all-users] Gefundene Benutzer ohne Verifizierung: ${unverifiedUsers.length}`)
+    // Für null-Werte müssen wir alle User holen und filtern
+    const allUsers = await prisma.user.findMany({
+      select: {
+        id: true,
+        email: true,
+        emailVerified: true,
+      },
+    })
 
-    if (unverifiedUsers.length === 0) {
+    const unverifiedUsersNull = allUsers.filter(user => user.emailVerified === null)
+    const unverifiedUsers = [...unverifiedUsersFalse, ...unverifiedUsersNull]
+    const uniqueUsers = Array.from(new Map(unverifiedUsers.map(u => [u.id, u])).values())
+
+    console.log(`[verify-all-users] Gefundene Benutzer ohne Verifizierung: ${uniqueUsers.length}`)
+
+    if (uniqueUsers.length === 0) {
       return NextResponse.json({
         success: true,
         message: 'Alle Benutzer sind bereits verifiziert!',
@@ -64,13 +75,14 @@ async function verifyAllUsers() {
       })
     }
 
-    // Aktualisiere alle Benutzer
+    // Aktualisiere alle Benutzer - verwende IDs statt OR mit null
+    const userIds = uniqueUsers.map(u => u.id)
+    
     const result = await prisma.user.updateMany({
       where: {
-        OR: [
-          { emailVerified: false },
-          { emailVerified: null },
-        ],
+        id: {
+          in: userIds,
+        },
       },
       data: {
         emailVerified: true,
@@ -86,7 +98,7 @@ async function verifyAllUsers() {
       success: true,
       message: `${result.count} Benutzer erfolgreich verifiziert`,
       updatedCount: result.count,
-      updatedUsers: unverifiedUsers.map(u => ({
+      updatedUsers: uniqueUsers.map(u => ({
         id: u.id,
         email: u.email,
       })),
