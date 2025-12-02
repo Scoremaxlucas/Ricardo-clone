@@ -168,11 +168,20 @@ export function CategoryBar() {
     setHoveredCategory(slug)
   }, [])
 
-  const handleCategoryLeave = useCallback(() => {
+  const handleCategoryLeave = useCallback((e: React.MouseEvent) => {
+    // Prüfe ob Maus zu Dropdown oder Brücke bewegt wird
+    const relatedTarget = e.relatedTarget as HTMLElement
+    if (relatedTarget && (
+      relatedTarget.closest('[data-dropdown-bridge]') ||
+      relatedTarget.closest('[data-dropdown-menu]')
+    )) {
+      return // Nicht schließen wenn zu Dropdown/Brücke bewegt
+    }
+    
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 500) // Noch längerer Delay verhindert Flackern komplett
+    }, 600) // Sehr langer Delay verhindert Flackern komplett
   }, [])
 
   const handleBridgeEnter = useCallback((slug: string) => {
@@ -183,11 +192,17 @@ export function CategoryBar() {
     setHoveredCategory(slug)
   }, [])
 
-  const handleBridgeLeave = useCallback(() => {
+  const handleBridgeLeave = useCallback((e: React.MouseEvent) => {
+    // Prüfe ob Maus zu Dropdown bewegt wird
+    const relatedTarget = e.relatedTarget as HTMLElement
+    if (relatedTarget && relatedTarget.closest('[data-dropdown-menu]')) {
+      return // Nicht schließen wenn zu Dropdown bewegt
+    }
+    
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 500) // Noch längerer Delay verhindert Flackern komplett
+    }, 600) // Sehr langer Delay verhindert Flackern komplett
   }, [])
 
   const handleDropdownEnter = useCallback((slug: string) => {
@@ -198,11 +213,20 @@ export function CategoryBar() {
     setHoveredCategory(slug)
   }, [])
 
-  const handleDropdownLeave = useCallback(() => {
+  const handleDropdownLeave = useCallback((e: React.MouseEvent) => {
+    // Prüfe ob Maus zu Brücke oder Button bewegt wird
+    const relatedTarget = e.relatedTarget as HTMLElement
+    if (relatedTarget && (
+      relatedTarget.closest('[data-dropdown-bridge]') ||
+      relatedTarget.closest('[data-category-button]')
+    )) {
+      return // Nicht schließen wenn zu Button/Brücke bewegt
+    }
+    
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 500) // Noch längerer Delay verhindert Flackern komplett
+    }, 600) // Sehr langer Delay verhindert Flackern komplett
   }, [])
 
   const handleOverlayClick = useCallback(() => {
@@ -239,7 +263,12 @@ export function CategoryBar() {
         Math.min(rect.left, window.innerWidth - dropdownWidth - margin)
       ),
       bridgeTop: rect.bottom, // Brücke startet direkt am Button
-      bridgeHeight: gap + 50, // Größere Brücke deckt Gap + viel extra Raum ab
+      bridgeHeight: gap + 60, // Sehr große Brücke deckt alles ab - mit Overlap
+      bridgeLeft: Math.max(
+        10,
+        Math.min(rect.left, window.innerWidth - dropdownWidth - margin)
+      ),
+      bridgeWidth: Math.max(rect.width, dropdownWidth), // Mindestens so breit wie Dropdown
     }
   }, [hoveredCategory])
 
@@ -281,6 +310,7 @@ export function CategoryBar() {
                     key={category.slug}
                     ref={el => { categoryRefs.current[category.slug] = el }}
                     className="relative z-50"
+                    data-category-button
                     onMouseEnter={() => handleCategoryEnter(category.slug)}
                     onMouseLeave={handleCategoryLeave}
                   >
@@ -318,17 +348,19 @@ export function CategoryBar() {
                             aria-hidden="true"
                           />
                           {/* Unsichtbare Brücke zwischen Button und Dropdown - verhindert Flackern */}
+                          {/* Brücke mit Overlap für nahtlosen Übergang */}
                           {dropdownPosition && calculatedPosition && categoryRefs.current[category.slug] && (
                             <div
+                              data-dropdown-bridge
                               className="fixed z-[10000] bg-transparent"
                               style={{
                                 top: calculatedPosition.bridgeTop || categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
-                                left: dropdownPosition.left,
-                                width: Math.max(
+                                left: calculatedPosition.bridgeLeft || dropdownPosition.left,
+                                width: calculatedPosition.bridgeWidth || Math.max(
                                   categoryRefs.current[category.slug]!.getBoundingClientRect().width,
                                   450
                                 ),
-                                height: `${calculatedPosition.bridgeHeight || 40}px`, // Dynamische Höhe deckt alles ab
+                                height: `${calculatedPosition.bridgeHeight || 64}px`, // Sehr große Brücke mit Overlap
                                 pointerEvents: 'auto',
                               }}
                               onMouseEnter={() => handleBridgeEnter(category.slug)}
@@ -339,6 +371,7 @@ export function CategoryBar() {
                           {/* Dropdown Menu */}
                           {dropdownPosition && (
                             <div
+                              data-dropdown-menu
                               className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-xl border border-gray-200 bg-white p-5 shadow-2xl backdrop-blur-sm"
                               onMouseEnter={() => handleDropdownEnter(category.slug)}
                               onMouseLeave={handleDropdownLeave}
