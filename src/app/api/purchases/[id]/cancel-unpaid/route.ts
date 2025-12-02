@@ -155,6 +155,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
+    const daysSincePurchase = Math.floor(
+      (now.getTime() - purchase.createdAt.getTime()) / (1000 * 60 * 60 * 24)
+    )
     console.log(
       `[purchases/cancel-unpaid] Verkäufer ${session.user.email} hat Purchase ${id} storniert (${daysSincePurchase} Tage nach Erstellung)`
     )
