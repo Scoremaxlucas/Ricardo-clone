@@ -64,7 +64,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Hole Seller-Infos separat für alle Purchases
-    const sellerIds = [...new Set(purchases.map(p => p.watch.sellerId))]
+    const sellerIds = Array.from(new Set(purchases.map(p => p.watch.sellerId)))
     const sellers = await prisma.user.findMany({
       where: { id: { in: sellerIds } },
       select: { id: true, name: true, email: true },
