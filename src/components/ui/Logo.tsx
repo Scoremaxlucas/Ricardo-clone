@@ -19,9 +19,9 @@ export function Logo({ className = '', size = 'md' }: LogoProps) {
   }
 
   return (
-    <div className={`inline-flex items-center ${className}`}>
+    <div className={`flex items-center ${className}`}>
       {/* Simple H */}
-      <div className={`${sizeClasses[size]} flex-shrink-0`}>
+      <div className={`${sizeClasses[size]} flex-shrink-0 flex items-center justify-center`}>
         <svg
           viewBox="0 0 40 40"
           className="h-full w-full"
@@ -40,14 +40,14 @@ export function Logo({ className = '', size = 'md' }: LogoProps) {
       </div>
 
       {/* Text */}
-      <span className={`ml-2.5 ${size === 'sm' ? 'ml-2' : ''} inline-flex items-baseline gap-0.5`}>
+      <div className={`ml-2.5 ${size === 'sm' ? 'ml-2' : ''} flex items-center`}>
         <span className={`${textSizeClasses[size]} font-bold text-gray-900`}>Helvenda</span>
         <span
-          className={`${size === 'sm' ? 'text-[10px]' : size === 'md' ? 'text-xs' : 'text-sm'} text-gray-500`}
+          className={`ml-0.5 ${size === 'sm' ? 'text-[10px]' : size === 'md' ? 'text-xs' : 'text-sm'} text-gray-500`}
         >
           .ch
         </span>
-      </span>
+      </div>
     </div>
   )
 }
