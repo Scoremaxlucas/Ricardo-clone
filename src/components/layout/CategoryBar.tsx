@@ -278,10 +278,15 @@ export function CategoryBar() {
                             }}
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
-                              left: Math.min(
-                                categoryRefs.current[category.slug]!.getBoundingClientRect().left,
-                                window.innerWidth - 470 // 450px width + 20px margin
-                              ),
+                              left: typeof window !== 'undefined' 
+                                ? Math.max(
+                                    10, // Minimum 10px from left edge
+                                    Math.min(
+                                      categoryRefs.current[category.slug]!.getBoundingClientRect().left,
+                                      window.innerWidth - 470 // 450px width + 20px margin
+                                    )
+                                  )
+                                : categoryRefs.current[category.slug]!.getBoundingClientRect().left,
                               pointerEvents: 'auto',
                               maxWidth: 'calc(100vw - 20px)', // Prevent cutoff on small screens
                             }}
