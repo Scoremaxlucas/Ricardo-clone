@@ -149,7 +149,7 @@ export function CategoryBar() {
     <>
       <CategorySidebarNew isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      <div className="border-b border-gray-200 bg-white shadow-sm">
+      <div className="relative border-b border-gray-200 bg-white shadow-sm z-40">
         <div className="mx-auto max-w-[1400px] px-2 sm:px-4 md:px-6 lg:px-8">
           {/* Container mit Overflow-Handling - Horizontal Scroll auf kleinen Bildschirmen */}
           <div className="overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
