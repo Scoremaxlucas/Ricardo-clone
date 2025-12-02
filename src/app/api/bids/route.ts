@@ -603,7 +603,7 @@ export async function POST(request: NextRequest) {
     // E-Mail: Gebotsbestätigung an Käufer
     try {
       const { sendEmail, getBidConfirmationEmail } = await import('@/lib/email')
-      const buyerName = bid.user.nickname || bid.user.firstName || bid.user.name || 'Käufer'
+      const buyerName = bid.user.nickname || bid.user.name || 'Käufer'
       const { subject, html, text } = getBidConfirmationEmail(
         buyerName,
         watch.title,
@@ -625,9 +625,9 @@ export async function POST(request: NextRequest) {
     try {
       const { sendEmail, getBidNotificationEmail } = await import('@/lib/email')
       const sellerName =
-        watch.seller.nickname || watch.seller.firstName || watch.seller.name || 'Verkäufer'
+        watch.seller.nickname || watch.seller.name || 'Verkäufer'
       const bidderName =
-        bid.user.nickname || bid.user.firstName || bid.user.name || bid.user.email || 'Ein Bieter'
+        bid.user.nickname || bid.user.name || bid.user.email || 'Ein Bieter'
       const { subject, html, text } = getBidNotificationEmail(
         sellerName,
         watch.title,
