@@ -238,10 +238,10 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white shadow-md">
-      <div className="mx-auto max-w-[1600px] overflow-hidden px-2 sm:px-4 md:px-6 lg:px-8">
+    <header className="sticky top-0 z-50 border-b bg-white shadow-md" style={{ position: 'relative' }}>
+      <div className="mx-auto max-w-[1600px] px-2 sm:px-4 md:px-6 lg:px-8">
         {/* ERSTE ZEILE: Logo, Navigation, User Actions - NO OVERFLOW */}
-        <div className="flex h-12 min-w-0 items-center justify-between overflow-hidden py-1 md:h-14">
+        <div className="flex h-12 min-w-0 items-center justify-between py-1 md:h-14">
           {/* Logo - Mobile kleiner */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
@@ -397,11 +397,11 @@ export function Header() {
                     {isProfileMenuOpen && (
                       <>
                         <div
-                          className="fixed inset-0 z-40"
+                          className="fixed inset-0 z-[45]"
                           onClick={() => setIsProfileMenuOpen(false)}
                         />
                         <div
-                          className="absolute right-0 z-50 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                          className="absolute right-0 top-full z-[60] mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
                           onClick={e => e.stopPropagation()}
                         >
                           <div className="relative py-1" style={{ pointerEvents: 'auto' }}>
@@ -596,10 +596,10 @@ export function Header() {
               {isLanguageMenuOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-40"
+                    className="fixed inset-0 z-[45]"
                     onClick={() => setIsLanguageMenuOpen(false)}
                   />
-                  <div className="absolute right-0 z-50 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+                  <div className="absolute right-0 top-full z-[60] mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
                     <div className="py-1">
                       {languages.map(lang => (
                         <button
