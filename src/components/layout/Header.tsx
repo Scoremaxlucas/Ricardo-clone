@@ -33,6 +33,8 @@ export function Header() {
   const [profileImage, setProfileImage] = useState<string | null>(null)
   const profileButtonRef = useRef<HTMLButtonElement>(null)
   const languageButtonRef = useRef<HTMLButtonElement>(null)
+  const profileMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const languageMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [userNickname, setUserNickname] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState<boolean>(false)
@@ -209,6 +211,48 @@ export function Header() {
     if (session?.user?.image) return session.user.image
     return null
   }
+
+  // Cleanup timeouts on unmount
+  useEffect(() => {
+    return () => {
+      if (profileMenuTimeoutRef.current) {
+        clearTimeout(profileMenuTimeoutRef.current)
+      }
+      if (languageMenuTimeoutRef.current) {
+        clearTimeout(languageMenuTimeoutRef.current)
+      }
+    }
+  }, [])
+
+  // Profile menu handlers with delay
+  const handleProfileMenuEnter = useCallback(() => {
+    if (profileMenuTimeoutRef.current) {
+      clearTimeout(profileMenuTimeoutRef.current)
+      profileMenuTimeoutRef.current = null
+    }
+    setIsProfileMenuOpen(true)
+  }, [])
+
+  const handleProfileMenuLeave = useCallback(() => {
+    profileMenuTimeoutRef.current = setTimeout(() => {
+      setIsProfileMenuOpen(false)
+    }, 150) // 150ms delay before closing
+  }, [])
+
+  // Language menu handlers with delay
+  const handleLanguageMenuEnter = useCallback(() => {
+    if (languageMenuTimeoutRef.current) {
+      clearTimeout(languageMenuTimeoutRef.current)
+      languageMenuTimeoutRef.current = null
+    }
+    setIsLanguageMenuOpen(true)
+  }, [])
+
+  const handleLanguageMenuLeave = useCallback(() => {
+    languageMenuTimeoutRef.current = setTimeout(() => {
+      setIsLanguageMenuOpen(false)
+    }, 150) // 150ms delay before closing
+  }, [])
 
   // Suchfunktion
   const handleSearch = async (e: React.FormEvent) => {
