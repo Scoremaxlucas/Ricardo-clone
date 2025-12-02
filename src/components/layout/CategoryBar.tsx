@@ -150,73 +150,78 @@ export function CategoryBar() {
       <CategorySidebarNew isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
       <div className="border-b border-gray-200 bg-white shadow-sm">
-        <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-          <div className="flex items-center gap-4 py-3">
-            {/* Alle Kategorien Button */}
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="flex items-center gap-2 whitespace-nowrap rounded-md border border-primary-200 bg-primary-50 px-4 py-2 font-medium text-gray-900 transition-colors hover:bg-primary-100"
-            >
-              <Menu className="h-4 w-4" />
-              {t.categoryBar.allCategories}
-            </button>
+        <div className="mx-auto max-w-[1400px] px-2 sm:px-4 md:px-6 lg:px-8">
+          {/* Container mit Overflow-Handling - Horizontal Scroll auf kleinen Bildschirmen */}
+          <div className="overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div className="flex min-w-0 items-center gap-2 py-3 sm:gap-3 md:gap-4">
+              {/* Alle Kategorien Button - Flex-shrink-0 damit er nicht schrumpft */}
+              <button
+                onClick={() => setIsSidebarOpen(true)}
+                className="flex flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-primary-100 sm:px-4"
+              >
+                <Menu className="h-4 w-4" />
+                <span className="hidden sm:inline">{t.categoryBar.allCategories}</span>
+                <span className="sm:hidden">{t.categoryBar.categories || 'Kategorien'}</span>
+              </button>
 
-            {/* Hauptkategorien mit Hover-Flyouts */}
-            {mainCategoriesConfig.map(category => {
-              const config = getCategoryConfig(category.slug)
-              const IconComponent = config.icon
-              // Verwende Übersetzung für Kategorienamen
-              const categoryName =
-                t.categories[category.slug as keyof typeof t.categories] || config.name
-              return (
-                <div
-                  key={category.slug}
-                  className="relative"
-                  onMouseEnter={() => setHoveredCategory(category.slug)}
-                  onMouseLeave={() => setHoveredCategory(null)}
-                >
-                  <Link
-                    href={`/search?category=${category.slug}`}
-                    className="flex items-center gap-2 whitespace-nowrap px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-primary-600"
+              {/* Hauptkategorien mit Hover-Flyouts - Flex-wrap verhindert Overflow */}
+              {mainCategoriesConfig.map(category => {
+                const config = getCategoryConfig(category.slug)
+                const IconComponent = config.icon
+                // Verwende Übersetzung für Kategorienamen
+                const categoryName =
+                  t.categories[category.slug as keyof typeof t.categories] || config.name
+                return (
+                  <div
+                    key={category.slug}
+                    className="relative"
+                    onMouseEnter={() => setHoveredCategory(category.slug)}
+                    onMouseLeave={() => setHoveredCategory(null)}
                   >
-                    <div
-                      className="flex h-6 w-6 items-center justify-center rounded"
-                      style={{ backgroundColor: '#0f766e' }}
+                    <Link
+                      href={`/search?category=${category.slug}`}
+                      className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
                     >
-                      <IconComponent className="h-4 w-4 text-white" />
-                    </div>
-                    {categoryName}
-                  </Link>
-
-                  {/* Flyout für Unterkategorien */}
-                  {hoveredCategory === category.slug &&
-                    category.subcategories &&
-                    category.subcategories.length > 0 && (
                       <div
-                        className="absolute left-0 top-full mt-1 max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
-                        style={{ zIndex: 9999 }}
-                        onMouseEnter={() => setHoveredCategory(category.slug)}
-                        onMouseLeave={() => setHoveredCategory(null)}
+                        className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded sm:h-6 sm:w-6"
+                        style={{ backgroundColor: '#0f766e' }}
                       >
-                        <h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">
-                          {categoryName}
-                        </h3>
-                        <div className="grid grid-cols-2 gap-2">
-                          {category.subcategories.map(subcat => (
-                            <Link
-                              key={subcat}
-                              href={`/search?category=${category.slug}&subcategory=${encodeURIComponent(subcat)}`}
-                              className="block py-1 text-sm text-gray-700 transition-colors hover:text-primary-600"
-                            >
-                              {translateSubcategory(subcat)}
-                            </Link>
-                          ))}
-                        </div>
+                        <IconComponent className="h-3 w-3 text-white sm:h-4 sm:w-4" />
                       </div>
-                    )}
-                </div>
-              )
-            })}
+                      <span className="hidden sm:inline">{categoryName}</span>
+                      <span className="sm:hidden">{categoryName.split(' ')[0]}</span>
+                    </Link>
+
+                    {/* Flyout für Unterkategorien */}
+                    {hoveredCategory === category.slug &&
+                      category.subcategories &&
+                      category.subcategories.length > 0 && (
+                        <div
+                          className="absolute left-0 top-full mt-1 max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
+                          style={{ zIndex: 9999 }}
+                          onMouseEnter={() => setHoveredCategory(category.slug)}
+                          onMouseLeave={() => setHoveredCategory(null)}
+                        >
+                          <h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">
+                            {categoryName}
+                          </h3>
+                          <div className="grid grid-cols-2 gap-2">
+                            {category.subcategories.map(subcat => (
+                              <Link
+                                key={subcat}
+                                href={`/search?category=${category.slug}&subcategory=${encodeURIComponent(subcat)}`}
+                                className="block py-1 text-sm text-gray-700 transition-colors hover:text-primary-600"
+                              >
+                                {translateSubcategory(subcat)}
+                              </Link>
+                            ))}
+                          </div>
+                        </div>
+                      )}
+                  </div>
+                )
+              })}
+            </div>
           </div>
         </div>
       </div>

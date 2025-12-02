@@ -57,8 +57,10 @@ export function MobileBottomNav() {
     return pathname?.startsWith(href)
   }
 
+  // Nur auf wirklich kleinen Bildschirmen anzeigen (< 640px)
+  // Verwende max-width statt sm:hidden für präzisere Kontrolle
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white shadow-lg sm:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white shadow-lg max-sm:block sm:hidden">
       <div className="flex h-16 items-center justify-around">
         {navItems.map(item => {
           const Icon = item.icon

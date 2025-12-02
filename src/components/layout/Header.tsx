@@ -241,9 +241,9 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white shadow-md">
-      <div className="mx-auto max-w-[1600px] px-2 sm:px-4 md:px-6 lg:px-8">
-        {/* ERSTE ZEILE: Logo, Navigation, User Actions */}
-        <div className="flex h-12 min-w-0 items-center justify-between py-1 md:h-14">
+      <div className="mx-auto max-w-[1600px] overflow-hidden px-2 sm:px-4 md:px-6 lg:px-8">
+        {/* ERSTE ZEILE: Logo, Navigation, User Actions - NO OVERFLOW */}
+        <div className="flex h-12 min-w-0 items-center justify-between overflow-hidden py-1 md:h-14">
           {/* Logo - Mobile kleiner */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
@@ -254,7 +254,8 @@ export function Header() {
 
           {/* Navigation - Responsive: Icons auf Mobile, Text auf Desktop */}
           {/* Verstecke auf sehr kleinen Bildschirmen (wird durch Hamburger-Menü ersetzt) */}
-          <div className="ml-1 hidden min-w-0 flex-1 items-center justify-start space-x-0.5 overflow-hidden sm:flex sm:ml-2 sm:space-x-1 md:ml-8 md:space-x-4 lg:space-x-6">
+          {/* Overflow-hidden verhindert dass Elemente ausbrechen */}
+          <div className="ml-1 hidden min-w-0 flex-1 items-center justify-start gap-0.5 overflow-hidden sm:flex sm:ml-2 sm:gap-1 md:ml-4 md:gap-2 lg:ml-8 lg:gap-4">
             {/* Favoriten - Icon auf Mobile, Icon + Text auf Desktop */}
             {session ? (
               <Link

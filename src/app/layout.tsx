@@ -19,7 +19,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="de" className="h-full">
       <body className={`${inter.className} flex min-h-screen flex-col`}>
         <Providers>
-          <div className="flex flex-1 flex-col pb-16 sm:pb-0">{children}</div>
+          <div className="flex flex-1 flex-col pb-16 max-sm:pb-16 sm:pb-0">{children}</div>
           <MobileBottomNav />
           <Toaster
             position="top-right"
