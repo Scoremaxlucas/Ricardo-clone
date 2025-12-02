@@ -1,4 +1,5 @@
 // Neue E-Mail-Templates - werden in email.ts integriert
+import { getHelvendaEmailTemplate } from './email'
 
 // Template für Überboten-Benachrichtigung (für Käufer)
 export function getOutbidNotificationEmail(
@@ -16,14 +17,14 @@ export function getOutbidNotificationEmail(
     `Hallo ${buyerName},`,
     `
       <p>Ein anderes Mitglied hat ein höheres Gebot auf den Artikel abgegeben:</p>
-      
+
       <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #92400e; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Aktuelles Höchstgebot:</strong> CHF ${currentHighestBid.toFixed(2)}
         </p>
       </div>
-      
+
       <p>Sie können jetzt ein neues, höheres Gebot abgeben, um Ihre Chance zu erhöhen, diesen Artikel zu gewinnen.</p>
     `,
     'Jetzt höher bieten',
@@ -68,7 +69,7 @@ export function getBidNotificationEmail(
     `Hallo ${sellerName},`,
     `
       <p>Es wurde ein neues Gebot auf Ihren Artikel abgegeben:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
@@ -76,7 +77,7 @@ export function getBidNotificationEmail(
           <strong>Bieter:</strong> ${bidderName}
         </p>
       </div>
-      
+
       <p>Sie werden weiterhin über neue Gebote informiert.</p>
     `,
     'Artikel ansehen',
@@ -122,14 +123,14 @@ export function getAuctionEndWonEmail(
     `Hallo ${buyerName},`,
     `
       <p>Herzlichen Glückwunsch! Sie haben die Auktion gewonnen:</p>
-      
+
       <div style="background-color: #d1fae5; border-left: 4px solid #10b981; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #065f46; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Ihr Gewinngebot:</strong> CHF ${winningBid.toFixed(2)}
         </p>
       </div>
-      
+
       <p>Bitte kontaktieren Sie den Verkäufer innerhalb von 7 Tagen und begleichen Sie die Zahlung innerhalb von 14 Tagen nach Kontaktaufnahme.</p>
     `,
     'Kauf ansehen',
@@ -172,14 +173,14 @@ export function getAuctionEndLostEmail(
     `Hallo ${buyerName},`,
     `
       <p>Die Auktion für den folgenden Artikel ist beendet:</p>
-      
+
       <div style="background-color: #f3f4f6; border-left: 4px solid #6b7280; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #374151; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Höchstgebot:</strong> CHF ${winningBid.toFixed(2)}
         </p>
       </div>
-      
+
       <p>Leider haben Sie diese Auktion nicht gewonnen. Schauen Sie sich gerne unsere anderen Angebote an!</p>
     `,
     'Weitere Angebote ansehen',
@@ -225,7 +226,7 @@ export function getAuctionEndSellerEmail(
     `Hallo ${sellerName},`,
     `
       <p>Ihre Auktion ist beendet und der Artikel wurde verkauft:</p>
-      
+
       <div style="background-color: #d1fae5; border-left: 4px solid #10b981; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #065f46; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
@@ -233,7 +234,7 @@ export function getAuctionEndSellerEmail(
           <strong>Käufer:</strong> ${buyerName}
         </p>
       </div>
-      
+
       <p>Bitte kontaktieren Sie den Käufer innerhalb von 7 Tagen. Der Käufer hat 14 Tage Zeit, die Zahlung zu begleichen.</p>
     `,
     'Verkauf ansehen',
@@ -279,7 +280,7 @@ export function getPaymentReceivedEmail(
     `Hallo ${sellerName},`,
     `
       <p>Sie haben eine Zahlung erhalten:</p>
-      
+
       <div style="background-color: #d1fae5; border-left: 4px solid #10b981; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #065f46; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
@@ -287,7 +288,7 @@ export function getPaymentReceivedEmail(
           <strong>Käufer:</strong> ${buyerName}
         </p>
       </div>
-      
+
       <p>Bitte versenden Sie den Artikel nun an den Käufer.</p>
     `,
     'Verkauf ansehen',
@@ -337,14 +338,14 @@ export function getShippingNotificationEmail(
     `Hallo ${buyerName},`,
     `
       <p>Gute Nachrichten! Ihr Artikel wurde versendet:</p>
-      
+
       <div style="background-color: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #1e40af; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           ${trackingInfo}
         </p>
       </div>
-      
+
       <p>Sie können den Versandstatus jederzeit in Ihrem Konto verfolgen.</p>
     `,
     'Kauf ansehen',
@@ -388,14 +389,14 @@ export function getShippingReminderEmail(
     `Hallo ${sellerName},`,
     `
       <p>Bitte versenden Sie den folgenden Artikel:</p>
-      
+
       <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #92400e; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Käufer:</strong> ${buyerName}
         </p>
       </div>
-      
+
       <p>Der Käufer hat bereits gezahlt. Bitte versenden Sie den Artikel so schnell wie möglich.</p>
     `,
     'Verkauf ansehen',
@@ -440,7 +441,7 @@ export function getPriceOfferReceivedEmail(
     `Hallo ${sellerName},`,
     `
       <p>Sie haben einen Preisvorschlag erhalten:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
@@ -448,7 +449,7 @@ export function getPriceOfferReceivedEmail(
           <strong>Von:</strong> ${buyerName}
         </p>
       </div>
-      
+
       <p>Sie können den Preisvorschlag annehmen oder ablehnen.</p>
     `,
     'Preisvorschläge ansehen',
@@ -494,14 +495,14 @@ export function getPriceOfferAcceptedEmail(
     `Hallo ${buyerName},`,
     `
       <p>Gute Nachrichten! Ihr Preisvorschlag wurde akzeptiert:</p>
-      
+
       <div style="background-color: #d1fae5; border-left: 4px solid #10b981; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #065f46; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Vereinbarter Preis:</strong> CHF ${offerAmount.toFixed(2)}
         </p>
       </div>
-      
+
       <p>Bitte kontaktieren Sie den Verkäufer innerhalb von 7 Tagen und begleichen Sie die Zahlung innerhalb von 14 Tagen nach Kontaktaufnahme.</p>
     `,
     'Kauf ansehen',
@@ -545,14 +546,14 @@ export function getListingConfirmationEmail(
     `Hallo ${sellerName},`,
     `
       <p>Ihr Angebot wurde erfolgreich erstellt:</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Artikelnummer:</strong> ${articleNumber}
         </p>
       </div>
-      
+
       <p>Ihr Angebot ist jetzt auf Helvenda sichtbar. Sie werden per E-Mail benachrichtigt, wenn Gebote eingehen oder wenn jemand kauft.</p>
     `,
     'Angebot ansehen',
@@ -596,14 +597,14 @@ export function getReviewRequestBuyerEmail(
     `Hallo ${buyerName},`,
     `
       <p>Wie war Ihre Erfahrung mit dem Kauf?</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Verkäufer:</strong> ${sellerName}
         </p>
       </div>
-      
+
       <p>Ihre Bewertung hilft anderen Käufern und Verkäufern auf Helvenda.</p>
     `,
     'Jetzt bewerten',
@@ -647,14 +648,14 @@ export function getReviewRequestSellerEmail(
     `Hallo ${sellerName},`,
     `
       <p>Wie war Ihre Erfahrung mit dem Verkauf?</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
         <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
           <strong>Artikel:</strong> ${articleTitle}<br>
           <strong>Käufer:</strong> ${buyerName}
         </p>
       </div>
-      
+
       <p>Ihre Bewertung hilft anderen Käufern und Verkäufern auf Helvenda.</p>
     `,
     'Jetzt bewerten',

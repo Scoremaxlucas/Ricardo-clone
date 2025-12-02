@@ -2137,7 +2137,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 // ============================================================================
 
 // Hilfsfunktion für Helvenda E-Mail-Template (gemeinsames Design)
-function getHelvendaEmailTemplate(
+export function getHelvendaEmailTemplate(
   title: string,
   greeting: string,
   content: string,

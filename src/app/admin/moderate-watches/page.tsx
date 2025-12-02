@@ -1,36 +1,34 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import Image from 'next/image'
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { useLanguage } from '@/contexts/LanguageContext'
 import {
-  Search,
-  Eye,
-  EyeOff,
-  Trash2,
   AlertTriangle,
   CheckCircle,
-  XCircle,
-  Package,
-  Filter,
-  Download,
-  FileText,
-  User,
-  Calendar,
-  Tag,
-  MessageSquare,
-  History,
   CheckSquare,
-  X,
+  Download,
+  Eye,
+  EyeOff,
+  Filter,
   Flag,
+  History,
+  MessageSquare,
+  Package,
+  Search,
   Shield,
+  Tag,
+  Trash2,
+  User,
+  X,
+  XCircle,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Watch {
   id: string
@@ -920,7 +918,11 @@ export default function AdminModerateWatchesPage() {
                     }
 
                     const getActorLabel = () => {
-                      if (detailsObj?.editedBy === 'seller' || detailsObj?.createdBy === 'seller' || detailsObj?.updatedBy === 'seller') {
+                      if (
+                        detailsObj?.editedBy === 'seller' ||
+                        detailsObj?.createdBy === 'seller' ||
+                        detailsObj?.updatedBy === 'seller'
+                      ) {
                         return 'Verkäufer'
                       }
                       const adminName = item.admin?.nickname || item.admin?.name || 'Unbekannt'
@@ -929,7 +931,10 @@ export default function AdminModerateWatchesPage() {
                     }
 
                     return (
-                      <div key={item.id} className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+                      <div
+                        key={item.id}
+                        className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm"
+                      >
                         <div className="mb-2 flex items-center justify-between">
                           <span className="text-sm font-semibold text-gray-900">
                             {getActionLabel()}
@@ -952,123 +957,144 @@ export default function AdminModerateWatchesPage() {
                         </div>
 
                         {/* Zeige Änderungsdetails bei Bearbeitungen */}
-                        {(item.action === 'edited' || item.action === 'updated') && detailsObj?.changes && Object.keys(detailsObj.changes).length > 0 && (
-                          <div className="mt-3 space-y-2 rounded-md bg-blue-50 p-3">
-                            <div className="text-xs font-semibold text-blue-900">
-                              Geänderte Felder ({Object.keys(detailsObj.changes).length}):
-                            </div>
-                            {Object.entries(detailsObj.changes).map(([field, change]: [string, any]) => {
-                              const fieldLabels: Record<string, string> = {
-                                title: 'Titel',
-                                description: 'Beschreibung',
-                                price: 'Preis',
-                                buyNowPrice: 'Sofortkaufpreis',
-                                brand: 'Marke',
-                                model: 'Modell',
-                                condition: 'Zustand',
-                                isAuction: 'Auktionsart',
-                                auctionDuration: 'Auktionsdauer',
-                                auctionEnd: 'Auktionsende',
-                                images: 'Bilder',
-                                video: 'Video',
-                                shippingMethods: 'Versandmethoden',
-                                shippingMethod: 'Versandmethode',
-                                category: 'Kategorie',
-                                subcategory: 'Unterkategorie',
-                                material: 'Material',
-                                movement: 'Werk',
-                                caseDiameter: 'Gehäusedurchmesser',
-                                year: 'Jahr',
-                                referenceNumber: 'Referenznummer',
-                                autoRenew: 'Automatische Verlängerung',
-                                lastRevision: 'Letzte Revision',
-                                accuracy: 'Genauigkeit',
-                                fullset: 'Vollständiges Set',
-                                box: 'Box',
-                                papers: 'Papiere',
-                                warranty: 'Garantie',
-                                warrantyMonths: 'Garantie (Monate)',
-                                warrantyYears: 'Garantie (Jahre)',
-                                warrantyNote: 'Garantie-Notiz',
-                                warrantyDescription: 'Garantie-Beschreibung',
-                                boosters: 'Booster',
-                              }
-
-                              const formatValue = (value: any) => {
-                                if (value === null || value === undefined) return 'Nicht gesetzt'
-                                if (typeof value === 'boolean') return value ? 'Ja' : 'Nein'
-                                if (typeof value === 'object') {
-                                  try {
-                                    return JSON.stringify(value)
-                                  } catch {
-                                    return String(value)
+                        {(item.action === 'edited' || item.action === 'updated') &&
+                          detailsObj?.changes &&
+                          Object.keys(detailsObj.changes).length > 0 && (
+                            <div className="mt-3 space-y-2 rounded-md bg-blue-50 p-3">
+                              <div className="text-xs font-semibold text-blue-900">
+                                Geänderte Felder ({Object.keys(detailsObj.changes).length}):
+                              </div>
+                              {Object.entries(detailsObj.changes).map(
+                                ([field, change]: [string, any]) => {
+                                  const fieldLabels: Record<string, string> = {
+                                    title: 'Titel',
+                                    description: 'Beschreibung',
+                                    price: 'Preis',
+                                    buyNowPrice: 'Sofortkaufpreis',
+                                    brand: 'Marke',
+                                    model: 'Modell',
+                                    condition: 'Zustand',
+                                    isAuction: 'Auktionsart',
+                                    auctionDuration: 'Auktionsdauer',
+                                    auctionEnd: 'Auktionsende',
+                                    images: 'Bilder',
+                                    video: 'Video',
+                                    shippingMethods: 'Versandmethoden',
+                                    shippingMethod: 'Versandmethode',
+                                    category: 'Kategorie',
+                                    subcategory: 'Unterkategorie',
+                                    material: 'Material',
+                                    movement: 'Werk',
+                                    caseDiameter: 'Gehäusedurchmesser',
+                                    year: 'Jahr',
+                                    referenceNumber: 'Referenznummer',
+                                    autoRenew: 'Automatische Verlängerung',
+                                    lastRevision: 'Letzte Revision',
+                                    accuracy: 'Genauigkeit',
+                                    fullset: 'Vollständiges Set',
+                                    box: 'Box',
+                                    papers: 'Papiere',
+                                    warranty: 'Garantie',
+                                    warrantyMonths: 'Garantie (Monate)',
+                                    warrantyYears: 'Garantie (Jahre)',
+                                    warrantyNote: 'Garantie-Notiz',
+                                    warrantyDescription: 'Garantie-Beschreibung',
+                                    boosters: 'Booster',
                                   }
-                                }
-                                if (field === 'price' || field === 'buyNowPrice') {
-                                  const numValue = parseFloat(value)
-                                  if (isNaN(numValue)) return String(value)
-                                  return `CHF ${numValue.toFixed(2)}`
-                                }
-                                if (field === 'images') {
-                                  try {
-                                    const images = typeof value === 'string' ? JSON.parse(value) : value
-                                    if (Array.isArray(images)) {
-                                      return `${images.length} Bild(er)`
+
+                                  const formatValue = (value: any) => {
+                                    if (value === null || value === undefined)
+                                      return 'Nicht gesetzt'
+                                    if (typeof value === 'boolean') return value ? 'Ja' : 'Nein'
+                                    if (typeof value === 'object') {
+                                      try {
+                                        return JSON.stringify(value)
+                                      } catch {
+                                        return String(value)
+                                      }
+                                    }
+                                    if (field === 'price' || field === 'buyNowPrice') {
+                                      const numValue = parseFloat(value)
+                                      if (isNaN(numValue)) return String(value)
+                                      return `CHF ${numValue.toFixed(2)}`
+                                    }
+                                    if (field === 'images') {
+                                      try {
+                                        const images =
+                                          typeof value === 'string' ? JSON.parse(value) : value
+                                        if (Array.isArray(images)) {
+                                          return `${images.length} Bild(er)`
+                                        }
+                                        return String(value)
+                                      } catch {
+                                        return String(value)
+                                      }
+                                    }
+                                    if (
+                                      field === 'auctionEnd' ||
+                                      field === 'auctionStart' ||
+                                      field === 'lastRevision'
+                                    ) {
+                                      try {
+                                        const date = new Date(value)
+                                        return date.toLocaleString('de-CH', {
+                                          day: '2-digit',
+                                          month: '2-digit',
+                                          year: 'numeric',
+                                          hour: '2-digit',
+                                          minute: '2-digit',
+                                        })
+                                      } catch {
+                                        return String(value)
+                                      }
                                     }
                                     return String(value)
-                                  } catch {
-                                    return String(value)
                                   }
-                                }
-                                if (field === 'auctionEnd' || field === 'auctionStart' || field === 'lastRevision') {
-                                  try {
-                                    const date = new Date(value)
-                                    return date.toLocaleString('de-CH', {
-                                      day: '2-digit',
-                                      month: '2-digit',
-                                      year: 'numeric',
-                                      hour: '2-digit',
-                                      minute: '2-digit',
-                                    })
-                                  } catch {
-                                    return String(value)
-                                  }
-                                }
-                                return String(value)
-                              }
 
-                              const oldValue = formatValue(change.old)
-                              const newValue = formatValue(change.new)
+                                  const oldValue = formatValue(change.old)
+                                  const newValue = formatValue(change.new)
 
-                              return (
-                                <div key={field} className="flex flex-col gap-1 rounded-md bg-white/60 p-2 text-xs">
-                                  <div className="font-semibold text-blue-900">
-                                    {fieldLabels[field] || field}
-                                  </div>
-                                  <div className="flex items-center gap-2 text-blue-800">
-                                    <span className="line-through text-red-600">{oldValue}</span>
-                                    <span className="text-gray-400">→</span>
-                                    <span className="font-semibold text-green-700">{newValue}</span>
-                                  </div>
+                                  return (
+                                    <div
+                                      key={field}
+                                      className="flex flex-col gap-1 rounded-md bg-white/60 p-2 text-xs"
+                                    >
+                                      <div className="font-semibold text-blue-900">
+                                        {fieldLabels[field] || field}
+                                      </div>
+                                      <div className="flex items-center gap-2 text-blue-800">
+                                        <span className="text-red-600 line-through">
+                                          {oldValue}
+                                        </span>
+                                        <span className="text-gray-400">→</span>
+                                        <span className="font-semibold text-green-700">
+                                          {newValue}
+                                        </span>
+                                      </div>
+                                    </div>
+                                  )
+                                }
+                              )}
+                              {detailsObj.hasBids && (
+                                <div className="mt-2 rounded-md bg-yellow-100 p-2 text-xs text-yellow-800">
+                                  ⚠️ Bearbeitung mit vorhandenen Geboten (nur
+                                  Beschreibung/Bilder/Video)
                                 </div>
-                              )
-                            })}
-                            {detailsObj.hasBids && (
-                              <div className="mt-2 rounded-md bg-yellow-100 p-2 text-xs text-yellow-800">
-                                ⚠️ Bearbeitung mit vorhandenen Geboten (nur Beschreibung/Bilder/Video)
-                              </div>
-                            )}
-                          </div>
-                        )}
+                              )}
+                            </div>
+                          )}
 
                         {/* Zeige Hinweis wenn "updated" ohne Details */}
-                        {item.action === 'updated' && (!detailsObj?.changes || Object.keys(detailsObj.changes || {}).length === 0) && (
-                          <div className="mt-3 rounded-md bg-gray-50 p-3">
-                            <div className="text-xs text-gray-600">
-                              {detailsObj?.note || 'Automatische Aktualisierung (keine Details verfügbar)'}
+                        {item.action === 'updated' &&
+                          (!detailsObj?.changes ||
+                            Object.keys(detailsObj.changes || {}).length === 0) && (
+                            <div className="mt-3 rounded-md bg-gray-50 p-3">
+                              <div className="text-xs text-gray-600">
+                                {detailsObj?.note ||
+                                  'Automatische Aktualisierung (keine Details verfügbar)'}
+                              </div>
                             </div>
-                          </div>
-                        )}
+                          )}
 
                         {/* Zeige andere Details */}
                         {detailsObj?.reason && (

@@ -340,7 +340,7 @@ export function ProductPageClient({
         <div className="space-y-6">
           {watch.isAuction ? (
             <BidComponent
-              watchId={watch.id}
+              itemId={watch.id}
               startPrice={watch.price}
               buyNowPrice={watch.buyNowPrice}
               auctionEnd={watch.auctionEnd}

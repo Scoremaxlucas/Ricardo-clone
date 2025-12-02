@@ -219,7 +219,7 @@ export function BidComponent({
         // Auktion ist abgelaufen - prüfe ob sie verarbeitet wurde
         try {
           await fetch('/api/auctions/check-expired', { method: 'POST' })
-          loadWatchStatus()
+          loadItemStatus()
         } catch (error) {
           console.error('Error checking expired auctions:', error)
         }

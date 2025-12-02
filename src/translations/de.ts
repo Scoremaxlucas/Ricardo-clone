@@ -70,6 +70,8 @@ export const de = {
     noItemsAvailable: 'Noch keine Artikel verfügbar',
     beFirstToSell: 'Seien Sie der Erste und',
     sellNowItem: 'verkaufen Sie jetzt einen Artikel',
+    trendingNow: 'Trending',
+    whatsTrending: 'Was gerade angesagt ist',
   },
 
   // Product
@@ -493,7 +495,6 @@ export const de = {
     processing: 'Wird verarbeitet...',
     performUpgrade: 'Upgrade durchführen',
     add: 'Hinzufügen',
-    active: 'AKTIV',
     boosterSuccess:
       'Booster erfolgreich upgegradet! Rechnung: {invoiceNumber} (CHF {amount} - Differenz)',
     boosterAdded: 'Booster erfolgreich hinzugefügt! Rechnung: {invoiceNumber} (CHF {amount})',

@@ -441,7 +441,7 @@ export default function SellPage() {
       }
 
       // Entferne Duplikate
-      cleanImages = [...new Set(cleanImages)]
+      cleanImages = Array.from(new Set(cleanImages))
 
       console.log('Cleaned data before sending:', {
         descriptionLength: cleanDescription.length,

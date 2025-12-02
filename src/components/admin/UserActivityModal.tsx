@@ -103,11 +103,6 @@ const actionLabels: Record<string, { label: string; icon: any; color: string }> 
     icon: Flag,
     color: 'text-green-600 bg-green-100',
   },
-  user_unblocked: {
-    label: 'Benutzer entblockt',
-    icon: UserCheck,
-    color: 'text-green-600 bg-green-100',
-  },
   admin_rights_granted: {
     label: 'Admin-Rechte vergeben',
     icon: Shield,

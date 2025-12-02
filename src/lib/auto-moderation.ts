@@ -125,6 +125,6 @@ export function moderateWatch(watch: {
     reason:
       titleResult.reason || descriptionResult.reason || brandResult.reason || modelResult.reason,
     severity: maxSeverity,
-    keywords: [...new Set(allKeywords)], // Entferne Duplikate
+    keywords: Array.from(new Set(allKeywords)), // Entferne Duplikate
   }
 }

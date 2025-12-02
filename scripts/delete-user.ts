@@ -108,19 +108,19 @@ async function main() {
         // Zuerst Watches finden, bevor sie gelöscht werden
         const watchesByUser = await prisma.watch.findMany({ where: { sellerId: user.id }, select: { id: true } })
         const watchIds = watchesByUser.map(w => w.id)
-        
+
         // Lösche Purchases
         await prisma.purchase.deleteMany({ where: { buyerId: user.id } })
         if (watchIds.length > 0) {
           await prisma.purchase.deleteMany({ where: { watchId: { in: watchIds } } })
         }
-        
+
         // Lösche PriceOffers
         await prisma.priceOffer.deleteMany({ where: { buyerId: user.id } })
         if (watchIds.length > 0) {
           await prisma.priceOffer.deleteMany({ where: { watchId: { in: watchIds } } })
         }
-        
+
         // Jetzt können die Watches gelöscht werden
         await prisma.watch.deleteMany({ where: { sellerId: user.id } })
         await prisma.bid.deleteMany({ where: { userId: user.id } })

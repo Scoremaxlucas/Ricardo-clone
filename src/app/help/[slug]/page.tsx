@@ -72,7 +72,7 @@ export default function HelpArticlePage() {
             </div>
 
             {/* Tips */}
-            {article.tips && article.tips.length > 0 && (
+            {'tips' in article && article.tips && article.tips.length > 0 && (
               <div className="mt-8 rounded border-l-4 border-blue-500 bg-blue-50 p-4">
                 <div className="flex items-start gap-3">
                   <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
@@ -89,7 +89,7 @@ export default function HelpArticlePage() {
             )}
 
             {/* Warnings */}
-            {article.warnings && article.warnings.length > 0 && (
+            {'warnings' in article && article.warnings && article.warnings.length > 0 && (
               <div className="mt-6 rounded border-l-4 border-red-500 bg-red-50 p-4">
                 <div className="flex items-start gap-3">
                   <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />

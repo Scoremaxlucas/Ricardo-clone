@@ -697,67 +697,6 @@ export const brandsByCategory: Record<string, string[]> = {
     'Apogee',
   ],
 
-  // FOTO & OPTIK (erweitert)
-  'foto-optik': [
-    // Kameras (siehe oben)
-    'Canon',
-    'Nikon',
-    'Sony',
-    'Fujifilm',
-    'Olympus',
-    'Panasonic',
-    'Leica',
-    'Pentax',
-    'Hasselblad',
-    'Phase One',
-    'Mamiya',
-    'Bronica',
-    // Objektive (siehe oben)
-    'Canon EF',
-    'Canon RF',
-    'Nikon F',
-    'Nikon Z',
-    'Sony E',
-    'Sony FE',
-    'Sigma',
-    'Tamron',
-    'Tokina',
-    'Zeiss',
-    'Voigtländer',
-    'Laowa',
-    // Drohnen (siehe oben)
-    'DJI',
-    'Parrot',
-    'Autel',
-    'Skydio',
-    'Yuneec',
-    // Action Cams (siehe oben)
-    'GoPro',
-    'DJI Osmo',
-    'Insta360',
-    'Sony Action Cam',
-    // Zubehör (siehe oben)
-    'Manfrotto',
-    'Gitzo',
-    'Joby',
-    'Peak Design',
-    'Lowepro',
-    'Think Tank',
-    'Blackmagic',
-    'Atomos',
-    // Ferngläser & Optik
-    'Zeiss',
-    'Leica',
-    'Swarovski',
-    'Nikon',
-    'Canon',
-    'Steiner',
-    'Vortex',
-    'Bushnell',
-    'Celestron',
-    'Meade',
-  ],
-
   // KIND & BABY
   'kind-baby': [
     'Bugaboo',

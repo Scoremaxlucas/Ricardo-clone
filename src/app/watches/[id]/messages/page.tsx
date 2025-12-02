@@ -143,10 +143,14 @@ export default function WatchMessagesPage({ params }: { params: { id: string } }
                       <span className="text-gray-500">→</span>
                       <span className="text-gray-700">{message.receiver.name}</span>
                       {message.isPublic && (
-                        <Globe className="h-4 w-4 text-blue-600" title="Öffentlich" />
+                        <span title="Öffentlich">
+                          <Globe className="h-4 w-4 text-blue-600" />
+                        </span>
                       )}
                       {!message.isPublic && (
-                        <Lock className="h-4 w-4 text-gray-400" title="Privat" />
+                        <span title="Privat">
+                          <Lock className="h-4 w-4 text-gray-400" />
+                        </span>
                       )}
                     </div>
                     <span className="text-sm text-gray-500">

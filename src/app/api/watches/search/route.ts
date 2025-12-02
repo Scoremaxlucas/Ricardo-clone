@@ -2121,6 +2121,7 @@ export async function GET(request: NextRequest) {
         console.log(`[SEARCH] Using keywords:`, keywords.slice(0, 10))
 
         watchesWithImages = watchesWithImages.filter(watch => {
+          if (!watch) return false
           const searchText =
             `${watch.brand || ''} ${watch.model || ''} ${watch.title || ''} ${watch.description || ''}`.toLowerCase()
           const matchesKeywords = keywords.some(keyword =>
@@ -2140,8 +2141,9 @@ export async function GET(request: NextRequest) {
       } else {
         // Verwende normale Filterung mit Kategorie-Verknüpfung + Fallback
         watchesWithImages = watchesWithImages.filter(watch => {
+          if (!watch) return false
           // Prüfe ob das Produkt eine Kategorie-Verknüpfung hat
-          const hasCategoryLink = watch.categorySlugs?.some(slug => {
+          const hasCategoryLink = watch.categorySlugs?.some((slug: string) => {
             const slugLower = slug?.toLowerCase().trim()
             return categoryVariants.some(variant => {
               const variantLower = variant.toLowerCase().trim()
@@ -2191,6 +2193,7 @@ export async function GET(request: NextRequest) {
       // Nur Subkategorie ohne Hauptkategorie
       const subcatLower = subcategory.toLowerCase()
       watchesWithImages = watchesWithImages.filter(watch => {
+        if (!watch) return false
         const searchText =
           `${watch.brand} ${watch.model} ${watch.title} ${watch.description || ''}`.toLowerCase()
         return searchText.includes(subcatLower)
@@ -2208,6 +2211,7 @@ export async function GET(request: NextRequest) {
     // Sortierung anwenden (Booster-Priorität hat IMMER Vorrang)
     if (sortBy === 'relevance') {
       watchesWithImages = watchesWithImages.sort((a, b) => {
+        if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
 
@@ -2219,6 +2223,7 @@ export async function GET(request: NextRequest) {
       })
     } else if (sortBy === 'ending') {
       watchesWithImages = watchesWithImages.sort((a, b) => {
+        if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
 
@@ -2233,6 +2238,7 @@ export async function GET(request: NextRequest) {
       })
     } else if (sortBy === 'newest') {
       watchesWithImages = watchesWithImages.sort((a, b) => {
+        if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
 
@@ -2244,6 +2250,7 @@ export async function GET(request: NextRequest) {
       })
     } else if (sortBy === 'price-low') {
       watchesWithImages = watchesWithImages.sort((a, b) => {
+        if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
 
@@ -2255,6 +2262,7 @@ export async function GET(request: NextRequest) {
       })
     } else if (sortBy === 'price-high') {
       watchesWithImages = watchesWithImages.sort((a, b) => {
+        if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
 
@@ -2266,6 +2274,7 @@ export async function GET(request: NextRequest) {
       })
     } else if (sortBy === 'bids') {
       watchesWithImages = watchesWithImages.sort((a, b) => {
+        if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
 
@@ -2280,6 +2289,7 @@ export async function GET(request: NextRequest) {
     } else {
       // Standard: Nach Booster-Priorität sortieren
       watchesWithImages = watchesWithImages.sort((a, b) => {
+        if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
 

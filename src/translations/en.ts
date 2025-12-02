@@ -72,6 +72,8 @@ export const en: Translation = {
     noItemsAvailable: 'No items available yet',
     beFirstToSell: 'Be the first and',
     sellNowItem: 'sell an item now',
+    trendingNow: 'Trending',
+    whatsTrending: 'What\'s trending',
   },
 
   // Product
@@ -352,6 +354,12 @@ export const en: Translation = {
     locationInfo: 'Location information',
   },
 
+  // Verification
+  verification: {
+    submitted:
+      'Your verification has been submitted and is now being reviewed by our team. You will receive a notification once the verification is complete.',
+  },
+
   // Common
   common: {
     loading: 'Loading...',
@@ -436,38 +444,6 @@ export const en: Translation = {
     auctionEndsIn: 'Auction ends in',
   },
 
-  // Moderation/Reporting
-  moderation: {
-    reportOffer: 'Report Offer',
-    selectReason: 'Please select a reason',
-    reason: 'Reason',
-    description: 'Description',
-    submit: 'Report',
-    submitting: 'Submitting...',
-    success: 'Offer successfully reported. Thank you!',
-    error: 'Error reporting',
-    unknownError: 'Unknown error',
-    tryAgain: 'Please try again later.',
-    spam: 'Spam',
-    fraud: 'Fraud / False Information',
-    wrongCategory: 'Wrong Category',
-    inappropriate: 'Inappropriate Content',
-    duplicate: 'Duplicate',
-    other: 'Other',
-    describeProblem: 'Please describe the problem...',
-  },
-
-  // Bid Component
-  bid: {
-    congratulations: 'Congratulations! You have successfully acquired this offer.',
-    alreadySold: 'This offer has already been sold.',
-    salePrice: 'Sale Price',
-    auctionEnded: 'This auction has already ended.',
-    currentHighestBid: 'Current Highest Bid',
-    startAuction: 'Start the Auction',
-    auctionEndsIn: 'Auction ends in',
-  },
-
   // My Items / Selling
   myWatches: {
     myWatches: 'My Items',
@@ -518,7 +494,6 @@ export const en: Translation = {
     processing: 'Processing...',
     performUpgrade: 'Perform Upgrade',
     add: 'Add',
-    active: 'ACTIVE',
     boosterSuccess:
       'Booster successfully upgraded! Invoice: {invoiceNumber} (CHF {amount} - difference)',
     boosterAdded: 'Booster successfully added! Invoice: {invoiceNumber} (CHF {amount})',

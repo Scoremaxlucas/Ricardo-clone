@@ -104,8 +104,8 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
           // Kein JSON, also einzelner String
           method = purchase.shippingMethod
         }
-      } else if (Array.isArray(purchase.shippingMethod) && purchase.shippingMethod.length > 0) {
-        method = purchase.shippingMethod[0] // Legacy: Nimm erste Methode
+      } else if (Array.isArray(purchase.shippingMethod) && (purchase.shippingMethod as any[]).length > 0) {
+        method = (purchase.shippingMethod as any[])[0] // Legacy: Nimm erste Methode
       }
 
       if (method) {
@@ -127,7 +127,7 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     amount: totalAmount,
     currency: 'CHF',
     reference: reference,
-    creditorName: accountHolder,
+    creditorName: accountHolder || PAYMENT_CONFIG.creditorName,
     creditorAddress: {
       street: seller.street || PAYMENT_CONFIG.address.street,
       streetNumber: seller.streetNumber || PAYMENT_CONFIG.address.streetNumber,
@@ -166,8 +166,8 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     amount: totalAmount,
     currency: 'CHF',
     iban: sellerIban,
-    bic: sellerBic,
-    accountHolder: accountHolder,
+    bic: sellerBic || PAYMENT_CONFIG.bic,
+    accountHolder: accountHolder || PAYMENT_CONFIG.creditorName,
     reference: reference,
     productTitle: purchase.watch.title,
   })
@@ -180,7 +180,7 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     // Generiere TWINT Deep Link
     const twintAmount = totalAmount.toFixed(2)
     const twintMessage = `Kauf: ${purchase.watch.title}`
-    twintDeepLink = `twint://pay?phone=${encodeURIComponent(twintPhone)}&amount=${twintAmount}&message=${encodeURIComponent(twintMessage)}&reference=${encodeURIComponent(reference)}`
+    twintDeepLink = `twint://pay?phone=${encodeURIComponent(twintPhone || '')}&amount=${twintAmount}&message=${encodeURIComponent(twintMessage)}&reference=${encodeURIComponent(reference)}`
 
     // Generiere TWINT QR-Code
     try {

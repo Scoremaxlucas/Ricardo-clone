@@ -107,7 +107,6 @@ function TwintCheckoutForm({
       <div className="rounded-lg bg-gray-50 p-4">
         <PaymentElement
           options={{
-            paymentMethodTypes: ['twint'],
             layout: 'tabs',
           }}
         />

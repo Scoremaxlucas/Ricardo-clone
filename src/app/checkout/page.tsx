@@ -5,7 +5,7 @@ import { useRouter, useSearchParams } from 'next/navigation'
 import { PaymentForm } from '@/components/payment/PaymentForm'
 import { Card } from '@/components/ui/Card'
 import { ArrowLeft, CreditCard, Shield } from 'lucide-react'
-import { getShippingCost } from '@/lib/shipping'
+import { getShippingCostForMethod } from '@/lib/shipping'
 
 interface Watch {
   id: string
@@ -123,7 +123,7 @@ export default function CheckoutPage() {
   } catch (e) {
     console.error('Error parsing shippingMethod:', e)
   }
-  const shippingCost = getShippingCost(shippingMethods.filter(m => m === selectedShipping))
+  const shippingCost = getShippingCostForMethod(selectedShipping as any)
   const totalPrice = (watch.buyNowPrice || watch.price) + shippingCost
 
   const isBase64Image = (src: string) => {

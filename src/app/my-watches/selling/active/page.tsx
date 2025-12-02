@@ -81,21 +81,6 @@ export default function ActivePage() {
     loadWatches()
   }, [session, status, router])
 
-  if (status === 'loading' || loading) {
-    return (
-      <div className="flex min-h-screen flex-col bg-gray-50">
-        <Header />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-            <p className="mt-4 text-gray-600">Lädt...</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
-
   // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
   if (status === 'unauthenticated' || !session) {
     return (
@@ -167,7 +152,7 @@ export default function ActivePage() {
                       brand={watch.brand}
                       price={watch.highestBid?.amount || watch.price}
                       images={images}
-                      buyNowPrice={watch.buyNowPrice}
+                      buyNowPrice={watch.buyNowPrice || undefined}
                       isAuction={isAuction && !isExpired}
                       auctionEnd={watch.auctionEnd || undefined}
                       city={(watch as any).city}

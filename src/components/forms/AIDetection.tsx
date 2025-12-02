@@ -420,13 +420,6 @@ const categoryMapping: Record<
   },
 
   // TASTATUREN
-  keyboard: {
-    category: 'computer-netzwerk',
-    subcategory: 'Tastaturen',
-    productName: 'Tastatur',
-    priority: 10,
-    negativeKeywords: ['piano', 'organ'],
-  },
   'computer keyboard': {
     category: 'computer-netzwerk',
     subcategory: 'Tastaturen',
@@ -638,13 +631,6 @@ const categoryMapping: Record<
     subcategory: 'Webcams',
     productName: 'Webcam',
     priority: 10,
-  },
-  camera: {
-    category: 'computer-netzwerk',
-    subcategory: 'Webcams',
-    productName: 'Webcam',
-    priority: 9,
-    negativeKeywords: ['phone', 'dslr', 'reflex'],
   },
   'usb camera': {
     category: 'computer-netzwerk',
@@ -2575,13 +2561,6 @@ const categoryMapping: Record<
     priority: 10,
   },
   bicycle: { category: 'sport', subcategory: 'Fahrräder', productName: 'Fahrrad', priority: 10 },
-  bike: {
-    category: 'sport',
-    subcategory: 'Fahrräder',
-    productName: 'Fahrrad',
-    priority: 9,
-    negativeKeywords: ['motorcycle', 'motor'],
-  },
   'road bike': { category: 'sport', subcategory: 'Fahrräder', productName: 'Rennrad', priority: 9 },
   'racing bicycle': {
     category: 'sport',
@@ -2596,7 +2575,6 @@ const categoryMapping: Record<
     productName: 'E-Bike',
     priority: 10,
   },
-  treadmill: { category: 'sport', subcategory: 'Laufbänder', productName: 'Laufband', priority: 9 },
   dumbbell: { category: 'sport', subcategory: 'Hanteln', productName: 'Hantel', priority: 9 },
   dumbbells: { category: 'sport', subcategory: 'Hanteln', productName: 'Hanteln', priority: 9 },
   barbell: { category: 'sport', subcategory: 'Hanteln', productName: 'Langhantel', priority: 9 },
@@ -3621,7 +3599,7 @@ const categoryMapping: Record<
     productName: 'Camping-Zelt',
     priority: 11,
   },
-  backpack: {
+  'camping backpack': {
     category: 'camping-outdoor',
     subcategory: 'Rucksäcke & Taschen',
     productName: 'Rucksack',
@@ -3687,18 +3665,6 @@ const categoryMapping: Record<
   },
 
   // REISE & URLAUB
-  suitcase: {
-    category: 'reise-urlaub',
-    subcategory: 'Koffer & Reisetaschen',
-    productName: 'Koffer',
-    priority: 9,
-  },
-  luggage: {
-    category: 'reise-urlaub',
-    subcategory: 'Koffer & Reisetaschen',
-    productName: 'Reisegepäck',
-    priority: 9,
-  },
   'travel guide': {
     category: 'reise-urlaub',
     subcategory: 'Reiseführer',
@@ -3905,49 +3871,6 @@ const categoryMapping: Record<
     subcategory: 'Küchengeräte',
     productName: 'Küchengerät',
     priority: 9,
-  },
-  mixer: {
-    category: 'elektrogeraete',
-    subcategory: 'Küchengeräte',
-    productName: 'Mixer',
-    priority: 9,
-    negativeKeywords: ['audio', 'sound'],
-  },
-  blender: {
-    category: 'elektrogeraete',
-    subcategory: 'Küchengeräte',
-    productName: 'Mixer',
-    priority: 9,
-  },
-  toaster: {
-    category: 'elektrogeraete',
-    subcategory: 'Küchengeräte',
-    productName: 'Toaster',
-    priority: 9,
-  },
-  'coffee maker': {
-    category: 'elektrogeraete',
-    subcategory: 'Küchengeräte',
-    productName: 'Kaffeemaschine',
-    priority: 9,
-  },
-  refrigerator: {
-    category: 'elektrogeraete',
-    subcategory: 'Haushaltsgeräte',
-    productName: 'Kühlschrank',
-    priority: 10,
-  },
-  'washing machine': {
-    category: 'elektrogeraete',
-    subcategory: 'Haushaltsgeräte',
-    productName: 'Waschmaschine',
-    priority: 10,
-  },
-  dishwasher: {
-    category: 'elektrogeraete',
-    subcategory: 'Haushaltsgeräte',
-    productName: 'Geschirrspüler',
-    priority: 10,
   },
 
   // BAUSTOFFE
@@ -4481,12 +4404,12 @@ export function AIDetection({
       // 2. Partielles Match - 70-80% Score
       for (const [key, value] of Object.entries(categoryMapping)) {
         const keyLower = key.toLowerCase()
-        const labelWords = label.split(/[\s,\-_,.]+/).filter(w => w.length > 2)
-        const keyWords = keyLower.split(/[\s,\-_,.]+/).filter(w => w.length > 2)
+        const labelWords = label.split(/[\s,\-_,.]+/).filter((w: string) => w.length > 2)
+        const keyWords = keyLower.split(/[\s,\-_,.]+/).filter((w: string) => w.length > 2)
 
         const hasCommonWord =
-          labelWords.some(lw => keyWords.includes(lw)) ||
-          keyWords.some(kw => labelWords.includes(kw))
+          labelWords.some((lw: string) => keyWords.includes(lw)) ||
+          keyWords.some((kw: string) => labelWords.includes(kw))
         const containsMatch = label.includes(keyLower) || keyLower.includes(label)
 
         if ((hasCommonWord || containsMatch) && !matches.find(m => m.match === value)) {
@@ -4851,15 +4774,15 @@ export function AIDetection({
     if (!result) {
       // Fallback mit dem eingegebenen Text als Produktname
       result = {
+        keywords: [],
         category: 'haushalt-wohnen',
         subcategory: 'Sonstiges',
         productName: text.charAt(0).toUpperCase() + text.slice(1),
-        confidence: 70,
       }
       console.log('⚠️ Keine exakte Übereinstimmung - Fallback zu Haushalt & Wohnen')
     }
 
-    const confidence = result.confidence || 85 + Math.floor(Math.random() * 10)
+    const confidence = 85 + Math.floor(Math.random() * 10)
 
     console.log(
       '🔍 Text analysiert:',

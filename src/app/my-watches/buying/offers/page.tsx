@@ -60,9 +60,9 @@ export default function OffersPage() {
 
         // Markiere alle Preisvorschläge als gelesen
         const readOffers = JSON.parse(localStorage.getItem('readOffers') || '[]')
-        const newReadOffers = [
-          ...new Set([...readOffers, ...data.offers.map((o: PriceOffer) => o.id)]),
-        ]
+        const newReadOffers = Array.from(
+          new Set([...readOffers, ...data.offers.map((o: PriceOffer) => o.id)])
+        )
         localStorage.setItem('readOffers', JSON.stringify(newReadOffers))
 
         // Trigger event für Badge-Update

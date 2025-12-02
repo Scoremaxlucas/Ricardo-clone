@@ -20,7 +20,7 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
 import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
-import { getShippingLabels, getShippingCost } from '@/lib/shipping'
+import { getShippingLabels, getShippingCostForMethod } from '@/lib/shipping'
 
 interface Sale {
   id: string
@@ -279,7 +279,11 @@ export default function SoldPage() {
                       } catch {
                         shippingMethods = []
                       }
-                      const shippingCost = getShippingCost(shippingMethods)
+                      // Verwende die erste Methode oder berechne den höchsten Betrag
+                      const shippingCost =
+                        shippingMethods.length > 0
+                          ? getShippingCostForMethod(shippingMethods[0] as any)
+                          : 0
                       const total = sale.watch.finalPrice + shippingCost
 
                       return (
@@ -311,7 +315,7 @@ export default function SoldPage() {
                               Lieferart
                             </div>
                             <div className="text-sm text-blue-900">
-                              {getShippingLabels(shippingMethods).join(', ')}
+                              {getShippingLabels(shippingMethods as any).join(', ')}
                             </div>
                           </div>
                         </>

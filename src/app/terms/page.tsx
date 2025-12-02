@@ -12,7 +12,7 @@ export default function TermsPage() {
           <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8 md:p-12">
             <h1 className="text-3xl font-bold text-gray-900 mb-2">Allgemeine Geschäftsbedingungen</h1>
             <p className="text-gray-600 mb-8">Gültig seit 17.01.2025</p>
-            
+
             <div className="prose prose-lg max-w-none">
               <div className="space-y-8 text-gray-700">
                 <div>
@@ -23,9 +23,9 @@ export default function TermsPage() {
 
                 <section>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">1 Einleitung</h2>
-                  
+
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">1.1 Anwendungsbereich und Geltung dieser Allgemeinen Geschäftsbedingungen</h3>
-                  
+
                   <h4 className="text-lg font-semibold text-gray-900 mb-2 mt-4">Geltung</h4>
                   <p className="mb-4">
                     Diese Allgemeinen Geschäftsbedingungen (AGB) der Score-Max-GmbH, in der Hauswiese 2, CH-Zollikerberg, Schweiz (nachfolgend „Helvenda") sowie die von diesen AGB als verbindlich erklärten, neben der AGB festgehaltenen Bestimmungen, insbesondere die Datenschutzerklärung und das Gebührenreglement, regeln die mit der Nutzung der über die Webseite www.helvenda.ch (inkl. aller Subdomains) angebotenen Produkte Helvenda (zusammen nachfolgend „Marktplatz") im Zusammenhang stehenden Rechte und Pflichten und das vertragliche Verhältnis zwischen Helvenda und Helvenda-Mitgliedern.
@@ -42,7 +42,7 @@ export default function TermsPage() {
                   </p>
 
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">1.3 Grundsätze für die Nutzung des Marktplatzes von Helvenda</h3>
-                  
+
                   <h4 className="text-lg font-semibold text-gray-900 mb-2 mt-4">1.3.1 Eigenverantwortliche Nutzung</h4>
                   <p className="mb-4">
                     Auf dem Marktplatz können die Mitglieder untereinander bzw. die Händler und die Mitglieder autonom und eigenverantwortlich Verträge abschliessen. Aus solchen Verträgen verpflichtet und berechtigt sind einzig der Verkäufer bzw. der Händler und der Käufer. Die Erfüllung des Vertrags liegt in der ausschliesslichen Verantwortung von Händler bzw. Verkäufer und Käufer.
@@ -62,7 +62,7 @@ export default function TermsPage() {
                   </p>
 
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">1.4 Definitionen</h3>
-                  
+
                   <h4 className="text-lg font-semibold text-gray-900 mb-2 mt-4">1.4.1 Mitglied</h4>
                   <p className="mb-4">
                     Mit der Anmeldung, d.h. mit der Angabe seiner abgefragten persönlichen Angaben und seiner Zustimmung zu den vorliegenden AGB wird der Interessent zu einem „Mitglied" des Marktplatzes. Helvenda kann zusätzliche Angaben und/oder Verifikationen vorsehen oder darauf verzichten. Anmeldung und Mitgliedschaft sind kostenlos.
@@ -77,13 +77,13 @@ export default function TermsPage() {
                   <p className="mb-4">
                     Angebote können verschieden ausgestaltet werden. Zurzeit stehen folgende Formen zur Verfügung:
                   </p>
-                  
+
                   <div className="ml-4 mb-4">
                     <p className="mb-2"><strong>a) Auktionen</strong></p>
                     <p className="mb-4">
                       Bei einer Auktion (Versteigerung) auf Helvenda wird ein Angebot für einen vom Verkäufer festgelegten Zeitraum und zu den vom Verkäufer festgelegten Konditionen auf dem Marktplatz veröffentlicht. Beginnend beim festgelegten Mindestpreis können Interessenten im gegenseitigen Wettstreit Gebote (d.h. den Preis, den sie maximal dafür zu zahlen verbindlich bereit sind) für das angebotene Produkt abgeben. Das Einstellen eines Produktes zwecks Durchführung einer Auktion stellt eine verbindliche Offerte des Verkäufers zum Abschluss eines Vertrages über den Kauf des angebotenen Produkts mit dem Meistbietenden bei Ablauf der Auktionsdauer dar. Wird innerhalb der letzten 3 Minuten der Angebotsdauer ein Gebot abgegeben, so schliesst die Auktion drei Minuten nach Eingabe des letzten Gebots. Der Vertragsschluss erfolgt an den Höchstbieter. Bei einer Mehrfachauktion stellt das Einstellen mehrerer identischer Produkte eine verbindliche Offerte des Verkäufers zum Abschluss separater Kaufverträge bis zum Ausschöpfen der Stückzahl mit den Bietern in absteigender Reihenfolge der Höhe der eingegangenen Gebote dar.
                     </p>
-                    
+
                     <p className="mb-2"><strong>b) Angebote zu Fixpreis/Auktionen mit Sofort-kaufen-Preis</strong></p>
                     <p className="mb-4">
                       Das Einstellen eines Produkts unter Angabe eines sogenannten Fixpreises durch den Verkäufer stellt eine verbindliche Offerte zur sofortigen Veräusserung des Produkts an denjenigen dar, der sich bereit erklärt, diesen festgelegten Betrag zu bezahlen.
@@ -96,7 +96,7 @@ export default function TermsPage() {
 
                 <section>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">2 Mitgliedschaft</h2>
-                  
+
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">2.1 Zweck</h3>
                   <p className="mb-4">
                     Voraussetzung für das Anbieten und den Kauf von Produkten auf dem Marktplatz, für die Benutzung von damit zusammenhängenden Webseitenfunktionen sowie für die Benutzung passwortgeschützter Bereiche der Webseiten (insbesondere eines persönlichen Kontos) ist die Mitgliedschaft als angemeldeter Benutzer. Um sämtliche Funktionen des Marktplatzes als Mitglied nutzen zu können (insb. verkaufen und unbeschränkt kaufen), sind verschiedene Verifikationsstufen vorgesehen bzw. können verlangt werden (z.B. die Eingabe eines postalisch zugesendeten Aktivierungscodes).
@@ -108,7 +108,7 @@ export default function TermsPage() {
                   </p>
 
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">2.3 Mindestvoraussetzungen für die Mitgliedschaft</h3>
-                  
+
                   <h4 className="text-lg font-semibold text-gray-900 mb-2 mt-4">2.3.1 Handlungsfähigkeit</h4>
                   <p className="mb-4">
                     Die Mitgliedschaft steht nur unbeschränkt handlungsfähigen, natürlichen oder juristischen Personen offen. Von der Mitgliedschaft ausgeschlossen sind minderjährige Personen (Personen unter 18 Jahren).
@@ -131,7 +131,7 @@ export default function TermsPage() {
                   </p>
 
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">2.4 Beginn und Beendigung der Mitgliedschaft</h3>
-                  
+
                   <h4 className="text-lg font-semibold text-gray-900 mb-2 mt-4">2.4.1 Beginn</h4>
                   <p className="mb-4">
                     Die Mitgliedschaft beginnt mit der Zusendung einer E-Mail-Bestätigung durch Helvenda nach erfolgter Registrierung und Zustimmung zu diesen AGB.
@@ -167,7 +167,7 @@ export default function TermsPage() {
 
                 <section>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">3 Mitgliederpflichten allgemein</h2>
-                  
+
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">3.1 Geheimhaltung der Zugangsdaten</h3>
                   <p className="mb-4">
                     Das Mitglied ist verpflichtet, das ihm von Helvenda im Rahmen seiner Anmeldung mitgeteilte oder selbst erstellte, persönliche Passwort sowie den postalisch erhaltenen Aktivierungscode jederzeit geheim zu halten und niemals Dritten bekannt zu geben oder zugänglich zu machen.
@@ -252,7 +252,7 @@ export default function TermsPage() {
 
                 <section>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">4 Marktplatzbetrieb bei Helvenda</h2>
-                  
+
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">4.1 Unzulässige Angebote</h3>
                   <p className="mb-4">
                     Helvenda ist befugt, das Anbieten bestimmter Produkte und Produktgruppen auf dem Marktplatz jederzeit nach eigenem Ermessen und ohne Angabe von Gründen zu verbieten. Eine nicht abschliessende, laufend aktualisierte Übersicht findet sich in der allgemeinen Verbotsliste.
@@ -287,7 +287,7 @@ export default function TermsPage() {
 
                 <section>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">5 Verkäuferpflichten</h2>
-                  
+
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">5.1 Verfügungsmacht über das angebotene Produkt</h3>
                   <p className="mb-4">
                     Der Verkäufer darf lediglich Produkte anbieten, hinsichtlich derer er verfügungsberechtigt ist. Das bedeutet namentlich, ohne hierauf beschränkt zu sein, dass das Mitglied den Besitz und Eigentum vollständig und unbelastet auf den Käufer zu übertragen fähig und berechtigt ist; dass er zur Vermietung eines Objektes berechtigt ist und, dass er zur Übertragung eines Rechts befugt ist.
@@ -347,7 +347,7 @@ export default function TermsPage() {
                   </ul>
 
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">5.6 Gebührenrückerstattung</h3>
-                  
+
                   <h4 className="text-lg font-semibold text-gray-900 mb-2 mt-4">5.6.1 Rückerstattung von Erfolgsprovisionen</h4>
                   <p className="mb-4">
                     Erfolgsprovisionen werden auf Antrag des Verkäufers zurückerstattet, wenn der Käufer den Kaufpreis nicht bezahlt, der Verkäufer jedoch etwaige Obliegenheiten zur Mitwirkung ordnungsgemäss erfüllt hat (Vertragsrücktritt, siehe: Verhältnis Verkäufer - Käufer / Rücktritt). Heben die Parteien den Vertrag im gegenseitigen Einvernehmen auf, um so einen Streitfall zu lösen, kann der Verkäufer ebenfalls die Gutschrift der angefallenen Erfolgsprovision beantragen. Der Verkäufer hat den Antrag mittels Online-Formular in seinem Benutzerzentrum zu stellen. Dieser Antrag muss in jedem Fall spätestens 60 Tage nach Abschluss des Verkaufes (Auktionsende) gestellt werden. Später erfolgende Rückerstattungsanträge werden nicht berücksichtigt und der Verkäufer hat keinen Anspruch auf eine Rückerstattung der Erfolgsprovision. Wenn ein Rückerstattungsantrag betreffend Erfolgsprovision durch Helvenda genehmigt wird, werden die entsprechenden Gebühren dem Helvenda-Konto des Verkäufers auf Helvenda gutgeschrieben. Der Verkäufer hat, ausser bei Beendigung seiner Mitgliedschaft, kein Anrecht auf eine Auszahlung in bar oder auf eine Überweisung dieser Gebühren. Dies gilt auch für Rückerstattungen von Gebühren für Angebote, welche von Helvenda gelöscht wurden.
@@ -372,14 +372,14 @@ export default function TermsPage() {
 
                 <section>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">6 Verhältnis Verkäufer – Käufer</h2>
-                  
+
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">6.1 Allgemeines</h3>
                   <p className="mb-4">
                     Helvenda übernimmt keine Gewähr dafür, dass Mitglieder sich beim Handel über den Marktplatz nach den Grundsätzen von Treu und Glauben verhalten. Helvenda übernimmt insbesondere keine Gewähr dafür, dass Mitglieder ihren untereinander allenfalls bestehenden Vertragspflichten nachkommen.
                   </p>
 
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">6.2 Angebotsverlauf bei Auktionen und Angeboten zum Fix- oder Sofort-kaufen-Preis</h3>
-                  
+
                   <h4 className="text-lg font-semibold text-gray-900 mb-2 mt-4">6.2.1 Verbindlichkeit des Angebots</h4>
                   <p className="mb-4">
                     Solange kein Gebot vorliegt, ist der Verkäufer berechtigt, sein Angebot zu löschen und damit zurückzuziehen. Sobald ein Gebot vorliegt, ist der Verkäufer an das Angebot gebunden.
@@ -419,7 +419,7 @@ export default function TermsPage() {
                   </p>
 
                   <h4 className="text-lg font-semibold text-gray-900 mb-2 mt-4">6.2.5 Vertragsinhalt</h4>
-                  
+
                   <p className="mb-2"><strong>a) Bedingungen des Verkäufers</strong></p>
                   <p className="mb-4">
                     Der Inhalt des geschlossenen Vertrags bestimmt sich nach der vom Verkäufer aufgeführten Produktbeschreibung (inklusive Ergänzungen wie bspw. Verkäuferangaben, die dieser im Rahmen der Funktion „Fragen und Antworten" veröffentlicht hat) und den von ihm festgelegten Bedingungen, wie sie im Zeitpunkt des erfolgreichen Gebots auf der Angebotswebpage ersichtlich waren, sowie nach etwaigen Absprachen zwischen den Parteien vor dem Vertragsschluss.
@@ -457,7 +457,7 @@ export default function TermsPage() {
                   </p>
 
                   <h4 className="text-lg font-semibold text-gray-900 mb-2 mt-4">6.2.6 Vertragsabwicklung</h4>
-                  
+
                   <p className="mb-2"><strong>a) Allgemein</strong></p>
                   <p className="mb-4">
                     Beide Vertragsparteien sind verpflichtet, ihren Verpflichtungen aus dem Kaufvertrag vollständig und termingerecht nachzukommen.
@@ -528,7 +528,7 @@ export default function TermsPage() {
 
                 <section>
                   <h2 className="text-2xl font-bold text-gray-900 mb-4">10 Haftungsausschlüsse Helvenda</h2>
-                  
+
                   <h3 className="text-xl font-semibold text-gray-900 mb-3 mt-6">10.1 Allgemein</h3>
                   <p className="mb-4">
                     Helvenda haftet nur für direkte Schäden, die durch eine vorsätzliche oder grob fahrlässige eigene Handlung von Helvenda entstehen. Eine Haftung von Helvenda für direkte Schäden bei leichtem Verschulden – gleich aus welchem Rechtsgrund – ist unter Vorbehalt zwingender gesetzlicher Bestimmungen ausdrücklich ausgeschlossen. Eine Haftung von Helvenda für indirekte Schäden oder für Folgeschäden – gleich aus welchem Rechtsgrund – ist vollumfänglich und ausdrücklich ausgeschlossen.

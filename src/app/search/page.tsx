@@ -259,9 +259,9 @@ export default function SearchPage() {
         }
 
         // Extrahiere verfügbare Marken für Dropdown
-        const brands = [
-          ...new Set(watchesData.map((w: WatchItem) => w.brand).filter(Boolean)),
-        ].sort() as string[]
+        const brands = Array.from(
+          new Set(watchesData.map((w: WatchItem) => w.brand).filter(Boolean))
+        ).sort() as string[]
 
         // Lade Marken aus statischer Liste für die aktuelle Kategorie
         try {
@@ -269,7 +269,7 @@ export default function SearchPage() {
             // Nur Marken aus der aktuellen Kategorie anzeigen
             const categoryBrands = getBrandsForCategory(cat)
             // Kombiniere mit Marken aus den Ergebnissen
-            const allAvailableBrands = [...new Set([...brands, ...categoryBrands])].sort()
+            const allAvailableBrands = Array.from(new Set([...brands, ...categoryBrands])).sort()
             setAvailableBrands(allAvailableBrands)
           } else {
             // Wenn keine Kategorie, zeige alle Marken aus Ergebnissen

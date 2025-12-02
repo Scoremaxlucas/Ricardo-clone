@@ -173,9 +173,9 @@ export default function MyPurchasedPage() {
 
           // Markiere alle Purchases als gelesen
           const readPurchases = JSON.parse(localStorage.getItem('readPurchases') || '[]')
-          const newReadPurchases = [
-            ...new Set([...readPurchases, ...loadedPurchases.map((p: any) => p.id)]),
-          ]
+          const newReadPurchases = Array.from(
+            new Set([...readPurchases, ...loadedPurchases.map((p: any) => p.id)])
+          )
           localStorage.setItem('readPurchases', JSON.stringify(newReadPurchases))
 
           // Trigger event für Badge-Update

@@ -365,7 +365,7 @@ export function Header() {
                       >
                         {getProfileImage() ? (
                           <img
-                            src={getProfileImage()}
+                            src={getProfileImage() || undefined}
                             alt={session.user?.name || t.header.myProfile}
                             className="h-full w-full rounded-full object-cover"
                           />
@@ -518,9 +518,7 @@ export function Header() {
                                 {t.header.cancel}
                               </div>
                             </Link>
-                            {(isAdmin ||
-                              session.user?.isAdmin === true ||
-                              session.user?.isAdmin === true) && (
+                            {(isAdmin || session.user?.isAdmin === true) && (
                               <>
                                 <div className="my-1 border-t border-gray-200" />
                                 <Link
@@ -737,7 +735,7 @@ export function Header() {
                     >
                       {getProfileImage() ? (
                         <img
-                          src={getProfileImage()}
+                          src={getProfileImage() ?? undefined}
                           alt={session.user?.name || t.header.profile}
                           className="h-full w-full rounded-full object-cover"
                         />

@@ -186,12 +186,12 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
         // Format: twint://pay?phone=...&amount=...&message=...
         const twintAmount = invoice.total.toFixed(2)
         const twintMessage = `Rechnung ${invoice.invoiceNumber}`
-        twintDeepLink = `twint://pay?phone=${encodeURIComponent(twintPhone)}&amount=${twintAmount}&message=${encodeURIComponent(twintMessage)}`
+        twintDeepLink = `twint://pay?phone=${encodeURIComponent(twintPhone || '')}&amount=${twintAmount}&message=${encodeURIComponent(twintMessage)}`
 
         // Generiere TWINT QR-Code (für Desktop-Nutzer)
         // TWINT QR-Code Format: Enthält Telefonnummer, Betrag und Referenz
         const twintQRString = generateTWINTQRCodeString({
-          phone: twintPhone,
+          phone: twintPhone || '',
           amount: invoice.total,
           message: twintMessage,
           reference: reference,

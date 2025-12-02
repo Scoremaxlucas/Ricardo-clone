@@ -61,7 +61,7 @@ export default function VerificationPage() {
   const [idDocumentPage2, setIdDocumentPage2] = useState<File | null>(null)
   const [idDocumentPage2Preview, setIdDocumentPage2Preview] = useState<string | null>(null)
   const [idDocumentPage2Base64, setIdDocumentPage2Base64] = useState<string | null>(null)
-  const [idDocumentType, setIdDocumentType] = useState<'ID' | 'Passport' | ''>('')
+  const [idDocumentType, setIdDocumentType] = useState<'ID' | 'Passport' | '' | null>('')
 
   // Zahlungsmittel
   const [selectedPaymentMethods, setSelectedPaymentMethods] = useState<PaymentMethod[]>([])
@@ -242,7 +242,7 @@ export default function VerificationPage() {
     console.log('Form Submit - Ausweistyp vor Validierung:', {
       idDocumentType: idDocumentType,
       value: idDocumentType,
-      isEmpty: !idDocumentType || idDocumentType === '',
+      isEmpty: !idDocumentType || (idDocumentType as any) === '' || (idDocumentType as any).trim?.() === '',
     })
 
     // Validierung
@@ -328,7 +328,7 @@ export default function VerificationPage() {
       idDocumentType: idDocumentType,
       type: typeof idDocumentType,
       length: idDocumentType?.length,
-      isEmpty: !idDocumentType || idDocumentType === '',
+      isEmpty: !idDocumentType || (idDocumentType as any) === '',
       isID: idDocumentType === 'ID',
       isPassport: idDocumentType === 'Passport',
       strictCheck: idDocumentType !== 'ID' && idDocumentType !== 'Passport',
@@ -337,8 +337,8 @@ export default function VerificationPage() {
     // Prüfe ob ein gültiger Ausweistyp gewählt wurde
     if (
       !idDocumentType ||
-      idDocumentType === '' ||
-      idDocumentType.trim() === '' ||
+      (idDocumentType as any) === '' ||
+      (idDocumentType as any)?.trim?.() === '' ||
       (idDocumentType !== 'ID' && idDocumentType !== 'Passport')
     ) {
       setError('Bitte wählen Sie einen Ausweistyp aus')
@@ -871,7 +871,7 @@ export default function VerificationPage() {
                     Ausweistyp *
                   </label>
                   <select
-                    value={idDocumentType}
+                    value={idDocumentType || ''}
                     onChange={e => {
                       const selectedValue = e.target.value as 'ID' | 'Passport' | ''
                       console.log('Ausweistyp geändert:', selectedValue)

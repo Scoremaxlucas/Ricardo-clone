@@ -200,7 +200,7 @@ export default function MySellingPage() {
     )
   }
 
-  if (!session || status === 'unauthenticated') {
+  if (status === 'unauthenticated' || !session) {
     return (
       <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />

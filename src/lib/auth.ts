@@ -75,11 +75,7 @@ export const authOptions = {
           const isAdmin = user.isAdmin === true
 
           // Prüfe emailVerified explizit auf true, 1, oder String 'true'
-          const emailVerified =
-            user.emailVerified === true ||
-            user.emailVerified === 1 ||
-            user.emailVerified === '1' ||
-            user.emailVerified === 'true'
+          const emailVerified = Boolean(user.emailVerified)
 
           if (!emailVerified && !isAdmin) {
             console.log('[AUTH] Email not verified:', normalizedEmail, 'emailVerified value:', user.emailVerified)
@@ -92,11 +88,7 @@ export const authOptions = {
 
           // Prüfe ob Benutzer blockiert ist
           // Prüfe explizit auf true, 1, oder String 'true'
-          const isBlocked =
-            user.isBlocked === true ||
-            user.isBlocked === 1 ||
-            user.isBlocked === '1' ||
-            user.isBlocked === 'true'
+          const isBlocked = Boolean(user.isBlocked)
 
           if (isBlocked) {
             console.log('[AUTH] User is blocked:', normalizedEmail)
