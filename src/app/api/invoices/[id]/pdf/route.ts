@@ -673,7 +673,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       // Verweis auf ursprüngliche Rechnung
       if (invoice.originalInvoiceId && (invoice as any).originalInvoice) {
         pdf.text(
-          `Storniert Rechnung: ${invoice.originalInvoice.invoiceNumber} vom ${new Date(invoice.originalInvoice.createdAt).toLocaleDateString('de-CH')}`,
+          `Storniert Rechnung: ${(invoice as any).originalInvoice.invoiceNumber} vom ${new Date((invoice as any).originalInvoice.createdAt).toLocaleDateString('de-CH')}`,
           margin + 5,
           creditNoteYPos
         )
