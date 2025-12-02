@@ -66,7 +66,7 @@ export default function AdminContactRequestsPage() {
       return
     }
 
-    const isAdminInSession = session?.user?.isAdmin === true || session?.user?.isAdmin === 1
+    const isAdminInSession = session?.user?.isAdmin === true
     if (!isAdminInSession) {
       router.push('/')
       return
