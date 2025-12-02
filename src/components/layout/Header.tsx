@@ -305,7 +305,7 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white shadow-md" style={{ position: 'relative' }}>
-      <div className="mx-auto max-w-[1600px] px-2 sm:px-4 md:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 md:px-8 lg:px-12">
         {/* ERSTE ZEILE: Logo, Navigation, User Actions - NO OVERFLOW */}
         <div className="flex h-12 min-w-0 items-center justify-between py-1 md:h-14">
           {/* Logo - Mobile kleiner */}
