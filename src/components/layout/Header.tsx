@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Search,
-  Menu,
   User,
   Heart,
   Bell,
@@ -27,7 +26,6 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { CategoryBar } from './CategoryBar'
 
 export function Header() {
-  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false)
   const [isSellMenuOpen, setIsSellMenuOpen] = useState(false)
@@ -253,9 +251,8 @@ export function Header() {
           </div>
 
           {/* Navigation - Responsive: Icons auf Mobile, Text auf Desktop */}
-          {/* Verstecke auf sehr kleinen Bildschirmen (wird durch Hamburger-Menü ersetzt) */}
           {/* Overflow-hidden verhindert dass Elemente ausbrechen */}
-          <div className="ml-1 hidden min-w-0 flex-1 items-center justify-start gap-0.5 overflow-hidden sm:flex sm:ml-2 sm:gap-1 md:ml-4 md:gap-2 lg:ml-8 lg:gap-4">
+          <div className="ml-1 flex min-w-0 flex-1 items-center justify-start gap-0.5 overflow-hidden sm:ml-2 sm:gap-1 md:ml-4 md:gap-2 lg:ml-8 lg:gap-4">
             {/* Favoriten - Icon auf Mobile, Icon + Text auf Desktop */}
             {session ? (
               <Link
@@ -646,14 +643,6 @@ export function Header() {
               )}
             </div>
 
-            {/* Hamburger Menu Button - Zeige wenn Navigation nicht sichtbar */}
-            <button
-              onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="ml-2 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 lg:hidden"
-              title="Menü"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
           </div>
         </div>
 
@@ -707,178 +696,6 @@ export function Header() {
           </form>
         </div>
 
-        {/* Mobile Menu - Zeige wenn Hamburger-Menü geöffnet */}
-        {isMenuOpen && (
-          <div className="lg:hidden">
-            <div className="space-y-1 border-t px-2 pb-3 pt-2 sm:px-3">
-              <Link
-                href="/categories"
-                onClick={() => setIsMenuOpen(false)}
-                className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
-              >
-                {t.header.categories}
-              </Link>
-              {session ? (
-                <Link
-                  href="/favorites"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="relative flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
-                >
-                  <Heart className="mr-2 h-5 w-5" />
-                  {t.header.favorites}
-                  {favoritesCount > 0 && (
-                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
-                      {favoritesCount > 9 ? '9+' : favoritesCount}
-                    </span>
-                  )}
-                </Link>
-              ) : (
-                <button
-                  onClick={() => {
-                    setIsMenuOpen(false)
-                    alert(t.header.pleaseLoginForFavorites)
-                  }}
-                  className="flex w-full items-center rounded-md px-3 py-2 text-left text-base font-medium text-gray-700 hover:text-primary-600"
-                >
-                  <Heart className="mr-2 h-5 w-5" />
-                  {t.header.favorites}
-                </button>
-              )}
-              <Link
-                href="/auctions"
-                onClick={() => setIsMenuOpen(false)}
-                className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
-              >
-                {t.header.auctions}
-              </Link>
-              <div className="px-3 py-2">
-                <div className="mb-1 text-base font-medium text-gray-700">{t.header.sell}</div>
-                <Link
-                  href="/sell"
-                  className="block py-2 pl-4 text-sm text-gray-600 hover:text-primary-600"
-                >
-                  {t.header.singleItem}
-                </Link>
-                <Link
-                  href="/sell/bulk"
-                  className="block py-2 pl-4 text-sm text-gray-600 hover:text-primary-600"
-                >
-                  {t.header.multipleItems}
-                </Link>
-              </div>
-              {session ? (
-                <>
-                  <div className="flex items-center space-x-3 border-b border-gray-200 px-3 py-3">
-                    <Link
-                      href={session.user?.id ? `/users/${session.user.id}` : '/profile'}
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex h-10 w-10 cursor-pointer items-center justify-center rounded-full bg-primary-600 text-white transition-opacity hover:opacity-80"
-                    >
-                      {getProfileImage() ? (
-                        <img
-                          src={getProfileImage() ?? undefined}
-                          alt={session.user?.name || t.header.profile}
-                          className="h-full w-full rounded-full object-cover"
-                        />
-                      ) : (
-                        <span className="text-sm font-semibold">
-                          {getInitials(session.user?.name)}
-                        </span>
-                      )}
-                    </Link>
-                    <div>
-                      <p className="text-sm font-medium text-gray-900">
-                        {session.user?.name || t.header.user}
-                      </p>
-                      <p className="truncate text-xs text-gray-500">{session.user?.email}</p>
-                    </div>
-                  </div>
-                  <Link
-                    href="/profile"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
-                  >
-                    <User className="mr-2 h-5 w-5" />
-                    {t.header.myProfile}
-                  </Link>
-                  <Link
-                    href="/my-watches"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
-                  >
-                    <Package className="mr-2 h-5 w-5" />
-                    {t.header.mySelling}
-                  </Link>
-                  <Link
-                    href="/my-watches/buying"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
-                  >
-                    <ShoppingBag className="mr-2 h-5 w-5" />
-                    {t.header.myBuying}
-                  </Link>
-                  <Link
-                    href="/my-watches/account"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
-                  >
-                    <Settings className="mr-2 h-5 w-5" />
-                    {t.header.settings}
-                  </Link>
-                  <Link
-                    href="/my-watches/selling/fees"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
-                  >
-                    <Wallet className="mr-2 h-5 w-5" />
-                    {t.header.feesAndInvoices}
-                  </Link>
-                  <Link
-                    href="/my-watches/selling/cancel-request"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="block flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
-                  >
-                    <X className="mr-2 h-5 w-5" />
-                    {t.header.cancel}
-                  </Link>
-                  {(session?.user?.isAdmin || isAdmin) && (
-                    <Link
-                      href="/admin/dashboard"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="block flex items-center rounded-md px-3 py-2 text-base font-semibold text-primary-600 hover:text-primary-700"
-                    >
-                      <Shield className="mr-2 h-5 w-5" />
-                      {t.header.adminDashboard}
-                    </Link>
-                  )}
-                  <button
-                    onClick={async () => {
-                      setIsMenuOpen(false)
-                      try {
-                        await signOut({ callbackUrl: '/' })
-                      } catch (error) {
-                        console.error('Error signing out:', error)
-                        // Fallback: manuell zur Hauptseite
-                        window.location.href = '/'
-                      }
-                    }}
-                    className="block flex w-full items-center rounded-md px-3 py-2 text-left text-base font-medium text-red-600 hover:text-red-700"
-                  >
-                    <LogOut className="mr-2 h-5 w-5" />
-                    {t.header.logout}
-                  </button>
-                </>
-              ) : (
-                <Link
-                  href="/login"
-                  className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
-                >
-                  {t.header.login}
-                </Link>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     </header>
   )
