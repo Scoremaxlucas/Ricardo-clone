@@ -389,7 +389,7 @@ export function Header() {
                         )}
                       </Link>
                       <ChevronDown
-                        className={`hidden h-3 w-3 transition-transform sm:block sm:h-4 sm:w-4 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
+                        className={`h-3 w-3 transition-transform sm:h-4 sm:w-4 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
 
@@ -397,28 +397,12 @@ export function Header() {
                     {isProfileMenuOpen && (
                       <>
                         <div
-                          className="fixed inset-0 z-[5]"
-                          onClick={e => {
-                            // Prüfe ob Klick auf Dropdown-Menü war
-                            const target = e.target as HTMLElement
-                            if (target.closest('[data-dropdown-menu]')) {
-                              return // Ignoriere Klicks auf Dropdown
-                            }
-                            setIsProfileMenuOpen(false)
-                          }}
-                          style={{ pointerEvents: 'auto' }}
+                          className="fixed inset-0 z-40"
+                          onClick={() => setIsProfileMenuOpen(false)}
                         />
                         <div
-                          data-dropdown-menu
-                          className="absolute right-0 z-[100] mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-                          onClick={e => {
-                            e.stopPropagation()
-                            // Verhindere dass Overlay geschlossen wird
-                          }}
-                          onMouseDown={e => {
-                            e.stopPropagation()
-                          }}
-                          style={{ pointerEvents: 'auto' }}
+                          className="absolute right-0 z-50 mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                          onClick={e => e.stopPropagation()}
                         >
                           <div className="relative py-1" style={{ pointerEvents: 'auto' }}>
                             <div className="border-b border-gray-200 px-4 py-3">
@@ -612,10 +596,10 @@ export function Header() {
               {isLanguageMenuOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-10"
+                    className="fixed inset-0 z-40"
                     onClick={() => setIsLanguageMenuOpen(false)}
                   />
-                  <div className="absolute right-0 z-20 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+                  <div className="absolute right-0 z-50 mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
                     <div className="py-1">
                       {languages.map(lang => (
                         <button

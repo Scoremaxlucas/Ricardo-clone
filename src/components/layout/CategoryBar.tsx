@@ -161,7 +161,7 @@ export function CategoryBar() {
               >
                 <Menu className="h-4 w-4" />
                 <span className="hidden sm:inline">{t.categoryBar.allCategories}</span>
-                <span className="sm:hidden">{t.categoryBar.categories || 'Kategorien'}</span>
+                <span className="sm:hidden">Kategorien</span>
               </button>
 
               {/* Hauptkategorien mit Hover-Flyouts - Flex-wrap verhindert Overflow */}
