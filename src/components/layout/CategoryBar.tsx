@@ -245,7 +245,7 @@ export function CategoryBar() {
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
                               left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
                               width: categoryRefs.current[category.slug]!.getBoundingClientRect().width,
-                              height: '20px', // Höher für besseren Schutz vor Flackern - deckt Lücke komplett ab
+                              height: '24px', // Höher für besseren Schutz vor Flackern - deckt Lücke komplett ab
                               pointerEvents: 'auto',
                             }}
                             onMouseEnter={() => {
@@ -264,7 +264,7 @@ export function CategoryBar() {
                             }}
                           />
                           <div
-                            className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl dropdown-enter"
+                            className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
                             onMouseEnter={() => {
                               // Dropdown bleibt offen wenn Maus darüber ist
                               if (categoryMenuTimeoutRef.current) {
