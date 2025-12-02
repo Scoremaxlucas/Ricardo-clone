@@ -331,7 +331,7 @@ export function Header() {
           </div>
 
             {/* User Actions - Rechts - IMMER SICHTBAR - Overflow verhindern - NO BRANCHING OUT */}
-          <div className="flex flex-shrink-0 items-center gap-0.5 overflow-hidden sm:gap-1 md:gap-1.5 lg:gap-2">
+          <div className="flex flex-shrink-0 items-center gap-0.5 sm:gap-1 md:gap-1.5 lg:gap-2">
             {/* Notifications - Icon auf Mobile, Icon + Text auf Desktop */}
             <Link
               href="/notifications"
@@ -400,10 +400,15 @@ export function Header() {
                     {/* Dropdown Menu - Hover-based like Ricardo with smooth animations */}
                     {isProfileMenuOpen && (
                       <div
-                        className="absolute right-0 top-full z-[60] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                        className="absolute right-0 top-full z-[9999] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
                         onMouseEnter={() => setIsProfileMenuOpen(true)}
                         onMouseLeave={() => setIsProfileMenuOpen(false)}
-                        style={{ display: 'block' }}
+                        style={{ 
+                          display: 'block',
+                          visibility: 'visible',
+                          opacity: 1,
+                          pointerEvents: 'auto'
+                        }}
                       >
                           <div className="relative py-1">
                             <div className="border-b border-gray-100 px-4 py-3">
@@ -539,10 +544,16 @@ export function Header() {
             </div>
 
             {/* Language Selector - Far Right - Hover-based like Ricardo */}
-            <div
+            <div 
               className="relative flex-shrink-0"
-              onMouseEnter={() => setIsLanguageMenuOpen(true)}
-              onMouseLeave={() => setIsLanguageMenuOpen(false)}
+              onMouseEnter={() => {
+                console.log('Language hover enter')
+                setIsLanguageMenuOpen(true)
+              }}
+              onMouseLeave={() => {
+                console.log('Language hover leave')
+                setIsLanguageMenuOpen(false)
+              }}
             >
               <button
                 ref={languageButtonRef}
@@ -560,10 +571,15 @@ export function Header() {
               {/* Language Dropdown - Hover-based like Ricardo with smooth animations */}
               {isLanguageMenuOpen && (
                 <div
-                  className="absolute right-0 top-full z-[60] mt-1 w-48 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                  className="absolute right-0 top-full z-[9999] mt-1 w-48 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
                   onMouseEnter={() => setIsLanguageMenuOpen(true)}
                   onMouseLeave={() => setIsLanguageMenuOpen(false)}
-                  style={{ display: 'block' }}
+                  style={{ 
+                    display: 'block',
+                    visibility: 'visible',
+                    opacity: 1,
+                    pointerEvents: 'auto'
+                  }}
                 >
                     <div className="py-1">
                       {languages.map(lang => (
