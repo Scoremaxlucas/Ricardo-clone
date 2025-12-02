@@ -232,10 +232,10 @@ export function CategoryBar() {
                               const rect = categoryRefs.current[category.slug]!.getBoundingClientRect()
                               const mouseX = e.clientX
                               const mouseY = e.clientY
-                              
+
                               // Prüfe ob Maus außerhalb des Button-Bereichs ist
                               const isOutsideButton = mouseX < rect.left || mouseX > rect.right || mouseY < rect.top || mouseY > rect.bottom + 10
-                              
+
                               if (isOutsideButton) {
                                 categoryMenuTimeoutRef.current = setTimeout(() => {
                                   setHoveredCategory(null)
@@ -263,7 +263,7 @@ export function CategoryBar() {
                             }}
                           />
                           <div
-                            className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
+                            className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl dropdown-enter"
                             onMouseEnter={() => {
                               if (categoryMenuTimeoutRef.current) {
                                 clearTimeout(categoryMenuTimeoutRef.current)
@@ -278,8 +278,12 @@ export function CategoryBar() {
                             }}
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
-                              left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
+                              left: Math.min(
+                                categoryRefs.current[category.slug]!.getBoundingClientRect().left,
+                                window.innerWidth - 470 // 450px width + 20px margin
+                              ),
                               pointerEvents: 'auto',
+                              maxWidth: 'calc(100vw - 20px)', // Prevent cutoff on small screens
                             }}
                           >
                             <h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">

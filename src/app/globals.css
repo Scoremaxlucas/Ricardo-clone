@@ -311,12 +311,28 @@ html {
     border-color: rgba(20, 184, 166, 0.3);
   }
 
-  /* Scrollbar Hide - Für horizontales Scrollen ohne sichtbare Scrollbar */
+    /* Scrollbar Hide - Für horizontales Scrollen ohne sichtbare Scrollbar */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
   .scrollbar-hide {
     -ms-overflow-style: none;
     scrollbar-width: none;
+  }
+
+  /* Dropdown Animationen - Smooth fade-in und slide-down */
+  @keyframes dropdownFadeIn {
+    from {
+      opacity: 0;
+      transform: translateY(-8px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  .dropdown-enter {
+    animation: dropdownFadeIn 0.2s ease-out;
   }
 }

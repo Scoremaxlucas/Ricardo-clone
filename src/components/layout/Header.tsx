@@ -378,7 +378,7 @@ export function Header() {
                     onMouseEnter={handleSellMenuEnter}
                   />
                   <div
-                    className="absolute left-0 top-full z-[10002] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                    className="absolute left-0 top-full z-[10002] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg dropdown-enter"
                     onMouseEnter={handleSellMenuEnter}
                     onMouseLeave={handleSellMenuLeave}
                     style={{
@@ -386,6 +386,7 @@ export function Header() {
                       visibility: 'visible',
                       opacity: 1,
                       pointerEvents: 'auto',
+                      maxWidth: 'calc(100vw - 20px)', // Prevent cutoff on small screens
                     }}
                   >
                     <div className="py-1">
