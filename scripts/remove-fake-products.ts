@@ -135,7 +135,6 @@ async function main() {
   console.log(`   - Gelöschte Favoriten: ${deletedFavorites.count}`)
   console.log(`   - Gelöschte Nachrichten: ${deletedMessages.count}`)
   console.log(`   - Gelöschte Preisvorschläge: ${deletedPriceOffers.count}`)
-  console.log(`   - Gelöschte Fragen: ${deletedQuestions.count}`)
   console.log(`   - Gelöschte Käufe: ${deletedPurchases.count}`)
   console.log(`   - Gelöschte Verkäufe: ${deletedSales.count}`)
 }
