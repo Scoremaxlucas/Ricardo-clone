@@ -31,8 +31,6 @@ export function Header() {
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false)
   const [isSellMenuOpen, setIsSellMenuOpen] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(null)
-  const [profileDropdownPosition, setProfileDropdownPosition] = useState({ top: 0, right: 0 })
-  const [languageDropdownPosition, setLanguageDropdownPosition] = useState({ top: 0, right: 0 })
   const profileButtonRef = useRef<HTMLButtonElement>(null)
   const languageButtonRef = useRef<HTMLButtonElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
@@ -370,24 +368,15 @@ export function Header() {
                       />
                     </div>
                   </div>
-                  <div className="relative">
+                  <div 
+                    className="relative"
+                    onMouseEnter={() => setIsProfileMenuOpen(true)}
+                    onMouseLeave={() => setIsProfileMenuOpen(false)}
+                  >
                     <button
                       ref={profileButtonRef}
                       type="button"
-                      onClick={(e) => {
-                        e.preventDefault()
-                        e.stopPropagation()
-                        console.log('Profile button clicked, current state:', isProfileMenuOpen)
-                        if (profileButtonRef.current) {
-                          const rect = profileButtonRef.current.getBoundingClientRect()
-                          setProfileDropdownPosition({
-                            top: rect.bottom + 8,
-                            right: window.innerWidth - rect.right
-                          })
-                        }
-                        setIsProfileMenuOpen(!isProfileMenuOpen)
-                      }}
-                      className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 p-1 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:px-2 sm:py-1"
+                      className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 p-1 text-white transition-all duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:px-2 sm:py-1"
                       title={t.header.profileMenu}
                     >
                       <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 sm:h-8 sm:w-8">
@@ -408,32 +397,15 @@ export function Header() {
                       />
                     </button>
 
-                    {/* Dropdown Menu */}
+                    {/* Dropdown Menu - Hover-based like Ricardo with smooth animations */}
                     {isProfileMenuOpen && (
-                      <>
-                        <div
-                          className="fixed inset-0 z-[45] bg-transparent"
-                          onClick={() => {
-                            console.log('Overlay clicked, closing dropdown')
-                            setIsProfileMenuOpen(false)
-                          }}
-                        />
-                        <div
-                          className="fixed z-[60] w-56 rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5"
-                          onClick={(e) => {
-                            console.log('Dropdown clicked, isProfileMenuOpen:', isProfileMenuOpen)
-                            e.stopPropagation()
-                          }}
-                          style={{
-                            display: 'block',
-                            visibility: 'visible',
-                            opacity: 1,
-                            top: `${profileDropdownPosition.top}px`,
-                            right: `${profileDropdownPosition.right}px`
-                          }}
-                        >
-                          <div className="relative py-1" style={{ pointerEvents: 'auto' }}>
-                            <div className="border-b border-gray-200 px-4 py-3">
+                      <div
+                        className="absolute right-0 top-full z-[60] mt-1 w-56 animate-in fade-in slide-in-from-top-2 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                        onMouseEnter={() => setIsProfileMenuOpen(true)}
+                        onMouseLeave={() => setIsProfileMenuOpen(false)}
+                      >
+                          <div className="relative py-1">
+                            <div className="border-b border-gray-100 px-4 py-3">
                               <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
                                 <UserName
                                   userId={session.user.id}
@@ -452,12 +424,8 @@ export function Header() {
                             </div>
                             <Link
                               href="/profile"
-                              onClick={e => {
-                                e.stopPropagation()
-                                setIsProfileMenuOpen(false)
-                              }}
-                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
+                              onClick={() => setIsProfileMenuOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                             >
                               <div className="flex items-center">
                                 <User className="mr-2 h-4 w-4" />
@@ -466,12 +434,8 @@ export function Header() {
                             </Link>
                             <Link
                               href="/my-watches"
-                              onClick={e => {
-                                e.stopPropagation()
-                                setIsProfileMenuOpen(false)
-                              }}
-                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
+                              onClick={() => setIsProfileMenuOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                             >
                               <div className="flex items-center">
                                 <Package className="mr-2 h-4 w-4" />
@@ -480,12 +444,8 @@ export function Header() {
                             </Link>
                             <Link
                               href="/my-watches/buying"
-                              onClick={e => {
-                                e.stopPropagation()
-                                setIsProfileMenuOpen(false)
-                              }}
-                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
+                              onClick={() => setIsProfileMenuOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                             >
                               <div className="flex items-center">
                                 <ShoppingBag className="mr-2 h-4 w-4" />
@@ -494,31 +454,19 @@ export function Header() {
                             </Link>
                             <Link
                               href="/my-watches/account"
-                              onClick={e => {
-                                e.stopPropagation()
-                                setIsProfileMenuOpen(false)
-                              }}
-                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              style={{ pointerEvents: 'auto', zIndex: 1000, position: 'relative' }}
+                              onClick={() => setIsProfileMenuOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                             >
                               <div className="flex items-center">
                                 <Settings className="mr-2 h-4 w-4" />
                                 {t.header.settings}
                               </div>
                             </Link>
-                            <div className="my-1 border-t border-gray-200" />
+                            <div className="my-1 border-t border-gray-100" />
                             <Link
                               href="/my-watches/selling/fees"
-                              onClick={e => {
-                                e.stopPropagation()
-                                setIsProfileMenuOpen(false)
-                              }}
-                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              style={{
-                                pointerEvents: 'auto',
-                                zIndex: 1000,
-                                position: 'relative',
-                              }}
+                              onClick={() => setIsProfileMenuOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                             >
                               <div className="flex items-center">
                                 <Wallet className="mr-2 h-4 w-4" />
@@ -527,16 +475,8 @@ export function Header() {
                             </Link>
                             <Link
                               href="/my-watches/selling/cancel-request"
-                              onClick={e => {
-                                e.stopPropagation()
-                                setIsProfileMenuOpen(false)
-                              }}
-                              className="relative block cursor-pointer px-4 py-2 text-sm text-gray-700 hover:bg-gray-100"
-                              style={{
-                                pointerEvents: 'auto',
-                                zIndex: 1000,
-                                position: 'relative',
-                              }}
+                              onClick={() => setIsProfileMenuOpen(false)}
+                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                             >
                               <div className="flex items-center">
                                 <X className="mr-2 h-4 w-4" />
@@ -545,19 +485,11 @@ export function Header() {
                             </Link>
                             {(isAdmin || session.user?.isAdmin === true) && (
                               <>
-                                <div className="my-1 border-t border-gray-200" />
+                                <div className="my-1 border-t border-gray-100" />
                                 <Link
                                   href="/admin/dashboard"
-                                  onClick={e => {
-                                    e.stopPropagation()
-                                    setIsProfileMenuOpen(false)
-                                  }}
-                                  className="relative block cursor-pointer px-4 py-2 text-sm font-semibold text-gray-700 text-primary-600 hover:bg-gray-100"
-                                  style={{
-                                    pointerEvents: 'auto',
-                                    zIndex: 1000,
-                                    position: 'relative',
-                                  }}
+                                  onClick={() => setIsProfileMenuOpen(false)}
+                                  className="block px-4 py-2 text-sm font-semibold text-primary-600 transition-colors hover:bg-gray-50 hover:text-primary-700"
                                 >
                                   <div className="flex items-center">
                                     <Shield className="mr-2 h-4 w-4" />
@@ -587,7 +519,6 @@ export function Header() {
                             </button>
                           </div>
                         </div>
-                      </>
                     )}
                   </div>
                 </>
@@ -606,25 +537,16 @@ export function Header() {
               )}
             </div>
 
-            {/* Language Selector - Far Right - Nur Flagge, kein Text um Overflow zu vermeiden */}
-            <div className="relative flex-shrink-0">
+            {/* Language Selector - Far Right - Hover-based like Ricardo */}
+            <div 
+              className="relative flex-shrink-0"
+              onMouseEnter={() => setIsLanguageMenuOpen(true)}
+              onMouseLeave={() => setIsLanguageMenuOpen(false)}
+            >
               <button
                 ref={languageButtonRef}
                 type="button"
-                onClick={(e) => {
-                  e.preventDefault()
-                  e.stopPropagation()
-                  console.log('Language button clicked, current state:', isLanguageMenuOpen)
-                  if (languageButtonRef.current) {
-                    const rect = languageButtonRef.current.getBoundingClientRect()
-                    setLanguageDropdownPosition({
-                      top: rect.bottom + 8,
-                      right: window.innerWidth - rect.right
-                    })
-                  }
-                  setIsLanguageMenuOpen(!isLanguageMenuOpen)
-                }}
-                className="flex items-center justify-center rounded-md p-1.5 font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:p-2"
+                className="flex items-center justify-center rounded-md p-1.5 font-medium text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-primary-600 sm:p-2"
                 title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
               >
                 {/* Nur Flagge anzeigen, kein Text um Overflow zu vermeiden */}
@@ -634,30 +556,13 @@ export function Header() {
                 />
               </button>
 
-              {/* Language Dropdown */}
+              {/* Language Dropdown - Hover-based like Ricardo with smooth animations */}
               {isLanguageMenuOpen && (
-                <>
-                  <div
-                    className="fixed inset-0 z-[45] bg-transparent"
-                    onClick={() => {
-                      console.log('Language overlay clicked, closing dropdown')
-                      setIsLanguageMenuOpen(false)
-                    }}
-                  />
-                  <div
-                    className="fixed z-[60] w-48 rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5"
-                    onClick={(e) => {
-                      console.log('Language dropdown clicked, isLanguageMenuOpen:', isLanguageMenuOpen)
-                      e.stopPropagation()
-                    }}
-                    style={{
-                      display: 'block',
-                      visibility: 'visible',
-                      opacity: 1,
-                      top: `${languageDropdownPosition.top}px`,
-                      right: `${languageDropdownPosition.right}px`
-                    }}
-                  >
+                <div
+                  className="absolute right-0 top-full z-[60] mt-1 w-48 animate-in fade-in slide-in-from-top-2 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                  onMouseEnter={() => setIsLanguageMenuOpen(true)}
+                  onMouseLeave={() => setIsLanguageMenuOpen(false)}
+                >
                     <div className="py-1">
                       {languages.map(lang => (
                         <button
@@ -666,10 +571,10 @@ export function Header() {
                             setLanguage(lang.code)
                             setIsLanguageMenuOpen(false)
                           }}
-                          className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm hover:bg-gray-100 ${
+                          className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-gray-50 ${
                             language === lang.code
                               ? 'bg-primary-50 font-medium text-primary-600'
-                              : 'text-gray-700'
+                              : 'text-gray-700 hover:text-primary-600'
                           }`}
                         >
                           <span className="text-xl">{lang.flag}</span>
@@ -681,7 +586,6 @@ export function Header() {
                       ))}
                     </div>
                   </div>
-                </>
               )}
             </div>
 
