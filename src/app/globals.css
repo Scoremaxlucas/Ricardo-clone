@@ -335,4 +335,16 @@ html {
   .dropdown-enter {
     animation: dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1);
   }
+
+  /* Sidebar Flyout Animation - Smooth fade-in and slide */
+  @keyframes flyoutFadeIn {
+    from {
+      opacity: 0;
+      transform: translateX(-10px) scale(0.98);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0) scale(1);
+    }
+  }
 }

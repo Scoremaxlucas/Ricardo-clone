@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import Link from 'next/link'
 import { X, ChevronRight } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -627,6 +627,9 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
   const { t, translateSubcategory } = useLanguage()
   const [hovered, setHovered] = useState<number | null>(null)
   const [flyoutPosition, setFlyoutPosition] = useState({ top: 0, visible: false })
+  const [isAnimating, setIsAnimating] = useState(false)
+  const sidebarRef = useRef<HTMLDivElement>(null)
+  const flyoutTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Übersetzte Kategorien mit übersetzten Unterkategorien
   const translatedCategories = categories.map(cat => ({
@@ -635,20 +638,40 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
     subs: cat.subs.map(sub => translateSubcategory(sub)),
   }))
 
-  if (!isOpen) return null
+  // Handle animation states
+  useEffect(() => {
+    if (isOpen) {
+      setIsAnimating(true)
+      // Prevent body scroll when sidebar is open
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = ''
+    }
+    return () => {
+      document.body.style.overflow = ''
+      if (flyoutTimeoutRef.current) {
+        clearTimeout(flyoutTimeoutRef.current)
+      }
+    }
+  }, [isOpen])
+
+  if (!isOpen && !isAnimating) return null
 
   const handleCategoryEnter = (index: number, event: React.MouseEvent) => {
-    console.log('✅ HOVER START:', categories[index].name)
-    const rect = event.currentTarget.getBoundingClientRect()
+    // Cancel any pending timeout
+    if (flyoutTimeoutRef.current) {
+      clearTimeout(flyoutTimeoutRef.current)
+      flyoutTimeoutRef.current = null
+    }
 
+    const rect = event.currentTarget.getBoundingClientRect()
     const categoryTop = rect.top
-    const categoryBottom = rect.bottom
     const viewportHeight = window.innerHeight
 
-    // Präzise Höhenberechnung mit mehr Sicherheit
+    // Präzise Höhenberechnung
     const numSubs = categories[index].subs.length
     const headerHeight = 85 // Header + Titel im Flyout
-    const rowHeight = 40 // Höhe pro Zeile (etwas mehr für Sicherheit)
+    const rowHeight = 40 // Höhe pro Zeile
     const padding = 50 // Top + Bottom Padding
     const rows = Math.ceil(numSubs / 2) // 2 Spalten
     const calculatedHeight = headerHeight + rows * rowHeight + padding
@@ -670,26 +693,7 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
       // Stelle sicher, dass wir nicht über den oberen Rand gehen
       if (finalTop < topMargin) {
         finalTop = topMargin
-        console.log('🔝 Clamped to top margin:', topMargin)
       }
-
-      console.log(
-        '⬆️ Shifted UP by',
-        overflow,
-        'px | Flyout height:',
-        flyoutHeight,
-        '| Final top:',
-        finalTop
-      )
-    } else {
-      console.log(
-        '✅ Perfect alignment | Category:',
-        categoryTop,
-        '| Flyout height:',
-        flyoutHeight,
-        '| Space below:',
-        spaceBelow
-      )
     }
 
     setFlyoutPosition({ top: finalTop, visible: true })
@@ -697,199 +701,144 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
   }
 
   const handleCategoryLeave = () => {
-    // KEIN setTimeout - wir warten auf das Flyout-Enter Event
-    console.log('⏸️ CATEGORY LEAVE - Waiting for flyout...')
+    // Delay before closing to allow movement to flyout
+    flyoutTimeoutRef.current = setTimeout(() => {
+      setHovered(null)
+      setFlyoutPosition({ top: 0, visible: false })
+    }, 200)
   }
 
   const handleFlyoutEnter = (index: number) => {
-    console.log('🔥 FLYOUT ENTERED:', categories[index].name)
+    // Cancel timeout if mouse enters flyout
+    if (flyoutTimeoutRef.current) {
+      clearTimeout(flyoutTimeoutRef.current)
+      flyoutTimeoutRef.current = null
+    }
     setHovered(index)
   }
 
   const handleFlyoutLeave = () => {
-    console.log('🚪 FLYOUT LEFT - Closing')
     setHovered(null)
     setFlyoutPosition({ top: 0, visible: false })
   }
 
+  const handleClose = () => {
+    setIsAnimating(false)
+    setTimeout(() => {
+      onClose()
+    }, 300) // Wait for animation to complete
+  }
+
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop with smooth fade-in */}
       <div
-        onClick={onClose}
+        onClick={handleClose}
+        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[998] transition-opacity duration-300 ${
+          isOpen ? 'opacity-100' : 'opacity-0'
+        }`}
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0,0,0,0.3)',
-          zIndex: 998,
+          transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
         }}
       />
 
-      {/* Sidebar */}
+      {/* Sidebar with smooth slide-in animation */}
       <div
+        ref={sidebarRef}
+        className={`fixed top-0 left-0 bottom-0 w-[320px] bg-white z-[999] overflow-y-auto shadow-2xl transition-transform duration-300 ease-out ${
+          isOpen ? 'translate-x-0' : '-translate-x-full'
+        }`}
         style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          bottom: 0,
-          width: '300px',
-          backgroundColor: 'white',
-          zIndex: 999,
-          overflowY: 'auto',
-          boxShadow: '2px 0 10px rgba(0,0,0,0.1)',
+          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
+        onTransitionEnd={() => {
+          if (!isOpen) {
+            setIsAnimating(false)
+          }
         }}
       >
         {/* Header */}
-        <div
-          style={{
-            padding: '16px',
-            borderBottom: '1px solid #e5e7eb',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            position: 'sticky',
-            top: 0,
-            backgroundColor: 'white',
-            zIndex: 10,
-          }}
-        >
-          <h2 style={{ fontSize: '18px', fontWeight: 'bold' }}>{t.selling.allCategories}</h2>
+        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
+          <h2 className="text-lg font-bold text-gray-900">{t.selling.allCategories}</h2>
           <button
-            onClick={onClose}
-            style={{ cursor: 'pointer', border: 'none', background: 'none' }}
+            onClick={handleClose}
+            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-gray-100"
+            aria-label="Close"
           >
-            <X size={20} />
+            <X size={20} className="text-gray-600" />
           </button>
         </div>
 
         {/* Kategorie Liste */}
-        {translatedCategories.map((cat, index) => (
-          <div
-            key={cat.slug}
-            onMouseEnter={e => handleCategoryEnter(index, e)}
-            onMouseLeave={handleCategoryLeave}
-            style={{ position: 'relative' }}
-          >
-            {/* Kategorie Link */}
-            <Link
-              href={`/search?category=${cat.slug}`}
-              style={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                padding: '12px 16px',
-                textDecoration: 'none',
-                color: 'inherit',
-                backgroundColor: hovered === index ? '#f3f4f6' : 'white',
-                transition: 'background-color 0.2s',
-              }}
-            >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                {(() => {
-                  const config = getCategoryConfig(cat.slug)
-                  const IconComponent = config.icon
-                  return (
-                    <div
-                      style={{
-                        width: '28px',
-                        height: '28px',
-                        backgroundColor: '#0f766e',
-                        borderRadius: '4px',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                      }}
-                    >
-                      <IconComponent size={20} color="white" />
-                    </div>
-                  )
-                })()}
-                <span
-                  style={{
-                    fontSize: '14px',
-                    fontWeight: 500,
-                    color: hovered === index ? '#0f766e' : '#111827',
-                  }}
+        <div className="py-2">
+          {translatedCategories.map((cat, index) => {
+            const config = getCategoryConfig(cat.slug)
+            const IconComponent = config.icon
+            const isHovered = hovered === index
+            
+            return (
+              <div
+                key={cat.slug}
+                onMouseEnter={e => handleCategoryEnter(index, e)}
+                onMouseLeave={handleCategoryLeave}
+                className="relative"
+              >
+                {/* Kategorie Link */}
+                <Link
+                  href={`/search?category=${cat.slug}`}
+                  className={`flex items-center justify-between px-5 py-3 text-sm font-medium transition-all duration-200 ${
+                    isHovered
+                      ? 'bg-primary-50 text-primary-700'
+                      : 'bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
                 >
-                  {cat.name}
-                </span>
+                  <div className="flex items-center gap-3">
+                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-primary-700">
+                      <IconComponent size={18} className="text-white" />
+                    </div>
+                    <span className="font-medium">{cat.name}</span>
+                  </div>
+                  <ChevronRight
+                    size={16}
+                    className={`transition-transform duration-200 ${
+                      isHovered ? 'text-primary-600 translate-x-0.5' : 'text-gray-400'
+                    }`}
+                  />
+                </Link>
               </div>
-              <ChevronRight size={16} color={hovered === index ? '#0f766e' : '#9ca3af'} />
-            </Link>
-          </div>
-        ))}
+            )
+          })}
+        </div>
       </div>
 
-      {/* FLYOUT - Außerhalb des Sidebars, als separates Element */}
+      {/* FLYOUT - Außerhalb des Sidebars, als separates Element mit smooth animation */}
       {hovered !== null && (
         <div
           onMouseEnter={() => handleFlyoutEnter(hovered)}
           onMouseLeave={handleFlyoutLeave}
+          className="fixed left-[320px] w-[520px] max-h-[calc(100vh-80px)] bg-white border-2 border-primary-600 rounded-r-xl shadow-2xl p-6 z-[1000] overflow-y-auto"
           style={{
-            position: 'fixed',
-            left: '300px',
             top: `${flyoutPosition.top}px`,
-            width: '500px',
-            maxHeight: 'calc(100vh - 100px)',
-            backgroundColor: 'white',
-            border: '2px solid #0f766e',
-            borderRadius: '0 8px 8px 0',
-            boxShadow: '0 20px 40px rgba(0,0,0,0.25)',
-            padding: '24px',
-            zIndex: 1000,
-            overflowY: 'auto',
+            animation: 'flyoutFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
+            willChange: 'transform, opacity',
           }}
         >
-          <h3
-            style={{
-              fontSize: '18px',
-              fontWeight: 'bold',
-              marginBottom: '16px',
-              borderBottom: '2px solid #e5e7eb',
-              paddingBottom: '8px',
-              color: '#0f766e',
-            }}
-          >
+          <h3 className="mb-4 border-b-2 border-gray-100 pb-3 text-lg font-bold text-primary-700">
             {translatedCategories[hovered].name}
-            <span
-              style={{
-                fontSize: '14px',
-                color: '#6b7280',
-                fontWeight: 'normal',
-                marginLeft: '8px',
-              }}
-            >
+            <span className="ml-2 text-sm font-normal text-gray-500">
               ({categories[hovered].subs.length} {t.selling.categoriesCount})
             </span>
           </h3>
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px' }}>
+          <div className="grid grid-cols-2 gap-2.5">
             {translatedCategories[hovered].subs.map((sub, idx) => (
               <Link
                 key={`${translatedCategories[hovered].slug}-${idx}`}
                 href={`/search?category=${translatedCategories[hovered].slug}&subcategory=${encodeURIComponent(categories[hovered].subs[idx])}`}
-                onClick={onClose}
-                style={{
-                  padding: '10px 12px',
-                  textDecoration: 'none',
-                  color: '#374151',
-                  fontSize: '14px',
-                  borderRadius: '6px',
-                  transition: 'all 0.2s',
-                  display: 'block',
-                }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.backgroundColor = '#f0fdfa'
-                  e.currentTarget.style.color = '#0f766e'
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.backgroundColor = 'transparent'
-                  e.currentTarget.style.color = '#374151'
-                }}
+                onClick={handleClose}
+                className="group relative block rounded-lg px-3 py-2.5 text-sm text-gray-700 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 hover:shadow-sm"
               >
-                • {translatedCategories[hovered].subs[idx]}
+                <span className="relative z-10">{sub}</span>
+                <span className="absolute inset-0 rounded-lg bg-primary-100 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
               </Link>
             ))}
           </div>
