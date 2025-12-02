@@ -881,41 +881,8 @@ export async function POST(request: NextRequest) {
       console.warn('[CREATE] No category provided for watch:', watch.id)
     }
 
-    // Benachrichtige alle Follower des Verkäufers
-    try {
-      const followers = await prisma.follow.findMany({
-        where: {
-          followingId: session.user.id,
-        },
-        include: {
-          follower: {
-            select: {
-              name: true,
-              nickname: true,
-            },
-          },
-        },
-      })
-
-      if (followers.length > 0) {
-        const sellerName = session.user.name || session.user.nickname || 'Ein Verkäufer'
-        const notifications = followers.map(follow => ({
-          userId: follow.followerId,
-          type: 'NEW_PRODUCT_FROM_FOLLOWED',
-          title: 'Neuer Artikel von gefolgtem Verkäufer',
-          message: `${sellerName} hat einen neuen Artikel eingestellt: "${title}"`,
-          watchId: watch.id,
-        }))
-
-        await prisma.notification.createMany({
-          data: notifications,
-        })
-
-        console.log(`Created ${notifications.length} notifications for followers`)
-      }
-    } catch (notifError) {
-      console.error('Error creating follower notifications:', notifError)
-    }
+    // Follow-Funktionalität ist derzeit nicht verfügbar (Follow Model fehlt im Schema)
+    // TODO: Follow-Funktionalität wieder aktivieren, wenn Follow Model hinzugefügt wird
 
     // Erstelle Rechnung für Booster, falls ein kostenpflichtiger Booster gewählt wurde
     try {
