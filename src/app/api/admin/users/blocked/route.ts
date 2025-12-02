@@ -82,7 +82,7 @@ export async function GET(request: NextRequest) {
       isAdmin: u.isAdmin === true,
       isBlocked: true,
       blockedAt: u.blockedAt?.toISOString() || null,
-      verified: u.verified === true || u.verified === 1,
+      verified: u.verified === true,
       verificationStatus: u.verificationStatus,
       warningCount: u.warningCount || 0,
       lastWarnedAt: u.lastWarnedAt?.toISOString() || null,
