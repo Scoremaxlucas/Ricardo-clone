@@ -740,7 +740,7 @@ export default function AdminModerateWatchesPage() {
                                 <User className="h-4 w-4" />
                                 {watch.seller.nickname || watch.seller.name || watch.seller.email}
                                 {watch.seller.verified && (
-                                  <Shield className="h-3 w-3 text-green-600" title="Verifiziert" />
+                                  <Shield className="h-3 w-3 text-green-600" />
                                 )}
                               </Link>
                             </div>
