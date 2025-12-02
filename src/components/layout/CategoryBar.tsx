@@ -172,7 +172,7 @@ export function CategoryBar() {
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 400) // Längerer Delay verhindert Flackern
+    }, 500) // Noch längerer Delay verhindert Flackern komplett
   }, [])
 
   const handleBridgeEnter = useCallback((slug: string) => {
@@ -187,7 +187,7 @@ export function CategoryBar() {
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 400) // Längerer Delay verhindert Flackern
+    }, 500) // Noch längerer Delay verhindert Flackern komplett
   }, [])
 
   const handleDropdownEnter = useCallback((slug: string) => {
@@ -202,7 +202,7 @@ export function CategoryBar() {
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 400) // Längerer Delay verhindert Flackern
+    }, 500) // Noch längerer Delay verhindert Flackern komplett
   }, [])
 
   const handleOverlayClick = useCallback(() => {
@@ -218,7 +218,7 @@ export function CategoryBar() {
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
-    }, 400) // Längerer Delay verhindert Flackern
+    }, 500) // Noch längerer Delay verhindert Flackern komplett
   }, [])
 
   // Calculate dropdown position with useMemo
@@ -239,7 +239,7 @@ export function CategoryBar() {
         Math.min(rect.left, window.innerWidth - dropdownWidth - margin)
       ),
       bridgeTop: rect.bottom, // Brücke startet direkt am Button
-      bridgeHeight: gap + 36, // Brücke deckt Gap + extra Raum ab
+      bridgeHeight: gap + 50, // Größere Brücke deckt Gap + viel extra Raum ab
     }
   }, [hoveredCategory])
 
