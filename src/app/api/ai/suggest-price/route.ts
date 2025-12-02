@@ -150,7 +150,7 @@ export async function POST(request: NextRequest) {
       .map(item => {
         const purchase = item.purchases[0]
         if (!purchase) return null
-        return purchase.amount || item.price
+        return purchase.price || item.price
       })
       .filter((p): p is number => p !== null && p > 0)
 
