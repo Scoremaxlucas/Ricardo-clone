@@ -26,9 +26,9 @@ export async function GET(request: NextRequest) {
 
     const where: any = {}
     if (filter === 'active') {
-      where.isActive = true
+      where.moderationStatus = 'approved'
     } else if (filter === 'inactive') {
-      where.isActive = false
+      where.moderationStatus = { not: 'approved' }
     }
 
     const watches = await prisma.watch.findMany({
@@ -97,7 +97,7 @@ export async function GET(request: NextRequest) {
         watch.brand,
         watch.model,
         watch.price.toFixed(2),
-        watch.isActive ? 'Aktiv' : 'Inaktiv',
+        watch.moderationStatus === 'approved' ? 'Aktiv' : 'Inaktiv',
         watch.seller.nickname || watch.seller.name || '',
         watch.seller.email,
         watch.seller.verified ? 'Ja' : 'Nein',
