@@ -1,6 +1,7 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { ChevronDown, Menu } from 'lucide-react'
 import { CategorySidebarNew } from './CategorySidebarNew'
@@ -144,6 +145,7 @@ export function CategoryBar() {
   const { t, translateSubcategory } = useLanguage()
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
+  const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
 
   return (
     <>
@@ -174,6 +176,7 @@ export function CategoryBar() {
                 return (
                   <div
                     key={category.slug}
+                    ref={el => categoryRefs.current[category.slug] = el}
                     className="relative z-50"
                     onMouseEnter={() => setHoveredCategory(category.slug)}
                     onMouseLeave={() => setHoveredCategory(null)}
@@ -192,30 +195,46 @@ export function CategoryBar() {
                       <span className="sm:hidden">{categoryName.split(' ')[0]}</span>
                     </Link>
 
-                    {/* Flyout für Unterkategorien */}
+                    {/* Flyout für Unterkategorien - Use Portal to render outside overflow container */}
                     {hoveredCategory === category.slug &&
                       category.subcategories &&
-                      category.subcategories.length > 0 && (
-                        <div
-                          className="absolute left-0 top-full z-[10000] mt-1 max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
-                          onMouseEnter={() => setHoveredCategory(category.slug)}
-                          onMouseLeave={() => setHoveredCategory(null)}
-                        >
-                          <h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">
-                            {categoryName}
-                          </h3>
-                          <div className="grid grid-cols-2 gap-2">
-                            {category.subcategories.map(subcat => (
-                              <Link
-                                key={subcat}
-                                href={`/search?category=${category.slug}&subcategory=${encodeURIComponent(subcat)}`}
-                                className="block py-1 text-sm text-gray-700 transition-colors hover:text-primary-600"
-                              >
-                                {translateSubcategory(subcat)}
-                              </Link>
-                            ))}
+                      category.subcategories.length > 0 &&
+                      typeof window !== 'undefined' &&
+                      categoryRefs.current[category.slug] &&
+                      createPortal(
+                        <>
+                          <div
+                            className="fixed inset-0 z-[9999] bg-transparent"
+                            onClick={() => setHoveredCategory(null)}
+                            onMouseEnter={() => setHoveredCategory(null)}
+                          />
+                          <div
+                            className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
+                            onMouseEnter={() => setHoveredCategory(category.slug)}
+                            onMouseLeave={() => setHoveredCategory(null)}
+                            style={{
+                              top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
+                              left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
+                            }}
+                          >
+                            <h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">
+                              {categoryName}
+                            </h3>
+                            <div className="grid grid-cols-2 gap-2">
+                              {category.subcategories.map(subcat => (
+                                <Link
+                                  key={subcat}
+                                  href={`/search?category=${category.slug}&subcategory=${encodeURIComponent(subcat)}`}
+                                  className="block py-1 text-sm text-gray-700 transition-colors hover:text-primary-600"
+                                  onClick={() => setHoveredCategory(null)}
+                                >
+                                  {translateSubcategory(subcat)}
+                                </Link>
+                              ))}
+                            </div>
                           </div>
-                        </div>
+                        </>,
+                        document.body
                       )}
                   </div>
                 )
