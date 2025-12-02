@@ -175,19 +175,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         yPos,
         { align: 'right' }
       )
-    } else if (invoice.originalInvoice) {
+    } else if (invoice.originalInvoiceId && (invoice as any).originalInvoice) {
       // Zeige Verweis auf ursprüngliche Rechnung bei Korrektur-Rechnungen
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(100, 100, 100)
       pdf.text(
-        `Storniert Rechnung: ${invoice.originalInvoice.invoiceNumber}`,
+        `Storniert Rechnung: ${(invoice as any).originalInvoice.invoiceNumber}`,
         pageWidth - margin,
         yPos,
         { align: 'right' }
       )
       yPos += 5
       pdf.text(
-        `vom ${new Date(invoice.originalInvoice.createdAt).toLocaleDateString('de-CH')}`,
+        `vom ${new Date((invoice as any).originalInvoice.createdAt).toLocaleDateString('de-CH')}`,
         pageWidth - margin,
         yPos,
         { align: 'right' }
@@ -671,7 +671,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       pdf.setTextColor(0, 0, 0)
 
       // Verweis auf ursprüngliche Rechnung
-      if (invoice.originalInvoice) {
+      if (invoice.originalInvoiceId && (invoice as any).originalInvoice) {
         pdf.text(
           `Storniert Rechnung: ${invoice.originalInvoice.invoiceNumber} vom ${new Date(invoice.originalInvoice.createdAt).toLocaleDateString('de-CH')}`,
           margin + 5,
