@@ -83,9 +83,8 @@ export default function RegisterPage() {
       if (response.ok) {
         const data = await response.json()
 
-        // IMMER zur "Check your email" Seite weiterleiten (wie bei Resend)
-        // KEIN Link zur manuellen Bestätigung mehr - nur über E-Mail!
-        router.push(`/check-email?email=${encodeURIComponent(formData.email.trim())}`)
+        // Email verification disabled - redirect to login page
+        router.push(`/login?registered=true&email=${encodeURIComponent(formData.email.trim())}`)
       } else {
         const data = await response.json()
         setError(data.message || 'Ein Fehler ist aufgetreten')

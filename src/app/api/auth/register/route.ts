@@ -1,8 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import bcrypt from 'bcryptjs'
 import { prisma } from '@/lib/prisma'
-import crypto from 'crypto'
-import { sendEmail, getEmailVerificationEmail } from '@/lib/email'
 
 export async function POST(request: NextRequest) {
   try {
@@ -55,12 +53,7 @@ export async function POST(request: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 12)
 
-    // Generate email verification token
-    const verificationToken = crypto.randomBytes(32).toString('hex')
-    const tokenExpires = new Date()
-    tokenExpires.setHours(tokenExpires.getHours() + 24) // Token gültig für 24 Stunden
-
-    // Create user
+    // Create user with emailVerified: true (email verification disabled)
     const user = await prisma.user.create({
       data: {
         firstName,
@@ -69,87 +62,21 @@ export async function POST(request: NextRequest) {
         name: `${firstName} ${lastName}`, // Für Kompatibilität
         email: normalizedEmail,
         password: hashedPassword,
-        emailVerified: false,
-        emailVerificationToken: verificationToken,
-        emailVerificationTokenExpires: tokenExpires,
+        emailVerified: true, // Email verification disabled - users can login immediately
+        emailVerifiedAt: new Date(), // Set verification date to now
       },
     })
 
-    // E-Mail versenden mit Bestätigungslink (E-Mail-Bestätigung erforderlich)
-    const baseUrl =
-      process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'
-    const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`
-
-    console.log('\n📧 ===== REGISTRIERUNG: E-MAIL-VERSAND =====')
-    console.log(`[register] User: ${firstName} ${lastName}`)
-    console.log(`[register] Email: ${normalizedEmail}`)
-    console.log(`[register] Verification URL: ${verificationUrl}`)
-    console.log(`[register] Base URL: ${baseUrl}`)
-
-    let emailSent = false
-    let emailError: string | null = null
-    
-    try {
-      const { subject, html, text } = getEmailVerificationEmail(firstName, verificationUrl)
-
-      console.log(`[register] E-Mail-Template generiert:`)
-      console.log(`  Subject: ${subject}`)
-      console.log(`  HTML Length: ${html.length} Zeichen`)
-      console.log(`  To Email: ${normalizedEmail}`)
-      console.log(`  Verification URL: ${verificationUrl}`)
-
-      const emailResult = await sendEmail({
-        to: normalizedEmail,
-        subject,
-        html,
-        text,
-      })
-
-      console.log(`[register] E-Mail-Versand Ergebnis:`)
-      console.log(`  Success: ${emailResult.success}`)
-      console.log(`  Method: ${emailResult.method}`)
-      console.log(`  Message ID: ${emailResult.messageId || 'N/A'}`)
-      console.log(`  Error: ${emailResult.error || 'Keine'}`)
-
-      if (emailResult.success) {
-        emailSent = true
-        console.log(`[register] ✅ E-Mail-Bestätigung erfolgreich gesendet an ${normalizedEmail}`)
-      } else {
-        emailError = emailResult.error || 'Unbekannter Fehler'
-        console.error(`[register] ❌ Fehler beim Senden der E-Mail-Bestätigung:`)
-        console.error(`  Error: ${emailError}`)
-        console.error(`  Method: ${emailResult.method}`)
-        // Versuche trotzdem fortzufahren, aber logge den Fehler
-      }
-    } catch (emailErrorException: any) {
-      emailError = emailErrorException.message || 'Unbekannte Exception'
-      console.error('[register] ❌ Exception beim Senden der E-Mail-Bestätigung:')
-      console.error(`  Message: ${emailErrorException.message}`)
-      console.error(`  Stack: ${emailErrorException.stack}`)
-      // Versuche trotzdem fortzufahren
-    }
-
-    console.log(`[register] Email Sent Flag: ${emailSent}`)
-    console.log('📧 ===== REGISTRIERUNG: E-MAIL-VERSAND ENDE =====\n')
-
-    // Token zurückgeben wenn E-Mail nicht versendet werden konnte
-    // Damit kann der User sich manuell verifizieren oder Admin kann helfen
-    const shouldReturnToken = !emailSent
+    console.log(`[register] ✅ User created: ${firstName} ${lastName} (${normalizedEmail})`)
+    console.log(`[register] Email verification disabled - user can login immediately`)
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user
 
     return NextResponse.json(
       {
-        message: emailSent
-          ? 'Benutzer erfolgreich erstellt. Bitte überprüfen Sie Ihr E-Mail-Postfach und klicken Sie auf den Bestätigungslink.'
-          : 'Benutzer erfolgreich erstellt. Bitte überprüfen Sie Ihr E-Mail-Postfach. Falls keine E-Mail ankommt, kontaktieren Sie bitte den Support.',
+        message: 'Benutzer erfolgreich erstellt. Sie können sich jetzt anmelden.',
         user: userWithoutPassword,
-        // Token zurückgeben wenn E-Mail nicht versendet werden konnte (für manuelle Verifizierung)
-        verificationToken: shouldReturnToken ? verificationToken : undefined,
-        verificationUrl: shouldReturnToken ? verificationUrl : undefined,
-        emailSent: emailSent,
-        emailError: emailError || undefined,
       },
       { status: 201 }
     )

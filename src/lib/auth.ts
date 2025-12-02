@@ -70,21 +70,8 @@ export const authOptions = {
             emailVerified: user.emailVerified,
           })
 
-          // Prüfe ob E-Mail bestätigt ist (E-Mail-Bestätigung erforderlich)
-          // AUSNAHME: Admins können sich auch ohne E-Mail-Verifizierung einloggen
+          // Email verification check disabled - users can login immediately after registration
           const isAdmin = user.isAdmin === true
-
-          // Prüfe emailVerified explizit auf true, 1, oder String 'true'
-          const emailVerified = Boolean(user.emailVerified)
-
-          if (!emailVerified && !isAdmin) {
-            console.log('[AUTH] Email not verified:', normalizedEmail, 'emailVerified value:', user.emailVerified)
-            throw new Error('EMAIL_NOT_VERIFIED')
-          }
-
-          if (isAdmin && !user.emailVerified) {
-            console.log('[AUTH] Admin login without email verification - allowed')
-          }
 
           // Prüfe ob Benutzer blockiert ist
           // Prüfe explizit auf true, 1, oder String 'true'
@@ -134,10 +121,7 @@ export const authOptions = {
             stack: error.stack?.substring(0, 500), // Limit stack trace
           })
 
-          // Wenn es ein EMAIL_NOT_VERIFIED Error ist, werfe ihn weiter
-          if (error.message === 'EMAIL_NOT_VERIFIED' || error.name === 'EmailNotVerified') {
-            throw error
-          }
+          // Email verification errors are no longer thrown
 
           return null
         }
