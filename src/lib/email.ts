@@ -62,7 +62,13 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
         console.error('   Name:', result.error.name)
         console.error('   Message:', result.error.message)
         console.error('   Full Error:', JSON.stringify(result.error, null, 2))
-        throw new Error(result.error.message || 'Resend Fehler')
+        // Return error instead of throwing, so we can log it properly
+        return {
+          success: false,
+          error: result.error.message || `Resend Fehler: ${result.error.statusCode || 'Unknown'}`,
+          method: 'resend',
+          statusCode: result.error.statusCode,
+        }
       }
 
       console.log('✅ E-Mail via Resend erfolgreich versendet!')
