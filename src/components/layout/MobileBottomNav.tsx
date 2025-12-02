@@ -15,6 +15,8 @@ export function MobileBottomNav() {
   const hideOnPages = ['/login', '/register', '/admin']
   const shouldHide = hideOnPages.some(page => pathname?.startsWith(page))
 
+  // Nur auf sehr kleinen Bildschirmen anzeigen (< 640px) - Web-First Ansatz
+  // Auf größeren Bildschirmen verwenden wir den Header
   if (shouldHide) return null
 
   const navItems = [
@@ -56,7 +58,7 @@ export function MobileBottomNav() {
   }
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white shadow-lg md:hidden">
+    <nav className="fixed bottom-0 left-0 right-0 z-50 border-t border-gray-200 bg-white shadow-lg sm:hidden">
       <div className="flex h-16 items-center justify-around">
         {navItems.map(item => {
           const Icon = item.icon
@@ -94,4 +96,3 @@ export function MobileBottomNav() {
     </nav>
   )
 }
-

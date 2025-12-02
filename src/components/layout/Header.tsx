@@ -252,17 +252,20 @@ export function Header() {
             </Link>
           </div>
 
-          {/* Navigation */}
-          <div className="ml-8 hidden flex-1 items-center justify-start space-x-6 md:flex">
+          {/* Navigation - Responsive: Icons auf Mobile, Text auf Desktop */}
+          {/* Verstecke auf sehr kleinen Bildschirmen (wird durch Hamburger-Menü ersetzt) */}
+          <div className="ml-2 hidden flex-1 items-center justify-start space-x-1 sm:flex sm:space-x-2 md:ml-8 md:space-x-6">
+            {/* Favoriten - Icon auf Mobile, Icon + Text auf Desktop */}
             {session ? (
               <Link
                 href="/favorites"
-                className="relative flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-primary-600"
+                className="relative flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+                title={t.header.favorites}
               >
-                <Heart className="h-4 w-4" />
-                {t.header.favorites}
+                <Heart className="h-5 w-5 sm:h-4 sm:w-4" />
+                <span className="hidden text-sm font-medium sm:inline">{t.header.favorites}</span>
                 {favoritesCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:w-5 sm:text-xs">
                     {favoritesCount > 9 ? '9+' : favoritesCount}
                   </span>
                 )}
@@ -270,20 +273,23 @@ export function Header() {
             ) : (
               <button
                 onClick={() => alert(t.header.pleaseLoginForFavorites)}
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-primary-600"
+                className="flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+                title={t.header.favorites}
               >
-                <Heart className="h-4 w-4" />
-                {t.header.favorites}
+                <Heart className="h-5 w-5 sm:h-4 sm:w-4" />
+                <span className="hidden text-sm font-medium sm:inline">{t.header.favorites}</span>
               </button>
             )}
+            {/* Auktionen - Icon auf Mobile, Icon + Text auf Desktop */}
             <Link
               href="/auctions"
-              className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-primary-600"
+              className="flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+              title={t.header.auctions}
             >
-              <Gavel className="h-4 w-4" />
-              {t.header.auctions}
+              <Gavel className="h-5 w-5 sm:h-4 sm:w-4" />
+              <span className="hidden text-sm font-medium sm:inline">{t.header.auctions}</span>
             </Link>
-            {/* Verkaufen Dropdown */}
+            {/* Verkaufen Dropdown - Icon auf Mobile, Icon + Text auf Desktop */}
             <div
               className="relative"
               onMouseEnter={() => setIsSellMenuOpen(true)}
@@ -291,11 +297,12 @@ export function Header() {
             >
               <Link
                 href="/sell"
-                className="flex items-center gap-2 rounded-md px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:text-primary-600"
+                className="flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+                title={t.header.sell}
               >
-                <Plus className="h-4 w-4" />
-                {t.header.sell}
-                <ChevronDown className="h-3 w-3" />
+                <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
+                <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
+                <ChevronDown className="hidden h-3 w-3 sm:block" />
               </Link>
 
               {/* Dropdown Menu */}
@@ -322,30 +329,32 @@ export function Header() {
             </div>
           </div>
 
-          {/* User Actions - Rechts */}
-          <div className="flex items-center space-x-1 md:space-x-3">
-            {/* Notifications - Mobile nur Icon */}
+          {/* User Actions - Rechts - IMMER SICHTBAR */}
+          <div className="flex items-center space-x-1 sm:space-x-2 md:space-x-3">
+            {/* Notifications - Icon auf Mobile, Icon + Text auf Desktop */}
             <Link
               href="/notifications"
-              className="relative flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 md:gap-2 md:px-3 md:py-2"
+              className="relative flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+              title={t.header.notifications}
             >
               <div className="relative">
-                <Bell className="h-5 w-5 md:h-5 md:w-5" />
+                <Bell className="h-5 w-5" />
                 {unreadNotifications > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white md:-right-2 md:-top-2 md:h-5 md:w-5 md:text-xs">
+                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white sm:-right-2 sm:-top-2 sm:h-5 sm:w-5 sm:text-xs">
                     {unreadNotifications > 9 ? '9+' : unreadNotifications}
                   </span>
                 )}
               </div>
-              <span className="hidden font-medium md:inline">{t.header.notifications}</span>
+              <span className="hidden text-sm font-medium sm:inline">{t.header.notifications}</span>
             </Link>
 
-            {/* User Menu */}
-            <div className="relative flex items-center space-x-2">
+            {/* User Menu - IMMER SICHTBAR */}
+            <div className="relative flex items-center space-x-1 sm:space-x-2">
               {session ? (
                 <>
-                  <div className="mr-2 flex hidden items-center gap-1 text-sm text-gray-700 md:block">
-                    {t.header.hello},{' '}
+                  {/* Begrüßung - Versteckt auf sehr kleinen Bildschirmen */}
+                  <div className="mr-1 hidden items-center gap-1 text-xs text-gray-700 sm:flex md:text-sm">
+                    <span className="hidden lg:inline">{t.header.hello},</span>
                     <UserName
                       userId={session.user.id}
                       userName={
@@ -357,12 +366,12 @@ export function Header() {
                   <div className="relative">
                     <button
                       onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                      className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 px-2 py-1 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                      className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 p-1 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:px-2 sm:py-1"
                       title={t.header.profileMenu}
                     >
                       <Link
                         href={session.user?.id ? `/users/${session.user.id}` : '/profile'}
-                        className="flex h-8 w-8 items-center justify-center rounded-full bg-primary-700 transition-opacity hover:opacity-80"
+                        className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 transition-opacity hover:opacity-80 sm:h-8 sm:w-8"
                         onClick={e => e.stopPropagation()}
                       >
                         {getProfileImage() ? (
@@ -372,13 +381,13 @@ export function Header() {
                             className="h-full w-full rounded-full object-cover"
                           />
                         ) : (
-                          <span className="text-xs font-semibold">
+                          <span className="text-[10px] font-semibold sm:text-xs">
                             {getInitials(session.user?.name)}
                           </span>
                         )}
                       </Link>
                       <ChevronDown
-                        className={`h-4 w-4 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`}
+                        className={`hidden h-3 w-3 transition-transform sm:block sm:h-4 sm:w-4 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
                       />
                     </button>
 
@@ -570,34 +579,32 @@ export function Header() {
                 </>
               ) : (
                 <>
-                  <button className="p-2 text-gray-400 hover:text-gray-500">
-                    <User className="h-6 w-6" />
-                  </button>
-                  <div className="hidden md:block">
-                    <Link
-                      href="/login"
-                      className="rounded-md px-3 py-2 text-sm font-medium text-gray-700 hover:text-primary-600"
-                    >
-                      {t.header.login}
-                    </Link>
-                  </div>
+                  {/* Login - Icon auf Mobile, Icon + Text auf Desktop */}
+                  <Link
+                    href="/login"
+                    className="flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+                    title={t.header.login}
+                  >
+                    <User className="h-5 w-5 sm:h-4 sm:w-4" />
+                    <span className="hidden text-sm font-medium sm:inline">{t.header.login}</span>
+                  </Link>
                 </>
               )}
             </div>
 
-            {/* Language Selector - Far Right */}
-            <div className="relative hidden md:block">
+            {/* Language Selector - Far Right - Icon auf Mobile */}
+            <div className="relative">
               <button
                 onClick={() => setIsLanguageMenuOpen(!isLanguageMenuOpen)}
-                className="flex items-center gap-1 rounded-md px-3 py-2 font-medium text-gray-700 transition-colors hover:text-primary-600"
+                className="flex items-center gap-1 rounded-md p-2 font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-1 sm:px-3 sm:py-2"
                 title={t.header.selectLanguage}
               >
-                <span className="text-lg">{languages.find(l => l.code === language)?.flag}</span>
-                <span className="text-sm">
+                <span className="text-base sm:text-lg">{languages.find(l => l.code === language)?.flag}</span>
+                <span className="hidden text-xs sm:inline sm:text-sm">
                   {languages.find(l => l.code === language)?.code.toUpperCase()}
                 </span>
                 <ChevronDown
-                  className={`h-4 w-4 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`}
+                  className={`hidden h-3 w-3 transition-transform sm:block sm:h-4 sm:w-4 ${isLanguageMenuOpen ? 'rotate-180' : ''}`}
                 />
               </button>
 
@@ -636,18 +643,19 @@ export function Header() {
               )}
             </div>
 
-            {/* Mobile menu button */}
+            {/* Hamburger Menu Button - Zeige wenn Navigation nicht sichtbar */}
             <button
               onClick={() => setIsMenuOpen(!isMenuOpen)}
-              className="p-2 text-gray-400 hover:text-gray-500 md:hidden"
+              className="ml-2 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-gray-900 lg:hidden"
+              title="Menü"
             >
-              <Menu className="h-6 w-6" />
+              <Menu className="h-5 w-5" />
             </button>
           </div>
         </div>
 
-        {/* ZWEITE ZEILE: Suchleiste - ZENTRIERT */}
-        <div className="hidden border-t border-gray-200 py-3 md:block">
+        {/* ZWEITE ZEILE: Suchleiste - ZENTRIERT - Versteckt auf sehr kleinen Bildschirmen */}
+        <div className="hidden border-t border-gray-200 py-3 sm:block">
           <div className="flex items-center justify-center">
             {/* Suchleiste - Zentriert */}
             <div className="max-w-3xl flex-1">
@@ -696,18 +704,46 @@ export function Header() {
           </form>
         </div>
 
-        {/* Mobile Menu */}
+        {/* Mobile Menu - Zeige wenn Hamburger-Menü geöffnet */}
         {isMenuOpen && (
-          <div className="md:hidden">
+          <div className="lg:hidden">
             <div className="space-y-1 border-t px-2 pb-3 pt-2 sm:px-3">
               <Link
                 href="/categories"
+                onClick={() => setIsMenuOpen(false)}
                 className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
               >
                 {t.header.categories}
               </Link>
+              {session ? (
+                <Link
+                  href="/favorites"
+                  onClick={() => setIsMenuOpen(false)}
+                  className="relative flex items-center rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
+                >
+                  <Heart className="mr-2 h-5 w-5" />
+                  {t.header.favorites}
+                  {favoritesCount > 0 && (
+                    <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                      {favoritesCount > 9 ? '9+' : favoritesCount}
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <button
+                  onClick={() => {
+                    setIsMenuOpen(false)
+                    alert(t.header.pleaseLoginForFavorites)
+                  }}
+                  className="flex w-full items-center rounded-md px-3 py-2 text-left text-base font-medium text-gray-700 hover:text-primary-600"
+                >
+                  <Heart className="mr-2 h-5 w-5" />
+                  {t.header.favorites}
+                </button>
+              )}
               <Link
                 href="/auctions"
+                onClick={() => setIsMenuOpen(false)}
                 className="block rounded-md px-3 py-2 text-base font-medium text-gray-700 hover:text-primary-600"
               >
                 {t.header.auctions}
