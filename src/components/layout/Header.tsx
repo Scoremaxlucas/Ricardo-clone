@@ -241,13 +241,14 @@ export function Header() {
 
   return (
     <header className="sticky top-0 z-50 border-b bg-white shadow-md">
-      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-[1600px] px-2 sm:px-4 md:px-6 lg:px-8">
         {/* ERSTE ZEILE: Logo, Navigation, User Actions */}
-        <div className="flex h-12 items-center justify-between py-1">
-          {/* Logo */}
+        <div className="flex h-12 items-center justify-between py-1 md:h-14">
+          {/* Logo - Mobile kleiner */}
           <div className="flex-shrink-0">
             <Link href="/" className="flex items-center">
-              <Logo size="md" />
+              <Logo size="sm" className="md:hidden" />
+              <Logo size="md" className="hidden md:block" />
             </Link>
           </div>
 
@@ -322,15 +323,16 @@ export function Header() {
           </div>
 
           {/* User Actions - Rechts */}
-          <div className="flex items-center space-x-3">
+          <div className="flex items-center space-x-1 md:space-x-3">
+            {/* Notifications - Mobile nur Icon */}
             <Link
               href="/notifications"
-              className="relative flex items-center gap-2 px-3 py-2 text-gray-700 transition-colors hover:text-primary-600"
+              className="relative flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 md:gap-2 md:px-3 md:py-2"
             >
               <div className="relative">
-                <Bell className="h-5 w-5" />
+                <Bell className="h-5 w-5 md:h-5 md:w-5" />
                 {unreadNotifications > 0 && (
-                  <span className="absolute -right-2 -top-2 flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-xs font-bold text-white">
+                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white md:-right-2 md:-top-2 md:h-5 md:w-5 md:text-xs">
                     {unreadNotifications > 9 ? '9+' : unreadNotifications}
                   </span>
                 )}
@@ -676,19 +678,19 @@ export function Header() {
         {/* DRITTE ZEILE: CategoryBar mit Kategorien */}
         <CategoryBar />
 
-        {/* Mobile Search */}
-        <div className="pb-4 md:hidden">
+        {/* Mobile Search - Kompakter */}
+        <div className="border-t border-gray-200 px-2 pb-2 pt-2 md:hidden">
           <form onSubmit={handleSearch}>
             <div className="relative">
               <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search className="h-5 w-5 text-gray-400" />
+                <Search className="h-4 w-4 text-gray-400" />
               </div>
               <input
                 type="text"
                 placeholder={t.header.searchPlaceholder}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 py-2 pl-10 pr-3 text-gray-900 focus:border-transparent focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="block w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
               />
             </div>
           </form>

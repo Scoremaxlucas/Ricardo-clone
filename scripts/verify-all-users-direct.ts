@@ -2,7 +2,7 @@
 /**
  * Direct script to verify all users in the database
  * This can be run locally and will update the production database
- * 
+ *
  * Usage: DATABASE_URL="your-db-url" npx tsx scripts/verify-all-users-direct.ts
  */
 
@@ -28,14 +28,8 @@ async function main() {
   }
 
   try {
-    // Finde alle Benutzer mit emailVerified: false oder null
-    const unverifiedUsers = await prisma.user.findMany({
-      where: {
-        OR: [
-          { emailVerified: false },
-          { emailVerified: null },
-        ],
-      },
+    // Hole alle Benutzer und filtere die, die nicht verifiziert sind
+    const allUsers = await prisma.user.findMany({
       select: {
         id: true,
         email: true,
@@ -43,20 +37,29 @@ async function main() {
       },
     })
 
-    console.log(`📊 Gefundene Benutzer ohne Verifizierung: ${unverifiedUsers.length}`)
+    // Filtere Benutzer mit emailVerified: false oder null
+    const unverifiedUsers = allUsers.filter(
+      user => user.emailVerified === false || user.emailVerified === null
+    )
+
+    console.log(`📊 Gesamt Benutzer: ${allUsers.length}`)
+    console.log(`📊 Benutzer ohne Verifizierung: ${unverifiedUsers.length}`)
 
     if (unverifiedUsers.length === 0) {
       console.log('✅ Alle Benutzer sind bereits verifiziert!')
       return
     }
 
-    // Aktualisiere alle Benutzer
+    // Aktualisiere alle nicht verifizierten Benutzer
+    // Verwende updateMany mit OR-Bedingung oder einzelne Updates
+    const userIds = unverifiedUsers.map(u => u.id)
+
+    // Aktualisiere alle auf einmal
     const result = await prisma.user.updateMany({
       where: {
-        OR: [
-          { emailVerified: false },
-          { emailVerified: null },
-        ],
+        id: {
+          in: userIds,
+        },
       },
       data: {
         emailVerified: true,

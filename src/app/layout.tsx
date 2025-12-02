@@ -4,6 +4,7 @@ import './globals.css'
 import { Providers } from '@/components/providers'
 import { Toaster } from 'react-hot-toast'
 import { EmmaChat } from '@/components/emma/EmmaChat'
+import { MobileBottomNav } from '@/components/layout/MobileBottomNav'
 
 const inter = Inter({ subsets: ['latin'] })
 
@@ -18,7 +19,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="de" className="h-full">
       <body className={`${inter.className} flex min-h-screen flex-col`}>
         <Providers>
-          <div className="flex flex-1 flex-col">{children}</div>
+          <div className="flex flex-1 flex-col pb-16 md:pb-0">{children}</div>
+          <MobileBottomNav />
           <Toaster
             position="top-right"
             toastOptions={{

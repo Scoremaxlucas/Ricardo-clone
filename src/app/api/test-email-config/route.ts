@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
       try {
         const resend = new Resend(resendApiKey)
         resendClientStatus = 'initialized'
-        
+
         // Versuche eine Test-Email zu senden
         const testResult = await resend.emails.send({
           from: resendFromEmail || 'onboarding@resend.dev',
@@ -24,7 +24,7 @@ export async function GET(request: NextRequest) {
           subject: 'Test Email from Helvenda',
           html: '<h1>Test Email</h1><p>This is a test email to verify Resend configuration.</p>',
         })
-        
+
         resendTestResult = {
           success: !testResult.error,
           error: testResult.error,

@@ -29,6 +29,7 @@ export const fr: Translation = {
     selectLanguage: 'Sélectionner la langue',
     search: 'Rechercher',
     profile: 'Profil',
+    home: 'Accueil',
   },
 
   home: {

@@ -30,6 +30,7 @@ export const en: Translation = {
     selectLanguage: 'Select language',
     search: 'Search',
     profile: 'Profile',
+    home: 'Home',
   },
 
   // Homepage

@@ -207,17 +207,17 @@ export function ProductCard({
             </div>
           )}
 
-          {/* Favorite Button */}
+          {/* Favorite Button - Größer auf Mobile */}
           <button
             onClick={handleFavoriteClick}
-            className={`absolute right-1.5 top-1.5 z-10 rounded-full p-1 shadow-md transition-all ${
+            className={`absolute right-1.5 top-1.5 z-10 rounded-full p-1.5 shadow-md transition-all md:p-1 ${
               isFavorite
                 ? 'bg-red-500 text-white hover:bg-red-600'
                 : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
             } ${isLoadingFavorite ? 'cursor-wait opacity-50' : ''}`}
             aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
           >
-            <Heart className={`h-3 w-3 ${isFavorite ? 'fill-current' : ''}`} />
+            <Heart className={`h-4 w-4 md:h-3 md:w-3 ${isFavorite ? 'fill-current' : ''}`} />
           </button>
 
           {/* Booster Badges */}
@@ -238,18 +238,18 @@ export function ProductCard({
           )}
         </div>
 
-        <div className="p-2">
+        <div className="p-2 md:p-2">
           {product.brand && (
-            <div className="mb-1 truncate text-xs font-medium text-primary-600">
+            <div className="mb-1 truncate text-xs font-medium text-primary-600 md:text-xs">
               {product.brand}
             </div>
           )}
           <div className="mb-1 flex items-center justify-between">
-            <div className="text-sm font-bold text-gray-900">
+            <div className="text-base font-bold text-gray-900 md:text-sm">
               {formatPrice(product.currentBid || product.price)}
             </div>
             {product.buyNowPrice && (
-              <div className="text-xs text-gray-500">
+              <div className="text-xs text-gray-500 md:text-xs">
                 Sofort: {formatPrice(product.buyNowPrice)}
               </div>
             )}
@@ -260,7 +260,7 @@ export function ProductCard({
               <span className="text-xs font-medium text-orange-600">Auktion</span>
             </div>
           )}
-          <div className="mb-1 line-clamp-2 min-h-[40px] text-sm font-medium leading-tight text-gray-900">
+          <div className="mb-1 line-clamp-2 min-h-[44px] text-sm font-medium leading-tight text-gray-900 md:min-h-[40px] md:text-sm">
             {product.title}
           </div>
           {/* Location - IMMER sichtbar, sehr prominent - AUSSERHALB des flex-wrap Containers */}

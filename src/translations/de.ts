@@ -28,6 +28,7 @@ export const de = {
     selectLanguage: 'Sprache wählen',
     search: 'Suchen',
     profile: 'Profil',
+    home: 'Home',
   },
 
   // Homepage
