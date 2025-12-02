@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import {
@@ -31,6 +31,10 @@ export function Header() {
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false)
   const [isSellMenuOpen, setIsSellMenuOpen] = useState(false)
   const [profileImage, setProfileImage] = useState<string | null>(null)
+  const [profileDropdownPosition, setProfileDropdownPosition] = useState({ top: 0, right: 0 })
+  const [languageDropdownPosition, setLanguageDropdownPosition] = useState({ top: 0, right: 0 })
+  const profileButtonRef = useRef<HTMLButtonElement>(null)
+  const languageButtonRef = useRef<HTMLButtonElement>(null)
   const [searchQuery, setSearchQuery] = useState('')
   const [userNickname, setUserNickname] = useState<string | null>(null)
   const [isAdmin, setIsAdmin] = useState<boolean>(false)
@@ -408,12 +412,18 @@ export function Header() {
                           }}
                         />
                         <div
-                          className="absolute right-0 top-full z-[60] mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
+                          className="fixed z-[60] w-56 rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5"
                           onClick={(e) => {
-                            console.log('Dropdown clicked')
+                            console.log('Dropdown clicked, isProfileMenuOpen:', isProfileMenuOpen)
                             e.stopPropagation()
                           }}
-                          style={{ display: 'block' }}
+                          style={{ 
+                            display: 'block',
+                            visibility: 'visible',
+                            opacity: 1,
+                            top: `${profileDropdownPosition.top}px`,
+                            right: `${profileDropdownPosition.right}px`
+                          }}
                         >
                           <div className="relative py-1" style={{ pointerEvents: 'auto' }}>
                             <div className="border-b border-gray-200 px-4 py-3">
@@ -598,6 +608,13 @@ export function Header() {
                   e.preventDefault()
                   e.stopPropagation()
                   console.log('Language button clicked, current state:', isLanguageMenuOpen)
+                  if (languageButtonRef.current) {
+                    const rect = languageButtonRef.current.getBoundingClientRect()
+                    setLanguageDropdownPosition({
+                      top: rect.bottom + 8,
+                      right: window.innerWidth - rect.right
+                    })
+                  }
                   setIsLanguageMenuOpen(!isLanguageMenuOpen)
                 }}
                 className="flex items-center justify-center rounded-md p-1.5 font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:p-2"
@@ -620,8 +637,8 @@ export function Header() {
                       setIsLanguageMenuOpen(false)
                     }}
                   />
-                  <div 
-                    className="absolute right-0 top-full z-[60] mt-2 w-48 rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5"
+                  <div
+                    className="fixed z-[60] w-48 rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5"
                     onClick={(e) => {
                       console.log('Language dropdown clicked, isLanguageMenuOpen:', isLanguageMenuOpen)
                       e.stopPropagation()
@@ -630,7 +647,8 @@ export function Header() {
                       display: 'block',
                       visibility: 'visible',
                       opacity: 1,
-                      pointerEvents: 'auto'
+                      top: `${languageDropdownPosition.top}px`,
+                      right: `${languageDropdownPosition.right}px`
                     }}
                   >
                     <div className="py-1">
