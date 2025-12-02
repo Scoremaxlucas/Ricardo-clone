@@ -2098,6 +2098,7 @@ export async function GET(request: NextRequest) {
 
       // Prüfe zuerst, ob Watches mit Kategorie-Verknüpfung vorhanden sind
       const watchesWithCategoryLink = watchesWithImages.filter(watch => {
+        if (!watch) return false
         return watch.categorySlugs?.some(slug => {
           const slugLower = slug?.toLowerCase().trim()
           return categoryVariants.some(variant => {
