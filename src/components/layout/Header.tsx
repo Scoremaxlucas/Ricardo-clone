@@ -623,14 +623,14 @@ export function Header() {
                   <div 
                     className="absolute right-0 top-full z-[60] mt-2 w-48 rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5"
                     onClick={(e) => {
-                      console.log('Language dropdown clicked')
+                      console.log('Language dropdown clicked, isLanguageMenuOpen:', isLanguageMenuOpen)
                       e.stopPropagation()
                     }}
                     style={{
-                      position: 'absolute',
-                      top: '100%',
-                      right: 0,
-                      marginTop: '8px',
+                      display: 'block',
+                      visibility: 'visible',
+                      opacity: 1,
+                      pointerEvents: 'auto'
                     }}
                   >
                     <div className="py-1">
