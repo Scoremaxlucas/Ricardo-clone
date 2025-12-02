@@ -174,7 +174,7 @@ export function CategoryBar() {
                 return (
                   <div
                     key={category.slug}
-                    className="relative"
+                    className="relative z-50"
                     onMouseEnter={() => setHoveredCategory(category.slug)}
                     onMouseLeave={() => setHoveredCategory(null)}
                   >
@@ -197,8 +197,7 @@ export function CategoryBar() {
                       category.subcategories &&
                       category.subcategories.length > 0 && (
                         <div
-                          className="absolute left-0 top-full mt-1 max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
-                          style={{ zIndex: 9999 }}
+                          className="absolute left-0 top-full z-[10000] mt-1 max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
                           onMouseEnter={() => setHoveredCategory(category.slug)}
                           onMouseLeave={() => setHoveredCategory(null)}
                         >

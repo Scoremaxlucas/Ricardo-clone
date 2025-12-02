@@ -19,15 +19,14 @@ export function Logo({ className = '', size = 'md' }: LogoProps) {
   }
 
   return (
-    <div className={`flex items-center ${className}`}>
+    <div className={`inline-flex items-center ${className}`}>
       {/* Simple H */}
-      <div className={`${sizeClasses[size]} flex-shrink-0 flex items-center justify-center`}>
+      <div className={`${sizeClasses[size]} flex-shrink-0`}>
         <svg
           viewBox="0 0 40 40"
-          className="h-full w-full block"
+          className="h-full w-full"
           fill="none"
           xmlns="http://www.w3.org/2000/svg"
-          style={{ display: 'block', verticalAlign: 'middle' }}
         >
           <rect width="40" height="40" rx="8" fill="#0f766e" />
           <path
@@ -41,14 +40,14 @@ export function Logo({ className = '', size = 'md' }: LogoProps) {
       </div>
 
       {/* Text */}
-      <div className={`ml-2.5 ${size === 'sm' ? 'ml-2' : ''} flex items-center`}>
-        <span className={`${textSizeClasses[size]} font-bold text-gray-900 leading-none`}>Helvenda</span>
+      <span className={`ml-2.5 ${size === 'sm' ? 'ml-2' : ''} inline-flex items-baseline gap-0.5`}>
+        <span className={`${textSizeClasses[size]} font-bold text-gray-900`}>Helvenda</span>
         <span
-          className={`ml-0.5 ${size === 'sm' ? 'text-[10px]' : size === 'md' ? 'text-xs' : 'text-sm'} text-gray-500 leading-none`}
+          className={`${size === 'sm' ? 'text-[10px]' : size === 'md' ? 'text-xs' : 'text-sm'} text-gray-500`}
         >
           .ch
         </span>
-      </div>
+      </span>
     </div>
   )
 }
