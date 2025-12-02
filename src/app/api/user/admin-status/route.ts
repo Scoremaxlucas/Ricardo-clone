@@ -42,11 +42,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Prüfe explizit auf true, 1, oder '1'
-    const isAdminValue =
-      user?.isAdmin === true ||
-      user?.isAdmin === true ||
-      user?.isAdmin === '1' ||
-      user?.isAdmin === 'true'
+    const isAdminValue = user?.isAdmin === true
 
     console.log('Final isAdmin value:', isAdminValue)
 
