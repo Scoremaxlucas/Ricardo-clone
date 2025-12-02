@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
 import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import { ChevronDown, Menu } from 'lucide-react'
@@ -147,6 +147,105 @@ export function CategoryBar() {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
   const categoryMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null)
+
+  // Cleanup timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (categoryMenuTimeoutRef.current) {
+        clearTimeout(categoryMenuTimeoutRef.current)
+        categoryMenuTimeoutRef.current = null
+      }
+    }
+  }, [])
+
+  // Optimized handlers with useCallback
+  const handleCategoryEnter = useCallback((slug: string) => {
+    if (categoryMenuTimeoutRef.current) {
+      clearTimeout(categoryMenuTimeoutRef.current)
+      categoryMenuTimeoutRef.current = null
+    }
+    setHoveredCategory(slug)
+  }, [])
+
+  const handleCategoryLeave = useCallback(() => {
+    categoryMenuTimeoutRef.current = setTimeout(() => {
+      setHoveredCategory(null)
+      setDropdownPosition(null)
+    }, 250)
+  }, [])
+
+  const handleBridgeEnter = useCallback((slug: string) => {
+    if (categoryMenuTimeoutRef.current) {
+      clearTimeout(categoryMenuTimeoutRef.current)
+      categoryMenuTimeoutRef.current = null
+    }
+    setHoveredCategory(slug)
+  }, [])
+
+  const handleBridgeLeave = useCallback(() => {
+    categoryMenuTimeoutRef.current = setTimeout(() => {
+      setHoveredCategory(null)
+      setDropdownPosition(null)
+    }, 250)
+  }, [])
+
+  const handleDropdownEnter = useCallback((slug: string) => {
+    if (categoryMenuTimeoutRef.current) {
+      clearTimeout(categoryMenuTimeoutRef.current)
+      categoryMenuTimeoutRef.current = null
+    }
+    setHoveredCategory(slug)
+  }, [])
+
+  const handleDropdownLeave = useCallback(() => {
+    categoryMenuTimeoutRef.current = setTimeout(() => {
+      setHoveredCategory(null)
+      setDropdownPosition(null)
+    }, 250)
+  }, [])
+
+  const handleOverlayClick = useCallback(() => {
+    if (categoryMenuTimeoutRef.current) {
+      clearTimeout(categoryMenuTimeoutRef.current)
+      categoryMenuTimeoutRef.current = null
+    }
+    setHoveredCategory(null)
+    setDropdownPosition(null)
+  }, [])
+
+  const handleOverlayEnter = useCallback(() => {
+    categoryMenuTimeoutRef.current = setTimeout(() => {
+      setHoveredCategory(null)
+      setDropdownPosition(null)
+    }, 250)
+  }, [])
+
+  // Calculate dropdown position with useMemo
+  const calculatedPosition = useMemo(() => {
+    if (!hoveredCategory || !categoryRefs.current[hoveredCategory] || typeof window === 'undefined') {
+      return null
+    }
+
+    const rect = categoryRefs.current[hoveredCategory]!.getBoundingClientRect()
+    const dropdownWidth = 450
+    const margin = 20
+
+    return {
+      top: rect.bottom + 4,
+      left: Math.max(
+        10,
+        Math.min(rect.left, window.innerWidth - dropdownWidth - margin)
+      ),
+    }
+  }, [hoveredCategory])
+
+  // Update position when hovered category changes
+  useEffect(() => {
+    if (calculatedPosition) {
+      setDropdownPosition(calculatedPosition)
+    }
+  }, [calculatedPosition])
 
   return (
     <>
@@ -179,21 +278,8 @@ export function CategoryBar() {
                     key={category.slug}
                     ref={el => { categoryRefs.current[category.slug] = el }}
                     className="relative z-50"
-                    onMouseEnter={() => {
-                      // Sofortiges Schließen des alten Dropdowns und Öffnen des neuen
-                      if (categoryMenuTimeoutRef.current) {
-                        clearTimeout(categoryMenuTimeoutRef.current)
-                        categoryMenuTimeoutRef.current = null
-                      }
-                      // Sofort setzen - kein Delay beim Wechsel zwischen Kategorien
-                      setHoveredCategory(category.slug)
-                    }}
-                    onMouseLeave={() => {
-                      // Längerer Delay - verhindert Flackern beim Bewegen zum Dropdown
-                      categoryMenuTimeoutRef.current = setTimeout(() => {
-                        setHoveredCategory(null)
-                      }, 300) // Längerer Delay verhindert Flackern
-                    }}
+                    onMouseEnter={() => handleCategoryEnter(category.slug)}
+                    onMouseLeave={handleCategoryLeave}
                   >
                     <div className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm">
                       <Link
@@ -223,98 +309,69 @@ export function CategoryBar() {
                           {/* Overlay zum Schließen bei Klick außerhalb */}
                           <div
                             className="fixed inset-0 z-[9999] bg-transparent"
-                            onClick={() => {
-                              if (categoryMenuTimeoutRef.current) {
-                                clearTimeout(categoryMenuTimeoutRef.current)
-                                categoryMenuTimeoutRef.current = null
-                              }
-                              setHoveredCategory(null)
-                            }}
-                            onMouseEnter={() => {
-                              // Längerer Delay beim Verlassen - verhindert Flackern
-                              categoryMenuTimeoutRef.current = setTimeout(() => {
-                                setHoveredCategory(null)
-                              }, 300)
-                            }}
+                            onClick={handleOverlayClick}
+                            onMouseEnter={handleOverlayEnter}
                             style={{ pointerEvents: 'auto' }}
+                            aria-hidden="true"
                           />
                           {/* Unsichtbare Brücke zwischen Button und Dropdown - verhindert Flackern */}
-                          {/* Brücke direkt an Dropdown anschließen lassen - keine Lücke */}
-                          <div
-                            className="fixed z-[10000] bg-transparent"
-                            style={{
-                              top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
-                              left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
-                              width: Math.max(
-                                categoryRefs.current[category.slug]!.getBoundingClientRect().width,
-                                450 // Mindestens so breit wie Dropdown
-                              ),
-                              height: '28px', // Höher für besseren Schutz - deckt Lücke komplett ab
-                              pointerEvents: 'auto',
-                            }}
-                            onMouseEnter={() => {
-                              // Dropdown bleibt offen wenn Maus über Brücke ist
-                              if (categoryMenuTimeoutRef.current) {
-                                clearTimeout(categoryMenuTimeoutRef.current)
-                                categoryMenuTimeoutRef.current = null
-                              }
-                              setHoveredCategory(category.slug)
-                            }}
-                            onMouseLeave={() => {
-                              // Längerer Delay für Brücke
-                              categoryMenuTimeoutRef.current = setTimeout(() => {
-                                setHoveredCategory(null)
-                              }, 300)
-                            }}
-                          />
-                          <div
-                            className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl"
-                            onMouseEnter={() => {
-                              // Dropdown bleibt offen wenn Maus darüber ist
-                              if (categoryMenuTimeoutRef.current) {
-                                clearTimeout(categoryMenuTimeoutRef.current)
-                                categoryMenuTimeoutRef.current = null
-                              }
-                              setHoveredCategory(category.slug)
-                            }}
-                            onMouseLeave={() => {
-                              // Längerer Delay - verhindert Flackern
-                              categoryMenuTimeoutRef.current = setTimeout(() => {
-                                setHoveredCategory(null)
-                              }, 300)
-                            }}
-                            style={{
-                              top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
-                              animation: hoveredCategory === category.slug ? 'dropdownFadeIn 0.15s ease-out' : 'none',
-                              left: typeof window !== 'undefined'
-                                ? Math.max(
-                                    10, // Minimum 10px from left edge
-                                    Math.min(
-                                      categoryRefs.current[category.slug]!.getBoundingClientRect().left,
-                                      window.innerWidth - 470 // 450px width + 20px margin
-                                    )
-                                  )
-                                : categoryRefs.current[category.slug]!.getBoundingClientRect().left,
-                              pointerEvents: 'auto',
-                              maxWidth: 'calc(100vw - 20px)', // Prevent cutoff on small screens
-                            }}
-                          >
-                            <h3 className="mb-3 border-b border-gray-200 pb-2 text-sm font-bold text-gray-900">
-                              {categoryName}
-                            </h3>
-                            <div className="grid grid-cols-2 gap-2">
-                              {category.subcategories.map(subcat => (
-                                <Link
-                                  key={subcat}
-                                  href={`/search?category=${category.slug}&subcategory=${encodeURIComponent(subcat)}`}
-                                  className="block py-1 text-sm text-gray-700 transition-colors hover:text-primary-600"
-                                  onClick={() => setHoveredCategory(null)}
-                                >
-                                  {translateSubcategory(subcat)}
-                                </Link>
-                              ))}
+                          {dropdownPosition && categoryRefs.current[category.slug] && (
+                            <div
+                              className="fixed z-[10000] bg-transparent"
+                              style={{
+                                top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
+                                left: dropdownPosition.left,
+                                width: Math.max(
+                                  categoryRefs.current[category.slug]!.getBoundingClientRect().width,
+                                  450
+                                ),
+                                height: '32px',
+                                pointerEvents: 'auto',
+                              }}
+                              onMouseEnter={() => handleBridgeEnter(category.slug)}
+                              onMouseLeave={handleBridgeLeave}
+                              aria-hidden="true"
+                            />
+                          )}
+                          {/* Dropdown Menu */}
+                          {dropdownPosition && (
+                            <div
+                              className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-xl border border-gray-200 bg-white p-5 shadow-2xl backdrop-blur-sm"
+                              onMouseEnter={() => handleDropdownEnter(category.slug)}
+                              onMouseLeave={handleDropdownLeave}
+                              style={{
+                                top: dropdownPosition.top,
+                                left: dropdownPosition.left,
+                                animation: 'dropdownFadeIn 0.2s cubic-bezier(0.16, 1, 0.3, 1)',
+                                pointerEvents: 'auto',
+                                maxWidth: 'calc(100vw - 20px)',
+                                willChange: 'transform, opacity',
+                              }}
+                              role="menu"
+                              aria-label={`${categoryName} Unterkategorien`}
+                            >
+                              <h3 className="mb-4 border-b border-gray-100 pb-3 text-base font-bold text-gray-900">
+                                {categoryName}
+                              </h3>
+                              <div className="grid grid-cols-2 gap-2.5">
+                                {category.subcategories.map(subcat => (
+                                  <Link
+                                    key={subcat}
+                                    href={`/search?category=${category.slug}&subcategory=${encodeURIComponent(subcat)}`}
+                                    className="group relative block rounded-lg px-3 py-2 text-sm text-gray-700 transition-all duration-200 hover:bg-primary-50 hover:text-primary-600 hover:shadow-sm"
+                                    onClick={() => {
+                                      setHoveredCategory(null)
+                                      setDropdownPosition(null)
+                                    }}
+                                    role="menuitem"
+                                  >
+                                    <span className="relative z-10">{translateSubcategory(subcat)}</span>
+                                    <span className="absolute inset-0 rounded-lg bg-primary-100 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
+                                  </Link>
+                                ))}
+                              </div>
                             </div>
-                          </div>
+                          )}
                         </>,
                         document.body
                       )}
