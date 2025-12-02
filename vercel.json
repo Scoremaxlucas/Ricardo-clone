@@ -1,5 +1,5 @@
 {
   "installCommand": "npm install nodemailer@7.0.11 --legacy-peer-deps --save && npm install --legacy-peer-deps",
-  "buildCommand": "node -e \"f=require('fs');l=f.readFileSync('src/app/api/watches/route.ts','utf8').split('\\n');l.splice(187,1);f.writeFileSync('src/app/api/watches/route.ts',l.join('\\n'));\" && npm run build",
+  "buildCommand": "node fix-duplicate-now.js && npm run build",
   "framework": "nextjs"
 }
