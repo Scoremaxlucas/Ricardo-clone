@@ -189,10 +189,10 @@ export function CategoryBar() {
                       setHoveredCategory(category.slug)
                     }}
                     onMouseLeave={() => {
-                      // Kurzer Delay - ermöglicht horizontale Bewegung zu nächster Kategorie
+                      // Längerer Delay - verhindert Flackern beim Bewegen zum Dropdown
                       categoryMenuTimeoutRef.current = setTimeout(() => {
                         setHoveredCategory(null)
-                      }, 100) // Delay für horizontale Bewegung
+                      }, 200) // Längerer Delay verhindert Flackern
                     }}
                   >
                     <div className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm">
@@ -231,10 +231,10 @@ export function CategoryBar() {
                               setHoveredCategory(null)
                             }}
                             onMouseEnter={() => {
-                              // Delay beim Verlassen - ermöglicht horizontale Bewegung
+                              // Längerer Delay beim Verlassen - verhindert Flackern
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 100)
+                              }, 200)
                             }}
                             style={{ pointerEvents: 'auto' }}
                           />
@@ -245,7 +245,7 @@ export function CategoryBar() {
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
                               left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
                               width: categoryRefs.current[category.slug]!.getBoundingClientRect().width,
-                              height: '4px', // Sehr schmal - nur um Flackern zu verhindern
+                              height: '8px', // Höher für besseren Schutz vor Flackern
                               pointerEvents: 'auto',
                             }}
                             onMouseEnter={() => {
@@ -255,6 +255,12 @@ export function CategoryBar() {
                                 categoryMenuTimeoutRef.current = null
                               }
                               setHoveredCategory(category.slug)
+                            }}
+                            onMouseLeave={() => {
+                              // Sehr kurzer Delay auch für Brücke
+                              categoryMenuTimeoutRef.current = setTimeout(() => {
+                                setHoveredCategory(null)
+                              }, 100)
                             }}
                           />
                           <div
@@ -268,10 +274,10 @@ export function CategoryBar() {
                               setHoveredCategory(category.slug)
                             }}
                             onMouseLeave={() => {
-                              // Delay für horizontale Bewegung zu nächster Kategorie
+                              // Längerer Delay - verhindert Flackern
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 100)
+                              }, 200)
                             }}
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
