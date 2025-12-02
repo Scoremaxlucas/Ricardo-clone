@@ -317,8 +317,8 @@ export function Header() {
           </div>
 
           {/* Navigation - Responsive: Icons auf Mobile, Text auf Desktop */}
-          {/* Overflow-hidden verhindert dass Elemente ausbrechen */}
-          <div className="ml-1 flex min-w-0 flex-1 items-center justify-start gap-0.5 overflow-hidden sm:ml-2 sm:gap-1 md:ml-4 md:gap-2 lg:ml-8 lg:gap-4">
+          {/* Overflow-hidden entfernt damit Dropdowns nicht abgeschnitten werden */}
+          <div className="ml-1 flex min-w-0 flex-1 items-center justify-start gap-0.5 sm:ml-2 sm:gap-1 md:ml-4 md:gap-2 lg:ml-8 lg:gap-4">
             {/* Favoriten - Icon auf Mobile, Icon + Text auf Desktop */}
             {session ? (
               <Link
@@ -355,7 +355,7 @@ export function Header() {
             </Link>
             {/* Verkaufen Dropdown - Icon auf Mobile, Icon + Text auf Desktop */}
             <div
-              className="relative"
+              className="relative z-50"
               onMouseEnter={handleSellMenuEnter}
               onMouseLeave={handleSellMenuLeave}
             >
@@ -374,11 +374,11 @@ export function Header() {
                 <>
                   {/* Unsichtbare Brücke zwischen Button und Dropdown */}
                   <div
-                    className="absolute left-0 top-full z-[9998] h-1 w-full bg-transparent"
+                    className="absolute left-0 top-full z-[10001] h-1 w-full bg-transparent"
                     onMouseEnter={handleSellMenuEnter}
                   />
                   <div
-                    className="absolute left-0 top-full z-[9999] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                    className="absolute left-0 top-full z-[10002] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
                     onMouseEnter={handleSellMenuEnter}
                     onMouseLeave={handleSellMenuLeave}
                     style={{

@@ -217,7 +217,7 @@ export function CategoryBar() {
                       categoryRefs.current[category.slug] &&
                       createPortal(
                         <>
-                          {/* Overlay nur zum Schließen bei Klick außerhalb */}
+                          {/* Overlay zum Schließen bei Klick oder MouseEnter außerhalb */}
                           <div
                             className="fixed inset-0 z-[9999] bg-transparent"
                             onClick={() => {
@@ -227,11 +227,26 @@ export function CategoryBar() {
                               }
                               setHoveredCategory(null)
                             }}
+                            onMouseEnter={(e) => {
+                              // Schließe nur wenn Maus wirklich außerhalb von Button, Brücke und Dropdown
+                              const rect = categoryRefs.current[category.slug]!.getBoundingClientRect()
+                              const mouseX = e.clientX
+                              const mouseY = e.clientY
+                              
+                              // Prüfe ob Maus außerhalb des Button-Bereichs ist
+                              const isOutsideButton = mouseX < rect.left || mouseX > rect.right || mouseY < rect.top || mouseY > rect.bottom + 10
+                              
+                              if (isOutsideButton) {
+                                categoryMenuTimeoutRef.current = setTimeout(() => {
+                                  setHoveredCategory(null)
+                                }, 100)
+                              }
+                            }}
                             style={{ pointerEvents: 'auto' }}
                           />
                           {/* Unsichtbare Brücke zwischen Button und Dropdown - verhindert Blinken */}
                           <div
-                            className="fixed z-[9999] bg-transparent"
+                            className="fixed z-[10000] bg-transparent"
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
                               left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
@@ -245,9 +260,6 @@ export function CategoryBar() {
                                 categoryMenuTimeoutRef.current = null
                               }
                               setHoveredCategory(category.slug)
-                            }}
-                            onMouseLeave={() => {
-                              // Kein Timeout hier - direkt weiter zum Dropdown
                             }}
                           />
                           <div
