@@ -2163,6 +2163,7 @@ export async function GET(request: NextRequest) {
           // Fallback: Prüfe ob das Produkt basierend auf Keywords zur Kategorie passt
           const keywords = categoryKeywords[categorySlug] || []
           if (keywords.length > 0) {
+            if (!watch) return false
             const searchText =
               `${watch.brand || ''} ${watch.model || ''} ${watch.title || ''} ${watch.description || ''}`.toLowerCase()
             const matchesKeywords = keywords.some(keyword =>
