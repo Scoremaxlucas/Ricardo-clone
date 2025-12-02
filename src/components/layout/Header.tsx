@@ -367,15 +367,17 @@ export function Header() {
                   </div>
                   <div className="relative">
                     <button
-                      onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                      type="button"
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        console.log('Profile button clicked, current state:', isProfileMenuOpen)
+                        setIsProfileMenuOpen(!isProfileMenuOpen)
+                      }}
                       className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 p-1 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:px-2 sm:py-1"
                       title={t.header.profileMenu}
                     >
-                      <Link
-                        href={session.user?.id ? `/users/${session.user.id}` : '/profile'}
-                        className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 transition-opacity hover:opacity-80 sm:h-8 sm:w-8"
-                        onClick={e => e.stopPropagation()}
-                      >
+                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 sm:h-8 sm:w-8">
                         {getProfileImage() ? (
                           <img
                             src={getProfileImage() || undefined}
@@ -387,7 +389,7 @@ export function Header() {
                             {getInitials(session.user?.name)}
                           </span>
                         )}
-                      </Link>
+                      </div>
                       <ChevronDown
                         className={`h-3 w-3 transition-transform sm:h-4 sm:w-4 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
                       />
@@ -581,7 +583,13 @@ export function Header() {
             {/* Language Selector - Far Right - Nur Flagge, kein Text um Overflow zu vermeiden */}
             <div className="relative flex-shrink-0">
               <button
-                onClick={() => setIsLanguageMenuOpen(!isLanguageMenuOpen)}
+                type="button"
+                onClick={(e) => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  console.log('Language button clicked, current state:', isLanguageMenuOpen)
+                  setIsLanguageMenuOpen(!isLanguageMenuOpen)
+                }}
                 className="flex items-center justify-center rounded-md p-1.5 font-medium text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:p-2"
                 title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
               >
