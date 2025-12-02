@@ -8,8 +8,17 @@ import { prisma } from '@/lib/prisma'
  * This is a one-time operation to disable email verification requirement
  *
  * Requires admin authentication
+ * Supports both GET and POST methods for easier access
  */
 export async function POST(request: NextRequest) {
+  return verifyAllUsers()
+}
+
+export async function GET(request: NextRequest) {
+  return verifyAllUsers()
+}
+
+async function verifyAllUsers() {
   try {
     const session = await getServerSession(authOptions)
 
