@@ -185,13 +185,7 @@ export async function GET(request: NextRequest) {
       ]
     }
 
-    const watches = await prisma.watch.findMany({
       where,
-      include: {
-        seller: {
-          select: {
-            id: true,
-            name: true,
             email: true,
             city: true,
             postalCode: true,
