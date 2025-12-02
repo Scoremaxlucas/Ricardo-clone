@@ -2076,6 +2076,7 @@ export async function GET(request: NextRequest) {
       const max = maxPrice ? parseFloat(maxPrice) : Infinity
 
       watchesWithImages = watchesWithImages.filter(watch => {
+        if (!watch) return false
         const currentPrice = watch.price
         return currentPrice >= min && currentPrice <= max
       })
