@@ -189,22 +189,25 @@ export function CategoryBar() {
                     onMouseLeave={() => {
                       categoryMenuTimeoutRef.current = setTimeout(() => {
                         setHoveredCategory(null)
-                      }, 150) // 150ms delay before closing
+                      }, 200) // 200ms delay before closing for better UX
                     }}
                   >
-                    <Link
-                      href={`/search?category=${category.slug}`}
-                      className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm"
-                    >
-                      <div
-                        className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded sm:h-6 sm:w-6"
-                        style={{ backgroundColor: '#0f766e' }}
+                    <div className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm">
+                      <Link
+                        href={`/search?category=${category.slug}`}
+                        className="flex items-center gap-1.5 sm:gap-2"
+                        onClick={() => setHoveredCategory(null)}
                       >
-                        <IconComponent className="h-3 w-3 text-white sm:h-4 sm:w-4" />
-                      </div>
-                      <span className="hidden sm:inline">{categoryName}</span>
-                      <span className="sm:hidden">{categoryName.split(' ')[0]}</span>
-                    </Link>
+                        <div
+                          className="flex h-5 w-5 flex-shrink-0 items-center justify-center rounded sm:h-6 sm:w-6"
+                          style={{ backgroundColor: '#0f766e' }}
+                        >
+                          <IconComponent className="h-3 w-3 text-white sm:h-4 sm:w-4" />
+                        </div>
+                        <span className="hidden sm:inline">{categoryName}</span>
+                        <span className="sm:hidden">{categoryName.split(' ')[0]}</span>
+                      </Link>
+                    </div>
 
                     {/* Flyout für Unterkategorien - Use Portal to render outside overflow container */}
                     {hoveredCategory === category.slug &&
@@ -226,7 +229,7 @@ export function CategoryBar() {
                             onMouseEnter={() => {
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 150)
+                              }, 200)
                             }}
                           />
                           <div
@@ -241,7 +244,7 @@ export function CategoryBar() {
                             onMouseLeave={() => {
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 150)
+                              }, 200)
                             }}
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,

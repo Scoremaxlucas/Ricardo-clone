@@ -270,7 +270,7 @@ export function Header() {
   const handleSellMenuLeave = useCallback(() => {
     sellMenuTimeoutRef.current = setTimeout(() => {
       setIsSellMenuOpen(false)
-    }, 150) // 150ms delay before closing
+    }, 200) // 200ms delay before closing for better UX
   }, [])
 
   // Suchfunktion
@@ -359,20 +359,22 @@ export function Header() {
               onMouseEnter={handleSellMenuEnter}
               onMouseLeave={handleSellMenuLeave}
             >
-              <button
-                type="button"
-                className="flex w-full items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
-                title={t.header.sell}
-              >
-                <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
-                <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
+              <div className="flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2">
+                <Link
+                  href="/sell"
+                  className="flex items-center gap-1 sm:gap-2"
+                  title={t.header.sell}
+                >
+                  <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
+                  <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
+                </Link>
                 <ChevronDown className={`h-3 w-3 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
+              </div>
 
               {/* Dropdown Menu */}
               {isSellMenuOpen && (
                 <div
-                  className="absolute left-0 top-full z-[9999] w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
+                  className="absolute left-0 top-full z-[9999] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
                   onMouseEnter={handleSellMenuEnter}
                   onMouseLeave={handleSellMenuLeave}
                   style={{
@@ -380,7 +382,6 @@ export function Header() {
                     visibility: 'visible',
                     opacity: 1,
                     pointerEvents: 'auto',
-                    marginTop: '4px' // Smaller gap - 4px instead of mt-1 (8px)
                   }}
                 >
                   <div className="py-1">
