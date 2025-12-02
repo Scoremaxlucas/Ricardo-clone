@@ -202,7 +202,7 @@ export async function POST(request: NextRequest) {
         seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
 
       // Berechne Versandkosten basierend auf gewählter Methode
-      const shippingMethod = purchase.shippingMethod || watch.shippingMethod
+      const shippingMethod: string | string[] | null = purchase.shippingMethod || watch.shippingMethod
       let shippingCost = 0
       if (shippingMethod) {
         try {
