@@ -188,35 +188,11 @@ export function CategoryBar() {
                       // Sofort setzen - kein Delay beim Wechsel zwischen Kategorien
                       setHoveredCategory(category.slug)
                     }}
-                    onMouseLeave={(e) => {
-                      // Prüfe ob Maus zu einer anderen Kategorie bewegt wird
-                      let isMovingToAnotherCategory = false
-                      Object.keys(categoryRefs.current).forEach(slug => {
-                        if (slug !== category.slug && categoryRefs.current[slug]) {
-                          const rect = categoryRefs.current[slug]!.getBoundingClientRect()
-                          const mouseX = e.clientX
-                          const mouseY = e.clientY
-                          
-                          // Prüfe ob Maus in Richtung einer anderen Kategorie bewegt wird
-                          if (mouseX >= rect.left - 10 && mouseX <= rect.right + 10 && 
-                              mouseY >= rect.top - 10 && mouseY <= rect.bottom + 10) {
-                            isMovingToAnotherCategory = true
-                            // Sofort zur neuen Kategorie wechseln
-                            if (categoryMenuTimeoutRef.current) {
-                              clearTimeout(categoryMenuTimeoutRef.current)
-                              categoryMenuTimeoutRef.current = null
-                            }
-                            setHoveredCategory(slug)
-                          }
-                        }
-                      })
-
-                      // Delay nur wenn nicht zu einer anderen Kategorie bewegt wird
-                      if (!isMovingToAnotherCategory) {
-                        categoryMenuTimeoutRef.current = setTimeout(() => {
-                          setHoveredCategory(null)
-                        }, 150) // Kürzerer Delay für bessere Reaktivität
-                      }
+                    onMouseLeave={() => {
+                      // Sehr kurzer Delay - ermöglicht horizontale Bewegung zu nächster Kategorie
+                      categoryMenuTimeoutRef.current = setTimeout(() => {
+                        setHoveredCategory(null)
+                      }, 50) // Sehr kurzer Delay (50ms) für horizontale Bewegung
                     }}
                   >
                     <div className="flex flex-shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2 sm:text-sm">
@@ -244,7 +220,7 @@ export function CategoryBar() {
                       categoryRefs.current[category.slug] &&
                       createPortal(
                         <>
-                          {/* Overlay zum Schließen bei Klick oder MouseEnter außerhalb */}
+                          {/* Overlay zum Schließen bei Klick außerhalb */}
                           <div
                             className="fixed inset-0 z-[9999] bg-transparent"
                             onClick={() => {
@@ -254,114 +230,29 @@ export function CategoryBar() {
                               }
                               setHoveredCategory(null)
                             }}
-                            onMouseEnter={(e) => {
-                              // Prüfe ob Maus über einer anderen Kategorie ist
-                              let isOverAnotherCategory = false
-                              Object.keys(categoryRefs.current).forEach(slug => {
-                                if (slug !== category.slug && categoryRefs.current[slug]) {
-                                  const rect = categoryRefs.current[slug]!.getBoundingClientRect()
-                                  const mouseX = e.clientX
-                                  const mouseY = e.clientY
-
-                                  if (mouseX >= rect.left && mouseX <= rect.right &&
-                                      mouseY >= rect.top && mouseY <= rect.bottom) {
-                                    isOverAnotherCategory = true
-                                  }
-                                }
-                              })
-
-                              // Nur schließen wenn nicht über einer anderen Kategorie
-                              if (!isOverAnotherCategory) {
-                                const rect = categoryRefs.current[category.slug]!.getBoundingClientRect()
-                                const mouseX = e.clientX
-                                const mouseY = e.clientY
-
-                                // Prüfe ob Maus außerhalb des Button-Bereichs ist
-                                const isOutsideButton = mouseX < rect.left || mouseX > rect.right || mouseY < rect.top || mouseY > rect.bottom + 10
-
-                                if (isOutsideButton) {
-                                  categoryMenuTimeoutRef.current = setTimeout(() => {
-                                    setHoveredCategory(null)
-                                  }, 100)
-                                }
-                              }
+                            onMouseEnter={() => {
+                              // Sehr kurzer Delay beim Verlassen - ermöglicht horizontale Bewegung
+                              categoryMenuTimeoutRef.current = setTimeout(() => {
+                                setHoveredCategory(null)
+                              }, 50)
                             }}
                             style={{ pointerEvents: 'auto' }}
                           />
-                          {/* Unsichtbare Brücke zwischen Button und Dropdown - nur so breit wie Button */}
-                          <div
-                            className="fixed z-[10000] bg-transparent"
-                            style={{
-                              top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
-                              left: categoryRefs.current[category.slug]!.getBoundingClientRect().left,
-                              width: categoryRefs.current[category.slug]!.getBoundingClientRect().width, // Nur Button-Breite, nicht breiter
-                              height: '6px',
-                              pointerEvents: 'auto',
-                            }}
-                            onMouseEnter={(e) => {
-                              // Prüfe ob Maus über einer anderen Kategorie ist
-                              let isOverAnotherCategory = false
-                              Object.keys(categoryRefs.current).forEach(slug => {
-                                if (slug !== category.slug && categoryRefs.current[slug]) {
-                                  const rect = categoryRefs.current[slug]!.getBoundingClientRect()
-                                  const mouseX = e.clientX
-                                  const mouseY = e.clientY
-                                  
-                                  if (mouseX >= rect.left && mouseX <= rect.right && 
-                                      mouseY >= rect.top && mouseY <= rect.bottom) {
-                                    isOverAnotherCategory = true
-                                    // Sofort zur neuen Kategorie wechseln
-                                    setHoveredCategory(slug)
-                                  }
-                                }
-                              })
-
-                              if (!isOverAnotherCategory) {
-                                if (categoryMenuTimeoutRef.current) {
-                                  clearTimeout(categoryMenuTimeoutRef.current)
-                                  categoryMenuTimeoutRef.current = null
-                                }
-                                setHoveredCategory(category.slug)
-                              }
-                            }}
-                          />
                           <div
                             className="fixed z-[10000] max-h-[500px] w-[450px] overflow-y-auto rounded-lg border border-gray-200 bg-white p-4 shadow-2xl dropdown-enter"
-                            onMouseEnter={(e) => {
-                              // Prüfe ob Maus über einer anderen Kategorie ist
-                              let isOverAnotherCategory = false
-                              Object.keys(categoryRefs.current).forEach(slug => {
-                                if (slug !== category.slug && categoryRefs.current[slug]) {
-                                  const rect = categoryRefs.current[slug]!.getBoundingClientRect()
-                                  const mouseX = e.clientX
-                                  const mouseY = e.clientY
-                                  
-                                  if (mouseX >= rect.left && mouseX <= rect.right && 
-                                      mouseY >= rect.top && mouseY <= rect.bottom) {
-                                    isOverAnotherCategory = true
-                                    // Sofort zur neuen Kategorie wechseln
-                                    if (categoryMenuTimeoutRef.current) {
-                                      clearTimeout(categoryMenuTimeoutRef.current)
-                                      categoryMenuTimeoutRef.current = null
-                                    }
-                                    setHoveredCategory(slug)
-                                  }
-                                }
-                              })
-
-                              if (!isOverAnotherCategory) {
-                                if (categoryMenuTimeoutRef.current) {
-                                  clearTimeout(categoryMenuTimeoutRef.current)
-                                  categoryMenuTimeoutRef.current = null
-                                }
-                                setHoveredCategory(category.slug)
+                            onMouseEnter={() => {
+                              // Dropdown bleibt offen wenn Maus darüber ist
+                              if (categoryMenuTimeoutRef.current) {
+                                clearTimeout(categoryMenuTimeoutRef.current)
+                                categoryMenuTimeoutRef.current = null
                               }
+                              setHoveredCategory(category.slug)
                             }}
                             onMouseLeave={() => {
-                              // Kürzerer Delay für bessere Reaktivität
+                              // Sehr kurzer Delay für horizontale Bewegung zu nächster Kategorie
                               categoryMenuTimeoutRef.current = setTimeout(() => {
                                 setHoveredCategory(null)
-                              }, 150)
+                              }, 50)
                             }}
                             style={{
                               top: categoryRefs.current[category.slug]!.getBoundingClientRect().bottom + 4,
