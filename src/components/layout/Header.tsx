@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import Link from 'next/link'
 import {
   Search,
@@ -367,6 +368,7 @@ export function Header() {
                   </div>
                   <div className="relative">
                     <button
+                      ref={profileButtonRef}
                       type="button"
                       onClick={(e) => {
                         e.preventDefault()
@@ -399,12 +401,19 @@ export function Header() {
                     {isProfileMenuOpen && (
                       <>
                         <div
-                          className="fixed inset-0 z-[45]"
-                          onClick={() => setIsProfileMenuOpen(false)}
+                          className="fixed inset-0 z-[45] bg-transparent"
+                          onClick={() => {
+                            console.log('Overlay clicked, closing dropdown')
+                            setIsProfileMenuOpen(false)
+                          }}
                         />
                         <div
                           className="absolute right-0 top-full z-[60] mt-2 w-56 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5"
-                          onClick={e => e.stopPropagation()}
+                          onClick={(e) => {
+                            console.log('Dropdown clicked')
+                            e.stopPropagation()
+                          }}
+                          style={{ display: 'block' }}
                         >
                           <div className="relative py-1" style={{ pointerEvents: 'auto' }}>
                             <div className="border-b border-gray-200 px-4 py-3">
@@ -583,6 +592,7 @@ export function Header() {
             {/* Language Selector - Far Right - Nur Flagge, kein Text um Overflow zu vermeiden */}
             <div className="relative flex-shrink-0">
               <button
+                ref={languageButtonRef}
                 type="button"
                 onClick={(e) => {
                   e.preventDefault()
@@ -604,10 +614,25 @@ export function Header() {
               {isLanguageMenuOpen && (
                 <>
                   <div
-                    className="fixed inset-0 z-[45]"
-                    onClick={() => setIsLanguageMenuOpen(false)}
+                    className="fixed inset-0 z-[45] bg-transparent"
+                    onClick={() => {
+                      console.log('Language overlay clicked, closing dropdown')
+                      setIsLanguageMenuOpen(false)
+                    }}
                   />
-                  <div className="absolute right-0 top-full z-[60] mt-2 w-48 rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5">
+                  <div 
+                    className="absolute right-0 top-full z-[60] mt-2 w-48 rounded-md bg-white shadow-xl ring-1 ring-black ring-opacity-5"
+                    onClick={(e) => {
+                      console.log('Language dropdown clicked')
+                      e.stopPropagation()
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top: '100%',
+                      right: 0,
+                      marginTop: '8px',
+                    }}
+                  >
                     <div className="py-1">
                       {languages.map(lang => (
                         <button
