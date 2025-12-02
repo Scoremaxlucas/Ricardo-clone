@@ -64,8 +64,8 @@ export async function POST(request: NextRequest) {
         model: watch.model,
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Test watch creation error:', error)
-    return NextResponse.json({ message: 'Test Fehler: ' + error.message }, { status: 500 })
+    return NextResponse.json({ message: 'Test Fehler: ' + (error?.message || String(error)) }, { status: 500 })
   }
 }
