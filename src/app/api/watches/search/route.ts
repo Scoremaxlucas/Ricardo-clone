@@ -1126,7 +1126,6 @@ const searchSynonyms: Record<string, string[]> = {
   ],
   ford: ['fords', 'ford', 'mustang', 'mustangs', 'f150', 'focus', 'foci'],
   toyota: ['toyotas', 'toyota', 'corolla', 'corollas', 'camry', 'camrys', 'prius', 'priuses'],
-  honda: ['hondas', 'honda', 'civic', 'civics', 'accord', 'accords', 'crv', 'crvs'],
   volkswagen: [
     'vw',
     'vws',
