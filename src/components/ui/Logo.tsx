@@ -40,11 +40,11 @@ export function Logo({ className = '', size = 'md' }: LogoProps) {
       </div>
 
       {/* Text */}
-      <div className="ml-2.5">
+      <div className={`ml-2.5 ${size === 'sm' ? 'ml-2' : ''}`}>
         <div className="flex items-baseline gap-0.5">
           <span className={`${textSizeClasses[size]} font-bold text-gray-900 leading-tight`}>Helvenda</span>
           <span
-            className={`${size === 'sm' ? 'text-[10px]' : size === 'md' ? 'text-[11px]' : 'text-sm'} text-gray-500 leading-tight`}
+            className={`${size === 'sm' ? 'text-[10px]' : size === 'md' ? 'text-xs' : 'text-sm'} text-gray-500 leading-tight`}
           >
             .ch
           </span>

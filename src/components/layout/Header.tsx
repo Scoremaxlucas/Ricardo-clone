@@ -371,11 +371,11 @@ export function Header() {
 
               {/* Dropdown Menu */}
               {isSellMenuOpen && (
-                <div 
+                <div
                   className="absolute left-0 top-full z-[9999] w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg transition-all duration-200 ease-out"
                   onMouseEnter={handleSellMenuEnter}
                   onMouseLeave={handleSellMenuLeave}
-                  style={{ 
+                  style={{
                     display: 'block',
                     visibility: 'visible',
                     opacity: 1,
@@ -714,23 +714,6 @@ export function Header() {
         {/* DRITTE ZEILE: CategoryBar mit Kategorien */}
         <CategoryBar />
 
-        {/* Mobile Search - Kompakter */}
-        <div className="border-t border-gray-200 px-2 pb-2 pt-2 md:hidden">
-          <form onSubmit={handleSearch}>
-            <div className="relative">
-              <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
-                <Search className="h-4 w-4 text-gray-400" />
-              </div>
-              <input
-                type="text"
-                placeholder={t.header.searchPlaceholder}
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="block w-full rounded-lg border border-gray-300 py-2 pl-9 pr-3 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              />
-            </div>
-          </form>
-        </div>
 
       </div>
     </header>
