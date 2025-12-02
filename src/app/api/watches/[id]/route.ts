@@ -170,7 +170,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         // Zusätzliche Bilder hinzufügen (nicht ersetzen)
         updateData.images = JSON.stringify([
           ...currentImages,
-          ...newImages.filter(img => !currentImages.includes(img)),
+          ...newImages.filter((img: string) => !currentImages.includes(img)),
         ])
       }
       if (data.video !== undefined) updateData.video = data.video
@@ -182,7 +182,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         // Nur zusätzliche Bilder hinzufügen
         updateData.images = JSON.stringify([
           ...currentImages,
-          ...newImages.filter(img => !currentImages.includes(img)),
+          ...newImages.filter((img: string) => !currentImages.includes(img)),
         ])
       }
       if (data.additionalInfo !== undefined) {
