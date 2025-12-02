@@ -99,12 +99,6 @@ async function main() {
   })
   console.log(`🗑️  ${deletedPriceOffers.count} Preisvorschläge gelöscht`)
 
-  // Lösche Fragen
-  const deletedQuestions = await prisma.question.deleteMany({
-    where: { watchId: { in: watchIds } },
-  })
-  console.log(`🗑️  ${deletedQuestions.count} Fragen gelöscht`)
-
   // Lösche Watch-Kategorien-Verknüpfungen
   const deletedWatchCategories = await prisma.watchCategory.deleteMany({
     where: { watchId: { in: watchIds } },
