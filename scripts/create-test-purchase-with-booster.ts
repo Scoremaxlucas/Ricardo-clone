@@ -64,11 +64,14 @@ async function main() {
   console.log(`👤 Käufer: ${buyer.email}`)
 
   // Erstelle Purchase
+  const contactDeadline = new Date()
+  contactDeadline.setDate(contactDeadline.getDate() + 7)
   const purchase = await prisma.purchase.create({
     data: {
       watchId: watch.id,
       buyerId: buyer.id,
       price: watch.price,
+      contactDeadline: contactDeadline,
     },
     include: {
       watch: true,
