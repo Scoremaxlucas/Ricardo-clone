@@ -216,11 +216,24 @@ export function InvoicePaymentForm({
     if (!clientSecret || typeof clientSecret !== 'string' || clientSecret.trim() === '') {
       return null
     }
+    
+    // Prüfe ob Mobile (client-side only)
+    const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+    
     return {
       clientSecret: clientSecret.trim(),
       appearance: {
         theme: 'stripe' as const,
       },
+      // Auf Mobile: Link deaktivieren, TWINT priorisieren
+      ...(isMobile && {
+        paymentMethodTypes: ['card', 'twint'],
+        wallets: {
+          applePay: 'never',
+          googlePay: 'never',
+          link: 'never', // Link auf Mobile deaktivieren
+        },
+      }),
     }
   }, [clientSecret])
 
