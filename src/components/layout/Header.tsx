@@ -359,15 +359,15 @@ export function Header() {
               onMouseEnter={handleSellMenuEnter}
               onMouseLeave={handleSellMenuLeave}
             >
-              <button
-                type="button"
+              <Link
+                href="/sell"
                 className="flex w-full items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
                 title={t.header.sell}
               >
                 <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
                 <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
                 <ChevronDown className={`h-3 w-3 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
+              </Link>
 
               {/* Dropdown Menu */}
               {isSellMenuOpen && (
