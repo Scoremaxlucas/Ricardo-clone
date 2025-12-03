@@ -81,7 +81,7 @@ export default function MyWatchesPage() {
     try {
       setLoading(true)
       // Cache-Busting hinzufügen
-      const res = await fetch(`/api/watches/mine?t=${Date.now()}`)
+      const res = await fetch(`/api/articles/mine?t=${Date.now()}`)
       const data = await res.json()
       const itemsList = Array.isArray(data.watches) ? data.watches : []
       setItems(itemsList)

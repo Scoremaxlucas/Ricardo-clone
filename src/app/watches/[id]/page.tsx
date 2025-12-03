@@ -78,7 +78,7 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
 
   const fetchWatch = async () => {
     try {
-      const res = await fetch(`/api/watches/${params.id}`)
+      const res = await fetch(`/api/articles/${params.id}`)
       if (res.ok) {
         const data = await res.json()
         setWatch(data.watch)
@@ -92,7 +92,7 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
 
   const fetchMessages = async () => {
     try {
-      const res = await fetch(`/api/watches/${params.id}/messages`)
+      const res = await fetch(`/api/articles/${params.id}/messages`)
       if (res.ok) {
         const data = await res.json()
         setMessages(data)

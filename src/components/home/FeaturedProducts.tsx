@@ -33,13 +33,13 @@ export function FeaturedProducts() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch('/api/watches/search?limit=6', {
+        const response = await fetch('/api/articles/search?limit=6', {
           cache: 'force-cache', // Aggressive caching for better performance
           next: { revalidate: 120 }, // Revalidate every 2 minutes
         })
         if (response.ok) {
           const data = await response.json()
-          setItems(Array.isArray(data.watches) ? data.watches : []) // API verwendet noch 'watches'
+          setItems(Array.isArray(data.watches) ? data.watches : []) // Backward compatibility: API response still uses 'watches'
         } else {
           setItems([])
         }

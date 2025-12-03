@@ -285,7 +285,7 @@ export function Header() {
     if (isNumericArticleNumber) {
       // Suche nach Artikelnummer
       try {
-        const res = await fetch(`/api/watches/search?q=${encodeURIComponent(query)}&limit=1`)
+        const res = await fetch(`/api/articles/search?q=${encodeURIComponent(query)}&limit=1`)
         if (res.ok) {
           const data = await res.json()
           if (data.watches && data.watches.length === 1) {

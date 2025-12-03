@@ -42,7 +42,7 @@ export function SimilarProducts({
     const fetchSimilar = async () => {
       try {
         // Suche ähnliche Produkte basierend auf Marke
-        const url = `/api/watches/search?q=${encodeURIComponent(brand)}&limit=6`
+        const url = `/api/articles/search?q=${encodeURIComponent(brand)}&limit=6`
 
         const res = await fetch(url)
         if (res.ok) {

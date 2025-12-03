@@ -31,7 +31,7 @@ export default function WatchesPage() {
 
   const fetchWatches = async () => {
     try {
-      const res = await fetch('/api/watches')
+      const res = await fetch('/api/articles')
       if (res.ok) {
         const response = await res.json()
         const data = response.watches || response

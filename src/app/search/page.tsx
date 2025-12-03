@@ -186,7 +186,7 @@ export default function SearchPage() {
             ? new URLSearchParams(window.location.search)
             : new URLSearchParams(urlSearchString)
 
-        let url = '/api/watches/search'
+        let url = '/api/articles/search'
         const params = new URLSearchParams()
 
         const q = (currentParams.get('q') || '').trim()

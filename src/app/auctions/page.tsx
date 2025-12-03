@@ -39,7 +39,7 @@ export default function AuctionsPage() {
       setLoading(true)
       try {
         // Hole nur Auktionsartikel
-        const response = await fetch('/api/watches/search?isAuction=true')
+        const response = await fetch('/api/articles/search?isAuction=true')
         if (response.ok) {
           const data = await response.json()
           let auctions = Array.isArray(data.watches)

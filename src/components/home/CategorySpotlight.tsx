@@ -118,7 +118,7 @@ export function CategorySpotlight() {
         // Execute all category fetches in parallel for maximum speed
         const promises = limitedCategories.map(async cat => {
           try {
-            const url = `/api/watches/search?category=${encodeURIComponent(cat.category)}&limit=6`
+            const url = `/api/articles/search?category=${encodeURIComponent(cat.category)}&limit=6`
 
             const response = await fetch(url, {
               cache: 'force-cache', // Aggressive caching for better performance
