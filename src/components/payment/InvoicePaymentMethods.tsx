@@ -368,20 +368,6 @@ export function InvoicePaymentMethods({
               </div>
             </div>
 
-            {/* TWINT Hinweis für Mobile */}
-            <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4 sm:hidden">
-              <div className="flex items-start gap-3">
-                <Smartphone className="mt-0.5 h-6 w-6 flex-shrink-0 text-green-600" />
-                <div className="flex-1">
-                  <h4 className="mb-1 font-semibold text-green-900">TWINT verfügbar</h4>
-                  <p className="text-sm text-green-800">
-                    Im Zahlungsformular können Sie zwischen Kreditkarte und TWINT wählen. TWINT ist
-                    besonders für mobile Zahlungen geeignet.
-                  </p>
-                </div>
-              </div>
-            </div>
-
             {/* Kreditkarte / TWINT - Einheitliches Formular */}
             <div className="border-t border-gray-200 pt-4 sm:pt-6">
               <h4 className="mb-3 flex items-center gap-2 text-base font-semibold text-gray-900 sm:text-lg">

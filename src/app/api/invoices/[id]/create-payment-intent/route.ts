@@ -124,7 +124,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           enabled: true,
           allow_redirects: 'always', // Erlaubt TWINT und andere Redirect-basierte Zahlungsmethoden
         },
-        payment_method_types: ['card', 'twint'], // Explizit TWINT aktivieren
         description: `Rechnung ${invoice.invoiceNumber}`,
       })
 
