@@ -1322,17 +1322,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '20')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    console.log('[SEARCH] Search params:', {
-      query,
-      category,
-      subcategory,
-      isAuction,
-      minPrice,
-      maxPrice,
-      condition,
-      brand,
-      postalCode,
-    })
+    // Removed console.log for better performance
 
     const now = new Date()
 
@@ -2304,14 +2294,19 @@ export async function GET(request: NextRequest) {
     // Limit und Offset anwenden
     const limitedWatches = watchesWithImages.slice(offset, offset + limit)
 
-    console.log(
-      `[SEARCH] Returning ${limitedWatches.length} watches (limit: ${limit}, offset: ${offset}, total: ${watchesWithImages.length})`
-    )
+    // Removed console.log for better performance
 
-    return NextResponse.json({
-      watches: limitedWatches,
-      total: watchesWithImages.length,
-    })
+    return NextResponse.json(
+      {
+        watches: limitedWatches,
+        total: watchesWithImages.length,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+        },
+      }
+    )
   } catch (error: any) {
     console.error('[SEARCH] Search error:', error)
     console.error('[SEARCH] Error stack:', error?.stack)

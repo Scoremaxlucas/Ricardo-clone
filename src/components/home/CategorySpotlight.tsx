@@ -118,11 +118,11 @@ export function CategorySpotlight() {
         const promises = limitedCategories.map(async cat => {
           try {
             const url = `/api/watches/search?category=${encodeURIComponent(cat.category)}&limit=6`
-            console.log(
-              `[CategorySpotlight] Fetching products for category: ${cat.category} (${cat.name})`
-            )
-
-            const response = await fetch(url)
+            
+            const response = await fetch(url, {
+              // Add cache headers for better performance
+              next: { revalidate: 60 }, // Revalidate every 60 seconds
+            })
             if (!response.ok) {
               const errorText = await response.text().catch(() => 'Unknown error')
               console.error(
@@ -136,19 +136,6 @@ export function CategorySpotlight() {
 
             const data = await response.json()
             const watches = data.watches || []
-
-            console.log(
-              `[CategorySpotlight] Category ${cat.category} (${cat.name}): Found ${watches.length} watches (total: ${data.total || 0})`
-            )
-            if (watches.length === 0) {
-              console.warn(
-                `[CategorySpotlight] ⚠️ No watches found for category ${cat.category}! Check if products are linked to this category.`
-              )
-            } else {
-              console.log(
-                `[CategorySpotlight] Sample watch: ${watches[0].title} (ID: ${watches[0].id})`
-              )
-            }
 
             if (watches.length === 0) {
               return { ...cat, featured: null, products: [] }
@@ -226,9 +213,6 @@ export function CategorySpotlight() {
           setCategories(categoriesWithProducts)
         }
 
-        console.log(
-          `CategorySpotlight: Showing ${categoriesWithProducts.length} categories with products out of ${results.length} total`
-        )
       } catch (error) {
         console.error('Error fetching category spotlights:', error)
       } finally {

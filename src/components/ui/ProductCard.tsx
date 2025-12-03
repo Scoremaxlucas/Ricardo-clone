@@ -1,5 +1,6 @@
 'use client'
 
+import { memo } from 'react'
 import { ProductCard as BaseProductCard, ProductCardData } from '@/components/product/ProductCard'
 
 interface ProductCardProps extends Partial<ProductCardData> {
@@ -13,7 +14,7 @@ interface ProductCardProps extends Partial<ProductCardData> {
   className?: string
 }
 
-export function ProductCard(props: ProductCardProps) {
+export const ProductCard = memo(function ProductCard(props: ProductCardProps) {
   const {
     favorites,
     onFavoriteToggle,
@@ -56,4 +57,4 @@ export function ProductCard(props: ProductCardProps) {
       className={className}
     />
   )
-}
+})

@@ -48,7 +48,14 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ favorites: favoritesWithImages })
+    return NextResponse.json(
+      { favorites: favoritesWithImages },
+      {
+        headers: {
+          'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=60',
+        },
+      }
+    )
   } catch (error: any) {
     console.error('Error fetching favorites:', error)
     return NextResponse.json(

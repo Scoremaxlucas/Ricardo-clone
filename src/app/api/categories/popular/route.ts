@@ -167,20 +167,16 @@ export async function GET() {
       return b.score - a.score
     })
 
-    // Debug-Logging
-    console.log(`[categories/popular] Returning ${sortedCategories.length} categories`)
-    const autoMotorrad = sortedCategories.find(c => c.category === 'auto-motorrad')
-    if (autoMotorrad) {
-      console.log(
-        `[categories/popular] auto-motorrad: ${autoMotorrad.productCount} products, ${autoMotorrad.boostedCount} boosted`
-      )
-    } else {
-      console.warn(`[categories/popular] auto-motorrad NOT FOUND in results!`)
-    }
-
-    return NextResponse.json({
-      categories: sortedCategories,
-    })
+    return NextResponse.json(
+      {
+        categories: sortedCategories,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=120, stale-while-revalidate=240',
+        },
+      }
+    )
   } catch (error) {
     console.error('Error fetching popular categories:', error)
     return NextResponse.json({ error: 'Failed to fetch popular categories' }, { status: 500 })

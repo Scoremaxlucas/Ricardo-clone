@@ -1,11 +1,18 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { Suspense, lazy } from 'react'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { Toaster } from 'react-hot-toast'
-import { EmmaChat } from '@/components/emma/EmmaChat'
 
-const inter = Inter({ subsets: ['latin'] })
+// Lazy load EmmaChat - not critical for initial render
+const EmmaChat = lazy(() => import('@/components/emma/EmmaChat').then(m => ({ default: m.EmmaChat })))
+
+const inter = Inter({ 
+  subsets: ['latin'],
+  display: 'swap', // Better performance - show fallback font immediately
+  preload: true,
+})
 
 export const metadata: Metadata = {
   title: 'Helvenda.ch - Schweizer Online-Marktplatz',
@@ -52,8 +59,10 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               },
             }}
           />
-          {/* Emma AI Assistant - Verfügbar auf allen Seiten */}
-          <EmmaChat />
+          {/* Emma AI Assistant - Lazy loaded for better performance */}
+          <Suspense fallback={null}>
+            <EmmaChat />
+          </Suspense>
         </Providers>
       </body>
     </html>

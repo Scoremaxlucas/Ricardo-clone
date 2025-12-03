@@ -33,16 +33,17 @@ export function FeaturedProducts() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch('/api/watches/search?limit=6')
+        const response = await fetch('/api/watches/search?limit=6', {
+          // Add cache headers for better performance
+          next: { revalidate: 60 }, // Revalidate every 60 seconds
+        })
         if (response.ok) {
           const data = await response.json()
           setItems(Array.isArray(data.watches) ? data.watches : []) // API verwendet noch 'watches'
         } else {
-          console.error('API response not ok:', response.status)
           setItems([])
         }
       } catch (error) {
-        console.error('Error fetching items:', error)
         setItems([])
       } finally {
         setLoading(false)
@@ -56,13 +57,16 @@ export function FeaturedProducts() {
       if (!session?.user) return
 
       try {
-        const response = await fetch('/api/favorites')
+        const response = await fetch('/api/favorites', {
+          // Cache favorites for 30 seconds
+          next: { revalidate: 30 },
+        })
         if (response.ok) {
           const data = await response.json()
           setFavorites(new Set(data.favorites?.map((f: any) => f.watchId) || []))
         }
       } catch (error) {
-        console.error('Error fetching favorites:', error)
+        // Silently fail - favorites are not critical for initial render
       }
     }
 
