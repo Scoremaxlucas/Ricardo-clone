@@ -50,7 +50,7 @@ DATABASE_URL="postgresql://user:password@host:5432/db?connection_limit=20&pool_t
 ### Caching Strategy
 
 - **Search API**: 3 minutes cache, 6 minutes stale-while-revalidate
-- **Categories API**: 5 minutes cache, 10 minutes stale-while-revalidate  
+- **Categories API**: 5 minutes cache, 10 minutes stale-while-revalidate
 - **Favorites API**: 1 minute cache, 2 minutes stale-while-revalidate
 
 ### Query Optimizations
@@ -88,6 +88,34 @@ DATABASE_URL="postgresql://user:password@host:5432/db?connection_limit=20&pool_t
 
 ## Monitoring
 
+### Health Check Endpoint
+
+Monitor application health with:
+```
+GET /api/health
+```
+
+Returns:
+- Database connection status
+- Query performance metrics
+- Basic statistics
+- Performance rating (excellent/good/slow)
+
+### Performance Metrics Endpoint (Admin Only)
+
+Get detailed performance metrics:
+```
+GET /api/metrics
+```
+
+Returns:
+- Detailed database query times
+- Application statistics
+- Performance recommendations
+- Optimization suggestions
+
+### Target Metrics
+
 Monitor these metrics to ensure optimal performance:
 
 - API response times (target: <200ms)
@@ -95,4 +123,34 @@ Monitor these metrics to ensure optimal performance:
 - Time to First Byte (TTFB) (target: <500ms)
 - First Contentful Paint (FCP) (target: <1.5s)
 - Largest Contentful Paint (LCP) (target: <2.5s)
+
+### Setup Database Indexes
+
+Run the setup script to add all recommended indexes:
+
+```bash
+# Make script executable
+chmod +x scripts/setup-database-performance.sh
+
+# Run setup
+./scripts/setup-database-performance.sh
+```
+
+Or manually run the SQL script:
+
+```bash
+psql $DATABASE_URL -f scripts/add-database-indexes.sql
+```
+
+### Optimize Connection Pool
+
+Update your DATABASE_URL to include connection pool settings:
+
+```
+postgresql://user:password@host:5432/db?connection_limit=20&pool_timeout=10
+```
+
+Recommended settings:
+- `connection_limit=20` - Maximum concurrent connections
+- `pool_timeout=10` - Connection timeout in seconds
 
