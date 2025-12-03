@@ -178,6 +178,7 @@ export function ProductCard({
     return (
       <Link
         href={productHref}
+        prefetch={true}
         className={`group overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
         style={{
           border: '1px solid rgba(20, 184, 166, 0.1)',
@@ -303,6 +304,7 @@ export function ProductCard({
     return (
       <Link
         href={productHref}
+        prefetch={true}
         className={`group flex overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
         style={{
           border: '1px solid rgba(20, 184, 166, 0.1)',
@@ -437,6 +439,7 @@ export function ProductCard({
   return (
     <Link
       href={productHref}
+      prefetch={true}
       className={`group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
       style={{
         border: '1px solid rgba(20, 184, 166, 0.1)',

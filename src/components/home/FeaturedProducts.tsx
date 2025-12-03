@@ -34,8 +34,8 @@ export function FeaturedProducts() {
     const fetchItems = async () => {
       try {
         const response = await fetch('/api/watches/search?limit=6', {
-          // Add cache headers for better performance
-          next: { revalidate: 60 }, // Revalidate every 60 seconds
+          cache: 'force-cache', // Aggressive caching for better performance
+          next: { revalidate: 120 }, // Revalidate every 2 minutes
         })
         if (response.ok) {
           const data = await response.json()

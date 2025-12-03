@@ -1446,8 +1446,6 @@ export async function GET(request: NextRequest) {
     //   // Dies ermöglicht es, auch Watches ohne Kategorie-Verknüpfung zu finden
     // }
 
-    console.log('[SEARCH] WHERE clause:', JSON.stringify(whereClause, null, 2))
-
     // Hole alle verfügbaren Watches basierend auf WHERE-Klausel
     let watches: any[] = []
 
@@ -1475,15 +1473,11 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 1000, // Erhöhe Limit für bessere Ergebnisse
+      take: 200, // Optimized limit for better performance
     })
 
     // Filtere Watches ohne gültigen Seller heraus
     watches = watches.filter((w: any) => w.seller && w.seller.id)
-
-    console.log(
-      `[SEARCH] Prisma query result: ${watches.length} watches (category: ${category || 'none'})`
-    )
 
     // Filtere verkaufte Produkte raus
     // Nur nicht-stornierte Purchases zählen als "verkauft"
@@ -1506,7 +1500,6 @@ export async function GET(request: NextRequest) {
         return true // Bei Fehler: behalte das Produkt
       }
     })
-    console.log(`[SEARCH] Purchase filter: ${beforePurchaseFilter} -> ${watches.length} watches`)
 
     // Wenn Suchbegriff vorhanden, filtere intelligent mit Relevanz-Ranking
     if (query) {
@@ -1630,11 +1623,6 @@ export async function GET(request: NextRequest) {
 
       // Erweitere Query-Wörter um Synonyme, Plural/Singular, Umlaute
       const expandedQueryWords = expandSearchTerms(queryWords)
-
-      console.log(`[SEARCH] Original query words: ${queryWords.join(', ')}`)
-      console.log(
-        `[SEARCH] Expanded query words: ${expandedQueryWords.slice(0, 20).join(', ')}... (${expandedQueryWords.length} total)`
-      )
 
       // Verbesserte präzise Suche mit intelligenter Relevanz-Berechnung
       // WICHTIG: Booster beeinflussen nur die Sortierung, NICHT die Filterung!
@@ -1958,13 +1946,6 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    console.log(
-      '[SEARCH] Processing watches, query:',
-      query || 'none',
-      'category:',
-      category || 'none'
-    )
-
     // Konvertiere Bilder von JSON String zu Array und berechne aktuellen Preis
     let watchesWithImages = watches
       .map((watch: any) => {
@@ -2058,8 +2039,6 @@ export async function GET(request: NextRequest) {
       })
       .filter((w: any) => w !== null)
 
-    console.log('[SEARCH] After image processing:', watchesWithImages.length, 'watches')
-
     // Preis-Filter anwenden (nach Berechnung des aktuellen Preises)
     if (minPrice || maxPrice) {
       const min = minPrice ? parseFloat(minPrice) : 0
@@ -2098,17 +2077,9 @@ export async function GET(request: NextRequest) {
         })
       })
 
-      console.log(
-        `[SEARCH] Watches with category link: ${watchesWithCategoryLink.length} out of ${beforeFilter}`
-      )
-
       // Wenn keine Watches mit Kategorie-Verknüpfung gefunden wurden, verwende IMMER Keyword-Fallback
       if (watchesWithCategoryLink.length === 0) {
-        console.log(
-          `[SEARCH] No watches with category link found, using keyword fallback for "${categorySlug}"`
-        )
         const keywords = categoryKeywords[categorySlug] || []
-        console.log(`[SEARCH] Using keywords:`, keywords.slice(0, 10))
 
         watchesWithImages = watchesWithImages.filter(watch => {
           if (!watch) return false
@@ -2175,10 +2146,6 @@ export async function GET(request: NextRequest) {
           return false
         })
       }
-
-      console.log(
-        `[SEARCH] Category filter applied: ${beforeFilter} -> ${watchesWithImages.length} watches`
-      )
     } else if (subcategory) {
       // Nur Subkategorie ohne Hauptkategorie
       const subcatLower = subcategory.toLowerCase()
@@ -2294,8 +2261,6 @@ export async function GET(request: NextRequest) {
     // Limit und Offset anwenden
     const limitedWatches = watchesWithImages.slice(offset, offset + limit)
 
-    // Removed console.log for better performance
-
     return NextResponse.json(
       {
         watches: limitedWatches,
@@ -2303,7 +2268,7 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+          'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=360', // 3min cache, 6min stale
         },
       }
     )

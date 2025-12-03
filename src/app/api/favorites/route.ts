@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
       { favorites: favoritesWithImages },
       {
         headers: {
-          'Cache-Control': 'private, s-maxage=30, stale-while-revalidate=60',
+          'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=120', // 1min cache, 2min stale
         },
       }
     )
