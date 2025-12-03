@@ -1451,8 +1451,32 @@ export async function GET(request: NextRequest) {
 
     watches = await prisma.watch.findMany({
       where: whereClause,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        brand: true,
+        model: true,
+        referenceNumber: true,
+        price: true,
+        buyNowPrice: true,
+        condition: true,
+        year: true,
+        images: true,
+        boosters: true,
+        isAuction: true,
+        auctionStart: true,
+        auctionEnd: true,
+        createdAt: true,
+        updatedAt: true,
+        sellerId: true,
         bids: {
+          select: {
+            id: true,
+            amount: true,
+            userId: true,
+            createdAt: true,
+          },
           orderBy: { amount: 'desc' },
         },
         seller: {
@@ -1464,12 +1488,21 @@ export async function GET(request: NextRequest) {
           },
         },
         categories: {
-          include: {
-            category: true,
+          select: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
           },
         },
         purchases: {
-          // Lade ALLE Purchases, um korrekt filtern zu können
+          select: {
+            id: true,
+            status: true,
+          },
         },
       },
       orderBy: { createdAt: 'desc' },

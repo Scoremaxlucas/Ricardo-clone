@@ -24,12 +24,17 @@ export async function GET() {
           not: null,
         },
       },
-      include: {
+      select: {
+        total: true,
         watch: {
-          include: {
+          select: {
             categories: {
-              include: {
-                category: true,
+              select: {
+                category: {
+                  select: {
+                    slug: true,
+                  },
+                },
               },
             },
           },
@@ -62,8 +67,12 @@ export async function GET() {
       select: {
         boosters: true,
         categories: {
-          include: {
-            category: true,
+          select: {
+            category: {
+              select: {
+                slug: true,
+              },
+            },
           },
         },
       },
@@ -112,10 +121,15 @@ export async function GET() {
           some: {}, // Hat mindestens eine Kategorie
         },
       },
-      include: {
+      select: {
+        id: true,
         categories: {
-          include: {
-            category: true,
+          select: {
+            category: {
+              select: {
+                slug: true,
+              },
+            },
           },
         },
       },

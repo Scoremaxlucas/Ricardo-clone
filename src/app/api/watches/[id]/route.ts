@@ -8,8 +8,52 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params
     const watch = await prisma.watch.findUnique({
       where: { id },
-      include: {
-        bids: true,
+      select: {
+        id: true,
+        title: true,
+        description: true,
+        brand: true,
+        model: true,
+        referenceNumber: true,
+        year: true,
+        condition: true,
+        material: true,
+        movement: true,
+        caseDiameter: true,
+        price: true,
+        buyNowPrice: true,
+        isAuction: true,
+        auctionStart: true,
+        auctionEnd: true,
+        auctionDuration: true,
+        autoRenew: true,
+        lastRevision: true,
+        accuracy: true,
+        fullset: true,
+        box: true,
+        papers: true,
+        allLinks: true,
+        warranty: true,
+        warrantyMonths: true,
+        warrantyYears: true,
+        warrantyNote: true,
+        warrantyDescription: true,
+        images: true,
+        video: true,
+        shippingMethod: true,
+        boosters: true,
+        sellerId: true,
+        createdAt: true,
+        updatedAt: true,
+        bids: {
+          select: {
+            id: true,
+            amount: true,
+            userId: true,
+            createdAt: true,
+          },
+          orderBy: { amount: 'desc' },
+        },
         seller: {
           select: {
             id: true,
@@ -18,8 +62,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           },
         },
         categories: {
-          include: {
-            category: true,
+          select: {
+            category: {
+              select: {
+                id: true,
+                name: true,
+                slug: true,
+              },
+            },
           },
         },
       },

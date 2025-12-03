@@ -13,9 +13,24 @@ export async function GET(request: NextRequest) {
 
     const favorites = await prisma.favorite.findMany({
       where: { userId: session.user.id },
-      include: {
+      select: {
+        id: true,
+        watchId: true,
+        userId: true,
+        createdAt: true,
         watch: {
-          include: {
+          select: {
+            id: true,
+            title: true,
+            brand: true,
+            model: true,
+            price: true,
+            buyNowPrice: true,
+            condition: true,
+            images: true,
+            isAuction: true,
+            auctionEnd: true,
+            createdAt: true,
             seller: {
               select: {
                 id: true,
@@ -24,6 +39,11 @@ export async function GET(request: NextRequest) {
               },
             },
             bids: {
+              select: {
+                id: true,
+                amount: true,
+                createdAt: true,
+              },
               orderBy: { amount: 'desc' },
               take: 1, // Nur das höchste Gebot
             },
