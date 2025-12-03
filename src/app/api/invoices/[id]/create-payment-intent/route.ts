@@ -120,9 +120,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           sellerId: invoice.sellerId,
           type: 'invoice_payment',
         },
+        // Explizit nur Card und TWINT aktivieren - Link wird dadurch ausgeschlossen
+        payment_method_types: ['card', 'twint'],
         automatic_payment_methods: {
-          enabled: true,
-          allow_redirects: 'always', // Erlaubt TWINT und andere Redirect-basierte Zahlungsmethoden
+          enabled: false, // Deaktiviert, da wir payment_method_types verwenden
         },
         description: `Rechnung ${invoice.invoiceNumber}`,
       })
@@ -140,7 +141,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       console.error('[invoices/create-payment-intent] Stripe Error Type:', stripeError.type)
       console.error('[invoices/create-payment-intent] Stripe Error Message:', stripeError.message)
       console.error('[invoices/create-payment-intent] Stripe Error Code:', stripeError.code)
-      
+
       // Detailliertere Fehlermeldung
       if (stripeError.type === 'StripeAuthenticationError') {
         return NextResponse.json(
@@ -152,7 +153,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           { status: 500 }
         )
       }
-      
+
       if (stripeError.type === 'StripeInvalidRequestError') {
         return NextResponse.json(
           {
@@ -164,7 +165,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           { status: 500 }
         )
       }
-      
+
       return NextResponse.json(
         {
           message: `Stripe Fehler: ${stripeError.message || 'Unbekannter Fehler'}`,

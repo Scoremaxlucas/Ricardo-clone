@@ -216,10 +216,10 @@ export function InvoicePaymentForm({
     if (!clientSecret || typeof clientSecret !== 'string' || clientSecret.trim() === '') {
       return null
     }
-    
+
     // Prüfe ob Mobile (client-side only)
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
-    
+
     return {
       clientSecret: clientSecret.trim(),
       appearance: {
@@ -345,14 +345,12 @@ export function InvoicePaymentForm({
         appearance: {
           theme: 'stripe',
         },
-        // Auf Mobile: Link deaktivieren, TWINT explizit aktivieren
-        ...(isMobile && {
-          wallets: {
-            applePay: 'never',
-            googlePay: 'never',
-            link: 'never', // Link auf Mobile komplett deaktivieren
-          },
-        }),
+        // Link IMMER deaktivieren (sowohl Mobile als auch Desktop)
+        wallets: {
+          applePay: 'never',
+          googlePay: 'never',
+          link: 'never', // Link komplett deaktivieren
+        },
       }}
     >
       <CheckoutForm
