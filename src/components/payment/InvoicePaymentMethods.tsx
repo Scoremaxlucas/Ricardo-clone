@@ -149,47 +149,47 @@ export function InvoicePaymentMethods({
     <div className="space-y-6">
       {/* Zahlungsmethoden-Auswahl */}
       {!selectedMethod && (
-        <div className="rounded-lg bg-white p-6 shadow-md">
+        <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
           <h3 className="mb-4 text-lg font-semibold text-gray-900">Zahlungsmethode wählen</h3>
-          <div
-            className={`grid grid-cols-1 gap-4 ${
-              // Berechne Anzahl der verfügbaren Zahlungsmethoden
-              // Banküberweisung (1), Kreditkarte/TWINT kombiniert (1), PayPal (optional)
-              (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID ? 1 : 0) + 2 // Banküberweisung + Kreditkarte/TWINT sind immer verfügbar
-            } > 2 ? 'md:grid-cols-2 lg:grid-cols-3' : (process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID) ? 'md:grid-cols-2' : 'md:grid-cols-1' }`}
-          >
+          <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
+            {/* Kreditkarte / TWINT - kombiniert - Prominent auf Mobile */}
+            <button
+              onClick={() => setSelectedMethod('card_or_twint')}
+              className="order-1 rounded-lg border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-green-50 p-5 text-left transition-all hover:border-purple-500 hover:shadow-md sm:p-6"
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <CreditCard className="h-8 w-8 text-purple-600 sm:h-10 sm:w-10" />
+                <Smartphone className="h-7 w-7 text-green-600 sm:h-8 sm:w-8" />
+              </div>
+              <h4 className="mb-1 text-base font-bold text-gray-900 sm:text-lg">
+                Kreditkarte / TWINT
+              </h4>
+              <p className="text-sm font-medium text-green-700 sm:text-base">Sofortige Zahlung</p>
+              <div className="mt-2 flex items-center gap-1 text-xs text-green-600 sm:text-sm">
+                <Smartphone className="h-3 w-3 sm:h-4 sm:w-4" />
+                <span>TWINT verfügbar</span>
+              </div>
+            </button>
+
             {/* Banküberweisung */}
             <button
               onClick={() => setSelectedMethod('bank')}
-              className="rounded-lg border-2 border-gray-200 p-6 text-left transition-all hover:border-blue-500 hover:bg-blue-50"
+              className="order-2 rounded-lg border-2 border-gray-200 p-5 text-left transition-all hover:border-blue-500 hover:bg-blue-50 sm:p-6"
             >
-              <Building2 className="mb-3 h-8 w-8 text-blue-600" />
-              <h4 className="mb-1 font-semibold text-gray-900">Banküberweisung</h4>
-              <p className="text-sm text-gray-600">Mit QR-Code oder manuell</p>
-            </button>
-
-            {/* Kreditkarte / TWINT - kombiniert */}
-            <button
-              onClick={() => setSelectedMethod('card_or_twint')}
-              className="rounded-lg border-2 border-gray-200 p-6 text-left transition-all hover:border-purple-500 hover:bg-purple-50"
-            >
-              <div className="mb-3 flex items-center gap-2">
-                <CreditCard className="h-8 w-8 text-purple-600" />
-                <Smartphone className="h-6 w-6 text-green-600" />
-              </div>
-              <h4 className="mb-1 font-semibold text-gray-900">Kreditkarte / TWINT</h4>
-              <p className="text-sm text-gray-600">Sofortige Zahlung</p>
+              <Building2 className="mb-3 h-8 w-8 text-blue-600 sm:h-10 sm:w-10" />
+              <h4 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">Banküberweisung</h4>
+              <p className="text-sm text-gray-600 sm:text-base">Mit QR-Code oder manuell</p>
             </button>
 
             {/* PayPal */}
             {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
               <button
                 onClick={() => setSelectedMethod('paypal')}
-                className="rounded-lg border-2 border-gray-200 p-6 text-left transition-all hover:border-blue-500 hover:bg-blue-50"
+                className="order-3 rounded-lg border-2 border-gray-200 p-5 text-left transition-all hover:border-blue-500 hover:bg-blue-50 sm:p-6"
               >
-                <Wallet className="mb-3 h-8 w-8 text-blue-600" />
-                <h4 className="mb-1 font-semibold text-gray-900">PayPal</h4>
-                <p className="text-sm text-gray-600">Schnell und sicher</p>
+                <Wallet className="mb-3 h-8 w-8 text-blue-600 sm:h-10 sm:w-10" />
+                <h4 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">PayPal</h4>
+                <p className="text-sm text-gray-600 sm:text-base">Schnell und sicher</p>
               </button>
             )}
           </div>
@@ -341,42 +341,56 @@ export function InvoicePaymentMethods({
 
       {/* Kreditkarte / TWINT - kombiniert */}
       {selectedMethod === 'card_or_twint' && (
-        <div className="rounded-lg bg-white p-6 shadow-md">
+        <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
+            <h3 className="flex flex-col gap-1 text-base font-semibold text-gray-900 sm:flex-row sm:items-center sm:gap-2 sm:text-lg">
               <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-purple-600" />
-                <span className="text-gray-400">/</span>
-                <Smartphone className="h-5 w-5 text-green-600" />
+                <CreditCard className="h-5 w-5 text-purple-600 sm:h-6 sm:w-6" />
+                <span className="hidden text-gray-400 sm:inline">/</span>
+                <Smartphone className="h-5 w-5 text-green-600 sm:h-6 sm:w-6" />
               </div>
-              Kreditkarte / TWINT
+              <span className="sm:ml-0">Kreditkarte / TWINT</span>
             </h3>
             <button
               onClick={() => setSelectedMethod(null)}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
             >
               Zurück
             </button>
           </div>
 
-          <div className="space-y-6">
+          <div className="space-y-4 sm:space-y-6">
             {/* Betrag */}
-            <div className="rounded-lg border border-purple-200 bg-purple-50 p-3">
-              <div className="mb-1 text-sm text-gray-600">Zu zahlender Betrag</div>
-              <div className="text-2xl font-bold text-purple-700">
+            <div className="rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-green-50 p-4">
+              <div className="mb-1 text-sm font-medium text-gray-600">Zu zahlender Betrag</div>
+              <div className="text-2xl font-bold text-purple-700 sm:text-3xl">
                 {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
               </div>
             </div>
 
+            {/* TWINT Hinweis für Mobile */}
+            <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4 sm:hidden">
+              <div className="flex items-start gap-3">
+                <Smartphone className="mt-0.5 h-6 w-6 flex-shrink-0 text-green-600" />
+                <div className="flex-1">
+                  <h4 className="mb-1 font-semibold text-green-900">TWINT verfügbar</h4>
+                  <p className="text-sm text-green-800">
+                    Im Zahlungsformular können Sie zwischen Kreditkarte und TWINT wählen. TWINT ist
+                    besonders für mobile Zahlungen geeignet.
+                  </p>
+                </div>
+              </div>
+            </div>
+
             {/* Kreditkarte / TWINT - Einheitliches Formular */}
-            <div className="border-t border-gray-200 pt-6">
-              <h4 className="text-md mb-4 flex items-center gap-2 font-semibold text-gray-900">
+            <div className="border-t border-gray-200 pt-4 sm:pt-6">
+              <h4 className="mb-3 flex items-center gap-2 text-base font-semibold text-gray-900 sm:text-lg">
                 <div className="flex items-center gap-2">
                   <CreditCard className="h-5 w-5 text-purple-600" />
                   <span className="text-gray-400">/</span>
                   <Smartphone className="h-5 w-5 text-green-600" />
                 </div>
-                Kreditkarte / TWINT
+                <span>Kreditkarte / TWINT</span>
               </h4>
               <InvoicePaymentForm
                 invoiceId={invoiceId}
