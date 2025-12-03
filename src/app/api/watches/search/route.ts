@@ -1336,12 +1336,8 @@ export async function GET(request: NextRequest) {
       AND: [
         {
           // GOLDEN RULE: Zeige ALLE Artikel außer explizit 'rejected'
-          // Verwende 'not: rejected' um sicherzustellen, dass keine Artikel versehentlich versteckt werden
-          // Dies schließt auch alle zukünftigen moderationStatus-Werte ein
-          OR: [
-            { moderationStatus: null },
-            { moderationStatus: { not: 'rejected' } },
-          ],
+          // 'not: rejected' schließt auch null-Werte ein
+          moderationStatus: { not: 'rejected' },
         },
         {
           OR: [

@@ -2,11 +2,11 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { validateAllWatchesVisible, isWatchVisible } from '@/lib/data-protection'
+import { validateAllArticlesVisible, isArticleVisible } from '@/lib/data-protection'
 
 /**
- * Admin endpoint to validate that all watches are still visible
- * CRITICAL: Use this before deployments to ensure no watches disappear
+ * Admin endpoint to validate that all articles are still visible
+ * CRITICAL: Use this before deployments to ensure no articles disappear
  */
 export async function GET(request: NextRequest) {
   try {
@@ -30,11 +30,11 @@ export async function GET(request: NextRequest) {
     const searchTitle = searchParams.get('searchTitle') // Suche nach Titel (z.B. "lacoste")
 
     if (watchId) {
-      // Check single watch
-      const result = await isWatchVisible(watchId)
+      // Check single article
+      const result = await isArticleVisible(watchId)
       
-      // Get watch details
-      const watch = await prisma.watch.findUnique({
+      // Get article details
+      const article = await prisma.watch.findUnique({
         where: { id: watchId },
         select: {
           id: true,
@@ -58,13 +58,13 @@ export async function GET(request: NextRequest) {
       })
       
       return NextResponse.json({
-        watchId,
-        watch: watch ? {
-          title: watch.title,
-          brand: watch.brand,
-          model: watch.model,
-          moderationStatus: watch.moderationStatus,
-          categories: watch.categories.map((wc: any) => ({
+        articleId: watchId,
+        article: article ? {
+          title: article.title,
+          brand: article.brand,
+          model: article.model,
+          moderationStatus: article.moderationStatus,
+          categories: article.categories.map((wc: any) => ({
             name: wc.category.name,
             slug: wc.category.slug,
           })),
@@ -74,8 +74,8 @@ export async function GET(request: NextRequest) {
     }
 
     if (searchTitle) {
-      // Search for watches by title
-      const watches = await prisma.watch.findMany({
+      // Search for articles by title
+      const articles = await prisma.watch.findMany({
         where: {
           title: {
             contains: searchTitle,
@@ -93,28 +93,28 @@ export async function GET(request: NextRequest) {
       })
       
       const results = await Promise.all(
-        watches.map(watch => isWatchVisible(watch.id))
+        articles.map(article => isArticleVisible(article.id))
       )
       
       return NextResponse.json({
         searchTitle,
-        watches: watches.map((watch, index) => ({
-          ...watch,
+        articles: articles.map((article, index) => ({
+          ...article,
           visibility: results[index],
         })),
       })
     }
 
-    // Check all watches
-    const validation = await validateAllWatchesVisible()
+    // Check all articles
+    const validation = await validateAllArticlesVisible()
     
     return NextResponse.json({
       ...validation,
       timestamp: new Date().toISOString(),
       status: validation.hidden === 0 ? 'safe' : 'warning',
       message: validation.hidden === 0 
-        ? 'All watches are visible' 
-        : `${validation.hidden} watches are hidden - REVIEW BEFORE DEPLOYMENT!`,
+        ? 'All articles are visible' 
+        : `${validation.hidden} articles are hidden - REVIEW BEFORE DEPLOYMENT!`,
     })
   } catch (error: any) {
     return NextResponse.json({

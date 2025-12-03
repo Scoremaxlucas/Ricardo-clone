@@ -22,8 +22,13 @@ GET /api/admin/validate-watches
 
 **Wenn `hidden > 0`: STOPPEN! Deployment nicht durchführen!**
 
+**Suche nach spezifischem Artikel:**
+```bash
+GET /api/admin/validate-watches?searchTitle=lacoste
+```
+
 ### 2. Prüfe Filter-Logik Änderungen
-- [ ] Alle Filter verwenden `{ moderationStatus: { not: 'rejected' } }` statt expliziter Listen
+- [ ] Alle Filter verwenden `moderationStatus: { not: 'rejected' }` (vereinfacht, ohne OR)
 - [ ] Keine neuen Filter hinzugefügt, die bestehende Artikel ausschließen könnten
 - [ ] Purchase-Filter erlauben: keine Purchases ODER alle storniert
 - [ ] Auction-Filter erlauben: keine Auktion ODER noch nicht abgelaufen ODER Purchase vorhanden

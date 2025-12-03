@@ -10,7 +10,7 @@ import { prisma } from './prisma'
 /**
  * Prüft ob ein Artikel durch die aktuelle Filter-Logik sichtbar ist
  */
-export async function isWatchVisible(watchId: string): Promise<{
+export async function isArticleVisible(articleId: string): Promise<{
   visible: boolean
   reason?: string
   filters: {
@@ -20,8 +20,8 @@ export async function isWatchVisible(watchId: string): Promise<{
   }
 }> {
   try {
-    const watch = await prisma.watch.findUnique({
-      where: { id: watchId },
+    const article = await prisma.watch.findUnique({
+      where: { id: articleId },
       select: {
         id: true,
         moderationStatus: true,
@@ -36,10 +36,10 @@ export async function isWatchVisible(watchId: string): Promise<{
       },
     })
 
-    if (!watch) {
+    if (!article) {
       return {
         visible: false,
-        reason: 'Watch not found',
+        reason: 'Article not found',
         filters: {
           moderationStatus: false,
           purchases: false,
@@ -51,17 +51,17 @@ export async function isWatchVisible(watchId: string): Promise<{
     const now = new Date()
     const filters = {
       // Moderation Status Filter: Zeige alle außer 'rejected'
-      moderationStatus: watch.moderationStatus !== 'rejected',
+      moderationStatus: article.moderationStatus !== 'rejected',
       
       // Purchase Filter: Zeige wenn keine Purchases ODER alle storniert
-      purchases: watch.purchases.length === 0 || 
-                 watch.purchases.every(p => p.status === 'cancelled'),
+      purchases: article.purchases.length === 0 || 
+                 article.purchases.every(p => p.status === 'cancelled'),
       
       // Auction Filter: Zeige wenn keine Auktion ODER noch nicht abgelaufen ODER Purchase vorhanden
-      auction: !watch.isAuction || 
-               !watch.auctionEnd || 
-               watch.auctionEnd > now ||
-               watch.purchases.some(p => p.status !== 'cancelled'),
+      auction: !article.isAuction || 
+               !article.auctionEnd || 
+               article.auctionEnd > now ||
+               article.purchases.some(p => p.status !== 'cancelled'),
     }
 
     const visible = filters.moderationStatus && filters.purchases && filters.auction
@@ -92,14 +92,14 @@ export async function isWatchVisible(watchId: string): Promise<{
  * Prüft ob alle bestehenden Artikel noch sichtbar sind
  * Sollte vor jedem Deployment aufgerufen werden
  */
-export async function validateAllWatchesVisible(): Promise<{
+export async function validateAllArticlesVisible(): Promise<{
   total: number
   visible: number
   hidden: number
-  hiddenWatches: Array<{ id: string; reason: string }>
+  hiddenArticles: Array<{ id: string; reason: string }>
 }> {
   try {
-    const allWatches = await prisma.watch.findMany({
+    const allArticles = await prisma.watch.findMany({
       select: {
         id: true,
         moderationStatus: true,
@@ -115,26 +115,30 @@ export async function validateAllWatchesVisible(): Promise<{
     })
 
     const results = await Promise.all(
-      allWatches.map(watch => isWatchVisible(watch.id))
+      allArticles.map(article => isArticleVisible(article.id))
     )
 
-    const hiddenWatches = results
+    const hiddenArticles = results
       .map((result, index) => ({
-        id: allWatches[index].id,
+        id: allArticles[index].id,
         reason: result.reason || 'unknown',
       }))
       .filter((_, index) => !results[index].visible)
 
     return {
-      total: allWatches.length,
+      total: allArticles.length,
       visible: results.filter(r => r.visible).length,
-      hidden: hiddenWatches.length,
-      hiddenWatches,
+      hidden: hiddenArticles.length,
+      hiddenArticles,
     }
   } catch (error: any) {
-    throw new Error(`Error validating watches: ${error.message}`)
+    throw new Error(`Error validating articles: ${error.message}`)
   }
 }
+
+// Backward compatibility aliases
+export const isWatchVisible = isArticleVisible
+export const validateAllWatchesVisible = validateAllArticlesVisible
 
 /**
  * Sicherheitsprüfung: Verhindert dass Filter-Logik zu restriktiv wird
