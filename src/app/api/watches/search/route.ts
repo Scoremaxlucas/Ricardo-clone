@@ -1518,6 +1518,16 @@ export async function GET(request: NextRequest) {
 
     // DEBUG: Log how many articles passed initial filters
     console.log(`[SEARCH] Articles after DB query: ${watches.length}`)
+    
+    // DEBUG: Check if Lacoste article is in results
+    const lacosteArticle = watches.find((w: any) => w.id === 'cmipseh3y0001bbm7ew1n8atm')
+    if (lacosteArticle) {
+      console.log(`[SEARCH] ✅ Lacoste article found in DB query results`)
+      console.log(`[SEARCH]   Seller: ${lacosteArticle.seller?.id || 'MISSING'}`)
+      console.log(`[SEARCH]   Purchases: ${lacosteArticle.purchases?.length || 0}`)
+    } else {
+      console.log(`[SEARCH] ❌ Lacoste article NOT in DB query results`)
+    }
 
     // Filtere verkaufte Produkte raus
     // Nur nicht-stornierte Purchases zählen als "verkauft"
@@ -1542,6 +1552,14 @@ export async function GET(request: NextRequest) {
     })
 
     console.log(`[SEARCH] Articles after purchase filter: ${watches.length} (removed: ${beforePurchaseFilter - watches.length})`)
+    
+    // DEBUG: Check if Lacoste article passed purchase filter
+    const lacosteAfterPurchase = watches.find((w: any) => w.id === 'cmipseh3y0001bbm7ew1n8atm')
+    if (lacosteAfterPurchase) {
+      console.log(`[SEARCH] ✅ Lacoste article passed purchase filter`)
+    } else {
+      console.log(`[SEARCH] ❌ Lacoste article FAILED purchase filter`)
+    }
 
     // Wenn Suchbegriff vorhanden, filtere intelligent mit Relevanz-Ranking
     if (query) {
@@ -2079,7 +2097,19 @@ export async function GET(request: NextRequest) {
           return null
         }
       })
-      .filter((w: any) => w !== null)
+      .filter((w: any) => {
+        if (w === null) {
+          return false
+        }
+        // DEBUG: Check if Lacoste article passed mapping
+        if (w.id === 'cmipseh3y0001bbm7ew1n8atm') {
+          console.log(`[SEARCH] ✅ Lacoste article passed mapping filter`)
+          console.log(`[SEARCH]   Title: ${w.title}`)
+          console.log(`[SEARCH]   Images: ${w.images?.length || 0}`)
+          console.log(`[SEARCH]   CategorySlugs: ${w.categorySlugs?.join(', ') || 'none'}`)
+        }
+        return true
+      })
 
     // Preis-Filter anwenden (nach Berechnung des aktuellen Preises)
     if (minPrice || maxPrice) {
