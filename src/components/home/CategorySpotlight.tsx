@@ -120,9 +120,8 @@ export function CategorySpotlight() {
           try {
             const url = `/api/articles/search?category=${encodeURIComponent(cat.category)}&limit=6`
 
-            const response = await fetch(url, {
-              cache: 'force-cache', // Aggressive caching for better performance
-              next: { revalidate: 120 }, // Revalidate every 2 minutes
+            const response = await fetch(url + '&t=' + Date.now(), {
+              cache: 'no-store', // No caching to ensure fresh results
             })
             if (!response.ok) {
               const errorText = await response.text().catch(() => 'Unknown error')

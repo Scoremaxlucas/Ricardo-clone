@@ -1515,7 +1515,7 @@ export async function GET(request: NextRequest) {
 
     // Filtere Watches ohne gültigen Seller heraus (Seller sollte bereits durch Prisma gefiltert sein, aber Sicherheit)
     watches = watches.filter((w: any) => w.seller && w.seller.id)
-    
+
     // DEBUG: Log how many articles passed initial filters
     console.log(`[SEARCH] Articles after DB query: ${watches.length}`)
 
@@ -1540,7 +1540,7 @@ export async function GET(request: NextRequest) {
         return true // Bei Fehler: behalte das Produkt (fail-safe)
       }
     })
-    
+
     console.log(`[SEARCH] Articles after purchase filter: ${watches.length} (removed: ${beforePurchaseFilter - watches.length})`)
 
     // Wenn Suchbegriff vorhanden, filtere intelligent mit Relevanz-Ranking
@@ -2310,8 +2310,7 @@ export async function GET(request: NextRequest) {
       },
       {
         headers: {
-          'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=360', // 3min cache, 6min stale
-          'Content-Encoding': 'gzip', // Enable compression
+          'Cache-Control': 'no-store, no-cache, must-revalidate', // No caching to ensure fresh results
           'X-Content-Type-Options': 'nosniff',
         },
       }
