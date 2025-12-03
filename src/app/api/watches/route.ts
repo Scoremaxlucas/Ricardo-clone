@@ -111,8 +111,11 @@ export async function GET(request: NextRequest) {
       AND: [
         {
           // GOLDEN RULE: Zeige ALLE Artikel außer explizit 'rejected'
-          // 'not: rejected' schließt auch null-Werte ein
-          moderationStatus: { not: 'rejected' },
+          // Explizit null UND alle anderen Werte außer 'rejected' einschließen
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { not: 'rejected' } },
+          ],
         },
         {
           // Verkaufte Artikel ausschließen (nur nicht-stornierte Purchases zählen als "verkauft")
