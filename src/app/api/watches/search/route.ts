@@ -1510,11 +1510,14 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 200, // Optimized limit for better performance
+      take: 1000, // Increased limit to ensure all articles are found
     })
 
-    // Filtere Watches ohne gültigen Seller heraus
+    // Filtere Watches ohne gültigen Seller heraus (Seller sollte bereits durch Prisma gefiltert sein, aber Sicherheit)
     watches = watches.filter((w: any) => w.seller && w.seller.id)
+    
+    // DEBUG: Log how many articles passed initial filters
+    console.log(`[SEARCH] Articles after DB query: ${watches.length}`)
 
     // Filtere verkaufte Produkte raus
     // Nur nicht-stornierte Purchases zählen als "verkauft"
