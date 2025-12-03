@@ -555,6 +555,7 @@ export async function POST(request: NextRequest) {
         : null,
       sellerId: seller.id, // Verwende die verifizierte sellerId
       referenceNumber: referenceNumber || null,
+      moderationStatus: 'pending', // Explizit auf pending setzen für Sichtbarkeit
       shippingMethod: (() => {
         try {
           if (shippingMethods && Array.isArray(shippingMethods) && shippingMethods.length > 0) {

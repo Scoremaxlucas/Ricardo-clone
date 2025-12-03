@@ -110,8 +110,14 @@ export async function GET(request: NextRequest) {
     const where: any = {
       AND: [
         {
-          // WICHTIG: Manuell deaktivierte Artikel ausschließen (moderationStatus === 'rejected')
-          OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
+          // WICHTIG: Zeige alle Artikel außer rejected
+          // Zeige: null, 'pending', 'approved', 'reviewing' - verstecke nur 'rejected'
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: 'pending' },
+            { moderationStatus: 'approved' },
+            { moderationStatus: 'reviewing' },
+          ],
         },
         {
           // Verkaufte Artikel ausschließen (nur nicht-stornierte Purchases zählen als "verkauft")
