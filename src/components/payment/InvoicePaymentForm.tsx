@@ -29,6 +29,46 @@ function CheckoutForm({
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  
+  // Deaktiviere Link nach dem Laden des Elements
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // Link komplett verstecken durch CSS
+      const hideLink = () => {
+        // Verstecke Link-Button und Link-Authentifizierung
+        const linkButtons = document.querySelectorAll('[data-testid="link-button"], [data-testid="link-authentication-element"], [id*="link"], .LinkButton, [class*="Link"]')
+        linkButtons.forEach(el => {
+          (el as HTMLElement).style.display = 'none'
+        })
+        
+        // Verstecke auch Text der Link erwähnt
+        const allElements = document.querySelectorAll('*')
+        allElements.forEach(el => {
+          const text = el.textContent || ''
+          if (text.includes('Link') && text.includes('schneller') || text.includes('sicherer')) {
+            const parent = el.closest('[class*="payment"], [class*="wallet"], [class*="element"]')
+            if (parent) {
+              (parent as HTMLElement).style.display = 'none'
+            }
+          }
+        })
+      }
+      
+      // Sofort ausführen
+      hideLink()
+      
+      // Auch nach kurzer Verzögerung (wenn Stripe Element geladen ist)
+      setTimeout(hideLink, 500)
+      setTimeout(hideLink, 1000)
+      setTimeout(hideLink, 2000)
+      
+      // Observer für dynamisch hinzugefügte Elemente
+      const observer = new MutationObserver(hideLink)
+      observer.observe(document.body, { childList: true, subtree: true })
+      
+      return () => observer.disconnect()
+    }
+  }, [elements])
 
   const handleSubmit = async (event: React.FormEvent) => {
     event.preventDefault()
@@ -333,9 +373,6 @@ export function InvoicePaymentForm({
   }
 
   // JETZT erst Elements rendern - mit allen Checks
-  // Prüfe ob Mobile für Options-Anpassung
-  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
-  
   return (
     <Elements
       key={`elements-${finalClientSecret.substring(0, 20)}`}
@@ -344,12 +381,6 @@ export function InvoicePaymentForm({
         clientSecret: finalClientSecret,
         appearance: {
           theme: 'stripe',
-        },
-        // Link IMMER deaktivieren (sowohl Mobile als auch Desktop)
-        wallets: {
-          applePay: 'never',
-          googlePay: 'never',
-          link: 'never', // Link komplett deaktivieren
         },
       }}
     >
