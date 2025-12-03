@@ -63,8 +63,24 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Erstelle Stripe Client
     const stripeSecretKey = process.env.STRIPE_SECRET_KEY?.trim()
     if (!stripeSecretKey) {
+      console.error('[invoices/create-payment-intent] STRIPE_SECRET_KEY ist nicht gesetzt')
       return NextResponse.json(
-        { message: 'Stripe Secret Key ist nicht konfiguriert' },
+        {
+          message: 'Stripe Secret Key ist nicht konfiguriert. Bitte setzen Sie STRIPE_SECRET_KEY in Vercel Environment Variables.',
+          error: 'STRIPE_SECRET_KEY_MISSING',
+        },
+        { status: 500 }
+      )
+    }
+
+    // Prüfe Key-Format
+    if (!stripeSecretKey.startsWith('sk_')) {
+      console.error('[invoices/create-payment-intent] STRIPE_SECRET_KEY hat ungültiges Format')
+      return NextResponse.json(
+        {
+          message: 'Stripe Secret Key hat ungültiges Format. Der Key sollte mit "sk_test_" oder "sk_live_" beginnen.',
+          error: 'STRIPE_SECRET_KEY_INVALID_FORMAT',
+        },
         { status: 500 }
       )
     }
@@ -76,9 +92,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       stripeSecretKey.substring(stripeSecretKey.length - 4)
     console.log(`[invoices/create-payment-intent] Verwende Stripe Key: ${keyPrefix}`)
 
-    const stripe = new Stripe(stripeSecretKey, {
-      apiVersion: '2023-10-16',
-    })
+    let stripe: Stripe
+    try {
+      stripe = new Stripe(stripeSecretKey, {
+        apiVersion: '2023-10-16',
+      })
+    } catch (stripeInitError: any) {
+      console.error('[invoices/create-payment-intent] Fehler beim Initialisieren von Stripe:', stripeInitError)
+      return NextResponse.json(
+        {
+          message: 'Fehler beim Initialisieren von Stripe. Bitte prüfen Sie Ihren STRIPE_SECRET_KEY.',
+          error: 'STRIPE_INIT_ERROR',
+          details: stripeInitError.message,
+        },
+        { status: 500 }
+      )
+    }
 
     // Erstelle Payment Intent
     try {
@@ -107,34 +136,71 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       })
     } catch (stripeError: any) {
       console.error('[invoices/create-payment-intent] Stripe API Fehler:', stripeError)
+      console.error('[invoices/create-payment-intent] Stripe Error Type:', stripeError.type)
+      console.error('[invoices/create-payment-intent] Stripe Error Message:', stripeError.message)
+      console.error('[invoices/create-payment-intent] Stripe Error Code:', stripeError.code)
+      
       // Detailliertere Fehlermeldung
       if (stripeError.type === 'StripeAuthenticationError') {
         return NextResponse.json(
           {
-            message: `Stripe Authentifizierungsfehler: Bitte prüfen Sie Ihren STRIPE_SECRET_KEY in der .env Datei. Key-Präfix: ${keyPrefix}`,
+            message: `Stripe Authentifizierungsfehler: Bitte prüfen Sie Ihren STRIPE_SECRET_KEY in Vercel Environment Variables. Key-Präfix: ${keyPrefix}`,
+            error: 'STRIPE_AUTH_ERROR',
+            details: stripeError.message,
           },
           { status: 500 }
         )
       }
-      throw stripeError // Weiterwerfen für allgemeines Error-Handling
+      
+      if (stripeError.type === 'StripeInvalidRequestError') {
+        return NextResponse.json(
+          {
+            message: `Stripe API Fehler: ${stripeError.message}`,
+            error: 'STRIPE_INVALID_REQUEST',
+            details: stripeError.message,
+            code: stripeError.code,
+          },
+          { status: 500 }
+        )
+      }
+      
+      return NextResponse.json(
+        {
+          message: `Stripe Fehler: ${stripeError.message || 'Unbekannter Fehler'}`,
+          error: 'STRIPE_ERROR',
+          type: stripeError.type,
+          details: stripeError.message,
+        },
+        { status: 500 }
+      )
     }
   } catch (error: any) {
     console.error(
       '[invoices/create-payment-intent] Fehler beim Erstellen des Payment Intents:',
       error
     )
+    console.error('[invoices/create-payment-intent] Error Stack:', error.stack)
 
     // Detailliertere Fehlermeldung für den Benutzer
     let errorMessage = 'Fehler beim Erstellen des Payment Intents'
+    let errorType = 'UNKNOWN_ERROR'
 
     if (error.message) {
       errorMessage += ': ' + error.message
     }
 
     if (error.type === 'StripeAuthenticationError') {
-      errorMessage += ' (Stripe Authentifizierungsfehler - bitte prüfen Sie Ihre API Keys)'
+      errorMessage += ' (Stripe Authentifizierungsfehler - bitte prüfen Sie Ihre API Keys in Vercel)'
+      errorType = 'STRIPE_AUTH_ERROR'
     }
 
-    return NextResponse.json({ message: errorMessage }, { status: 500 })
+    return NextResponse.json(
+      {
+        message: errorMessage,
+        error: errorType,
+        details: error.message,
+      },
+      { status: 500 }
+    )
   }
 }
