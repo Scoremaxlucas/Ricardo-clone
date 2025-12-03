@@ -1450,10 +1450,10 @@ export async function GET(request: NextRequest) {
     //   // Dies ermöglicht es, auch Watches ohne Kategorie-Verknüpfung zu finden
     // }
 
-    // Hole alle verfügbaren Watches basierend auf WHERE-Klausel
-    let watches: any[] = []
+    // Hole alle verfügbaren Artikel basierend auf WHERE-Klausel
+    let articles: any[] = []
 
-    watches = await prisma.watch.findMany({
+    articles = await prisma.watch.findMany({
       where: whereClause,
       select: {
         id: true,
@@ -1513,14 +1513,14 @@ export async function GET(request: NextRequest) {
       take: 1000, // Increased limit to ensure all articles are found
     })
 
-    // Filtere Watches ohne gültigen Seller heraus (Seller sollte bereits durch Prisma gefiltert sein, aber Sicherheit)
-    watches = watches.filter((w: any) => w.seller && w.seller.id)
+    // Filtere Artikel ohne gültigen Seller heraus (Seller sollte bereits durch Prisma gefiltert sein, aber Sicherheit)
+    articles = articles.filter((w: any) => w.seller && w.seller.id)
 
     // DEBUG: Log how many articles passed initial filters
-    console.log(`[SEARCH] Articles after DB query: ${watches.length}`)
+    console.log(`[SEARCH] Articles after DB query: ${articles.length}`)
     
     // DEBUG: Check if Lacoste article is in results
-    const lacosteArticle = watches.find((w: any) => w.id === 'cmipseh3y0001bbm7ew1n8atm')
+    const lacosteArticle = articles.find((w: any) => w.id === 'cmipseh3y0001bbm7ew1n8atm')
     if (lacosteArticle) {
       console.log(`[SEARCH] ✅ Lacoste article found in DB query results`)
       console.log(`[SEARCH]   Seller: ${lacosteArticle.seller?.id || 'MISSING'}`)
@@ -1552,7 +1552,7 @@ export async function GET(request: NextRequest) {
     })
 
     console.log(`[SEARCH] Articles after purchase filter: ${watches.length} (removed: ${beforePurchaseFilter - watches.length})`)
-    
+
     // DEBUG: Check if Lacoste article passed purchase filter
     const lacosteAfterPurchase = watches.find((w: any) => w.id === 'cmipseh3y0001bbm7ew1n8atm')
     if (lacosteAfterPurchase) {
@@ -1686,12 +1686,12 @@ export async function GET(request: NextRequest) {
 
       // Verbesserte präzise Suche mit intelligenter Relevanz-Berechnung
       // WICHTIG: Booster beeinflussen nur die Sortierung, NICHT die Filterung!
-      const watchesWithScore = watches.map(watch => {
+      const articlesWithScore = articles.map(article => {
         // Parse boosters für Priorität (nur für Sortierung)
         let boosters: string[] = []
         try {
-          if ((watch as any).boosters) {
-            boosters = JSON.parse((watch as any).boosters)
+          if ((article as any).boosters) {
+            boosters = JSON.parse((article as any).boosters)
           }
         } catch (e) {
           boosters = []
@@ -1707,7 +1707,7 @@ export async function GET(request: NextRequest) {
         let relevanceScore = 0
         let matches = false
 
-        // WICHTIG: Prüfe zuerst, ob das Watch zur Suche passt (OHNE Booster-Bonus)
+        // WICHTIG: Prüfe zuerst, ob der Artikel zur Suche passt (OHNE Booster-Bonus)
         // Exakte Übereinstimmung (höchste Priorität)
         const normalizedQ = normalizeUmlauts(qLower)
         const normalizedSearchText = normalizeUmlauts(searchText)
@@ -1939,13 +1939,13 @@ export async function GET(request: NextRequest) {
           }
 
           // WICHTIG: matches wird basierend auf Relevanz gesetzt
-          // Ein Watch passt zur Suche wenn:
+          // Ein Artikel passt zur Suche wenn:
           // - Mindestens ein Original-Wort ODER Synonym gefunden wurde
           // - UND relevanceScore > 0
           matches = relevanceScore > 0 && (hasOriginalMatch || hasSynonymMatch)
         }
 
-        // Booster-Bonus wird NUR hinzugefügt, wenn das Watch bereits zur Suche passt
+        // Booster-Bonus wird NUR hinzugefügt, wenn der Artikel bereits zur Suche passt
         // Booster beeinflusst nur die Sortierung, nicht die Filterung!
         if (matches) {
           if (boosters.includes('super-boost')) {
@@ -1957,20 +1957,20 @@ export async function GET(request: NextRequest) {
           }
         }
 
-        return { watch, relevanceScore, matches, boosters }
+        return { article, relevanceScore, matches, boosters }
       })
 
-      // Filtere NUR Watches, die zur Suche passen (matches = true)
-      watches = watchesWithScore
-        .filter(item => item.matches) // WICHTIG: Nur relevante Watches werden angezeigt
+      // Filtere NUR Artikel, die zur Suche passen (matches = true)
+      articles = articlesWithScore
+        .filter(item => item.matches) // WICHTIG: Nur relevante Artikel werden angezeigt
         .sort((a, b) => {
-          // Sortiere nach Relevanz-Score (inkl. Booster-Bonus für relevante Watches)
+          // Sortiere nach Relevanz-Score (inkl. Booster-Bonus für relevante Artikel)
           if (b.relevanceScore !== a.relevanceScore) {
             return b.relevanceScore - a.relevanceScore
           }
-          return new Date(b.watch.createdAt).getTime() - new Date(a.watch.createdAt).getTime()
+          return new Date(b.article.createdAt).getTime() - new Date(a.article.createdAt).getTime()
         })
-        .map(item => item.watch)
+        .map(item => item.article)
     } else if (category) {
       // Nur Kategorie-Filter ohne Suchbegriff
       // Sortiere nach Booster-Priorität
@@ -1981,7 +1981,7 @@ export async function GET(request: NextRequest) {
         return 1
       }
 
-      watches = watches.sort((a, b) => {
+      articles = articles.sort((a, b) => {
         let boostersA: string[] = []
         let boostersB: string[] = []
         try {
@@ -2007,20 +2007,20 @@ export async function GET(request: NextRequest) {
     }
 
     // Konvertiere Bilder von JSON String zu Array und berechne aktuellen Preis
-    let watchesWithImages = watches
-      .map((watch: any) => {
+    let articlesWithImages = articles
+      .map((article: any) => {
         try {
-          const highestBid = watch.bids?.[0]
-          const currentPrice = highestBid ? highestBid.amount : watch.price || 0
+          const highestBid = article.bids?.[0]
+          const currentPrice = highestBid ? highestBid.amount : article.price || 0
 
           // Parse boosters
           let boosters: string[] = []
           try {
-            if (watch.boosters) {
-              if (Array.isArray(watch.boosters)) {
-                boosters = watch.boosters
-              } else if (typeof watch.boosters === 'string') {
-                boosters = JSON.parse(watch.boosters)
+            if (article.boosters) {
+              if (Array.isArray(article.boosters)) {
+                boosters = article.boosters
+              } else if (typeof article.boosters === 'string') {
+                boosters = JSON.parse(article.boosters)
               }
             }
           } catch (e) {
@@ -2030,30 +2030,30 @@ export async function GET(request: NextRequest) {
           // Parse images sicher
           let images: string[] = []
           try {
-            if (watch.images) {
-              if (Array.isArray(watch.images)) {
-                images = watch.images
-              } else if (typeof watch.images === 'string') {
-                if (watch.images.trim().startsWith('[') || watch.images.trim().startsWith('{')) {
-                  images = JSON.parse(watch.images)
-                } else if (watch.images.trim().startsWith('http')) {
-                  images = [watch.images]
+            if (article.images) {
+              if (Array.isArray(article.images)) {
+                images = article.images
+              } else if (typeof article.images === 'string') {
+                if (article.images.trim().startsWith('[') || article.images.trim().startsWith('{')) {
+                  images = JSON.parse(article.images)
+                } else if (article.images.trim().startsWith('http')) {
+                  images = [article.images]
                 } else {
                   try {
-                    images = JSON.parse(watch.images)
+                    images = JSON.parse(article.images)
                   } catch {
-                    images = watch.images.trim() ? [watch.images] : []
+                    images = article.images.trim() ? [article.images] : []
                   }
                 }
               }
             }
           } catch (e) {
             if (
-              watch.images &&
-              typeof watch.images === 'string' &&
-              watch.images.trim().startsWith('http')
+              article.images &&
+              typeof article.images === 'string' &&
+              article.images.trim().startsWith('http')
             ) {
-              images = [watch.images]
+              images = [article.images]
             } else {
               images = []
             }
@@ -2061,39 +2061,39 @@ export async function GET(request: NextRequest) {
 
           // Extrahiere Kategorie-Slugs für Filterung
           const categorySlugs =
-            watch.categories?.map((cat: any) => cat.category?.slug).filter(Boolean) || []
+            article.categories?.map((cat: any) => cat.category?.slug).filter(Boolean) || []
 
           return {
-            id: watch.id,
-            title: watch.title || '',
-            description: watch.description || '',
-            brand: watch.brand || '',
-            model: watch.model || '',
+            id: article.id,
+            title: article.title || '',
+            description: article.description || '',
+            brand: article.brand || '',
+            model: article.model || '',
             price: currentPrice,
-            buyNowPrice: watch.buyNowPrice || null,
-            condition: watch.condition || '',
-            year: watch.year || null,
+            buyNowPrice: article.buyNowPrice || null,
+            condition: article.condition || '',
+            year: article.year || null,
             images: images,
             boosters: boosters,
-            isAuction: watch.isAuction || false,
-            auctionEnd: watch.auctionEnd || null,
-            auctionStart: watch.auctionStart || null,
-            city: watch.seller?.city || null,
-            postalCode: watch.seller?.postalCode || null,
-            bids: watch.bids || [],
-            createdAt: watch.createdAt,
-            updatedAt: watch.updatedAt,
-            sellerId: watch.sellerId,
-            seller: watch.seller
+            isAuction: article.isAuction || false,
+            auctionEnd: article.auctionEnd || null,
+            auctionStart: article.auctionStart || null,
+            city: article.seller?.city || null,
+            postalCode: article.seller?.postalCode || null,
+            bids: article.bids || [],
+            createdAt: article.createdAt,
+            updatedAt: article.updatedAt,
+            sellerId: article.sellerId,
+            seller: article.seller
               ? {
-                  city: watch.seller.city,
-                  postalCode: watch.seller.postalCode,
+                  city: article.seller.city,
+                  postalCode: article.seller.postalCode,
                 }
               : null,
             categorySlugs: categorySlugs,
           }
         } catch (e) {
-          console.error('Error processing watch:', watch?.id, e)
+          console.error('Error processing article:', article?.id, e)
           return null
         }
       })
@@ -2116,17 +2116,17 @@ export async function GET(request: NextRequest) {
       const min = minPrice ? parseFloat(minPrice) : 0
       const max = maxPrice ? parseFloat(maxPrice) : Infinity
 
-      watchesWithImages = watchesWithImages.filter(watch => {
-        if (!watch) return false
-        const currentPrice = watch.price
+      articlesWithImages = articlesWithImages.filter(article => {
+        if (!article) return false
+        const currentPrice = article.price
         return currentPrice >= min && currentPrice <= max
       })
     }
 
     // Kategorie-Filterung: Wenn Kategorie gesetzt ist, filtere nach Kategorie-Verknüpfung ODER Keywords
-    // WICHTIG: Wenn keine Watches mit Kategorie-Verknüpfung gefunden werden, verwende IMMER Keyword-Fallback
+    // WICHTIG: Wenn keine Artikel mit Kategorie-Verknüpfung gefunden werden, verwende IMMER Keyword-Fallback
     if (category) {
-      const beforeFilter = watchesWithImages.length
+      const beforeFilter = articlesWithImages.length
       const categorySlug = category.toLowerCase().trim()
       const categoryVariants = [
         categorySlug,
@@ -2137,10 +2137,10 @@ export async function GET(request: NextRequest) {
         categorySlug.replace(/_/g, '-'),
       ]
 
-      // Prüfe zuerst, ob Watches mit Kategorie-Verknüpfung vorhanden sind
-      const watchesWithCategoryLink = watchesWithImages.filter(watch => {
-        if (!watch) return false
-        return watch.categorySlugs?.some((slug: string) => {
+      // Prüfe zuerst, ob Artikel mit Kategorie-Verknüpfung vorhanden sind
+      const articlesWithCategoryLink = articlesWithImages.filter(article => {
+        if (!article) return false
+        return article.categorySlugs?.some((slug: string) => {
           const slugLower = slug?.toLowerCase().trim()
           return categoryVariants.some(variant => {
             const variantLower = variant.toLowerCase().trim()
@@ -2149,14 +2149,14 @@ export async function GET(request: NextRequest) {
         })
       })
 
-      // Wenn keine Watches mit Kategorie-Verknüpfung gefunden wurden, verwende IMMER Keyword-Fallback
-      if (watchesWithCategoryLink.length === 0) {
+      // Wenn keine Artikel mit Kategorie-Verknüpfung gefunden wurden, verwende IMMER Keyword-Fallback
+      if (articlesWithCategoryLink.length === 0) {
         const keywords = categoryKeywords[categorySlug] || []
 
-        watchesWithImages = watchesWithImages.filter(watch => {
-          if (!watch) return false
+        articlesWithImages = articlesWithImages.filter(article => {
+          if (!article) return false
           const searchText =
-            `${watch.brand || ''} ${watch.model || ''} ${watch.title || ''} ${watch.description || ''}`.toLowerCase()
+            `${article.brand || ''} ${article.model || ''} ${article.title || ''} ${article.description || ''}`.toLowerCase()
           const matchesKeywords = keywords.some(keyword =>
             searchText.includes(keyword.toLowerCase())
           )
@@ -2173,10 +2173,10 @@ export async function GET(request: NextRequest) {
         })
       } else {
         // Verwende normale Filterung mit Kategorie-Verknüpfung + Fallback
-        watchesWithImages = watchesWithImages.filter(watch => {
-          if (!watch) return false
-          // Prüfe ob das Produkt eine Kategorie-Verknüpfung hat
-          const hasCategoryLink = watch.categorySlugs?.some((slug: string) => {
+        articlesWithImages = articlesWithImages.filter(article => {
+          if (!article) return false
+          // Prüfe ob der Artikel eine Kategorie-Verknüpfung hat
+          const hasCategoryLink = article.categorySlugs?.some((slug: string) => {
             const slugLower = slug?.toLowerCase().trim()
             return categoryVariants.some(variant => {
               const variantLower = variant.toLowerCase().trim()
@@ -2189,18 +2189,18 @@ export async function GET(request: NextRequest) {
             if (subcategory) {
               const subcatLower = subcategory.toLowerCase()
               const searchText =
-                `${watch.brand || ''} ${watch.model || ''} ${watch.title || ''} ${watch.description || ''}`.toLowerCase()
+                `${article.brand || ''} ${article.model || ''} ${article.title || ''} ${article.description || ''}`.toLowerCase()
               return searchText.includes(subcatLower)
             }
             return true
           }
 
-          // Fallback: Prüfe ob das Produkt basierend auf Keywords zur Kategorie passt
+          // Fallback: Prüfe ob der Artikel basierend auf Keywords zur Kategorie passt
           const keywords = categoryKeywords[categorySlug] || []
           if (keywords.length > 0) {
-            if (!watch) return false
+            if (!article) return false
             const searchText =
-              `${watch.brand || ''} ${watch.model || ''} ${watch.title || ''} ${watch.description || ''}`.toLowerCase()
+              `${article.brand || ''} ${article.model || ''} ${article.title || ''} ${article.description || ''}`.toLowerCase()
             const matchesKeywords = keywords.some(keyword =>
               searchText.includes(keyword.toLowerCase())
             )
@@ -2221,10 +2221,10 @@ export async function GET(request: NextRequest) {
     } else if (subcategory) {
       // Nur Subkategorie ohne Hauptkategorie
       const subcatLower = subcategory.toLowerCase()
-      watchesWithImages = watchesWithImages.filter(watch => {
-        if (!watch) return false
+      articlesWithImages = articlesWithImages.filter(article => {
+        if (!article) return false
         const searchText =
-          `${watch.brand} ${watch.model} ${watch.title} ${watch.description || ''}`.toLowerCase()
+          `${article.brand} ${article.model} ${article.title} ${article.description || ''}`.toLowerCase()
         return searchText.includes(subcatLower)
       })
     }
@@ -2239,7 +2239,7 @@ export async function GET(request: NextRequest) {
 
     // Sortierung anwenden (Booster-Priorität hat IMMER Vorrang)
     if (sortBy === 'relevance') {
-      watchesWithImages = watchesWithImages.sort((a, b) => {
+      articlesWithImages = articlesWithImages.sort((a, b) => {
         if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
@@ -2251,7 +2251,7 @@ export async function GET(request: NextRequest) {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       })
     } else if (sortBy === 'ending') {
-      watchesWithImages = watchesWithImages.sort((a, b) => {
+      articlesWithImages = articlesWithImages.sort((a, b) => {
         if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
@@ -2266,7 +2266,7 @@ export async function GET(request: NextRequest) {
         return new Date(a.auctionEnd).getTime() - new Date(b.auctionEnd).getTime()
       })
     } else if (sortBy === 'newest') {
-      watchesWithImages = watchesWithImages.sort((a, b) => {
+      articlesWithImages = articlesWithImages.sort((a, b) => {
         if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
@@ -2278,7 +2278,7 @@ export async function GET(request: NextRequest) {
         return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
       })
     } else if (sortBy === 'price-low') {
-      watchesWithImages = watchesWithImages.sort((a, b) => {
+      articlesWithImages = articlesWithImages.sort((a, b) => {
         if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
@@ -2290,7 +2290,7 @@ export async function GET(request: NextRequest) {
         return a.price - b.price
       })
     } else if (sortBy === 'price-high') {
-      watchesWithImages = watchesWithImages.sort((a, b) => {
+      articlesWithImages = articlesWithImages.sort((a, b) => {
         if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
@@ -2302,7 +2302,7 @@ export async function GET(request: NextRequest) {
         return b.price - a.price
       })
     } else if (sortBy === 'bids') {
-      watchesWithImages = watchesWithImages.sort((a, b) => {
+      articlesWithImages = articlesWithImages.sort((a, b) => {
         if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
@@ -2317,7 +2317,7 @@ export async function GET(request: NextRequest) {
       })
     } else {
       // Standard: Nach Booster-Priorität sortieren
-      watchesWithImages = watchesWithImages.sort((a, b) => {
+      articlesWithImages = articlesWithImages.sort((a, b) => {
         if (!a || !b) return 0
         const priorityA = getBoostPriority(a.boosters || [])
         const priorityB = getBoostPriority(b.boosters || [])
@@ -2331,12 +2331,12 @@ export async function GET(request: NextRequest) {
     }
 
     // Limit und Offset anwenden
-    const limitedWatches = watchesWithImages.slice(offset, offset + limit)
+    const limitedArticles = articlesWithImages.slice(offset, offset + limit)
 
     return NextResponse.json(
       {
-        watches: limitedWatches,
-        total: watchesWithImages.length,
+        watches: limitedArticles, // Backward compatibility: API response still uses 'watches'
+        total: articlesWithImages.length,
       },
       {
         headers: {
