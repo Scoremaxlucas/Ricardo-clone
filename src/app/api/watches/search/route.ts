@@ -1531,14 +1531,14 @@ export async function GET(request: NextRequest) {
 
     // Filtere verkaufte Produkte raus
     // Nur nicht-stornierte Purchases zählen als "verkauft"
-    const beforePurchaseFilter = watches.length
-    watches = watches.filter((watch: any) => {
+    const beforePurchaseFilter = articles.length
+    articles = articles.filter((article: any) => {
       try {
-        if (!watch.purchases || !Array.isArray(watch.purchases) || watch.purchases.length === 0) {
+        if (!article.purchases || !Array.isArray(article.purchases) || article.purchases.length === 0) {
           return true // Keine Purchases = verfügbar
         }
         // Prüfe ob es aktive (nicht-stornierte) Purchases gibt
-        const activePurchases = watch.purchases.filter(
+        const activePurchases = article.purchases.filter(
           (p: any) => p && p.status && p.status !== 'cancelled'
         )
         if (activePurchases.length > 0) {
@@ -1546,15 +1546,15 @@ export async function GET(request: NextRequest) {
         }
         return true // Alle Purchases sind storniert = verfügbar
       } catch (e) {
-        console.error('[SEARCH] Error filtering purchases:', e, 'watch:', watch?.id)
+        console.error('[SEARCH] Error filtering purchases:', e, 'article:', article?.id)
         return true // Bei Fehler: behalte das Produkt (fail-safe)
       }
     })
 
-    console.log(`[SEARCH] Articles after purchase filter: ${watches.length} (removed: ${beforePurchaseFilter - watches.length})`)
+    console.log(`[SEARCH] Articles after purchase filter: ${articles.length} (removed: ${beforePurchaseFilter - articles.length})`)
 
     // DEBUG: Check if Lacoste article passed purchase filter
-    const lacosteAfterPurchase = watches.find((w: any) => w.id === 'cmipseh3y0001bbm7ew1n8atm')
+    const lacosteAfterPurchase = articles.find((w: any) => w.id === 'cmipseh3y0001bbm7ew1n8atm')
     if (lacosteAfterPurchase) {
       console.log(`[SEARCH] ✅ Lacoste article passed purchase filter`)
     } else {
@@ -1697,11 +1697,11 @@ export async function GET(request: NextRequest) {
           boosters = []
         }
 
-        const brandLower = (watch.brand || '').toLowerCase().trim()
-        const modelLower = (watch.model || '').toLowerCase().trim()
-        const titleLower = (watch.title || '').toLowerCase().trim()
-        const descLower = (watch.description || '').toLowerCase().trim()
-        const refLower = (watch.referenceNumber || '').toLowerCase().trim()
+        const brandLower = (article.brand || '').toLowerCase().trim()
+        const modelLower = (article.model || '').toLowerCase().trim()
+        const titleLower = (article.title || '').toLowerCase().trim()
+        const descLower = (article.description || '').toLowerCase().trim()
+        const refLower = (article.referenceNumber || '').toLowerCase().trim()
 
         const searchText = `${brandLower} ${modelLower} ${titleLower} ${descLower} ${refLower}`
         let relevanceScore = 0
