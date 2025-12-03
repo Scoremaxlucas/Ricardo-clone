@@ -225,15 +225,8 @@ export function InvoicePaymentForm({
       appearance: {
         theme: 'stripe' as const,
       },
-      // Auf Mobile: Link deaktivieren, TWINT priorisieren
-      ...(isMobile && {
-        paymentMethodTypes: ['card', 'twint'],
-        wallets: {
-          applePay: 'never',
-          googlePay: 'never',
-          link: 'never', // Link auf Mobile deaktivieren
-        },
-      }),
+      // Auf Mobile: Link deaktivieren (wird in Elements-Komponente verwendet)
+      // paymentMethodTypes wird nicht verwendet wenn automatic_payment_methods aktiv ist
     }
   }, [clientSecret])
 
@@ -340,6 +333,9 @@ export function InvoicePaymentForm({
   }
 
   // JETZT erst Elements rendern - mit allen Checks
+  // Prüfe ob Mobile für Options-Anpassung
+  const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
+  
   return (
     <Elements
       key={`elements-${finalClientSecret.substring(0, 20)}`}
@@ -349,6 +345,14 @@ export function InvoicePaymentForm({
         appearance: {
           theme: 'stripe',
         },
+        // Auf Mobile: Link deaktivieren, TWINT explizit aktivieren
+        ...(isMobile && {
+          wallets: {
+            applePay: 'never',
+            googlePay: 'never',
+            link: 'never', // Link auf Mobile komplett deaktivieren
+          },
+        }),
       }}
     >
       <CheckoutForm
