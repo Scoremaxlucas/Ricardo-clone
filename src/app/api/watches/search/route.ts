@@ -1335,13 +1335,12 @@ export async function GET(request: NextRequest) {
     const whereClause: any = {
       AND: [
         {
-          // WICHTIG: Zeige alle Artikel außer rejected
-          // Zeige: null, 'pending', 'approved', 'reviewing' - verstecke nur 'rejected'
+          // GOLDEN RULE: Zeige ALLE Artikel außer explizit 'rejected'
+          // Verwende 'not: rejected' um sicherzustellen, dass keine Artikel versehentlich versteckt werden
+          // Dies schließt auch alle zukünftigen moderationStatus-Werte ein
           OR: [
             { moderationStatus: null },
-            { moderationStatus: 'pending' },
-            { moderationStatus: 'approved' },
-            { moderationStatus: 'reviewing' },
+            { moderationStatus: { not: 'rejected' } },
           ],
         },
         {

@@ -110,13 +110,11 @@ export async function GET(request: NextRequest) {
     const where: any = {
       AND: [
         {
-          // WICHTIG: Zeige alle Artikel außer rejected
-          // Zeige: null, 'pending', 'approved', 'reviewing' - verstecke nur 'rejected'
+          // GOLDEN RULE: Zeige ALLE Artikel außer explizit 'rejected'
+          // Verwende 'not: rejected' um sicherzustellen, dass keine Artikel versehentlich versteckt werden
           OR: [
             { moderationStatus: null },
-            { moderationStatus: 'pending' },
-            { moderationStatus: 'approved' },
-            { moderationStatus: 'reviewing' },
+            { moderationStatus: { not: 'rejected' } },
           ],
         },
         {
