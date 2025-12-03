@@ -113,12 +113,13 @@ export function CategorySpotlight() {
           }
         }
 
-        // Limit to 6 categories max and reduce products per category for better performance
-        const limitedCategories = categoriesToFetch.slice(0, 6)
+        // Limit to 4 categories max for better performance (reduced from 6)
+        const limitedCategories = categoriesToFetch.slice(0, 4)
+        // Execute all category fetches in parallel for maximum speed
         const promises = limitedCategories.map(async cat => {
           try {
             const url = `/api/watches/search?category=${encodeURIComponent(cat.category)}&limit=6`
-            
+
             const response = await fetch(url, {
               cache: 'force-cache', // Aggressive caching for better performance
               next: { revalidate: 120 }, // Revalidate every 2 minutes

@@ -2,6 +2,10 @@ import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { categoryConfig } from '@/data/categories'
 
+// Use Edge Runtime for better performance
+export const runtime = 'nodejs' // Keep nodejs for Prisma compatibility
+export const maxDuration = 20 // Maximum execution time
+
 // Helper to get category metadata (for API compatibility - returns icon as string placeholder)
 function getCategoryMetadata(slug: string) {
   const config = categoryConfig[slug] || categoryConfig['auto-motorrad'] // fallback
@@ -188,6 +192,8 @@ export async function GET() {
       {
         headers: {
           'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600', // 5min cache, 10min stale
+          'Content-Encoding': 'gzip', // Enable compression
+          'X-Content-Type-Options': 'nosniff',
         },
       }
     )

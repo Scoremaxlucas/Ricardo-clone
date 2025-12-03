@@ -2,6 +2,14 @@
 const nextConfig = {
   // Enable compression
   compress: true,
+  // Optimize output
+  swcMinify: true,
+  // Enable React strict mode for better performance
+  reactStrictMode: true,
+  // Optimize production builds
+  productionBrowserSourceMaps: false,
+  // Power optimization
+  poweredByHeader: false,
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],

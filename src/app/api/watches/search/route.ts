@@ -1,6 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// Use Edge Runtime for better performance (faster cold starts)
+export const runtime = 'nodejs' // Keep nodejs for Prisma compatibility
+export const maxDuration = 30 // Maximum execution time
+
 // Kategorie-Keyword-Mapping (spezifisch, um Verwechslungen zu vermeiden)
 const categoryKeywords: Record<string, string[]> = {
   'auto-motorrad': [
@@ -2302,6 +2306,8 @@ export async function GET(request: NextRequest) {
       {
         headers: {
           'Cache-Control': 'public, s-maxage=180, stale-while-revalidate=360', // 3min cache, 6min stale
+          'Content-Encoding': 'gzip', // Enable compression
+          'X-Content-Type-Options': 'nosniff',
         },
       }
     )
