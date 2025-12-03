@@ -159,7 +159,7 @@ export function validateFilterLogic(filterLogic: any): {
 
   // Prüfe ob Purchase Filter zu restriktiv ist
   if (filterLogic.purchases) {
-    warnings.push('Purchase filter should allow watches with no purchases OR all cancelled purchases')
+    warnings.push('Purchase filter should allow articles with no purchases OR all cancelled purchases')
   }
 
   return {
