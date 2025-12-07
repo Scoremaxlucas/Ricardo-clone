@@ -26,15 +26,8 @@ export const authOptions = {
           console.log('[AUTH] Attempting login for:', normalizedEmail)
           console.log('[AUTH] Password length:', credentials.password.length)
 
-          // WICHTIG: Stelle sicher, dass Prisma verbunden ist
-          // Prüfe Datenbankverbindung zuerst
-          try {
-            await prisma.$connect()
-          } catch (connectError: any) {
-            console.error('[AUTH] Database connection error:', connectError)
-            throw new Error('Database connection failed')
-          }
-
+          // WICHTIG: Prisma verbindet sich automatisch beim ersten Query
+          // Kein expliziter $connect() nötig - kann in Serverless-Umgebungen Probleme verursachen
           let user
           try {
             user = await prisma.user.findUnique({
@@ -62,17 +55,23 @@ export const authOptions = {
               code: dbError.code,
               name: dbError.name,
             })
-            throw dbError
+            // WICHTIG: Bei Datenbankfehlern, return null statt throw
+            // NextAuth behandelt null als "invalid credentials"
+            return null
           }
 
           if (!user) {
             console.log('[AUTH] User not found:', normalizedEmail)
-            // WICHTIG: Prüfe ob User mit anderer Groß-/Kleinschreibung existiert
-            const allUsers = await prisma.user.findMany({
-              select: { email: true },
-              take: 10,
-            })
-            console.log('[AUTH] Sample users in database:', allUsers.map(u => u.email))
+            // WICHTIG: Prüfe ob User mit anderer Groß-/Kleinschreibung existiert (nur für Debugging)
+            try {
+              const allUsers = await prisma.user.findMany({
+                select: { email: true },
+                take: 10,
+              })
+              console.log('[AUTH] Sample users in database:', allUsers.map(u => u.email))
+            } catch (error) {
+              // Ignore error - nur für Debugging
+            }
             return null
           }
 
@@ -116,7 +115,7 @@ export const authOptions = {
           // Fallback: Wenn bcrypt fehlschlägt, versuche direkten Vergleich (für alte Passwörter)
           let isPasswordValid = false
           const passwordIsHashed = user.password.startsWith('$2a$') || user.password.startsWith('$2b$') || user.password.startsWith('$2y$')
-          
+
           console.log('[AUTH] Password check:', {
             providedLength: credentials.password.length,
             storedLength: user.password.length,
