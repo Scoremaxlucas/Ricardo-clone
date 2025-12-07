@@ -6,16 +6,40 @@ import { Footer } from '@/components/layout/Footer'
 import { ProductPageClient } from '@/components/product/ProductPageClient'
 
 interface Props {
-  params: { id: string }
+  params: Promise<{ id: string }>
 }
 
 export default async function ProductPage({ params }: Props) {
   try {
+    // WICHTIG: In Next.js 15+ müssen params awaited werden
+    const { id } = await params
+    
+    if (!id) {
+      console.error('[ProductPage] No ID provided in params')
+      return (
+        <div className="flex min-h-screen flex-col bg-gray-50">
+          <Header />
+          <main className="flex-1 pb-8">
+            <ProductPageClient
+              watch={null}
+              images={[]}
+              conditionMap={{}}
+              lieferumfang=""
+              seller={null}
+            />
+          </main>
+          <Footer />
+        </div>
+      )
+    }
+    
     // Prüfe ob params.id eine Artikelnummer ist (numerisch)
-    const isArticleNumber = /^\d{6,10}$/.test(params.id)
+    const isArticleNumber = /^\d{6,10}$/.test(id)
+
+    console.log(`[ProductPage] Looking for product with ID: ${id}, isArticleNumber: ${isArticleNumber}`)
 
     const watch = await prisma.watch.findUnique({
-      where: isArticleNumber ? { articleNumber: parseInt(params.id) } : { id: params.id },
+      where: isArticleNumber ? { articleNumber: parseInt(id) } : { id },
       include: {
         seller: {
           select: {
@@ -35,7 +59,7 @@ export default async function ProductPage({ params }: Props) {
     watch &&
     isArticleNumber &&
     watch.articleNumber &&
-    watch.articleNumber.toString() !== params.id
+    watch.articleNumber.toString() !== id
   ) {
     redirect(`/products/${watch.articleNumber}`)
   }
@@ -46,6 +70,7 @@ export default async function ProductPage({ params }: Props) {
   }
 
   if (!watch) {
+    console.error(`[ProductPage] Product not found with ID: ${id}, isArticleNumber: ${isArticleNumber}`)
     return (
       <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
@@ -62,6 +87,8 @@ export default async function ProductPage({ params }: Props) {
       </div>
     )
   }
+
+  console.log(`[ProductPage] Product found: ${watch.title} (ID: ${watch.id}, ArticleNumber: ${watch.articleNumber})`)
 
     // Prüfe ob Auktion abgelaufen ist und verarbeite sie falls nötig
     if (watch.auctionEnd && new Date(watch.auctionEnd) <= new Date()) {
