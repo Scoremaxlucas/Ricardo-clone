@@ -182,17 +182,17 @@ export function ProductCard({
         prefetch={true}
         className={`group overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
         style={{
-          border: '1px solid rgba(20, 184, 166, 0.1)',
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)',
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)',
         }}
         onMouseEnter={e => {
           e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)'
-          e.currentTarget.style.boxShadow = '0px 12px 40px rgba(20, 184, 166, 0.25)'
+          e.currentTarget.style.boxShadow = '0px 12px 40px rgba(0, 0, 0, 0.15)'
         }}
         onMouseLeave={e => {
           e.currentTarget.style.transform = 'translateY(0) scale(1)'
           e.currentTarget.style.boxShadow =
-            '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)'
+            '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)'
         }}
       >
         <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
@@ -308,15 +308,15 @@ export function ProductCard({
         prefetch={true}
         className={`group flex overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
         style={{
-          border: '1px solid rgba(20, 184, 166, 0.1)',
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)',
+          border: '1px solid rgba(0, 0, 0, 0.1)',
+          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)',
         }}
         onMouseEnter={e => {
-          e.currentTarget.style.boxShadow = '0px 12px 40px rgba(20, 184, 166, 0.25)'
+          e.currentTarget.style.boxShadow = '0px 12px 40px rgba(0, 0, 0, 0.15)'
         }}
         onMouseLeave={e => {
           e.currentTarget.style.boxShadow =
-            '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)'
+            '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)'
         }}
       >
         <div className="relative w-64 flex-shrink-0 bg-gray-100">
@@ -443,19 +443,19 @@ export function ProductCard({
       prefetch={true}
       className={`group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
       style={{
-        border: '1px solid rgba(20, 184, 166, 0.1)',
-        boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)',
+        border: '1px solid rgba(0, 0, 0, 0.1)',
+        boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)',
       }}
       onMouseEnter={e => {
         e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)'
-        e.currentTarget.style.boxShadow = '0px 12px 40px rgba(20, 184, 166, 0.25)'
-        e.currentTarget.style.borderColor = 'rgba(20, 184, 166, 0.3)'
+        e.currentTarget.style.boxShadow = '0px 12px 40px rgba(0, 0, 0, 0.15)'
+        e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.15)'
       }}
       onMouseLeave={e => {
         e.currentTarget.style.transform = 'translateY(0) scale(1)'
         e.currentTarget.style.boxShadow =
-          '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(20, 184, 166, 0.1)'
-        e.currentTarget.style.borderColor = 'rgba(20, 184, 166, 0.1)'
+          '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)'
+        e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)'
       }}
     >
       <div className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
