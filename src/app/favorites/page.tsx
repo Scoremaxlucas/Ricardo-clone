@@ -40,43 +40,27 @@ export default function FavoritesPage() {
   const fetchFavorites = async () => {
     setLoading(true)
     try {
-      const response = await fetch('/api/favorites')
+      // OPTIMIERT: Verwende fast API-Route für instant loading
+      // Lädt alle Favoriten in einem einzigen optimierten Query
+      const response = await fetch('/api/articles/favorites-fast')
       if (response.ok) {
         const data = await response.json()
-        const favoriteItems = data.favorites || []
-
-        // Hole Details für jeden Favoriten
-        const productPromises = favoriteItems.map(async (fav: any) => {
-          try {
-            const res = await fetch(`/api/watches/${fav.watchId}`)
-            if (res.ok) {
-              const data = await res.json()
-              const watch = data.watch || data // API kann { watch: {...} } oder direkt {...} zurückgeben
-
-              // Parse images falls sie als String kommen
-              if (watch && typeof watch.images === 'string') {
-                try {
-                  watch.images = JSON.parse(watch.images)
-                } catch (e) {
-                  watch.images = []
-                }
-              }
-
-              // Stelle sicher, dass price existiert
-              if (watch && !watch.price) {
-                watch.price = 0
-              }
-
-              return watch
-            }
-          } catch (e) {
-            console.error('Error fetching watch:', e)
-          }
-          return null
-        })
-
-        const products = await Promise.all(productPromises)
-        setFavorites(products.filter(p => p !== null && p.price !== undefined))
+        const watches = data.watches || []
+        
+        // Transformiere zu Product-Format
+        const products: Product[] = watches.map((w: any) => ({
+          id: w.id,
+          title: w.title,
+          brand: w.brand,
+          model: w.model,
+          price: w.price,
+          images: w.images || [],
+          condition: w.condition || '',
+          isAuction: w.isAuction || false,
+          currentBid: w.price, // Bei Auktionen ist price bereits der aktuelle Preis
+        }))
+        
+        setFavorites(products)
       }
     } catch (error) {
       console.error('Error fetching favorites:', error)

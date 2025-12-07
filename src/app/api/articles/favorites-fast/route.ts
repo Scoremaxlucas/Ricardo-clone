@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
       postalCode: string | null
       condition: string | null
     }>>`
-      SELECT 
+      SELECT
         w.id,
         w.title,
         w.brand,
@@ -55,20 +55,20 @@ export async function GET(request: NextRequest) {
       FROM watches w
       INNER JOIN favorites f ON f."watchId" = w.id
       INNER JOIN users u ON w."sellerId" = u.id
-      WHERE 
+      WHERE
         f."userId" = ${session.user.id}
         AND (w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')
         AND NOT EXISTS (
-          SELECT 1 FROM purchases p 
-          WHERE p."watchId" = w.id 
+          SELECT 1 FROM purchases p
+          WHERE p."watchId" = w.id
           AND p.status != 'cancelled'
         )
         AND (
-          w."auctionEnd" IS NULL 
+          w."auctionEnd" IS NULL
           OR w."auctionEnd" > ${now}
           OR EXISTS (
-            SELECT 1 FROM purchases p2 
-            WHERE p2."watchId" = w.id 
+            SELECT 1 FROM purchases p2
+            WHERE p2."watchId" = w.id
             AND p2.status != 'cancelled'
           )
         )
