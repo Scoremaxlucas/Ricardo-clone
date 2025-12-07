@@ -539,7 +539,7 @@ export async function POST(request: NextRequest) {
           return JSON.stringify([])
         }
       })(),
-      video: video || null,
+      video: null, // Video-Upload wurde entfernt
       lastRevision: lastRevisionDate,
       accuracy: accuracy || null,
       fullset: fullset || false,

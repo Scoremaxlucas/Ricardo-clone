@@ -35,6 +35,8 @@ export default function SellPage() {
   const router = useRouter()
   const { t } = useLanguage()
   const [isLoading, setIsLoading] = useState(false)
+  const [isGeneratingTitle, setIsGeneratingTitle] = useState(false)
+  const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
@@ -171,7 +173,7 @@ export default function SellPage() {
       reader.onload = () => {
         newImages.push(reader.result as string)
         loadedCount++
-        
+
         // Wenn alle Dateien geladen sind
         if (loadedCount === files.length) {
           const currentImageCount = formData.images.length
@@ -179,7 +181,7 @@ export default function SellPage() {
             ...prev,
             images: [...prev.images, ...newImages],
           }))
-          
+
           // WICHTIG: Nur wenn noch KEINE Bilder vorhanden waren, setze das erste als Titelbild
           // Wenn bereits Bilder vorhanden sind, bleibt das aktuelle Titelbild bestehen
           if (currentImageCount === 0 && newImages.length > 0) {
@@ -919,7 +921,7 @@ export default function SellPage() {
                               type="button"
                               onClick={async () => {
                                 try {
-                                  setIsLoading(true)
+                                  setIsGeneratingTitle(true)
                                   const imageBase64 = formData.images[0]
                                   const response = await fetch('/api/ai/generate-title', {
                                     method: 'POST',
@@ -933,20 +935,35 @@ export default function SellPage() {
                                   if (response.ok) {
                                     const data = await response.json()
                                     if (data.title) {
-                                      setFormData(prev => ({ ...prev, title: data.title }))
+                                      // Typing-Effekt für Titel
+                                      const fullText = data.title
+                                      let currentIndex = 0
+                                      setFormData(prev => ({ ...prev, title: '' }))
+                                      
+                                      const typingInterval = setInterval(() => {
+                                        if (currentIndex < fullText.length) {
+                                          setFormData(prev => ({ 
+                                            ...prev, 
+                                            title: fullText.substring(0, currentIndex + 1) 
+                                          }))
+                                          currentIndex++
+                                        } else {
+                                          clearInterval(typingInterval)
+                                        }
+                                      }, 20) // 20ms pro Zeichen = schnell aber sichtbar
                                     }
                                   }
                                 } catch (error) {
                                   console.error('Fehler bei Titel-Generierung:', error)
                                 } finally {
-                                  setIsLoading(false)
+                                  setIsGeneratingTitle(false)
                                 }
                               }}
-                              disabled={isLoading}
+                              disabled={isGeneratingTitle || isGeneratingDescription}
                               className="flex items-center gap-1 rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
                             >
                               <Sparkles className="h-3 w-3" />
-                              {isLoading ? 'Generiere...' : 'KI-Titel generieren'}
+                              {isGeneratingTitle ? 'Generiere...' : 'KI-Titel generieren'}
                             </button>
                           )}
                         </div>
@@ -1077,7 +1094,7 @@ export default function SellPage() {
                                 type="button"
                                 onClick={async () => {
                                   try {
-                                    setIsLoading(true)
+                                    setIsGeneratingDescription(true)
                                     const imageBase64 = formData.images.length > 0 ? formData.images[0] : null
                                     const response = await fetch('/api/ai/generate-description', {
                                       method: 'POST',
@@ -1101,21 +1118,35 @@ export default function SellPage() {
                                           cleanDesc = data.description.trim()
                                         }
                                         if (cleanDesc) {
-                                          setFormData(prev => ({ ...prev, description: cleanDesc }))
+                                          // Typing-Effekt für Beschreibung
+                                          let currentIndex = 0
+                                          setFormData(prev => ({ ...prev, description: '' }))
+                                          
+                                          const typingInterval = setInterval(() => {
+                                            if (currentIndex < cleanDesc.length) {
+                                              setFormData(prev => ({ 
+                                                ...prev, 
+                                                description: cleanDesc.substring(0, currentIndex + 1) 
+                                              }))
+                                              currentIndex++
+                                            } else {
+                                              clearInterval(typingInterval)
+                                            }
+                                          }, 15) // 15ms pro Zeichen = schnell aber sichtbar
                                         }
                                       }
                                     }
                                   } catch (error) {
                                     console.error('Fehler bei Beschreibungs-Generierung:', error)
                                   } finally {
-                                    setIsLoading(false)
+                                    setIsGeneratingDescription(false)
                                   }
                                 }}
-                                disabled={isLoading}
+                                disabled={isGeneratingTitle || isGeneratingDescription}
                                 className="flex items-center gap-1 rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
                               >
                                 <Sparkles className="h-3 w-3" />
-                                {isLoading ? 'Generiere...' : 'KI-Beschreibung generieren'}
+                                {isGeneratingDescription ? 'Generiere...' : 'KI-Beschreibung generieren'}
                               </button>
                             )}
                           </div>
