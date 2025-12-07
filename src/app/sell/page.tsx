@@ -18,7 +18,7 @@ import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
 
 // Lazy load AIDetection to avoid bundling TensorFlow.js on every page
@@ -939,19 +939,19 @@ export default function SellPage() {
                                       // Typing-Effekt für Titel
                                       const fullText = data.title
                                       let currentIndex = 0
-                                      
+
                                       // Lösche vorherigen Interval falls vorhanden
                                       if (typingIntervalRef.current) {
                                         clearInterval(typingIntervalRef.current)
                                       }
-                                      
+
                                       setFormData(prev => ({ ...prev, title: '' }))
-                                      
+
                                       typingIntervalRef.current = setInterval(() => {
                                         if (currentIndex < fullText.length) {
-                                          setFormData(prev => ({ 
-                                            ...prev, 
-                                            title: fullText.substring(0, currentIndex + 1) 
+                                          setFormData(prev => ({
+                                            ...prev,
+                                            title: fullText.substring(0, currentIndex + 1)
                                           }))
                                           currentIndex++
                                         } else {
@@ -1134,19 +1134,19 @@ export default function SellPage() {
                                         if (cleanDesc) {
                                           // Typing-Effekt für Beschreibung
                                           let currentIndex = 0
-                                          
+
                                           // Lösche vorherigen Interval falls vorhanden
                                           if (typingIntervalRef.current) {
                                             clearInterval(typingIntervalRef.current)
                                           }
-                                          
+
                                           setFormData(prev => ({ ...prev, description: '' }))
-                                          
+
                                           typingIntervalRef.current = setInterval(() => {
                                             if (currentIndex < cleanDesc.length) {
-                                              setFormData(prev => ({ 
-                                                ...prev, 
-                                                description: cleanDesc.substring(0, currentIndex + 1) 
+                                              setFormData(prev => ({
+                                                ...prev,
+                                                description: cleanDesc.substring(0, currentIndex + 1)
                                               }))
                                               currentIndex++
                                             } else {
