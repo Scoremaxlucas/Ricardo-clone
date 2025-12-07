@@ -392,7 +392,8 @@ export default function MySellingPage() {
           {loading ? (
             <div className="rounded-lg bg-white p-12 text-center shadow-md">
               <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-              <p className="mt-4 text-gray-600">Artikel werden geladen...</p>
+              <p className="mt-4 text-lg font-medium text-gray-700">Artikel werden geladen...</p>
+              <p className="mt-2 text-sm text-gray-500">Bitte warten Sie einen Moment</p>
             </div>
           ) : filteredItems.length === 0 ? (
             <div className="rounded-lg bg-white p-12 text-center shadow-md">
