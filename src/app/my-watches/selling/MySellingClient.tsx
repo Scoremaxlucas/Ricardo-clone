@@ -56,11 +56,10 @@ export function MySellingClient({ initialItems, initialStats }: MySellingClientP
   const [loadingDetails, setLoadingDetails] = useState(false)
 
   // OPTIMIERT: Lade Details (bids, purchases) non-blocking im Hintergrund
-  // Initial render zeigt Artikel sofort, Details kommen nach
+  // WICHTIG: Wenn initialItems leer ist, versuche sofort API-Route zu laden
   useEffect(() => {
-    if (initialItems.length === 0) return
-
-    // Lade Details für alle Artikel parallel (non-blocking)
+    // WICHTIG: Wenn initialItems leer ist, versuche sofort API-Route zu laden
+    // Dies stellt sicher, dass Artikel nicht verschwinden
     const loadDetails = async () => {
       try {
         const response = await fetch('/api/articles/mine-fast')
@@ -79,18 +78,27 @@ export function MySellingClient({ initialItems, initialStats }: MySellingClientP
               active,
               inactive,
             })
+          } else if (initialItems.length === 0 && (!data.watches || data.watches.length === 0)) {
+            // Wenn initialItems leer ist UND API auch leer ist, behalte leeren State
+            // Aber versuche es nochmal nach kurzer Verzögerung (könnte temporärer Fehler sein)
+            setTimeout(loadDetails, 2000)
           }
-          // Wenn data.watches leer ist, behalte initiale Daten - keine Änderung
+          // Wenn data.watches leer ist aber initialItems vorhanden sind, behalte initiale Daten
         }
       } catch (error) {
         // Silently fail - initial items are already displayed
         // WICHTIG: Initiale Artikel bleiben erhalten, werden NICHT überschrieben
         console.error('Error loading details:', error)
+        // Wenn initialItems leer ist, versuche es nochmal nach kurzer Verzögerung
+        if (initialItems.length === 0) {
+          setTimeout(loadDetails, 2000)
+        }
       }
     }
 
-    // Lade Details nach kurzer Verzögerung (non-blocking)
-    const timeoutId = setTimeout(loadDetails, 100)
+    // Wenn initialItems leer ist, lade sofort (könnte Server-Side-Fehler sein)
+    // Sonst lade Details nach kurzer Verzögerung (non-blocking)
+    const timeoutId = setTimeout(loadDetails, initialItems.length === 0 ? 0 : 100)
     return () => clearTimeout(timeoutId)
   }, [initialItems.length])
 

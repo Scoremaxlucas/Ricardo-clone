@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { MyPurchasesClient } from './MyPurchasesClient'
-import { getMyPurchases } from '@/lib/my-purchases'
+import { getMyPurchases, MyPurchaseItem } from '@/lib/my-purchases'
 import Link from 'next/link'
 
 // Revalidate every 30 seconds for fresh data
@@ -19,7 +19,19 @@ export default async function MyPurchasedPage() {
 
   // OPTIMIERT: Fetch purchases server-side für instant rendering (wie Ricardo)
   // Purchases sind bereits im initial HTML, kein Client-Side API-Call nötig
-  const purchases = await getMyPurchases(session.user.id)
+  // WICHTIG: Fallback zu API-Route wenn Server-Side-Funktion fehlschlägt
+  let purchases: MyPurchaseItem[] = []
+  try {
+    purchases = await getMyPurchases(session.user.id)
+    // WICHTIG: Wenn leeres Array, könnte temporärer Fehler sein - Client wird API-Route verwenden
+    if (purchases.length === 0) {
+      console.warn('[my-purchases] Server-side returned empty array, client will try API fallback...')
+    }
+  } catch (error) {
+    console.error('[my-purchases] Error fetching purchases server-side:', error)
+    // WICHTIG: Bei Fehler leeres Array zurückgeben, aber Client wird API-Route verwenden
+    purchases = []
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">

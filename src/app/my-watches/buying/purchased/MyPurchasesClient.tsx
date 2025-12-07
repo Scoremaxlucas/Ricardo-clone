@@ -78,14 +78,27 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
             )
             localStorage.setItem('readPurchases', JSON.stringify(newReadPurchases))
             window.dispatchEvent(new CustomEvent('purchases-viewed'))
+          } else if (initialPurchases.length === 0 && (!data.purchases || data.purchases.length === 0)) {
+            // Wenn initialPurchases leer ist UND API auch leer ist, versuche es nochmal
+            // (könnte temporärer Fehler sein)
+            setTimeout(loadPurchases, 2000)
           }
-          // Wenn data.purchases leer ist, behalte initiale Daten - keine Änderung
+          // Wenn data.purchases leer ist aber initialPurchases vorhanden sind, behalte initiale Daten
         }
       } catch (error) {
         // Silently fail - initial purchases are already displayed
         // WICHTIG: Initiale Purchases bleiben erhalten, werden NICHT überschrieben
         console.error('Error loading purchases:', error)
+        // Wenn initialPurchases leer ist, versuche es nochmal nach kurzer Verzögerung
+        if (initialPurchases.length === 0) {
+          setTimeout(loadPurchases, 2000)
+        }
       }
+    }
+
+    // WICHTIG: Wenn initialPurchases leer ist, lade sofort (könnte Server-Side-Fehler sein)
+    if (initialPurchases.length === 0) {
+      loadPurchases()
     }
 
     // Rufe check-expired auf (non-blocking, nach 2 Sekunden)
