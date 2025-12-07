@@ -263,7 +263,14 @@ export default function MySellingPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="mb-1 text-sm text-gray-600">{t.myWatches.total}</p>
-                  <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600"></div>
+                      <span className="text-sm text-gray-500">Lädt...</span>
+                    </div>
+                  ) : (
+                    <p className="text-3xl font-bold text-gray-900">{stats.total}</p>
+                  )}
                 </div>
                 <div className="rounded-lg bg-gray-100 p-3">
                   <Package className="h-6 w-6 text-gray-600" />
@@ -275,7 +282,14 @@ export default function MySellingPage() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="mb-1 text-sm text-gray-600">{t.myWatches.active}</p>
-                  <p className="text-3xl font-bold text-green-600">{stats.active}</p>
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-green-600"></div>
+                      <span className="text-sm text-gray-500">Lädt...</span>
+                    </div>
+                  ) : (
+                    <p className="text-3xl font-bold text-green-600">{stats.active}</p>
+                  )}
                 </div>
                 <div className="rounded-lg bg-green-100 p-3">
                   <CheckCircle className="h-6 w-6 text-green-600" />
@@ -297,13 +311,20 @@ export default function MySellingPage() {
                   >
                     {t.myWatches.inactive}
                   </p>
-                  <p
-                    className={`text-3xl font-bold ${
-                      filter === 'inactive' ? 'text-red-600' : 'text-red-500'
-                    }`}
-                  >
-                    {stats.inactive}
-                  </p>
+                  {loading ? (
+                    <div className="flex items-center gap-2">
+                      <div className="h-8 w-8 animate-spin rounded-full border-2 border-gray-300 border-t-red-600"></div>
+                      <span className="text-sm text-gray-500">Lädt...</span>
+                    </div>
+                  ) : (
+                    <p
+                      className={`text-3xl font-bold ${
+                        filter === 'inactive' ? 'text-red-600' : 'text-red-500'
+                      }`}
+                    >
+                      {stats.inactive}
+                    </p>
+                  )}
                 </div>
                 <div
                   className={`rounded-lg p-3 ${filter === 'inactive' ? 'bg-red-100' : 'bg-red-50'}`}
