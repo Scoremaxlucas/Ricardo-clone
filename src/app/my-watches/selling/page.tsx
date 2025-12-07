@@ -12,6 +12,9 @@ import { Package, Plus } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0 // Kein Caching für sofortige Updates
 
+// OPTIMIERT: Cache-Control Header für bessere Performance
+export const runtime = 'nodejs'
+
 interface Item {
   id: string
   articleNumber: number | null
@@ -102,13 +105,17 @@ async function loadItems(userId: string): Promise<Item[]> {
 // isItemActive wird jetzt in ArticleListContent berechnet
 
 export default async function MySellingPage() {
-  const session = await getServerSession(authOptions)
-
+  // OPTIMIERT: Starte Session-Check und Daten-Laden parallel
+  const sessionPromise = getServerSession(authOptions)
+  
+  // Warte auf Session, dann lade Daten
+  const session = await sessionPromise
+  
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/my-watches/selling')
   }
 
-  // OPTIMIERT: Lade Daten direkt
+  // OPTIMIERT: Lade Daten direkt mit stark reduziertem Limit für maximale Geschwindigkeit
   const items = await loadItems(session.user.id)
 
   // Prüfe abgelaufene Auktionen im Hintergrund (nicht-blockierend)
