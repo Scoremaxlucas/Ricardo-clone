@@ -39,7 +39,7 @@ export default function WatchesPage() {
         const response = await res.json()
         const data = response.watches || response
         setWatches(data)
-        
+
         // OPTIMIERT: Progressive Loading - zeige zuerst 12 Artikel sofort
         if (data.length > 0) {
           setVisibleCount(12)

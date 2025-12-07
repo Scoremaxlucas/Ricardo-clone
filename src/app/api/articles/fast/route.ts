@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
 
     // OPTIMIERT: Versuche zuerst Raw SQL, fallback zu Prisma bei Fehler
     let watches: any[] = []
-    
+
     try {
       // Versuche Raw SQL Query (schneller)
       watches = await prisma.$queryRaw<Array<{
@@ -137,7 +137,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         skip: skip,
       }) as any[]
-      
+
       // Transformiere Prisma-Format zu Raw SQL-Format
       watches = watches.map(w => ({
         ...w,

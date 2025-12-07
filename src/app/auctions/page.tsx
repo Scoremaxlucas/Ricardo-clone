@@ -100,7 +100,7 @@ export default function AuctionsPage() {
           })
 
           setWatches(auctions)
-          
+
           // OPTIMIERT: Progressive Loading - zeige zuerst 12 Artikel sofort
           if (auctions.length > 0) {
             setVisibleCount(12)
@@ -222,33 +222,33 @@ export default function AuctionsPage() {
           // GRID ANSICHT - Verwende ProductCard für Konsistenz
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 md:gap-3 lg:grid-cols-5 xl:grid-cols-6">
             {watches.slice(0, visibleCount).map((w, index) => (
-              <ProductCard
-                key={w.id}
-                id={w.id}
-                title={w.title}
-                brand={w.brand}
-                price={w.price}
-                images={w.images}
-                city={w.city}
-                postalCode={w.postalCode}
-                auctionEnd={w.auctionEnd}
-                buyNowPrice={w.buyNowPrice}
-                isAuction={w.isAuction}
-                bids={w.bids}
-                boosters={w.boosters}
-                favorites={favorites}
-                onFavoriteToggle={(id, isFavorite) => {
-                  setFavorites(prev => {
-                    const newSet = new Set(prev)
-                    if (isFavorite) {
-                      newSet.add(id)
-                    } else {
-                      newSet.delete(id)
-                    }
-                    return newSet
-                  })
-                }}
-              />
+              <div key={w.id} className={`animate-in fade-in slide-in-from-bottom-4 ${index < 12 ? '' : 'duration-300'}`}>
+                <ProductCard
+                  id={w.id}
+                  title={w.title}
+                  brand={w.brand}
+                  price={w.price}
+                  images={w.images}
+                  city={w.city}
+                  postalCode={w.postalCode}
+                  auctionEnd={w.auctionEnd}
+                  buyNowPrice={w.buyNowPrice}
+                  isAuction={w.isAuction}
+                  bids={w.bids}
+                  boosters={w.boosters}
+                  favorites={favorites}
+                  onFavoriteToggle={(id, isFavorite) => {
+                    setFavorites(prev => {
+                      const newSet = new Set(prev)
+                      if (isFavorite) {
+                        newSet.add(id)
+                      } else {
+                        newSet.delete(id)
+                      }
+                      return newSet
+                    })
+                  }}
+                />
               </div>
             ))}
             {loading && watches.length > visibleCount && (

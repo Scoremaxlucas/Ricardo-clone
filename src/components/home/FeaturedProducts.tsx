@@ -43,7 +43,7 @@ export function FeaturedProducts() {
           const data = await response.json()
           const fetchedItems = Array.isArray(data.watches) ? data.watches : []
           setItems(fetchedItems)
-          
+
           // OPTIMIERT: Progressive Loading - zeige zuerst 3 Artikel sofort
           if (fetchedItems.length > 0) {
             setVisibleCount(3)
