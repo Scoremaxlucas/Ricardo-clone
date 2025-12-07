@@ -5,6 +5,7 @@ import { ProductCard } from '@/components/ui/ProductCard'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
+import { Loader2 } from 'lucide-react'
 
 interface FeaturedProductsServerProps {
   initialProducts: ProductItem[]
@@ -14,6 +15,53 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   const { t } = useLanguage()
   const { data: session } = useSession()
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [products, setProducts] = useState<ProductItem[]>(initialProducts)
+  const [loading, setLoading] = useState(initialProducts.length === 0)
+
+  // WICHTIG: Wenn initialProducts leer ist, lade sofort von API-Route
+  useEffect(() => {
+    if (initialProducts.length === 0) {
+      const loadProducts = async () => {
+        try {
+          setLoading(true)
+          const response = await fetch('/api/articles/fast?limit=6')
+          if (response.ok) {
+            const data = await response.json()
+            if (data.watches && Array.isArray(data.watches) && data.watches.length > 0) {
+              // Transformiere API-Format zu ProductItem-Format
+              const transformedProducts: ProductItem[] = data.watches.map((w: any) => ({
+                id: w.id,
+                title: w.title || '',
+                brand: w.brand || '',
+                model: w.model || '',
+                price: w.price || 0,
+                buyNowPrice: w.buyNowPrice,
+                isAuction: w.isAuction || false,
+                auctionEnd: w.auctionEnd || null,
+                images: Array.isArray(w.images) ? w.images : [],
+                condition: w.condition || '',
+                createdAt: w.createdAt || new Date().toISOString(),
+                boosters: w.boosters || [],
+                city: w.city || null,
+                postalCode: w.postalCode || null,
+                articleNumber: w.articleNumber || null,
+              }))
+              setProducts(transformedProducts)
+            }
+          }
+        } catch (error) {
+          console.error('Error loading products from API:', error)
+          // Retry nach 2 Sekunden wenn Fehler
+          setTimeout(() => {
+            loadProducts()
+          }, 2000)
+        } finally {
+          setLoading(false)
+        }
+      }
+      loadProducts()
+    }
+  }, [initialProducts.length])
 
   // Load favorites client-side (non-blocking)
   useEffect(() => {
@@ -29,7 +77,26 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       })
   }, [session?.user])
 
-  if (initialProducts.length === 0) {
+  if (loading) {
+    return (
+      <section className="bg-[#FAFAFA] py-12">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="mb-10 text-center">
+            <h2 className="mb-3 text-3xl font-extrabold text-gray-900 md:text-4xl">
+              {t.home.featured}
+            </h2>
+            <p className="text-lg leading-relaxed text-gray-600">{t.home.discoverLatest}</p>
+          </div>
+          <div className="flex items-center justify-center py-12">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
+            <p className="ml-3 text-gray-600">Artikel werden geladen...</p>
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  if (products.length === 0) {
     return (
       <section className="bg-[#FAFAFA] py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
@@ -53,7 +120,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-          {initialProducts.map((product, index) => (
+          {products.map((product, index) => (
             <div
               key={product.id}
               className="flex h-full min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-300"
