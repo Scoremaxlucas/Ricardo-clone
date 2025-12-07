@@ -20,29 +20,13 @@ export default async function MySellingPage() {
 
   // OPTIMIERT: Fetch articles server-side für instant rendering (wie Ricardo)
   // Artikel sind bereits im initial HTML, kein Client-Side API-Call nötig
-  // WICHTIG: Fallback zu API-Route wenn Server-Side-Funktion fehlschlägt
-  let items
+  // WICHTIG: Wenn Server-Side-Funktion fehlschlägt oder leer ist, Client wird API-Route verwenden
+  let items: MySellingItem[] = []
   try {
     items = await getMySellingArticles(session.user.id)
-    // WICHTIG: Wenn leeres Array, versuche Fallback (könnte temporärer Fehler sein)
+    // WICHTIG: Wenn leeres Array, Client wird API-Route verwenden (könnte temporärer Fehler sein)
     if (items.length === 0) {
-      console.warn('[my-selling] Server-side returned empty array, trying API fallback...')
-      // Versuche API-Route als Fallback (non-blocking)
-      try {
-        const fallbackResponse = await fetch(`${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'}/api/articles/mine-fast?userId=${session.user.id}`, {
-          headers: {
-            'Cookie': `next-auth.session-token=${(await import('next-auth')).getServerSession(authOptions)?.then(s => s?.sessionToken) || ''}`,
-          },
-        })
-        if (fallbackResponse.ok) {
-          const fallbackData = await fallbackResponse.json()
-          if (fallbackData.watches && fallbackData.watches.length > 0) {
-            items = fallbackData.watches
-          }
-        }
-      } catch (fallbackError) {
-        console.error('[my-selling] Fallback also failed:', fallbackError)
-      }
+      console.warn('[my-selling] Server-side returned empty array, client will try API fallback...')
     }
   } catch (error) {
     console.error('[my-selling] Error fetching articles server-side:', error)
