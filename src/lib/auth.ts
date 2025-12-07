@@ -15,17 +15,22 @@ export const authOptions = {
         password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
+        // WICHTIG: Logging für Debugging in Production
+        const logPrefix = '[AUTH]'
+        
         try {
           if (!credentials?.email || !credentials?.password) {
-            console.log('[AUTH] Missing credentials')
+            console.log(`${logPrefix} Missing credentials`)
             return null
           }
 
           // Normalize email (lowercase and trim)
           const normalizedEmail = credentials.email.toLowerCase().trim()
 
-          console.log('[AUTH] Attempting login for:', normalizedEmail)
-          console.log('[AUTH] Password length:', credentials.password.length)
+          console.log(`${logPrefix} Attempting login for:`, normalizedEmail)
+          console.log(`${logPrefix} Password length:`, credentials.password.length)
+          console.log(`${logPrefix} DATABASE_URL exists:`, !!process.env.DATABASE_URL)
+          console.log(`${logPrefix} NEXTAUTH_SECRET exists:`, !!process.env.NEXTAUTH_SECRET)
 
           // WICHTIG: Prisma verbindet sich automatisch beim ersten Query
           // Kein expliziter $connect() nötig - kann in Serverless-Umgebungen Probleme verursachen
@@ -50,27 +55,31 @@ export const authOptions = {
               },
             })
           } catch (dbError: any) {
-            console.error('[AUTH] Database query error:', dbError)
-            console.error('[AUTH] Database error details:', {
+            console.error(`${logPrefix} Database query error:`, dbError)
+            console.error(`${logPrefix} Database error details:`, {
               message: dbError.message,
               code: dbError.code,
               name: dbError.name,
+              stack: dbError.stack?.substring(0, 300),
             })
             // WICHTIG: Bei Datenbankfehlern, return null statt throw
             // NextAuth behandelt null als "invalid credentials"
+            // Aber logge es ausführlich für Debugging
             return null
           }
 
           if (!user) {
-            console.log('[AUTH] User not found:', normalizedEmail)
+            console.log(`${logPrefix} User not found:`, normalizedEmail)
             // WICHTIG: Prüfe ob User mit anderer Groß-/Kleinschreibung existiert (nur für Debugging)
             try {
               const allUsers = await prisma.user.findMany({
                 select: { email: true },
                 take: 10,
               })
-              console.log('[AUTH] Sample users in database:', allUsers.map(u => u.email))
-            } catch (error) {
+              console.log(`${logPrefix} Sample users in database:`, allUsers.map(u => u.email))
+              console.log(`${logPrefix} Total users found:`, allUsers.length)
+            } catch (error: any) {
+              console.error(`${logPrefix} Error fetching sample users:`, error.message)
               // Ignore error - nur für Debugging
             }
             return null
