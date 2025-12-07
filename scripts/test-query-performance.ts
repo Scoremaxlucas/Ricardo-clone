@@ -68,9 +68,9 @@ async function testQueryPerformance() {
 
   // Test 3: Prüfe ob Indizes existieren
   const indexes = await prisma.$queryRawUnsafe(`
-    SELECT indexname, indexdef 
-    FROM pg_indexes 
-    WHERE tablename = 'watches' 
+    SELECT indexname, indexdef
+    FROM pg_indexes
+    WHERE tablename = 'watches'
     AND indexname LIKE '%sellerId%'
     ORDER BY indexname;
   `)

@@ -1,9 +1,21 @@
 import { PrismaClient } from '@prisma/client'
-import { config } from 'dotenv'
+import { readFileSync } from 'fs'
 import { resolve } from 'path'
 
 // Lade Umgebungsvariablen aus .env.local
-config({ path: resolve(process.cwd(), '.env.local') })
+try {
+  const envFile = readFileSync(resolve(process.cwd(), '.env.local'), 'utf-8')
+  envFile.split('\n').forEach(line => {
+    const match = line.match(/^([^=]+)=(.*)$/)
+    if (match) {
+      const key = match[1].trim()
+      const value = match[2].trim().replace(/^["']|["']$/g, '')
+      process.env[key] = value
+    }
+  })
+} catch (error) {
+  console.warn('Could not load .env.local, using environment variables')
+}
 
 // Prüfe ob DATABASE_URL gesetzt ist
 if (!process.env.DATABASE_URL) {
@@ -12,7 +24,16 @@ if (!process.env.DATABASE_URL) {
   process.exit(1)
 }
 
-const prisma = new PrismaClient()
+console.log('DATABASE_URL:', process.env.DATABASE_URL.substring(0, 20) + '...')
+
+// Erstelle Prisma Client mit expliziter DATABASE_URL
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+})
 
 async function createIndexes() {
   console.log('Creating performance indexes...')

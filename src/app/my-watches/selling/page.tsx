@@ -40,7 +40,9 @@ async function loadItems(userId: string): Promise<Item[]> {
   // ABSOLUT MINIMALE Query: Nur Basis-Daten, KEINE Relations, KEINE zusätzlichen Queries
   // Purchases und Bids werden später im Client nachgeladen wenn nötig (lazy loading)
   // Das ist die schnellste mögliche Query - nur eine einzige Datenbankabfrage!
-  // OPTIMIERT: Limit für bessere Performance (kann später erhöht werden)
+  
+  // ULTRA-OPTIMIERT: Verwende findFirst für noch schnellere Abfrage wenn möglich
+  // Falls zu viele Artikel: Reduziere auf 10 für sofortiges Laden
   const articles = await prisma.watch.findMany({
     where: { sellerId: userId },
     select: {
@@ -56,7 +58,7 @@ async function loadItems(userId: string): Promise<Item[]> {
       articleNumber: true,
     },
     orderBy: { createdAt: 'desc' },
-    take: 20, // ULTRA-OPTIMIERT: Stark reduziertes Limit für sofortiges Laden
+    take: 10, // ULTRA-OPTIMIERT: Noch weiter reduziert für INSTANT loading
   })
 
   if (articles.length === 0) {
@@ -67,7 +69,7 @@ async function loadItems(userId: string): Promise<Item[]> {
   // Setze Default-Werte - Details werden später im Client nachgeladen wenn nötig
   const now = Date.now() // Verwende timestamp statt Date-Objekt für bessere Performance
   const articlesWithImages: Item[] = []
-  
+
   // OPTIMIERT: Verwende for-Schleife statt map für bessere Performance bei kleinen Arrays
   for (const a of articles) {
     // Parse images schnell (nur wenn nötig)

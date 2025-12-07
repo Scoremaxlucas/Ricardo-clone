@@ -55,8 +55,8 @@ Die wichtigsten Indizes sind:
 ## Prüfen ob Indizes existieren
 
 ```sql
-SELECT indexname, indexdef 
-FROM pg_indexes 
+SELECT indexname, indexdef
+FROM pg_indexes
 WHERE tablename IN ('watches', 'bids', 'purchases')
 ORDER BY tablename, indexname;
 ```
