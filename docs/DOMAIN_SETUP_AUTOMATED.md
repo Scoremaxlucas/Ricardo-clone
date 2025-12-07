@@ -2,7 +2,7 @@
 
 ## ⚠️ Wichtiger Hinweis
 
-DNS-Einträge können **nicht automatisch** von mir geändert werden, da diese bei deinem Domain-Provider (Hostpoint, Switch, etc.) konfiguriert werden müssen. 
+DNS-Einträge können **nicht automatisch** von mir geändert werden, da diese bei deinem Domain-Provider (Hostpoint, Switch, etc.) konfiguriert werden müssen.
 
 **Was ich für dich tun kann:**
 - ✅ Die benötigten DNS-Einträge vorbereiten
@@ -35,7 +35,7 @@ TTL:    3600
 
 **ODER** (falls A Record nicht funktioniert):
 ```
-Typ:    CNAME Record  
+Typ:    CNAME Record
 Name:   @ (oder helvenda.ch)
 Wert:   cname.vercel-dns.com
 TTL:    3600
