@@ -27,11 +27,12 @@ export interface MySellingItem {
  * Details (bids, purchases) can be loaded client-side if needed
  */
 export async function getMySellingArticles(userId: string): Promise<MySellingItem[]> {
-  const now = new Date()
+  try {
+    const now = new Date()
 
-  // ABSOLUT MINIMALE Query: Nur die wichtigsten Felder (wie mine-instant)
-  // KEINE bids oder purchases - das würde N+1 Problem verursachen und langsam sein
-  const watches = await prisma.watch.findMany({
+    // ABSOLUT MINIMALE Query: Nur die wichtigsten Felder (wie mine-instant)
+    // KEINE bids oder purchases - das würde N+1 Problem verursachen und langsam sein
+    const watches = await prisma.watch.findMany({
     where: { sellerId: userId },
     select: {
       id: true,
@@ -102,6 +103,11 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
     })
   }
 
-  return result
+    return result
+  } catch (error) {
+    console.error('Error fetching my selling articles:', error)
+    // Return empty array on error to prevent Server Component crash
+    return []
+  }
 }
 

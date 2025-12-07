@@ -23,9 +23,10 @@ export interface ProductItem {
  * Optimized for fast initial page load
  */
 export async function getFeaturedProducts(limit: number = 6): Promise<ProductItem[]> {
-  const now = new Date()
+  try {
+    const now = new Date()
 
-  const watches = await prisma.watch.findMany({
+    const watches = await prisma.watch.findMany({
     where: {
       AND: [
         {
@@ -125,5 +126,10 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
       articleNumber: w.articleNumber,
     }
   })
+  } catch (error) {
+    console.error('Error fetching featured products:', error)
+    // Return empty array on error to prevent Server Component crash
+    return []
+  }
 }
 

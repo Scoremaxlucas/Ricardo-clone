@@ -55,9 +55,10 @@ export interface MyPurchaseItem {
  * ULTRA-OPTIMIZED: No N+1 problem - purchase.price is already the final price
  */
 export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> {
-  // ULTRA-MINIMALE Query: purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
-  // KEINE bids Query nötig - das würde N+1 Problem verursachen
-  const purchases = await prisma.purchase.findMany({
+  try {
+    // ULTRA-MINIMALE Query: purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
+    // KEINE bids Query nötig - das würde N+1 Problem verursachen
+    const purchases = await prisma.purchase.findMany({
     where: {
       buyerId: userId,
       status: { not: 'cancelled' },
@@ -120,69 +121,74 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
     orderBy: { createdAt: 'desc' },
   })
 
-  return purchases.map(purchase => {
-    const watch = purchase.watch
+    return purchases.map(purchase => {
+      const watch = purchase.watch
 
-    // Parse images
-    let images: string[] = []
-    if (watch.images) {
-      try {
-        if (typeof watch.images === 'string') {
-          if (watch.images.startsWith('[') || watch.images.startsWith('{')) {
-            images = JSON.parse(watch.images)
-          } else {
-            images = watch.images.split(',').filter(img => img.trim().length > 0)
+      // Parse images
+      let images: string[] = []
+      if (watch.images) {
+        try {
+          if (typeof watch.images === 'string') {
+            if (watch.images.startsWith('[') || watch.images.startsWith('{')) {
+              images = JSON.parse(watch.images)
+            } else {
+              images = watch.images.split(',').filter(img => img.trim().length > 0)
+            }
+          } else if (Array.isArray(watch.images)) {
+            images = watch.images
           }
-        } else if (Array.isArray(watch.images)) {
-          images = watch.images
+        } catch {
+          images = []
         }
-      } catch {
-        images = []
       }
-    }
 
-    // purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
-    const finalPrice = purchase.price || watch.price || 0
-    // Bestimme purchaseType basierend auf isAuction und buyNowPrice
-    const purchaseType = watch.isAuction && finalPrice !== watch.buyNowPrice ? 'auction' : 'buy-now'
+      // purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
+      const finalPrice = purchase.price || watch.price || 0
+      // Bestimme purchaseType basierend auf isAuction und buyNowPrice
+      const purchaseType = watch.isAuction && finalPrice !== watch.buyNowPrice ? 'auction' : 'buy-now'
 
-    return {
-      id: purchase.id,
-      purchasedAt: purchase.createdAt.toISOString(),
-      shippingMethod: purchase.shippingMethod || watch.shippingMethod || null,
-      paid: purchase.paymentConfirmed || purchase.paid || false,
-      status: purchase.status || 'pending',
-      itemReceived: purchase.itemReceived || false,
-      itemReceivedAt: purchase.itemReceivedAt?.toISOString() || null,
-      paymentConfirmed: purchase.paymentConfirmed || false,
-      paymentConfirmedAt: purchase.paymentConfirmedAt?.toISOString() || null,
-      contactDeadline: purchase.contactDeadline?.toISOString() || null,
-      sellerContactedAt: purchase.sellerContactedAt?.toISOString() || null,
-      buyerContactedAt: purchase.buyerContactedAt?.toISOString() || null,
-      contactWarningSentAt: purchase.contactWarningSentAt?.toISOString() || null,
-      contactDeadlineMissed: purchase.contactDeadlineMissed || false,
-      paymentDeadline: purchase.paymentDeadline?.toISOString() || null,
-      paymentReminderSentAt: purchase.paymentReminderSentAt?.toISOString() || null,
-      paymentDeadlineMissed: purchase.paymentDeadlineMissed || false,
-      disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
-      disputeReason: purchase.disputeReason || null,
-      disputeStatus: purchase.disputeStatus || null,
-      disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
-      trackingNumber: purchase.trackingNumber || null,
-      trackingProvider: purchase.trackingProvider || null,
-      shippedAt: purchase.shippedAt?.toISOString() || null,
-      watch: {
-        id: watch.id,
-        title: watch.title || 'Unbekanntes Produkt',
-        brand: watch.brand || '',
-        model: watch.model || '',
-        images: images || [],
-        seller: watch.seller || null,
-        price: watch.price || 0,
-        finalPrice,
-        purchaseType,
-      },
-    }
-  })
+      return {
+        id: purchase.id,
+        purchasedAt: purchase.createdAt.toISOString(),
+        shippingMethod: purchase.shippingMethod || watch.shippingMethod || null,
+        paid: purchase.paymentConfirmed || purchase.paid || false,
+        status: purchase.status || 'pending',
+        itemReceived: purchase.itemReceived || false,
+        itemReceivedAt: purchase.itemReceivedAt?.toISOString() || null,
+        paymentConfirmed: purchase.paymentConfirmed || false,
+        paymentConfirmedAt: purchase.paymentConfirmedAt?.toISOString() || null,
+        contactDeadline: purchase.contactDeadline?.toISOString() || null,
+        sellerContactedAt: purchase.sellerContactedAt?.toISOString() || null,
+        buyerContactedAt: purchase.buyerContactedAt?.toISOString() || null,
+        contactWarningSentAt: purchase.contactWarningSentAt?.toISOString() || null,
+        contactDeadlineMissed: purchase.contactDeadlineMissed || false,
+        paymentDeadline: purchase.paymentDeadline?.toISOString() || null,
+        paymentReminderSentAt: purchase.paymentReminderSentAt?.toISOString() || null,
+        paymentDeadlineMissed: purchase.paymentDeadlineMissed || false,
+        disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
+        disputeReason: purchase.disputeReason || null,
+        disputeStatus: purchase.disputeStatus || null,
+        disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
+        trackingNumber: purchase.trackingNumber || null,
+        trackingProvider: purchase.trackingProvider || null,
+        shippedAt: purchase.shippedAt?.toISOString() || null,
+        watch: {
+          id: watch.id,
+          title: watch.title || 'Unbekanntes Produkt',
+          brand: watch.brand || '',
+          model: watch.model || '',
+          images: images || [],
+          seller: watch.seller || null,
+          price: watch.price || 0,
+          finalPrice,
+          purchaseType,
+        },
+      }
+    })
+  } catch (error) {
+    console.error('Error fetching my purchases:', error)
+    // Return empty array on error to prevent Server Component crash
+    return []
+  }
 }
 
