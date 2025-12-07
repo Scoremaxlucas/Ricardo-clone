@@ -55,8 +55,40 @@ export function MySellingClient({ initialItems, initialStats }: MySellingClientP
   const [searchQuery, setSearchQuery] = useState('')
   const [loadingDetails, setLoadingDetails] = useState(false)
 
-  // ENTFERNT: Details werden bereits in page.tsx geladen
-  // Keine zusätzliche Fetch-Anfrage nötig
+  // OPTIMIERT: Lade Details (bids, purchases) non-blocking im Hintergrund
+  // Initial render zeigt Artikel sofort, Details kommen nach
+  useEffect(() => {
+    if (initialItems.length === 0) return
+
+    // Lade Details für alle Artikel parallel (non-blocking)
+    const loadDetails = async () => {
+      try {
+        const response = await fetch('/api/articles/mine-fast')
+        if (response.ok) {
+          const data = await response.json()
+          if (data.watches && Array.isArray(data.watches)) {
+            // Update items with detailed data
+            setItems(data.watches)
+            // Update stats
+            const active = data.watches.filter((item: Item) => item.isActive).length
+            const inactive = data.watches.filter((item: Item) => !item.isActive).length
+            setStats({
+              total: data.watches.length,
+              active,
+              inactive,
+            })
+          }
+        }
+      } catch (error) {
+        // Silently fail - initial items are already displayed
+        console.error('Error loading details:', error)
+      }
+    }
+
+    // Lade Details nach kurzer Verzögerung (non-blocking)
+    const timeoutId = setTimeout(loadDetails, 100)
+    return () => clearTimeout(timeoutId)
+  }, [initialItems.length])
 
   const isItemActive = (item: Item): boolean => {
     if (item.isActive !== undefined) {
