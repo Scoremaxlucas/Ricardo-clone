@@ -183,7 +183,7 @@ export default function SellPage() {
           quality: 0.85,
           maxSizeMB: 2,
         })
-        
+
         newImages.push(compressedImage)
         processedCount++
 
@@ -198,12 +198,12 @@ export default function SellPage() {
         // Wenn alle Dateien verarbeitet sind
         if (processedCount === files.length) {
           toast.dismiss('image-upload-progress')
-          
+
           setFormData(prev => ({
             ...prev,
             images: [...prev.images, ...newImages],
           }))
-          
+
           // WICHTIG: Nur wenn noch KEINE Bilder vorhanden waren, setze das erste als Titelbild
           // Wenn bereits Bilder vorhanden sind, bleibt das aktuelle Titelbild bestehen
           if (currentImageCount === 0 && newImages.length > 0) {
@@ -1968,18 +1968,38 @@ export default function SellPage() {
                       Bilder
                     </h2>
 
-                    <div className="mb-4">
-                      <input
-                        type="file"
-                        multiple
-                        accept="image/*"
-                        onChange={handleImageUpload}
-                        className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
-                      />
-                      <p className="mt-1 text-sm text-gray-500">
-                        Laden Sie bis zu 10 Bilder hoch (JPG, PNG, max. 5MB pro Bild)
-                      </p>
-                    </div>
+                    {formData.images.length === 0 ? (
+                      <div className="mb-4">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                          Titelbild *
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
+                        />
+                        <p className="mt-1 text-sm text-gray-500">
+                          Laden Sie das Titelbild hoch (JPG, PNG, max. 10MB). Dieses Bild wird automatisch als Titelbild verwendet.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mb-4">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                          Weitere Bilder hinzufügen (Optional)
+                        </label>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
+                        />
+                        <p className="mt-1 text-sm text-gray-500">
+                          Fügen Sie weitere Bilder hinzu (JPG, PNG, max. 10MB pro Bild). Sie können bis zu 10 Bilder insgesamt hochladen.
+                        </p>
+                      </div>
+                    )}
 
                     {formData.images.length > 0 && (
                       <div className="space-y-3">
