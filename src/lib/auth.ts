@@ -115,7 +115,11 @@ export const authOptions = {
           // WICHTIG: Prüfe Passwort mit bcrypt
           // Fallback: Wenn bcrypt fehlschlägt, versuche direkten Vergleich (für alte Passwörter)
           let isPasswordValid = false
-          const passwordIsHashed = user.password.startsWith('$2a$') || user.password.startsWith('$2b$') || user.password.startsWith('$2y$')
+          const passwordIsHashed = 
+            user.password.startsWith('$2a$') || 
+            user.password.startsWith('$2b$') || 
+            user.password.startsWith('$2y$') ||
+            user.password.startsWith('$2x$')
 
           console.log('[AUTH] Password check:', {
             providedLength: credentials.password.length,
@@ -124,28 +128,36 @@ export const authOptions = {
             isHashed: passwordIsHashed,
           })
 
-          try {
-            if (passwordIsHashed) {
+          // WICHTIG: Versuche zuerst bcrypt, dann direkten Vergleich
+          if (passwordIsHashed) {
+            try {
               // Passwort ist gehasht, verwende bcrypt
               isPasswordValid = await bcrypt.compare(credentials.password, user.password)
               console.log('[AUTH] Bcrypt password valid:', isPasswordValid)
-            } else {
-              // Passwort ist nicht gehasht, direkter Vergleich
-              console.log('[AUTH] Password not hashed, trying direct comparison')
+            } catch (bcryptError: any) {
+              console.error('[AUTH] Bcrypt comparison error:', bcryptError)
+              // Bei bcrypt-Fehler, versuche direkten Vergleich als Fallback
+              console.log('[AUTH] Fallback: Trying direct password comparison after bcrypt error')
               isPasswordValid = credentials.password === user.password
               console.log('[AUTH] Direct comparison result:', isPasswordValid)
             }
-          } catch (bcryptError: any) {
-            console.error('[AUTH] Bcrypt comparison error:', bcryptError)
-            // Fallback: Versuche direkten Vergleich wenn bcrypt fehlschlägt
-            if (!passwordIsHashed) {
-              console.log('[AUTH] Fallback: Trying direct password comparison')
-              isPasswordValid = credentials.password === user.password
-              console.log('[AUTH] Direct comparison result:', isPasswordValid)
-            }
+          } else {
+            // Passwort ist nicht gehasht, direkter Vergleich
+            console.log('[AUTH] Password not hashed, trying direct comparison')
+            isPasswordValid = credentials.password === user.password
+            console.log('[AUTH] Direct comparison result:', isPasswordValid)
+            
+            // WICHTIG: Wenn direkter Vergleich fehlschlägt, versuche auch bcrypt
+            // (für den Fall, dass das Passwort gehasht ist, aber nicht mit $2 beginnt)
             if (!isPasswordValid) {
-              console.log('[AUTH] Password validation failed after fallback')
-              return null
+              try {
+                console.log('[AUTH] Direct comparison failed, trying bcrypt as fallback')
+                isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+                console.log('[AUTH] Bcrypt fallback result:', isPasswordValid)
+              } catch (bcryptError: any) {
+                console.error('[AUTH] Bcrypt fallback error:', bcryptError)
+                // Behalte isPasswordValid = false
+              }
             }
           }
 
