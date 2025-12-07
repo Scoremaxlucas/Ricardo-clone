@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { ArticleList } from './ArticleList'
+import { MySellingClient } from './MySellingClient'
 import Link from 'next/link'
 import { Package, Plus } from 'lucide-react'
 
@@ -96,7 +96,7 @@ async function loadItems(userId: string): Promise<Item[]> {
   // Gruppiere Gebote nach Artikel-ID und finde höchstes Gebot pro Artikel
   const highestBidMap = new Map<string, { amount: number; createdAt: Date }>()
   const bidCountMap = new Map<string, number>()
-  
+
   // Sortiere Gebote nach amount für jedes Artikel
   const bidsByArticle = new Map<string, typeof allBids>()
   allBids.forEach(b => {
@@ -119,7 +119,7 @@ async function loadItems(userId: string): Promise<Item[]> {
     // Parse images schnell
     let images: string[] = []
     try {
-      images = w.images ? JSON.parse(w.images) : []
+      images = a.images ? JSON.parse(a.images) : []
     } catch {
       images = []
     }
@@ -173,18 +173,13 @@ async function loadItems(userId: string): Promise<Item[]> {
 // isItemActive wird jetzt in ArticleListContent berechnet
 
 export default async function MySellingPage() {
-  // OPTIMIERT: Session-Check parallel mit Daten-Laden starten
-  const [session, itemsPromise] = await Promise.all([
-    getServerSession(authOptions),
-    // Starte Daten-Laden sofort (wird später mit userId gefiltert)
-    Promise.resolve([] as Item[]),
-  ])
+  const session = await getServerSession(authOptions)
 
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/my-watches/selling')
   }
 
-  // OPTIMIERT: Lade Daten jetzt mit userId
+  // OPTIMIERT: Lade Daten direkt
   const items = await loadItems(session.user.id)
 
   // Prüfe abgelaufene Auktionen im Hintergrund (nicht-blockierend)
