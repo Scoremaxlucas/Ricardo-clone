@@ -37,46 +37,34 @@ export default function MySellingPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
-    // OPTIMIERT: Starte Daten-Laden SOFORT, auch während Session lädt
-    if (status === 'loading') {
-      // Lade Daten bereits während Session-Check läuft
-      fetch(`/api/articles/mine-instant`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.watches && Array.isArray(data.watches)) {
-            setItems(data.watches)
-            setLoading(false)
-          }
-        })
-        .catch(() => {})
-      return
-    }
-
-    if (!session?.user?.id) {
-      router.push('/login?callbackUrl=/my-watches/selling')
-      return
-    }
-
-    // ULTRA-OPTIMIERT: Lade Daten SOFORT mit sehr kurzem Timeout
+    // ULTRA-OPTIMIERT: Lade Daten SOFORT ohne auf Session zu warten
+    // Verwende userId aus Session wenn verfügbar, sonst lade trotzdem (API prüft selbst)
+    
     const loadData = async () => {
       try {
         setLoading(true)
         
-        // STRATEGIE: Versuche INSTANT API mit 500ms Timeout für INSTANT loading
+        // OPTIMIERT: Wenn Session bereits verfügbar, übergebe userId für noch schnellere API
+        const userId = session?.user?.id
+        const url = userId 
+          ? `/api/articles/mine-instant?userId=${userId}`
+          : `/api/articles/mine-instant`
+
+        // STRATEGIE: Versuche INSTANT API mit 300ms Timeout für INSTANT loading
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 500) // 500ms für INSTANT
-        
+        const timeoutId = setTimeout(() => controller.abort(), 300) // 300ms für INSTANT
+
         try {
-          const res = await fetch(`/api/articles/mine-instant`, {
+          const res = await fetch(url, {
             signal: controller.signal,
             cache: 'no-store',
             headers: {
               'Accept': 'application/json',
             },
           })
-          
+
           clearTimeout(timeoutId)
-          
+
           if (res.ok) {
             const data = await res.json()
             if (data.watches && Array.isArray(data.watches)) {
@@ -110,27 +98,18 @@ export default function MySellingPage() {
       }
     }
 
+    // OPTIMIERT: Starte sofort, auch wenn Session noch lädt
     loadData()
+    
+    // OPTIMIERT: Prüfe Session separat und redirect nur wenn nötig
+    if (status !== 'loading' && !session?.user?.id) {
+      router.push('/login?callbackUrl=/my-watches/selling')
+    }
   }, [session, status, router])
 
-  if (status === 'loading' || loading) {
-    return (
-      <div className="flex min-h-screen flex-col bg-gray-50">
-        <Header />
-        <div className="flex-1 py-8">
-          <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-                <p className="mt-4 text-gray-600">Artikel werden geladen...</p>
-              </div>
-            </div>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
+  // OPTIMIERT: Zeige Artikel sofort an, auch wenn noch geladen wird
+  // Nur zeigen Loading-State wenn wirklich keine Artikel vorhanden sind
+  const showLoading = loading && items.length === 0 && status !== 'loading'
 
   if (!session?.user?.id) {
     return null
@@ -176,8 +155,17 @@ export default function MySellingPage() {
             </Link>
           </div>
 
-          {/* Client Component */}
-          <MySellingClient initialItems={items} initialStats={stats} />
+          {/* OPTIMIERT: Zeige Loading nur wenn wirklich keine Artikel vorhanden */}
+          {showLoading ? (
+            <div className="flex items-center justify-center py-12">
+              <div className="text-center">
+                <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+                <p className="mt-4 text-gray-600">Artikel werden geladen...</p>
+              </div>
+            </div>
+          ) : (
+            <MySellingClient initialItems={items} initialStats={stats} />
+          )}
         </div>
       </div>
       <Footer />

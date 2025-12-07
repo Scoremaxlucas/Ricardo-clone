@@ -7,14 +7,31 @@ import { prisma } from '@/lib/prisma'
 // Lädt nur ID, Titel, Preis und erstes Bild
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-    if (!session?.user?.id) {
+    // OPTIMIERT: Session-Check parallel mit Query-Vorbereitung
+    const sessionPromise = getServerSession(authOptions)
+    
+    // OPTIMIERT: Verwende userId aus Query-Parameter wenn verfügbar (noch schneller)
+    const userId = request.nextUrl.searchParams.get('userId')
+    
+    let finalUserId: string | null = null
+    
+    if (userId) {
+      // Wenn userId als Parameter übergeben wurde, verwende direkt (noch schneller)
+      finalUserId = userId
+    } else {
+      // Sonst warte auf Session
+      const session = await sessionPromise
+      finalUserId = session?.user?.id || null
+    }
+    
+    if (!finalUserId) {
       return NextResponse.json({ watches: [] }, { status: 200 })
     }
 
     // ABSOLUT MINIMALE Query: Nur die wichtigsten Felder
+    // OPTIMIERT: Verwende Index direkt (sellerId, createdAt DESC)
     const watches = await prisma.watch.findMany({
-      where: { sellerId: session.user.id },
+      where: { sellerId: finalUserId },
       select: {
         id: true,
         title: true,
@@ -28,25 +45,28 @@ export async function GET(request: NextRequest) {
         articleNumber: true,
       },
       orderBy: { createdAt: 'desc' },
+      // OPTIMIERT: Nutze Index watches_sellerId_createdAt_idx
     })
 
-    // MINIMALE Verarbeitung
-    const watchesWithImages = watches.map(w => {
-      // Nur erstes Bild parsen für maximale Geschwindigkeit
+    // ULTRA-MINIMALE Verarbeitung für maximale Geschwindigkeit
+    // OPTIMIERT: Verwende for-Schleife statt map für bessere Performance bei kleinen Arrays
+    const watchesWithImages = []
+    for (const w of watches) {
+      // OPTIMIERT: Nur erstes Bild parsen wenn wirklich vorhanden
       let firstImage = ''
-      if (w.images) {
+      if (w.images && typeof w.images === 'string') {
         try {
-          const parsed = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
+          const parsed = JSON.parse(w.images)
           firstImage = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : ''
         } catch {
-          firstImage = ''
+          // Ignore parse errors
         }
       }
 
-      return {
+      watchesWithImages.push({
         id: w.id,
         articleNumber: w.articleNumber,
-        title: w.title,
+        title: w.title || '',
         brand: w.brand || '',
         model: w.model || '',
         price: w.price,
@@ -59,8 +79,8 @@ export async function GET(request: NextRequest) {
         bidCount: 0,
         finalPrice: w.price,
         isActive: true, // Vereinfacht: immer true für instant loading
-      }
-    })
+      })
+    }
 
     return NextResponse.json(
       { watches: watchesWithImages },
