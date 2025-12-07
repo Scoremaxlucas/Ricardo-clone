@@ -98,7 +98,6 @@ export default function SellPage() {
     title: '',
     description: '',
     images: [] as string[],
-    video: null as string | null,
   })
 
   // Exklusive Auswahl für Lieferumfang (nur eine Option aktiv)
@@ -147,46 +146,49 @@ export default function SellPage() {
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     const newImages: string[] = []
+    let loadedCount = 0
 
     files.forEach(file => {
+      // Prüfe Dateityp - nur Bilder erlauben
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} ist kein Bild. Bitte wählen Sie nur Bilddateien aus.`, {
+          position: 'top-right',
+          duration: 4000,
+        })
+        return
+      }
+
+      // Prüfe Dateigröße (max 10MB pro Bild)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} ist zu groß. Maximale Größe: 10MB`, {
+          position: 'top-right',
+          duration: 4000,
+        })
+        return
+      }
+
       const reader = new FileReader()
       reader.onload = () => {
         newImages.push(reader.result as string)
-        if (newImages.length === files.length) {
+        loadedCount++
+        
+        // Wenn alle Dateien geladen sind
+        if (loadedCount === files.length) {
+          const currentImageCount = formData.images.length
           setFormData(prev => ({
             ...prev,
             images: [...prev.images, ...newImages],
           }))
+          
+          // WICHTIG: Nur wenn noch KEINE Bilder vorhanden waren, setze das erste als Titelbild
+          // Wenn bereits Bilder vorhanden sind, bleibt das aktuelle Titelbild bestehen
+          if (currentImageCount === 0 && newImages.length > 0) {
+            setTitleImageIndex(0)
+          }
         }
       }
       reader.readAsDataURL(file)
     })
-  }
-
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      // Prüfe Dateigröße (max 50MB)
-      if (file.size > 50 * 1024 * 1024) {
-        alert('Das Video ist zu groß. Maximale Größe: 50MB')
-        return
-      }
-
-      // Prüfe Dateityp
-      if (!file.type.startsWith('video/')) {
-        alert('Bitte wählen Sie eine Video-Datei aus')
-        return
-      }
-
-      const reader = new FileReader()
-      reader.onload = () => {
-        setFormData(prev => ({
-          ...prev,
-          video: reader.result as string,
-        }))
-      }
-      reader.readAsDataURL(file)
-    }
   }
 
   const removeImage = (index: number) => {
@@ -202,12 +204,6 @@ export default function SellPage() {
     }
   }
 
-  const removeVideo = () => {
-    setFormData(prev => ({
-      ...prev,
-      video: null,
-    }))
-  }
 
   // Lade Verifizierungsstatus und Booster
   useEffect(() => {
@@ -484,7 +480,7 @@ export default function SellPage() {
         title: formData.title || '',
         description: cleanDescription, // GARANTIERT bereinigt
         images: cleanImages, // GARANTIERT bereinigt
-        video: formData.video || null,
+        titleImage: titleImageIndex, // Index des Titelbilds
         booster: selectedBooster !== 'none' ? selectedBooster : undefined,
         category: selectedCategory || '',
         subcategory: selectedSubcategory || '',
@@ -545,7 +541,6 @@ export default function SellPage() {
           title: '',
           description: '',
           images: [],
-          video: null,
         })
         setTitleImageIndex(0)
 
@@ -746,9 +741,11 @@ export default function SellPage() {
                           ...prev,
                           images: newImages,
                         }))
-                        // Setze das neue Bild automatisch als Titelbild (letztes Bild in der Liste)
-                        setTitleImageIndex(newImages.length - 1)
-                        console.log('[sell/page] Titelbild-Index gesetzt auf:', newImages.length - 1)
+                        // Setze nur als Titelbild, wenn noch kein Titelbild gesetzt ist
+                        if (titleImageIndex === 0 && currentImages.length === 0) {
+                          setTitleImageIndex(0)
+                          console.log('[sell/page] Erstes Bild als Titelbild gesetzt')
+                        }
                       } else {
                         // Bild bereits vorhanden - setze es als Titelbild
                         const existingIndex = currentImages.indexOf(imageUrl)
@@ -1949,38 +1946,6 @@ export default function SellPage() {
                       </div>
                     )}
 
-                    {/* Video Upload */}
-                    <div className="mt-8">
-                      <h3 className="mb-4 text-lg font-medium text-gray-900">Video (Optional)</h3>
-                      <div className="mb-4">
-                        <input
-                          type="file"
-                          accept="video/*"
-                          onChange={handleVideoUpload}
-                          className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
-                        />
-                        <p className="mt-1 text-sm text-gray-500">
-                          Laden Sie ein Video hoch (MP4, AVI, MOV, max. 50MB)
-                        </p>
-                      </div>
-
-                      {formData.video && (
-                        <div className="relative">
-                          <video
-                            src={formData.video}
-                            controls
-                            className="h-64 w-full max-w-md rounded-lg object-cover"
-                          />
-                          <button
-                            type="button"
-                            onClick={removeVideo}
-                            className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-sm text-white hover:bg-red-600"
-                          >
-                            ×
-                          </button>
-                        </div>
-                      )}
-                    </div>
                   </div>
 
                   {/* Submit Button */}

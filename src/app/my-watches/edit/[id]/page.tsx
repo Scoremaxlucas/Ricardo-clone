@@ -25,7 +25,7 @@ import { getCategoryConfig } from '@/data/categories'
  * Bearbeitungsseite für Artikel
  *
  * Regeln:
- * - Wenn Gebote vorhanden: Nur Beschreibung, Bilder, Video können ergänzt werden
+ * - Wenn Gebote vorhanden: Nur Beschreibung und Bilder können ergänzt werden
  * - Wenn kein Kauf: Vollständige Bearbeitung möglich
  * - Gleiche Maske wie beim Erstellen
  */
@@ -81,7 +81,6 @@ export default function EditWatchPage() {
     title: '',
     description: '',
     images: [] as string[],
-    video: null as string | null,
     shippingMethods: [] as string[],
   })
 
@@ -214,7 +213,6 @@ export default function EditWatchPage() {
           title: watch.title || '',
           description: watch.description || '',
           images: images,
-          video: watch.video || null,
           shippingMethods: shippingMethods,
         })
 
@@ -333,38 +331,6 @@ export default function EditWatchPage() {
     toast.success('Bild entfernt')
   }
 
-  const handleVideoUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      if (file.size > 50 * 1024 * 1024) {
-        toast.error('Das Video ist zu groß. Maximale Größe: 50MB')
-        return
-      }
-
-      if (!file.type.startsWith('video/')) {
-        toast.error('Bitte wählen Sie eine Video-Datei aus')
-        return
-      }
-
-      const reader = new FileReader()
-      reader.onload = () => {
-        setFormData(prev => ({
-          ...prev,
-          video: reader.result as string,
-        }))
-        toast.success('Video erfolgreich hochgeladen')
-      }
-      reader.readAsDataURL(file)
-    }
-  }
-
-  const removeVideo = () => {
-    setFormData(prev => ({
-      ...prev,
-      video: null,
-    }))
-    toast.success('Video entfernt')
-  }
 
   const setExclusiveSupply = (option: 'fullset' | 'onlyBox' | 'onlyPapers' | 'onlyAllLinks') => {
     if (hasBids) {
@@ -524,7 +490,7 @@ export default function EditWatchPage() {
           <p className="text-gray-600">
             Bearbeiten Sie Ihr Angebot.{' '}
             {hasBids &&
-              'Bei vorhandenen Geboten können nur Beschreibung, Bilder und Video ergänzt werden.'}
+              'Bei vorhandenen Geboten können nur Beschreibung und Bilder ergänzt werden.'}
           </p>
         </div>
 
@@ -536,7 +502,7 @@ export default function EditWatchPage() {
                 <p className="mb-1 font-semibold text-yellow-800">Wichtig: Gebote vorhanden</p>
                 <p className="text-sm text-yellow-700">
                   Es existieren bereits Gebote auf dieses Angebot. Sie können nur noch die
-                  Beschreibung ändern sowie zusätzliche Bilder und Videos hinzufügen. Preis,
+                  Beschreibung ändern sowie zusätzliche Bilder hinzufügen. Preis,
                   Auktionsdauer und andere wichtige Felder sind gesperrt.
                 </p>
               </div>
@@ -1111,38 +1077,6 @@ export default function EditWatchPage() {
                 </div>
               )}
 
-              {/* Video */}
-              <div className="mt-8">
-                <h3 className="mb-4 text-lg font-medium text-gray-900">Video (Optional)</h3>
-                <div className="mb-4">
-                  <input
-                    type="file"
-                    accept="video/*"
-                    onChange={handleVideoUpload}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
-                  />
-                  <p className="mt-1 text-sm text-gray-500">
-                    Laden Sie ein Video hoch (MP4, AVI, MOV, max. 50MB)
-                  </p>
-                </div>
-
-                {formData.video && (
-                  <div className="relative">
-                    <video
-                      src={formData.video}
-                      controls
-                      className="h-64 w-full max-w-md rounded-lg object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={removeVideo}
-                      className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-sm text-white hover:bg-red-600"
-                    >
-                      ×
-                    </button>
-                  </div>
-                )}
-              </div>
             </div>
 
             {/* Booster */}
