@@ -37,6 +37,7 @@ export default function SellPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false)
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
+  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
@@ -938,9 +939,15 @@ export default function SellPage() {
                                       // Typing-Effekt für Titel
                                       const fullText = data.title
                                       let currentIndex = 0
+                                      
+                                      // Lösche vorherigen Interval falls vorhanden
+                                      if (typingIntervalRef.current) {
+                                        clearInterval(typingIntervalRef.current)
+                                      }
+                                      
                                       setFormData(prev => ({ ...prev, title: '' }))
                                       
-                                      const typingInterval = setInterval(() => {
+                                      typingIntervalRef.current = setInterval(() => {
                                         if (currentIndex < fullText.length) {
                                           setFormData(prev => ({ 
                                             ...prev, 
@@ -948,13 +955,20 @@ export default function SellPage() {
                                           }))
                                           currentIndex++
                                         } else {
-                                          clearInterval(typingInterval)
+                                          if (typingIntervalRef.current) {
+                                            clearInterval(typingIntervalRef.current)
+                                            typingIntervalRef.current = null
+                                          }
                                         }
                                       }, 20) // 20ms pro Zeichen = schnell aber sichtbar
                                     }
                                   }
                                 } catch (error) {
                                   console.error('Fehler bei Titel-Generierung:', error)
+                                  if (typingIntervalRef.current) {
+                                    clearInterval(typingIntervalRef.current)
+                                    typingIntervalRef.current = null
+                                  }
                                 } finally {
                                   setIsGeneratingTitle(false)
                                 }
@@ -1120,9 +1134,15 @@ export default function SellPage() {
                                         if (cleanDesc) {
                                           // Typing-Effekt für Beschreibung
                                           let currentIndex = 0
+                                          
+                                          // Lösche vorherigen Interval falls vorhanden
+                                          if (typingIntervalRef.current) {
+                                            clearInterval(typingIntervalRef.current)
+                                          }
+                                          
                                           setFormData(prev => ({ ...prev, description: '' }))
                                           
-                                          const typingInterval = setInterval(() => {
+                                          typingIntervalRef.current = setInterval(() => {
                                             if (currentIndex < cleanDesc.length) {
                                               setFormData(prev => ({ 
                                                 ...prev, 
@@ -1130,7 +1150,10 @@ export default function SellPage() {
                                               }))
                                               currentIndex++
                                             } else {
-                                              clearInterval(typingInterval)
+                                              if (typingIntervalRef.current) {
+                                                clearInterval(typingIntervalRef.current)
+                                                typingIntervalRef.current = null
+                                              }
                                             }
                                           }, 15) // 15ms pro Zeichen = schnell aber sichtbar
                                         }
@@ -1138,6 +1161,10 @@ export default function SellPage() {
                                     }
                                   } catch (error) {
                                     console.error('Fehler bei Beschreibungs-Generierung:', error)
+                                    if (typingIntervalRef.current) {
+                                      clearInterval(typingIntervalRef.current)
+                                      typingIntervalRef.current = null
+                                    }
                                   } finally {
                                     setIsGeneratingDescription(false)
                                   }
