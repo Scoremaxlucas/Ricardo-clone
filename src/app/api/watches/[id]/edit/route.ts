@@ -125,6 +125,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         updateData.caseDiameter = data.caseDiameter ? parseFloat(data.caseDiameter) : null
 
       // Preis
+      // WICHTIG: Artikelpreise werden NICHT gerundet - exakter Betrag wird gespeichert (z.B. CHF 1.80)
+      // Nur Rechnungsbeträge (Kommission, MwSt) werden auf 5 Rappen gerundet
       if (data.price !== undefined) {
         const priceFloat = parseFloat(data.price)
         if (isNaN(priceFloat) || priceFloat <= 0) {
@@ -137,6 +139,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
 
       if (data.buyNowPrice !== undefined) {
+        // WICHTIG: Artikelpreise werden NICHT gerundet - exakter Betrag wird gespeichert
         updateData.buyNowPrice = data.buyNowPrice ? parseFloat(data.buyNowPrice) : null
       }
 
