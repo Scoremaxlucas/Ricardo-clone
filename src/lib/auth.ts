@@ -6,6 +6,7 @@ import bcrypt from 'bcryptjs'
 export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET || 'development-secret-key',
   adapter: undefined, // Disable adapter for now
+  debug: process.env.NODE_ENV === 'development', // Enable debug in development
   providers: [
     CredentialsProvider({
       name: 'credentials',
