@@ -137,12 +137,6 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-        // OPTIMIERT: Lade Purchase-Count separat für isActive-Logik
-        _count: {
-          select: {
-            purchases: true,
-          },
-        },
         bids: {
           select: {
             amount: true,
@@ -151,9 +145,10 @@ export async function GET(request: NextRequest) {
           orderBy: { amount: 'desc' },
           take: 1, // Höchstes Gebot für finalPrice
         },
-        // OPTIMIERT: Lade bidCount separat für bessere Performance
+        // OPTIMIERT: Lade beide Counts in einem einzigen _count Objekt
         _count: {
           select: {
+            purchases: true,
             bids: true,
           },
         },
