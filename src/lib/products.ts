@@ -16,6 +16,7 @@ export interface ProductItem {
   city?: string | null
   postalCode?: string | null
   articleNumber?: number | null
+  href?: string // WICHTIG: Expliziter href für Produktlinks
 }
 
 /**
@@ -118,8 +119,12 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
 
     const highestBid = w.bids?.[0]?.amount || null
 
+    // WICHTIG: Verwende articleNumber für Link, falls vorhanden, sonst CUID
+    // Dies stellt sicher, dass Produkte korrekt verlinkt sind
+    const productId = w.articleNumber ? w.articleNumber.toString() : w.id
+    
     return {
-      id: w.id,
+      id: w.id, // Behalte CUID für interne Verwendung
       title: w.title || '',
       brand: w.brand || '',
       model: w.model || '',
@@ -134,6 +139,8 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
       city: w.seller?.city || null,
       postalCode: w.seller?.postalCode || null,
       articleNumber: w.articleNumber,
+      // WICHTIG: Setze href explizit, damit der richtige Link verwendet wird
+      href: `/products/${productId}`,
     }
   })
   } catch (error) {

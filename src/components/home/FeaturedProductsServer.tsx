@@ -32,23 +32,31 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
             const data = await response.json()
             if (data.watches && Array.isArray(data.watches) && data.watches.length > 0) {
               // Transformiere API-Format zu ProductItem-Format
-              const transformedProducts: ProductItem[] = data.watches.map((w: any) => ({
-                id: w.id,
-                title: w.title || '',
-                brand: w.brand || '',
-                model: w.model || '',
-                price: w.price || 0,
-                buyNowPrice: w.buyNowPrice,
-                isAuction: w.isAuction || false,
-                auctionEnd: w.auctionEnd || null,
-                images: Array.isArray(w.images) ? w.images : [],
-                condition: w.condition || '',
-                createdAt: w.createdAt || new Date().toISOString(),
-                boosters: w.boosters || [],
-                city: w.city || null,
-                postalCode: w.postalCode || null,
-                articleNumber: w.articleNumber || null,
-              }))
+              const transformedProducts: ProductItem[] = data.watches.map((w: any) => {
+                // WICHTIG: Verwende articleNumber für Link, falls vorhanden, sonst CUID
+                // Dies stellt sicher, dass Produkte korrekt verlinkt sind
+                const productId = w.articleNumber ? w.articleNumber.toString() : w.id
+                
+                return {
+                  id: w.id, // Behalte CUID für interne Verwendung
+                  title: w.title || '',
+                  brand: w.brand || '',
+                  model: w.model || '',
+                  price: w.price || 0,
+                  buyNowPrice: w.buyNowPrice,
+                  isAuction: w.isAuction || false,
+                  auctionEnd: w.auctionEnd || null,
+                  images: Array.isArray(w.images) ? w.images : [],
+                  condition: w.condition || '',
+                  createdAt: w.createdAt || new Date().toISOString(),
+                  boosters: w.boosters || [],
+                  city: w.city || null,
+                  postalCode: w.postalCode || null,
+                  articleNumber: w.articleNumber || null,
+                  // WICHTIG: Setze href explizit, damit der richtige Link verwendet wird
+                  href: `/products/${productId}`,
+                }
+              })
               setProducts(transformedProducts)
               setLoading(false)
               return

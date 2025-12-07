@@ -13,7 +13,7 @@ export default async function ProductPage({ params }: Props) {
   try {
     // WICHTIG: In Next.js 15+ müssen params awaited werden
     const { id } = await params
-    
+
     if (!id) {
       console.error('[ProductPage] No ID provided in params')
       return (
@@ -32,27 +32,70 @@ export default async function ProductPage({ params }: Props) {
         </div>
       )
     }
-    
+
     // Prüfe ob params.id eine Artikelnummer ist (numerisch)
     const isArticleNumber = /^\d{6,10}$/.test(id)
 
     console.log(`[ProductPage] Looking for product with ID: ${id}, isArticleNumber: ${isArticleNumber}`)
 
-    const watch = await prisma.watch.findUnique({
-      where: isArticleNumber ? { articleNumber: parseInt(id) } : { id },
-      include: {
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            city: true,
-            postalCode: true,
-            verified: true,
+    // WICHTIG: Versuche zuerst nach CUID, dann nach Artikelnummer
+    // Dies stellt sicher, dass Produkte gefunden werden, unabhängig davon, wie sie verlinkt sind
+    let watch = null
+    
+    if (isArticleNumber) {
+      // Wenn es eine Artikelnummer ist, suche nach Artikelnummer
+      watch = await prisma.watch.findUnique({
+        where: { articleNumber: parseInt(id) },
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              city: true,
+              postalCode: true,
+              verified: true,
+            },
           },
         },
-      },
-    })
+      })
+    } else {
+      // Wenn es eine CUID ist, suche nach CUID
+      watch = await prisma.watch.findUnique({
+        where: { id },
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              city: true,
+              postalCode: true,
+              verified: true,
+            },
+          },
+        },
+      })
+      
+      // Falls nicht gefunden, versuche es als Artikelnummer (falls es doch numerisch ist)
+      if (!watch && /^\d+$/.test(id)) {
+        watch = await prisma.watch.findUnique({
+          where: { articleNumber: parseInt(id) },
+          include: {
+            seller: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                city: true,
+                postalCode: true,
+                verified: true,
+              },
+            },
+          },
+        })
+      }
+    }
 
   // Wenn Artikelnummer gefunden, redirect zu Artikelnummer-URL
   if (
@@ -71,6 +114,28 @@ export default async function ProductPage({ params }: Props) {
 
   if (!watch) {
     console.error(`[ProductPage] Product not found with ID: ${id}, isArticleNumber: ${isArticleNumber}`)
+    
+    // WICHTIG: Versuche auch eine Suche nach ähnlichen IDs für Debugging
+    try {
+      const similarWatches = await prisma.watch.findMany({
+        where: {
+          OR: [
+            { id: { contains: id.substring(0, 10) } },
+            { title: { contains: id } },
+          ],
+        },
+        take: 5,
+        select: {
+          id: true,
+          articleNumber: true,
+          title: true,
+        },
+      })
+      console.error(`[ProductPage] Similar watches found:`, similarWatches)
+    } catch (searchError) {
+      console.error(`[ProductPage] Error searching for similar watches:`, searchError)
+    }
+    
     return (
       <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
