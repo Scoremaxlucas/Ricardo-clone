@@ -226,26 +226,46 @@ async function main() {
     console.log('   No other users found without passwords')
   }
 
-  // 7. Restore categories
+  // 7. Restore categories (with error handling for quota)
   console.log('\n📁 Restoring categories...')
-  const categories = await Promise.all([
-    prisma.category.upsert({
-      where: { name: 'Rolex' },
-      update: {},
-      create: { name: 'Rolex', slug: 'rolex' },
-    }),
-    prisma.category.upsert({
-      where: { name: 'Omega' },
-      update: {},
-      create: { name: 'Omega', slug: 'omega' },
-    }),
-    prisma.category.upsert({
-      where: { name: 'Vintage' },
-      update: {},
-      create: { name: 'Vintage', slug: 'vintage' },
-    }),
-  ])
-  console.log(`✅ ${categories.length} categories restored`)
+  let categories: any[] = []
+  try {
+    categories = await Promise.all([
+      prisma.category.upsert({
+        where: { name: 'Rolex' },
+        update: {},
+        create: { name: 'Rolex', slug: 'rolex' },
+      }),
+      prisma.category.upsert({
+        where: { name: 'Omega' },
+        update: {},
+        create: { name: 'Omega', slug: 'omega' },
+      }),
+      prisma.category.upsert({
+        where: { name: 'Vintage' },
+        update: {},
+        create: { name: 'Vintage', slug: 'vintage' },
+      }),
+    ])
+    console.log(`✅ ${categories.length} categories restored`)
+  } catch (categoryError: any) {
+    if (categoryError.message?.includes('quota')) {
+      console.log('⚠️  Categories restore skipped due to quota (will be created automatically when needed)')
+      // Try to fetch existing categories
+      try {
+        categories = await prisma.category.findMany({
+          where: { name: { in: ['Rolex', 'Omega', 'Vintage'] } },
+        })
+        if (categories.length > 0) {
+          console.log(`✅ Found ${categories.length} existing categories`)
+        }
+      } catch (e) {
+        // Ignore
+      }
+    } else {
+      throw categoryError
+    }
+  }
 
   // 8. Check if products exist
   const existingWatches = await prisma.watch.count()
