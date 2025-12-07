@@ -61,14 +61,14 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
       setIsInitialLoad(false)
     }, 100)
 
-    return () => clearTimeout(timer)
-
     const loadPurchases = async () => {
       try {
         const res = await fetch(`/api/purchases/my-purchases?t=${Date.now()}`)
         if (res.ok) {
           const data = await res.json()
-          if (data.purchases && Array.isArray(data.purchases)) {
+          // WICHTIG: Nur updaten wenn Daten vorhanden sind UND nicht leer
+          // Verhindert dass Purchases verschwinden wenn Update fehlschlägt
+          if (data.purchases && Array.isArray(data.purchases) && data.purchases.length > 0) {
             setPurchases(data.purchases)
 
             // Markiere alle Purchases als gelesen
@@ -79,9 +79,11 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
             localStorage.setItem('readPurchases', JSON.stringify(newReadPurchases))
             window.dispatchEvent(new CustomEvent('purchases-viewed'))
           }
+          // Wenn data.purchases leer ist, behalte initiale Daten - keine Änderung
         }
       } catch (error) {
         // Silently fail - initial purchases are already displayed
+        // WICHTIG: Initiale Purchases bleiben erhalten, werden NICHT überschrieben
         console.error('Error loading purchases:', error)
       }
     }
@@ -111,6 +113,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
     }, 2000)
 
     return () => {
+      clearTimeout(timer)
       clearTimeout(timeoutId)
       if (intervalId) {
         clearInterval(intervalId)

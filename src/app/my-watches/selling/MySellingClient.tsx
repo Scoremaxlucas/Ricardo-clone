@@ -66,7 +66,9 @@ export function MySellingClient({ initialItems, initialStats }: MySellingClientP
         const response = await fetch('/api/articles/mine-fast')
         if (response.ok) {
           const data = await response.json()
-          if (data.watches && Array.isArray(data.watches)) {
+          // WICHTIG: Nur updaten wenn Daten vorhanden sind UND nicht leer
+          // Verhindert dass Artikel verschwinden wenn Update fehlschlägt
+          if (data.watches && Array.isArray(data.watches) && data.watches.length > 0) {
             // Update items with detailed data
             setItems(data.watches)
             // Update stats
@@ -78,9 +80,11 @@ export function MySellingClient({ initialItems, initialStats }: MySellingClientP
               inactive,
             })
           }
+          // Wenn data.watches leer ist, behalte initiale Daten - keine Änderung
         }
       } catch (error) {
         // Silently fail - initial items are already displayed
+        // WICHTIG: Initiale Artikel bleiben erhalten, werden NICHT überschrieben
         console.error('Error loading details:', error)
       }
     }
