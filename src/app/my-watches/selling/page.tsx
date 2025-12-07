@@ -1,119 +1,26 @@
-'use client'
-
-import { useEffect, useState } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { redirect } from 'next/navigation'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { MySellingClient } from './MySellingClient'
+import { getMySellingArticles } from '@/lib/my-selling'
 import Link from 'next/link'
 import { Package, Plus } from 'lucide-react'
 
-interface Item {
-  id: string
-  articleNumber: number | null
-  title: string
-  brand: string
-  model: string
-  price: number
-  images: string[]
-  createdAt: string
-  isSold: boolean
-  isAuction: boolean
-  auctionEnd: string | null
-  highestBid: {
-    amount: number
-    createdAt: string
-  } | null
-  bidCount: number
-  finalPrice: number
-  isActive?: boolean
-}
+// Revalidate every 30 seconds for fresh data
+export const revalidate = 30
 
-export default function MySellingPage() {
-  const { data: session, status } = useSession()
-  const router = useRouter()
-  const [items, setItems] = useState<Item[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    // ULTRA-OPTIMIERT: Lade Daten SOFORT ohne auf Session zu warten
-    // Verwende userId aus Session wenn verfügbar, sonst lade trotzdem (API prüft selbst)
-
-    const loadData = async () => {
-      try {
-        setLoading(true)
-
-        // OPTIMIERT: Wenn Session bereits verfügbar, übergebe userId für noch schnellere API
-        const userId = session?.user?.id
-        const url = userId
-          ? `/api/articles/mine-instant?userId=${userId}`
-          : `/api/articles/mine-instant`
-
-        // STRATEGIE: Versuche INSTANT API mit 300ms Timeout für INSTANT loading
-        const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 300) // 300ms für INSTANT
-
-        try {
-          const res = await fetch(url, {
-            signal: controller.signal,
-            cache: 'no-store',
-            headers: {
-              'Accept': 'application/json',
-            },
-          })
-
-          clearTimeout(timeoutId)
-
-          if (res.ok) {
-            const data = await res.json()
-            if (data.watches && Array.isArray(data.watches)) {
-              setItems(data.watches)
-              setLoading(false)
-              return
-            }
-          }
-        } catch (fetchError: any) {
-          clearTimeout(timeoutId)
-          if (fetchError.name === 'AbortError') {
-            // Timeout - zeige leere Liste, lade im Hintergrund nach
-            setLoading(false)
-            fetch(`/api/articles/mine-fast`)
-              .then(res => res.json())
-              .then(data => {
-                if (data.watches && Array.isArray(data.watches)) {
-                  setItems(data.watches)
-                }
-              })
-              .catch(() => {})
-            return
-          }
-          throw fetchError
-        }
-      } catch (error: any) {
-        console.error('Error loading articles:', error)
-        setItems([])
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    // OPTIMIERT: Starte sofort, auch wenn Session noch lädt
-    loadData()
-
-    // OPTIMIERT: Prüfe Session separat und redirect nur wenn nötig
-    if (status !== 'loading' && !session?.user?.id) {
-      router.push('/login?callbackUrl=/my-watches/selling')
-    }
-  }, [session, status, router])
-
-  // OPTIMIERT: Zeige Artikel sofort an, auch wenn noch geladen wird
-  // Nur zeigen Loading-State wenn wirklich keine Artikel vorhanden sind
-  const showLoading = loading && items.length === 0 && status !== 'loading'
+export default async function MySellingPage() {
+  const session = await getServerSession(authOptions)
 
   if (!session?.user?.id) {
-    return null
+    redirect('/login?callbackUrl=/my-watches/selling')
   }
+
+  // OPTIMIERT: Fetch articles server-side für instant rendering (wie Ricardo)
+  // Artikel sind bereits im initial HTML, kein Client-Side API-Call nötig
+  const items = await getMySellingArticles(session.user.id)
 
   const stats = {
     total: items.length,
@@ -155,17 +62,8 @@ export default function MySellingPage() {
             </Link>
           </div>
 
-          {/* OPTIMIERT: Zeige Loading nur wenn wirklich keine Artikel vorhanden */}
-          {showLoading ? (
-            <div className="flex items-center justify-center py-12">
-              <div className="text-center">
-                <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-                <p className="mt-4 text-gray-600">Artikel werden geladen...</p>
-              </div>
-            </div>
-          ) : (
-            <MySellingClient initialItems={items} initialStats={stats} />
-          )}
+          {/* Server-Side Rendered Articles - Instant Display */}
+          <MySellingClient initialItems={items} initialStats={stats} />
         </div>
       </div>
       <Footer />
