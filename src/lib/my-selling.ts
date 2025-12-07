@@ -31,9 +31,22 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
     const now = new Date()
 
     // ABSOLUT MINIMALE Query: Nur die wichtigsten Felder (wie mine-instant)
+    // WICHTIG: Zeige ALLE Artikel des Users, auch neue ohne moderationStatus
     // KEINE bids oder purchases - das würde N+1 Problem verursachen und langsam sein
     const watches = await prisma.watch.findMany({
-    where: { sellerId: userId },
+    where: { 
+      sellerId: userId,
+      // WICHTIG: Zeige ALLE Artikel außer explizit 'rejected'
+      // Neue Artikel ohne moderationStatus (null) werden angezeigt
+      AND: [
+        {
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { not: 'rejected' } },
+          ],
+        },
+      ],
+    },
     select: {
       id: true,
       title: true,
@@ -45,6 +58,7 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
       isAuction: true,
       auctionEnd: true,
       articleNumber: true,
+      moderationStatus: true, // WICHTIG: Für Debugging
     },
     orderBy: { createdAt: 'desc' },
     // OPTIMIERT: Nutze Index watches_sellerId_createdAt_idx

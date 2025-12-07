@@ -30,18 +30,24 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
     where: {
       AND: [
         {
+          // WICHTIG: Zeige ALLE Artikel außer explizit 'rejected'
+          // Neue Artikel ohne moderationStatus (null) werden angezeigt
           OR: [
             { moderationStatus: null },
             { moderationStatus: { not: 'rejected' } },
           ],
         },
         {
+          // WICHTIG: Zeige Artikel die NICHT verkauft sind
+          // Neue Artikel ohne Purchase werden angezeigt
           OR: [
             { purchases: { none: {} } },
             { purchases: { every: { status: 'cancelled' } } },
           ],
         },
         {
+          // WICHTIG: Zeige aktive Auktionen oder verkaufte Auktionen
+          // Neue Artikel ohne auctionEnd werden angezeigt
           OR: [
             { auctionEnd: null },
             { auctionEnd: { gt: now } },
