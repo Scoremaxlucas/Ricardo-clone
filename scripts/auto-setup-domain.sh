@@ -27,7 +27,7 @@ else
     echo "   ✅ A Record gefunden:"
     [ ! -z "$A_RECORD_GOOGLE" ] && echo "      Google DNS (8.8.8.8): $A_RECORD_GOOGLE"
     [ ! -z "$A_RECORD_CLOUDFLARE" ] && echo "      Cloudflare DNS (1.1.1.1): $A_RECORD_CLOUDFLARE"
-    
+
     # Prüfe ob es die Vercel IP ist
     if [[ "$A_RECORD_GOOGLE" == "76.76.21.21" ]] || [[ "$A_RECORD_CLOUDFLARE" == "76.76.21.21" ]]; then
         echo "   ✅ Korrekte Vercel IP gefunden!"
@@ -52,7 +52,7 @@ else
     echo "   ✅ CNAME Record gefunden:"
     [ ! -z "$CNAME_GOOGLE" ] && echo "      Google DNS (8.8.8.8): $CNAME_GOOGLE"
     [ ! -z "$CNAME_CLOUDFLARE" ] && echo "      Cloudflare DNS (1.1.1.1): $CNAME_CLOUDFLARE"
-    
+
     if [[ "$CNAME_GOOGLE" == *"vercel-dns.com"* ]] || [[ "$CNAME_CLOUDFLARE" == *"vercel-dns.com"* ]]; then
         echo "   ✅ Korrekter Vercel CNAME gefunden!"
     else
