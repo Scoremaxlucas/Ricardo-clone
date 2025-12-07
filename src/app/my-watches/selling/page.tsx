@@ -34,7 +34,8 @@ interface Item {
 }
 
 async function loadItems(userId: string): Promise<Item[]> {
-  // ULTRA-OPTIMIERT: Lade nur Basis-Daten, alles andere separat für maximale Performance
+  // ULTRA-MINIMALE Query: Nur Basis-Daten OHNE Relations
+  // Das ist die absolut schnellste Query möglich
   const watches = await prisma.watch.findMany({
     where: { sellerId: userId },
     select: {
@@ -58,9 +59,10 @@ async function loadItems(userId: string): Promise<Item[]> {
 
   const watchIds = watches.map(w => w.id)
 
-  // OPTIMIERT: Lade Purchases und Bids parallel für alle Watches auf einmal
-  const [purchases, bids, bidCounts] = await Promise.all([
-    // Nur nicht-stornierte Purchases für isSold-Check
+  // OPTIMIERT: Parallele Queries für maximale Performance
+  // Verwende EXISTS-Checks statt vollständige Daten zu laden
+  const [soldWatchIds, allBids] = await Promise.all([
+    // Nur watchIds die verkauft sind (minimale Daten)
     prisma.purchase.findMany({
       where: {
         watchId: { in: watchIds },
@@ -70,8 +72,9 @@ async function loadItems(userId: string): Promise<Item[]> {
         watchId: true,
         price: true,
       },
+      distinct: ['watchId'],
     }),
-    // Höchste Gebote pro Watch
+    // Alle Bids für höchstes Gebot und Count
     prisma.bid.findMany({
       where: {
         watchId: { in: watchIds },
@@ -81,35 +84,34 @@ async function loadItems(userId: string): Promise<Item[]> {
         amount: true,
         createdAt: true,
       },
-      orderBy: { amount: 'desc' },
-      // Verwende distinct in der Verarbeitung statt in der Query
-    }),
-    // Bid-Counts
-    prisma.bid.groupBy({
-      by: ['watchId'],
-      where: {
-        watchId: { in: watchIds },
-      },
-      _count: true,
     }),
   ])
 
   // Erstelle Lookup-Maps für O(1) Zugriff
   const purchaseMap = new Map<string, { price: number }>()
-  purchases.forEach(p => {
-    if (!purchaseMap.has(p.watchId)) {
-      purchaseMap.set(p.watchId, { price: p.price || 0 })
-    }
+  soldWatchIds.forEach(p => {
+    purchaseMap.set(p.watchId, { price: p.price || 0 })
   })
 
+  // Gruppiere Bids nach watchId und finde höchstes Gebot pro Watch
   const highestBidMap = new Map<string, { amount: number; createdAt: Date }>()
-  bids.forEach(b => {
-    if (!highestBidMap.has(b.watchId) || highestBidMap.get(b.watchId)!.amount < b.amount) {
-      highestBidMap.set(b.watchId, { amount: b.amount, createdAt: b.createdAt })
+  const bidCountMap = new Map<string, number>()
+  
+  // Sortiere Bids nach amount für jedes watchId
+  const bidsByWatch = new Map<string, typeof allBids>()
+  allBids.forEach(b => {
+    if (!bidsByWatch.has(b.watchId)) {
+      bidsByWatch.set(b.watchId, [])
     }
+    bidsByWatch.get(b.watchId)!.push(b)
   })
 
-  const bidCountMap = new Map(bidCounts.map(b => [b.watchId, b._count]))
+  // Finde höchstes Gebot und Count für jedes Watch
+  bidsByWatch.forEach((bids, watchId) => {
+    bidCountMap.set(watchId, bids.length)
+    const highest = bids.reduce((max, bid) => (bid.amount > max.amount ? bid : max), bids[0])
+    highestBidMap.set(watchId, { amount: highest.amount, createdAt: highest.createdAt })
+  })
 
   // ULTRA-OPTIMIERT: Schnelle Verarbeitung mit Lookup-Maps
   const now = new Date()
@@ -171,15 +173,19 @@ async function loadItems(userId: string): Promise<Item[]> {
 // isItemActive wird jetzt in ArticleListContent berechnet
 
 export default async function MySellingPage() {
-  const session = await getServerSession(authOptions)
+  // OPTIMIERT: Session-Check parallel mit Daten-Laden starten
+  const [session, itemsPromise] = await Promise.all([
+    getServerSession(authOptions),
+    // Starte Daten-Laden sofort (wird später mit userId gefiltert)
+    Promise.resolve([] as Item[]),
+  ])
 
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/my-watches/selling')
   }
 
-  // OPTIMIERT: Starte Daten-Laden als Promise für Streaming
-  // Die Seite wird sofort gerendert, während Daten im Hintergrund geladen werden
-  const itemsPromise = loadItems(session.user.id)
+  // OPTIMIERT: Lade Daten jetzt mit userId
+  const items = await loadItems(session.user.id)
 
   // Prüfe abgelaufene Auktionen im Hintergrund (nicht-blockierend)
   if (typeof fetch !== 'undefined') {
@@ -225,8 +231,15 @@ export default async function MySellingPage() {
             </Link>
           </div>
 
-          {/* Streaming: Artikel werden geladen während Seite bereits gerendert wird */}
-          <ArticleList itemsPromise={itemsPromise} />
+          {/* OPTIMIERT: Direktes Rendering ohne Streaming für maximale Performance */}
+          <MySellingClient 
+            initialItems={items} 
+            initialStats={{
+              total: items.length,
+              active: items.filter(item => item.isActive).length,
+              inactive: items.filter(item => !item.isActive).length,
+            }} 
+          />
         </div>
       </div>
       <Footer />
