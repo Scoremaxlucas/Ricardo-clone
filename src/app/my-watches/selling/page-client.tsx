@@ -44,12 +44,11 @@ export default function MySellingPage() {
       return
     }
 
-    // OPTIMIERT: Lade Daten SOFORT im Client mit ultra-schneller API
+    // OPTIMIERT: Lade Daten SOFORT im Client
     const loadData = async () => {
       try {
         setLoading(true)
-        // Verwende die schnelle API-Route die nur Basis-Daten lädt
-        const res = await fetch(`/api/articles/mine-fast`)
+        const res = await fetch(`/api/articles/mine?activeOnly=false`)
         if (res.ok) {
           const data = await res.json()
           if (data.watches && Array.isArray(data.watches)) {

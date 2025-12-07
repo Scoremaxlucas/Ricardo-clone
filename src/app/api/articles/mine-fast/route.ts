@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// OPTIMIERT: Ultra-schnelle API für initiales Laden
-// Lädt nur Basis-Daten ohne Purchases/Bids
+// ULTRA-SCHNELLE API: Lädt nur Basis-Daten ohne Relations
+// Purchases und Bids werden später nachgeladen wenn nötig
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -12,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ watches: [] }, { status: 200 })
     }
 
-    // ABSOLUT MINIMALE Query: Nur Basis-Daten
+    // ABSOLUT MINIMALE Query: Nur Basis-Daten, KEINE Relations
     const watches = await prisma.watch.findMany({
       where: { sellerId: session.user.id },
       select: {
@@ -28,10 +28,10 @@ export async function GET(request: NextRequest) {
         articleNumber: true,
       },
       orderBy: { createdAt: 'desc' },
-      take: 50, // Limit für maximale Geschwindigkeit
     })
 
-    // Schnelle Verarbeitung
+    // OPTIMIERT: Schnelle Verarbeitung OHNE zusätzliche Queries
+    const now = Date.now()
     const watchesWithImages = watches.map(w => {
       let images: string[] = []
       try {
@@ -40,8 +40,7 @@ export async function GET(request: NextRequest) {
         images = []
       }
 
-      const now = new Date()
-      const auctionEndDate = w.auctionEnd ? new Date(w.auctionEnd) : null
+      const auctionEndDate = w.auctionEnd ? w.auctionEnd.getTime() : null
       const isExpired = auctionEndDate ? auctionEndDate <= now : false
       const isActive = !auctionEndDate || !isExpired
 
@@ -54,20 +53,27 @@ export async function GET(request: NextRequest) {
         price: w.price,
         images,
         createdAt: w.createdAt.toISOString(),
-        isSold: false,
+        isSold: false, // Wird später nachgeladen wenn nötig
         isAuction: w.isAuction || !!w.auctionEnd,
         auctionEnd: w.auctionEnd ? w.auctionEnd.toISOString() : null,
-        highestBid: null,
-        bidCount: 0,
+        highestBid: null, // Wird später nachgeladen wenn nötig
+        bidCount: 0, // Wird später nachgeladen wenn nötig
         finalPrice: w.price,
         isActive,
       }
     })
 
-    return NextResponse.json({ watches: watchesWithImages }, { status: 200 })
+    return NextResponse.json(
+      { watches: watchesWithImages },
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store, no-cache, must-revalidate',
+        },
+      }
+    )
   } catch (error) {
     console.error('Error fetching articles:', error)
     return NextResponse.json({ watches: [] }, { status: 200 })
   }
 }
-
