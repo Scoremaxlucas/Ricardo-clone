@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { MySellingClient } from './MySellingClient'
+import { ArticleList } from './ArticleList'
 import Link from 'next/link'
 import { Package, Plus } from 'lucide-react'
 
@@ -34,7 +34,7 @@ interface Item {
 }
 
 async function loadItems(userId: string): Promise<Item[]> {
-  // OPTIMIERT: Minimale Query - nur absolut notwendige Felder
+  // ULTRA-OPTIMIERT: Eine einzige optimierte Query mit minimalen Daten
   const watches = await prisma.watch.findMany({
     where: { sellerId: userId },
     select: {
@@ -48,18 +48,18 @@ async function loadItems(userId: string): Promise<Item[]> {
       isAuction: true,
       auctionEnd: true,
       articleNumber: true,
-      // boosters entfernt - werden nicht benötigt für die Liste
-      // Seller-Daten entfernt - werden nicht benötigt
+      // Nur erste nicht-stornierte Purchase für isSold-Check
       purchases: {
-        // OPTIMIERT: Lade nur Status und Price - Buyer-Daten werden nicht benötigt für die Liste
-        // Limit auf 1 für maximale Performance (nur prüfen ob verkauft)
+        where: {
+          status: { not: 'cancelled' },
+        },
         select: {
           id: true,
-          status: true,
           price: true,
         },
-        take: 1, // OPTIMIERT: Nur erste Purchase laden für isSold-Check
+        take: 1,
       },
+      // Nur höchstes Gebot
       bids: {
         select: {
           amount: true,
@@ -68,6 +68,7 @@ async function loadItems(userId: string): Promise<Item[]> {
         orderBy: { amount: 'desc' },
         take: 1,
       },
+      // Counts für Statistiken
       _count: {
         select: {
           purchases: true,
@@ -78,10 +79,10 @@ async function loadItems(userId: string): Promise<Item[]> {
     orderBy: { createdAt: 'desc' },
   })
 
-  // OPTIMIERT: Vereinfachte Verarbeitung für maximale Performance
+  // ULTRA-OPTIMIERT: Schnelle Verarbeitung
   const now = new Date()
   const watchesWithImages = watches.map(w => {
-    // Parse images nur wenn nötig
+    // Parse images schnell
     let images: string[] = []
     try {
       images = w.images ? JSON.parse(w.images) : []
@@ -90,14 +91,14 @@ async function loadItems(userId: string): Promise<Item[]> {
     }
 
     // Schnelle Prüfung ob verkauft
-    const activePurchases = w.purchases.filter(p => p.status !== 'cancelled')
-    const isSold = activePurchases.length > 0
+    const isSold = w.purchases.length > 0
+    const bidCount = w._count?.bids || 0
+    const highestBid = w.bids?.[0] || null
 
     // Berechne finalPrice schnell
     let finalPrice = w.price
-    const highestBid = w.bids?.[0]
-    if (isSold && activePurchases[0]) {
-      finalPrice = highestBid?.amount || activePurchases[0].price || w.price
+    if (isSold && w.purchases[0]) {
+      finalPrice = highestBid?.amount || w.purchases[0].price || w.price
     } else if (highestBid) {
       finalPrice = highestBid.amount
     }
@@ -126,7 +127,7 @@ async function loadItems(userId: string): Promise<Item[]> {
             createdAt: highestBid.createdAt.toISOString(),
           }
         : null,
-      bidCount: w._count?.bids || 0,
+      bidCount,
       finalPrice,
       isActive,
     }
@@ -135,20 +136,7 @@ async function loadItems(userId: string): Promise<Item[]> {
   return watchesWithImages
 }
 
-function isItemActive(item: Item): boolean {
-  if (item.isActive !== undefined) {
-    return item.isActive
-  }
-  if (item.isSold) return false
-  if (item.isAuction && item.auctionEnd) {
-    const auctionEndDate = new Date(item.auctionEnd)
-    const now = new Date()
-    if (auctionEndDate <= now) {
-      return false
-    }
-  }
-  return true
-}
+// isItemActive wird jetzt in ArticleListContent berechnet
 
 export default async function MySellingPage() {
   const session = await getServerSession(authOptions)
@@ -157,21 +145,11 @@ export default async function MySellingPage() {
     redirect('/login?callbackUrl=/my-watches/selling')
   }
 
-  // Lade Artikel direkt beim Server-Rendering - KEIN DELAY!
-  const items = await loadItems(session.user.id)
-
-  // Berechne Statistiken
-  const activeCount = items.filter(item => isItemActive(item)).length
-  const inactiveCount = items.length - activeCount
-
-  const stats = {
-    total: items.length,
-    active: activeCount,
-    inactive: inactiveCount,
-  }
+  // OPTIMIERT: Starte Daten-Laden als Promise für Streaming
+  // Die Seite wird sofort gerendert, während Daten im Hintergrund geladen werden
+  const itemsPromise = loadItems(session.user.id)
 
   // Prüfe abgelaufene Auktionen im Hintergrund (nicht-blockierend)
-  // Verwende fetch mit no-wait um nicht zu blockieren
   if (typeof fetch !== 'undefined') {
     fetch(`${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/api/auctions/check-expired`, {
       method: 'POST',
@@ -215,8 +193,8 @@ export default async function MySellingPage() {
             </Link>
           </div>
 
-          {/* Client Component für interaktive Features */}
-          <MySellingClient initialItems={items} initialStats={stats} />
+          {/* Streaming: Artikel werden geladen während Seite bereits gerendert wird */}
+          <ArticleList itemsPromise={itemsPromise} />
         </div>
       </div>
       <Footer />
