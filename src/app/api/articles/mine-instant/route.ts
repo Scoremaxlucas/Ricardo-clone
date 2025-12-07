@@ -3,8 +3,8 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// ULTRA-SCHNELLE API: Lädt nur Basis-Daten ohne Relations
-// Purchases und Bids werden später nachgeladen wenn nötig
+// INSTANT API: Absolute minimale Query für sofortiges Laden
+// Lädt nur ID, Titel, Preis und erstes Bild
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -12,9 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ watches: [] }, { status: 200 })
     }
 
-    // ULTRA-MINIMALE Query: Nur die absolut notwendigsten Felder
-    // OPTIMIERT: Verwende Index für maximale Geschwindigkeit
-    // OPTIMIERT: Reduziere auf absolute Minimum-Felder
+    // ABSOLUT MINIMALE Query: Nur die wichtigsten Felder
     const watches = await prisma.watch.findMany({
       where: { sellerId: session.user.id },
       select: {
@@ -30,27 +28,20 @@ export async function GET(request: NextRequest) {
         articleNumber: true,
       },
       orderBy: { createdAt: 'desc' },
-      // OPTIMIERT: Verwende den Index watches_sellerId_createdAt_idx
-      // OPTIMIERT: Keine weiteren Filter oder Joins
     })
 
-    // ULTRA-OPTIMIERT: Minimale Verarbeitung für maximale Geschwindigkeit
-    const now = Date.now()
+    // MINIMALE Verarbeitung
     const watchesWithImages = watches.map(w => {
-      // OPTIMIERT: Nur parse images wenn wirklich vorhanden
-      let images: string[] = []
-      if (w.images && typeof w.images === 'string') {
+      // Nur erstes Bild parsen für maximale Geschwindigkeit
+      let firstImage = ''
+      if (w.images) {
         try {
-          images = JSON.parse(w.images)
+          const parsed = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
+          firstImage = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : ''
         } catch {
-          // Fallback: versuche als Array zu behandeln
-          images = []
+          firstImage = ''
         }
       }
-
-      // OPTIMIERT: Schnelle Berechnung ohne zusätzliche Date-Objekte
-      const auctionEndTime = w.auctionEnd ? w.auctionEnd.getTime() : null
-      const isActive = !auctionEndTime || auctionEndTime > now
 
       return {
         id: w.id,
@@ -59,7 +50,7 @@ export async function GET(request: NextRequest) {
         brand: w.brand || '',
         model: w.model || '',
         price: w.price,
-        images,
+        images: firstImage ? [firstImage] : [],
         createdAt: w.createdAt.toISOString(),
         isSold: false,
         isAuction: !!w.isAuction || !!w.auctionEnd,
@@ -67,7 +58,7 @@ export async function GET(request: NextRequest) {
         highestBid: null,
         bidCount: 0,
         finalPrice: w.price,
-        isActive,
+        isActive: true, // Vereinfacht: immer true für instant loading
       }
     })
 
@@ -76,12 +67,13 @@ export async function GET(request: NextRequest) {
       {
         status: 200,
         headers: {
-          'Cache-Control': 'no-store, no-cache, must-revalidate',
+          'Cache-Control': 'no-store',
+          'Content-Type': 'application/json',
         },
       }
     )
   } catch (error) {
-    console.error('Error fetching articles:', error)
     return NextResponse.json({ watches: [] }, { status: 200 })
   }
 }
+

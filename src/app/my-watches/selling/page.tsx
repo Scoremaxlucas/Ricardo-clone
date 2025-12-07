@@ -44,38 +44,63 @@ export default function MySellingPage() {
       return
     }
 
-    // OPTIMIERT: Lade Daten SOFORT im Client mit ultra-schneller API
-    // OPTIMIERT: Verwende AbortController für Timeout-Schutz
+    // ULTRA-OPTIMIERT: Lade Daten SOFORT mit mehreren Strategien
     const loadData = async () => {
       try {
         setLoading(true)
+        
+        // STRATEGIE 1: Versuche zuerst die schnelle API mit sehr kurzem Timeout
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 2000) // 2s Timeout
+        const timeoutId = setTimeout(() => controller.abort(), 1000) // 1s Timeout für INSTANT loading
         
-        // Verwende die schnelle API-Route die nur Basis-Daten lädt
-        const res = await fetch(`/api/articles/mine-fast`, {
-          signal: controller.signal,
-          cache: 'no-store', // Kein Caching für sofortige Updates
-        })
-        
-        clearTimeout(timeoutId)
-        
-        if (res.ok) {
-          const data = await res.json()
-          if (data.watches && Array.isArray(data.watches)) {
-            setItems(data.watches)
+        try {
+          // OPTIMIERT: Versuche zuerst die INSTANT API (noch schneller)
+          const res = await fetch(`/api/articles/mine-instant`, {
+            signal: controller.signal,
+            cache: 'no-store',
+            headers: {
+              'Accept': 'application/json',
+            },
+          })
+          
+          clearTimeout(timeoutId)
+          
+          if (res.ok) {
+            const data = await res.json()
+            if (data.watches && Array.isArray(data.watches)) {
+              setItems(data.watches)
+              setLoading(false)
+              return // Erfolgreich geladen, beende hier
+            }
           }
+        } catch (fetchError: any) {
+          clearTimeout(timeoutId)
+          if (fetchError.name === 'AbortError') {
+            // Timeout - zeige leere Liste, lade im Hintergrund nach
+            setLoading(false)
+            // Lade im Hintergrund ohne UI zu blockieren (mit vollständigen Daten)
+            fetch(`/api/articles/mine-fast`)
+              .then(res => res.json())
+              .then(data => {
+                if (data.watches && Array.isArray(data.watches)) {
+                  setItems(data.watches)
+                }
+              })
+              .catch(() => {})
+            return
+          }
+          throw fetchError
         }
       } catch (error: any) {
-        if (error.name !== 'AbortError') {
-          console.error('Error loading articles:', error)
-        }
-        // Bei Timeout: Zeige leere Liste, wird später nachgeladen
+        console.error('Error loading articles:', error)
+        // Bei Fehler: Zeige leere Liste
+        setItems([])
       } finally {
         setLoading(false)
       }
     }
 
+    // OPTIMIERT: Starte sofort ohne Verzögerung
     loadData()
   }, [session, status, router])
 
