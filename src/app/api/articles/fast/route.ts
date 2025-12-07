@@ -15,7 +15,7 @@ export async function GET(request: NextRequest) {
     // OPTIMIERT: Verwende Prisma Query direkt (zuverlässiger als Raw SQL)
     // Raw SQL kann in verschiedenen Umgebungen unterschiedlich funktionieren
     const nowDate = new Date()
-    
+
     const watches = await prisma.watch.findMany({
       where: {
         AND: [
