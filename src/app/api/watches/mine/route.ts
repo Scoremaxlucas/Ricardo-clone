@@ -90,9 +90,21 @@ export async function GET(request: NextRequest) {
       }
     }
 
+    // Optimiert: Verwende select statt include für bessere Performance
     const watches = await prisma.watch.findMany({
       where: whereClause,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        brand: true,
+        model: true,
+        price: true,
+        images: true,
+        createdAt: true,
+        isAuction: true,
+        auctionEnd: true,
+        articleNumber: true,
+        boosters: true,
         seller: {
           select: {
             id: true,
@@ -103,7 +115,10 @@ export async function GET(request: NextRequest) {
         },
         purchases: {
           // WICHTIG: Lade ALLE Purchases, um korrekt zu prüfen ob es nicht-stornierte gibt
-          include: {
+          select: {
+            id: true,
+            status: true,
+            price: true,
             buyer: {
               select: {
                 id: true,
@@ -122,6 +137,10 @@ export async function GET(request: NextRequest) {
           },
         },
         bids: {
+          select: {
+            amount: true,
+            createdAt: true,
+          },
           orderBy: { amount: 'desc' },
           take: 1, // Höchstes Gebot für finalPrice
         },
@@ -214,7 +233,12 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ watches: watchesWithImages })
+    const response = NextResponse.json({ watches: watchesWithImages })
+    
+    // Cache für kurze Zeit, aber nicht zu aggressiv, damit neue Artikel sofort sichtbar sind
+    response.headers.set('Cache-Control', 'private, s-maxage=30, stale-while-revalidate=60')
+    
+    return response
   } catch (error: any) {
     return NextResponse.json(
       { message: 'Fehler beim Laden Ihrer Artikel: ' + error.message },

@@ -361,8 +361,18 @@ export function Header() {
             >
               <Link
                 href="/sell"
+                prefetch={true}
                 className="flex w-full items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
                 title={t.header.sell}
+                onMouseEnter={() => {
+                  // Prefetch die Verkaufsseite und API-Daten beim Hover
+                  if (session?.user) {
+                    // Prefetch die API-Route im Hintergrund
+                    fetch(`/api/articles/mine?t=${Date.now()}`).catch(() => {
+                      // Ignoriere Fehler beim Prefetch
+                    })
+                  }
+                }}
               >
                 <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
                 <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
@@ -524,6 +534,7 @@ export function Header() {
                             </Link>
                             <Link
                               href="/my-watches"
+                              prefetch={true}
                               onClick={() => setIsProfileMenuOpen(false)}
                               className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                             >

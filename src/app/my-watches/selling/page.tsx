@@ -91,18 +91,18 @@ export default function MySellingPage() {
     try {
       setLoading(true)
 
-      // Prüfe und verarbeite abgelaufene Auktionen automatisch
-      try {
-        await fetch('/api/auctions/check-expired', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        })
-      } catch (error) {
+      // Prüfe und verarbeite abgelaufene Auktionen automatisch (NICHT-BLOCKIEREND im Hintergrund)
+      // Dies sollte nicht das Laden der Artikel verzögern
+      fetch('/api/auctions/check-expired', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      }).catch(error => {
         console.error('Error checking expired auctions:', error)
-      }
+        // Fehler ignorieren, da dies nicht kritisch ist
+      })
 
-      // Lade ALLE Artikel (nicht nur aktive)
-      const res = await fetch(`/api/watches/mine?t=${Date.now()}`)
+      // Lade ALLE Artikel (nicht nur aktive) - PRIORITÄT
+      const res = await fetch(`/api/articles/mine?t=${Date.now()}`)
       const data = await res.json()
       const itemsList = Array.isArray(data.watches) ? data.watches : []
       setItems(itemsList)
