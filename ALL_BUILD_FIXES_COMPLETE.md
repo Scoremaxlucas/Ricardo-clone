@@ -35,3 +35,5 @@ Das nächste Deployment sollte jetzt erfolgreich sein!
 **Prüfen Sie den Status hier:** https://vercel.com/lucas-rodrigues-projects-1afdcdc5/helvenda/deployments
 
 
+
+

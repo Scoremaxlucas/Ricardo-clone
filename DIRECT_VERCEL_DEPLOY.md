@@ -48,3 +48,5 @@ Da die Datei lokal bereits korrekt ist, können wir den Build Command so anpasse
 Das ist der einfachste Weg - der Build Command korrigiert die Datei automatisch während des Builds!
 
 
+
+

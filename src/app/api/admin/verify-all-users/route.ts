@@ -77,7 +77,7 @@ async function verifyAllUsers() {
 
     // Aktualisiere alle Benutzer - verwende IDs statt OR mit null
     const userIds = uniqueUsers.map(u => u.id)
-    
+
     const result = await prisma.user.updateMany({
       where: {
         id: {

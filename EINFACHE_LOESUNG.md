@@ -50,3 +50,5 @@ const now = new Date()  // ❌ Doppelte Definition
 Die Datei `CORRECTED_WATCHES_ROUTE.ts` enthält die vollständige, korrigierte Version ohne doppelte `now` Definition.
 
 
+
+

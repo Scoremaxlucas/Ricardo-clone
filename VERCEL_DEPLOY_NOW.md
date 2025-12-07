@@ -67,3 +67,5 @@ Prüfen Sie die Build-Logs im Vercel Dashboard:
 Viel Erfolg! 🚀
 
 
+
+

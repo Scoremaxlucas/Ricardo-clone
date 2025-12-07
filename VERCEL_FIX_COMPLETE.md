@@ -31,3 +31,5 @@ Falls Sie nicht zu GitHub pushen können, können Sie die `vercel.json` Datei ma
 Die Datei `vercel.json` ist jetzt lokal erstellt und bereit!
 
 
+
+

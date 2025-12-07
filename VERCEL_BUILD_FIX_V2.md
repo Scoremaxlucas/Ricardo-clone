@@ -52,3 +52,5 @@ npm install nodemailer@7.0.11 --legacy-peer-deps --save && npm install --legacy-
 Der Build-Command installiert `nodemailer@7.0.11` **direkt**, bevor andere Dependencies installiert werden.
 
 
+
+

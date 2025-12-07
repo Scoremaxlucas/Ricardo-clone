@@ -258,3 +258,5 @@ Sobald Sie diese Schritte abgeschlossen haben, ist Ihre Anwendung bereit für Po
 Bei Fragen oder Problemen, siehe `VERCEL_DEPLOYMENT.md` oder die Vercel-Dokumentation.
 
 
+
+

@@ -2,9 +2,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * Test-Route um zu prüfen ob Stripe korrekt konfiguriert ist
- * 
+ *
  * GET /api/test-stripe
- * 
+ *
  * Prüft:
  * - Ob STRIPE_SECRET_KEY gesetzt ist
  * - Ob NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY gesetzt ist
@@ -128,4 +128,5 @@ export async function GET(_request: NextRequest) {
     )
   }
 }
+
 

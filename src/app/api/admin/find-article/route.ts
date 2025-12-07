@@ -11,16 +11,16 @@ import { isArticleVisible } from '@/lib/data-protection'
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
-    
+
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { isAdmin: true },
     })
-    
+
     if (!user?.isAdmin) {
       return NextResponse.json({ message: 'Admin access required' }, { status: 403 })
     }
@@ -98,7 +98,7 @@ export async function GET(request: NextRequest) {
     const searchFilterCheck = articles.map((article) => {
       const hasActivePurchases = article.purchases.some(p => p.status !== 'cancelled')
       const isAuctionExpired = article.isAuction && article.auctionEnd && new Date(article.auctionEnd) <= now
-      const wouldAppearInSearch = 
+      const wouldAppearInSearch =
         article.moderationStatus !== 'rejected' &&
         !hasActivePurchases &&
         (!isAuctionExpired || hasActivePurchases)
@@ -137,4 +137,5 @@ export async function GET(request: NextRequest) {
     })
   }
 }
+
 

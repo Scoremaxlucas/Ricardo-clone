@@ -1,6 +1,6 @@
 /**
  * Article Detail API Route
- * 
+ *
  * This is an alias for /api/watches/[id] to support the new terminology.
  */
 
@@ -27,4 +27,5 @@ export async function DELETE(
 ) {
   return watchDELETE(request, { params })
 }
+
 

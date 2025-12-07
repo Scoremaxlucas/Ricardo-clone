@@ -177,7 +177,7 @@ export function CategoryBar() {
     )) {
       return // Nicht schließen wenn zu Dropdown/Brücke bewegt
     }
-    
+
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
@@ -198,7 +198,7 @@ export function CategoryBar() {
     if (relatedTarget && relatedTarget.closest('[data-dropdown-menu]')) {
       return // Nicht schließen wenn zu Dropdown bewegt
     }
-    
+
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)
@@ -222,7 +222,7 @@ export function CategoryBar() {
     )) {
       return // Nicht schließen wenn zu Button/Brücke bewegt
     }
-    
+
     categoryMenuTimeoutRef.current = setTimeout(() => {
       setHoveredCategory(null)
       setDropdownPosition(null)

@@ -775,7 +775,7 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
             const config = getCategoryConfig(cat.slug)
             const IconComponent = config.icon
             const isHovered = hovered === index
-            
+
             return (
               <div
                 key={cat.slug}

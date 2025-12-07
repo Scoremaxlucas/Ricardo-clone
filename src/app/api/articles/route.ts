@@ -1,6 +1,6 @@
 /**
  * Articles API Route
- * 
+ *
  * This is an alias for /api/watches to support the new terminology.
  * All requests are forwarded to the watches route for backward compatibility.
  */
@@ -15,4 +15,5 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   return watchesPOST(request)
 }
+
 
