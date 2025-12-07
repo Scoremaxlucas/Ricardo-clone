@@ -26,7 +26,15 @@ export const authOptions = {
           console.log('[AUTH] Attempting login for:', normalizedEmail)
           console.log('[AUTH] Password length:', credentials.password.length)
 
-          // Stelle sicher, dass Prisma verbunden ist
+          // WICHTIG: Stelle sicher, dass Prisma verbunden ist
+          // Prüfe Datenbankverbindung zuerst
+          try {
+            await prisma.$connect()
+          } catch (connectError: any) {
+            console.error('[AUTH] Database connection error:', connectError)
+            throw new Error('Database connection failed')
+          }
+
           let user
           try {
             user = await prisma.user.findUnique({
@@ -52,12 +60,19 @@ export const authOptions = {
             console.error('[AUTH] Database error details:', {
               message: dbError.message,
               code: dbError.code,
+              name: dbError.name,
             })
-            return null
+            throw dbError
           }
 
           if (!user) {
             console.log('[AUTH] User not found:', normalizedEmail)
+            // WICHTIG: Prüfe ob User mit anderer Groß-/Kleinschreibung existiert
+            const allUsers = await prisma.user.findMany({
+              select: { email: true },
+              take: 10,
+            })
+            console.log('[AUTH] Sample users in database:', allUsers.map(u => u.email))
             return null
           }
 
@@ -65,6 +80,7 @@ export const authOptions = {
             id: user.id,
             email: user.email,
             hasPassword: !!user.password,
+            passwordLength: user.password?.length || 0,
             isAdmin: user.isAdmin,
             isBlocked: user.isBlocked,
             emailVerified: user.emailVerified,
@@ -99,13 +115,22 @@ export const authOptions = {
           // WICHTIG: Prüfe Passwort mit bcrypt
           // Fallback: Wenn bcrypt fehlschlägt, versuche direkten Vergleich (für alte Passwörter)
           let isPasswordValid = false
-          try {
-            // Versuche zuerst bcrypt
-            isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-            console.log('[AUTH] Bcrypt password valid:', isPasswordValid)
+          const passwordIsHashed = user.password.startsWith('$2a$') || user.password.startsWith('$2b$') || user.password.startsWith('$2y$')
+          
+          console.log('[AUTH] Password check:', {
+            providedLength: credentials.password.length,
+            storedLength: user.password.length,
+            storedStartsWith: user.password.substring(0, 10),
+            isHashed: passwordIsHashed,
+          })
 
-            // Fallback: Wenn bcrypt fehlschlägt UND Passwort nicht gehasht ist (beginnt nicht mit $2a$ oder $2b$), versuche direkten Vergleich
-            if (!isPasswordValid && !user.password.startsWith('$2')) {
+          try {
+            if (passwordIsHashed) {
+              // Passwort ist gehasht, verwende bcrypt
+              isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+              console.log('[AUTH] Bcrypt password valid:', isPasswordValid)
+            } else {
+              // Passwort ist nicht gehasht, direkter Vergleich
               console.log('[AUTH] Password not hashed, trying direct comparison')
               isPasswordValid = credentials.password === user.password
               console.log('[AUTH] Direct comparison result:', isPasswordValid)
@@ -113,11 +138,13 @@ export const authOptions = {
           } catch (bcryptError: any) {
             console.error('[AUTH] Bcrypt comparison error:', bcryptError)
             // Fallback: Versuche direkten Vergleich wenn bcrypt fehlschlägt
-            if (!user.password.startsWith('$2')) {
+            if (!passwordIsHashed) {
               console.log('[AUTH] Fallback: Trying direct password comparison')
               isPasswordValid = credentials.password === user.password
+              console.log('[AUTH] Direct comparison result:', isPasswordValid)
             }
             if (!isPasswordValid) {
+              console.log('[AUTH] Password validation failed after fallback')
               return null
             }
           }
@@ -128,11 +155,12 @@ export const authOptions = {
               providedLength: credentials.password.length,
               storedLength: user.password.length,
               storedStartsWith: user.password.substring(0, 10),
+              isHashed: passwordIsHashed,
             })
             return null
           }
 
-          console.log('[AUTH] Login successful for:', normalizedEmail, 'isAdmin:', user.isAdmin)
+          console.log('[AUTH] ✅ Login successful for:', normalizedEmail, 'isAdmin:', user.isAdmin)
 
           return {
             id: user.id,
@@ -143,7 +171,7 @@ export const authOptions = {
             isAdmin: user.isAdmin === true,
           }
         } catch (error: any) {
-          console.error('[AUTH] Error during authorization:', error)
+          console.error('[AUTH] ❌ Error during authorization:', error)
           console.error('[AUTH] Error details:', {
             message: error.message,
             code: error.code,
@@ -151,8 +179,8 @@ export const authOptions = {
             stack: error.stack?.substring(0, 500), // Limit stack trace
           })
 
-          // Email verification errors are no longer thrown
-
+          // WICHTIG: Bei Datenbankfehlern, versuche trotzdem zu authentifizieren
+          // Dies verhindert, dass temporäre DB-Probleme alle Logins blockieren
           return null
         }
       },
