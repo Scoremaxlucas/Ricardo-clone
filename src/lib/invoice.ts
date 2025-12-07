@@ -34,7 +34,10 @@ export async function calculateInvoiceForSale(purchaseId: string) {
   const commission = salePrice * pricing.commissionRate
   const subtotal = commission
   const vatAmount = subtotal * pricing.vatRate
-  const total = subtotal + vatAmount
+  // Schweizer Rappenrundung auf 0.05 (5 Rappen)
+  const roundedSubtotal = Math.floor(subtotal * 20) / 20
+  const roundedVatAmount = Math.ceil(vatAmount * 20) / 20
+  const roundedTotal = roundedSubtotal + roundedVatAmount
 
   // Generiere Rechnungsnummer
   const year = new Date().getFullYear()
@@ -63,10 +66,10 @@ export async function calculateInvoiceForSale(purchaseId: string) {
       invoiceNumber,
       sellerId: purchase.watch.sellerId,
       saleId: purchaseId,
-      subtotal,
+      subtotal: roundedSubtotal,
       vatRate: pricing.vatRate,
-      vatAmount,
-      total,
+      vatAmount: roundedVatAmount,
+      total: roundedTotal,
       status: 'pending',
       dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist
       items: {
@@ -75,8 +78,8 @@ export async function calculateInvoiceForSale(purchaseId: string) {
             watchId: purchase.watchId,
             description: `Kommission: ${purchase.watch.title}`,
             quantity: 1,
-            price: subtotal,
-            total: subtotal,
+            price: roundedSubtotal,
+            total: roundedSubtotal,
           },
         ],
       },
@@ -88,7 +91,7 @@ export async function calculateInvoiceForSale(purchaseId: string) {
   })
 
   console.log(
-    `[invoice] Rechnung erstellt: ${invoiceNumber} für Seller ${purchase.watch.sellerId}, Total: CHF ${total.toFixed(2)}`
+    `[invoice] Rechnung erstellt: ${invoiceNumber} für Seller ${purchase.watch.sellerId}, Total: CHF ${roundedTotal.toFixed(2)}`
   )
 
   // Erstelle nur Plattform-Benachrichtigung (E-Mail wird nach 14 Tagen gesendet)
@@ -99,7 +102,7 @@ export async function calculateInvoiceForSale(purchaseId: string) {
         userId: purchase.watch.sellerId,
         type: 'NEW_INVOICE',
         title: 'Neue Rechnung erstellt',
-        message: `Eine neue Rechnung wurde für Sie erstellt: ${invoiceNumber} (CHF ${total.toFixed(2)}). Die Zahlungsaufforderung erhalten Sie in 14 Tagen.`,
+        message: `Eine neue Rechnung wurde für Sie erstellt: ${invoiceNumber} (CHF ${roundedTotal.toFixed(2)}). Die Zahlungsaufforderung erhalten Sie in 14 Tagen.`,
         link: `/my-watches/selling/fees?invoice=${invoice.id}`,
       },
     })
