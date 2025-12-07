@@ -73,14 +73,17 @@ export const authOptions = {
           // Email verification check disabled - users can login immediately after registration
           const isAdmin = user.isAdmin === true
 
-          // Prüfe ob Benutzer blockiert ist
-          // Prüfe explizit auf true, 1, oder String 'true'
-          const isBlocked = Boolean(user.isBlocked)
+          // WICHTIG: Prüfe ob Benutzer blockiert ist
+          // Nur explizit blockierte Benutzer werden abgelehnt
+          // null, false, 0, oder undefined = nicht blockiert
+          const isBlocked = user.isBlocked === true || user.isBlocked === 1 || user.isBlocked === 'true'
 
           if (isBlocked) {
-            console.log('[AUTH] User is blocked:', normalizedEmail)
+            console.log('[AUTH] User is blocked:', normalizedEmail, 'isBlocked value:', user.isBlocked)
             return null
           }
+
+          console.log('[AUTH] User is NOT blocked:', normalizedEmail, 'isBlocked value:', user.isBlocked)
 
           if (!user.password) {
             console.log('[AUTH] User has no password set:', normalizedEmail)

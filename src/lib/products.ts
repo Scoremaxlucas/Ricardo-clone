@@ -26,12 +26,15 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
   try {
     const now = new Date()
 
+    // WICHTIG: Zeige ALLE Artikel außer explizit 'rejected' oder verkauft
+    // Lockere Filter um ALLE vorherigen Artikel wiederherzustellen
     const watches = await prisma.watch.findMany({
     where: {
       AND: [
         {
           // WICHTIG: Zeige ALLE Artikel außer explizit 'rejected'
           // Neue Artikel ohne moderationStatus (null) werden angezeigt
+          // Auch Artikel mit moderationStatus: 'approved' oder 'pending' werden angezeigt
           OR: [
             { moderationStatus: null },
             { moderationStatus: { not: 'rejected' } },
@@ -40,6 +43,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         {
           // WICHTIG: Zeige Artikel die NICHT verkauft sind
           // Neue Artikel ohne Purchase werden angezeigt
+          // Artikel mit nur cancelled purchases werden angezeigt
           OR: [
             { purchases: { none: {} } },
             { purchases: { every: { status: 'cancelled' } } },

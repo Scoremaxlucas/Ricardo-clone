@@ -34,7 +34,7 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
     // WICHTIG: Zeige ALLE Artikel des Users, auch neue ohne moderationStatus
     // KEINE bids oder purchases - das würde N+1 Problem verursachen und langsam sein
     const watches = await prisma.watch.findMany({
-    where: { 
+    where: {
       sellerId: userId,
       // WICHTIG: Zeige ALLE Artikel außer explizit 'rejected'
       // Neue Artikel ohne moderationStatus (null) werden angezeigt
