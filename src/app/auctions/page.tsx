@@ -38,8 +38,8 @@ export default function AuctionsPage() {
     const fetchAuctions = async () => {
       setLoading(true)
       try {
-        // Hole nur Auktionsartikel
-        const response = await fetch('/api/articles/search?isAuction=true')
+        // OPTIMIERT: Verwende fast API-Route für instant loading
+        const response = await fetch('/api/articles/auctions-fast')
         if (response.ok) {
           const data = await response.json()
           let auctions = Array.isArray(data.watches)

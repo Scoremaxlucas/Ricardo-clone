@@ -33,12 +33,13 @@ export function FeaturedProducts() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        const response = await fetch('/api/articles/search?limit=6&t=' + Date.now(), {
-          cache: 'no-store', // No caching to ensure fresh results
+        // OPTIMIERT: Verwende fast API-Route für instant loading
+        const response = await fetch('/api/articles/fast?limit=6', {
+          cache: 'no-store',
         })
         if (response.ok) {
           const data = await response.json()
-          setItems(Array.isArray(data.watches) ? data.watches : []) // Backward compatibility: API response still uses 'watches'
+          setItems(Array.isArray(data.watches) ? data.watches : [])
         } else {
           setItems([])
         }

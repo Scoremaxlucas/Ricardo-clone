@@ -186,7 +186,8 @@ export default function SearchPage() {
             ? new URLSearchParams(window.location.search)
             : new URLSearchParams(urlSearchString)
 
-        let url = '/api/articles/search'
+        // OPTIMIERT: Verwende fast API-Route für instant loading
+        let url = '/api/articles/search-fast'
         const params = new URLSearchParams()
 
         const q = (currentParams.get('q') || '').trim()

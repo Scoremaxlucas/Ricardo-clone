@@ -31,7 +31,8 @@ export default function WatchesPage() {
 
   const fetchWatches = async () => {
     try {
-      const res = await fetch('/api/articles')
+      // OPTIMIERT: Verwende fast API-Route für instant loading
+      const res = await fetch('/api/articles/fast?limit=50')
       if (res.ok) {
         const response = await res.json()
         const data = response.watches || response

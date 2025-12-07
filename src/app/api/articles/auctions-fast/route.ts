@@ -1,0 +1,129 @@
+import { NextRequest, NextResponse } from 'next/server'
+import { prisma } from '@/lib/prisma'
+
+// FAST AUCTIONS API: Optimierte Route für schnelles Laden von Auktionen
+export async function GET(request: NextRequest) {
+  try {
+    const { searchParams } = new URL(request.url)
+    const limit = parseInt(searchParams.get('limit') || '20')
+    const page = parseInt(searchParams.get('page') || '1')
+    const skip = (page - 1) * limit
+
+    const now = new Date()
+
+    // OPTIMIERT: Raw SQL Query nur für Auktionen
+    const watches = await prisma.$queryRaw<Array<{
+      id: string
+      title: string | null
+      brand: string | null
+      model: string | null
+      price: number
+      images: string | null
+      createdAt: Date
+      auctionEnd: Date | null
+      articleNumber: number | null
+      boosters: string | null
+      city: string | null
+      postalCode: string | null
+      condition: string | null
+      bidCount: bigint
+      highestBid: number | null
+    }>>`
+      SELECT 
+        w.id,
+        w.title,
+        w.brand,
+        w.model,
+        w.price,
+        w.images,
+        w."createdAt",
+        w."auctionEnd",
+        w."articleNumber",
+        w.boosters,
+        u.city,
+        u."postalCode",
+        w.condition,
+        COUNT(b.id)::bigint as "bidCount",
+        MAX(b.amount) as "highestBid"
+      FROM watches w
+      INNER JOIN users u ON w."sellerId" = u.id
+      LEFT JOIN bids b ON b."watchId" = w.id
+      WHERE 
+        w."isAuction" = true
+        AND (w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')
+        AND NOT EXISTS (
+          SELECT 1 FROM purchases p 
+          WHERE p."watchId" = w.id 
+          AND p.status != 'cancelled'
+        )
+        AND (w."auctionEnd" IS NULL OR w."auctionEnd" > ${now})
+      GROUP BY w.id, u.city, u."postalCode"
+      ORDER BY 
+        CASE 
+          WHEN w.boosters LIKE '%super-boost%' THEN 4
+          WHEN w.boosters LIKE '%turbo-boost%' THEN 3
+          WHEN w.boosters LIKE '%boost%' THEN 2
+          ELSE 1
+        END DESC,
+        w."createdAt" DESC
+      LIMIT ${limit}
+      OFFSET ${skip}
+    `
+
+    // OPTIMIERT: Minimale Verarbeitung
+    const watchesWithImages = watches.map(w => {
+      let firstImage = ''
+      if (w.images) {
+        try {
+          const parsed = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
+          firstImage = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : ''
+        } catch {
+          firstImage = ''
+        }
+      }
+
+      let boosters: string[] = []
+      if (w.boosters) {
+        try {
+          boosters = typeof w.boosters === 'string' ? JSON.parse(w.boosters) : w.boosters
+        } catch {
+          boosters = []
+        }
+      }
+
+      return {
+        id: w.id,
+        title: w.title || '',
+        brand: w.brand || '',
+        model: w.model || '',
+        price: w.highestBid || w.price,
+        images: firstImage ? [firstImage] : [],
+        createdAt: w.createdAt instanceof Date ? w.createdAt.toISOString() : new Date(w.createdAt).toISOString(),
+        isAuction: true,
+        auctionEnd: w.auctionEnd ? (w.auctionEnd instanceof Date ? w.auctionEnd.toISOString() : new Date(w.auctionEnd).toISOString()) : null,
+        articleNumber: w.articleNumber,
+        boosters,
+        city: w.city,
+        postalCode: w.postalCode,
+        condition: w.condition || '',
+        bidCount: Number(w.bidCount),
+        highestBid: w.highestBid,
+      }
+    })
+
+    return NextResponse.json(
+      { watches: watchesWithImages },
+      {
+        status: 200,
+        headers: {
+          'Cache-Control': 'no-store',
+          'Content-Type': 'application/json',
+        },
+      }
+    )
+  } catch (error) {
+    console.error('Error fetching auctions:', error)
+    return NextResponse.json({ watches: [] }, { status: 200 })
+  }
+}
+

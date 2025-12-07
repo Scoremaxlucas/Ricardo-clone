@@ -52,7 +52,7 @@ export async function GET(request: NextRequest) {
     // OPTIMIERT: Verwende for-Schleife statt map für bessere Performance
     const watchesWithImages = []
     const now = Date.now() // Einmal berechnen statt in jeder Iteration
-    
+
     for (const w of watches) {
       // OPTIMIERT: Nur erstes Bild parsen wenn wirklich vorhanden
       let firstImage = ''
@@ -66,11 +66,11 @@ export async function GET(request: NextRequest) {
       }
 
       // OPTIMIERT: Minimale Date-Konvertierung
-      const createdAt = w.createdAt instanceof Date 
-        ? w.createdAt.toISOString() 
+      const createdAt = w.createdAt instanceof Date
+        ? w.createdAt.toISOString()
         : new Date(w.createdAt).toISOString()
-      
-      const auctionEnd = w.auctionEnd 
+
+      const auctionEnd = w.auctionEnd
         ? (w.auctionEnd instanceof Date ? w.auctionEnd.toISOString() : new Date(w.auctionEnd).toISOString())
         : null
 
