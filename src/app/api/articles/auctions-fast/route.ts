@@ -29,7 +29,7 @@ export async function GET(request: NextRequest) {
       bidCount: bigint
       highestBid: number | null
     }>>`
-      SELECT 
+      SELECT
         w.id,
         w.title,
         w.brand,
@@ -48,18 +48,18 @@ export async function GET(request: NextRequest) {
       FROM watches w
       INNER JOIN users u ON w."sellerId" = u.id
       LEFT JOIN bids b ON b."watchId" = w.id
-      WHERE 
+      WHERE
         w."isAuction" = true
         AND (w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')
         AND NOT EXISTS (
-          SELECT 1 FROM purchases p 
-          WHERE p."watchId" = w.id 
+          SELECT 1 FROM purchases p
+          WHERE p."watchId" = w.id
           AND p.status != 'cancelled'
         )
         AND (w."auctionEnd" IS NULL OR w."auctionEnd" > ${now})
       GROUP BY w.id, u.city, u."postalCode"
-      ORDER BY 
-        CASE 
+      ORDER BY
+        CASE
           WHEN w.boosters LIKE '%super-boost%' THEN 4
           WHEN w.boosters LIKE '%turbo-boost%' THEN 3
           WHEN w.boosters LIKE '%boost%' THEN 2

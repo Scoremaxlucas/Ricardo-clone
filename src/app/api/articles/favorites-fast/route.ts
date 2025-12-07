@@ -1,19 +1,24 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getServerSession } from 'next-auth'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// FAST API: Optimierte Route für schnelles Laden von Artikeln
-// Verwendet Raw SQL für maximale Performance
+// FAST FAVORITES API: Optimierte Route für schnelles Laden von Favoriten
 export async function GET(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ watches: [] }, { status: 200 })
+    }
+
     const { searchParams } = new URL(request.url)
-    const limit = parseInt(searchParams.get('limit') || '20')
+    const limit = parseInt(searchParams.get('limit') || '50')
     const page = parseInt(searchParams.get('page') || '1')
     const skip = (page - 1) * limit
 
     const now = new Date()
 
     // OPTIMIERT: Raw SQL Query für maximale Geschwindigkeit
-    // Lädt nur die wichtigsten Felder ohne Relations
     const watches = await prisma.$queryRaw<Array<{
       id: string
       title: string | null
@@ -31,7 +36,7 @@ export async function GET(request: NextRequest) {
       postalCode: string | null
       condition: string | null
     }>>`
-      SELECT
+      SELECT 
         w.id,
         w.title,
         w.brand,
@@ -48,31 +53,26 @@ export async function GET(request: NextRequest) {
         u."postalCode",
         w.condition
       FROM watches w
+      INNER JOIN favorites f ON f."watchId" = w.id
       INNER JOIN users u ON w."sellerId" = u.id
-      WHERE
-        (w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')
+      WHERE 
+        f."userId" = ${session.user.id}
+        AND (w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')
         AND NOT EXISTS (
-          SELECT 1 FROM purchases p
-          WHERE p."watchId" = w.id
+          SELECT 1 FROM purchases p 
+          WHERE p."watchId" = w.id 
           AND p.status != 'cancelled'
         )
         AND (
-          w."auctionEnd" IS NULL
+          w."auctionEnd" IS NULL 
           OR w."auctionEnd" > ${now}
           OR EXISTS (
-            SELECT 1 FROM purchases p2
-            WHERE p2."watchId" = w.id
+            SELECT 1 FROM purchases p2 
+            WHERE p2."watchId" = w.id 
             AND p2.status != 'cancelled'
           )
         )
-      ORDER BY
-        CASE
-          WHEN w.boosters LIKE '%super-boost%' THEN 4
-          WHEN w.boosters LIKE '%turbo-boost%' THEN 3
-          WHEN w.boosters LIKE '%boost%' THEN 2
-          ELSE 1
-        END DESC,
-        w."createdAt" DESC
+      ORDER BY f."createdAt" DESC
       LIMIT ${limit}
       OFFSET ${skip}
     `
@@ -128,7 +128,7 @@ export async function GET(request: NextRequest) {
       }
     )
   } catch (error) {
-    console.error('Error fetching articles:', error)
+    console.error('Error fetching favorites:', error)
     return NextResponse.json({ watches: [] }, { status: 200 })
   }
 }

@@ -72,7 +72,7 @@ export async function GET(request: NextRequest) {
       postalCode: string | null
       condition: string | null
     }>>(`
-      SELECT 
+      SELECT
         w.id,
         w.title,
         w.brand,
@@ -91,8 +91,8 @@ export async function GET(request: NextRequest) {
       FROM watches w
       INNER JOIN users u ON w."sellerId" = u.id
       WHERE ${whereClause}
-      ORDER BY 
-        CASE 
+      ORDER BY
+        CASE
           WHEN w.boosters LIKE '%super-boost%' THEN 4
           WHEN w.boosters LIKE '%turbo-boost%' THEN 3
           WHEN w.boosters LIKE '%boost%' THEN 2
