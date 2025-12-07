@@ -3070,6 +3070,100 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 }
 
 // Template für Bewertungsaufforderung (für Verkäufer)
+export function getProductDeletedEmail(
+  sellerName: string,
+  productTitle: string,
+  productId: string,
+  adminName: string
+) {
+  const subject = `⚠️ Ihr Artikel "${productTitle}" wurde gelöscht`
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .warning { background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; }
+    .info-box { background: #fff; border: 1px solid #e5e7eb; padding: 15px; margin: 20px 0; border-radius: 8px; }
+    .button { display: inline-block; background: #0f766e; color: #ffffff !important; padding: 12px 24px; text-decoration: none; border-radius: 16px; margin: 20px 0; font-weight: 600; }
+    .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚠️ Artikel gelöscht</h1>
+    </div>
+    <div class="content">
+      <p>Hallo ${sellerName},</p>
+
+      <div class="warning">
+        <strong>Wichtige Information:</strong> Ihr Artikel wurde von einem Administrator gelöscht.
+      </div>
+
+      <div class="info-box">
+        <p><strong>Artikel:</strong> ${productTitle}</p>
+        <p><strong>Gelöscht von:</strong> ${adminName}</p>
+        <p><strong>Datum:</strong> ${new Date().toLocaleDateString('de-CH', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit',
+        })}</p>
+      </div>
+
+      <p><strong>Was bedeutet das?</strong></p>
+      <p>Ihr Artikel wurde aufgrund von Verstößen gegen unsere Richtlinien oder aus anderen Gründen von einem Administrator entfernt. Der Artikel ist nicht mehr auf der Plattform sichtbar und kann nicht wiederhergestellt werden.</p>
+
+      <p>Falls Sie Fragen zu dieser Entscheidung haben oder weitere Informationen benötigen, können Sie sich gerne an unseren Support wenden.</p>
+
+      <a href="${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling" class="button">
+        Zu meinen Artikeln
+      </a>
+    </div>
+    <div class="footer">
+      <p>Diese E-Mail wurde automatisch von Helvenda.ch gesendet.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Artikel gelöscht
+
+Hallo ${sellerName},
+
+Ihr Artikel wurde von einem Administrator gelöscht.
+
+Artikel: ${productTitle}
+Gelöscht von: ${adminName}
+Datum: ${new Date().toLocaleDateString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+    hour: '2-digit',
+    minute: '2-digit',
+  })}
+
+Was bedeutet das?
+Ihr Artikel wurde aufgrund von Verstößen gegen unsere Richtlinien oder aus anderen Gründen von einem Administrator entfernt. Der Artikel ist nicht mehr auf der Plattform sichtbar und kann nicht wiederhergestellt werden.
+
+Falls Sie Fragen zu dieser Entscheidung haben oder weitere Informationen benötigen, können Sie sich gerne an unseren Support wenden.
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
 export function getReviewRequestSellerEmail(
   sellerName: string,
   articleTitle: string,

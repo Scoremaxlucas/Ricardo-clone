@@ -117,6 +117,6 @@ ON CONFLICT (email) DO UPDATE SET
 
 -- IMPORTANT: After running this SQL, you MUST run the restore script to set passwords:
 -- npx tsx scripts/restore-all-data.ts
--- 
+--
 -- The SQL only creates/updates users, but passwords need to be bcrypt hashed properly.
 

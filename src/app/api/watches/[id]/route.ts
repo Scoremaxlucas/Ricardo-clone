@@ -287,13 +287,39 @@ export async function DELETE(
       )
     }
 
+    // Hole Watch mit Seller-Informationen für Benachrichtigung
     const watch = await prisma.watch.findUnique({
       where: { id },
+      include: {
+        seller: {
+          select: {
+            id: true,
+            email: true,
+            name: true,
+            firstName: true,
+            lastName: true,
+            nickname: true,
+          },
+        },
+      },
     })
 
     if (!watch) {
       return NextResponse.json({ message: 'Angebot nicht gefunden' }, { status: 404 })
     }
+
+    // Hole Admin-Informationen für Moderation History
+    const admin = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        nickname: true,
+      },
+    })
 
     // Lösche zuerst alle abhängigen Daten
     await prisma.bid.deleteMany({ where: { watchId: id } })
@@ -311,10 +337,57 @@ export async function DELETE(
     await prisma.notification.deleteMany({ where: { watchId: id } })
     await prisma.conversation.deleteMany({ where: { context: { contains: id } } })
 
-    // Lösche dann das Angebot
+    // Lösche dann das Angebot (WICHTIG: Komplett löschen, nicht nur als rejected markieren)
     await prisma.watch.delete({
       where: { id },
     })
+
+    // Sende Benachrichtigung an den Verkäufer
+    try {
+      const { sendEmail, getProductDeletedEmail } = await import('@/lib/email')
+      const sellerName =
+        watch.seller.nickname ||
+        watch.seller.firstName ||
+        watch.seller.name ||
+        watch.seller.email ||
+        'Verkäufer'
+
+      const emailContent = getProductDeletedEmail(
+        sellerName,
+        watch.title,
+        watch.id,
+        admin?.name || admin?.email || 'Ein Administrator'
+      )
+
+      await sendEmail({
+        to: watch.seller.email,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+      })
+
+      console.log(`[DELETE] Product deletion notification sent to ${watch.seller.email}`)
+    } catch (emailError: any) {
+      // E-Mail-Fehler soll nicht die Löschung verhindern
+      console.error('[DELETE] Error sending deletion notification:', emailError)
+    }
+
+    // Erstelle in-app Benachrichtigung für den Verkäufer
+    try {
+      await prisma.notification.create({
+        data: {
+          userId: watch.sellerId,
+          type: 'product_deleted',
+          title: 'Ihr Artikel wurde gelöscht',
+          message: `Ihr Artikel "${watch.title}" wurde von einem Administrator gelöscht.`,
+          link: `/my-watches/selling`,
+        },
+      })
+      console.log(`[DELETE] In-app notification created for seller ${watch.sellerId}`)
+    } catch (notificationError: any) {
+      // Benachrichtigungs-Fehler soll nicht die Löschung verhindern
+      console.error('[DELETE] Error creating in-app notification:', notificationError)
+    }
 
     return NextResponse.json({
       message: 'Angebot erfolgreich gelöscht',

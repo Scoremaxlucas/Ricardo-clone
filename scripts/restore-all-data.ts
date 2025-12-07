@@ -135,7 +135,7 @@ async function main() {
   // 4. Restore Lucas8122 User (handle both uppercase and lowercase versions)
   console.log('👤 Restoring Lucas8122 user...')
   const lucas8122Password = await bcrypt.hash('test123', 12)
-  
+
   // Update both versions if they exist (email normalization handles case)
   const lowercaseLucas8122 = await prisma.user.findUnique({
     where: { email: 'lugas8122@gmail.com' },
@@ -143,7 +143,7 @@ async function main() {
   const uppercaseLucas8122 = await prisma.user.findUnique({
     where: { email: 'Lugas8122@gmail.com' },
   })
-  
+
   // Update whichever exists (or create uppercase version)
   if (lowercaseLucas8122) {
     await prisma.user.update({
@@ -160,7 +160,7 @@ async function main() {
     })
     console.log(`✅ Lucas8122 user restored (lowercase): lugas8122@gmail.com`)
   }
-  
+
   const lucas8122 = await prisma.user.upsert({
     where: { email: 'Lugas8122@gmail.com' },
     update: {
@@ -191,7 +191,7 @@ async function main() {
   // 5. Restore Lucas8118 User (handle both uppercase and lowercase versions)
   console.log('👤 Restoring Lucas8118 user...')
   const lucas8118Password = await bcrypt.hash('test123', 12)
-  
+
   // Update both versions if they exist (email normalization handles case)
   const lowercaseLucas8118 = await prisma.user.findUnique({
     where: { email: 'lolcas8118@gmail.com' },
@@ -199,7 +199,7 @@ async function main() {
   const uppercaseLucas8118 = await prisma.user.findUnique({
     where: { email: 'Lolcas8118@gmail.com' },
   })
-  
+
   // Update whichever exists (or create uppercase version)
   if (lowercaseLucas8118) {
     await prisma.user.update({
@@ -216,7 +216,7 @@ async function main() {
     })
     console.log(`✅ Lucas8118 user restored (lowercase): lolcas8118@gmail.com`)
   }
-  
+
   const lucas8118 = await prisma.user.upsert({
     where: { email: 'Lolcas8118@gmail.com' },
     update: {
@@ -330,7 +330,7 @@ async function main() {
   // 9. Always create/restore test products (even if some exist)
   // This ensures products are available for testing
   console.log('📦 Creating/restoring test products...')
-  
+
   // Check if we have categories, if not create them first
   if (categories.length === 0) {
     try {
@@ -359,7 +359,7 @@ async function main() {
       })
     }
   }
-  
+
   if (categories.length >= 3) {
     console.log('📦 Creating test products...')
 
