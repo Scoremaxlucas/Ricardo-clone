@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { revalidatePath } from 'next/cache'
 
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -341,6 +342,19 @@ export async function DELETE(
     await prisma.watch.delete({
       where: { id },
     })
+
+    // WICHTIG: Cache invalidierten, damit gelöschte Produkte sofort verschwinden
+    try {
+      revalidatePath('/', 'page') // Homepage
+      revalidatePath('/search', 'page') // Suchseite
+      revalidatePath('/watches', 'page') // Alle Artikel
+      revalidatePath('/auctions', 'page') // Auktionen
+      // API-Routen haben bereits Cache-Control: no-store, müssen nicht invalidiert werden
+      console.log('[DELETE] Cache invalidated for homepage and related pages')
+    } catch (revalidateError: any) {
+      // Revalidate-Fehler soll nicht die Löschung verhindern
+      console.error('[DELETE] Error revalidating cache:', revalidateError)
+    }
 
     // Sende Benachrichtigung an den Verkäufer
     try {

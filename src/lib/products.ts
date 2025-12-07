@@ -26,8 +26,8 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
   try {
     const now = new Date()
 
-    // WICHTIG: Zeige ALLE Artikel außer explizit 'rejected' oder verkauft
-    // Lockere Filter um ALLE vorherigen Artikel wiederherzustellen
+    // WICHTIG: Zeige nur existierende Artikel (gelöschte werden automatisch nicht angezeigt)
+    // Filter für moderationStatus und Purchase-Status
     const watches = await prisma.watch.findMany({
     where: {
       AND: [
