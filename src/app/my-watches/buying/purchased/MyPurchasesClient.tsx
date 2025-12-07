@@ -35,6 +35,7 @@ interface MyPurchasesClientProps {
 
 export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) {
   const [purchases, setPurchases] = useState<MyPurchaseItem[]>(initialPurchases)
+  const [isInitialLoad, setIsInitialLoad] = useState(true) // Track if initial data has been confirmed
   const [selectedPurchase, setSelectedPurchase] = useState<MyPurchaseItem | null>(null)
   const [showSellerInfo, setShowSellerInfo] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
@@ -53,6 +54,14 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
       localStorage.setItem('readPurchases', JSON.stringify(newReadPurchases))
       window.dispatchEvent(new CustomEvent('purchases-viewed'))
     }
+    
+    // Markiere initial load als abgeschlossen nach kurzer Verzögerung
+    // Dies gibt dem Server-Side Render Zeit, die Daten zu übertragen
+    const timer = setTimeout(() => {
+      setIsInitialLoad(false)
+    }, 100)
+    
+    return () => clearTimeout(timer)
 
     const loadPurchases = async () => {
       try {
@@ -90,10 +99,10 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
     // OPTIMIERT: Warte 2 Sekunden bevor Background-Updates starten
     // Initial purchases sind bereits sichtbar
     let intervalId: NodeJS.Timeout | null = null
-    
+
     const timeoutId = setTimeout(() => {
       checkExpired()
-      
+
       // Polling alle 5 Sekunden für Updates
       intervalId = setInterval(() => {
         loadPurchases()
@@ -240,7 +249,15 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
         </button>
       </div>
 
-      {purchases.length === 0 ? (
+      {isInitialLoad && purchases.length === 0 ? (
+        <div className="rounded-lg bg-white p-12 text-center shadow-md">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center">
+            <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+          </div>
+          <h3 className="mb-2 text-xl font-semibold text-gray-900">Lädt...</h3>
+          <p className="mb-6 text-gray-600">Ihre Käufe werden geladen...</p>
+        </div>
+      ) : purchases.length === 0 ? (
         <div className="rounded-lg bg-white p-12 text-center shadow-md">
           <ShoppingBag className="mx-auto mb-4 h-16 w-16 text-gray-400" />
           <h3 className="mb-2 text-xl font-semibold text-gray-900">Noch keine Käufe</h3>
