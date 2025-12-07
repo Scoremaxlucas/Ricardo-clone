@@ -132,7 +132,63 @@ async function main() {
   })
   console.log(`✅ Gregor user restored: ${gregor.email}`)
 
-  // 4. Restore all other users that might exist but have no password
+  // 4. Restore Lucas8122 User
+  console.log('👤 Restoring Lucas8122 user...')
+  const lucas8122Password = await bcrypt.hash('test123', 12)
+  const lucas8122 = await prisma.user.upsert({
+    where: { email: 'Lugas8122@gmail.com' },
+    update: {
+      password: lucas8122Password,
+      isBlocked: false,
+      blockedAt: null,
+      blockedReason: null,
+      emailVerified: true,
+      verified: true,
+      verificationStatus: 'approved',
+    },
+    create: {
+      email: 'Lugas8122@gmail.com',
+      name: 'Lucas',
+      firstName: 'Lucas',
+      lastName: 'Rodrigues',
+      nickname: 'Lucas8122',
+      password: lucas8122Password,
+      emailVerified: true,
+      verified: true,
+      verificationStatus: 'approved',
+    },
+  })
+  console.log(`✅ Lucas8122 user restored: ${lucas8122.email}`)
+
+  // 5. Restore Lucas8118 User
+  console.log('👤 Restoring Lucas8118 user...')
+  const lucas8118Password = await bcrypt.hash('test123', 12)
+  const lucas8118 = await prisma.user.upsert({
+    where: { email: 'Lolcas8118@gmail.com' },
+    update: {
+      password: lucas8118Password,
+      isBlocked: false,
+      blockedAt: null,
+      blockedReason: null,
+      emailVerified: true,
+      verified: true,
+      verificationStatus: 'approved',
+    },
+    create: {
+      email: 'Lolcas8118@gmail.com',
+      name: 'Lucas',
+      firstName: 'Lucas',
+      lastName: 'Rodrigues',
+      nickname: 'Lucas8118',
+      password: lucas8118Password,
+      emailVerified: true,
+      verified: true,
+      verificationStatus: 'approved',
+    },
+  })
+  console.log(`✅ Lucas8118 user restored: ${lucas8118.email}`)
+
+  // 6. Restore all other users that might exist but have no password
   console.log('\n👤 Restoring other users without passwords...')
   const usersWithoutPassword = await prisma.user.findMany({
     where: {
@@ -141,7 +197,13 @@ async function main() {
         { password: '' },
       ],
       email: {
-        notIn: ['admin@helvenda.ch', 'noah@test.com', 'gregor@test.com'],
+        notIn: [
+          'admin@helvenda.ch',
+          'noah@test.com',
+          'gregor@test.com',
+          'Lugas8122@gmail.com',
+          'Lolcas8118@gmail.com',
+        ],
       },
     },
     select: { id: true, email: true },
@@ -164,7 +226,7 @@ async function main() {
     console.log('   No other users found without passwords')
   }
 
-  // 5. Restore categories
+  // 7. Restore categories
   console.log('\n📁 Restoring categories...')
   const categories = await Promise.all([
     prisma.category.upsert({
@@ -185,11 +247,11 @@ async function main() {
   ])
   console.log(`✅ ${categories.length} categories restored`)
 
-  // 6. Check if products exist
+  // 8. Check if products exist
   const existingWatches = await prisma.watch.count()
   console.log(`\n📦 Found ${existingWatches} existing products`)
 
-  // 7. Create test products if none exist
+  // 9. Create test products if none exist
   if (existingWatches === 0) {
     console.log('📦 Creating test products...')
 
@@ -263,7 +325,7 @@ async function main() {
     console.log('✅ Test products created')
   }
 
-  // 8. List all users
+  // 10. List all users
   console.log('\n📋 All users in database:')
   const allUsers = await prisma.user.findMany({
     select: {
@@ -288,6 +350,8 @@ async function main() {
   console.log('   - admin@helvenda.ch (Password: test123) [ADMIN]')
   console.log('   - noah@test.com (Password: noah123)')
   console.log('   - gregor@test.com (Password: gregor123)')
+  console.log('   - Lugas8122@gmail.com (Password: test123)')
+  console.log('   - Lolcas8118@gmail.com (Password: test123)')
   if (usersWithoutPassword.length > 0) {
     console.log(`   - ${usersWithoutPassword.length} other users (Password: test123)`)
   }
