@@ -50,9 +50,13 @@ export function ProductPageClient({
   // Berechne Aspect Ratio des aktuellen Bildes
   useEffect(() => {
     if (images.length > 0 && selectedImageIndex < images.length) {
-      const img = new Image()
+      const img = new window.Image()
       img.onload = () => {
         setImageAspectRatio(img.width / img.height)
+      }
+      img.onerror = () => {
+        // Fallback: Setze Standard-Aspect-Ratio wenn Bild nicht geladen werden kann
+        setImageAspectRatio(1)
       }
       img.src = images[selectedImageIndex]
     }
