@@ -28,7 +28,7 @@ interface ArticleListProps {
 
 async function ArticleListContent({ itemsPromise }: ArticleListProps) {
   const items = await itemsPromise
-  
+
   const isItemActive = (item: Item): boolean => {
     if (item.isActive !== undefined) {
       return item.isActive

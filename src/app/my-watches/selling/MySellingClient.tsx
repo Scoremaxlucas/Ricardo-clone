@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import Link from 'next/link'
 import {
   Package,
@@ -49,10 +49,49 @@ interface MySellingClientProps {
 
 export function MySellingClient({ initialItems, initialStats }: MySellingClientProps) {
   const { t } = useLanguage()
-  const [items] = useState<Item[]>(initialItems)
-  const [stats] = useState(initialStats)
+  const [items, setItems] = useState<Item[]>(initialItems)
+  const [stats, setStats] = useState(initialStats)
   const [filter, setFilter] = useState<FilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
+  const [loadingDetails, setLoadingDetails] = useState(false)
+
+  // OPTIMIERT: Lade Details (Purchases/Bids) nach dem initialen Render im Hintergrund
+  useEffect(() => {
+    if (initialItems.length > 0 && !loadingDetails) {
+      setLoadingDetails(true)
+      // Lade Details im Hintergrund ohne UI zu blockieren
+      fetch(`/api/articles/mine?activeOnly=false`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.watches && Array.isArray(data.watches)) {
+            setItems(data.watches)
+            // Update stats
+            const activeCount = data.watches.filter((item: Item) => {
+              if (item.isActive !== undefined) return item.isActive
+              if (item.isSold) return false
+              if (item.isAuction && item.auctionEnd) {
+                const auctionEndDate = new Date(item.auctionEnd)
+                const now = new Date()
+                if (auctionEndDate <= now) return false
+              }
+              return true
+            }).length
+            setStats({
+              total: data.watches.length,
+              active: activeCount,
+              inactive: data.watches.length - activeCount,
+            })
+          }
+        })
+        .catch(() => {
+          // Ignoriere Fehler - initialItems sind bereits geladen
+        })
+        .finally(() => {
+          setLoadingDetails(false)
+        })
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []) // Nur einmal beim Mount
 
   const isItemActive = (item: Item): boolean => {
     if (item.isActive !== undefined) {
