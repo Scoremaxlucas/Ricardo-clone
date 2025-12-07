@@ -297,6 +297,8 @@ export async function POST(request: NextRequest) {
     const yearInt = year ? parseInt(year) : null
 
     // Konvertiere Preise zu Float
+    // WICHTIG: Artikelpreise werden NICHT gerundet - exakter Betrag wird gespeichert (z.B. CHF 1.80)
+    // Nur Rechnungsbeträge (Kommission, MwSt) werden auf 5 Rappen gerundet
     const priceFloat = parseFloat(price)
     const buyNowPriceFloat = buyNowPrice ? parseFloat(buyNowPrice) : null
 
