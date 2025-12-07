@@ -54,13 +54,13 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
       localStorage.setItem('readPurchases', JSON.stringify(newReadPurchases))
       window.dispatchEvent(new CustomEvent('purchases-viewed'))
     }
-    
+
     // Markiere initial load als abgeschlossen nach kurzer Verzögerung
     // Dies gibt dem Server-Side Render Zeit, die Daten zu übertragen
     const timer = setTimeout(() => {
       setIsInitialLoad(false)
     }, 100)
-    
+
     return () => clearTimeout(timer)
 
     const loadPurchases = async () => {

@@ -117,7 +117,19 @@ export default function ActivePage() {
             </div>
           </div>
 
-          {watches.length === 0 ? (
+          {loading ? (
+            <div className="rounded-lg bg-white p-8 shadow-md">
+              <div className="py-12 text-center">
+                <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center">
+                  <div className="h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+                </div>
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">Lädt...</h3>
+                <p className="mb-6 text-gray-600">
+                  Ihre aktiven Verkaufsanzeigen werden geladen...
+                </p>
+              </div>
+            </div>
+          ) : watches.length === 0 ? (
             <div className="rounded-lg bg-white p-8 shadow-md">
               <div className="py-12 text-center">
                 <Clock className="mx-auto mb-4 h-16 w-16 text-gray-400" />
