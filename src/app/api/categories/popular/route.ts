@@ -16,7 +16,7 @@ export async function GET() {
   try {
     // WICHTIG: Fehlerbehandlung für Prisma-Abfragen
     // Hole alle InvoiceItems, die Booster sind (description enthält "Booster")
-    let boosterInvoices = []
+    let boosterInvoices: any[] = []
     try {
       boosterInvoices = await prisma.invoiceItem.findMany({
         where: {
@@ -60,7 +60,7 @@ export async function GET() {
     const categoryRevenue: Record<string, number> = {}
 
     // Zähle aktive geboostete Produkte direkt (über Relation)
-    let activeBoostedWatches = []
+    let activeBoostedWatches: any[] = []
     try {
       activeBoostedWatches = await prisma.watch.findMany({
         where: {
@@ -127,7 +127,7 @@ export async function GET() {
     })
 
     // Hole alle aktiven Produkte mit ihren Kategorien
-    let activeWatches = []
+    let activeWatches: any[] = []
     try {
       activeWatches = await prisma.watch.findMany({
         where: {

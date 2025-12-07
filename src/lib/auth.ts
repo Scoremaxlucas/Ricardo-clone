@@ -103,7 +103,7 @@ export const authOptions = {
             // Versuche zuerst bcrypt
             isPasswordValid = await bcrypt.compare(credentials.password, user.password)
             console.log('[AUTH] Bcrypt password valid:', isPasswordValid)
-            
+
             // Fallback: Wenn bcrypt fehlschlägt UND Passwort nicht gehasht ist (beginnt nicht mit $2a$ oder $2b$), versuche direkten Vergleich
             if (!isPasswordValid && !user.password.startsWith('$2')) {
               console.log('[AUTH] Password not hashed, trying direct comparison')
