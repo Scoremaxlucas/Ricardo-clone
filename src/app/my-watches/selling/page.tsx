@@ -36,7 +36,7 @@ interface Item {
 async function loadItems(userId: string): Promise<Item[]> {
   // ULTRA-MINIMALE Query: Nur Basis-Daten OHNE Relations
   // Das ist die absolut schnellste Query möglich
-  const watches = await prisma.watch.findMany({
+  const articles = await prisma.watch.findMany({
     where: { sellerId: userId },
     select: {
       id: true,
@@ -53,19 +53,19 @@ async function loadItems(userId: string): Promise<Item[]> {
     orderBy: { createdAt: 'desc' },
   })
 
-  if (watches.length === 0) {
+  if (articles.length === 0) {
     return []
   }
 
-  const watchIds = watches.map(w => w.id)
+  const articleIds = articles.map(a => a.id)
 
   // OPTIMIERT: Parallele Queries für maximale Performance
   // Verwende EXISTS-Checks statt vollständige Daten zu laden
-  const [soldWatchIds, allBids] = await Promise.all([
-    // Nur watchIds die verkauft sind (minimale Daten)
+  const [soldArticleIds, allBids] = await Promise.all([
+    // Nur Artikel-IDs die verkauft sind (minimale Daten)
     prisma.purchase.findMany({
       where: {
-        watchId: { in: watchIds },
+        watchId: { in: articleIds },
         status: { not: 'cancelled' },
       },
       select: {
@@ -74,10 +74,10 @@ async function loadItems(userId: string): Promise<Item[]> {
       },
       distinct: ['watchId'],
     }),
-    // Alle Bids für höchstes Gebot und Count
+    // Alle Gebote für höchstes Gebot und Count
     prisma.bid.findMany({
       where: {
-        watchId: { in: watchIds },
+        watchId: { in: articleIds },
       },
       select: {
         watchId: true,
@@ -89,33 +89,33 @@ async function loadItems(userId: string): Promise<Item[]> {
 
   // Erstelle Lookup-Maps für O(1) Zugriff
   const purchaseMap = new Map<string, { price: number }>()
-  soldWatchIds.forEach(p => {
+  soldArticleIds.forEach(p => {
     purchaseMap.set(p.watchId, { price: p.price || 0 })
   })
 
-  // Gruppiere Bids nach watchId und finde höchstes Gebot pro Watch
+  // Gruppiere Gebote nach Artikel-ID und finde höchstes Gebot pro Artikel
   const highestBidMap = new Map<string, { amount: number; createdAt: Date }>()
   const bidCountMap = new Map<string, number>()
   
-  // Sortiere Bids nach amount für jedes watchId
-  const bidsByWatch = new Map<string, typeof allBids>()
+  // Sortiere Gebote nach amount für jedes Artikel
+  const bidsByArticle = new Map<string, typeof allBids>()
   allBids.forEach(b => {
-    if (!bidsByWatch.has(b.watchId)) {
-      bidsByWatch.set(b.watchId, [])
+    if (!bidsByArticle.has(b.watchId)) {
+      bidsByArticle.set(b.watchId, [])
     }
-    bidsByWatch.get(b.watchId)!.push(b)
+    bidsByArticle.get(b.watchId)!.push(b)
   })
 
-  // Finde höchstes Gebot und Count für jedes Watch
-  bidsByWatch.forEach((bids, watchId) => {
-    bidCountMap.set(watchId, bids.length)
+  // Finde höchstes Gebot und Count für jedes Artikel
+  bidsByArticle.forEach((bids, articleId) => {
+    bidCountMap.set(articleId, bids.length)
     const highest = bids.reduce((max, bid) => (bid.amount > max.amount ? bid : max), bids[0])
-    highestBidMap.set(watchId, { amount: highest.amount, createdAt: highest.createdAt })
+    highestBidMap.set(articleId, { amount: highest.amount, createdAt: highest.createdAt })
   })
 
   // ULTRA-OPTIMIERT: Schnelle Verarbeitung mit Lookup-Maps
   const now = new Date()
-  const watchesWithImages = watches.map(w => {
+  const articlesWithImages = articles.map(a => {
     // Parse images schnell
     let images: string[] = []
     try {
@@ -125,36 +125,36 @@ async function loadItems(userId: string): Promise<Item[]> {
     }
 
     // Schnelle Prüfung ob verkauft aus Map
-    const purchase = purchaseMap.get(w.id)
+    const purchase = purchaseMap.get(a.id)
     const isSold = !!purchase
-    const bidCount = bidCountMap.get(w.id) || 0
-    const highestBidData = highestBidMap.get(w.id)
+    const bidCount = bidCountMap.get(a.id) || 0
+    const highestBidData = highestBidMap.get(a.id)
 
     // Berechne finalPrice schnell
-    let finalPrice = w.price
+    let finalPrice = a.price
     if (isSold && purchase) {
-      finalPrice = highestBidData?.amount || purchase.price || w.price
+      finalPrice = highestBidData?.amount || purchase.price || a.price
     } else if (highestBidData) {
       finalPrice = highestBidData.amount
     }
 
     // Berechne isActive schnell
-    const auctionEndDate = w.auctionEnd ? new Date(w.auctionEnd) : null
+    const auctionEndDate = a.auctionEnd ? new Date(a.auctionEnd) : null
     const isExpired = auctionEndDate ? auctionEndDate <= now : false
     const isActive = !isSold && (!auctionEndDate || !isExpired)
 
     return {
-      id: w.id,
-      articleNumber: w.articleNumber,
-      title: w.title,
-      brand: w.brand,
-      model: w.model,
-      price: w.price,
+      id: a.id,
+      articleNumber: a.articleNumber,
+      title: a.title,
+      brand: a.brand,
+      model: a.model,
+      price: a.price,
       images,
-      createdAt: w.createdAt.toISOString(),
+      createdAt: a.createdAt.toISOString(),
       isSold,
-      isAuction: w.isAuction || !!w.auctionEnd,
-      auctionEnd: w.auctionEnd ? w.auctionEnd.toISOString() : null,
+      isAuction: a.isAuction || !!a.auctionEnd,
+      auctionEnd: a.auctionEnd ? a.auctionEnd.toISOString() : null,
       highestBid: highestBidData
         ? {
             amount: highestBidData.amount,
@@ -167,7 +167,7 @@ async function loadItems(userId: string): Promise<Item[]> {
     }
   })
 
-  return watchesWithImages
+  return articlesWithImages
 }
 
 // isItemActive wird jetzt in ArticleListContent berechnet
@@ -232,13 +232,13 @@ export default async function MySellingPage() {
           </div>
 
           {/* OPTIMIERT: Direktes Rendering ohne Streaming für maximale Performance */}
-          <MySellingClient 
-            initialItems={items} 
+          <MySellingClient
+            initialItems={items}
             initialStats={{
               total: items.length,
               active: items.filter(item => item.isActive).length,
               inactive: items.filter(item => !item.isActive).length,
-            }} 
+            }}
           />
         </div>
       </div>
