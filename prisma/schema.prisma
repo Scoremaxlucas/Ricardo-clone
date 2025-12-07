@@ -198,6 +198,8 @@ model Watch {
 
   @@index([moderationStatus])
   @@index([createdAt])
+  @@index([sellerId]) // KRITISCH: Für schnelle Abfragen nach sellerId
+  @@index([sellerId, createdAt]) // OPTIMIERT: Für Sortierung nach createdAt bei sellerId-Filter
   @@map("watches")
 }
 
@@ -210,6 +212,8 @@ model Bid {
   user      User     @relation(fields: [userId], references: [id])
   watch     Watch    @relation(fields: [watchId], references: [id])
 
+  @@index([watchId]) // OPTIMIERT: Für schnelle Bid-Abfragen
+  @@index([watchId, amount]) // OPTIMIERT: Für Sortierung nach amount bei watchId-Filter
   @@map("bids")
 }
 
@@ -277,6 +281,8 @@ model Purchase {
   watch                          Watch        @relation(fields: [watchId], references: [id])
   reviews                        Review[]
 
+  @@index([watchId]) // OPTIMIERT: Für schnelle Purchase-Abfragen
+  @@index([watchId, status]) // OPTIMIERT: Für Filterung nach Status bei watchId-Filter
   @@map("purchases")
 }
 

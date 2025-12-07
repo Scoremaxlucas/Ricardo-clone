@@ -34,7 +34,7 @@ interface Item {
 }
 
 async function loadItems(userId: string): Promise<Item[]> {
-  // ULTRA-OPTIMIERT: Eine einzige optimierte Query mit minimalen Daten
+  // ULTRA-OPTIMIERT: Lade nur Basis-Daten, alles andere separat für maximale Performance
   const watches = await prisma.watch.findMany({
     where: { sellerId: userId },
     select: {
@@ -48,38 +48,70 @@ async function loadItems(userId: string): Promise<Item[]> {
       isAuction: true,
       auctionEnd: true,
       articleNumber: true,
-      // Nur erste nicht-stornierte Purchase für isSold-Check
-      purchases: {
-        where: {
-          status: { not: 'cancelled' },
-        },
-        select: {
-          id: true,
-          price: true,
-        },
-        take: 1,
-      },
-      // Nur höchstes Gebot
-      bids: {
-        select: {
-          amount: true,
-          createdAt: true,
-        },
-        orderBy: { amount: 'desc' },
-        take: 1,
-      },
-      // Counts für Statistiken
-      _count: {
-        select: {
-          purchases: true,
-          bids: true,
-        },
-      },
     },
     orderBy: { createdAt: 'desc' },
   })
 
-  // ULTRA-OPTIMIERT: Schnelle Verarbeitung
+  if (watches.length === 0) {
+    return []
+  }
+
+  const watchIds = watches.map(w => w.id)
+
+  // OPTIMIERT: Lade Purchases und Bids parallel für alle Watches auf einmal
+  const [purchases, bids, bidCounts] = await Promise.all([
+    // Nur nicht-stornierte Purchases für isSold-Check
+    prisma.purchase.findMany({
+      where: {
+        watchId: { in: watchIds },
+        status: { not: 'cancelled' },
+      },
+      select: {
+        watchId: true,
+        price: true,
+      },
+    }),
+    // Höchste Gebote pro Watch
+    prisma.bid.findMany({
+      where: {
+        watchId: { in: watchIds },
+      },
+      select: {
+        watchId: true,
+        amount: true,
+        createdAt: true,
+      },
+      orderBy: { amount: 'desc' },
+      // Verwende distinct in der Verarbeitung statt in der Query
+    }),
+    // Bid-Counts
+    prisma.bid.groupBy({
+      by: ['watchId'],
+      where: {
+        watchId: { in: watchIds },
+      },
+      _count: true,
+    }),
+  ])
+
+  // Erstelle Lookup-Maps für O(1) Zugriff
+  const purchaseMap = new Map<string, { price: number }>()
+  purchases.forEach(p => {
+    if (!purchaseMap.has(p.watchId)) {
+      purchaseMap.set(p.watchId, { price: p.price || 0 })
+    }
+  })
+
+  const highestBidMap = new Map<string, { amount: number; createdAt: Date }>()
+  bids.forEach(b => {
+    if (!highestBidMap.has(b.watchId) || highestBidMap.get(b.watchId)!.amount < b.amount) {
+      highestBidMap.set(b.watchId, { amount: b.amount, createdAt: b.createdAt })
+    }
+  })
+
+  const bidCountMap = new Map(bidCounts.map(b => [b.watchId, b._count]))
+
+  // ULTRA-OPTIMIERT: Schnelle Verarbeitung mit Lookup-Maps
   const now = new Date()
   const watchesWithImages = watches.map(w => {
     // Parse images schnell
@@ -90,24 +122,24 @@ async function loadItems(userId: string): Promise<Item[]> {
       images = []
     }
 
-    // Schnelle Prüfung ob verkauft
-    const isSold = w.purchases.length > 0
-    const bidCount = w._count?.bids || 0
-    const highestBid = w.bids?.[0] || null
+    // Schnelle Prüfung ob verkauft aus Map
+    const purchase = purchaseMap.get(w.id)
+    const isSold = !!purchase
+    const bidCount = bidCountMap.get(w.id) || 0
+    const highestBidData = highestBidMap.get(w.id)
 
     // Berechne finalPrice schnell
     let finalPrice = w.price
-    if (isSold && w.purchases[0]) {
-      finalPrice = highestBid?.amount || w.purchases[0].price || w.price
-    } else if (highestBid) {
-      finalPrice = highestBid.amount
+    if (isSold && purchase) {
+      finalPrice = highestBidData?.amount || purchase.price || w.price
+    } else if (highestBidData) {
+      finalPrice = highestBidData.amount
     }
 
     // Berechne isActive schnell
     const auctionEndDate = w.auctionEnd ? new Date(w.auctionEnd) : null
     const isExpired = auctionEndDate ? auctionEndDate <= now : false
-    const hasAnyPurchases = (w._count?.purchases || 0) > 0
-    const isActive = !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
+    const isActive = !isSold && (!auctionEndDate || !isExpired)
 
     return {
       id: w.id,
@@ -121,10 +153,10 @@ async function loadItems(userId: string): Promise<Item[]> {
       isSold,
       isAuction: w.isAuction || !!w.auctionEnd,
       auctionEnd: w.auctionEnd ? w.auctionEnd.toISOString() : null,
-      highestBid: highestBid
+      highestBid: highestBidData
         ? {
-            amount: highestBid.amount,
-            createdAt: highestBid.createdAt.toISOString(),
+            amount: highestBidData.amount,
+            createdAt: highestBidData.createdAt.toISOString(),
           }
         : null,
       bidCount,
