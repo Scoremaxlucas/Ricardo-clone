@@ -139,10 +139,7 @@ export function ProductPageClient({
                       />
                     )}
 
-                    {/* Zoom-Indikator */}
-                    {isZoomed && (
-                      <div className="pointer-events-none absolute inset-0 border-2 border-primary-500 bg-primary-500/10" />
-                    )}
+                    {/* Zoom-Indikator - Entfernt, da keine Verfärbung gewünscht */}
 
                     {/* Navigation Pfeile (wenn mehrere Bilder) */}
                     {images.length > 1 && (
