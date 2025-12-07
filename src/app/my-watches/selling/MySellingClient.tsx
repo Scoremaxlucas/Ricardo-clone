@@ -55,54 +55,8 @@ export function MySellingClient({ initialItems, initialStats }: MySellingClientP
   const [searchQuery, setSearchQuery] = useState('')
   const [loadingDetails, setLoadingDetails] = useState(false)
 
-  // OPTIMIERT: Lade Details (Purchases/Bids) nach dem initialen Render im Hintergrund
-  // Verwende requestIdleCallback für maximale Performance (lädt nur wenn Browser idle ist)
-  useEffect(() => {
-    if (initialItems.length === 0 || loadingDetails) return
-
-    const loadDetails = () => {
-      setLoadingDetails(true)
-      // Lade Details im Hintergrund ohne UI zu blockieren
-      fetch(`/api/articles/mine?activeOnly=false`)
-        .then(res => res.json())
-        .then(data => {
-          if (data.watches && Array.isArray(data.watches)) {
-            setItems(data.watches)
-            // Update stats
-            const activeCount = data.watches.filter((item: Item) => {
-              if (item.isActive !== undefined) return item.isActive
-              if (item.isSold) return false
-              if (item.isAuction && item.auctionEnd) {
-                const auctionEndDate = new Date(item.auctionEnd)
-                const now = new Date()
-                if (auctionEndDate <= now) return false
-              }
-              return true
-            }).length
-            setStats({
-              total: data.watches.length,
-              active: activeCount,
-              inactive: data.watches.length - activeCount,
-            })
-          }
-        })
-        .catch(() => {
-          // Ignoriere Fehler - initialItems sind bereits geladen
-        })
-        .finally(() => {
-          setLoadingDetails(false)
-        })
-    }
-
-    // OPTIMIERT: Warte bis Browser idle ist für maximale Performance
-    if ('requestIdleCallback' in window) {
-      requestIdleCallback(loadDetails, { timeout: 2000 })
-    } else {
-      // Fallback für Browser ohne requestIdleCallback
-      setTimeout(loadDetails, 100)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []) // Nur einmal beim Mount
+  // ENTFERNT: Details werden bereits in page.tsx geladen
+  // Keine zusätzliche Fetch-Anfrage nötig
 
   const isItemActive = (item: Item): boolean => {
     if (item.isActive !== undefined) {
