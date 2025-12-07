@@ -21,6 +21,9 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   // WICHTIG: Wenn initialProducts leer ist, lade sofort von API-Route
   useEffect(() => {
     if (initialProducts.length === 0) {
+      let retryCount = 0
+      const maxRetries = 3
+
       const loadProducts = async () => {
         try {
           setLoading(true)
@@ -47,16 +50,30 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 articleNumber: w.articleNumber || null,
               }))
               setProducts(transformedProducts)
+              setLoading(false)
+              return
             }
+          }
+          // Wenn keine Daten, retry wenn noch Versuche übrig
+          if (retryCount < maxRetries) {
+            retryCount++
+            setTimeout(() => {
+              loadProducts()
+            }, 2000)
+          } else {
+            setLoading(false)
           }
         } catch (error) {
           console.error('Error loading products from API:', error)
-          // Retry nach 2 Sekunden wenn Fehler
-          setTimeout(() => {
-            loadProducts()
-          }, 2000)
-        } finally {
-          setLoading(false)
+          // Retry nach 2 Sekunden wenn Fehler und noch Versuche übrig
+          if (retryCount < maxRetries) {
+            retryCount++
+            setTimeout(() => {
+              loadProducts()
+            }, 2000)
+          } else {
+            setLoading(false)
+          }
         }
       }
       loadProducts()
