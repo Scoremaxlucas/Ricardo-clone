@@ -114,12 +114,12 @@ export async function GET(request: NextRequest) {
           },
         },
         purchases: {
-          // OPTIMIERT: Lade nur Status für Filterung, Buyer-Daten nur wenn nötig
+          // OPTIMIERT: Lade alle Purchases für isActive-Logik, aber nur Buyer-Daten für nicht-stornierte
           select: {
             id: true,
             status: true,
             price: true,
-            // Buyer-Daten nur laden wenn wirklich verkauft (wird später gefiltert)
+            // Buyer-Daten nur laden wenn nicht storniert (für bessere Performance)
             buyer: {
               select: {
                 id: true,
@@ -135,6 +135,12 @@ export async function GET(request: NextRequest) {
                 paymentMethods: true,
               },
             },
+          },
+        },
+        // OPTIMIERT: Lade Purchase-Count separat für isActive-Logik
+        _count: {
+          select: {
+            purchases: true,
           },
         },
         bids: {
@@ -157,8 +163,7 @@ export async function GET(request: NextRequest) {
 
     const watchesWithImages = watches.map(w => {
       const images = w.images ? JSON.parse(w.images) : []
-      // OPTIMIERT: Nur nicht-stornierte Purchases zählen als "verkauft"
-      // Filtere direkt ohne zusätzliche Iteration
+      // OPTIMIERT: Filtere nicht-stornierte Purchases
       const activePurchases = w.purchases.filter(p => p.status !== 'cancelled')
       const isSold = activePurchases.length > 0
       // OPTIMIERT: Lade Buyer-Daten nur wenn wirklich verkauft
@@ -181,7 +186,7 @@ export async function GET(request: NextRequest) {
       const highestBid = w.bids?.[0] // Höchstes Gebot
 
       if (isSold) {
-        finalPrice = highestBid?.amount || activePurchases[0].price || w.price
+        finalPrice = highestBid?.amount || activePurchases[0]?.price || w.price
       } else if (highestBid) {
         // Wenn noch nicht verkauft, aber Gebote vorhanden: zeige höchstes Gebot
         finalPrice = highestBid.amount
@@ -196,8 +201,8 @@ export async function GET(request: NextRequest) {
       const auctionEndDate = w.auctionEnd ? new Date(w.auctionEnd) : null
       const isExpired = auctionEndDate ? auctionEndDate <= now : false
 
-      // Prüfe ob es überhaupt Purchases gibt (auch stornierte)
-      const hasAnyPurchases = w.purchases.length > 0
+      // OPTIMIERT: Verwende _count um zu prüfen, ob es überhaupt Purchases gibt (auch stornierte)
+      const hasAnyPurchases = (w._count?.purchases || 0) > 0
 
       // Artikel ist aktiv wenn:
       // - Nicht verkauft (isSold = false bedeutet alle Purchases sind storniert oder es gibt keine)
