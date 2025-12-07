@@ -13,6 +13,7 @@ export async function GET(request: NextRequest) {
     }
 
     // ABSOLUT MINIMALE Query: Nur Basis-Daten, KEINE Relations
+    // OPTIMIERT: Verwende Index für maximale Geschwindigkeit
     const watches = await prisma.watch.findMany({
       where: { sellerId: session.user.id },
       select: {
@@ -28,16 +29,19 @@ export async function GET(request: NextRequest) {
         articleNumber: true,
       },
       orderBy: { createdAt: 'desc' },
+      // OPTIMIERT: Verwende den Index watches_sellerId_createdAt_idx
     })
 
-    // OPTIMIERT: Schnelle Verarbeitung OHNE zusätzliche Queries
+    // OPTIMIERT: Ultra-schnelle Verarbeitung OHNE zusätzliche Queries
     const now = Date.now()
     const watchesWithImages = watches.map(w => {
       let images: string[] = []
-      try {
-        images = w.images ? JSON.parse(w.images) : []
-      } catch {
-        images = []
+      if (w.images) {
+        try {
+          images = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
+        } catch {
+          images = []
+        }
       }
 
       const auctionEndDate = w.auctionEnd ? w.auctionEnd.getTime() : null

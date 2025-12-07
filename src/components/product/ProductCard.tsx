@@ -567,11 +567,11 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Zusätzliche Details - Brand beim Hover, Condition immer sichtbar */}
+        {/* Zusätzliche Details - Brand IMMER sichtbar, Condition immer sichtbar */}
         <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600">
-          {/* Brand - Nur beim Hover */}
+          {/* Brand - IMMER sichtbar */}
           {product.brand && (
-            <span className="text-primary-600 font-medium opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <span className="text-primary-600 font-medium">
               {product.brand}
             </span>
           )}
