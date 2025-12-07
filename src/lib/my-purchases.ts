@@ -1,0 +1,195 @@
+import { prisma } from '@/lib/prisma'
+
+export interface MyPurchaseItem {
+  id: string
+  purchasedAt: string
+  shippingMethod: string | null
+  paid: boolean
+  status: string
+  itemReceived: boolean
+  itemReceivedAt: string | null
+  paymentConfirmed: boolean
+  paymentConfirmedAt: string | null
+  contactDeadline: string | null
+  sellerContactedAt: string | null
+  buyerContactedAt: string | null
+  contactWarningSentAt: string | null
+  contactDeadlineMissed: boolean
+  paymentDeadline: string | null
+  paymentReminderSentAt: string | null
+  paymentDeadlineMissed: boolean
+  disputeOpenedAt: string | null
+  disputeReason: string | null
+  disputeStatus: string | null
+  disputeResolvedAt: string | null
+  trackingNumber?: string | null
+  trackingProvider?: string | null
+  shippedAt?: string | null
+  watch: {
+    id: string
+    title: string
+    brand: string
+    model: string
+    images: string[]
+    seller: {
+      id: string
+      name: string | null
+      email: string | null
+      phone: string | null
+      firstName: string | null
+      lastName: string | null
+      street: string | null
+      streetNumber: string | null
+      postalCode: string | null
+      city: string | null
+      paymentMethods: string | null
+    }
+    price: number
+    finalPrice: number
+    purchaseType: 'auction' | 'buy-now'
+  }
+}
+
+/**
+ * Fetch user's purchases server-side for instant rendering
+ * OPTIMIZED: Minimal queries, no N+1 problem
+ */
+export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> {
+  // OPTIMIERT: Lade Purchases mit Watch und Seller in einer Query
+  // bids werden nur für finalPrice benötigt - lade nur höchstes Gebot pro Watch
+  const purchases = await prisma.purchase.findMany({
+    where: {
+      buyerId: userId,
+      status: { not: 'cancelled' },
+    },
+    select: {
+      id: true,
+      price: true,
+      createdAt: true,
+      shippingMethod: true,
+      paymentConfirmed: true,
+      paid: true,
+      status: true,
+      itemReceived: true,
+      itemReceivedAt: true,
+      paymentConfirmedAt: true,
+      contactDeadline: true,
+      sellerContactedAt: true,
+      buyerContactedAt: true,
+      contactWarningSentAt: true,
+      contactDeadlineMissed: true,
+      paymentDeadline: true,
+      paymentReminderSentAt: true,
+      paymentDeadlineMissed: true,
+      disputeOpenedAt: true,
+      disputeReason: true,
+      disputeStatus: true,
+      disputeResolvedAt: true,
+      trackingNumber: true,
+      trackingProvider: true,
+      shippedAt: true,
+      watch: {
+        select: {
+          id: true,
+          title: true,
+          brand: true,
+          model: true,
+          images: true,
+          price: true,
+          buyNowPrice: true,
+          shippingMethod: true,
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              phone: true,
+              firstName: true,
+              lastName: true,
+              street: true,
+              streetNumber: true,
+              postalCode: true,
+              city: true,
+              paymentMethods: true,
+            },
+          },
+          bids: {
+            select: {
+              amount: true,
+            },
+            orderBy: { amount: 'desc' },
+            take: 1, // Nur höchstes Gebot für finalPrice
+          },
+        },
+      },
+    },
+    orderBy: { createdAt: 'desc' },
+  })
+
+  return purchases.map(purchase => {
+    const watch = purchase.watch
+
+    // Parse images
+    let images: string[] = []
+    if (watch.images) {
+      try {
+        if (typeof watch.images === 'string') {
+          if (watch.images.startsWith('[') || watch.images.startsWith('{')) {
+            images = JSON.parse(watch.images)
+          } else {
+            images = watch.images.split(',').filter(img => img.trim().length > 0)
+          }
+        } else if (Array.isArray(watch.images)) {
+          images = watch.images
+        }
+      } catch {
+        images = []
+      }
+    }
+
+    const winningBid = watch.bids?.[0]
+    const finalPrice = winningBid?.amount || purchase.price || watch.price || 0
+    const isBuyNow =
+      watch.buyNowPrice && winningBid && winningBid.amount === watch.buyNowPrice
+    const purchaseType = isBuyNow ? 'buy-now' : winningBid ? 'auction' : 'buy-now'
+
+    return {
+      id: purchase.id,
+      purchasedAt: purchase.createdAt.toISOString(),
+      shippingMethod: purchase.shippingMethod || watch.shippingMethod || null,
+      paid: purchase.paymentConfirmed || purchase.paid || false,
+      status: purchase.status || 'pending',
+      itemReceived: purchase.itemReceived || false,
+      itemReceivedAt: purchase.itemReceivedAt?.toISOString() || null,
+      paymentConfirmed: purchase.paymentConfirmed || false,
+      paymentConfirmedAt: purchase.paymentConfirmedAt?.toISOString() || null,
+      contactDeadline: purchase.contactDeadline?.toISOString() || null,
+      sellerContactedAt: purchase.sellerContactedAt?.toISOString() || null,
+      buyerContactedAt: purchase.buyerContactedAt?.toISOString() || null,
+      contactWarningSentAt: purchase.contactWarningSentAt?.toISOString() || null,
+      contactDeadlineMissed: purchase.contactDeadlineMissed || false,
+      paymentDeadline: purchase.paymentDeadline?.toISOString() || null,
+      paymentReminderSentAt: purchase.paymentReminderSentAt?.toISOString() || null,
+      paymentDeadlineMissed: purchase.paymentDeadlineMissed || false,
+      disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
+      disputeReason: purchase.disputeReason || null,
+      disputeStatus: purchase.disputeStatus || null,
+      disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
+      trackingNumber: purchase.trackingNumber || null,
+      trackingProvider: purchase.trackingProvider || null,
+      shippedAt: purchase.shippedAt?.toISOString() || null,
+      watch: {
+        id: watch.id,
+        title: watch.title || 'Unbekanntes Produkt',
+        brand: watch.brand || '',
+        model: watch.model || '',
+        images: images || [],
+        seller: watch.seller || null,
+        price: watch.price || 0,
+        finalPrice,
+        purchaseType,
+      },
+    }
+  })
+}
+
