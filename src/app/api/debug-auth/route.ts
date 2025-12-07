@@ -85,12 +85,12 @@ export async function POST(request: NextRequest) {
     }
 
     // WICHTIG: Mehrere Passwort-Validierungsstrategien (wie in auth.ts)
-    const passwordIsHashed = 
-      user.password.startsWith('$2a$') || 
-      user.password.startsWith('$2b$') || 
+    const passwordIsHashed =
+      user.password.startsWith('$2a$') ||
+      user.password.startsWith('$2b$') ||
       user.password.startsWith('$2y$') ||
       user.password.startsWith('$2x$')
-    
+
     let passwordValid = false
 
     // Versuche zuerst bcrypt, dann direkten Vergleich
