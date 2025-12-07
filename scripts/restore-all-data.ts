@@ -132,9 +132,35 @@ async function main() {
   })
   console.log(`✅ Gregor user restored: ${gregor.email}`)
 
-  // 4. Restore Lucas8122 User
+  // 4. Restore Lucas8122 User (handle both uppercase and lowercase versions)
   console.log('👤 Restoring Lucas8122 user...')
   const lucas8122Password = await bcrypt.hash('test123', 12)
+  
+  // Update both versions if they exist (email normalization handles case)
+  const lowercaseLucas8122 = await prisma.user.findUnique({
+    where: { email: 'lugas8122@gmail.com' },
+  })
+  const uppercaseLucas8122 = await prisma.user.findUnique({
+    where: { email: 'Lugas8122@gmail.com' },
+  })
+  
+  // Update whichever exists (or create uppercase version)
+  if (lowercaseLucas8122) {
+    await prisma.user.update({
+      where: { email: 'lugas8122@gmail.com' },
+      data: {
+        password: lucas8122Password,
+        isBlocked: false,
+        blockedAt: null,
+        blockedReason: null,
+        emailVerified: true,
+        verified: true,
+        verificationStatus: 'approved',
+      },
+    })
+    console.log(`✅ Lucas8122 user restored (lowercase): lugas8122@gmail.com`)
+  }
+  
   const lucas8122 = await prisma.user.upsert({
     where: { email: 'Lugas8122@gmail.com' },
     update: {
@@ -158,11 +184,39 @@ async function main() {
       verificationStatus: 'approved',
     },
   })
-  console.log(`✅ Lucas8122 user restored: ${lucas8122.email}`)
+  if (!lowercaseLucas8122) {
+    console.log(`✅ Lucas8122 user restored: ${lucas8122.email}`)
+  }
 
-  // 5. Restore Lucas8118 User
+  // 5. Restore Lucas8118 User (handle both uppercase and lowercase versions)
   console.log('👤 Restoring Lucas8118 user...')
   const lucas8118Password = await bcrypt.hash('test123', 12)
+  
+  // Update both versions if they exist (email normalization handles case)
+  const lowercaseLucas8118 = await prisma.user.findUnique({
+    where: { email: 'lolcas8118@gmail.com' },
+  })
+  const uppercaseLucas8118 = await prisma.user.findUnique({
+    where: { email: 'Lolcas8118@gmail.com' },
+  })
+  
+  // Update whichever exists (or create uppercase version)
+  if (lowercaseLucas8118) {
+    await prisma.user.update({
+      where: { email: 'lolcas8118@gmail.com' },
+      data: {
+        password: lucas8118Password,
+        isBlocked: false,
+        blockedAt: null,
+        blockedReason: null,
+        emailVerified: true,
+        verified: true,
+        verificationStatus: 'approved',
+      },
+    })
+    console.log(`✅ Lucas8118 user restored (lowercase): lolcas8118@gmail.com`)
+  }
+  
   const lucas8118 = await prisma.user.upsert({
     where: { email: 'Lolcas8118@gmail.com' },
     update: {
@@ -186,7 +240,9 @@ async function main() {
       verificationStatus: 'approved',
     },
   })
-  console.log(`✅ Lucas8118 user restored: ${lucas8118.email}`)
+  if (!lowercaseLucas8118) {
+    console.log(`✅ Lucas8118 user restored: ${lucas8118.email}`)
+  }
 
   // 6. Restore all other users that might exist but have no password
   console.log('\n👤 Restoring other users without passwords...')
@@ -271,8 +327,40 @@ async function main() {
   const existingWatches = await prisma.watch.count()
   console.log(`\n📦 Found ${existingWatches} existing products`)
 
-  // 9. Create test products if none exist
-  if (existingWatches === 0) {
+  // 9. Always create/restore test products (even if some exist)
+  // This ensures products are available for testing
+  console.log('📦 Creating/restoring test products...')
+  
+  // Check if we have categories, if not create them first
+  if (categories.length === 0) {
+    try {
+      categories = await Promise.all([
+        prisma.category.upsert({
+          where: { name: 'Rolex' },
+          update: {},
+          create: { name: 'Rolex', slug: 'rolex' },
+        }),
+        prisma.category.upsert({
+          where: { name: 'Omega' },
+          update: {},
+          create: { name: 'Omega', slug: 'omega' },
+        }),
+        prisma.category.upsert({
+          where: { name: 'Vintage' },
+          update: {},
+          create: { name: 'Vintage', slug: 'vintage' },
+        }),
+      ])
+      console.log(`✅ Created ${categories.length} categories for products`)
+    } catch (e) {
+      console.log('⚠️  Could not create categories, trying to fetch existing...')
+      categories = await prisma.category.findMany({
+        where: { name: { in: ['Rolex', 'Omega', 'Vintage'] } },
+      })
+    }
+  }
+  
+  if (categories.length >= 3) {
     console.log('📦 Creating test products...')
 
     const watch1 = await prisma.watch.create({
@@ -343,6 +431,8 @@ async function main() {
     })
 
     console.log('✅ Test products created')
+  } else {
+    console.log('⚠️  Could not create products - categories not available')
   }
 
   // 10. List all users
