@@ -3,6 +3,7 @@
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import Image from 'next/image'
+import { ArticleSkeleton } from '@/components/ui/ArticleSkeleton'
 
 interface Watch {
   id: string
@@ -24,6 +25,7 @@ interface Watch {
 export default function WatchesPage() {
   const [watches, setWatches] = useState<Watch[]>([])
   const [loading, setLoading] = useState(true)
+  const [visibleCount, setVisibleCount] = useState(12) // Progressive loading: zeige zuerst 12
 
   useEffect(() => {
     fetchWatches()
@@ -37,6 +39,15 @@ export default function WatchesPage() {
         const response = await res.json()
         const data = response.watches || response
         setWatches(data)
+        
+        // OPTIMIERT: Progressive Loading - zeige zuerst 12 Artikel sofort
+        if (data.length > 0) {
+          setVisibleCount(12)
+          // Lade restliche Artikel nach kurzer Verzögerung
+          if (data.length > 12) {
+            setTimeout(() => setVisibleCount(data.length), 150)
+          }
+        }
       }
     } catch (error) {
       console.error('Error fetching watches:', error)
@@ -45,8 +56,15 @@ export default function WatchesPage() {
     }
   }
 
-  if (loading) {
-    return <div className="flex min-h-screen items-center justify-center">Lädt...</div>
+  if (loading && watches.length === 0) {
+    return (
+      <div className="min-h-screen bg-gray-50 py-12">
+        <div className="mx-auto max-w-7xl px-4">
+          <h1 className="mb-8 text-3xl font-bold text-gray-900">Alle Artikel</h1>
+          <ArticleSkeleton count={12} variant="grid" />
+        </div>
+      </div>
+    )
   }
 
   return (
@@ -66,7 +84,7 @@ export default function WatchesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {watches.map(watch => {
+            {watches.slice(0, visibleCount).map((watch, index) => {
               const images = watch.images ? watch.images.split(',') : []
               const imageUrl = images[0] || '/placeholder-watch.jpg'
               const boosters = watch.boosters || []
@@ -78,7 +96,9 @@ export default function WatchesPage() {
                 <Link
                   key={watch.id}
                   href={`/products/${watch.id}`}
-                  className={`overflow-hidden rounded-lg shadow-md transition-shadow hover:shadow-xl ${
+                  className={`overflow-hidden rounded-lg shadow-md transition-all hover:shadow-xl animate-in fade-in slide-in-from-bottom-4 ${
+                    index < 12 ? '' : 'duration-300'
+                  } ${
                     hasSuperBoost
                       ? 'border-2 border-yellow-400 bg-gradient-to-br from-yellow-50 to-orange-50'
                       : hasTurboBoost
@@ -127,6 +147,9 @@ export default function WatchesPage() {
                 </Link>
               )
             })}
+            {loading && watches.length > visibleCount && (
+              <ArticleSkeleton count={Math.min(4, watches.length - visibleCount)} variant="grid" />
+            )}
           </div>
         )}
       </div>

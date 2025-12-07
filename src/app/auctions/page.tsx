@@ -3,6 +3,7 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { ProductCard } from '@/components/ui/ProductCard'
+import { ArticleSkeleton } from '@/components/ui/ArticleSkeleton'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Gavel, Grid3x3, List } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -33,6 +34,7 @@ export default function AuctionsPage() {
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [sortBy, setSortBy] = useState<'newest' | 'ending' | 'price' | 'bids'>('ending')
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [visibleCount, setVisibleCount] = useState(12) // Progressive loading
 
   useEffect(() => {
     const fetchAuctions = async () => {
@@ -98,6 +100,15 @@ export default function AuctionsPage() {
           })
 
           setWatches(auctions)
+          
+          // OPTIMIERT: Progressive Loading - zeige zuerst 12 Artikel sofort
+          if (auctions.length > 0) {
+            setVisibleCount(12)
+            // Lade restliche Artikel nach kurzer Verzögerung
+            if (auctions.length > 12) {
+              setTimeout(() => setVisibleCount(auctions.length), 150)
+            }
+          }
         }
       } catch (error) {
         console.error('Error fetching auctions:', error)
@@ -191,12 +202,9 @@ export default function AuctionsPage() {
         </div>
 
         {/* Results */}
-        {loading ? (
-          <div className="flex items-center justify-center py-20">
-            <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-              <p className="text-gray-600">{t.search.loadingResults}</p>
-            </div>
+        {loading && watches.length === 0 ? (
+          <div className="py-8">
+            <ArticleSkeleton count={12} variant={viewMode} />
           </div>
         ) : watches.length === 0 ? (
           <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
@@ -213,7 +221,7 @@ export default function AuctionsPage() {
         ) : viewMode === 'grid' ? (
           // GRID ANSICHT - Verwende ProductCard für Konsistenz
           <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 md:grid-cols-4 md:gap-3 lg:grid-cols-5 xl:grid-cols-6">
-            {watches.map(w => (
+            {watches.slice(0, visibleCount).map((w, index) => (
               <ProductCard
                 key={w.id}
                 id={w.id}
@@ -241,30 +249,38 @@ export default function AuctionsPage() {
                   })
                 }}
               />
+              </div>
             ))}
+            {loading && watches.length > visibleCount && (
+              <ArticleSkeleton count={Math.min(4, watches.length - visibleCount)} variant="grid" />
+            )}
           </div>
         ) : (
           // LIST ANSICHT - Verwende ProductCard mit variant="list"
           <div className="space-y-3">
-            {watches.map(w => (
-              <ProductCard
-                key={w.id}
-                id={w.id}
-                title={w.title}
-                brand={w.brand}
-                price={w.price}
-                images={w.images}
-                city={w.city}
-                postalCode={w.postalCode}
-                auctionEnd={w.auctionEnd}
-                buyNowPrice={w.buyNowPrice}
-                isAuction={w.isAuction}
-                bids={w.bids}
-                boosters={w.boosters}
-                variant="list"
-                showBuyNowButton={true}
-              />
+            {watches.slice(0, visibleCount).map((w, index) => (
+              <div key={w.id} className={`animate-in fade-in slide-in-from-bottom-4 ${index < 12 ? '' : 'duration-300'}`}>
+                <ProductCard
+                  id={w.id}
+                  title={w.title}
+                  brand={w.brand}
+                  price={w.price}
+                  images={w.images}
+                  city={w.city}
+                  postalCode={w.postalCode}
+                  auctionEnd={w.auctionEnd}
+                  buyNowPrice={w.buyNowPrice}
+                  isAuction={w.isAuction}
+                  bids={w.bids}
+                  boosters={w.boosters}
+                  variant="list"
+                  showBuyNowButton={true}
+                />
+              </div>
             ))}
+            {loading && watches.length > visibleCount && (
+              <ArticleSkeleton count={Math.min(4, watches.length - visibleCount)} variant="list" />
+            )}
           </div>
         )}
       </div>

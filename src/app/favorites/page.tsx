@@ -46,7 +46,7 @@ export default function FavoritesPage() {
       if (response.ok) {
         const data = await response.json()
         const watches = data.watches || []
-        
+
         // Transformiere zu Product-Format
         const products: Product[] = watches.map((w: any) => ({
           id: w.id,
@@ -59,7 +59,7 @@ export default function FavoritesPage() {
           isAuction: w.isAuction || false,
           currentBid: w.price, // Bei Auktionen ist price bereits der aktuelle Preis
         }))
-        
+
         setFavorites(products)
       }
     } catch (error) {
