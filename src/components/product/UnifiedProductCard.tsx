@@ -88,12 +88,13 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
     : false
 
   // Format price
+  // WICHTIG: Immer 2 Dezimalstellen anzeigen, damit Preise wie CHF 1.80 korrekt angezeigt werden
   const formatPrice = useCallback((price: number) => {
     return new Intl.NumberFormat('de-CH', {
       style: 'currency',
       currency: 'CHF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(price)
   }, [])
 

@@ -77,8 +77,12 @@ export function ModernProductCard({
     }
   }
 
+  // WICHTIG: Immer 2 Dezimalstellen anzeigen, damit Preise wie CHF 1.80 korrekt angezeigt werden
   const formatPrice = (price: number) => {
-    return `CHF ${new Intl.NumberFormat('de-CH').format(price)}`
+    return `CHF ${new Intl.NumberFormat('de-CH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(price)}`
   }
 
   const formatAuctionEnd = (endDate: string) => {
