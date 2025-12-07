@@ -45,19 +45,32 @@ export default function MySellingPage() {
     }
 
     // OPTIMIERT: Lade Daten SOFORT im Client mit ultra-schneller API
+    // OPTIMIERT: Verwende AbortController für Timeout-Schutz
     const loadData = async () => {
       try {
         setLoading(true)
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 2000) // 2s Timeout
+        
         // Verwende die schnelle API-Route die nur Basis-Daten lädt
-        const res = await fetch(`/api/articles/mine-fast`)
+        const res = await fetch(`/api/articles/mine-fast`, {
+          signal: controller.signal,
+          cache: 'no-store', // Kein Caching für sofortige Updates
+        })
+        
+        clearTimeout(timeoutId)
+        
         if (res.ok) {
           const data = await res.json()
           if (data.watches && Array.isArray(data.watches)) {
             setItems(data.watches)
           }
         }
-      } catch (error) {
-        console.error('Error loading articles:', error)
+      } catch (error: any) {
+        if (error.name !== 'AbortError') {
+          console.error('Error loading articles:', error)
+        }
+        // Bei Timeout: Zeige leere Liste, wird später nachgeladen
       } finally {
         setLoading(false)
       }
