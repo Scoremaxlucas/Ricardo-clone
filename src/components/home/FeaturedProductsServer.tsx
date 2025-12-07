@@ -165,6 +165,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 city={product.city ?? undefined}
                 postalCode={product.postalCode ?? undefined}
                 boosters={product.boosters}
+                href={product.href} // WICHTIG: Verwende expliziten href, falls vorhanden
                 showCondition={true}
                 showViewButton={true}
                 viewButtonText={t.home.viewOffer}

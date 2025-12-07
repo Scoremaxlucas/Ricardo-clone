@@ -122,7 +122,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
     // WICHTIG: Verwende articleNumber für Link, falls vorhanden, sonst CUID
     // Dies stellt sicher, dass Produkte korrekt verlinkt sind
     const productId = w.articleNumber ? w.articleNumber.toString() : w.id
-    
+
     return {
       id: w.id, // Behalte CUID für interne Verwendung
       title: w.title || '',
