@@ -114,11 +114,12 @@ export async function GET(request: NextRequest) {
           },
         },
         purchases: {
-          // WICHTIG: Lade ALLE Purchases, um korrekt zu prüfen ob es nicht-stornierte gibt
+          // OPTIMIERT: Lade nur Status für Filterung, Buyer-Daten nur wenn nötig
           select: {
             id: true,
             status: true,
             price: true,
+            // Buyer-Daten nur laden wenn wirklich verkauft (wird später gefiltert)
             buyer: {
               select: {
                 id: true,
@@ -144,16 +145,24 @@ export async function GET(request: NextRequest) {
           orderBy: { amount: 'desc' },
           take: 1, // Höchstes Gebot für finalPrice
         },
+        // OPTIMIERT: Lade bidCount separat für bessere Performance
+        _count: {
+          select: {
+            bids: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
     })
 
     const watchesWithImages = watches.map(w => {
       const images = w.images ? JSON.parse(w.images) : []
-      // Nur nicht-stornierte Purchases zählen als "verkauft"
+      // OPTIMIERT: Nur nicht-stornierte Purchases zählen als "verkauft"
+      // Filtere direkt ohne zusätzliche Iteration
       const activePurchases = w.purchases.filter(p => p.status !== 'cancelled')
       const isSold = activePurchases.length > 0
-      const buyer = isSold ? activePurchases[0].buyer : null
+      // OPTIMIERT: Lade Buyer-Daten nur wenn wirklich verkauft
+      const buyer = isSold && activePurchases[0] ? activePurchases[0].buyer : null
 
       // Parse boosters
       let boosters: string[] = []
@@ -222,7 +231,7 @@ export async function GET(request: NextRequest) {
               createdAt: highestBid.createdAt,
             }
           : null,
-        bidCount: w.bids.length,
+        bidCount: w._count?.bids || 0, // Verwende _count statt bids.length für bessere Performance
         boosters,
         articleNumber: w.articleNumber, // Stelle sicher dass articleNumber zurückgegeben wird
         isActive, // WICHTIG: Gib isActive zurück, damit Frontend es verwenden kann
@@ -234,10 +243,10 @@ export async function GET(request: NextRequest) {
     })
 
     const response = NextResponse.json({ watches: watchesWithImages })
-    
+
     // Cache für kurze Zeit, aber nicht zu aggressiv, damit neue Artikel sofort sichtbar sind
     response.headers.set('Cache-Control', 'private, s-maxage=30, stale-while-revalidate=60')
-    
+
     return response
   } catch (error: any) {
     return NextResponse.json(

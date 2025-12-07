@@ -91,6 +91,29 @@ export default function MySellingPage() {
     try {
       setLoading(true)
 
+      // OPTIMIERT: Lade Artikel SOFORT, ohne auf andere Requests zu warten
+      const fetchPromise = fetch(`/api/articles/mine?t=${Date.now()}`)
+        .then(res => res.json())
+        .then(data => {
+          const itemsList = Array.isArray(data.watches) ? data.watches : []
+          setItems(itemsList)
+
+          // Berechne Statistiken
+          const activeCount = itemsList.filter((w: Item) => isItemActive(w)).length
+          const inactiveCount = itemsList.length - activeCount
+
+          setStats({
+            total: itemsList.length,
+            active: activeCount,
+            inactive: inactiveCount,
+          })
+          setLoading(false)
+        })
+        .catch(error => {
+          console.error('Error loading items:', error)
+          setLoading(false)
+        })
+
       // Prüfe und verarbeite abgelaufene Auktionen automatisch (NICHT-BLOCKIEREND im Hintergrund)
       // Dies sollte nicht das Laden der Artikel verzögern
       fetch('/api/auctions/check-expired', {
@@ -101,24 +124,10 @@ export default function MySellingPage() {
         // Fehler ignorieren, da dies nicht kritisch ist
       })
 
-      // Lade ALLE Artikel (nicht nur aktive) - PRIORITÄT
-      const res = await fetch(`/api/articles/mine?t=${Date.now()}`)
-      const data = await res.json()
-      const itemsList = Array.isArray(data.watches) ? data.watches : []
-      setItems(itemsList)
-
-      // Berechne Statistiken
-      const activeCount = itemsList.filter((w: Item) => isItemActive(w)).length
-      const inactiveCount = itemsList.length - activeCount
-
-      setStats({
-        total: itemsList.length,
-        active: activeCount,
-        inactive: inactiveCount,
-      })
+      // Warte auf Artikel-Laden (aber nicht auf Auktionen-Prüfung)
+      await fetchPromise
     } catch (error) {
       console.error('Error loading items:', error)
-    } finally {
       setLoading(false)
     }
   }
@@ -185,7 +194,9 @@ export default function MySellingPage() {
     }
   }
 
-  if (status === 'loading' || loading) {
+  // OPTIMIERT: Zeige Seite sofort, auch während des Ladens
+  // Nur wenn Session noch lädt, zeige Loading-Screen
+  if (status === 'loading') {
     return (
       <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
@@ -357,7 +368,12 @@ export default function MySellingPage() {
           </div>
 
           {/* Artikel-Liste */}
-          {filteredItems.length === 0 ? (
+          {loading ? (
+            <div className="rounded-lg bg-white p-12 text-center shadow-md">
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+              <p className="mt-4 text-gray-600">Artikel werden geladen...</p>
+            </div>
+          ) : filteredItems.length === 0 ? (
             <div className="rounded-lg bg-white p-12 text-center shadow-md">
               <Package className="mx-auto mb-4 h-16 w-16 text-gray-400" />
               <h3 className="mb-2 text-lg font-semibold text-gray-900">{t.myWatches.noItems}</h3>
