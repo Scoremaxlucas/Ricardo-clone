@@ -56,31 +56,36 @@ async function loadItems(userId: string): Promise<Item[]> {
       articleNumber: true,
     },
     orderBy: { createdAt: 'desc' },
-    take: 50, // OPTIMIERT: Limit für maximale Geschwindigkeit
+    take: 20, // ULTRA-OPTIMIERT: Stark reduziertes Limit für sofortiges Laden
   })
 
   if (articles.length === 0) {
     return []
   }
 
-  // OPTIMIERT: Schnelle Verarbeitung OHNE zusätzliche Queries
+  // OPTIMIERT: Ultra-schnelle Verarbeitung OHNE zusätzliche Queries
   // Setze Default-Werte - Details werden später im Client nachgeladen wenn nötig
-  const now = new Date()
-  const articlesWithImages = articles.map(a => {
-    // Parse images schnell
+  const now = Date.now() // Verwende timestamp statt Date-Objekt für bessere Performance
+  const articlesWithImages: Item[] = []
+  
+  // OPTIMIERT: Verwende for-Schleife statt map für bessere Performance bei kleinen Arrays
+  for (const a of articles) {
+    // Parse images schnell (nur wenn nötig)
     let images: string[] = []
-    try {
-      images = a.images ? JSON.parse(a.images) : []
-    } catch {
-      images = []
+    if (a.images) {
+      try {
+        images = JSON.parse(a.images)
+      } catch {
+        images = []
+      }
     }
 
     // Berechne isActive schnell (ohne Purchase-Check für maximale Geschwindigkeit)
-    const auctionEndDate = a.auctionEnd ? new Date(a.auctionEnd) : null
+    const auctionEndDate = a.auctionEnd ? a.auctionEnd.getTime() : null
     const isExpired = auctionEndDate ? auctionEndDate <= now : false
     const isActive = !auctionEndDate || !isExpired
 
-    return {
+    articlesWithImages.push({
       id: a.id,
       articleNumber: a.articleNumber,
       title: a.title,
@@ -96,8 +101,8 @@ async function loadItems(userId: string): Promise<Item[]> {
       bidCount: 0, // Wird später im Client nachgeladen wenn nötig
       finalPrice: a.price, // Standard-Preis, wird später aktualisiert wenn nötig
       isActive,
-    }
-  })
+    })
+  }
 
   return articlesWithImages
 }
@@ -107,10 +112,10 @@ async function loadItems(userId: string): Promise<Item[]> {
 export default async function MySellingPage() {
   // OPTIMIERT: Starte Session-Check und Daten-Laden parallel
   const sessionPromise = getServerSession(authOptions)
-  
+
   // Warte auf Session, dann lade Daten
   const session = await sessionPromise
-  
+
   if (!session?.user?.id) {
     redirect('/login?callbackUrl=/my-watches/selling')
   }
