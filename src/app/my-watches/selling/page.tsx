@@ -8,6 +8,10 @@ import { MySellingClient } from './MySellingClient'
 import Link from 'next/link'
 import { Package, Plus } from 'lucide-react'
 
+// OPTIMIERT: Force dynamic rendering für sofortiges Laden
+export const dynamic = 'force-dynamic'
+export const revalidate = 0 // Kein Caching für sofortige Updates
+
 interface Item {
   id: string
   articleNumber: number | null
@@ -30,10 +34,9 @@ interface Item {
 }
 
 async function loadItems(userId: string): Promise<Item[]> {
-  const whereClause: any = { sellerId: userId }
-
+  // OPTIMIERT: Minimale Query - nur absolut notwendige Felder
   const watches = await prisma.watch.findMany({
-    where: whereClause,
+    where: { sellerId: userId },
     select: {
       id: true,
       title: true,
@@ -45,36 +48,17 @@ async function loadItems(userId: string): Promise<Item[]> {
       isAuction: true,
       auctionEnd: true,
       articleNumber: true,
-      boosters: true,
-      seller: {
-        select: {
-          id: true,
-          name: true,
-          city: true,
-          postalCode: true,
-        },
-      },
+      // boosters entfernt - werden nicht benötigt für die Liste
+      // Seller-Daten entfernt - werden nicht benötigt
       purchases: {
+        // OPTIMIERT: Lade nur Status und Price - Buyer-Daten werden nicht benötigt für die Liste
+        // Limit auf 1 für maximale Performance (nur prüfen ob verkauft)
         select: {
           id: true,
           status: true,
           price: true,
-          buyer: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-              street: true,
-              streetNumber: true,
-              postalCode: true,
-              city: true,
-              phone: true,
-              paymentMethods: true,
-            },
-          },
         },
+        take: 1, // OPTIMIERT: Nur erste Purchase laden für isSold-Check
       },
       bids: {
         select: {
@@ -94,21 +78,31 @@ async function loadItems(userId: string): Promise<Item[]> {
     orderBy: { createdAt: 'desc' },
   })
 
+  // OPTIMIERT: Vereinfachte Verarbeitung für maximale Performance
+  const now = new Date()
   const watchesWithImages = watches.map(w => {
-    const images = w.images ? JSON.parse(w.images) : []
+    // Parse images nur wenn nötig
+    let images: string[] = []
+    try {
+      images = w.images ? JSON.parse(w.images) : []
+    } catch {
+      images = []
+    }
+
+    // Schnelle Prüfung ob verkauft
     const activePurchases = w.purchases.filter(p => p.status !== 'cancelled')
     const isSold = activePurchases.length > 0
 
+    // Berechne finalPrice schnell
     let finalPrice = w.price
     const highestBid = w.bids?.[0]
-
-    if (isSold) {
-      finalPrice = highestBid?.amount || activePurchases[0]?.price || w.price
+    if (isSold && activePurchases[0]) {
+      finalPrice = highestBid?.amount || activePurchases[0].price || w.price
     } else if (highestBid) {
       finalPrice = highestBid.amount
     }
 
-    const now = new Date()
+    // Berechne isActive schnell
     const auctionEndDate = w.auctionEnd ? new Date(w.auctionEnd) : null
     const isExpired = auctionEndDate ? auctionEndDate <= now : false
     const hasAnyPurchases = (w._count?.purchases || 0) > 0
