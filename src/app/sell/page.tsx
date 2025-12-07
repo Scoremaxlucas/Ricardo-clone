@@ -20,6 +20,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
+import { compressImage } from '@/lib/image-compression'
 
 // Lazy load AIDetection to avoid bundling TensorFlow.js on every page
 const AIDetection = dynamic(
@@ -146,52 +147,86 @@ export default function SellPage() {
     })
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     const newImages: string[] = []
-    let loadedCount = 0
+    const currentImageCount = formData.images.length
+    let processedCount = 0
 
-    files.forEach(file => {
+    // Reset input
+    e.target.value = ''
+
+    for (const file of files) {
       // Prüfe Dateityp - nur Bilder erlauben
       if (!file.type.startsWith('image/')) {
         toast.error(`${file.name} ist kein Bild. Bitte wählen Sie nur Bilddateien aus.`, {
           position: 'top-right',
           duration: 4000,
         })
-        return
+        continue
       }
 
-      // Prüfe Dateigröße (max 10MB pro Bild)
+      // Prüfe Dateigröße (max 10MB pro Bild vor Komprimierung)
       if (file.size > 10 * 1024 * 1024) {
         toast.error(`${file.name} ist zu groß. Maximale Größe: 10MB`, {
           position: 'top-right',
           duration: 4000,
         })
-        return
+        continue
       }
 
-      const reader = new FileReader()
-      reader.onload = () => {
-        newImages.push(reader.result as string)
-        loadedCount++
+      try {
+        // Komprimiere Bild (max 2MB nach Komprimierung)
+        const compressedImage = await compressImage(file, {
+          maxWidth: 1920,
+          maxHeight: 1920,
+          quality: 0.85,
+          maxSizeMB: 2,
+        })
+        
+        newImages.push(compressedImage)
+        processedCount++
 
-        // Wenn alle Dateien geladen sind
-        if (loadedCount === files.length) {
-          const currentImageCount = formData.images.length
+        // Zeige Fortschritt bei mehreren Bildern
+        if (files.length > 1) {
+          toast.loading(`Bild ${processedCount} von ${files.length} wird verarbeitet...`, {
+            id: 'image-upload-progress',
+            position: 'top-right',
+          })
+        }
+
+        // Wenn alle Dateien verarbeitet sind
+        if (processedCount === files.length) {
+          toast.dismiss('image-upload-progress')
+          
           setFormData(prev => ({
             ...prev,
             images: [...prev.images, ...newImages],
           }))
-
+          
           // WICHTIG: Nur wenn noch KEINE Bilder vorhanden waren, setze das erste als Titelbild
           // Wenn bereits Bilder vorhanden sind, bleibt das aktuelle Titelbild bestehen
           if (currentImageCount === 0 && newImages.length > 0) {
             setTitleImageIndex(0)
+            toast.success(`${newImages.length} Bild${newImages.length > 1 ? 'er' : ''} hinzugefügt. Das erste Bild ist das Titelbild.`, {
+              position: 'top-right',
+              duration: 3000,
+            })
+          } else if (newImages.length > 0) {
+            toast.success(`${newImages.length} weitere Bild${newImages.length > 1 ? 'er' : ''} hinzugefügt.`, {
+              position: 'top-right',
+              duration: 3000,
+            })
           }
         }
+      } catch (error) {
+        console.error('Fehler beim Komprimieren von Bild:', file.name, error)
+        toast.error(`Fehler beim Verarbeiten von ${file.name}`, {
+          position: 'top-right',
+          duration: 4000,
+        })
       }
-      reader.readAsDataURL(file)
-    })
+    }
   }
 
   const removeImage = (index: number) => {
