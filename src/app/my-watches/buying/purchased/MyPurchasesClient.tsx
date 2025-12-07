@@ -42,7 +42,18 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
   const [statusFilter, setStatusFilter] = useState<string>('all')
 
   // OPTIMIERT: Lade Updates non-blocking im Hintergrund (Polling)
+  // WICHTIG: Initial purchases werden sofort angezeigt, Updates kommen später
   useEffect(() => {
+    // Markiere initial purchases als gelesen (sofort, ohne Wartezeit)
+    if (initialPurchases.length > 0) {
+      const readPurchases = JSON.parse(localStorage.getItem('readPurchases') || '[]')
+      const newReadPurchases = Array.from(
+        new Set([...readPurchases, ...initialPurchases.map(p => p.id)])
+      )
+      localStorage.setItem('readPurchases', JSON.stringify(newReadPurchases))
+      window.dispatchEvent(new CustomEvent('purchases-viewed'))
+    }
+
     const loadPurchases = async () => {
       try {
         const res = await fetch(`/api/purchases/my-purchases?t=${Date.now()}`)
@@ -66,7 +77,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
       }
     }
 
-    // Rufe check-expired auf
+    // Rufe check-expired auf (non-blocking, nach 2 Sekunden)
     const checkExpired = async () => {
       try {
         await fetch('/api/auctions/check-expired', { method: 'POST' })
@@ -76,17 +87,27 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
       }
     }
 
-    // Initial check
-    checkExpired()
-
-    // Polling alle 5 Sekunden für Updates
-    const interval = setInterval(() => {
-      loadPurchases()
+    // OPTIMIERT: Warte 2 Sekunden bevor Background-Updates starten
+    // Initial purchases sind bereits sichtbar
+    let intervalId: NodeJS.Timeout | null = null
+    
+    const timeoutId = setTimeout(() => {
       checkExpired()
-    }, 5000)
+      
+      // Polling alle 5 Sekunden für Updates
+      intervalId = setInterval(() => {
+        loadPurchases()
+        checkExpired()
+      }, 5000)
+    }, 2000)
 
-    return () => clearInterval(interval)
-  }, [])
+    return () => {
+      clearTimeout(timeoutId)
+      if (intervalId) {
+        clearInterval(intervalId)
+      }
+    }
+  }, [initialPurchases])
 
   const handleMarkPaid = () => {
     fetch(`/api/purchases/my-purchases?t=${Date.now()}`)

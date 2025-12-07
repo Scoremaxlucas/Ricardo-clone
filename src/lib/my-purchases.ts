@@ -52,11 +52,11 @@ export interface MyPurchaseItem {
 
 /**
  * Fetch user's purchases server-side for instant rendering
- * OPTIMIZED: Minimal queries, no N+1 problem
+ * ULTRA-OPTIMIZED: No N+1 problem - purchase.price is already the final price
  */
 export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> {
-  // OPTIMIERT: Lade Purchases mit Watch und Seller in einer Query
-  // bids werden nur für finalPrice benötigt - lade nur höchstes Gebot pro Watch
+  // ULTRA-MINIMALE Query: purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
+  // KEINE bids Query nötig - das würde N+1 Problem verursachen
   const purchases = await prisma.purchase.findMany({
     where: {
       buyerId: userId,
@@ -64,7 +64,7 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
     },
     select: {
       id: true,
-      price: true,
+      price: true, // purchase.price ist bereits der finale Preis
       createdAt: true,
       shippingMethod: true,
       paymentConfirmed: true,
@@ -98,6 +98,7 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
           price: true,
           buyNowPrice: true,
           shippingMethod: true,
+          isAuction: true,
           seller: {
             select: {
               id: true,
@@ -112,13 +113,6 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
               city: true,
               paymentMethods: true,
             },
-          },
-          bids: {
-            select: {
-              amount: true,
-            },
-            orderBy: { amount: 'desc' },
-            take: 1, // Nur höchstes Gebot für finalPrice
           },
         },
       },
@@ -147,11 +141,10 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
       }
     }
 
-    const winningBid = watch.bids?.[0]
-    const finalPrice = winningBid?.amount || purchase.price || watch.price || 0
-    const isBuyNow =
-      watch.buyNowPrice && winningBid && winningBid.amount === watch.buyNowPrice
-    const purchaseType = isBuyNow ? 'buy-now' : winningBid ? 'auction' : 'buy-now'
+    // purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
+    const finalPrice = purchase.price || watch.price || 0
+    // Bestimme purchaseType basierend auf isAuction und buyNowPrice
+    const purchaseType = watch.isAuction && finalPrice !== watch.buyNowPrice ? 'auction' : 'buy-now'
 
     return {
       id: purchase.id,
