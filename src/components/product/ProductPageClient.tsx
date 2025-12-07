@@ -36,6 +36,7 @@ export function ProductPageClient({
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
+  const [imageAspectRatio, setImageAspectRatio] = useState<number | null>(null)
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const zoomImageRef = useRef<HTMLImageElement>(null)
 
@@ -45,6 +46,17 @@ export function ProductPageClient({
       fetch(`/api/watches/${watch.id}/view`, { method: 'POST' }).catch(() => {})
     }
   }, [watch?.id])
+
+  // Berechne Aspect Ratio des aktuellen Bildes
+  useEffect(() => {
+    if (images.length > 0 && selectedImageIndex < images.length) {
+      const img = new Image()
+      img.onload = () => {
+        setImageAspectRatio(img.width / img.height)
+      }
+      img.src = images[selectedImageIndex]
+    }
+  }, [images, selectedImageIndex])
 
   if (!watch) {
     return (
@@ -95,10 +107,15 @@ export function ProductPageClient({
                 </div>
               ) : images.length > 0 ? (
                 <>
-                  {/* Hauptbild mit Zoom-Effekt */}
+                  {/* Hauptbild mit Zoom-Effekt - Container passt sich an Bildformat an */}
                   <div
                     ref={imageContainerRef}
-                    className="relative h-96 w-full overflow-hidden rounded-lg bg-gray-100"
+                    className="relative w-full overflow-hidden rounded-lg bg-gray-100"
+                    style={{
+                      aspectRatio: imageAspectRatio ? `${imageAspectRatio}` : 'auto',
+                      minHeight: '400px',
+                      maxHeight: '800px',
+                    }}
                     onMouseMove={(e) => {
                       if (!imageContainerRef.current || !zoomImageRef.current) return
                       const rect = imageContainerRef.current.getBoundingClientRect()
@@ -116,8 +133,8 @@ export function ProductPageClient({
                         ref={zoomImageRef}
                         src={images[selectedImageIndex]}
                         alt={watch.title}
-                        className={`h-full w-full object-contain transition-transform duration-200 ${
-                          isZoomed ? 'scale-[2]' : 'scale-100'
+                        className={`h-full w-full object-contain transition-transform duration-200 ease-out ${
+                          isZoomed ? 'scale-[4]' : 'scale-100'
                         }`}
                         style={{
                           transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
@@ -129,8 +146,8 @@ export function ProductPageClient({
                         src={images[selectedImageIndex]}
                         alt={watch.title}
                         fill
-                        className={`object-contain transition-transform duration-200 ${
-                          isZoomed ? 'scale-[2]' : 'scale-100'
+                        className={`object-contain transition-transform duration-200 ease-out ${
+                          isZoomed ? 'scale-[4]' : 'scale-100'
                         }`}
                         style={{
                           transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
