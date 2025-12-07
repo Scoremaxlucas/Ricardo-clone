@@ -88,21 +88,47 @@ export const authOptions = {
 
           if (!user.password) {
             console.log('[AUTH] User has no password set:', normalizedEmail)
+            console.log('[AUTH] User data:', {
+              id: user.id,
+              email: user.email,
+              hasPassword: !!user.password,
+            })
             return null
           }
 
-          // Prüfe Passwort mit bcrypt
+          // WICHTIG: Prüfe Passwort mit bcrypt
+          // Fallback: Wenn bcrypt fehlschlägt, versuche direkten Vergleich (für alte Passwörter)
           let isPasswordValid = false
           try {
+            // Versuche zuerst bcrypt
             isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-            console.log('[AUTH] Password valid:', isPasswordValid)
+            console.log('[AUTH] Bcrypt password valid:', isPasswordValid)
+            
+            // Fallback: Wenn bcrypt fehlschlägt UND Passwort nicht gehasht ist (beginnt nicht mit $2a$ oder $2b$), versuche direkten Vergleich
+            if (!isPasswordValid && !user.password.startsWith('$2')) {
+              console.log('[AUTH] Password not hashed, trying direct comparison')
+              isPasswordValid = credentials.password === user.password
+              console.log('[AUTH] Direct comparison result:', isPasswordValid)
+            }
           } catch (bcryptError: any) {
             console.error('[AUTH] Bcrypt comparison error:', bcryptError)
-            return null
+            // Fallback: Versuche direkten Vergleich wenn bcrypt fehlschlägt
+            if (!user.password.startsWith('$2')) {
+              console.log('[AUTH] Fallback: Trying direct password comparison')
+              isPasswordValid = credentials.password === user.password
+            }
+            if (!isPasswordValid) {
+              return null
+            }
           }
 
           if (!isPasswordValid) {
             console.log('[AUTH] Invalid password for:', normalizedEmail)
+            console.log('[AUTH] Password check details:', {
+              providedLength: credentials.password.length,
+              storedLength: user.password.length,
+              storedStartsWith: user.password.substring(0, 10),
+            })
             return null
           }
 

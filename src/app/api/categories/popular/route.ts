@@ -14,69 +14,84 @@ function getCategoryMetadata(slug: string) {
 
 export async function GET() {
   try {
+    // WICHTIG: Fehlerbehandlung für Prisma-Abfragen
     // Hole alle InvoiceItems, die Booster sind (description enthält "Booster")
-    const boosterInvoices = await prisma.invoiceItem.findMany({
-      where: {
-        description: {
-          contains: 'Booster',
+    let boosterInvoices = []
+    try {
+      boosterInvoices = await prisma.invoiceItem.findMany({
+        where: {
+          description: {
+            contains: 'Booster',
+          },
+          watchId: {
+            not: null,
+          },
         },
-        watchId: {
-          not: null,
-        },
-      },
-      select: {
-        total: true,
-        watch: {
-          select: {
-            categories: {
-              select: {
-                category: {
-                  select: {
-                    slug: true,
+        select: {
+          total: true,
+          watch: {
+            select: {
+              categories: {
+                select: {
+                  category: {
+                    select: {
+                      slug: true,
+                    },
                   },
                 },
               },
             },
           },
-        },
-        invoice: {
-          select: {
-            status: true,
+          invoice: {
+            select: {
+              status: true,
+            },
           },
         },
-      },
-    })
+      })
+    } catch (invoiceError: any) {
+      console.error('[popular-categories] Error fetching booster invoices:', invoiceError)
+      // Fallback: Leeres Array, API funktioniert trotzdem
+      boosterInvoices = []
+    }
 
     // Berechne Anzahl der geboosteten Artikel pro Kategorie (aus aktiven Produkten)
     const boostedProductsByCategory: Record<string, number> = {}
     const categoryRevenue: Record<string, number> = {}
 
     // Zähle aktive geboostete Produkte direkt (über Relation)
-    const activeBoostedWatches = await prisma.watch.findMany({
-      where: {
-        purchases: {
-          none: {}, // Nur nicht verkaufte Produkte
+    let activeBoostedWatches = []
+    try {
+      activeBoostedWatches = await prisma.watch.findMany({
+        where: {
+          purchases: {
+            none: {}, // Nur nicht verkaufte Produkte
+          },
+          boosters: {
+            not: null,
+          },
+          categories: {
+            some: {}, // Hat mindestens eine Kategorie
+          },
         },
-        boosters: {
-          not: null,
-        },
-        categories: {
-          some: {}, // Hat mindestens eine Kategorie
-        },
-      },
-      select: {
-        boosters: true,
-        categories: {
-          select: {
-            category: {
-              select: {
-                slug: true,
+        select: {
+          boosters: true,
+          categories: {
+            select: {
+              category: {
+                select: {
+                  slug: true,
+                },
               },
             },
           },
         },
-      },
-    })
+      })
+    } catch (boostedError: any) {
+      console.error('[popular-categories] Error fetching boosted watches:', boostedError)
+      // Fallback: Leeres Array, API funktioniert trotzdem
+      activeBoostedWatches = []
+    }
 
     activeBoostedWatches.forEach(watch => {
       try {
@@ -112,28 +127,35 @@ export async function GET() {
     })
 
     // Hole alle aktiven Produkte mit ihren Kategorien
-    const activeWatches = await prisma.watch.findMany({
-      where: {
-        purchases: {
-          none: {}, // Nur nicht verkaufte Produkte
+    let activeWatches = []
+    try {
+      activeWatches = await prisma.watch.findMany({
+        where: {
+          purchases: {
+            none: {}, // Nur nicht verkaufte Produkte
+          },
+          categories: {
+            some: {}, // Hat mindestens eine Kategorie
+          },
         },
-        categories: {
-          some: {}, // Hat mindestens eine Kategorie
-        },
-      },
-      select: {
-        id: true,
-        categories: {
-          select: {
-            category: {
-              select: {
-                slug: true,
+        select: {
+          id: true,
+          categories: {
+            select: {
+              category: {
+                select: {
+                  slug: true,
+                },
               },
             },
           },
         },
-      },
-    })
+      })
+    } catch (watchesError: any) {
+      console.error('[popular-categories] Error fetching active watches:', watchesError)
+      // Fallback: Leeres Array, API funktioniert trotzdem
+      activeWatches = []
+    }
 
     // Zähle Produkte pro Kategorie
     const activeProductsByCategory: Record<string, number> = {}
