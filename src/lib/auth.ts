@@ -17,7 +17,7 @@ export const authOptions = {
       async authorize(credentials) {
         // WICHTIG: Logging für Debugging in Production
         const logPrefix = '[AUTH]'
-        
+
         try {
           if (!credentials?.email || !credentials?.password) {
             console.log(`${logPrefix} Missing credentials`)
@@ -124,9 +124,9 @@ export const authOptions = {
           // WICHTIG: Prüfe Passwort mit bcrypt
           // Fallback: Wenn bcrypt fehlschlägt, versuche direkten Vergleich (für alte Passwörter)
           let isPasswordValid = false
-          const passwordIsHashed = 
-            user.password.startsWith('$2a$') || 
-            user.password.startsWith('$2b$') || 
+          const passwordIsHashed =
+            user.password.startsWith('$2a$') ||
+            user.password.startsWith('$2b$') ||
             user.password.startsWith('$2y$') ||
             user.password.startsWith('$2x$')
 
@@ -155,7 +155,7 @@ export const authOptions = {
             console.log('[AUTH] Password not hashed, trying direct comparison')
             isPasswordValid = credentials.password === user.password
             console.log('[AUTH] Direct comparison result:', isPasswordValid)
-            
+
             // WICHTIG: Wenn direkter Vergleich fehlschlägt, versuche auch bcrypt
             // (für den Fall, dass das Passwort gehasht ist, aber nicht mit $2 beginnt)
             if (!isPasswordValid) {
@@ -181,16 +181,28 @@ export const authOptions = {
             return null
           }
 
-          console.log('[AUTH] ✅ Login successful for:', normalizedEmail, 'isAdmin:', user.isAdmin)
+          console.log(`${logPrefix} ✅ Login successful for:`, normalizedEmail, 'isAdmin:', user.isAdmin)
 
-          return {
+          // WICHTIG: Stelle sicher, dass alle erforderlichen Felder vorhanden sind
+          const userObject = {
             id: user.id,
             email: user.email,
             name: user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim() || 'User',
-            nickname: user.nickname,
-            image: user.image,
+            nickname: user.nickname || null,
+            image: user.image || null,
             isAdmin: user.isAdmin === true,
           }
+
+          console.log(`${logPrefix} Returning user object:`, {
+            id: userObject.id,
+            email: userObject.email,
+            name: userObject.name,
+            hasNickname: !!userObject.nickname,
+            hasImage: !!userObject.image,
+            isAdmin: userObject.isAdmin,
+          })
+
+          return userObject
         } catch (error: any) {
           console.error('[AUTH] ❌ Error during authorization:', error)
           console.error('[AUTH] Error details:', {

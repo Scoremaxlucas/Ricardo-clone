@@ -19,15 +19,17 @@ export async function POST(request: NextRequest) {
 
     const normalizedEmail = email.toLowerCase().trim()
 
-    // Test database connection
+    // WICHTIG: Prisma verbindet sich automatisch, kein expliziter $connect() nötig
+    // Test database connection durch einfache Query
     let dbConnected = false
     try {
-      await prisma.$connect()
+      await prisma.$queryRaw`SELECT 1`
       dbConnected = true
     } catch (error: any) {
       return NextResponse.json({
         error: 'Database connection failed',
         details: error.message,
+        code: error.code,
       })
     }
 
@@ -82,20 +84,34 @@ export async function POST(request: NextRequest) {
       })
     }
 
-    const passwordIsHashed = user.password.startsWith('$2a$') || user.password.startsWith('$2b$') || user.password.startsWith('$2y$')
+    // WICHTIG: Mehrere Passwort-Validierungsstrategien (wie in auth.ts)
+    const passwordIsHashed = 
+      user.password.startsWith('$2a$') || 
+      user.password.startsWith('$2b$') || 
+      user.password.startsWith('$2y$') ||
+      user.password.startsWith('$2x$')
+    
     let passwordValid = false
 
+    // Versuche zuerst bcrypt, dann direkten Vergleich
     if (passwordIsHashed) {
       try {
         passwordValid = await bcrypt.compare(password, user.password)
       } catch (error: any) {
-        return NextResponse.json({
-          error: 'Bcrypt comparison failed',
-          details: error.message,
-        })
+        // Fallback: Versuche direkten Vergleich wenn bcrypt fehlschlägt
+        passwordValid = password === user.password
       }
     } else {
+      // Direkter Vergleich
       passwordValid = password === user.password
+      // Fallback: Versuche auch bcrypt wenn direkter Vergleich fehlschlägt
+      if (!passwordValid) {
+        try {
+          passwordValid = await bcrypt.compare(password, user.password)
+        } catch (error: any) {
+          // Behalte passwordValid = false
+        }
+      }
     }
 
     return NextResponse.json({
