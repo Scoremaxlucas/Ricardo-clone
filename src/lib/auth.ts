@@ -76,15 +76,15 @@ export const authOptions = {
           // WICHTIG: Prüfe ob Benutzer blockiert ist
           // Nur explizit blockierte Benutzer werden abgelehnt
           // null, false, 0, oder undefined = nicht blockiert
-          // Prüfe auf Boolean true oder truthy Werte
-          const isBlocked = Boolean(user.isBlocked) && user.isBlocked !== false
+          // Prüfe explizit auf true (Boolean)
+          const isBlocked = user.isBlocked === true
 
           if (isBlocked) {
             console.log('[AUTH] User is blocked:', normalizedEmail, 'isBlocked value:', user.isBlocked)
             return null
           }
 
-          console.log('[AUTH] User is NOT blocked:', normalizedEmail, 'isBlocked value:', user.isBlocked)
+          console.log('[AUTH] User is NOT blocked:', normalizedEmail, 'isBlocked value:', user.isBlocked, 'type:', typeof user.isBlocked)
 
           if (!user.password) {
             console.log('[AUTH] User has no password set:', normalizedEmail)
