@@ -239,12 +239,13 @@ export default function PublicProfilePage() {
     return year.toString()
   }
 
+  // WICHTIG: Immer 2 Dezimalstellen anzeigen, damit Preise wie CHF 1.80 korrekt angezeigt werden
   const formatPrice = (price: number) => {
     return new Intl.NumberFormat('de-CH', {
       style: 'currency',
       currency: 'CHF',
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format(price)
   }
 
