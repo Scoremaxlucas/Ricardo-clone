@@ -39,14 +39,14 @@ export default function MySellingPage() {
   useEffect(() => {
     // ULTRA-OPTIMIERT: Lade Daten SOFORT ohne auf Session zu warten
     // Verwende userId aus Session wenn verfügbar, sonst lade trotzdem (API prüft selbst)
-    
+
     const loadData = async () => {
       try {
         setLoading(true)
-        
+
         // OPTIMIERT: Wenn Session bereits verfügbar, übergebe userId für noch schnellere API
         const userId = session?.user?.id
-        const url = userId 
+        const url = userId
           ? `/api/articles/mine-instant?userId=${userId}`
           : `/api/articles/mine-instant`
 
@@ -100,7 +100,7 @@ export default function MySellingPage() {
 
     // OPTIMIERT: Starte sofort, auch wenn Session noch lädt
     loadData()
-    
+
     // OPTIMIERT: Prüfe Session separat und redirect nur wenn nötig
     if (status !== 'loading' && !session?.user?.id) {
       router.push('/login?callbackUrl=/my-watches/selling')

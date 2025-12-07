@@ -9,12 +9,12 @@ export async function GET(request: NextRequest) {
   try {
     // OPTIMIERT: Session-Check parallel mit Query-Vorbereitung
     const sessionPromise = getServerSession(authOptions)
-    
+
     // OPTIMIERT: Verwende userId aus Query-Parameter wenn verfügbar (noch schneller)
     const userId = request.nextUrl.searchParams.get('userId')
-    
+
     let finalUserId: string | null = null
-    
+
     if (userId) {
       // Wenn userId als Parameter übergeben wurde, verwende direkt (noch schneller)
       finalUserId = userId
@@ -23,7 +23,7 @@ export async function GET(request: NextRequest) {
       const session = await sessionPromise
       finalUserId = session?.user?.id || null
     }
-    
+
     if (!finalUserId) {
       return NextResponse.json({ watches: [] }, { status: 200 })
     }
@@ -49,8 +49,10 @@ export async function GET(request: NextRequest) {
     })
 
     // ULTRA-MINIMALE Verarbeitung für maximale Geschwindigkeit
-    // OPTIMIERT: Verwende for-Schleife statt map für bessere Performance bei kleinen Arrays
+    // OPTIMIERT: Verwende for-Schleife statt map für bessere Performance
     const watchesWithImages = []
+    const now = Date.now() // Einmal berechnen statt in jeder Iteration
+    
     for (const w of watches) {
       // OPTIMIERT: Nur erstes Bild parsen wenn wirklich vorhanden
       let firstImage = ''
@@ -63,6 +65,15 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // OPTIMIERT: Minimale Date-Konvertierung
+      const createdAt = w.createdAt instanceof Date 
+        ? w.createdAt.toISOString() 
+        : new Date(w.createdAt).toISOString()
+      
+      const auctionEnd = w.auctionEnd 
+        ? (w.auctionEnd instanceof Date ? w.auctionEnd.toISOString() : new Date(w.auctionEnd).toISOString())
+        : null
+
       watchesWithImages.push({
         id: w.id,
         articleNumber: w.articleNumber,
@@ -71,10 +82,10 @@ export async function GET(request: NextRequest) {
         model: w.model || '',
         price: w.price,
         images: firstImage ? [firstImage] : [],
-        createdAt: w.createdAt.toISOString(),
+        createdAt,
         isSold: false,
         isAuction: !!w.isAuction || !!w.auctionEnd,
-        auctionEnd: w.auctionEnd ? w.auctionEnd.toISOString() : null,
+        auctionEnd,
         highestBid: null,
         bidCount: 0,
         finalPrice: w.price,

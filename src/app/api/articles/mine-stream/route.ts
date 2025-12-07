@@ -9,14 +9,14 @@ export async function GET(request: NextRequest) {
   try {
     const userId = request.nextUrl.searchParams.get('userId')
     let finalUserId: string | null = null
-    
+
     if (userId) {
       finalUserId = userId
     } else {
       const session = await getServerSession(authOptions)
       finalUserId = session?.user?.id || null
     }
-    
+
     if (!finalUserId) {
       return new Response(JSON.stringify({ watches: [] }), {
         status: 200,
@@ -27,19 +27,19 @@ export async function GET(request: NextRequest) {
     // OPTIMIERT: Verwende cursor-based pagination für Streaming
     // Lade in kleinen Batches und sende sofort
     const batchSize = 10
-    
+
     // Erstelle ReadableStream für progressive Übertragung
     const stream = new ReadableStream({
       async start(controller) {
         const encoder = new TextEncoder()
-        
+
         try {
           // Sende Start-Marker
           controller.enqueue(encoder.encode('{"watches":['))
-          
+
           let skip = 0
           let firstItem = true
-          
+
           while (true) {
             const batch = await prisma.watch.findMany({
               where: { sellerId: finalUserId! },
@@ -59,15 +59,15 @@ export async function GET(request: NextRequest) {
               skip,
               take: batchSize,
             })
-            
+
             if (batch.length === 0) break
-            
+
             for (const w of batch) {
               if (!firstItem) {
                 controller.enqueue(encoder.encode(','))
               }
               firstItem = false
-              
+
               let firstImage = ''
               if (w.images && typeof w.images === 'string') {
                 try {
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
                   firstImage = Array.isArray(parsed) && parsed.length > 0 ? parsed[0] : ''
                 } catch {}
               }
-              
+
               const item = JSON.stringify({
                 id: w.id,
                 articleNumber: w.articleNumber,
@@ -93,14 +93,14 @@ export async function GET(request: NextRequest) {
                 finalPrice: w.price,
                 isActive: true,
               })
-              
+
               controller.enqueue(encoder.encode(item))
             }
-            
+
             if (batch.length < batchSize) break
             skip += batchSize
           }
-          
+
           // Sende End-Marker
           controller.enqueue(encoder.encode(']}'))
           controller.close()
@@ -109,7 +109,7 @@ export async function GET(request: NextRequest) {
         }
       },
     })
-    
+
     return new Response(stream, {
       headers: {
         'Content-Type': 'application/json',
