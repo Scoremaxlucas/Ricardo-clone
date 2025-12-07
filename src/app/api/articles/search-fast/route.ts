@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
 
     // OPTIMIERT: Versuche Raw SQL, fallback zu Prisma bei Fehler
     let watches: any[] = []
-    
+
     try {
       // Versuche Raw SQL Query (schneller)
       watches = await prisma.$queryRawUnsafe<Array<{
@@ -138,7 +138,7 @@ export async function GET(request: NextRequest) {
           },
         ],
       }
-      
+
       if (query) {
         where.OR = [
           { title: { contains: query, mode: 'insensitive' } },
@@ -146,7 +146,7 @@ export async function GET(request: NextRequest) {
           { model: { contains: query, mode: 'insensitive' } },
         ]
       }
-      
+
       if (category) {
         where.categories = {
           some: {
@@ -159,21 +159,21 @@ export async function GET(request: NextRequest) {
           },
         }
       }
-      
+
       if (minPrice) {
         where.price = { ...where.price, gte: parseFloat(minPrice) }
       }
-      
+
       if (maxPrice) {
         where.price = { ...where.price, lte: parseFloat(maxPrice) }
       }
-      
+
       if (isAuction === 'true') {
         where.isAuction = true
       } else if (isAuction === 'false') {
         where.isAuction = false
       }
-      
+
       watches = await prisma.watch.findMany({
         where,
         select: {
@@ -201,7 +201,7 @@ export async function GET(request: NextRequest) {
         take: limit,
         skip: skip,
       }) as any[]
-      
+
       // Transformiere Prisma-Format zu Raw SQL-Format
       watches = watches.map(w => ({
         ...w,

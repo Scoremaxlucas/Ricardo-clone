@@ -12,142 +12,86 @@ export async function GET(request: NextRequest) {
 
     const now = new Date()
 
-    // OPTIMIERT: Versuche zuerst Raw SQL, fallback zu Prisma bei Fehler
-    let watches: any[] = []
-
-    try {
-      // Versuche Raw SQL Query (schneller)
-      watches = await prisma.$queryRaw<Array<{
-        id: string
-        title: string | null
-        brand: string | null
-        model: string | null
-        price: number
-        buyNowPrice: number | null
-        images: string | null
-        createdAt: Date
-        isAuction: boolean | null
-        auctionEnd: Date | null
-        articleNumber: number | null
-        boosters: string | null
-        city: string | null
-        postalCode: string | null
-        condition: string | null
-      }>>`
-        SELECT
-          w.id,
-          w.title,
-          w.brand,
-          w.model,
-          w.price,
-          w."buyNowPrice",
-          w.images,
-          w."createdAt",
-          w."isAuction",
-          w."auctionEnd",
-          w."articleNumber",
-          w.boosters,
-          u.city,
-          u."postalCode",
-          w.condition
-        FROM watches w
-        INNER JOIN users u ON w."sellerId" = u.id
-        WHERE
-          (w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')
-          AND NOT EXISTS (
-            SELECT 1 FROM purchases p
-            WHERE p."watchId" = w.id
-            AND p.status != 'cancelled'
-          )
-          AND (
-            w."auctionEnd" IS NULL
-            OR w."auctionEnd" > ${now}
-            OR EXISTS (
-              SELECT 1 FROM purchases p2
-              WHERE p2."watchId" = w.id
-              AND p2.status != 'cancelled'
-            )
-          )
-        ORDER BY
-          CASE
-            WHEN w.boosters LIKE '%super-boost%' THEN 4
-            WHEN w.boosters LIKE '%turbo-boost%' THEN 3
-            WHEN w.boosters LIKE '%boost%' THEN 2
-            ELSE 1
-          END DESC,
-          w."createdAt" DESC
-        LIMIT ${limit}
-        OFFSET ${skip}
-      `
-    } catch (sqlError) {
-      // Fallback zu Prisma Query falls Raw SQL fehlschlägt
-      console.warn('Raw SQL failed, using Prisma fallback:', sqlError)
-      const nowDate = new Date()
-      watches = await prisma.watch.findMany({
-        where: {
-          AND: [
-            {
-              OR: [
-                { moderationStatus: null },
-                { moderationStatus: { not: 'rejected' } },
-              ],
-            },
-            {
-              OR: [
-                { purchases: { none: {} } },
-                { purchases: { every: { status: 'cancelled' } } },
-              ],
-            },
-            {
-              OR: [
-                { auctionEnd: null },
-                { auctionEnd: { gt: nowDate } },
-                {
-                  AND: [
-                    { auctionEnd: { lte: nowDate } },
-                    { purchases: { some: { status: { not: 'cancelled' } } } },
-                  ],
-                },
-              ],
-            },
-          ],
-        },
-        select: {
-          id: true,
-          title: true,
-          brand: true,
-          model: true,
-          price: true,
-          buyNowPrice: true,
-          images: true,
-          createdAt: true,
-          isAuction: true,
-          auctionEnd: true,
-          articleNumber: true,
-          boosters: true,
-          condition: true,
-          seller: {
-            select: {
-              city: true,
-              postalCode: true,
-            },
+    // OPTIMIERT: Verwende Prisma Query direkt (zuverlässiger als Raw SQL)
+    // Raw SQL kann in verschiedenen Umgebungen unterschiedlich funktionieren
+    const nowDate = new Date()
+    
+    const watches = await prisma.watch.findMany({
+      where: {
+        AND: [
+          {
+            OR: [
+              { moderationStatus: null },
+              { moderationStatus: { not: 'rejected' } },
+            ],
+          },
+          {
+            OR: [
+              { purchases: { none: {} } },
+              { purchases: { every: { status: 'cancelled' } } },
+            ],
+          },
+          {
+            OR: [
+              { auctionEnd: null },
+              { auctionEnd: { gt: nowDate } },
+              {
+                AND: [
+                  { auctionEnd: { lte: nowDate } },
+                  { purchases: { some: { status: { not: 'cancelled' } } } },
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        brand: true,
+        model: true,
+        price: true,
+        buyNowPrice: true,
+        images: true,
+        createdAt: true,
+        isAuction: true,
+        auctionEnd: true,
+        articleNumber: true,
+        boosters: true,
+        condition: true,
+        seller: {
+          select: {
+            city: true,
+            postalCode: true,
           },
         },
-        orderBy: { createdAt: 'desc' },
-        take: limit,
-        skip: skip,
-      }) as any[]
+      },
+      orderBy: { createdAt: 'desc' },
+      take: limit,
+      skip: skip,
+    })
 
-      // Transformiere Prisma-Format zu Raw SQL-Format
-      watches = watches.map(w => ({
-        ...w,
-        city: (w as any).seller?.city || null,
-        postalCode: (w as any).seller?.postalCode || null,
-      }))
-    }
+    // Transformiere Prisma-Format zu erwartetem Format
+    const watchesFormatted = watches.map(w => ({
+      id: w.id,
+      title: w.title,
+      brand: w.brand,
+      model: w.model,
+      price: w.price,
+      buyNowPrice: w.buyNowPrice,
+      images: w.images,
+      createdAt: w.createdAt,
+      isAuction: w.isAuction,
+      auctionEnd: w.auctionEnd,
+      articleNumber: w.articleNumber,
+      boosters: w.boosters,
+      condition: w.condition,
+      city: w.seller?.city || null,
+      postalCode: w.seller?.postalCode || null,
+    }))
 
     // OPTIMIERT: Minimale Verarbeitung
-    const watchesWithImages = watches.map(w => {
+    const watchesWithImages = watchesFormatted.map(w => {
       let firstImage = ''
       if (w.images) {
         try {

@@ -35,10 +35,18 @@ export function FeaturedProducts() {
   useEffect(() => {
     const fetchItems = async () => {
       try {
-        // OPTIMIERT: Verwende fast API-Route für instant loading
-        const response = await fetch('/api/articles/fast?limit=6', {
+        // OPTIMIERT: Verwende search API-Route (zuverlässiger)
+        // Fallback zu fast route falls nötig
+        let response = await fetch('/api/articles/search?limit=6', {
           cache: 'no-store',
         })
+        
+        // Fallback zu fast route falls search fehlschlägt
+        if (!response.ok) {
+          response = await fetch('/api/articles/fast?limit=6', {
+            cache: 'no-store',
+          })
+        }
         if (response.ok) {
           const data = await response.json()
           const fetchedItems = Array.isArray(data.watches) ? data.watches : []
