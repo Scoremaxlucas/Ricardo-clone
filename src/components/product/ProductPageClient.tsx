@@ -193,7 +193,7 @@ export function ProductPageClient({
                           onClick={() => setSelectedImageIndex(index)}
                           className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
                             selectedImageIndex === index
-                              ? 'border-primary-600 ring-2 ring-primary-200'
+                              ? 'border-gray-600 ring-2 ring-gray-200'
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
