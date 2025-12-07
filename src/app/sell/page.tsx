@@ -38,7 +38,7 @@ export default function SellPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false)
   const [isGeneratingDescription, setIsGeneratingDescription] = useState(false)
-  const typingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
