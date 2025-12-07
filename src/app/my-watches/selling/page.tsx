@@ -4,7 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { MySellingClient } from './MySellingClient'
-import { getMySellingArticles } from '@/lib/my-selling'
+import { getMySellingArticles, MySellingItem } from '@/lib/my-selling'
 import Link from 'next/link'
 import { Package, Plus } from 'lucide-react'
 
