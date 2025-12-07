@@ -54,8 +54,12 @@ export async function GET(request: NextRequest) {
 
     const whereClause = whereConditions.join(' AND ')
 
-    // OPTIMIERT: Raw SQL Query
-    const watches = await prisma.$queryRawUnsafe<Array<{
+    // OPTIMIERT: Versuche Raw SQL, fallback zu Prisma bei Fehler
+    let watches: any[] = []
+    
+    try {
+      // Versuche Raw SQL Query (schneller)
+      watches = await prisma.$queryRawUnsafe<Array<{
       id: string
       title: string | null
       brand: string | null
@@ -102,6 +106,109 @@ export async function GET(request: NextRequest) {
       LIMIT ${limit}
       OFFSET ${skip}
     `, ...params)
+    } catch (sqlError) {
+      // Fallback zu Prisma Query falls Raw SQL fehlschlägt
+      console.warn('Raw SQL failed in search-fast, using Prisma fallback:', sqlError)
+      const nowDate = new Date()
+      const where: any = {
+        AND: [
+          {
+            OR: [
+              { moderationStatus: null },
+              { moderationStatus: { not: 'rejected' } },
+            ],
+          },
+          {
+            OR: [
+              { purchases: { none: {} } },
+              { purchases: { every: { status: 'cancelled' } } },
+            ],
+          },
+          {
+            OR: [
+              { auctionEnd: null },
+              { auctionEnd: { gt: nowDate } },
+              {
+                AND: [
+                  { auctionEnd: { lte: nowDate } },
+                  { purchases: { some: { status: { not: 'cancelled' } } } },
+                ],
+              },
+            ],
+          },
+        ],
+      }
+      
+      if (query) {
+        where.OR = [
+          { title: { contains: query, mode: 'insensitive' } },
+          { brand: { contains: query, mode: 'insensitive' } },
+          { model: { contains: query, mode: 'insensitive' } },
+        ]
+      }
+      
+      if (category) {
+        where.categories = {
+          some: {
+            category: {
+              OR: [
+                { slug: category },
+                { name: category },
+              ],
+            },
+          },
+        }
+      }
+      
+      if (minPrice) {
+        where.price = { ...where.price, gte: parseFloat(minPrice) }
+      }
+      
+      if (maxPrice) {
+        where.price = { ...where.price, lte: parseFloat(maxPrice) }
+      }
+      
+      if (isAuction === 'true') {
+        where.isAuction = true
+      } else if (isAuction === 'false') {
+        where.isAuction = false
+      }
+      
+      watches = await prisma.watch.findMany({
+        where,
+        select: {
+          id: true,
+          title: true,
+          brand: true,
+          model: true,
+          price: true,
+          buyNowPrice: true,
+          images: true,
+          createdAt: true,
+          isAuction: true,
+          auctionEnd: true,
+          articleNumber: true,
+          boosters: true,
+          condition: true,
+          seller: {
+            select: {
+              city: true,
+              postalCode: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+        take: limit,
+        skip: skip,
+      }) as any[]
+      
+      // Transformiere Prisma-Format zu Raw SQL-Format
+      watches = watches.map(w => ({
+        ...w,
+        city: (w as any).seller?.city || null,
+        postalCode: (w as any).seller?.postalCode || null,
+      }))
+    }
 
     // OPTIMIERT: Minimale Verarbeitung
     const watchesWithImages = watches.map(w => {

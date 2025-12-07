@@ -18,8 +18,12 @@ export async function GET(request: NextRequest) {
 
     const now = new Date()
 
-    // OPTIMIERT: Raw SQL Query für maximale Geschwindigkeit
-    const watches = await prisma.$queryRaw<Array<{
+    // OPTIMIERT: Versuche Raw SQL, fallback zu Prisma bei Fehler
+    let watches: any[] = []
+    
+    try {
+      // Versuche Raw SQL Query (schneller)
+      watches = await prisma.$queryRaw<Array<{
       id: string
       title: string | null
       brand: string | null
@@ -76,6 +80,83 @@ export async function GET(request: NextRequest) {
       LIMIT ${limit}
       OFFSET ${skip}
     `
+    } catch (sqlError) {
+      // Fallback zu Prisma Query falls Raw SQL fehlschlägt
+      console.warn('Raw SQL failed in favorites-fast, using Prisma fallback:', sqlError)
+      const nowDate = new Date()
+      watches = await prisma.watch.findMany({
+        where: {
+          AND: [
+            {
+              favorites: {
+                some: {
+                  userId: session.user.id,
+                },
+              },
+            },
+            {
+              OR: [
+                { moderationStatus: null },
+                { moderationStatus: { not: 'rejected' } },
+              ],
+            },
+            {
+              OR: [
+                { purchases: { none: {} } },
+                { purchases: { every: { status: 'cancelled' } } },
+              ],
+            },
+            {
+              OR: [
+                { auctionEnd: null },
+                { auctionEnd: { gt: nowDate } },
+                {
+                  AND: [
+                    { auctionEnd: { lte: nowDate } },
+                    { purchases: { some: { status: { not: 'cancelled' } } } },
+                  ],
+                },
+              ],
+            },
+          ],
+        },
+        select: {
+          id: true,
+          title: true,
+          brand: true,
+          model: true,
+          price: true,
+          buyNowPrice: true,
+          images: true,
+          createdAt: true,
+          isAuction: true,
+          auctionEnd: true,
+          articleNumber: true,
+          boosters: true,
+          condition: true,
+          seller: {
+            select: {
+              city: true,
+              postalCode: true,
+            },
+          },
+        },
+        orderBy: {
+          favorites: {
+            _count: 'desc',
+          },
+        },
+        take: limit,
+        skip: skip,
+      }) as any[]
+      
+      // Transformiere Prisma-Format zu Raw SQL-Format
+      watches = watches.map(w => ({
+        ...w,
+        city: (w as any).seller?.city || null,
+        postalCode: (w as any).seller?.postalCode || null,
+      }))
+    }
 
     // OPTIMIERT: Minimale Verarbeitung
     const watchesWithImages = watches.map(w => {
