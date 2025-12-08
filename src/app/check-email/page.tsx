@@ -6,7 +6,7 @@ import { Mail } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Logo } from '@/components/ui/Logo'
 
-export default function CheckEmailPage() {
+function CheckEmailPageContent() {
   const searchParams = useSearchParams()
   const email = searchParams.get('email') || ''
   const { t } = useLanguage()
@@ -77,5 +77,20 @@ export default function CheckEmailPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function CheckEmailPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+          <p className="text-gray-600">Laden...</p>
+        </div>
+      </div>
+    }>
+      <CheckEmailPageContent />
+    </Suspense>
   )
 }

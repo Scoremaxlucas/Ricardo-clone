@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
 import {
   FileCheck,
   CheckCircle,
@@ -43,7 +43,7 @@ interface VerificationUser {
   createdAt: string
 }
 
-export default function AdminVerificationsPage() {
+function AdminVerificationsPageContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -395,5 +395,20 @@ export default function AdminVerificationsPage() {
         </div>
       </div>
     </div>
+  )
+}
+
+export default function AdminVerificationsPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <div className="text-center">
+          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+          <p className="text-gray-600">Laden...</p>
+        </div>
+      </div>
+    }>
+      <AdminVerificationsPageContent />
+    </Suspense>
   )
 }

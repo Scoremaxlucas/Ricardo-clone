@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo, Suspense } from 'react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/layout/Header'
@@ -41,7 +41,7 @@ interface WatchItem {
   boosters?: string[]
 }
 
-export default function SearchPage() {
+function SearchPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams() // OPTIMIERT: Next.js Hook statt Polling
   const { t, translateSubcategory } = useLanguage()
@@ -1273,5 +1273,24 @@ export default function SearchPage() {
       </main>
       <Footer />
     </div>
+  )
+}
+
+export default function SearchPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen flex-col bg-gray-50">
+        <Header />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-center">
+            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+            <p className="text-gray-600">Laden...</p>
+          </div>
+        </div>
+        <Footer />
+      </div>
+    }>
+      <SearchPageContent />
+    </Suspense>
   )
 }
