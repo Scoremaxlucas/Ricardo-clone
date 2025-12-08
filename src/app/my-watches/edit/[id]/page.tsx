@@ -315,7 +315,7 @@ export default function EditWatchPage() {
       try {
         // WICHTIG: Verwende Bildkomprimierung wie auf der Sell-Seite
         const { compressImage } = await import('@/lib/image-compression')
-        
+
         // Aggressive Komprimierung um 413 Fehler zu vermeiden
         const compressedImage = await compressImage(file, {
           maxWidth: 1600,
@@ -323,7 +323,7 @@ export default function EditWatchPage() {
           quality: 0.75,
           maxSizeMB: 1.5,
         })
-        
+
         // Prüfe finale Größe des komprimierten Bildes
         const base64SizeMB = (compressedImage.length * 3) / 4 / (1024 * 1024)
         if (base64SizeMB > 1.5) {
@@ -344,7 +344,7 @@ export default function EditWatchPage() {
             ...prev,
             images: [...prev.images, ...newImages],
           }))
-          
+
           if (newImages.length > 0) {
             toast.success(`${newImages.length} Bild${newImages.length > 1 ? 'er' : ''} hinzugefügt.`, {
               position: 'top-right',

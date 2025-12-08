@@ -12,6 +12,11 @@ import { prisma } from '@/lib/prisma'
  * 3. Wenn keine Gebote → Vollständige Bearbeitung möglich
  * 4. Stornierte Purchases zählen nicht - Artikel kann wieder bearbeitet werden
  */
+
+// WICHTIG: Erhöhe Body-Size-Limit für große Bild-Uploads
+export const runtime = 'nodejs'
+export const maxDuration = 60 // 60 Sekunden für große Uploads
+
 export async function PUT(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
