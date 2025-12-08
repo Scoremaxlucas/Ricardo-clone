@@ -663,7 +663,7 @@ export default function SellPage() {
             <div className="w-full space-y-3">
               {/* Smooth progress bar with left-to-right motion */}
               <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
-                <div 
+                <div
                   className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-primary-500"
                   style={{
                     width: '100%',

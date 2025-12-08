@@ -6017,6 +6017,423 @@ export function CategoryFields({
     )
   }
 
+  // ============================================
+  // FEHLENDE UNTERKATEGORIEN - SYSTEMATISCH HINZUGEFÜGT
+  // ============================================
+  
+  // AUTO & MOTORRAD - Fehlende Unterkategorien
+  if (category === 'auto-motorrad') {
+    // Autos
+    if (subcategory === 'Autos' || subcategory === 'Pkw') {
+      return (
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900">Auto-Details</h3>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Marke *</label>
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. VW, BMW, Mercedes"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Modell *</label>
+              <input
+                type="text"
+                name="model"
+                value={formData.model || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. Golf, 3er, C-Klasse"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Baujahr *</label>
+              <input
+                type="number"
+                name="year"
+                value={formData.year || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 2020"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Kilometerstand</label>
+              <input
+                type="number"
+                name="mileage"
+                value={formData.mileage || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 50000"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Kraftstoff</label>
+              <select
+                name="fuelType"
+                value={formData.fuelType || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+              >
+                <option value="">Bitte wählen</option>
+                <option value="benzin">Benzin</option>
+                <option value="diesel">Diesel</option>
+                <option value="elektro">Elektro</option>
+                <option value="hybrid">Hybrid</option>
+                <option value="erdgas">Erdgas</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Getriebe</label>
+              <select
+                name="transmission"
+                value={formData.transmission || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+              >
+                <option value="">Bitte wählen</option>
+                <option value="manuell">Manuell</option>
+                <option value="automatik">Automatik</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Leistung (PS)</label>
+              <input
+                type="number"
+                name="power"
+                value={formData.power || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 150"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Hubraum (cm³)</label>
+              <input
+                type="number"
+                name="displacement"
+                value={formData.displacement || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 2000"
+              />
+            </div>
+          </div>
+        </div>
+      )
+    }
+    
+    // Autozubehör
+    if (subcategory === 'Autozubehör' || subcategory === 'Fahrzeugzubehör') {
+      return (
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900">Autozubehör-Details</h3>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Marke/Hersteller</label>
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. Thule, Bosch, Hella"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Produkttyp</label>
+              <select
+                name="productType"
+                value={formData.productType || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+              >
+                <option value="">Bitte wählen</option>
+                <option value="dachbox">Dachbox</option>
+                <option value="fahrradtraeger">Fahrradträger</option>
+                <option value="felgen">Felgen & Reifen</option>
+                <option value="navigationsgeraet">Navigationsgerät</option>
+                <option value="winterreifen">Winterreifen</option>
+                <option value="sommerreifen">Sommerreifen</option>
+                <option value="andere">Andere</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Kompatibilität</label>
+              <input
+                type="text"
+                name="compatibility"
+                value={formData.compatibility || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. für VW Golf, universell"
+              />
+            </div>
+          </div>
+        </div>
+      )
+    }
+    
+    // Felgen & Reifen
+    if (subcategory === 'Felgen & Reifen') {
+      return (
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900">Felgen & Reifen-Details</h3>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Marke</label>
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. BBS, OZ, Michelin"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Typ</label>
+              <select
+                name="type"
+                value={formData.type || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+              >
+                <option value="">Bitte wählen</option>
+                <option value="felgen">Felgen</option>
+                <option value="reifen">Reifen</option>
+                <option value="komplettraeder">Kompletträder</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Grösse</label>
+              <input
+                type="text"
+                name="size"
+                value={formData.size || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 17x7.5, 225/45R17"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Lochkreis</label>
+              <input
+                type="text"
+                name="boltPattern"
+                value={formData.boltPattern || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 5x112"
+              />
+            </div>
+          </div>
+        </div>
+      )
+    }
+    
+    // Motorräder
+    if (subcategory === 'Motorräder' || subcategory === 'Motorräder & Roller') {
+      return (
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900">Motorrad-Details</h3>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Marke *</label>
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. Honda, Yamaha, BMW"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Modell *</label>
+              <input
+                type="text"
+                name="model"
+                value={formData.model || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. CBR600RR, R1, S1000RR"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Baujahr *</label>
+              <input
+                type="number"
+                name="year"
+                value={formData.year || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 2020"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Kilometerstand</label>
+              <input
+                type="number"
+                name="mileage"
+                value={formData.mileage || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 15000"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Hubraum (cm³)</label>
+              <input
+                type="number"
+                name="displacement"
+                value={formData.displacement || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 600, 1000"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Leistung (PS)</label>
+              <input
+                type="number"
+                name="power"
+                value={formData.power || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 100"
+              />
+            </div>
+          </div>
+        </div>
+      )
+    }
+    
+    // Nutzfahrzeuge
+    if (subcategory === 'Nutzfahrzeuge') {
+      return (
+        <div className="space-y-6">
+          <h3 className="text-lg font-semibold text-gray-900">Nutzfahrzeug-Details</h3>
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Marke *</label>
+              <input
+                type="text"
+                name="brand"
+                value={formData.brand || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. Mercedes, MAN, Iveco"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Modell *</label>
+              <input
+                type="text"
+                name="model"
+                value={formData.model || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. Sprinter, TGE, Daily"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Baujahr *</label>
+              <input
+                type="number"
+                name="year"
+                value={formData.year || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 2020"
+                required
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Kilometerstand</label>
+              <input
+                type="number"
+                name="mileage"
+                value={formData.mileage || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 100000"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Nutzlast (kg)</label>
+              <input
+                type="number"
+                name="payload"
+                value={formData.payload || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+                placeholder="z.B. 3500"
+              />
+            </div>
+            <div>
+              <label className="mb-2 block text-sm font-medium text-gray-700">Fahrzeugtyp</label>
+              <select
+                name="vehicleType"
+                value={formData.vehicleType || ''}
+                onChange={onChange}
+                disabled={disabled}
+                className={`w-full rounded-lg border border-gray-300 px-4 py-2 focus:ring-2 focus:ring-primary-500 ${disabled ? 'cursor-not-allowed bg-gray-100' : ''}`}
+              >
+                <option value="">Bitte wählen</option>
+                <option value="transporter">Transporter</option>
+                <option value="lieferwagen">Lieferwagen</option>
+                <option value="lkw">LKW</option>
+                <option value="bus">Bus</option>
+                <option value="andere">Andere</option>
+              </select>
+            </div>
+          </div>
+        </div>
+      )
+    }
+  }
+
   // Keine Kategorie ausgewählt
   return null
 }
