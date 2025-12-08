@@ -640,6 +640,37 @@ export default function SellPage() {
     return null
   }
 
+  // Full-Screen Loading Modal während Upload
+  const UploadLoadingModal = () => {
+    if (!isLoading) return null
+    
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
+        <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+          <div className="flex flex-col items-center text-center">
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100">
+              <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+            </div>
+            <h2 className="mb-2 text-2xl font-bold text-gray-900">
+              Artikel wird hochgeladen
+            </h2>
+            <p className="mb-6 text-gray-600">
+              Bitte haben Sie einen Moment Geduld. Ihr Artikel wird verarbeitet und hochgeladen.
+            </p>
+            <div className="w-full space-y-2">
+              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
+                <div className="h-full w-full animate-pulse bg-primary-600" style={{ animationDuration: '1.5s' }} />
+              </div>
+              <p className="text-sm text-gray-500">
+                Dies kann bei mehreren Bildern etwas länger dauern...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Zeige Loading während Verifizierungsstatus geprüft wird
   if (isCheckingVerification) {
     return (
