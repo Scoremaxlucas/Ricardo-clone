@@ -594,11 +594,7 @@ export default function SellPage() {
         })
         setTitleImageIndex(0)
 
-        // WICHTIG: Warte kurz, damit der Erfolg angezeigt wird, dann weiterleiten
-        // Das Loading-Modal bleibt währenddessen sichtbar
-        await new Promise(resolve => setTimeout(resolve, 1500))
-        
-        // Erst jetzt Loading beenden und weiterleiten
+        // Loading sofort beenden und weiterleiten (keine Verzögerung)
         setIsLoading(false)
         router.push('/')
       } else {
@@ -651,38 +647,46 @@ export default function SellPage() {
     if (!isLoading) return null
 
     return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
-        <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300">
+        <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl animate-in fade-in duration-300">
           <div className="flex flex-col items-center text-center">
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100">
-              <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+            {/* Softer spinner with reduced animation speed */}
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary-50 to-primary-100">
+              <Loader2 className="h-8 w-8 text-primary-500" style={{ animation: 'spin 2s linear infinite' }} />
             </div>
-            <h2 className="mb-2 text-2xl font-bold text-gray-900">
+            <h2 className="mb-2 text-2xl font-semibold text-gray-900">
               Artikel wird hochgeladen
             </h2>
             <p className="mb-6 text-gray-600">
               Bitte haben Sie einen Moment Geduld. Ihr Artikel wird verarbeitet und hochgeladen.
             </p>
             <div className="w-full space-y-3">
-              {/* Animated Progress Bar with smooth shimmer effect */}
-              <div className="relative h-3 w-full overflow-hidden rounded-full bg-gray-200 shadow-inner">
+              {/* Smooth progress bar with left-to-right motion */}
+              <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
                 <div 
-                  className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600"
+                  className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-primary-500"
                   style={{
                     width: '100%',
                     backgroundSize: '200% 100%',
-                    animation: 'shimmer 1.5s ease-in-out infinite',
-                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
+                    animation: 'progressFlow 2s ease-in-out infinite',
                   }}
                 />
               </div>
               <style jsx global>{`
-                @keyframes shimmer {
+                @keyframes progressFlow {
                   0% {
-                    background-position: -200% 0;
+                    background-position: 0% 0;
                   }
                   100% {
                     background-position: 200% 0;
+                  }
+                }
+                @keyframes spin {
+                  from {
+                    transform: rotate(0deg);
+                  }
+                  to {
+                    transform: rotate(360deg);
                   }
                 }
               `}</style>
