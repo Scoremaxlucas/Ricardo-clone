@@ -17,7 +17,7 @@ export async function GET(request: NextRequest) {
 
     const now = new Date()
 
-    // OPTIMIERT: Baue WHERE-Klausel dynamisch
+    // OPTIMIERT: Baue WHERE-Klausel dynamisch mit serverseitiger Filterung
     let whereConditions = [
       `(w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')`,
       `NOT EXISTS (SELECT 1 FROM purchases p WHERE p."watchId" = w.id AND p.status != 'cancelled')`,
@@ -26,8 +26,20 @@ export async function GET(request: NextRequest) {
 
     const params: any[] = [now]
 
+    // OPTIMIERT: Preis-Filter serverseitig
+    if (minPrice) {
+      whereConditions.push(`w.price >= $${params.length + 1}`)
+      params.push(parseFloat(minPrice))
+    }
+
+    if (maxPrice) {
+      whereConditions.push(`w.price <= $${params.length + 1}`)
+      params.push(parseFloat(maxPrice))
+    }
+
     if (query) {
-      whereConditions.push(`(w.title ILIKE $${params.length + 1} OR w.brand ILIKE $${params.length + 1} OR w.model ILIKE $${params.length + 1})`)
+      // OPTIMIERT: Suche auch in description für bessere Trefferquote
+      whereConditions.push(`(w.title ILIKE $${params.length + 1} OR w.brand ILIKE $${params.length + 1} OR w.model ILIKE $${params.length + 1} OR w.description ILIKE $${params.length + 1})`)
       params.push(`%${query}%`)
     }
 
@@ -198,7 +210,7 @@ export async function GET(request: NextRequest) {
           },
         },
         orderBy: { createdAt: 'desc' },
-        take: limit,
+        take: Math.min(limit, 200), // OPTIMIERT: Max 200 Ergebnisse
         skip: skip,
       }) as any[]
 

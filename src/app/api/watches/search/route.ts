@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { fuzzyMatch, normalizeSearchText, extractSearchTerms } from '@/lib/search-utils'
 
 // Kategorie-Keyword-Mapping (spezifisch, um Verwechslungen zu vermeiden)
 const categoryKeywords: Record<string, string[]> = {
@@ -1440,17 +1441,85 @@ export async function GET(request: NextRequest) {
       })
     }
 
-    // Kategorie-Filter über Relation (categories -> category.slug)
-    // WICHTIG: Wir fügen den Filter hinzu, aber wenn keine Ergebnisse gefunden werden,
-    // verwenden wir später einen Fallback auf Keyword-basierte Filterung
-    // Daher entfernen wir den Filter NICHT aus der WHERE-Klausel, sondern filtern später zusätzlich
-    // Dies ermöglicht es, auch Watches ohne Kategorie-Verknüpfung zu finden (via Keywords)
-    // if (category) {
-    //   // Kategorie-Filter wird später nach dem Laden angewendet (mit Fallback)
-    //   // Dies ermöglicht es, auch Watches ohne Kategorie-Verknüpfung zu finden
-    // }
+    // KRITISCH: Wenn ein Suchbegriff vorhanden ist, muss die DB-Query bereits danach filtern!
+    // Sonst werden relevante Artikel übersehen, wenn sie nicht in den ersten 1000 sind
+    if (query && query.trim()) {
+      const q = query.trim().toLowerCase()
+      const queryWords = q.split(/\s+/).filter(w => w.length > 0)
+
+      // Erweitere Query-Wörter um Synonyme für DB-Query
+      const expandedQueryWords = expandSearchTerms(queryWords)
+      const uniqueSearchTerms = Array.from(new Set(expandedQueryWords)).slice(0, 50) // Limit für DB-Performance
+
+      // Baue OR-Bedingung für alle Suchfelder mit allen erweiterten Begriffen
+      const searchConditions: any[] = []
+
+      for (const term of uniqueSearchTerms) {
+        if (term.length < 2) continue
+        searchConditions.push(
+          { title: { contains: term, mode: 'insensitive' } },
+          { brand: { contains: term, mode: 'insensitive' } },
+          { model: { contains: term, mode: 'insensitive' } },
+          { description: { contains: term, mode: 'insensitive' } },
+          { referenceNumber: { contains: term, mode: 'insensitive' } }
+        )
+      }
+
+      if (searchConditions.length > 0) {
+        whereClause.AND.push({
+          OR: searchConditions
+        })
+      }
+    }
+
+    // OPTIMIERT: Kategorie-Filter direkt in WHERE-Klausel (serverseitig)
+    if (category) {
+      const categorySlug = category.toLowerCase().trim()
+      const categoryVariants = [
+        categorySlug,
+        category,
+        category.toLowerCase(),
+        category.toUpperCase(),
+        categorySlug.replace(/-/g, '_'),
+        categorySlug.replace(/_/g, '-'),
+      ]
+
+      whereClause.AND.push({
+        OR: [
+          {
+            categories: {
+              some: {
+                category: {
+                  OR: categoryVariants.map(variant => ({
+                    OR: [
+                      { slug: variant },
+                      { name: variant },
+                    ],
+                  })),
+                },
+              },
+            },
+          },
+        ],
+      })
+    }
+
+    // OPTIMIERT: Preis-Filter direkt in WHERE-Klausel (serverseitig)
+    if (minPrice || maxPrice) {
+      const priceFilter: any = {}
+      if (minPrice) {
+        priceFilter.gte = parseFloat(minPrice)
+      }
+      if (maxPrice) {
+        priceFilter.lte = parseFloat(maxPrice)
+      }
+      whereClause.AND.push({ price: priceFilter })
+    }
 
     // Hole alle verfügbaren Artikel basierend auf WHERE-Klausel
+    // PERFORMANCE: Erhöhtes Limit wenn Suchbegriff vorhanden (für bessere Trefferquote)
+    const MAX_INITIAL_RESULTS = query && query.trim() ? 1000 : 500
+
     let articles: any[] = []
 
     articles = await prisma.watch.findMany({
@@ -1510,56 +1579,15 @@ export async function GET(request: NextRequest) {
         },
       },
       orderBy: { createdAt: 'desc' },
-      take: 1000, // Increased limit to ensure all articles are found
+      take: MAX_INITIAL_RESULTS,
     })
 
-    // Filtere Artikel ohne gültigen Seller heraus (Seller sollte bereits durch Prisma gefiltert sein, aber Sicherheit)
+    // OPTIMIERT: Filter bereits in DB-Query enthalten (purchases WHERE status != 'cancelled')
+    // Nur noch Sicherheits-Check für Seller
     articles = articles.filter((w: any) => w.seller && w.seller.id)
 
-    // DEBUG: Log how many articles passed initial filters
-    console.log(`[SEARCH] Articles after DB query: ${articles.length}`)
-    
-    // DEBUG: Check if Lacoste article is in results
-    const lacosteArticle = articles.find((w: any) => w.id === 'cmipseh3y0001bbm7ew1n8atm')
-    if (lacosteArticle) {
-      console.log(`[SEARCH] ✅ Lacoste article found in DB query results`)
-      console.log(`[SEARCH]   Seller: ${lacosteArticle.seller?.id || 'MISSING'}`)
-      console.log(`[SEARCH]   Purchases: ${lacosteArticle.purchases?.length || 0}`)
-    } else {
-      console.log(`[SEARCH] ❌ Lacoste article NOT in DB query results`)
-    }
-
-    // Filtere verkaufte Produkte raus
-    // Nur nicht-stornierte Purchases zählen als "verkauft"
-    const beforePurchaseFilter = articles.length
-    articles = articles.filter((article: any) => {
-      try {
-        if (!article.purchases || !Array.isArray(article.purchases) || article.purchases.length === 0) {
-          return true // Keine Purchases = verfügbar
-        }
-        // Prüfe ob es aktive (nicht-stornierte) Purchases gibt
-        const activePurchases = article.purchases.filter(
-          (p: any) => p && p.status && p.status !== 'cancelled'
-        )
-        if (activePurchases.length > 0) {
-          return false // Hat aktive Purchases = verkauft
-        }
-        return true // Alle Purchases sind storniert = verfügbar
-      } catch (e) {
-        console.error('[SEARCH] Error filtering purchases:', e, 'article:', article?.id)
-        return true // Bei Fehler: behalte das Produkt (fail-safe)
-      }
-    })
-
-    console.log(`[SEARCH] Articles after purchase filter: ${articles.length} (removed: ${beforePurchaseFilter - articles.length})`)
-
-    // DEBUG: Check if Lacoste article passed purchase filter
-    const lacosteAfterPurchase = articles.find((w: any) => w.id === 'cmipseh3y0001bbm7ew1n8atm')
-    if (lacosteAfterPurchase) {
-      console.log(`[SEARCH] ✅ Lacoste article passed purchase filter`)
-    } else {
-      console.log(`[SEARCH] ❌ Lacoste article FAILED purchase filter`)
-    }
+    // OPTIMIERT: Verkaufte Artikel sind bereits durch purchases-Filter ausgeschlossen
+    // Keine zusätzliche Filterung nötig
 
     // Wenn Suchbegriff vorhanden, filtere intelligent mit Relevanz-Ranking
     if (query) {
@@ -1731,7 +1759,7 @@ export async function GET(request: NextRequest) {
           let exactWordMatches = 0
           const matchedFields = new Set<string>()
 
-          // Prüfe sowohl Original-Wörter als auch Synonyme
+            // Prüfe sowohl Original-Wörter als auch Synonyme
           for (const word of expandedQueryWords) {
             if (word.length < 2) continue
 
@@ -1753,7 +1781,7 @@ export async function GET(request: NextRequest) {
             // Prüfe alle Felder (nicht mit else if, damit alle Felder geprüft werden)
             // Exakte Wort-Übereinstimmung (Word Boundary) - höchste Priorität
 
-            // Brand
+            // Brand - mit Fuzzy-Search Unterstützung
             if (
               exactMatchRegex.test(brandLower) ||
               (normalizedExactMatchRegex &&
@@ -1781,9 +1809,14 @@ export async function GET(request: NextRequest) {
                 synonymWordsMatched.add(word)
               }
               matchedFields.add('brand')
+            } else if (fuzzyMatch(word, brandLower, 0.75)) {
+              // OPTIMIERT: Fuzzy-Match für Tippfehler (nur wenn kein exakter Match)
+              wordScore = Math.max(wordScore, 30) // Niedrigere Punktzahl für Fuzzy-Matches
+              wordMatched = true
+              matchedFields.add('brand')
             }
 
-            // Model
+            // Model - mit Fuzzy-Search Unterstützung
             if (
               exactMatchRegex.test(modelLower) ||
               (normalizedExactMatchRegex &&
@@ -1810,6 +1843,11 @@ export async function GET(request: NextRequest) {
               } else {
                 synonymWordsMatched.add(word)
               }
+              matchedFields.add('model')
+            } else if (fuzzyMatch(word, modelLower, 0.75)) {
+              // OPTIMIERT: Fuzzy-Match für Tippfehler (nur wenn kein exakter Match)
+              wordScore = Math.max(wordScore, 25)
+              wordMatched = true
               matchedFields.add('model')
             }
 
@@ -1961,8 +1999,14 @@ export async function GET(request: NextRequest) {
       })
 
       // Filtere NUR Artikel, die zur Suche passen (matches = true)
+      // WICHTIG: Da die DB bereits nach Suchbegriff gefiltert hat, sollten alle Artikel hier matchen
+      // Die Relevanz-Berechnung dient nur noch zur Sortierung
       articles = articlesWithScore
-        .filter(item => item.matches) // WICHTIG: Nur relevante Artikel werden angezeigt
+        .filter(item => {
+          // Wenn DB bereits gefiltert hat, akzeptiere alle Artikel (mit Relevanz-Score > 0)
+          // Sonst nur explizite Matches
+          return item.matches || item.relevanceScore > 0
+        })
         .sort((a, b) => {
           // Sortiere nach Relevanz-Score (inkl. Booster-Bonus für relevante Artikel)
           if (b.relevanceScore !== a.relevanceScore) {
@@ -2111,17 +2155,8 @@ export async function GET(request: NextRequest) {
         return true
       })
 
-    // Preis-Filter anwenden (nach Berechnung des aktuellen Preises)
-    if (minPrice || maxPrice) {
-      const min = minPrice ? parseFloat(minPrice) : 0
-      const max = maxPrice ? parseFloat(maxPrice) : Infinity
-
-      articlesWithImages = articlesWithImages.filter(article => {
-        if (!article) return false
-        const currentPrice = article.price
-        return currentPrice >= min && currentPrice <= max
-      })
-    }
+    // OPTIMIERT: Preis-Filter bereits in DB-Query angewendet
+    // Keine zusätzliche Filterung nötig (außer für Auktionen mit Geboten)
 
     // Kategorie-Filterung: Wenn Kategorie gesetzt ist, filtere nach Kategorie-Verknüpfung ODER Keywords
     // WICHTIG: Wenn keine Artikel mit Kategorie-Verknüpfung gefunden werden, verwende IMMER Keyword-Fallback

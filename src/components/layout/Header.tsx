@@ -273,34 +273,33 @@ export function Header() {
     }, 200) // 200ms delay before closing for better UX
   }, [])
 
-  // Suchfunktion
-  const handleSearch = async (e: React.FormEvent) => {
+  // OPTIMIERT: Schnellere Suche ohne Seiten-Reload
+  const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     const query = searchQuery.trim()
     if (!query) return
 
-    // Prüfe ob es eine Artikelnummer ist (6-10 stellige Nummer)
+    // OPTIMIERT: Sofortige Navigation ohne Warten auf API-Call
+    // Artikelnummer-Check läuft im Hintergrund
     const isNumericArticleNumber = /^\d{6,10}$/.test(query)
 
     if (isNumericArticleNumber) {
-      // Suche nach Artikelnummer
-      try {
-        const res = await fetch(`/api/articles/search?q=${encodeURIComponent(query)}&limit=1`)
-        if (res.ok) {
-          const data = await res.json()
-          if (data.watches && data.watches.length === 1) {
-            // Eindeutiger Treffer: Direkt zur Artikelseite
+      // OPTIMIERT: Asynchroner Check im Hintergrund, aber sofortige Navigation zur Suche
+      fetch(`/api/articles/search?q=${encodeURIComponent(query)}&limit=1`)
+        .then(res => res.ok ? res.json() : null)
+        .then(data => {
+          if (data?.watches?.length === 1) {
+            // Eindeutiger Treffer: Navigiere zur Artikelseite
             router.push(`/products/${data.watches[0].id}`)
-            return
           }
-        }
-      } catch (error) {
-        console.error('Error searching by article number:', error)
-      }
+        })
+        .catch(() => {
+          // Bei Fehler: Normale Suche (bereits geladen)
+        })
     }
 
-    // Normale Suche
-    router.push(`/search?q=${encodeURIComponent(query)}`)
+    // OPTIMIERT: Sofortige Navigation mit replace (kein History-Eintrag, schneller)
+    router.replace(`/search?q=${encodeURIComponent(query)}`)
   }
 
   return (

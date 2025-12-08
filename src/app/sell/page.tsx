@@ -1,6 +1,6 @@
 'use client'
 
-import { CategoryFields } from '@/components/forms/CategoryFieldsNew'
+import { CategoryFields } from '@/components/forms/category-fields'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { useLanguage } from '@/contexts/LanguageContext'

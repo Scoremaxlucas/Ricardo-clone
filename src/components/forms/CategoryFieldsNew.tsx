@@ -6020,7 +6020,7 @@ export function CategoryFields({
   // ============================================
   // FEHLENDE UNTERKATEGORIEN - SYSTEMATISCH HINZUGEFÜGT
   // ============================================
-  
+
   // AUTO & MOTORRAD - Fehlende Unterkategorien
   if (category === 'auto-motorrad') {
     // Autos
@@ -6139,7 +6139,7 @@ export function CategoryFields({
         </div>
       )
     }
-    
+
     // Autozubehör
     if (subcategory === 'Autozubehör' || subcategory === 'Fahrzeugzubehör') {
       return (
@@ -6193,7 +6193,7 @@ export function CategoryFields({
         </div>
       )
     }
-    
+
     // Felgen & Reifen
     if (subcategory === 'Felgen & Reifen') {
       return (
@@ -6255,7 +6255,7 @@ export function CategoryFields({
         </div>
       )
     }
-    
+
     // Motorräder
     if (subcategory === 'Motorräder' || subcategory === 'Motorräder & Roller') {
       return (
@@ -6341,7 +6341,7 @@ export function CategoryFields({
         </div>
       )
     }
-    
+
     // Nutzfahrzeuge
     if (subcategory === 'Nutzfahrzeuge') {
       return (

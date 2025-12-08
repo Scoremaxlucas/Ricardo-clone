@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import {
@@ -43,6 +43,7 @@ interface WatchItem {
 
 export default function SearchPage() {
   const router = useRouter()
+  const searchParams = useSearchParams() // OPTIMIERT: Next.js Hook statt Polling
   const { t, translateSubcategory } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [watches, setWatches] = useState<WatchItem[]>([])
@@ -54,52 +55,12 @@ export default function SearchPage() {
   const [brandCounts, setBrandCounts] = useState<Record<string, number>>({})
   const [localMinPrice, setLocalMinPrice] = useState<string>('')
   const [localMaxPrice, setLocalMaxPrice] = useState<string>('')
-  const [mounted, setMounted] = useState(false)
   const sliderContainerRef = useRef<HTMLDivElement>(null)
+  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const abortControllerRef = useRef<AbortController | null>(null)
 
-  // Warte bis Component gemountet ist
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // State für URL-Parameter-String (für React Dependencies)
-  const [urlSearchString, setUrlSearchString] = useState<string>('')
-
-  // Lade URL-Parameter wenn Component gemountet ist
-  useEffect(() => {
-    if (mounted && typeof window !== 'undefined') {
-      setUrlSearchString(window.location.search)
-    }
-  }, [mounted])
-
-  // Aktualisiere URL-Parameter wenn sich die URL ändert
-  useEffect(() => {
-    if (!mounted || typeof window === 'undefined') return
-
-    const handleRouteChange = () => {
-      setUrlSearchString(window.location.search)
-    }
-
-    // Initial load
-    handleRouteChange()
-
-    // Polling für URL-Änderungen (da router.push() nicht immer popstate auslöst)
-    const interval = setInterval(handleRouteChange, 100)
-
-    // Listen to popstate (back/forward button)
-    window.addEventListener('popstate', handleRouteChange)
-
-    return () => {
-      clearInterval(interval)
-      window.removeEventListener('popstate', handleRouteChange)
-    }
-  }, [mounted])
-
-  // Parse URL-Parameter
-  const urlParams =
-    mounted && typeof window !== 'undefined'
-      ? new URLSearchParams(window.location.search)
-      : new URLSearchParams(urlSearchString)
+  // OPTIMIERT: Parse URL-Parameter direkt aus searchParams
+  const urlParams = searchParams
 
   const query = (urlParams?.get('q') || '').trim()
   const category = (urlParams?.get('category') || '').trim()
@@ -174,126 +135,160 @@ export default function SearchPage() {
     }
   }
 
-  useEffect(() => {
-    if (!mounted) return
+  // OPTIMIERT: Debounced Search Function
+  const performSearch = useCallback(async (params: URLSearchParams, signal?: AbortSignal) => {
+    setLoading(true)
 
-    const run = async () => {
-      setLoading(true)
-      try {
-        // Verwende aktuelle URL-Parameter direkt aus window.location
-        const currentParams =
-          typeof window !== 'undefined'
-            ? new URLSearchParams(window.location.search)
-            : new URLSearchParams(urlSearchString)
+    try {
+      // OPTIMIERT: Verwende die vollständige Such-API mit Synonymen und Fuzzy-Search
+      let url = '/api/watches/search'
+      const searchParams = new URLSearchParams()
 
-        // OPTIMIERT: Verwende fast API-Route für instant loading
-        let url = '/api/articles/search-fast'
-        const params = new URLSearchParams()
+      const q = (params.get('q') || '').trim()
+      const cat = (params.get('category') || '').trim()
+      const subcat = (params.get('subcategory') || '').trim()
+      const min = params.get('minPrice') || ''
+      const max = params.get('maxPrice') || ''
+      const cond = params.get('condition') || ''
+      const br = params.get('brand') || ''
+      const auction = params.get('isAuction') || ''
+      const plz = params.get('postalCode') || ''
+      const sort = params.get('sortBy') || 'relevance'
 
-        const q = (currentParams.get('q') || '').trim()
-        const cat = (currentParams.get('category') || '').trim()
-        const subcat = (currentParams.get('subcategory') || '').trim()
-        const min = currentParams.get('minPrice') || ''
-        const max = currentParams.get('maxPrice') || ''
-        const cond = currentParams.get('condition') || ''
-        const br = currentParams.get('brand') || ''
-        const auction = currentParams.get('isAuction') || ''
-        const plz = currentParams.get('postalCode') || ''
-        const sort = currentParams.get('sortBy') || 'relevance'
+      if (q) searchParams.append('q', q)
+      if (cat) searchParams.append('category', cat)
+      if (subcat) searchParams.append('subcategory', subcat)
+      if (min) searchParams.append('minPrice', min)
+      if (max) searchParams.append('maxPrice', max)
+      if (cond) searchParams.append('condition', cond)
+      if (br) searchParams.append('brand', br)
+      if (auction) searchParams.append('isAuction', auction)
+      if (plz) searchParams.append('postalCode', plz)
+      if (sort) searchParams.append('sortBy', sort)
 
-        if (q) params.append('q', q)
-        if (cat) params.append('category', cat)
-        if (subcat) params.append('subcategory', subcat)
-        if (min) params.append('minPrice', min)
-        if (max) params.append('maxPrice', max)
-        if (cond) params.append('condition', cond)
-        if (br) params.append('brand', br)
-        if (auction) params.append('isAuction', auction)
-        if (plz) params.append('postalCode', plz)
-        if (sort) params.append('sortBy', sort)
+      if (searchParams.toString()) {
+        url += '?' + searchParams.toString()
+      }
 
-        if (params.toString()) {
-          url += '?' + params.toString()
-        }
+      // OPTIMIERT: AbortController für Cancellation
+      console.log(`🔍 Starting search for: "${q}"`, { url, cat, subcat, min, max, cond, br, auction })
+      const res = await fetch(url, { signal })
+      if (signal?.aborted) {
+        console.log('❌ Search aborted')
+        return // Request wurde abgebrochen
+      }
 
-        console.log('🔍 Fetching with URL:', url)
-        console.log('📊 Filter params:', { min, max, cond, br, auction, plz, sort })
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error(`❌ API error ${res.status}:`, errorText)
+        throw new Error(`API error: ${res.status}`)
+      }
+      const data = await res.json()
+      console.log(`📦 API Response:`, { watchesCount: data.watches?.length, total: data.total, hasError: !!data.error })
 
-        const res = await fetch(url)
-        if (!res.ok) {
-          throw new Error(`API error: ${res.status}`)
-        }
-        const data = await res.json()
-        const watchesData = Array.isArray(data.watches) ? data.watches : []
-        console.log(`✅ Received ${watchesData.length} watches`)
-        setWatches(watchesData)
+      const watchesData = Array.isArray(data.watches) ? data.watches : []
 
-        // Lade präzise Marken-Anzahlen aus separater API (ohne Marken-Filter)
-        try {
-          const brandCountsParams = new URLSearchParams()
-          if (cat) brandCountsParams.append('category', cat)
-          if (subcat) brandCountsParams.append('subcategory', subcat)
-          if (min) brandCountsParams.append('minPrice', min)
-          if (max) brandCountsParams.append('maxPrice', max)
-          if (cond) brandCountsParams.append('condition', cond)
-          if (auction) brandCountsParams.append('isAuction', auction)
-          if (plz) brandCountsParams.append('postalCode', plz)
-          if (q) brandCountsParams.append('q', q)
+      if (signal?.aborted) {
+        console.log('❌ Search aborted after response')
+        return // Request wurde abgebrochen
+      }
 
-          const brandCountsUrl = `/api/watches/brand-counts?${brandCountsParams.toString()}`
-          const brandCountsRes = await fetch(brandCountsUrl)
-          if (brandCountsRes.ok) {
-            const brandCountsData = await brandCountsRes.json()
-            setBrandCounts(brandCountsData.brandCounts || {})
-            console.log('📊 Brand counts loaded:', brandCountsData.brandCounts)
+      console.log(`✅ Search for "${q}": Found ${watchesData.length} articles`)
+      if (watchesData.length === 0 && q) {
+        console.warn(`⚠️ No articles found for "${q}". Check filters and database.`)
+      }
+
+      setWatches(watchesData)
+
+      // OPTIMIERT: Parallele API-Calls für Brand Counts (nicht blockierend)
+      const brandCountsParams = new URLSearchParams()
+      if (cat) brandCountsParams.append('category', cat)
+      if (subcat) brandCountsParams.append('subcategory', subcat)
+      if (min) brandCountsParams.append('minPrice', min)
+      if (max) brandCountsParams.append('maxPrice', max)
+      if (cond) brandCountsParams.append('condition', cond)
+      if (auction) brandCountsParams.append('isAuction', auction)
+      if (plz) brandCountsParams.append('postalCode', plz)
+      if (q) brandCountsParams.append('q', q)
+
+      // OPTIMIERT: Brand Counts im Hintergrund laden (nicht blockierend)
+      fetch(`/api/watches/brand-counts?${brandCountsParams.toString()}`, { signal })
+        .then(res => {
+          if (signal?.aborted) return
+          if (res.ok) {
+            return res.json()
           }
-        } catch (error) {
-          console.error('Error loading brand counts:', error)
-          // Fallback: Zähle aus aktuellen Ergebnissen
-          const counts: Record<string, number> = {}
-          watchesData.forEach((w: WatchItem) => {
-            if (w.brand) {
-              counts[w.brand] = (counts[w.brand] || 0) + 1
-            }
-          })
-          setBrandCounts(counts)
-        }
-
-        // Extrahiere verfügbare Marken für Dropdown
-        const brands = Array.from(
-          new Set(watchesData.map((w: WatchItem) => w.brand).filter(Boolean))
-        ).sort() as string[]
-
-        // Lade Marken aus statischer Liste für die aktuelle Kategorie
-        try {
-          if (cat) {
-            // Nur Marken aus der aktuellen Kategorie anzeigen
-            const categoryBrands = getBrandsForCategory(cat)
-            // Kombiniere mit Marken aus den Ergebnissen
-            const allAvailableBrands = Array.from(new Set([...brands, ...categoryBrands])).sort()
-            setAvailableBrands(allAvailableBrands)
-          } else {
-            // Wenn keine Kategorie, zeige alle Marken aus Ergebnissen
-            setAvailableBrands(brands)
+        })
+        .then(data => {
+          if (signal?.aborted) return
+          if (data?.brandCounts) {
+            setBrandCounts(data.brandCounts)
           }
-        } catch (error) {
-          console.error('Error loading brands:', error)
-          setAvailableBrands(brands)
-        }
-      } catch (error) {
+        })
+        .catch(error => {
+          if (!signal?.aborted) {
+            console.error('Error loading brand counts:', error)
+            // Fallback: Zähle aus aktuellen Ergebnissen
+            const counts: Record<string, number> = {}
+            watchesData.forEach((w: WatchItem) => {
+              if (w.brand) {
+                counts[w.brand] = (counts[w.brand] || 0) + 1
+              }
+            })
+            setBrandCounts(counts)
+          }
+        })
+
+      // Extrahiere verfügbare Marken für Dropdown
+      const brands = Array.from(
+        new Set(watchesData.map((w: WatchItem) => w.brand).filter(Boolean))
+      ).sort() as string[]
+
+      // OPTIMIERT: Marken synchron setzen (schneller)
+      if (cat) {
+        const categoryBrands = getBrandsForCategory(cat)
+        const allAvailableBrands = Array.from(new Set([...brands, ...categoryBrands])).sort()
+        setAvailableBrands(allAvailableBrands)
+      } else {
+        setAvailableBrands(brands)
+      }
+    } catch (error) {
+      if (!signal?.aborted) {
         console.error('Error fetching watches:', error)
         setWatches([])
-      } finally {
+      }
+    } finally {
+      if (!signal?.aborted) {
         setLoading(false)
       }
     }
-    run()
-  }, [mounted, urlSearchString, category])
+  }, [])
 
-  const updateFilter = (key: string, value: string) => {
-    if (!mounted || typeof window === 'undefined') return
+  // OPTIMIERT: Sofortige Suche ohne Debounce für bessere UX (wie Ricardo)
+  useEffect(() => {
+    // Abbreche vorherige Requests
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort()
+    }
 
-    const params = new URLSearchParams(window.location.search)
+    // Erstelle neuen AbortController
+    const abortController = new AbortController()
+    abortControllerRef.current = abortController
+
+    // OPTIMIERT: Sofortige Suche ohne Debounce (wie Ricardo)
+    // Zeige Loading-State sofort für besseres Feedback
+    setLoading(true)
+
+    // Starte Suche sofort
+    performSearch(searchParams, abortController.signal)
+
+    return () => {
+      abortController.abort()
+    }
+  }, [searchParams, performSearch])
+
+  const updateFilter = useCallback((key: string, value: string) => {
+    const params = new URLSearchParams(searchParams.toString())
 
     // Setze neuen Filter
     if (value && value.trim() !== '') {
@@ -303,16 +298,11 @@ export default function SearchPage() {
     }
 
     const newUrl = `/search?${params.toString()}`
-    router.push(newUrl)
+    router.replace(newUrl) // OPTIMIERT: replace statt push für schnellere Navigation
+  }, [searchParams, router])
 
-    // Aktualisiere URL-Parameter sofort
-    setUrlSearchString(params.toString())
-  }
-
-  const applyBrandFilter = () => {
-    if (!mounted || typeof window === 'undefined') return
-
-    const params = new URLSearchParams(window.location.search)
+  const applyBrandFilter = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString())
     if (selectedBrands.length > 0) {
       params.set('brand', selectedBrands[0]) // Für jetzt nur erste Marke, später können wir mehrere unterstützen
     } else {
@@ -320,11 +310,8 @@ export default function SearchPage() {
     }
 
     const newUrl = `/search?${params.toString()}`
-    router.push(newUrl)
-
-    // Aktualisiere URL-Parameter sofort
-    setUrlSearchString(params.toString())
-  }
+    router.replace(newUrl) // OPTIMIERT: replace statt push
+  }, [selectedBrands, searchParams, router])
 
   const toggleBrand = (brandName: string) => {
     setSelectedBrands(prev => {
@@ -340,10 +327,8 @@ export default function SearchPage() {
     updateFilter(key, '')
   }
 
-  const applyPriceFilter = () => {
-    if (!mounted || typeof window === 'undefined') return
-
-    const params = new URLSearchParams(window.location.search)
+  const applyPriceFilter = useCallback(() => {
+    const params = new URLSearchParams(searchParams.toString())
 
     // Setze minPrice nur wenn es gesetzt ist und nicht der Standardwert
     if (localMinPrice && localMinPrice !== '0.05' && localMinPrice.trim() !== '') {
@@ -360,24 +345,16 @@ export default function SearchPage() {
     }
 
     const newUrl = `/search?${params.toString()}`
-    router.push(newUrl)
+    router.replace(newUrl) // OPTIMIERT: replace statt push
+  }, [localMinPrice, localMaxPrice, searchParams, router])
 
-    // Aktualisiere URL-Parameter sofort
-    setUrlSearchString(params.toString())
-  }
-
-  const handleSortChange = (newSort: string) => {
-    if (!mounted || typeof window === 'undefined') return
-
-    const params = new URLSearchParams(window.location.search)
+  const handleSortChange = useCallback((newSort: string) => {
+    const params = new URLSearchParams(searchParams.toString())
     params.set('sortBy', newSort)
 
     const newUrl = `/search?${params.toString()}`
-    router.push(newUrl)
-
-    // Aktualisiere URL-Parameter sofort
-    setUrlSearchString(params.toString())
-  }
+    router.replace(newUrl) // OPTIMIERT: replace statt push
+  }, [searchParams, router])
 
   // Schließe Filter-Dropdowns beim Klick außerhalb
   useEffect(() => {
@@ -394,22 +371,7 @@ export default function SearchPage() {
     }
   }, [openFilter])
 
-  // Zeige Loading-State bis Component gemountet ist
-  if (!mounted) {
-    return (
-      <div className="flex min-h-screen flex-col bg-gray-50">
-        <Header />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-            <p className="text-gray-600">Laden...</p>
-          </div>
-        </div>
-        <Footer />
-      </div>
-    )
-  }
-
+  // OPTIMIERT: Kein mounted-Check mehr nötig, da useSearchParams sofort verfügbar ist
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
@@ -1095,10 +1057,10 @@ export default function SearchPage() {
                           type="text"
                           value={postalCode}
                           onChange={e => {
-                            const params = new URLSearchParams(window.location.search)
+                            const params = new URLSearchParams(searchParams.toString())
                             if (e.target.value) params.set('postalCode', e.target.value)
                             else params.delete('postalCode')
-                            router.push(`/search?${params.toString()}`)
+                            router.replace(`/search?${params.toString()}`) // OPTIMIERT: replace statt push
                           }}
                           className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                           placeholder="z.B. 8001"
