@@ -19,10 +19,10 @@ export function compressImage(
 ): Promise<string> {
   return new Promise((resolve, reject) => {
     const {
-      maxWidth = 1920,
-      maxHeight = 1920,
-      quality = 0.85,
-      maxSizeMB = 2,
+      maxWidth = 1600, // Reduziert von 1920 für kleinere Dateien
+      maxHeight = 1600, // Reduziert von 1920 für kleinere Dateien
+      quality = 0.75, // Reduziert von 0.85 für bessere Komprimierung
+      maxSizeMB = 1.5, // Reduziert von 2MB für sicherere Uploads
     } = options
 
     const reader = new FileReader()
@@ -61,31 +61,39 @@ export function compressImage(
               return
             }
 
-            // Prüfe Größe
-            const sizeMB = blob.size / (1024 * 1024)
-            if (sizeMB > maxSizeMB) {
+            // Prüfe Größe und komprimiere iterativ bis Zielgröße erreicht
+            const checkAndCompress = (currentBlob: Blob, currentQuality: number, attempts: number = 0): void => {
+              const sizeMB = currentBlob.size / (1024 * 1024)
+              
+              if (sizeMB <= maxSizeMB || attempts >= 5) {
+                // Zielgröße erreicht oder maximale Versuche erreicht
+                const reader = new FileReader()
+                reader.onload = () => resolve(reader.result as string)
+                reader.onerror = reject
+                reader.readAsDataURL(currentBlob)
+                return
+              }
+              
               // Weitere Komprimierung bei Bedarf
-              const newQuality = Math.max(0.3, quality - 0.2)
+              const newQuality = Math.max(0.2, currentQuality - 0.15)
               canvas.toBlob(
                 (compressedBlob) => {
                   if (!compressedBlob) {
-                    reject(new Error('Komprimierung fehlgeschlagen'))
+                    // Falls Komprimierung fehlschlägt, verwende aktuelles Blob
+                    const reader = new FileReader()
+                    reader.onload = () => resolve(reader.result as string)
+                    reader.onerror = reject
+                    reader.readAsDataURL(currentBlob)
                     return
                   }
-                  const reader = new FileReader()
-                  reader.onload = () => resolve(reader.result as string)
-                  reader.onerror = reject
-                  reader.readAsDataURL(compressedBlob)
+                  checkAndCompress(compressedBlob, newQuality, attempts + 1)
                 },
                 'image/jpeg',
                 newQuality
               )
-            } else {
-              const reader = new FileReader()
-              reader.onload = () => resolve(reader.result as string)
-              reader.onerror = reject
-              reader.readAsDataURL(blob)
             }
+            
+            checkAndCompress(blob, quality)
           },
           'image/jpeg',
           quality

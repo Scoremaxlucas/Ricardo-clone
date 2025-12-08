@@ -176,13 +176,25 @@ export default function SellPage() {
       }
 
       try {
-        // Komprimiere Bild (max 2MB nach Komprimierung)
+        // WICHTIG: Aggressive Komprimierung um 413 Fehler zu vermeiden
+        // Reduzierte Größe und Quality für kleinere Dateien
         const compressedImage = await compressImage(file, {
-          maxWidth: 1920,
-          maxHeight: 1920,
-          quality: 0.85,
-          maxSizeMB: 2,
+          maxWidth: 1600, // Reduziert von 1920
+          maxHeight: 1600, // Reduziert von 1920
+          quality: 0.75, // Reduziert von 0.85
+          maxSizeMB: 1.5, // Reduziert von 2MB für sicherere Uploads
         })
+        
+        // Prüfe finale Größe des komprimierten Bildes
+        const base64SizeMB = (compressedImage.length * 3) / 4 / (1024 * 1024)
+        if (base64SizeMB > 1.5) {
+          console.warn(`Bild ${file.name} ist nach Komprimierung noch ${base64SizeMB.toFixed(2)}MB groß`)
+          toast(`Bild ${file.name} ist sehr groß (${base64SizeMB.toFixed(2)}MB). Bitte verwenden Sie ein kleineres Bild.`, {
+            icon: '⚠️',
+            position: 'top-right',
+            duration: 5000,
+          })
+        }
 
         newImages.push(compressedImage)
         processedCount++

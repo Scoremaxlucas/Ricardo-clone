@@ -5,11 +5,23 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
 
+// WICHTIG: Erhöhe Body-Size-Limit für große Bild-Uploads
+export const runtime = 'nodejs'
+export const maxDuration = 60 // 60 Sekunden für große Uploads
+
 export async function POST(request: NextRequest) {
   try {
     console.log('Watch creation API called')
 
     const rawData = await request.json()
+    
+    // WICHTIG: Prüfe Request-Größe und logge sie für Debugging
+    const requestSizeMB = JSON.stringify(rawData).length / (1024 * 1024)
+    console.log(`[Watch Create] Request size: ${requestSizeMB.toFixed(2)}MB`)
+    
+    if (requestSizeMB > 10) {
+      console.warn(`[Watch Create] WARNING: Request is very large (${requestSizeMB.toFixed(2)}MB)`)
+    }
 
     // Prüfe ob description vielleicht ein JSON-String ist, der geparst werden muss
     if (typeof rawData.description === 'string' && rawData.description.trim().startsWith('[')) {

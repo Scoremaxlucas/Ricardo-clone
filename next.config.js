@@ -10,6 +10,14 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   // Power optimization
   poweredByHeader: false,
+  // WICHTIG: Erhöhe Body-Size-Limit für große Bild-Uploads (Standard: 1MB)
+  // Vercel hat ein Limit von 4.5MB für Serverless Functions
+  // Wir erhöhen es auf das Maximum, aber die Bilder sollten bereits komprimiert sein
+  experimental: {
+    serverActions: {
+      bodySizeLimit: '10mb', // Erhöht von Standard 1MB
+    },
+  },
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],
