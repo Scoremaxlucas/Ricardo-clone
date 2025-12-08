@@ -594,10 +594,13 @@ export default function SellPage() {
         })
         setTitleImageIndex(0)
 
-        // Erfolg anzeigen und dann weiterleiten
-        setTimeout(() => {
-          router.push('/')
-        }, 1500)
+        // WICHTIG: Warte kurz, damit der Erfolg angezeigt wird, dann weiterleiten
+        // Das Loading-Modal bleibt währenddessen sichtbar
+        await new Promise(resolve => setTimeout(resolve, 1500))
+        
+        // Erst jetzt Loading beenden und weiterleiten
+        setIsLoading(false)
+        router.push('/')
       } else {
         try {
           const errorData = await response.json()
@@ -614,6 +617,8 @@ export default function SellPage() {
             duration: 5000,
           })
         }
+        // WICHTIG: Loading beenden bei Fehler
+        setIsLoading(false)
       }
     } catch (err: any) {
       console.error('Error submitting form:', err)
@@ -624,9 +629,10 @@ export default function SellPage() {
           duration: 5000,
         }
       )
-    } finally {
+      // WICHTIG: Loading beenden bei Fehler
       setIsLoading(false)
     }
+    // WICHTIG: Kein finally-Block mehr - Loading wird explizit beendet
   }
 
   if (status === 'loading') {
@@ -657,10 +663,29 @@ export default function SellPage() {
             <p className="mb-6 text-gray-600">
               Bitte haben Sie einen Moment Geduld. Ihr Artikel wird verarbeitet und hochgeladen.
             </p>
-            <div className="w-full space-y-2">
-              <div className="h-2 w-full overflow-hidden rounded-full bg-gray-200">
-                <div className="h-full w-full animate-pulse bg-primary-600" style={{ animationDuration: '1.5s' }} />
+            <div className="w-full space-y-3">
+              {/* Animated Progress Bar with smooth shimmer effect */}
+              <div className="relative h-3 w-full overflow-hidden rounded-full bg-gray-200 shadow-inner">
+                <div 
+                  className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-primary-400 via-primary-500 to-primary-600"
+                  style={{
+                    width: '100%',
+                    backgroundSize: '200% 100%',
+                    animation: 'shimmer 1.5s ease-in-out infinite',
+                    boxShadow: '0 2px 8px rgba(16, 185, 129, 0.4)',
+                  }}
+                />
               </div>
+              <style jsx global>{`
+                @keyframes shimmer {
+                  0% {
+                    background-position: -200% 0;
+                  }
+                  100% {
+                    background-position: 200% 0;
+                  }
+                }
+              `}</style>
               <p className="text-sm text-gray-500">
                 Dies kann bei mehreren Bildern etwas länger dauern...
               </p>
