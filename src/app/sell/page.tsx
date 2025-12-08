@@ -643,7 +643,7 @@ export default function SellPage() {
   // Full-Screen Loading Modal während Upload
   const UploadLoadingModal = () => {
     if (!isLoading) return null
-    
+
     return (
       <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/60 backdrop-blur-sm">
         <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl">
@@ -689,6 +689,7 @@ export default function SellPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
+      <UploadLoadingModal />
       <Header />
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-6">
