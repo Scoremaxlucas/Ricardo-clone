@@ -14,11 +14,11 @@ export async function POST(request: NextRequest) {
     console.log('Watch creation API called')
 
     const rawData = await request.json()
-    
+
     // WICHTIG: Prüfe Request-Größe und logge sie für Debugging
     const requestSizeMB = JSON.stringify(rawData).length / (1024 * 1024)
     console.log(`[Watch Create] Request size: ${requestSizeMB.toFixed(2)}MB`)
-    
+
     if (requestSizeMB > 10) {
       console.warn(`[Watch Create] WARNING: Request is very large (${requestSizeMB.toFixed(2)}MB)`)
     }

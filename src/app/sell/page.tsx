@@ -184,7 +184,7 @@ export default function SellPage() {
           quality: 0.75, // Reduziert von 0.85
           maxSizeMB: 1.5, // Reduziert von 2MB für sicherere Uploads
         })
-        
+
         // Prüfe finale Größe des komprimierten Bildes
         const base64SizeMB = (compressedImage.length * 3) / 4 / (1024 * 1024)
         if (base64SizeMB > 1.5) {

@@ -64,7 +64,7 @@ export function compressImage(
             // Prüfe Größe und komprimiere iterativ bis Zielgröße erreicht
             const checkAndCompress = (currentBlob: Blob, currentQuality: number, attempts: number = 0): void => {
               const sizeMB = currentBlob.size / (1024 * 1024)
-              
+
               if (sizeMB <= maxSizeMB || attempts >= 5) {
                 // Zielgröße erreicht oder maximale Versuche erreicht
                 const reader = new FileReader()
@@ -73,7 +73,7 @@ export function compressImage(
                 reader.readAsDataURL(currentBlob)
                 return
               }
-              
+
               // Weitere Komprimierung bei Bedarf
               const newQuality = Math.max(0.2, currentQuality - 0.15)
               canvas.toBlob(
@@ -92,7 +92,7 @@ export function compressImage(
                 newQuality
               )
             }
-            
+
             checkAndCompress(blob, quality)
           },
           'image/jpeg',

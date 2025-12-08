@@ -285,29 +285,81 @@ export default function EditWatchPage() {
     }))
   }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     const newImages: string[] = []
+    let processedCount = 0
 
-    files.forEach(file => {
-      if (file.size > 5 * 1024 * 1024) {
-        toast.error(`Bild ${file.name} ist zu groß (max. 5MB)`)
-        return
+    // Reset input
+    e.target.value = ''
+
+    for (const file of files) {
+      // Prüfe Dateityp - nur Bilder erlauben
+      if (!file.type.startsWith('image/')) {
+        toast.error(`${file.name} ist kein Bild. Bitte wählen Sie nur Bilddateien aus.`, {
+          position: 'top-right',
+          duration: 4000,
+        })
+        continue
       }
 
-      const reader = new FileReader()
-      reader.onload = () => {
-        newImages.push(reader.result as string)
-        if (newImages.length === files.length) {
+      // Prüfe Dateigröße (max 10MB pro Bild vor Komprimierung)
+      if (file.size > 10 * 1024 * 1024) {
+        toast.error(`${file.name} ist zu groß. Maximale Größe: 10MB`, {
+          position: 'top-right',
+          duration: 4000,
+        })
+        continue
+      }
+
+      try {
+        // WICHTIG: Verwende Bildkomprimierung wie auf der Sell-Seite
+        const { compressImage } = await import('@/lib/image-compression')
+        
+        // Aggressive Komprimierung um 413 Fehler zu vermeiden
+        const compressedImage = await compressImage(file, {
+          maxWidth: 1600,
+          maxHeight: 1600,
+          quality: 0.75,
+          maxSizeMB: 1.5,
+        })
+        
+        // Prüfe finale Größe des komprimierten Bildes
+        const base64SizeMB = (compressedImage.length * 3) / 4 / (1024 * 1024)
+        if (base64SizeMB > 1.5) {
+          console.warn(`Bild ${file.name} ist nach Komprimierung noch ${base64SizeMB.toFixed(2)}MB groß`)
+          toast(`Bild ${file.name} ist sehr groß (${base64SizeMB.toFixed(2)}MB). Bitte verwenden Sie ein kleineres Bild.`, {
+            icon: '⚠️',
+            position: 'top-right',
+            duration: 5000,
+          })
+        }
+
+        newImages.push(compressedImage)
+        processedCount++
+
+        // Wenn alle Dateien verarbeitet sind
+        if (processedCount === files.length) {
           setFormData(prev => ({
             ...prev,
             images: [...prev.images, ...newImages],
           }))
-          toast.success(`${newImages.length} Bild(er) hinzugefügt`)
+          
+          if (newImages.length > 0) {
+            toast.success(`${newImages.length} Bild${newImages.length > 1 ? 'er' : ''} hinzugefügt.`, {
+              position: 'top-right',
+              duration: 3000,
+            })
+          }
         }
+      } catch (error) {
+        console.error('Fehler beim Komprimieren von Bild:', file.name, error)
+        toast.error(`Fehler beim Verarbeiten von ${file.name}`, {
+          position: 'top-right',
+          duration: 4000,
+        })
       }
-      reader.readAsDataURL(file)
-    })
+    }
   }
 
   const removeImage = (index: number) => {
