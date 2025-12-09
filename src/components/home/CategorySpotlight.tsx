@@ -207,8 +207,10 @@ export function CategorySpotlight() {
               featured: products[0] || null,
               products: products.slice(1, 10) || [],
             }
-          } catch (error) {
-            console.error(`Error fetching products for category ${cat.category}:`, error)
+          } catch (error: any) {
+            if (error.name !== 'AbortError') {
+              console.error(`Error fetching products for category ${cat.category}:`, error)
+            }
           }
           return { ...cat, featured: null, products: [] }
         })
