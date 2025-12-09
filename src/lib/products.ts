@@ -109,16 +109,34 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         if (Array.isArray(parsedImages) && parsedImages.length > 0) {
           const titleImage = parsedImages[0] // Titelbild
 
-          // KRITISCH: WIE RICARDO - IMMER Titelbild behalten, egal wie groß!
-          // Ricardo zeigt Bilder sofort an, auch wenn sie groß sind
-          // Wir verwenden VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR=1 um größere Pages zu erlauben
+          // KRITISCH: WIE RICARDO - IMMER Titelbild behalten!
           // Titelbild NIEMALS filtern - immer anzeigen!
-          images = [titleImage]
+          // Für sehr große Base64-Bilder (>500KB) trotzdem filtern um Deployment zu ermöglichen
+          if (titleImage.startsWith('data:image/')) {
+            // Erhöhtes Limit für Titelbild: 500KB Base64 (~375KB Original)
+            // Dies ermöglicht die meisten Bilder sofort, während sehr große über API geladen werden
+            if (titleImage.length < 500000) {
+              images = [titleImage]
+            } else {
+              // Sehr große Titelbilder werden über API nachgeladen (selten)
+              images = []
+            }
+          } else {
+            // URLs sind immer klein, behalten
+            images = [titleImage]
+          }
 
-          // OPTIMIERT: Behalte alle zusätzlichen Bilder für sofortige Anzeige
-          // Wie Ricardo - alle Bilder werden sofort angezeigt
-          const additionalImages = parsedImages.slice(1)
-          images = [...images, ...additionalImages]
+          // OPTIMIERT: Behalte zusätzliche Bilder wenn sie klein genug sind
+          // Erlaube bis zu 200KB Base64 für zusätzliche Bilder
+          const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
+            if (img.startsWith('data:image/')) {
+              return img.length < 200000 // <200KB Base64 für zusätzliche Bilder
+            }
+            // URLs sind immer klein
+            return img.length < 1000
+          })
+
+          images = [...images, ...smallAdditionalImages]
         } else {
           images = []
         }
