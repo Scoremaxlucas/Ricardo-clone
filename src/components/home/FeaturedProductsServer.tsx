@@ -15,14 +15,14 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   const { t } = useLanguage()
   const { data: session } = useSession()
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
-  // OPTIMIERT: initialProducts enthalten keine Base64-Bilder mehr (reduziert ISR-Größe)
-  // Bilder werden client-side nachgeladen
+  // OPTIMIERT: initialProducts können Base64-Bilder enthalten (mit VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR)
+  // Cache wird verwendet um Bilder nach Navigation zu erhalten
   const [products, setProducts] = useState<ProductItem[]>(initialProducts)
   const [loading, setLoading] = useState(initialProducts.length === 0)
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, string[]>>({})
 
-  // OPTIMIERT: Lade Bilder aus localStorage Cache oder von API
-  // Cache wird persistent gespeichert, damit Bilder nach Navigation erhalten bleiben
+  // OPTIMIERT: Lade Bilder aus localStorage Cache für Persistenz nach Navigation
+  // Server-Bilder werden sofort verwendet, Cache wird nur für fehlende Bilder geladen
   useEffect(() => {
     if (initialProducts.length > 0) {
       // Lade Cache aus localStorage
@@ -48,17 +48,31 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
         return {}
       })()
 
-      // Initialisiere mit gecachten Bildern
+      // Initialisiere Cache: Verwende Server-Bilder wenn vorhanden, sonst Cache
       const initialImagesMap: Record<string, string[]> = {}
       initialProducts.forEach(product => {
-        if (cachedImages[product.id]?.images) {
+        // Priorität: 1. Server-Bilder (wenn vorhanden), 2. Cache
+        if (product.images && product.images.length > 0) {
+          initialImagesMap[product.id] = product.images
+          // Aktualisiere Cache mit Server-Bildern
+          cachedImages[product.id] = { images: product.images, timestamp: Date.now() }
+        } else if (cachedImages[product.id]?.images) {
           initialImagesMap[product.id] = cachedImages[product.id].images
         }
       })
       setImagesLoaded(initialImagesMap)
 
-      // Lade fehlende Bilder von API
-      const productsToLoad = initialProducts.filter(p => !cachedImages[p.id]?.images)
+      // Speichere aktualisierten Cache (mit Server-Bildern)
+      try {
+        localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
+      } catch (error) {
+        console.error('Error saving image cache:', error)
+      }
+
+      // Lade nur fehlende Bilder von API (wenn weder Server noch Cache vorhanden)
+      const productsToLoad = initialProducts.filter(
+        p => !p.images?.length && !cachedImages[p.id]?.images
+      )
       if (productsToLoad.length > 0) {
         Promise.all(
           productsToLoad.map(async (product) => {
@@ -76,9 +90,11 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
         ).then((imageData) => {
           const newImagesMap: Record<string, string[]> = { ...initialImagesMap }
           imageData.forEach(({ id, images }) => {
-            newImagesMap[id] = images
-            // Speichere im Cache
-            cachedImages[id] = { images, timestamp: Date.now() }
+            if (images.length > 0) {
+              newImagesMap[id] = images
+              // Speichere im Cache
+              cachedImages[id] = { images, timestamp: Date.now() }
+            }
           })
           setImagesLoaded(newImagesMap)
           
@@ -235,7 +251,12 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 buyNowPrice={product.buyNowPrice ?? undefined}
                 isAuction={product.isAuction}
                 auctionEnd={product.auctionEnd ?? undefined}
-                images={imagesLoaded[product.id]?.length > 0 ? imagesLoaded[product.id] : product.images} // Verwende gecachte Bilder oder Server-Bilder
+                images={
+                  // Priorität: 1. Gecachte Bilder (falls vorhanden), 2. Server-Bilder, 3. Leer
+                  imagesLoaded[product.id]?.length > 0 
+                    ? imagesLoaded[product.id] 
+                    : product.images || []
+                }
                 condition={product.condition}
                 city={product.city ?? undefined}
                 postalCode={product.postalCode ?? undefined}

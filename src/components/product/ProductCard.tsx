@@ -202,7 +202,7 @@ export function ProductCard({
                 src={mainImage}
                 alt={product.title}
                 className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
+                loading="eager"
                 onError={() => setImageError(true)}
               />
             ) : (
@@ -211,14 +211,15 @@ export function ProductCard({
                 alt={product.title}
                 fill
                 className="object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="lazy"
+                loading="eager"
                 sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
                 onError={() => setImageError(true)}
               />
             )
           ) : (
-            <div className="flex h-full w-full items-center justify-center text-xs text-gray-400">
-              <Sparkles className="h-6 w-6" />
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-xs text-gray-400">
+              <Sparkles className="h-6 w-6 opacity-50" />
+              <span className="ml-2 text-xs">Kein Bild</span>
             </div>
           )}
 
