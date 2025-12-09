@@ -16,9 +16,38 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   const { data: session } = useSession()
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   // OPTIMIERT: initialProducts enthalten keine Base64-Bilder mehr (reduziert ISR-Größe)
-  // Bilder werden client-side über ProductCard geladen wenn benötigt
+  // Bilder werden client-side nachgeladen
   const [products, setProducts] = useState<ProductItem[]>(initialProducts)
   const [loading, setLoading] = useState(initialProducts.length === 0)
+  const [imagesLoaded, setImagesLoaded] = useState<Record<string, string[]>>({})
+
+  // OPTIMIERT: Lade Bilder client-side nach (nur IDs werden gesendet, nicht Base64)
+  // Verwendet separate API-Route für bessere Performance
+  useEffect(() => {
+    if (initialProducts.length > 0) {
+      // Lade Bilder für alle Produkte parallel über optimierte Route
+      Promise.all(
+        initialProducts.map(async (product) => {
+          try {
+            const response = await fetch(`/api/watches/${product.id}/images`)
+            if (response.ok) {
+              const data = await response.json()
+              return { id: product.id, images: data.images || [] }
+            }
+          } catch (error) {
+            console.error(`Error loading images for product ${product.id}:`, error)
+          }
+          return { id: product.id, images: [] }
+        })
+      ).then((imageData) => {
+        const imagesMap: Record<string, string[]> = {}
+        imageData.forEach(({ id, images }) => {
+          imagesMap[id] = images
+        })
+        setImagesLoaded(imagesMap)
+      })
+    }
+  }, [initialProducts.length])
 
   // WICHTIG: Wenn initialProducts leer ist, lade sofort von API-Route
   useEffect(() => {
@@ -162,7 +191,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 buyNowPrice={product.buyNowPrice ?? undefined}
                 isAuction={product.isAuction}
                 auctionEnd={product.auctionEnd ?? undefined}
-                images={product.images}
+                images={imagesLoaded[product.id] || product.images} // Verwende nachgeladene Bilder falls verfügbar
                 condition={product.condition}
                 city={product.city ?? undefined}
                 postalCode={product.postalCode ?? undefined}
