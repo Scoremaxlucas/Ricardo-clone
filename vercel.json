@@ -1,5 +1,8 @@
 {
   "installCommand": "npm install nodemailer@7.0.11 --legacy-peer-deps --save && npm install --legacy-peer-deps",
   "buildCommand": "npm run build",
-  "framework": "nextjs"
+  "framework": "nextjs",
+  "env": {
+    "VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR": "1"
+  }
 }
