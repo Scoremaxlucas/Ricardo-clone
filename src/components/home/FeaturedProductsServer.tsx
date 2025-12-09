@@ -134,14 +134,14 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 preloadProductImages(updated)
                 return updated
               })
-              
+
               // Aktualisiere Cache für Persistenz nach Navigation
               Object.entries(batchImages).forEach(([id, images]: [string, any]) => {
                 if (images && Array.isArray(images) && images.length > 0) {
                   cachedImages[id] = { images, timestamp: Date.now() }
                 }
               })
-              
+
               try {
                 localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
               } catch (error) {

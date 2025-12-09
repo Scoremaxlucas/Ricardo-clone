@@ -121,13 +121,14 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             // Für extrem große Base64-Bilder (>5MB) trotzdem filtern um Deployment zu ermöglichen
             // Aber sehr sehr hohes Limit für sofortige Anzeige
             if (titleImage.startsWith('data:image/')) {
-              // Extrem hohes Limit für Titelbild: 5MB Base64 (~3.75MB Original)
-              // Dies ermöglicht praktisch ALLE Bilder sofort, während nur extrem große über API geladen werden
-              if (titleImage.length < 5000000) {
+              // OPTIMIERT: Reduziertes Limit für Titelbild: 2MB Base64 (~1.5MB Original)
+              // Balance zwischen sofortiger Anzeige und Deployment-Größe
+              // Größere Bilder werden über Batch-API nachgeladen
+              if (titleImage.length < 2000000) {
                 images = [titleImage]
                 console.log(`[getFeaturedProducts] Watch ${w.id} titleImage included (${Math.round(titleImage.length / 1024)}KB Base64)`)
               } else {
-                // Extrem große Titelbilder (>5MB) werden über Batch-API nachgeladen (extrem selten)
+                // Große Titelbilder (>2MB) werden über Batch-API nachgeladen
                 console.warn(`[getFeaturedProducts] Watch ${w.id} titleImage too large (${Math.round(titleImage.length / 1024)}KB), will load via Batch API`)
                 images = []
               }
