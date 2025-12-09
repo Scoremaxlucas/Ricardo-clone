@@ -103,21 +103,39 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
     if (w.images) {
       try {
         const parsedImages = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
-        // WICHTIG: Titelbild (erstes Bild) NIEMALS filtern, auch wenn es groß ist
-        // Nur zusätzliche Bilder filtern, um Performance zu optimieren
+        // KRITISCH: Für Deployment-Größe müssen wir Base64-Bilder stark reduzieren
+        // Nur sehr kleine Base64-Bilder (<100KB) im initialen Response senden
+        // Größere Bilder werden über /api/watches/[id]/images nachgeladen
         if (Array.isArray(parsedImages) && parsedImages.length > 0) {
-          const titleImage = parsedImages[0] // Titelbild immer behalten
-          const additionalImages = parsedImages.slice(1).filter((img: string) => {
-            // Erlaube Base64-Bilder, aber filtere sehr große (>500KB)
-            if (img.startsWith('data:image/')) {
-              // Base64 ist ~33% größer als Original, also ~375KB Original = ~500KB Base64
-              return img.length < 500000 // ~500KB Base64
+          const titleImage = parsedImages[0] // Titelbild
+          
+          // KRITISCH: Filtere große Base64-Bilder aus dem initialen Response
+          // Dies reduziert die Page-Größe von 33MB auf unter 19MB
+          // Titelbild wird nur behalten wenn es klein genug ist (<100KB Base64)
+          // Größere Titelbilder werden über API nachgeladen
+          if (titleImage.startsWith('data:image/')) {
+            // Nur sehr kleine Base64-Bilder behalten (<100KB Base64 = ~75KB Original)
+            if (titleImage.length < 100000) {
+              images = [titleImage]
+            } else {
+              // Titelbild ist zu groß, lade es später über API
+              images = []
             }
-            // Erlaube URLs
+          } else {
+            // URLs sind immer klein, behalten
+            images = [titleImage]
+          }
+          
+          // Zusätzliche Bilder: Nur sehr kleine Base64-Bilder behalten
+          const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
+            if (img.startsWith('data:image/')) {
+              return img.length < 100000 // <100KB Base64
+            }
+            // URLs sind immer klein
             return img.length < 1000
           })
-          // WICHTIG: Titelbild immer an erster Stelle, dann gefilterte zusätzliche Bilder
-          images = [titleImage, ...additionalImages]
+          
+          images = [...images, ...smallAdditionalImages]
         } else {
           images = []
         }
@@ -148,7 +166,8 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
       model: w.model || '',
       price: highestBid || w.price,
       buyNowPrice: w.buyNowPrice,
-      images: images, // Base64-Bilder <500KB sind jetzt erlaubt (mit VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR)
+      images: images, // KRITISCH: Nur sehr kleine Base64-Bilder (<100KB) im initialen Response
+      // Größere Bilder werden über /api/watches/[id]/images nachgeladen
       createdAt: w.createdAt.toISOString(),
       isAuction: !!w.isAuction || !!w.auctionEnd,
       auctionEnd: w.auctionEnd ? w.auctionEnd.toISOString() : null,

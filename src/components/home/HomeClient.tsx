@@ -20,7 +20,7 @@ export function HomeClient() {
 
   useEffect(() => {
     let isMounted = true
-    
+
     // Prüfe ob Verifizierung gerade abgeschickt wurde
     const verificationSubmitted = searchParams.get('verificationSubmitted')
     if (verificationSubmitted === 'true' && !hasShownToast.current && isMounted) {

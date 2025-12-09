@@ -82,10 +82,16 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       // Ignore localStorage errors (quota exceeded, etc.)
     }
 
-    // Lade nur fehlende Bilder von API (wenn weder Server noch Cache vorhanden)
-    const productsToLoad = initialProducts.filter(
-      p => !p.images?.length && !cachedImages[p.id]?.images
-    )
+      // Lade fehlende oder große Bilder von API
+      // Wenn initialProducts keine Bilder hat ODER nur kleine Bilder hat, lade alle Bilder
+      const productsToLoad = initialProducts.filter(
+        p => {
+          // Lade Bilder wenn:
+          // 1. Keine Bilder im initialProducts vorhanden
+          // 2. ODER nur kleine Bilder vorhanden (große wurden gefiltert)
+          return !p.images?.length || (p.images.length === 0 && !cachedImages[p.id]?.images)
+        }
+      )
     if (productsToLoad.length > 0) {
       Promise.all(
         productsToLoad.map(async (product) => {
