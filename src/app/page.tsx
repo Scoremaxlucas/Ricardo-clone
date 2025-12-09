@@ -20,23 +20,8 @@ export default async function Home() {
   const featuredProducts = await getFeaturedProducts(6)
 
   return (
-    <>
-      {/* OPTIMIERT: Preload critical images for instant display */}
-      {featuredProducts
-        .flatMap(p => p.images || [])
-        .filter(img => img && !img.startsWith('data:') && !img.startsWith('blob:'))
-        .slice(0, 6)
-        .map((url, index) => (
-          <link
-            key={index}
-            rel="preload"
-            as="image"
-            href={url}
-            fetchPriority={index < 3 ? 'high' : 'low'}
-          />
-        ))}
-      <div className="flex min-h-screen flex-col bg-[#FAFAFA]">
-        <Header />
+    <div className="flex min-h-screen flex-col bg-[#FAFAFA]">
+      <Header />
       <main className="flex-1 pb-8">
         {/* Hero Section */}
         <Hero />
@@ -46,7 +31,7 @@ export default async function Home() {
 
         {/* OPTIMIERT: Preload images for instant display */}
         <ImagePreloader products={featuredProducts} />
-        
+
         {/* Featured Products - Server-Side Rendered für instant display */}
         <FeaturedProductsServer initialProducts={featuredProducts} />
 
