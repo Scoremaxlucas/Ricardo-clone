@@ -27,6 +27,7 @@ export async function POST(request: NextRequest) {
     const limitedIds = ids.slice(0, 20) // Max 20 products at once
 
     // Fetch all watches in parallel
+    // WICHTIG: Hole auch description für Fallback-Extraktion
     const watches = await prisma.watch.findMany({
       where: {
         id: { in: limitedIds },
@@ -34,6 +35,7 @@ export async function POST(request: NextRequest) {
       select: {
         id: true,
         images: true,
+        description: true, // Für Fallback-Extraktion
       },
     })
 
