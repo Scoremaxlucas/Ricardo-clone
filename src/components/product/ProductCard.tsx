@@ -53,7 +53,7 @@ export function ProductCard({
   // Reset imageError wenn neue Bilder vorhanden sind
   useEffect(() => {
     let isMounted = true
-    
+
     const images = typeof product.images === 'string'
       ? (() => {
           try {
@@ -67,7 +67,7 @@ export function ProductCard({
     if (images.length > 0 && isMounted) {
       setImageError(false) // Reset error wenn Bilder vorhanden sind
     }
-    
+
     return () => {
       isMounted = false
     }
@@ -131,7 +131,7 @@ export function ProductCard({
   // KRITISCH: Immer das ERSTE Bild (Titelbild) verwenden, NIEMALS ein anderes
   // Verwende images[0] direkt - keine Filterung, keine Sortierung
   const mainImage = images.length > 0 ? images[0] : null
-  
+
   // DEBUG: Log wenn falsches Bild verwendet wird
   if (images.length > 1 && product.id) {
     console.log(`[ProductCard] Product ${product.id} (${product.title}) using title image (first of ${images.length} images)`)
