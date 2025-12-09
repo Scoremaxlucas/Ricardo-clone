@@ -324,21 +324,10 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 isAuction={product.isAuction}
                 auctionEnd={product.auctionEnd ?? undefined}
                 images={
-                  // KRITISCH: WIE RICARDO - Verwende product.images ODER imagesLoaded
-                  // Priorisiere product.images (Server-Bilder), fallback zu imagesLoaded (Cache/Batch-API)
+                  // KRITISCH: WIE RICARDO - Verwende IMMER product.images direkt!
+                  // Kein imagesLoaded State mehr - eliminiert Verzögerung
                   // Stelle sicher, dass immer ein Array zurückgegeben wird
-                  (() => {
-                    // 1. Priorität: product.images (Server-Bilder)
-                    if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-                      return product.images
-                    }
-                    // 2. Fallback: imagesLoaded (Cache/Batch-API)
-                    if (imagesLoaded[product.id] && Array.isArray(imagesLoaded[product.id]) && imagesLoaded[product.id].length > 0) {
-                      return imagesLoaded[product.id]
-                    }
-                    // 3. Fallback: Leeres Array
-                    return []
-                  })()
+                  Array.isArray(product.images) && product.images.length > 0 ? product.images : []
                 }
                 condition={product.condition}
                 city={product.city ?? undefined}
