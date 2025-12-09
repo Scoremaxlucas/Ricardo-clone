@@ -150,9 +150,9 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 preloadProductImages(updated)
                 return updated
               })
-            } catch (error) {
+            } catch (error: any) {
               // Silently fail - images will show from cache or remain empty
-              if (error.name !== 'AbortError' && error.message !== 'Image loading timeout') {
+              if (error?.name !== 'AbortError' && error?.message !== 'Image loading timeout') {
                 console.warn('Error parsing batch images response:', error)
               }
             }
