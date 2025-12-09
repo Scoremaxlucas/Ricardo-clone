@@ -17,7 +17,9 @@ export const revalidate = 60
 export default async function Home() {
   // OPTIMIERT: Fetch products server-side für instant rendering (wie Ricardo)
   // Produkte sind bereits im initial HTML, kein Client-Side API-Call nötig
-  const featuredProducts = await getFeaturedProducts(6)
+  // OPTIMIERT: Reduziere auf 4 Produkte um Page-Größe zu reduzieren
+  // Die meisten Bilder werden trotzdem sofort angezeigt (Titelbilder <1MB)
+  const featuredProducts = await getFeaturedProducts(4)
 
   return (
     <div className="flex min-h-screen flex-col bg-[#FAFAFA]">

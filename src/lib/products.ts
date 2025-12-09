@@ -109,16 +109,35 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         if (Array.isArray(parsedImages) && parsedImages.length > 0) {
           const titleImage = parsedImages[0] // Titelbild
 
-          // KRITISCH: WIE RICARDO - IMMER Titelbild behalten, egal wie groß!
-          // Ricardo zeigt ALLE Titelbilder sofort an, auch wenn sie sehr groß sind
-          // Wir verwenden VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR=1 für größere Pages
-          // Titelbild NIEMALS filtern - IMMER anzeigen!
-          images = [titleImage]
+          // OPTIMIERT: Intelligente Bildgrößen-Limits für Balance zwischen Performance und Deployment
+          // Titelbilder: Erhöhtes Limit (1MB Base64 = ~750KB Original) - die meisten werden sofort angezeigt
+          // Zusätzliche Bilder: Kleineres Limit (300KB Base64) - werden sofort angezeigt wenn klein genug
+          // Sehr große Bilder: Über Batch-API nachladen (selten)
+          if (titleImage.startsWith('data:image/')) {
+            // Erhöhtes Limit für Titelbild: 1MB Base64 (~750KB Original)
+            // Dies ermöglicht die meisten Bilder sofort, während sehr große über API geladen werden
+            if (titleImage.length < 1000000) {
+              images = [titleImage]
+            } else {
+              // Sehr große Titelbilder (>1MB) werden über Batch-API nachgeladen (selten)
+              images = []
+            }
+          } else {
+            // URLs sind immer klein, behalten
+            images = [titleImage]
+          }
 
-          // OPTIMIERT: Behalte ALLE zusätzlichen Bilder für sofortige Anzeige
-          // Wie Ricardo - alle Bilder werden sofort angezeigt
-          const additionalImages = parsedImages.slice(1)
-          images = [...images, ...additionalImages]
+          // OPTIMIERT: Behalte zusätzliche Bilder wenn sie klein genug sind
+          // Erlaube bis zu 300KB Base64 für zusätzliche Bilder
+          const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
+            if (img.startsWith('data:image/')) {
+              return img.length < 300000 // <300KB Base64 für zusätzliche Bilder
+            }
+            // URLs sind immer klein
+            return img.length < 1000
+          })
+
+          images = [...images, ...smallAdditionalImages]
         } else {
           images = []
         }
