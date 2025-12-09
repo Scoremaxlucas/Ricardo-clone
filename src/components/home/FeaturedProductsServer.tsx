@@ -19,7 +19,15 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   // OPTIMIERT: initialProducts können Base64-Bilder enthalten (mit VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR)
   // Cache wird verwendet um Bilder nach Navigation zu erhalten
   // KRITISCH: WIE RICARDO - Produkte sind sofort verfügbar, kein Loading-State!
-  const [products, setProducts] = useState<ProductItem[]>(initialProducts)
+  // WICHTIG: Initialisiere products State mit initialProducts UND stelle sicher, dass Bilder vorhanden sind
+  const [products, setProducts] = useState<ProductItem[]>(() => {
+    // Stelle sicher, dass alle Produkte ihre Bilder haben
+    return initialProducts.map(p => ({
+      ...p,
+      // Stelle sicher, dass images immer ein Array ist
+      images: Array.isArray(p.images) && p.images.length > 0 ? p.images : []
+    }))
+  })
   const [loading, setLoading] = useState(false) // Kein Loading mehr - alles sofort verfügbar!
   // WICHTIG: Initialisiere imagesLoaded sofort mit Server-Bildern, keine Wartezeit
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, string[]>>(() => {
