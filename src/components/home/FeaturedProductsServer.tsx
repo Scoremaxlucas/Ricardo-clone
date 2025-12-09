@@ -73,7 +73,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
 
     if (productsToLoad.length > 0 && isMounted) {
       const productIds = productsToLoad.map(p => p.id)
-      
+
       // Schneller Timeout (2 Sekunden) - Bilder sollten bereits vorhanden sein
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Image loading timeout')), 2000)

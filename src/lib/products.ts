@@ -136,16 +136,18 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
               images = [titleImage]
             }
 
-            // OPTIMIERT: Behalte zusätzliche Bilder wenn sie klein genug sind
-            // Erlaube bis zu 1MB Base64 für zusätzliche Bilder
+            // OPTIMIERT: Behalte zusätzliche Bilder
+            // URLs (Blob Storage) werden IMMER behalten
+            // Base64 nur wenn klein (<300KB) für sofortige Anzeige während Migration
             // KRITISCH: Behalte die ORIGINALE REIHENFOLGE - Titelbild ist IMMER zuerst!
             const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
               if (typeof img !== 'string') return false
               if (img.startsWith('data:image/')) {
-                return img.length < 1000000 // <1MB Base64 für zusätzliche Bilder
+                // Kleine Base64-Bilder für sofortige Anzeige während Migration
+                return img.length < 300000 // <300KB Base64
               }
-              // URLs sind immer klein
-              return img.length < 1000
+              // URLs (Blob Storage) sind immer klein, IMMER behalten
+              return img.startsWith('http://') || img.startsWith('https://')
             })
 
             images = [...images, ...smallAdditionalImages]

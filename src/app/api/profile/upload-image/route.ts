@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { uploadImageToBlob, deleteImageFromBlob } from '@/lib/blob-storage'
 
 export async function POST(request: NextRequest) {
   try {
@@ -13,18 +14,35 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Datei und User ID erforderlich' }, { status: 400 })
     }
 
-    // Konvertiere File zu Base64
-    const bytes = await file.arrayBuffer()
-    const buffer = Buffer.from(bytes)
-    const base64Image = `data:${file.type};base64,${buffer.toString('base64')}`
+    console.log('Uploading profile image for user:', userId)
+    console.log('Image size:', file.size, 'bytes')
 
-    console.log('Uploading image for user:', userId)
-    console.log('Image size:', base64Image.length)
+    // KRITISCH: Upload zu Vercel Blob Storage statt Base64
+    const blobPath = `profiles/${userId}/${Date.now()}.${file.name.split('.').pop() || 'jpg'}`
+    const blobUrl = await uploadImageToBlob(file, blobPath)
 
-    // Speichere Base64 String in der Datenbank
+    console.log('Uploaded to Blob Storage:', blobUrl)
+
+    // Lösche altes Profilbild aus Blob Storage falls vorhanden
+    const existingUser = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { image: true },
+    })
+
+    if (existingUser?.image && existingUser.image.startsWith('https://')) {
+      try {
+        await deleteImageFromBlob(existingUser.image)
+        console.log('Deleted old profile image from Blob Storage')
+      } catch (error) {
+        // Nicht kritisch wenn Löschen fehlschlägt
+        console.warn('Could not delete old profile image:', error)
+      }
+    }
+
+    // Speichere Blob URL in der Datenbank
     const updatedUser = await prisma.user.update({
       where: { id: userId },
-      data: { image: base64Image },
+      data: { image: blobUrl },
       select: { id: true, image: true },
     })
 
@@ -32,7 +50,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({
       message: 'Profilbild erfolgreich hochgeladen',
-      imageUrl: base64Image,
+      imageUrl: blobUrl,
     })
   } catch (error) {
     console.error('Error uploading profile image:', error)
@@ -48,7 +66,24 @@ export async function DELETE(request: NextRequest) {
       return NextResponse.json({ message: 'User ID erforderlich' }, { status: 400 })
     }
 
-    // Entferne Profilbild
+    // Hole aktuelles Profilbild
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { image: true },
+    })
+
+    // Lösche Profilbild aus Blob Storage falls vorhanden
+    if (user?.image && user.image.startsWith('https://')) {
+      try {
+        await deleteImageFromBlob(user.image)
+        console.log('Deleted profile image from Blob Storage')
+      } catch (error) {
+        // Nicht kritisch wenn Löschen fehlschlägt
+        console.warn('Could not delete profile image from Blob Storage:', error)
+      }
+    }
+
+    // Entferne Profilbild aus Datenbank
     await prisma.user.update({
       where: { id: userId },
       data: { image: null },
