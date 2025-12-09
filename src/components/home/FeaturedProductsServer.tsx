@@ -235,7 +235,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 buyNowPrice={product.buyNowPrice ?? undefined}
                 isAuction={product.isAuction}
                 auctionEnd={product.auctionEnd ?? undefined}
-                images={imagesLoaded[product.id] || product.images} // Verwende nachgeladene Bilder falls verfügbar
+                images={imagesLoaded[product.id]?.length > 0 ? imagesLoaded[product.id] : product.images} // Verwende gecachte Bilder oder Server-Bilder
                 condition={product.condition}
                 city={product.city ?? undefined}
                 postalCode={product.postalCode ?? undefined}
