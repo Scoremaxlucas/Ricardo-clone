@@ -54,8 +54,7 @@ export async function POST(request: NextRequest) {
       headers: {
         'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
         'X-Content-Type-Options': 'nosniff',
-        // OPTIMIERT: Enable compression for faster transfer
-        'Content-Encoding': 'gzip',
+        // Compression is handled automatically by Next.js/Vercel
       },
     })
   } catch (error) {
