@@ -8,7 +8,7 @@ import { Suspense } from 'react'
 
 // OPTIMIERT: Dynamic Import für große Komponente - reduziert initial Bundle Size
 const ProductPageClient = dynamic(
-  () => import('@/components/product/ProductPageClient').then(mod => ({ default: mod.ProductPageClient })),
+  () => import('@/components/product/ProductPageClient').then(mod => mod.ProductPageClient),
   {
     loading: () => (
       <div className="flex min-h-screen items-center justify-center">
