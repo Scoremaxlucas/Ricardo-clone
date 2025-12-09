@@ -11,7 +11,7 @@ export async function GET(
 ) {
   try {
     const { id } = await params
-    
+
     const watch = await prisma.watch.findUnique({
       where: { id },
       select: {

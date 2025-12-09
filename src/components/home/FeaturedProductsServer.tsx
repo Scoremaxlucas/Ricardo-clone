@@ -21,31 +21,75 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   const [loading, setLoading] = useState(initialProducts.length === 0)
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, string[]>>({})
 
-  // OPTIMIERT: Lade Bilder client-side nach (nur IDs werden gesendet, nicht Base64)
-  // Verwendet separate API-Route für bessere Performance
+  // OPTIMIERT: Lade Bilder aus localStorage Cache oder von API
+  // Cache wird persistent gespeichert, damit Bilder nach Navigation erhalten bleiben
   useEffect(() => {
     if (initialProducts.length > 0) {
-      // Lade Bilder für alle Produkte parallel über optimierte Route
-      Promise.all(
-        initialProducts.map(async (product) => {
-          try {
-            const response = await fetch(`/api/watches/${product.id}/images`)
-            if (response.ok) {
-              const data = await response.json()
-              return { id: product.id, images: data.images || [] }
-            }
-          } catch (error) {
-            console.error(`Error loading images for product ${product.id}:`, error)
+      // Lade Cache aus localStorage
+      const cacheKey = 'product-images-cache'
+      const cachedImages: Record<string, { images: string[]; timestamp: number }> = (() => {
+        try {
+          const cached = localStorage.getItem(cacheKey)
+          if (cached) {
+            const parsed = JSON.parse(cached)
+            // Entferne alte Einträge (älter als 1 Stunde)
+            const now = Date.now()
+            const oneHour = 60 * 60 * 1000
+            Object.keys(parsed).forEach(id => {
+              if (parsed[id].timestamp && now - parsed[id].timestamp > oneHour) {
+                delete parsed[id]
+              }
+            })
+            return parsed
           }
-          return { id: product.id, images: [] }
-        })
-      ).then((imageData) => {
-        const imagesMap: Record<string, string[]> = {}
-        imageData.forEach(({ id, images }) => {
-          imagesMap[id] = images
-        })
-        setImagesLoaded(imagesMap)
+        } catch (error) {
+          console.error('Error loading image cache:', error)
+        }
+        return {}
+      })()
+
+      // Initialisiere mit gecachten Bildern
+      const initialImagesMap: Record<string, string[]> = {}
+      initialProducts.forEach(product => {
+        if (cachedImages[product.id]?.images) {
+          initialImagesMap[product.id] = cachedImages[product.id].images
+        }
       })
+      setImagesLoaded(initialImagesMap)
+
+      // Lade fehlende Bilder von API
+      const productsToLoad = initialProducts.filter(p => !cachedImages[p.id]?.images)
+      if (productsToLoad.length > 0) {
+        Promise.all(
+          productsToLoad.map(async (product) => {
+            try {
+              const response = await fetch(`/api/watches/${product.id}/images`)
+              if (response.ok) {
+                const data = await response.json()
+                return { id: product.id, images: data.images || [] }
+              }
+            } catch (error) {
+              console.error(`Error loading images for product ${product.id}:`, error)
+            }
+            return { id: product.id, images: [] }
+          })
+        ).then((imageData) => {
+          const newImagesMap: Record<string, string[]> = { ...initialImagesMap }
+          imageData.forEach(({ id, images }) => {
+            newImagesMap[id] = images
+            // Speichere im Cache
+            cachedImages[id] = { images, timestamp: Date.now() }
+          })
+          setImagesLoaded(newImagesMap)
+          
+          // Speichere aktualisierten Cache
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
+          } catch (error) {
+            console.error('Error saving image cache:', error)
+          }
+        })
+      }
     }
   }, [initialProducts.length])
 

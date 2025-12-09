@@ -103,10 +103,18 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
     if (w.images) {
       try {
         const parsedImages = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
-        // OPTIMIERT: Filtere Base64-Bilder aus Server-Response um ISR-Größe zu reduzieren
-        // Base64-Bilder werden client-side geladen
+        // OPTIMIERT: Mit VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR können wir Base64-Bilder wieder senden
+        // Aber filtern wir trotzdem sehr große Bilder (>500KB Base64) um Performance zu optimieren
         images = Array.isArray(parsedImages)
-          ? parsedImages.filter((img: string) => !img.startsWith('data:image/') && img.length < 1000)
+          ? parsedImages.filter((img: string) => {
+              // Erlaube Base64-Bilder, aber filtere sehr große (>500KB)
+              if (img.startsWith('data:image/')) {
+                // Base64 ist ~33% größer als Original, also ~375KB Original = ~500KB Base64
+                return img.length < 500000 // ~500KB Base64
+              }
+              // Erlaube URLs
+              return img.length < 1000
+            })
           : []
       } catch {
         images = []

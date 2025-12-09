@@ -1,0 +1,6 @@
+# Ignore directories that are not needed for deployment
+mobile-app/
+scripts/
+*.md
+!README.md
+

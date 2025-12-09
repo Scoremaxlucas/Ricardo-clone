@@ -11,6 +11,7 @@ import { HomeClient } from '@/components/home/HomeClient'
 // Cache wird nach Produktlöschung invalidiert (siehe DELETE endpoint)
 export const revalidate = 60
 // Entfernt: dynamic = 'force-dynamic' - widerspricht ISR und verhindert Caching
+// HINWEIS: VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR=1 wird auf Vercel gesetzt um größere ISR-Pages zu erlauben
 
 export default async function Home() {
   // OPTIMIERT: Fetch products server-side für instant rendering (wie Ricardo)
