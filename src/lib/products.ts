@@ -103,19 +103,24 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
     if (w.images) {
       try {
         const parsedImages = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
-        // OPTIMIERT: Mit VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR können wir Base64-Bilder wieder senden
-        // Aber filtern wir trotzdem sehr große Bilder (>500KB Base64) um Performance zu optimieren
-        images = Array.isArray(parsedImages)
-          ? parsedImages.filter((img: string) => {
-              // Erlaube Base64-Bilder, aber filtere sehr große (>500KB)
-              if (img.startsWith('data:image/')) {
-                // Base64 ist ~33% größer als Original, also ~375KB Original = ~500KB Base64
-                return img.length < 500000 // ~500KB Base64
-              }
-              // Erlaube URLs
-              return img.length < 1000
-            })
-          : []
+        // WICHTIG: Titelbild (erstes Bild) NIEMALS filtern, auch wenn es groß ist
+        // Nur zusätzliche Bilder filtern, um Performance zu optimieren
+        if (Array.isArray(parsedImages) && parsedImages.length > 0) {
+          const titleImage = parsedImages[0] // Titelbild immer behalten
+          const additionalImages = parsedImages.slice(1).filter((img: string) => {
+            // Erlaube Base64-Bilder, aber filtere sehr große (>500KB)
+            if (img.startsWith('data:image/')) {
+              // Base64 ist ~33% größer als Original, also ~375KB Original = ~500KB Base64
+              return img.length < 500000 // ~500KB Base64
+            }
+            // Erlaube URLs
+            return img.length < 1000
+          })
+          // WICHTIG: Titelbild immer an erster Stelle, dann gefilterte zusätzliche Bilder
+          images = [titleImage, ...additionalImages]
+        } else {
+          images = []
+        }
       } catch {
         images = []
       }

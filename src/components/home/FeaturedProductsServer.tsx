@@ -212,14 +212,29 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   useEffect(() => {
     if (!session?.user) return
 
-    fetch('/api/favorites')
+    let isMounted = true
+    const abortController = new AbortController()
+
+    fetch('/api/favorites', {
+      signal: abortController.signal,
+    })
       .then(res => res.json())
       .then(data => {
-        setFavorites(new Set(data.favorites?.map((f: any) => f.watchId) || []))
+        if (isMounted) {
+          setFavorites(new Set(data.favorites?.map((f: any) => f.watchId) || []))
+        }
       })
-      .catch(() => {
+      .catch((error: any) => {
         // Silently fail - favorites are not critical
+        if (error.name !== 'AbortError') {
+          // Ignore abort errors
+        }
       })
+
+    return () => {
+      isMounted = false
+      abortController.abort()
+    }
   }, [session?.user])
 
   if (loading) {
@@ -283,8 +298,8 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 images={
                   // WICHTIG: Verwende immer Server-Bilder wenn vorhanden (sofort verfügbar im initialProducts)
                   // imagesLoaded wird nur für nachgeladene Bilder verwendet
-                  (product.images && product.images.length > 0) 
-                    ? product.images 
+                  (product.images && product.images.length > 0)
+                    ? product.images
                     : (imagesLoaded[product.id]?.length > 0 ? imagesLoaded[product.id] : [])
                 }
                 condition={product.condition}

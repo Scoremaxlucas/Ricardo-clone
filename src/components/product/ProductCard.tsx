@@ -61,39 +61,60 @@ export function ProductCard({
 
   // Check if product is favorite on mount
   useEffect(() => {
+    let isMounted = true
+    const abortController = new AbortController()
+
     const checkFavorite = async () => {
       if (!session?.user) {
-        setIsFavorite(false)
+        if (isMounted) {
+          setIsFavorite(false)
+        }
         return
       }
 
       try {
-        const res = await fetch('/api/favorites')
-        if (res.ok) {
+        const res = await fetch('/api/favorites', {
+          signal: abortController.signal,
+        })
+        if (res.ok && isMounted) {
           const data = await res.json()
           const favoriteIds = (data.favorites || []).map((f: any) => f.watchId || f.watch?.id)
-          setIsFavorite(favoriteIds.includes(product.id))
+          if (isMounted) {
+            setIsFavorite(favoriteIds.includes(product.id))
+          }
         }
-      } catch (error) {
-        console.error('Error checking favorite:', error)
+      } catch (error: any) {
+        if (error.name !== 'AbortError' && isMounted) {
+          console.error('Error checking favorite:', error)
+        }
       }
     }
     checkFavorite()
+
+    return () => {
+      isMounted = false
+      abortController.abort()
+    }
   }, [product.id, session?.user])
 
   // Parse images
+  // WICHTIG: Stelle sicher, dass immer das erste Bild (Titelbild) verwendet wird
   const images =
     typeof product.images === 'string'
       ? (() => {
           try {
-            return JSON.parse(product.images)
+            const parsed = JSON.parse(product.images)
+            // Stelle sicher, dass es ein Array ist und die Reihenfolge beibehalten wird
+            return Array.isArray(parsed) ? parsed : []
           } catch {
+            // Fallback: Split by comma, behalte Reihenfolge
             return product.images.split(',').filter(Boolean)
           }
         })()
-      : product.images || []
+      : Array.isArray(product.images) ? product.images : []
 
-  const mainImage = images[0] || null
+  // WICHTIG: Immer das erste Bild (Titelbild) verwenden, NIEMALS ein anderes
+  const mainImage = images.length > 0 ? images[0] : null
 
   // Parse boosters
   const boosters = product.boosters || []

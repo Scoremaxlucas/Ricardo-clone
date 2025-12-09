@@ -19,9 +19,11 @@ export function HomeClient() {
   const { t } = useLanguage()
 
   useEffect(() => {
+    let isMounted = true
+    
     // Prüfe ob Verifizierung gerade abgeschickt wurde
     const verificationSubmitted = searchParams.get('verificationSubmitted')
-    if (verificationSubmitted === 'true' && !hasShownToast.current) {
+    if (verificationSubmitted === 'true' && !hasShownToast.current && isMounted) {
       hasShownToast.current = true
 
       // Entferne Query-Parameter aus URL
@@ -29,11 +31,17 @@ export function HomeClient() {
       url.searchParams.delete('verificationSubmitted')
       window.history.replaceState({}, '', url.toString())
 
-      // Zeige Erfolgs-Toast
-      toast.success(t.verification.submitted, {
-        duration: 6000,
-        icon: '✅',
-      })
+      // Zeige Erfolgs-Toast nur wenn Component noch gemountet ist
+      if (isMounted) {
+        toast.success(t.verification.submitted, {
+          duration: 6000,
+          icon: '✅',
+        })
+      }
+    }
+
+    return () => {
+      isMounted = false
     }
   }, [searchParams, t])
 
