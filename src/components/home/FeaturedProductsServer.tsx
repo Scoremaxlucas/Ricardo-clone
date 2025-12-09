@@ -26,24 +26,19 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   // KRITISCH: KEIN imagesLoaded State mehr - verwende direkt product.images!
   // Dies eliminiert Verzögerung und stellt sicher, dass Bilder sofort angezeigt werden
 
-  // KRITISCH: KEIN useEffect mehr für State-Updates - alles ist bereits in initialProducts!
-  // Produkte werden SOFORT angezeigt ohne Verzögerung
-  // Nur für fehlende Bilder (extrem große) wird Batch-API verwendet
+  // KRITISCH: WIE RICARDO - KEINE API-CALLS, KEINE VERZÖGERUNG!
+  // Alle Bilder sind bereits in initialProducts - werden SOFORT angezeigt
+  // Nur Preload für bessere Performance
   useEffect(() => {
     if (initialProducts.length === 0) return
 
-    let isMounted = true
-    const abortController = new AbortController()
-
     // OPTIMIERT: Preload images immediately for instant display
-    if (initialProducts.length > 0) {
-      preloadProductImages(initialProducts)
-    }
+    preloadProductImages(initialProducts)
 
-    // Lade Cache aus localStorage für Persistenz nach Navigation
+    // Aktualisiere Cache für Persistenz nach Navigation (asynchron, blockiert nicht)
     const cacheKey = 'product-images-cache'
-    let cachedImages: Record<string, { images: string[]; timestamp: number }> = {}
     try {
+      let cachedImages: Record<string, { images: string[]; timestamp: number }> = {}
       const cached = localStorage.getItem(cacheKey)
       if (cached) {
         const parsed = JSON.parse(cached)
@@ -57,112 +52,17 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
         })
         cachedImages = parsed
       }
-    } catch (error) {
-      // Ignore cache errors
-    }
 
-    // Aktualisiere Cache mit Server-Bildern (asynchron, blockiert nicht)
-    initialProducts.forEach(product => {
-      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-        cachedImages[product.id] = { images: product.images, timestamp: Date.now() }
-      }
-    })
+      // Aktualisiere Cache mit Server-Bildern
+      initialProducts.forEach(product => {
+        if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+          cachedImages[product.id] = { images: product.images, timestamp: Date.now() }
+        }
+      })
 
-    try {
       localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
     } catch (error) {
       // Ignore localStorage errors (quota exceeded, etc.)
-    }
-
-      // KRITISCH: Lade fehlende Bilder über Batch-API wenn nötig
-      // Nur für Produkte ohne Bilder (wurden wegen Größe gefiltert)
-      const productsToLoad = initialProducts.filter(
-        p => !p.images?.length && !cachedImages[p.id]?.images
-      )
-
-      if (productsToLoad.length > 0) {
-        console.log(`[FeaturedProducts] Loading ${productsToLoad.length} products without images via Batch API:`, productsToLoad.map(p => p.id))
-        const productIds = productsToLoad.map(p => p.id)
-
-        // Timeout nach 5 Sekunden (länger für größere Bilder)
-        const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('Image loading timeout')), 5000)
-        })
-
-        Promise.race([
-          fetch('/api/watches/images/batch', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ ids: productIds }),
-            signal: abortController.signal,
-          }),
-          timeoutPromise,
-        ])
-          .then(async (response) => {
-            if (!isMounted) return
-
-            if (!response.ok) {
-              console.warn(`[FeaturedProducts] Batch API failed: ${response.status} ${response.statusText}`)
-              return
-            }
-
-            try {
-              const data = await response.json()
-              const batchImages = data.images || {}
-
-              console.log(`[FeaturedProducts] Batch API returned images for ${Object.keys(batchImages).length} products`)
-
-              if (!isMounted) return
-
-              // KRITISCH: Aktualisiere products State DIREKT mit Batch-API Bildern
-              // Kein imagesLoaded State mehr - direkte Aktualisierung eliminiert Verzögerung
-              setProducts(prev => {
-                const updated = prev.map(p => {
-                  const images = batchImages[p.id]
-                  if (images && Array.isArray(images) && images.length > 0) {
-                    console.log(`[FeaturedProducts] Updating product ${p.id} with ${images.length} images from Batch API`)
-                    // KRITISCH: Stelle sicher, dass IMMER das erste Bild (Titelbild) verwendet wird
-                    // Sortiere NICHT - verwende die Reihenfolge aus der Datenbank
-                    const titleImage = images[0] // IMMER das erste Bild
-                    const additionalImages = images.slice(1)
-                    // KRITISCH: Stelle sicher, dass Titelbild IMMER zuerst ist
-                    return { ...p, images: [titleImage, ...additionalImages] }
-                  }
-                  // Stelle sicher, dass images immer ein Array ist
-                  return { ...p, images: Array.isArray(p.images) && p.images.length > 0 ? p.images : [] }
-                })
-                preloadProductImages(updated)
-                return updated
-              })
-
-              // Aktualisiere Cache für Persistenz nach Navigation
-              Object.entries(batchImages).forEach(([id, images]: [string, any]) => {
-                if (images && Array.isArray(images) && images.length > 0) {
-                  cachedImages[id] = { images, timestamp: Date.now() }
-                }
-              })
-
-              try {
-                localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
-              } catch (error) {
-                // Ignore localStorage errors
-              }
-            } catch (error: any) {
-              console.error('[FeaturedProducts] Error parsing batch images:', error)
-            }
-          })
-          .catch((error: any) => {
-            if (error.name !== 'AbortError' && error.message !== 'Image loading timeout' && isMounted) {
-              console.error('[FeaturedProducts] Batch API error:', error)
-            }
-          })
-      } else {
-        console.log('[FeaturedProducts] All products have images, no Batch API call needed')
-      }
-
-    return () => {
-      isMounted = false
-      abortController.abort()
     }
   }, [initialProducts])
 

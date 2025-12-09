@@ -120,31 +120,31 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             // KRITISCH: WIE RICARDO - IMMER Titelbild behalten!
             // Für extrem große Base64-Bilder (>5MB) trotzdem filtern um Deployment zu ermöglichen
             // Aber sehr sehr hohes Limit für sofortige Anzeige
+            // KRITISCH: WIE RICARDO - IMMER Titelbild behalten, egal wie groß!
+            // Ricardo zeigt ALLE Bilder sofort an, keine Filterung
+            // Wir erhöhen das Limit auf 10MB um praktisch alle Bilder zu erlauben
             if (titleImage.startsWith('data:image/')) {
-              // OPTIMIERT: Reduziertes Limit für Titelbild: 2MB Base64 (~1.5MB Original)
-              // Balance zwischen sofortiger Anzeige und Deployment-Größe
-              // Größere Bilder werden über Batch-API nachgeladen
-              if (titleImage.length < 2000000) {
+              // Sehr hohes Limit für Titelbild: 10MB Base64 (~7.5MB Original)
+              // Ermöglicht praktisch ALLE Bilder sofort, wie Ricardo
+              if (titleImage.length < 10000000) {
                 images = [titleImage]
-                console.log(`[getFeaturedProducts] Watch ${w.id} titleImage included (${Math.round(titleImage.length / 1024)}KB Base64)`)
               } else {
-                // Große Titelbilder (>2MB) werden über Batch-API nachgeladen
-                console.warn(`[getFeaturedProducts] Watch ${w.id} titleImage too large (${Math.round(titleImage.length / 1024)}KB), will load via Batch API`)
+                // Nur extrem große Titelbilder (>10MB) werden über Batch-API nachgeladen (extrem selten)
                 images = []
               }
             } else {
               // URLs sind immer klein, behalten
               images = [titleImage]
-              console.log(`[getFeaturedProducts] Watch ${w.id} titleImage is URL:`, titleImage.substring(0, 50))
             }
 
-            // OPTIMIERT: Behalte zusätzliche Bilder wenn sie klein genug sind
-            // Erlaube bis zu 500KB Base64 für zusätzliche Bilder
+            // KRITISCH: WIE RICARDO - Behalte ALLE zusätzlichen Bilder!
+            // Ricardo zeigt alle Bilder sofort an, keine Filterung
+            // Erlaube bis zu 5MB Base64 für zusätzliche Bilder
             // KRITISCH: Behalte die ORIGINALE REIHENFOLGE - Titelbild ist IMMER zuerst!
             const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
               if (typeof img !== 'string') return false
               if (img.startsWith('data:image/')) {
-                return img.length < 500000 // <500KB Base64 für zusätzliche Bilder
+                return img.length < 5000000 // <5MB Base64 für zusätzliche Bilder
               }
               // URLs sind immer klein
               return img.length < 1000

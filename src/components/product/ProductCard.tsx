@@ -49,9 +49,11 @@ export function ProductCard({
   const [imageError, setImageError] = useState(false)
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
 
-  // WICHTIG: Reagiere auf Änderungen in product.images
+  // KRITISCH: Reagiere auf Änderungen in product.images
+  // Reset imageError wenn neue Bilder vorhanden sind
   useEffect(() => {
-    // Wenn neue Bilder vorhanden sind, reset imageError
+    let isMounted = true
+    
     const images = typeof product.images === 'string'
       ? (() => {
           try {
@@ -62,8 +64,12 @@ export function ProductCard({
         })()
       : Array.isArray(product.images) ? product.images : []
 
-    if (images.length > 0) {
+    if (images.length > 0 && isMounted) {
       setImageError(false) // Reset error wenn Bilder vorhanden sind
+    }
+    
+    return () => {
+      isMounted = false
     }
   }, [product.images])
 
