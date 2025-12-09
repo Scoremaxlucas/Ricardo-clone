@@ -66,12 +66,18 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       // Ignore localStorage errors (quota exceeded, etc.)
     }
 
-    // OPTIMIERT: Lade nur fehlende große Bilder über Batch-API (selten)
+    // KRITISCH: Lade fehlende Bilder über Batch-API
+    // Dies lädt auch Base64-Bilder, die automatisch zu Blob Storage migriert werden
     const productsToLoad = initialProducts.filter(
-      p => !p.images?.length && !cachedImages[p.id]?.images
+      p => {
+        const hasImages = p.images && Array.isArray(p.images) && p.images.length > 0
+        const hasCachedImages = cachedImages[p.id]?.images && cachedImages[p.id].images.length > 0
+        return !hasImages && !hasCachedImages
+      }
     )
 
     if (productsToLoad.length > 0 && isMounted) {
+      console.log(`[FeaturedProducts] Loading ${productsToLoad.length} products without images via Batch API (will auto-migrate Base64 to Blob Storage)`)
       const productIds = productsToLoad.map(p => p.id)
 
       // Schneller Timeout (2 Sekunden) - Bilder sollten bereits vorhanden sein
@@ -100,7 +106,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
             // Aktualisiere products State mit Batch-API Bildern
             // KRITISCH: Prüfe isMounted vor State-Update
             if (!isMounted) return
-            
+
             setProducts(prev => {
               if (!isMounted) return prev // Double-check
               const updated = prev.map(p => {
@@ -156,22 +162,22 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
 
       const loadProducts = async () => {
         if (!isMounted) return
-        
+
         try {
           if (isMounted) {
             setLoading(true)
           }
-          
+
           const response = await fetch('/api/articles/fast?limit=6', {
             signal: abortController.signal,
           })
-          
+
           if (!isMounted) return
-          
+
           if (response.ok) {
             const data = await response.json()
             if (!isMounted) return
-            
+
             if (data.watches && Array.isArray(data.watches) && data.watches.length > 0) {
               // Transformiere API-Format zu ProductItem-Format
               const transformedProducts: ProductItem[] = data.watches.map((w: any) => {
@@ -199,7 +205,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                   href: `/products/${productId}`,
                 }
               })
-              
+
               if (isMounted) {
                 setProducts(transformedProducts)
                 setLoading(false)
@@ -207,10 +213,10 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
               return
             }
           }
-          
+
           // Wenn keine Daten, retry wenn noch Versuche übrig
           if (!isMounted) return
-          
+
           if (retryCount < maxRetries) {
             retryCount++
             setTimeout(() => {
@@ -225,14 +231,14 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
           }
         } catch (error: any) {
           if (error.name === 'AbortError') return
-          
+
           if (isMounted) {
             console.error('Error loading products from API:', error)
           }
-          
+
           // Retry nach 2 Sekunden wenn Fehler und noch Versuche übrig
           if (!isMounted) return
-          
+
           if (retryCount < maxRetries) {
             retryCount++
             setTimeout(() => {
@@ -247,9 +253,9 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
           }
         }
       }
-      
+
       loadProducts()
-      
+
       return () => {
         isMounted = false
         abortController.abort()

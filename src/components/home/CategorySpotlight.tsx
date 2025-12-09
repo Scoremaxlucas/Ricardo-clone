@@ -230,7 +230,7 @@ export function CategorySpotlight() {
         // Das zeigt dem Benutzer, dass die Kategorien existieren, auch wenn noch keine Produkte vorhanden sind
         // KRITISCH: Prüfe isMounted vor jedem State-Update
         if (!isMounted) return
-        
+
         if (categoriesWithProducts.length === 0 && results.length > 0) {
           setCategories(results.slice(0, 3))
         } else {
