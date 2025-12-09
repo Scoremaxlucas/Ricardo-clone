@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { uploadImagesToBlob } from '@/lib/blob-storage'
 
 /**
  * OPTIMIERT: Batch API für mehrere Produktbilder auf einmal
@@ -58,7 +59,6 @@ export async function POST(request: NextRequest) {
           // Wenn Base64-Bilder vorhanden, migriere sie zu Blob Storage
           if (base64Images.length > 0) {
             try {
-              const { uploadImagesToBlob } = await import('@/lib/blob-storage')
               const basePath = `watches/${watch.id}`
               const blobUrls = await uploadImagesToBlob(base64Images, basePath)
               
