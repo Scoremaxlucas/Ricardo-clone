@@ -103,23 +103,19 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
     if (w.images) {
       try {
         const parsedImages = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
-        // KRITISCH: Für Deployment-Größe müssen wir Base64-Bilder stark reduzieren
-        // Nur sehr kleine Base64-Bilder (<100KB) im initialen Response senden
-        // Größere Bilder werden über /api/watches/[id]/images nachgeladen
         if (Array.isArray(parsedImages) && parsedImages.length > 0) {
           const titleImage = parsedImages[0] // Titelbild
 
-          // OPTIMIERT: Intelligente Bildgrößen-Limits für Balance zwischen Performance und Deployment
-          // Titelbilder: Erhöhtes Limit (1MB Base64 = ~750KB Original) - die meisten werden sofort angezeigt
-          // Zusätzliche Bilder: Kleineres Limit (300KB Base64) - werden sofort angezeigt wenn klein genug
-          // Sehr große Bilder: Über Batch-API nachladen (selten)
+          // KRITISCH: WIE RICARDO - IMMER Titelbild behalten!
+          // Für sehr große Base64-Bilder (>2MB) trotzdem filtern um Deployment zu ermöglichen
+          // Aber erhöhtes Limit für sofortige Anzeige
           if (titleImage.startsWith('data:image/')) {
-            // Erhöhtes Limit für Titelbild: 1MB Base64 (~750KB Original)
-            // Dies ermöglicht die meisten Bilder sofort, während sehr große über API geladen werden
-            if (titleImage.length < 1000000) {
+            // Erhöhtes Limit für Titelbild: 2MB Base64 (~1.5MB Original)
+            // Dies ermöglicht fast alle Bilder sofort, während sehr große über API geladen werden
+            if (titleImage.length < 2000000) {
               images = [titleImage]
             } else {
-              // Sehr große Titelbilder (>1MB) werden über Batch-API nachgeladen (selten)
+              // Sehr große Titelbilder (>2MB) werden über Batch-API nachgeladen (extrem selten)
               images = []
             }
           } else {
@@ -128,10 +124,10 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
           }
 
           // OPTIMIERT: Behalte zusätzliche Bilder wenn sie klein genug sind
-          // Erlaube bis zu 300KB Base64 für zusätzliche Bilder
+          // Erlaube bis zu 500KB Base64 für zusätzliche Bilder
           const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
             if (img.startsWith('data:image/')) {
-              return img.length < 300000 // <300KB Base64 für zusätzliche Bilder
+              return img.length < 500000 // <500KB Base64 für zusätzliche Bilder
             }
             // URLs sind immer klein
             return img.length < 1000
@@ -141,7 +137,8 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         } else {
           images = []
         }
-      } catch {
+      } catch (error) {
+        console.error(`Error parsing images for watch ${w.id}:`, error)
         images = []
       }
     }
