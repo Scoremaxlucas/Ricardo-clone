@@ -26,47 +26,14 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   // KRITISCH: KEIN imagesLoaded State mehr - verwende direkt product.images!
   // Dies eliminiert Verzögerung und stellt sicher, dass Bilder sofort angezeigt werden
 
-  // OPTIMIERT: Verwende Server-Bilder sofort, keine Wartezeit auf Cache/API
-  // Cache wird nur für Persistenz nach Navigation verwendet
+  // KRITISCH: KEIN useEffect mehr für State-Updates - alles ist bereits in initialProducts!
+  // Produkte werden SOFORT angezeigt ohne Verzögerung
+  // Nur für fehlende Bilder (extrem große) wird Batch-API verwendet
   useEffect(() => {
     if (initialProducts.length === 0) return
 
     let isMounted = true
     const abortController = new AbortController()
-
-    // Setze Bilder sofort aus initialProducts (Server-Response)
-    const initialImagesMap: Record<string, string[]> = {}
-    initialProducts.forEach(product => {
-      // Verwende Server-Bilder wenn vorhanden
-      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-        initialImagesMap[product.id] = product.images
-        console.log(`[FeaturedProducts] Product ${product.id} has ${product.images.length} images from server`)
-      } else {
-        console.warn(`[FeaturedProducts] Product ${product.id} has NO images from server`)
-      }
-    })
-
-    // KRITISCH: Setze State synchron, damit Bilder SOFORT angezeigt werden
-    // Wie Ricardo - alles ist bereits im initialProducts, keine Verzögerung!
-    setImagesLoaded(initialImagesMap)
-
-    // KRITISCH: Stelle sicher, dass products State sofort gesetzt ist
-    // Keine Wartezeit auf API-Calls - alles sofort verfügbar!
-    // Stelle sicher, dass alle Produkte ihre Bilder haben
-    const productsWithImages = initialProducts.map(p => {
-      const images = Array.isArray(p.images) && p.images.length > 0 ? p.images : []
-      if (images.length === 0 && p.id) {
-        console.warn(`[FeaturedProducts] Product ${p.id} (${p.title}) has NO images in initialProducts`)
-      } else if (images.length > 0) {
-        console.log(`[FeaturedProducts] Product ${p.id} (${p.title}) has ${images.length} images in initialProducts`)
-      }
-      return {
-        ...p,
-        // Stelle sicher, dass images immer ein Array ist
-        images
-      }
-    })
-    setProducts(productsWithImages)
 
     // OPTIMIERT: Preload images immediately for instant display
     if (initialProducts.length > 0) {
