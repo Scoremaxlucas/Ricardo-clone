@@ -9,7 +9,7 @@ import { ProductQuestions } from '@/components/product/ProductQuestions'
 import { SimilarProducts } from '@/components/product/SimilarProducts'
 import { SellerProfile } from '@/components/seller/SellerProfile'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { ChevronLeft, ChevronRight, Flag } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Flag, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -37,6 +37,8 @@ export function ProductPageClient({
   const [isZoomed, setIsZoomed] = useState(false)
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
   const [imageAspectRatio, setImageAspectRatio] = useState<number | null>(null)
+  const [isImageModalOpen, setIsImageModalOpen] = useState(false)
+  const [modalImageIndex, setModalImageIndex] = useState(0)
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const zoomImageRef = useRef<HTMLImageElement>(null)
 
@@ -62,6 +64,47 @@ export function ProductPageClient({
     }
   }, [images, selectedImageIndex])
 
+  // Keyboard-Navigation für Modal
+  useEffect(() => {
+    if (!isImageModalOpen) return
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setIsImageModalOpen(false)
+      } else if (e.key === 'ArrowLeft') {
+        setModalImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+      } else if (e.key === 'ArrowRight') {
+        setModalImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+      }
+    }
+
+    window.addEventListener('keydown', handleKeyDown)
+    return () => window.removeEventListener('keydown', handleKeyDown)
+  }, [isImageModalOpen, images.length])
+
+  // Öffne Modal mit dem geklickten Bild
+  const openImageModal = (index: number) => {
+    setModalImageIndex(index)
+    setIsImageModalOpen(true)
+    // Verhindere Body-Scroll wenn Modal offen ist
+    document.body.style.overflow = 'hidden'
+  }
+
+  // Schließe Modal
+  const closeImageModal = () => {
+    setIsImageModalOpen(false)
+    document.body.style.overflow = 'unset'
+  }
+
+  // Navigiere im Modal
+  const navigateModalImage = (direction: 'prev' | 'next') => {
+    if (direction === 'prev') {
+      setModalImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+    } else {
+      setModalImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+    }
+  }
+
   if (!watch) {
     return (
       <div className="p-8">
@@ -77,6 +120,120 @@ export function ProductPageClient({
 
   return (
     <>
+      {/* Bild-Modal (Fullscreen) */}
+      {isImageModalOpen && images.length > 0 && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
+          onClick={closeImageModal}
+        >
+          {/* Schließen-Button */}
+          <button
+            onClick={closeImageModal}
+            className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white transition-all hover:bg-white/20"
+            aria-label="Schließen"
+          >
+            <X className="h-6 w-6" />
+          </button>
+
+          {/* Hauptbild im Modal */}
+          <div
+            className="relative flex h-full w-full items-center justify-center p-8"
+            onClick={(e) => e.stopPropagation()}
+          >
+            {/* Navigation: Vorheriges Bild */}
+            {images.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigateModalImage('prev')
+                }}
+                className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-all hover:bg-white/20"
+                aria-label="Vorheriges Bild"
+              >
+                <ChevronLeft className="h-8 w-8" />
+              </button>
+            )}
+
+            {/* Bild */}
+            <div className="relative h-full w-full max-h-[90vh] max-w-[90vw]">
+              {images[modalImageIndex]?.startsWith('data:image/') ||
+              images[modalImageIndex]?.length > 1000 ? (
+                <img
+                  src={images[modalImageIndex]}
+                  alt={`${watch.title} - Bild ${modalImageIndex + 1}`}
+                  className="h-full w-full object-contain"
+                />
+              ) : (
+                <Image
+                  src={images[modalImageIndex]}
+                  alt={`${watch.title} - Bild ${modalImageIndex + 1}`}
+                  fill
+                  className="object-contain"
+                  sizes="90vw"
+                />
+              )}
+            </div>
+
+            {/* Navigation: Nächstes Bild */}
+            {images.length > 1 && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation()
+                  navigateModalImage('next')
+                }}
+                className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-all hover:bg-white/20"
+                aria-label="Nächstes Bild"
+              >
+                <ChevronRight className="h-8 w-8" />
+              </button>
+            )}
+
+            {/* Bildnummer Anzeige */}
+            {images.length > 1 && (
+              <div className="absolute bottom-20 left-1/2 -translate-x-1/2 rounded-full bg-black/70 px-4 py-2 text-sm text-white">
+                {modalImageIndex + 1} / {images.length}
+              </div>
+            )}
+
+            {/* Thumbnail-Galerie im Modal */}
+            {images.length > 1 && (
+              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 overflow-x-auto pb-2">
+                {images.map((image, index) => (
+                  <button
+                    key={index}
+                    onClick={(e) => {
+                      e.stopPropagation()
+                      setModalImageIndex(index)
+                    }}
+                    className={`relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                      modalImageIndex === index
+                        ? 'border-white ring-2 ring-white/50'
+                        : 'border-white/30 hover:border-white/60'
+                    }`}
+                  >
+                    {image?.startsWith('data:image/') || image?.length > 1000 ? (
+                      <img
+                        src={image}
+                        alt={`${watch.title} - Bild ${index + 1}`}
+                        className="h-full w-full object-cover"
+                      />
+                    ) : (
+                      <Image
+                        src={image}
+                        alt={`${watch.title} - Bild ${index + 1}`}
+                        fill
+                        className="object-cover"
+                        sizes="64px"
+                      />
+                    )}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
       {/* Breadcrumb */}
       <div className="mb-4 text-sm text-gray-600">
         <Link href="/" className="text-primary-600 hover:text-primary-700">
@@ -114,12 +271,13 @@ export function ProductPageClient({
                   {/* Hauptbild mit Zoom-Effekt - Container passt sich an Bildformat an */}
                   <div
                     ref={imageContainerRef}
-                    className="relative w-full overflow-hidden rounded-lg bg-gray-100"
+                    className="relative w-full cursor-pointer overflow-hidden rounded-lg bg-gray-100"
                     style={{
                       aspectRatio: imageAspectRatio ? `${imageAspectRatio}` : 'auto',
                       minHeight: '400px',
                       maxHeight: '800px',
                     }}
+                    onClick={() => openImageModal(selectedImageIndex)}
                     onMouseMove={(e) => {
                       if (!imageContainerRef.current || !zoomImageRef.current) return
                       const rect = imageContainerRef.current.getBoundingClientRect()
@@ -211,8 +369,11 @@ export function ProductPageClient({
                       {images.map((image, index) => (
                         <button
                           key={index}
-                          onClick={() => setSelectedImageIndex(index)}
-                          className={`relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg border-2 transition-all ${
+                          onClick={() => {
+                            setSelectedImageIndex(index)
+                            openImageModal(index)
+                          }}
+                          className={`relative h-20 w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-all ${
                             selectedImageIndex === index
                               ? 'border-gray-600 ring-2 ring-gray-200'
                               : 'border-gray-200 hover:border-gray-300'
