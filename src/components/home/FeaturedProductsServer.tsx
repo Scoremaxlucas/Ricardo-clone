@@ -62,8 +62,10 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
     }
 
     // Aktualisiere Cache mit Server-Bildern (asynchron, blockiert nicht)
-    Object.keys(initialImagesMap).forEach(id => {
-      cachedImages[id] = { images: initialImagesMap[id], timestamp: Date.now() }
+    initialProducts.forEach(product => {
+      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        cachedImages[product.id] = { images: product.images, timestamp: Date.now() }
+      }
     })
 
     try {
