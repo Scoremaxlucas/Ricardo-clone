@@ -106,7 +106,8 @@ export function ProductCard({
   }, [product.id, session?.user])
 
   // Parse images
-  // WICHTIG: Stelle sicher, dass immer das erste Bild (Titelbild) verwendet wird
+  // KRITISCH: Stelle sicher, dass IMMER das erste Bild (Titelbild) verwendet wird
+  // KEINE Sortierung, KEINE Filterung - verwende exakt die Reihenfolge aus product.images
   const images =
     typeof product.images === 'string'
       ? (() => {
@@ -121,13 +122,14 @@ export function ProductCard({
         })()
       : Array.isArray(product.images) ? product.images : []
 
-  // DEBUG: Log wenn keine Bilder vorhanden
-  if (images.length === 0 && product.id) {
-    console.warn(`[ProductCard] Product ${product.id} (${product.title}) has NO images. product.images:`, product.images)
-  }
-
-  // WICHTIG: Immer das erste Bild (Titelbild) verwenden, NIEMALS ein anderes
+  // KRITISCH: Immer das ERSTE Bild (Titelbild) verwenden, NIEMALS ein anderes
+  // Verwende images[0] direkt - keine Filterung, keine Sortierung
   const mainImage = images.length > 0 ? images[0] : null
+  
+  // DEBUG: Log wenn falsches Bild verwendet wird
+  if (images.length > 1 && product.id) {
+    console.log(`[ProductCard] Product ${product.id} (${product.title}) using title image (first of ${images.length} images)`)
+  }
 
   // OPTIMIERT: Preload image when it becomes available for instant display
   useEffect(() => {

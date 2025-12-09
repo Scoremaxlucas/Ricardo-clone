@@ -20,14 +20,8 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   // Cache wird verwendet um Bilder nach Navigation zu erhalten
   // KRITISCH: WIE RICARDO - Produkte sind sofort verfügbar, kein Loading-State!
   // WICHTIG: Initialisiere products State mit initialProducts UND stelle sicher, dass Bilder vorhanden sind
-  const [products, setProducts] = useState<ProductItem[]>(() => {
-    // Stelle sicher, dass alle Produkte ihre Bilder haben
-    return initialProducts.map(p => ({
-      ...p,
-      // Stelle sicher, dass images immer ein Array ist
-      images: Array.isArray(p.images) && p.images.length > 0 ? p.images : []
-    }))
-  })
+  // KRITISCH: Setze State SYNCHRON beim Initialisieren, keine Verzögerung!
+  const [products, setProducts] = useState<ProductItem[]>(initialProducts)
   const [loading, setLoading] = useState(false) // Kein Loading mehr - alles sofort verfügbar!
   // WICHTIG: Initialisiere imagesLoaded sofort mit Server-Bildern, keine Wartezeit
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, string[]>>(() => {
@@ -159,34 +153,19 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
 
               if (!isMounted) return
 
-              // KRITISCH: Aktualisiere imagesLoaded mit Batch-API Bildern
-              setImagesLoaded(prev => {
-                const newImagesMap = { ...prev }
-                Object.entries(batchImages).forEach(([id, images]: [string, any]) => {
-                  if (images && Array.isArray(images) && images.length > 0) {
-                    console.log(`[FeaturedProducts] Setting images for product ${id}: ${images.length} images`)
-                    newImagesMap[id] = images
-                    cachedImages[id] = { images, timestamp: Date.now() }
-                  }
-                })
-
-                try {
-                  localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
-                } catch (error) {
-                  // Ignore localStorage errors
-                }
-
-                return newImagesMap
-              })
-
-              // KRITISCH: Aktualisiere products State mit Batch-API Bildern
+              // KRITISCH: Aktualisiere products State DIREKT mit Batch-API Bildern
+              // Kein imagesLoaded State mehr - direkte Aktualisierung eliminiert Verzögerung
               setProducts(prev => {
                 const updated = prev.map(p => {
                   const images = batchImages[p.id]
                   if (images && Array.isArray(images) && images.length > 0) {
-                    console.log(`[FeaturedProducts] Updating product ${p.id} with ${images.length} images`)
-                    // KRITISCH: Aktualisiere product.images mit Batch-API Bildern
-                    return { ...p, images }
+                    console.log(`[FeaturedProducts] Updating product ${p.id} with ${images.length} images from Batch API`)
+                    // KRITISCH: Stelle sicher, dass IMMER das erste Bild (Titelbild) verwendet wird
+                    // Sortiere NICHT - verwende die Reihenfolge aus der Datenbank
+                    const titleImage = images[0] // IMMER das erste Bild
+                    const additionalImages = images.slice(1)
+                    // KRITISCH: Stelle sicher, dass Titelbild IMMER zuerst ist
+                    return { ...p, images: [titleImage, ...additionalImages] }
                   }
                   // Stelle sicher, dass images immer ein Array ist
                   return { ...p, images: Array.isArray(p.images) && p.images.length > 0 ? p.images : [] }
@@ -194,6 +173,19 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 preloadProductImages(updated)
                 return updated
               })
+              
+              // Aktualisiere Cache für Persistenz nach Navigation
+              Object.entries(batchImages).forEach(([id, images]: [string, any]) => {
+                if (images && Array.isArray(images) && images.length > 0) {
+                  cachedImages[id] = { images, timestamp: Date.now() }
+                }
+              })
+              
+              try {
+                localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
+              } catch (error) {
+                // Ignore localStorage errors
+              }
             } catch (error: any) {
               console.error('[FeaturedProducts] Error parsing batch images:', error)
             }

@@ -103,7 +103,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
     if (w.images) {
       try {
         const parsedImages = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
-        
+
         if (!Array.isArray(parsedImages)) {
           console.warn(`[getFeaturedProducts] Watch ${w.id} images is not an array:`, typeof parsedImages, parsedImages)
           images = []
@@ -112,7 +112,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
           images = []
         } else {
           const titleImage = parsedImages[0] // Titelbild
-          
+
           if (!titleImage || typeof titleImage !== 'string') {
             console.warn(`[getFeaturedProducts] Watch ${w.id} titleImage is invalid:`, typeof titleImage, titleImage)
             images = []
