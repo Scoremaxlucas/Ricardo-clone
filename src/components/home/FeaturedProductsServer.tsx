@@ -49,9 +49,14 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       }
     })
 
-    // Setze State synchron, damit Bilder sofort angezeigt werden
+    // KRITISCH: Setze State synchron, damit Bilder SOFORT angezeigt werden
+    // Wie Ricardo - alles ist bereits im initialProducts, keine Verzögerung!
     setImagesLoaded(initialImagesMap)
-
+    
+    // KRITISCH: Stelle sicher, dass products State sofort gesetzt ist
+    // Keine Wartezeit auf API-Calls - alles sofort verfügbar!
+    setProducts(initialProducts)
+    
     // OPTIMIERT: Preload images immediately for instant display
     if (initialProducts.length > 0) {
       preloadProductImages(initialProducts)
