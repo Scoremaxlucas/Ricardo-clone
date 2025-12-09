@@ -83,13 +83,13 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
     }
 
       // Lade fehlende oder große Bilder von API
-      // Wenn initialProducts keine Bilder hat ODER nur kleine Bilder hat, lade alle Bilder
+      // Wenn initialProducts keine Bilder hat (weil sie zu groß waren), lade sie nach
       const productsToLoad = initialProducts.filter(
         p => {
           // Lade Bilder wenn:
-          // 1. Keine Bilder im initialProducts vorhanden
-          // 2. ODER nur kleine Bilder vorhanden (große wurden gefiltert)
-          return !p.images?.length || (p.images.length === 0 && !cachedImages[p.id]?.images)
+          // 1. Keine Bilder im initialProducts vorhanden (wurden wegen Größe gefiltert)
+          // 2. ODER keine Bilder im Cache vorhanden
+          return !p.images?.length && !cachedImages[p.id]?.images
         }
       )
     if (productsToLoad.length > 0) {
