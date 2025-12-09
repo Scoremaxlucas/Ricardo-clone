@@ -265,6 +265,7 @@ export function ProductCard({
               fill
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               loading="eager"
+              priority
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
               onError={() => {
                 setImageError(true)
@@ -280,7 +281,10 @@ export function ProductCard({
             <Sparkles className="h-6 w-6 opacity-50" />
             <span className="ml-2 text-xs">Kein Bild</span>
           </div>
-        ) : null}
+        ) : (
+          // OPTIMIERT: Zeige subtilen Placeholder statt Spinner (wie Ricardo)
+          <div className="h-full w-full bg-gradient-to-br from-gray-50 to-gray-100" />
+        )}
 
           {/* Favorite Button - Größer auf Mobile */}
           <button
