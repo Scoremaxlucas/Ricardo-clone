@@ -1,9 +1,9 @@
 /**
  * In-Memory API Response Cache
- * 
+ *
  * Caches frequently accessed API responses to reduce database load
  * and improve response times.
- * 
+ *
  * Features:
  * - TTL-based expiration
  * - Automatic cleanup of expired entries
@@ -144,15 +144,15 @@ export function generateCacheKey(
 
 /**
  * Cache middleware for API routes
- * 
+ *
  * Usage:
  * ```typescript
  * const cacheKey = generateCacheKey('/api/watches', { page: 1, limit: 10 })
  * const cached = apiCache.get(cacheKey)
  * if (cached) return NextResponse.json(cached)
- * 
+ *
  * // ... fetch data ...
- * 
+ *
  * apiCache.set(cacheKey, data, 60000) // Cache for 60 seconds
  * ```
  */

@@ -95,11 +95,14 @@ function SearchPageContent() {
     setSelectedBrands(brand ? [brand] : [])
   }, [brand])
 
-  // Lade Favoriten
+  // OPTIMIERT: Lade Favoriten mit Session-Check
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        const response = await fetch('/api/favorites')
+        // Use cached response if available (handled by API cache)
+        const response = await fetch('/api/favorites', {
+          cache: 'force-cache', // Use browser cache
+        })
         if (response.ok) {
           const data = await response.json()
           setFavorites(new Set(data.favorites?.map((f: any) => f.watchId) || []))

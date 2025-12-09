@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { apiCache, generateCacheKey } from '@/lib/api-cache'
 
 /**
  * API-Route für präzise Marken-Anzahlen
@@ -8,6 +9,18 @@ import { prisma } from '@/lib/prisma'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
+    
+    // Check cache first
+    const cacheKey = generateCacheKey('/api/watches/brand-counts', Object.fromEntries(searchParams))
+    const cached = apiCache.get(cacheKey)
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+          'X-Cache': 'HIT',
+        },
+      })
+    }
     const category = searchParams.get('category') || ''
     const subcategory = searchParams.get('subcategory') || ''
     const isAuction = searchParams.get('isAuction')

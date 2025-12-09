@@ -4,6 +4,7 @@ import { Suspense, lazy } from 'react'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { Toaster } from 'react-hot-toast'
+import { ServiceWorker } from '@/components/ServiceWorker'
 
 // Lazy load EmmaChat - not critical for initial render
 const EmmaChat = lazy(() => import('@/components/emma/EmmaChat').then(m => ({ default: m.EmmaChat })))
@@ -18,12 +19,25 @@ export const metadata: Metadata = {
   title: 'Helvenda.ch - Schweizer Online-Marktplatz',
   description:
     'Der Schweizer Online-Marktplatz für Private und Gewerbetreibende. Kaufen, verkaufen und handeln Sie einfach und sicher.',
+  manifest: '/manifest.json',
+  themeColor: '#0f766e',
+  viewport: 'width=device-width, initial-scale=1, maximum-scale=5',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'Helvenda',
+  },
 }
 
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="de" className="h-full">
+      <head>
+        <link rel="manifest" href="/manifest.json" />
+        <meta name="theme-color" content="#0f766e" />
+      </head>
       <body className={`${inter.className} flex min-h-screen flex-col`}>
+        <ServiceWorker />
         <Providers>
           <div className="flex flex-1 flex-col">{children}</div>
           <Toaster

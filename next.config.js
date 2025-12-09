@@ -94,12 +94,11 @@ const nextConfig = {
       }
     }
 
-    // Optimize bundle splitting - TensorFlow.js will be in a separate chunk
+    // OPTIMIERT: Bundle Size Optimization
     if (!isServer) {
       config.optimization = config.optimization || {}
 
       // Stelle sicher, dass splitChunks existiert (Next.js setzt es standardmäßig)
-      // Wenn es nicht existiert, lass Next.js die Defaults verwenden und füge nur unsere Cache-Gruppe hinzu
       if (!config.optimization.splitChunks) {
         config.optimization.splitChunks = {}
       }
@@ -111,13 +110,29 @@ const nextConfig = {
         existingSplitChunks.cacheGroups = {}
       }
 
-      // Füge TensorFlow Cache-Gruppe zu den bestehenden Cache-Gruppen hinzu
-      // Dies überschreibt keine Next.js Defaults, sondern erweitert sie nur
+      // OPTIMIERT: Separate chunks für bessere Code-Splitting
+      // TensorFlow.js in separatem Chunk (große Bibliothek)
       existingSplitChunks.cacheGroups.tensorflow = {
         test: /[\\/]node_modules[\\/]@tensorflow[\\/]/,
         name: 'tensorflow',
         chunks: 'async',
         priority: 10,
+      }
+
+      // Lucide Icons in separatem Chunk (nur bei Bedarf laden)
+      existingSplitChunks.cacheGroups.lucide = {
+        test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
+        name: 'lucide-icons',
+        chunks: 'async',
+        priority: 9,
+      }
+
+      // React/Next.js Vendor Chunk
+      existingSplitChunks.cacheGroups.vendor = {
+        test: /[\\/]node_modules[\\/](react|react-dom|next)[\\/]/,
+        name: 'vendor',
+        chunks: 'all',
+        priority: 8,
       }
     }
 
