@@ -2,6 +2,38 @@ import { withAuth } from 'next-auth/middleware'
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// OPTIMIERT: Cache für Admin-Checks (5 Minuten TTL)
+const adminCache = new Map<string, { isAdmin: boolean; expires: number }>()
+const CACHE_TTL = 5 * 60 * 1000 // 5 Minuten
+
+async function checkAdminStatus(userId: string): Promise<boolean> {
+  // Prüfe Cache zuerst
+  const cached = adminCache.get(userId)
+  if (cached && cached.expires > Date.now()) {
+    return cached.isAdmin
+  }
+
+  // Falls nicht im Cache, prüfe Datenbank
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: { isAdmin: true },
+    })
+    const isAdmin = user?.isAdmin === true
+
+    // Speichere im Cache
+    adminCache.set(userId, {
+      isAdmin,
+      expires: Date.now() + CACHE_TTL,
+    })
+
+    return isAdmin
+  } catch (error) {
+    console.error('[MIDDLEWARE] Error checking admin status:', error)
+    return false
+  }
+}
+
 export default withAuth(
   async function middleware(req) {
     const token = req.nextauth.token
@@ -9,20 +41,12 @@ export default withAuth(
 
     // Wenn es eine Admin-Route ist, prüfe Admin-Rechte
     if (isAdminRoute) {
-      // Prüfe Admin-Status aus Token
+      // Prüfe Admin-Status aus Token zuerst
       let isAdmin = token?.isAdmin === true
 
-      // Falls nicht im Token, prüfe direkt in der Datenbank
+      // Falls nicht im Token, prüfe mit Cache
       if (!isAdmin && token?.id) {
-        try {
-          const user = await prisma.user.findUnique({
-            where: { id: token.id as string },
-            select: { isAdmin: true },
-          })
-          isAdmin = user?.isAdmin === true
-        } catch (error) {
-          console.error('[MIDDLEWARE] Error checking admin status:', error)
-        }
+        isAdmin = await checkAdminStatus(token.id as string)
       }
 
       if (!isAdmin) {

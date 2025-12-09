@@ -3,7 +3,14 @@ import { redirect } from 'next/navigation'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { ProductPageClient } from '@/components/product/ProductPageClient'
+import dynamic from 'next/dynamic'
+import { Suspense } from 'react'
+
+// OPTIMIERT: Dynamic Import für große Komponente - reduziert initial Bundle Size
+const ProductPageClient = dynamic(() => import('@/components/product/ProductPageClient').then(mod => ({ default: mod.ProductPageClient })), {
+  loading: () => <div className="flex min-h-screen items-center justify-center"><div className="text-gray-600">Lade Produkt...</div></div>,
+  ssr: true,
+})
 
 interface Props {
   params: Promise<{ id: string }>

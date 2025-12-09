@@ -7,10 +7,10 @@ import { getFeaturedProducts } from '@/lib/products'
 import { FeaturedProductsServer } from '@/components/home/FeaturedProductsServer'
 import { HomeClient } from '@/components/home/HomeClient'
 
-// Revalidate homepage every 60 seconds for fresh products
-// WICHTIG: Cache wird auch nach Produktlöschung invalidiert (siehe DELETE endpoint)
+// OPTIMIERT: ISR mit 60 Sekunden Revalidation für bessere Performance
+// Cache wird nach Produktlöschung invalidiert (siehe DELETE endpoint)
 export const revalidate = 60
-export const dynamic = 'force-dynamic' // Stelle sicher, dass gelöschte Produkte sofort verschwinden
+// Entfernt: dynamic = 'force-dynamic' - widerspricht ISR und verhindert Caching
 
 export default async function Home() {
   // OPTIMIERT: Fetch products server-side für instant rendering (wie Ricardo)

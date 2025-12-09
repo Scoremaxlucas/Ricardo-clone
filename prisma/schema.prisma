@@ -200,6 +200,12 @@ model Watch {
   @@index([createdAt])
   @@index([sellerId]) // KRITISCH: Für schnelle Abfragen nach sellerId
   @@index([sellerId, createdAt]) // OPTIMIERT: Für Sortierung nach createdAt bei sellerId-Filter
+  @@index([title]) // PERFORMANCE: Für schnelle Textsuche
+  @@index([brand]) // PERFORMANCE: Für schnelle Brand-Filterung
+  @@index([price]) // PERFORMANCE: Für schnelle Preis-Sortierung
+  @@index([articleNumber]) // PERFORMANCE: Für schnelle Artikelnummer-Lookups
+  @@index([auctionEnd]) // PERFORMANCE: Für schnelle Auktion-Filterung
+  @@index([title, brand]) // PERFORMANCE: Composite Index für kombinierte Suche
   @@map("watches")
 }
 
