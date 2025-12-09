@@ -266,7 +266,17 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ brandCounts })
+    const responseData = { brandCounts }
+    
+    // Cache for 5 minutes
+    apiCache.set(cacheKey, responseData, 5 * 60 * 1000)
+    
+    return NextResponse.json(responseData, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'X-Cache': 'MISS',
+      },
+    })
   } catch (error) {
     console.error('Error fetching brand counts:', error)
     return NextResponse.json({ brandCounts: {} }, { status: 500 })
