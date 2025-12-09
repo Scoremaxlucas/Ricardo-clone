@@ -143,7 +143,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
       model: w.model || '',
       price: highestBid || w.price,
       buyNowPrice: w.buyNowPrice,
-      images: images, // Nur URLs, keine Base64-Bilder
+      images: images, // Base64-Bilder <500KB sind jetzt erlaubt (mit VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR)
       createdAt: w.createdAt.toISOString(),
       isAuction: !!w.isAuction || !!w.auctionEnd,
       auctionEnd: w.auctionEnd ? w.auctionEnd.toISOString() : null,
