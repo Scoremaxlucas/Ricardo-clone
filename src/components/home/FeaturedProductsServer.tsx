@@ -6,6 +6,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 import { Loader2 } from 'lucide-react'
+import { preloadProductImages } from '@/lib/image-preloader'
 
 interface FeaturedProductsServerProps {
   initialProducts: ProductItem[]
@@ -49,6 +50,11 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
 
     // Setze State synchron, damit Bilder sofort angezeigt werden
     setImagesLoaded(initialImagesMap)
+    
+    // OPTIMIERT: Preload images immediately for instant display
+    if (initialProducts.length > 0) {
+      preloadProductImages(initialProducts)
+    }
 
     // Lade Cache aus localStorage für Persistenz nach Navigation
     const cacheKey = 'product-images-cache'
@@ -92,16 +98,16 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
           return !p.images?.length && !cachedImages[p.id]?.images
         }
       )
-      
+
     if (productsToLoad.length > 0) {
       // OPTIMIERT: Batch-Request für alle Bilder auf einmal
       const productIds = productsToLoad.map(p => p.id)
-      
+
       // Timeout nach 5 Sekunden
       const timeoutPromise = new Promise<never>((_, reject) => {
         setTimeout(() => reject(new Error('Image loading timeout')), 5000)
       })
-      
+
       Promise.race([
         fetch('/api/watches/images/batch', {
           method: 'POST',
@@ -113,12 +119,12 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       ])
         .then(async (response) => {
           if (!isMounted || !response.ok) return
-          
+
           const data = await response.json()
           const batchImages = data.images || {}
-          
+
           if (!isMounted) return
-          
+
           setImagesLoaded(prev => {
             const newImagesMap = { ...prev }
             Object.entries(batchImages).forEach(([id, images]: [string, any]) => {
@@ -138,16 +144,21 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
 
             return newImagesMap
           })
-          
+
           // Aktualisiere auch products State
           setProducts(prev => {
-            return prev.map(p => {
+            const updated = prev.map(p => {
               const images = batchImages[p.id]
               if (images && Array.isArray(images) && images.length > 0) {
                 return { ...p, images }
               }
               return p
             })
+            
+            // OPTIMIERT: Preload newly loaded images
+            preloadProductImages(updated)
+            
+            return updated
           })
         })
         .catch((error: any) => {

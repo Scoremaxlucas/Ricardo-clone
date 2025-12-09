@@ -266,6 +266,7 @@ export function ProductCard({
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               loading="eager"
               priority
+              quality={85}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
               onError={() => {
                 setImageError(true)

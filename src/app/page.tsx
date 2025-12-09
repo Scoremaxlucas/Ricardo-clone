@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/Footer'
 import { getFeaturedProducts } from '@/lib/products'
 import { FeaturedProductsServer } from '@/components/home/FeaturedProductsServer'
 import { HomeClient } from '@/components/home/HomeClient'
+import { ImagePreloader } from '@/components/ImagePreloader'
 
 // OPTIMIERT: ISR mit 60 Sekunden Revalidation für bessere Performance
 // Cache wird nach Produktlöschung invalidiert (siehe DELETE endpoint)
@@ -19,8 +20,23 @@ export default async function Home() {
   const featuredProducts = await getFeaturedProducts(6)
 
   return (
-    <div className="flex min-h-screen flex-col bg-[#FAFAFA]">
-      <Header />
+    <>
+      {/* OPTIMIERT: Preload critical images for instant display */}
+      {featuredProducts
+        .flatMap(p => p.images || [])
+        .filter(img => img && !img.startsWith('data:') && !img.startsWith('blob:'))
+        .slice(0, 6)
+        .map((url, index) => (
+          <link
+            key={index}
+            rel="preload"
+            as="image"
+            href={url}
+            fetchPriority={index < 3 ? 'high' : 'low'}
+          />
+        ))}
+      <div className="flex min-h-screen flex-col bg-[#FAFAFA]">
+        <Header />
       <main className="flex-1 pb-8">
         {/* Hero Section */}
         <Hero />
@@ -28,6 +44,9 @@ export default async function Home() {
         {/* Quick Access Bar - Moderne Filter */}
         <QuickAccessBar />
 
+        {/* OPTIMIERT: Preload images for instant display */}
+        <ImagePreloader products={featuredProducts} />
+        
         {/* Featured Products - Server-Side Rendered für instant display */}
         <FeaturedProductsServer initialProducts={featuredProducts} />
 

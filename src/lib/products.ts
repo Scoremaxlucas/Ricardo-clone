@@ -110,12 +110,11 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
           const titleImage = parsedImages[0] // Titelbild
 
           // OPTIMIERT: Für bessere Performance - immer Titelbild behalten wenn möglich
-          // Aber für sehr große Base64-Bilder (>200KB) trotzdem filtern
-          // Dies ermöglicht sofortige Anzeige kleiner Bilder, während große über Batch-API geladen werden
+          // Erhöhtes Limit für sofortige Anzeige, große Bilder werden komprimiert
           if (titleImage.startsWith('data:image/')) {
-            // Erhöhtes Limit für Titelbild: 200KB Base64 (~150KB Original)
-            // Dies ermöglicht mehr Bilder im initialen Response ohne Page-Größe zu sprengen
-            if (titleImage.length < 200000) {
+            // Erhöhtes Limit für Titelbild: 300KB Base64 (~225KB Original)
+            // Mehr Bilder werden sofort angezeigt, größere werden über Batch-API geladen
+            if (titleImage.length < 300000) {
               images = [titleImage]
             } else {
               // Sehr große Titelbilder werden über Batch-API nachgeladen

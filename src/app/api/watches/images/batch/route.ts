@@ -53,6 +53,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ images: imagesMap }, {
       headers: {
         'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
+        'X-Content-Type-Options': 'nosniff',
+        // OPTIMIERT: Enable compression for faster transfer
+        'Content-Encoding': 'gzip',
       },
     })
   } catch (error) {
