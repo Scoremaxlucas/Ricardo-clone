@@ -118,16 +118,16 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             images = []
           } else {
             // KRITISCH: WIE RICARDO - IMMER Titelbild behalten!
-            // Für sehr große Base64-Bilder (>3MB) trotzdem filtern um Deployment zu ermöglichen
-            // Aber sehr hohes Limit für sofortige Anzeige
+            // Für extrem große Base64-Bilder (>5MB) trotzdem filtern um Deployment zu ermöglichen
+            // Aber sehr sehr hohes Limit für sofortige Anzeige
             if (titleImage.startsWith('data:image/')) {
-              // Sehr hohes Limit für Titelbild: 3MB Base64 (~2.25MB Original)
-              // Dies ermöglicht praktisch alle Bilder sofort, während extrem große über API geladen werden
-              if (titleImage.length < 3000000) {
+              // Extrem hohes Limit für Titelbild: 5MB Base64 (~3.75MB Original)
+              // Dies ermöglicht praktisch ALLE Bilder sofort, während nur extrem große über API geladen werden
+              if (titleImage.length < 5000000) {
                 images = [titleImage]
                 console.log(`[getFeaturedProducts] Watch ${w.id} titleImage included (${Math.round(titleImage.length / 1024)}KB Base64)`)
               } else {
-                // Extrem große Titelbilder (>3MB) werden über Batch-API nachgeladen (extrem selten)
+                // Extrem große Titelbilder (>5MB) werden über Batch-API nachgeladen (extrem selten)
                 console.warn(`[getFeaturedProducts] Watch ${w.id} titleImage too large (${Math.round(titleImage.length / 1024)}KB), will load via Batch API`)
                 images = []
               }
@@ -138,11 +138,11 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             }
 
             // OPTIMIERT: Behalte zusätzliche Bilder wenn sie klein genug sind
-            // Erlaube bis zu 800KB Base64 für zusätzliche Bilder
+            // Erlaube bis zu 1.5MB Base64 für zusätzliche Bilder
             const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
               if (typeof img !== 'string') return false
               if (img.startsWith('data:image/')) {
-                return img.length < 800000 // <800KB Base64 für zusätzliche Bilder
+                return img.length < 1500000 // <1.5MB Base64 für zusätzliche Bilder
               }
               // URLs sind immer klein
               return img.length < 1000
