@@ -103,44 +103,61 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
     if (w.images) {
       try {
         const parsedImages = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
-        if (Array.isArray(parsedImages) && parsedImages.length > 0) {
-          const titleImage = parsedImages[0] // Titelbild
-
-          // KRITISCH: WIE RICARDO - IMMER Titelbild behalten!
-          // Für sehr große Base64-Bilder (>3MB) trotzdem filtern um Deployment zu ermöglichen
-          // Aber sehr hohes Limit für sofortige Anzeige
-          if (titleImage.startsWith('data:image/')) {
-            // Sehr hohes Limit für Titelbild: 3MB Base64 (~2.25MB Original)
-            // Dies ermöglicht praktisch alle Bilder sofort, während extrem große über API geladen werden
-            if (titleImage.length < 3000000) {
-              images = [titleImage]
-            } else {
-              // Extrem große Titelbilder (>3MB) werden über Batch-API nachgeladen (extrem selten)
-              images = []
-            }
-          } else {
-            // URLs sind immer klein, behalten
-            images = [titleImage]
-          }
-
-          // OPTIMIERT: Behalte zusätzliche Bilder wenn sie klein genug sind
-          // Erlaube bis zu 800KB Base64 für zusätzliche Bilder
-          const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
-            if (img.startsWith('data:image/')) {
-              return img.length < 800000 // <800KB Base64 für zusätzliche Bilder
-            }
-            // URLs sind immer klein
-            return img.length < 1000
-          })
-
-          images = [...images, ...smallAdditionalImages]
-        } else {
+        
+        if (!Array.isArray(parsedImages)) {
+          console.warn(`[getFeaturedProducts] Watch ${w.id} images is not an array:`, typeof parsedImages, parsedImages)
           images = []
+        } else if (parsedImages.length === 0) {
+          console.warn(`[getFeaturedProducts] Watch ${w.id} has empty images array`)
+          images = []
+        } else {
+          const titleImage = parsedImages[0] // Titelbild
+          
+          if (!titleImage || typeof titleImage !== 'string') {
+            console.warn(`[getFeaturedProducts] Watch ${w.id} titleImage is invalid:`, typeof titleImage, titleImage)
+            images = []
+          } else {
+            // KRITISCH: WIE RICARDO - IMMER Titelbild behalten!
+            // Für sehr große Base64-Bilder (>3MB) trotzdem filtern um Deployment zu ermöglichen
+            // Aber sehr hohes Limit für sofortige Anzeige
+            if (titleImage.startsWith('data:image/')) {
+              // Sehr hohes Limit für Titelbild: 3MB Base64 (~2.25MB Original)
+              // Dies ermöglicht praktisch alle Bilder sofort, während extrem große über API geladen werden
+              if (titleImage.length < 3000000) {
+                images = [titleImage]
+                console.log(`[getFeaturedProducts] Watch ${w.id} titleImage included (${Math.round(titleImage.length / 1024)}KB Base64)`)
+              } else {
+                // Extrem große Titelbilder (>3MB) werden über Batch-API nachgeladen (extrem selten)
+                console.warn(`[getFeaturedProducts] Watch ${w.id} titleImage too large (${Math.round(titleImage.length / 1024)}KB), will load via Batch API`)
+                images = []
+              }
+            } else {
+              // URLs sind immer klein, behalten
+              images = [titleImage]
+              console.log(`[getFeaturedProducts] Watch ${w.id} titleImage is URL:`, titleImage.substring(0, 50))
+            }
+
+            // OPTIMIERT: Behalte zusätzliche Bilder wenn sie klein genug sind
+            // Erlaube bis zu 800KB Base64 für zusätzliche Bilder
+            const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
+              if (typeof img !== 'string') return false
+              if (img.startsWith('data:image/')) {
+                return img.length < 800000 // <800KB Base64 für zusätzliche Bilder
+              }
+              // URLs sind immer klein
+              return img.length < 1000
+            })
+
+            images = [...images, ...smallAdditionalImages]
+            console.log(`[getFeaturedProducts] Watch ${w.id} total images: ${images.length} (${parsedImages.length} original)`)
+          }
         }
       } catch (error) {
-        console.error(`Error parsing images for watch ${w.id}:`, error)
+        console.error(`[getFeaturedProducts] Error parsing images for watch ${w.id}:`, error)
         images = []
       }
+    } else {
+      console.warn(`[getFeaturedProducts] Watch ${w.id} has no images field`)
     }
 
     let boosters: string[] = []

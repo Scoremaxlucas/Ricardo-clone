@@ -67,11 +67,20 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
     // KRITISCH: Stelle sicher, dass products State sofort gesetzt ist
     // Keine Wartezeit auf API-Calls - alles sofort verfügbar!
     // Stelle sicher, dass alle Produkte ihre Bilder haben
-    setProducts(initialProducts.map(p => ({
-      ...p,
-      // Stelle sicher, dass images immer ein Array ist
-      images: Array.isArray(p.images) && p.images.length > 0 ? p.images : []
-    })))
+    const productsWithImages = initialProducts.map(p => {
+      const images = Array.isArray(p.images) && p.images.length > 0 ? p.images : []
+      if (images.length === 0 && p.id) {
+        console.warn(`[FeaturedProducts] Product ${p.id} (${p.title}) has NO images in initialProducts`)
+      } else if (images.length > 0) {
+        console.log(`[FeaturedProducts] Product ${p.id} (${p.title}) has ${images.length} images in initialProducts`)
+      }
+      return {
+        ...p,
+        // Stelle sicher, dass images immer ein Array ist
+        images
+      }
+    })
+    setProducts(productsWithImages)
 
     // OPTIMIERT: Preload images immediately for instant display
     if (initialProducts.length > 0) {
@@ -115,16 +124,16 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       const productsToLoad = initialProducts.filter(
         p => !p.images?.length && !cachedImages[p.id]?.images
       )
-      
+
       if (productsToLoad.length > 0) {
         console.log(`[FeaturedProducts] Loading ${productsToLoad.length} products without images via Batch API:`, productsToLoad.map(p => p.id))
         const productIds = productsToLoad.map(p => p.id)
-        
+
         // Timeout nach 5 Sekunden (länger für größere Bilder)
         const timeoutPromise = new Promise<never>((_, reject) => {
           setTimeout(() => reject(new Error('Image loading timeout')), 5000)
         })
-        
+
         Promise.race([
           fetch('/api/watches/images/batch', {
             method: 'POST',
@@ -136,20 +145,20 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
         ])
           .then(async (response) => {
             if (!isMounted) return
-            
+
             if (!response.ok) {
               console.warn(`[FeaturedProducts] Batch API failed: ${response.status} ${response.statusText}`)
               return
             }
-            
+
             try {
               const data = await response.json()
               const batchImages = data.images || {}
-              
+
               console.log(`[FeaturedProducts] Batch API returned images for ${Object.keys(batchImages).length} products`)
-              
+
               if (!isMounted) return
-              
+
               // KRITISCH: Aktualisiere imagesLoaded mit Batch-API Bildern
               setImagesLoaded(prev => {
                 const newImagesMap = { ...prev }
@@ -160,16 +169,16 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                     cachedImages[id] = { images, timestamp: Date.now() }
                   }
                 })
-                
+
                 try {
                   localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
                 } catch (error) {
                   // Ignore localStorage errors
                 }
-                
+
                 return newImagesMap
               })
-              
+
               // KRITISCH: Aktualisiere products State mit Batch-API Bildern
               setProducts(prev => {
                 const updated = prev.map(p => {
