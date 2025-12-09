@@ -72,16 +72,16 @@ export function CategorySpotlight() {
             console.warn('Failed to fetch popular categories, using fallback:', error)
           }
         }
-          // Zeige nur die ersten 6 Kategorien (sortiert nach geboosteten Artikeln)
-          // Begrenzt die Anzahl der API-Aufrufe für bessere Performance
-          if (popularData?.categories && Array.isArray(popularData.categories)) {
-            categoriesToFetch = popularData.categories.slice(0, 6).map((cat: any) => ({
-              category: cat.category,
-              name: cat.name,
-              icon: cat.icon,
-              color: cat.color,
-            }))
-          }
+
+        // Zeige nur die ersten 6 Kategorien (sortiert nach geboosteten Artikeln)
+        // Begrenzt die Anzahl der API-Aufrufe für bessere Performance
+        if (popularData?.categories && Array.isArray(popularData.categories)) {
+          categoriesToFetch = popularData.categories.slice(0, 6).map((cat: any) => ({
+            category: cat.category,
+            name: cat.name,
+            icon: cat.icon,
+            color: cat.color,
+          }))
         }
 
         // Fallback: Falls API fehlschlägt ODER keine Kategorien mit Produkten zurückgegeben wurden,
@@ -213,7 +213,7 @@ export function CategorySpotlight() {
         })
 
         const results = await Promise.all(promises)
-        
+
         // Prüfe ob Component noch gemountet ist
         if (!isMounted) return
 

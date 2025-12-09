@@ -37,7 +37,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
         initialImagesMap[product.id] = product.images
       }
     })
-    
+
     // Setze State synchron, damit Bilder sofort angezeigt werden
     setImagesLoaded(initialImagesMap)
 
@@ -66,7 +66,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
     Object.keys(initialImagesMap).forEach(id => {
       cachedImages[id] = { images: initialImagesMap[id], timestamp: Date.now() }
     })
-    
+
     try {
       localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
     } catch (error) {
@@ -98,7 +98,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       ).then((imageData) => {
         // Prüfe ob Component noch gemountet ist
         if (!isMounted) return
-        
+
         setImagesLoaded(prev => {
           const newImagesMap = { ...prev }
           imageData.forEach(({ id, images }) => {
@@ -108,14 +108,14 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
               cachedImages[id] = { images, timestamp: Date.now() }
             }
           })
-          
+
           // Speichere aktualisierten Cache
           try {
             localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
           } catch (error) {
             // Ignore localStorage errors
           }
-          
+
           return newImagesMap
         })
       }).catch(() => {
