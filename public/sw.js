@@ -1,6 +1,6 @@
 /**
  * Service Worker for Helvenda
- * 
+ *
  * Provides offline caching and PWA capabilities
  */
 

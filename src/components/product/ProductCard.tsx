@@ -44,8 +44,14 @@ export function ProductCard({
 }: ProductCardProps) {
   const { data: session } = useSession()
   const [isFavorite, setIsFavorite] = useState(false)
-  // WICHTIG: Initialisiere imageError nur wenn wirklich kein Bild vorhanden ist
-  const [imageError, setImageError] = useState(() => {
+  // WICHTIG: imageError wird nur auf true gesetzt, wenn ein Bild-Fehler auftritt
+  // Initial false, damit Bilder geladen werden können
+  const [imageError, setImageError] = useState(false)
+  const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
+  
+  // WICHTIG: Reagiere auf Änderungen in product.images
+  useEffect(() => {
+    // Wenn neue Bilder vorhanden sind, reset imageError
     const images = typeof product.images === 'string'
       ? (() => {
           try {
@@ -54,10 +60,12 @@ export function ProductCard({
             return product.images.split(',').filter(Boolean)
           }
         })()
-      : product.images || []
-    return images.length === 0
-  })
-  const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
+      : Array.isArray(product.images) ? product.images : []
+    
+    if (images.length > 0) {
+      setImageError(false) // Reset error wenn Bilder vorhanden sind
+    }
+  }, [product.images])
 
   // Check if product is favorite on mount
   useEffect(() => {

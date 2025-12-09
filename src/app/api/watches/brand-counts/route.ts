@@ -9,7 +9,7 @@ import { apiCache, generateCacheKey } from '@/lib/api-cache'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    
+
     // Check cache first
     const cacheKey = generateCacheKey('/api/watches/brand-counts', Object.fromEntries(searchParams))
     const cached = apiCache.get(cacheKey)
@@ -267,10 +267,10 @@ export async function GET(request: NextRequest) {
     })
 
     const responseData = { brandCounts }
-    
+
     // Cache for 5 minutes
     apiCache.set(cacheKey, responseData, 5 * 60 * 1000)
-    
+
     return NextResponse.json(responseData, {
       headers: {
         'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',

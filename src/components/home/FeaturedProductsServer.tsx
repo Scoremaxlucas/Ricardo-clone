@@ -302,11 +302,12 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 isAuction={product.isAuction}
                 auctionEnd={product.auctionEnd ?? undefined}
                 images={
-                  // WICHTIG: Verwende immer Server-Bilder wenn vorhanden (sofort verfügbar im initialProducts)
-                  // imagesLoaded wird nur für nachgeladene Bilder verwendet
-                  (product.images && product.images.length > 0)
-                    ? product.images
-                    : (imagesLoaded[product.id]?.length > 0 ? imagesLoaded[product.id] : [])
+                  // WICHTIG: Priorisiere imagesLoaded (enthält nachgeladene Bilder von API)
+                  // Falls nicht vorhanden, verwende product.images (Server-Bilder)
+                  // Dies stellt sicher, dass Bilder angezeigt werden, auch wenn sie nachgeladen wurden
+                  imagesLoaded[product.id]?.length > 0
+                    ? imagesLoaded[product.id]
+                    : (product.images && product.images.length > 0 ? product.images : [])
                 }
                 condition={product.condition}
                 city={product.city ?? undefined}

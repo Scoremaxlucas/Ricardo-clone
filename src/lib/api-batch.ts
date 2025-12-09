@@ -1,6 +1,6 @@
 /**
  * API Request Batching Utility
- * 
+ *
  * Batches multiple API requests into a single request to reduce
  * network overhead and improve performance.
  */

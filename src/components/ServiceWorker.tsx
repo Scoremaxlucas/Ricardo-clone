@@ -4,7 +4,7 @@ import { useEffect } from 'react'
 
 /**
  * Service Worker Registration Component
- * 
+ *
  * Registers service worker for offline caching and PWA capabilities
  */
 export function ServiceWorker() {
@@ -14,7 +14,7 @@ export function ServiceWorker() {
         .register('/sw.js')
         .then((registration) => {
           console.log('Service Worker registered:', registration.scope)
-          
+
           // Check for updates
           registration.addEventListener('updatefound', () => {
             const newWorker = registration.installing

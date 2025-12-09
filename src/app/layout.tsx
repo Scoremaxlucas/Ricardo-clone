@@ -9,7 +9,7 @@ import { ServiceWorker } from '@/components/ServiceWorker'
 // Lazy load EmmaChat - not critical for initial render
 const EmmaChat = lazy(() => import('@/components/emma/EmmaChat').then(m => ({ default: m.EmmaChat })))
 
-const inter = Inter({ 
+const inter = Inter({
   subsets: ['latin'],
   display: 'swap', // Better performance - show fallback font immediately
   preload: true,

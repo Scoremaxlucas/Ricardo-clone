@@ -16,7 +16,7 @@ interface VirtualizedProductGridProps {
 
 /**
  * Virtualized Product Grid Component
- * 
+ *
  * Optimized grid layout for product lists with responsive columns.
  * Virtual scrolling can be added later if needed for 1000+ items.
  */

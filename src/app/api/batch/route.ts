@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * Batch API Endpoint
- * 
+ *
  * Executes multiple API requests in parallel and returns combined results.
  * This reduces network overhead when multiple endpoints need to be called.
  */
