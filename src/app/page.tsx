@@ -31,7 +31,9 @@ export default async function Home() {
         <FeaturedProductsServer initialProducts={featuredProducts} />
 
         {/* Client Components für interaktive Features */}
-        <HomeClient />
+        <Suspense fallback={<div className="py-16 text-center text-gray-600">Lade Inhalte...</div>}>
+          <HomeClient />
+        </Suspense>
       </main>
       <Footer />
     </div>
