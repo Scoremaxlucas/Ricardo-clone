@@ -18,8 +18,9 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   // OPTIMIERT: initialProducts können Base64-Bilder enthalten (mit VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR)
   // Cache wird verwendet um Bilder nach Navigation zu erhalten
+  // KRITISCH: WIE RICARDO - Produkte sind sofort verfügbar, kein Loading-State!
   const [products, setProducts] = useState<ProductItem[]>(initialProducts)
-  const [loading, setLoading] = useState(initialProducts.length === 0)
+  const [loading, setLoading] = useState(false) // Kein Loading mehr - alles sofort verfügbar!
   // WICHTIG: Initialisiere imagesLoaded sofort mit Server-Bildern, keine Wartezeit
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, string[]>>(() => {
     const initialMap: Record<string, string[]> = {}
@@ -88,85 +89,10 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       // Ignore localStorage errors (quota exceeded, etc.)
     }
 
-      // OPTIMIERT: Batch-Loading für alle fehlenden Bilder auf einmal
-      // Reduziert API-Calls von N auf 1 (wie Ricardo)
-      const productsToLoad = initialProducts.filter(
-        p => {
-          // Lade Bilder wenn:
-          // 1. Keine Bilder im initialProducts vorhanden (wurden wegen Größe gefiltert)
-          // 2. ODER keine Bilder im Cache vorhanden
-          return !p.images?.length && !cachedImages[p.id]?.images
-        }
-      )
-
-    if (productsToLoad.length > 0) {
-      // OPTIMIERT: Batch-Request für alle Bilder auf einmal
-      const productIds = productsToLoad.map(p => p.id)
-
-      // Timeout nach 5 Sekunden
-      const timeoutPromise = new Promise<never>((_, reject) => {
-        setTimeout(() => reject(new Error('Image loading timeout')), 5000)
-      })
-
-      Promise.race([
-        fetch('/api/watches/images/batch', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ ids: productIds }),
-          signal: abortController.signal,
-        }),
-        timeoutPromise,
-      ])
-        .then(async (response) => {
-          if (!isMounted || !response.ok) return
-
-          const data = await response.json()
-          const batchImages = data.images || {}
-
-          if (!isMounted) return
-
-          setImagesLoaded(prev => {
-            const newImagesMap = { ...prev }
-            Object.entries(batchImages).forEach(([id, images]: [string, any]) => {
-              if (images && Array.isArray(images) && images.length > 0) {
-                newImagesMap[id] = images
-                // Speichere im Cache
-                cachedImages[id] = { images, timestamp: Date.now() }
-              }
-            })
-
-            // Speichere aktualisierten Cache
-            try {
-              localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
-            } catch (error) {
-              // Ignore localStorage errors
-            }
-
-            return newImagesMap
-          })
-
-          // Aktualisiere auch products State
-          setProducts(prev => {
-            const updated = prev.map(p => {
-              const images = batchImages[p.id]
-              if (images && Array.isArray(images) && images.length > 0) {
-                return { ...p, images }
-              }
-              return p
-            })
-
-            // OPTIMIERT: Preload newly loaded images
-            preloadProductImages(updated)
-
-            return updated
-          })
-        })
-        .catch((error: any) => {
-          if (error.name !== 'AbortError' && error.message !== 'Image loading timeout' && isMounted) {
-            console.error('Error loading batch images:', error)
-          }
-        })
-    }
+      // KRITISCH: WIE RICARDO - KEINE API-CALLS MEHR!
+      // Alle Bilder sind bereits im initialProducts (getFeaturedProducts sendet ALLE Bilder)
+      // Keine Batch-API mehr nötig - alles sofort verfügbar!
+      // Dies eliminiert Verzögerungen komplett
 
     return () => {
       isMounted = false
