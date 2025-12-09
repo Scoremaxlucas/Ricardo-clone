@@ -195,33 +195,36 @@ export function ProductCard({
             '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)'
         }}
       >
-        <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
-          {mainImage && !imageError ? (
-            mainImage.startsWith('data:image/') || mainImage.length > 1000 ? (
-              <img
-                src={mainImage}
-                alt={product.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="eager"
-                onError={() => setImageError(true)}
-              />
-            ) : (
-              <Image
-                src={mainImage}
-                alt={product.title}
-                fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
-                loading="eager"
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                onError={() => setImageError(true)}
-              />
-            )
+      <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
+        {mainImage && !imageError ? (
+          mainImage.startsWith('data:image/') || mainImage.startsWith('blob:') || mainImage.length > 1000 ? (
+            <img
+              src={mainImage}
+              alt={product.title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="eager"
+              onError={() => setImageError(true)}
+              onLoad={() => setImageError(false)}
+            />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-xs text-gray-400">
-              <Sparkles className="h-6 w-6 opacity-50" />
-              <span className="ml-2 text-xs">Kein Bild</span>
-            </div>
-          )}
+            <Image
+              src={mainImage}
+              alt={product.title}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
+              loading="eager"
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              onError={() => setImageError(true)}
+              onLoad={() => setImageError(false)}
+              unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
+            />
+          )
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-xs text-gray-400">
+            <Sparkles className="h-6 w-6 opacity-50" />
+            <span className="ml-2 text-xs">Kein Bild</span>
+          </div>
+        )}
 
           {/* Favorite Button - Größer auf Mobile */}
           <button
@@ -474,16 +477,28 @@ export function ProductCard({
     >
       <div className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
         {mainImage && !imageError ? (
-          <Image
-            src={mainImage}
-            alt={product.title}
-            fill
-            className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-            onError={() => setImageError(true)}
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            loading="lazy"
-            unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
-          />
+          mainImage.startsWith('data:image/') || mainImage.startsWith('blob:') || mainImage.length > 1000 ? (
+            <img
+              src={mainImage}
+              alt={product.title}
+              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+              onError={() => setImageError(true)}
+              onLoad={() => setImageError(false)}
+              loading="lazy"
+            />
+          ) : (
+            <Image
+              src={mainImage}
+              alt={product.title}
+              fill
+              className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+              onError={() => setImageError(true)}
+              onLoad={() => setImageError(false)}
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              loading="lazy"
+              unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
+            />
+          )
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
             <Sparkles className="mb-2 h-8 w-8 opacity-50" />

@@ -44,11 +44,13 @@ export function CategorySpotlight() {
   const [canScrollRight, setCanScrollRight] = useState<{ [key: string]: boolean }>({})
 
   useEffect(() => {
+    let isMounted = true
+    const abortController = new AbortController()
+
     const fetchCategorySpotlights = async () => {
       setLoading(true)
       try {
         // Hole beliebte Kategorien (priorisiert nach Booster-Umsatz)
-        const popularResponse = await fetch('/api/categories/popular')
         let categoriesToFetch: Array<{
           category: string
           name: string
@@ -57,8 +59,19 @@ export function CategorySpotlight() {
         }> = []
 
         let popularData: any = null
-        if (popularResponse.ok) {
-          popularData = await popularResponse.json()
+        try {
+          const popularResponse = await fetch('/api/categories/popular', {
+            signal: abortController.signal,
+          })
+          if (popularResponse.ok && isMounted) {
+            popularData = await popularResponse.json()
+          }
+        } catch (error: any) {
+          // Silently fail - use fallback categories
+          if (error.name !== 'AbortError') {
+            console.warn('Failed to fetch popular categories, using fallback:', error)
+          }
+        }
           // Zeige nur die ersten 6 Kategorien (sortiert nach geboosteten Artikeln)
           // Begrenzt die Anzahl der API-Aufrufe für bessere Performance
           if (popularData?.categories && Array.isArray(popularData.categories)) {
@@ -122,6 +135,7 @@ export function CategorySpotlight() {
 
             const response = await fetch(url + '&t=' + Date.now(), {
               cache: 'no-store', // No caching to ensure fresh results
+              signal: abortController.signal,
             })
             if (!response.ok) {
               const errorText = await response.text().catch(() => 'Unknown error')
@@ -199,6 +213,10 @@ export function CategorySpotlight() {
         })
 
         const results = await Promise.all(promises)
+        
+        // Prüfe ob Component noch gemountet ist
+        if (!isMounted) return
+
         // Filtere Kategorien heraus, die keine Produkte haben
         // ABER: Zeige sie trotzdem, wenn sie im Fallback sind (damit Benutzer sehen, dass die Kategorie existiert)
         const categoriesWithProducts = results.filter(
@@ -213,14 +231,23 @@ export function CategorySpotlight() {
           setCategories(categoriesWithProducts)
         }
 
-      } catch (error) {
-        console.error('Error fetching category spotlights:', error)
+      } catch (error: any) {
+        if (error.name !== 'AbortError' && isMounted) {
+          console.error('Error fetching category spotlights:', error)
+        }
       } finally {
-        setLoading(false)
+        if (isMounted) {
+          setLoading(false)
+        }
       }
     }
 
     fetchCategorySpotlights()
+
+    return () => {
+      isMounted = false
+      abortController.abort()
+    }
   }, [])
 
   useEffect(() => {

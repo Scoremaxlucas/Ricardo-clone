@@ -21,74 +21,86 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   const [loading, setLoading] = useState(initialProducts.length === 0)
   const [imagesLoaded, setImagesLoaded] = useState<Record<string, string[]>>({})
 
-  // OPTIMIERT: Lade Bilder aus localStorage Cache für Persistenz nach Navigation
-  // Server-Bilder werden sofort verwendet, Cache wird nur für fehlende Bilder geladen
+  // OPTIMIERT: Verwende Server-Bilder sofort, keine Wartezeit auf Cache/API
+  // Cache wird nur für Persistenz nach Navigation verwendet
   useEffect(() => {
-    if (initialProducts.length > 0) {
-      // Lade Cache aus localStorage
-      const cacheKey = 'product-images-cache'
-      const cachedImages: Record<string, { images: string[]; timestamp: number }> = (() => {
-        try {
-          const cached = localStorage.getItem(cacheKey)
-          if (cached) {
-            const parsed = JSON.parse(cached)
-            // Entferne alte Einträge (älter als 1 Stunde)
-            const now = Date.now()
-            const oneHour = 60 * 60 * 1000
-            Object.keys(parsed).forEach(id => {
-              if (parsed[id].timestamp && now - parsed[id].timestamp > oneHour) {
-                delete parsed[id]
-              }
-            })
-            return parsed
-          }
-        } catch (error) {
-          console.error('Error loading image cache:', error)
-        }
-        return {}
-      })()
+    if (initialProducts.length === 0) return
 
-      // Initialisiere Cache: Verwende Server-Bilder wenn vorhanden, sonst Cache
-      const initialImagesMap: Record<string, string[]> = {}
-      initialProducts.forEach(product => {
-        // Priorität: 1. Server-Bilder (wenn vorhanden), 2. Cache
-        if (product.images && product.images.length > 0) {
-          initialImagesMap[product.id] = product.images
-          // Aktualisiere Cache mit Server-Bildern
-          cachedImages[product.id] = { images: product.images, timestamp: Date.now() }
-        } else if (cachedImages[product.id]?.images) {
-          initialImagesMap[product.id] = cachedImages[product.id].images
-        }
-      })
-      setImagesLoaded(initialImagesMap)
+    let isMounted = true
+    const abortController = new AbortController()
 
-      // Speichere aktualisierten Cache (mit Server-Bildern)
-      try {
-        localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
-      } catch (error) {
-        console.error('Error saving image cache:', error)
+    // Setze Bilder sofort aus initialProducts (Server-Response)
+    const initialImagesMap: Record<string, string[]> = {}
+    initialProducts.forEach(product => {
+      // Verwende Server-Bilder wenn vorhanden
+      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        initialImagesMap[product.id] = product.images
       }
+    })
+    
+    // Setze State synchron, damit Bilder sofort angezeigt werden
+    setImagesLoaded(initialImagesMap)
 
-      // Lade nur fehlende Bilder von API (wenn weder Server noch Cache vorhanden)
-      const productsToLoad = initialProducts.filter(
-        p => !p.images?.length && !cachedImages[p.id]?.images
-      )
-      if (productsToLoad.length > 0) {
-        Promise.all(
-          productsToLoad.map(async (product) => {
-            try {
-              const response = await fetch(`/api/watches/${product.id}/images`)
-              if (response.ok) {
-                const data = await response.json()
-                return { id: product.id, images: data.images || [] }
-              }
-            } catch (error) {
+    // Lade Cache aus localStorage für Persistenz nach Navigation
+    const cacheKey = 'product-images-cache'
+    let cachedImages: Record<string, { images: string[]; timestamp: number }> = {}
+    try {
+      const cached = localStorage.getItem(cacheKey)
+      if (cached) {
+        const parsed = JSON.parse(cached)
+        // Entferne alte Einträge (älter als 1 Stunde)
+        const now = Date.now()
+        const oneHour = 60 * 60 * 1000
+        Object.keys(parsed).forEach(id => {
+          if (parsed[id].timestamp && now - parsed[id].timestamp > oneHour) {
+            delete parsed[id]
+          }
+        })
+        cachedImages = parsed
+      }
+    } catch (error) {
+      // Ignore cache errors
+    }
+
+    // Aktualisiere Cache mit Server-Bildern (asynchron, blockiert nicht)
+    Object.keys(initialImagesMap).forEach(id => {
+      cachedImages[id] = { images: initialImagesMap[id], timestamp: Date.now() }
+    })
+    
+    try {
+      localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
+    } catch (error) {
+      // Ignore localStorage errors (quota exceeded, etc.)
+    }
+
+    // Lade nur fehlende Bilder von API (wenn weder Server noch Cache vorhanden)
+    const productsToLoad = initialProducts.filter(
+      p => !p.images?.length && !cachedImages[p.id]?.images
+    )
+    if (productsToLoad.length > 0) {
+      Promise.all(
+        productsToLoad.map(async (product) => {
+          try {
+            const response = await fetch(`/api/watches/${product.id}/images`, {
+              signal: abortController.signal,
+            })
+            if (response.ok && isMounted) {
+              const data = await response.json()
+              return { id: product.id, images: data.images || [] }
+            }
+          } catch (error: any) {
+            if (error.name !== 'AbortError' && isMounted) {
               console.error(`Error loading images for product ${product.id}:`, error)
             }
-            return { id: product.id, images: [] }
-          })
-        ).then((imageData) => {
-          const newImagesMap: Record<string, string[]> = { ...initialImagesMap }
+          }
+          return { id: product.id, images: [] }
+        })
+      ).then((imageData) => {
+        // Prüfe ob Component noch gemountet ist
+        if (!isMounted) return
+        
+        setImagesLoaded(prev => {
+          const newImagesMap = { ...prev }
           imageData.forEach(({ id, images }) => {
             if (images.length > 0) {
               newImagesMap[id] = images
@@ -96,18 +108,26 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
               cachedImages[id] = { images, timestamp: Date.now() }
             }
           })
-          setImagesLoaded(newImagesMap)
           
           // Speichere aktualisierten Cache
           try {
             localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
           } catch (error) {
-            console.error('Error saving image cache:', error)
+            // Ignore localStorage errors
           }
+          
+          return newImagesMap
         })
-      }
+      }).catch(() => {
+        // Ignore errors
+      })
     }
-  }, [initialProducts.length])
+
+    return () => {
+      isMounted = false
+      abortController.abort()
+    }
+  }, [initialProducts])
 
   // WICHTIG: Wenn initialProducts leer ist, lade sofort von API-Route
   useEffect(() => {
@@ -252,10 +272,12 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 isAuction={product.isAuction}
                 auctionEnd={product.auctionEnd ?? undefined}
                 images={
-                  // Priorität: 1. Gecachte Bilder (falls vorhanden), 2. Server-Bilder, 3. Leer
-                  imagesLoaded[product.id]?.length > 0 
-                    ? imagesLoaded[product.id] 
-                    : product.images || []
+                  // Priorität: 1. Server-Bilder (sofort verfügbar), 2. Gecachte Bilder, 3. Leer
+                  product.images && product.images.length > 0
+                    ? product.images
+                    : imagesLoaded[product.id]?.length > 0
+                    ? imagesLoaded[product.id]
+                    : []
                 }
                 condition={product.condition}
                 city={product.city ?? undefined}

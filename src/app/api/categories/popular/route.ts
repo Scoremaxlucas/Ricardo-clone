@@ -210,7 +210,6 @@ export async function GET() {
       {
         headers: {
           'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600', // 5min cache, 10min stale
-          'Content-Encoding': 'gzip', // Enable compression
           'X-Content-Type-Options': 'nosniff',
         },
       }
