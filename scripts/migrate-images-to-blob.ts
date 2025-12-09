@@ -10,8 +10,41 @@
  *   tsx scripts/migrate-images-to-blob.ts
  */
 
-import { prisma } from '../src/lib/prisma'
+// WICHTIG: Lade Environment Variables BEVOR Prisma importiert wird
+import dotenv from 'dotenv'
+import { resolve } from 'path'
+
+// WICHTIG: Lade .env.local MIT override, damit PostgreSQL-URL verwendet wird
+// .env.local enthält die Production DATABASE_URL (PostgreSQL)
+// .env enthält SQLite für Development - wird überschrieben
+dotenv.config({ path: resolve(process.cwd(), '.env.local'), override: true })
+dotenv.config({ path: resolve(process.cwd(), '.env'), override: false }) // Nur wenn nicht in .env.local
+
+// Prüfe DATABASE_URL
+if (!process.env.DATABASE_URL) {
+  console.error('❌ DATABASE_URL is not set!')
+  console.error('Please ensure .env.local contains DATABASE_URL')
+  process.exit(1)
+}
+
+if (!process.env.DATABASE_URL.startsWith('postgres')) {
+  console.error('❌ DATABASE_URL must start with postgres:// or postgresql://')
+  console.error('Current value:', process.env.DATABASE_URL.substring(0, 50) + '...')
+  process.exit(1)
+}
+
+// Importiere Prisma NACH dem Laden der Environment Variables
+import { PrismaClient } from '@prisma/client'
 import { uploadImagesToBlob, isBlobUrl } from '../src/lib/blob-storage'
+
+// Erstelle eigenen Prisma Client für Migration
+const prisma = new PrismaClient({
+  datasources: {
+    db: {
+      url: process.env.DATABASE_URL,
+    },
+  },
+})
 
 interface MigrationStats {
   total: number
@@ -33,13 +66,8 @@ async function migrateWatchImages() {
   }
 
   try {
-    // Hole alle Watches mit Bildern
-    const watches = await prisma.watch.findMany({
-      where: {
-        images: {
-          not: null,
-        },
-      },
+    // Hole alle Watches (Prisma kann nicht direkt nach null filtern)
+    const allWatches = await prisma.watch.findMany({
       select: {
         id: true,
         images: true,
@@ -47,14 +75,17 @@ async function migrateWatchImages() {
       },
     })
 
-    stats.total = watches.length
+    // Filtere Watches mit Bildern heraus
+    const watchesWithImages = allWatches.filter(w => w.images !== null && w.images !== undefined && w.images !== '')
+
+    stats.total = watchesWithImages.length
     console.log(`📦 Found ${stats.total} watches with images\n`)
 
     // Migriere in Batches von 10 (um Rate Limits zu vermeiden)
     const batchSize = 10
-    for (let i = 0; i < watches.length; i += batchSize) {
-      const batch = watches.slice(i, i + batchSize)
-      console.log(`\n📦 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(watches.length / batchSize)}...`)
+    for (let i = 0; i < watchesWithImages.length; i += batchSize) {
+      const batch = watchesWithImages.slice(i, i + batchSize)
+      console.log(`\n📦 Processing batch ${Math.floor(i / batchSize) + 1}/${Math.ceil(watchesWithImages.length / batchSize)}...`)
 
       await Promise.all(
         batch.map(async (watch) => {
@@ -91,7 +122,7 @@ async function migrateWatchImages() {
             if (!hasBase64 && allBlobUrls) {
               // Bereits migriert
               stats.skipped++
-              console.log(`⏭️  Watch ${watch.id} already migrated, skipping...`)
+              console.log(`⏭️  Watch ${watch.id} (${watch.title?.substring(0, 30)}...) already migrated - ${images.length} URLs, skipping...`)
               return
             }
 
@@ -105,6 +136,7 @@ async function migrateWatchImages() {
 
             if (base64Images.length === 0) {
               stats.skipped++
+              console.log(`⏭️  Watch ${watch.id} has no Base64 images (${existingUrls.length} URLs already) - skipping`)
               return
             }
 
@@ -137,7 +169,7 @@ async function migrateWatchImages() {
       )
 
       // Kurze Pause zwischen Batches um Rate Limits zu vermeiden
-      if (i + batchSize < watches.length) {
+      if (i + batchSize < watchesWithImages.length) {
         await new Promise(resolve => setTimeout(resolve, 1000))
       }
     }

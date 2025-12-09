@@ -48,6 +48,7 @@ export function CategorySpotlight() {
     const abortController = new AbortController()
 
     const fetchCategorySpotlights = async () => {
+      if (!isMounted) return
       setLoading(true)
       try {
         // Hole beliebte Kategorien (priorisiert nach Booster-Umsatz)
@@ -225,6 +226,9 @@ export function CategorySpotlight() {
 
         // Wenn nach Filterung keine Kategorien übrig sind, zeige trotzdem die ersten 3 (auch wenn leer)
         // Das zeigt dem Benutzer, dass die Kategorien existieren, auch wenn noch keine Produkte vorhanden sind
+        // KRITISCH: Prüfe isMounted vor jedem State-Update
+        if (!isMounted) return
+        
         if (categoriesWithProducts.length === 0 && results.length > 0) {
           setCategories(results.slice(0, 3))
         } else {
@@ -251,21 +255,35 @@ export function CategorySpotlight() {
   }, [])
 
   useEffect(() => {
-    const fetchFavorites = async () => {
-      if (!session?.user) return
+    if (!session?.user) return
 
+    let isMounted = true
+    const abortController = new AbortController()
+
+    const fetchFavorites = async () => {
       try {
-        const response = await fetch('/api/favorites')
-        if (response.ok) {
+        const response = await fetch('/api/favorites', {
+          signal: abortController.signal,
+        })
+        if (response.ok && isMounted) {
           const data = await response.json()
-          setFavorites(new Set(data.favorites?.map((f: any) => f.watchId) || []))
+          if (isMounted) {
+            setFavorites(new Set(data.favorites?.map((f: any) => f.watchId) || []))
+          }
         }
-      } catch (error) {
-        console.error('Error fetching favorites:', error)
+      } catch (error: any) {
+        if (error.name !== 'AbortError' && isMounted) {
+          console.error('Error fetching favorites:', error)
+        }
       }
     }
 
     fetchFavorites()
+
+    return () => {
+      isMounted = false
+      abortController.abort()
+    }
   }, [session?.user])
 
   const checkScrollButtons = useCallback((categoryKey: string) => {

@@ -23,21 +23,26 @@ export function HomeClient() {
 
     // Prüfe ob Verifizierung gerade abgeschickt wurde
     const verificationSubmitted = searchParams.get('verificationSubmitted')
-    if (verificationSubmitted === 'true' && !hasShownToast.current && isMounted) {
+    if (verificationSubmitted === 'true' && !hasShownToast.current) {
       hasShownToast.current = true
 
       // Entferne Query-Parameter aus URL
-      const url = new URL(window.location.href)
-      url.searchParams.delete('verificationSubmitted')
-      window.history.replaceState({}, '', url.toString())
+      if (typeof window !== 'undefined' && isMounted) {
+        const url = new URL(window.location.href)
+        url.searchParams.delete('verificationSubmitted')
+        window.history.replaceState({}, '', url.toString())
+      }
 
       // Zeige Erfolgs-Toast nur wenn Component noch gemountet ist
-      if (isMounted) {
-        toast.success(t.verification.submitted, {
-          duration: 6000,
-          icon: '✅',
-        })
-      }
+      // KRITISCH: Verwende setTimeout um sicherzustellen, dass Toast nach Render passiert
+      setTimeout(() => {
+        if (isMounted) {
+          toast.success(t.verification.submitted, {
+            duration: 6000,
+            icon: '✅',
+          })
+        }
+      }, 0)
     }
 
     return () => {

@@ -121,7 +121,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             // Base64-Bilder verursachen Page-Größen >20MB und Deployment-Fehler
             // Nur URLs (Blob Storage) werden behalten - Base64 wird über Batch-API nachgeladen
             // Dies ermöglicht erfolgreiche Deployments und Skalierung wie Ricardo
-            
+
             if (titleImage.startsWith('data:image/')) {
               // Base64-Bilder werden NICHT in Server-Response enthalten
               // Sie werden über Batch-API nachgeladen (siehe FeaturedProductsServer)

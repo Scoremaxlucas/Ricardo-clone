@@ -13,18 +13,36 @@ Helvenda verwendet jetzt Vercel Blob Storage für alle Bilder statt Base64-Strin
 
 ### 1. Vercel Blob Storage aktivieren
 
+**Detaillierte Anleitung:** Siehe [VERCEL_BLOB_SETUP.md](./VERCEL_BLOB_SETUP.md)
+
+**Kurzfassung:**
 1. Gehe zu [Vercel Dashboard](https://vercel.com/dashboard)
 2. Wähle dein Projekt "helvenda"
-3. Gehe zu **Storage** → **Create Database**
-4. Wähle **Blob** aus
-5. Erstelle den Blob Store (z.B. "helvenda-images")
+3. Gehe zu **Storage** → **Create Database** (oder **Add Storage**)
+4. Wähle **Blob** aus der Liste
+5. Gib einen Namen ein: **"helvenda-images"**
+6. Wähle Region: **fra1** (Frankfurt, nahe Schweiz)
+7. Klicke auf **"Create"**
 
-### 2. Environment Variable setzen
+### 2. Token holen und setzen
 
-Die Blob Storage Token wird automatisch von Vercel gesetzt. Stelle sicher, dass:
+**Nach dem Erstellen des Blob Stores:**
 
-- `BLOB_READ_WRITE_TOKEN` ist in Vercel Project Settings gesetzt
-- Oder verwende `@vercel/blob` SDK (automatisch konfiguriert)
+1. Gehe zu **Storage** → Klicke auf **"helvenda-images"**
+2. Gehe zu **Settings** oder **Environment Variables**
+3. Kopiere den **BLOB_READ_WRITE_TOKEN** (beginnt mit `vercel_blob_rw_...`)
+
+**Token zur `.env.local` hinzufügen:**
+```bash
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+```
+
+**WICHTIG:** Token auch in Vercel Project Settings setzen:
+1. Project Settings → Environment Variables
+2. Name: `BLOB_READ_WRITE_TOKEN`
+3. Value: Token einfügen
+4. Environments: Production, Preview, Development
+5. Save
 
 ### 3. Environment Variable für Page-Größe
 

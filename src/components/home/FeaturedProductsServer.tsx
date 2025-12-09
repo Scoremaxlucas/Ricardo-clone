@@ -98,7 +98,11 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
             if (!isMounted) return
 
             // Aktualisiere products State mit Batch-API Bildern
+            // KRITISCH: Prüfe isMounted vor State-Update
+            if (!isMounted) return
+            
             setProducts(prev => {
+              if (!isMounted) return prev // Double-check
               const updated = prev.map(p => {
                 const images = batchImages[p.id]
                 if (images && Array.isArray(images) && images.length > 0) {
@@ -106,7 +110,9 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 }
                 return p
               })
-              preloadProductImages(updated)
+              if (isMounted) {
+                preloadProductImages(updated)
+              }
               return updated
             })
 
@@ -143,15 +149,29 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   // WICHTIG: Wenn initialProducts leer ist, lade sofort von API-Route
   useEffect(() => {
     if (initialProducts.length === 0) {
+      let isMounted = true
+      const abortController = new AbortController()
       let retryCount = 0
       const maxRetries = 3
 
       const loadProducts = async () => {
+        if (!isMounted) return
+        
         try {
-          setLoading(true)
-          const response = await fetch('/api/articles/fast?limit=6')
+          if (isMounted) {
+            setLoading(true)
+          }
+          
+          const response = await fetch('/api/articles/fast?limit=6', {
+            signal: abortController.signal,
+          })
+          
+          if (!isMounted) return
+          
           if (response.ok) {
             const data = await response.json()
+            if (!isMounted) return
+            
             if (data.watches && Array.isArray(data.watches) && data.watches.length > 0) {
               // Transformiere API-Format zu ProductItem-Format
               const transformedProducts: ProductItem[] = data.watches.map((w: any) => {
@@ -179,34 +199,61 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                   href: `/products/${productId}`,
                 }
               })
-              setProducts(transformedProducts)
-              setLoading(false)
+              
+              if (isMounted) {
+                setProducts(transformedProducts)
+                setLoading(false)
+              }
               return
             }
           }
+          
           // Wenn keine Daten, retry wenn noch Versuche übrig
+          if (!isMounted) return
+          
           if (retryCount < maxRetries) {
             retryCount++
             setTimeout(() => {
-              loadProducts()
+              if (isMounted) {
+                loadProducts()
+              }
             }, 2000)
           } else {
-            setLoading(false)
+            if (isMounted) {
+              setLoading(false)
+            }
           }
-        } catch (error) {
-          console.error('Error loading products from API:', error)
+        } catch (error: any) {
+          if (error.name === 'AbortError') return
+          
+          if (isMounted) {
+            console.error('Error loading products from API:', error)
+          }
+          
           // Retry nach 2 Sekunden wenn Fehler und noch Versuche übrig
+          if (!isMounted) return
+          
           if (retryCount < maxRetries) {
             retryCount++
             setTimeout(() => {
-              loadProducts()
+              if (isMounted) {
+                loadProducts()
+              }
             }, 2000)
           } else {
-            setLoading(false)
+            if (isMounted) {
+              setLoading(false)
+            }
           }
         }
       }
+      
       loadProducts()
+      
+      return () => {
+        isMounted = false
+        abortController.abort()
+      }
     }
   }, [initialProducts.length])
 
