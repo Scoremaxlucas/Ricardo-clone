@@ -139,11 +139,12 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             }
 
             // OPTIMIERT: Behalte zusätzliche Bilder wenn sie klein genug sind
-            // Erlaube bis zu 1.5MB Base64 für zusätzliche Bilder
+            // Erlaube bis zu 500KB Base64 für zusätzliche Bilder
+            // KRITISCH: Behalte die ORIGINALE REIHENFOLGE - Titelbild ist IMMER zuerst!
             const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
               if (typeof img !== 'string') return false
               if (img.startsWith('data:image/')) {
-                return img.length < 1500000 // <1.5MB Base64 für zusätzliche Bilder
+                return img.length < 500000 // <500KB Base64 für zusätzliche Bilder
               }
               // URLs sind immer klein
               return img.length < 1000
