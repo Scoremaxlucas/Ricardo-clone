@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { apiCache, generateCacheKey } from '@/lib/api-cache'
+import { apiCache, generateCacheKey } from '@/lib/api-cache'
 
 // Favoriten eines Users abrufen
 export async function GET(request: NextRequest) {
@@ -81,14 +82,19 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json(
-      { favorites: favoritesWithImages },
-      {
-        headers: {
-          'Cache-Control': 'private, s-maxage=60, stale-while-revalidate=120', // 1min cache, 2min stale
-        },
-      }
-    )
+    const responseData = {
+      favorites: favoritesWithImages,
+    }
+
+    // Cache for 30 seconds (user-specific, so shorter TTL)
+    apiCache.set(cacheKey, responseData, 30000)
+
+    return NextResponse.json(responseData, {
+      headers: {
+        'Cache-Control': 'private, max-age=30, stale-while-revalidate=60',
+        'X-Cache': 'MISS',
+      },
+    })
   } catch (error: any) {
     console.error('Error fetching favorites:', error)
     return NextResponse.json(
@@ -136,6 +142,10 @@ export async function POST(request: NextRequest) {
         watch: true,
       },
     })
+
+    // Invalidate favorites cache for this user
+    const cacheKey = generateCacheKey('/api/favorites', { userId: session.user.id })
+    apiCache.delete(cacheKey)
 
     return NextResponse.json({ favorite })
   } catch (error: any) {
