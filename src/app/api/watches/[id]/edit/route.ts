@@ -105,16 +105,16 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         // Kombiniere alte und neue Bilder
         const oldImages = watch.images ? JSON.parse(watch.images) : []
         const newImages = Array.isArray(data.images) ? data.images : []
-        
+
         // KRITISCH: Upload neue Base64-Bilder zu Blob Storage
         try {
-          const base64Images = newImages.filter((img: string) => 
+          const base64Images = newImages.filter((img: string) =>
             typeof img === 'string' && img.startsWith('data:image/')
           )
-          const existingUrls = newImages.filter((img: string) => 
+          const existingUrls = newImages.filter((img: string) =>
             typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))
           )
-          
+
           // Upload neue Base64-Bilder zu Blob Storage
           let blobUrls: string[] = [...oldImages, ...existingUrls]
           if (base64Images.length > 0) {
@@ -122,7 +122,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             const uploadedUrls = await uploadImagesToBlob(base64Images, basePath)
             blobUrls = [...oldImages, ...existingUrls, ...uploadedUrls]
           }
-          
+
           // Entferne Duplikate
           const combinedImages = Array.from(new Set(blobUrls))
           updateData.images = JSON.stringify(combinedImages)
@@ -204,26 +204,26 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         if (imagesArray.length > 10) {
           return NextResponse.json({ message: 'Maximal 10 Bilder erlaubt' }, { status: 400 })
         }
-        
+
         // KRITISCH: Upload neue Bilder zu Blob Storage
         try {
           const { id } = await params
           const watchId = id
-          
+
           // Hole aktuelles Watch für alte Bilder
           const watch = await prisma.watch.findUnique({
             where: { id: watchId },
             select: { images: true },
           })
-          
+
           // Trenne Base64-Bilder (neu) von URLs (bereits hochgeladen)
-          const base64Images = imagesArray.filter((img: string) => 
+          const base64Images = imagesArray.filter((img: string) =>
             typeof img === 'string' && img.startsWith('data:image/')
           )
-          const existingUrls = imagesArray.filter((img: string) => 
+          const existingUrls = imagesArray.filter((img: string) =>
             typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))
           )
-          
+
           // Upload neue Base64-Bilder zu Blob Storage
           let blobUrls: string[] = existingUrls
           if (base64Images.length > 0) {
@@ -231,19 +231,19 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
             const uploadedUrls = await uploadImagesToBlob(base64Images, basePath)
             blobUrls = [...existingUrls, ...uploadedUrls]
           }
-          
+
           updateData.images = JSON.stringify(blobUrls)
-          
+
           // Lösche alte Bilder aus Blob Storage die nicht mehr verwendet werden
           if (watch?.images) {
             try {
               const oldImages = JSON.parse(watch.images as string)
-              const imagesToDelete = oldImages.filter((oldImg: string) => 
-                typeof oldImg === 'string' && 
-                oldImg.startsWith('https://') && 
+              const imagesToDelete = oldImages.filter((oldImg: string) =>
+                typeof oldImg === 'string' &&
+                oldImg.startsWith('https://') &&
                 !blobUrls.includes(oldImg)
               )
-              
+
               for (const oldImg of imagesToDelete) {
                 await deleteImageFromBlob(oldImg)
               }

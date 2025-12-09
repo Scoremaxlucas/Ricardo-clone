@@ -1,11 +1,11 @@
 /**
  * Migration Script: Base64 Images zu Vercel Blob Storage
- * 
+ *
  * Dieses Script migriert alle Base64-Bilder in der Datenbank zu Vercel Blob Storage.
- * 
+ *
  * Usage:
  *   npm run migrate:images-to-blob
- * 
+ *
  * Oder direkt:
  *   tsx scripts/migrate-images-to-blob.ts
  */
@@ -81,10 +81,10 @@ async function migrateWatchImages() {
             }
 
             // Prüfe ob bereits Blob URLs vorhanden sind
-            const hasBase64 = images.some((img: string) => 
+            const hasBase64 = images.some((img: string) =>
               typeof img === 'string' && img.startsWith('data:image/')
             )
-            const allBlobUrls = images.every((img: string) => 
+            const allBlobUrls = images.every((img: string) =>
               typeof img === 'string' && (isBlobUrl(img) || img.startsWith('http'))
             )
 
@@ -96,10 +96,10 @@ async function migrateWatchImages() {
             }
 
             // Trenne Base64 von URLs
-            const base64Images = images.filter((img: string) => 
+            const base64Images = images.filter((img: string) =>
               typeof img === 'string' && img.startsWith('data:image/')
             )
-            const existingUrls = images.filter((img: string) => 
+            const existingUrls = images.filter((img: string) =>
               typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))
             )
 
@@ -110,7 +110,7 @@ async function migrateWatchImages() {
 
             // Upload Base64-Bilder zu Blob Storage
             console.log(`📤 Uploading ${base64Images.length} images for watch ${watch.id} (${watch.title?.substring(0, 30)}...)...`)
-            
+
             const basePath = `watches/${watch.id}`
             const blobUrls = await uploadImagesToBlob(base64Images, basePath)
 
@@ -144,7 +144,7 @@ async function migrateWatchImages() {
 
     // Migriere Profilbilder
     console.log('\n\n👤 Migrating profile images...\n')
-    
+
     const users = await prisma.user.findMany({
       where: {
         image: {
@@ -176,7 +176,7 @@ async function migrateWatchImages() {
         // Upload zu Blob Storage
         if (user.image.startsWith('data:image/')) {
           console.log(`📤 Uploading profile image for user ${user.id} (${user.email})...`)
-          
+
           const blobPath = `profiles/${user.id}/profile.jpg`
           const { uploadImageToBlob } = await import('../src/lib/blob-storage')
           const blobUrl = await uploadImageToBlob(user.image, blobPath)
@@ -208,7 +208,7 @@ async function migrateWatchImages() {
     console.log(`✅ Migrated:     ${stats.migrated}`)
     console.log(`⏭️  Skipped:      ${stats.skipped}`)
     console.log(`❌ Failed:       ${stats.failed}`)
-    
+
     if (stats.errors.length > 0) {
       console.log('\n❌ Errors:')
       stats.errors.slice(0, 10).forEach(error => console.log(`   - ${error}`))
@@ -216,7 +216,7 @@ async function migrateWatchImages() {
         console.log(`   ... and ${stats.errors.length - 10} more errors`)
       }
     }
-    
+
     console.log('\n✅ Migration completed!')
   } catch (error) {
     console.error('❌ Fatal error during migration:', error)

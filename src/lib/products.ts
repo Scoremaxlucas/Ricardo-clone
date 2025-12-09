@@ -117,41 +117,35 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             console.warn(`[getFeaturedProducts] Watch ${w.id} titleImage is invalid:`, typeof titleImage, titleImage)
             images = []
           } else {
-            // KRITISCH: WIE RICARDO - IMMER Titelbild behalten!
-            // Für extrem große Base64-Bilder (>5MB) trotzdem filtern um Deployment zu ermöglichen
-            // Aber sehr sehr hohes Limit für sofortige Anzeige
-            // KRITISCH: WIE RICARDO - IMMER Titelbild behalten!
-            // Balance zwischen sofortiger Anzeige und Deployment-Größe
+            // KRITISCH: FÜR DEPLOYMENT - KEINE Base64-Bilder mehr in Server-Response!
+            // Base64-Bilder verursachen Page-Größen >20MB und Deployment-Fehler
+            // Nur URLs (Blob Storage) werden behalten - Base64 wird über Batch-API nachgeladen
+            // Dies ermöglicht erfolgreiche Deployments und Skalierung wie Ricardo
+            
             if (titleImage.startsWith('data:image/')) {
-              // Optimiertes Limit für Titelbild: 3MB Base64 (~2.25MB Original)
-              // Ermöglicht die meisten Bilder sofort, während sehr große über Batch-API geladen werden
-              if (titleImage.length < 3000000) {
-                images = [titleImage]
-              } else {
-                // Sehr große Titelbilder (>3MB) werden über Batch-API nachgeladen
-                images = []
-              }
-            } else {
-              // URLs sind immer klein, behalten
+              // Base64-Bilder werden NICHT in Server-Response enthalten
+              // Sie werden über Batch-API nachgeladen (siehe FeaturedProductsServer)
+              images = []
+              console.log(`[getFeaturedProducts] Watch ${w.id} has Base64 titleImage - will load via Batch API`)
+            } else if (titleImage.startsWith('http://') || titleImage.startsWith('https://')) {
+              // URLs (Blob Storage) sind klein und werden behalten
               images = [titleImage]
+              console.log(`[getFeaturedProducts] Watch ${w.id} has URL titleImage - included`)
+            } else {
+              // Unbekanntes Format
+              images = []
             }
 
-            // OPTIMIERT: Behalte zusätzliche Bilder
-            // URLs (Blob Storage) werden IMMER behalten
-            // Base64 nur wenn klein (<300KB) für sofortige Anzeige während Migration
+            // OPTIMIERT: Nur URLs behalten, Base64 wird über Batch-API nachgeladen
             // KRITISCH: Behalte die ORIGINALE REIHENFOLGE - Titelbild ist IMMER zuerst!
-            const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
+            const urlImages = parsedImages.slice(1).filter((img: string) => {
               if (typeof img !== 'string') return false
-              if (img.startsWith('data:image/')) {
-                // Kleine Base64-Bilder für sofortige Anzeige während Migration
-                return img.length < 300000 // <300KB Base64
-              }
-              // URLs (Blob Storage) sind immer klein, IMMER behalten
+              // Nur URLs behalten, Base64 wird über Batch-API nachgeladen
               return img.startsWith('http://') || img.startsWith('https://')
             })
 
-            images = [...images, ...smallAdditionalImages]
-            console.log(`[getFeaturedProducts] Watch ${w.id} total images: ${images.length} (${parsedImages.length} original)`)
+            images = [...images, ...urlImages]
+            console.log(`[getFeaturedProducts] Watch ${w.id} total images: ${images.length} URLs (${parsedImages.length} original, ${parsedImages.filter((img: any) => typeof img === 'string' && img.startsWith('data:image/')).length} Base64 will load via Batch API)`)
           }
         }
       } catch (error) {

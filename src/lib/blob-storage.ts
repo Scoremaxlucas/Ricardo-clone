@@ -1,9 +1,9 @@
 /**
  * Vercel Blob Storage Utility Functions
- * 
+ *
  * Diese Funktionen handhaben das Uploaden von Bildern zu Vercel Blob Storage
  * statt Base64-Strings in der Datenbank zu speichern.
- * 
+ *
  * Vorteile:
  * - Kleinere Datenbank-Größe
  * - Schnellere Page-Loads

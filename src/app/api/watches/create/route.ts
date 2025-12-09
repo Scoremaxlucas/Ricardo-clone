@@ -758,22 +758,22 @@ export async function POST(request: NextRequest) {
     if (allImages.length > 0 && watch.id) {
       try {
         console.log(`[Watch Create] Uploading ${allImages.length} images to Blob Storage for watch ${watch.id}...`)
-        
+
         const basePath = `watches/${watch.id}`
-        
+
         // Upload alle Bilder zu Blob Storage
         const blobImageUrls = await uploadImagesToBlob(allImages, basePath)
-        
+
         console.log(`[Watch Create] Successfully uploaded ${blobImageUrls.length} images to Blob Storage`)
-        
+
         // Filtere bereits vorhandene URLs (werden nicht erneut hochgeladen)
-        const existingUrls = allImages.filter(img => 
+        const existingUrls = allImages.filter(img =>
           typeof img === 'string' && isBlobUrl(img)
         ) as string[]
-        
+
         // Kombiniere neue Blob URLs mit bestehenden URLs
         const finalImageUrls = [...existingUrls, ...blobImageUrls.filter(url => !existingUrls.includes(url))]
-        
+
         // Update Watch mit Blob URLs statt Base64
         if (finalImageUrls.length > 0) {
           await prisma.watch.update({
@@ -782,7 +782,7 @@ export async function POST(request: NextRequest) {
               images: JSON.stringify(finalImageUrls),
             },
           })
-          
+
           console.log(`[Watch Create] Updated watch ${watch.id} with ${finalImageUrls.length} Blob URLs`)
         }
       } catch (error) {
