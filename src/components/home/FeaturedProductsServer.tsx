@@ -15,6 +15,8 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   const { t } = useLanguage()
   const { data: session } = useSession()
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  // OPTIMIERT: initialProducts enthalten keine Base64-Bilder mehr (reduziert ISR-Größe)
+  // Bilder werden client-side über ProductCard geladen wenn benötigt
   const [products, setProducts] = useState<ProductItem[]>(initialProducts)
   const [loading, setLoading] = useState(initialProducts.length === 0)
 

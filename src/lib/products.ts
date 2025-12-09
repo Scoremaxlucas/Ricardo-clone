@@ -102,7 +102,12 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
     let images: string[] = []
     if (w.images) {
       try {
-        images = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
+        const parsedImages = typeof w.images === 'string' ? JSON.parse(w.images) : w.images
+        // OPTIMIERT: Filtere Base64-Bilder aus Server-Response um ISR-Größe zu reduzieren
+        // Base64-Bilder werden client-side geladen
+        images = Array.isArray(parsedImages)
+          ? parsedImages.filter((img: string) => !img.startsWith('data:image/') && img.length < 1000)
+          : []
       } catch {
         images = []
       }
@@ -130,7 +135,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
       model: w.model || '',
       price: highestBid || w.price,
       buyNowPrice: w.buyNowPrice,
-      images: Array.isArray(images) ? images : [],
+      images: images, // Nur URLs, keine Base64-Bilder
       createdAt: w.createdAt.toISOString(),
       isAuction: !!w.isAuction || !!w.auctionEnd,
       auctionEnd: w.auctionEnd ? w.auctionEnd.toISOString() : null,
