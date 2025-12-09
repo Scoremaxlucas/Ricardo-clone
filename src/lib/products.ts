@@ -107,15 +107,15 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
           const titleImage = parsedImages[0] // Titelbild
 
           // KRITISCH: WIE RICARDO - IMMER Titelbild behalten!
-          // Für sehr große Base64-Bilder (>2MB) trotzdem filtern um Deployment zu ermöglichen
-          // Aber erhöhtes Limit für sofortige Anzeige
+          // Für sehr große Base64-Bilder (>3MB) trotzdem filtern um Deployment zu ermöglichen
+          // Aber sehr hohes Limit für sofortige Anzeige
           if (titleImage.startsWith('data:image/')) {
-            // Erhöhtes Limit für Titelbild: 2MB Base64 (~1.5MB Original)
-            // Dies ermöglicht fast alle Bilder sofort, während sehr große über API geladen werden
-            if (titleImage.length < 2000000) {
+            // Sehr hohes Limit für Titelbild: 3MB Base64 (~2.25MB Original)
+            // Dies ermöglicht praktisch alle Bilder sofort, während extrem große über API geladen werden
+            if (titleImage.length < 3000000) {
               images = [titleImage]
             } else {
-              // Sehr große Titelbilder (>2MB) werden über Batch-API nachgeladen (extrem selten)
+              // Extrem große Titelbilder (>3MB) werden über Batch-API nachgeladen (extrem selten)
               images = []
             }
           } else {
@@ -124,10 +124,10 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
           }
 
           // OPTIMIERT: Behalte zusätzliche Bilder wenn sie klein genug sind
-          // Erlaube bis zu 500KB Base64 für zusätzliche Bilder
+          // Erlaube bis zu 800KB Base64 für zusätzliche Bilder
           const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
             if (img.startsWith('data:image/')) {
-              return img.length < 500000 // <500KB Base64 für zusätzliche Bilder
+              return img.length < 800000 // <800KB Base64 für zusätzliche Bilder
             }
             // URLs sind immer klein
             return img.length < 1000

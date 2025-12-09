@@ -121,6 +121,11 @@ export function ProductCard({
         })()
       : Array.isArray(product.images) ? product.images : []
 
+  // DEBUG: Log wenn keine Bilder vorhanden
+  if (images.length === 0 && product.id) {
+    console.warn(`[ProductCard] Product ${product.id} (${product.title}) has NO images. product.images:`, product.images)
+  }
+
   // WICHTIG: Immer das erste Bild (Titelbild) verwenden, NIEMALS ein anderes
   const mainImage = images.length > 0 ? images[0] : null
 

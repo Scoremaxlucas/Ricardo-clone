@@ -54,6 +54,9 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       // Verwende Server-Bilder wenn vorhanden
       if (product.images && Array.isArray(product.images) && product.images.length > 0) {
         initialImagesMap[product.id] = product.images
+        console.log(`[FeaturedProducts] Product ${product.id} has ${product.images.length} images from server`)
+      } else {
+        console.warn(`[FeaturedProducts] Product ${product.id} has NO images from server`)
       }
     })
 
