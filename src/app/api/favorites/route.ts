@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { apiCache, generateCacheKey } from '@/lib/api-cache'
-import { apiCache, generateCacheKey } from '@/lib/api-cache'
 
 // Favoriten eines Users abrufen
 export async function GET(request: NextRequest) {
