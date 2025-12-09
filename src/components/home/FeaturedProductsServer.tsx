@@ -110,20 +110,21 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       // Ignore localStorage errors (quota exceeded, etc.)
     }
 
-      // OPTIMIERT: Lade fehlende Bilder über Batch-API wenn nötig
+      // KRITISCH: Lade fehlende Bilder über Batch-API wenn nötig
       // Nur für Produkte ohne Bilder (wurden wegen Größe gefiltert)
       const productsToLoad = initialProducts.filter(
         p => !p.images?.length && !cachedImages[p.id]?.images
       )
-
+      
       if (productsToLoad.length > 0) {
+        console.log(`[FeaturedProducts] Loading ${productsToLoad.length} products without images via Batch API:`, productsToLoad.map(p => p.id))
         const productIds = productsToLoad.map(p => p.id)
-
-        // Timeout nach 2 Sekunden (schneller)
+        
+        // Timeout nach 5 Sekunden (länger für größere Bilder)
         const timeoutPromise = new Promise<never>((_, reject) => {
-          setTimeout(() => reject(new Error('Image loading timeout')), 2000)
+          setTimeout(() => reject(new Error('Image loading timeout')), 5000)
         })
-
+        
         Promise.race([
           fetch('/api/watches/images/batch', {
             method: 'POST',
@@ -134,56 +135,67 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
           timeoutPromise,
         ])
           .then(async (response) => {
-            if (!isMounted || !response.ok) return
-
+            if (!isMounted) return
+            
+            if (!response.ok) {
+              console.warn(`[FeaturedProducts] Batch API failed: ${response.status} ${response.statusText}`)
+              return
+            }
+            
             try {
               const data = await response.json()
               const batchImages = data.images || {}
-
+              
+              console.log(`[FeaturedProducts] Batch API returned images for ${Object.keys(batchImages).length} products`)
+              
               if (!isMounted) return
-
+              
+              // KRITISCH: Aktualisiere imagesLoaded mit Batch-API Bildern
               setImagesLoaded(prev => {
                 const newImagesMap = { ...prev }
                 Object.entries(batchImages).forEach(([id, images]: [string, any]) => {
                   if (images && Array.isArray(images) && images.length > 0) {
+                    console.log(`[FeaturedProducts] Setting images for product ${id}: ${images.length} images`)
                     newImagesMap[id] = images
                     cachedImages[id] = { images, timestamp: Date.now() }
                   }
                 })
-
+                
                 try {
                   localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
                 } catch (error) {
                   // Ignore localStorage errors
                 }
-
+                
                 return newImagesMap
               })
-
+              
+              // KRITISCH: Aktualisiere products State mit Batch-API Bildern
               setProducts(prev => {
                 const updated = prev.map(p => {
                   const images = batchImages[p.id]
                   if (images && Array.isArray(images) && images.length > 0) {
+                    console.log(`[FeaturedProducts] Updating product ${p.id} with ${images.length} images`)
+                    // KRITISCH: Aktualisiere product.images mit Batch-API Bildern
                     return { ...p, images }
                   }
-                  return p
+                  // Stelle sicher, dass images immer ein Array ist
+                  return { ...p, images: Array.isArray(p.images) && p.images.length > 0 ? p.images : [] }
                 })
                 preloadProductImages(updated)
                 return updated
               })
             } catch (error: any) {
-              // Silently fail - images will show from cache or remain empty
-              if (error?.name !== 'AbortError' && error?.message !== 'Image loading timeout') {
-                // Silent fail
-              }
+              console.error('[FeaturedProducts] Error parsing batch images:', error)
             }
           })
           .catch((error: any) => {
-            // Silently fail - images already shown from initialProducts
             if (error.name !== 'AbortError' && error.message !== 'Image loading timeout' && isMounted) {
-              // Silent fail
+              console.error('[FeaturedProducts] Batch API error:', error)
             }
           })
+      } else {
+        console.log('[FeaturedProducts] All products have images, no Batch API call needed')
       }
 
     return () => {
