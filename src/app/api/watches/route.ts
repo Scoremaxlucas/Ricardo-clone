@@ -2,6 +2,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
+import { apiCache, generateCacheKey } from '@/lib/api-cache'
 
 export async function POST(request: NextRequest) {
   try {
@@ -189,9 +190,38 @@ export async function GET(request: NextRequest) {
       ]
     }
 
+    // OPTIMIERT: Check cache first (only for non-search queries to avoid stale results)
+    const cacheKey = search
+      ? null
+      : generateCacheKey('/api/watches', { page, limit, category })
+    const cached = cacheKey ? apiCache.get(cacheKey) : null
+
+    if (cached) {
+      return NextResponse.json(cached, {
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+          'X-Cache': 'HIT',
+        },
+      })
+    }
+
+    // OPTIMIERT: Use select instead of include to reduce data transfer
     const watches = await prisma.watch.findMany({
       where,
-      include: {
+      select: {
+        id: true,
+        title: true,
+        brand: true,
+        model: true,
+        price: true,
+        buyNowPrice: true,
+        images: true,
+        condition: true,
+        isAuction: true,
+        auctionEnd: true,
+        createdAt: true,
+        boosters: true,
+        articleNumber: true,
         seller: {
           select: {
             id: true,
@@ -202,11 +232,22 @@ export async function GET(request: NextRequest) {
           },
         },
         categories: {
-          include: {
-            category: true,
+          select: {
+            category: {
+              select: {
+                id: true,
+                slug: true,
+                name: true,
+              },
+            },
           },
         },
         bids: {
+          select: {
+            id: true,
+            amount: true,
+            createdAt: true,
+          },
           orderBy: {
             amount: 'desc',
           },
@@ -284,13 +325,27 @@ export async function GET(request: NextRequest) {
       where,
     })
 
-    return NextResponse.json({
+    const responseData = {
       watches: watchesWithCurrentPrice,
       pagination: {
         page,
         limit,
         total,
         pages: Math.ceil(total / limit),
+      },
+    }
+
+    // Cache non-search results for 60 seconds
+    if (cacheKey) {
+      apiCache.set(cacheKey, responseData, 60000)
+    }
+
+    return NextResponse.json(responseData, {
+      headers: {
+        'Cache-Control': search
+          ? 'no-cache'
+          : 'public, s-maxage=60, stale-while-revalidate=120',
+        'X-Cache': cached ? 'HIT' : 'MISS',
       },
     })
   } catch (error) {

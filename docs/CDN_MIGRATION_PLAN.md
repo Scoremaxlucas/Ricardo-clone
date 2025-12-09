@@ -80,16 +80,16 @@ import { put } from '@vercel/blob'
 export async function POST(request: NextRequest) {
   const formData = await request.formData()
   const file = formData.get('image') as File
-  
+
   // Upload zu Vercel Blob
   const blob = await put(`watches/${watchId}/${Date.now()}.jpg`, file, {
     access: 'public',
   })
-  
+
   // Speichere URL statt Base64
   await prisma.watch.update({
     where: { id: watchId },
-    data: { 
+    data: {
       images: JSON.stringify([blob.url, ...existingImages])
     }
   })
@@ -154,14 +154,14 @@ async function migrateImages() {
           const base64Data = image.split(',')[1]
           const buffer = Buffer.from(base64Data, 'base64')
           const blob = new Blob([buffer])
-          
+
           // Upload zu Vercel Blob
           const result = await put(
             `watches/${watch.id}/${Date.now()}.jpg`,
             blob,
             { access: 'public' }
           )
-          
+
           blobUrls.push(result.url)
         } else {
           // Bereits eine URL

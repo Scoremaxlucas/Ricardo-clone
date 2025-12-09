@@ -168,6 +168,10 @@ export function ProductCard({
     setIsLoadingFavorite(true)
     const newFavoriteState = !isFavorite
 
+    // OPTIMISTIC UI UPDATE: Update UI immediately before API call
+    setIsFavorite(newFavoriteState)
+    onFavoriteToggle?.(product.id, newFavoriteState)
+
     try {
       if (isFavorite) {
         // Entfernen: DELETE /api/favorites/${watchId}
@@ -175,10 +179,10 @@ export function ProductCard({
           method: 'DELETE',
         })
 
-        if (response.ok) {
-          setIsFavorite(false)
-          onFavoriteToggle?.(product.id, false)
-        } else {
+        if (!response.ok) {
+          // Revert on error
+          setIsFavorite(!newFavoriteState)
+          onFavoriteToggle?.(product.id, !newFavoriteState)
           const errorData = await response.json()
           console.error('Error removing favorite:', errorData.message)
         }
@@ -190,15 +194,18 @@ export function ProductCard({
           body: JSON.stringify({ watchId: product.id }),
         })
 
-        if (response.ok) {
-          setIsFavorite(true)
-          onFavoriteToggle?.(product.id, true)
-        } else {
+        if (!response.ok) {
+          // Revert on error
+          setIsFavorite(!newFavoriteState)
+          onFavoriteToggle?.(product.id, !newFavoriteState)
           const errorData = await response.json()
           console.error('Error adding favorite:', errorData.message)
         }
       }
     } catch (error) {
+      // Revert on error
+      setIsFavorite(!newFavoriteState)
+      onFavoriteToggle?.(product.id, !newFavoriteState)
       console.error('Error toggling favorite:', error)
     } finally {
       setIsLoadingFavorite(false)

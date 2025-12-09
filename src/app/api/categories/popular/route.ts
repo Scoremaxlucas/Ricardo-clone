@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { categoryConfig } from '@/data/categories'
+import { apiCache, generateCacheKey } from '@/lib/api-cache'
 
 // Helper to get category metadata (for API compatibility - returns icon as string placeholder)
 function getCategoryMetadata(slug: string) {
@@ -13,6 +14,19 @@ function getCategoryMetadata(slug: string) {
 }
 
 export async function GET() {
+  // Check cache first
+  const cacheKey = generateCacheKey('/api/categories/popular')
+  const cached = apiCache.get(cacheKey)
+  if (cached) {
+    return NextResponse.json(cached, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600',
+        'X-Content-Type-Options': 'nosniff',
+        'X-Cache': 'HIT',
+      },
+    })
+  }
+
   try {
     // WICHTIG: Fehlerbehandlung für Prisma-Abfragen
     // Hole alle InvoiceItems, die Booster sind (description enthält "Booster")
@@ -203,17 +217,20 @@ export async function GET() {
       return b.score - a.score
     })
 
-    return NextResponse.json(
-      {
-        categories: sortedCategories,
+    const responseData = {
+      categories: sortedCategories,
+    }
+
+    // Cache for 5 minutes
+    apiCache.set(cacheKey, responseData, 5 * 60 * 1000)
+
+    return NextResponse.json(responseData, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600', // 5min cache, 10min stale
+        'X-Content-Type-Options': 'nosniff',
+        'X-Cache': 'MISS',
       },
-      {
-        headers: {
-          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=600', // 5min cache, 10min stale
-          'X-Content-Type-Options': 'nosniff',
-        },
-      }
-    )
+    })
   } catch (error) {
     console.error('Error fetching popular categories:', error)
     return NextResponse.json({ error: 'Failed to fetch popular categories' }, { status: 500 })

@@ -108,7 +108,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         // Größere Bilder werden über /api/watches/[id]/images nachgeladen
         if (Array.isArray(parsedImages) && parsedImages.length > 0) {
           const titleImage = parsedImages[0] // Titelbild
-          
+
           // KRITISCH: Filtere große Base64-Bilder aus dem initialen Response
           // Dies reduziert die Page-Größe von 33MB auf unter 19MB
           // Titelbild wird nur behalten wenn es klein genug ist (<100KB Base64)
@@ -125,7 +125,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             // URLs sind immer klein, behalten
             images = [titleImage]
           }
-          
+
           // Zusätzliche Bilder: Nur sehr kleine Base64-Bilder behalten
           const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
             if (img.startsWith('data:image/')) {
@@ -134,7 +134,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             // URLs sind immer klein
             return img.length < 1000
           })
-          
+
           images = [...images, ...smallAdditionalImages]
         } else {
           images = []
