@@ -23,16 +23,8 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   // KRITISCH: Setze State SYNCHRON beim Initialisieren, keine Verzögerung!
   const [products, setProducts] = useState<ProductItem[]>(initialProducts)
   const [loading, setLoading] = useState(false) // Kein Loading mehr - alles sofort verfügbar!
-  // WICHTIG: Initialisiere imagesLoaded sofort mit Server-Bildern, keine Wartezeit
-  const [imagesLoaded, setImagesLoaded] = useState<Record<string, string[]>>(() => {
-    const initialMap: Record<string, string[]> = {}
-    initialProducts.forEach(product => {
-      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
-        initialMap[product.id] = product.images
-      }
-    })
-    return initialMap
-  })
+  // KRITISCH: KEIN imagesLoaded State mehr - verwende direkt product.images!
+  // Dies eliminiert Verzögerung und stellt sicher, dass Bilder sofort angezeigt werden
 
   // OPTIMIERT: Verwende Server-Bilder sofort, keine Wartezeit auf Cache/API
   // Cache wird nur für Persistenz nach Navigation verwendet
