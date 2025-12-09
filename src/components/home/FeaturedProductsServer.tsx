@@ -19,7 +19,16 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   // Cache wird verwendet um Bilder nach Navigation zu erhalten
   const [products, setProducts] = useState<ProductItem[]>(initialProducts)
   const [loading, setLoading] = useState(initialProducts.length === 0)
-  const [imagesLoaded, setImagesLoaded] = useState<Record<string, string[]>>({})
+  // WICHTIG: Initialisiere imagesLoaded sofort mit Server-Bildern, keine Wartezeit
+  const [imagesLoaded, setImagesLoaded] = useState<Record<string, string[]>>(() => {
+    const initialMap: Record<string, string[]> = {}
+    initialProducts.forEach(product => {
+      if (product.images && Array.isArray(product.images) && product.images.length > 0) {
+        initialMap[product.id] = product.images
+      }
+    })
+    return initialMap
+  })
 
   // OPTIMIERT: Verwende Server-Bilder sofort, keine Wartezeit auf Cache/API
   // Cache wird nur für Persistenz nach Navigation verwendet
@@ -272,12 +281,11 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 isAuction={product.isAuction}
                 auctionEnd={product.auctionEnd ?? undefined}
                 images={
-                  // Priorität: 1. Server-Bilder (sofort verfügbar), 2. Gecachte Bilder, 3. Leer
-                  product.images && product.images.length > 0
-                    ? product.images
-                    : imagesLoaded[product.id]?.length > 0
-                    ? imagesLoaded[product.id]
-                    : []
+                  // WICHTIG: Verwende immer Server-Bilder wenn vorhanden (sofort verfügbar im initialProducts)
+                  // imagesLoaded wird nur für nachgeladene Bilder verwendet
+                  (product.images && product.images.length > 0) 
+                    ? product.images 
+                    : (imagesLoaded[product.id]?.length > 0 ? imagesLoaded[product.id] : [])
                 }
                 condition={product.condition}
                 city={product.city ?? undefined}

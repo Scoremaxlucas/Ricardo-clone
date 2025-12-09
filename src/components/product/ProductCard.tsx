@@ -44,7 +44,19 @@ export function ProductCard({
 }: ProductCardProps) {
   const { data: session } = useSession()
   const [isFavorite, setIsFavorite] = useState(false)
-  const [imageError, setImageError] = useState(false)
+  // WICHTIG: Initialisiere imageError nur wenn wirklich kein Bild vorhanden ist
+  const [imageError, setImageError] = useState(() => {
+    const images = typeof product.images === 'string'
+      ? (() => {
+          try {
+            return JSON.parse(product.images)
+          } catch {
+            return product.images.split(',').filter(Boolean)
+          }
+        })()
+      : product.images || []
+    return images.length === 0
+  })
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
 
   // Check if product is favorite on mount
@@ -196,15 +208,19 @@ export function ProductCard({
         }}
       >
       <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
-        {mainImage && !imageError ? (
+        {mainImage ? (
           mainImage.startsWith('data:image/') || mainImage.startsWith('blob:') || mainImage.length > 1000 ? (
             <img
               src={mainImage}
               alt={product.title}
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
               loading="eager"
-              onError={() => setImageError(true)}
-              onLoad={() => setImageError(false)}
+              onError={() => {
+                setImageError(true)
+              }}
+              onLoad={() => {
+                setImageError(false)
+              }}
             />
           ) : (
             <Image
@@ -214,15 +230,23 @@ export function ProductCard({
               className="object-cover transition-transform duration-300 group-hover:scale-105"
               loading="eager"
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              onError={() => setImageError(true)}
-              onLoad={() => setImageError(false)}
+              onError={() => {
+                setImageError(true)
+              }}
+              onLoad={() => {
+                setImageError(false)
+              }}
               unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
             />
           )
-        ) : (
+        ) : imageError ? (
           <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-xs text-gray-400">
             <Sparkles className="h-6 w-6 opacity-50" />
             <span className="ml-2 text-xs">Kein Bild</span>
+          </div>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600"></div>
           </div>
         )}
 
@@ -338,21 +362,37 @@ export function ProductCard({
       >
         <div className="relative w-64 flex-shrink-0 bg-gray-100">
           <div className="relative aspect-[5/4]">
-            {mainImage && !imageError ? (
-              <Image
-                src={mainImage}
-                alt={product.title}
-                fill
-                className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
-                onError={() => setImageError(true)}
-                sizes="256px"
-                loading="lazy"
-                unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
-              />
-            ) : (
+            {mainImage ? (
+              mainImage.startsWith('data:image/') || mainImage.startsWith('blob:') || mainImage.length > 1000 ? (
+                <img
+                  src={mainImage}
+                  alt={product.title}
+                  className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                  onError={() => setImageError(true)}
+                  onLoad={() => setImageError(false)}
+                  loading="lazy"
+                />
+              ) : (
+                <Image
+                  src={mainImage}
+                  alt={product.title}
+                  fill
+                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                  onError={() => setImageError(true)}
+                  onLoad={() => setImageError(false)}
+                  sizes="256px"
+                  loading="lazy"
+                  unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
+                />
+              )
+            ) : imageError ? (
               <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
                 <Sparkles className="mb-2 h-8 w-8 opacity-50" />
                 <span className="text-xs">Kein Bild</span>
+              </div>
+            ) : (
+              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+                <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600"></div>
               </div>
             )}
           </div>
@@ -476,7 +516,7 @@ export function ProductCard({
       }}
     >
       <div className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
-        {mainImage && !imageError ? (
+        {mainImage ? (
           mainImage.startsWith('data:image/') || mainImage.startsWith('blob:') || mainImage.length > 1000 ? (
             <img
               src={mainImage}
@@ -499,10 +539,14 @@ export function ProductCard({
               unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
             />
           )
-        ) : (
+        ) : imageError ? (
           <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
             <Sparkles className="mb-2 h-8 w-8 opacity-50" />
             <span className="text-xs">Kein Bild</span>
+          </div>
+        ) : (
+          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
+            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600"></div>
           </div>
         )}
 
