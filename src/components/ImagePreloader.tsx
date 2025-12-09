@@ -14,16 +14,16 @@ interface ImagePreloaderProps {
 export function ImagePreloader({ products }: ImagePreloaderProps) {
   useEffect(() => {
     if (typeof window === 'undefined') return
-    
+
     // Preload images immediately
     preloadProductImages(products)
-    
+
     // Also add preload links to head for critical images
     const imageUrls = products
       .flatMap(p => p.images || [])
       .filter(img => img && !img.startsWith('data:') && !img.startsWith('blob:'))
       .slice(0, 6) // Preload first 6 images
-    
+
     const links: HTMLLinkElement[] = []
     imageUrls.forEach((url, index) => {
       const link = document.createElement('link')
@@ -34,7 +34,7 @@ export function ImagePreloader({ products }: ImagePreloaderProps) {
       document.head.appendChild(link)
       links.push(link)
     })
-    
+
     return () => {
       links.forEach(link => {
         if (document.head.contains(link)) {
@@ -43,7 +43,7 @@ export function ImagePreloader({ products }: ImagePreloaderProps) {
       })
     }
   }, [products])
-  
+
   return null
 }
 

@@ -123,7 +123,7 @@ export function ProductCard({
 
   // WICHTIG: Immer das erste Bild (Titelbild) verwenden, NIEMALS ein anderes
   const mainImage = images.length > 0 ? images[0] : null
-  
+
   // OPTIMIERT: Preload image when it becomes available for instant display
   useEffect(() => {
     if (mainImage && typeof window !== 'undefined' && !mainImage.startsWith('data:') && !mainImage.startsWith('blob:')) {
@@ -134,7 +134,7 @@ export function ProductCard({
       link.href = mainImage
       link.setAttribute('fetchpriority', 'high')
       document.head.appendChild(link)
-      
+
       return () => {
         if (document.head.contains(link)) {
           document.head.removeChild(link)

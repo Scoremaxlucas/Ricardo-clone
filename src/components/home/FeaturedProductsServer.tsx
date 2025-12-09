@@ -50,7 +50,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
 
     // Setze State synchron, damit Bilder sofort angezeigt werden
     setImagesLoaded(initialImagesMap)
-    
+
     // OPTIMIERT: Preload images immediately for instant display
     if (initialProducts.length > 0) {
       preloadProductImages(initialProducts)
@@ -154,10 +154,10 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
               }
               return p
             })
-            
+
             // OPTIMIERT: Preload newly loaded images
             preloadProductImages(updated)
-            
+
             return updated
           })
         })
@@ -332,12 +332,12 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                 isAuction={product.isAuction}
                 auctionEnd={product.auctionEnd ?? undefined}
                 images={
-                  // WICHTIG: Priorisiere imagesLoaded (enthält nachgeladene Bilder von API)
-                  // Falls nicht vorhanden, verwende product.images (Server-Bilder)
-                  // Dies stellt sicher, dass Bilder angezeigt werden, auch wenn sie nachgeladen wurden
-                  imagesLoaded[product.id]?.length > 0
-                    ? imagesLoaded[product.id]
-                    : (product.images && product.images.length > 0 ? product.images : [])
+                  // KRITISCH: WIE RICARDO - IMMER product.images verwenden (Server-Bilder)
+                  // Alle Bilder sind bereits im initialProducts, keine API-Calls nötig!
+                  // imagesLoaded wird nur für Cache-Persistenz verwendet
+                  (product.images && product.images.length > 0)
+                    ? product.images
+                    : (imagesLoaded[product.id]?.length > 0 ? imagesLoaded[product.id] : [])
                 }
                 condition={product.condition}
                 city={product.city ?? undefined}

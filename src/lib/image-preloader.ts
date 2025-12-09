@@ -1,6 +1,6 @@
 /**
  * Image Preloader Utility
- * 
+ *
  * Preloads images in the background to improve perceived performance.
  * Similar to Ricardo's image loading strategy.
  */

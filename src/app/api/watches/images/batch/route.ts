@@ -7,7 +7,15 @@ import { prisma } from '@/lib/prisma'
  */
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json()
+    // OPTIMIERT: Besseres Error-Handling für fehlerhafte Requests
+    let body
+    try {
+      body = await request.json()
+    } catch (error) {
+      console.error('Error parsing request body:', error)
+      return NextResponse.json({ images: {} }, { status: 400 })
+    }
+
     const { ids } = body
 
     if (!Array.isArray(ids) || ids.length === 0) {
@@ -36,7 +44,8 @@ export async function POST(request: NextRequest) {
         try {
           const parsed = typeof watch.images === 'string' ? JSON.parse(watch.images) : watch.images
           images = Array.isArray(parsed) ? parsed : []
-        } catch {
+        } catch (error) {
+          console.error(`Error parsing images for watch ${watch.id}:`, error)
           images = []
         }
       }
@@ -52,14 +61,15 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json({ images: imagesMap }, {
       headers: {
+        'Content-Type': 'application/json',
         'Cache-Control': 'public, s-maxage=3600, stale-while-revalidate=7200',
         'X-Content-Type-Options': 'nosniff',
-        // Compression is handled automatically by Next.js/Vercel
       },
     })
-  } catch (error) {
+  } catch (error: any) {
     console.error('Error fetching batch images:', error)
-    return NextResponse.json({ images: {} }, { status: 200 })
+    // WICHTIG: Immer gültiges JSON zurückgeben, auch bei Fehlern
+    return NextResponse.json({ images: {}, error: error.message || 'Unknown error' }, { status: 200 })
   }
 }
 

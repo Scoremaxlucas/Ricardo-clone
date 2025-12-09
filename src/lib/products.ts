@@ -109,32 +109,16 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         if (Array.isArray(parsedImages) && parsedImages.length > 0) {
           const titleImage = parsedImages[0] // Titelbild
 
-          // OPTIMIERT: Für bessere Performance - immer Titelbild behalten wenn möglich
-          // Erhöhtes Limit für sofortige Anzeige, große Bilder werden komprimiert
-          if (titleImage.startsWith('data:image/')) {
-            // Erhöhtes Limit für Titelbild: 300KB Base64 (~225KB Original)
-            // Mehr Bilder werden sofort angezeigt, größere werden über Batch-API geladen
-            if (titleImage.length < 300000) {
-              images = [titleImage]
-            } else {
-              // Sehr große Titelbilder werden über Batch-API nachgeladen
-              images = []
-            }
-          } else {
-            // URLs sind immer klein, behalten
-            images = [titleImage]
-          }
+          // KRITISCH: WIE RICARDO - IMMER Titelbild behalten, egal wie groß!
+          // Ricardo zeigt Bilder sofort an, auch wenn sie groß sind
+          // Wir verwenden VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR=1 um größere Pages zu erlauben
+          // Titelbild NIEMALS filtern - immer anzeigen!
+          images = [titleImage]
 
-          // Zusätzliche Bilder: Filtere große Base64-Bilder (werden über Batch-API geladen)
-          const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
-            if (img.startsWith('data:image/')) {
-              return img.length < 150000 // <150KB Base64 für zusätzliche Bilder
-            }
-            // URLs sind immer klein
-            return img.length < 1000
-          })
-
-          images = [...images, ...smallAdditionalImages]
+          // OPTIMIERT: Behalte alle zusätzlichen Bilder für sofortige Anzeige
+          // Wie Ricardo - alle Bilder werden sofort angezeigt
+          const additionalImages = parsedImages.slice(1)
+          images = [...images, ...additionalImages]
         } else {
           images = []
         }
