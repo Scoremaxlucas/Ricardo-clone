@@ -109,16 +109,16 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         if (Array.isArray(parsedImages) && parsedImages.length > 0) {
           const titleImage = parsedImages[0] // Titelbild
 
-          // KRITISCH: Filtere große Base64-Bilder aus dem initialen Response
-          // Dies reduziert die Page-Größe von 33MB auf unter 19MB
-          // Titelbild wird nur behalten wenn es klein genug ist (<100KB Base64)
-          // Größere Titelbilder werden über API nachgeladen
+          // OPTIMIERT: Für bessere Performance - immer Titelbild behalten wenn möglich
+          // Aber für sehr große Base64-Bilder (>200KB) trotzdem filtern
+          // Dies ermöglicht sofortige Anzeige kleiner Bilder, während große über Batch-API geladen werden
           if (titleImage.startsWith('data:image/')) {
-            // Nur sehr kleine Base64-Bilder behalten (<100KB Base64 = ~75KB Original)
-            if (titleImage.length < 100000) {
+            // Erhöhtes Limit für Titelbild: 200KB Base64 (~150KB Original)
+            // Dies ermöglicht mehr Bilder im initialen Response ohne Page-Größe zu sprengen
+            if (titleImage.length < 200000) {
               images = [titleImage]
             } else {
-              // Titelbild ist zu groß, lade es später über API
+              // Sehr große Titelbilder werden über Batch-API nachgeladen
               images = []
             }
           } else {
@@ -126,10 +126,10 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             images = [titleImage]
           }
 
-          // Zusätzliche Bilder: Nur sehr kleine Base64-Bilder behalten
+          // Zusätzliche Bilder: Filtere große Base64-Bilder (werden über Batch-API geladen)
           const smallAdditionalImages = parsedImages.slice(1).filter((img: string) => {
             if (img.startsWith('data:image/')) {
-              return img.length < 100000 // <100KB Base64
+              return img.length < 150000 // <150KB Base64 für zusätzliche Bilder
             }
             // URLs sind immer klein
             return img.length < 1000

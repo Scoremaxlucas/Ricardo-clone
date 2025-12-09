@@ -48,7 +48,7 @@ export function ProductCard({
   // Initial false, damit Bilder geladen werden können
   const [imageError, setImageError] = useState(false)
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
-  
+
   // WICHTIG: Reagiere auf Änderungen in product.images
   useEffect(() => {
     // Wenn neue Bilder vorhanden sind, reset imageError
@@ -61,7 +61,7 @@ export function ProductCard({
           }
         })()
       : Array.isArray(product.images) ? product.images : []
-    
+
     if (images.length > 0) {
       setImageError(false) // Reset error wenn Bilder vorhanden sind
     }
@@ -280,11 +280,7 @@ export function ProductCard({
             <Sparkles className="h-6 w-6 opacity-50" />
             <span className="ml-2 text-xs">Kein Bild</span>
           </div>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600"></div>
-          </div>
-        )}
+        ) : null}
 
           {/* Favorite Button - Größer auf Mobile */}
           <button
@@ -426,11 +422,7 @@ export function ProductCard({
                 <Sparkles className="mb-2 h-8 w-8 opacity-50" />
                 <span className="text-xs">Kein Bild</span>
               </div>
-            ) : (
-              <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600"></div>
-              </div>
-            )}
+            ) : null}
           </div>
           <button
             onClick={handleFavoriteClick}
@@ -580,11 +572,7 @@ export function ProductCard({
             <Sparkles className="mb-2 h-8 w-8 opacity-50" />
             <span className="text-xs">Kein Bild</span>
           </div>
-        ) : (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-            <div className="h-6 w-6 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600"></div>
-          </div>
-        )}
+        ) : null}
 
         {/* Favorite Button */}
         <button

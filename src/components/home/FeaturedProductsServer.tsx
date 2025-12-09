@@ -82,8 +82,8 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       // Ignore localStorage errors (quota exceeded, etc.)
     }
 
-      // Lade fehlende oder große Bilder von API
-      // Wenn initialProducts keine Bilder hat (weil sie zu groß waren), lade sie nach
+      // OPTIMIERT: Batch-Loading für alle fehlenden Bilder auf einmal
+      // Reduziert API-Calls von N auf 1 (wie Ricardo)
       const productsToLoad = initialProducts.filter(
         p => {
           // Lade Bilder wenn:
@@ -92,50 +92,69 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
           return !p.images?.length && !cachedImages[p.id]?.images
         }
       )
+      
     if (productsToLoad.length > 0) {
-      Promise.all(
-        productsToLoad.map(async (product) => {
-          try {
-            const response = await fetch(`/api/watches/${product.id}/images`, {
-              signal: abortController.signal,
-            })
-            if (response.ok && isMounted) {
-              const data = await response.json()
-              return { id: product.id, images: data.images || [] }
-            }
-          } catch (error: any) {
-            if (error.name !== 'AbortError' && isMounted) {
-              console.error(`Error loading images for product ${product.id}:`, error)
-            }
-          }
-          return { id: product.id, images: [] }
-        })
-      ).then((imageData) => {
-        // Prüfe ob Component noch gemountet ist
-        if (!isMounted) return
-
-        setImagesLoaded(prev => {
-          const newImagesMap = { ...prev }
-          imageData.forEach(({ id, images }) => {
-            if (images.length > 0) {
-              newImagesMap[id] = images
-              // Speichere im Cache
-              cachedImages[id] = { images, timestamp: Date.now() }
-            }
-          })
-
-          // Speichere aktualisierten Cache
-          try {
-            localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
-          } catch (error) {
-            // Ignore localStorage errors
-          }
-
-          return newImagesMap
-        })
-      }).catch(() => {
-        // Ignore errors
+      // OPTIMIERT: Batch-Request für alle Bilder auf einmal
+      const productIds = productsToLoad.map(p => p.id)
+      
+      // Timeout nach 5 Sekunden
+      const timeoutPromise = new Promise<never>((_, reject) => {
+        setTimeout(() => reject(new Error('Image loading timeout')), 5000)
       })
+      
+      Promise.race([
+        fetch('/api/watches/images/batch', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ ids: productIds }),
+          signal: abortController.signal,
+        }),
+        timeoutPromise,
+      ])
+        .then(async (response) => {
+          if (!isMounted || !response.ok) return
+          
+          const data = await response.json()
+          const batchImages = data.images || {}
+          
+          if (!isMounted) return
+          
+          setImagesLoaded(prev => {
+            const newImagesMap = { ...prev }
+            Object.entries(batchImages).forEach(([id, images]: [string, any]) => {
+              if (images && Array.isArray(images) && images.length > 0) {
+                newImagesMap[id] = images
+                // Speichere im Cache
+                cachedImages[id] = { images, timestamp: Date.now() }
+              }
+            })
+
+            // Speichere aktualisierten Cache
+            try {
+              localStorage.setItem(cacheKey, JSON.stringify(cachedImages))
+            } catch (error) {
+              // Ignore localStorage errors
+            }
+
+            return newImagesMap
+          })
+          
+          // Aktualisiere auch products State
+          setProducts(prev => {
+            return prev.map(p => {
+              const images = batchImages[p.id]
+              if (images && Array.isArray(images) && images.length > 0) {
+                return { ...p, images }
+              }
+              return p
+            })
+          })
+        })
+        .catch((error: any) => {
+          if (error.name !== 'AbortError' && error.message !== 'Image loading timeout' && isMounted) {
+            console.error('Error loading batch images:', error)
+          }
+        })
     }
 
     return () => {
