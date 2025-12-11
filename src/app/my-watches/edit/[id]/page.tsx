@@ -16,7 +16,7 @@ import {
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
 
 /**
@@ -46,6 +46,8 @@ export default function EditWatchPage() {
   const [currentBooster, setCurrentBooster] = useState<string>('none')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isDragging, setIsDragging] = useState(false)
 
   const [formData, setFormData] = useState({
     brand: '',
@@ -1132,38 +1134,60 @@ export default function EditWatchPage() {
                 )}
               </h2>
 
-              {formData.images.length === 0 ? (
-                <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Titelbild *
-                  </label>
-                  <input
-                    type="file"
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
-                  />
-                  <p className="mt-1 text-sm text-gray-500">
-                    Laden Sie das Titelbild hoch (JPG, PNG, max. 10MB). Dieses Bild wird automatisch als Titelbild verwendet.
-                  </p>
-                </div>
-              ) : (
-                <div className="mb-4">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Weitere Bilder hinzufügen (Optional)
-                  </label>
-                  <input
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                    className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
-                  />
-                  <p className="mt-1 text-sm text-gray-500">
-                    Fügen Sie weitere Bilder hinzu (JPG, PNG, max. 10MB pro Bild). Sie können bis zu 10 Bilder insgesamt hochladen.
-                  </p>
-                </div>
-              )}
+              {/* Verstecktes File Input */}
+              <input
+                ref={fileInputRef}
+                type="file"
+                multiple
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+                aria-label="Bilder hochladen"
+              />
+
+              {/* Drag and Drop Zone - Anklickbar */}
+              <div
+                className={`relative mb-4 cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-all ${
+                  isDragging
+                    ? 'border-primary-500 bg-primary-50'
+                    : 'border-gray-300 bg-gray-50 hover:border-primary-400 hover:bg-primary-50/50'
+                }`}
+                onClick={() => fileInputRef.current?.click()}
+                onDragOver={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setIsDragging(true)
+                }}
+                onDragLeave={e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setIsDragging(false)
+                }}
+                onDrop={async e => {
+                  e.preventDefault()
+                  e.stopPropagation()
+                  setIsDragging(false)
+
+                  const files = Array.from(e.dataTransfer.files).filter(file =>
+                    file.type.startsWith('image/')
+                  )
+                  if (files.length > 0) {
+                    await processFiles(files)
+                  }
+                }}
+              >
+                <Upload className="mx-auto mb-3 h-12 w-12 text-gray-400" />
+                <p className="text-sm font-medium text-gray-700">
+                  {formData.images.length === 0
+                    ? 'Klicken Sie hier oder ziehen Sie Bilder hierher'
+                    : 'Klicken Sie hier oder ziehen Sie weitere Bilder hierher'}
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  {formData.images.length === 0
+                    ? 'Titelbild hochladen (JPG, PNG, max. 10MB)'
+                    : 'Weitere Bilder hinzufügen (JPG, PNG, max. 10MB pro Bild). Bis zu 10 Bilder insgesamt.'}
+                </p>
+              </div>
 
               {formData.images.length > 0 && (
                 <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
