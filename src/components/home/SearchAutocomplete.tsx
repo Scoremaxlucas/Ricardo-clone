@@ -208,6 +208,8 @@ export function SearchAutocomplete({
                 inputRef.current?.focus()
               }}
               className="absolute right-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              title="Suche löschen"
+              aria-label="Suche löschen"
             >
               <X className="h-5 w-5" />
             </button>
