@@ -68,15 +68,18 @@ export async function POST(
     const fiveMinutesAgo = new Date()
     fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5)
 
-    const viewersNow = await prisma.watchView.count({
+    // Count distinct viewers (unique userId + ipAddress combinations)
+    // Prisma count doesn't support distinct with multiple fields, so we use groupBy
+    const viewerGroups = await prisma.watchView.groupBy({
+      by: ['userId', 'ipAddress'],
       where: {
         watchId,
         viewedAt: {
           gte: fiveMinutesAgo,
         },
       },
-      distinct: ['userId', 'ipAddress'],
     })
+    const viewersNow = viewerGroups.length
 
     // Update ProductStats
     await prisma.productStats.upsert({
