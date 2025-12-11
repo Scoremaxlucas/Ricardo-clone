@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
     // KRITISCH: Wenn Bilder Base64 sind, migriere sie zu Blob Storage
     // FALLBACK: Wenn keine Bilder vorhanden, versuche sie aus description zu extrahieren
     const imagesMap: Record<string, string[]> = {}
-    
+
     for (const watch of watches) {
       let images: string[] = []
       if (watch.images) {
@@ -55,7 +55,7 @@ export async function POST(request: NextRequest) {
           images = []
         }
       }
-      
+
       // FALLBACK: Wenn keine Bilder vorhanden, versuche sie aus description zu extrahieren
       // Dies kann passieren, wenn Bilder beim Erstellen nicht richtig gespeichert wurden
       if (images.length === 0 && watch.description) {
@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
           // Suche nach Base64-Bildern in der description
           const base64Pattern = /data:image\/[^;]+;base64,[A-Za-z0-9+/=]+/g
           const matches = desc.match(base64Pattern)
-          
+
           if (matches && matches.length > 0) {
             console.log(`[Batch API] Found ${matches.length} Base64 images in description for watch ${watch.id}, extracting...`)
             images = matches
@@ -73,24 +73,24 @@ export async function POST(request: NextRequest) {
           console.error(`[Batch API] Error extracting images from description for watch ${watch.id}:`, error)
         }
       }
-      
+
       // KRITISCH: Prüfe ob Base64-Bilder vorhanden sind und migriere sie
-      const base64Images = images.filter((img: string) => 
+      const base64Images = images.filter((img: string) =>
         typeof img === 'string' && img.startsWith('data:image/')
       )
-      const urlImages = images.filter((img: string) => 
+      const urlImages = images.filter((img: string) =>
         typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))
       )
-      
+
       // Wenn Base64-Bilder vorhanden, migriere sie zu Blob Storage
       if (base64Images.length > 0) {
         try {
           const basePath = `watches/${watch.id}`
           const blobUrls = await uploadImagesToBlob(base64Images, basePath)
-          
+
           // Kombiniere URLs
           const finalUrls = [...urlImages, ...blobUrls]
-          
+
           // Update Datenbank mit Blob URLs
           await prisma.watch.update({
             where: { id: watch.id },
@@ -98,7 +98,7 @@ export async function POST(request: NextRequest) {
               images: JSON.stringify(finalUrls),
             },
           })
-          
+
           images = finalUrls
           console.log(`[Batch API] Migrated ${base64Images.length} Base64 images to Blob Storage for watch ${watch.id}`)
         } catch (migrationError: any) {
@@ -110,7 +110,7 @@ export async function POST(request: NextRequest) {
         // Nur URLs, keine Migration nötig
         images = urlImages
       }
-      
+
       imagesMap[watch.id] = images
     }
 

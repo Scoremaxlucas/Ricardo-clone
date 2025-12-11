@@ -151,3 +151,5 @@ Bei Problemen:
 2. Prüfe Migration-Script Output
 3. Kontaktiere Vercel Support falls nötig
 
+
+

@@ -185,17 +185,29 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
       >
         <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
           {mainImage && !imageError ? (
-            <Image
-              src={mainImage}
-              alt={product.title}
-              fill
-              className="object-cover transition-transform duration-300"
-              style={{ transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
-              onError={() => setImageError(true)}
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              loading="lazy"
-              unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
-            />
+            mainImage.startsWith('data:') ||
+            mainImage.startsWith('blob:') ||
+            mainImage.includes('blob.vercel-storage.com') ? (
+              <img
+                src={mainImage}
+                alt={product.title}
+                className="h-full w-full object-cover transition-transform duration-300"
+                style={{ transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
+                onError={() => setImageError(true)}
+                loading="lazy"
+              />
+            ) : (
+              <Image
+                src={mainImage}
+                alt={product.title}
+                fill
+                className="object-cover transition-transform duration-300"
+                style={{ transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
+                onError={() => setImageError(true)}
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                loading="lazy"
+              />
+            )
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
               <Sparkles className="mb-2 h-6 w-6 opacity-50" />
@@ -243,9 +255,11 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             )}
             {/* Auction Badge - Immer sichtbar wenn Auktion (auch mit Boostern) - Subtiler */}
             {product.isAuction && (
-              <div className={`absolute left-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 backdrop-blur-sm px-1.5 py-0.5 text-[9px] font-medium text-white ${
-                hasSuperBoost || hasTurboBoost || hasBoost ? 'top-8' : 'top-1.5'
-              }`}>
+              <div
+                className={`absolute left-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm ${
+                  hasSuperBoost || hasTurboBoost || hasBoost ? 'top-8' : 'top-1.5'
+                }`}
+              >
                 <Gavel className="h-2.5 w-2.5" />
                 <span>Auktion</span>
               </div>
@@ -304,11 +318,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
           {/* Zusätzliche Details - Nur beim Hover */}
           <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
             {/* Brand */}
-            {product.brand && (
-              <span className="text-primary-600 font-medium">
-                {product.brand}
-              </span>
-            )}
+            {product.brand && <span className="font-medium text-primary-600">{product.brand}</span>}
 
             {/* Condition */}
             {showCondition && product.condition && (
@@ -335,17 +345,29 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
         <div className="relative w-64 flex-shrink-0 bg-gray-100">
           <div className="relative aspect-[5/4]">
             {mainImage && !imageError ? (
-              <Image
-                src={mainImage}
-                alt={product.title}
-                fill
-                className="object-cover transition-transform duration-300"
-                style={{ transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
-                onError={() => setImageError(true)}
-                sizes="256px"
-                loading="lazy"
-                unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
-              />
+              mainImage.startsWith('data:') ||
+              mainImage.startsWith('blob:') ||
+              mainImage.includes('blob.vercel-storage.com') ? (
+                <img
+                  src={mainImage}
+                  alt={product.title}
+                  className="h-full w-full object-cover transition-transform duration-300"
+                  style={{ transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
+                  onError={() => setImageError(true)}
+                  loading="lazy"
+                />
+              ) : (
+                <Image
+                  src={mainImage}
+                  alt={product.title}
+                  fill
+                  className="object-cover transition-transform duration-300"
+                  style={{ transform: isHovered ? 'scale(1.05)' : 'scale(1)' }}
+                  onError={() => setImageError(true)}
+                  sizes="256px"
+                  loading="lazy"
+                />
+              )
             ) : (
               <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
                 <Sparkles className="mb-2 h-8 w-8 opacity-50" />
@@ -390,7 +412,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             )}
             {/* Auction Badge - Immer sichtbar wenn Auktion (falls kein Booster) - Subtiler */}
             {product.isAuction && !hasSuperBoost && !hasTurboBoost && !hasBoost && (
-              <div className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 backdrop-blur-sm px-1.5 py-0.5 text-[9px] font-medium text-white">
+              <div className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm">
                 <Gavel className="h-2.5 w-2.5" />
                 <span>Auktion</span>
               </div>
@@ -534,7 +556,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
           )}
           {/* Auction Badge - Immer sichtbar wenn Auktion (falls kein Booster) - Subtiler */}
           {product.isAuction && !hasSuperBoost && !hasTurboBoost && !hasBoost && (
-            <div className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 backdrop-blur-sm px-1.5 py-0.5 text-[9px] font-medium text-white">
+            <div className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm">
               <Gavel className="h-2.5 w-2.5" />
               <span>Auktion</span>
             </div>

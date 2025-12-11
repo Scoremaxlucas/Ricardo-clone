@@ -54,15 +54,18 @@ export function ProductCard({
   useEffect(() => {
     let isMounted = true
 
-    const images = typeof product.images === 'string'
-      ? (() => {
-          try {
-            return JSON.parse(product.images)
-          } catch {
-            return product.images.split(',').filter(Boolean)
-          }
-        })()
-      : Array.isArray(product.images) ? product.images : []
+    const images =
+      typeof product.images === 'string'
+        ? (() => {
+            try {
+              return JSON.parse(product.images)
+            } catch {
+              return product.images.split(',').filter(Boolean)
+            }
+          })()
+        : Array.isArray(product.images)
+          ? product.images
+          : []
 
     if (images.length > 0 && isMounted) {
       setImageError(false) // Reset error wenn Bilder vorhanden sind
@@ -126,7 +129,9 @@ export function ProductCard({
             return product.images.split(',').filter(Boolean)
           }
         })()
-      : Array.isArray(product.images) ? product.images : []
+      : Array.isArray(product.images)
+        ? product.images
+        : []
 
   // KRITISCH: Immer das ERSTE Bild (Titelbild) verwenden, NIEMALS ein anderes
   // Verwende images[0] direkt - keine Filterung, keine Sortierung
@@ -134,12 +139,19 @@ export function ProductCard({
 
   // DEBUG: Log wenn falsches Bild verwendet wird
   if (images.length > 1 && product.id) {
-    console.log(`[ProductCard] Product ${product.id} (${product.title}) using title image (first of ${images.length} images)`)
+    console.log(
+      `[ProductCard] Product ${product.id} (${product.title}) using title image (first of ${images.length} images)`
+    )
   }
 
   // OPTIMIERT: Preload image when it becomes available for instant display
   useEffect(() => {
-    if (mainImage && typeof window !== 'undefined' && !mainImage.startsWith('data:') && !mainImage.startsWith('blob:')) {
+    if (
+      mainImage &&
+      typeof window !== 'undefined' &&
+      !mainImage.startsWith('data:') &&
+      !mainImage.startsWith('blob:')
+    ) {
       // Preload URL images for instant display
       const link = document.createElement('link')
       link.rel = 'preload'
@@ -275,49 +287,51 @@ export function ProductCard({
             '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)'
         }}
       >
-      <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
-        {mainImage ? (
-          mainImage.startsWith('data:image/') || mainImage.startsWith('blob:') || mainImage.length > 1000 ? (
-            <img
-              src={mainImage}
-              alt={product.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
-              loading="eager"
-              onError={() => {
-                setImageError(true)
-              }}
-              onLoad={() => {
-                setImageError(false)
-              }}
-            />
+        <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
+          {mainImage ? (
+            mainImage.startsWith('data:image/') ||
+            mainImage.startsWith('blob:') ||
+            mainImage.length > 1000 ||
+            mainImage.includes('blob.vercel-storage.com') ? (
+              <img
+                src={mainImage}
+                alt={product.title}
+                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="eager"
+                onError={() => {
+                  setImageError(true)
+                }}
+                onLoad={() => {
+                  setImageError(false)
+                }}
+              />
+            ) : (
+              <Image
+                src={mainImage}
+                alt={product.title}
+                fill
+                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                loading="eager"
+                priority
+                quality={85}
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                onError={() => {
+                  setImageError(true)
+                }}
+                onLoad={() => {
+                  setImageError(false)
+                }}
+              />
+            )
+          ) : imageError ? (
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-xs text-gray-400">
+              <Sparkles className="h-6 w-6 opacity-50" />
+              <span className="ml-2 text-xs">Kein Bild</span>
+            </div>
           ) : (
-            <Image
-              src={mainImage}
-              alt={product.title}
-              fill
-              className="object-cover transition-transform duration-300 group-hover:scale-105"
-              loading="eager"
-              priority
-              quality={85}
-              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              onError={() => {
-                setImageError(true)
-              }}
-              onLoad={() => {
-                setImageError(false)
-              }}
-              unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
-            />
-          )
-        ) : imageError ? (
-          <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-xs text-gray-400">
-            <Sparkles className="h-6 w-6 opacity-50" />
-            <span className="ml-2 text-xs">Kein Bild</span>
-          </div>
-        ) : (
-          // OPTIMIERT: Zeige subtilen Placeholder statt Spinner (wie Ricardo)
-          <div className="h-full w-full bg-gradient-to-br from-gray-50 to-gray-100" />
-        )}
+            // OPTIMIERT: Zeige subtilen Placeholder statt Spinner (wie Ricardo)
+            <div className="h-full w-full bg-gradient-to-br from-gray-50 to-gray-100" />
+          )}
 
           {/* Favorite Button - Größer auf Mobile */}
           <button
@@ -432,7 +446,10 @@ export function ProductCard({
         <div className="relative w-64 flex-shrink-0 bg-gray-100">
           <div className="relative aspect-[5/4]">
             {mainImage ? (
-              mainImage.startsWith('data:image/') || mainImage.startsWith('blob:') || mainImage.length > 1000 ? (
+              mainImage.startsWith('data:image/') ||
+              mainImage.startsWith('blob:') ||
+              mainImage.length > 1000 ||
+              mainImage.includes('blob.vercel-storage.com') ? (
                 <img
                   src={mainImage}
                   alt={product.title}
@@ -451,7 +468,6 @@ export function ProductCard({
                   onLoad={() => setImageError(false)}
                   sizes="256px"
                   loading="lazy"
-                  unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
                 />
               )
             ) : imageError ? (
@@ -582,7 +598,10 @@ export function ProductCard({
     >
       <div className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
         {mainImage ? (
-          mainImage.startsWith('data:image/') || mainImage.startsWith('blob:') || mainImage.length > 1000 ? (
+          mainImage.startsWith('data:image/') ||
+          mainImage.startsWith('blob:') ||
+          mainImage.length > 1000 ||
+          mainImage.includes('blob.vercel-storage.com') ? (
             <img
               src={mainImage}
               alt={product.title}
@@ -601,7 +620,6 @@ export function ProductCard({
               onLoad={() => setImageError(false)}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
               loading="lazy"
-              unoptimized={mainImage.startsWith('data:') || mainImage.startsWith('blob:')}
             />
           )
         ) : imageError ? (
@@ -643,9 +661,11 @@ export function ProductCard({
 
         {/* Auction Badge - Immer sichtbar wenn Auktion (auch mit Boostern) - Subtiler */}
         {product.isAuction && (
-          <div className={`absolute left-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 backdrop-blur-sm px-1.5 py-0.5 text-[9px] font-medium text-white ${
-            hasSuperBoost || hasTurboBoost || hasBoost ? 'top-10' : 'top-1.5'
-          }`}>
+          <div
+            className={`absolute left-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm ${
+              hasSuperBoost || hasTurboBoost || hasBoost ? 'top-10' : 'top-1.5'
+            }`}
+          >
             <Gavel className="h-2.5 w-2.5" />
             <span>Auktion</span>
           </div>
@@ -705,11 +725,7 @@ export function ProductCard({
         {/* Zusätzliche Details - Brand IMMER sichtbar, Condition immer sichtbar */}
         <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600">
           {/* Brand - IMMER sichtbar */}
-          {product.brand && (
-            <span className="text-primary-600 font-medium">
-              {product.brand}
-            </span>
-          )}
+          {product.brand && <span className="font-medium text-primary-600">{product.brand}</span>}
 
           {/* Condition - IMMER sichtbar */}
           {product.condition && (

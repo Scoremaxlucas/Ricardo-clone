@@ -72,9 +72,9 @@ export function ProductPageClient({
       if (e.key === 'Escape') {
         setIsImageModalOpen(false)
       } else if (e.key === 'ArrowLeft') {
-        setModalImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+        setModalImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1))
       } else if (e.key === 'ArrowRight') {
-        setModalImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+        setModalImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1))
       }
     }
 
@@ -99,9 +99,9 @@ export function ProductPageClient({
   // Navigiere im Modal
   const navigateModalImage = (direction: 'prev' | 'next') => {
     if (direction === 'prev') {
-      setModalImageIndex((prev) => (prev === 0 ? images.length - 1 : prev - 1))
+      setModalImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1))
     } else {
-      setModalImageIndex((prev) => (prev === images.length - 1 ? 0 : prev + 1))
+      setModalImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1))
     }
   }
 
@@ -138,12 +138,12 @@ export function ProductPageClient({
           {/* Hauptbild im Modal */}
           <div
             className="relative flex h-full w-full items-center justify-center p-8"
-            onClick={(e) => e.stopPropagation()}
+            onClick={e => e.stopPropagation()}
           >
             {/* Navigation: Vorheriges Bild */}
             {images.length > 1 && (
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   navigateModalImage('prev')
                 }}
@@ -155,9 +155,10 @@ export function ProductPageClient({
             )}
 
             {/* Bild */}
-            <div className="relative h-full w-full max-h-[90vh] max-w-[90vw]">
+            <div className="relative h-full max-h-[90vh] w-full max-w-[90vw]">
               {images[modalImageIndex]?.startsWith('data:image/') ||
-              images[modalImageIndex]?.length > 1000 ? (
+              images[modalImageIndex]?.length > 1000 ||
+              images[modalImageIndex]?.includes('blob.vercel-storage.com') ? (
                 <img
                   src={images[modalImageIndex]}
                   alt={`${watch.title} - Bild ${modalImageIndex + 1}`}
@@ -177,7 +178,7 @@ export function ProductPageClient({
             {/* Navigation: Nächstes Bild */}
             {images.length > 1 && (
               <button
-                onClick={(e) => {
+                onClick={e => {
                   e.stopPropagation()
                   navigateModalImage('next')
                 }}
@@ -197,11 +198,11 @@ export function ProductPageClient({
 
             {/* Thumbnail-Galerie im Modal */}
             {images.length > 1 && (
-              <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-2 overflow-x-auto pb-2">
+              <div className="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-2 overflow-x-auto pb-2">
                 {images.map((image, index) => (
                   <button
                     key={index}
-                    onClick={(e) => {
+                    onClick={e => {
                       e.stopPropagation()
                       setModalImageIndex(index)
                     }}
@@ -211,7 +212,9 @@ export function ProductPageClient({
                         : 'border-white/30 hover:border-white/60'
                     }`}
                   >
-                    {image?.startsWith('data:image/') || image?.length > 1000 ? (
+                    {image?.startsWith('data:image/') ||
+                    image?.length > 1000 ||
+                    image?.includes('blob.vercel-storage.com') ? (
                       <img
                         src={image}
                         alt={`${watch.title} - Bild ${index + 1}`}
@@ -278,7 +281,7 @@ export function ProductPageClient({
                       maxHeight: '800px',
                     }}
                     onClick={() => openImageModal(selectedImageIndex)}
-                    onMouseMove={(e) => {
+                    onMouseMove={e => {
                       if (!imageContainerRef.current || !zoomImageRef.current) return
                       const rect = imageContainerRef.current.getBoundingClientRect()
                       const x = ((e.clientX - rect.left) / rect.width) * 100
@@ -290,7 +293,8 @@ export function ProductPageClient({
                   >
                     {/* Hauptbild */}
                     {images[selectedImageIndex]?.startsWith('data:image/') ||
-                    images[selectedImageIndex]?.length > 1000 ? (
+                    images[selectedImageIndex]?.length > 1000 ||
+                    images[selectedImageIndex]?.includes('blob.vercel-storage.com') ? (
                       <img
                         ref={zoomImageRef}
                         src={images[selectedImageIndex]}
@@ -324,9 +328,9 @@ export function ProductPageClient({
                     {images.length > 1 && (
                       <>
                         <button
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation()
-                            setSelectedImageIndex((prev) =>
+                            setSelectedImageIndex(prev =>
                               prev === 0 ? images.length - 1 : prev - 1
                             )
                           }}
@@ -336,9 +340,9 @@ export function ProductPageClient({
                           <ChevronLeft className="h-6 w-6 text-gray-700" />
                         </button>
                         <button
-                          onClick={(e) => {
+                          onClick={e => {
                             e.stopPropagation()
-                            setSelectedImageIndex((prev) =>
+                            setSelectedImageIndex(prev =>
                               prev === images.length - 1 ? 0 : prev + 1
                             )
                           }}
@@ -379,7 +383,9 @@ export function ProductPageClient({
                               : 'border-gray-200 hover:border-gray-300'
                           }`}
                         >
-                          {image?.startsWith('data:image/') || image?.length > 1000 ? (
+                          {image?.startsWith('data:image/') ||
+                          image?.length > 1000 ||
+                          image?.includes('blob.vercel-storage.com') ? (
                             <img
                               src={image}
                               alt={`${watch.title} - Bild ${index + 1}`}
@@ -501,10 +507,7 @@ export function ProductPageClient({
             {/* Karte für Abholort - IMMER anzeigen wenn Seller vorhanden */}
             {seller && (
               <div className="mt-6 border-t border-gray-200 pt-6">
-                <PickupMap
-                  city={seller.city || 'Schweiz'}
-                  postalCode={seller.postalCode || ''}
-                />
+                <PickupMap city={seller.city || 'Schweiz'} postalCode={seller.postalCode || ''} />
               </div>
             )}
 

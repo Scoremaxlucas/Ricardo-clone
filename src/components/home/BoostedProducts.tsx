@@ -120,20 +120,28 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
               >
                 <div className="relative aspect-[5/4]">
                   {product.images && product.images.length > 0 ? (
-                    <Image
-                      src={product.images[0]}
-                      alt={product.title}
-                      fill
-                      className="object-cover"
-                      sizes="(max-width: 768px) 50vw, (max-width: 1200px) 20vw, 16vw"
-                      loading="lazy"
-                      unoptimized={
-                        product.images[0].startsWith('data:') || product.images[0].startsWith('blob:')
-                      }
-                    />
+                    product.images[0].startsWith('data:') ||
+                    product.images[0].startsWith('blob:') ||
+                    product.images[0].includes('blob.vercel-storage.com') ? (
+                      <img
+                        src={product.images[0]}
+                        alt={product.title}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <Image
+                        src={product.images[0]}
+                        alt={product.title}
+                        fill
+                        className="object-cover"
+                        sizes="(max-width: 768px) 50vw, (max-width: 1200px) 20vw, 16vw"
+                        loading="lazy"
+                      />
+                    )
                   ) : (
                     <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200">
-                      <Sparkles className="mb-2 h-6 w-6 opacity-50 text-gray-400" />
+                      <Sparkles className="mb-2 h-6 w-6 text-gray-400 opacity-50" />
                       <span className="text-xs text-gray-400">{t.home.noImage}</span>
                     </div>
                   )}

@@ -166,16 +166,27 @@ export function ModernProductCard({
       {/* Image Container - 260x260px */}
       <div className="relative h-[260px] w-full flex-shrink-0 overflow-hidden bg-[#F4F4F4]">
         {imageUrl && !imageError ? (
-          <Image
-            src={imageUrl}
-            alt={title}
-            fill
-            className="object-cover transition-transform duration-300 group-hover:scale-110"
-            onError={() => setImageError(true)}
-            sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-            loading="lazy"
-            unoptimized={imageUrl.startsWith('data:') || imageUrl.startsWith('blob:')}
-          />
+          imageUrl.startsWith('data:') ||
+          imageUrl.startsWith('blob:') ||
+          imageUrl.includes('blob.vercel-storage.com') ? (
+            <img
+              src={imageUrl}
+              alt={title}
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-110"
+              onError={() => setImageError(true)}
+              loading="lazy"
+            />
+          ) : (
+            <Image
+              src={imageUrl}
+              alt={title}
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-110"
+              onError={() => setImageError(true)}
+              sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              loading="lazy"
+            />
+          )
         ) : (
           <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-sm text-[#C6C6C6]">
             <Sparkles className="mb-2 h-8 w-8 opacity-50" />
@@ -200,7 +211,7 @@ export function ModernProductCard({
         <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">
           {/* Auktion Badge - Immer sichtbar wenn Auktion (auch mit Booster) - Subtiler */}
           {isAuction && (
-            <div className="flex items-center gap-1 rounded-md bg-gray-800/70 backdrop-blur-sm px-1.5 py-0.5 text-[9px] font-medium text-white">
+            <div className="flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm">
               <Gavel className="h-2.5 w-2.5" />
               <span>Auktion</span>
             </div>
@@ -251,53 +262,68 @@ export function ModernProductCard({
         )}
 
         {/* Auktion Info - Prominent wenn Auktion */}
-        {isAuction && auctionEnd && (() => {
-          const endDate = new Date(auctionEnd)
-          const urgent = isUrgent(endDate)
-          return (
-            <div className={`mb-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 ${
-              urgent ? 'bg-red-50 border border-red-200' : 'bg-orange-50'
-            }`}>
-              <Clock className={`h-3.5 w-3.5 flex-shrink-0 ${urgent ? 'text-red-600' : 'text-orange-600'}`} />
-              <span className={`text-[11px] font-semibold ${urgent ? 'text-red-700' : 'text-orange-700'}`}>
-                {formatAuctionEnd(auctionEnd)}
-                {urgent && <span className="ml-1">⚠️</span>}
-              </span>
-              {bids && bids.length > 0 && (
-                <span className={`ml-auto text-[11px] ${urgent ? 'text-red-600' : 'text-orange-600'}`}>
-                  {bids.length} {bids.length === 1 ? 'Gebot' : 'Gebote'}
+        {isAuction &&
+          auctionEnd &&
+          (() => {
+            const endDate = new Date(auctionEnd)
+            const urgent = isUrgent(endDate)
+            return (
+              <div
+                className={`mb-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 ${
+                  urgent ? 'border border-red-200 bg-red-50' : 'bg-orange-50'
+                }`}
+              >
+                <Clock
+                  className={`h-3.5 w-3.5 flex-shrink-0 ${urgent ? 'text-red-600' : 'text-orange-600'}`}
+                />
+                <span
+                  className={`text-[11px] font-semibold ${urgent ? 'text-red-700' : 'text-orange-700'}`}
+                >
+                  {formatAuctionEnd(auctionEnd)}
+                  {urgent && <span className="ml-1">⚠️</span>}
                 </span>
-              )}
-            </div>
-          )
-        })()}
+                {bids && bids.length > 0 && (
+                  <span
+                    className={`ml-auto text-[11px] ${urgent ? 'text-red-600' : 'text-orange-600'}`}
+                  >
+                    {bids.length} {bids.length === 1 ? 'Gebot' : 'Gebote'}
+                  </span>
+                )}
+              </div>
+            )
+          })()}
 
         {/* Angebotsende bei normalen Angeboten */}
-        {!isAuction && (() => {
-          const offerEndDate = calculateOfferEnd()
-          if (!offerEndDate) return null
-          const urgent = isUrgent(offerEndDate)
-          return (
-            <div className={`mb-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 ${
-              urgent ? 'bg-red-50 border border-red-200' : 'bg-gray-50'
-            }`}>
-              <Clock className={`h-3.5 w-3.5 flex-shrink-0 ${urgent ? 'text-red-600' : 'text-gray-600'}`} />
-              <span className={`text-[11px] font-semibold ${urgent ? 'text-red-700' : 'text-gray-700'}`}>
-                Endet: {formatOfferEnd(offerEndDate)}
-                {urgent && <span className="ml-1">⚠️</span>}
-              </span>
-            </div>
-          )
-        })()}
+        {!isAuction &&
+          (() => {
+            const offerEndDate = calculateOfferEnd()
+            if (!offerEndDate) return null
+            const urgent = isUrgent(offerEndDate)
+            return (
+              <div
+                className={`mb-2 flex items-center gap-1.5 rounded-md px-2 py-1.5 ${
+                  urgent ? 'border border-red-200 bg-red-50' : 'bg-gray-50'
+                }`}
+              >
+                <Clock
+                  className={`h-3.5 w-3.5 flex-shrink-0 ${urgent ? 'text-red-600' : 'text-gray-600'}`}
+                />
+                <span
+                  className={`text-[11px] font-semibold ${urgent ? 'text-red-700' : 'text-gray-700'}`}
+                >
+                  Endet: {formatOfferEnd(offerEndDate)}
+                  {urgent && <span className="ml-1">⚠️</span>}
+                </span>
+              </div>
+            )
+          })()}
 
         {/* Location - IMMER sichtbar, sehr prominent */}
         {(city || postalCode) && (
           <div className="mb-2 flex items-center gap-1.5 rounded-md bg-gray-50 px-2 py-1.5 text-[12px] font-bold text-gray-800">
             <MapPin className="h-4 w-4 flex-shrink-0 text-primary-600" />
             <span className="truncate">
-              {postalCode && city
-                ? `${postalCode} ${city}`
-                : postalCode || city || ''}
+              {postalCode && city ? `${postalCode} ${city}` : postalCode || city || ''}
             </span>
           </div>
         )}
@@ -305,11 +331,7 @@ export function ModernProductCard({
         {/* Zusätzliche Details - Nur beim Hover sichtbar */}
         <div className="mt-auto flex flex-wrap items-center gap-2 text-[11px] text-[#C6C6C6] opacity-0 transition-opacity duration-300 group-hover:opacity-100">
           {/* Brand */}
-          {brand && (
-            <span className="text-[#137A5F] font-medium">
-              {brand}
-            </span>
-          )}
+          {brand && <span className="font-medium text-[#137A5F]">{brand}</span>}
 
           {/* Condition Badge */}
           {condition && (
@@ -320,9 +342,9 @@ export function ModernProductCard({
 
           {/* Verified Badge */}
           {verified && (
-            <span className="flex items-center gap-1 flex-shrink-0 text-[#137A5F]">
+            <span className="flex flex-shrink-0 items-center gap-1 text-[#137A5F]">
               <CheckCircle2 className="h-3 w-3 flex-shrink-0" />
-              <span className="text-[10px] font-medium whitespace-nowrap">Verifiziert</span>
+              <span className="whitespace-nowrap text-[10px] font-medium">Verifiziert</span>
             </span>
           )}
         </div>

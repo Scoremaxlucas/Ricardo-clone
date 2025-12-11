@@ -1,10 +1,10 @@
 'use client'
 
+import { Globe, Heart, Lock, Send } from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { Send, Globe, Lock, Calendar, MapPin, Package, Clock, Tag, Heart } from 'lucide-react'
-import Image from 'next/image'
 
 interface Watch {
   id: string
@@ -168,7 +168,7 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
             {/* Bilder */}
             <div className="rounded-lg bg-white p-6 shadow-md">
               <div className="relative mx-auto aspect-square w-full max-w-2xl">
-                {isBase64Image(imageUrl) ? (
+                {isBase64Image(imageUrl) || imageUrl.includes('blob.vercel-storage.com') ? (
                   <img
                     src={imageUrl}
                     alt={watch.title}
@@ -187,7 +187,7 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
                 <div className="mt-4 grid grid-cols-4 gap-2">
                   {images.slice(1, 5).map((img, idx) => (
                     <div key={idx} className="relative aspect-square">
-                      {isBase64Image(img) ? (
+                      {isBase64Image(img) || img.includes('blob.vercel-storage.com') ? (
                         <img
                           src={img}
                           alt={`${watch.title} ${idx + 2}`}

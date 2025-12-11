@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import Image from 'next/image'
 import { ArticleSkeleton } from '@/components/ui/ArticleSkeleton'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 interface Watch {
   id: string
@@ -96,7 +96,7 @@ export default function WatchesPage() {
                 <Link
                   key={watch.id}
                   href={`/products/${watch.id}`}
-                  className={`overflow-hidden rounded-lg shadow-md transition-all hover:shadow-xl animate-in fade-in slide-in-from-bottom-4 ${
+                  className={`animate-in fade-in slide-in-from-bottom-4 overflow-hidden rounded-lg shadow-md transition-all hover:shadow-xl ${
                     index < 12 ? '' : 'duration-300'
                   } ${
                     hasSuperBoost
@@ -109,7 +109,18 @@ export default function WatchesPage() {
                   }`}
                 >
                   <div className="relative aspect-square w-full">
-                    <Image src={imageUrl} alt={watch.title} fill className="object-cover" />
+                    {imageUrl.includes('blob.vercel-storage.com') ||
+                    imageUrl.startsWith('data:') ||
+                    imageUrl.startsWith('blob:') ? (
+                      <img
+                        src={imageUrl}
+                        alt={watch.title}
+                        className="h-full w-full object-cover"
+                        loading="lazy"
+                      />
+                    ) : (
+                      <Image src={imageUrl} alt={watch.title} fill className="object-cover" />
+                    )}
                     {hasSuperBoost && (
                       <div className="absolute left-2 top-2 rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 px-2 py-1 text-xs font-bold text-white shadow-lg">
                         ⭐

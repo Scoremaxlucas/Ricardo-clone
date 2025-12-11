@@ -665,7 +665,22 @@ export default function AdminModerateWatchesPage() {
                       </div>
                       <div className="flex-shrink-0">
                         <div className="relative h-24 w-24 overflow-hidden rounded-lg bg-gray-200">
-                          <Image src={mainImage} alt={watch.title} fill className="object-cover" />
+                          {mainImage.startsWith('data:') ||
+                          mainImage.startsWith('blob:') ||
+                          mainImage.includes('blob.vercel-storage.com') ? (
+                            <img
+                              src={mainImage}
+                              alt={watch.title}
+                              className="h-full w-full object-cover"
+                            />
+                          ) : (
+                            <Image
+                              src={mainImage}
+                              alt={watch.title}
+                              fill
+                              className="object-cover"
+                            />
+                          )}
                         </div>
                       </div>
                       <div className="flex-1">

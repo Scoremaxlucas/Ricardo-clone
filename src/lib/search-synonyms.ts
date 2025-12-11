@@ -334,3 +334,5 @@ export const searchSynonyms: Record<string, string[]> = {
   klavier: ['piano', 'pianos', 'klavier', 'klaviers', 'flügel', 'grand piano'],
 }
 
+
+

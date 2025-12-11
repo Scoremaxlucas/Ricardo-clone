@@ -54,3 +54,5 @@ Dies konvertiert alle Base64-Bilder zu Blob Storage URLs.
 - ✅ Bilder werden über Batch-API nachgeladen
 - ✅ Performance wie Ricardo
 
+
+
