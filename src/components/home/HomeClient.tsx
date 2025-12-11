@@ -1,9 +1,9 @@
 'use client'
 
-import { Suspense, lazy, useEffect, useRef } from 'react'
-import { useSearchParams } from 'next/navigation'
-import { toast } from 'react-hot-toast'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useSearchParams } from 'next/navigation'
+import { Suspense, lazy, useEffect, useRef } from 'react'
+import { toast } from 'react-hot-toast'
 
 // Lazy load below-the-fold components
 const LazyTrendingNow = lazy(() =>
@@ -11,6 +11,9 @@ const LazyTrendingNow = lazy(() =>
 )
 const LazyCategorySpotlight = lazy(() =>
   import('@/components/home/CategorySpotlight').then(m => ({ default: m.CategorySpotlight }))
+)
+const LazyLocationMap = lazy(() =>
+  import('@/components/home/LocationMap').then(m => ({ default: m.LocationMap }))
 )
 
 export function HomeClient() {
@@ -77,7 +80,19 @@ export function HomeClient() {
       >
         <LazyCategorySpotlight />
       </Suspense>
+
+      {/* Location Map - Lazy loaded */}
+      <Suspense
+        fallback={
+          <div className="bg-white py-16">
+            <div className="mx-auto max-w-7xl px-4 text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
+            </div>
+          </div>
+        }
+      >
+        <LazyLocationMap />
+      </Suspense>
     </>
   )
 }
-

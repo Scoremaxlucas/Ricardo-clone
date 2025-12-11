@@ -1,29 +1,27 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { createPortal } from 'react-dom'
-import Link from 'next/link'
-import {
-  Search,
-  User,
-  Heart,
-  Bell,
-  LogOut,
-  ChevronDown,
-  Gavel,
-  Plus,
-  X,
-  Package,
-  ShoppingBag,
-  Settings,
-  Wallet,
-  Shield,
-} from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
-import { useSession, signOut } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { UserName } from '@/components/ui/UserName'
 import { useLanguage } from '@/contexts/LanguageContext'
+import {
+  Bell,
+  ChevronDown,
+  Gavel,
+  Heart,
+  LogOut,
+  Package,
+  Plus,
+  Settings,
+  Shield,
+  ShoppingBag,
+  User,
+  Wallet,
+  X,
+} from 'lucide-react'
+import { signOut, useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { CategoryBar } from './CategoryBar'
 
 export function Header() {
@@ -86,8 +84,7 @@ export function Header() {
           })
           .then(data => {
             console.log('Admin status from API:', data)
-            const adminValue =
-              data.isAdmin === true || data.isAdmin === 'true'
+            const adminValue = data.isAdmin === true || data.isAdmin === 'true'
             console.log('Setting isAdmin to:', adminValue)
             setIsAdmin(adminValue)
           })
@@ -286,7 +283,7 @@ export function Header() {
     if (isNumericArticleNumber) {
       // OPTIMIERT: Asynchroner Check im Hintergrund, aber sofortige Navigation zur Suche
       fetch(`/api/articles/search?q=${encodeURIComponent(query)}&limit=1`)
-        .then(res => res.ok ? res.json() : null)
+        .then(res => (res.ok ? res.json() : null))
         .then(data => {
           if (data?.watches?.length === 1) {
             // Eindeutiger Treffer: Navigiere zur Artikelseite
@@ -303,7 +300,10 @@ export function Header() {
   }
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white shadow-md" style={{ position: 'relative' }}>
+    <header
+      className="sticky top-0 z-50 border-b bg-white shadow-md"
+      style={{ position: 'relative' }}
+    >
       <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
         {/* ERSTE ZEILE: Logo, Navigation, User Actions - NO OVERFLOW */}
         <div className="flex h-12 min-w-0 items-center justify-between py-1 md:h-14">
@@ -375,7 +375,9 @@ export function Header() {
               >
                 <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
                 <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
-                <ChevronDown className={`h-3 w-3 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`} />
+                <ChevronDown
+                  className={`h-3 w-3 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`}
+                />
               </Link>
 
               {/* Dropdown Menu */}
@@ -387,7 +389,7 @@ export function Header() {
                     onMouseEnter={handleSellMenuEnter}
                   />
                   <div
-                    className="absolute left-0 top-full z-[10002] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg dropdown-enter"
+                    className="dropdown-enter absolute left-0 top-full z-[10002] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg"
                     onMouseEnter={handleSellMenuEnter}
                     onMouseLeave={handleSellMenuLeave}
                     style={{
@@ -422,7 +424,7 @@ export function Header() {
             </div>
           </div>
 
-            {/* User Actions - Rechts - IMMER SICHTBAR - Overflow verhindern - NO BRANCHING OUT */}
+          {/* User Actions - Rechts - IMMER SICHTBAR - Overflow verhindern - NO BRANCHING OUT */}
           <div className="flex flex-shrink-0 items-center gap-0.5 sm:gap-1 md:gap-1.5 lg:gap-2">
             {/* Notifications - Icon auf Mobile, Icon + Text auf Desktop */}
             <Link
@@ -500,125 +502,123 @@ export function Header() {
                           visibility: 'visible',
                           opacity: 1,
                           pointerEvents: 'auto',
-                          marginTop: '4px' // Smaller gap - 4px instead of mt-1 (8px)
+                          marginTop: '4px', // Smaller gap - 4px instead of mt-1 (8px)
                         }}
                       >
-                          <div className="relative py-1">
-                            <div className="border-b border-gray-100 px-4 py-3">
-                              <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
-                                <UserName
-                                  userId={session.user.id}
-                                  userName={
-                                    userNickname ||
-                                    session.user?.nickname ||
-                                    session.user?.name ||
-                                    t.header.user
-                                  }
-                                  badgeSize="sm"
-                                />
-                              </p>
-                              <p className="truncate text-sm text-gray-500">
-                                {session.user?.email}
-                              </p>
-                            </div>
-                            <Link
-                              href="/profile"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                            >
-                              <div className="flex items-center">
-                                <User className="mr-2 h-4 w-4" />
-                                {t.header.myProfile}
-                              </div>
-                            </Link>
-                            <Link
-                              href="/my-watches"
-                              prefetch={true}
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                            >
-                              <div className="flex items-center">
-                                <Package className="mr-2 h-4 w-4" />
-                                {t.header.mySelling}
-                              </div>
-                            </Link>
-                            <Link
-                              href="/my-watches/buying"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                            >
-                              <div className="flex items-center">
-                                <ShoppingBag className="mr-2 h-4 w-4" />
-                                {t.header.myBuying}
-                              </div>
-                            </Link>
-                            <Link
-                              href="/my-watches/account"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                            >
-                              <div className="flex items-center">
-                                <Settings className="mr-2 h-4 w-4" />
-                                {t.header.settings}
-                              </div>
-                            </Link>
-                            <div className="my-1 border-t border-gray-100" />
-                            <Link
-                              href="/my-watches/selling/fees"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                            >
-                              <div className="flex items-center">
-                                <Wallet className="mr-2 h-4 w-4" />
-                                {t.header.feesAndInvoices}
-                              </div>
-                            </Link>
-                            <Link
-                              href="/my-watches/selling/cancel-request"
-                              onClick={() => setIsProfileMenuOpen(false)}
-                              className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                            >
-                              <div className="flex items-center">
-                                <X className="mr-2 h-4 w-4" />
-                                {t.header.cancel}
-                              </div>
-                            </Link>
-                            {(isAdmin || session.user?.isAdmin === true) && (
-                              <>
-                                <div className="my-1 border-t border-gray-100" />
-                                <Link
-                                  href="/admin/dashboard"
-                                  onClick={() => setIsProfileMenuOpen(false)}
-                                  className="block px-4 py-2 text-sm font-semibold text-primary-600 transition-colors hover:bg-gray-50 hover:text-primary-700"
-                                >
-                                  <div className="flex items-center">
-                                    <Shield className="mr-2 h-4 w-4" />
-                                    {t.header.adminDashboard}
-                                  </div>
-                                </Link>
-                              </>
-                            )}
-                            <div className="my-1 border-t border-gray-200" />
-                            <button
-                              onClick={async () => {
-                                setIsProfileMenuOpen(false)
-                                try {
-                                  await signOut({ callbackUrl: '/' })
-                                } catch (error) {
-                                  console.error('Error signing out:', error)
-                                  // Fallback: manuell zur Hauptseite
-                                  window.location.href = '/'
+                        <div className="relative py-1">
+                          <div className="border-b border-gray-100 px-4 py-3">
+                            <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                              <UserName
+                                userId={session.user.id}
+                                userName={
+                                  userNickname ||
+                                  session.user?.nickname ||
+                                  session.user?.name ||
+                                  t.header.user
                                 }
-                              }}
-                              className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
-                            >
-                              <div className="flex items-center">
-                                <LogOut className="mr-2 h-4 w-4" />
-                                {t.header.logout}
-                              </div>
-                            </button>
+                                badgeSize="sm"
+                              />
+                            </p>
+                            <p className="truncate text-sm text-gray-500">{session.user?.email}</p>
                           </div>
+                          <Link
+                            href="/profile"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <User className="mr-2 h-4 w-4" />
+                              {t.header.myProfile}
+                            </div>
+                          </Link>
+                          <Link
+                            href="/my-watches"
+                            prefetch={true}
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <Package className="mr-2 h-4 w-4" />
+                              {t.header.mySelling}
+                            </div>
+                          </Link>
+                          <Link
+                            href="/my-watches/buying"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <ShoppingBag className="mr-2 h-4 w-4" />
+                              {t.header.myBuying}
+                            </div>
+                          </Link>
+                          <Link
+                            href="/my-watches/account"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <Settings className="mr-2 h-4 w-4" />
+                              {t.header.settings}
+                            </div>
+                          </Link>
+                          <div className="my-1 border-t border-gray-100" />
+                          <Link
+                            href="/my-watches/selling/fees"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <Wallet className="mr-2 h-4 w-4" />
+                              {t.header.feesAndInvoices}
+                            </div>
+                          </Link>
+                          <Link
+                            href="/my-watches/selling/cancel-request"
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <X className="mr-2 h-4 w-4" />
+                              {t.header.cancel}
+                            </div>
+                          </Link>
+                          {(isAdmin || session.user?.isAdmin === true) && (
+                            <>
+                              <div className="my-1 border-t border-gray-100" />
+                              <Link
+                                href="/admin/dashboard"
+                                onClick={() => setIsProfileMenuOpen(false)}
+                                className="block px-4 py-2 text-sm font-semibold text-primary-600 transition-colors hover:bg-gray-50 hover:text-primary-700"
+                              >
+                                <div className="flex items-center">
+                                  <Shield className="mr-2 h-4 w-4" />
+                                  {t.header.adminDashboard}
+                                </div>
+                              </Link>
+                            </>
+                          )}
+                          <div className="my-1 border-t border-gray-200" />
+                          <button
+                            onClick={async () => {
+                              setIsProfileMenuOpen(false)
+                              try {
+                                await signOut({ callbackUrl: '/' })
+                              } catch (error) {
+                                console.error('Error signing out:', error)
+                                // Fallback: manuell zur Hauptseite
+                                window.location.href = '/'
+                              }
+                            }}
+                            className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                          >
+                            <div className="flex items-center">
+                              <LogOut className="mr-2 h-4 w-4" />
+                              {t.header.logout}
+                            </div>
+                          </button>
                         </div>
+                      </div>
                     )}
                   </div>
                 </>
@@ -650,7 +650,9 @@ export function Header() {
                 title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
               >
                 {/* Nur Flagge anzeigen, kein Text um Overflow zu vermeiden */}
-                <span className="text-lg sm:text-xl">{languages.find(l => l.code === language)?.flag}</span>
+                <span className="text-lg sm:text-xl">
+                  {languages.find(l => l.code === language)?.flag}
+                </span>
                 <ChevronDown
                   className={`ml-0.5 h-3 w-3 transition-transform sm:h-4 sm:w-4 ${isLanguageMenuOpen ? 'rotate-180' : ''}`}
                 />
@@ -667,71 +669,39 @@ export function Header() {
                     visibility: 'visible',
                     opacity: 1,
                     pointerEvents: 'auto',
-                    marginTop: '4px' // Smaller gap - 4px instead of mt-1 (8px)
+                    marginTop: '4px', // Smaller gap - 4px instead of mt-1 (8px)
                   }}
                 >
-                    <div className="py-1">
-                      {languages.map(lang => (
-                        <button
-                          key={lang.code}
-                          onClick={() => {
-                            setLanguage(lang.code)
-                            setIsLanguageMenuOpen(false)
-                          }}
-                          className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-gray-50 ${
-                            language === lang.code
-                              ? 'bg-primary-50 font-medium text-primary-600'
-                              : 'text-gray-700 hover:text-primary-600'
-                          }`}
-                        >
-                          <span className="text-xl">{lang.flag}</span>
-                          <span>{lang.name}</span>
-                          {language === lang.code && (
-                            <span className="ml-auto text-primary-600">✓</span>
-                          )}
-                        </button>
-                      ))}
-                    </div>
+                  <div className="py-1">
+                    {languages.map(lang => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          setLanguage(lang.code)
+                          setIsLanguageMenuOpen(false)
+                        }}
+                        className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-gray-50 ${
+                          language === lang.code
+                            ? 'bg-primary-50 font-medium text-primary-600'
+                            : 'text-gray-700 hover:text-primary-600'
+                        }`}
+                      >
+                        <span className="text-xl">{lang.flag}</span>
+                        <span>{lang.name}</span>
+                        {language === lang.code && (
+                          <span className="ml-auto text-primary-600">✓</span>
+                        )}
+                      </button>
+                    ))}
                   </div>
-              )}
-            </div>
-
-          </div>
-        </div>
-
-        {/* ZWEITE ZEILE: Suchleiste - ZENTRIERT - Versteckt auf sehr kleinen Bildschirmen */}
-        <div className="hidden border-t border-gray-200 py-3 sm:block">
-          <div className="flex items-center justify-center">
-            {/* Suchleiste - Zentriert */}
-            <div className="max-w-3xl flex-1">
-              <form onSubmit={handleSearch}>
-                <div className="relative flex items-center">
-                  <div className="pointer-events-none absolute left-4 flex items-center">
-                    <Search className="h-5 w-5 text-gray-400" />
-                  </div>
-                  <input
-                    type="text"
-                    placeholder={t.header.searchPlaceholder}
-                    value={searchQuery}
-                    onChange={e => setSearchQuery(e.target.value)}
-                    className="block w-full rounded-l-lg border border-gray-300 py-2.5 pl-11 pr-4 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  />
-                  <button
-                    type="submit"
-                    className="rounded-r-lg bg-primary-600 px-6 py-2.5 font-medium text-white transition-colors hover:bg-primary-700"
-                  >
-                    {t.header.search}
-                  </button>
                 </div>
-              </form>
+              )}
             </div>
           </div>
         </div>
 
         {/* DRITTE ZEILE: CategoryBar mit Kategorien */}
         <CategoryBar />
-
-
       </div>
     </header>
   )

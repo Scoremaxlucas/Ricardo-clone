@@ -193,7 +193,7 @@ export function SearchAutocomplete({
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder || 'Suchen Sie nach Produkten...'}
-            className="w-full rounded-full border-2 border-gray-200 bg-white py-4 pl-12 pr-12 text-base shadow-lg transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 md:py-5 md:text-lg"
+            className="w-full rounded-full border-2 border-gray-200 bg-white py-4 pl-12 pr-12 text-base text-gray-900 shadow-lg transition-all placeholder:text-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 md:py-5 md:text-lg"
           />
           {query && (
             <button
@@ -221,7 +221,9 @@ export function SearchAutocomplete({
           className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-xl"
         >
           {isLoading ? (
-            <div className="px-4 py-3 text-center text-sm text-gray-500">Lädt...</div>
+            <div className="flex items-center justify-center px-4 py-3">
+              <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"></div>
+            </div>
           ) : (
             <>
               {showPopular && (
