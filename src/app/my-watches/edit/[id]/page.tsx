@@ -84,6 +84,55 @@ export default function EditWatchPage() {
     shippingMethods: [] as string[],
   })
 
+  // Paste from clipboard support
+  useEffect(() => {
+    const handlePaste = async (e: ClipboardEvent) => {
+      const items = e.clipboardData?.items
+      if (!items) return
+
+      const imageItems = Array.from(items).filter(item => item.type.startsWith('image/'))
+      if (imageItems.length === 0) return
+
+      e.preventDefault()
+
+      for (const item of imageItems) {
+        const file = item.getAsFile()
+        if (!file) continue
+
+        try {
+          const { compressImage } = await import('@/lib/image-compression')
+          const compressedImage = await compressImage(file, {
+            maxWidth: 1600,
+            maxHeight: 1600,
+            quality: 0.75,
+            maxSizeMB: 1.5,
+          })
+
+          setFormData(prev => ({
+            ...prev,
+            images: [...prev.images, compressedImage],
+          }))
+
+          toast.success('Bild aus Zwischenablage hinzugefügt.', {
+            position: 'top-right',
+            duration: 3000,
+          })
+        } catch (error) {
+          console.error('Fehler beim Verarbeiten von Bild aus Zwischenablage:', error)
+          toast.error('Fehler beim Verarbeiten des Bildes aus der Zwischenablage.', {
+            position: 'top-right',
+            duration: 4000,
+          })
+        }
+      }
+    }
+
+    window.addEventListener('paste', handlePaste)
+    return () => {
+      window.removeEventListener('paste', handlePaste)
+    }
+  }, [])
+
   // Lade Watch-Daten
   useEffect(() => {
     const loadWatch = async () => {
@@ -359,6 +408,71 @@ export default function EditWatchPage() {
           duration: 4000,
         })
       }
+    }
+  }
+
+  const handleImageUrlAdd = async (url: string) => {
+    if (!url || (!url.startsWith('http://') && !url.startsWith('https://'))) {
+      toast.error('Bitte geben Sie eine gültige URL ein (beginnt mit http:// oder https://)', {
+        position: 'top-right',
+        duration: 4000,
+      })
+      return
+    }
+
+    try {
+      // Prüfe ob URL ein Bild ist
+      const response = await fetch(url, { method: 'HEAD' })
+      const contentType = response.headers.get('content-type')
+      
+      if (!contentType || !contentType.startsWith('image/')) {
+        toast.error('Die URL zeigt nicht auf ein Bild. Bitte verwenden Sie eine Bild-URL.', {
+          position: 'top-right',
+          duration: 4000,
+        })
+        return
+      }
+
+      // Lade Bild und konvertiere zu Base64
+      const imageResponse = await fetch(url)
+      const blob = await imageResponse.blob()
+      
+      // Prüfe Größe
+      if (blob.size > 10 * 1024 * 1024) {
+        toast.error('Bild ist zu groß. Maximale Größe: 10MB', {
+          position: 'top-right',
+          duration: 4000,
+        })
+        return
+      }
+
+      // Konvertiere zu File für Komprimierung
+      const file = new File([blob], 'image.jpg', { type: blob.type })
+      
+      // Verwende Bildkomprimierung
+      const { compressImage } = await import('@/lib/image-compression')
+      const compressedImage = await compressImage(file, {
+        maxWidth: 1600,
+        maxHeight: 1600,
+        quality: 0.75,
+        maxSizeMB: 1.5,
+      })
+
+      setFormData(prev => ({
+        ...prev,
+        images: [...prev.images, compressedImage],
+      }))
+
+      toast.success('Bild von URL hinzugefügt.', {
+        position: 'top-right',
+        duration: 3000,
+      })
+    } catch (error) {
+      console.error('Fehler beim Laden von Bild-URL:', error)
+      toast.error('Fehler beim Laden des Bildes von der URL. Bitte versuchen Sie es erneut.', {
+        position: 'top-right',
+        duration: 4000,
+      })
     }
   }
 
@@ -1073,19 +1187,94 @@ export default function EditWatchPage() {
                 )}
               </h2>
 
-              <div className="mb-4">
-                <input
-                  type="file"
-                  multiple
-                  accept="image/*"
-                  onChange={handleImageUpload}
-                  className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
-                />
-                <p className="mt-1 text-sm text-gray-500">
-                  {hasBids
-                    ? 'Laden Sie zusätzliche Bilder hoch'
-                    : 'Laden Sie bis zu 10 Bilder hoch (JPG, PNG, max. 5MB pro Bild)'}
-                </p>
+              <div className="mb-4 space-y-4">
+                {/* File Upload */}
+                <div>
+                  <input
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
+                  />
+                </div>
+
+                {/* URL Input */}
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Oder fügen Sie ein Bild per URL hinzu:
+                  </label>
+                  <div className="flex gap-2">
+                    <input
+                      type="url"
+                      placeholder="https://example.com/image.jpg"
+                      className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                      onKeyDown={async (e) => {
+                        if (e.key === 'Enter') {
+                          e.preventDefault()
+                          const urlInput = e.currentTarget
+                          const url = urlInput.value.trim()
+                          if (url) {
+                            await handleImageUrlAdd(url)
+                            urlInput.value = ''
+                          }
+                        }
+                      }}
+                    />
+                    <button
+                      type="button"
+                      onClick={async (e) => {
+                        const input = e.currentTarget.previousElementSibling as HTMLInputElement
+                        const url = input.value.trim()
+                        if (url) {
+                          await handleImageUrlAdd(url)
+                          input.value = ''
+                        }
+                      }}
+                      className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    >
+                      Hinzufügen
+                    </button>
+                  </div>
+                </div>
+
+                {/* Drag and Drop Zone */}
+                <div
+                  className="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary-400 transition-colors"
+                  onDragOver={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    e.currentTarget.classList.add('border-primary-500', 'bg-primary-50')
+                  }}
+                  onDragLeave={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    e.currentTarget.classList.remove('border-primary-500', 'bg-primary-50')
+                  }}
+                  onDrop={async (e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    e.currentTarget.classList.remove('border-primary-500', 'bg-primary-50')
+                    
+                    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'))
+                    if (files.length > 0) {
+                      const fakeEvent = {
+                        target: { files, value: '' },
+                      } as React.ChangeEvent<HTMLInputElement>
+                      await handleImageUpload(fakeEvent)
+                    }
+                  }}
+                >
+                  <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+                  <p className="text-sm text-gray-600">
+                    Ziehen Sie Bilder hierher oder klicken Sie zum Auswählen
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    {hasBids
+                      ? 'Zusätzliche Bilder möglich'
+                      : 'Bis zu 10 Bilder (JPG, PNG, max. 5MB pro Bild)'}
+                  </p>
+                </div>
               </div>
 
               {formData.images.length > 0 && (
