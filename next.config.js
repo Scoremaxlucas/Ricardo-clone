@@ -107,6 +107,21 @@ const nextConfig = {
       }
     }
 
+    // Leaflet is browser-only - exclude from server-side bundle
+    if (isServer) {
+      config.externals = config.externals || []
+      if (Array.isArray(config.externals)) {
+        config.externals.push({
+          leaflet: 'commonjs leaflet',
+          'react-leaflet': 'commonjs react-leaflet',
+        })
+      } else {
+        const externals = config.externals
+        externals.leaflet = 'commonjs leaflet'
+        externals['react-leaflet'] = 'commonjs react-leaflet'
+      }
+    }
+
     // OPTIMIERT: Bundle Size Optimization
     if (!isServer) {
       config.optimization = config.optimization || {}
