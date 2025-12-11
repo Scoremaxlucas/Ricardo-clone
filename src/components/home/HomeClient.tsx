@@ -12,12 +12,19 @@ const LazyTrendingNow = lazy(() =>
 const LazyCategorySpotlight = lazy(() =>
   import('@/components/home/CategorySpotlight').then(m => ({ default: m.CategorySpotlight }))
 )
+const LazySocialProofWidget = lazy(() =>
+  import('@/components/home/SocialProofWidget').then(m => ({ default: m.SocialProofWidget }))
+)
 // Temporarily disabled to fix build issues
 // const LazyLocationMap = lazy(() =>
 //   import('@/components/home/LocationMap').then(m => ({ default: m.LocationMap }))
 // )
 
-export function HomeClient() {
+interface HomeClientProps {
+  featuredProductIds?: string[]
+}
+
+export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
   const searchParams = useSearchParams()
   const hasShownToast = useRef(false)
   const { t } = useLanguage()
@@ -56,6 +63,21 @@ export function HomeClient() {
 
   return (
     <>
+      {/* Social Proof Widget - Feature 2 */}
+      {featuredProductIds.length > 0 && (
+        <Suspense
+          fallback={
+            <div className="bg-gradient-to-br from-primary-50 to-primary-100 py-8">
+              <div className="mx-auto max-w-[1600px] px-4 text-center">
+                <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
+              </div>
+            </div>
+          }
+        >
+          <LazySocialProofWidget watchIds={featuredProductIds} />
+        </Suspense>
+      )}
+
       {/* Trending Now - Lazy loaded */}
       <Suspense
         fallback={

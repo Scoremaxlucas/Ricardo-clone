@@ -1143,15 +1143,15 @@ export default function EditWatchPage() {
               </h2>
 
               {/* Verstecktes File Input */}
-              <input
+                  <input
                 ref={fileInputRef}
-                type="file"
-                multiple
-                accept="image/*"
-                onChange={handleImageUpload}
+                    type="file"
+                    multiple
+                    accept="image/*"
+                    onChange={handleImageUpload}
                 className="hidden"
                 aria-label="Bilder hochladen"
-              />
+                  />
 
               {/* Drag and Drop Zone - Anklickbar */}
               <div
@@ -1161,40 +1161,40 @@ export default function EditWatchPage() {
                     : 'border-gray-300 bg-gray-50 hover:border-primary-400 hover:bg-primary-50/50'
                 }`}
                 onClick={() => fileInputRef.current?.click()}
-                onDragOver={e => {
-                  e.preventDefault()
-                  e.stopPropagation()
+                  onDragOver={e => {
+                    e.preventDefault()
+                    e.stopPropagation()
                   setIsDragging(true)
-                }}
-                onDragLeave={e => {
-                  e.preventDefault()
-                  e.stopPropagation()
+                  }}
+                  onDragLeave={e => {
+                    e.preventDefault()
+                    e.stopPropagation()
                   setIsDragging(false)
-                }}
-                onDrop={async e => {
-                  e.preventDefault()
-                  e.stopPropagation()
+                  }}
+                  onDrop={async e => {
+                    e.preventDefault()
+                    e.stopPropagation()
                   setIsDragging(false)
 
-                  const files = Array.from(e.dataTransfer.files).filter(file =>
-                    file.type.startsWith('image/')
-                  )
-                  if (files.length > 0) {
+                    const files = Array.from(e.dataTransfer.files).filter(file =>
+                      file.type.startsWith('image/')
+                    )
+                    if (files.length > 0) {
                     await processFiles(files)
-                  }
-                }}
-              >
+                    }
+                  }}
+                >
                 <Upload className="mx-auto mb-3 h-12 w-12 text-gray-400" />
                 <p className="text-sm font-medium text-gray-700">
                   {formData.images.length === 0
                     ? 'Klicken Sie hier oder ziehen Sie Bilder hierher'
                     : 'Klicken Sie hier oder ziehen Sie weitere Bilder hierher'}
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
                   {formData.images.length === 0
                     ? 'Titelbild hochladen (JPG, PNG, max. 10MB)'
                     : 'Weitere Bilder hinzufügen (JPG, PNG, max. 10MB pro Bild). Bis zu 10 Bilder insgesamt.'}
-                </p>
+                  </p>
               </div>
 
               {formData.images.length > 0 && (

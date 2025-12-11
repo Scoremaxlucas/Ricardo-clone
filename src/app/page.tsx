@@ -39,7 +39,7 @@ export default async function Home() {
 
         {/* Client Components für interaktive Features */}
         <Suspense fallback={<div className="py-16 text-center text-gray-600">Lade Inhalte...</div>}>
-          <HomeClient />
+          <HomeClient featuredProductIds={featuredProducts.map(p => p.id)} />
         </Suspense>
       </main>
       <Footer />

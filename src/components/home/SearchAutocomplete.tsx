@@ -72,8 +72,10 @@ export function SearchAutocomplete({
     }
   }, [])
 
-  // Debounce Input-Änderungen
+  // Debounce Input-Änderungen - nur wenn User interagiert hat
   useEffect(() => {
+    if (!hasInteracted) return
+
     if (debounceTimeoutRef.current) {
       clearTimeout(debounceTimeoutRef.current)
     }
@@ -94,7 +96,7 @@ export function SearchAutocomplete({
         clearTimeout(debounceTimeoutRef.current)
       }
     }
-  }, [query, fetchSuggestions])
+  }, [query, fetchSuggestions, hasInteracted])
 
   // Handle Search Submit
   const handleSubmit = useCallback(
@@ -184,10 +186,16 @@ export function SearchAutocomplete({
             type="text"
             value={query}
             onChange={e => {
+              setHasInteracted(true)
               setQuery(e.target.value)
               setSelectedIndex(-1)
             }}
             onFocus={() => {
+              setHasInteracted(true)
+              // Lade Suggestions beim ersten Focus
+              if (query.trim().length === 0 && suggestions.length === 0) {
+                fetchSuggestions('')
+              }
               if (suggestions.length > 0 || query.trim().length === 0) {
                 setIsOpen(true)
               }
