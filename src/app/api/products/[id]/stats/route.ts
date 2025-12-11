@@ -3,9 +3,9 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * API Route für Produkt-Statistiken (Feature 2: Social Proof)
- * 
+ *
  * GET /api/products/[id]/stats
- * 
+ *
  * Gibt Statistiken für ein Produkt zurück:
  * - viewCount: Anzahl der Aufrufe
  * - favoriteCount: Anzahl der Favoriten
@@ -121,7 +121,7 @@ export async function GET(
 
 /**
  * POST /api/products/[id]/stats
- * 
+ *
  * Trackt einen View für ein Produkt
  */
 export async function POST(
@@ -146,8 +146,8 @@ export async function POST(
           viewCount: 0,
           soldLast24h: 0,
           viewersNow: 0,
-        })
-      }
+        },
+      })
     }
 
     // Inkrementiere viewCount
