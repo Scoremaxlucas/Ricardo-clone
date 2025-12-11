@@ -111,20 +111,21 @@ export default async function ProductPage({ params }: Props) {
       }
     }
 
-  // Wenn Artikelnummer gefunden, redirect zu Artikelnummer-URL
+  // WICHTIG: Erlaube sowohl CUID als auch Artikelnummer-URLs
+  // Redirect nur wenn Artikelnummer-URL verwendet wurde, aber nicht mit der gefundenen übereinstimmt
+  // CUID-URLs sollten funktionieren ohne Redirect, um Race Conditions zu vermeiden
   if (
     watch &&
     isArticleNumber &&
     watch.articleNumber &&
     watch.articleNumber.toString() !== id
   ) {
+    // Nur redirect wenn Artikelnummer-URL verwendet wurde und nicht übereinstimmt
     redirect(`/products/${watch.articleNumber}`)
   }
 
-  // Wenn CUID verwendet wurde, aber Artikelnummer vorhanden ist, redirect zu Artikelnummer
-  if (watch && !isArticleNumber && watch.articleNumber) {
-    redirect(`/products/${watch.articleNumber}`)
-  }
+  // KEIN Redirect von CUID zu Artikelnummer mehr - beide URLs sollen funktionieren
+  // Dies verhindert Race Conditions und "not found" Fehler
 
   if (!watch) {
     console.error(`[ProductPage] Product not found with ID: ${id}, isArticleNumber: ${isArticleNumber}`)
