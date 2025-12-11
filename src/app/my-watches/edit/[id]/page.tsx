@@ -1,25 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter, useParams } from 'next/navigation'
-import Link from 'next/link'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
 import { CategoryFields } from '@/components/forms/CategoryFieldsNew'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
 import {
-  Calendar,
-  Upload,
-  Clock,
-  Shield,
-  CheckCircle,
-  Lock,
-  Sparkles,
   AlertCircle,
+  CheckCircle,
+  Clock,
   Loader2,
+  Lock,
+  Shield,
+  Sparkles,
+  Upload,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { getCategoryConfig } from '@/data/categories'
 
 /**
  * Bearbeitungsseite für Artikel
@@ -334,13 +332,9 @@ export default function EditWatchPage() {
     }))
   }
 
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
+  const processFiles = async (files: File[]) => {
     const newImages: string[] = []
     let processedCount = 0
-
-    // Reset input
-    e.target.value = ''
 
     for (const file of files) {
       // Prüfe Dateityp - nur Bilder erlauben
@@ -376,12 +370,17 @@ export default function EditWatchPage() {
         // Prüfe finale Größe des komprimierten Bildes
         const base64SizeMB = (compressedImage.length * 3) / 4 / (1024 * 1024)
         if (base64SizeMB > 1.5) {
-          console.warn(`Bild ${file.name} ist nach Komprimierung noch ${base64SizeMB.toFixed(2)}MB groß`)
-          toast(`Bild ${file.name} ist sehr groß (${base64SizeMB.toFixed(2)}MB). Bitte verwenden Sie ein kleineres Bild.`, {
-            icon: '⚠️',
-            position: 'top-right',
-            duration: 5000,
-          })
+          console.warn(
+            `Bild ${file.name} ist nach Komprimierung noch ${base64SizeMB.toFixed(2)}MB groß`
+          )
+          toast(
+            `Bild ${file.name} ist sehr groß (${base64SizeMB.toFixed(2)}MB). Bitte verwenden Sie ein kleineres Bild.`,
+            {
+              icon: '⚠️',
+              position: 'top-right',
+              duration: 5000,
+            }
+          )
         }
 
         newImages.push(compressedImage)
@@ -395,10 +394,13 @@ export default function EditWatchPage() {
           }))
 
           if (newImages.length > 0) {
-            toast.success(`${newImages.length} Bild${newImages.length > 1 ? 'er' : ''} hinzugefügt.`, {
-              position: 'top-right',
-              duration: 3000,
-            })
+            toast.success(
+              `${newImages.length} Bild${newImages.length > 1 ? 'er' : ''} hinzugefügt.`,
+              {
+                position: 'top-right',
+                duration: 3000,
+              }
+            )
           }
         }
       } catch (error) {
@@ -409,6 +411,15 @@ export default function EditWatchPage() {
         })
       }
     }
+  }
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || [])
+
+    // Reset input
+    e.target.value = ''
+
+    await processFiles(files)
   }
 
   const handleImageUrlAdd = async (url: string) => {
@@ -424,7 +435,7 @@ export default function EditWatchPage() {
       // Prüfe ob URL ein Bild ist
       const response = await fetch(url, { method: 'HEAD' })
       const contentType = response.headers.get('content-type')
-      
+
       if (!contentType || !contentType.startsWith('image/')) {
         toast.error('Die URL zeigt nicht auf ein Bild. Bitte verwenden Sie eine Bild-URL.', {
           position: 'top-right',
@@ -436,7 +447,7 @@ export default function EditWatchPage() {
       // Lade Bild und konvertiere zu Base64
       const imageResponse = await fetch(url)
       const blob = await imageResponse.blob()
-      
+
       // Prüfe Größe
       if (blob.size > 10 * 1024 * 1024) {
         toast.error('Bild ist zu groß. Maximale Größe: 10MB', {
@@ -448,7 +459,7 @@ export default function EditWatchPage() {
 
       // Konvertiere zu File für Komprimierung
       const file = new File([blob], 'image.jpg', { type: blob.type })
-      
+
       // Verwende Bildkomprimierung
       const { compressImage } = await import('@/lib/image-compression')
       const compressedImage = await compressImage(file, {
@@ -496,7 +507,6 @@ export default function EditWatchPage() {
 
     toast.success('Bild entfernt')
   }
-
 
   const setExclusiveSupply = (option: 'fullset' | 'onlyBox' | 'onlyPapers' | 'onlyAllLinks') => {
     if (hasBids) {
@@ -668,8 +678,8 @@ export default function EditWatchPage() {
                 <p className="mb-1 font-semibold text-yellow-800">Wichtig: Gebote vorhanden</p>
                 <p className="text-sm text-yellow-700">
                   Es existieren bereits Gebote auf dieses Angebot. Sie können nur noch die
-                  Beschreibung ändern sowie zusätzliche Bilder hinzufügen. Preis,
-                  Auktionsdauer und andere wichtige Felder sind gesperrt.
+                  Beschreibung ändern sowie zusätzliche Bilder hinzufügen. Preis, Auktionsdauer und
+                  andere wichtige Felder sind gesperrt.
                 </p>
               </div>
             </div>
@@ -854,14 +864,14 @@ export default function EditWatchPage() {
                       disabled={hasBids}
                       className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
                         hasBids
-                          ? 'cursor-not-allowed bg-gray-100 border-gray-300'
+                          ? 'cursor-not-allowed border-gray-300 bg-gray-100'
                           : formData.buyNowPrice &&
-                            formData.price &&
-                            parseFloat(formData.buyNowPrice) > 0 &&
-                            parseFloat(formData.price) > 0 &&
-                            parseFloat(formData.buyNowPrice) <= parseFloat(formData.price)
-                          ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                          : 'border-gray-300 focus:ring-primary-500'
+                              formData.price &&
+                              parseFloat(formData.buyNowPrice) > 0 &&
+                              parseFloat(formData.price) > 0 &&
+                              parseFloat(formData.buyNowPrice) <= parseFloat(formData.price)
+                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                            : 'border-gray-300 focus:ring-primary-500'
                       }`}
                       placeholder={formData.isAuction ? 'z.B. 8000 (optional)' : 'z.B. 8000'}
                       step="0.01"
@@ -1201,7 +1211,7 @@ export default function EditWatchPage() {
 
                 {/* URL Input */}
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
                     Oder fügen Sie ein Bild per URL hinzu:
                   </label>
                   <div className="flex gap-2">
@@ -1209,7 +1219,7 @@ export default function EditWatchPage() {
                       type="url"
                       placeholder="https://example.com/image.jpg"
                       className="flex-1 rounded-md border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-                      onKeyDown={async (e) => {
+                      onKeyDown={async e => {
                         if (e.key === 'Enter') {
                           e.preventDefault()
                           const urlInput = e.currentTarget
@@ -1223,7 +1233,7 @@ export default function EditWatchPage() {
                     />
                     <button
                       type="button"
-                      onClick={async (e) => {
+                      onClick={async e => {
                         const input = e.currentTarget.previousElementSibling as HTMLInputElement
                         const url = input.value.trim()
                         if (url) {
@@ -1240,32 +1250,31 @@ export default function EditWatchPage() {
 
                 {/* Drag and Drop Zone */}
                 <div
-                  className="relative border-2 border-dashed border-gray-300 rounded-lg p-8 text-center hover:border-primary-400 transition-colors"
-                  onDragOver={(e) => {
+                  className="relative rounded-lg border-2 border-dashed border-gray-300 p-8 text-center transition-colors hover:border-primary-400"
+                  onDragOver={e => {
                     e.preventDefault()
                     e.stopPropagation()
                     e.currentTarget.classList.add('border-primary-500', 'bg-primary-50')
                   }}
-                  onDragLeave={(e) => {
+                  onDragLeave={e => {
                     e.preventDefault()
                     e.stopPropagation()
                     e.currentTarget.classList.remove('border-primary-500', 'bg-primary-50')
                   }}
-                  onDrop={async (e) => {
+                  onDrop={async e => {
                     e.preventDefault()
                     e.stopPropagation()
                     e.currentTarget.classList.remove('border-primary-500', 'bg-primary-50')
-                    
-                    const files = Array.from(e.dataTransfer.files).filter(file => file.type.startsWith('image/'))
+
+                    const files = Array.from(e.dataTransfer.files).filter(file =>
+                      file.type.startsWith('image/')
+                    )
                     if (files.length > 0) {
-                      const fakeEvent = {
-                        target: { files, value: '' },
-                      } as React.ChangeEvent<HTMLInputElement>
-                      await handleImageUpload(fakeEvent)
+                      await processFiles(files)
                     }
                   }}
                 >
-                  <Upload className="mx-auto h-12 w-12 text-gray-400 mb-2" />
+                  <Upload className="mx-auto mb-2 h-12 w-12 text-gray-400" />
                   <p className="text-sm text-gray-600">
                     Ziehen Sie Bilder hierher oder klicken Sie zum Auswählen
                   </p>
@@ -1317,7 +1326,6 @@ export default function EditWatchPage() {
                   ))}
                 </div>
               )}
-
             </div>
 
             {/* Booster */}
