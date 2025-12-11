@@ -3,7 +3,7 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
+  provider = "sqlite"
   url      = env("DATABASE_URL")
 }
 
@@ -124,6 +124,17 @@ model User {
   userAdminNotes                UserAdminNote[]      @relation("UserAdminNoteAdmin")
   userAdminNotesForUser         UserAdminNote[]      @relation("UserAdminNoteUser")
   userActivities                UserActivity[]
+  searchQueries                 SearchQuery[]
+  userPreferences               UserPreferences?
+  collections                   Collection[]
+  auctionViewers                AuctionViewer[]
+  stories                       Story[]
+  browsingHistory               BrowsingHistory[]
+  userBadges                    UserBadge[]
+  userStreaks                   UserStreak?
+  rewards                       Reward[]
+  aiConversations               AIConversation[]
+  aiSearchResults               AISearchResult[]
 
   @@map("users")
 }
@@ -195,6 +206,12 @@ model Watch {
   moderationHistory   ModerationHistory[]
   views               WatchView[]
   maxBids             MaxBid[]
+  productStats        ProductStats?
+  collectionItems     CollectionItem[]
+  auctionViewers      AuctionViewer[]
+  stories             Story[]
+  browsingHistory     BrowsingHistory[]
+  aiSearchResults     AISearchResult[]
 
   @@index([moderationStatus])
   @@index([createdAt])
@@ -680,4 +697,249 @@ model UserActivity {
   @@index([createdAt])
   @@index([action])
   @@map("user_activities")
+}
+
+// ============================================
+// HOMEPAGE ENHANCEMENT FEATURES - PHASE 0
+// ============================================
+
+// Feature 1: Intelligente Suche - Search Analytics
+model SearchQuery {
+  id             String   @id @default(cuid())
+  query          String
+  userId         String?
+  category       String?
+  resultCount    Int      @default(0)
+  clicked        Boolean  @default(false)
+  clickedWatchId String?
+  createdAt      DateTime @default(now())
+  user           User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+
+  @@index([query])
+  @@index([createdAt])
+  @@index([userId])
+  @@index([category])
+  @@map("search_queries")
+}
+
+// Feature 2: Social Proof - Product Statistics
+model ProductStats {
+  id            String   @id @default(cuid())
+  watchId       String   @unique
+  favoriteCount Int      @default(0)
+  viewCount     Int      @default(0)
+  soldLast24h   Int      @default(0)
+  viewersNow    Int      @default(0) // Aktuelle Viewer (wird regelmäßig aktualisiert)
+  lastUpdated   DateTime @default(now())
+  watch         Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
+
+  @@index([watchId])
+  @@index([lastUpdated])
+  @@map("product_stats")
+}
+
+// Feature 3: Lokale Karte - Nutzt bestehende postalCode/city Felder
+// Kein neues Model nötig, nutzt Watch.postalCode und Watch.city
+
+// Feature 4: Smart Collections
+model Collection {
+  id          String           @id @default(cuid())
+  name        String
+  description String?
+  type        String           @default("user") // 'system' oder 'user'
+  userId      String?
+  imageUrl    String?
+  createdAt   DateTime         @default(now())
+  updatedAt   DateTime         @updatedAt
+  user        User?            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  items       CollectionItem[]
+
+  @@index([userId])
+  @@index([type])
+  @@index([createdAt])
+  @@map("collections")
+}
+
+model CollectionItem {
+  id           String     @id @default(cuid())
+  collectionId String
+  watchId      String
+  order        Int        @default(0)
+  addedAt      DateTime   @default(now())
+  collection   Collection @relation(fields: [collectionId], references: [id], onDelete: Cascade)
+  watch        Watch      @relation(fields: [watchId], references: [id], onDelete: Cascade)
+
+  @@unique([collectionId, watchId])
+  @@index([collectionId])
+  @@index([watchId])
+  @@index([order])
+  @@map("collection_items")
+}
+
+// Feature 5: Personalisierung
+model BrowsingHistory {
+  id       String   @id @default(cuid())
+  userId   String
+  watchId  String
+  viewedAt DateTime @default(now())
+  duration Int?     @default(0) // Sekunden
+  action   String   @default("view") // 'view', 'favorite', 'click', 'purchase'
+  user     User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  watch    Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, viewedAt])
+  @@index([watchId])
+  @@index([action])
+  @@map("browsing_history")
+}
+
+model UserPreferences {
+  id                  String   @id @default(cuid())
+  userId              String   @unique
+  preferredCategories String? // JSON Array
+  priceRange          String? // JSON: {min: number, max: number}
+  preferredBrands     String? // JSON Array
+  preferredConditions String? // JSON Array
+  updatedAt           DateTime @default(now())
+  user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_preferences")
+}
+
+// Feature 6: Live-Auktionen
+model AuctionViewer {
+  id       String   @id @default(cuid())
+  watchId  String
+  userId   String?
+  joinedAt DateTime @default(now())
+  user     User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  watch    Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
+
+  @@index([watchId])
+  @@index([joinedAt])
+  @@index([userId])
+  @@map("auction_viewers")
+}
+
+// Feature 7: Video-Highlights - Nutzt bestehendes Watch.video Feld
+// Kein neues Model nötig
+
+// Feature 8: Story-Feature
+model Story {
+  id        String   @id @default(cuid())
+  sellerId  String
+  watchId   String?
+  imageUrl  String?
+  videoUrl  String?
+  text      String?
+  createdAt DateTime @default(now())
+  expiresAt DateTime
+  user      User     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  watch     Watch?   @relation(fields: [watchId], references: [id], onDelete: SetNull)
+
+  @@index([sellerId])
+  @@index([expiresAt])
+  @@index([createdAt])
+  @@index([watchId])
+  @@map("stories")
+}
+
+// Feature 9: Gamification
+model UserBadge {
+  id           String   @id @default(cuid())
+  userId       String
+  badgeType    String // 'FIRST_PURCHASE', 'POWER_BUYER_10', 'POWER_BUYER_50', 'POWER_SELLER', 'LOYAL_CUSTOMER', 'STREAK_7', 'STREAK_30'
+  displayOrder Int      @default(0)
+  earnedAt     DateTime @default(now())
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, badgeType])
+  @@index([userId])
+  @@index([badgeType])
+  @@map("user_badges")
+}
+
+model UserStreak {
+  id            String   @id @default(cuid())
+  userId        String   @unique
+  currentStreak Int      @default(0)
+  longestStreak Int      @default(0)
+  lastVisitDate DateTime @default(now())
+  totalVisits   Int      @default(0)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("user_streaks")
+}
+
+model DailyDeal {
+  id              String   @id @default(cuid())
+  watchId         String
+  discountPercent Float
+  startDate       DateTime
+  endDate         DateTime
+  maxQuantity     Int      @default(1)
+  soldQuantity    Int      @default(0)
+  createdAt       DateTime @default(now())
+
+  @@index([startDate])
+  @@index([endDate])
+  @@index([watchId])
+  @@map("daily_deals")
+}
+
+model Reward {
+  id          String    @id @default(cuid())
+  userId      String
+  rewardType  String // 'discount', 'free_booster', 'premium_feature'
+  rewardValue String // JSON: {percent: number} oder {boosterCode: string}
+  claimedAt   DateTime?
+  expiresAt   DateTime
+  usedAt      DateTime?
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([expiresAt])
+  @@index([claimedAt])
+  @@map("rewards")
+}
+
+// Feature 10: AI-Powered Chat
+// Nutzt bestehende Conversation und ConversationMessage Models
+// Erweitert mit zusätzlichen Feldern für Produkt-Empfehlungen
+
+model AIConversation {
+  id        String           @id @default(cuid())
+  userId    String
+  messages  String           @default("[]") // JSON Array
+  createdAt DateTime         @default(now())
+  updatedAt DateTime         @updatedAt
+  user      User             @relation(fields: [userId], references: [id], onDelete: Cascade)
+  results   AISearchResult[]
+
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_conversations")
+}
+
+model AISearchResult {
+  id              String          @id @default(cuid())
+  conversationId  String?
+  watchId         String
+  query           String
+  productIds      String          @default("[]") // JSON Array
+  clickedProducts String?         @default("[]") // JSON Array
+  createdAt       DateTime        @default(now())
+  conversation    AIConversation? @relation(fields: [conversationId], references: [id], onDelete: SetNull)
+  watch           Watch           @relation(fields: [watchId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId          String
+
+  @@index([conversationId])
+  @@index([watchId])
+  @@index([userId])
+  @@index([createdAt])
+  @@map("ai_search_results")
 }
