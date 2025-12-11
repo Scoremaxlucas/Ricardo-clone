@@ -12,9 +12,10 @@ const LazyTrendingNow = lazy(() =>
 const LazyCategorySpotlight = lazy(() =>
   import('@/components/home/CategorySpotlight').then(m => ({ default: m.CategorySpotlight }))
 )
-const LazyLocationMap = lazy(() =>
-  import('@/components/home/LocationMap').then(m => ({ default: m.LocationMap }))
-)
+// Temporarily disabled to fix build issues
+// const LazyLocationMap = lazy(() =>
+//   import('@/components/home/LocationMap').then(m => ({ default: m.LocationMap }))
+// )
 
 export function HomeClient() {
   const searchParams = useSearchParams()
@@ -81,8 +82,8 @@ export function HomeClient() {
         <LazyCategorySpotlight />
       </Suspense>
 
-      {/* Location Map - Lazy loaded */}
-      <Suspense
+      {/* Location Map - Temporarily disabled to fix build issues */}
+      {/* <Suspense
         fallback={
           <div className="bg-white py-16">
             <div className="mx-auto max-w-7xl px-4 text-center">
@@ -92,7 +93,7 @@ export function HomeClient() {
         }
       >
         <LazyLocationMap />
-      </Suspense>
+      </Suspense> */}
     </>
   )
 }
