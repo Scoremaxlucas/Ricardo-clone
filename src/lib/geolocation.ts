@@ -3,16 +3,29 @@
  * Feature 3: Lokale Karte - Helper für Standort-basierte Funktionen
  */
 
+import { prisma } from './prisma'
+
 /**
  * Konvertiert eine Schweizer Postleitzahl zu Koordinaten
- * Nutzt OpenStreetMap Nominatim API als Fallback
+ * Nutzt zuerst Datenbank-Cache, dann OpenStreetMap Nominatim API
  */
 export async function postalCodeToCoordinates(
   postalCode: string
 ): Promise<{ lat: number; lon: number } | null> {
   try {
-    // Schweizer Postleitzahlen-Mapping (vereinfacht)
-    // In Produktion sollte eine vollständige Datenbank verwendet werden
+    // Prüfe zuerst Cache
+    const cached = await prisma.postalCodeCache.findUnique({
+      where: { postalCode },
+    })
+
+    if (cached) {
+      return {
+        lat: cached.latitude,
+        lon: cached.longitude,
+      }
+    }
+
+    // Wenn nicht im Cache, hole von Nominatim API
     const response = await fetch(
       `https://nominatim.openstreetmap.org/search?postalcode=${postalCode}&country=Switzerland&format=json&limit=1`,
       {
@@ -31,10 +44,29 @@ export async function postalCodeToCoordinates(
       return null
     }
 
-    return {
+    const coords = {
       lat: parseFloat(data[0].lat),
       lon: parseFloat(data[0].lon),
     }
+
+    // Speichere im Cache für zukünftige Anfragen
+    try {
+      await prisma.postalCodeCache.create({
+        data: {
+          postalCode,
+          latitude: coords.lat,
+          longitude: coords.lon,
+          city: data[0].display_name?.split(',')[0] || null,
+        },
+      })
+    } catch (error: any) {
+      // Ignoriere Fehler wenn bereits existiert (Race Condition)
+      if (!error.message?.includes('Unique constraint')) {
+        console.error('Error caching postal code:', error)
+      }
+    }
+
+    return coords
   } catch (error) {
     console.error('Error converting postal code to coordinates:', error)
     return null
@@ -75,20 +107,64 @@ export function isValidSwissPostalCode(postalCode: string): boolean {
 
 /**
  * Holt Koordinaten für mehrere Postleitzahlen (Batch)
+ * OPTIMIERT: Lädt zuerst alle aus Cache, dann fehlende parallel
  */
 export async function batchPostalCodeToCoordinates(
   postalCodes: string[]
 ): Promise<Map<string, { lat: number; lon: number }>> {
   const coordinatesMap = new Map<string, { lat: number; lon: number }>()
 
-  // Rate limiting: Max 1 Request pro Sekunde für Nominatim
-  for (const postalCode of postalCodes) {
-    const coords = await postalCodeToCoordinates(postalCode)
-    if (coords) {
-      coordinatesMap.set(postalCode, coords)
+  if (postalCodes.length === 0) {
+    return coordinatesMap
+  }
+
+  // OPTIMIERT: Hole alle auf einmal aus Cache
+  const cached = await prisma.postalCodeCache.findMany({
+    where: {
+      postalCode: {
+        in: postalCodes,
+      },
+    },
+  })
+
+  // Füge gecachte Koordinaten hinzu
+  cached.forEach(cache => {
+    coordinatesMap.set(cache.postalCode, {
+      lat: cache.latitude,
+      lon: cache.longitude,
+    })
+  })
+
+  // Finde fehlende Postleitzahlen
+  const missing = postalCodes.filter(pc => !coordinatesMap.has(pc))
+
+  if (missing.length === 0) {
+    return coordinatesMap
+  }
+
+  // OPTIMIERT: Lade fehlende parallel mit Rate Limiting
+  // Nominatim erlaubt max 1 Request pro Sekunde
+  // Wir machen 2 Requests parallel, dann warten wir 1 Sekunde
+  const batchSize = 2
+  for (let i = 0; i < missing.length; i += batchSize) {
+    const batch = missing.slice(i, i + batchSize)
+    
+    // Lade Batch parallel
+    const promises = batch.map(postalCode => postalCodeToCoordinates(postalCode))
+    const results = await Promise.all(promises)
+    
+    // Füge Ergebnisse hinzu
+    batch.forEach((postalCode, index) => {
+      const coords = results[index]
+      if (coords) {
+        coordinatesMap.set(postalCode, coords)
+      }
+    })
+
+    // Rate limiting: Warte 1 Sekunde zwischen Batches (außer beim letzten Batch)
+    if (i + batchSize < missing.length) {
+      await new Promise(resolve => setTimeout(resolve, 1000))
     }
-    // Rate limiting
-    await new Promise(resolve => setTimeout(resolve, 1000))
   }
 
   return coordinatesMap

@@ -15,10 +15,9 @@ const LazyCategorySpotlight = lazy(() =>
 const LazySocialProofWidget = lazy(() =>
   import('@/components/home/SocialProofWidget').then(m => ({ default: m.SocialProofWidget }))
 )
-// Temporarily disabled to fix build issues
-// const LazyLocationMap = lazy(() =>
-//   import('@/components/home/LocationMap').then(m => ({ default: m.LocationMap }))
-// )
+const LazyLocationMap = lazy(() =>
+  import('@/components/home/LocationMap').then(m => ({ default: m.LocationMap }))
+)
 
 interface HomeClientProps {
   featuredProductIds?: string[]
@@ -104,8 +103,8 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
         <LazyCategorySpotlight />
       </Suspense>
 
-      {/* Location Map - Temporarily disabled to fix build issues */}
-      {/* <Suspense
+      {/* Location Map - Feature 3 */}
+      <Suspense
         fallback={
           <div className="bg-white py-16">
             <div className="mx-auto max-w-7xl px-4 text-center">
@@ -115,7 +114,7 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
         }
       >
         <LazyLocationMap />
-      </Suspense> */}
+      </Suspense>
     </>
   )
 }
