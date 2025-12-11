@@ -79,17 +79,19 @@ export async function GET(request: NextRequest) {
       })
 
       // Schätze aktuelle Viewer (Views der letzten 5 Minuten)
+      // Prisma count doesn't support distinct with multiple fields, so we use groupBy
       const fiveMinutesAgo = new Date()
       fiveMinutesAgo.setMinutes(fiveMinutesAgo.getMinutes() - 5)
-      const viewersNow = await prisma.watchView.count({
+      const viewerGroups = await prisma.watchView.groupBy({
+        by: ['userId', 'ipAddress'],
         where: {
           watchId,
           viewedAt: {
             gte: fiveMinutesAgo,
           },
         },
-        distinct: ['userId', 'ipAddress'],
       })
+      const viewersNow = viewerGroups.length
 
       // Update oder erstelle ProductStats-Eintrag
       const updatedStat = await prisma.productStats.upsert({
