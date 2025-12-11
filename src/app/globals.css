@@ -4,6 +4,9 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
+/* Leaflet CSS for maps */
+@import 'leaflet/dist/leaflet.css';
+
 :root {
   /* Helvenda Design System Colors - Wärmere Palette */
   --color-primary: #14b8a6; /* Wärmeres Teal */
