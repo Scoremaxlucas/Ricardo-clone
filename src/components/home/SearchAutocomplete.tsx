@@ -36,6 +36,7 @@ export function SearchAutocomplete({
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [isLoading, setIsLoading] = useState(false)
   const [showPopular, setShowPopular] = useState(false)
+  const [hasInteracted, setHasInteracted] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
