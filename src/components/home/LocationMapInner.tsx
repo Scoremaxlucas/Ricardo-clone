@@ -1,19 +1,7 @@
 'use client'
 
-import L from 'leaflet'
 import Link from 'next/link'
-import { useEffect } from 'react'
-import { MapContainer, Marker, Popup, TileLayer, useMap } from 'react-leaflet'
-
-// Fix für Leaflet-Icons in Next.js
-if (typeof window !== 'undefined') {
-  delete (L.Icon.Default.prototype as any)._getIconUrl
-  L.Icon.Default.mergeOptions({
-    iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-    iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-    shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-  })
-}
+import { useEffect, useState } from 'react'
 
 interface NearbyWatch {
   id: string
@@ -40,24 +28,79 @@ interface LocationMapInnerProps {
   center: { lat: number; lon: number } | null
 }
 
-// Komponente zum Anpassen der Karte an Marker
-function MapBounds({ watches }: { watches: NearbyWatch[] }) {
-  const map = useMap()
+export default function LocationMapInner({ watches, center }: LocationMapInnerProps) {
+  const [MapComponents, setMapComponents] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
 
   useEffect(() => {
-    if (watches.length === 0 || !L) return
+    // Dynamisch Leaflet-Module nur im Browser laden
+    if (typeof window === 'undefined') {
+      setIsLoading(false)
+      return
+    }
 
-    const bounds = L.latLngBounds(watches.map(w => [w.coordinates.lat, w.coordinates.lon]))
-    map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
-  }, [watches, map])
+    const loadMap = async () => {
+      try {
+        const [L, { MapContainer, Marker, Popup, TileLayer, useMap }] = await Promise.all([
+          import('leaflet'),
+          import('react-leaflet'),
+        ])
 
-  return null
-}
+        // Fix für Leaflet-Icons in Next.js
+        delete (L.default.Icon.Default.prototype as any)._getIconUrl
+        L.default.Icon.Default.mergeOptions({
+          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+        })
 
-export default function LocationMapInner({ watches, center }: LocationMapInnerProps) {
+        // Komponente zum Anpassen der Karte an Marker
+        function MapBounds({ watches }: { watches: NearbyWatch[] }) {
+          const map = useMap()
+
+          useEffect(() => {
+            if (watches.length === 0 || !L.default) return
+
+            const bounds = L.default.latLngBounds(
+              watches.map(w => [w.coordinates.lat, w.coordinates.lon])
+            )
+            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
+          }, [watches, map])
+
+          return null
+        }
+
+        setMapComponents({
+          MapContainer,
+          Marker,
+          Popup,
+          TileLayer,
+          MapBounds,
+          L: L.default,
+        })
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error loading Leaflet:', error)
+        setIsLoading(false)
+      }
+    }
+
+    loadMap()
+  }, [])
+
   // Standard-Zentrum: Schweiz (Bern)
   const defaultCenter: [number, number] = [46.9481, 7.4474]
   const defaultZoom = 8
+
+  if (isLoading || !MapComponents) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  const { MapContainer, Marker, Popup, TileLayer, MapBounds } = MapComponents
 
   return (
     <MapContainer
@@ -97,4 +140,3 @@ export default function LocationMapInner({ watches, center }: LocationMapInnerPr
     </MapContainer>
   )
 }
-

@@ -109,17 +109,16 @@ const nextConfig = {
 
     // Leaflet is browser-only - exclude from server-side bundle
     if (isServer) {
-      config.externals = config.externals || []
-      if (Array.isArray(config.externals)) {
-        config.externals.push({
-          leaflet: 'commonjs leaflet',
-          'react-leaflet': 'commonjs react-leaflet',
-        })
-      } else {
-        const externals = config.externals
-        externals.leaflet = 'commonjs leaflet'
-        externals['react-leaflet'] = 'commonjs react-leaflet'
-      }
+      const originalExternals = config.externals
+      config.externals = [
+        ...(Array.isArray(originalExternals) ? originalExternals : [originalExternals]),
+        ({ request }, callback) => {
+          if (request === 'leaflet' || request === 'react-leaflet') {
+            return callback(null, `commonjs ${request}`)
+          }
+          callback()
+        },
+      ]
     }
 
     // OPTIMIERT: Bundle Size Optimization
