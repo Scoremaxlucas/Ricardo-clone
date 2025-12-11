@@ -28,84 +28,42 @@ interface LocationMapInnerProps {
   center: { lat: number; lon: number } | null
 }
 
-export default function LocationMapInner({ watches, center }: LocationMapInnerProps) {
-  const [MapComponents, setMapComponents] = useState<any>(null)
-  const [isLoading, setIsLoading] = useState(true)
+// Separate Komponente für die Map - wird nur gerendert wenn Module geladen sind
+function LeafletMap({
+  watches,
+  center,
+  MapContainer,
+  Marker,
+  Popup,
+  TileLayer,
+  useMap,
+  L,
+}: {
+  watches: NearbyWatch[]
+  center: { lat: number; lon: number } | null
+  MapContainer: any
+  Marker: any
+  Popup: any
+  TileLayer: any
+  useMap: any
+  L: any
+}) {
+  // Komponente zum Anpassen der Karte an Marker
+  function MapBounds({ watches }: { watches: NearbyWatch[] }) {
+    const map = useMap()
 
-  useEffect(() => {
-    // Dynamisch Leaflet-Module nur im Browser laden
-    if (typeof window === 'undefined') {
-      setIsLoading(false)
-      return
-    }
+    useEffect(() => {
+      if (watches.length === 0 || !L) return
 
-    const loadMap = async () => {
-      try {
-        const [L, reactLeaflet] = await Promise.all([
-          import('leaflet'),
-          import('react-leaflet'),
-        ])
+      const bounds = L.latLngBounds(watches.map(w => [w.coordinates.lat, w.coordinates.lon]))
+      map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
+    }, [watches, map, L])
 
-        const LModule = L.default || L
-        const { MapContainer, Marker, Popup, TileLayer, useMap } = reactLeaflet
-
-        // Fix für Leaflet-Icons in Next.js
-        if (LModule.Icon && LModule.Icon.Default) {
-          delete (LModule.Icon.Default.prototype as any)._getIconUrl
-          LModule.Icon.Default.mergeOptions({
-            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-          })
-        }
-
-        // Komponente zum Anpassen der Karte an Marker - muss außerhalb von useEffect sein
-        const MapBounds = ({ watches }: { watches: NearbyWatch[] }) => {
-          const map = useMap()
-
-          useEffect(() => {
-            if (watches.length === 0 || !LModule) return
-
-            const bounds = LModule.latLngBounds(
-              watches.map(w => [w.coordinates.lat, w.coordinates.lon])
-            )
-            map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
-          }, [watches, map])
-
-          return null
-        }
-
-        setMapComponents({
-          MapContainer,
-          Marker,
-          Popup,
-          TileLayer,
-          MapBounds,
-          L: LModule,
-        })
-        setIsLoading(false)
-      } catch (error) {
-        console.error('Error loading Leaflet:', error)
-        setIsLoading(false)
-      }
-    }
-
-    loadMap()
-  }, [])
-
-  // Standard-Zentrum: Schweiz (Bern)
-  const defaultCenter: [number, number] = [46.9481, 7.4474]
-  const defaultZoom = 8
-
-  if (isLoading || !MapComponents) {
-    return (
-      <div className="flex h-full w-full items-center justify-center">
-        <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
-      </div>
-    )
+    return null
   }
 
-  const { MapContainer, Marker, Popup, TileLayer, MapBounds } = MapComponents
+  const defaultCenter: [number, number] = [46.9481, 7.4474]
+  const defaultZoom = 8
 
   return (
     <MapContainer
@@ -143,5 +101,71 @@ export default function LocationMapInner({ watches, center }: LocationMapInnerPr
         </Marker>
       ))}
     </MapContainer>
+  )
+}
+
+export default function LocationMapInner({ watches, center }: LocationMapInnerProps) {
+  const [MapComponents, setMapComponents] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    // Dynamisch Leaflet-Module nur im Browser laden
+    if (typeof window === 'undefined') {
+      setIsLoading(false)
+      return
+    }
+
+    const loadMap = async () => {
+      try {
+        const [L, reactLeaflet] = await Promise.all([
+          import('leaflet'),
+          import('react-leaflet'),
+        ])
+
+        const LModule = L.default || L
+        const { MapContainer, Marker, Popup, TileLayer, useMap } = reactLeaflet
+
+        // Fix für Leaflet-Icons in Next.js
+        if (LModule.Icon && LModule.Icon.Default) {
+          delete (LModule.Icon.Default.prototype as any)._getIconUrl
+          LModule.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+          })
+        }
+
+        setMapComponents({
+          MapContainer,
+          Marker,
+          Popup,
+          TileLayer,
+          useMap,
+          L: LModule,
+        })
+        setIsLoading(false)
+      } catch (error) {
+        console.error('Error loading Leaflet:', error)
+        setIsLoading(false)
+      }
+    }
+
+    loadMap()
+  }, [])
+
+  if (isLoading || !MapComponents) {
+    return (
+      <div className="flex h-full w-full items-center justify-center">
+        <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
+      </div>
+    )
+  }
+
+  return (
+    <LeafletMap
+      watches={watches}
+      center={center}
+      {...MapComponents}
+    />
   )
 }
