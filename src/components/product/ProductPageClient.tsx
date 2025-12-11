@@ -6,6 +6,7 @@ import { ReportModal } from '@/components/moderation/ReportModal'
 import { PriceOfferComponent } from '@/components/offers/PriceOfferComponent'
 import { PickupMap } from '@/components/product/PickupMap'
 import { ProductQuestions } from '@/components/product/ProductQuestions'
+import { ProductStats } from '@/components/product/ProductStats'
 import { SimilarProducts } from '@/components/product/SimilarProducts'
 import { SellerProfile } from '@/components/seller/SellerProfile'
 import { useLanguage } from '@/contexts/LanguageContext'
@@ -42,10 +43,11 @@ export function ProductPageClient({
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const zoomImageRef = useRef<HTMLImageElement>(null)
 
-  // Track view
+  // Track view (Feature 2: Social Proof)
   useEffect(() => {
     if (watch?.id) {
-      fetch(`/api/watches/${watch.id}/view`, { method: 'POST' }).catch(() => {})
+      // Track view using new ProductStats API
+      fetch(`/api/products/${watch.id}/stats`, { method: 'POST' }).catch(() => {})
     }
   }, [watch?.id])
 
@@ -450,6 +452,11 @@ export function ProductPageClient({
                   </div>
                 </div>
               )}
+            </div>
+
+            {/* Product Stats - Feature 2: Social Proof */}
+            <div className="mb-6">
+              <ProductStats watchId={watch.id} showViewersNow={true} showSoldLast24h={true} />
             </div>
 
             {/* Produktdetails */}

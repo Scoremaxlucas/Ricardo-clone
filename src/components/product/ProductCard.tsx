@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { ProductStats } from './ProductStats'
 
 export interface ProductCardData {
   id: string
@@ -419,6 +420,10 @@ export function ProductCard({
               <span>Endet: {formatAuctionEnd(product.auctionEnd)}</span>
             </div>
           )}
+          {/* Product Stats - Feature 2: Social Proof (Compact) */}
+          <div className="mt-2">
+            <ProductStats watchId={product.id} compact={true} showViewersNow={false} />
+          </div>
         </div>
       </Link>
     )

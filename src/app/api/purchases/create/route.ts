@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { calculateInvoiceForSale } from '@/lib/invoice'
 import { getShippingCost, getShippingCostForMethod } from '@/lib/shipping'
 import { addStatusHistory } from '@/lib/status-history'
+import { updateSoldLast24h } from '@/lib/product-stats'
 
 export async function POST(request: NextRequest) {
   try {
@@ -132,6 +133,11 @@ export async function POST(request: NextRequest) {
     } catch (error) {
       console.error('[purchases/create] Fehler beim Hinzufügen der Status-Historie:', error)
     }
+
+    // Update soldLast24h statistic (Feature 2: Social Proof)
+    updateSoldLast24h(watchId).catch(err => {
+      console.error('Error updating soldLast24h:', err)
+    })
 
     // Erstelle Rechnung SOFORT nach erfolgreichem Verkauf
     // Die Kommission wird direkt berechnet, auch wenn der Käufer noch nicht gezahlt hat

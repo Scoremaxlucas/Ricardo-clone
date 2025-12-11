@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { getSearchSuggestions, getPopularSearches } from '@/lib/search-analytics'
+import { getPopularSearches, getSearchSuggestions } from '@/lib/search-analytics'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * API Route für Suchvorschläge (Feature 1: Intelligente Suchleiste)
- * 
+ *
  * GET /api/search/suggestions?q=...&limit=...
- * 
+ *
  * Gibt Suchvorschläge basierend auf Teilstring zurück
  * Falls kein Query-Parameter, gibt populäre Suchbegriffe zurück
  */

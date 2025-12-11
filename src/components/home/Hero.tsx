@@ -73,7 +73,9 @@ export function Hero() {
             </p>
             <SearchAutocomplete
               onSearch={handleSearch}
-              placeholder={t.header.searchPlaceholder || 'Suchen Sie nach Produkten, Marken, Kategorien...'}
+              placeholder={
+                t.header.searchPlaceholder || 'Suchen Sie nach Produkten, Marken, Kategorien...'
+              }
               className="mx-auto"
             />
           </div>

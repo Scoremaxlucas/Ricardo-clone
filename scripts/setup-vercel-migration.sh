@@ -16,15 +16,15 @@ fi
 # Check if DATABASE_URL is set and points to PostgreSQL
 if [ -n "$DATABASE_URL" ] && [[ "$DATABASE_URL" == postgres* ]]; then
   echo "✅ DATABASE_URL points to PostgreSQL"
-  
+
   # Update schema to PostgreSQL
   sed -i '' 's/provider = "sqlite"/provider = "postgresql"/' prisma/schema.prisma
   echo "✅ Schema updated to PostgreSQL"
-  
+
   # Generate Prisma Client
   echo "📦 Generating Prisma Client..."
   npx prisma generate
-  
+
   echo "✅ Setup complete! Ready for Vercel deployment."
   echo ""
   echo "Next steps:"

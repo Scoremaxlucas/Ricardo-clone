@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { trackSearchQuery } from '@/lib/search-analytics'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * API Route für Search Analytics Tracking (Feature 1)
- * 
+ *
  * POST /api/search/track
- * 
+ *
  * Trackt Suchanfragen für Analytics und Empfehlungen
  */
 export async function POST(request: NextRequest) {
@@ -35,9 +35,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ success: true })
   } catch (error: any) {
     console.error('Error tracking search query:', error)
-    return NextResponse.json(
-      { error: 'Error tracking search query' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Error tracking search query' }, { status: 500 })
   }
 }
