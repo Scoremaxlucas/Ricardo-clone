@@ -77,11 +77,10 @@ export function SocialProofWidget({ watchIds, className = '' }: SocialProofWidge
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
           <h2 className="text-2xl font-bold text-gray-900">
-            {t.home?.socialProof?.title || 'Vertrauen Sie unserer Community'}
+            Vertrauen Sie unserer Community
           </h2>
           <p className="mt-2 text-sm text-gray-600">
-            {t.home?.socialProof?.subtitle ||
-              'Tausende von Nutzern vertrauen auf unsere Plattform'}
+            Tausende von Nutzern vertrauen auf unsere Plattform
           </p>
         </div>
 

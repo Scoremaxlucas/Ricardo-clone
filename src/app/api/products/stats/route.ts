@@ -18,10 +18,7 @@ export async function GET(request: NextRequest) {
     const watchIdsParam = searchParams.get('watchIds')
 
     if (!watchIdsParam) {
-      return NextResponse.json(
-        { error: 'watchIds parameter is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'watchIds parameter is required' }, { status: 400 })
     }
 
     const watchIds = watchIdsParam.split(',').filter(Boolean)
