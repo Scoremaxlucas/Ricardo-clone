@@ -117,6 +117,16 @@ export default function LocationMapInner({ watches, center }: LocationMapInnerPr
 
     const loadMap = async () => {
       try {
+        // Dynamisch CSS laden (nur client-side)
+        if (typeof document !== 'undefined') {
+          const link = document.createElement('link')
+          link.rel = 'stylesheet'
+          link.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css'
+          link.integrity = 'sha256-p4NxAoJBh7IN4omJ5s0/l4hvYy8pqReJzQ57sBXv1Mw='
+          link.crossOrigin = ''
+          document.head.appendChild(link)
+        }
+
         const [L, reactLeaflet] = await Promise.all([
           import('leaflet'),
           import('react-leaflet'),

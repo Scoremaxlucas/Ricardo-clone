@@ -4,9 +4,6 @@
 
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
 
-/* Leaflet CSS for maps */
-@import 'leaflet/dist/leaflet.css';
-
 :root {
   /* Helvenda Design System Colors - Wärmere Palette */
   --color-primary: #14b8a6; /* Wärmeres Teal */
@@ -314,7 +311,7 @@ html {
     border-color: rgba(20, 184, 166, 0.3);
   }
 
-    /* Scrollbar Hide - Für horizontales Scrollen ohne sichtbare Scrollbar */
+  /* Scrollbar Hide - Für horizontales Scrollen ohne sichtbare Scrollbar */
   .scrollbar-hide::-webkit-scrollbar {
     display: none;
   }
