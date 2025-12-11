@@ -9,7 +9,7 @@
     "dev:status": "./server-status.sh",
     "postinstall": "prisma generate",
     "prepare:schema": "node scripts/prepare-schema.js",
-    "build": "next build",
+    "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
