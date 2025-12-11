@@ -7,7 +7,7 @@
     "dev:start": "./start-server.sh",
     "dev:check": "./check-and-start.sh",
     "dev:status": "./server-status.sh",
-    "postinstall": "bash scripts/prepare-schema.sh && prisma generate",
+    "postinstall": "node scripts/prepare-schema.js && prisma generate",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
