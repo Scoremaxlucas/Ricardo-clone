@@ -16,7 +16,7 @@ import {
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 
 /**
@@ -833,10 +833,14 @@ export default function EditWatchPage() {
                   {formData.isAuction && (
                     <>
                       <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="auctionDuration"
+                          className="mb-2 block text-sm font-medium text-gray-700"
+                        >
                           Auktionsdauer (Tage) *
                         </label>
                         <select
+                          id="auctionDuration"
                           name="auctionDuration"
                           required={formData.isAuction}
                           value={formData.auctionDuration}
@@ -853,10 +857,14 @@ export default function EditWatchPage() {
                       </div>
 
                       <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                        <label
+                          htmlFor="auctionStart"
+                          className="mb-2 block text-sm font-medium text-gray-700"
+                        >
                           Starttermin (optional)
                         </label>
                         <input
+                          id="auctionStart"
                           type="datetime-local"
                           name="auctionStart"
                           value={formData.auctionStart}
