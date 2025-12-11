@@ -13,16 +13,21 @@ export async function postalCodeToCoordinates(
   postalCode: string
 ): Promise<{ lat: number; lon: number } | null> {
   try {
-    // Prüfe zuerst Cache
-    const cached = await prisma.postalCodeCache.findUnique({
-      where: { postalCode },
-    })
+    // Prüfe zuerst Cache (nur wenn Prisma verfügbar ist)
+    try {
+      const cached = await prisma.postalCodeCache.findUnique({
+        where: { postalCode },
+      })
 
-    if (cached) {
-      return {
-        lat: cached.latitude,
-        lon: cached.longitude,
+      if (cached) {
+        return {
+          lat: cached.latitude,
+          lon: cached.longitude,
+        }
       }
+    } catch (cacheError) {
+      // Wenn Cache nicht verfügbar (z.B. während Build), überspringe Cache
+      // und hole direkt von API
     }
 
     // Wenn nicht im Cache, hole von Nominatim API
@@ -49,7 +54,7 @@ export async function postalCodeToCoordinates(
       lon: parseFloat(data[0].lon),
     }
 
-    // Speichere im Cache für zukünftige Anfragen
+    // Speichere im Cache für zukünftige Anfragen (nur wenn Prisma verfügbar ist)
     try {
       await prisma.postalCodeCache.create({
         data: {
@@ -60,8 +65,8 @@ export async function postalCodeToCoordinates(
         },
       })
     } catch (error: any) {
-      // Ignoriere Fehler wenn bereits existiert (Race Condition)
-      if (!error.message?.includes('Unique constraint')) {
+      // Ignoriere Fehler wenn bereits existiert (Race Condition) oder wenn DB nicht verfügbar
+      if (!error.message?.includes('Unique constraint') && !error.message?.includes('connect')) {
         console.error('Error caching postal code:', error)
       }
     }
@@ -118,22 +123,27 @@ export async function batchPostalCodeToCoordinates(
     return coordinatesMap
   }
 
-  // OPTIMIERT: Hole alle auf einmal aus Cache
-  const cached = await prisma.postalCodeCache.findMany({
-    where: {
-      postalCode: {
-        in: postalCodes,
+  // OPTIMIERT: Hole alle auf einmal aus Cache (nur wenn Prisma verfügbar ist)
+  try {
+    const cached = await prisma.postalCodeCache.findMany({
+      where: {
+        postalCode: {
+          in: postalCodes,
+        },
       },
-    },
-  })
-
-  // Füge gecachte Koordinaten hinzu
-  cached.forEach(cache => {
-    coordinatesMap.set(cache.postalCode, {
-      lat: cache.latitude,
-      lon: cache.longitude,
     })
-  })
+
+    // Füge gecachte Koordinaten hinzu
+    cached.forEach(cache => {
+      coordinatesMap.set(cache.postalCode, {
+        lat: cache.latitude,
+        lon: cache.longitude,
+      })
+    })
+  } catch (cacheError) {
+    // Wenn Cache nicht verfügbar (z.B. während Build), überspringe Cache
+    // und hole direkt von API
+  }
 
   // Finde fehlende Postleitzahlen
   const missing = postalCodes.filter(pc => !coordinatesMap.has(pc))
@@ -148,11 +158,11 @@ export async function batchPostalCodeToCoordinates(
   const batchSize = 2
   for (let i = 0; i < missing.length; i += batchSize) {
     const batch = missing.slice(i, i + batchSize)
-    
+
     // Lade Batch parallel
     const promises = batch.map(postalCode => postalCodeToCoordinates(postalCode))
     const results = await Promise.all(promises)
-    
+
     // Füge Ergebnisse hinzu
     batch.forEach((postalCode, index) => {
       const coords = results[index]
