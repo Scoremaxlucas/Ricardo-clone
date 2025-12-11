@@ -46,8 +46,9 @@ export function ProductPageClient({
   // Track view (Feature 2: Social Proof)
   useEffect(() => {
     if (watch?.id) {
-      // Track view using new ProductStats API
-      fetch(`/api/products/${watch.id}/stats`, { method: 'POST' }).catch(err => {
+      // Track view using /api/products/[id]/view for complete WatchView tracking
+      // This creates a WatchView entry AND updates ProductStats
+      fetch(`/api/products/${watch.id}/view`, { method: 'POST' }).catch(err => {
         console.error('[ProductPageClient] Error tracking view:', err)
       })
     }
