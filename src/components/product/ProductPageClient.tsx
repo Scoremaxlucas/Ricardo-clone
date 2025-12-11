@@ -47,7 +47,9 @@ export function ProductPageClient({
   useEffect(() => {
     if (watch?.id) {
       // Track view using new ProductStats API
-      fetch(`/api/products/${watch.id}/stats`, { method: 'POST' }).catch(() => {})
+      fetch(`/api/products/${watch.id}/stats`, { method: 'POST' }).catch(err => {
+        console.error('[ProductPageClient] Error tracking view:', err)
+      })
     }
   }, [watch?.id])
 

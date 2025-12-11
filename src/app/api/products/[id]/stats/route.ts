@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * API Route für Produkt-Statistiken (Feature 2: Social Proof)
@@ -12,10 +12,7 @@ import { prisma } from '@/lib/prisma'
  * - soldLast24h: Anzahl verkauft in letzten 24h (für ähnliche Produkte)
  * - viewersNow: Aktuelle Anzahl der Viewer
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const watchId = id
@@ -124,10 +121,7 @@ export async function GET(
  *
  * Trackt einen View für ein Produkt
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const watchId = id
@@ -165,9 +159,6 @@ export async function POST(
     })
   } catch (error: any) {
     console.error('Error tracking product view:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error tracking view' },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: 'Error tracking view' }, { status: 500 })
   }
 }

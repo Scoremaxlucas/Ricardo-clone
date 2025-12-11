@@ -1,7 +1,7 @@
 'use client'
 
-import { useEffect, useState } from 'react'
 import { Eye, Heart, ShoppingBag, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface ProductStatsProps {
   watchId: string
@@ -21,7 +21,7 @@ interface Stats {
 
 /**
  * ProductStats Komponente (Feature 2: Social Proof)
- * 
+ *
  * Zeigt Vertrauenssignale für ein Produkt:
  * - Anzahl der Aufrufe
  * - Anzahl der Favoriten
@@ -72,7 +72,11 @@ export function ProductStats({
 
     // Track viewer (nur einmal beim Mount)
     if (showViewersNow) {
-      fetch(`/api/products/${watchId}/viewers`, { method: 'POST' }).catch(() => {})
+      fetch(`/api/products/${watchId}/viewers`, { method: 'POST' }).catch(err => {
+        if (isMounted) {
+          console.error('[ProductStats] Error tracking viewer:', err)
+        }
+      })
     }
 
     // Polling für Live-Viewer (alle 30 Sekunden)
@@ -80,7 +84,11 @@ export function ProductStats({
       if (isMounted && showViewersNow) {
         fetchStats()
         // Re-track viewer alle 2 Minuten
-        fetch(`/api/products/${watchId}/viewers`, { method: 'POST' }).catch(() => {})
+        fetch(`/api/products/${watchId}/viewers`, { method: 'POST' }).catch(err => {
+          if (isMounted) {
+            console.error('[ProductStats] Error re-tracking viewer:', err)
+          }
+        })
       }
     }, 30000)
 
@@ -148,7 +156,7 @@ export function ProductStats({
 
       {/* Sold Last 24h (für ähnliche Produkte) */}
       {showSoldLast24h && stats.similarSoldLast24h > 0 && (
-        <div className="flex items-center gap-2 text-green-600 font-medium">
+        <div className="flex items-center gap-2 font-medium text-green-600">
           <ShoppingBag className="h-4 w-4" />
           <span>{stats.similarSoldLast24h} ähnliche Artikel verkauft in 24h</span>
         </div>
@@ -156,9 +164,12 @@ export function ProductStats({
 
       {/* Live Viewers */}
       {showViewersNow && stats.viewersNow > 0 && (
-        <div className="flex items-center gap-2 text-primary-600 font-medium animate-pulse">
+        <div className="flex animate-pulse items-center gap-2 font-medium text-primary-600">
           <Users className="h-4 w-4" />
-          <span>{stats.viewersNow} {stats.viewersNow === 1 ? 'Person schaut' : 'Personen schauen'} gerade</span>
+          <span>
+            {stats.viewersNow} {stats.viewersNow === 1 ? 'Person schaut' : 'Personen schauen'}{' '}
+            gerade
+          </span>
         </div>
       )}
     </div>

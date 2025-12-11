@@ -1,20 +1,17 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * API Route für Live-Viewer Tracking (Feature 2: Social Proof)
- * 
+ *
  * POST /api/products/[id]/viewers
- * 
+ *
  * Registriert einen aktiven Viewer für ein Produkt
  * GET gibt aktuelle Viewer-Anzahl zurück
  */
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const watchId = id
@@ -65,13 +62,10 @@ export async function GET(
 
 /**
  * POST /api/products/[id]/viewers
- * 
+ *
  * Registriert einen aktiven Viewer
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const watchId = id
@@ -81,7 +75,7 @@ export async function POST(
     // Erstelle Viewer-Eintrag (mit eindeutiger ID)
     // Verwende Timestamp für eindeutige IDs
     const viewerId = `viewer-${watchId}-${userId || 'anonymous'}-${Date.now()}-${Math.random().toString(36).substring(7)}`
-    
+
     try {
       await prisma.auctionViewer.create({
         data: {
@@ -92,8 +86,10 @@ export async function POST(
         },
       })
     } catch (createError: any) {
-      // Ignore duplicate errors - viewer might already be tracked
+      // Ignore duplicate key errors (P2002) - viewer might already be tracked
+      // But log other errors for debugging
       if (createError.code !== 'P2002') {
+        console.error('[Viewers API] Error creating viewer entry:', createError)
         throw createError
       }
     }
@@ -142,9 +138,6 @@ export async function POST(
       return NextResponse.json({ success: true })
     }
     console.error('Error tracking viewer:', error)
-    return NextResponse.json(
-      { success: false, error: 'Error tracking viewer' },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: 'Error tracking viewer' }, { status: 500 })
   }
 }
