@@ -41,27 +41,32 @@ export default function LocationMapInner({ watches, center }: LocationMapInnerPr
 
     const loadMap = async () => {
       try {
-        const [L, { MapContainer, Marker, Popup, TileLayer, useMap }] = await Promise.all([
+        const [L, reactLeaflet] = await Promise.all([
           import('leaflet'),
           import('react-leaflet'),
         ])
 
-        // Fix für Leaflet-Icons in Next.js
-        delete (L.default.Icon.Default.prototype as any)._getIconUrl
-        L.default.Icon.Default.mergeOptions({
-          iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
-          iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
-          shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
-        })
+        const LModule = L.default || L
+        const { MapContainer, Marker, Popup, TileLayer, useMap } = reactLeaflet
 
-        // Komponente zum Anpassen der Karte an Marker
-        function MapBounds({ watches }: { watches: NearbyWatch[] }) {
+        // Fix für Leaflet-Icons in Next.js
+        if (LModule.Icon && LModule.Icon.Default) {
+          delete (LModule.Icon.Default.prototype as any)._getIconUrl
+          LModule.Icon.Default.mergeOptions({
+            iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon-2x.png',
+            iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-icon.png',
+            shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/images/marker-shadow.png',
+          })
+        }
+
+        // Komponente zum Anpassen der Karte an Marker - muss außerhalb von useEffect sein
+        const MapBounds = ({ watches }: { watches: NearbyWatch[] }) => {
           const map = useMap()
 
           useEffect(() => {
-            if (watches.length === 0 || !L.default) return
+            if (watches.length === 0 || !LModule) return
 
-            const bounds = L.default.latLngBounds(
+            const bounds = LModule.latLngBounds(
               watches.map(w => [w.coordinates.lat, w.coordinates.lon])
             )
             map.fitBounds(bounds, { padding: [50, 50], maxZoom: 12 })
@@ -76,7 +81,7 @@ export default function LocationMapInner({ watches, center }: LocationMapInnerPr
           Popup,
           TileLayer,
           MapBounds,
-          L: L.default,
+          L: LModule,
         })
         setIsLoading(false)
       } catch (error) {
