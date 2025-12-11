@@ -2,9 +2,45 @@
 
 import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { SearchAutocomplete } from './SearchAutocomplete'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { trackSearchQuery } from '@/lib/search-analytics'
 
 export function Hero() {
   const { t } = useLanguage()
+  const { data: session } = useSession()
+  const router = useRouter()
+
+  // Handle Search with Analytics Tracking
+  const handleSearch = async (query: string) => {
+    if (!query.trim()) return
+
+    // Track search query (async, non-blocking)
+    try {
+      // Get result count first (simplified - could be improved)
+      const searchResponse = await fetch(`/api/watches/search?q=${encodeURIComponent(query)}&limit=1`)
+      const searchData = await searchResponse.json()
+      const resultCount = searchData?.watches?.length || 0
+
+      // Track search query
+      await fetch('/api/search/track', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          query: query.trim(),
+          userId: session?.user?.id || null,
+          resultCount,
+        }),
+      })
+    } catch (error) {
+      // Silent fail - analytics should not block search
+      console.error('Error tracking search:', error)
+    }
+
+    // Navigate to search results
+    router.push(`/search?q=${encodeURIComponent(query)}`)
+  }
 
   return (
     <section
@@ -25,6 +61,23 @@ export function Hero() {
       />
 
       <div className="relative z-10 mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+        {/* Intelligente Suchleiste - Feature 1 */}
+        <div className="mb-12 animate-fade-in-up">
+          <div className="mx-auto max-w-3xl">
+            <h1 className="mb-4 text-center text-3xl font-bold text-white md:text-4xl lg:text-5xl">
+              {t.home.hero.title || 'Finden Sie genau das, was Sie suchen'}
+            </h1>
+            <p className="mb-6 text-center text-lg text-white/90 md:text-xl">
+              {t.home.hero.subtitle || 'Schweizer Online-Marktplatz für alle Ihre Bedürfnisse'}
+            </p>
+            <SearchAutocomplete
+              onSearch={handleSearch}
+              placeholder={t?.home?.search?.placeholder || 'Suchen Sie nach Produkten, Marken, Kategorien...'}
+              className="mx-auto"
+            />
+          </div>
+        </div>
+
         <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
           {/* Linke Box */}
           <div className="animate-fade-in-up max-w-md flex-1">
@@ -50,10 +103,12 @@ export function Hero() {
           {/* Rechte Box - Gleiches Design wie links */}
           <div className="animate-fade-in-up max-w-2xl flex-1" style={{ animationDelay: '0.2s' }}>
             <div className="rounded-2xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-md">
-              <h3 className="mb-3 text-3xl font-bold leading-tight text-white md:text-4xl">
-                {t.home.hero.title}
+              <h3 className="mb-3 text-2xl font-bold leading-tight text-white md:text-3xl">
+                {t.home.hero.sellNow || 'Verkaufen Sie jetzt'}
               </h3>
-              <p className="text-base leading-relaxed text-white/90">{t.home.hero.subtitle}</p>
+              <p className="text-base leading-relaxed text-white/90">
+                {t.home.hero.reachBuyers || 'Erreichen Sie tausende von Käufern in der ganzen Schweiz'}
+              </p>
             </div>
           </div>
         </div>
