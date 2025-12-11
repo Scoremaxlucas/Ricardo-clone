@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
-import { Search, X, TrendingUp } from 'lucide-react'
-import { useRouter } from 'next/navigation'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { Search, TrendingUp, X } from 'lucide-react'
+import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useRef, useState } from 'react'
 
 interface SearchAutocompleteProps {
   onSearch?: (query: string) => void
@@ -14,7 +14,7 @@ interface SearchAutocompleteProps {
 
 /**
  * Intelligente Suchleiste mit Autocomplete (Feature 1)
- * 
+ *
  * Features:
  * - Live-Suggestions basierend auf User-Eingabe
  * - Populäre Suchbegriffe wenn kein Input
@@ -42,37 +42,34 @@ export function SearchAutocomplete({
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
   // Debounced API-Call für Suggestions
-  const fetchSuggestions = useCallback(
-    async (searchTerm: string) => {
-      if (searchTerm.trim().length < 2 && searchTerm.trim().length > 0) {
+  const fetchSuggestions = useCallback(async (searchTerm: string) => {
+    if (searchTerm.trim().length < 2 && searchTerm.trim().length > 0) {
+      setSuggestions([])
+      setShowPopular(false)
+      return
+    }
+
+    setIsLoading(true)
+    try {
+      const url = `/api/search/suggestions?q=${encodeURIComponent(searchTerm)}&limit=8`
+      const response = await fetch(url)
+      const data = await response.json()
+
+      if (data.suggestions && Array.isArray(data.suggestions)) {
+        setSuggestions(data.suggestions)
+        setShowPopular(searchTerm.trim().length === 0 && data.suggestions.length > 0)
+      } else {
         setSuggestions([])
         setShowPopular(false)
-        return
       }
-
-      setIsLoading(true)
-      try {
-        const url = `/api/search/suggestions?q=${encodeURIComponent(searchTerm)}&limit=8`
-        const response = await fetch(url)
-        const data = await response.json()
-
-        if (data.suggestions && Array.isArray(data.suggestions)) {
-          setSuggestions(data.suggestions)
-          setShowPopular(searchTerm.trim().length === 0 && data.suggestions.length > 0)
-        } else {
-          setSuggestions([])
-          setShowPopular(false)
-        }
-      } catch (error) {
-        console.error('Error fetching suggestions:', error)
-        setSuggestions([])
-        setShowPopular(false)
-      } finally {
-        setIsLoading(false)
-      }
-    },
-    []
-  )
+    } catch (error) {
+      console.error('Error fetching suggestions:', error)
+      setSuggestions([])
+      setShowPopular(false)
+    } finally {
+      setIsLoading(false)
+    }
+  }, [])
 
   // Debounce Input-Änderungen
   useEffect(() => {
@@ -195,7 +192,7 @@ export function SearchAutocomplete({
               }
             }}
             onKeyDown={handleKeyDown}
-            placeholder={placeholder || t?.home?.search?.placeholder || 'Suchen Sie nach Produkten...'}
+            placeholder={placeholder || 'Suchen Sie nach Produkten...'}
             className="w-full rounded-full border-2 border-gray-200 bg-white py-4 pl-12 pr-12 text-base shadow-lg transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 md:py-5 md:text-lg"
           />
           {query && (

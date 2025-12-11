@@ -1,11 +1,10 @@
 'use client'
 
-import Link from 'next/link'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { SearchAutocomplete } from './SearchAutocomplete'
 import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { trackSearchQuery } from '@/lib/search-analytics'
+import { SearchAutocomplete } from './SearchAutocomplete'
 
 export function Hero() {
   const { t } = useLanguage()
@@ -19,7 +18,9 @@ export function Hero() {
     // Track search query (async, non-blocking)
     try {
       // Get result count first (simplified - could be improved)
-      const searchResponse = await fetch(`/api/watches/search?q=${encodeURIComponent(query)}&limit=1`)
+      const searchResponse = await fetch(
+        `/api/watches/search?q=${encodeURIComponent(query)}&limit=1`
+      )
       const searchData = await searchResponse.json()
       const resultCount = searchData?.watches?.length || 0
 
@@ -62,7 +63,7 @@ export function Hero() {
 
       <div className="relative z-10 mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         {/* Intelligente Suchleiste - Feature 1 */}
-        <div className="mb-12 animate-fade-in-up">
+        <div className="animate-fade-in-up mb-12">
           <div className="mx-auto max-w-3xl">
             <h1 className="mb-4 text-center text-3xl font-bold text-white md:text-4xl lg:text-5xl">
               {t.home.hero.title || 'Finden Sie genau das, was Sie suchen'}
@@ -72,7 +73,7 @@ export function Hero() {
             </p>
             <SearchAutocomplete
               onSearch={handleSearch}
-              placeholder={t?.home?.search?.placeholder || 'Suchen Sie nach Produkten, Marken, Kategorien...'}
+              placeholder={t.header.searchPlaceholder || 'Suchen Sie nach Produkten, Marken, Kategorien...'}
               className="mx-auto"
             />
           </div>
@@ -107,7 +108,8 @@ export function Hero() {
                 {t.home.hero.sellNow || 'Verkaufen Sie jetzt'}
               </h3>
               <p className="text-base leading-relaxed text-white/90">
-                {t.home.hero.reachBuyers || 'Erreichen Sie tausende von Käufern in der ganzen Schweiz'}
+                {t.home.hero.reachBuyers ||
+                  'Erreichen Sie tausende von Käufern in der ganzen Schweiz'}
               </p>
             </div>
           </div>
