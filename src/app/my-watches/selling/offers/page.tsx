@@ -47,7 +47,7 @@ export default function ReceivedOffersPage() {
   const [confirmOfferId, setConfirmOfferId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (status === 'authenticated' && session?.user?.id) {
+    if (status === 'authenticated' && (session?.user as { id?: string })?.id) {
       fetchOffers()
     }
   }, [status, session])
