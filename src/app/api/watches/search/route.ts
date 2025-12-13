@@ -1011,17 +1011,9 @@ export async function GET(request: NextRequest) {
           matches = relevanceScore > 0 && (hasOriginalMatch || hasSynonymMatch)
         }
 
-        // Booster-Bonus wird NUR hinzugefügt, wenn der Artikel bereits zur Suche passt
-        // Booster beeinflusst nur die Sortierung, nicht die Filterung!
-        if (matches) {
-          if (boosters.includes('super-boost')) {
-            relevanceScore += 10000
-          } else if (boosters.includes('turbo-boost')) {
-            relevanceScore += 5000
-          } else if (boosters.includes('boost')) {
-            relevanceScore += 2000
-          }
-        }
+        // Booster-Bonus wird NUR nach KI-Relevanz-Prüfung hinzugefügt
+        // Wird später in der Pipeline hinzugefügt, wenn KI-Relevanz bestätigt ist
+        // Hier nur den Basis-Score zurückgeben
 
         return { article, relevanceScore, matches, boosters }
       })
@@ -1063,26 +1055,69 @@ export async function GET(request: NextRequest) {
 
       // Filtere Artikel mit niedriger KI-Relevanz (< 0.5)
       // Dies entfernt irrelevante Ergebnisse wie "Headset" bei Suche nach "Maus"
-      const relevantArticles = articlesWithAIRelevance.filter(item => {
-        // Wenn OpenAI nicht verfügbar (aiRelevance = 1.0), nutze traditionellen Score
-        if (item.aiRelevance >= 0.99) {
-          return item.matches || item.relevanceScore > 0
-        }
-        // Mit OpenAI: Nur Artikel mit Relevanz > 0.5 (ausgewogener Threshold)
-        return item.aiRelevance > 0.5
-      })
+      const relevantArticles = articlesWithAIRelevance
+        .filter(item => {
+          // Wenn OpenAI nicht verfügbar (aiRelevance = 1.0), nutze traditionellen Score
+          if (item.aiRelevance >= 0.99) {
+            return item.matches || item.relevanceScore > 0
+          }
+          // Mit OpenAI: Nur Artikel mit Relevanz > 0.5 (ausgewogener Threshold)
+          return item.aiRelevance > 0.5
+        })
+        .map(item => {
+          // Füge Booster-Bonus NUR hinzu, wenn Artikel relevant ist (nach KI-Prüfung)
+          let finalScore = item.combinedScore || item.relevanceScore
+          
+          if (item.aiRelevance > 0.5) {
+            // Artikel ist relevant - jetzt Booster-Bonus hinzufügen
+            if (item.boosters.includes('super-boost')) {
+              finalScore += 10000
+            } else if (item.boosters.includes('turbo-boost')) {
+              finalScore += 5000
+            } else if (item.boosters.includes('boost')) {
+              finalScore += 2000
+            }
+          }
+          // Wenn nicht relevant (aiRelevance <= 0.5), kein Booster-Bonus
+
+          return {
+            ...item,
+            finalScore,
+          }
+        })
 
       // Füge restliche Artikel hinzu (die nicht mit KI geprüft wurden)
       const remainingArticles = articlesWithScore
         .filter(item => !topCandidates.includes(item))
         .filter(item => item.matches || item.relevanceScore > 0)
 
-      // Kombiniere und sortiere
-      articles = [...relevantArticles, ...remainingArticles]
+      // Füge Booster-Bonus zu restlichen Artikeln hinzu (die nicht mit KI geprüft wurden)
+      const remainingArticlesWithBoost = remainingArticles.map(item => {
+        let finalScore = item.relevanceScore
+        
+        // Booster-Bonus nur wenn Artikel relevant ist
+        if (item.matches || item.relevanceScore > 0) {
+          if (item.boosters.includes('super-boost')) {
+            finalScore += 10000
+          } else if (item.boosters.includes('turbo-boost')) {
+            finalScore += 5000
+          } else if (item.boosters.includes('boost')) {
+            finalScore += 2000
+          }
+        }
+
+        return {
+          ...item,
+          finalScore,
+        }
+      })
+
+      // Kombiniere und sortiere nach finalScore (inkl. Booster-Bonus für relevante Artikel)
+      articles = [...relevantArticles, ...remainingArticlesWithBoost]
         .sort((a, b) => {
-          // Sortiere nach combinedScore (falls vorhanden) oder relevanceScore
-          const scoreA = 'combinedScore' in a ? (a as any).combinedScore : a.relevanceScore
-          const scoreB = 'combinedScore' in b ? (b as any).combinedScore : b.relevanceScore
+          // Sortiere nach finalScore (inkl. Booster-Bonus)
+          const scoreA = 'finalScore' in a ? (a as any).finalScore : a.relevanceScore
+          const scoreB = 'finalScore' in b ? (b as any).finalScore : b.relevanceScore
 
           if (scoreB !== scoreA) {
             return scoreB - scoreA
