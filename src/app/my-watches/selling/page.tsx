@@ -1,5 +1,5 @@
 import { redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
