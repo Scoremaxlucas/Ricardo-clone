@@ -24,5 +24,5 @@
     }
   },
   "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
-  "exclude": ["node_modules", "mobile-app", "scripts"]
+  "exclude": ["node_modules", "mobile-app", "scripts", "CORRECTED_WATCHES_ROUTE.ts"]
 }
