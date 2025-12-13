@@ -94,7 +94,7 @@ export function BidComponent({
   const [showVerificationModal, setShowVerificationModal] = useState(false)
   const [verificationAction, setVerificationAction] = useState<'buy' | 'offer' | 'bid'>('buy')
 
-  const isSeller = session?.user?.id === sellerId
+  const isSeller = (session?.user as { id?: string })?.id === sellerId
   const isAuctionActive = currentAuctionEnd ? new Date(currentAuctionEnd) > new Date() : true
 
   // Aktualisiere currentAuctionEnd wenn Prop sich ändert
@@ -184,7 +184,7 @@ export function BidComponent({
 
   // Lade Verifizierungsstatus
   const loadVerificationStatus = async () => {
-    if (session?.user?.id) {
+    if ((session?.user as { id?: string })?.id) {
       try {
         const res = await fetch('/api/verification/get')
         if (res.ok) {
@@ -453,7 +453,7 @@ export function BidComponent({
 
   // Prüfe ob Artikel verkauft wurde
   if (itemStatus?.isSold) {
-    const isCurrentUserBuyer = session?.user?.id === itemStatus.purchase?.buyerId
+    const isCurrentUserBuyer = (session?.user as { id?: string })?.id === itemStatus.purchase?.buyerId
     return (
       <div className="mt-8 rounded-lg bg-white p-6 shadow">
         <div className="text-center">

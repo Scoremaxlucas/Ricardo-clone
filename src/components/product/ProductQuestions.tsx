@@ -37,7 +37,7 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
   const [answerText, setAnswerText] = useState<{ [key: string]: string }>({})
   const [answerVisibility, setAnswerVisibility] = useState<{ [key: string]: boolean }>({})
 
-  const isSeller = session?.user?.id === sellerId
+  const isSeller = (session?.user as { id?: string })?.id === sellerId
 
   // Fragen laden
   const loadQuestions = async () => {
@@ -61,7 +61,7 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
   const handleSubmitQuestion = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!session?.user?.id) {
+    if (!(session?.user as { id?: string })?.id) {
       setError('Bitte melden Sie sich an, um Fragen zu stellen.')
       return
     }
@@ -177,11 +177,11 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
               placeholder="Stellen Sie dem Verkäufer eine Frage zu diesem Artikel..."
               rows={3}
               maxLength={800}
-              disabled={!session?.user?.id}
+              disabled={!(session?.user as { id?: string })?.id}
             />
             <div className="mt-2 flex items-center justify-between">
               <span className="text-xs text-gray-500">{questionText.length}/800 Zeichen</span>
-              {!session?.user?.id && (
+              {!(session?.user as { id?: string })?.id && (
                 <div className="flex items-center gap-2 text-sm text-gray-600">
                   <AlertCircle className="h-4 w-4" />
                   <span>
@@ -213,7 +213,7 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
 
             <button
               type="submit"
-              disabled={!session?.user?.id || !questionText.trim() || isSubmitting}
+              disabled={!(session?.user as { id?: string })?.id || !questionText.trim() || isSubmitting}
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-300 sm:w-auto"
             >
               <Send className="h-4 w-4" />
@@ -235,7 +235,7 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
           </div>
         ) : (
           questions.map(q => {
-            const isOwnQuestion = q.user.id === session?.user?.id
+            const isOwnQuestion = q.user.id === (session?.user as { id?: string })?.id
             const canAnswer = isSeller && !q.answer
 
             return (

@@ -34,7 +34,7 @@ export function ProductChat({ watchId, sellerId }: ProductChatProps) {
   const [loading, setLoading] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
-  const isSeller = session?.user?.id === sellerId
+  const isSeller = (session?.user as { id?: string })?.id === sellerId
 
   const loadMessages = async () => {
     try {
@@ -149,8 +149,8 @@ export function ProductChat({ watchId, sellerId }: ProductChatProps) {
           <p className="py-4 text-center text-gray-500">Noch keine Nachrichten</p>
         ) : (
           messages.map(msg => {
-            const isOwnMessage = msg.sender.id === session.user?.id
-            const isReceiver = msg.receiver.id === session.user?.id
+            const isOwnMessage = msg.sender.id === (session?.user as { id?: string })?.id
+            const isReceiver = msg.receiver.id === (session?.user as { id?: string })?.id
 
             return (
               <div

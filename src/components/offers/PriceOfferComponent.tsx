@@ -42,7 +42,7 @@ export function PriceOfferComponent({
   const [availableShippingMethods, setAvailableShippingMethods] = useState<ShippingMethod[]>([])
 
   useEffect(() => {
-    if (session?.user?.id === sellerId) {
+    if ((session?.user as { id?: string })?.id === sellerId) {
       setIsSeller(true)
     }
   }, [session, sellerId])
@@ -67,7 +67,7 @@ export function PriceOfferComponent({
   // Lade Verifizierungsstatus
   useEffect(() => {
     const loadVerificationStatus = async () => {
-      if (session?.user?.id) {
+      if ((session?.user as { id?: string })?.id) {
         try {
           const res = await fetch('/api/verification/get')
           if (res.ok) {
@@ -93,7 +93,7 @@ export function PriceOfferComponent({
   const maximumPrice = price - 0.01 // Muss niedriger als Verkaufspreis sein
 
   const handleBuyNow = async () => {
-    if (!session?.user?.id) {
+    if (!(session?.user as { id?: string })?.id) {
       toast.error('Bitte melden Sie sich an, um zu kaufen.')
       return
     }
@@ -157,7 +157,7 @@ export function PriceOfferComponent({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (!session?.user?.id) {
+    if (!(session?.user as { id?: string })?.id) {
       toast.error('Bitte melden Sie sich an, um einen Preisvorschlag zu machen.')
       return
     }
@@ -250,7 +250,7 @@ export function PriceOfferComponent({
     )
   }
 
-  if (!session?.user?.id) {
+  if (!(session?.user as { id?: string })?.id) {
     return (
       <div className="rounded-lg border-2 border-gray-200 bg-white p-6 shadow-lg">
         <div className="mb-6 flex items-center gap-3">
@@ -446,7 +446,7 @@ export function PriceOfferComponent({
 
         <button
           onClick={handleBuyNow}
-          disabled={buyNowLoading || isSeller || !session?.user?.id}
+          disabled={buyNowLoading || isSeller || !(session?.user as { id?: string })?.id}
           className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
         >
           {buyNowLoading ? (

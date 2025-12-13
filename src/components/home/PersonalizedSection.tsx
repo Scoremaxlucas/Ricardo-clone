@@ -26,7 +26,7 @@ export function PersonalizedSection({
     const fetchProducts = async () => {
       setLoading(true)
       try {
-        const url = session?.user ? `${apiEndpoint}?userId=${session.user.id}` : apiEndpoint
+        const url = session?.user ? `${apiEndpoint}?userId=${(session.user as { id?: string })?.id}` : apiEndpoint
         const response = await fetch(url)
         if (response.ok) {
           const data = await response.json()
