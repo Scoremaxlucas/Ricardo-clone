@@ -12,11 +12,14 @@
         "varsIgnorePattern": "^_"
       }
     ],
-    "no-console": [
-      "warn",
-      {
-        "allow": ["warn", "error"]
+    "no-console": "off"
+  },
+  "overrides": [
+    {
+      "files": ["src/types/**/*.d.ts"],
+      "rules": {
+        "no-unused-vars": "off"
       }
-    ]
-  }
+    }
+  ]
 }
