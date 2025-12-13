@@ -3,6 +3,230 @@ import { prisma } from '@/lib/prisma'
 import { fuzzyMatch, normalizeSearchText, extractSearchTerms } from '@/lib/search-utils'
 import { categoryKeywords, searchSynonyms } from '@/lib/search-synonyms'
 
+/**
+ * Prüft ob ein Suchbegriff mehrdeutig ist und KI-Prüfung benötigt
+ */
+function needsAIRelevanceCheck(query: string): boolean {
+  const ambiguousTerms = [
+    'maus',
+    'mouse',
+    'tastatur',
+    'keyboard',
+    'laptop',
+    'notebook',
+    'uhr',
+    'watch',
+    'ring',
+    'kette',
+    'schuhe',
+    'shoes',
+    'jacke',
+    'jacket',
+  ]
+
+  const queryLower = query.toLowerCase().trim()
+  return ambiguousTerms.some(term => queryLower === term || queryLower.includes(term))
+}
+
+/**
+ * KI-basierte Batch-Relevanz-Prüfung mit OpenAI
+ * Bewertet mehrere Artikel gleichzeitig für bessere Performance
+ */
+async function checkRelevanceBatchWithAI(
+  query: string,
+  articles: Array<{
+    title: string
+    description: string
+    brand?: string
+  }>
+): Promise<number[]> {
+  const openaiApiKey = process.env.OPENAI_API_KEY
+
+  // Wenn kein OpenAI API Key, nutze Fallback (alle relevant)
+  if (!openaiApiKey || articles.length === 0) {
+    return articles.map(() => 1.0)
+  }
+
+  try {
+    const articlesText = articles
+      .map(
+        (article, index) =>
+          `Artikel ${index + 1}:\nTitel: "${article.title}"\nBeschreibung: "${article.description}"\n${article.brand ? `Marke: "${article.brand}"` : ''}`
+      )
+      .join('\n\n')
+
+    const systemPrompt = `Du bist ein Experte für Produktrelevanz-Bewertung auf einem Online-Marktplatz.
+
+Deine Aufgabe: Bewerte ob Artikel wirklich zur Suchanfrage passen.
+
+Antworte IMMER im JSON-Format:
+{
+  "relevances": [0.0-1.0, 0.0-1.0, ...]
+}
+
+Bewertung:
+- 1.0 = Perfekt passend (z.B. "Maus" → Computer-Maus)
+- 0.8-0.9 = Sehr relevant
+- 0.6-0.7 = Teilweise relevant
+- 0.3-0.5 = Schwach relevant
+- 0.0-0.2 = Nicht relevant (z.B. "Maus" → Headset mit "Mausklick" in Beschreibung)
+
+WICHTIG:
+- "Maus" sollte NUR Computer-Mäuse finden, NICHT Headsets oder andere Produkte
+- "Laptop" sollte NUR Laptops finden, NICHT Taschen oder Zubehör
+- Sei sehr streng bei Mehrdeutigkeiten
+- Array-Länge muss exakt der Anzahl der Artikel entsprechen`
+
+    const userPrompt = `Suchanfrage: "${query}"
+
+Artikel:
+${articlesText}
+
+Antworte mit JSON-Array der Relevanz-Bewertungen:`
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // Günstigeres Model für schnelle Bewertungen
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: userPrompt,
+          },
+        ],
+        response_format: { type: 'json_object' },
+        temperature: 0.1, // Sehr niedrig für konsistente Bewertungen
+        max_tokens: 500,
+      }),
+    })
+
+    if (!response.ok) {
+      console.error('OpenAI API Fehler bei Batch-Relevanz-Prüfung:', response.status)
+      return articles.map(() => 1.0) // Fallback: Akzeptiere alle
+    }
+
+    const data = await response.json()
+    const resultText = data.choices[0]?.message?.content?.trim() || '{"relevances": []}'
+
+    try {
+      const result = JSON.parse(resultText)
+      const relevances = result.relevances || []
+
+      // Validiere und fülle auf falls nötig
+      return articles.map((_, index) => {
+        const relevance = relevances[index]
+        if (typeof relevance === 'number' && relevance >= 0 && relevance <= 1) {
+          return relevance
+        }
+        return 1.0 // Fallback
+      })
+    } catch (parseError) {
+      console.error('Fehler beim Parsen der KI-Antwort:', parseError)
+      return articles.map(() => 1.0) // Fallback
+    }
+  } catch (error) {
+    console.error('Fehler bei KI-Batch-Relevanz-Prüfung:', error)
+    return articles.map(() => 1.0) // Fallback: Akzeptiere alle bei Fehler
+  }
+}
+
+/**
+ * KI-basierte Relevanz-Prüfung mit OpenAI (Einzelprüfung - Legacy)
+ * @deprecated Nutze checkRelevanceBatchWithAI für bessere Performance
+ */
+async function checkRelevanceWithAI(
+  query: string,
+  articleTitle: string,
+  articleDescription: string,
+  articleBrand?: string
+): Promise<number> {
+  const openaiApiKey = process.env.OPENAI_API_KEY
+
+  // Wenn kein OpenAI API Key, nutze Fallback (immer relevant)
+  if (!openaiApiKey) {
+    return 1.0
+  }
+
+  try {
+    const articleText = `${articleTitle} ${articleDescription} ${articleBrand || ''}`.trim()
+
+    const systemPrompt = `Du bist ein Experte für Produktrelevanz-Bewertung auf einem Online-Marktplatz.
+
+Deine Aufgabe: Bewerte ob ein Artikel wirklich zur Suchanfrage passt.
+
+Antworte IMMER nur mit einer Zahl zwischen 0.0 und 1.0:
+- 1.0 = Perfekt passend (z.B. "Maus" → Computer-Maus)
+- 0.8-0.9 = Sehr relevant
+- 0.6-0.7 = Teilweise relevant
+- 0.3-0.5 = Schwach relevant
+- 0.0-0.2 = Nicht relevant (z.B. "Maus" → Headset mit "Mausklick" in Beschreibung)
+
+WICHTIG:
+- "Maus" sollte NUR Computer-Mäuse finden, NICHT Headsets oder andere Produkte
+- "Laptop" sollte NUR Laptops finden, NICHT Taschen oder Zubehör
+- Sei sehr streng bei Mehrdeutigkeiten`
+
+    const userPrompt = `Suchanfrage: "${query}"
+
+Artikel:
+Titel: "${articleTitle}"
+Beschreibung: "${articleDescription}"
+${articleBrand ? `Marke: "${articleBrand}"` : ''}
+
+Bewerte die Relevanz (0.0-1.0):`
+
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini', // Günstigeres Model für schnelle Bewertungen
+        messages: [
+          {
+            role: 'system',
+            content: systemPrompt,
+          },
+          {
+            role: 'user',
+            content: userPrompt,
+          },
+        ],
+        temperature: 0.1, // Sehr niedrig für konsistente Bewertungen
+        max_tokens: 10, // Nur eine Zahl
+      }),
+    })
+
+    if (!response.ok) {
+      console.error('OpenAI API Fehler bei Relevanz-Prüfung:', response.status)
+      return 1.0 // Fallback: Akzeptiere Artikel
+    }
+
+    const data = await response.json()
+    const relevanceText = data.choices[0]?.message?.content?.trim() || '1.0'
+    const relevance = parseFloat(relevanceText)
+
+    // Validiere Ergebnis
+    if (isNaN(relevance) || relevance < 0 || relevance > 1) {
+      return 1.0 // Fallback
+    }
+
+    return relevance
+  } catch (error) {
+    console.error('Fehler bei KI-Relevanz-Prüfung:', error)
+    return 1.0 // Fallback: Akzeptiere Artikel bei Fehler
+  }
+}
+
 // OPTIMIERT: Synonym-Mappings wurden in separate Datei ausgelagert für bessere Performance
 // Die Mappings werden nur einmal geladen und können gecached werden
 // categoryKeywords und searchSynonyms sind jetzt in @/lib/search-synonyms.ts
@@ -802,21 +1026,71 @@ export async function GET(request: NextRequest) {
         return { article, relevanceScore, matches, boosters }
       })
 
-      // Filtere NUR Artikel, die zur Suche passen (matches = true)
-      // WICHTIG: Da die DB bereits nach Suchbegriff gefiltert hat, sollten alle Artikel hier matchen
-      // Die Relevanz-Berechnung dient nur noch zur Sortierung
-      articles = articlesWithScore
-        .filter(item => {
-          // Wenn DB bereits gefiltert hat, akzeptiere alle Artikel (mit Relevanz-Score > 0)
-          // Sonst nur explizite Matches
-          return item.matches || item.relevanceScore > 0
-        })
-        .sort((a, b) => {
-          // Sortiere nach Relevanz-Score (inkl. Booster-Bonus für relevante Artikel)
-          if (b.relevanceScore !== a.relevanceScore) {
-            return b.relevanceScore - a.relevanceScore
+      // KI-basierte Relevanz-Prüfung für präzise Ergebnisse
+      // Nur bei mehrdeutigen Begriffen (z.B. "Maus") für bessere Performance
+      const shouldUseAI = needsAIRelevanceCheck(q)
+      const topCandidates = articlesWithScore
+        .filter(item => item.matches || item.relevanceScore > 0)
+        .slice(0, shouldUseAI ? 30 : 0) // Prüfe max. 30 Artikel mit KI
+
+      let articlesWithAIRelevance = topCandidates.map(item => ({
+        ...item,
+        aiRelevance: 1.0, // Default: relevant
+        combinedScore: item.relevanceScore,
+      }))
+
+      // Batch-KI-Prüfung nur wenn nötig und OpenAI verfügbar
+      if (shouldUseAI && topCandidates.length > 0 && process.env.OPENAI_API_KEY) {
+        const articlesForAI = topCandidates.map(item => ({
+          title: item.article.title || '',
+          description: item.article.description || '',
+          brand: item.article.brand || undefined,
+        }))
+
+        const aiRelevances = await checkRelevanceBatchWithAI(q, articlesForAI)
+
+        articlesWithAIRelevance = topCandidates.map((item, index) => {
+          const aiRelevance = aiRelevances[index] || 1.0
+          const combinedScore = item.relevanceScore * aiRelevance
+
+          return {
+            ...item,
+            aiRelevance,
+            combinedScore,
           }
-          return new Date(b.article.createdAt).getTime() - new Date(a.article.createdAt).getTime()
+        })
+      }
+
+      // Filtere Artikel mit niedriger KI-Relevanz (< 0.5)
+      // Dies entfernt irrelevante Ergebnisse wie "Headset" bei Suche nach "Maus"
+      const relevantArticles = articlesWithAIRelevance.filter(item => {
+        // Wenn OpenAI nicht verfügbar (aiRelevance = 1.0), nutze traditionellen Score
+        if (item.aiRelevance >= 0.99) {
+          return item.matches || item.relevanceScore > 0
+        }
+        // Mit OpenAI: Nur Artikel mit Relevanz > 0.5 (ausgewogener Threshold)
+        return item.aiRelevance > 0.5
+      })
+
+      // Füge restliche Artikel hinzu (die nicht mit KI geprüft wurden)
+      const remainingArticles = articlesWithScore
+        .filter(item => !topCandidates.includes(item))
+        .filter(item => item.matches || item.relevanceScore > 0)
+
+      // Kombiniere und sortiere
+      articles = [...relevantArticles, ...remainingArticles]
+        .sort((a, b) => {
+          // Sortiere nach combinedScore (falls vorhanden) oder relevanceScore
+          const scoreA = 'combinedScore' in a ? (a as any).combinedScore : a.relevanceScore
+          const scoreB = 'combinedScore' in b ? (b as any).combinedScore : b.relevanceScore
+
+          if (scoreB !== scoreA) {
+            return scoreB - scoreA
+          }
+          return (
+            new Date(b.article.createdAt).getTime() -
+            new Date(a.article.createdAt).getTime()
+          )
         })
         .map(item => item.article)
     } else if (category) {
