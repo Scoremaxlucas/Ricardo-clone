@@ -1973,7 +1973,6 @@ export function getDisputeResolvedEmail(
     ? `✅ Dispute erfolgreich gelöst - ${productTitle}`
     : `⚠️ Dispute gelöst - ${productTitle}`
 
-  const headerColor = isSuccess ? '#0f766e' : '#f59e0b'
   const headerBg = isSuccess ? '#0f766e' : '#f59e0b'
   const boxColor = isSuccess ? '#f0fdfa' : '#fef3c7'
   const boxBorder = isSuccess ? '#0f766e' : '#f59e0b'
