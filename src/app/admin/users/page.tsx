@@ -500,7 +500,7 @@ export default function AdminUsersPage() {
                             <Shield className="h-5 w-5" />
                           </button>
                         )}
-                        {user.isAdmin && user.id !== session?.user?.id && (
+                        {user.isAdmin && user.id !== (session?.user as { id?: string })?.id && (
                           <button
                             onClick={() => handleToggleAdmin(user.id, false)}
                             className="text-gray-400 hover:text-gray-600"
