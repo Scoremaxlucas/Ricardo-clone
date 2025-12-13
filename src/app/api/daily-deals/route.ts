@@ -16,41 +16,58 @@ export async function GET(request: NextRequest) {
         startDate: { lte: now },
         endDate: { gte: now },
       },
-      include: {
-        watch: {
-          include: {
-            seller: {
-              select: {
-                id: true,
-                name: true,
-              },
-            },
-          },
-        },
-      },
       orderBy: {
         createdAt: 'desc',
       },
       take: 10,
     })
 
+    // Hole Watch-Daten separat für alle Deals
+    const watchIds = deals.map(deal => deal.watchId)
+    const watches = await prisma.watch.findMany({
+      where: {
+        id: { in: watchIds },
+      },
+      select: {
+        id: true,
+        title: true,
+        brand: true,
+        price: true,
+        images: true,
+        createdAt: true,
+        seller: {
+          select: {
+            id: true,
+            name: true,
+          },
+        },
+      },
+    })
+
+    const watchMap = new Map(watches.map(w => [w.id, w]))
+
     const dealsWithDiscountPrice = deals.map(deal => {
-      const discountPrice = deal.watch.price * (1 - deal.discountPercent / 100)
+      const watch = watchMap.get(deal.watchId)
+      if (!watch) {
+        return null
+      }
+      
+      const discountPrice = watch.price * (1 - deal.discountPercent / 100)
 
       return {
         id: deal.id,
         watchId: deal.watchId,
         discountPercent: deal.discountPercent,
-        originalPrice: deal.watch.price,
+        originalPrice: watch.price,
         discountPrice,
         startDate: deal.startDate,
         endDate: deal.endDate,
         maxQuantity: deal.maxQuantity,
         soldQuantity: deal.soldQuantity,
         remainingQuantity: deal.maxQuantity - deal.soldQuantity,
-        watch: deal.watch,
+        watch,
       }
-    })
+    }).filter((deal): deal is NonNullable<typeof deal> => deal !== null)
 
     return NextResponse.json({ deals: dealsWithDiscountPrice })
   } catch (error: any) {
