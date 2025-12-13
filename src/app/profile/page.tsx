@@ -36,8 +36,10 @@ export default function ProfilePage() {
 
   // Lade Nickname aus DB, falls nicht in Session
   useEffect(() => {
-    if ((session?.user as { id?: string })?.id && !(session.user as { nickname?: string | null })?.nickname) {
-      fetch(`/api/user/nickname?userId=${(session.user as { id?: string })?.id}`)
+    const userId = (session?.user as { id?: string })?.id
+    const userNickname = (session?.user as { nickname?: string | null })?.nickname
+    if (userId && !userNickname) {
+      fetch(`/api/user/nickname?userId=${userId}`)
         .then(res => res.json())
         .then(data => {
           if (data.nickname) {
@@ -46,7 +48,7 @@ export default function ProfilePage() {
         })
         .catch(err => console.error('Error loading nickname:', err))
     }
-  }, [session?.user?.id])
+  }, [(session?.user as { id?: string })?.id, (session?.user as { nickname?: string | null })?.nickname])
 
   // Lade Verifizierungsstatus und Bewertungsstatistiken
   useEffect(() => {
