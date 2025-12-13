@@ -20,7 +20,7 @@ export function VerificationModal({ isOpen, onClose, onVerify, action }: Verific
   const [isChecking, setIsChecking] = useState(true)
 
   useEffect(() => {
-    if (isOpen && session?.user?.id) {
+    if (isOpen && (session?.user as { id?: string })?.id) {
       checkVerification()
     } else {
       setIsChecking(false)
