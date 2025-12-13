@@ -25,7 +25,7 @@ export default function ProfilePage() {
   const [formData, setFormData] = useState({
     name: session?.user?.name || '',
     email: session?.user?.email || '',
-    nickname: session?.user?.nickname || '',
+    nickname: (session?.user as { nickname?: string | null })?.nickname || '',
   })
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -36,8 +36,8 @@ export default function ProfilePage() {
 
   // Lade Nickname aus DB, falls nicht in Session
   useEffect(() => {
-    if (session?.user?.id && !session.user.nickname) {
-      fetch(`/api/user/nickname?userId=${session.user.id}`)
+    if ((session?.user as { id?: string })?.id && !(session.user as { nickname?: string | null })?.nickname) {
+      fetch(`/api/user/nickname?userId=${(session.user as { id?: string })?.id}`)
         .then(res => res.json())
         .then(data => {
           if (data.nickname) {
@@ -50,7 +50,8 @@ export default function ProfilePage() {
 
   // Lade Verifizierungsstatus und Bewertungsstatistiken
   useEffect(() => {
-    if (session?.user?.id) {
+    const userId = (session?.user as { id?: string })?.id
+    if (userId) {
       fetch('/api/verification/get')
         .then(res => res.json())
         .then(data => {
@@ -64,7 +65,7 @@ export default function ProfilePage() {
         .catch(err => console.error('Error loading verification status:', err))
 
       // Lade Bewertungsstatistiken
-      fetch(`/api/users/${session.user.id}/stats`)
+      fetch(`/api/users/${userId}/stats`)
         .then(res => res.json())
         .then(data => {
           if (
@@ -85,7 +86,7 @@ export default function ProfilePage() {
       setFormData({
         name: session.user.name || '',
         email: session.user.email || '',
-        nickname: session.user.nickname || '',
+        nickname: (session.user as { nickname?: string | null })?.nickname || '',
       })
     }
 
@@ -485,7 +486,7 @@ export default function ProfilePage() {
         {/* Badges Sektion - Feature 9 */}
         {session?.user?.id && (
           <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
-            <BadgeDisplay userId={session.user.id} />
+            <BadgeDisplay userId={(session.user as { id?: string })?.id || ''} />
           </div>
         )}
 
