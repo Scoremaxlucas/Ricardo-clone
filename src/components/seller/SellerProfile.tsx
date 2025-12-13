@@ -1,9 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { UserBadges } from '@/components/ui/UserBadges'
+import { CheckCircle, CheckCircle2, Package, Star } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { Star, CheckCircle, Package, CheckCircle2 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
 interface SellerProfileProps {
@@ -187,12 +188,15 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
 
         <div className="flex-1">
           {/* Verkäufer Name */}
-          <Link
-            href={`/users/${sellerId}`}
-            className="mb-1 block text-lg font-semibold text-gray-900 hover:text-primary-600"
-          >
-            {sellerName}
-          </Link>
+          <div className="mb-1 flex items-center gap-2">
+            <Link
+              href={`/users/${sellerId}`}
+              className="text-lg font-semibold text-gray-900 hover:text-primary-600"
+            >
+              {sellerName}
+            </Link>
+            <UserBadges userId={sellerId} limit={2} size="sm" />
+          </div>
 
           {/* Anzahl offener Angebote */}
           <div className="mb-2 text-sm text-gray-600">

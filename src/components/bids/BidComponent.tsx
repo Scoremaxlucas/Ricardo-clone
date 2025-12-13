@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { Gavel, Zap, CheckCircle, AlertCircle, Loader2, Clock } from 'lucide-react'
-import Link from 'next/link'
 import { UserName } from '@/components/ui/UserName'
-import { getShippingCost, ShippingMethod, ShippingMethodArray } from '@/lib/shipping'
-import { BuyNowConfirmationModal } from './BuyNowConfirmationModal'
 import { VerificationModal } from '@/components/verification/VerificationModal'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { getShippingCost, ShippingMethod, ShippingMethodArray } from '@/lib/shipping'
+import { AlertCircle, CheckCircle, Clock, Gavel, Zap } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { BuyNowConfirmationModal } from './BuyNowConfirmationModal'
 
 interface Bid {
   id: string
@@ -436,6 +436,7 @@ export function BidComponent({
                   <UserName
                     userId={bid.user.id}
                     userName={bid.user.nickname || bid.user.name || bid.user.email || 'Unbekannt'}
+                    showBadges={true}
                     badgeSize="sm"
                     className="text-sm text-gray-900"
                   />
@@ -453,7 +454,8 @@ export function BidComponent({
 
   // Prüfe ob Artikel verkauft wurde
   if (itemStatus?.isSold) {
-    const isCurrentUserBuyer = (session?.user as { id?: string })?.id === itemStatus.purchase?.buyerId
+    const isCurrentUserBuyer =
+      (session?.user as { id?: string })?.id === itemStatus.purchase?.buyerId
     return (
       <div className="mt-8 rounded-lg bg-white p-6 shadow">
         <div className="text-center">
@@ -682,6 +684,7 @@ export function BidComponent({
                   <UserName
                     userId={bid.user.id}
                     userName={bid.user.nickname || bid.user.name || bid.user.email || 'Unbekannt'}
+                    showBadges={true}
                     badgeSize="sm"
                     className="text-xs text-gray-900"
                   />

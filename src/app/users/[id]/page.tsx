@@ -3,6 +3,7 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { ProductCard } from '@/components/ui/ProductCard'
+import { BadgeDisplay } from '@/components/user/BadgeDisplay'
 import { ReportUserModal } from '@/components/user/ReportUserModal'
 import { useLanguage } from '@/contexts/LanguageContext'
 import {
@@ -376,6 +377,11 @@ export default function PublicProfilePage() {
                         </span>
                       </div>
                     )}
+
+                    {/* Badges Sektion - Feature 9 */}
+                    <div className="mb-4">
+                      <BadgeDisplay userId={userId} showTitle={true} limit={5} />
+                    </div>
                   </div>
 
                   {/* FOLGEN Button - Helvenda Primary */}

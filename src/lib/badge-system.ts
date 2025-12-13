@@ -76,11 +76,12 @@ export const BADGE_INFO: Record<BadgeType, BadgeInfo> = {
 
 /**
  * Prüft und vergibt Badges basierend auf User-Aktionen
+ * Gibt Array der vergebenen Badge-Typen zurück
  */
 export async function checkAndAwardBadges(
   userId: string,
   action: 'purchase' | 'sale' | 'streak'
-): Promise<void> {
+): Promise<BadgeType[]> {
   try {
     // Hole aktuelle Badges
     const existingBadges = await prisma.userBadge.findMany({
@@ -170,9 +171,12 @@ export async function checkAndAwardBadges(
         console.error('[BadgeSystem] Error awarding rewards:', err)
       })
     }
+
+    return badgesToAward
   } catch (error) {
     // Silent fail - Badges sollten nicht die Hauptfunktionalität blockieren
     console.error('[BadgeSystem] Error checking badges:', error)
+    return []
   }
 }
 

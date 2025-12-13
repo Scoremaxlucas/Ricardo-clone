@@ -77,7 +77,13 @@ export function BadgeDisplay({
           <div
             key={index}
             className="group relative flex items-center gap-2 rounded-lg bg-white p-3 shadow-sm transition-all hover:shadow-md"
-            title={badge.description}
+            title={`${badge.name}: ${badge.description} - Erreicht am ${new Date(
+              badge.earnedAt
+            ).toLocaleDateString('de-CH', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric',
+            })}`}
           >
             <div
               className={`flex h-10 w-10 items-center justify-center rounded-full ${badge.color} text-xl`}

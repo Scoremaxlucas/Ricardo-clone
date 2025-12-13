@@ -1,7 +1,9 @@
 'use client'
 
 import { BadgeDisplay } from '@/components/user/BadgeDisplay'
+import { BadgeProgress } from '@/components/user/BadgeProgress'
 import { RewardDisplay } from '@/components/user/RewardDisplay'
+import { useBadgeNotifications } from '@/hooks/useBadgeNotifications'
 import { Camera, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -23,6 +25,11 @@ export default function ProfilePage() {
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
   const [verifiedAt, setVerifiedAt] = useState<string | null>(null)
   const [positivePercentage, setPositivePercentage] = useState<number | null>(null)
+
+  // Badge-Notifications (Feature 9)
+  const userId = (session?.user as { id?: string })?.id
+  useBadgeNotifications(userId)
+
   const [formData, setFormData] = useState({
     name: session?.user?.name || '',
     email: session?.user?.email || '',
@@ -53,6 +60,10 @@ export default function ProfilePage() {
     (session?.user as { id?: string })?.id,
     (session?.user as { nickname?: string | null })?.nickname,
   ])
+
+  // Badge-Notifications (Feature 9)
+  const userId = (session?.user as { id?: string })?.id
+  useBadgeNotifications(userId)
 
   // Lade Verifizierungsstatus und Bewertungsstatistiken
   useEffect(() => {
@@ -493,6 +504,13 @@ export default function ProfilePage() {
         {(session?.user as { id?: string })?.id && (
           <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
             <BadgeDisplay userId={(session?.user as { id?: string })?.id || ''} />
+          </div>
+        )}
+
+        {/* Badge Progress Sektion - Feature 9 */}
+        {(session?.user as { id?: string })?.id && (
+          <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
+            <BadgeProgress />
           </div>
         )}
 

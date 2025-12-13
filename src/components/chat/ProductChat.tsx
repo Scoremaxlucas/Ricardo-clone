@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { useSession } from 'next-auth/react'
-import { MessageCircle, Send, Globe, Lock } from 'lucide-react'
 import { UserName } from '@/components/ui/UserName'
+import { Globe, Lock, MessageCircle, Send } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useEffect, useRef, useState } from 'react'
 
 interface Message {
   id: string
@@ -172,6 +172,7 @@ export function ProductChat({ watchId, sellerId }: ProductChatProps) {
                         <UserName
                           userId={msg.sender.id}
                           userName={msg.sender.name || msg.sender.email || 'Unbekannt'}
+                          showBadges={true}
                           badgeSize="sm"
                           className="font-semibold text-gray-900"
                         />

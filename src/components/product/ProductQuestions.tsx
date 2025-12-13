@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { MessageCircle, Send, Lock, Globe, AlertCircle, CheckCircle } from 'lucide-react'
+import { UserName } from '@/components/ui/UserName'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { AlertCircle, CheckCircle, Globe, Lock, MessageCircle, Send } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 interface Question {
   id: string
@@ -213,7 +214,9 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
 
             <button
               type="submit"
-              disabled={!(session?.user as { id?: string })?.id || !questionText.trim() || isSubmitting}
+              disabled={
+                !(session?.user as { id?: string })?.id || !questionText.trim() || isSubmitting
+              }
               className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:bg-gray-300 sm:w-auto"
             >
               <Send className="h-4 w-4" />
@@ -249,9 +252,13 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
                   </div>
                   <div className="flex-1">
                     <div className="mb-1 flex items-center gap-2">
-                      <span className="font-medium text-gray-900">
-                        {q.user.nickname || q.user.name || 'Benutzer'}
-                      </span>
+                      <UserName
+                        userId={q.user.id}
+                        userName={q.user.nickname || q.user.name || 'Benutzer'}
+                        showBadges={true}
+                        badgeSize="sm"
+                        className="font-medium text-gray-900"
+                      />
                       <span className="text-xs text-gray-500">{formatDate(q.createdAt)}</span>
                       {isOwnQuestion && (
                         <span className="rounded bg-blue-100 px-2 py-0.5 text-xs text-blue-700">
