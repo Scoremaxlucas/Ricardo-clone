@@ -1,6 +1,7 @@
 'use client'
 
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
 import { Suspense, lazy, useEffect, useRef } from 'react'
 import { toast } from 'react-hot-toast'
@@ -18,6 +19,9 @@ const LazySocialProofWidget = lazy(() =>
 const LazyLocationMap = lazy(() =>
   import('@/components/home/LocationMap').then(m => ({ default: m.LocationMap }))
 )
+const LazyPersonalizedFeed = lazy(() =>
+  import('@/components/home/PersonalizedFeed').then(m => ({ default: m.PersonalizedFeed }))
+)
 
 interface HomeClientProps {
   featuredProductIds?: string[]
@@ -27,6 +31,7 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
   const searchParams = useSearchParams()
   const hasShownToast = useRef(false)
   const { t } = useLanguage()
+  const { data: session } = useSession()
 
   useEffect(() => {
     let isMounted = true
@@ -60,6 +65,15 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
     }
   }, [searchParams, t])
 
+  // Update user streak on page visit (Feature 9: Gamification)
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetch('/api/user/streak', { method: 'POST' }).catch(err => {
+        console.error('[HomeClient] Error updating streak:', err)
+      })
+    }
+  }, [session?.user?.id])
+
   return (
     <>
       {/* Social Proof Widget - Feature 2 */}
@@ -76,6 +90,32 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
           <LazySocialProofWidget watchIds={featuredProductIds} />
         </Suspense>
       )}
+
+      {/* Personalized Feed - Feature 5 */}
+      <Suspense
+        fallback={
+          <div className="bg-gradient-to-br from-purple-50 to-pink-50 py-16">
+            <div className="mx-auto max-w-7xl px-4 text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
+            </div>
+          </div>
+        }
+      >
+        <LazyPersonalizedFeed />
+      </Suspense>
+
+      {/* Daily Deals - Feature 9 */}
+      <Suspense
+        fallback={
+          <div className="bg-gradient-to-br from-orange-50 to-red-50 py-16">
+            <div className="mx-auto max-w-7xl px-4 text-center">
+              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
+            </div>
+          </div>
+        }
+      >
+        <LazyDailyDeals />
+      </Suspense>
 
       {/* Trending Now - Lazy loaded */}
       <Suspense

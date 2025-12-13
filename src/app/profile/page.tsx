@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useRef, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { BadgeDisplay } from '@/components/user/BadgeDisplay'
 import { Camera, X } from 'lucide-react'
-import Image from 'next/image'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 
 export default function ProfilePage() {
@@ -481,6 +481,13 @@ export default function ProfilePage() {
             {isSaving ? 'Wird gespeichert...' : 'Profil speichern'}
           </button>
         </div>
+
+        {/* Badges Sektion - Feature 9 */}
+        {session?.user?.id && (
+          <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
+            <BadgeDisplay userId={session.user.id} />
+          </div>
+        )}
 
         {/* Passwort ändern Sektion */}
         <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
