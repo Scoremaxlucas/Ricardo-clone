@@ -36,14 +36,17 @@ export default function AccountPage() {
     }
 
     // Lade Benutzerdaten
-    if (session?.user?.id) {
+    const userId = (session?.user as { id?: string })?.id
+    if (userId) {
       loadUserData()
     }
   }, [status, session, router])
 
   const loadUserData = async () => {
     try {
-      const res = await fetch(`/api/user/${session?.user?.id}`)
+      const userId = (session?.user as { id?: string })?.id
+      if (!userId) return
+      const res = await fetch(`/api/user/${userId}`)
       if (res.ok) {
         const data = await res.json()
         setFormData({
