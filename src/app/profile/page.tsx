@@ -61,10 +61,6 @@ export default function ProfilePage() {
     (session?.user as { nickname?: string | null })?.nickname,
   ])
 
-  // Badge-Notifications (Feature 9)
-  const userId = (session?.user as { id?: string })?.id
-  useBadgeNotifications(userId)
-
   // Lade Verifizierungsstatus und Bewertungsstatistiken
   useEffect(() => {
     const userId = (session?.user as { id?: string })?.id
