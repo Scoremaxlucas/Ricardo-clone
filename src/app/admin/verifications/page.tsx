@@ -56,7 +56,7 @@ function AdminVerificationsPageContent() {
   useEffect(() => {
     if (status === 'loading') return
 
-    if (!session?.user?.isAdmin) {
+    if (!(session?.user as { isAdmin?: boolean })?.isAdmin) {
       router.push('/')
       return
     }

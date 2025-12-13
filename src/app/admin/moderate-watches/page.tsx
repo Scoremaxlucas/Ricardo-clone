@@ -110,7 +110,7 @@ export default function AdminModerateWatchesPage() {
       return
     }
 
-    const isAdminInSession = session?.user?.isAdmin === true
+    const isAdminInSession = (session?.user as { isAdmin?: boolean })?.isAdmin === true
     if (!isAdminInSession) {
       router.push('/')
       return
