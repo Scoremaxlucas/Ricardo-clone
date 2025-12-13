@@ -1,8 +1,8 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { Eye, Heart, ShoppingBag, Users } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { Eye, Heart, ShoppingBag, Users } from 'lucide-react'
+import { useEffect, useState } from 'react'
 
 interface ProductStats {
   watchId: string
@@ -40,9 +40,7 @@ export function SocialProofWidget({ watchIds, className = '' }: SocialProofWidge
 
     const fetchStats = async () => {
       try {
-        const response = await fetch(
-          `/api/products/stats?watchIds=${watchIds.join(',')}`
-        )
+        const response = await fetch(`/api/products/stats?watchIds=${watchIds.join(',')}`)
         if (response.ok) {
           const data = await response.json()
           setStats(data.stats || [])
@@ -76,9 +74,7 @@ export function SocialProofWidget({ watchIds, className = '' }: SocialProofWidge
     <section className={`bg-gradient-to-br from-primary-50 to-primary-100 py-8 ${className}`}>
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
-          <h2 className="text-2xl font-bold text-gray-900">
-            Vertrauen Sie unserer Community
-          </h2>
+          <h2 className="text-2xl font-bold text-gray-900">Vertrauen Sie unserer Community</h2>
           <p className="mt-2 text-sm text-gray-600">
             Tausende von Nutzern vertrauen auf unsere Plattform
           </p>

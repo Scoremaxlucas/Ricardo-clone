@@ -1053,7 +1053,7 @@ export async function GET(request: NextRequest) {
         .filter(item => {
           // Sicherstelle dass aiRelevance definiert ist
           const aiRelevance = item.aiRelevance ?? 1.0
-          
+
           // Wenn OpenAI nicht verfügbar (aiRelevance = 1.0), nutze traditionellen Score
           if (aiRelevance >= 0.99) {
             return item.matches || item.relevanceScore > 0
@@ -1064,7 +1064,7 @@ export async function GET(request: NextRequest) {
         .map(item => {
           // Sicherstelle dass aiRelevance definiert ist
           const aiRelevance = item.aiRelevance ?? 1.0
-          
+
           // Füge Booster-Bonus NUR hinzu, wenn Artikel relevant ist (nach KI-Prüfung)
           let finalScore = item.combinedScore ?? item.relevanceScore
 
@@ -1072,7 +1072,7 @@ export async function GET(request: NextRequest) {
             // Artikel ist relevant - jetzt Booster-Bonus hinzufügen
             // Sicherstelle dass boosters ein Array ist
             const boosters = Array.isArray(item.boosters) ? item.boosters : []
-            
+
             if (boosters.includes('super-boost')) {
               finalScore += 10000
             } else if (boosters.includes('turbo-boost')) {
@@ -1102,7 +1102,7 @@ export async function GET(request: NextRequest) {
         if (item.matches || item.relevanceScore > 0) {
           // Sicherstelle dass boosters ein Array ist
           const boosters = Array.isArray(item.boosters) ? item.boosters : []
-          
+
           if (boosters.includes('super-boost')) {
             finalScore += 10000
           } else if (boosters.includes('turbo-boost')) {
