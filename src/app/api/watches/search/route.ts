@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
-import { fuzzyMatch, normalizeSearchText, extractSearchTerms } from '@/lib/search-utils'
 import { categoryKeywords, searchSynonyms } from '@/lib/search-synonyms'
+import { fuzzyMatch } from '@/lib/search-utils'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * Prüft ob ein Suchbegriff mehrdeutig ist und KI-Prüfung benötigt
@@ -366,10 +366,7 @@ export async function GET(request: NextRequest) {
         {
           // GOLDEN RULE: Zeige ALLE Artikel außer explizit 'rejected'
           // Explizit null UND alle anderen Werte außer 'rejected' einschließen
-          OR: [
-            { moderationStatus: null },
-            { moderationStatus: { not: 'rejected' } },
-          ],
+          OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
         },
         {
           OR: [
@@ -495,7 +492,7 @@ export async function GET(request: NextRequest) {
 
       if (searchConditions.length > 0) {
         whereClause.AND.push({
-          OR: searchConditions
+          OR: searchConditions,
         })
       }
     }
@@ -519,10 +516,7 @@ export async function GET(request: NextRequest) {
               some: {
                 category: {
                   OR: categoryVariants.map(variant => ({
-                    OR: [
-                      { slug: variant },
-                      { name: variant },
-                    ],
+                    OR: [{ slug: variant }, { name: variant }],
                   })),
                 },
               },
@@ -787,7 +781,7 @@ export async function GET(request: NextRequest) {
           let exactWordMatches = 0
           const matchedFields = new Set<string>()
 
-            // Prüfe sowohl Original-Wörter als auch Synonyme
+          // Prüfe sowohl Original-Wörter als auch Synonyme
           for (const word of expandedQueryWords) {
             if (word.length < 2) continue
 
@@ -1057,24 +1051,33 @@ export async function GET(request: NextRequest) {
       // Dies entfernt irrelevante Ergebnisse wie "Headset" bei Suche nach "Maus"
       const relevantArticles = articlesWithAIRelevance
         .filter(item => {
+          // Sicherstelle dass aiRelevance definiert ist
+          const aiRelevance = item.aiRelevance ?? 1.0
+          
           // Wenn OpenAI nicht verfügbar (aiRelevance = 1.0), nutze traditionellen Score
-          if (item.aiRelevance >= 0.99) {
+          if (aiRelevance >= 0.99) {
             return item.matches || item.relevanceScore > 0
           }
           // Mit OpenAI: Nur Artikel mit Relevanz > 0.5 (ausgewogener Threshold)
-          return item.aiRelevance > 0.5
+          return aiRelevance > 0.5
         })
         .map(item => {
-          // Füge Booster-Bonus NUR hinzu, wenn Artikel relevant ist (nach KI-Prüfung)
-          let finalScore = item.combinedScore || item.relevanceScore
+          // Sicherstelle dass aiRelevance definiert ist
+          const aiRelevance = item.aiRelevance ?? 1.0
           
-          if (item.aiRelevance > 0.5) {
+          // Füge Booster-Bonus NUR hinzu, wenn Artikel relevant ist (nach KI-Prüfung)
+          let finalScore = item.combinedScore ?? item.relevanceScore
+
+          if (aiRelevance > 0.5) {
             // Artikel ist relevant - jetzt Booster-Bonus hinzufügen
-            if (item.boosters.includes('super-boost')) {
+            // Sicherstelle dass boosters ein Array ist
+            const boosters = Array.isArray(item.boosters) ? item.boosters : []
+            
+            if (boosters.includes('super-boost')) {
               finalScore += 10000
-            } else if (item.boosters.includes('turbo-boost')) {
+            } else if (boosters.includes('turbo-boost')) {
               finalScore += 5000
-            } else if (item.boosters.includes('boost')) {
+            } else if (boosters.includes('boost')) {
               finalScore += 2000
             }
           }
@@ -1094,14 +1097,17 @@ export async function GET(request: NextRequest) {
       // Füge Booster-Bonus zu restlichen Artikeln hinzu (die nicht mit KI geprüft wurden)
       const remainingArticlesWithBoost = remainingArticles.map(item => {
         let finalScore = item.relevanceScore
-        
+
         // Booster-Bonus nur wenn Artikel relevant ist
         if (item.matches || item.relevanceScore > 0) {
-          if (item.boosters.includes('super-boost')) {
+          // Sicherstelle dass boosters ein Array ist
+          const boosters = Array.isArray(item.boosters) ? item.boosters : []
+          
+          if (boosters.includes('super-boost')) {
             finalScore += 10000
-          } else if (item.boosters.includes('turbo-boost')) {
+          } else if (boosters.includes('turbo-boost')) {
             finalScore += 5000
-          } else if (item.boosters.includes('boost')) {
+          } else if (boosters.includes('boost')) {
             finalScore += 2000
           }
         }
@@ -1116,16 +1122,13 @@ export async function GET(request: NextRequest) {
       articles = [...relevantArticles, ...remainingArticlesWithBoost]
         .sort((a, b) => {
           // Sortiere nach finalScore (inkl. Booster-Bonus)
-          const scoreA = 'finalScore' in a ? (a as any).finalScore : a.relevanceScore
-          const scoreB = 'finalScore' in b ? (b as any).finalScore : b.relevanceScore
+          const scoreA = ('finalScore' in a ? (a as any).finalScore : null) ?? a.relevanceScore
+          const scoreB = ('finalScore' in b ? (b as any).finalScore : null) ?? b.relevanceScore
 
           if (scoreB !== scoreA) {
             return scoreB - scoreA
           }
-          return (
-            new Date(b.article.createdAt).getTime() -
-            new Date(a.article.createdAt).getTime()
-          )
+          return new Date(b.article.createdAt).getTime() - new Date(a.article.createdAt).getTime()
         })
         .map(item => item.article)
     } else if (category) {
@@ -1191,7 +1194,10 @@ export async function GET(request: NextRequest) {
               if (Array.isArray(article.images)) {
                 images = article.images
               } else if (typeof article.images === 'string') {
-                if (article.images.trim().startsWith('[') || article.images.trim().startsWith('{')) {
+                if (
+                  article.images.trim().startsWith('[') ||
+                  article.images.trim().startsWith('{')
+                ) {
                   images = JSON.parse(article.images)
                 } else if (article.images.trim().startsWith('http')) {
                   images = [article.images]
