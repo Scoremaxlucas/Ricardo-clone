@@ -1,10 +1,9 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { AlertCircle, Shield, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
-import { X, Shield, AlertCircle } from 'lucide-react'
-import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 interface VerificationModalProps {
   isOpen: boolean

@@ -1,6 +1,7 @@
 'use client'
 
 import { BadgeDisplay } from '@/components/user/BadgeDisplay'
+import { RewardDisplay } from '@/components/user/RewardDisplay'
 import { Camera, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -48,7 +49,10 @@ export default function ProfilePage() {
         })
         .catch(err => console.error('Error loading nickname:', err))
     }
-  }, [(session?.user as { id?: string })?.id, (session?.user as { nickname?: string | null })?.nickname])
+  }, [
+    (session?.user as { id?: string })?.id,
+    (session?.user as { nickname?: string | null })?.nickname,
+  ])
 
   // Lade Verifizierungsstatus und Bewertungsstatistiken
   useEffect(() => {
@@ -489,6 +493,13 @@ export default function ProfilePage() {
         {(session?.user as { id?: string })?.id && (
           <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
             <BadgeDisplay userId={(session?.user as { id?: string })?.id || ''} />
+          </div>
+        )}
+
+        {/* Rewards Sektion - Feature 9 */}
+        {(session?.user as { id?: string })?.id && (
+          <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
+            <RewardDisplay userId={(session?.user as { id?: string })?.id || ''} />
           </div>
         )}
 

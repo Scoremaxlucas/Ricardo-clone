@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth'
+import { checkAndAwardBadges } from '@/lib/badge-system'
 import { calculateInvoiceForSale } from '@/lib/invoice'
 import { prisma } from '@/lib/prisma'
 import { updateSoldLast24h } from '@/lib/product-stats'
@@ -137,6 +138,11 @@ export async function POST(request: NextRequest) {
     // Update soldLast24h statistic (Feature 2: Social Proof)
     updateSoldLast24h(watchId).catch(() => {
       // Silent fail - Statistics update should not block purchase
+    })
+
+    // Badge-Vergabe für Käufer (Feature 9: Gamification)
+    checkAndAwardBadges(purchase.buyerId, 'purchase').catch(err => {
+      console.error('[purchases/create] Error awarding badges:', err)
     })
 
     // Erstelle Rechnung SOFORT nach erfolgreichem Verkauf

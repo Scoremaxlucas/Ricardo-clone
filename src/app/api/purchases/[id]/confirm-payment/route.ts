@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { checkAndAwardBadges } from '@/lib/badge-system'
 import { prisma } from '@/lib/prisma'
 import { addStatusHistory } from '@/lib/status-history'
-import { calculateInvoiceForSale } from '@/lib/invoice'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Verkäufer bestätigt Zahlung
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -101,6 +101,41 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         'system',
         'Zahlung und Erhalt bestätigt - Kauf abgeschlossen'
       )
+
+      // Erstelle Sale für Gamification (Feature 9)
+      try {
+        const existingSale = await prisma.sale.findFirst({
+          where: {
+            watchId: purchase.watchId,
+            sellerId: purchase.watch.sellerId,
+            buyerId: purchase.buyerId,
+          },
+        })
+
+        if (!existingSale) {
+          await prisma.sale.create({
+            data: {
+              watchId: purchase.watchId,
+              sellerId: purchase.watch.sellerId,
+              buyerId: purchase.buyerId,
+              price: purchase.price,
+            },
+          })
+
+          // Badge-Vergabe für Verkäufer (Feature 9: Gamification)
+          checkAndAwardBadges(purchase.watch.sellerId, 'sale').catch(err => {
+            console.error('[confirm-payment] Error awarding seller badges:', err)
+          })
+        }
+      } catch (saleError) {
+        console.error('[confirm-payment] Error creating sale:', saleError)
+        // Silent fail - Sale-Erstellung sollte nicht kritisch sein
+      }
+
+      // Badge-Vergabe für Käufer beim Purchase-Abschluss (Feature 9: Gamification)
+      checkAndAwardBadges(purchase.buyerId, 'purchase').catch(err => {
+        console.error('[confirm-payment] Error awarding buyer badges:', err)
+      })
     }
 
     // Benachrichtigung an Käufer
