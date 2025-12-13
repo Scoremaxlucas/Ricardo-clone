@@ -84,7 +84,7 @@ export default function PublicProfilePage() {
   useEffect(() => {
     if (userId) {
       loadUserStats()
-      if (session?.user?.id) {
+      if ((session?.user as { id?: string })?.id) {
         checkFollowStatus()
         loadFavorites()
       }
@@ -92,7 +92,7 @@ export default function PublicProfilePage() {
   }, [userId, session])
 
   const loadFavorites = async () => {
-    if (!session?.user?.id) return
+    if (!(session?.user as { id?: string })?.id) return
     try {
       const res = await fetch('/api/favorites')
       if (res.ok) {
@@ -131,7 +131,7 @@ export default function PublicProfilePage() {
   }
 
   const handleFollow = async () => {
-    if (!session?.user?.id) {
+    if (!(session?.user as { id?: string })?.id) {
       return
     }
     setFollowLoading(true)
@@ -281,7 +281,7 @@ export default function PublicProfilePage() {
   }
 
   const { user, verified, phoneVerified, stats: userStats, activeWatches, recentReviews } = stats
-  const isOwnProfile = session?.user?.id === userId
+  const isOwnProfile = (session?.user as { id?: string })?.id === userId
 
   return (
     <>
@@ -368,7 +368,7 @@ export default function PublicProfilePage() {
                   </div>
 
                   {/* FOLGEN Button - Helvenda Primary */}
-                  {!isOwnProfile && session?.user?.id && (
+                  {!isOwnProfile && (session?.user as { id?: string })?.id && (
                     <div className="flex items-center gap-2">
                       <button
                         onClick={handleFollow}

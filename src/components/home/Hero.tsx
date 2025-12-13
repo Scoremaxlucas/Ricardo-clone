@@ -30,7 +30,7 @@ export function Hero() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           query: query.trim(),
-          userId: session?.user?.id || null,
+          userId: (session?.user as { id?: string })?.id || null,
           resultCount,
         }),
       })

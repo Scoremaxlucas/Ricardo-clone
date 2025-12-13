@@ -70,12 +70,13 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
 
   // Update user streak on page visit (Feature 9: Gamification)
   useEffect(() => {
-    if (session?.user?.id) {
+    const userId = (session?.user as { id?: string })?.id
+    if (userId) {
       fetch('/api/user/streak', { method: 'POST' }).catch(err => {
         console.error('[HomeClient] Error updating streak:', err)
       })
     }
-  }, [session?.user?.id])
+  }, [(session?.user as { id?: string })?.id])
 
   return (
     <>

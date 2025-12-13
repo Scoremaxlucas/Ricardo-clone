@@ -37,7 +37,7 @@ export function SmartDiscoveryHub() {
       try {
         // Hole personalisierte Empfehlungen
         const url = session?.user
-          ? `/api/watches/recommended?userId=${session.user.id}`
+          ? `/api/watches/recommended?userId=${(session.user as { id?: string })?.id}`
           : '/api/watches?limit=8&sort=popular'
 
         const response = await fetch(url)
@@ -59,7 +59,7 @@ export function SmartDiscoveryHub() {
     }
 
     fetchPersonalizedProducts()
-  }, [session?.user?.id])
+  }, [(session?.user as { id?: string })?.id])
 
   useEffect(() => {
     const fetchFavorites = async () => {
