@@ -1,7 +1,7 @@
 import { authOptions } from '@/lib/auth'
 import { sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(
