@@ -22,6 +22,9 @@ const LazyLocationMap = lazy(() =>
 const LazyPersonalizedFeed = lazy(() =>
   import('@/components/home/PersonalizedFeed').then(m => ({ default: m.PersonalizedFeed }))
 )
+const LazyDailyDeals = lazy(() =>
+  import('@/components/home/DailyDeals').then(m => ({ default: m.DailyDeals }))
+)
 
 interface HomeClientProps {
   featuredProductIds?: string[]

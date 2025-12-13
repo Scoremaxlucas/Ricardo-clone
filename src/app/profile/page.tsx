@@ -79,7 +79,7 @@ export default function ProfilePage() {
         })
         .catch(err => console.error('Error loading user stats:', err))
     }
-  }, [session?.user?.id])
+  }, [(session?.user as { id?: string })?.id])
 
   // Initialisiere Formular und Profilbild
   useEffect(() => {
@@ -486,9 +486,9 @@ export default function ProfilePage() {
         </div>
 
         {/* Badges Sektion - Feature 9 */}
-        {session?.user?.id && (
+        {(session?.user as { id?: string })?.id && (
           <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
-            <BadgeDisplay userId={(session.user as { id?: string })?.id || ''} />
+            <BadgeDisplay userId={(session?.user as { id?: string })?.id || ''} />
           </div>
         )}
 

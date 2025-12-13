@@ -53,9 +53,13 @@ export function Header() {
 
   // Lade Nickname und Admin-Status aus der DB, falls nicht in Session
   useEffect(() => {
-    if (session?.user?.id) {
-      if (!session.user.nickname) {
-        fetch(`/api/user/nickname?userId=${session.user.id}`)
+    if (!session?.user) return
+    
+    const userId = (session.user as { id?: string })?.id
+    const userNickname = (session.user as { nickname?: string | null })?.nickname
+    if (userId) {
+      if (!userNickname) {
+        fetch(`/api/user/nickname?userId=${userId}`)
           .then(res => res.json())
           .then(data => {
             if (data.nickname) {
@@ -64,16 +68,16 @@ export function Header() {
           })
           .catch(err => console.error('Error loading nickname:', err))
       } else {
-        setUserNickname(session.user.nickname)
+        setUserNickname(userNickname || '')
       }
 
       // Prüfe Admin-Status nur aus Session
-      if ((session.user as { isAdmin?: boolean })?.isAdmin === true) {
+      if ((session?.user as { isAdmin?: boolean })?.isAdmin === true) {
         console.log('User is Admin based on session, setting isAdmin to true')
         setIsAdmin(true)
       } else {
         // Sonst versuche API-Aufruf
-        console.log('Loading admin status for user ID:', session.user.id)
+        console.log('Loading admin status for user ID:', userId)
         fetch(`/api/user/admin-status`)
           .then(res => {
             console.log('Admin status API response status:', res.status)
@@ -91,15 +95,15 @@ export function Header() {
           .catch(err => {
             console.error('Error loading admin status:', err)
             // Fallback: Verwende Session-Wert
-            const fallbackValue = (session.user as { isAdmin?: boolean })?.isAdmin === true
+            const fallbackValue = (session?.user as { isAdmin?: boolean })?.isAdmin === true
             console.log('Using fallback admin value:', fallbackValue)
             setIsAdmin(fallbackValue)
           })
       }
 
       // Lade Verifizierungsstatus
-      if (session.user.id) {
-        fetch(`/api/user/verified?userId=${session.user.id}`)
+      if (userId) {
+        fetch(`/api/user/verified?userId=${userId}`)
           .then(res => res.json())
           .then(data => {
             setIsVerified(data.verified === true)
@@ -107,7 +111,7 @@ export function Header() {
           .catch(err => console.error('Error loading verification status:', err))
       }
     }
-  }, [session?.user?.id, session?.user?.nickname, (session?.user as { isAdmin?: boolean })?.isAdmin])
+  }, [(session?.user as { id?: string })?.id, (session?.user as { nickname?: string | null })?.nickname, (session?.user as { isAdmin?: boolean })?.isAdmin])
 
   // Profilbild aus localStorage laden
   useEffect(() => {
@@ -453,9 +457,9 @@ export function Header() {
                     {/* Gekürzter Name mit max-width um Overflow zu verhindern - NO OVERFLOW */}
                     <div className="max-w-[35px] truncate sm:max-w-[50px] md:max-w-[65px] lg:max-w-[85px] xl:max-w-[110px]">
                       <UserName
-                        userId={session.user.id}
+                        userId={(session?.user as { id?: string })?.id || ''}
                         userName={
-                          userNickname || session.user?.nickname || session.user?.name || 'Benutzer'
+                          userNickname || (session?.user as { nickname?: string | null })?.nickname || (session?.user as { name?: string | null })?.name || 'Benutzer'
                         }
                         badgeSize="sm"
                         className="truncate"
@@ -509,11 +513,11 @@ export function Header() {
                           <div className="border-b border-gray-100 px-4 py-3">
                             <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
                               <UserName
-                                userId={session.user.id}
+                                userId={(session?.user as { id?: string })?.id || ''}
                                 userName={
                                   userNickname ||
-                                  session.user?.nickname ||
-                                  session.user?.name ||
+                                  (session?.user as { nickname?: string | null })?.nickname ||
+                                  (session?.user as { name?: string | null })?.name ||
                                   t.header.user
                                 }
                                 badgeSize="sm"

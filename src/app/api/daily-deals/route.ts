@@ -18,13 +18,7 @@ export async function GET(request: NextRequest) {
       },
       include: {
         watch: {
-          select: {
-            id: true,
-            title: true,
-            brand: true,
-            price: true,
-            images: true,
-            createdAt: true,
+          include: {
             seller: {
               select: {
                 id: true,

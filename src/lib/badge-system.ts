@@ -95,7 +95,7 @@ export async function checkAndAwardBadges(
     if (action === 'purchase') {
       // Zähle Käufe
       const purchaseCount = await prisma.purchase.count({
-        where: { userId },
+        where: { buyerId: userId },
       })
 
       if (purchaseCount === 1 && !existingBadgeTypes.has('FIRST_PURCHASE')) {
