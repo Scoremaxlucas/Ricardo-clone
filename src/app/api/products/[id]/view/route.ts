@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth'
+import { trackBrowsingHistory } from '@/lib/browsing-tracker'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth'
 import { NextRequest, NextResponse } from 'next/server'
@@ -95,6 +96,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         lastUpdated: new Date(),
       },
     })
+
+    // Track browsing history (Feature 5: Personalisierung)
+    if (userId) {
+      trackBrowsingHistory({
+        userId,
+        watchId,
+        action: 'view',
+      }).catch(err => {
+        console.error('[ViewRoute] Error tracking browsing history:', err)
+      })
+    }
 
     return NextResponse.json({ success: true })
   } catch (error: any) {

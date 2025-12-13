@@ -1,9 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { apiCache, generateCacheKey } from '@/lib/api-cache'
+import { authOptions } from '@/lib/auth'
+import { trackBrowsingHistory } from '@/lib/browsing-tracker'
+import { prisma } from '@/lib/prisma'
 import { updateFavoriteCount } from '@/lib/product-stats'
+import { getServerSession } from 'next-auth'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Favoriten eines Users abrufen
 export async function GET(request: NextRequest) {
@@ -150,6 +151,15 @@ export async function POST(request: NextRequest) {
     // Update favorite count in ProductStats (Feature 2)
     updateFavoriteCount(watchId).catch(err => {
       console.error('Error updating favorite count:', err)
+    })
+
+    // Track browsing history (Feature 5: Personalisierung)
+    trackBrowsingHistory({
+      userId: session.user.id,
+      watchId,
+      action: 'favorite',
+    }).catch(err => {
+      console.error('Error tracking browsing history:', err)
     })
 
     return NextResponse.json({ favorite })
