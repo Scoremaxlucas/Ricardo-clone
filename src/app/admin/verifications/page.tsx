@@ -159,7 +159,7 @@ function AdminVerificationsPageContent() {
     )
   }
 
-  if (!session?.user?.isAdmin) {
+  if (!(session?.user as { isAdmin?: boolean })?.isAdmin) {
     return null
   }
 

@@ -388,7 +388,7 @@ export default function AdminModerateWatchesPage() {
     )
   }
 
-  const isAdminInSession = session?.user?.isAdmin === true
+  const isAdminInSession = (session?.user as { isAdmin?: boolean })?.isAdmin === true
   if (!isAdminInSession) {
     return null
   }

@@ -91,7 +91,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
     }
 
     // Prüfe Admin-Status nur aus Session
-    const isAdminInSession = session?.user?.isAdmin === true
+    const isAdminInSession = (session?.user as { isAdmin?: boolean })?.isAdmin === true
 
     if (!isAdminInSession) {
       router.push('/')
@@ -236,7 +236,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
   }
 
   // Prüfe Admin-Status erneut für UI
-  const isAdminInSession = session?.user?.isAdmin === true
+  const isAdminInSession = (session?.user as { isAdmin?: boolean })?.isAdmin === true
 
   if (!isAdminInSession) {
     return (
