@@ -46,7 +46,7 @@ export default function OffersPage() {
       return
     }
 
-    if (status === 'authenticated' && session?.user?.id) {
+    if (status === 'authenticated' && (session?.user as { id?: string })?.id) {
       fetchOffers()
     }
   }, [status, session, router])
