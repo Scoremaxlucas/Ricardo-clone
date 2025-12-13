@@ -45,23 +45,12 @@ export async function checkSearchSubscriptions(watch: WatchData) {
     for (const subscription of subscriptions) {
       const matchesSubscription = matchesSearchSubscription(watch, subscription)
       if (matchesSubscription) {
-        console.log(`[search-subscription-matcher] ✓ Match gefunden!`, {
-          subscriptionId: subscription.id,
-          userId: subscription.userId,
-          userEmail: subscription.user.email,
-          searchTerm: subscription.searchTerm,
-          brand: subscription.brand,
-          model: subscription.model,
-          categoryId: subscription.categoryId,
-        })
         matches.push({
           subscriptionId: subscription.id,
           userId: subscription.userId,
         })
       }
     }
-
-    console.log(`[search-subscription-matcher] Gesamt: ${matches.length} Match(es) gefunden`)
 
     // Für jeden Match: Benachrichtigung senden und Counter aktualisieren
     for (const match of matches) {
@@ -126,13 +115,13 @@ export async function checkSearchSubscriptions(watch: WatchData) {
           },
         })
       } catch (error) {
-        console.error(`Error updating subscription ${match.subscriptionId}:`, error)
+        // Silent fail - Counter-Update sollte nicht die Hauptfunktionalität blockieren
       }
     }
 
     return matches.length
   } catch (error) {
-    console.error('Error checking search subscriptions:', error)
+    // Silent fail - Fehler sollten nicht die Hauptfunktionalität blockieren
     return 0
   }
 }
