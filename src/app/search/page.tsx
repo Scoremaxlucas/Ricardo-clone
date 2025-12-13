@@ -1,27 +1,15 @@
 'use client'
 
-import { useEffect, useState, useRef, useCallback, useMemo, Suspense } from 'react'
-import Link from 'next/link'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import {
-  Grid3x3,
-  List,
-  Search,
-  Package,
-  MapPin,
-  Clock,
-  X,
-  ChevronDown,
-  Filter,
-  Sparkles,
-  Zap,
-  Flame,
-} from 'lucide-react'
+import { Header } from '@/components/layout/Header'
+import { AISearchAssistant } from '@/components/search/AISearchAssistant'
+import { ProductCard } from '@/components/ui/ProductCard'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
-import { ProductCard } from '@/components/ui/ProductCard'
+import { ChevronDown, Filter, Grid3x3, List, Package, Search, X } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 
 interface WatchItem {
   id: string
@@ -174,7 +162,16 @@ function SearchPageContent() {
       }
 
       // OPTIMIERT: AbortController für Cancellation
-      console.log(`🔍 Starting search for: "${q}"`, { url, cat, subcat, min, max, cond, br, auction })
+      console.log(`🔍 Starting search for: "${q}"`, {
+        url,
+        cat,
+        subcat,
+        min,
+        max,
+        cond,
+        br,
+        auction,
+      })
       const res = await fetch(url, { signal })
       if (signal?.aborted) {
         console.log('❌ Search aborted')
@@ -187,7 +184,11 @@ function SearchPageContent() {
         throw new Error(`API error: ${res.status}`)
       }
       const data = await res.json()
-      console.log(`📦 API Response:`, { watchesCount: data.watches?.length, total: data.total, hasError: !!data.error })
+      console.log(`📦 API Response:`, {
+        watchesCount: data.watches?.length,
+        total: data.total,
+        hasError: !!data.error,
+      })
 
       const watchesData = Array.isArray(data.watches) ? data.watches : []
 
@@ -290,19 +291,22 @@ function SearchPageContent() {
     }
   }, [searchParams, performSearch])
 
-  const updateFilter = useCallback((key: string, value: string) => {
-    const params = new URLSearchParams(searchParams.toString())
+  const updateFilter = useCallback(
+    (key: string, value: string) => {
+      const params = new URLSearchParams(searchParams.toString())
 
-    // Setze neuen Filter
-    if (value && value.trim() !== '') {
-      params.set(key, value)
-    } else {
-      params.delete(key)
-    }
+      // Setze neuen Filter
+      if (value && value.trim() !== '') {
+        params.set(key, value)
+      } else {
+        params.delete(key)
+      }
 
-    const newUrl = `/search?${params.toString()}`
-    router.replace(newUrl) // OPTIMIERT: replace statt push für schnellere Navigation
-  }, [searchParams, router])
+      const newUrl = `/search?${params.toString()}`
+      router.replace(newUrl) // OPTIMIERT: replace statt push für schnellere Navigation
+    },
+    [searchParams, router]
+  )
 
   const applyBrandFilter = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
@@ -351,13 +355,16 @@ function SearchPageContent() {
     router.replace(newUrl) // OPTIMIERT: replace statt push
   }, [localMinPrice, localMaxPrice, searchParams, router])
 
-  const handleSortChange = useCallback((newSort: string) => {
-    const params = new URLSearchParams(searchParams.toString())
-    params.set('sortBy', newSort)
+  const handleSortChange = useCallback(
+    (newSort: string) => {
+      const params = new URLSearchParams(searchParams.toString())
+      params.set('sortBy', newSort)
 
-    const newUrl = `/search?${params.toString()}`
-    router.replace(newUrl) // OPTIMIERT: replace statt push
-  }, [searchParams, router])
+      const newUrl = `/search?${params.toString()}`
+      router.replace(newUrl) // OPTIMIERT: replace statt push
+    },
+    [searchParams, router]
+  )
 
   // Schließe Filter-Dropdowns beim Klick außerhalb
   useEffect(() => {
@@ -1275,24 +1282,27 @@ function SearchPageContent() {
         </div>
       </main>
       <Footer />
+      <AISearchAssistant />
     </div>
   )
 }
 
 export default function SearchPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen flex-col bg-gray-50">
-        <Header />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-            <p className="text-gray-600">Laden...</p>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen flex-col bg-gray-50">
+          <Header />
+          <div className="flex flex-1 items-center justify-center">
+            <div className="text-center">
+              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+              <p className="text-gray-600">Laden...</p>
+            </div>
           </div>
+          <Footer />
         </div>
-        <Footer />
-      </div>
-    }>
+      }
+    >
       <SearchPageContent />
     </Suspense>
   )
