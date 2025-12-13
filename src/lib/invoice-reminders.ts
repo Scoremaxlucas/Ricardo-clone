@@ -329,7 +329,7 @@ async function sendFinalReminderAndBlockAccount(invoice: any) {
 /**
  * Sperrt Benutzerkonto aufgrund nicht bezahlter Gebühren
  */
-async function blockUserAccount(userId: string, invoiceNumber: string, amount: number) {
+async function blockUserAccount(userId: string, invoiceNumber: string, _amount: number) {
   try {
     const user = await prisma.user.findUnique({
       where: { id: userId },
@@ -407,8 +407,6 @@ export async function processInvoiceReminders() {
     let processedCount = 0
 
     for (const invoice of openInvoices) {
-      const daysSinceInvoice = getDaysSinceInvoice(invoice.createdAt)
-
       // Prüfe jeden Schritt des Mahnprozesses
       // Tag 14: Erste Zahlungsaufforderung (Rechnung wird fällig)
       await sendPaymentRequest(invoice)
