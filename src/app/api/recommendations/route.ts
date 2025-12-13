@@ -7,7 +7,7 @@ import {
   getUserPriceRange,
 } from '@/lib/browsing-tracker'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**

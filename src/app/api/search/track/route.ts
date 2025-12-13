@@ -1,6 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { trackSearchQuery } from '@/lib/search-analytics'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**

@@ -1,6 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { getUserBadges } from '@/lib/badge-system'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**

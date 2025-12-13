@@ -1,6 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 // GET - Fragen für ein Produkt abrufen (verwendet Message Model)

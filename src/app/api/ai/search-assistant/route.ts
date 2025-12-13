@@ -1,7 +1,7 @@
 import { brandsByCategory } from '@/data/brands'
 import { authOptions } from '@/lib/auth'
 import { categoryKeywords } from '@/lib/search-synonyms'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**

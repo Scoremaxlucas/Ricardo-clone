@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { updateSoldLast24h } from '@/lib/product-stats'
 import { getShippingCostForMethod } from '@/lib/shipping'
 import { addStatusHistory } from '@/lib/status-history'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {

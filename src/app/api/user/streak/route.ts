@@ -1,6 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { getUserStreak, updateUserStreak } from '@/lib/streak-tracker'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**

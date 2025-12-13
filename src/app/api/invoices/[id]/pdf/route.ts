@@ -4,7 +4,7 @@ import { prisma } from '@/lib/prisma'
 import { formatValidationResult, validateQRBill } from '@/lib/qr-bill-validator'
 import { formatQRReference } from '@/lib/qr-reference'
 import { jsPDF } from 'jspdf'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import QRCode from 'qrcode'
 

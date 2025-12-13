@@ -2,7 +2,7 @@ import { generateArticleNumber } from '@/lib/article-number'
 import { authOptions } from '@/lib/auth'
 import { moderateWatch } from '@/lib/auto-moderation'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 import { uploadImagesToBlob, isBlobUrl } from '@/lib/blob-storage'
 
