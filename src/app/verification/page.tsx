@@ -69,7 +69,7 @@ export default function VerificationPage() {
   // Laden der bestehenden Verifizierungsdaten
   useEffect(() => {
     const loadVerificationData = async () => {
-      if (!session?.user?.id) return
+      if (!(session?.user as { id?: string })?.id) return
 
       try {
         const res = await fetch('/api/verification/get')

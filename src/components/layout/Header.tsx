@@ -54,7 +54,7 @@ export function Header() {
   // Lade Nickname und Admin-Status aus der DB, falls nicht in Session
   useEffect(() => {
     if (!session?.user) return
-    
+
     const userId = (session.user as { id?: string })?.id
     const userNickname = (session.user as { nickname?: string | null })?.nickname
     if (userId) {
@@ -111,7 +111,11 @@ export function Header() {
           .catch(err => console.error('Error loading verification status:', err))
       }
     }
-  }, [(session?.user as { id?: string })?.id, (session?.user as { nickname?: string | null })?.nickname, (session?.user as { isAdmin?: boolean })?.isAdmin])
+  }, [
+    (session?.user as { id?: string })?.id,
+    (session?.user as { nickname?: string | null })?.nickname,
+    (session?.user as { isAdmin?: boolean })?.isAdmin,
+  ])
 
   // Profilbild aus localStorage laden
   useEffect(() => {
@@ -459,7 +463,10 @@ export function Header() {
                       <UserName
                         userId={(session?.user as { id?: string })?.id || ''}
                         userName={
-                          userNickname || (session?.user as { nickname?: string | null })?.nickname || (session?.user as { name?: string | null })?.name || 'Benutzer'
+                          userNickname ||
+                          (session?.user as { nickname?: string | null })?.nickname ||
+                          (session?.user as { name?: string | null })?.name ||
+                          'Benutzer'
                         }
                         badgeSize="sm"
                         className="truncate"
@@ -587,7 +594,8 @@ export function Header() {
                               {t.header.cancel}
                             </div>
                           </Link>
-                          {(isAdmin || (session.user as { isAdmin?: boolean })?.isAdmin === true) && (
+                          {(isAdmin ||
+                            (session.user as { isAdmin?: boolean })?.isAdmin === true) && (
                             <>
                               <div className="my-1 border-t border-gray-100" />
                               <Link

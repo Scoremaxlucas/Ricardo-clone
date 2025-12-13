@@ -258,7 +258,7 @@ export default function SellPage() {
   // Lade Verifizierungsstatus und Booster
   useEffect(() => {
     const loadVerificationStatus = async () => {
-      if (session?.user?.id) {
+      if ((session?.user as { id?: string })?.id) {
         try {
           const res = await fetch('/api/verification/get')
           if (res.ok) {
@@ -299,7 +299,7 @@ export default function SellPage() {
       }
     }
     loadVerificationStatus()
-  }, [session?.user?.id])
+  }, [(session?.user as { id?: string })?.id])
 
   // Lade Booster-Preise
   useEffect(() => {

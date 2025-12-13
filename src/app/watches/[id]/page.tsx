@@ -117,7 +117,7 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
 
     setSending(true)
     try {
-      const isSeller = session.user?.id === watch.seller.id
+      const isSeller = (session?.user as { id?: string })?.id === watch.seller.id
       const receiverId = isSeller ? 'interessent-id' : watch.seller.id
 
       const res = await fetch(`/api/watches/${params.id}/messages`, {
@@ -150,7 +150,7 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
     return <div className="flex min-h-screen items-center justify-center">Uhr nicht gefunden</div>
   }
 
-  const isSeller = session?.user?.id === watch.seller.id
+  const isSeller = (session?.user as { id?: string })?.id === watch.seller.id
   const images = watch.images ? watch.images.split(',') : []
   const imageUrl = images[0] || '/placeholder-watch.jpg'
 

@@ -1,15 +1,25 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useParams } from 'next/navigation'
-import { useSession } from 'next-auth/react'
-import Link from 'next/link'
-import { CheckCircle, XCircle, Minus, User, MapPin, Calendar, Filter, ArrowUpDown, CheckCircle2, Flag } from 'lucide-react'
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { useLanguage } from '@/contexts/LanguageContext'
+import { Header } from '@/components/layout/Header'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { ReportUserModal } from '@/components/user/ReportUserModal'
+import { useLanguage } from '@/contexts/LanguageContext'
+import {
+  Calendar,
+  CheckCircle,
+  CheckCircle2,
+  Filter,
+  Flag,
+  MapPin,
+  Minus,
+  User,
+  XCircle,
+} from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
 interface UserStats {
@@ -157,7 +167,8 @@ export default function PublicProfilePage() {
                 borderRadius: '12px',
                 padding: '20px',
                 fontSize: '14px',
-                boxShadow: '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
+                boxShadow:
+                  '0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05)',
                 border: '1px solid #e5e7eb',
                 maxWidth: '400px',
               },
@@ -504,7 +515,9 @@ export default function PublicProfilePage() {
                         {activeWatches
                           .sort((a, b) => {
                             if (sortBy === 'newest') {
-                              return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                              return (
+                                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+                              )
                             } else if (sortBy === 'price-low') {
                               return a.price - b.price
                             } else if (sortBy === 'price-high') {
@@ -512,7 +525,9 @@ export default function PublicProfilePage() {
                             } else if (sortBy === 'ending') {
                               if (!a.auctionEnd) return 1
                               if (!b.auctionEnd) return -1
-                              return new Date(a.auctionEnd).getTime() - new Date(b.auctionEnd).getTime()
+                              return (
+                                new Date(a.auctionEnd).getTime() - new Date(b.auctionEnd).getTime()
+                              )
                             }
                             return 0
                           })

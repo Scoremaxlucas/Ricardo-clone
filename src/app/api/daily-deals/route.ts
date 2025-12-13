@@ -46,28 +46,30 @@ export async function GET(request: NextRequest) {
 
     const watchMap = new Map(watches.map(w => [w.id, w]))
 
-    const dealsWithDiscountPrice = deals.map(deal => {
-      const watch = watchMap.get(deal.watchId)
-      if (!watch) {
-        return null
-      }
-      
-      const discountPrice = watch.price * (1 - deal.discountPercent / 100)
+    const dealsWithDiscountPrice = deals
+      .map(deal => {
+        const watch = watchMap.get(deal.watchId)
+        if (!watch) {
+          return null
+        }
 
-      return {
-        id: deal.id,
-        watchId: deal.watchId,
-        discountPercent: deal.discountPercent,
-        originalPrice: watch.price,
-        discountPrice,
-        startDate: deal.startDate,
-        endDate: deal.endDate,
-        maxQuantity: deal.maxQuantity,
-        soldQuantity: deal.soldQuantity,
-        remainingQuantity: deal.maxQuantity - deal.soldQuantity,
-        watch,
-      }
-    }).filter((deal): deal is NonNullable<typeof deal> => deal !== null)
+        const discountPrice = watch.price * (1 - deal.discountPercent / 100)
+
+        return {
+          id: deal.id,
+          watchId: deal.watchId,
+          discountPercent: deal.discountPercent,
+          originalPrice: watch.price,
+          discountPrice,
+          startDate: deal.startDate,
+          endDate: deal.endDate,
+          maxQuantity: deal.maxQuantity,
+          soldQuantity: deal.soldQuantity,
+          remainingQuantity: deal.maxQuantity - deal.soldQuantity,
+          watch,
+        }
+      })
+      .filter((deal): deal is NonNullable<typeof deal> => deal !== null)
 
     return NextResponse.json({ deals: dealsWithDiscountPrice })
   } catch (error: any) {

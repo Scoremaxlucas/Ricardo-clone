@@ -39,7 +39,7 @@ export default function MySellingPage() {
   useEffect(() => {
     if (status === 'loading') return
 
-    if (!session?.user?.id) {
+    if (!(session?.user as { id?: string })?.id) {
       router.push('/login?callbackUrl=/my-watches/selling')
       return
     }
@@ -84,7 +84,7 @@ export default function MySellingPage() {
     )
   }
 
-  if (!session?.user?.id) {
+  if (!(session?.user as { id?: string })?.id) {
     return null
   }
 

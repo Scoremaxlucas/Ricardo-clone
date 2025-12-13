@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { ProductCard } from '@/components/ui/ProductCard'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { Sparkles, TrendingUp } from 'lucide-react'
 import { useSession } from 'next-auth/react'
-import { useLanguage } from '@/contexts/LanguageContext'
-import { ProductCard } from '@/components/ui/ProductCard'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 interface Product {
   id: string

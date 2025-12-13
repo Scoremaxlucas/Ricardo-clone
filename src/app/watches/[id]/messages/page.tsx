@@ -79,7 +79,7 @@ export default function WatchMessagesPage({ params }: { params: { id: string } }
 
     setSending(true)
     try {
-      const isSeller = session.user?.id === watch.sellerId
+      const isSeller = (session?.user as { id?: string })?.id === watch.sellerId
       const receiverId = isSeller ? 'interessent-id' : watch.sellerId // TODO: Für Interessenten die richtige ID holen
 
       const res = await fetch(`/api/watches/${params.id}/messages`, {
@@ -108,7 +108,7 @@ export default function WatchMessagesPage({ params }: { params: { id: string } }
     return <div className="flex min-h-screen items-center justify-center">Lädt...</div>
   }
 
-  const isSeller = watch && session?.user?.id === watch.sellerId
+  const isSeller = watch && (session?.user as { id?: string })?.id === watch.sellerId
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">

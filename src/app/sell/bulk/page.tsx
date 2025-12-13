@@ -88,7 +88,7 @@ export default function BulkUploadPage() {
   // Prüfe Verifizierungsstatus und lade Booster
   useEffect(() => {
     const loadVerificationStatus = async () => {
-      if (session?.user?.id) {
+      if ((session?.user as { id?: string })?.id) {
         try {
           const res = await fetch('/api/verification/get')
           if (res.ok) {
@@ -121,7 +121,7 @@ export default function BulkUploadPage() {
 
     loadVerificationStatus()
     loadBoosters()
-  }, [session?.user?.id])
+  }, [(session?.user as { id?: string })?.id])
 
   if (status === 'loading' || isCheckingVerification) {
     return (
