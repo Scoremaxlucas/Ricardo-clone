@@ -29,11 +29,6 @@ async function contentBasedRecommendations(
   limit: number = 10
 ): Promise<RecommendedProduct[]> {
   try {
-    // Hole User-Präferenzen
-    const preferences = await prisma.userPreferences.findUnique({
-      where: { userId },
-    })
-
     // Hole Browsing-History
     const history = await prisma.browsingHistory.findMany({
       where: { userId },
@@ -48,8 +43,7 @@ async function contentBasedRecommendations(
       return []
     }
 
-    // Analysiere häufig angesehene Kategorien, Marken, Preis-Range
-    const categories = new Map<string, number>()
+    // Analysiere häufig angesehene Marken, Preis-Range
     const brands = new Map<string, number>()
     const prices: number[] = []
 

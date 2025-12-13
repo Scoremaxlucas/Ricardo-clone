@@ -24,20 +24,6 @@ interface WatchData {
  */
 export async function checkSearchSubscriptions(watch: WatchData) {
   try {
-    console.log(
-      `[search-subscription-matcher] Prüfe Suchabos für Artikel: ${watch.title} (ID: ${watch.id})`
-    )
-    console.log(`[search-subscription-matcher] Artikel-Daten:`, {
-      brand: watch.brand,
-      model: watch.model,
-      categoryId: watch.categoryId,
-      categoryIds: watch.categoryIds,
-      price: watch.price,
-      condition: watch.condition,
-      hasDescription: !!watch.description,
-      descriptionLength: watch.description?.length || 0,
-    })
-
     // Hole alle aktiven Suchabos
     const subscriptions = await prisma.searchSubscription.findMany({
       where: {
@@ -53,8 +39,6 @@ export async function checkSearchSubscriptions(watch: WatchData) {
         },
       },
     })
-
-    console.log(`[search-subscription-matcher] Gefunden: ${subscriptions.length} aktive Suchabos`)
 
     const matches: Array<{ subscriptionId: string; userId: string }> = []
 
@@ -103,14 +87,8 @@ export async function checkSearchSubscriptions(watch: WatchData) {
           html,
           text,
         })
-        console.log(
-          `[search-subscription-matcher] ✓ E-Mail-Benachrichtigung gesendet an ${user.email}`
-        )
       } catch (error) {
-        console.error(
-          `[search-subscription-matcher] ❌ Fehler beim Senden der E-Mail an ${user.email}:`,
-          error
-        )
+        // Silent fail - E-Mail-Fehler sollten nicht die Hauptfunktionalität blockieren
       }
 
       // In-App-Benachrichtigung erstellen
