@@ -135,8 +135,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Update soldLast24h statistic (Feature 2: Social Proof)
-    updateSoldLast24h(watchId).catch(err => {
-      console.error('Error updating soldLast24h:', err)
+    updateSoldLast24h(watchId).catch(() => {
+      // Silent fail - Statistics update should not block purchase
     })
 
     // Erstelle Rechnung SOFORT nach erfolgreichem Verkauf
