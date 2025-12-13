@@ -115,7 +115,7 @@ export default function MyWatchesPage() {
 
     loadItems()
     const loadVerificationStatus = async () => {
-      if (session?.user?.id) {
+      if ((session?.user as { id?: string })?.id) {
         try {
           const res = await fetch('/api/verification/get')
           if (res.ok) {
