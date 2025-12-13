@@ -24,7 +24,7 @@ export default function DebugPage() {
             </div>
 
             <div>
-              <strong>User ID:</strong> {session?.user?.id || 'Nicht verfügbar'}
+              <strong>User ID:</strong> {(session?.user as { id?: string })?.id || 'Nicht verfügbar'}
             </div>
 
             <div>
