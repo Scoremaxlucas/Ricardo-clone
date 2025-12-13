@@ -556,7 +556,7 @@ export function ProductPageClient({
           />
 
           {/* Report-Button */}
-          {session?.user && session.user.id !== watch.sellerId && (
+          {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
             <div className="mt-4 border-t border-gray-200 pt-4">
               <button
                 onClick={() => setShowReportModal(true)}
