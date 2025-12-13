@@ -68,7 +68,7 @@ export function Header() {
       }
 
       // Prüfe Admin-Status nur aus Session
-      if (session.user.isAdmin === true) {
+      if ((session.user as { isAdmin?: boolean })?.isAdmin === true) {
         console.log('User is Admin based on session, setting isAdmin to true')
         setIsAdmin(true)
       } else {
@@ -91,7 +91,7 @@ export function Header() {
           .catch(err => {
             console.error('Error loading admin status:', err)
             // Fallback: Verwende Session-Wert
-            const fallbackValue = session.user.isAdmin === true
+            const fallbackValue = (session.user as { isAdmin?: boolean })?.isAdmin === true
             console.log('Using fallback admin value:', fallbackValue)
             setIsAdmin(fallbackValue)
           })
@@ -107,7 +107,7 @@ export function Header() {
           .catch(err => console.error('Error loading verification status:', err))
       }
     }
-  }, [session?.user?.id, session?.user?.nickname, session?.user?.isAdmin])
+  }, [session?.user?.id, session?.user?.nickname, (session?.user as { isAdmin?: boolean })?.isAdmin])
 
   // Profilbild aus localStorage laden
   useEffect(() => {
@@ -583,7 +583,7 @@ export function Header() {
                               {t.header.cancel}
                             </div>
                           </Link>
-                          {(isAdmin || session.user?.isAdmin === true) && (
+                          {(isAdmin || (session.user as { isAdmin?: boolean })?.isAdmin === true) && (
                             <>
                               <div className="my-1 border-t border-gray-100" />
                               <Link
