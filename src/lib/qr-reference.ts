@@ -8,8 +8,8 @@
  * Die Referenz muss alphanumerisch sein und wird mit einer Prüfziffer versehen
  * NOTE: Currently unused, but kept for future SCOR checksum validation if needed
  */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-function calculateSCORChecksum(reference: string): number {
+// eslint-disable-next-line no-unused-vars
+function _calculateSCORChecksum(reference: string): number {
   // Entferne alle nicht-alphanumerischen Zeichen
   const cleanRef = reference.replace(/[^0-9A-Z]/g, '').toUpperCase()
 

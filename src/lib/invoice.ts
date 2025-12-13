@@ -90,10 +90,6 @@ export async function calculateInvoiceForSale(purchaseId: string) {
     },
   })
 
-  console.log(
-    `[invoice] Rechnung erstellt: ${invoiceNumber} für Seller ${purchase.watch.sellerId}, Total: CHF ${roundedTotal.toFixed(2)}`
-  )
-
   // Erstelle nur Plattform-Benachrichtigung (E-Mail wird nach 14 Tagen gesendet)
   // Die erste Zahlungsaufforderung wird nach 14 Tagen über den Mahnprozess gesendet
   try {
@@ -106,10 +102,8 @@ export async function calculateInvoiceForSale(purchaseId: string) {
         link: `/my-watches/selling/fees?invoice=${invoice.id}`,
       },
     })
-    console.log(`[invoice] Plattform-Benachrichtigung für User ${purchase.watch.sellerId} erstellt`)
   } catch (notificationError: any) {
-    console.error('[invoice] Fehler beim Erstellen der Notification:', notificationError)
-    // Notification-Fehler sollte nicht kritisch sein
+    // Silent fail - Notification-Fehler sollte nicht kritisch sein
   }
 
   return invoice
@@ -128,7 +122,6 @@ export async function sendInvoiceNotificationAndEmail(invoice: any) {
     })
 
     if (!invoiceWithItems || !invoiceWithItems.seller) {
-      console.error('[invoice] Invoice oder Seller nicht gefunden')
       return
     }
 
@@ -152,10 +145,8 @@ export async function sendInvoiceNotificationAndEmail(invoice: any) {
           invoiceWithItems.dueDate,
           invoiceWithItems.id
         )
-        console.log(`[invoice] E-Mail-Benachrichtigung an ${seller.email} gesendet`)
       } catch (emailError: any) {
-        console.error('[invoice] Fehler beim Versenden der E-Mail:', emailError)
-        // E-Mail-Fehler sollte nicht die Notification verhindern
+        // Silent fail - E-Mail-Fehler sollte nicht die Notification verhindern
       }
     }
 
@@ -170,13 +161,11 @@ export async function sendInvoiceNotificationAndEmail(invoice: any) {
           link: `/my-watches/selling/fees?invoice=${invoiceWithItems.id}`,
         },
       })
-      console.log(`[invoice] Plattform-Benachrichtigung für User ${seller.id} erstellt`)
     } catch (notificationError: any) {
-      console.error('[invoice] Fehler beim Erstellen der Notification:', notificationError)
-      // Notification-Fehler sollte nicht kritisch sein
+      // Silent fail - Notification-Fehler sollte nicht kritisch sein
     }
   } catch (error: any) {
-    console.error('[invoice] Fehler bei sendInvoiceNotificationAndEmail:', error)
+    // Silent fail - Fehler sollten nicht die Hauptfunktionalität blockieren
     throw error
   }
 }
@@ -258,10 +247,6 @@ export async function createCreditNoteForInvoice(originalInvoiceId: string, reas
     },
   })
 
-  console.log(
-    `[invoice] Korrektur-Abrechnung erstellt: ${creditNoteNumber} für ursprüngliche Rechnung ${originalInvoice.invoiceNumber}, Total: CHF ${creditNote.total.toFixed(2)}`
-  )
-
   // Benachrichtigung an Verkäufer
   try {
     await prisma.notification.create({
@@ -273,14 +258,8 @@ export async function createCreditNoteForInvoice(originalInvoiceId: string, reas
         link: `/my-watches/selling/fees?invoice=${creditNote.id}`,
       },
     })
-    console.log(
-      `[invoice] Benachrichtigung für Korrektur-Abrechnung erstellt für User ${originalInvoice.sellerId}`
-    )
   } catch (notificationError: any) {
-    console.error(
-      '[invoice] Fehler beim Erstellen der Notification für Korrektur-Abrechnung:',
-      notificationError
-    )
+    // Silent fail - Notification-Fehler sollte nicht kritisch sein
   }
 
   return creditNote
