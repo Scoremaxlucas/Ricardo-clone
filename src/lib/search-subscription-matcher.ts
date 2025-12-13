@@ -1,5 +1,5 @@
+import { getSearchMatchFoundEmail, sendEmail } from './email'
 import { prisma } from './prisma'
-import { sendEmail, getSearchMatchFoundEmail } from './email'
 
 interface WatchData {
   id: string
@@ -93,14 +93,8 @@ export async function checkSearchSubscriptions(watch: WatchData) {
             isRead: false,
           },
         })
-        console.log(
-          `[search-subscription-matcher] ✓ In-App-Benachrichtigung erstellt für User ${user.id}`
-        )
       } catch (error) {
-        console.error(
-          `[search-subscription-matcher] ❌ Fehler beim Erstellen der Benachrichtigung für User ${user.id}:`,
-          error
-        )
+        // Silent fail - Benachrichtigungs-Fehler sollten nicht die Hauptfunktionalität blockieren
       }
 
       // Counter aktualisieren

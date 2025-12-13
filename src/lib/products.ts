@@ -127,15 +127,12 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
               // Sie werden über Batch-API nachgeladen UND automatisch zu Blob Storage migriert
               // Die Batch-API migriert Base64 zu Blob Storage beim ersten Aufruf
               images = []
-              console.log(`[getFeaturedProducts] Watch ${w.id} has Base64 titleImage - will load and migrate via Batch API`)
             } else if (titleImage.startsWith('http://') || titleImage.startsWith('https://')) {
               // URLs (Blob Storage) sind klein und werden behalten
               images = [titleImage]
-              console.log(`[getFeaturedProducts] Watch ${w.id} has URL titleImage - included`)
             } else {
               // Unbekanntes Format - versuche trotzdem zu verwenden
               images = [titleImage]
-              console.warn(`[getFeaturedProducts] Watch ${w.id} has unknown image format: ${titleImage.substring(0, 50)}`)
             }
 
             // OPTIMIERT: Nur URLs behalten, Base64 wird über Batch-API nachgeladen
@@ -147,15 +144,12 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
             })
 
             images = [...images, ...urlImages]
-            console.log(`[getFeaturedProducts] Watch ${w.id} total images: ${images.length} URLs (${parsedImages.length} original, ${parsedImages.filter((img: any) => typeof img === 'string' && img.startsWith('data:image/')).length} Base64 will load via Batch API)`)
           }
         }
       } catch (error) {
-        console.error(`[getFeaturedProducts] Error parsing images for watch ${w.id}:`, error)
+        // Silent fail - Image parsing errors sollten nicht die Hauptfunktionalität blockieren
         images = []
       }
-    } else {
-      console.warn(`[getFeaturedProducts] Watch ${w.id} has no images field`)
     }
 
     let boosters: string[] = []

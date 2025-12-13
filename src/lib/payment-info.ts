@@ -289,7 +289,7 @@ function generatePaymentInstructions(params: {
   reference: string
   productTitle: string
 }): string {
-  const { amount, currency, iban, bic, accountHolder, reference, productTitle } = params
+  const { amount, iban, bic, accountHolder, reference, productTitle } = params
 
   // Formatiere IBAN mit Leerzeichen (CH12 3456 7890 1234 5678 9)
   const formattedIban = iban.replace(/(.{4})/g, '$1 ').trim()

@@ -6,7 +6,9 @@
 /**
  * Berechnet die Prüfsumme für eine SCOR-Referenz (Modulo 10 Recursive)
  * Die Referenz muss alphanumerisch sein und wird mit einer Prüfziffer versehen
+ * NOTE: Currently unused, but kept for future SCOR checksum validation if needed
  */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function calculateSCORChecksum(reference: string): number {
   // Entferne alle nicht-alphanumerischen Zeichen
   const cleanRef = reference.replace(/[^0-9A-Z]/g, '').toUpperCase()
