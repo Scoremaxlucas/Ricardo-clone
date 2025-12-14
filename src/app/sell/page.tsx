@@ -21,6 +21,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import toast from 'react-hot-toast'
 import { compressImage } from '@/lib/image-compression'
+import { WizardProgress, type WizardStep } from '@/components/sell/WizardProgress'
 
 // Lazy load AIDetection to avoid bundling TensorFlow.js on every page
 const AIDetection = dynamic(
@@ -60,6 +61,7 @@ export default function SellPage() {
   const [detectedProductName, setDetectedProductName] = useState<string>('')
   const [detectedConfidence, setDetectedConfidence] = useState<number>(0)
   const [showAIDetection, setShowAIDetection] = useState<boolean>(true)
+  const [currentWizardStep, setCurrentWizardStep] = useState(0)
   const [formData, setFormData] = useState({
     // Grunddaten
     brand: '',
@@ -810,6 +812,46 @@ export default function SellPage() {
         ) : (
           <div className="rounded-lg bg-white p-8 shadow-md">
             <form onSubmit={handleSubmit} className="space-y-8">
+
+              {/* Wizard Progress Indicator */}
+              {selectedCategory && (
+                <WizardProgress
+                  steps={[
+                    {
+                      id: 'images',
+                      title: 'Bilder',
+                      isComplete: formData.images.length > 0,
+                      isActive: currentWizardStep === 0,
+                    },
+                    {
+                      id: 'details',
+                      title: 'Details',
+                      isComplete: !!formData.title && !!formData.condition,
+                      isActive: currentWizardStep === 1,
+                    },
+                    {
+                      id: 'price',
+                      title: 'Preis',
+                      isComplete: !!formData.price || formData.isAuction,
+                      isActive: currentWizardStep === 2,
+                    },
+                    {
+                      id: 'shipping',
+                      title: 'Versand',
+                      isComplete: formData.shippingMethods.length > 0,
+                      isActive: currentWizardStep === 3,
+                    },
+                  ]}
+                  currentStep={currentWizardStep}
+                  onStepClick={(step) => {
+                    setCurrentWizardStep(step)
+                    // Scroll to section
+                    const sectionIds = ['images-section', 'details-section', 'price-section', 'shipping-section']
+                    const element = document.getElementById(sectionIds[step])
+                    element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+                  }}
+                />
+              )}
               {showAIDetection && !selectedCategory ? (
                 <AIDetection
                   onCategoryDetected={async (
