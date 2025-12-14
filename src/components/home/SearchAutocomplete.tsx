@@ -181,7 +181,7 @@ export function SearchAutocomplete({
       >
         <div className="relative flex items-center">
           <Search className="absolute left-4 h-5 w-5 text-gray-400" />
-          <input
+          <input id="search"
             ref={inputRef}
             type="text"
             value={query}

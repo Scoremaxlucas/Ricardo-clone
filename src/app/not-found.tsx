@@ -9,7 +9,7 @@ export default function NotFound() {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
-      <main className="flex flex-1 items-center justify-center px-4 py-16">
+      <main id="main-content" className="flex flex-1 items-center justify-center px-4 py-16" tabIndex={-1}>
         <div className="w-full max-w-2xl text-center">
           {/* Animated Illustration */}
           <div className="mb-8 flex justify-center">

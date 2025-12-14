@@ -216,7 +216,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   const displayName = deferredData.nickname || (session?.user as any)?.nickname || session?.user?.name || 'Benutzer'
 
   return (
-    <header className="sticky top-0 z-50 border-b bg-white shadow-md">
+    <header id="navigation" className="sticky top-0 z-50 border-b bg-white shadow-md" tabIndex={-1}>
       <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
         {/* ERSTE ZEILE: Logo, Navigation, User Actions */}
         <div className="flex h-12 min-w-0 items-center justify-between py-1 md:h-14">

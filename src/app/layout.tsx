@@ -4,6 +4,7 @@ import './globals.css'
 import { Providers } from '@/components/providers'
 import { Toaster } from 'react-hot-toast'
 import { DeferredComponents } from '@/components/DeferredComponents'
+import { SkipLinks } from '@/components/accessibility/SkipLinks'
 
 /**
  * Root Layout - TTI Optimiert
@@ -52,6 +53,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       </head>
       <body className={`${inter.className} flex min-h-screen flex-col`}>
         <Providers>
+          <SkipLinks />
           {/* Kritischer Content - sofort gerendert */}
           <div className="flex flex-1 flex-col">{children}</div>
           

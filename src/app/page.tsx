@@ -73,7 +73,7 @@ export default async function Home() {
   return (
     <div className="flex min-h-screen flex-col bg-[#FAFAFA]">
       <Header />
-      <main className="flex-1 pb-8">
+      <main id="main-content" className="flex-1 pb-8" tabIndex={-1}>
         {/* 
           Hero Section - Kritisch für LCP
           Server Component rendert H1/H2 sofort
