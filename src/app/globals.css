@@ -2,7 +2,7 @@
 @tailwind components;
 @tailwind utilities;
 
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap');
+/* PERFORMANCE: Google Fonts @import entfernt - nutze next/font in layout.tsx stattdessen */
 
 :root {
   /* Helvenda Design System Colors - Wärmere Palette */

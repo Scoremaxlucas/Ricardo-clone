@@ -13,35 +13,42 @@ export function Hero() {
   const router = useRouter()
 
   // Handle Search with Analytics Tracking
-  const handleSearch = async (query: string) => {
+  // PERFORMANCE OPTIMIERT: Navigation SOFORT, Analytics im Hintergrund (~300ms gespart)
+  const handleSearch = (query: string) => {
     if (!query.trim()) return
 
-    // Track search query (async, non-blocking)
-    try {
-      // Get result count first (simplified - could be improved)
-      const searchResponse = await fetch(
-        `/api/watches/search?q=${encodeURIComponent(query)}&limit=1`
-      )
-      const searchData = await searchResponse.json()
-      const resultCount = searchData?.watches?.length || 0
+    // Navigate SOFORT zu Search Results - User wartet nicht auf Analytics
+    router.push(`/search?q=${encodeURIComponent(query)}`)
 
-      // Track search query
-      await fetch('/api/search/track', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          query: query.trim(),
-          userId: (session?.user as { id?: string })?.id || null,
-          resultCount,
-        }),
-      })
-    } catch (error) {
-      // Silent fail - analytics should not block search
-      console.error('Error tracking search:', error)
+    // Track search query ASYNC im Hintergrund (non-blocking)
+    // Verwendet Promise ohne await - Fire & Forget Pattern
+    const trackSearch = async () => {
+      try {
+        // Get result count (for analytics only)
+        const searchResponse = await fetch(
+          `/api/watches/search?q=${encodeURIComponent(query)}&limit=1`
+        )
+        const searchData = await searchResponse.json()
+        const resultCount = searchData?.watches?.length || 0
+
+        // Track search query
+        await fetch('/api/search/track', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            query: query.trim(),
+            userId: (session?.user as { id?: string })?.id || null,
+            resultCount,
+          }),
+        })
+      } catch (error) {
+        // Silent fail - analytics should not block anything
+        console.error('Error tracking search:', error)
+      }
     }
 
-    // Navigate to search results
-    router.push(`/search?q=${encodeURIComponent(query)}`)
+    // Fire & Forget - Analytics läuft im Hintergrund
+    trackSearch()
   }
 
   return (

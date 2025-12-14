@@ -59,7 +59,7 @@ export default function SellPage() {
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('')
   const [detectedProductName, setDetectedProductName] = useState<string>('')
   const [detectedConfidence, setDetectedConfidence] = useState<number>(0)
-  const [showAIDetection, setShowAIDetection] = useState<boolean>(true)
+  const [showAIDetection, setShowAIDetection] = useState<boolean>(false) // PERFORMANCE: false = TensorFlow erst bei Klick laden
   const [formData, setFormData] = useState({
     // Grunddaten
     brand: '',
@@ -810,7 +810,23 @@ export default function SellPage() {
         ) : (
           <div className="rounded-lg bg-white p-8 shadow-md">
             <form onSubmit={handleSubmit} className="space-y-8">
-              {/* KI-Erkennung (Bild oder Text) */}
+              {/* KI-Erkennung (Bild oder Text) - PERFORMANCE: Erst bei Klick laden (~600ms gespart) */}
+              {!showAIDetection && !selectedCategory && (
+                <div className="rounded-lg border-2 border-dashed border-primary-300 bg-primary-50 p-6 text-center">
+                  <Sparkles className="mx-auto h-12 w-12 text-primary-500 mb-4" />
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2">KI-Kategorisierung</h3>
+                  <p className="text-gray-600 mb-4">Lass die KI automatisch die passende Kategorie für dein Produkt erkennen.</p>
+                  <button
+                    type="button"
+                    onClick={() => setShowAIDetection(true)}
+                    className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-white font-medium hover:bg-primary-700 transition-colors"
+                  >
+                    <Sparkles className="h-5 w-5" />
+                    KI-Erkennung aktivieren
+                  </button>
+                  <p className="text-xs text-gray-500 mt-3">Oder wähle manuell eine Kategorie unten</p>
+                </div>
+              )}
               {showAIDetection && !selectedCategory ? (
                 <AIDetection
                   onCategoryDetected={async (
