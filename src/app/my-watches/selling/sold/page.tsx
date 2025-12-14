@@ -133,10 +133,13 @@ export default function SoldPage() {
   }
 
   useEffect(() => {
-    const loadSalesData = async () => {
+    const loadSalesData = async (isInitialLoad: boolean = false) => {
       if (!session?.user) return
       try {
-        setLoading(true)
+        // Nur beim initialen Load den Loading-Screen zeigen
+        if (isInitialLoad) {
+          setLoading(true)
+        }
 
         // Prüfe und verarbeite abgelaufene Auktionen automatisch
         try {
@@ -157,7 +160,10 @@ export default function SoldPage() {
       } catch (error) {
         console.error('Error loading sales:', error)
       } finally {
-        setLoading(false)
+        // Nur beim initialen Load den Loading-Screen ausblenden
+        if (isInitialLoad) {
+          setLoading(false)
+        }
       }
     }
     // Warte bis Session geladen ist
@@ -172,9 +178,9 @@ export default function SoldPage() {
       return
     }
 
-    loadSalesData()
-    // Polling alle 5 Sekunden für Updates
-    const interval = setInterval(loadSalesData, 5000)
+    loadSalesData(true) // Initial load mit Loading-Screen
+    // Polling alle 5 Sekunden für Updates (ohne Loading-Screen)
+    const interval = setInterval(() => loadSalesData(false), 5000)
     return () => clearInterval(interval)
   }, [session, status, router])
 
