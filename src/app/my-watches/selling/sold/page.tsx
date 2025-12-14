@@ -139,7 +139,7 @@ export default function SoldPage() {
 
   useEffect(() => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:134','message':'useEffect triggered','data':{status,hasSession:!!session?.user,loading,sessionId:session?.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:134','message':'useEffect triggered','data':{status,hasSession:!!session?.user,loading,sessionId:(session?.user as { id?: string })?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
     // #endregion
     const loadSalesData = async (isInitialLoad: boolean = false) => {
       // #region agent log
