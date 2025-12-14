@@ -681,3 +681,264 @@ html {
   .stagger-4 { animation-delay: 0.4s; }
   .stagger-5 { animation-delay: 0.5s; }
 }
+
+/* ===== PHASE 3.4: Accessibility (WCAG 2.1 AA) ===== */
+
+@layer utilities {
+  /* === Screen Reader Only === */
+  .sr-only {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+  }
+  
+  .not-sr-only {
+    position: static;
+    width: auto;
+    height: auto;
+    padding: 0;
+    margin: 0;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+  }
+  
+  /* === Focus Visible (Keyboard Only) === */
+  .focus-visible-ring:focus {
+    outline: none;
+  }
+  .focus-visible-ring:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+  }
+  
+  .focus-visible-glow:focus {
+    outline: none;
+  }
+  .focus-visible-glow:focus-visible {
+    @apply outline-none;
+    box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.4);
+  }
+  
+  /* High Contrast Focus for Dark Backgrounds */
+  .focus-visible-light:focus-visible {
+    @apply outline-none ring-2 ring-white ring-offset-2 ring-offset-primary-700;
+  }
+  
+  /* === Skip Links === */
+  .skip-link {
+    @apply sr-only;
+  }
+  .skip-link:focus {
+    @apply not-sr-only fixed left-4 top-4 z-[9999] rounded-lg bg-primary-600 px-4 py-2 text-white shadow-lg;
+  }
+  
+  /* === Reduced Motion === */
+  @media (prefers-reduced-motion: reduce) {
+    .motion-safe {
+      animation: none !important;
+      transition: none !important;
+    }
+    
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+  
+  .motion-reduce {
+    animation: none !important;
+    transition: none !important;
+  }
+  
+  /* === High Contrast Mode Support === */
+  @media (prefers-contrast: high) {
+    .contrast-auto {
+      forced-color-adjust: auto;
+    }
+    
+    .btn-primary,
+    .btn-secondary {
+      border: 2px solid currentColor !important;
+    }
+    
+    .card,
+    .product-card {
+      border: 2px solid currentColor !important;
+    }
+  }
+  
+  /* === Touch Target Sizes (44x44px minimum) === */
+  .touch-target {
+    @apply min-h-[44px] min-w-[44px];
+  }
+  
+  .touch-target-lg {
+    @apply min-h-[48px] min-w-[48px];
+  }
+  
+  /* === Interactive Element States === */
+  .interactive {
+    @apply cursor-pointer select-none;
+  }
+  
+  .interactive:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+  }
+  
+  .interactive:disabled,
+  .interactive[aria-disabled="true"] {
+    @apply cursor-not-allowed opacity-50;
+  }
+  
+  /* === Text Contrast Helpers === */
+  .text-high-contrast {
+    @apply text-gray-900;
+  }
+  
+  .text-medium-contrast {
+    @apply text-gray-700;
+  }
+  
+  .text-low-contrast {
+    @apply text-gray-500;
+  }
+  
+  /* On Dark Backgrounds */
+  .text-on-dark {
+    @apply text-white;
+  }
+  
+  .text-on-dark-muted {
+    @apply text-white/80;
+  }
+  
+  /* === Link Accessibility === */
+  .link-accessible {
+    @apply text-primary-700 underline decoration-1 underline-offset-2 transition-colors;
+  }
+  .link-accessible:hover {
+    @apply text-primary-900 decoration-2;
+  }
+  .link-accessible:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+  }
+  
+  /* === Form Accessibility === */
+  .input-accessible {
+    @apply rounded-lg border-2 border-gray-300 px-4 py-3 transition-all;
+  }
+  .input-accessible:focus {
+    @apply border-primary-500 outline-none ring-2 ring-primary-500/20;
+  }
+  .input-accessible:invalid {
+    @apply border-red-500;
+  }
+  .input-accessible[aria-invalid="true"] {
+    @apply border-red-500 ring-2 ring-red-500/20;
+  }
+  
+  /* Error Message Styling */
+  .error-message {
+    @apply mt-1 text-sm text-red-600;
+  }
+  .error-message::before {
+    content: "⚠ ";
+  }
+  
+  /* === ARIA Live Regions === */
+  .live-polite {
+    /* For screen readers: announce when idle */
+  }
+  
+  .live-assertive {
+    /* For screen readers: announce immediately */
+  }
+  
+  /* === Selection Colors (WCAG Compliant) === */
+  ::selection {
+    background-color: rgba(20, 184, 166, 0.3);
+    color: inherit;
+  }
+  
+  /* === Scrollbar Accessibility === */
+  .scrollbar-accessible {
+    scrollbar-width: auto;
+    scrollbar-color: #0d9488 #f0f0f0;
+  }
+  
+  .scrollbar-accessible::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+  
+  .scrollbar-accessible::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 6px;
+  }
+  
+  .scrollbar-accessible::-webkit-scrollbar-thumb {
+    background: #0d9488;
+    border-radius: 6px;
+    border: 2px solid #f0f0f0;
+  }
+  
+  .scrollbar-accessible::-webkit-scrollbar-thumb:hover {
+    background: #0f766e;
+  }
+}
+
+/* === Global Accessibility Improvements === */
+@layer base {
+  /* Ensure all focusable elements have visible focus */
+  a:focus-visible,
+  button:focus-visible,
+  input:focus-visible,
+  select:focus-visible,
+  textarea:focus-visible,
+  [tabindex]:focus-visible {
+    @apply outline-none ring-2 ring-primary-500 ring-offset-2;
+  }
+  
+  /* Ensure sufficient line height for readability */
+  body {
+    line-height: 1.6;
+    -webkit-text-size-adjust: 100%;
+    text-size-adjust: 100%;
+  }
+  
+  /* Ensure images have alt text indicator when missing */
+  img:not([alt]) {
+    outline: 3px dashed red;
+  }
+  
+  /* Ensure links are distinguishable */
+  a:not([class]) {
+    @apply text-primary-700 underline decoration-1 underline-offset-2;
+  }
+  
+  a:not([class]):hover {
+    @apply text-primary-900;
+  }
+  
+  /* Ensure buttons have pointer cursor */
+  button,
+  [role="button"] {
+    cursor: pointer;
+  }
+  
+  /* Ensure disabled elements are visually distinct */
+  [disabled],
+  [aria-disabled="true"] {
+    @apply cursor-not-allowed opacity-50;
+  }
+}
