@@ -77,16 +77,47 @@ export default function SoldPage() {
   const [showBuyerInfo, setShowBuyerInfo] = useState(false)
   const hasInitializedRef = useRef(false)
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
+  const initialLoadDoneRef = useRef(false) // Permanente Markierung für ersten Load
 
   // #region agent log
   useEffect(() => {
-    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:75','message':'Component render','data':{status,hasSession:!!session?.user,loading,salesCount:sales.length,hasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
-  });
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'sold/page.tsx:75',
+        message: 'Component render',
+        data: {
+          status,
+          hasSession: !!session?.user,
+          loading,
+          salesCount: sales.length,
+          hasInitialized: hasInitializedRef.current,
+        },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'B',
+      }),
+    }).catch(() => {})
+  })
   // #endregion
 
   const loadSales = async () => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:85','message':'loadSales called (legacy function)','data':{hasSession:!!session?.user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'sold/page.tsx:85',
+        message: 'loadSales called (legacy function)',
+        data: { hasSession: !!session?.user },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'D',
+      }),
+    }).catch(() => {})
     // #endregion
     if (!session?.user) return
 
@@ -141,9 +172,27 @@ export default function SoldPage() {
 
   useEffect(() => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:140','message':'useEffect triggered','data':{status,hasSession:!!session?.user,loading,sessionId:(session?.user as { id?: string })?.id,hasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'sold/page.tsx:140',
+        message: 'useEffect triggered',
+        data: {
+          status,
+          hasSession: !!session?.user,
+          loading,
+          sessionId: (session?.user as { id?: string })?.id,
+          hasInitialized: hasInitializedRef.current,
+        },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'B',
+      }),
+    }).catch(() => {})
     // #endregion
-    
+
     // Cleanup: Stoppe vorheriges Polling falls vorhanden
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current)
@@ -152,14 +201,38 @@ export default function SoldPage() {
 
     const loadSalesData = async (isInitialLoad: boolean = false) => {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:137','message':'loadSalesData called','data':{isInitialLoad,currentLoading:loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'sold/page.tsx:137',
+          message: 'loadSalesData called',
+          data: { isInitialLoad, currentLoading: loading },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'A',
+        }),
+      }).catch(() => {})
       // #endregion
       if (!session?.user) return
       try {
         // Nur beim initialen Load den Loading-Screen zeigen
         if (isInitialLoad) {
           // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:142','message':'Setting loading=true','data':{isInitialLoad},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'sold/page.tsx:142',
+              message: 'Setting loading=true',
+              data: { isInitialLoad },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'A',
+            }),
+          }).catch(() => {})
           // #endregion
           setLoading(true)
         }
@@ -171,37 +244,109 @@ export default function SoldPage() {
             headers: { 'Content-Type': 'application/json' },
           })
           // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:150','message':'check-expired response','data':{ok:expiredRes.ok,status:expiredRes.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'sold/page.tsx:150',
+              message: 'check-expired response',
+              data: { ok: expiredRes.ok, status: expiredRes.status },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'C',
+            }),
+          }).catch(() => {})
           // #endregion
         } catch (error) {
           console.error('Error checking expired auctions:', error)
           // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:153','message':'check-expired error','data':{error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'sold/page.tsx:153',
+              message: 'check-expired error',
+              data: { error: String(error) },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'C',
+            }),
+          }).catch(() => {})
           // #endregion
           // Fehler ignorieren, da dies nicht kritisch ist
         }
 
         const res = await fetch(`/api/sales/my-sales?t=${Date.now()}`)
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:160','message':'my-sales response','data':{ok:res.ok,status:res.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'sold/page.tsx:160',
+            message: 'my-sales response',
+            data: { ok: res.ok, status: res.status },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'C',
+          }),
+        }).catch(() => {})
         // #endregion
         if (res.ok) {
           const data = await res.json()
           // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:163','message':'Sales data set','data':{salesCount:data.sales?.length||0,isInitialLoad},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'sold/page.tsx:163',
+              message: 'Sales data set',
+              data: { salesCount: data.sales?.length || 0, isInitialLoad },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'A',
+            }),
+          }).catch(() => {})
           // #endregion
           setSales(data.sales || [])
         }
       } catch (error) {
         console.error('Error loading sales:', error)
         // #region agent log
-        fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:168','message':'loadSalesData error','data':{error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'sold/page.tsx:168',
+            message: 'loadSalesData error',
+            data: { error: String(error) },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'C',
+          }),
+        }).catch(() => {})
         // #endregion
       } finally {
         // Nur beim initialen Load den Loading-Screen ausblenden
         if (isInitialLoad) {
           // #region agent log
-          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:173','message':'Setting loading=false','data':{isInitialLoad},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'sold/page.tsx:173',
+              message: 'Setting loading=false',
+              data: { isInitialLoad },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'A',
+            }),
+          }).catch(() => {})
           // #endregion
           setLoading(false)
         }
@@ -210,7 +355,19 @@ export default function SoldPage() {
     // Warte bis Session geladen ist
     if (status === 'loading') {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:207','message':'Status is loading, returning early','data':{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'sold/page.tsx:207',
+          message: 'Status is loading, returning early',
+          data: { status },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'B',
+        }),
+      }).catch(() => {})
       // #endregion
       return
     }
@@ -218,45 +375,120 @@ export default function SoldPage() {
     // Wenn nicht authentifiziert, leite um (nur einmal)
     if (status === 'unauthenticated' || !session?.user) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:213','message':'Unauthenticated, redirecting','data':{status,hasSession:!!session?.user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'sold/page.tsx:213',
+          message: 'Unauthenticated, redirecting',
+          data: { status, hasSession: !!session?.user },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'B',
+        }),
+      }).catch(() => {})
       // #endregion
-      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/my-watches/selling/sold'
+      const currentPath =
+        typeof window !== 'undefined' ? window.location.pathname : '/my-watches/selling/sold'
       router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
       return
     }
 
-    // Verhindere mehrfache Initialisierung
-    if (hasInitializedRef.current) {
+    // Verhindere mehrfache Initialisierung - PERMANENT (wird nie zurückgesetzt)
+    if (initialLoadDoneRef.current) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:221','message':'Already initialized, skipping','data':{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'sold/page.tsx:221',
+          message: 'Initial load already done, starting polling only',
+          data: { status, hasInitialized: hasInitializedRef.current },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'B',
+        }),
+      }).catch(() => {})
       // #endregion
-      return
+      // Starte nur Polling, kein Loading-Screen mehr
+      if (!hasInitializedRef.current) {
+        hasInitializedRef.current = true
+        pollingIntervalRef.current = setInterval(() => loadSalesData(false), 5000)
+      }
+      return () => {
+        if (pollingIntervalRef.current) {
+          clearInterval(pollingIntervalRef.current)
+          pollingIntervalRef.current = null
+        }
+        hasInitializedRef.current = false
+      }
     }
 
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:226','message':'Starting initial load and polling','data':{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'sold/page.tsx:226',
+        message: 'Starting initial load and polling',
+        data: { status },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'A',
+      }),
+    }).catch(() => {})
     // #endregion
+    initialLoadDoneRef.current = true // PERMANENT - wird nie zurückgesetzt
     hasInitializedRef.current = true
     loadSalesData(true) // Initial load mit Loading-Screen
     // Polling alle 5 Sekunden für Updates (ohne Loading-Screen)
     pollingIntervalRef.current = setInterval(() => loadSalesData(false), 5000)
-    
+
     return () => {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:232','message':'Cleaning up interval','data':{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'sold/page.tsx:232',
+          message: 'Cleaning up interval',
+          data: {},
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'B',
+        }),
+      }).catch(() => {})
       // #endregion
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current)
         pollingIntervalRef.current = null
       }
       hasInitializedRef.current = false
+      // WICHTIG: initialLoadDoneRef.current wird NICHT zurückgesetzt!
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [status, (session?.user as { id?: string })?.id])
 
-  if (status === 'loading' || loading) {
+  // Zeige Loading-Screen nur beim ersten Load, nicht bei Session-Refresh
+  if (status === 'loading' || (loading && !initialLoadDoneRef.current)) {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:200','message':'Rendering loading screen','data':{status,loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'sold/page.tsx:200',
+        message: 'Rendering loading screen',
+        data: { status, loading },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'A',
+      }),
+    }).catch(() => {})
     // #endregion
     return (
       <div className="min-h-screen bg-gray-50">
