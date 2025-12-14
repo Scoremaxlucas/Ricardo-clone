@@ -49,6 +49,7 @@ export function ProductCard({
   // Initial false, damit Bilder geladen werden können
   const [imageError, setImageError] = useState(false)
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
+  const [showSecondImage, setShowSecondImage] = useState(false)
 
   // KRITISCH: Reagiere auf Änderungen in product.images
   // Reset imageError wenn neue Bilder vorhanden sind
@@ -137,6 +138,7 @@ export function ProductCard({
   // KRITISCH: Immer das ERSTE Bild (Titelbild) verwenden, NIEMALS ein anderes
   // Verwende images[0] direkt - keine Filterung, keine Sortierung
   const mainImage = images.length > 0 ? images[0] : null
+  const secondImage = images.length > 1 ? images[1] : null
 
   // DEBUG: Log wenn falsches Bild verwendet wird
   if (images.length > 1 && product.id) {
@@ -288,7 +290,12 @@ export function ProductCard({
             '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)'
         }}
       >
-        <div className="relative aspect-[5/4] overflow-hidden bg-gray-100">
+        <div
+          className="relative aspect-[5/4] overflow-hidden bg-gray-100"
+          onMouseEnter={() => setShowSecondImage(true)}
+          onMouseLeave={() => setShowSecondImage(false)}
+        >
+          {/* Hauptbild */}
           {mainImage ? (
             mainImage.startsWith('data:image/') ||
             mainImage.startsWith('blob:') ||
@@ -297,7 +304,9 @@ export function ProductCard({
               <img
                 src={mainImage}
                 alt={product.title}
-                className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                className={`h-full w-full object-cover transition-all duration-300 ${
+                  showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+                }`}
                 loading="eager"
                 onError={() => {
                   setImageError(true)
@@ -311,7 +320,9 @@ export function ProductCard({
                 src={mainImage}
                 alt={product.title}
                 fill
-                className="object-cover transition-transform duration-300 group-hover:scale-105"
+                className={`object-cover transition-all duration-300 ${
+                  showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+                }`}
                 loading="eager"
                 priority
                 quality={85}
@@ -333,6 +344,52 @@ export function ProductCard({
             // OPTIMIERT: Zeige subtilen Placeholder statt Spinner (wie Ricardo)
             <div className="h-full w-full bg-gradient-to-br from-gray-50 to-gray-100" />
           )}
+
+          {/* Zweites Bild auf Hover */}
+          {secondImage && (
+            <>
+              {secondImage.startsWith('data:image/') ||
+              secondImage.startsWith('blob:') ||
+              secondImage.length > 1000 ||
+              secondImage.includes('blob.vercel-storage.com') ? (
+                <img
+                  src={secondImage}
+                  alt={product.title}
+                  className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
+                    showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                  }`}
+                  loading="lazy"
+                />
+              ) : (
+                <Image
+                  src={secondImage}
+                  alt={product.title}
+                  fill
+                  className={`object-cover transition-all duration-300 ${
+                    showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                  }`}
+                  loading="lazy"
+                  quality={85}
+                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+                />
+              )}
+            </>
+          )}
+
+          {/* Schnellansicht Button auf Hover */}
+          <div
+            className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-300 ${
+              showSecondImage ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+            }`}
+          >
+            <Link
+              href={productHref}
+              onClick={e => e.stopPropagation()}
+              className="rounded-full bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg transition-all hover:bg-orange-600 hover:scale-105"
+            >
+              Schnellansicht
+            </Link>
+          </div>
 
           {/* Favorite Button - Größer auf Mobile */}
           <button
@@ -371,10 +428,10 @@ export function ProductCard({
               {product.brand}
             </div>
           )}
-          {/* Preis - Prominent hervorgehoben (1.5x größer als Titel) */}
-          <div className="mb-2 flex items-baseline gap-1">
+          {/* Preis - Prominent hervorgehoben (1.5x größer als Titel), wird auf Hover größer */}
+          <div className="mb-2 flex items-baseline gap-1 group-hover:scale-105 transition-transform duration-300">
             <span className="text-sm font-medium text-gray-600">CHF</span>
-            <span className="text-2xl font-bold text-primary-700 md:text-3xl">
+            <span className="text-2xl font-bold text-primary-700 transition-all duration-300 group-hover:text-4xl md:text-3xl md:group-hover:text-5xl">
               {new Intl.NumberFormat('de-CH', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -457,8 +514,13 @@ export function ProductCard({
             '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)'
         }}
       >
-        <div className="relative w-64 flex-shrink-0 bg-gray-100">
+        <div
+          className="relative w-64 flex-shrink-0 bg-gray-100"
+          onMouseEnter={() => setShowSecondImage(true)}
+          onMouseLeave={() => setShowSecondImage(false)}
+        >
           <div className="relative aspect-[5/4]">
+            {/* Hauptbild */}
             {mainImage ? (
               mainImage.startsWith('data:image/') ||
               mainImage.startsWith('blob:') ||
@@ -467,7 +529,9 @@ export function ProductCard({
                 <img
                   src={mainImage}
                   alt={product.title}
-                  className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                  className={`h-full w-full object-cover transition-all duration-300 ${
+                    showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+                  }`}
                   onError={() => setImageError(true)}
                   onLoad={() => setImageError(false)}
                   loading="lazy"
@@ -477,7 +541,9 @@ export function ProductCard({
                   src={mainImage}
                   alt={product.title}
                   fill
-                  className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+                  className={`object-cover transition-all duration-300 ${
+                    showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+                  }`}
                   onError={() => setImageError(true)}
                   onLoad={() => setImageError(false)}
                   sizes="256px"
@@ -490,6 +556,37 @@ export function ProductCard({
                 <span className="text-xs">Kein Bild</span>
               </div>
             ) : null}
+
+            {/* Zweites Bild auf Hover */}
+            {secondImage && (
+              <>
+                {secondImage.startsWith('data:image/') ||
+                secondImage.startsWith('blob:') ||
+                secondImage.length > 1000 ||
+                secondImage.includes('blob.vercel-storage.com') ? (
+                  <img
+                    src={secondImage}
+                    alt={product.title}
+                    className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
+                      showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                    }`}
+                    loading="lazy"
+                  />
+                ) : (
+                  <Image
+                    src={secondImage}
+                    alt={product.title}
+                    fill
+                    className={`object-cover transition-all duration-300 ${
+                      showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                    }`}
+                    loading="lazy"
+                    quality={85}
+                    sizes="256px"
+                  />
+                )}
+              </>
+            )}
           </div>
           <button
             onClick={handleFavoriteClick}
@@ -568,10 +665,10 @@ export function ProductCard({
           </div>
           <div className="mt-2 flex items-center justify-between">
             <div>
-              {/* Preis - Prominent hervorgehoben (1.5x größer als Titel) */}
-              <div className="flex items-baseline gap-1">
+              {/* Preis - Prominent hervorgehoben (1.5x größer als Titel), wird auf Hover größer */}
+              <div className="flex items-baseline gap-1 group-hover:scale-105 transition-transform duration-300">
                 <span className="text-sm font-medium text-gray-600">CHF</span>
-                <span className="text-2xl font-bold text-primary-700 md:text-3xl">
+                <span className="text-2xl font-bold text-primary-700 transition-all duration-300 group-hover:text-4xl md:text-3xl md:group-hover:text-5xl">
                   {new Intl.NumberFormat('de-CH', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -621,7 +718,12 @@ export function ProductCard({
         e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)'
       }}
     >
-      <div className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+      <div
+        className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100"
+        onMouseEnter={() => setShowSecondImage(true)}
+        onMouseLeave={() => setShowSecondImage(false)}
+      >
+        {/* Hauptbild */}
         {mainImage ? (
           mainImage.startsWith('data:image/') ||
           mainImage.startsWith('blob:') ||
@@ -630,7 +732,9 @@ export function ProductCard({
             <img
               src={mainImage}
               alt={product.title}
-              className="h-full w-full object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+              className={`h-full w-full object-cover transition-all duration-300 ${
+                showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+              }`}
               onError={() => setImageError(true)}
               onLoad={() => setImageError(false)}
               loading="lazy"
@@ -640,7 +744,9 @@ export function ProductCard({
               src={mainImage}
               alt={product.title}
               fill
-              className="object-cover transition-transform duration-500 ease-out group-hover:scale-110"
+              className={`object-cover transition-all duration-300 ${
+                showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+              }`}
               onError={() => setImageError(true)}
               onLoad={() => setImageError(false)}
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
@@ -653,6 +759,52 @@ export function ProductCard({
             <span className="text-xs">Kein Bild</span>
           </div>
         ) : null}
+
+        {/* Zweites Bild auf Hover */}
+        {secondImage && (
+          <>
+            {secondImage.startsWith('data:image/') ||
+            secondImage.startsWith('blob:') ||
+            secondImage.length > 1000 ||
+            secondImage.includes('blob.vercel-storage.com') ? (
+              <img
+                src={secondImage}
+                alt={product.title}
+                className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
+                  showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                }`}
+                loading="lazy"
+              />
+            ) : (
+              <Image
+                src={secondImage}
+                alt={product.title}
+                fill
+                className={`object-cover transition-all duration-300 ${
+                  showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                }`}
+                loading="lazy"
+                quality={85}
+                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
+              />
+            )}
+          </>
+        )}
+
+        {/* Schnellansicht Button auf Hover */}
+        <div
+          className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-300 ${
+            showSecondImage ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+          }`}
+        >
+          <Link
+            href={productHref}
+            onClick={e => e.stopPropagation()}
+            className="rounded-full bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg transition-all hover:bg-orange-600 hover:scale-105"
+          >
+            Schnellansicht
+          </Link>
+        </div>
 
         {/* Favorite Button */}
         <button
@@ -706,10 +858,10 @@ export function ProductCard({
           {product.title}
         </div>
 
-        {/* Price - Immer sichtbar, prominent hervorgehoben */}
-        <div className="mb-1 flex items-baseline gap-1">
+        {/* Price - Immer sichtbar, prominent hervorgehoben, wird auf Hover größer */}
+        <div className="mb-1 flex items-baseline gap-1 group-hover:scale-105 transition-transform duration-300">
           <span className="text-xs font-medium text-gray-600">CHF</span>
-          <span className="text-xl font-bold text-primary-700 md:text-2xl">
+          <span className="text-xl font-bold text-primary-700 transition-all duration-300 group-hover:text-3xl md:text-2xl md:group-hover:text-4xl">
             {new Intl.NumberFormat('de-CH', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
