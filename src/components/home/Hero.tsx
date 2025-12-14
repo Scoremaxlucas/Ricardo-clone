@@ -5,6 +5,7 @@ import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { SearchAutocomplete } from './SearchAutocomplete'
+import { CategoryQuickLinks } from './CategoryQuickLinks'
 
 export function Hero() {
   const { t } = useLanguage()
@@ -45,10 +46,9 @@ export function Hero() {
 
   return (
     <section
-      className="relative overflow-hidden text-white"
+      className="relative overflow-hidden py-10 text-white md:py-16"
       style={{
         background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #10b981 100%)',
-        padding: '80px 0',
       }}
     >
       {/* Subtiles Pattern Overlay */}
@@ -62,47 +62,56 @@ export function Hero() {
       />
 
       <div className="relative z-10 mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
-        {/* Intelligente Suchleiste - Feature 1 */}
-        <div className="animate-fade-in-up mb-12">
-          <div className="mx-auto max-w-3xl">
-            <h1 className="mb-4 text-center text-3xl font-bold text-white md:text-4xl lg:text-5xl">
-              {t.home.hero.title || 'Finden Sie genau das, was Sie suchen'}
-            </h1>
-            <p className="mb-6 text-center text-lg text-white/90 md:text-xl">
-              {t.home.hero.subtitle || 'Schweizer Online-Marktplatz für alle Ihre Bedürfnisse'}
-            </p>
-            <SearchAutocomplete
-              onSearch={handleSearch}
-              placeholder={
-                t.header.searchPlaceholder || 'Suchen Sie nach Produkten, Marken, Kategorien...'
-              }
-              className="mx-auto"
-            />
-          </div>
-        </div>
-
-        {/* Verkaufen Sie jetzt Box */}
-        <div className="flex justify-center">
-          <div className="animate-fade-in-up max-w-md">
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-md">
-              <h2 className="mb-3 text-2xl font-bold text-white md:text-3xl">
-                {t.home.hero.sellNow}
-              </h2>
-              <p className="mb-6 text-base leading-relaxed text-white/90">
-                {t.home.hero.reachBuyers}
+        {/* Layout: 2 Spalten - Suchleiste links, Verkaufen Box rechts */}
+        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
+          {/* Linke Spalte: Suchleiste (60% auf Desktop) */}
+          <div className="animate-fade-in-up lg:col-span-2">
+            <div className="mx-auto max-w-3xl">
+              <h1 className="mb-3 text-center text-2xl font-bold text-white md:text-3xl lg:text-4xl">
+                {t.home.hero.title || 'Finden Sie genau das, was Sie suchen'}
+              </h1>
+              <p className="mb-6 text-center text-base text-white/90 md:text-lg">
+                {t.home.hero.subtitle || 'Schweizer Online-Marktplatz für alle Ihre Bedürfnisse'}
               </p>
-              <Link
-                href="/sell"
-                className="hover:shadow-3xl inline-block rounded-[50px] bg-[#f97316] px-8 py-4 text-lg font-bold text-white shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-[#ea580c]"
-                style={{
-                  boxShadow: '0px 8px 30px rgba(249, 115, 22, 0.4)',
-                }}
-              >
-                {t.home.hero.offerItemNow}
-              </Link>
+              {/* Prominentere Suchleiste */}
+              <div className="mx-auto max-w-2xl">
+                <SearchAutocomplete
+                  onSearch={handleSearch}
+                  placeholder={
+                    t.header.searchPlaceholder || 'Suchen Sie nach Produkten, Marken, Kategorien...'
+                  }
+                  className="mx-auto"
+                />
+              </div>
+            </div>
+          </div>
+
+          {/* Rechte Spalte: Verkaufen Sie jetzt Box (40% auf Desktop) */}
+          <div className="animate-fade-in-up lg:col-span-1">
+            <div className="mx-auto max-w-md lg:max-w-full">
+              <div className="rounded-2xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-md">
+                <h2 className="mb-3 text-xl font-bold text-white md:text-2xl">
+                  {t.home.hero.sellNow}
+                </h2>
+                <p className="mb-6 text-sm leading-relaxed text-white/90 md:text-base">
+                  {t.home.hero.reachBuyers}
+                </p>
+                <Link
+                  href="/sell"
+                  className="hover:shadow-3xl inline-block w-full rounded-[50px] bg-[#f97316] px-6 py-3 text-center text-base font-bold text-white shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-[#ea580c] md:px-8 md:py-4 md:text-lg"
+                  style={{
+                    boxShadow: '0px 8px 30px rgba(249, 115, 22, 0.4)',
+                  }}
+                >
+                  {t.home.hero.offerItemNow}
+                </Link>
+              </div>
             </div>
           </div>
         </div>
+
+        {/* Kategorie-Icons unter Hero */}
+        <CategoryQuickLinks />
       </div>
     </section>
   )
