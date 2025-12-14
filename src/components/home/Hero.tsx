@@ -81,9 +81,9 @@ export function Hero() {
           </div>
         </div>
 
-        <div className="flex flex-col items-center justify-between gap-8 md:flex-row">
-          {/* Linke Box */}
-          <div className="animate-fade-in-up max-w-md flex-1">
+        {/* Verkaufen Sie jetzt Box */}
+        <div className="flex justify-center">
+          <div className="animate-fade-in-up max-w-md">
             <div className="rounded-2xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-md">
               <h2 className="mb-3 text-2xl font-bold text-white md:text-3xl">
                 {t.home.hero.sellNow}
@@ -100,19 +100,6 @@ export function Hero() {
               >
                 {t.home.hero.offerItemNow}
               </Link>
-            </div>
-          </div>
-
-          {/* Rechte Box - Gleiches Design wie links */}
-          <div className="animate-fade-in-up max-w-2xl flex-1" style={{ animationDelay: '0.2s' }}>
-            <div className="rounded-2xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-md">
-              <h3 className="mb-3 text-2xl font-bold leading-tight text-white md:text-3xl">
-                {t.home.hero.sellNow || 'Verkaufen Sie jetzt'}
-              </h3>
-              <p className="text-base leading-relaxed text-white/90">
-                {t.home.hero.reachBuyers ||
-                  'Erreichen Sie tausende von Käufern in der ganzen Schweiz'}
-              </p>
             </div>
           </div>
         </div>
