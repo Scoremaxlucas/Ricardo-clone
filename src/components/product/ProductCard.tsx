@@ -432,10 +432,10 @@ export function ProductCard({
               {product.brand}
             </div>
           )}
-          {/* Preis - Prominent hervorgehoben (1.5x größer als Titel), wird auf Hover größer */}
+          {/* Preis - Prominent hervorgehoben, subtile Scale-Animation auf Hover */}
           <div className="mb-2 flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-105">
             <span className="text-sm font-medium text-gray-600">CHF</span>
-            <span className="text-2xl font-bold text-primary-700 transition-all duration-300 group-hover:text-4xl md:text-3xl md:group-hover:text-5xl">
+            <span className="text-2xl font-bold text-primary-700 md:text-3xl">
               {new Intl.NumberFormat('de-CH', {
                 minimumFractionDigits: 2,
                 maximumFractionDigits: 2,
@@ -673,10 +673,10 @@ export function ProductCard({
           </div>
           <div className="mt-2 flex items-center justify-between">
             <div>
-              {/* Preis - Prominent hervorgehoben (1.5x größer als Titel), wird auf Hover größer */}
+              {/* Preis - Prominent hervorgehoben, subtile Scale-Animation auf Hover */}
               <div className="flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-105">
                 <span className="text-sm font-medium text-gray-600">CHF</span>
-                <span className="text-2xl font-bold text-primary-700 transition-all duration-300 group-hover:text-4xl md:text-3xl md:group-hover:text-5xl">
+                <span className="text-2xl font-bold text-primary-700 md:text-3xl">
                   {new Intl.NumberFormat('de-CH', {
                     minimumFractionDigits: 2,
                     maximumFractionDigits: 2,
@@ -870,10 +870,10 @@ export function ProductCard({
           {product.title}
         </div>
 
-        {/* Price - Immer sichtbar, prominent hervorgehoben, wird auf Hover größer */}
+        {/* Preis - Immer sichtbar, subtile Scale-Animation auf Hover */}
         <div className="mb-1 flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-105">
           <span className="text-xs font-medium text-gray-600">CHF</span>
-          <span className="text-xl font-bold text-primary-700 transition-all duration-300 group-hover:text-3xl md:text-2xl md:group-hover:text-4xl">
+          <span className="text-xl font-bold text-primary-700 md:text-2xl">
             {new Intl.NumberFormat('de-CH', {
               minimumFractionDigits: 2,
               maximumFractionDigits: 2,
