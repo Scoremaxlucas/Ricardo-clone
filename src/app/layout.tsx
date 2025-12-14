@@ -1,19 +1,29 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
-import { Suspense, lazy } from 'react'
 import './globals.css'
 import { Providers } from '@/components/providers'
 import { Toaster } from 'react-hot-toast'
-import { ServiceWorker } from '@/components/ServiceWorker'
+import { DeferredComponents } from '@/components/DeferredComponents'
 
-// Lazy load non-critical components
-const EmmaChat = lazy(() => import('@/components/emma/EmmaChat').then(m => ({ default: m.EmmaChat })))
-const PrefetchOnHover = lazy(() => import('@/hooks/usePrefetch').then(m => ({ default: m.PrefetchOnHover })))
+/**
+ * Root Layout - TTI Optimiert
+ * 
+ * JavaScript Loading Strategie:
+ * 1. Kritisch (0ms): Layout, Providers, Children
+ * 2. Nach Paint (16ms): PrefetchOnHover
+ * 3. Nach TTI (150ms): ServiceWorker
+ * 4. Idle (500-3000ms): EmmaChat
+ * 
+ * Nicht-kritisches JS wurde in DeferredComponents verschoben
+ * um TTI zu verbessern.
+ */
 
 const inter = Inter({
   subsets: ['latin'],
-  display: 'swap', // Better performance - show fallback font immediately
+  display: 'swap',
   preload: true,
+  // OPTIMIERT: Nur die wichtigsten Gewichte laden
+  weight: ['400', '500', '600', '700'],
 })
 
 export const metadata: Metadata = {
@@ -41,28 +51,23 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <link rel="preconnect" href="https://vercel.live" crossOrigin="anonymous" />
       </head>
       <body className={`${inter.className} flex min-h-screen flex-col`}>
-        <ServiceWorker />
         <Providers>
-          {/* Global Prefetch Listener - lädt Routen bei Hover */}
-          <Suspense fallback={null}>
-            <PrefetchOnHover />
-          </Suspense>
+          {/* Kritischer Content - sofort gerendert */}
           <div className="flex flex-1 flex-col">{children}</div>
+          
+          {/* Toaster - minimal, sofort verfügbar */}
           <Toaster
             position="top-right"
+            containerStyle={{ zIndex: 99999 }}
             toastOptions={{
+              duration: 3000,
               success: {
                 style: {
                   background: '#10b981',
                   color: '#fff',
                   borderRadius: '8px',
-                  padding: '16px',
+                  padding: '12px 16px',
                   fontSize: '14px',
-                  fontWeight: '500',
-                },
-                iconTheme: {
-                  primary: '#fff',
-                  secondary: '#10b981',
                 },
               },
               error: {
@@ -70,21 +75,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
                   background: '#ef4444',
                   color: '#fff',
                   borderRadius: '8px',
-                  padding: '16px',
+                  padding: '12px 16px',
                   fontSize: '14px',
-                  fontWeight: '500',
-                },
-                iconTheme: {
-                  primary: '#fff',
-                  secondary: '#ef4444',
                 },
               },
             }}
           />
-          {/* Emma AI Assistant - Lazy loaded for better performance */}
-          <Suspense fallback={null}>
-            <EmmaChat />
-          </Suspense>
+          
+          {/* Nicht-kritische Komponenten - verzögert geladen */}
+          <DeferredComponents />
         </Providers>
       </body>
     </html>

@@ -3,32 +3,49 @@ import { HeroServer } from '@/components/home/HeroServer'
 import { HeroSearch } from '@/components/home/HeroSearch'
 import { CategoryQuickLinks } from '@/components/home/CategoryQuickLinks'
 import { HomeClient } from '@/components/home/HomeClient'
-import { QuickAccessBar } from '@/components/home/QuickAccessBar'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { getFeaturedProducts } from '@/lib/products'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
+import dynamic from 'next/dynamic'
 
 /**
- * Homepage - LCP & ISR Optimiert
+ * Homepage - TTI & LCP Optimiert
  * 
- * Performance-Optimierungen:
- * 1. ISR mit 60s Revalidation - Seite wird gecached
- * 2. HeroServer - H1/Text server-gerendert für schnelleres LCP
- * 3. Search/CategoryLinks als Client in Suspense
- * 4. Featured Products server-side - Bilder im initialen HTML
- * 5. Below-the-fold mit Suspense - Non-blocking
- * 6. Metadata für SEO
+ * JavaScript Loading Priorität:
+ * 1. Kritisch (0ms): Header, HeroServer (Text), FeaturedProducts
+ * 2. Nach Paint: HeroSearch, CategoryQuickLinks
+ * 3. Nach Scroll: QuickAccessBar, HomeClient
  * 
- * LCP Element: Hero H1 "Finden Sie genau das, was Sie suchen"
- * Ziel: LCP < 2.5s (Good)
+ * TTI Ziel: <100ms (User kann sofort interagieren)
+ * LCP Ziel: <2.5s (Hero H1 ist sichtbar)
  */
+
+// OPTIMIERT: QuickAccessBar nur laden wenn sichtbar (nicht kritisch für TTI)
+const QuickAccessBar = dynamic(
+  () => import('@/components/home/QuickAccessBar').then(m => ({ default: m.QuickAccessBar })),
+  { 
+    ssr: true, // Server-Side Rendering für SEO
+    loading: () => (
+      <div className="border-b border-gray-200 bg-gray-50 py-3">
+        <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
+          <div className="flex items-center gap-3">
+            <div className="h-5 w-20 animate-pulse rounded bg-gray-200" />
+            <div className="h-10 w-32 animate-pulse rounded-lg bg-gray-200" />
+            <div className="h-10 w-32 animate-pulse rounded-lg bg-gray-200" />
+            <div className="h-10 w-32 animate-pulse rounded-lg bg-gray-200" />
+          </div>
+        </div>
+      </div>
+    )
+  }
+)
 
 // ISR: Revalidate alle 60 Sekunden
 export const revalidate = 60
 
-// SEO Metadata - Statisch für beste Performance
+// SEO Metadata
 export const metadata: Metadata = {
   title: 'Helvenda - Der Schweizer Online-Marktplatz',
   description: 'Kaufen und verkaufen Sie einfach und sicher auf dem Schweizer Online-Marktplatz. Tausende Produkte von privaten Verkäufern und Händlern.',
@@ -51,7 +68,6 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   // Server-side fetch für instant rendering
-  // Produkte sind im initialen HTML = schnelleres LCP
   const featuredProducts = await getFeaturedProducts(4)
 
   return (
@@ -59,9 +75,8 @@ export default async function Home() {
       <Header />
       <main className="flex-1 pb-8">
         {/* 
-          Hero Section - Composition Pattern
-          - HeroServer: Statischer Text (H1, H2) = sofort im HTML
-          - HeroSearch: Client Component in Suspense = non-blocking
+          Hero Section - Kritisch für LCP
+          Server Component rendert H1/H2 sofort
         */}
         <HeroServer
           title="Finden Sie genau das, was Sie suchen"
@@ -70,37 +85,30 @@ export default async function Home() {
           sellNowDescription="Erreichen Sie tausende potenzielle Käufer in der Schweiz"
           sellNowButton="Jetzt Artikel anbieten"
         >
-          {/* Search als Client Component - blockiert nicht LCP */}
+          {/* Search - Client Component mit Skeleton Fallback */}
           <Suspense fallback={
             <div className="flex h-14 items-center rounded-full bg-white/90 px-6 shadow-lg">
-              <span className="text-gray-400">Suchen...</span>
+              <div className="h-5 w-64 animate-pulse rounded bg-gray-200" />
             </div>
           }>
             <HeroSearch placeholder="Suchen Sie nach Produkten, Marken, Kategorien..." />
           </Suspense>
         </HeroServer>
 
-        {/* Category Quick Links - Client Component, aber unter Hero */}
+        {/* Category Links - Nach First Paint */}
         <div className="border-t border-primary-700/20 bg-primary-800/50 backdrop-blur-sm">
           <Suspense fallback={<div className="h-20" />}>
             <CategoryQuickLinks />
           </Suspense>
         </div>
 
-        {/* Quick Access Bar - Filter */}
+        {/* Quick Access Bar - Dynamisch geladen */}
         <QuickAccessBar />
 
-        {/* 
-          Featured Products - Server-Side Rendered
-          Erste 4 Produkte für schnelles LCP
-        */}
+        {/* Featured Products - Server-Side gerendert */}
         <FeaturedProductsServer initialProducts={featuredProducts} />
 
-        {/* 
-          Below-the-fold Content - Lazy loaded
-          TrendingNow, CategorySpotlight, etc.
-          Blockiert nicht das initiale Rendering
-        */}
+        {/* Below-the-fold - Lazy loaded mit null Fallback */}
         <Suspense fallback={null}>
           <HomeClient featuredProductIds={featuredProducts.map(p => p.id)} />
         </Suspense>

@@ -3,10 +3,20 @@
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSession } from 'next-auth/react'
 import { useSearchParams } from 'next/navigation'
-import { Suspense, lazy, useEffect, useRef } from 'react'
+import { Suspense, lazy, useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
-// Lazy load below-the-fold components
+/**
+ * HomeClient - Below-the-fold Komponenten
+ * 
+ * TTI-Optimierung:
+ * - Alle Komponenten sind lazy loaded
+ * - Intersection Observer basiertes Loading
+ * - Keine Spinner (reduziert Re-Renders)
+ * - Skeleton Fallbacks statt Loader
+ */
+
+// Lazy imports
 const LazyTrendingNow = lazy(() =>
   import('@/components/home/TrendingNow').then(m => ({ default: m.TrendingNow }))
 )
@@ -26,6 +36,23 @@ const LazyDailyDeals = lazy(() =>
   import('@/components/home/DailyDeals').then(m => ({ default: m.DailyDeals }))
 )
 
+// Skeleton Components - Schneller als Spinner, kein JS-Overhead
+const SectionSkeleton = ({ bg = 'bg-gray-50' }: { bg?: string }) => (
+  <div className={`${bg} py-16`}>
+    <div className="mx-auto max-w-7xl px-4">
+      <div className="mb-8 space-y-3">
+        <div className="mx-auto h-8 w-48 animate-pulse rounded bg-gray-200" />
+        <div className="mx-auto h-4 w-64 animate-pulse rounded bg-gray-200" />
+      </div>
+      <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+        {[...Array(4)].map((_, i) => (
+          <div key={i} className="h-48 animate-pulse rounded-lg bg-gray-200" />
+        ))}
+      </div>
+    </div>
+  </div>
+)
+
 interface HomeClientProps {
   featuredProductIds?: string[]
 }
@@ -35,130 +62,101 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
   const hasShownToast = useRef(false)
   const { t } = useLanguage()
   const { data: session } = useSession()
+  
+  // Intersection Observer State
+  const [isVisible, setIsVisible] = useState(false)
+  const containerRef = useRef<HTMLDivElement>(null)
 
+  // Toast für Verifizierung
   useEffect(() => {
-    let isMounted = true
-
-    // Prüfe ob Verifizierung gerade abgeschickt wurde
     const verificationSubmitted = searchParams.get('verificationSubmitted')
     if (verificationSubmitted === 'true' && !hasShownToast.current) {
       hasShownToast.current = true
 
-      // Entferne Query-Parameter aus URL
-      if (typeof window !== 'undefined' && isMounted) {
+      if (typeof window !== 'undefined') {
         const url = new URL(window.location.href)
         url.searchParams.delete('verificationSubmitted')
         window.history.replaceState({}, '', url.toString())
       }
 
-      // Zeige Erfolgs-Toast nur wenn Component noch gemountet ist
-      // KRITISCH: Verwende setTimeout um sicherzustellen, dass Toast nach Render passiert
+      // Verzögerter Toast
       setTimeout(() => {
-        if (isMounted) {
-          toast.success(t.verification.submitted, {
-            duration: 6000,
-            icon: '✅',
-          })
-        }
+        toast.success(t.verification.submitted, { duration: 6000, icon: '✅' })
       }, 0)
-    }
-
-    return () => {
-      isMounted = false
     }
   }, [searchParams, t])
 
-  // Update user streak on page visit (Feature 9: Gamification)
+  // Streak Update (deferred)
   useEffect(() => {
     const userId = (session?.user as { id?: string })?.id
     if (userId) {
-      fetch('/api/user/streak', { method: 'POST' }).catch(err => {
-        console.error('[HomeClient] Error updating streak:', err)
-      })
+      // Verzögere Streak Update um TTI nicht zu blockieren
+      const timeout = setTimeout(() => {
+        fetch('/api/user/streak', { method: 'POST' }).catch(() => {})
+      }, 2000)
+      return () => clearTimeout(timeout)
     }
   }, [(session?.user as { id?: string })?.id])
 
+  // Intersection Observer für Lazy Loading
+  useEffect(() => {
+    if (!containerRef.current) return
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          setIsVisible(true)
+          observer.disconnect()
+        }
+      },
+      { threshold: 0, rootMargin: '200px' }
+    )
+
+    observer.observe(containerRef.current)
+    return () => observer.disconnect()
+  }, [])
+
   return (
-    <>
-      {/* Social Proof Widget - Feature 2 */}
-      {featuredProductIds.length > 0 && (
-        <Suspense
-          fallback={
-            <div className="bg-gradient-to-br from-primary-50 to-primary-100 py-8">
-              <div className="mx-auto max-w-[1600px] px-4 text-center">
-                <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
-              </div>
-            </div>
-          }
-        >
-          <LazySocialProofWidget watchIds={featuredProductIds} />
-        </Suspense>
+    <div ref={containerRef}>
+      {/* Erst rendern wenn sichtbar oder fast sichtbar */}
+      {isVisible ? (
+        <>
+          {/* Social Proof Widget */}
+          {featuredProductIds.length > 0 && (
+            <Suspense fallback={<SectionSkeleton bg="bg-gradient-to-br from-primary-50 to-primary-100" />}>
+              <LazySocialProofWidget watchIds={featuredProductIds} />
+            </Suspense>
+          )}
+
+          {/* Personalized Feed */}
+          <Suspense fallback={<SectionSkeleton bg="bg-gradient-to-br from-purple-50 to-pink-50" />}>
+            <LazyPersonalizedFeed />
+          </Suspense>
+
+          {/* Daily Deals */}
+          <Suspense fallback={<SectionSkeleton bg="bg-gradient-to-br from-orange-50 to-red-50" />}>
+            <LazyDailyDeals />
+          </Suspense>
+
+          {/* Trending Now */}
+          <Suspense fallback={<SectionSkeleton />}>
+            <LazyTrendingNow />
+          </Suspense>
+
+          {/* Category Spotlight */}
+          <Suspense fallback={<SectionSkeleton />}>
+            <LazyCategorySpotlight />
+          </Suspense>
+
+          {/* Location Map */}
+          <Suspense fallback={<SectionSkeleton bg="bg-white" />}>
+            <LazyLocationMap />
+          </Suspense>
+        </>
+      ) : (
+        // Placeholder bis sichtbar
+        <div className="h-[200px]" />
       )}
-
-      {/* Personalized Feed - Feature 5 */}
-      <Suspense
-        fallback={
-          <div className="bg-gradient-to-br from-purple-50 to-pink-50 py-16">
-            <div className="mx-auto max-w-7xl px-4 text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
-            </div>
-          </div>
-        }
-      >
-        <LazyPersonalizedFeed />
-      </Suspense>
-
-      {/* Daily Deals - Feature 9 */}
-      <Suspense
-        fallback={
-          <div className="bg-gradient-to-br from-orange-50 to-red-50 py-16">
-            <div className="mx-auto max-w-7xl px-4 text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
-            </div>
-          </div>
-        }
-      >
-        <LazyDailyDeals />
-      </Suspense>
-
-      {/* Trending Now - Lazy loaded */}
-      <Suspense
-        fallback={
-          <div className="bg-gray-50 py-16">
-            <div className="mx-auto max-w-7xl px-4 text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
-            </div>
-          </div>
-        }
-      >
-        <LazyTrendingNow />
-      </Suspense>
-
-      {/* Category Spotlight - Lazy loaded */}
-      <Suspense
-        fallback={
-          <div className="bg-gray-50 py-16">
-            <div className="mx-auto max-w-7xl px-4 text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
-            </div>
-          </div>
-        }
-      >
-        <LazyCategorySpotlight />
-      </Suspense>
-
-      {/* Location Map - Feature 3 */}
-      <Suspense
-        fallback={
-          <div className="bg-white py-16">
-            <div className="mx-auto max-w-7xl px-4 text-center">
-              <div className="inline-block h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
-            </div>
-          </div>
-        }
-      >
-        <LazyLocationMap />
-      </Suspense>
-    </>
+    </div>
   )
 }
