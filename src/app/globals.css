@@ -65,6 +65,8 @@ body {
 }
 
 html {
+  /* Footer-Farbe für den Bereich unter dem Viewport - verhindert weißen Rand */
+  background-color: #134e4a;
   height: 100%;
 }
 
