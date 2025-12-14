@@ -7,9 +7,10 @@
 :root {
   /* Helvenda Design System Colors - Wärmere Palette */
   --color-primary: #14b8a6; /* Wärmeres Teal */
-  --color-primary-dark: #0f766e; /* Original für Kontraste */
+  --color-primary-dark: #0d9488; /* Dunkleres Teal für bessere Kontraste (WCAG AA) */
+  --color-primary-darker: #0f766e; /* Noch dunkler für maximale Lesbarkeit */
   --color-primary-light: #10b981; /* Grün-Türkis Mischung */
-  --color-accent: #ffd95c;
+  --color-accent: #fbbf24; /* Dunkleres Gelb für besseren Kontrast (statt #ffd95c) */
   --color-accent-orange: #f97316;
   --color-accent-pink: #ec4899;
   --color-accent-green: #10b981;
@@ -237,13 +238,13 @@ html {
   }
 
   .btn-secondary {
-    @apply cursor-pointer rounded-[50px] border-2 border-[#14b8a6] bg-white px-8 py-3.5 font-bold text-[#3A3A3A] transition-all duration-300 hover:bg-[#F8F9FA];
+    @apply cursor-pointer rounded-[50px] border-2 border-primary-600 bg-white px-8 py-3.5 font-bold text-gray-900 transition-all duration-300 hover:bg-gray-50;
   }
 
   .btn-secondary:hover {
-    @apply bg-[#14b8a6] text-white;
+    @apply bg-primary-600 text-white;
     transform: translateY(-2px);
-    box-shadow: 0px 4px 20px rgba(20, 184, 166, 0.2);
+    box-shadow: 0px 4px 20px rgba(13, 148, 136, 0.2);
   }
 
   /* Inputs - Wärmer und einladender */

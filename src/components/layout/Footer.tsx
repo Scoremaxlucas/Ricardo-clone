@@ -84,7 +84,7 @@ export function Footer() {
 
           {/* Für Käufer */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold text-[#FFD95C]">{t.footer.forBuyers}</h3>
+            <h3 className="mb-4 text-lg font-semibold text-accent-500">{t.footer.forBuyers}</h3>
             <ul className="space-y-2.5">
               <li>
                 <Link
@@ -123,7 +123,7 @@ export function Footer() {
 
           {/* Für Verkäufer */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold text-[#FFD95C]">{t.footer.forSellers}</h3>
+            <h3 className="mb-4 text-lg font-semibold text-accent-500">{t.footer.forSellers}</h3>
             <ul className="space-y-2.5">
               <li>
                 <Link
@@ -154,7 +154,7 @@ export function Footer() {
 
           {/* Hilfe & Support */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold text-[#FFD95C]">{t.footer.help}</h3>
+            <h3 className="mb-4 text-lg font-semibold text-accent-500">{t.footer.help}</h3>
             <ul className="space-y-2.5">
               <li>
                 <Link

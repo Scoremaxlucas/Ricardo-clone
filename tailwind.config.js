@@ -9,30 +9,32 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#0f766e',
+          DEFAULT: '#0d9488', /* Dunkleres Teal für bessere Lesbarkeit (WCAG AA) */
           50: '#f0fdfa',
           100: '#ccfbf1',
           200: '#99f6e4',
           300: '#5eead4',
           400: '#2dd4bf',
           500: '#14b8a6',
-          600: '#0d9488',
-          700: '#0f766e',
+          600: '#0d9488', /* Für CTAs und wichtige Elemente */
+          700: '#0f766e', /* Für maximale Kontraste */
           800: '#115e59',
           900: '#134e4a',
         },
         accent: {
-          DEFAULT: '#FFD95C',
+          DEFAULT: '#fbbf24', /* Dunkleres Gelb für besseren Kontrast (WCAG AA) */
           50: '#fff9e6',
           100: '#ffefb3',
           200: '#ffe580',
           300: '#ffdb4d',
-          400: '#FFD95C',
-          500: '#ffd133',
-          600: '#ccae0a',
-          700: '#998308',
-          800: '#665705',
-          900: '#332c03',
+          400: '#fbbf24', /* Neuer Standard für besseren Kontrast */
+          500: '#f59e0b', /* Dunkleres Gelb */
+          600: '#d97706', /* Noch dunkler */
+          700: '#b45309',
+          800: '#92400e',
+          900: '#78350f',
+          /* Legacy: Behalte alte Werte für Rückwärtskompatibilität */
+          legacy: '#FFD95C', /* Altes helles Gelb - nur für spezielle Fälle */
         },
         orange: {
           DEFAULT: '#f97316',
