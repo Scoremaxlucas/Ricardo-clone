@@ -4,6 +4,7 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { AISearchAssistant } from '@/components/search/AISearchAssistant'
 import { ProductCard } from '@/components/ui/ProductCard'
+import { FilterChips } from '@/components/ui/FilterChips'
 
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
@@ -386,6 +387,10 @@ function SearchPageContent() {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
+      {/* Aktive Filter als Chips */}
+      <Suspense fallback={null}>
+        <FilterChips />
+      </Suspense>
       <main className="flex-1 pb-8">
         <div className="mx-auto w-full max-w-[1400px] px-4 py-8">
           {/* Breadcrumb */}
@@ -416,134 +421,6 @@ function SearchPageContent() {
             )}
           </div>
 
-          {/* Active Filters Display */}
-          <div className="mb-4 flex flex-wrap gap-2">
-            {query && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-gray-300 bg-white px-4 py-2">
-                <Search className="h-4 w-4 text-gray-500" />
-                <span className="font-medium text-gray-900">"{query}"</span>
-                <Link href="/search" className="text-gray-400 hover:text-gray-600">
-                  ×
-                </Link>
-              </div>
-            )}
-            {category && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2">
-                <span className="font-medium capitalize text-primary-900">
-                  {t.categories[category as keyof typeof t.categories] ||
-                    category.replace(/-/g, ' ')}
-                </span>
-                <Link
-                  href={query ? `/search?q=${query}` : '/search'}
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  ×
-                </Link>
-              </div>
-            )}
-            {subcategory && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2">
-                <span className="font-medium text-primary-900">
-                  {translateSubcategory(subcategory)}
-                </span>
-                <Link
-                  href={`/search?category=${category}${query ? `&q=${query}` : ''}`}
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  ×
-                </Link>
-              </div>
-            )}
-            {minPrice && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2">
-                <span className="font-medium text-primary-900">
-                  {t.search.price}: {t.search.from} CHF {minPrice}
-                </span>
-                <button
-                  onClick={() => removeFilter('minPrice')}
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-            {maxPrice && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2">
-                <span className="font-medium text-primary-900">
-                  {t.search.price}: {t.search.to} CHF {maxPrice}
-                </span>
-                <button
-                  onClick={() => removeFilter('maxPrice')}
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-            {condition && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2">
-                <span className="font-medium text-primary-900">
-                  {t.search.condition}:{' '}
-                  {condition === 'neu'
-                    ? t.search.conditionNew
-                    : condition === 'wie-neu'
-                      ? t.search.conditionLikeNew
-                      : condition === 'sehr-gut'
-                        ? t.search.conditionVeryGood
-                        : condition === 'gut'
-                          ? t.search.conditionGood
-                          : condition === 'gebraucht'
-                            ? t.search.conditionUsed
-                            : condition}
-                </span>
-                <button
-                  onClick={() => removeFilter('condition')}
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-            {brand && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2">
-                <span className="font-medium text-primary-900">
-                  {t.search.brand}: {brand}
-                </span>
-                <button
-                  onClick={() => removeFilter('brand')}
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-            {isAuction && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2">
-                <span className="font-medium text-primary-900">
-                  {t.search.offerType}: {isAuction === 'true' ? t.search.auction : t.search.buyNow}
-                </span>
-                <button
-                  onClick={() => removeFilter('isAuction')}
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-            {postalCode && (
-              <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-4 py-2">
-                <span className="font-medium text-primary-900">
-                  {t.search.postalCode}: {postalCode}
-                </span>
-                <button
-                  onClick={() => removeFilter('postalCode')}
-                  className="text-primary-600 hover:text-primary-700"
-                >
-                  ×
-                </button>
-              </div>
-            )}
-          </div>
 
           {/* Filter Bar */}
           <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4">
@@ -1294,6 +1171,10 @@ export default function SearchPage() {
       fallback={
         <div className="flex min-h-screen flex-col bg-gray-50">
           <Header />
+      {/* Aktive Filter als Chips */}
+      <Suspense fallback={null}>
+        <FilterChips />
+      </Suspense>
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
               <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
