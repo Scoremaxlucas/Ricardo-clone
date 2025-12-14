@@ -18,12 +18,12 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseClasses =
-    'inline-flex items-center justify-center font-bold transition-all duration-300 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer'
+    'inline-flex items-center justify-center font-bold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer'
 
   const variants = {
     primary: 'text-white rounded-[50px] focus:ring-primary-500',
     secondary:
-      'bg-white text-primary-600 border-2 border-primary-500 hover:bg-primary-500 hover:text-white focus:ring-primary-500 rounded-[50px]',
+      'bg-white text-primary-600 border-2 border-primary-500 hover:bg-primary-500 hover:text-white focus:ring-primary-500 rounded-[50px] shadow-sm hover:shadow-md',
     outline:
       'border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-primary-500 focus:ring-primary-500 rounded-xl',
     ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-primary-500 rounded-xl',
@@ -35,7 +35,8 @@ export function Button({
     lg: 'px-8 py-4 text-lg',
   }
 
-  // Gradient für Primary Button - Orange für höhere Conversion
+  // Gradient für Primary Button - Orange für höhere Conversion (CTAs)
+  // Für sekundäre Primary-Buttons kann Teal-Gradient verwendet werden (vertrauensvoller)
   const primaryStyle =
     variant === 'primary'
       ? {
@@ -47,8 +48,8 @@ export function Button({
   const primaryHoverStyle =
     variant === 'primary'
       ? {
-          transform: 'translateY(-2px) scale(1.02)',
-          boxShadow: '0px 8px 30px rgba(249, 115, 22, 0.4)',
+          transform: 'translateY(-1px)',
+          boxShadow: '0px 6px 24px rgba(249, 115, 22, 0.3)',
           background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
         }
       : {}
@@ -61,8 +62,8 @@ export function Button({
         sizes[size],
         className,
         variant === 'primary' &&
-          'hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-[0.98]',
-        variant === 'secondary' && 'hover:-translate-y-0.5 active:scale-[0.98]'
+          'hover:-translate-y-0.5 active:translate-y-0',
+        variant === 'secondary' && 'hover:-translate-y-0.5 active:translate-y-0'
       )}
       style={variant === 'primary' ? primaryStyle : undefined}
       onMouseEnter={e => {
