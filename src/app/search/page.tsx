@@ -4,6 +4,7 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { AISearchAssistant } from '@/components/search/AISearchAssistant'
 import { ProductCard } from '@/components/ui/ProductCard'
+import { FilterChips } from '@/components/ui/FilterChips'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
 import { ChevronDown, Filter, Grid3x3, List, Package, Search, X } from 'lucide-react'
@@ -385,6 +386,10 @@ function SearchPageContent() {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
+      {/* Aktive Filter als Chips */}
+      <Suspense fallback={null}>
+        <FilterChips />
+      </Suspense>
       <main className="flex-1 pb-8">
         <div className="mx-auto w-full max-w-[1400px] px-4 py-8">
           {/* Breadcrumb */}
