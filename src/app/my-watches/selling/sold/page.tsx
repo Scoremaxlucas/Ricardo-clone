@@ -18,7 +18,7 @@ import {
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface Sale {
@@ -75,10 +75,12 @@ export default function SoldPage() {
   const [loading, setLoading] = useState(true)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [showBuyerInfo, setShowBuyerInfo] = useState(false)
+  const hasInitializedRef = useRef(false)
+  const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
 
   // #region agent log
   useEffect(() => {
-    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:75','message':'Component render','data':{status,hasSession:!!session?.user,loading,salesCount:sales.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:75','message':'Component render','data':{status,hasSession:!!session?.user,loading,salesCount:sales.length,hasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
   });
   // #endregion
 
@@ -139,8 +141,15 @@ export default function SoldPage() {
 
   useEffect(() => {
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:134','message':'useEffect triggered','data':{status,hasSession:!!session?.user,loading,sessionId:(session?.user as { id?: string })?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:140','message':'useEffect triggered','data':{status,hasSession:!!session?.user,loading,sessionId:(session?.user as { id?: string })?.id,hasInitialized:hasInitializedRef.current},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
     // #endregion
+    
+    // Cleanup: Stoppe vorheriges Polling falls vorhanden
+    if (pollingIntervalRef.current) {
+      clearInterval(pollingIntervalRef.current)
+      pollingIntervalRef.current = null
+    }
+
     const loadSalesData = async (isInitialLoad: boolean = false) => {
       // #region agent log
       fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:137','message':'loadSalesData called','data':{isInitialLoad,currentLoading:loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
@@ -201,34 +210,49 @@ export default function SoldPage() {
     // Warte bis Session geladen ist
     if (status === 'loading') {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:180','message':'Status is loading, returning early','data':{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:207','message':'Status is loading, returning early','data':{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
       // #endregion
       return
     }
 
-    // Wenn nicht authentifiziert, leite um
+    // Wenn nicht authentifiziert, leite um (nur einmal)
     if (status === 'unauthenticated' || !session?.user) {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:186','message':'Unauthenticated, redirecting','data':{status,hasSession:!!session?.user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:213','message':'Unauthenticated, redirecting','data':{status,hasSession:!!session?.user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
       // #endregion
-      const currentPath = window.location.pathname
+      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/my-watches/selling/sold'
       router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
       return
     }
 
+    // Verhindere mehrfache Initialisierung
+    if (hasInitializedRef.current) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:221','message':'Already initialized, skipping','data':{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      return
+    }
+
     // #region agent log
-    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:192','message':'Starting initial load and polling','data':{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:226','message':'Starting initial load and polling','data':{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
     // #endregion
+    hasInitializedRef.current = true
     loadSalesData(true) // Initial load mit Loading-Screen
     // Polling alle 5 Sekunden für Updates (ohne Loading-Screen)
-    const interval = setInterval(() => loadSalesData(false), 5000)
+    pollingIntervalRef.current = setInterval(() => loadSalesData(false), 5000)
+    
     return () => {
       // #region agent log
-      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:197','message':'Cleaning up interval','data':{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:232','message':'Cleaning up interval','data':{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
       // #endregion
-      clearInterval(interval)
+      if (pollingIntervalRef.current) {
+        clearInterval(pollingIntervalRef.current)
+        pollingIntervalRef.current = null
+      }
+      hasInitializedRef.current = false
     }
-  }, [session, status, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, (session?.user as { id?: string })?.id])
 
   if (status === 'loading' || loading) {
     // #region agent log
