@@ -10,22 +10,25 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   // Power optimization
   poweredByHeader: false,
-  // ESLint: Ignore during builds (warnings should not fail deployment)
+  
+  // ESLint: Ignore during builds
   eslint: {
     ignoreDuringBuilds: true,
   },
-  // TypeScript: Ignore during builds (warnings should not fail deployment)
+  // TypeScript
   typescript: {
     ignoreBuildErrors: false,
   },
-  // WICHTIG: Erhöhe Body-Size-Limit für große Bild-Uploads (Standard: 1MB)
-  // Vercel hat ein Limit von 4.5MB für Serverless Functions
-  // Wir erhöhen es auf das Maximum, aber die Bilder sollten bereits komprimiert sein
+
+  // Server Actions body size
   experimental: {
     serverActions: {
-      bodySizeLimit: '10mb', // Erhöht von Standard 1MB
+      bodySizeLimit: '10mb',
     },
+    // OPTIMIERT: Optimistic Client Cache für schnellere Navigation
+    optimisticClientCache: true,
   },
+
   // Optimize images
   images: {
     formats: ['image/avif', 'image/webp'],
@@ -35,65 +38,51 @@ const nextConfig = {
     dangerouslyAllowSVG: true,
     contentDispositionType: 'attachment',
     contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
-    // OPTIMIERT: Enable image optimization for better performance
     unoptimized: false,
     remotePatterns: [
-      {
-        protocol: 'https',
-        hostname: '*.public.blob.vercel-storage.com',
-      },
-      {
-        protocol: 'https',
-        hostname: '*.blob.vercel-storage.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'logos-world.net',
-      },
-      {
-        protocol: 'https',
-        hostname: 'images.unsplash.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'cdn.shopify.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'media.rolex.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'patek-res.cloudinary.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.omegawatches.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'dynamicmedia.audemarspiguet.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'res.garmin.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'backend.esquire.de',
-      },
-      {
-        protocol: 'https',
-        hostname: 'www.apple.com',
-      },
-      {
-        protocol: 'https',
-        hostname: 'img.freepik.com',
-      },
+      { protocol: 'https', hostname: '*.public.blob.vercel-storage.com' },
+      { protocol: 'https', hostname: '*.blob.vercel-storage.com' },
+      { protocol: 'https', hostname: 'logos-world.net' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
+      { protocol: 'https', hostname: 'cdn.shopify.com' },
+      { protocol: 'https', hostname: 'media.rolex.com' },
+      { protocol: 'https', hostname: 'patek-res.cloudinary.com' },
+      { protocol: 'https', hostname: 'www.omegawatches.com' },
+      { protocol: 'https', hostname: 'dynamicmedia.audemarspiguet.com' },
+      { protocol: 'https', hostname: 'res.garmin.com' },
+      { protocol: 'https', hostname: 'backend.esquire.de' },
+      { protocol: 'https', hostname: 'www.apple.com' },
+      { protocol: 'https', hostname: 'img.freepik.com' },
     ],
   },
+
+  // OPTIMIERT: HTTP Headers für schnellere Navigation
+  async headers() {
+    return [
+      {
+        // Static assets - sehr langer Cache
+        source: '/:path*.(js|css|woff|woff2|ttf|eot)',
+        headers: [
+          {
+            key: 'Cache-Control',
+            value: 'public, max-age=31536000, immutable',
+          },
+        ],
+      },
+      {
+        // Prefetch hints
+        source: '/:path*',
+        headers: [
+          {
+            key: 'X-DNS-Prefetch-Control',
+            value: 'on',
+          },
+        ],
+      },
+    ]
+  },
+
   webpack: (config, { isServer }) => {
-    // Hilfsfunktion: Prüft ob ein Wert ein plain object ist (nicht null, nicht Array, nicht function, etc.)
     const isPlainObject = value => {
       return (
         value !== null &&
@@ -115,7 +104,7 @@ const nextConfig = {
       }
     }
 
-    // Leaflet is browser-only - exclude from server-side bundle
+    // Leaflet is browser-only
     if (isServer) {
       const originalExternals = config.externals
       config.externals = [
@@ -133,20 +122,17 @@ const nextConfig = {
     if (!isServer) {
       config.optimization = config.optimization || {}
 
-      // Stelle sicher, dass splitChunks existiert (Next.js setzt es standardmäßig)
       if (!config.optimization.splitChunks) {
         config.optimization.splitChunks = {}
       }
 
       const existingSplitChunks = config.optimization.splitChunks
 
-      // Stelle sicher, dass cacheGroups existiert
       if (!existingSplitChunks.cacheGroups) {
         existingSplitChunks.cacheGroups = {}
       }
 
-      // OPTIMIERT: Separate chunks für bessere Code-Splitting
-      // TensorFlow.js in separatem Chunk (große Bibliothek)
+      // TensorFlow.js in separatem Chunk
       existingSplitChunks.cacheGroups.tensorflow = {
         test: /[\\/]node_modules[\\/]@tensorflow[\\/]/,
         name: 'tensorflow',
@@ -154,7 +140,7 @@ const nextConfig = {
         priority: 10,
       }
 
-      // Lucide Icons in separatem Chunk (nur bei Bedarf laden)
+      // Lucide Icons in separatem Chunk
       existingSplitChunks.cacheGroups.lucide = {
         test: /[\\/]node_modules[\\/]lucide-react[\\/]/,
         name: 'lucide-icons',

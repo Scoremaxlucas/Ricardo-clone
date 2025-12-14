@@ -6,8 +6,9 @@ import { Providers } from '@/components/providers'
 import { Toaster } from 'react-hot-toast'
 import { ServiceWorker } from '@/components/ServiceWorker'
 
-// Lazy load EmmaChat - not critical for initial render
+// Lazy load non-critical components
 const EmmaChat = lazy(() => import('@/components/emma/EmmaChat').then(m => ({ default: m.EmmaChat })))
+const PrefetchOnHover = lazy(() => import('@/hooks/usePrefetch').then(m => ({ default: m.PrefetchOnHover })))
 
 const inter = Inter({
   subsets: ['latin'],
@@ -35,10 +36,17 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
       <head>
         <link rel="manifest" href="/manifest.json" />
         <meta name="theme-color" content="#0f766e" />
+        {/* DNS Prefetch für kritische Domains */}
+        <link rel="dns-prefetch" href="https://vercel.live" />
+        <link rel="preconnect" href="https://vercel.live" crossOrigin="anonymous" />
       </head>
       <body className={`${inter.className} flex min-h-screen flex-col`}>
         <ServiceWorker />
         <Providers>
+          {/* Global Prefetch Listener - lädt Routen bei Hover */}
+          <Suspense fallback={null}>
+            <PrefetchOnHover />
+          </Suspense>
           <div className="flex flex-1 flex-col">{children}</div>
           <Toaster
             position="top-right"
