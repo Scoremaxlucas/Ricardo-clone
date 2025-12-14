@@ -4,10 +4,11 @@ import { useState, useEffect, Suspense } from 'react'
 import { signIn, getSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { Logo } from '@/components/ui/Logo'
+import { Button } from '@/components/ui/Button'
 
 function LoginPageContent() {
   const [email, setEmail] = useState('')
@@ -183,20 +184,14 @@ function LoginPageContent() {
               </div>
 
               <div>
-                <button
+                <Button
                   type="submit"
                   disabled={isLoading}
-                  className="group relative flex w-full justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  loading={isLoading}
+                  className="w-full"
                 >
-                  {isLoading ? (
-                    <>
-                      <span className="mr-2">⏳</span>
-                      Wird angemeldet...
-                    </>
-                  ) : (
-                    'Anmelden'
-                  )}
-                </button>
+                  {isLoading ? 'Wird angemeldet...' : 'Anmelden'}
+                </Button>
               </div>
             </form>
           </div>

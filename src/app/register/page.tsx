@@ -5,6 +5,7 @@ import { signIn } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Eye, EyeOff } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -282,13 +283,14 @@ export default function RegisterPage() {
           </div>
 
           <div>
-            <button
+            <Button
               type="submit"
               disabled={isLoading}
-              className="group relative flex w-full justify-center rounded-md border border-transparent bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:opacity-50"
+              loading={isLoading}
+              className="w-full"
             >
               {isLoading ? 'Konto wird erstellt...' : 'Konto erstellen'}
-            </button>
+            </Button>
           </div>
         </form>
       </div>

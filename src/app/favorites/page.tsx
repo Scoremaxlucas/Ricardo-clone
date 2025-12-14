@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { Heart, Package } from 'lucide-react'
+import { Heart, Package, Loader2 } from 'lucide-react'
+import { Button } from '@/components/ui/Button'
 
 interface Product {
   id: string
@@ -86,7 +87,7 @@ export default function FavoritesPage() {
         <Header />
         <div className="flex items-center justify-center py-20">
           <div className="text-center">
-            <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+            <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
             <p className="text-gray-600">Lade Favoriten...</p>
           </div>
         </div>
@@ -129,7 +130,11 @@ export default function FavoritesPage() {
             </p>
             <Link
               href="/search"
-              className="inline-block rounded-lg bg-primary-600 px-6 py-3 font-medium text-white hover:bg-primary-700"
+              className="inline-flex items-center justify-center rounded-[50px] px-6 py-3 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-[0.98]"
+              style={{
+                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                boxShadow: '0px 4px 20px rgba(249, 115, 22, 0.3)',
+              }}
             >
               Artikel durchstöbern
             </Link>
@@ -175,17 +180,23 @@ export default function FavoritesPage() {
                   <div className="flex items-center justify-between gap-2">
                     <Link
                       href={`/products/${product.id}`}
-                      className="flex-1 rounded-lg bg-primary-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-primary-700"
+                      className="flex-1 inline-flex items-center justify-center rounded-[50px] px-4 py-2 text-sm font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-[0.98]"
+                      style={{
+                        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+                        boxShadow: '0px 4px 20px rgba(249, 115, 22, 0.3)',
+                      }}
                     >
                       Ansehen
                     </Link>
-                    <button
+                    <Button
                       onClick={() => removeFavorite(product.id)}
-                      className="rounded-lg bg-red-500 px-4 py-2 text-white transition-colors hover:bg-red-600"
+                      variant="ghost"
+                      size="sm"
+                      className="rounded-lg bg-red-500 px-3 py-2 text-white hover:bg-red-600"
                       title="Aus Favoriten entfernen"
                     >
                       <Heart className="h-4 w-4 fill-current" />
-                    </button>
+                    </Button>
                   </div>
                 </div>
               </div>
