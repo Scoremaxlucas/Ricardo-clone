@@ -38,7 +38,7 @@ export function HeroCow() {
         </p>
         <Link
           href="/sell"
-          className="inline-flex items-center gap-2 rounded-[50px] bg-white px-6 py-3 text-base font-bold text-primary-600 shadow-xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-gray-50 hover:shadow-2xl"
+          className="inline-flex items-center gap-2 rounded-[50px] bg-orange-500 px-6 py-3 text-base font-bold text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-orange-600 hover:shadow-2xl"
         >
           Jetzt verkaufen
           <ArrowRight className="h-5 w-5" />

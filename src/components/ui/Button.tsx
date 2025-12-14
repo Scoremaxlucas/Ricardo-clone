@@ -35,12 +35,12 @@ export function Button({
     lg: 'px-8 py-4 text-lg',
   }
 
-  // Gradient für Primary Button
+  // Gradient für Primary Button - Orange für höhere Conversion
   const primaryStyle =
     variant === 'primary'
       ? {
-          background: 'linear-gradient(135deg, #14b8a6 0%, #10b981 100%)',
-          boxShadow: '0px 4px 20px rgba(20, 184, 166, 0.3)',
+          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
+          boxShadow: '0px 4px 20px rgba(249, 115, 22, 0.3)',
         }
       : {}
 
@@ -48,8 +48,8 @@ export function Button({
     variant === 'primary'
       ? {
           transform: 'translateY(-2px) scale(1.02)',
-          boxShadow: '0px 8px 30px rgba(20, 184, 166, 0.4)',
-          background: 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)',
+          boxShadow: '0px 8px 30px rgba(249, 115, 22, 0.4)',
+          background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
         }
       : {}
 
