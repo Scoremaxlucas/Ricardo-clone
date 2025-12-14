@@ -1,26 +1,25 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
+import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
+import { getShippingCostForMethod, getShippingLabels } from '@/lib/shipping'
 import {
+  AlertCircle,
   ArrowLeft,
   CheckCircle,
-  Package,
-  User,
-  CreditCard,
   Clock,
+  CreditCard,
+  Package,
   PackageCheck,
-  AlertCircle,
-  AlertTriangle,
+  User,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
-import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
-import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
-import { getShippingLabels, getShippingCostForMethod } from '@/lib/shipping'
 
 interface Sale {
   id: string
@@ -77,12 +76,20 @@ export default function SoldPage() {
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [showBuyerInfo, setShowBuyerInfo] = useState(false)
 
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:75','message':'Component render','data':{status,hasSession:!!session?.user,loading,salesCount:sales.length},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+  });
+  // #endregion
+
   const loadSales = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:85','message':'loadSales called (legacy function)','data':{hasSession:!!session?.user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'D'})}).catch(()=>{});
+    // #endregion
     if (!session?.user) return
 
     try {
-      setLoading(true)
-
+      // KEIN setLoading(true) mehr - Updates sollen im Hintergrund passieren
       // Prüfe und verarbeite abgelaufene Auktionen automatisch
       try {
         await fetch('/api/auctions/check-expired', {
@@ -101,8 +108,6 @@ export default function SoldPage() {
     } catch (error) {
       console.error('Error loading sales:', error)
       toast.error('Fehler beim Laden der Verkäufe')
-    } finally {
-      setLoading(false)
     }
   }
 
@@ -133,58 +138,102 @@ export default function SoldPage() {
   }
 
   useEffect(() => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:134','message':'useEffect triggered','data':{status,hasSession:!!session?.user,loading,sessionId:session?.user?.id},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+    // #endregion
     const loadSalesData = async (isInitialLoad: boolean = false) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:137','message':'loadSalesData called','data':{isInitialLoad,currentLoading:loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+      // #endregion
       if (!session?.user) return
       try {
         // Nur beim initialen Load den Loading-Screen zeigen
         if (isInitialLoad) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:142','message':'Setting loading=true','data':{isInitialLoad},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
           setLoading(true)
         }
 
         // Prüfe und verarbeite abgelaufene Auktionen automatisch
         try {
-          await fetch('/api/auctions/check-expired', {
+          const expiredRes = await fetch('/api/auctions/check-expired', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
           })
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:150','message':'check-expired response','data':{ok:expiredRes.ok,status:expiredRes.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
         } catch (error) {
           console.error('Error checking expired auctions:', error)
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:153','message':'check-expired error','data':{error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+          // #endregion
           // Fehler ignorieren, da dies nicht kritisch ist
         }
 
         const res = await fetch(`/api/sales/my-sales?t=${Date.now()}`)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:160','message':'my-sales response','data':{ok:res.ok,status:res.status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
         if (res.ok) {
           const data = await res.json()
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:163','message':'Sales data set','data':{salesCount:data.sales?.length||0,isInitialLoad},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
           setSales(data.sales || [])
         }
       } catch (error) {
         console.error('Error loading sales:', error)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:168','message':'loadSalesData error','data':{error:String(error)},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'C'})}).catch(()=>{});
+        // #endregion
       } finally {
         // Nur beim initialen Load den Loading-Screen ausblenden
         if (isInitialLoad) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:173','message':'Setting loading=false','data':{isInitialLoad},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+          // #endregion
           setLoading(false)
         }
       }
     }
     // Warte bis Session geladen ist
     if (status === 'loading') {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:180','message':'Status is loading, returning early','data':{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       return
     }
 
     // Wenn nicht authentifiziert, leite um
     if (status === 'unauthenticated' || !session?.user) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:186','message':'Unauthenticated, redirecting','data':{status,hasSession:!!session?.user},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
       const currentPath = window.location.pathname
       router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
       return
     }
 
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:192','message':'Starting initial load and polling','data':{status},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     loadSalesData(true) // Initial load mit Loading-Screen
     // Polling alle 5 Sekunden für Updates (ohne Loading-Screen)
     const interval = setInterval(() => loadSalesData(false), 5000)
-    return () => clearInterval(interval)
+    return () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:197','message':'Cleaning up interval','data':{},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'B'})}).catch(()=>{});
+      // #endregion
+      clearInterval(interval)
+    }
   }, [session, status, router])
 
   if (status === 'loading' || loading) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({location:'sold/page.tsx:200','message':'Rendering loading screen','data':{status,loading},timestamp:Date.now(),sessionId:'debug-session',runId:'run1',hypothesisId:'A'})}).catch(()=>{});
+    // #endregion
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
