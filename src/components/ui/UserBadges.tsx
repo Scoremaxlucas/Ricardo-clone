@@ -6,7 +6,7 @@ import { useEffect, useState } from 'react'
 interface UserBadgesProps {
   userId: string
   limit?: number
-  size?: 'sm' | 'md'
+  size?: 'sm' | 'md' | 'lg'
   className?: string
 }
 
@@ -51,6 +51,7 @@ export function UserBadges({ userId, limit = 2, size = 'sm', className = '' }: U
   const sizeClasses = {
     sm: 'h-4 w-4 text-xs',
     md: 'h-5 w-5 text-sm',
+    lg: 'h-6 w-6 text-base',
   }
 
   return (
