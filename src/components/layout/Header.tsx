@@ -330,7 +330,7 @@ export function Header() {
             {session ? (
               <Link
                 href="/favorites"
-                className="relative flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+                className="relative flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
                 title={t.header.favorites}
               >
                 <Heart className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -344,7 +344,7 @@ export function Header() {
             ) : (
               <button
                 onClick={() => alert(t.header.pleaseLoginForFavorites)}
-                className="flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+                className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
                 title={t.header.favorites}
               >
                 <Heart className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -354,7 +354,7 @@ export function Header() {
             {/* Auktionen - Icon auf Mobile, Icon + Text auf Desktop */}
             <Link
               href="/auctions"
-              className="flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
               title={t.header.auctions}
             >
               <Gavel className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -369,7 +369,7 @@ export function Header() {
               <Link
                 href="/sell"
                 prefetch={true}
-                className="flex w-full items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+                className="flex min-h-[44px] min-w-[44px] w-full items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
                 title={t.header.sell}
                 onMouseEnter={() => {
                   // Prefetch die Verkaufsseite und API-Daten beim Hover
@@ -437,7 +437,7 @@ export function Header() {
             {/* Notifications - Icon auf Mobile, Icon + Text auf Desktop */}
             <Link
               href="/notifications"
-              className="relative flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+              className="relative flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
               title={t.header.notifications}
             >
               <div className="relative">
@@ -639,7 +639,7 @@ export function Header() {
                   {/* Login - Icon auf Mobile, Icon + Text auf Desktop */}
                   <Link
                     href="/login"
-                    className="flex items-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:gap-2 sm:px-3 sm:py-2"
+                    className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
                     title={t.header.login}
                   >
                     <User className="h-5 w-5 sm:h-4 sm:w-4" />

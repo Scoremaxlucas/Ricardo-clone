@@ -305,7 +305,9 @@ export function ProductCard({
                 src={mainImage}
                 alt={product.title}
                 className={`h-full w-full object-cover transition-all duration-300 ${
-                  showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+                  showSecondImage && secondImage
+                    ? 'scale-110 opacity-0'
+                    : 'scale-100 opacity-100 group-hover:scale-110'
                 }`}
                 loading="eager"
                 onError={() => {
@@ -321,7 +323,9 @@ export function ProductCard({
                 alt={product.title}
                 fill
                 className={`object-cover transition-all duration-300 ${
-                  showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+                  showSecondImage && secondImage
+                    ? 'scale-110 opacity-0'
+                    : 'scale-100 opacity-100 group-hover:scale-110'
                 }`}
                 loading="eager"
                 priority
@@ -356,7 +360,7 @@ export function ProductCard({
                   src={secondImage}
                   alt={product.title}
                   className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
-                    showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                    showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                   }`}
                   loading="lazy"
                 />
@@ -366,7 +370,7 @@ export function ProductCard({
                   alt={product.title}
                   fill
                   className={`object-cover transition-all duration-300 ${
-                    showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                    showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                   }`}
                   loading="lazy"
                   quality={85}
@@ -379,13 +383,13 @@ export function ProductCard({
           {/* Schnellansicht Button auf Hover */}
           <div
             className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-300 ${
-              showSecondImage ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+              showSecondImage ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
             }`}
           >
             <Link
               href={productHref}
               onClick={e => e.stopPropagation()}
-              className="rounded-full bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg transition-all hover:bg-orange-600 hover:scale-105"
+              className="rounded-full bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-orange-600"
             >
               Schnellansicht
             </Link>
@@ -394,7 +398,7 @@ export function ProductCard({
           {/* Favorite Button - Größer auf Mobile */}
           <button
             onClick={handleFavoriteClick}
-            className={`absolute right-1.5 top-1.5 z-10 rounded-full p-1.5 shadow-md transition-all md:p-1 ${
+            className={`absolute right-1 top-1 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2 shadow-md transition-all md:min-h-0 md:min-w-0 md:p-1.5 ${
               isFavorite
                 ? 'bg-red-500 text-white hover:bg-red-600'
                 : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
@@ -429,7 +433,7 @@ export function ProductCard({
             </div>
           )}
           {/* Preis - Prominent hervorgehoben (1.5x größer als Titel), wird auf Hover größer */}
-          <div className="mb-2 flex items-baseline gap-1 group-hover:scale-105 transition-transform duration-300">
+          <div className="mb-2 flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-105">
             <span className="text-sm font-medium text-gray-600">CHF</span>
             <span className="text-2xl font-bold text-primary-700 transition-all duration-300 group-hover:text-4xl md:text-3xl md:group-hover:text-5xl">
               {new Intl.NumberFormat('de-CH', {
@@ -530,7 +534,9 @@ export function ProductCard({
                   src={mainImage}
                   alt={product.title}
                   className={`h-full w-full object-cover transition-all duration-300 ${
-                    showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+                    showSecondImage && secondImage
+                      ? 'scale-110 opacity-0'
+                      : 'scale-100 opacity-100 group-hover:scale-110'
                   }`}
                   onError={() => setImageError(true)}
                   onLoad={() => setImageError(false)}
@@ -542,7 +548,9 @@ export function ProductCard({
                   alt={product.title}
                   fill
                   className={`object-cover transition-all duration-300 ${
-                    showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+                    showSecondImage && secondImage
+                      ? 'scale-110 opacity-0'
+                      : 'scale-100 opacity-100 group-hover:scale-110'
                   }`}
                   onError={() => setImageError(true)}
                   onLoad={() => setImageError(false)}
@@ -568,7 +576,7 @@ export function ProductCard({
                     src={secondImage}
                     alt={product.title}
                     className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
-                      showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                      showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                     }`}
                     loading="lazy"
                   />
@@ -578,7 +586,7 @@ export function ProductCard({
                     alt={product.title}
                     fill
                     className={`object-cover transition-all duration-300 ${
-                      showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                      showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                     }`}
                     loading="lazy"
                     quality={85}
@@ -590,7 +598,7 @@ export function ProductCard({
           </div>
           <button
             onClick={handleFavoriteClick}
-            className={`absolute right-2 top-2 z-10 rounded-full p-1.5 shadow-md transition-all ${
+            className={`absolute right-1 top-1 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2 shadow-md transition-all md:min-h-0 md:min-w-0 md:p-1.5 ${
               isFavorite
                 ? 'bg-red-500 text-white hover:bg-red-600'
                 : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
@@ -666,7 +674,7 @@ export function ProductCard({
           <div className="mt-2 flex items-center justify-between">
             <div>
               {/* Preis - Prominent hervorgehoben (1.5x größer als Titel), wird auf Hover größer */}
-              <div className="flex items-baseline gap-1 group-hover:scale-105 transition-transform duration-300">
+              <div className="flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-105">
                 <span className="text-sm font-medium text-gray-600">CHF</span>
                 <span className="text-2xl font-bold text-primary-700 transition-all duration-300 group-hover:text-4xl md:text-3xl md:group-hover:text-5xl">
                   {new Intl.NumberFormat('de-CH', {
@@ -733,7 +741,9 @@ export function ProductCard({
               src={mainImage}
               alt={product.title}
               className={`h-full w-full object-cover transition-all duration-300 ${
-                showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+                showSecondImage && secondImage
+                  ? 'scale-110 opacity-0'
+                  : 'scale-100 opacity-100 group-hover:scale-110'
               }`}
               onError={() => setImageError(true)}
               onLoad={() => setImageError(false)}
@@ -745,7 +755,9 @@ export function ProductCard({
               alt={product.title}
               fill
               className={`object-cover transition-all duration-300 ${
-                showSecondImage && secondImage ? 'opacity-0 scale-110' : 'opacity-100 scale-100 group-hover:scale-110'
+                showSecondImage && secondImage
+                  ? 'scale-110 opacity-0'
+                  : 'scale-100 opacity-100 group-hover:scale-110'
               }`}
               onError={() => setImageError(true)}
               onLoad={() => setImageError(false)}
@@ -771,7 +783,7 @@ export function ProductCard({
                 src={secondImage}
                 alt={product.title}
                 className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
-                  showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                  showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                 }`}
                 loading="lazy"
               />
@@ -781,7 +793,7 @@ export function ProductCard({
                 alt={product.title}
                 fill
                 className={`object-cover transition-all duration-300 ${
-                  showSecondImage ? 'opacity-100 scale-110' : 'opacity-0 scale-100'
+                  showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                 }`}
                 loading="lazy"
                 quality={85}
@@ -794,13 +806,13 @@ export function ProductCard({
         {/* Schnellansicht Button auf Hover */}
         <div
           className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-300 ${
-            showSecondImage ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-2'
+            showSecondImage ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
           }`}
         >
           <Link
             href={productHref}
             onClick={e => e.stopPropagation()}
-            className="rounded-full bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg transition-all hover:bg-orange-600 hover:scale-105"
+            className="rounded-full bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-orange-600"
           >
             Schnellansicht
           </Link>
@@ -809,7 +821,7 @@ export function ProductCard({
         {/* Favorite Button */}
         <button
           onClick={handleFavoriteClick}
-          className={`absolute right-1.5 top-1.5 z-10 rounded-full p-1 shadow-md transition-all ${
+          className={`absolute right-1 top-1 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2 shadow-md transition-all md:min-h-0 md:min-w-0 md:p-1 ${
             isFavorite
               ? 'bg-red-500 text-white hover:bg-red-600'
               : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
@@ -859,7 +871,7 @@ export function ProductCard({
         </div>
 
         {/* Price - Immer sichtbar, prominent hervorgehoben, wird auf Hover größer */}
-        <div className="mb-1 flex items-baseline gap-1 group-hover:scale-105 transition-transform duration-300">
+        <div className="mb-1 flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-105">
           <span className="text-xs font-medium text-gray-600">CHF</span>
           <span className="text-xl font-bold text-primary-700 transition-all duration-300 group-hover:text-3xl md:text-2xl md:group-hover:text-4xl">
             {new Intl.NumberFormat('de-CH', {
