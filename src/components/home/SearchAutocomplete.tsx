@@ -202,7 +202,7 @@ export function SearchAutocomplete({
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder || 'Suchen Sie nach Produkten...'}
-            className="w-full rounded-full border-2 border-gray-200 bg-white py-4 pl-12 pr-12 text-base text-gray-900 shadow-lg transition-all placeholder:text-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 md:py-5 md:text-lg"
+            className="w-full rounded-full border-2 border-gray-200 bg-white py-5 pl-12 pr-12 text-base text-gray-900 shadow-lg transition-all placeholder:text-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 md:py-6 md:text-lg"
           />
           {query && (
             <button

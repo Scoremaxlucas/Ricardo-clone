@@ -52,14 +52,14 @@ export function HeroServer({
           <div className="lg:col-span-2">
             <div className="mx-auto max-w-3xl">
               {/* LCP-OPTIMIERT: H1 ist sofort im HTML, kein JavaScript nötig */}
-              <h1 className="mb-3 text-center text-2xl font-bold text-white md:text-3xl lg:text-4xl">
+              <h1 className="mb-4 text-center text-3xl font-bold text-white md:mb-5 md:text-4xl lg:text-5xl">
                 {title}
               </h1>
-              <p className="mb-6 text-center text-base text-white/90 md:text-lg">
+              <p className="mb-8 text-center text-base text-white/90 md:mb-10 md:text-lg">
                 {subtitle}
               </p>
               {/* Slot für Client Component (Search) */}
-              <div className="mx-auto max-w-2xl">
+              <div className="mx-auto max-w-3xl">
                 {children}
               </div>
             </div>
@@ -68,7 +68,7 @@ export function HeroServer({
           {/* Rechte Spalte: Verkaufen Sie jetzt Box (40% auf Desktop) */}
           <div className="lg:col-span-1">
             <div className="mx-auto max-w-md lg:max-w-full">
-              <div className="rounded-2xl border border-white/20 bg-white/10 p-6 shadow-xl backdrop-blur-md">
+              <div className="rounded-2xl border border-white/20 bg-white/8 p-6 shadow-lg backdrop-blur-md">
                 <h2 className="mb-3 text-xl font-bold text-white md:text-2xl">
                   {sellNowText}
                 </h2>
@@ -77,9 +77,9 @@ export function HeroServer({
                 </p>
                 <Link
                   href="/sell"
-                  className="hover:shadow-3xl inline-block w-full rounded-[50px] bg-[#f97316] px-6 py-3 text-center text-base font-bold text-white shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-[#ea580c] md:px-8 md:py-4 md:text-lg"
+                  className="inline-block w-full rounded-[50px] bg-[#f97316] px-6 py-3 text-center text-base font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#ea580c] md:px-8 md:py-4 md:text-lg"
                   style={{
-                    boxShadow: '0px 8px 30px rgba(249, 115, 22, 0.4)',
+                    boxShadow: '0px 4px 16px rgba(249, 115, 22, 0.25)',
                   }}
                 >
                   {sellNowButton}
