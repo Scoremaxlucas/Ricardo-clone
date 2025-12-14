@@ -289,7 +289,7 @@ export function ProductCard({
         }}
         onMouseEnter={e => {
           e.currentTarget.style.transform = 'translateY(-2px)'
-          e.currentTarget.style.boxShadow = '0px 12px 40px rgba(0, 0, 0, 0.15)'
+          e.currentTarget.style.boxShadow = '0px 8px 24px rgba(0, 0, 0, 0.12)'
         }}
         onMouseLeave={e => {
           e.currentTarget.style.transform = 'translateY(0)'
@@ -518,7 +518,7 @@ export function ProductCard({
           boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
         }}
         onMouseEnter={e => {
-          e.currentTarget.style.boxShadow = '0px 12px 40px rgba(0, 0, 0, 0.15)'
+          e.currentTarget.style.boxShadow = '0px 8px 24px rgba(0, 0, 0, 0.12)'
         }}
         onMouseLeave={e => {
           e.currentTarget.style.boxShadow =
@@ -723,7 +723,7 @@ export function ProductCard({
       }}
       onMouseEnter={e => {
           e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = '0px 12px 40px rgba(0, 0, 0, 0.15)'
+        e.currentTarget.style.boxShadow = '0px 8px 24px rgba(0, 0, 0, 0.12)'
         e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.15)'
       }}
       onMouseLeave={e => {
