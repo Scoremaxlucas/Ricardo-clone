@@ -1,4 +1,4 @@
-'use client'
+// Server Component - kein 'use client' nötig für statische Seiten
 
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
