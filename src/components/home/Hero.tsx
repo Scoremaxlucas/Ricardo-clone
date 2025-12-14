@@ -93,9 +93,9 @@ export function Hero() {
               </p>
               <Link
                 href="/sell"
-                className="hover:shadow-3xl inline-block rounded-[50px] bg-white px-8 py-4 text-lg font-bold text-primary-600 shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-gray-50"
+                className="hover:shadow-3xl inline-block rounded-[50px] bg-[#f97316] px-8 py-4 text-lg font-bold text-white shadow-2xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-[#ea580c]"
                 style={{
-                  boxShadow: '0px 8px 30px rgba(0, 0, 0, 0.2)',
+                  boxShadow: '0px 8px 30px rgba(249, 115, 22, 0.4)',
                 }}
               >
                 {t.home.hero.offerItemNow}
