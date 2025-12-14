@@ -6,8 +6,8 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { Heart, Package, Loader2 } from 'lucide-react'
-import { Button } from '@/components/ui/Button'
+import { Heart, Loader2 } from 'lucide-react'
+import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
 
 interface Product {
   id: string
@@ -141,66 +141,37 @@ export default function FavoritesPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-            {favorites.map(product => (
-              <div
-                key={product.id}
-                className="overflow-hidden rounded-lg border border-gray-200 bg-white transition-shadow hover:shadow-lg"
-              >
-                <Link href={`/products/${product.id}`}>
-                  {product.images && product.images.length > 0 ? (
-                    <img
-                      src={product.images[0]}
-                      alt={product.title}
-                      className="h-48 w-full object-cover"
-                    />
-                  ) : (
-                    <div className="flex h-48 w-full items-center justify-center bg-gray-100">
-                      <Package className="h-12 w-12 text-gray-300" />
-                    </div>
-                  )}
-                </Link>
-                <div className="p-4">
-                  <Link href={`/products/${product.id}`}>
-                    {product.brand && (
-                      <div className="mb-1 text-sm text-primary-600">{product.brand}</div>
-                    )}
-                    <div className="mb-2 line-clamp-2 font-semibold text-gray-900 hover:text-primary-600">
-                      {product.title}
-                    </div>
-                  </Link>
-                  <div className="mb-3 flex items-center justify-between">
-                    <div className="text-lg font-bold text-gray-900">
-                      CHF{' '}
-                      {product.isAuction && product.currentBid
-                        ? product.currentBid.toFixed(2)
-                        : (product.price || 0).toFixed(2)}
-                    </div>
-                    {product.isAuction && <div className="text-xs text-gray-500">Gebot</div>}
-                  </div>
-                  <div className="flex items-center justify-between gap-2">
-                    <Link
-                      href={`/products/${product.id}`}
-                      className="flex-1 inline-flex items-center justify-center rounded-[50px] px-4 py-2 text-sm font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-[0.98]"
-                      style={{
-                        background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                        boxShadow: '0px 4px 20px rgba(249, 115, 22, 0.3)',
-                      }}
-                    >
-                      Ansehen
-                    </Link>
-                    <Button
-                      onClick={() => removeFavorite(product.id)}
-                      variant="ghost"
-                      size="sm"
-                      className="rounded-lg bg-red-500 px-3 py-2 text-white hover:bg-red-600"
-                      title="Aus Favoriten entfernen"
-                    >
-                      <Heart className="h-4 w-4 fill-current" />
-                    </Button>
-                  </div>
-                </div>
-              </div>
-            ))}
+            {favorites.map(product => {
+              // Transform Product to ProductCardData format
+              const productCardData: ProductCardData = {
+                id: product.id,
+                title: product.title,
+                brand: product.brand,
+                model: product.model,
+                price: product.price,
+                images: product.images || [],
+                condition: product.condition,
+                isAuction: product.isAuction,
+                currentBid: product.currentBid,
+                href: `/products/${product.id}`,
+              }
+
+              return (
+                <ProductCard
+                  key={product.id}
+                  product={productCardData}
+                  variant="default"
+                  showCondition={true}
+                  onFavoriteToggle={async (productId, isFavorite) => {
+                    if (!isFavorite) {
+                      // Remove from favorites
+                      await removeFavorite(productId)
+                    }
+                  }}
+                  className="h-full"
+                />
+              )
+            })}
           </div>
         )}
       </div>
