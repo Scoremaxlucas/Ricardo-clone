@@ -285,16 +285,16 @@ export function ProductCard({
         className={`group overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
         style={{
           border: '1px solid rgba(0, 0, 0, 0.1)',
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
         }}
         onMouseEnter={e => {
-          e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)'
+          e.currentTarget.style.transform = 'translateY(-2px)'
           e.currentTarget.style.boxShadow = '0px 12px 40px rgba(0, 0, 0, 0.15)'
         }}
         onMouseLeave={e => {
-          e.currentTarget.style.transform = 'translateY(0) scale(1)'
+          e.currentTarget.style.transform = 'translateY(0)'
           e.currentTarget.style.boxShadow =
-            '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)'
+            '0px 4px 16px rgba(0, 0, 0, 0.1)'
         }}
       >
         <div
@@ -314,7 +314,7 @@ export function ProductCard({
                 className={`h-full w-full object-cover transition-all duration-300 ${
                   showSecondImage && secondImage
                     ? 'scale-110 opacity-0'
-                    : 'scale-100 opacity-100 group-hover:scale-110'
+                    : 'scale-100 opacity-100 group-hover:scale-[1.02]'
                 }`}
                 loading="eager"
                 onError={() => {
@@ -332,7 +332,7 @@ export function ProductCard({
                 className={`object-cover transition-all duration-300 ${
                   showSecondImage && secondImage
                     ? 'scale-110 opacity-0'
-                    : 'scale-100 opacity-100 group-hover:scale-110'
+                    : 'scale-100 opacity-100 group-hover:scale-[1.02]'
                 }`}
                 loading="eager"
                 priority
@@ -440,7 +440,7 @@ export function ProductCard({
             </div>
           )}
           {/* Preis - Prominent hervorgehoben, subtile Scale-Animation auf Hover */}
-          <div className="mb-2 flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-105">
+          <div className="mb-2 flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-[1.01]">
             <span className="text-sm font-medium text-gray-600">CHF</span>
             <span className="text-2xl font-bold text-primary-700 md:text-3xl">
               {new Intl.NumberFormat('de-CH', {
@@ -515,14 +515,14 @@ export function ProductCard({
         className={`group flex overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
         style={{
           border: '1px solid rgba(0, 0, 0, 0.1)',
-          boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
         }}
         onMouseEnter={e => {
           e.currentTarget.style.boxShadow = '0px 12px 40px rgba(0, 0, 0, 0.15)'
         }}
         onMouseLeave={e => {
           e.currentTarget.style.boxShadow =
-            '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)'
+            '0px 4px 16px rgba(0, 0, 0, 0.1)'
         }}
       >
         <div
@@ -543,7 +543,7 @@ export function ProductCard({
                   className={`h-full w-full object-cover transition-all duration-300 ${
                     showSecondImage && secondImage
                       ? 'scale-110 opacity-0'
-                      : 'scale-100 opacity-100 group-hover:scale-110'
+                      : 'scale-100 opacity-100 group-hover:scale-[1.02]'
                   }`}
                   onError={() => setImageError(true)}
                   onLoad={() => setImageError(false)}
@@ -557,7 +557,7 @@ export function ProductCard({
                   className={`object-cover transition-all duration-300 ${
                     showSecondImage && secondImage
                       ? 'scale-110 opacity-0'
-                      : 'scale-100 opacity-100 group-hover:scale-110'
+                      : 'scale-100 opacity-100 group-hover:scale-[1.02]'
                   }`}
                   onError={() => setImageError(true)}
                   onLoad={() => setImageError(false)}
@@ -681,7 +681,7 @@ export function ProductCard({
           <div className="mt-2 flex items-center justify-between">
             <div>
               {/* Preis - Prominent hervorgehoben, subtile Scale-Animation auf Hover */}
-              <div className="flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-105">
+              <div className="flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-[1.01]">
                 <span className="text-sm font-medium text-gray-600">CHF</span>
                 <span className="text-2xl font-bold text-primary-700 md:text-3xl">
                   {new Intl.NumberFormat('de-CH', {
@@ -719,17 +719,17 @@ export function ProductCard({
       className={`group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
       style={{
         border: '1px solid rgba(0, 0, 0, 0.1)',
-        boxShadow: '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)',
+          boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
       }}
       onMouseEnter={e => {
-        e.currentTarget.style.transform = 'translateY(-4px) scale(1.02)'
+          e.currentTarget.style.transform = 'translateY(-2px)'
         e.currentTarget.style.boxShadow = '0px 12px 40px rgba(0, 0, 0, 0.15)'
         e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.15)'
       }}
       onMouseLeave={e => {
-        e.currentTarget.style.transform = 'translateY(0) scale(1)'
+          e.currentTarget.style.transform = 'translateY(0)'
         e.currentTarget.style.boxShadow =
-          '0px 4px 20px rgba(0, 0, 0, 0.08), 0px 2px 8px rgba(0, 0, 0, 0.1)'
+          '0px 4px 16px rgba(0, 0, 0, 0.1)'
         e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)'
       }}
     >
@@ -750,7 +750,7 @@ export function ProductCard({
               className={`h-full w-full object-cover transition-all duration-300 ${
                 showSecondImage && secondImage
                   ? 'scale-110 opacity-0'
-                  : 'scale-100 opacity-100 group-hover:scale-110'
+                  : 'scale-100 opacity-100 group-hover:scale-[1.02]'
               }`}
               onError={() => setImageError(true)}
               onLoad={() => setImageError(false)}
@@ -764,7 +764,7 @@ export function ProductCard({
               className={`object-cover transition-all duration-300 ${
                 showSecondImage && secondImage
                   ? 'scale-110 opacity-0'
-                  : 'scale-100 opacity-100 group-hover:scale-110'
+                  : 'scale-100 opacity-100 group-hover:scale-[1.02]'
               }`}
               onError={() => setImageError(true)}
               onLoad={() => setImageError(false)}
@@ -878,7 +878,7 @@ export function ProductCard({
         </div>
 
         {/* Preis - Immer sichtbar, subtile Scale-Animation auf Hover */}
-        <div className="mb-1 flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-105">
+        <div className="mb-1 flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-[1.01]">
           <span className="text-xs font-medium text-gray-600">CHF</span>
           <span className="text-xl font-bold text-primary-700 md:text-2xl">
             {new Intl.NumberFormat('de-CH', {
