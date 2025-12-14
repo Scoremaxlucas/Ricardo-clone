@@ -371,16 +371,25 @@ export function ProductCard({
               {product.brand}
             </div>
           )}
-          <div className="mb-1 flex items-center justify-between">
-            <div className="text-base font-bold text-gray-900 md:text-sm">
-              {formatPrice(product.currentBid || product.price)}
-            </div>
-            {product.buyNowPrice && (
-              <div className="text-xs text-gray-500 md:text-xs">
-                Sofort: {formatPrice(product.buyNowPrice)}
-              </div>
-            )}
+          {/* Preis - Prominent hervorgehoben (1.5x größer als Titel) */}
+          <div className="mb-2 flex items-baseline gap-1">
+            <span className="text-sm font-medium text-gray-600">CHF</span>
+            <span className="text-2xl font-bold text-primary-700 md:text-3xl">
+              {new Intl.NumberFormat('de-CH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(product.currentBid || product.price)}
+            </span>
           </div>
+          {product.buyNowPrice && (
+            <div className="mb-2 text-xs text-gray-500 md:text-xs">
+              Sofort: CHF{' '}
+              {new Intl.NumberFormat('de-CH', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              }).format(product.buyNowPrice)}
+            </div>
+          )}
           {product.isAuction && (
             <div className="mb-1 flex items-center gap-1">
               <Gavel className="h-3 w-3 text-orange-600" />
@@ -559,12 +568,23 @@ export function ProductCard({
           </div>
           <div className="mt-2 flex items-center justify-between">
             <div>
-              <div className="text-xl font-bold text-gray-900">
-                {formatPrice(product.currentBid || product.price)}
+              {/* Preis - Prominent hervorgehoben (1.5x größer als Titel) */}
+              <div className="flex items-baseline gap-1">
+                <span className="text-sm font-medium text-gray-600">CHF</span>
+                <span className="text-2xl font-bold text-primary-700 md:text-3xl">
+                  {new Intl.NumberFormat('de-CH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }).format(product.currentBid || product.price)}
+                </span>
               </div>
               {product.buyNowPrice && (
                 <div className="mt-1 text-sm text-gray-500">
-                  Sofort: {formatPrice(product.buyNowPrice)}
+                  Sofort: CHF{' '}
+                  {new Intl.NumberFormat('de-CH', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  }).format(product.buyNowPrice)}
                 </div>
               )}
             </div>
@@ -686,17 +706,25 @@ export function ProductCard({
           {product.title}
         </div>
 
-        {/* Price - Immer sichtbar */}
-        <div className="mb-1 flex items-center justify-between">
-          <div className="text-sm font-bold text-gray-900">
-            {formatPrice(product.currentBid || product.price)}
-          </div>
+        {/* Price - Immer sichtbar, prominent hervorgehoben */}
+        <div className="mb-1 flex items-baseline gap-1">
+          <span className="text-xs font-medium text-gray-600">CHF</span>
+          <span className="text-xl font-bold text-primary-700 md:text-2xl">
+            {new Intl.NumberFormat('de-CH', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(product.currentBid || product.price)}
+          </span>
         </div>
 
         {/* Buy Now Price - IMMER sichtbar bei normalen Angeboten */}
         {!product.isAuction && product.buyNowPrice && (
           <div className="mb-1.5 text-xs font-semibold text-primary-600">
-            Sofort: {formatPrice(product.buyNowPrice)}
+            Sofort: CHF{' '}
+            {new Intl.NumberFormat('de-CH', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            }).format(product.buyNowPrice)}
           </div>
         )}
 
