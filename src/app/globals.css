@@ -944,3 +944,24 @@ html {
     @apply cursor-not-allowed opacity-50;
   }
 }
+
+/* ===== GLOBAL: Sticky Footer Fix für alle Seiten ===== */
+/* Stellt sicher, dass der Footer immer am unteren Rand klebt */
+
+/* Alle page containers mit min-h-screen sollten flex-layout verwenden */
+div.min-h-screen:has(> footer),
+div.min-h-screen:has(footer) {
+  display: flex !important;
+  flex-direction: column !important;
+}
+
+/* Der Content vor dem Footer soll wachsen */
+div.min-h-screen > *:not(footer):not(header):not(nav) {
+  flex-grow: 1;
+}
+
+/* Footer soll immer am Ende sein */
+div.min-h-screen > footer {
+  margin-top: auto;
+  flex-shrink: 0;
+}

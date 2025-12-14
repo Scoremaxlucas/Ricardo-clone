@@ -1,12 +1,12 @@
-import { Suspense } from 'react'
-import { Header } from '@/components/layout/Header'
-import { Hero } from '@/components/home/Hero'
-import { QuickAccessBar } from '@/components/home/QuickAccessBar'
-import { Footer } from '@/components/layout/Footer'
-import { getFeaturedProducts } from '@/lib/products'
 import { FeaturedProductsServer } from '@/components/home/FeaturedProductsServer'
+import { Hero } from '@/components/home/Hero'
 import { HomeClient } from '@/components/home/HomeClient'
+import { QuickAccessBar } from '@/components/home/QuickAccessBar'
 import { ImagePreloader } from '@/components/ImagePreloader'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { getFeaturedProducts } from '@/lib/products'
+import { Suspense } from 'react'
 
 // OPTIMIERT: ISR mit 60 Sekunden Revalidation für bessere Performance
 // Cache wird nach Produktlöschung invalidiert (siehe DELETE endpoint)

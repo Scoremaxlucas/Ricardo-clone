@@ -1,8 +1,8 @@
 'use client'
 
+import { useLanguage } from '@/contexts/LanguageContext'
 import { X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useLanguage } from '@/contexts/LanguageContext'
 import { Suspense } from 'react'
 
 interface ActiveFilter {
@@ -71,7 +71,7 @@ function FilterChipsContent() {
   const removeFilter = (keyToRemove: string) => {
     const params = new URLSearchParams(searchParams?.toString() || '')
     params.delete(keyToRemove)
-    
+
     // Behalte Query-Parameter (q, category, etc.)
     const newUrl = `/search?${params.toString()}`
     router.push(newUrl)
@@ -84,12 +84,12 @@ function FilterChipsContent() {
     const query = params.get('q')
     const category = params.get('category')
     const subcategory = params.get('subcategory')
-    
+
     const newParams = new URLSearchParams()
     if (query) newParams.set('q', query)
     if (category) newParams.set('category', category)
     if (subcategory) newParams.set('subcategory', subcategory)
-    
+
     router.push(`/search?${newParams.toString()}`)
   }
 
@@ -119,7 +119,7 @@ function FilterChipsContent() {
         {activeFilters.length > 0 && (
           <button
             onClick={clearAllFilters}
-            className="ml-auto rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:border-primary-500 hover:text-primary-600"
+            className="ml-auto rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:border-primary-500 hover:bg-gray-50 hover:text-primary-600"
           >
             Alle zurücksetzen
           </button>

@@ -1,6 +1,6 @@
 'use client'
 
-import { BadgeInfo, BADGE_INFO } from '@/lib/badge-system'
+import { BADGE_INFO, BadgeInfo } from '@/lib/badge-system'
 import { useEffect, useRef } from 'react'
 import toast from 'react-hot-toast'
 
@@ -42,7 +42,8 @@ export function useBadgeNotifications(userId?: string) {
                   borderRadius: '12px',
                   padding: '16px',
                   fontSize: '14px',
-                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
+                  boxShadow:
+                    '0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06)',
                   border: '1px solid #e5e7eb',
                 },
                 icon: badgeInfo.icon,
