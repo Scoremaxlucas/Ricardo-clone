@@ -9,32 +9,31 @@ module.exports = {
     extend: {
       colors: {
         primary: {
-          DEFAULT: '#0d9488', /* Dunkleres Teal für bessere Lesbarkeit (WCAG AA) */
+          DEFAULT: '#0d9488',
           50: '#f0fdfa',
           100: '#ccfbf1',
           200: '#99f6e4',
           300: '#5eead4',
           400: '#2dd4bf',
           500: '#14b8a6',
-          600: '#0d9488', /* Für CTAs und wichtige Elemente */
-          700: '#0f766e', /* Für maximale Kontraste */
+          600: '#0d9488',
+          700: '#0f766e',
           800: '#115e59',
           900: '#134e4a',
         },
         accent: {
-          DEFAULT: '#fbbf24', /* Dunkleres Gelb für besseren Kontrast (WCAG AA) */
+          DEFAULT: '#fbbf24',
           50: '#fff9e6',
           100: '#ffefb3',
           200: '#ffe580',
           300: '#ffdb4d',
-          400: '#fbbf24', /* Neuer Standard für besseren Kontrast */
-          500: '#f59e0b', /* Dunkleres Gelb */
-          600: '#d97706', /* Noch dunkler */
+          400: '#fbbf24',
+          500: '#f59e0b',
+          600: '#d97706',
           700: '#b45309',
           800: '#92400e',
           900: '#78350f',
-          /* Legacy: Behalte alte Werte für Rückwärtskompatibilität */
-          legacy: '#FFD95C', /* Altes helles Gelb - nur für spezielle Fälle */
+          legacy: '#FFD95C',
         },
         orange: {
           DEFAULT: '#f97316',
@@ -57,7 +56,6 @@ module.exports = {
             dark: '#3A3A3A',
           },
         },
-        // Legacy support
         secondary: {
           50: '#f8fafc',
           100: '#f1f5f9',
@@ -73,6 +71,34 @@ module.exports = {
       },
       fontFamily: {
         sans: ['Inter', 'system-ui', 'sans-serif'],
+      },
+      fontSize: {
+        'xs': ['0.75rem', { lineHeight: '1.5', letterSpacing: '0.02em' }],
+        'sm': ['0.875rem', { lineHeight: '1.5', letterSpacing: '0.01em' }],
+        'base': ['1rem', { lineHeight: '1.6', letterSpacing: '0' }],
+        'lg': ['1.125rem', { lineHeight: '1.6', letterSpacing: '0' }],
+        'xl': ['1.25rem', { lineHeight: '1.5', letterSpacing: '-0.01em' }],
+        '2xl': ['1.5rem', { lineHeight: '1.4', letterSpacing: '-0.01em' }],
+        '3xl': ['1.875rem', { lineHeight: '1.3', letterSpacing: '-0.02em' }],
+        '4xl': ['2.25rem', { lineHeight: '1.2', letterSpacing: '-0.02em' }],
+        '5xl': ['3rem', { lineHeight: '1.1', letterSpacing: '-0.02em' }],
+        '6xl': ['3.75rem', { lineHeight: '1.1', letterSpacing: '-0.03em' }],
+        '7xl': ['4.5rem', { lineHeight: '1', letterSpacing: '-0.03em' }],
+      },
+      lineHeight: {
+        'tight': '1.1',
+        'snug': '1.25',
+        'normal': '1.5',
+        'relaxed': '1.6',
+        'loose': '1.8',
+      },
+      letterSpacing: {
+        'tighter': '-0.03em',
+        'tight': '-0.02em',
+        'normal': '0',
+        'wide': '0.01em',
+        'wider': '0.02em',
+        'widest': '0.05em',
       },
     },
   },

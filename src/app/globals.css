@@ -188,33 +188,52 @@ html {
     @apply border-gray-200;
   }
 
-  h1,
-  h2,
-  h3,
-  h4,
-  h5,
-  h6 {
-    @apply font-bold; /* Fetter für mehr Gewicht */
-    letter-spacing: -0.01em; /* Leicht enger für moderne Optik */
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-bold text-gray-900;
+    letter-spacing: -0.02em;
   }
 
   h1 {
-    @apply text-4xl md:text-5xl; /* Größer */
+    @apply text-3xl font-extrabold sm:text-4xl md:text-5xl lg:text-6xl;
     line-height: 1.1;
+    letter-spacing: -0.03em;
   }
 
   h2 {
-    @apply text-3xl md:text-4xl;
+    @apply text-2xl font-bold sm:text-3xl md:text-4xl;
     line-height: 1.2;
   }
 
   h3 {
-    @apply text-2xl md:text-3xl;
+    @apply text-xl font-bold sm:text-2xl md:text-3xl;
+    line-height: 1.25;
+  }
+
+  h4 {
+    @apply text-lg font-semibold sm:text-xl;
     line-height: 1.3;
   }
 
+  h5 {
+    @apply text-base font-semibold sm:text-lg;
+    line-height: 1.4;
+  }
+
+  h6 {
+    @apply text-sm font-semibold uppercase tracking-wider text-gray-600;
+    line-height: 1.4;
+  }
+
+  p {
+    @apply text-base leading-relaxed text-gray-700;
+  }
+
+  small {
+    @apply text-sm leading-normal text-gray-600;
+  }
+
   body {
-    @apply bg-[#FAFAFA] text-gray-900; /* Warmes Weiß */
+    @apply bg-[#FAFAFA] text-gray-900;
   }
 }
 
