@@ -36,7 +36,7 @@
   --radius-xl: 32px;
   --radius-full: 50px;
 
-  /* Spacing System */
+  /* PHASE 3.2: Spacing System - 8px Base Grid */
   --space-xs: 4px;
   --space-sm: 8px;
   --space-md: 16px;
@@ -366,5 +366,74 @@ html {
       opacity: 1;
       transform: translateX(0) scale(1);
     }
+  }
+}
+
+@layer utilities {
+  /* PHASE 3.2: Spacing Utilities */
+  
+  /* Section Spacing */
+  .section-padding {
+    @apply py-12 md:py-16 lg:py-20;
+  }
+  
+  .section-padding-sm {
+    @apply py-8 md:py-12;
+  }
+  
+  .section-margin {
+    @apply my-12 md:my-16 lg:my-20;
+  }
+  
+  /* Container Widths */
+  .container-content {
+    @apply mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8;
+  }
+  
+  .container-wide {
+    @apply mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8;
+  }
+  
+  .container-narrow {
+    @apply mx-auto max-w-3xl px-4 sm:px-6;
+  }
+  
+  .container-prose {
+    @apply mx-auto max-w-[75ch] px-4;
+  }
+  
+  /* Card Grid Gaps */
+  .grid-cards {
+    @apply grid gap-4 md:gap-6;
+  }
+  
+  .grid-cards-tight {
+    @apply grid gap-2 md:gap-3;
+  }
+  
+  /* Stack Spacing (Vertical) */
+  .stack {
+    @apply flex flex-col gap-4;
+  }
+  
+  .stack-sm {
+    @apply flex flex-col gap-2;
+  }
+  
+  .stack-lg {
+    @apply flex flex-col gap-6;
+  }
+  
+  /* Cluster Spacing (Horizontal) */
+  .cluster {
+    @apply flex flex-wrap gap-4;
+  }
+  
+  .cluster-sm {
+    @apply flex flex-wrap gap-2;
+  }
+  
+  .cluster-lg {
+    @apply flex flex-wrap gap-6;
   }
 }
