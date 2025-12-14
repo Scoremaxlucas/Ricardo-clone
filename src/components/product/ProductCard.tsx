@@ -2,6 +2,7 @@
 
 import { Clock, Flame, Gavel, Heart, MapPin, Sparkles, Zap } from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import toast from 'react-hot-toast'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -240,6 +241,9 @@ export function ProductCard({
           onFavoriteToggle?.(product.id, !newFavoriteState)
           const errorData = await response.json()
           console.error('Error removing favorite:', errorData.message)
+          toast.error('Fehler beim Entfernen aus Favoriten')
+        } else {
+          toast.success('Aus Favoriten entfernt', { icon: '❤️' })
         }
       } else {
         // Hinzufügen: POST /api/favorites mit watchId im Body
@@ -255,6 +259,9 @@ export function ProductCard({
           onFavoriteToggle?.(product.id, !newFavoriteState)
           const errorData = await response.json()
           console.error('Error adding favorite:', errorData.message)
+          toast.error('Fehler beim Hinzufügen zu Favoriten')
+        } else {
+          toast.success('Zu Favoriten hinzugefügt', { icon: '❤️' })
         }
       }
     } catch (error) {

@@ -1,11 +1,26 @@
 'use client'
 
+import { useState } from 'react'
 import Link from 'next/link'
+import { ChevronDown } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 export function Footer() {
   const { t } = useLanguage()
+  const [openSections, setOpenSections] = useState<Set<string>>(new Set())
+
+  const toggleSection = (section: string) => {
+    setOpenSections(prev => {
+      const next = new Set(prev)
+      if (next.has(section)) {
+        next.delete(section)
+      } else {
+        next.add(section)
+      }
+      return next
+    })
+  }
 
   return (
     <footer
@@ -16,8 +31,9 @@ export function Footer() {
       }}
     >
       <div className="relative z-10 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
-        <div className="grid grid-cols-1 gap-8 md:grid-cols-2 lg:grid-cols-5">
-          {/* Company Info */}
+        {/* Mobile: Accordion Sections, Desktop: Grid */}
+        <div className="space-y-4 md:grid md:grid-cols-2 md:gap-8 lg:grid-cols-5 md:space-y-0">
+          {/* Company Info - Always visible */}
           <div className="col-span-1 lg:col-span-2">
             <div className="mb-4 flex items-center">
               <Logo size="md" className="text-white" />
@@ -82,10 +98,25 @@ export function Footer() {
             </div>
           </div>
 
-          {/* Für Käufer */}
+          {/* Für Käufer - Accordion on mobile */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold text-accent-500">{t.footer.forBuyers}</h3>
-            <ul className="space-y-2.5">
+            <button
+              onClick={() => toggleSection('buyers')}
+              className="mb-4 flex w-full items-center justify-between text-lg font-semibold text-accent-500 md:mb-4 md:block"
+              aria-expanded={openSections.has('buyers') || undefined}
+            >
+              <span>{t.footer.forBuyers}</span>
+              <ChevronDown
+                className={`h-5 w-5 transition-transform md:hidden ${
+                  openSections.has('buyers') ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            <ul
+              className={`space-y-2.5 transition-all md:block ${
+                openSections.has('buyers') ? 'block' : 'hidden md:block'
+              }`}
+            >
               <li>
                 <Link
                   href="/categories"
@@ -121,10 +152,25 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Für Verkäufer */}
+          {/* Für Verkäufer - Accordion on mobile */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold text-accent-500">{t.footer.forSellers}</h3>
-            <ul className="space-y-2.5">
+            <button
+              onClick={() => toggleSection('sellers')}
+              className="mb-4 flex w-full items-center justify-between text-lg font-semibold text-accent-500 md:mb-4 md:block"
+              aria-expanded={openSections.has('sellers') || undefined}
+            >
+              <span>{t.footer.forSellers}</span>
+              <ChevronDown
+                className={`h-5 w-5 transition-transform md:hidden ${
+                  openSections.has('sellers') ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            <ul
+              className={`space-y-2.5 transition-all md:block ${
+                openSections.has('sellers') ? 'block' : 'hidden md:block'
+              }`}
+            >
               <li>
                 <Link
                   href="/sell"
@@ -152,10 +198,25 @@ export function Footer() {
             </ul>
           </div>
 
-          {/* Hilfe & Support */}
+          {/* Hilfe & Support - Accordion on mobile */}
           <div>
-            <h3 className="mb-4 text-lg font-semibold text-accent-500">{t.footer.help}</h3>
-            <ul className="space-y-2.5">
+            <button
+              onClick={() => toggleSection('help')}
+              className="mb-4 flex w-full items-center justify-between text-lg font-semibold text-accent-500 md:mb-4 md:block"
+              aria-expanded={openSections.has('help') || undefined}
+            >
+              <span>{t.footer.help}</span>
+              <ChevronDown
+                className={`h-5 w-5 transition-transform md:hidden ${
+                  openSections.has('help') ? 'rotate-180' : ''
+                }`}
+              />
+            </button>
+            <ul
+              className={`space-y-2.5 transition-all md:block ${
+                openSections.has('help') ? 'block' : 'hidden md:block'
+              }`}
+            >
               <li>
                 <Link
                   href="/help"
@@ -200,12 +261,13 @@ export function Footer() {
           </div>
         </div>
 
+        {/* Legal Links - Always visible, 2-column grid on mobile */}
         <div className="mt-10 border-t border-white/20 pt-8">
           <div className="flex flex-col items-center justify-between gap-4 md:flex-row">
             <p className="text-sm text-white/70">
               © {new Date().getFullYear()} Helvenda.ch - {t.footer.allRightsReserved}
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-4 md:gap-6">
+            <div className="grid grid-cols-2 gap-3 md:flex md:flex-wrap md:items-center md:justify-center md:gap-6">
               <Link
                 href="/privacy"
                 className="text-sm text-white/70 transition-colors hover:text-white hover:underline"

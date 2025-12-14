@@ -9,6 +9,7 @@ import { FilterChips } from '@/components/ui/FilterChips'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
 import { ChevronDown, Filter, Grid3x3, List, Package, Search, X } from 'lucide-react'
+import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
@@ -1177,7 +1178,7 @@ export default function SearchPage() {
       </Suspense>
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
-              <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
+              <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
               <p className="text-gray-600">Laden...</p>
             </div>
           </div>
