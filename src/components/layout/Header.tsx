@@ -229,7 +229,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
           </div>
 
           {/* Navigation */}
-          <div className="ml-1 flex min-w-0 flex-1 items-center justify-start gap-0.5 sm:ml-2 sm:gap-1 md:ml-4 md:gap-2 lg:ml-8 lg:gap-4">
+          <div className="ml-1 hidden min-w-0 flex-1 items-center justify-start gap-0.5 sm:ml-2 sm:flex sm:gap-1 md:ml-4 md:gap-2 lg:ml-8 lg:gap-4">
             {/* Favoriten */}
             {session ? (
               <Link
@@ -250,7 +250,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             ) : (
               <button
                 onClick={() => alert(t.header.pleaseLoginForFavorites)}
-                className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
+                className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
                 title={t.header.favorites}
               >
                 <Heart className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -263,7 +263,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               href="/auctions"
               prefetch={true}
               onMouseEnter={() => handlePrefetch('/auctions')}
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
+              className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
               title={t.header.auctions}
             >
               <Gavel className="h-5 w-5 sm:h-4 sm:w-4" />
@@ -457,7 +457,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   href="/login"
                   prefetch={true}
                   onMouseEnter={() => handlePrefetch('/login')}
-                  className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
+                  className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
                   title={t.header.login}
                 >
                   <User className="h-5 w-5 sm:h-4 sm:w-4" />
