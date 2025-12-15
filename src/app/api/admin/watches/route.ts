@@ -208,8 +208,20 @@ export async function GET(request: NextRequest) {
       if (isRejected) {
         calculatedIsActive = false // Rejected = immer inaktiv
       } else if (isApproved) {
-        // Approved = aktiv, außer es wurde verkauft
+        // KRITISCH: Approved = IMMER aktiv, außer es wurde verkauft
+        // Ignoriere alle anderen Bedingungen (Auktion-Status, etc.)
         calculatedIsActive = !isSold
+        // Double-check: Wenn approved aber trotzdem false, log error
+        if (!calculatedIsActive && !isSold) {
+          console.error('[admin/watches] CRITICAL: Approved watch calculated as inactive but not sold!', {
+            watchId: watch.id,
+            moderationStatus: watch.moderationStatus,
+            isSold,
+            activePurchases: activePurchases.length,
+          })
+          // Force to true as fallback
+          calculatedIsActive = true
+        }
       } else {
         // Für andere Status (pending, null): Berechne basierend auf Auktion
         calculatedIsActive = !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)

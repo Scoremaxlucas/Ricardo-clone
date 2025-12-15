@@ -163,7 +163,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (isRejected) {
       calculatedIsActive = false // Rejected = immer inaktiv
     } else if (isApproved) {
-      calculatedIsActive = !isSold // Approved = aktiv, außer verkauft
+      // KRITISCH: Approved = IMMER aktiv, außer es wurde verkauft
+      calculatedIsActive = !isSold
+      // Double-check: Wenn approved aber trotzdem false, log error
+      if (!calculatedIsActive && !isSold) {
+        console.error('[edit-status] CRITICAL: Approved watch calculated as inactive but not sold!', {
+          watchId: id,
+          moderationStatus: updatedWatch?.moderationStatus,
+          isSold,
+          activePurchases: activePurchases.length,
+        })
+        // Force to true as fallback
+        calculatedIsActive = true
+      }
     } else {
       // Für andere Status (pending, null): Berechne basierend auf Auktion
       calculatedIsActive = !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
