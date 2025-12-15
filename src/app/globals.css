@@ -10,10 +10,13 @@
   --color-primary-dark: #0d9488; /* Dunkleres Teal für bessere Kontraste (WCAG AA) */
   --color-primary-darker: #0f766e; /* Noch dunkler für maximale Lesbarkeit */
   --color-primary-light: #10b981; /* Grün-Türkis Mischung */
-  --color-accent: #fbbf24; /* Dunkleres Gelb für besseren Kontrast (statt #ffd95c) */
-  --color-accent-orange: #f97316;
-  --color-accent-pink: #ec4899;
-  --color-accent-green: #10b981;
+  /* Accent-Farben - Intentional verwendet für spezifische Zwecke */
+  --color-accent: #fbbf24; /* Gelb: Warnungen und Highlights */
+  --color-accent-orange: #f97316; /* Orange: Nur für wichtige CTAs (Verkaufen, Kaufen) - höhere Conversion */
+  --color-accent-pink: #ec4899; /* Pink: Deprecated - nicht mehr verwenden */
+  --color-accent-green: #10b981; /* Grün: Erfolg/Positive Aktionen */
+  
+  /* Primary-Farbe: Teal für vertrauenswürdige Primary-Actions und Links */
 
   /* Wärmere Neutrale */
   --color-neutral-white: #fafafa; /* Warmes Weiß */

@@ -417,12 +417,12 @@ export function ProductCard({
 
           {/* Booster Badges */}
           {hasSuperBoost && (
-            <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 p-1 text-white shadow-md">
+            <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-orange-600 p-1 text-white shadow-md">
               <Sparkles className="h-3 w-3" />
             </div>
           )}
           {hasTurboBoost && (
-            <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-1 text-white shadow-md">
+            <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-primary-400 to-primary-600 p-1 text-white shadow-md">
               <Zap className="h-3 w-3" />
             </div>
           )}
@@ -614,12 +614,12 @@ export function ProductCard({
             <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
           </button>
           {hasSuperBoost && (
-            <div className="absolute left-2 top-2 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 p-1.5 text-white shadow-md">
+            <div className="absolute left-2 top-2 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-orange-600 p-1.5 text-white shadow-md">
               <Sparkles className="h-3.5 w-3.5" />
             </div>
           )}
           {hasTurboBoost && (
-            <div className="absolute left-2 top-2 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-1.5 text-white shadow-md">
+            <div className="absolute left-2 top-2 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-primary-400 to-primary-600 p-1.5 text-white shadow-md">
               <Zap className="h-3.5 w-3.5" />
             </div>
           )}
@@ -840,12 +840,12 @@ export function ProductCard({
 
         {/* Booster Badges */}
         {hasSuperBoost && (
-          <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 p-1 text-white shadow-md">
+          <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-orange-600 p-1 text-white shadow-md">
             <Sparkles className="h-3 w-3" />
           </div>
         )}
         {hasTurboBoost && (
-          <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-1 text-white shadow-md">
+          <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-primary-400 to-primary-600 p-1 text-white shadow-md">
             <Zap className="h-3 w-3" />
           </div>
         )}

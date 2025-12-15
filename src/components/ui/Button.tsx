@@ -2,7 +2,7 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'secondary' | 'outline' | 'ghost'
+  variant?: 'primary' | 'primary-teal' | 'secondary' | 'outline' | 'ghost'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
   children: React.ReactNode
@@ -21,6 +21,7 @@ export function Button({
     'inline-flex items-center justify-center font-bold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer'
 
   const variants = {
+    'primary-teal': 'text-white rounded-[50px] focus:ring-primary-500',
     primary: 'text-white rounded-[50px] focus:ring-primary-500',
     secondary:
       'bg-white text-primary-600 border-2 border-primary-500 hover:bg-primary-500 hover:text-white focus:ring-primary-500 rounded-[50px] shadow-sm hover:shadow-md',
@@ -37,6 +38,22 @@ export function Button({
 
   // Gradient für Primary Button - Orange für höhere Conversion (CTAs)
   // Für sekundäre Primary-Buttons kann Teal-Gradient verwendet werden (vertrauensvoller)
+  const primaryTealStyle =
+    variant === 'primary-teal'
+      ? {
+          background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+          boxShadow: '0px 4px 20px rgba(20, 184, 166, 0.3)',
+        }
+      : {}
+
+  const primaryTealHoverStyle =
+    variant === 'primary-teal'
+      ? {
+          transform: 'translateY(-1px)',
+          boxShadow: '0px 6px 24px rgba(20, 184, 166, 0.3)',
+          background: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)',
+        }
+      : {}
   const primaryStyle =
     variant === 'primary'
       ? {
@@ -61,19 +78,23 @@ export function Button({
         variants[variant],
         sizes[size],
         className,
-        variant === 'primary' &&
+        (variant === 'primary' || variant === 'primary-teal') &&
           'hover:-translate-y-0.5 active:translate-y-0',
         variant === 'secondary' && 'hover:-translate-y-0.5 active:translate-y-0'
       )}
-      style={variant === 'primary' ? primaryStyle : undefined}
+      style={variant === 'primary' ? primaryStyle : variant === 'primary-teal' ? primaryTealStyle : undefined}
       onMouseEnter={e => {
         if (variant === 'primary' && !disabled && !loading) {
           Object.assign(e.currentTarget.style, primaryHoverStyle)
+        } else if (variant === 'primary-teal' && !disabled && !loading) {
+          Object.assign(e.currentTarget.style, primaryTealHoverStyle)
         }
       }}
       onMouseLeave={e => {
         if (variant === 'primary' && !disabled && !loading) {
           Object.assign(e.currentTarget.style, primaryStyle)
+        } else if (variant === 'primary-teal' && !disabled && !loading) {
+          Object.assign(e.currentTarget.style, primaryTealStyle)
         }
       }}
       disabled={disabled || loading}
