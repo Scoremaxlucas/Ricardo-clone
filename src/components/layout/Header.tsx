@@ -33,6 +33,7 @@ import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { memo, useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { CategorySidebarNew } from './CategorySidebarNew'
 
 // Deferred data types
 interface DeferredData {
@@ -54,6 +55,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   const [isProfileMenuOpen, setIsProfileMenuOpen] = useState(false)
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false)
   const [isSellMenuOpen, setIsSellMenuOpen] = useState(false)
+  const [isSidebarOpen, setIsSidebarOpen] = useState(false)
 
   // === DEFERRED STATE (nicht-kritisch, verzögert laden) ===
   const [deferredData, setDeferredData] = useState<DeferredData>({
@@ -228,21 +230,19 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             </Link>
           </div>
 
-          {/* Categories Dropdown */}
-          <Link
-            href="/search"
-            prefetch={true}
-            onMouseEnter={() => handlePrefetch('/search')}
-            className="flex items-center gap-1.5 rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-primary-100"
-            title="Kategorien"
-          >
-            <Grid3x3 className="h-4 w-4 flex-shrink-0" />
-            <span className="hidden sm:inline">Kategorien</span>
-            <ChevronDown className="h-3 w-3 flex-shrink-0 hidden sm:inline" />
-          </Link>
-
-          {/* Navigation */}
+          {/* Navigation - Kategorien als erster Punkt (Design-Optimierung) */}
           <div className="ml-1 hidden min-w-0 flex-1 items-center justify-start gap-1 sm:ml-2 sm:flex sm:gap-2 md:ml-4 md:gap-3 lg:ml-8 lg:gap-4">
+            {/* Kategorien Button - Öffnet Sidebar */}
+            <button
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
+              title="Kategorien"
+            >
+              <Grid3x3 className="h-5 w-5" />
+              <span className="hidden text-sm font-medium sm:inline">Kategorien</span>
+              <ChevronDown className="h-3 w-3 flex-shrink-0 hidden sm:inline" />
+            </button>
+
             {/* Favoriten */}
             {session ? (
               <Link
@@ -524,6 +524,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
         </div>
 
       </div>
+      <CategorySidebarNew isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
     </header>
   )
 })
