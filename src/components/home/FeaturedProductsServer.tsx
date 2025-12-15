@@ -298,9 +298,9 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-10 text-center">
             <h2 className="mb-3 text-3xl font-extrabold text-gray-900 md:text-4xl">
-              {t.home.featured}
+              "Neu eingestellt"
             </h2>
-            <p className="text-lg leading-relaxed text-gray-600">{t.home.discoverLatest}</p>
+            <p className="text-lg leading-relaxed text-gray-600">"Die neuesten Artikel auf Helvenda"</p>
           </div>
           <div className="flex items-center justify-center py-12">
             <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
@@ -316,7 +316,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       <section className="bg-[#FAFAFA] py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="mb-4 text-3xl font-bold text-gray-900">{t.home.featured}</h2>
+            <h2 className="mb-4 text-3xl font-bold text-gray-900">"Neu eingestellt"</h2>
             <p className="text-lg text-gray-600">{t.home.noItemsYet}</p>
           </div>
         </div>
@@ -329,9 +329,9 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-10 text-center">
           <h2 className="mb-3 text-3xl font-extrabold text-gray-900 md:text-4xl">
-            {t.home.featured}
+            "Neu eingestellt"
           </h2>
-          <p className="text-lg leading-relaxed text-gray-600">{t.home.discoverLatest}</p>
+          <p className="text-lg leading-relaxed text-gray-600">"Die neuesten Artikel auf Helvenda"</p>
         </div>
 
         <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
