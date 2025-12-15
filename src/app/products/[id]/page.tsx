@@ -168,6 +168,29 @@ export default async function ProductPage({ params }: Props) {
     )
   }
 
+  // KRITISCH: Prüfe ob Produkt deaktiviert wurde (moderationStatus: 'rejected')
+  // Deaktivierte Produkte sollten nicht angezeigt werden
+  if (watch && watch.moderationStatus === 'rejected') {
+    console.log(`[ProductPage] Product ${id} is deactivated (rejected), showing 404`)
+    return (
+      <div className="flex min-h-screen flex-col bg-gray-50">
+        <Header />
+        <main className="flex-1 pb-8">
+          <div className="mx-auto max-w-[1400px] px-4 py-8">
+            <ProductPageClient
+              watch={null}
+              images={[]}
+              conditionMap={{}}
+              lieferumfang=""
+              seller={null}
+            />
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
+
   console.log(`[ProductPage] Product found: ${watch.title} (ID: ${watch.id}, ArticleNumber: ${watch.articleNumber})`)
 
     // Prüfe ob Auktion abgelaufen ist und verarbeite sie falls nötig

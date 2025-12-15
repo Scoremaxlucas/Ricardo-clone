@@ -200,10 +200,17 @@ export default function AdminModerateWatchesPage() {
           )
         }
         
-        // Dann vom Server neu laden für Konsistenz (mit kurzer Verzögerung für DB-Commit)
-        setTimeout(async () => {
-          await loadWatches()
-        }, 200)
+        // WICHTIG: Warte kurz für DB-Commit, dann lade vom Server neu für Konsistenz
+        // Verwende Promise-basierte Verzögerung statt setTimeout mit async
+        await new Promise(resolve => setTimeout(resolve, 300))
+        
+        // Wenn Filter auf 'inactive' steht und wir aktivieren, wechsle zu 'all' für bessere UX
+        if (filter === 'inactive' && !currentStatus) {
+          setFilter('all')
+        }
+        
+        // Lade Watches neu - dies verwendet den aktuellen Filter (oder 'all' wenn geändert)
+        await loadWatches()
       } else {
         console.error('Status update error:', data)
         toast.error(data.message || t.admin.errorChangingStatus)
