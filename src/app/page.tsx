@@ -82,6 +82,8 @@ export default async function Home() {
           title="Finden Sie lokale Deals in der Schweiz"
           subtitle="Tausende Artikel von Verkäufern in Ihrer Nähe"
         >
+          {/* Search - Client Component mit Skeleton Fallback */}
+          <Suspense fallback={
             <div className="flex h-14 items-center rounded-full bg-white/90 px-6 shadow-lg">
               <div className="h-5 w-64 animate-pulse rounded bg-gray-200" />
             </div>
