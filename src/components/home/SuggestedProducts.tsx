@@ -109,6 +109,7 @@ export function SuggestedProducts() {
   ]
 
   return (
+    <>
     <section className="bg-white py-12">
       <div className="mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         <h2 className="mb-6 text-2xl font-bold text-gray-900">{t.home.currentlyOnHelvenda}</h2>
@@ -215,5 +216,6 @@ export function SuggestedProducts() {
         message={t.favorites.loginRequired}
         loginButtonText="Anmelden"
       />
+    </>
   )
 }

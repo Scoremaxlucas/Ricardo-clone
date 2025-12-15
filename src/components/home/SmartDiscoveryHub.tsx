@@ -128,6 +128,7 @@ export function SmartDiscoveryHub() {
   }
 
   return (
+    <>
     <section className="bg-gradient-to-br from-primary-50 via-white to-purple-50 py-8">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         {/* Header */}
@@ -184,5 +185,6 @@ export function SmartDiscoveryHub() {
         message="Bitte melden Sie sich an, um Favoriten hinzuzufügen."
         loginButtonText="Anmelden"
       />
+    </>
   )
 }
