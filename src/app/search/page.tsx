@@ -437,7 +437,7 @@ function SearchPageContent() {
                     e.stopPropagation()
                     setOpenFilter(openFilter === 'price' ? null : 'price')
                   }}
-                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:border-primary-500"
+                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-2 transition-colors hover:border-primary-500"
                 >
                   <span className="text-sm font-medium text-gray-700">{t.search.price}</span>
                   <ChevronDown
@@ -643,7 +643,7 @@ function SearchPageContent() {
                                 setLocalMaxPrice(val)
                               }
                             }}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
+                            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
                             placeholder="0.05"
                           />
                         </div>
@@ -663,7 +663,7 @@ function SearchPageContent() {
                                 setLocalMinPrice(val)
                               }
                             }}
-                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
+                            className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
                             placeholder="1'000'000"
                           />
                         </div>
@@ -706,7 +706,7 @@ function SearchPageContent() {
                     e.stopPropagation()
                     setOpenFilter(openFilter === 'condition' ? null : 'condition')
                   }}
-                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:border-primary-500"
+                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-2 transition-colors hover:border-primary-500"
                 >
                   <span className="text-sm font-medium text-gray-700">{t.search.condition}</span>
                   <ChevronDown
@@ -762,7 +762,7 @@ function SearchPageContent() {
                     e.stopPropagation()
                     setOpenFilter(openFilter === 'brand' ? null : 'brand')
                   }}
-                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:border-primary-500"
+                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-2 transition-colors hover:border-primary-500"
                 >
                   <span className="text-sm font-medium text-gray-700">{t.search.brand}</span>
                   <ChevronDown
@@ -782,7 +782,7 @@ function SearchPageContent() {
                         placeholder={t.search.searchBrand}
                         value={brandSearchQuery}
                         onChange={e => setBrandSearchQuery(e.target.value)}
-                        className="w-full rounded-md border border-gray-300 py-2 pl-10 pr-8 text-sm focus:ring-2 focus:ring-primary-500"
+                        className="w-full rounded-md border border-gray-200 py-2 pl-10 pr-8 text-sm focus:ring-2 focus:ring-primary-500"
                       />
                       {brandSearchQuery && (
                         <button
@@ -867,7 +867,7 @@ function SearchPageContent() {
                     e.stopPropagation()
                     setOpenFilter(openFilter === 'offerType' ? null : 'offerType')
                   }}
-                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:border-primary-500"
+                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-2 transition-colors hover:border-primary-500"
                 >
                   <span className="text-sm font-medium text-gray-700">{t.search.offerType}</span>
                   <ChevronDown
@@ -925,7 +925,7 @@ function SearchPageContent() {
                     e.stopPropagation()
                     setOpenFilter(openFilter === 'location' ? null : 'location')
                   }}
-                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-300 px-4 py-2 transition-colors hover:border-primary-500"
+                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-2 transition-colors hover:border-primary-500"
                 >
                   <span className="text-sm font-medium text-gray-700">{t.search.location}</span>
                   <ChevronDown
@@ -951,7 +951,7 @@ function SearchPageContent() {
                             else params.delete('postalCode')
                             router.replace(`/search?${params.toString()}`) // OPTIMIERT: replace statt push
                           }}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 focus:ring-2 focus:ring-primary-500"
+                          className="w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                           placeholder="z.B. 8001"
                           maxLength={10}
                         />
@@ -972,7 +972,7 @@ function SearchPageContent() {
           {/* Results Header */}
           <div className="mb-6 flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold text-gray-900">
+              <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
                 {loading ? t.search.loading : `${watches.length} ${t.search.results}`}
               </h1>
             </div>
@@ -985,7 +985,7 @@ function SearchPageContent() {
                     e.stopPropagation()
                     setOpenFilter(openFilter === 'sort' ? null : 'sort')
                   }}
-                  className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 transition-colors hover:border-primary-500"
+                  className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 transition-colors hover:border-primary-500"
                 >
                   <span className="text-sm font-medium text-gray-700">
                     {t.search.sortBy}:{' '}
@@ -1042,7 +1042,7 @@ function SearchPageContent() {
               </div>
 
               {/* Ansicht */}
-              <div className="flex items-center gap-2 rounded-lg border border-gray-300 bg-white p-1">
+              <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`rounded p-2 transition-colors ${viewMode === 'grid' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:bg-gray-100'}`}
@@ -1099,7 +1099,7 @@ function SearchPageContent() {
               <div className="flex flex-col justify-center gap-3 sm:flex-row">
                 <Link
                   href="/categories"
-                  className="rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 hover:bg-gray-50"
+                  className="rounded-lg border-2 border-gray-200 bg-white px-6 py-3 font-medium text-gray-700 hover:bg-gray-50"
                 >
                   {t.search.browseCategories}
                 </Link>
