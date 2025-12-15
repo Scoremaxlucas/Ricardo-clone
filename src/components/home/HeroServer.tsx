@@ -77,9 +77,15 @@ export function HeroServer({
                 </p>
                 <Link
                   href="/sell"
-                  className="inline-block w-full rounded-[50px] bg-[#f97316] px-6 py-3 text-center text-base font-bold text-white shadow-lg transition-all duration-300 hover:-translate-y-1 hover:scale-[1.02] hover:bg-[#ea580c] md:px-8 md:py-4 md:text-lg"
+                  className="inline-block w-full rounded-[50px] bg-[#f97316] px-6 py-3 text-center text-base font-bold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#ea580c] md:px-8 md:py-4 md:text-lg"
                   style={{
                     boxShadow: '0px 4px 16px rgba(249, 115, 22, 0.25)',
+                  }}
+                  onMouseEnter={e => {
+                    e.currentTarget.style.boxShadow = '0px 6px 24px rgba(249, 115, 22, 0.3)'
+                  }}
+                  onMouseLeave={e => {
+                    e.currentTarget.style.boxShadow = '0px 4px 16px rgba(249, 115, 22, 0.25)'
                   }}
                 >
                   {sellNowButton}
