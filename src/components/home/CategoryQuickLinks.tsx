@@ -36,7 +36,7 @@ export function CategoryQuickLinks() {
   }>
 
   return (
-    <div className="border-t border-white/20 bg-white/5 py-6 backdrop-blur-sm">
+    <div className="border-t border-white/20 bg-white/5 py-8 backdrop-blur-sm md:py-12">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-center gap-4 overflow-x-auto pb-2 scrollbar-hide md:gap-6">
           {categories.map(category => {

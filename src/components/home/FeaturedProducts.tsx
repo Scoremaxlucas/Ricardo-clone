@@ -88,9 +88,9 @@ export function FeaturedProducts() {
 
   if (loading) {
     return (
-      <section className="bg-[#FAFAFA] py-12">
+      <section className="bg-[#FAFAFA] py-12 md:py-16 lg:py-20">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 text-center">
+          <div className="mb-12 text-center md:mb-16">
             <h2 className="mb-3 text-3xl font-extrabold text-gray-900 md:text-4xl">
               {t.home.featured}
             </h2>
@@ -116,9 +116,9 @@ export function FeaturedProducts() {
   }
 
   return (
-    <section className="bg-[#FAFAFA] py-12">
+    <section className="bg-[#FAFAFA] py-12 md:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 text-center">
+        <div className="mb-12 text-center md:mb-16">
           <h2 className="mb-3 text-3xl font-extrabold text-gray-900 md:text-4xl">
             {t.home.featured}
           </h2>

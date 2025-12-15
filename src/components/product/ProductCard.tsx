@@ -433,7 +433,7 @@ export function ProductCard({
           )}
         </div>
 
-        <div className="p-2 md:p-2">
+        <div className="p-4 md:p-4">
           {product.brand && (
             <div className="mb-1 truncate text-xs font-medium text-primary-600 md:text-xs">
               {product.brand}
@@ -868,7 +868,7 @@ export function ProductCard({
         )}
       </div>
 
-      <div className="relative p-2">
+      <div className="relative p-4">
         {/* Title - Immer sichtbar, 1 Zeile */}
         <div
           className="group/title relative mb-1 line-clamp-1 text-sm font-medium leading-tight text-gray-900"

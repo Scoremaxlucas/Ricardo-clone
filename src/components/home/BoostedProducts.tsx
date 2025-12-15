@@ -100,7 +100,7 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
   const isSuperBoost = boosterType === 'super-boost'
 
   return (
-    <section className="bg-gray-50 py-8">
+    <section className="bg-gray-50 py-12 md:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
           <h2 className="mb-2 text-xl font-bold text-gray-900">
