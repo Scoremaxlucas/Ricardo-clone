@@ -60,9 +60,9 @@ export function PopularCategories() {
               <Link
                 key={category.slug}
                 href={category.href}
-                className="group flex flex-col items-center gap-3 rounded-xl p-4 transition-all duration-200 hover:bg-gray-50 hover:shadow-md"
+                className="group flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-transparent bg-white p-4 transition-all duration-200 ease-out hover:border-primary-200 hover:bg-primary-50/50 hover:shadow-lg hover:scale-[1.02]"
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 text-primary-600 transition-all duration-200 group-hover:bg-primary-100 group-hover:scale-105 md:h-16 md:w-16">
+                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 text-primary-600 transition-all duration-200 group-hover:bg-primary-100 group-hover:scale-110 md:h-16 md:w-16">
                   <IconComponent className="h-7 w-7 md:h-8 md:w-8" />
                 </div>
                 <span className="text-center text-sm font-medium text-gray-700 transition-colors group-hover:text-primary-600">
@@ -77,11 +77,11 @@ export function PopularCategories() {
         <div className="mt-8 text-center">
           <Link
             href="/search"
-            className="inline-flex items-center gap-2 text-sm font-medium text-primary-600 transition-colors hover:text-primary-700"
+            className="group inline-flex items-center gap-2 rounded-full bg-primary-50 px-4 py-2 text-base font-semibold text-primary-600 transition-all duration-200 hover:bg-primary-100 hover:translate-x-1"
           >
             Alle Kategorien anzeigen
             <svg
-              className="h-4 w-4"
+              className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1"
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
