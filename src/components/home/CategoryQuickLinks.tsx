@@ -47,7 +47,7 @@ export function CategoryQuickLinks() {
                 href={category.href}
                 className="group flex min-w-[80px] flex-col items-center gap-2 rounded-xl p-3 transition-all duration-200 hover:bg-white/10 hover:scale-[1.02] md:min-w-[100px]"
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white transition-all duration-200 group-hover:bg-white/20 group-hover:scale-[1.05] md:h-14 md:w-14">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/15 text-white transition-all duration-200 group-hover:bg-white/15 group-hover:scale-[1.05] md:h-14 md:w-14">
                   <IconComponent className="h-6 w-6 md:h-7 md:w-7" />
                 </div>
                 <span className="text-center text-xs font-medium text-white/90 transition-colors group-hover:text-white md:text-sm">
