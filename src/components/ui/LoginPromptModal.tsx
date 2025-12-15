@@ -79,7 +79,7 @@ export function LoginPromptModal({
           </p>
 
           {/* Actions */}
-          <div className="flex flex-col gap-3 sm:flex-row sm:justify-center">
+          <div className="flex justify-center">
             <Button
               variant="primary-teal"
               onClick={handleLogin}
@@ -91,11 +91,5 @@ export function LoginPromptModal({
               onClick={onClose}
               className="rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
             >
-              Abbrechen
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
   )
 }
