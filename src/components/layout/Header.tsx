@@ -335,7 +335,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               <div className="relative">
                 <Bell className="h-5 w-5" />
                 {deferredData.unreadNotifications > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white sm:-right-2 sm:-top-2 sm:h-5 sm:w-5 sm:text-xs">
+                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white sm:-right-2 sm:-top-2 sm:h-4 sm:w-4 sm:text-xs">
                     {deferredData.unreadNotifications > 9 ? '9+' : deferredData.unreadNotifications}
                   </span>
                 )}
