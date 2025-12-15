@@ -12,6 +12,13 @@ import type { Metadata } from 'next'
 /**
  * Homepage - TTI & LCP Optimiert
  * 
+ * Homepage Struktur (nach UX Refactoring):
+ * 1. Header (simplified, Categories dropdown)
+ * 2. HeroServer (search-focused, sell secondary)
+ * 3. PopularCategories (6-8 top categories)
+ * 4. FeaturedProductsServer ("Neu eingestellt")
+ * 5. HomeClient (below-the-fold lazy-loaded)
+ * 
  * JavaScript Loading Priorität:
  * 1. Kritisch (0ms): Header, HeroServer (Text), FeaturedProducts
  * 2. Nach Paint: HeroSearch
