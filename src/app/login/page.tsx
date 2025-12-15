@@ -86,19 +86,19 @@ function LoginPageContent() {
       <Header />
       <div className="flex min-h-screen items-center justify-center px-4 py-12 sm:px-6 lg:px-8">
         <div className="w-full max-w-md">
-          <div className="space-y-8 rounded-lg bg-white px-8 py-10 shadow-xl">
+          <div className="space-y-8 rounded-xl bg-white px-8 py-10 shadow-lg ring-1 ring-gray-100">
             <div className="text-center">
               <div className="mb-6 flex justify-center">
                 <Logo size="lg" />
               </div>
-              <h2 className="mt-6 text-center text-3xl font-extrabold text-gray-900">
+              <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
                 Bei Ihrem Konto anmelden
               </h2>
-              <p className="mt-2 text-center text-sm text-gray-600">
+              <p className="mt-3 text-center text-sm text-gray-600">
                 Oder{' '}
                 <Link
                   href="/register"
-                  className="font-medium text-primary-600 hover:text-primary-500"
+                  className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
                 >
                   erstellen Sie ein neues Konto
                 </Link>
@@ -124,7 +124,7 @@ function LoginPageContent() {
                     required
                     value={email}
                     onChange={e => setEmail(e.target.value)}
-                    className="relative mt-1 block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-primary-500 sm:text-sm"
+                    className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 sm:text-sm"
                     placeholder="ihre@email.com"
                   />
                 </div>
@@ -142,7 +142,7 @@ function LoginPageContent() {
                       value={password}
                       onChange={e => setPassword(e.target.value)}
                       disabled={isLoading}
-                      className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 pr-10 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-gray-100 sm:text-sm"
+                      className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
                       placeholder="Ihr Passwort"
                     />
                     <button
@@ -166,7 +166,7 @@ function LoginPageContent() {
                     id="remember-me"
                     name="remember-me"
                     type="checkbox"
-                    className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    className="h-4 w-4 rounded border-gray-300 text-primary-600 transition-colors focus:ring-2 focus:ring-primary-500/20"
                   />
                   <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
                     Angemeldet bleiben
@@ -176,7 +176,7 @@ function LoginPageContent() {
                 <div className="text-sm">
                   <Link
                     href="/forgot-password"
-                    className="font-medium text-primary-600 hover:text-primary-500"
+                    className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
                   >
                     Passwort vergessen?
                   </Link>
@@ -186,6 +186,7 @@ function LoginPageContent() {
               <div>
                 <Button
                   type="submit"
+                  variant="primary-teal"
                   disabled={isLoading}
                   loading={isLoading}
                   className="w-full"
