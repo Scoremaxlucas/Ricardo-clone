@@ -910,6 +910,16 @@ div.min-h-screen > footer {
   flex-direction: column;
   gap: 0.5rem;
   padding: 1rem;
+  opacity: 0;
+  pointer-events: none;
+  visibility: hidden;
+}
+
+.skip-links-container:has(.skip-link:focus),
+.skip-links-container:has(.skip-link:hover) {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
 }
 
 .skip-link {

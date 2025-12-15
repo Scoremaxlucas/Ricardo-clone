@@ -53,6 +53,8 @@ export function SkipLinks() {
     }
   }
 
+  if (!isVisible) return null
+
   return (
     <div className="skip-links-container">
       <a
