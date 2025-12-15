@@ -14,18 +14,12 @@ import Link from 'next/link'
 interface HeroServerProps {
   title?: string
   subtitle?: string
-  sellNowText?: string
-  sellNowDescription?: string
-  sellNowButton?: string
   children?: React.ReactNode // Für Search Component
 }
 
 export function HeroServer({
-  title = 'Finden Sie genau das, was Sie suchen',
-  subtitle = 'Schweizer Online-Marktplatz für alle Ihre Bedürfnisse',
-  sellNowText = 'Verkaufen Sie jetzt',
-  sellNowDescription = 'Erreichen Sie tausende potenzielle Käufer in der Schweiz',
-  sellNowButton = 'Jetzt Artikel anbieten',
+  title = 'Finden Sie lokale Deals in der Schweiz',
+  subtitle = 'Tausende Artikel von Verkäufern in Ihrer Nähe',
   children,
 }: HeroServerProps) {
   return (
@@ -46,46 +40,27 @@ export function HeroServer({
       />
 
       <div className="relative z-10 mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
-        {/* Layout: 2 Spalten - Suchleiste links, Verkaufen Box rechts */}
-        <div className="mb-8 grid grid-cols-1 gap-6 lg:grid-cols-3 lg:gap-8">
-          {/* Linke Spalte: Suchleiste (60% auf Desktop) */}
-          <div className="lg:col-span-2">
-            <div className="mx-auto max-w-3xl">
-              {/* LCP-OPTIMIERT: H1 ist sofort im HTML, kein JavaScript nötig */}
-              <h1 className="mb-4 text-center text-3xl font-bold text-white md:mb-5 md:text-4xl lg:text-5xl">
-                {title}
-              </h1>
-              <p className="mb-8 text-center text-base text-white/90 md:mb-10 md:text-lg">
-                {subtitle}
-              </p>
-              {/* Slot für Client Component (Search) */}
-              <div className="mx-auto max-w-3xl">
-                {children}
-              </div>
-            </div>
+        {/* Single-Column Layout: Search-focused */}
+        <div className="mx-auto max-w-3xl">
+          {/* LCP-OPTIMIERT: H1 ist sofort im HTML, kein JavaScript nötig */}
+          <h1 className="mb-4 text-center text-3xl font-bold text-white md:mb-5 md:text-4xl lg:text-5xl">
+            {title}
+          </h1>
+          <p className="mb-8 text-center text-base text-white/90 md:mb-10 md:text-lg">
+            {subtitle}
+          </p>
+          {/* Slot für Client Component (Search) - Large, dominant */}
+          <div className="mx-auto max-w-3xl mb-4">
+            {children}
           </div>
-
-          {/* Rechte Spalte: Verkaufen Sie jetzt Box (40% auf Desktop) */}
-          <div className="lg:col-span-1">
-            <div className="mx-auto max-w-md lg:max-w-full">
-              <div className="rounded-2xl border border-white/20 bg-white/8 p-6 shadow-lg backdrop-blur-md">
-                <h2 className="mb-3 text-xl font-bold text-white md:text-2xl">
-                  {sellNowText}
-                </h2>
-                <p className="mb-6 text-sm leading-relaxed text-white/90 md:text-base">
-                  {sellNowDescription}
-                </p>
-                <Link
-                  href="/sell"
-                  className="inline-block w-full rounded-[50px] bg-[#f97316] px-6 py-3 text-center text-base font-bold text-white shadow-lg transition-all duration-200 hover:-translate-y-0.5 hover:bg-[#ea580c] hover:shadow-xl md:px-8 md:py-4 md:text-lg"
-                  style={{
-                    boxShadow: '0px 4px 16px rgba(249, 115, 22, 0.25)',
-                  }}
-                >
-                  {sellNowButton}
-                </Link>
-              </div>
-            </div>
+          {/* Secondary CTA: Artikel verkaufen */}
+          <div className="text-center">
+            <Link
+              href="/sell"
+              className="inline-block text-sm font-medium text-white/90 hover:text-white underline transition-colors"
+            >
+              Artikel verkaufen →
+            </Link>
           </div>
         </div>
       </div>
