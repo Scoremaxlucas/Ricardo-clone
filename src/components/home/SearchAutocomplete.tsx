@@ -202,7 +202,7 @@ export function SearchAutocomplete({
             }}
             onKeyDown={handleKeyDown}
             placeholder={placeholder || 'Suchen Sie nach Produkten...'}
-            className="w-full rounded-full border-2 border-gray-200 bg-white py-5 pl-12 pr-12 text-base text-gray-900 shadow-lg transition-all placeholder:text-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 md:py-6 md:text-lg"
+            className="w-full rounded-full border-2 border-gray-200 bg-white py-5 pl-12 pr-12 text-base text-gray-900 shadow-lg transition-all duration-200 ease-out placeholder:text-gray-500 hover:border-gray-300 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-200 md:py-6 md:text-lg"
           />
           {query && (
             <button
@@ -213,7 +213,7 @@ export function SearchAutocomplete({
                 setIsOpen(false)
                 inputRef.current?.focus()
               }}
-              className="absolute right-4 rounded-full p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+              className="absolute right-4 rounded-full p-1 text-gray-400 transition-all duration-200 ease-out hover:bg-gray-100 hover:text-gray-600 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
               title="Suche löschen"
               aria-label="Suche löschen"
             >
@@ -227,7 +227,7 @@ export function SearchAutocomplete({
       {isOpen && (suggestions.length > 0 || isLoading) && (
         <div
           ref={suggestionsRef}
-          className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-xl"
+          className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-xl animate-in fade-in slide-in-from-top-2 duration-200"
         >
           {isLoading ? (
             <div className="flex items-center justify-center px-4 py-3">
@@ -249,7 +249,7 @@ export function SearchAutocomplete({
                     key={index}
                     onClick={() => handleSubmit(suggestion)}
                     onMouseEnter={() => setSelectedIndex(index)}
-                    className={`cursor-pointer px-4 py-3 text-sm transition-colors ${
+                    className={`cursor-pointer px-4 py-3 text-sm transition-colors duration-150 ease-out ${
                       index === selectedIndex
                         ? 'bg-primary-50 text-primary-700'
                         : 'text-gray-700 hover:bg-gray-50'

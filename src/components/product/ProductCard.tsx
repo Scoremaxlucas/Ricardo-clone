@@ -282,7 +282,7 @@ export function ProductCard({
       <Link
         href={productHref}
         prefetch={true}
-        className={`group overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
+        className={`group overflow-hidden rounded-[20px] bg-white transition-all duration-200 ease-out ${className}`}
         style={{
           border: '1px solid rgba(0, 0, 0, 0.1)',
           boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
@@ -311,10 +311,10 @@ export function ProductCard({
               <img
                 src={mainImage}
                 alt={product.title}
-                className={`h-full w-full object-cover transition-all duration-300 ${
+                className={`h-full w-full object-cover transition-all duration-200 ease-out ${
                   showSecondImage && secondImage
                     ? 'scale-110 opacity-0'
-                    : 'scale-100 opacity-100 group-hover:scale-[1.02]'
+                    : 'scale-100 opacity-100 group-hover:scale-[1.01]'
                 }`}
                 loading="eager"
                 onError={() => {
@@ -329,10 +329,10 @@ export function ProductCard({
                 src={mainImage}
                 alt={product.title}
                 fill
-                className={`object-cover transition-all duration-300 ${
+                className={`object-cover transition-all duration-200 ease-out ${
                   showSecondImage && secondImage
                     ? 'scale-110 opacity-0'
-                    : 'scale-100 opacity-100 group-hover:scale-[1.02]'
+                    : 'scale-100 opacity-100 group-hover:scale-[1.01]'
                 }`}
                 loading="eager"
                 priority
@@ -366,7 +366,7 @@ export function ProductCard({
                 <img
                   src={secondImage}
                   alt={product.title}
-                  className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
+                  className={`absolute inset-0 h-full w-full object-cover transition-all duration-200 ease-out ${
                     showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                   }`}
                   loading="lazy"
@@ -376,7 +376,7 @@ export function ProductCard({
                   src={secondImage}
                   alt={product.title}
                   fill
-                  className={`object-cover transition-all duration-300 ${
+                  className={`object-cover transition-all duration-200 ease-out ${
                     showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                   }`}
                   loading="lazy"
@@ -389,7 +389,7 @@ export function ProductCard({
 
           {/* Schnellansicht Button auf Hover */}
           <div
-            className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-300 ${
+            className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-200 ease-out ${
               showSecondImage ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
             }`}
           >
@@ -512,7 +512,7 @@ export function ProductCard({
       <Link
         href={productHref}
         prefetch={true}
-        className={`group flex overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
+        className={`group flex overflow-hidden rounded-[20px] bg-white transition-all duration-200 ease-out ${className}`}
         style={{
           border: '1px solid rgba(0, 0, 0, 0.1)',
           boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
@@ -540,10 +540,10 @@ export function ProductCard({
                 <img
                   src={mainImage}
                   alt={product.title}
-                  className={`h-full w-full object-cover transition-all duration-300 ${
+                  className={`h-full w-full object-cover transition-all duration-200 ease-out ${
                     showSecondImage && secondImage
                       ? 'scale-110 opacity-0'
-                      : 'scale-100 opacity-100 group-hover:scale-[1.02]'
+                      : 'scale-100 opacity-100 group-hover:scale-[1.01]'
                   }`}
                   onError={() => setImageError(true)}
                   onLoad={() => setImageError(false)}
@@ -554,10 +554,10 @@ export function ProductCard({
                   src={mainImage}
                   alt={product.title}
                   fill
-                  className={`object-cover transition-all duration-300 ${
+                  className={`object-cover transition-all duration-200 ease-out ${
                     showSecondImage && secondImage
                       ? 'scale-110 opacity-0'
-                      : 'scale-100 opacity-100 group-hover:scale-[1.02]'
+                      : 'scale-100 opacity-100 group-hover:scale-[1.01]'
                   }`}
                   onError={() => setImageError(true)}
                   onLoad={() => setImageError(false)}
@@ -582,7 +582,7 @@ export function ProductCard({
                   <img
                     src={secondImage}
                     alt={product.title}
-                    className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
+                    className={`absolute inset-0 h-full w-full object-cover transition-all duration-200 ease-out ${
                       showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                     }`}
                     loading="lazy"
@@ -592,7 +592,7 @@ export function ProductCard({
                     src={secondImage}
                     alt={product.title}
                     fill
-                    className={`object-cover transition-all duration-300 ${
+                    className={`object-cover transition-all duration-200 ease-out ${
                       showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                     }`}
                     loading="lazy"
@@ -701,7 +701,7 @@ export function ProductCard({
               )}
             </div>
             {showBuyNowButton && (
-              <button className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700">
+              <button className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
                 Jetzt kaufen
               </button>
             )}
@@ -716,7 +716,7 @@ export function ProductCard({
     <Link
       href={productHref}
       prefetch={true}
-      className={`group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[20px] bg-white transition-all duration-300 ${className}`}
+      className={`group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[20px] bg-white transition-all duration-200 ease-out ${className}`}
       style={{
         border: '1px solid rgba(0, 0, 0, 0.1)',
           boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
@@ -747,10 +747,10 @@ export function ProductCard({
             <img
               src={mainImage}
               alt={product.title}
-              className={`h-full w-full object-cover transition-all duration-300 ${
+              className={`h-full w-full object-cover transition-all duration-200 ease-out ${
                 showSecondImage && secondImage
                   ? 'scale-110 opacity-0'
-                  : 'scale-100 opacity-100 group-hover:scale-[1.02]'
+                  : 'scale-100 opacity-100 group-hover:scale-[1.01]'
               }`}
               onError={() => setImageError(true)}
               onLoad={() => setImageError(false)}
@@ -761,10 +761,10 @@ export function ProductCard({
               src={mainImage}
               alt={product.title}
               fill
-              className={`object-cover transition-all duration-300 ${
+              className={`object-cover transition-all duration-200 ease-out ${
                 showSecondImage && secondImage
                   ? 'scale-110 opacity-0'
-                  : 'scale-100 opacity-100 group-hover:scale-[1.02]'
+                  : 'scale-100 opacity-100 group-hover:scale-[1.01]'
               }`}
               onError={() => setImageError(true)}
               onLoad={() => setImageError(false)}
@@ -789,7 +789,7 @@ export function ProductCard({
               <img
                 src={secondImage}
                 alt={product.title}
-                className={`absolute inset-0 h-full w-full object-cover transition-all duration-300 ${
+                className={`absolute inset-0 h-full w-full object-cover transition-all duration-200 ease-out ${
                   showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                 }`}
                 loading="lazy"
@@ -799,7 +799,7 @@ export function ProductCard({
                 src={secondImage}
                 alt={product.title}
                 fill
-                className={`object-cover transition-all duration-300 ${
+                className={`object-cover transition-all duration-200 ease-out ${
                   showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
                 }`}
                 loading="lazy"
@@ -812,7 +812,7 @@ export function ProductCard({
 
         {/* Schnellansicht Button auf Hover */}
         <div
-          className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-300 ${
+          className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-200 ease-out ${
             showSecondImage ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
           }`}
         >

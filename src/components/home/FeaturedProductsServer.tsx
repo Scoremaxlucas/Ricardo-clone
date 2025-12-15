@@ -338,8 +338,8 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
           {products.map((product, index) => (
             <div
               key={product.id}
-              className="flex h-full min-w-0 animate-in fade-in slide-in-from-bottom-4 duration-300"
-              style={{ animationDelay: `${index * 50}ms` }}
+              className="flex h-full min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-200"
+              style={{ animationDelay: `${index * 30}ms` }}
             >
               <ProductCard
                 id={product.id}

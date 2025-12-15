@@ -57,7 +57,7 @@ export function HeroServer({
           <div className="text-center">
             <Link
               href="/sell"
-              className="inline-block text-sm font-medium text-white/90 hover:text-white underline transition-colors"
+              className="inline-block text-sm font-medium text-white/90 hover:text-white underline transition-colors duration-200 ease-out focus:outline-none focus:ring-2 focus:ring-white focus:ring-offset-2 focus:ring-offset-teal-600 rounded"
             >
               Artikel verkaufen →
             </Link>
