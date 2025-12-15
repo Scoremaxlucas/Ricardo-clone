@@ -229,7 +229,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
           </div>
 
           {/* Navigation */}
-          <div className="ml-1 hidden min-w-0 flex-1 items-center justify-start gap-0.5 sm:ml-2 sm:flex sm:gap-1 md:ml-4 md:gap-2 lg:ml-8 lg:gap-4">
+          <div className="ml-1 hidden min-w-0 flex-1 items-center justify-start gap-1 sm:ml-2 sm:flex sm:gap-2 md:ml-4 md:gap-3 lg:ml-8 lg:gap-4">
             {/* Favoriten */}
             {session ? (
               <Link
@@ -239,10 +239,10 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 className="relative flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
                 title={t.header.favorites}
               >
-                <Heart className="h-5 w-5 sm:h-4 sm:w-4" />
+                <Heart className="h-5 w-5" />
                 <span className="hidden text-sm font-medium sm:inline">{t.header.favorites}</span>
                 {deferredData.favoritesCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-5 sm:w-5 sm:text-xs">
+                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-4 sm:w-4 sm:text-xs">
                     {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
                   </span>
                 )}
@@ -253,7 +253,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
                 title={t.header.favorites}
               >
-                <Heart className="h-5 w-5 sm:h-4 sm:w-4" />
+                <Heart className="h-5 w-5" />
                 <span className="hidden text-sm font-medium sm:inline">{t.header.favorites}</span>
               </button>
             )}
@@ -266,7 +266,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
               title={t.header.auctions}
             >
-              <Gavel className="h-5 w-5 sm:h-4 sm:w-4" />
+              <Gavel className="h-5 w-5" />
               <span className="hidden text-sm font-medium sm:inline">{t.header.auctions}</span>
             </Link>
 
@@ -285,7 +285,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 className="flex min-h-[44px] min-w-[44px] w-full items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
                 title={t.header.sell}
               >
-                <Plus className="h-5 w-5 sm:h-4 sm:w-4" />
+                <Plus className="h-5 w-5" />
                 <span className="hidden text-sm font-medium sm:inline">{t.header.sell}</span>
                 <ChevronDown className={`h-3 w-3 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`} />
               </Link>
@@ -323,7 +323,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
           </div>
 
           {/* User Actions */}
-          <div className="flex flex-shrink-0 items-center gap-0.5 sm:gap-1 md:gap-1.5 lg:gap-2">
+          <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2 md:gap-2 lg:gap-3">
             {/* Notifications */}
             <Link
               href="/notifications"
@@ -335,7 +335,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               <div className="relative">
                 <Bell className="h-5 w-5" />
                 {deferredData.unreadNotifications > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white sm:-right-2 sm:-top-2 sm:h-5 sm:w-5 sm:text-xs">
+                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white sm:-right-2 sm:-top-2 sm:h-5 sm:w-5 sm:text-xs">
                     {deferredData.unreadNotifications > 9 ? '9+' : deferredData.unreadNotifications}
                   </span>
                 )}
@@ -460,7 +460,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
                   title={t.header.login}
                 >
-                  <User className="h-5 w-5 sm:h-4 sm:w-4" />
+                  <User className="h-5 w-5" />
                   <span className="hidden text-sm font-medium sm:inline">{t.header.login}</span>
                 </Link>
               )}
