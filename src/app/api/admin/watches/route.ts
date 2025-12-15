@@ -243,20 +243,6 @@ export async function GET(request: NextRequest) {
       const favoriteCount = (watch.favorites || []).length
       const noteCount = (watch.adminNotes || []).length
 
-      // Debug logging for first watch to understand calculation
-      if (watchesWithCalculatedStatus.length === 0 || watch.id === watchesWithCalculatedStatus[0]?.id) {
-        console.log('[admin/watches] Watch calculation:', {
-          watchId: watch.id,
-          moderationStatus: watch.moderationStatus,
-          isApproved: watch.moderationStatus === 'approved',
-          isRejected: watch.moderationStatus === 'rejected',
-          isSold,
-          isExpired,
-          hasAnyPurchases,
-          calculatedIsActive,
-        })
-      }
-
       return {
         ...watch,
         images,
