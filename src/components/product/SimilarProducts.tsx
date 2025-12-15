@@ -4,6 +4,7 @@ import { Clock, Heart, MapPin, Sparkles } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
 
 interface Product {
   id: string
