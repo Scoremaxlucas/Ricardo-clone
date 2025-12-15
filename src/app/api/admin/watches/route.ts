@@ -202,23 +202,48 @@ export async function GET(request: NextRequest) {
       const isRejected = watch.moderationStatus === 'rejected'
       const isApproved = watch.moderationStatus === 'approved'
 
-      // Artikel ist aktiv wenn:
-      // - moderationStatus = 'approved' UND nicht verkauft (Admin hat es aktiviert)
-      // - ODER moderationStatus != 'rejected' UND nicht verkauft UND (keine Auktion ODER nicht abgelaufen)
+      // KRITISCH: Wenn moderationStatus = 'approved', ist das Produkt IMMER aktiv (außer verkauft)
+      // Dies überschreibt alle anderen Berechnungen
       let calculatedIsActive: boolean
       if (isRejected) {
         calculatedIsActive = false // Rejected = immer inaktiv
       } else if (isApproved) {
-        calculatedIsActive = !isSold // Approved = aktiv, außer verkauft
+        // Approved = aktiv, außer es wurde verkauft
+        calculatedIsActive = !isSold
       } else {
         // Für andere Status (pending, null): Berechne basierend auf Auktion
         calculatedIsActive = !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
+      }
+
+      // Debug logging für approved watches die trotzdem inaktiv sind
+      if (isApproved && !calculatedIsActive) {
+        console.error('[admin/watches] Approved watch is inactive!', {
+          watchId: watch.id,
+          moderationStatus: watch.moderationStatus,
+          isSold,
+          activePurchasesCount: activePurchases.length,
+          allPurchasesCount: (watch.purchases || []).length,
+        })
       }
 
       const pendingReports = (watch.reports || []).filter((r: any) => r.status === 'pending').length
       const viewCount = (watch.views || []).length
       const favoriteCount = (watch.favorites || []).length
       const noteCount = (watch.adminNotes || []).length
+
+      // Debug logging for first watch to understand calculation
+      if (watchesWithCalculatedStatus.length === 0 || watch.id === watchesWithCalculatedStatus[0]?.id) {
+        console.log('[admin/watches] Watch calculation:', {
+          watchId: watch.id,
+          moderationStatus: watch.moderationStatus,
+          isApproved: watch.moderationStatus === 'approved',
+          isRejected: watch.moderationStatus === 'rejected',
+          isSold,
+          isExpired,
+          hasAnyPurchases,
+          calculatedIsActive,
+        })
+      }
 
       return {
         ...watch,

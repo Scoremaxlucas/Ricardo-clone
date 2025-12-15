@@ -169,6 +169,16 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       calculatedIsActive = !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
     }
 
+    console.log('[edit-status] Status update:', {
+      watchId: id,
+      requestedIsActive: isActive,
+      moderationStatus: updatedWatch?.moderationStatus,
+      isApproved: updatedWatch?.moderationStatus === 'approved',
+      isRejected: updatedWatch?.moderationStatus === 'rejected',
+      isSold,
+      calculatedIsActive,
+    })
+
     return NextResponse.json({
       message: `Angebot erfolgreich ${isActive ? 'aktiviert' : 'deaktiviert'}`,
       watch: {

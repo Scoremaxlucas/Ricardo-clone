@@ -184,9 +184,26 @@ export default function AdminModerateWatchesPage() {
         toast.success(
           data.message || (!currentStatus ? t.admin.offerActivated : t.admin.offerDeactivated)
         )
-        // WICHTIG: Lade Watches IMMER neu nach erfolgreichem Update, um Konsistenz sicherzustellen
-        // Dies stellt sicher, dass die UI den korrekten Status vom Server zeigt
-        await loadWatches()
+        
+        // Optimistisches Update für sofortiges Feedback
+        if (data.watch) {
+          setWatches(prevWatches =>
+            prevWatches.map((w: any) =>
+              w.id === watchId
+                ? {
+                    ...w,
+                    isActive: data.watch.isActive,
+                    moderationStatus: data.watch.moderationStatus,
+                  }
+                : w
+            )
+          )
+        }
+        
+        // Dann vom Server neu laden für Konsistenz (mit kurzer Verzögerung für DB-Commit)
+        setTimeout(async () => {
+          await loadWatches()
+        }, 200)
       } else {
         console.error('Status update error:', data)
         toast.error(data.message || t.admin.errorChangingStatus)
