@@ -184,31 +184,9 @@ export default function AdminModerateWatchesPage() {
         toast.success(
           data.message || (!currentStatus ? t.admin.offerActivated : t.admin.offerDeactivated)
         )
-        // Aktualisiere den Watch-State direkt mit den neuen Daten
-        if (data.watch) {
-          setWatches(prevWatches =>
-            prevWatches.map((w: any) =>
-              w.id === watchId
-                ? {
-                    ...w,
-                    isActive: data.watch.isActive,
-                    moderationStatus: data.watch.moderationStatus,
-                  }
-                : w
-            )
-          )
-          // Aktualisiere auch den ausgewählten Watch
-          if (selectedWatch?.id === watchId) {
-            setSelectedWatch({
-              ...selectedWatch,
-              isActive: data.watch.isActive,
-              moderationStatus: data.watch.moderationStatus,
-            })
-          }
-        } else {
-          // Fallback: Lade alle Watches neu
-          await loadWatches()
-        }
+        // WICHTIG: Lade Watches IMMER neu nach erfolgreichem Update, um Konsistenz sicherzustellen
+        // Dies stellt sicher, dass die UI den korrekten Status vom Server zeigt
+        await loadWatches()
       } else {
         console.error('Status update error:', data)
         toast.error(data.message || t.admin.errorChangingStatus)

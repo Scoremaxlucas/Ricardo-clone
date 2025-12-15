@@ -200,13 +200,20 @@ export async function GET(request: NextRequest) {
 
       // WICHTIG: moderationStatus 'rejected' bedeutet deaktiviert (Admin hat es manuell deaktiviert)
       const isRejected = watch.moderationStatus === 'rejected'
+      const isApproved = watch.moderationStatus === 'approved'
 
       // Artikel ist aktiv wenn:
-      // - Nicht manuell deaktiviert (moderationStatus !== 'rejected')
-      // - UND nicht verkauft (isSold = false)
-      // - UND (keine Auktion ODER Auktion noch nicht abgelaufen ODER alle Purchases wurden storniert)
-      const calculatedIsActive =
-        !isRejected && !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
+      // - moderationStatus = 'approved' UND nicht verkauft (Admin hat es aktiviert)
+      // - ODER moderationStatus != 'rejected' UND nicht verkauft UND (keine Auktion ODER nicht abgelaufen)
+      let calculatedIsActive: boolean
+      if (isRejected) {
+        calculatedIsActive = false // Rejected = immer inaktiv
+      } else if (isApproved) {
+        calculatedIsActive = !isSold // Approved = aktiv, außer verkauft
+      } else {
+        // Für andere Status (pending, null): Berechne basierend auf Auktion
+        calculatedIsActive = !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
+      }
 
       const pendingReports = (watch.reports || []).filter((r: any) => r.status === 'pending').length
       const viewCount = (watch.views || []).length

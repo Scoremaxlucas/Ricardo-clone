@@ -147,12 +147,27 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     const now = new Date()
     const auctionEndDate = updatedWatch?.auctionEnd ? new Date(updatedWatch.auctionEnd) : null
-    const isSold = (updatedWatch?.purchases.length || 0) > 0
+    // WICHTIG: Nur nicht-stornierte Purchases zählen als "verkauft" (wie in admin/watches)
+    const activePurchases = (updatedWatch?.purchases || []).filter((p: any) => p.status !== 'cancelled')
+    const isSold = activePurchases.length > 0
     const isExpired = auctionEndDate ? auctionEndDate <= now : false
+    const hasAnyPurchases = (updatedWatch?.purchases || []).length > 0
 
     // WICHTIG: moderationStatus 'rejected' bedeutet deaktiviert
     const isRejected = updatedWatch?.moderationStatus === 'rejected'
-    const calculatedIsActive = !isRejected && !isSold && (!auctionEndDate || !isExpired)
+    // WICHTIG: Wenn moderationStatus = 'approved', ist das Produkt aktiv (außer es wurde verkauft)
+    // Wenn moderationStatus = 'rejected', ist es immer inaktiv
+    // Ansonsten berechne basierend auf Auktion-Status
+    const isApproved = updatedWatch?.moderationStatus === 'approved'
+    let calculatedIsActive: boolean
+    if (isRejected) {
+      calculatedIsActive = false // Rejected = immer inaktiv
+    } else if (isApproved) {
+      calculatedIsActive = !isSold // Approved = aktiv, außer verkauft
+    } else {
+      // Für andere Status (pending, null): Berechne basierend auf Auktion
+      calculatedIsActive = !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
+    }
 
     return NextResponse.json({
       message: `Angebot erfolgreich ${isActive ? 'aktiviert' : 'deaktiviert'}`,
