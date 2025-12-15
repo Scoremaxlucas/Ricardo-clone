@@ -74,7 +74,7 @@ export default async function Home() {
         {/* Beliebte Kategorien */}
         <PopularCategories />
 
-{/* Featured Products - Server-Side gerendert */}
+        {/* Featured Products - Server-Side gerendert */}
         <FeaturedProductsServer initialProducts={featuredProducts} />
 
         {/* Below-the-fold - Lazy loaded mit null Fallback */}
