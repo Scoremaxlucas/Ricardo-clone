@@ -1,7 +1,6 @@
 import { FeaturedProductsServer } from '@/components/home/FeaturedProductsServer'
 import { HeroServer } from '@/components/home/HeroServer'
 import { HeroSearch } from '@/components/home/HeroSearch'
-import { CategoryQuickLinks } from '@/components/home/CategoryQuickLinks'
 import { HomeClient } from '@/components/home/HomeClient'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
@@ -15,7 +14,7 @@ import dynamic from 'next/dynamic'
  * 
  * JavaScript Loading Priorität:
  * 1. Kritisch (0ms): Header, HeroServer (Text), FeaturedProducts
- * 2. Nach Paint: HeroSearch, CategoryQuickLinks
+ * 2. Nach Paint: HeroSearch
  * 3. Nach Scroll: QuickAccessBar, HomeClient
  * 
  * TTI Ziel: <100ms (User kann sofort interagieren)
@@ -91,13 +90,6 @@ export default async function Home() {
             <HeroSearch placeholder="Suchen Sie nach Produkten, Marken, Kategorien..." />
           </Suspense>
         </HeroServer>
-
-        {/* Category Links - Nach First Paint */}
-        <div className="border-t border-primary-700/20 bg-primary-800/50 backdrop-blur-sm">
-          <Suspense fallback={<div className="h-20" />}>
-            <CategoryQuickLinks />
-          </Suspense>
-        </div>
 
         {/* Quick Access Bar - Dynamisch geladen */}
         <QuickAccessBar />
