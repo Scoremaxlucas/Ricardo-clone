@@ -16,6 +16,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import {
   Bell,
   ChevronDown,
+  Grid3x3,
   Gavel,
   Heart,
   LogOut,
@@ -32,7 +33,6 @@ import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { memo, useCallback, useEffect, useRef, useState, useTransition } from 'react'
-import { CategoryBar } from './CategoryBar'
 
 // Deferred data types
 interface DeferredData {
@@ -227,6 +227,19 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               <Logo size="md" className="hidden md:block" />
             </Link>
           </div>
+
+          {/* Categories Dropdown */}
+          <Link
+            href="/search"
+            prefetch={true}
+            onMouseEnter={() => handlePrefetch('/search')}
+            className="flex items-center gap-1.5 rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-primary-100"
+            title="Kategorien"
+          >
+            <Grid3x3 className="h-4 w-4 flex-shrink-0" />
+            <span className="hidden sm:inline">Kategorien</span>
+            <ChevronDown className="h-3 w-3 flex-shrink-0 hidden sm:inline" />
+          </Link>
 
           {/* Navigation */}
           <div className="ml-1 hidden min-w-0 flex-1 items-center justify-start gap-1 sm:ml-2 sm:flex sm:gap-2 md:ml-4 md:gap-3 lg:ml-8 lg:gap-4">
@@ -510,8 +523,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
           </div>
         </div>
 
-        {/* CategoryBar */}
-        <CategoryBar />
       </div>
     </header>
   )
