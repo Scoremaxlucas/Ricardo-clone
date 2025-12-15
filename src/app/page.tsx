@@ -2,6 +2,7 @@ import { FeaturedProductsServer } from '@/components/home/FeaturedProductsServer
 import { HeroServer } from '@/components/home/HeroServer'
 import { HeroSearch } from '@/components/home/HeroSearch'
 import { PopularCategories } from '@/components/home/PopularCategories'
+import { TrustSection } from '@/components/home/TrustSection'
 import { HomeClient } from '@/components/home/HomeClient'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
@@ -73,6 +74,9 @@ export default async function Home() {
 
         {/* Beliebte Kategorien */}
         <PopularCategories />
+
+        {/* Trust & Value Proposition */}
+        <TrustSection />
 
         {/* Featured Products - Server-Side gerendert */}
         <FeaturedProductsServer initialProducts={featuredProducts} />
