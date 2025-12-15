@@ -1,6 +1,7 @@
 import { FeaturedProductsServer } from '@/components/home/FeaturedProductsServer'
 import { HeroServer } from '@/components/home/HeroServer'
 import { HeroSearch } from '@/components/home/HeroSearch'
+import { PopularCategories } from '@/components/home/PopularCategories'
 import { HomeClient } from '@/components/home/HomeClient'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
@@ -90,6 +91,9 @@ export default async function Home() {
             <HeroSearch placeholder="Suchen Sie nach Produkten, Marken, Kategorien..." />
           </Suspense>
         </HeroServer>
+
+        {/* Beliebte Kategorien */}
+        <PopularCategories />
 
         {/* Quick Access Bar - Dynamisch geladen */}
         <QuickAccessBar />
