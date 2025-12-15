@@ -87,9 +87,9 @@ export function LoginPromptModal({
             >
               {loginButtonText}
             </Button>
-            <button
-              onClick={onClose}
-              className="rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-            >
+          </div>
+        </div>
+      </div>
+    </div>
   )
 }
