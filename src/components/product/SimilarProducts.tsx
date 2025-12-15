@@ -125,6 +125,7 @@ export function SimilarProducts({
   }
 
   return (
+    <>
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <div className="mb-6 flex items-center gap-2">
         <Sparkles className="h-5 w-5 text-primary-600" />
@@ -231,12 +232,13 @@ export function SimilarProducts({
         </Link>
       </div>
     </div>
-      <LoginPromptModal
+    <LoginPromptModal
         isOpen={isLoginModalOpen}
         onClose={() => setIsLoginModalOpen(false)}
         title="Anmeldung erforderlich"
         message="Bitte melden Sie sich an, um Favoriten hinzuzufügen."
         loginButtonText="Anmelden"
       />
+    </>
   )
 }
