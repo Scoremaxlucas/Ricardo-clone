@@ -8,7 +8,6 @@ import { Header } from '@/components/layout/Header'
 import { getFeaturedProducts } from '@/lib/products'
 import { Suspense } from 'react'
 import type { Metadata } from 'next'
-import dynamic from 'next/dynamic'
 
 /**
  * Homepage - TTI & LCP Optimiert
