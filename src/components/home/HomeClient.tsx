@@ -29,9 +29,7 @@ const LazySocialProofWidget = lazy(() =>
 const LazyLocationMap = lazy(() =>
   import('@/components/home/LocationMap').then(m => ({ default: m.LocationMap }))
 )
-const LazyPersonalizedFeed = lazy(() =>
-  import('@/components/home/PersonalizedFeed').then(m => ({ default: m.PersonalizedFeed }))
-)
+
 const LazyDailyDeals = lazy(() =>
   import('@/components/home/DailyDeals').then(m => ({ default: m.DailyDeals }))
 )
@@ -127,11 +125,6 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
               <LazySocialProofWidget watchIds={featuredProductIds} />
             </Suspense>
           )}
-
-          {/* Personalized Feed */}
-          <Suspense fallback={<SectionSkeleton bg="bg-gradient-to-br from-purple-50 to-pink-50" />}>
-            <LazyPersonalizedFeed />
-          </Suspense>
 
           {/* Daily Deals */}
           <Suspense fallback={<SectionSkeleton bg="bg-gradient-to-br from-orange-50 to-red-50" />}>
