@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
 import Link from 'next/link'
 import { Heart } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -24,6 +25,7 @@ export function SuggestedProducts() {
   )
   const [loading, setLoading] = useState(true)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -67,7 +69,7 @@ export function SuggestedProducts() {
     e.preventDefault()
 
     if (!session?.user) {
-      alert(t.favorites.loginRequired)
+      setIsLoginModalOpen(true)
       return
     }
 
@@ -206,5 +208,12 @@ export function SuggestedProducts() {
         )}
       </div>
     </section>
+      <LoginPromptModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        title="Anmeldung erforderlich"
+        message={t.favorites.loginRequired}
+        loginButtonText="Anmelden"
+      />
   )
 }

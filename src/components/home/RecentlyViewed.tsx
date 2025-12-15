@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
 import { useSession } from 'next-auth/react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { ProductCard } from '@/components/ui/ProductCard'
@@ -21,6 +22,7 @@ export function RecentlyViewed() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchProducts = async () => {
@@ -65,7 +67,7 @@ export function RecentlyViewed() {
     e.preventDefault()
 
     if (!session?.user) {
-      alert(t.favorites.loginRequired)
+      setIsLoginModalOpen(true)
       return
     }
 
@@ -133,5 +135,12 @@ export function RecentlyViewed() {
         </div>
       </div>
     </section>
+      <LoginPromptModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        title="Anmeldung erforderlich"
+        message={t.favorites.loginRequired}
+        loginButtonText="Anmelden"
+      />
   )
 }

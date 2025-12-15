@@ -6,6 +6,7 @@ import { Sparkles, TrendingUp } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
+import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
 
 interface Product {
   id: string
@@ -30,6 +31,7 @@ export function SmartDiscoveryHub() {
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
   useEffect(() => {
     const fetchPersonalizedProducts = async () => {
@@ -84,7 +86,7 @@ export function SmartDiscoveryHub() {
     e.stopPropagation()
 
     if (!session?.user) {
-      alert('Bitte melden Sie sich an, um Favoriten hinzuzufügen')
+      setIsLoginModalOpen(true)
       return
     }
 
@@ -175,5 +177,12 @@ export function SmartDiscoveryHub() {
         </div>
       </div>
     </section>
+      <LoginPromptModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        title="Anmeldung erforderlich"
+        message="Bitte melden Sie sich an, um Favoriten hinzuzufügen."
+        loginButtonText="Anmelden"
+      />
   )
 }

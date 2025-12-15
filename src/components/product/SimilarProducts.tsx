@@ -36,6 +36,7 @@ export function SimilarProducts({
   const { data: session } = useSession()
   const [products, setProducts] = useState<Product[]>([])
   const [loading, setLoading] = useState(true)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
 
   useEffect(() => {
@@ -87,7 +88,7 @@ export function SimilarProducts({
     e.stopPropagation()
 
     if (!session?.user) {
-      alert('Bitte melden Sie sich an, um Favoriten hinzuzufügen')
+      setIsLoginModalOpen(true)
       return
     }
 
@@ -230,5 +231,12 @@ export function SimilarProducts({
         </Link>
       </div>
     </div>
+      <LoginPromptModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        title="Anmeldung erforderlich"
+        message="Bitte melden Sie sich an, um Favoriten hinzuzufügen."
+        loginButtonText="Anmelden"
+      />
   )
 }

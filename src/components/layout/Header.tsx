@@ -33,6 +33,7 @@ import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { memo, useCallback, useEffect, useRef, useState, useTransition } from 'react'
+import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
 import { CategorySidebarNew } from './CategorySidebarNew'
 
 // Deferred data types
@@ -56,6 +57,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false)
   const [isSellMenuOpen, setIsSellMenuOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
+  const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
 
   // === DEFERRED STATE (nicht-kritisch, verzögert laden) ===
   const [deferredData, setDeferredData] = useState<DeferredData>({
@@ -262,7 +264,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               </Link>
             ) : (
               <button
-                onClick={() => alert(t.header.pleaseLoginForFavorites)}
+                onClick={() => setIsLoginModalOpen(true)}
                 className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 opacity-90 text-gray-600 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-1.5 sm:px-2 sm:py-1.5"
                 title={t.header.favorites}
               >
@@ -525,6 +527,13 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
       </div>
       <CategorySidebarNew isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
+      <LoginPromptModal
+        isOpen={isLoginModalOpen}
+        onClose={() => setIsLoginModalOpen(false)}
+        title="Anmeldung erforderlich"
+        message={t.header.pleaseLoginForFavorites}
+        loginButtonText="Anmelden"
+      />
     </header>
   )
 })
