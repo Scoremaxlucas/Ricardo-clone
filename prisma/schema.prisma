@@ -96,6 +96,9 @@ model User {
   lastWarnedAt                  DateTime?
   hasUnpaidInvoices             Boolean              @default(false)
   lastInvoiceReminderAt         DateTime?
+  stripeConnectedAccountId      String?
+  stripeOnboardingComplete      Boolean              @default(false)
+  stripeOnboardingLinkExpiresAt DateTime?
   accounts                      Account[]
   bids                          Bid[]
   favorites                     Favorite[]
@@ -135,7 +138,9 @@ model User {
   rewards                       Reward[]
   aiConversations               AIConversation[]
   aiSearchResults               AISearchResult[]
-  pricingHistoryChanges         PricingHistory[]
+  ordersAsBuyer                 Order[]              @relation("OrderBuyer")
+  pricingHistory              PricingHistory[]
+  ordersAsSeller                Order[]              @relation("OrderSeller")
 
   @@map("users")
 }
@@ -200,6 +205,7 @@ model Watch {
   priceOffers         PriceOffer[]
   purchases           Purchase[]
   sales               Sale[]
+  orders              Order[]
   categories          WatchCategory[]
   seller              User                @relation(fields: [sellerId], references: [id])
   reports             Report[]
@@ -959,6 +965,7 @@ model AISearchResult {
   @@map("ai_search_results")
 }
 
+
 model PricingHistory {
   id                 String   @id @default(cuid())
   platformMarginRate Float?
@@ -974,4 +981,108 @@ model PricingHistory {
   @@index([changedAt])
   @@index([changedBy])
   @@map("pricing_history")
+}
+
+model Order {
+  id                    String          @id @default(cuid())
+  orderNumber           String          @unique
+  watchId               String
+  buyerId               String
+  sellerId              String
+
+  // Pricing
+  itemPrice             Float
+  shippingCost          Float
+  platformFee           Float
+  protectionFee         Float?
+  totalAmount           Float
+
+  // Stripe IDs
+  stripePaymentIntentId String?
+  stripeChargeId        String?
+  stripeCheckoutSessionId String?
+  stripeTransferId      String?
+  stripeRefundId        String?
+
+  // Status
+  orderStatus           String          @default("awaiting_payment")
+  paymentStatus         String          @default("created")
+
+  // Timeline
+  paidAt                DateTime?
+  shippedAt             DateTime?
+  deliveredAt           DateTime?
+  releasedAt            DateTime?
+  refundedAt            DateTime?
+  autoReleaseAt         DateTime?
+
+  // Buyer confirmation
+  buyerConfirmedReceipt Boolean         @default(false)
+  buyerConfirmedAt      DateTime?
+
+  // Dispute
+  disputeStatus         String          @default("none")
+  disputeOpenedAt       DateTime?
+  disputeReason         String?
+  disputeDescription    String?
+  disputeResolvedAt     DateTime?
+  disputeResolvedBy     String?
+
+  // Tracking
+  trackingNumber        String?
+  trackingProvider      String?
+
+  // Relations
+  watch                 Watch           @relation(fields: [watchId], references: [id])
+  buyer                 User            @relation("OrderBuyer", fields: [buyerId], references: [id])
+  seller                User            @relation("OrderSeller", fields: [sellerId], references: [id])
+  paymentRecord         PaymentRecord?
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@index([buyerId])
+  @@index([sellerId])
+  @@index([watchId])
+  @@index([orderStatus])
+  @@index([paymentStatus])
+  @@index([stripePaymentIntentId])
+  @@index([autoReleaseAt])
+  @@map("orders")
+}
+
+model PaymentRecord {
+  id                    String          @id @default(cuid())
+  orderId               String          @unique
+  order                 Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+
+  // Stripe IDs
+  stripePaymentIntentId String          @unique
+  stripeChargeId        String?
+  stripeCheckoutSessionId String?
+  stripeTransferId      String?
+  stripeRefundId        String?
+
+  // Amounts
+  amount                Float
+  currency              String          @default("chf")
+  platformFee           Float
+  sellerAmount          Float
+
+  // Status tracking
+  paymentStatus         String
+  transferStatus        String?
+  refundStatus          String?
+
+  // Webhook tracking
+  lastWebhookEvent      String?
+  lastWebhookAt        DateTime?
+
+  createdAt             DateTime        @default(now())
+  updatedAt             DateTime        @updatedAt
+
+  @@index([stripePaymentIntentId])
+  @@index([stripeChargeId])
+  @@index([stripeTransferId])
+  @@map("payment_records")
 }

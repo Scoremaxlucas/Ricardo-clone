@@ -63,14 +63,6 @@ export async function POST(
       )
     }
 
-    // Prüfe ob Order bereits gelöst wurde
-    if (order.disputeStatus === 'resolved_refund' || order.disputeStatus === 'resolved_release') {
-      return NextResponse.json(
-        { message: 'Dieser Dispute wurde bereits gelöst' },
-        { status: 400 }
-      )
-    }
-
     const adminId = session.user!.id
 
     if (resolution === 'refund') {

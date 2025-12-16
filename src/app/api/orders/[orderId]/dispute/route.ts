@@ -86,13 +86,6 @@ export async function POST(
       )
     }
 
-    // Prüfe ob Order bereits freigegeben wurde
-    if (order.paymentStatus === 'released') {
-      return NextResponse.json(
-        { message: 'Dispute kann nicht geöffnet werden, da die Zahlung bereits freigegeben wurde' },
-        { status: 400 }
-      )
-    }
 
     // Öffne Dispute
     await prisma.order.update({

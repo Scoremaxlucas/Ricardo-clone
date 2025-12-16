@@ -61,14 +61,6 @@ export async function POST(
       )
     }
 
-    // Prüfe ob Order bereits freigegeben wurde
-    if (order.paymentStatus === 'released') {
-      return NextResponse.json(
-        { message: 'Die Zahlung wurde bereits freigegeben' },
-        { status: 400 }
-      )
-    }
-
     // Update Order - Käufer bestätigt Erhalt
     await prisma.order.update({
       where: { id: orderId },

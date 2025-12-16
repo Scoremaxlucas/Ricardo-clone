@@ -129,8 +129,8 @@ export async function GET(
       (order.paymentStatus === 'paid' ||
         order.paymentStatus === 'release_pending' ||
         order.paymentStatus === 'disputed') &&
-      order.paymentStatus !== 'refunded' &&
-      !order.stripeTransferId &&
+      // paymentStatus kann nicht 'refunded' sein nach obiger Prüfung
+!order.stripeTransferId &&
       !!order.paymentRecord?.stripeChargeId
 
     return NextResponse.json({
