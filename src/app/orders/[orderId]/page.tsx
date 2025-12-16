@@ -243,7 +243,7 @@ export default function OrderDetailPage() {
   const images = parseImages(order.watch.images)
   const isBuyerView = isBuyer
   const canConfirmReceipt = isBuyer && order.paymentStatus === 'paid' && !order.buyerConfirmedReceipt && order.disputeStatus === 'none'
-  const canOpenDispute = isBuyer && order.paymentStatus === 'paid' && order.disputeStatus === 'none' && order.paymentStatus !== 'released'
+  const canOpenDispute = isBuyer && order.paymentStatus === 'paid' && order.disputeStatus === 'none'
 
   return (
     <div className="flex min-h-screen flex-col">
