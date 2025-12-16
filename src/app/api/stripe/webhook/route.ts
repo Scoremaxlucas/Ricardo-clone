@@ -50,12 +50,12 @@ export async function POST(request: NextRequest) {
 
       case 'payment_intent.amount_capturable_updated':
         // TWINT-Zahlungen können hier behandelt werden
-        const paymentIntent = event.data.object as Stripe.PaymentIntent
+        const twintPaymentIntent = event.data.object as Stripe.PaymentIntent
         if (
-          paymentIntent.metadata?.type === 'invoice_payment_twint' &&
-          paymentIntent.status === 'succeeded'
+          twintPaymentIntent.metadata?.type === 'invoice_payment_twint' &&
+          twintPaymentIntent.status === 'succeeded'
         ) {
-          await handlePaymentSuccess(paymentIntent)
+          await handlePaymentSuccess(twintPaymentIntent)
         }
         break
 
