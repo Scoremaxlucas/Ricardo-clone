@@ -3,8 +3,8 @@ import { prisma } from './prisma'
 import { getPricingConfig, calculatePlatformFee, DEFAULT_PRICING } from './pricing-config'
 
 // Verwende zentrale Pricing-Konfiguration
-const getInvoicePricing = () => {
-  const config = getPricingConfig()
+const getInvoicePricing = async () => {
+  const config = await getPricingConfig()
   return {
     commissionRate: config.platformFeeRate, // Verwende Platform Fee Rate
     vatRate: config.vatRate,
@@ -36,11 +36,11 @@ export async function calculateInvoiceForSale(purchaseId: string) {
     throw new Error('Purchase nicht gefunden')
   }
 
-  const pricing = getInvoicePricing()
+  const pricing = await getInvoicePricing()
   const salePrice = purchase.price || purchase.watch.price
 
   // Verwende zentrale calculatePlatformFee Funktion für Konsistenz
-  const commission = calculatePlatformFee(salePrice, {
+  const commission = await calculatePlatformFee(salePrice, {
     platformFeeRate: pricing.commissionRate,
     minimumCommission: pricing.minimumCommission,
     maximumCommission: pricing.maximumCommission,

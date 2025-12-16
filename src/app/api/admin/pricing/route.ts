@@ -6,6 +6,7 @@ import { prisma } from '@/lib/prisma'
 // Default Pricing Settings
 const DEFAULT_PRICING = {
   platformMarginRate: 0.1, // 10%
+  protectionFeeRate: 0.02, // 2% Zahlungsschutz-Gebühr
   vatRate: 0.081, // 8.1% MwSt
   minimumCommission: 0,
   maximumCommission: 220, // Maximum CHF 220.- für Plattform-Gebühr
@@ -13,8 +14,38 @@ const DEFAULT_PRICING = {
   transactionFee: 0,
 }
 
-// In-Memory Store (später können wir das in eine Datenbank-Tabelle verschieben)
-const pricingSettings: typeof DEFAULT_PRICING = { ...DEFAULT_PRICING }
+/**
+ * Lädt die aktuellen Pricing-Settings aus der Datenbank
+ * Gibt die neuesten Settings zurück oder Defaults falls keine vorhanden
+ */
+async function getCurrentPricingSettings() {
+  const latestPricing = await prisma.pricingHistory.findFirst({
+    orderBy: { changedAt: 'desc' },
+    select: {
+      platformMarginRate: true,
+      protectionFeeRate: true,
+      vatRate: true,
+      minimumCommission: true,
+      maximumCommission: true,
+      listingFee: true,
+      transactionFee: true,
+    },
+  })
+
+  if (latestPricing) {
+    return {
+      platformMarginRate: latestPricing.platformMarginRate ?? DEFAULT_PRICING.platformMarginRate,
+      protectionFeeRate: latestPricing.protectionFeeRate ?? DEFAULT_PRICING.protectionFeeRate,
+      vatRate: latestPricing.vatRate ?? DEFAULT_PRICING.vatRate,
+      minimumCommission: latestPricing.minimumCommission ?? DEFAULT_PRICING.minimumCommission,
+      maximumCommission: latestPricing.maximumCommission ?? DEFAULT_PRICING.maximumCommission,
+      listingFee: latestPricing.listingFee ?? DEFAULT_PRICING.listingFee,
+      transactionFee: latestPricing.transactionFee ?? DEFAULT_PRICING.transactionFee,
+    }
+  }
+
+  return { ...DEFAULT_PRICING }
+}
 
 // Helper function to check admin status
 async function checkAdmin(session: any): Promise<boolean> {
@@ -53,7 +84,8 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    return NextResponse.json(pricingSettings)
+    const currentSettings = await getCurrentPricingSettings()
+    return NextResponse.json(currentSettings)
   } catch (error: any) {
     console.error('Error fetching pricing settings:', error)
     return NextResponse.json(
@@ -77,6 +109,7 @@ export async function POST(request: NextRequest) {
     const body = await request.json()
     const {
       platformMarginRate,
+      protectionFeeRate,
       vatRate,
       minimumCommission,
       maximumCommission,
@@ -93,6 +126,19 @@ export async function POST(request: NextRequest) {
       ) {
         return NextResponse.json(
           { message: 'Plattform-Marge muss zwischen 0 und 1 liegen (0 = 0%, 1 = 100%)' },
+          { status: 400 }
+        )
+      }
+    }
+
+    if (protectionFeeRate !== undefined) {
+      if (
+        typeof protectionFeeRate !== 'number' ||
+        protectionFeeRate < 0 ||
+        protectionFeeRate > 1
+      ) {
+        return NextResponse.json(
+          { message: 'Zahlungsschutz-Gebühr muss zwischen 0 und 1 liegen (0 = 0%, 1 = 100%)' },
           { status: 400 }
         )
       }
@@ -135,35 +181,46 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Transaktionsgebühr muss >= 0 sein' }, { status: 400 })
     }
 
-    // Update settings
-    if (platformMarginRate !== undefined) pricingSettings.platformMarginRate = platformMarginRate
-    if (vatRate !== undefined) pricingSettings.vatRate = vatRate
-    if (minimumCommission !== undefined) pricingSettings.minimumCommission = minimumCommission
-    if (maximumCommission !== undefined) pricingSettings.maximumCommission = maximumCommission
-    if (listingFee !== undefined) pricingSettings.listingFee = listingFee
-    if (transactionFee !== undefined) pricingSettings.transactionFee = transactionFee
+    // Lade aktuelle Settings
+    const currentSettings = await getCurrentPricingSettings()
 
-    // Erstelle Historie-Eintrag für die Änderung
-    try {
-      await prisma.pricingHistory.create({
-        data: {
-          platformMarginRate: pricingSettings.platformMarginRate,
-          vatRate: pricingSettings.vatRate,
-          minimumCommission: pricingSettings.minimumCommission,
-          maximumCommission: pricingSettings.maximumCommission,
-          listingFee: pricingSettings.listingFee,
-          transactionFee: pricingSettings.transactionFee,
-          changedBy: session!.user!.id,
-        },
-      })
-    } catch (historyError: any) {
-      console.error('Error creating pricing history entry:', historyError)
-      // Historie-Fehler sollte nicht die Pricing-Änderung verhindern
+    // Erstelle neue Settings mit Updates
+    const newSettings = {
+      platformMarginRate:
+        platformMarginRate !== undefined ? platformMarginRate : currentSettings.platformMarginRate,
+      protectionFeeRate:
+        protectionFeeRate !== undefined ? protectionFeeRate : currentSettings.protectionFeeRate,
+      vatRate: vatRate !== undefined ? vatRate : currentSettings.vatRate,
+      minimumCommission:
+        minimumCommission !== undefined ? minimumCommission : currentSettings.minimumCommission,
+      maximumCommission:
+        maximumCommission !== undefined ? maximumCommission : currentSettings.maximumCommission,
+      listingFee: listingFee !== undefined ? listingFee : currentSettings.listingFee,
+      transactionFee:
+        transactionFee !== undefined ? transactionFee : currentSettings.transactionFee,
     }
+
+    // Speichere in Datenbank (PricingHistory)
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: 'Benutzer-ID nicht gefunden' }, { status: 400 })
+    }
+
+    await prisma.pricingHistory.create({
+      data: {
+        platformMarginRate: newSettings.platformMarginRate,
+        protectionFeeRate: newSettings.protectionFeeRate,
+        vatRate: newSettings.vatRate,
+        minimumCommission: newSettings.minimumCommission,
+        maximumCommission: newSettings.maximumCommission,
+        listingFee: newSettings.listingFee,
+        transactionFee: newSettings.transactionFee,
+        changedBy: session.user.id,
+      },
+    })
 
     return NextResponse.json({
       message: 'Pricing-Einstellungen erfolgreich gespeichert',
-      settings: pricingSettings,
+      settings: newSettings,
     })
   } catch (error: any) {
     console.error('Error updating pricing settings:', error)

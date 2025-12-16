@@ -3,11 +3,12 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { DollarSign, Save, ArrowLeft, Edit, Sparkles, History } from 'lucide-react'
+import { DollarSign, Save, ArrowLeft, Edit, Sparkles, Shield } from 'lucide-react'
 import Link from 'next/link'
 
 interface PricingSettings {
   platformMarginRate: number // Prozent (0.1 = 10%)
+  protectionFeeRate: number // Zahlungsschutz-Gebühr (0.02 = 2%)
   vatRate: number // MwSt-Satz (0.081 = 8.1%)
   minimumCommission: number // Minimale Kommission in CHF
   maximumCommission: number // Maximale Kommission (Kostendach) in CHF
@@ -24,24 +25,7 @@ interface BoosterPrice {
   isActive: boolean
 }
 
-interface PricingHistoryItem {
-  id: string
-  platformMarginRate: number | null
-  vatRate: number | null
-  minimumCommission: number | null
-  maximumCommission: number | null
-  listingFee: number | null
-  transactionFee: number | null
-  changedBy: string
-  changedAt: string
-  admin: {
-    id: string
-    email: string
-    name: string
-  }
-}
-
-type Tab = 'fees' | 'boosters' | 'history'
+type Tab = 'fees' | 'boosters'
 
 export default function AdminPricingPage() {
   const { data: session, status } = useSession()
@@ -51,10 +35,9 @@ export default function AdminPricingPage() {
   const [saving, setSaving] = useState(false)
   const [editingBooster, setEditingBooster] = useState<BoosterPrice | null>(null)
   const [boosters, setBoosters] = useState<BoosterPrice[]>([])
-  const [history, setHistory] = useState<PricingHistoryItem[]>([])
-  const [loadingHistory, setLoadingHistory] = useState(false)
   const [settings, setSettings] = useState<PricingSettings>({
-    platformMarginRate: 0.05, // Start with 5%, user can change to 10%
+    platformMarginRate: 0.1, // 10%
+    protectionFeeRate: 0.02, // 2% Zahlungsschutz-Gebühr
     vatRate: 0.081, // 8.1%
     minimumCommission: 0,
     maximumCommission: 220, // Kostendach CHF 220.-
@@ -102,13 +85,6 @@ export default function AdminPricingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status])
 
-  useEffect(() => {
-    if (activeTab === 'history' && session?.user) {
-      loadHistory()
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeTab])
-
   const loadPricing = async () => {
     try {
       const res = await fetch('/api/admin/pricing')
@@ -139,23 +115,6 @@ export default function AdminPricingPage() {
       }
     } catch (error) {
       console.error('Error loading boosters:', error)
-    }
-  }
-
-  const loadHistory = async () => {
-    setLoadingHistory(true)
-    try {
-      const res = await fetch('/api/admin/pricing/history')
-      if (res.ok) {
-        const data = await res.json()
-        setHistory(data.history || [])
-      } else {
-        console.error('Error loading pricing history')
-      }
-    } catch (error) {
-      console.error('Error loading history:', error)
-    } finally {
-      setLoadingHistory(false)
     }
   }
 
@@ -300,19 +259,7 @@ export default function AdminPricingPage() {
               } whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium`}
             >
               <Sparkles className="mr-2 inline h-4 w-4" />
-              <Sparkles className="mr-2 inline h-4 w-4" />
               Booster
-            </button>
-            <button
-              onClick={() => setActiveTab('history')}
-              className={`${
-                activeTab === 'history'
-                  ? 'border-primary-600 text-primary-600'
-                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-              } whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium`}
-            >
-              <History className="mr-2 inline h-4 w-4" />
-              Historie
             </button>
           </nav>
         </div>
@@ -341,6 +288,38 @@ export default function AdminPricingPage() {
                   </span>
                 </div>
                 <p className="mt-1 text-xs text-gray-500">Von jedem Verkauf (z.B. 0.1 = 10%)</p>
+              </div>
+
+              {/* Zahlungsschutz-Gebühr (Helvenda Schutz) */}
+              <div className="rounded-lg border-2 border-primary-200 bg-primary-50 p-4">
+                <div className="mb-2 flex items-center gap-2">
+                  <Shield className="h-5 w-5 text-primary-600" />
+                  <label className="block text-sm font-semibold text-gray-900">
+                    Helvenda Schutz (Zahlungsschutz-Gebühr)
+                  </label>
+                </div>
+                <div className="flex items-center gap-4">
+                  <input
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    max="1"
+                    value={settings.protectionFeeRate}
+                    onChange={e => handleChange('protectionFeeRate', e.target.value)}
+                    className="w-32 rounded-md border border-primary-300 bg-white px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                  />
+                  <span className="font-medium text-primary-700">
+                    = {(settings.protectionFeeRate * 100).toFixed(2)}%
+                  </span>
+                </div>
+                <p className="mt-2 text-xs text-gray-600">
+                  Gebühr für Zahlungsschutz bei Orders (z.B. 0.02 = 2%). Diese Gebühr wird zusätzlich
+                  zum Artikelpreis berechnet und bietet Käufern und Verkäufern Sicherheit.
+                </p>
+                <div className="mt-3 rounded bg-white p-3 text-xs text-gray-600">
+                  <strong>Beispiel:</strong> Bei einem CHF 1'000 Artikel beträgt die
+                  Zahlungsschutz-Gebühr CHF {(1000 * settings.protectionFeeRate).toFixed(2)}
+                </div>
               </div>
 
               {/* MwSt */}
@@ -401,9 +380,12 @@ export default function AdminPricingPage() {
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Zwischensumme:</span>
-                    <span className="font-medium">
-                      CHF {(1000 * settings.platformMarginRate).toFixed(2)}
+                    <span className="text-primary-700">
+                      <Shield className="mr-1 inline h-4 w-4" />
+                      Helvenda Schutz ({(settings.protectionFeeRate * 100).toFixed(2)}%):
+                    </span>
+                    <span className="font-medium text-primary-700">
+                      CHF {(1000 * settings.protectionFeeRate).toFixed(2)}
                     </span>
                   </div>
                   <div className="flex justify-between text-sm">
@@ -419,6 +401,17 @@ export default function AdminPricingPage() {
                     <span className="font-semibold text-primary-600">
                       CHF {(1000 * settings.platformMarginRate * (1 + settings.vatRate)).toFixed(2)}
                     </span>
+                  </div>
+                  <div className="mt-3 rounded border border-primary-200 bg-primary-50 p-3 text-xs">
+                    <div className="flex justify-between text-primary-700">
+                      <span>
+                        <strong>Mit Zahlungsschutz:</strong> Käufer zahlt zusätzlich{' '}
+                        {(settings.protectionFeeRate * 100).toFixed(2)}% für Sicherheit
+                      </span>
+                      <span className="font-semibold">
+                        CHF {(1000 * (1 + settings.protectionFeeRate)).toFixed(2)}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -6,7 +6,6 @@ import { useSession } from 'next-auth/react'
 import { Card } from '@/components/ui/Card'
 import { ArrowLeft, CreditCard, Shield, Loader2 } from 'lucide-react'
 import { getShippingCostForMethod } from '@/lib/shipping'
-import { calculateOrderFees } from '@/lib/order-fees'
 import { toast } from 'react-hot-toast'
 
 interface Watch {
@@ -32,6 +31,7 @@ function CheckoutPageContent() {
   const [selectedShipping, setSelectedShipping] = useState<string>('')
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState('')
+  const [pricingConfig, setPricingConfig] = useState<any>(null)
 
   useEffect(() => {
     if (!session) {
@@ -45,17 +45,21 @@ function CheckoutPageContent() {
       return
     }
 
-    // Lade Watch-Details
-    fetch(`/api/watches/${watchId}`)
-      .then(res => res.json())
-      .then(data => {
-        if (data.watch) {
-          const images = data.watch.images ? JSON.parse(data.watch.images) : []
-          setWatch({ ...data.watch, images })
+    // Lade Pricing-Config und Watch-Details parallel
+    Promise.all([
+      fetch('/api/pricing/config').then(res => res.json()),
+      fetch(`/api/watches/${watchId}`).then(res => res.json()),
+    ])
+      .then(([pricingData, watchData]) => {
+        setPricingConfig(pricingData)
+
+        if (watchData.watch) {
+          const images = watchData.watch.images ? JSON.parse(watchData.watch.images) : []
+          setWatch({ ...watchData.watch, images })
 
           // Parse shipping methods und setze ersten als Standard
-          if (data.watch.shippingMethod) {
-            const shippingMethods = JSON.parse(data.watch.shippingMethod)
+          if (watchData.watch.shippingMethod) {
+            const shippingMethods = JSON.parse(watchData.watch.shippingMethod)
             if (shippingMethods && shippingMethods.length > 0) {
               setSelectedShipping(shippingMethods[0])
             }
@@ -65,8 +69,8 @@ function CheckoutPageContent() {
         }
       })
       .catch(err => {
-        console.error('Error loading watch:', err)
-        setError('Fehler beim Laden der Uhr')
+        console.error('Error loading data:', err)
+        setError('Fehler beim Laden der Daten')
       })
       .finally(() => setLoading(false))
   }, [watchId, session, router])
@@ -160,9 +164,24 @@ function CheckoutPageContent() {
   } catch (e) {
     console.error('Error parsing shippingMethod:', e)
   }
+  // Berechne Fees synchron mit Pricing-Config
   const shippingCost = getShippingCostForMethod(selectedShipping as any)
   const itemPrice = watch.buyNowPrice || watch.price
-  const fees = calculateOrderFees(itemPrice, shippingCost, true)
+
+  // Verwende Pricing-Config für synchrone Berechnung
+  const calculateFeesSync = () => {
+    if (!pricingConfig) {
+      return { itemPrice, shippingCost, platformFee: 0, protectionFee: 0, totalAmount: itemPrice + shippingCost }
+    }
+
+    const platformFee = Math.round(itemPrice * pricingConfig.platformFeeRate * 100) / 100
+    const protectionFee = Math.round(itemPrice * pricingConfig.protectionFeeRate * 100) / 100
+    const totalAmount = Math.round((itemPrice + shippingCost + platformFee + protectionFee) * 100) / 100
+
+    return { itemPrice, shippingCost, platformFee, protectionFee, totalAmount }
+  }
+
+  const fees = calculateFeesSync()
   const totalPrice = fees.totalAmount
 
   const isBase64Image = (src: string) => {

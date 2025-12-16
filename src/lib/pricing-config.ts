@@ -6,7 +6,9 @@
  * - Invoices (Kommission)
  * - Platform Fees
  *
- * Gebühren können über Environment Variables überschrieben werden.
+ * Gebühren werden aus der Datenbank geladen (Admin-Pricing-Settings).
+ * Falls keine Datenbank-Einstellungen vorhanden sind, werden Environment Variables verwendet.
+ * Als letzter Fallback werden die Default-Werte verwendet.
  */
 
 export interface PricingConfig {
@@ -25,28 +27,59 @@ export interface PricingConfig {
 }
 
 /**
- * Lädt die Pricing-Konfiguration aus Environment Variables oder verwendet Defaults
+ * Lädt die Pricing-Konfiguration aus der Datenbank (Admin-Pricing-Settings)
+ * Falls keine DB-Einstellungen vorhanden sind, werden Environment Variables verwendet.
+ * Als letzter Fallback werden die Default-Werte verwendet.
  */
-export function getPricingConfig(): PricingConfig {
+export async function getPricingConfig(): Promise<PricingConfig> {
+  try {
+    // Versuche aus Datenbank zu laden
+    const { prisma } = await import('./prisma')
+    const latestPricing = await prisma.pricingHistory.findFirst({
+      orderBy: { changedAt: 'desc' },
+      select: {
+        platformMarginRate: true,
+        protectionFeeRate: true,
+        vatRate: true,
+        minimumCommission: true,
+        maximumCommission: true,
+      },
+    })
+
+    if (latestPricing) {
+      return {
+        platformFeeRate: latestPricing.platformMarginRate ?? DEFAULT_PRICING.platformFeeRate,
+        protectionFeeRate: latestPricing.protectionFeeRate ?? DEFAULT_PRICING.protectionFeeRate,
+        vatRate: latestPricing.vatRate ?? DEFAULT_PRICING.vatRate,
+        minimumCommission: latestPricing.minimumCommission ?? DEFAULT_PRICING.minimumCommission,
+        maximumCommission: latestPricing.maximumCommission ?? DEFAULT_PRICING.maximumCommission,
+      }
+    }
+  } catch (error) {
+    // Bei Fehler (z.B. DB nicht verfügbar), verwende Fallback
+    console.warn('[pricing-config] Fehler beim Laden aus DB, verwende Fallback:', error)
+  }
+
+  // Fallback: Environment Variables oder Defaults
   const platformFeeRate = parseFloat(
-    process.env.PLATFORM_FEE_RATE || '0.1'
-  ) // Default: 10%
+    process.env.PLATFORM_FEE_RATE || String(DEFAULT_PRICING.platformFeeRate)
+  )
 
   const protectionFeeRate = parseFloat(
-    process.env.PROTECTION_FEE_RATE || '0.02'
-  ) // Default: 2%
+    process.env.PROTECTION_FEE_RATE || String(DEFAULT_PRICING.protectionFeeRate)
+  )
 
   const vatRate = parseFloat(
-    process.env.VAT_RATE || '0.081'
-  ) // Default: 8.1%
+    process.env.VAT_RATE || String(DEFAULT_PRICING.vatRate)
+  )
 
   const minimumCommission = process.env.MINIMUM_COMMISSION
     ? parseFloat(process.env.MINIMUM_COMMISSION)
-    : undefined
+    : DEFAULT_PRICING.minimumCommission
 
   const maximumCommission = process.env.MAXIMUM_COMMISSION
     ? parseFloat(process.env.MAXIMUM_COMMISSION)
-    : undefined
+    : DEFAULT_PRICING.maximumCommission
 
   return {
     platformFeeRate,
@@ -60,11 +93,11 @@ export function getPricingConfig(): PricingConfig {
 /**
  * Berechnet die Plattform-Gebühr mit optionalen Min/Max Limits
  */
-export function calculatePlatformFee(
+export async function calculatePlatformFee(
   itemPrice: number,
   config?: Partial<PricingConfig>
-): number {
-  const pricingConfig = config ? { ...getPricingConfig(), ...config } : getPricingConfig()
+): Promise<number> {
+  const pricingConfig = config ? { ...(await getPricingConfig()), ...config } : await getPricingConfig()
 
   let fee = itemPrice * pricingConfig.platformFeeRate
 
@@ -84,11 +117,11 @@ export function calculatePlatformFee(
 /**
  * Berechnet die Zahlungsschutz-Gebühr
  */
-export function calculateProtectionFee(
+export async function calculateProtectionFee(
   itemPrice: number,
   config?: Partial<PricingConfig>
-): number {
-  const pricingConfig = config ? { ...getPricingConfig(), ...config } : getPricingConfig()
+): Promise<number> {
+  const pricingConfig = config ? { ...(await getPricingConfig()), ...config } : await getPricingConfig()
   return Math.round(itemPrice * pricingConfig.protectionFeeRate * 100) / 100
 }
 

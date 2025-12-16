@@ -139,8 +139,8 @@ model User {
   aiConversations               AIConversation[]
   aiSearchResults               AISearchResult[]
   ordersAsBuyer                 Order[]              @relation("OrderBuyer")
-  pricingHistory              PricingHistory[]
   ordersAsSeller                Order[]              @relation("OrderSeller")
+  pricingHistory                PricingHistory[]
 
   @@map("users")
 }
@@ -965,24 +965,6 @@ model AISearchResult {
   @@map("ai_search_results")
 }
 
-
-model PricingHistory {
-  id                 String   @id @default(cuid())
-  platformMarginRate Float?
-  vatRate            Float?
-  minimumCommission  Float?
-  maximumCommission  Float?
-  listingFee         Float?
-  transactionFee     Float?
-  changedBy          String
-  changedAt          DateTime @default(now())
-  admin              User     @relation(fields: [changedBy], references: [id], onDelete: Cascade)
-
-  @@index([changedAt])
-  @@index([changedBy])
-  @@map("pricing_history")
-}
-
 model Order {
   id                    String          @id @default(cuid())
   orderNumber           String          @unique
@@ -1085,4 +1067,22 @@ model PaymentRecord {
   @@index([stripeChargeId])
   @@index([stripeTransferId])
   @@map("payment_records")
+}
+
+model PricingHistory {
+  id                 String   @id @default(cuid())
+  platformMarginRate Float?
+  protectionFeeRate  Float?   // Zahlungsschutz-Gebühr (z.B. 0.02 = 2%)
+  vatRate            Float?
+  minimumCommission  Float?
+  maximumCommission  Float?
+  listingFee         Float?
+  transactionFee     Float?
+  changedBy          String
+  changedAt          DateTime @default(now())
+  admin              User     @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+
+  @@index([changedAt])
+  @@index([changedBy])
+  @@map("pricing_history")
 }

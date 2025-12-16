@@ -22,18 +22,18 @@ export interface OrderFeeCalculation {
  * @param includeProtectionFee - Ob die Zahlungsschutz-Gebühr eingerechnet werden soll
  * @param customConfig - Optionale benutzerdefinierte Pricing-Konfiguration
  */
-export function calculateOrderFees(
+export async function calculateOrderFees(
   itemPrice: number,
   shippingCost: number,
   includeProtectionFee: boolean = true,
   customConfig?: Partial<import('./pricing-config').PricingConfig>
-): OrderFeeCalculation {
+): Promise<OrderFeeCalculation> {
   // Plattform-Gebühr (verwendet zentrale Pricing-Konfiguration)
-  const platformFee = calculatePlatformFee(itemPrice, customConfig)
+  const platformFee = await calculatePlatformFee(itemPrice, customConfig)
 
   // Zahlungsschutz-Gebühr (optional)
   const protectionFee = includeProtectionFee
-    ? calculateProtectionFee(itemPrice, customConfig)
+    ? await calculateProtectionFee(itemPrice, customConfig)
     : 0
 
   // Gesamtbetrag
