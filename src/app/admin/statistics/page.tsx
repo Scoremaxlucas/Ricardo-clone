@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import {
   BarChart3,
+  Download,
   Users,
   ShoppingBag,
   TrendingUp,
@@ -143,6 +144,29 @@ export default function AdminStatisticsPage() {
     }
   }
 
+  const exportStatistics = async () => {
+    try {
+      const res = await fetch('/api/admin/statistics/export')
+      if (res.ok) {
+        const blob = await res.blob()
+        const url = window.URL.createObjectURL(blob)
+        const a = document.createElement('a')
+        a.href = url
+        a.download = `helvenda-statistiken-${new Date().toISOString().split('T')[0]}.csv`
+        document.body.appendChild(a)
+        a.click()
+        window.URL.revokeObjectURL(url)
+        document.body.removeChild(a)
+        toast.success('Statistiken erfolgreich exportiert')
+      } else {
+        toast.error('Fehler beim Export')
+      }
+    } catch (error) {
+      console.error('Error exporting statistics:', error)
+      toast.error('Fehler beim Export')
+    }
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -209,6 +233,13 @@ export default function AdminStatisticsPage() {
               </p>
             </div>
             <div className="flex gap-4">
+              <button
+                onClick={exportStatistics}
+                className="inline-flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 font-medium text-white transition-colors hover:bg-green-700"
+              >
+                <Download className="h-4 w-4" />
+                CSV Export
+              </button>
               <Link
                 href="/admin/dashboard"
                 className="inline-flex items-center font-medium text-gray-600 hover:text-gray-700"
