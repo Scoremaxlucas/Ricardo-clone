@@ -1,9 +1,16 @@
 import { sendInvoiceNotificationEmail } from './email'
 import { prisma } from './prisma'
+import { getPricingConfig, calculatePlatformFee, DEFAULT_PRICING } from './pricing-config'
 
-const DEFAULT_PRICING = {
-  commissionRate: 0.1, // 10% Kommission
-  vatRate: 0.081, // 8.1% MwSt
+// Verwende zentrale Pricing-Konfiguration
+const getInvoicePricing = () => {
+  const config = getPricingConfig()
+  return {
+    commissionRate: config.platformFeeRate, // Verwende Platform Fee Rate
+    vatRate: config.vatRate,
+    minimumCommission: config.minimumCommission,
+    maximumCommission: config.maximumCommission,
+  }
 }
 
 // Hilfsfunktion zur Berechnung von Rechnungen
@@ -29,9 +36,15 @@ export async function calculateInvoiceForSale(purchaseId: string) {
     throw new Error('Purchase nicht gefunden')
   }
 
-  const pricing = DEFAULT_PRICING
+  const pricing = getInvoicePricing()
   const salePrice = purchase.price || purchase.watch.price
-  const commission = salePrice * pricing.commissionRate
+
+  // Verwende zentrale calculatePlatformFee Funktion für Konsistenz
+  const commission = calculatePlatformFee(salePrice, {
+    platformFeeRate: pricing.commissionRate,
+    minimumCommission: pricing.minimumCommission,
+    maximumCommission: pricing.maximumCommission,
+  })
   const subtotal = commission
   const vatAmount = subtotal * pricing.vatRate
   // Schweizer Rappenrundung auf 0.05 (5 Rappen)

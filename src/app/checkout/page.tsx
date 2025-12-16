@@ -2,10 +2,12 @@
 
 import { useState, useEffect, Suspense } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { PaymentForm } from '@/components/payment/PaymentForm'
+import { useSession } from 'next-auth/react'
 import { Card } from '@/components/ui/Card'
-import { ArrowLeft, CreditCard, Shield } from 'lucide-react'
+import { ArrowLeft, CreditCard, Shield, Loader2 } from 'lucide-react'
 import { getShippingCostForMethod } from '@/lib/shipping'
+import { calculateOrderFees } from '@/lib/order-fees'
+import { toast } from 'react-hot-toast'
 
 interface Watch {
   id: string
@@ -23,6 +25,7 @@ interface Watch {
 function CheckoutPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { data: session } = useSession()
   const watchId = searchParams.get('watchId')
   const [watch, setWatch] = useState<Watch | null>(null)
   const [loading, setLoading] = useState(true)
@@ -31,6 +34,11 @@ function CheckoutPageContent() {
   const [error, setError] = useState('')
 
   useEffect(() => {
+    if (!session) {
+      router.push('/login?callbackUrl=/checkout?watchId=' + watchId)
+      return
+    }
+
     if (!watchId) {
       setError('Keine Uhr ausgewählt')
       setLoading(false)
@@ -61,41 +69,62 @@ function CheckoutPageContent() {
         setError('Fehler beim Laden der Uhr')
       })
       .finally(() => setLoading(false))
-  }, [watchId])
+  }, [watchId, session, router])
 
-  const handlePaymentSuccess = async (paymentIntent: any) => {
-    setIsProcessing(true)
-
-    // Erstelle Purchase-Record
-    if (watch && selectedShipping) {
-      try {
-        const response = await fetch('/api/purchases/create', {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            watchId: watch.id,
-            shippingMethod: selectedShipping,
-            price: watch.buyNowPrice || watch.price,
-          }),
-        })
-
-        if (!response.ok) {
-          console.error('Error creating purchase:', await response.text())
-        }
-      } catch (error) {
-        console.error('Error creating purchase:', error)
-      }
+  const handleCheckout = async () => {
+    if (!watch || !selectedShipping) {
+      toast.error('Bitte wählen Sie eine Versandart aus')
+      return
     }
 
-    // Redirect to success page
-    router.push(`/checkout/success?payment_intent=${paymentIntent.id}`)
-  }
+    setIsProcessing(true)
+    setError('')
 
-  const handlePaymentError = (error: string) => {
-    console.error('Payment error:', error)
-    setError(error)
+    try {
+      // Schritt 1: Erstelle Order
+      const createOrderRes = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          watchId: watch.id,
+          shippingMethod: selectedShipping,
+        }),
+      })
+
+      if (!createOrderRes.ok) {
+        const errorData = await createOrderRes.json()
+        throw new Error(errorData.message || 'Fehler beim Erstellen der Bestellung')
+      }
+
+      const orderData = await createOrderRes.json()
+      const orderId = orderData.order.id
+
+      // Schritt 2: Erstelle Checkout Session
+      const checkoutRes = await fetch(`/api/orders/${orderId}/checkout`, {
+        method: 'POST',
+      })
+
+      if (!checkoutRes.ok) {
+        const errorData = await checkoutRes.json()
+        throw new Error(errorData.message || 'Fehler beim Erstellen der Checkout Session')
+      }
+
+      const checkoutData = await checkoutRes.json()
+
+      // Schritt 3: Redirect zu Stripe Checkout
+      if (checkoutData.checkoutUrl) {
+        window.location.href = checkoutData.checkoutUrl
+      } else {
+        throw new Error('Keine Checkout URL erhalten')
+      }
+    } catch (err: any) {
+      console.error('Error during checkout:', err)
+      setError(err.message || 'Fehler beim Checkout')
+      toast.error(err.message || 'Fehler beim Checkout')
+      setIsProcessing(false)
+    }
   }
 
   if (loading) {
@@ -109,7 +138,15 @@ function CheckoutPageContent() {
   if (error || !watch) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-red-600">{error || 'Uhr nicht gefunden'}</div>
+        <div className="rounded-lg bg-white p-8 shadow-md">
+          <div className="text-red-600">{error || 'Uhr nicht gefunden'}</div>
+          <button
+            onClick={() => router.back()}
+            className="mt-4 text-primary-600 hover:underline"
+          >
+            Zurück
+          </button>
+        </div>
       </div>
     )
   }
@@ -124,7 +161,9 @@ function CheckoutPageContent() {
     console.error('Error parsing shippingMethod:', e)
   }
   const shippingCost = getShippingCostForMethod(selectedShipping as any)
-  const totalPrice = (watch.buyNowPrice || watch.price) + shippingCost
+  const itemPrice = watch.buyNowPrice || watch.price
+  const fees = calculateOrderFees(itemPrice, shippingCost, true)
+  const totalPrice = fees.totalAmount
 
   const isBase64Image = (src: string) => {
     return src && (src.startsWith('data:image/') || src.length > 1000)
@@ -168,7 +207,7 @@ function CheckoutPageContent() {
                   </div>
                   <div className="text-right">
                     <p className="font-semibold text-gray-900">
-                      CHF {(watch.buyNowPrice || watch.price).toLocaleString()}
+                      CHF {itemPrice.toLocaleString()}
                     </p>
                   </div>
                 </div>
@@ -206,66 +245,92 @@ function CheckoutPageContent() {
                               </span>
                             )}
                           </div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {method === 'pickup' ? 'CHF 0.00' : method === 'b-post' ? 'CHF 8.50' : 'CHF 12.50'}
+                          </div>
                         </label>
                       ))}
                     </div>
                   </div>
                 )}
 
+                {/* Preis-Zusammenfassung */}
                 <div className="border-t pt-4">
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-gray-600">Zwischensumme</span>
-                    <span className="text-gray-900">
-                      CHF {(watch.buyNowPrice || watch.price).toLocaleString()}
-                    </span>
-                  </div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="text-gray-600">Versand</span>
-                    <span className="text-gray-900">CHF {shippingCost.toFixed(2)}</span>
-                  </div>
-                  <div className="border-t pt-2">
-                    <div className="flex items-center justify-between">
-                      <span className="text-lg font-semibold text-gray-900">Gesamt</span>
-                      <span className="text-lg font-bold text-primary-600">
-                        CHF {totalPrice.toFixed(2)}
-                      </span>
+                  <div className="space-y-2 text-sm">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Artikelpreis:</span>
+                      <span className="font-medium">CHF {itemPrice.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Versandkosten:</span>
+                      <span className="font-medium">CHF {shippingCost.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Plattform-Gebühr:</span>
+                      <span className="font-medium">CHF {fees.platformFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Zahlungsschutz:</span>
+                      <span className="font-medium">CHF {fees.protectionFee.toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-gray-200 pt-2">
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-900">Gesamt:</span>
+                        <span className="text-lg font-bold text-primary-600">
+                          CHF {totalPrice.toFixed(2)}
+                        </span>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </Card>
 
-            {/* Security Info */}
+            {/* Zahlungsschutz Info */}
             <Card>
               <div className="p-6">
-                <div className="mb-4 flex items-center space-x-3">
-                  <Shield className="h-5 w-5 text-green-600" />
-                  <h3 className="font-semibold text-gray-900">Sichere Zahlung</h3>
+                <div className="flex items-start">
+                  <Shield className="mr-3 h-6 w-6 text-blue-600" />
+                  <div>
+                    <h3 className="mb-2 font-semibold text-gray-900">Zahlungsschutz</h3>
+                    <p className="text-sm text-gray-600">
+                      Ihr Geld wird geschützt gehalten, bis Sie die Ware erhalten haben. Sie können
+                      die Zahlung freigeben, sobald alles in Ordnung ist.
+                    </p>
+                  </div>
                 </div>
-                <ul className="space-y-2 text-sm text-gray-600">
-                  <li>• SSL-verschlüsselte Übertragung</li>
-                  <li>• Stripe PCI DSS konform</li>
-                  <li>• 30-Tage Geld-zurück-Garantie</li>
-                  <li>• Authentizitäts-Garantie</li>
-                </ul>
               </div>
             </Card>
           </div>
 
-          {/* Payment Form */}
+          {/* Payment Section */}
           <div>
             <Card>
               <div className="p-6">
-                <div className="mb-6 flex items-center space-x-3">
-                  <CreditCard className="h-5 w-5 text-primary-600" />
-                  <h2 className="text-lg font-semibold">Zahlungsinformationen</h2>
-                </div>
+                <h2 className="mb-4 flex items-center text-lg font-semibold">
+                  <CreditCard className="mr-2 h-5 w-5" />
+                  Zahlung
+                </h2>
 
-                <PaymentForm
-                  amount={totalPrice}
-                  onSuccess={handlePaymentSuccess}
-                  onError={handlePaymentError}
-                />
+                <button
+                  onClick={handleCheckout}
+                  disabled={isProcessing || !selectedShipping}
+                  className="w-full rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700 disabled:opacity-50"
+                >
+                  {isProcessing ? (
+                    <span className="flex items-center justify-center">
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Wird verarbeitet...
+                    </span>
+                  ) : (
+                    `Jetzt bezahlen - CHF ${totalPrice.toFixed(2)}`
+                  )}
+                </button>
+
+                <p className="mt-4 text-xs text-gray-500">
+                  Durch Klicken auf "Jetzt bezahlen" werden Sie zu Stripe weitergeleitet, um Ihre
+                  Zahlung sicher abzuschließen.
+                </p>
               </div>
             </Card>
           </div>
@@ -277,14 +342,7 @@ function CheckoutPageContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-          <p className="text-gray-600">Laden...</p>
-        </div>
-      </div>
-    }>
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Lädt...</div>}>
       <CheckoutPageContent />
     </Suspense>
   )
