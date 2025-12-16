@@ -3,7 +3,7 @@
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { DollarSign, Save, ArrowLeft, Edit, Sparkles } from 'lucide-react'
+import { DollarSign, Save, ArrowLeft, Edit, Sparkles, History } from 'lucide-react'
 import Link from 'next/link'
 
 interface PricingSettings {
@@ -24,7 +24,24 @@ interface BoosterPrice {
   isActive: boolean
 }
 
-type Tab = 'fees' | 'boosters'
+interface PricingHistoryItem {
+  id: string
+  platformMarginRate: number | null
+  vatRate: number | null
+  minimumCommission: number | null
+  maximumCommission: number | null
+  listingFee: number | null
+  transactionFee: number | null
+  changedBy: string
+  changedAt: string
+  admin: {
+    id: string
+    email: string
+    name: string
+  }
+}
+
+type Tab = 'fees' | 'boosters' | 'history'
 
 export default function AdminPricingPage() {
   const { data: session, status } = useSession()
@@ -34,6 +51,8 @@ export default function AdminPricingPage() {
   const [saving, setSaving] = useState(false)
   const [editingBooster, setEditingBooster] = useState<BoosterPrice | null>(null)
   const [boosters, setBoosters] = useState<BoosterPrice[]>([])
+  const [history, setHistory] = useState<PricingHistoryItem[]>([])
+  const [loadingHistory, setLoadingHistory] = useState(false)
   const [settings, setSettings] = useState<PricingSettings>({
     platformMarginRate: 0.05, // Start with 5%, user can change to 10%
     vatRate: 0.081, // 8.1%
@@ -83,6 +102,13 @@ export default function AdminPricingPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [session, status])
 
+  useEffect(() => {
+    if (activeTab === 'history' && session?.user) {
+      loadHistory()
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeTab])
+
   const loadPricing = async () => {
     try {
       const res = await fetch('/api/admin/pricing')
@@ -113,6 +139,23 @@ export default function AdminPricingPage() {
       }
     } catch (error) {
       console.error('Error loading boosters:', error)
+    }
+  }
+
+  const loadHistory = async () => {
+    setLoadingHistory(true)
+    try {
+      const res = await fetch('/api/admin/pricing/history')
+      if (res.ok) {
+        const data = await res.json()
+        setHistory(data.history || [])
+      } else {
+        console.error('Error loading pricing history')
+      }
+    } catch (error) {
+      console.error('Error loading history:', error)
+    } finally {
+      setLoadingHistory(false)
     }
   }
 
@@ -257,7 +300,19 @@ export default function AdminPricingPage() {
               } whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium`}
             >
               <Sparkles className="mr-2 inline h-4 w-4" />
+              <Sparkles className="mr-2 inline h-4 w-4" />
               Booster
+            </button>
+            <button
+              onClick={() => setActiveTab('history')}
+              className={`${
+                activeTab === 'history'
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+              } whitespace-nowrap border-b-2 px-1 py-4 text-sm font-medium`}
+            >
+              <History className="mr-2 inline h-4 w-4" />
+              Historie
             </button>
           </nav>
         </div>

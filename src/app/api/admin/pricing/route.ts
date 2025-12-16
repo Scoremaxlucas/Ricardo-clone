@@ -143,7 +143,23 @@ export async function POST(request: NextRequest) {
     if (listingFee !== undefined) pricingSettings.listingFee = listingFee
     if (transactionFee !== undefined) pricingSettings.transactionFee = transactionFee
 
-    // TODO: Später in Datenbank speichern
+    // Erstelle Historie-Eintrag für die Änderung
+    try {
+      await prisma.pricingHistory.create({
+        data: {
+          platformMarginRate: pricingSettings.platformMarginRate,
+          vatRate: pricingSettings.vatRate,
+          minimumCommission: pricingSettings.minimumCommission,
+          maximumCommission: pricingSettings.maximumCommission,
+          listingFee: pricingSettings.listingFee,
+          transactionFee: pricingSettings.transactionFee,
+          changedBy: session!.user!.id,
+        },
+      })
+    } catch (historyError: any) {
+      console.error('Error creating pricing history entry:', historyError)
+      // Historie-Fehler sollte nicht die Pricing-Änderung verhindern
+    }
 
     return NextResponse.json({
       message: 'Pricing-Einstellungen erfolgreich gespeichert',

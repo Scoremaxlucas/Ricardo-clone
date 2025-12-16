@@ -135,6 +135,7 @@ model User {
   rewards                       Reward[]
   aiConversations               AIConversation[]
   aiSearchResults               AISearchResult[]
+  pricingHistoryChanges         PricingHistory[]
 
   @@map("users")
 }
@@ -956,4 +957,21 @@ model AISearchResult {
   @@index([userId])
   @@index([createdAt])
   @@map("ai_search_results")
+}
+
+model PricingHistory {
+  id                String   @id @default(cuid())
+  platformMarginRate Float?
+  vatRate           Float?
+  minimumCommission Float?
+  maximumCommission Float?
+  listingFee        Float?
+  transactionFee    Float?
+  changedBy         String
+  changedAt         DateTime @default(now())
+  admin             User     @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+  
+  @@index([changedAt])
+  @@index([changedBy])
+  @@map("pricing_history")
 }
