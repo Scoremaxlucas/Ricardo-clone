@@ -10,6 +10,7 @@ import {
   AlertTriangle,
   Ban,
   CheckCircle,
+  CheckSquare,
   FileText,
   Flag,
   History,
@@ -58,6 +59,7 @@ export default function AdminUsersPage() {
   const [showWarnModal, setShowWarnModal] = useState(false)
   const [warnUserId, setWarnUserId] = useState<string | null>(null)
   const [warnUserName, setWarnUserName] = useState<string | null>(null)
+  const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
 
   useEffect(() => {
     if (status === 'loading') return
@@ -151,6 +153,55 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleBulkAction = async (action: 'block' | 'unblock' | 'warn' | 'grantAdmin' | 'revokeAdmin') => {
+    if (selectedUsers.size === 0) {
+      toast.error('Bitte wählen Sie mindestens einen Benutzer aus')
+      return
+    }
+
+    if (
+      (action === 'block' || action === 'revokeAdmin') &&
+      !confirm(`Möchten Sie wirklich ${selectedUsers.size} Benutzer ${action === 'block' ? 'blockieren' : 'die Admin-Rechte entziehen'}?`)
+    ) {
+      return
+    }
+
+    try {
+      const res = await fetch('/api/admin/users/bulk', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action,
+          userIds: Array.from(selectedUsers),
+          reason: action === 'warn' ? 'other' : undefined,
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        toast.success(data.message || `Bulk-Aktion erfolgreich ausgeführt`)
+        setSelectedUsers(new Set())
+        loadUsers()
+      } else {
+        const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
+        toast.error(errorData.message || 'Fehler bei Bulk-Aktion')
+      }
+    } catch (error) {
+      console.error('Error performing bulk action:', error)
+      toast.error('Fehler bei Bulk-Aktion')
+    }
+  }
+
+  const toggleUserSelection = (userId: string) => {
+    const newSelection = new Set(selectedUsers)
+    if (newSelection.has(userId)) {
+      newSelection.delete(userId)
+    } else {
+      newSelection.add(userId)
+    }
+    setSelectedUsers(newSelection)
+  }
+
   const handleWarn = (userId: string) => {
     const user = users.find(u => u.id === userId)
     setWarnUserId(userId)
@@ -227,6 +278,14 @@ export default function AdminUsersPage() {
 
     return matchesSearch
   })
+
+  const toggleSelectAll = () => {
+    if (selectedUsers.size === filteredUsers.length) {
+      setSelectedUsers(new Set())
+    } else {
+      setSelectedUsers(new Set(filteredUsers.map(u => u.id)))
+    }
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -315,12 +374,74 @@ export default function AdminUsersPage() {
           </div>
         </div>
 
+        {/* Bulk-Aktionen */}
+        {selectedUsers.size > 0 && (
+          <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <CheckSquare className="h-5 w-5 text-blue-600" />
+                <span className="font-medium text-blue-900">
+                  {selectedUsers.size} Benutzer{selectedUsers.size !== 1 ? '' : ''} ausgewählt
+                </span>
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handleBulkAction('block')}
+                  className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700"
+                >
+                  Blockieren
+                </button>
+                <button
+                  onClick={() => handleBulkAction('unblock')}
+                  className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white transition-colors hover:bg-green-700"
+                >
+                  Entblocken
+                </button>
+                <button
+                  onClick={() => handleBulkAction('warn')}
+                  className="rounded-lg bg-yellow-600 px-4 py-2 text-sm text-white transition-colors hover:bg-yellow-700"
+                >
+                  Verwarnen
+                </button>
+                <button
+                  onClick={() => handleBulkAction('grantAdmin')}
+                  className="rounded-lg bg-purple-600 px-4 py-2 text-sm text-white transition-colors hover:bg-purple-700"
+                >
+                  Admin-Rechte vergeben
+                </button>
+                <button
+                  onClick={() => handleBulkAction('revokeAdmin')}
+                  className="rounded-lg bg-orange-600 px-4 py-2 text-sm text-white transition-colors hover:bg-orange-700"
+                >
+                  Admin-Rechte entziehen
+                </button>
+                <button
+                  onClick={() => setSelectedUsers(new Set())}
+                  className="rounded-lg border border-gray-300 px-4 py-2 text-sm transition-colors hover:bg-gray-50"
+                >
+                  Abbrechen
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
         {/* User Liste */}
         <div className="overflow-hidden rounded-lg bg-white shadow">
           <div className="overflow-x-auto">
             <table className="min-w-full divide-y divide-gray-200">
               <thead className="bg-gray-50">
                 <tr>
+                  <th className="w-12 px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    <label className="flex cursor-pointer items-center">
+                      <input
+                        type="checkbox"
+                        checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
+                        onChange={toggleSelectAll}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      />
+                    </label>
+                  </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Benutzer
                   </th>
@@ -345,8 +466,18 @@ export default function AdminUsersPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-gray-200 bg-white">
-                {filteredUsers.map(user => (
-                  <tr key={user.id} className="hover:bg-gray-50">
+                {filteredUsers.map(user => {
+                  const isSelected = selectedUsers.has(user.id)
+                  return (
+                  <tr key={user.id} className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}>
+                    <td className="whitespace-nowrap px-6 py-4">
+                      <input
+                        type="checkbox"
+                        checked={isSelected}
+                        onChange={() => toggleUserSelection(user.id)}
+                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                      />
+                    </td>
                     <td className="whitespace-nowrap px-6 py-4">
                       <div>
                         <div className="text-sm font-medium text-gray-900">
@@ -536,7 +667,8 @@ export default function AdminUsersPage() {
                       </div>
                     </td>
                   </tr>
-                ))}
+                  )
+                })}
               </tbody>
             </table>
           </div>
