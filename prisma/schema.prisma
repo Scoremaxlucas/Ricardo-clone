@@ -960,17 +960,17 @@ model AISearchResult {
 }
 
 model PricingHistory {
-  id                String   @id @default(cuid())
+  id                 String   @id @default(cuid())
   platformMarginRate Float?
-  vatRate           Float?
-  minimumCommission Float?
-  maximumCommission Float?
-  listingFee        Float?
-  transactionFee    Float?
-  changedBy         String
-  changedAt         DateTime @default(now())
-  admin             User     @relation(fields: [changedBy], references: [id], onDelete: Cascade)
-  
+  vatRate            Float?
+  minimumCommission  Float?
+  maximumCommission  Float?
+  listingFee         Float?
+  transactionFee     Float?
+  changedBy          String
+  changedAt          DateTime @default(now())
+  admin              User     @relation(fields: [changedBy], references: [id], onDelete: Cascade)
+
   @@index([changedAt])
   @@index([changedBy])
   @@map("pricing_history")
