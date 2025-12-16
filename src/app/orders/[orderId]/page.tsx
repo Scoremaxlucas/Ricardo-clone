@@ -99,8 +99,8 @@ export default function OrderDetailPage() {
       const orderData = data.order
 
       setOrder(orderData)
-      setIsBuyer(orderData.buyerId === session?.user?.id || '')
-      setIsSeller(orderData.sellerId === session?.user?.id || '')
+      setIsBuyer(orderData.buyerId === (session?.user?.id ?? ''))
+      setIsSeller(orderData.sellerId === (session?.user?.id ?? ''))
     } catch (err: any) {
       toast.error(err.message || 'Fehler beim Laden der Bestellung')
       router.push('/my-watches/buying')
