@@ -136,7 +136,13 @@ export default function AdminModerateWatchesPage() {
         const allWatches = data.watches || []
         setWatches(allWatches)
       } else {
-        toast.error(t.admin.errorLoadingOffers)
+        toast.error(
+          'Fehler beim Laden der Angebote. Bitte Seite neu laden.',
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
     } catch (error) {
       console.error('Error loading watches:', error)
@@ -171,37 +177,45 @@ export default function AdminModerateWatchesPage() {
   }
 
   const toggleWatchStatus = async (watchId: string, currentStatus: boolean) => {
+    const newStatus = !currentStatus
+    const watch = watches.find(w => w.id === watchId)
+    const watchTitle = watch?.title || 'Angebot'
+    
+    // Optimistisches Update - sofortiges UI-Feedback
+    setWatches(prevWatches =>
+      prevWatches.map((w: any) =>
+        w.id === watchId
+          ? {
+              ...w,
+              isActive: newStatus,
+              moderationStatus: newStatus ? 'approved' : 'rejected',
+            }
+          : w
+      )
+    )
+    
     try {
       const res = await fetch(`/api/watches/${watchId}/edit-status`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: !currentStatus }),
+        body: JSON.stringify({ isActive: newStatus }),
       })
 
       const data = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
 
       if (res.ok) {
+        // Erfolgreiche Toast-Nachricht mit Details
         toast.success(
-          data.message || (!currentStatus ? t.admin.offerActivated : t.admin.offerDeactivated)
+          newStatus 
+            ? `✓ "${watchTitle}" wurde erfolgreich aktiviert` 
+            : `✓ "${watchTitle}" wurde erfolgreich deaktiviert`,
+          {
+            duration: 3000,
+            icon: newStatus ? '✅' : '⏸️',
+          }
         )
         
-        // Optimistisches Update für sofortiges Feedback
-        if (data.watch) {
-          setWatches(prevWatches =>
-            prevWatches.map((w: any) =>
-              w.id === watchId
-                ? {
-                    ...w,
-                    isActive: data.watch.isActive,
-                    moderationStatus: data.watch.moderationStatus,
-                  }
-                : w
-            )
-          )
-        }
-        
         // WICHTIG: Warte kurz für DB-Commit, dann lade vom Server neu für Konsistenz
-        // Verwende Promise-basierte Verzögerung statt setTimeout mit async
         await new Promise(resolve => setTimeout(resolve, 300))
         
         // Wenn Filter auf 'inactive' steht und wir aktivieren, wechsle zu 'all' für bessere UX
@@ -212,12 +226,48 @@ export default function AdminModerateWatchesPage() {
         // Lade Watches neu - dies verwendet den aktuellen Filter (oder 'all' wenn geändert)
         await loadWatches()
       } else {
+        // Rollback bei Fehler
+        setWatches(prevWatches =>
+          prevWatches.map((w: any) =>
+            w.id === watchId
+              ? {
+                  ...w,
+                  isActive: currentStatus,
+                  moderationStatus: currentStatus ? 'approved' : 'rejected',
+                }
+              : w
+          )
+        )
         console.error('Status update error:', data)
-        toast.error(data.message || t.admin.errorChangingStatus)
+        toast.error(
+          data.message || `Fehler beim ${newStatus ? 'Aktivieren' : 'Deaktivieren'} des Angebots`,
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
     } catch (error: any) {
+      // Rollback bei Fehler
+      setWatches(prevWatches =>
+        prevWatches.map((w: any) =>
+          w.id === watchId
+            ? {
+                ...w,
+                isActive: currentStatus,
+                moderationStatus: currentStatus ? 'approved' : 'rejected',
+              }
+            : w
+        )
+      )
       console.error('Error toggling watch status:', error)
-      toast.error(error.message || 'Fehler beim Ändern des Status')
+      toast.error(
+        `Fehler beim ${newStatus ? 'Aktivieren' : 'Deaktivieren'} des Angebots: ${error.message || 'Netzwerkfehler'}`,
+        {
+          duration: 4000,
+          icon: '❌',
+        }
+      )
     }
   }
 
@@ -303,11 +353,25 @@ export default function AdminModerateWatchesPage() {
       })
 
       if (res.ok) {
-        toast.success(`Bulk-Aktion erfolgreich ausgeführt`)
+        const actionText = action === 'activate' ? 'aktiviert' : action === 'deactivate' ? 'deaktiviert' : 'gelöscht'
+        toast.success(
+          `✓ ${selectedWatches.size} Angebot${selectedWatches.size !== 1 ? 'e' : ''} erfolgreich ${actionText}`,
+          {
+            duration: 3000,
+            icon: '✅',
+          }
+        )
         setSelectedWatches(new Set())
         loadWatches()
       } else {
-        toast.error('Fehler bei Bulk-Aktion')
+        const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
+        toast.error(
+          errorData.message || `Fehler bei Bulk-Aktion: ${action}`,
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
     } catch (error) {
       console.error('Error performing bulk action:', error)
@@ -329,9 +393,21 @@ export default function AdminModerateWatchesPage() {
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-        toast.success('Export erfolgreich')
+        toast.success(
+          `✓ CSV-Export erfolgreich erstellt (${filter})`,
+          {
+            duration: 3000,
+            icon: '📥',
+          }
+        )
       } else {
-        toast.error('Fehler beim Export')
+        toast.error(
+          'Fehler beim CSV-Export. Bitte versuchen Sie es erneut.',
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
     } catch (error) {
       console.error('Error exporting:', error)
@@ -690,11 +766,13 @@ export default function AdminModerateWatchesPage() {
                           <div className="flex-1">
                             <div className="mb-2 flex flex-wrap items-center gap-3">
                               {watch.isActive ? (
-                                <span className="rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-800">
+                                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                  <CheckCircle className="mr-1 h-3 w-3" />
                                   Aktiv
                                 </span>
                               ) : (
-                                <span className="rounded bg-red-100 px-2 py-1 text-xs font-medium text-red-800">
+                                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                  <XCircle className="mr-1 h-3 w-3" />
                                   Inaktiv
                                 </span>
                               )}

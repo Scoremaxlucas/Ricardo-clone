@@ -88,7 +88,13 @@ export default function AdminContactRequestsPage() {
       } else {
         const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
         console.error('[contact-requests-page] Error response:', errorData)
-        toast.error(`Fehler beim Laden: ${errorData.message || 'Unbekannter Fehler'}`)
+        toast.error(
+          `Fehler beim Laden: ${errorData.message || 'Unbekannter Fehler'}`,
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
     } catch (error: any) {
       console.error('[contact-requests-page] Error loading contact requests:', error)
@@ -97,7 +103,13 @@ export default function AdminContactRequestsPage() {
         message: error.message,
         stack: error.stack,
       })
-      toast.error(`Fehler beim Laden der Kontaktanfragen: ${error.message || 'Unbekannter Fehler'}`)
+      toast.error(
+        `Fehler beim Laden der Kontaktanfragen: ${error.message || 'Unbekannter Fehler'}`,
+        {
+          duration: 4000,
+          icon: '❌',
+        }
+      )
     } finally {
       setLoading(false)
     }
@@ -113,16 +125,35 @@ export default function AdminContactRequestsPage() {
       })
 
       if (res.ok) {
-        toast.success('Status erfolgreich aktualisiert')
+        toast.success(
+          `✓ Status erfolgreich auf "${newStatus}" aktualisiert`,
+          {
+            duration: 3000,
+            icon: '✅',
+          }
+        )
         loadContactRequests()
         setSelectedRequest(null)
         setNotes('')
       } else {
-        toast.error('Fehler beim Aktualisieren des Status')
+        const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
+        toast.error(
+          errorData.message || 'Fehler beim Aktualisieren des Status',
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating status:', error)
-      toast.error('Fehler beim Aktualisieren des Status')
+      toast.error(
+        `Fehler beim Aktualisieren des Status: ${error.message || 'Netzwerkfehler'}`,
+        {
+          duration: 4000,
+          icon: '❌',
+        }
+      )
     } finally {
       setUpdating(false)
     }
@@ -138,17 +169,36 @@ export default function AdminContactRequestsPage() {
       })
 
       if (res.ok) {
-        toast.success('Notizen erfolgreich gespeichert')
+        toast.success(
+          '✓ Notizen erfolgreich gespeichert',
+          {
+            duration: 3000,
+            icon: '📝',
+          }
+        )
         loadContactRequests()
         if (selectedRequest) {
           setSelectedRequest({ ...selectedRequest, notes })
         }
       } else {
-        toast.error('Fehler beim Speichern der Notizen')
+        const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
+        toast.error(
+          errorData.message || 'Fehler beim Speichern der Notizen',
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error updating notes:', error)
-      toast.error('Fehler beim Speichern der Notizen')
+      toast.error(
+        `Fehler beim Speichern der Notizen: ${error.message || 'Netzwerkfehler'}`,
+        {
+          duration: 4000,
+          icon: '❌',
+        }
+      )
     } finally {
       setUpdating(false)
     }

@@ -110,7 +110,13 @@ export default function AdminUsersPage() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
         console.error('Users API error:', errorData)
-        toast.error('Fehler beim Laden der Benutzer')
+        toast.error(
+          'Fehler beim Laden der Benutzer. Bitte Seite neu laden.',
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
         setUsers([])
         setLoading(false)
         return
@@ -128,7 +134,13 @@ export default function AdminUsersPage() {
       setUsers(data)
     } catch (error: any) {
       console.error('Error loading users:', error)
-      toast.error('Fehler beim Laden der Benutzer')
+      toast.error(
+        'Fehler beim Laden der Benutzer. Bitte Seite neu laden.',
+        {
+          duration: 4000,
+          icon: '❌',
+        }
+      )
       setUsers([])
     } finally {
       setLoading(false)
@@ -136,20 +148,67 @@ export default function AdminUsersPage() {
   }
 
   const handleBlock = async (userId: string, block: boolean) => {
+    const user = users.find(u => u.id === userId)
+    const userName = user?.name || user?.email || 'Benutzer'
+    const currentBlockedStatus = user?.isBlocked || false
+    
+    // Optimistisches Update
+    setUsers(prevUsers =>
+      prevUsers.map(u =>
+        u.id === userId
+          ? { ...u, isBlocked: block }
+          : u
+      )
+    )
+    
     try {
       const res = await fetch(`/api/admin/users/${userId}/${block ? 'block' : 'unblock'}`, {
         method: 'POST',
       })
       if (res.ok) {
-        toast.success(block ? 'Benutzer blockiert' : 'Benutzer entblockt')
+        toast.success(
+          block ? `✓ "${userName}" wurde erfolgreich blockiert` : `✓ "${userName}" wurde erfolgreich entblockt`,
+          {
+            duration: 3000,
+            icon: block ? '🚫' : '✅',
+          }
+        )
         loadUsers()
       } else {
-        const data = await res.json()
-        toast.error(data.message || 'Fehler beim Blockieren/Entblocken')
+        // Rollback bei Fehler
+        setUsers(prevUsers =>
+          prevUsers.map(u =>
+            u.id === userId
+              ? { ...u, isBlocked: currentBlockedStatus }
+              : u
+          )
+        )
+        const data = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
+        toast.error(
+          data.message || `Fehler beim ${block ? 'Blockieren' : 'Entblocken'} von "${userName}"`,
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
-    } catch (error) {
+    } catch (error: any) {
+      // Rollback bei Fehler
+      setUsers(prevUsers =>
+        prevUsers.map(u =>
+          u.id === userId
+            ? { ...u, isBlocked: currentBlockedStatus }
+            : u
+        )
+      )
       console.error('Error blocking user:', error)
-      toast.error('Fehler beim Blockieren/Entblocken')
+      toast.error(
+        `Fehler beim ${block ? 'Blockieren' : 'Entblocken'}: ${error.message || 'Netzwerkfehler'}`,
+        {
+          duration: 4000,
+          icon: '❌',
+        }
+      )
     }
   }
 
@@ -179,12 +238,39 @@ export default function AdminUsersPage() {
 
       if (res.ok) {
         const data = await res.json()
-        toast.success(data.message || `Bulk-Aktion erfolgreich ausgeführt`)
+        const actionTexts: Record<string, string> = {
+          block: 'blockiert',
+          unblock: 'entblockt',
+          warn: 'verwarnt',
+          grantAdmin: 'Admin-Rechte vergeben',
+          revokeAdmin: 'Admin-Rechte entzogen',
+        }
+        const actionText = actionTexts[action] || 'bearbeitet'
+        const icons: Record<string, string> = {
+          block: '🚫',
+          unblock: '✅',
+          warn: '⚠️',
+          grantAdmin: '👑',
+          revokeAdmin: '🔓',
+        }
+        toast.success(
+          data.message || `✓ ${selectedUsers.size} Benutzer erfolgreich ${actionText}`,
+          {
+            duration: 3000,
+            icon: icons[action] || '✅',
+          }
+        )
         setSelectedUsers(new Set())
         loadUsers()
       } else {
         const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
-        toast.error(errorData.message || 'Fehler bei Bulk-Aktion')
+        toast.error(
+          errorData.message || `Fehler bei Bulk-Aktion: ${action}`,
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
     } catch (error) {
       console.error('Error performing bulk action:', error)

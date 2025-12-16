@@ -113,13 +113,23 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
       } else {
         const errorData = await res.json().catch(() => ({ message: 'Unknown error' }))
         toast.error(
-          'Fehler beim Laden des Disputes: ' + (errorData.message || 'Unbekannter Fehler')
+          'Fehler beim Laden des Disputes: ' + (errorData.message || 'Unbekannter Fehler'),
+          {
+            duration: 4000,
+            icon: '❌',
+          }
         )
         router.push('/admin/disputes')
       }
     } catch (error) {
       console.error('Error loading dispute:', error)
-      toast.error('Fehler beim Laden des Disputes')
+      toast.error(
+        'Fehler beim Laden des Disputes. Bitte Seite neu laden.',
+        {
+          duration: 4000,
+          icon: '❌',
+        }
+      )
       router.push('/admin/disputes')
     } finally {
       setLoading(false)
@@ -153,14 +163,32 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
       const data = await res.json()
 
       if (res.ok) {
-        toast.success('Dispute erfolgreich gelöst!')
+        toast.success(
+          '✓ Dispute erfolgreich gelöst!',
+          {
+            duration: 3000,
+            icon: '✅',
+          }
+        )
         router.push('/admin/disputes')
       } else {
-        toast.error(data.message || 'Fehler beim Lösen des Disputes')
+        toast.error(
+          data.message || 'Fehler beim Lösen des Disputes',
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error resolving dispute:', error)
-      toast.error('Fehler beim Lösen des Disputes')
+      toast.error(
+        `Fehler beim Lösen des Disputes: ${error.message || 'Netzwerkfehler'}`,
+        {
+          duration: 4000,
+          icon: '❌',
+        }
+      )
     } finally {
       setResolving(false)
     }

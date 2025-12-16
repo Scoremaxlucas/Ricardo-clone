@@ -128,7 +128,11 @@ export default function AdminStatisticsPage() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
         toast.error(
-          'Fehler beim Laden der Statistiken: ' + (errorData.message || 'Unbekannter Fehler')
+          'Fehler beim Laden der Statistiken: ' + (errorData.message || 'Unbekannter Fehler'),
+          {
+            duration: 4000,
+            icon: '❌',
+          }
         )
         setLoading(false)
         return
@@ -138,7 +142,13 @@ export default function AdminStatisticsPage() {
       setStats(data)
     } catch (error: any) {
       console.error('Error loading statistics:', error)
-      toast.error('Fehler beim Laden der Statistiken')
+      toast.error(
+        'Fehler beim Laden der Statistiken. Bitte Seite neu laden.',
+        {
+          duration: 4000,
+          icon: '❌',
+        }
+      )
     } finally {
       setLoading(false)
     }
@@ -157,13 +167,31 @@ export default function AdminStatisticsPage() {
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-        toast.success('Statistiken erfolgreich exportiert')
+        toast.success(
+          '✓ Statistiken erfolgreich exportiert',
+          {
+            duration: 3000,
+            icon: '📥',
+          }
+        )
       } else {
-        toast.error('Fehler beim Export')
+        toast.error(
+          'Fehler beim Export. Bitte versuchen Sie es erneut.',
+          {
+            duration: 4000,
+            icon: '❌',
+          }
+        )
       }
     } catch (error) {
       console.error('Error exporting statistics:', error)
-      toast.error('Fehler beim Export')
+      toast.error(
+        'Fehler beim Export. Bitte versuchen Sie es erneut.',
+        {
+          duration: 4000,
+          icon: '❌',
+        }
+      )
     }
   }
 
