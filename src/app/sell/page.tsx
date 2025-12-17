@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import { CategoryFields } from '@/components/forms/category-fields'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
@@ -63,7 +62,7 @@ const UploadLoadingModal = ({ isLoading }: { isLoading: boolean }) => {
                 }}
               />
             </div>
-            <style jsx global>{`
+            <style dangerouslySetInnerHTML={{ __html: `
               @keyframes progressFlow {
                 0% {
                   background-position: 0% 0;
@@ -80,7 +79,7 @@ const UploadLoadingModal = ({ isLoading }: { isLoading: boolean }) => {
                   transform: rotate(360deg);
                 }
               }
-            `}</style>
+            `}} />
             <p className="text-sm text-gray-500">
               Dies kann bei mehreren Bildern etwas länger dauern...
             </p>
