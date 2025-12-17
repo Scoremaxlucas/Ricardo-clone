@@ -146,8 +146,8 @@ export function StepReviewPublish({
 
   const categoryConfig = selectedCategory ? getCategoryConfig(selectedCategory) : null
   const titleImage = formData.images[titleImageIndex] || formData.images[0]
-  const selectedBoosterData = selectedBooster === 'none' 
-    ? null 
+  const selectedBoosterData = selectedBooster === 'none'
+    ? null
     : boosters.find(b => b.id === selectedBooster)
 
   return (
