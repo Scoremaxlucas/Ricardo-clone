@@ -1,6 +1,7 @@
 'use client'
 
-import { Check, ChevronRight } from 'lucide-react'
+import { Check, ChevronRight, AlertCircle } from 'lucide-react'
+import { useState } from 'react'
 
 export interface WizardStepInfo {
   id: string
@@ -40,9 +41,12 @@ export function StepProgress({ steps, currentStep, completedSteps, onStepClick }
       <div className="hidden sm:block">
         <div className="flex items-center justify-between">
           {steps.map((step, index) => {
-            const isCompleted = completedSteps.includes(index)
+            // Step is completed only if:
+            // 1. It's in completedSteps array AND
+            // 2. We've moved past this step (index < currentStep)
+            const isCompleted = completedSteps.includes(index) && index < currentStep
             const isCurrent = index === currentStep
-            const isClickable = isCompleted || index <= currentStep
+            const isClickable = index < currentStep || (isCompleted && index <= currentStep)
 
             return (
               <div key={step.id} className="flex flex-1 items-center">
@@ -104,6 +108,7 @@ interface WizardFooterProps {
   isLastStep: boolean
   canProceed: boolean
   isSubmitting?: boolean
+  disabledReason?: string
 }
 
 export function WizardFooter({
@@ -116,7 +121,10 @@ export function WizardFooter({
   isLastStep,
   canProceed,
   isSubmitting,
+  disabledReason,
 }: WizardFooterProps) {
+  const [showTooltip, setShowTooltip] = useState(false)
+
   return (
     <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-4 py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8">
       <div className="mx-auto flex max-w-4xl items-center justify-between">
@@ -145,32 +153,56 @@ export function WizardFooter({
           <span className="hidden text-sm text-gray-500 sm:block">
             {currentStep + 1} / {totalSteps}
           </span>
-          <button
-            type="button"
-            onClick={isLastStep ? onPublish : onNext}
-            disabled={!canProceed || isSubmitting}
-            className={`
-              rounded-full px-6 py-2.5 font-bold text-white transition-all duration-300
-              ${canProceed && !isSubmitting
-                ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg hover:-translate-y-0.5 hover:shadow-xl'
-                : 'cursor-not-allowed bg-gray-300'
-              }
-            `}
-          >
-            {isSubmitting ? (
-              <span className="flex items-center gap-2">
-                <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                Wird erstellt...
-              </span>
-            ) : isLastStep ? (
-              'Artikel veröffentlichen'
-            ) : (
-              <>Weiter →</>
+          
+          {/* Weiter/Publish button with tooltip */}
+          <div className="relative">
+            <button
+              type="button"
+              onClick={isLastStep ? onPublish : onNext}
+              disabled={!canProceed || isSubmitting}
+              onMouseEnter={() => !canProceed && disabledReason && setShowTooltip(true)}
+              onMouseLeave={() => setShowTooltip(false)}
+              className={`
+                rounded-full px-6 py-2.5 font-bold text-white transition-all duration-300
+                ${canProceed && !isSubmitting
+                  ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg hover:-translate-y-0.5 hover:shadow-xl'
+                  : 'cursor-not-allowed bg-gray-300'
+                }
+              `}
+            >
+              {isSubmitting ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  Wird erstellt...
+                </span>
+              ) : isLastStep ? (
+                'Artikel veröffentlichen'
+              ) : (
+                <>Weiter →</>
+              )}
+            </button>
+            
+            {/* Disabled reason tooltip */}
+            {showTooltip && !canProceed && disabledReason && (
+              <div className="absolute bottom-full right-0 mb-2 w-64 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg">
+                <div className="flex items-start gap-2">
+                  <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-yellow-400" />
+                  <span>{disabledReason}</span>
+                </div>
+                <div className="absolute -bottom-1 right-6 h-2 w-2 rotate-45 bg-gray-900" />
+              </div>
             )}
-          </button>
+          </div>
         </div>
       </div>
+      
+      {/* Mobile disabled reason */}
+      {!canProceed && disabledReason && (
+        <div className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-red-600 sm:hidden">
+          <AlertCircle className="h-4 w-4" />
+          <span>{disabledReason}</span>
+        </div>
+      )}
     </div>
   )
 }
-

@@ -1,6 +1,6 @@
 'use client'
 
-import { Package, MapPin, Truck, Shield, Info } from 'lucide-react'
+import { Package, MapPin, Truck, Shield, Info, ExternalLink, CheckCircle, Clock, AlertTriangle } from 'lucide-react'
 
 interface StepShippingPaymentProps {
   formData: {
@@ -15,23 +15,23 @@ const SHIPPING_OPTIONS = [
   {
     id: 'pickup',
     label: 'Abholung',
-    description: 'Käufer holt Artikel persönlich ab',
+    description: 'Käufer holt den Artikel persönlich ab',
     price: 'kostenlos',
     priceValue: 0,
     icon: MapPin,
   },
   {
     id: 'b-post',
-    label: 'Versand als Paket B-Post, bis 2 KG',
-    description: 'Standardversand mit der Post',
+    label: 'Paket B-Post (bis 2 kg)',
+    description: 'Zustellung innerhalb von 2-3 Werktagen',
     price: 'CHF 8.50',
     priceValue: 8.5,
     icon: Package,
   },
   {
     id: 'a-post',
-    label: 'Versand als Paket A-Post, bis 2 KG',
-    description: 'Schneller Versand mit der Post',
+    label: 'Paket A-Post (bis 2 kg)',
+    description: 'Zustellung am nächsten Werktag',
     price: 'CHF 12.50',
     priceValue: 12.5,
     icon: Truck,
@@ -49,15 +49,21 @@ export function StepShippingPayment({
       <div className="text-center">
         <h2 className="mb-2 text-2xl font-bold text-gray-900">Versand & Zahlung</h2>
         <p className="text-gray-600">
-          Wählen Sie die Versandoptionen und aktivieren Sie optional den Zahlungsschutz
+          Legen Sie fest, welche Versandoptionen Sie anbieten möchten
         </p>
       </div>
 
       {/* Shipping methods */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-gray-700">
-          Lieferart <span className="text-red-500">*</span>
-        </label>
+        <div>
+          <label className="block text-sm font-medium text-gray-700">
+            Angebotene Lieferarten <span className="text-red-500">*</span>
+          </label>
+          <p className="mt-1 text-sm text-gray-500">
+            Wählen Sie, welche Versandoptionen Sie dem Käufer anbieten. Der Käufer entscheidet beim Kauf, welche Option er nutzen möchte.
+          </p>
+        </div>
+        
         <div className="space-y-3">
           {SHIPPING_OPTIONS.map((option) => {
             const isSelected = formData.shippingMethods.includes(option.id)
@@ -97,19 +103,24 @@ export function StepShippingPayment({
           })}
         </div>
 
-        <p className="text-sm text-gray-500">
-          Die Versandkosten werden dem Käufer zusätzlich zum Kaufbetrag berechnet.
-          Es wird der höchste Betrag der ausgewählten Lieferarten berechnet.
-        </p>
+        {/* Info about shipping costs */}
+        <div className="flex items-start gap-3 rounded-lg bg-gray-50 p-4 text-sm text-gray-600">
+          <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-400" />
+          <span>
+            Die Versandkosten werden dem Käufer <strong>zusätzlich</strong> zum Kaufpreis berechnet.
+            Falls mehrere Optionen gewählt werden, entscheidet der Käufer.
+          </span>
+        </div>
 
         {formData.shippingMethods.length === 0 && (
-          <p className="text-sm font-medium text-red-500">
-            Bitte wählen Sie mindestens eine Lieferart aus.
-          </p>
+          <div className="flex items-center gap-2 rounded-lg bg-red-50 p-3 text-sm text-red-700">
+            <AlertTriangle className="h-4 w-4" />
+            <span>Bitte wählen Sie mindestens eine Lieferart aus.</span>
+          </div>
         )}
       </div>
 
-      {/* Helvenda Zahlungsschutz */}
+      {/* Helvenda Zahlungsschutz - Enhanced with details */}
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-primary-600" />
@@ -133,35 +144,69 @@ export function StepShippingPayment({
                 <span className="font-semibold text-gray-900">Zahlungsschutz aktivieren</span>
                 {paymentProtectionEnabled && (
                   <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-medium text-green-700">
-                    Aktiv
+                    Empfohlen
                   </span>
                 )}
               </div>
               <p className="mt-1 text-sm text-gray-600">
-                Das Geld wird sicher verwahrt, bis der Käufer den Erhalt bestätigt.
-                Erst dann wird der Betrag an Sie ausgezahlt.
+                Sichere Zahlungsabwicklung über Helvenda – für Käufer und Verkäufer.
               </p>
             </div>
           </label>
 
-          {/* Info box */}
-          <div className="mt-4 flex items-start gap-3 rounded-lg bg-white p-4">
-            <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-500" />
-            <div className="text-sm text-gray-600">
-              <p className="font-medium text-gray-700">So funktioniert der Zahlungsschutz:</p>
-              <ul className="mt-2 space-y-1">
-                <li>✓ Käufer zahlt sicher über Helvenda</li>
-                <li>✓ Geld wird treuhänderisch verwahrt</li>
-                <li>✓ Sie versenden den Artikel</li>
-                <li>✓ Käufer bestätigt Erhalt</li>
-                <li>✓ Geld wird an Sie ausgezahlt</li>
-              </ul>
+          {/* Detailed info box */}
+          <div className="mt-4 space-y-3 rounded-lg bg-white p-4">
+            <div className="flex items-center gap-2 text-sm font-medium text-gray-900">
+              <Info className="h-4 w-4 text-primary-500" />
+              <span>So funktioniert der Zahlungsschutz:</span>
+            </div>
+            
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="flex items-start gap-2 text-sm text-gray-600">
+                <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+                <span>Käufer zahlt sicher über Helvenda</span>
+              </div>
+              <div className="flex items-start gap-2 text-sm text-gray-600">
+                <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+                <span>Geld wird treuhänderisch verwahrt</span>
+              </div>
+              <div className="flex items-start gap-2 text-sm text-gray-600">
+                <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+                <span>Auszahlung nach Empfangsbestätigung</span>
+              </div>
+              <div className="flex items-start gap-2 text-sm text-gray-600">
+                <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
+                <span>Streitfall-Mediation durch Helvenda</span>
+              </div>
+            </div>
+            
+            {/* Costs and timing */}
+            <div className="mt-3 grid grid-cols-1 gap-2 border-t border-gray-100 pt-3 sm:grid-cols-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-medium text-gray-500">Gebühr:</span>
+                <span className="text-sm font-semibold text-gray-900">3.9% + CHF 0.30</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Clock className="h-4 w-4 text-gray-400" />
+                <span className="text-sm text-gray-600">Auszahlung in 2-3 Tagen</span>
+              </div>
+              <a
+                href="/help/payment-protection"
+                target="_blank"
+                className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
+              >
+                <span>Mehr erfahren</span>
+                <ExternalLink className="h-3 w-3" />
+              </a>
             </div>
           </div>
 
           {paymentProtectionEnabled && (
-            <div className="mt-4 rounded-lg bg-green-100 p-3 text-sm text-green-800">
-              <strong>Hinweis:</strong> Nach Veröffentlichung kann der Zahlungsschutz nicht mehr geändert werden.
+            <div className="mt-4 flex items-start gap-2 rounded-lg bg-green-100 p-3 text-sm text-green-800">
+              <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+              <span>
+                <strong>Zahlungsschutz aktiviert.</strong> Nach Veröffentlichung kann diese Option nicht mehr geändert werden.
+              </span>
             </div>
           )}
         </div>
@@ -169,4 +214,3 @@ export function StepShippingPayment({
     </div>
   )
 }
-

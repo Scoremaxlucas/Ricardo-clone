@@ -1,6 +1,6 @@
 'use client'
 
-import { Sparkles, Upload, X, Star } from 'lucide-react'
+import { Sparkles, Upload, X, Star, Bot } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { compressImage } from '@/lib/image-compression'
 
@@ -9,6 +9,7 @@ interface StepImagesProps {
     images: string[]
   }
   titleImageIndex: number
+  aiDetectedImageIndex?: number  // Track which image came from AI detection
   onImagesChange: (images: string[]) => void
   onTitleImageChange: (index: number) => void
 }
@@ -16,6 +17,7 @@ interface StepImagesProps {
 export function StepImages({
   formData,
   titleImageIndex,
+  aiDetectedImageIndex = 0,  // Default to first image (AI-detected image is typically first)
   onImagesChange,
   onTitleImageChange,
 }: StepImagesProps) {
@@ -129,6 +131,9 @@ export function StepImages({
     })
   }
 
+  // Check if the first image likely came from AI detection
+  const hasAIDetectedImage = formData.images.length > 0
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -138,6 +143,21 @@ export function StepImages({
         </p>
       </div>
 
+      {/* AI-detected image notice */}
+      {hasAIDetectedImage && formData.images.length === 1 && (
+        <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
+            <Bot className="h-5 w-5 text-green-600" />
+          </div>
+          <div className="flex-1">
+            <p className="font-medium text-green-800">Bild von KI-Erkennung übernommen</p>
+            <p className="text-sm text-green-700">
+              Das Bild aus der Kategorie-Erkennung wurde automatisch als erstes Listing-Bild gesetzt.
+            </p>
+          </div>
+        </div>
+      )}
+
       {/* Upload area */}
       <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 transition-colors hover:border-primary-400 hover:bg-primary-50">
         <label className="flex cursor-pointer flex-col items-center gap-4">
@@ -146,7 +166,7 @@ export function StepImages({
           </div>
           <div className="text-center">
             <span className="text-lg font-semibold text-gray-700">
-              Bilder hochladen
+              {formData.images.length > 0 ? 'Weitere Bilder hinzufügen' : 'Bilder hochladen'}
             </span>
             <p className="mt-1 text-sm text-gray-500">
               JPG, PNG, max. 10MB pro Bild
@@ -205,11 +225,11 @@ export function StepImages({
                   </div>
                 )}
 
-                {/* AI badge if first image */}
+                {/* AI badge if first image (from AI detection) */}
                 {index === 0 && (
                   <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-green-600/90 px-2 py-1 text-xs font-medium text-white">
-                    <Sparkles className="h-3 w-3" />
-                    KI
+                    <Bot className="h-3 w-3" />
+                    Von KI
                   </div>
                 )}
 
@@ -239,4 +259,3 @@ export function StepImages({
     </div>
   )
 }
-

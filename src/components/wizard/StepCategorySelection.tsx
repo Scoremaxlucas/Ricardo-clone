@@ -1,7 +1,7 @@
 'use client'
 
 import { getCategoryConfig } from '@/data/categories'
-import { Sparkles } from 'lucide-react'
+import { Sparkles, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
 import dynamic from 'next/dynamic'
 
 // Lazy load AIDetection to avoid bundling TensorFlow.js on every page
@@ -42,6 +42,24 @@ interface StepCategorySelectionProps {
   setTitleImageIndex: React.Dispatch<React.SetStateAction<number>>
 }
 
+// Format confidence with Swiss locale (clamped 0-100)
+function formatConfidence(confidence: number): string {
+  const clamped = Math.min(100, Math.max(0, Math.round(confidence * 100)))
+  return clamped.toLocaleString('de-CH') + ' %'
+}
+
+// Get confidence level label
+function getConfidenceLevel(confidence: number): { label: string; color: string; bgColor: string } {
+  const percent = Math.min(100, Math.max(0, confidence * 100))
+  if (percent >= 85) {
+    return { label: 'Hohe Konfidenz', color: 'text-green-700', bgColor: 'bg-green-100' }
+  } else if (percent >= 60) {
+    return { label: 'Mittlere Konfidenz', color: 'text-yellow-700', bgColor: 'bg-yellow-100' }
+  } else {
+    return { label: 'Niedrige Konfidenz', color: 'text-red-700', bgColor: 'bg-red-100' }
+  }
+}
+
 export function StepCategorySelection({
   selectedCategory,
   selectedSubcategory,
@@ -57,6 +75,8 @@ export function StepCategorySelection({
   setFormData,
   setTitleImageIndex,
 }: StepCategorySelectionProps) {
+  const confidenceLevel = getConfidenceLevel(detectedConfidence)
+  
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -114,24 +134,55 @@ export function StepCategorySelection({
             )}
           </div>
 
-          {/* AI Detection info */}
+          {/* AI Detection info - Enhanced with trust indicators */}
           {detectedConfidence > 0 && (
-            <div className="rounded-xl border border-green-200 bg-green-50 p-6">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
               <div className="flex items-start gap-3">
-                <Sparkles className="mt-0.5 h-6 w-6 flex-shrink-0 text-green-600" />
+                <Sparkles className="mt-0.5 h-6 w-6 flex-shrink-0 text-amber-600" />
                 <div className="flex-1">
-                  <p className="mb-2 text-lg font-semibold text-gray-900">
-                    Helvenda AI aktiviert
-                  </p>
-                  <div className="space-y-1 text-sm text-gray-700">
+                  <div className="mb-3 flex items-center gap-2">
+                    <p className="text-lg font-semibold text-gray-900">
+                      Vorschlag der KI
+                    </p>
+                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${confidenceLevel.bgColor} ${confidenceLevel.color}`}>
+                      {confidenceLevel.label}
+                    </span>
+                  </div>
+                  
+                  {/* Warning banner */}
+                  <div className="mb-4 flex items-start gap-2 rounded-lg bg-white/60 p-3 text-sm text-amber-800">
+                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                    <span>
+                      Die KI-Erkennung ist ein <strong>Vorschlag</strong>. Bitte überprüfen Sie, ob die Kategorie korrekt ist.
+                    </span>
+                  </div>
+                  
+                  <div className="space-y-2 text-sm text-gray-700">
                     {detectedProductName && (
-                      <p>✓ Erkannt: <span className="font-medium">{detectedProductName}</span></p>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <span>Erkannt: <span className="font-medium">{detectedProductName}</span></span>
+                      </div>
                     )}
                     {selectedSubcategory && (
-                      <p>✓ Unterkategorie: <span className="font-medium">{selectedSubcategory}</span></p>
+                      <div className="flex items-center gap-2">
+                        <CheckCircle2 className="h-4 w-4 text-green-600" />
+                        <span>Unterkategorie: <span className="font-medium">{selectedSubcategory}</span></span>
+                      </div>
                     )}
-                    <p>✓ Konfidenz: <span className="font-medium text-green-600">{Math.round(detectedConfidence * 100)}%</span></p>
+                    <div className="flex items-center gap-2">
+                      <CheckCircle2 className="h-4 w-4 text-green-600" />
+                      <span>Konfidenz: <span className={`font-medium ${confidenceLevel.color}`}>{formatConfidence(detectedConfidence)}</span></span>
+                    </div>
                   </div>
+                  
+                  {/* AI image transferred note */}
+                  {formData.images.length > 0 && (
+                    <div className="mt-4 flex items-center gap-2 text-sm text-green-700">
+                      <CheckCircle2 className="h-4 w-4" />
+                      <span>Das hochgeladene Bild wurde automatisch als Listing-Bild übernommen.</span>
+                    </div>
+                  )}
                 </div>
               </div>
             </div>
@@ -147,4 +198,3 @@ export function StepCategorySelection({
     </div>
   )
 }
-

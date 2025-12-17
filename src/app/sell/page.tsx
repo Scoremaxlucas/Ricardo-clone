@@ -184,6 +184,39 @@ function SellPageContent() {
     }
   }
 
+  // Get disabled reason for current step
+  const getDisabledReason = (step: number): string | undefined => {
+    switch (step) {
+      case 0:
+        if (!selectedCategory) return 'Bitte wählen Sie eine Kategorie aus'
+        return undefined
+      case 1:
+        if (formData.images.length === 0) return 'Bitte laden Sie mindestens ein Bild hoch'
+        return undefined
+      case 2:
+        if (!formData.title?.trim()) return 'Bitte geben Sie einen Titel ein'
+        if (!formData.description?.trim()) return 'Bitte geben Sie eine Beschreibung ein'
+        if (!formData.condition) return 'Bitte wählen Sie den Zustand aus'
+        return undefined
+      case 3:
+        const price = parseFloat(formData.price)
+        if (!price || price <= 0) return 'Bitte geben Sie einen gültigen Preis ein'
+        if (formData.isAuction && !formData.auctionDuration) return 'Bitte wählen Sie die Auktionsdauer'
+        if (formData.buyNowPrice) {
+          const buyNow = parseFloat(formData.buyNowPrice)
+          if (buyNow > 0 && buyNow <= price) return 'Sofortkaufpreis muss höher als Startpreis sein'
+        }
+        return undefined
+      case 4:
+        if (formData.shippingMethods.length === 0) return 'Bitte wählen Sie mindestens eine Lieferart'
+        return undefined
+      case 5:
+        return undefined
+      default:
+        return undefined
+    }
+  }
+
   const computeMaxAllowedStep = (): number => {
     for (let i = 0; i < WIZARD_STEPS.length; i++) {
       if (!validateStep(i)) return i
@@ -191,9 +224,10 @@ function SellPageContent() {
     return WIZARD_STEPS.length - 1
   }
 
+  // Get completed steps - only mark as completed if we've actually moved past this step
   const getCompletedSteps = (): number[] => {
     const completed: number[] = []
-    for (let i = 0; i < WIZARD_STEPS.length - 1; i++) {
+    for (let i = 0; i < currentStep; i++) {
       if (validateStep(i)) completed.push(i)
     }
     return completed
@@ -214,7 +248,7 @@ function SellPageContent() {
     if (!skipValidation && clampedStep > currentStep) {
       if (!validateStep(currentStep)) {
         toast.error('Bitte füllen Sie alle erforderlichen Felder aus', {
-          position: 'top-right',
+            position: 'top-right',
           duration: 3000,
         })
         return
@@ -238,11 +272,11 @@ function SellPageContent() {
       goToStep(currentStep + 1)
     } else {
       toast.error('Bitte füllen Sie alle erforderlichen Felder aus', {
-        position: 'top-right',
-        duration: 3000,
-      })
-    }
-  }
+              position: 'top-right',
+              duration: 3000,
+            })
+          }
+        }
 
   const prevStep = () => {
     goToStep(currentStep - 1, true)
@@ -335,10 +369,10 @@ function SellPageContent() {
           setIsVerified(userData.verified === true)
           setVerificationStatus(userData.verificationStatus || null)
           setVerificationInProgress(userData.verificationStatus === 'pending')
-        }
-      } catch (error) {
-        console.error('Error loading verification status:', error)
-      } finally {
+          }
+        } catch (error) {
+          console.error('Error loading verification status:', error)
+        } finally {
         setIsCheckingVerification(false)
       }
     }
@@ -507,13 +541,13 @@ function SellPageContent() {
       let cleanDescription = ''
       if (formData.description && typeof formData.description === 'string') {
         if (!formData.description.startsWith('data:image/') && formData.description.length < 10000) {
-          cleanDescription = formData.description.trim()
+            cleanDescription = formData.description.trim()
         }
       }
 
       // Clean images
       let cleanImages = formData.images.filter(img =>
-        typeof img === 'string' &&
+            typeof img === 'string' &&
         (img.startsWith('data:image/') || img.startsWith('http://') || img.startsWith('https://'))
       )
       cleanImages = Array.from(new Set(cleanImages))
@@ -574,17 +608,17 @@ function SellPageContent() {
         router.push('/my-watches')
       } else {
         const errorData = await response.json().catch(() => ({}))
-        toast.error(errorData.message || 'Ein Fehler ist aufgetreten', {
-          position: 'top-right',
-          duration: 5000,
-        })
+          toast.error(errorData.message || 'Ein Fehler ist aufgetreten', {
+            position: 'top-right',
+            duration: 5000,
+          })
         setIsLoading(false)
       }
     } catch (err: any) {
       console.error('Error submitting form:', err)
       toast.error(`Ein Fehler ist aufgetreten: ${err?.message || 'Unbekannter Fehler'}`, {
-        position: 'top-right',
-        duration: 5000,
+          position: 'top-right',
+          duration: 5000,
       })
       setIsLoading(false)
     }
@@ -624,9 +658,9 @@ function SellPageContent() {
 
   // Not verified
   if (isVerified === false) {
-    return (
-      <div className="min-h-screen bg-gray-50">
-        <Header />
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <Header />
         <div className="mx-auto max-w-2xl px-4 py-16">
           <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
             <AlertCircle className="mx-auto mb-6 h-16 w-16 text-yellow-500" />
@@ -653,7 +687,7 @@ function SellPageContent() {
   }
 
   // Main wizard UI
-  return (
+                            return (
     <div className="min-h-screen bg-gray-50">
       <Header />
 
@@ -662,25 +696,26 @@ function SellPageContent() {
         <div className="fixed right-4 top-20 z-50 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3 shadow-lg">
           <CheckCircle className="h-5 w-5 text-green-600" />
           <span className="text-sm text-green-800">Entwurf wiederhergestellt</span>
-          <button
-            onClick={() => {
+                      <button
+                        onClick={() => {
               clearDraft()
               setShowDraftRestored(false)
             }}
             className="ml-2 text-xs text-green-600 underline hover:text-green-800"
           >
             Verwerfen
-          </button>
+                      </button>
           <button
             onClick={() => setShowDraftRestored(false)}
             className="ml-1 text-green-600 hover:text-green-800"
           >
             <X className="h-4 w-4" />
           </button>
-        </div>
-      )}
+                                </div>
+                              )}
 
-      <div className="mx-auto max-w-4xl px-4 py-8">
+      {/* Wizard container with min-height to prevent global footer interference */}
+      <div className="mx-auto min-h-[calc(100vh-200px)] max-w-4xl px-4 py-8">
         {/* Back link */}
         <div className="mb-6">
           <Link
@@ -689,7 +724,7 @@ function SellPageContent() {
           >
             ← Zurück zu Mein Verkaufen
           </Link>
-        </div>
+                        </div>
 
         {/* Page title */}
         <div className="mb-8 text-center">
@@ -697,7 +732,7 @@ function SellPageContent() {
           <p className="mt-2 text-gray-600">
             Wählen Sie zunächst die Kategorie und füllen Sie dann alle relevanten Felder aus.
           </p>
-        </div>
+                      </div>
 
         {/* Progress indicator */}
         <StepProgress
@@ -708,7 +743,8 @@ function SellPageContent() {
         />
 
         {/* Form - prevent default submission, only submit via explicit button click */}
-        <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
+        {/* Added pb-24 for sticky footer and chat bubble spacing */}
+        <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="rounded-2xl bg-white p-6 pb-28 shadow-lg sm:p-8 sm:pb-28">
           {/* Step 0: Category */}
           {currentStep === 0 && (
             <StepCategorySelection
@@ -766,7 +802,7 @@ function SellPageContent() {
           {/* Step 3: Price */}
           {currentStep === 3 && (
             <StepPrice
-              formData={formData}
+                    formData={formData}
               onInputChange={handleInputChange}
               onFormDataChange={(data) => setFormData(prev => ({ ...prev, ...data }))}
             />
@@ -808,14 +844,15 @@ function SellPageContent() {
             isLastStep={currentStep === WIZARD_STEPS.length - 1}
             canProceed={validateStep(currentStep)}
             isSubmitting={isLoading}
+            disabledReason={getDisabledReason(currentStep)}
           />
-        </form>
-      </div>
+                </form>
+              </div>
 
-      <Footer />
-    </div>
-  )
-}
+          <Footer />
+        </div>
+      )
+    }
 
 export default function SellPage() {
   return (
