@@ -124,12 +124,12 @@ export function getListingBadges(listing: ListingData): string[] {
     }
 
     const conditionLabel = conditionMap[listing.condition.toLowerCase()] || listing.condition
-    
+
     // Only add condition if:
     // 1. We have space (max 1 badge normally, max 2 if Zahlungsschutz exists)
     // 2. Condition label is meaningful (mapped, not raw slug)
     // 3. NOT "Neu" if "Neu eingestellt" is already shown
-    const canAddCondition = 
+    const canAddCondition =
       (badges.length === 0 || (badges.length === 1 && badges[0] === 'Zahlungsschutz')) &&
       conditionLabel !== listing.condition &&
       !(hasNewListing && conditionLabel === 'Neu')

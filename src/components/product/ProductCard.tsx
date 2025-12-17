@@ -40,19 +40,19 @@ export function ProductCard({
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
 
   // Parse images
-  const images =
-    typeof product.images === 'string'
-      ? (() => {
-          try {
+    const images =
+      typeof product.images === 'string'
+        ? (() => {
+            try {
             const parsed = JSON.parse(product.images)
             return Array.isArray(parsed) ? parsed : []
-          } catch {
-            return product.images.split(',').filter(Boolean)
-          }
-        })()
-      : Array.isArray(product.images)
-        ? product.images
-        : []
+            } catch {
+              return product.images.split(',').filter(Boolean)
+            }
+          })()
+        : Array.isArray(product.images)
+          ? product.images
+          : []
 
   const mainImage = images.length > 0 ? images[0] : null
 
@@ -230,14 +230,14 @@ export function ProductCard({
       </div>
 
       {/* Content Wrapper */}
-      <div className="p-3">
-        {/* Title */}
-        <h3 className="text-[13px] font-medium leading-5 text-gray-900 line-clamp-2 min-h-[40px]">
+      <div className="p-2.5">
+        {/* Title - 1 line on desktop, 2 lines on mobile */}
+        <h3 className="text-[13px] font-medium leading-4 text-gray-900 line-clamp-2 md:line-clamp-1">
           {product.title}
         </h3>
 
         {/* Price Block */}
-        <div className="mt-2 flex items-baseline gap-2">
+        <div className="mt-1.5 flex items-baseline gap-2">
           <span className="text-[12px] font-medium text-gray-600">CHF</span>
           <span className="text-[20px] font-semibold leading-6 text-gray-900">
             {formatCHF(mainPrice).replace('CHF ', '')}
@@ -251,29 +251,29 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Meta Row */}
-        <div className="mt-2 flex items-center justify-between gap-2 text-[12px] text-gray-600">
+        {/* Meta Row - Compact single line */}
+        <div className="mt-1.5 flex items-center justify-between gap-2 text-[12px] text-gray-600">
           {/* Left Meta: Location + Delivery */}
-          <div className="flex items-center gap-2 min-w-0">
+          <div className="flex items-center gap-1.5 min-w-0 truncate">
             {(product.city || product.postalCode) && (
               <span className="inline-flex items-center gap-1 truncate">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
+                <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
                 <span className="truncate">
                   {product.postalCode && product.city
                     ? `${product.postalCode} ${product.city}`
                     : product.postalCode || product.city || ''}
-                </span>
+            </span>
               </span>
             )}
             <span className="inline-flex items-center gap-1 shrink-0">
-              <Package className="h-3 w-3" />
+              <Package className="h-3.5 w-3.5" />
               {deliveryLabel}
             </span>
           </div>
 
           {/* Right Meta (only for Auction): bidCount + timeLeft */}
           {isAuction && (bidCount > 0 || timeLeft) && (
-            <div className="shrink-0">
+            <div className="shrink-0 whitespace-nowrap">
               {bidCount > 0 && `${bidCount} Gebote`}
               {bidCount > 0 && timeLeft && ' · '}
               {timeLeft && timeLeft}
