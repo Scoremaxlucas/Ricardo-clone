@@ -704,19 +704,22 @@ export default function SellPage() {
   }
 
   // Zeige Loading während Verifizierungsstatus geprüft wird
-  return (
-    isCheckingVerification ? (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
-      <div className="flex min-h-[60vh] items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
-          <p className="text-gray-600">{t.selling.loading}</p>
+  if (isCheckingVerification) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <div className="flex min-h-[60vh] items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
+            <p className="text-gray-600">{t.selling.loading}</p>
+          </div>
         </div>
+        <Footer />
       </div>
-      <Footer />
-    </div>
-  ) : (
+    )
+  }
+
+  return (
     <div className="min-h-screen bg-gray-50">
       <UploadLoadingModal isLoading={isLoading} />
       <Header />
@@ -1497,7 +1500,7 @@ export default function SellPage() {
           </div>
           <Footer />
         </div>
+      </div>
     )
-  )
-}
+  }
 
