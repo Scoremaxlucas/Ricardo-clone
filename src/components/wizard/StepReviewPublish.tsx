@@ -1,5 +1,7 @@
 'use client'
 
+import { getCategoryDisplayName } from '@/lib/product-utils'
+import { formatCHF } from '@/lib/product-utils'
 import { getCategoryConfig } from '@/data/categories'
 import {
   Edit2,
@@ -12,7 +14,7 @@ import {
   CheckCircle,
   Clock
 } from 'lucide-react'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 
 interface BoosterOption {
   id: string
@@ -21,6 +23,10 @@ interface BoosterOption {
   price: number
   badge: string
   badgeColor: string
+  short?: string // Kurze Summary für Card
+  detailsTitle?: string // Titel für Detail-Panel
+  bullets?: string[] // Bulletpoints für Detail-Panel
+  fineprint?: string // Optional: kleine Zusatzinfo
 }
 
 interface StepReviewPublishProps {
@@ -60,6 +66,40 @@ const SHIPPING_LABELS: Record<string, string> = {
   'a-post': 'A-Post (CHF 12.50)',
 }
 
+// Booster-Datenstruktur mit short/details/bullets
+const BOOSTER_DETAILS: Record<string, { short: string; detailsTitle: string; bullets: string[]; fineprint?: string }> = {
+  'boost': {
+    short: 'Fett hervorgehoben in Listen',
+    detailsTitle: 'Boost – Details',
+    bullets: [
+      'Das Angebot wird in einer Liste von ähnlichen Modellen fett hervorgehoben',
+      'Bessere Sichtbarkeit bei Suchergebnissen',
+      'Erhöht die Aufmerksamkeit potenzieller Käufer',
+      'Geeignet für Standard-Angebote'
+    ],
+  },
+  'turbo-boost': {
+    short: 'Hervorhebung + Hauptseite',
+    detailsTitle: 'Turbo-Boost – Details',
+    bullets: [
+      'Das Angebot wird nicht nur hervorgehoben, sondern erscheint teilweise auf der Hauptseite als "Turbo-Boost-Angebot"',
+      'Zusätzliche Sichtbarkeit auf der Startseite',
+      'Erhöht die Reichweite deutlich',
+      'Ideal für schnellverkaufende Artikel'
+    ],
+  },
+  'super-boost': {
+    short: 'Hervorhebung + Hauptseite + Top-Position',
+    detailsTitle: 'Super-Boost – Details',
+    bullets: [
+      'Das Angebot wird hervorgehoben und erscheint teilweise auf der Hauptseite',
+      'Wird immer zuoberst in der Liste angezeigt',
+      'Maximale Sichtbarkeit und Reichweite',
+      'Perfekt für Premium-Artikel oder schnelle Verkäufe'
+    ],
+  },
+}
+
 export function StepReviewPublish({
   formData,
   selectedCategory,
@@ -72,6 +112,7 @@ export function StepReviewPublish({
   isSubmitting,
 }: StepReviewPublishProps) {
   const [boosters, setBoosters] = useState<BoosterOption[]>([])
+  const stepHeadingRef = useState<HTMLHeadingElement | null>(null)
 
   // Load boosters
   useEffect(() => {
@@ -80,7 +121,21 @@ export function StepReviewPublish({
         const response = await fetch('/api/boosters')
         if (response.ok) {
           const data = await response.json()
-          setBoosters(data.boosters || [])
+          const boostersWithDetails = (data.boosters || []).map((booster: BoosterOption) => {
+            const details = BOOSTER_DETAILS[booster.id] || {
+              short: booster.description.substring(0, 60),
+              detailsTitle: `${booster.name} – Details`,
+              bullets: [booster.description],
+            }
+            return {
+              ...booster,
+              short: details.short,
+              detailsTitle: details.detailsTitle,
+              bullets: details.bullets,
+              fineprint: details.fineprint,
+            }
+          })
+          setBoosters(boostersWithDetails)
         }
       } catch (error) {
         console.error('Error loading boosters:', error)
@@ -91,17 +146,20 @@ export function StepReviewPublish({
 
   const categoryConfig = selectedCategory ? getCategoryConfig(selectedCategory) : null
   const titleImage = formData.images[titleImageIndex] || formData.images[0]
+  const selectedBoosterData = selectedBooster === 'none' 
+    ? null 
+    : boosters.find(b => b.id === selectedBooster)
 
   return (
     <div className="space-y-8">
       <div className="text-center">
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">Überprüfen & Veröffentlichen</h2>
+        <h2 ref={(el) => { if (el) (window as any).stepHeadingRef = el }} tabIndex={-1} className="mb-2 text-2xl font-bold text-gray-900">Überprüfen & Veröffentlichen</h2>
         <p className="text-gray-600">
           Überprüfen Sie Ihre Angaben und wählen Sie optional einen Booster
         </p>
       </div>
 
-      {/* Summary card */}
+      {/* Summary card - Improved spacing */}
       <div className="overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-sm">
         {/* Header with image */}
         <div className="flex gap-6 border-b border-gray-100 p-6">
@@ -117,11 +175,11 @@ export function StepReviewPublish({
               </div>
             </div>
           )}
-          <div className="flex-1">
+          <div className="flex-1 min-w-0">
             <h3 className="mb-2 text-xl font-bold text-gray-900">{formData.title || 'Kein Titel'}</h3>
             {categoryConfig && (
-              <div className="mb-2 flex items-center gap-2">
-                <categoryConfig.icon className="h-4 w-4 text-primary-600" />
+              <div className="mb-3 flex items-center gap-2">
+                <categoryConfig.icon className="h-4 w-4 flex-shrink-0 text-primary-600" />
                 <span className="text-sm text-gray-600">{categoryConfig.name}</span>
                 {selectedSubcategory && (
                   <>
@@ -133,7 +191,7 @@ export function StepReviewPublish({
             )}
             <div className="flex items-baseline gap-2">
               <span className="text-2xl font-bold text-primary-600">
-                CHF {parseFloat(formData.price || '0').toLocaleString('de-CH')}
+                {formatCHF(parseFloat(formData.price || '0'))}
               </span>
               {formData.isAuction && (
                 <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-700">
@@ -149,7 +207,7 @@ export function StepReviewPublish({
           {/* Images */}
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
-              <ImageIcon className="h-5 w-5 text-gray-400" />
+              <ImageIcon className="h-5 w-5 flex-shrink-0 text-gray-400" />
               <div>
                 <span className="font-medium text-gray-700">Bilder</span>
                 <p className="text-sm text-gray-500">{formData.images.length} Bilder hochgeladen</p>
@@ -168,7 +226,7 @@ export function StepReviewPublish({
           {/* Details */}
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
-              <FileText className="h-5 w-5 text-gray-400" />
+              <FileText className="h-5 w-5 flex-shrink-0 text-gray-400" />
               <div>
                 <span className="font-medium text-gray-700">Details</span>
                 <p className="text-sm text-gray-500">
@@ -189,15 +247,15 @@ export function StepReviewPublish({
           {/* Price */}
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
-              <Tag className="h-5 w-5 text-gray-400" />
+              <Tag className="h-5 w-5 flex-shrink-0 text-gray-400" />
               <div>
                 <span className="font-medium text-gray-700">Preis</span>
                 <p className="text-sm text-gray-500">
                   {formData.isAuction
-                    ? `Startpreis: CHF ${parseFloat(formData.price || '0').toLocaleString('de-CH')} • ${formData.auctionDuration} Tage`
-                    : `Festpreis: CHF ${parseFloat(formData.price || '0').toLocaleString('de-CH')}`
+                    ? `Startpreis: ${formatCHF(parseFloat(formData.price || '0'))} • ${formData.auctionDuration} Tage`
+                    : `Festpreis: ${formatCHF(parseFloat(formData.price || '0'))}`
                   }
-                  {formData.buyNowPrice && ` • Sofortkauf: CHF ${parseFloat(formData.buyNowPrice).toLocaleString('de-CH')}`}
+                  {formData.buyNowPrice && ` • Sofortkauf: ${formatCHF(parseFloat(formData.buyNowPrice))}`}
                 </p>
               </div>
             </div>
@@ -214,7 +272,7 @@ export function StepReviewPublish({
           {/* Shipping */}
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
-              <Truck className="h-5 w-5 text-gray-400" />
+              <Truck className="h-5 w-5 flex-shrink-0 text-gray-400" />
               <div>
                 <span className="font-medium text-gray-700">Versand</span>
                 <p className="text-sm text-gray-500">
@@ -238,7 +296,7 @@ export function StepReviewPublish({
           {/* Payment protection */}
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
-              <Shield className={`h-5 w-5 ${paymentProtectionEnabled ? 'text-green-500' : 'text-gray-400'}`} />
+              <Shield className={`h-5 w-5 flex-shrink-0 ${paymentProtectionEnabled ? 'text-green-500' : 'text-gray-400'}`} />
               <div>
                 <span className="font-medium text-gray-700">Zahlungsschutz</span>
                 <p className="text-sm text-gray-500">
@@ -318,10 +376,10 @@ export function StepReviewPublish({
                 {booster.badge}
               </div>
               <h4 className="font-semibold text-gray-900">{booster.name}</h4>
-              <p className="mt-1 line-clamp-2 text-sm text-gray-500">{booster.description}</p>
+              <p className="mt-1 text-sm text-gray-500">{booster.short || booster.description}</p>
               <div className="mt-auto pt-3">
                 <span className="text-lg font-bold" style={{ color: booster.badgeColor }}>
-                  CHF {booster.price.toFixed(2)}
+                  {formatCHF(booster.price)}
                 </span>
               </div>
               {selectedBooster === booster.id && (
@@ -332,6 +390,26 @@ export function StepReviewPublish({
             </button>
           ))}
         </div>
+
+        {/* Detail Panel - Only show when booster is selected */}
+        {selectedBoosterData && (
+          <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50/50 p-6">
+            <h4 className="mb-4 text-lg font-semibold text-gray-900">
+              {selectedBoosterData.detailsTitle || `${selectedBoosterData.name} – Details`}
+            </h4>
+            <ul className="space-y-2.5">
+              {selectedBoosterData.bullets?.map((bullet, index) => (
+                <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                  <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500" />
+                  <span>{bullet}</span>
+                </li>
+              ))}
+            </ul>
+            {selectedBoosterData.fineprint && (
+              <p className="mt-4 text-xs text-gray-500">{selectedBoosterData.fineprint}</p>
+            )}
+          </div>
+        )}
       </div>
 
       {/* Final validation message */}
@@ -345,4 +423,3 @@ export function StepReviewPublish({
     </div>
   )
 }
-

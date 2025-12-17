@@ -78,7 +78,7 @@ export function StepShippingPayment({
           {SHIPPING_OPTIONS.map((option) => {
             const isSelected = formData.shippingMethods.includes(option.id)
             const Icon = option.icon
-            const priceDisplay = option.priceValue === 0 
+            const priceDisplay = option.priceValue === 0
               ? formatCHF(0) + ' (kostenlos)'
               : formatCHF(option.priceValue)
 

@@ -58,6 +58,8 @@ function SellPageContent() {
   const { t } = useLanguage()
   const formRef = useRef<HTMLFormElement>(null)
   const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  const wizardContainerRef = useRef<HTMLDivElement>(null)
+  const stepHeadingRef = useRef<HTMLHeadingElement>(null)
 
   // State
   const [isLoading, setIsLoading] = useState(false)
@@ -269,6 +271,9 @@ function SellPageContent() {
   }, [currentStep, router, selectedCategory, formData])
 
   const nextStep = () => {
+    // Mark current step as touched when user tries to proceed
+    setTouchedSteps(prev => new Set(prev).add(currentStep))
+
     if (validateStep(currentStep)) {
       goToStep(currentStep + 1)
     } else {
@@ -352,6 +357,32 @@ function SellPageContent() {
       setIsSavingDraft(false)
     }
   }, [formData, titleImageIndex, selectedCategory, selectedSubcategory, selectedBooster, paymentProtectionEnabled, currentStep, session?.user])
+
+  // Scroll to top and focus heading when step changes
+  useEffect(() => {
+    const scrollToStepTop = () => {
+      // Try scrolling wizard container first
+      if (wizardContainerRef.current) {
+        wizardContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+      } else {
+        // Fallback to window scroll
+        window.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+    }
+
+    // Focus heading after scroll (check global ref set by StepReviewPublish)
+    const focusHeading = () => {
+      requestAnimationFrame(() => {
+        const headingRef = (window as any).stepHeadingRef
+        if (headingRef) {
+          headingRef.focus()
+        }
+      })
+    }
+
+    scrollToStepTop()
+    focusHeading()
+  }, [currentStep])
 
   // Restore draft on mount - Try server first, fallback to localStorage
   useEffect(() => {
@@ -877,7 +908,7 @@ function SellPageContent() {
                               )}
 
       {/* Wizard container with min-height to prevent global footer interference */}
-      <div className="mx-auto min-h-[calc(100vh-200px)] max-w-4xl px-4 py-8">
+      <div ref={wizardContainerRef} className="mx-auto min-h-[calc(100vh-200px)] max-w-4xl px-4 py-8">
         {/* Back link */}
         <div className="mb-6">
           <Link
@@ -975,8 +1006,13 @@ function SellPageContent() {
             <StepShippingPayment
               formData={formData}
               paymentProtectionEnabled={paymentProtectionEnabled}
-              onShippingMethodChange={handleShippingMethodChange}
+              onShippingMethodChange={(method, checked) => {
+                setTouchedSteps(prev => new Set(prev).add(4))
+                handleShippingMethodChange(method, checked)
+              }}
               onPaymentProtectionChange={setPaymentProtectionEnabled}
+              hasInteracted={touchedSteps.has(4)}
+              showValidation={touchedSteps.has(4) && !validateStep(4)}
             />
           )}
 
