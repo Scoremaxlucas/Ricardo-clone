@@ -112,7 +112,7 @@ export function StepReviewPublish({
   isSubmitting,
 }: StepReviewPublishProps) {
   const [boosters, setBoosters] = useState<BoosterOption[]>([])
-  const stepHeadingRef = useState<HTMLHeadingElement | null>(null)
+  const stepHeadingRef = useRef<HTMLHeadingElement | null>(null)
 
   // Load boosters
   useEffect(() => {
