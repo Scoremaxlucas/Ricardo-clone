@@ -1,6 +1,5 @@
 'use client'
 
-import React from 'react'
 import { CategoryFields } from '@/components/forms/category-fields'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
@@ -32,64 +31,6 @@ const AIDetection = dynamic(
     loading: () => <div className="p-4 text-center text-gray-500">Lade KI-Erkennung...</div>,
   }
 )
-
-// Full-Screen Loading Modal während Upload
-const UploadLoadingModal = ({ isLoading }: { isLoading: boolean }) => {
-  if (!isLoading) return null
-
-  return (
-    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300">
-      <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl animate-in fade-in duration-300">
-        <div className="flex flex-col items-center text-center">
-          {/* Softer spinner with reduced animation speed */}
-          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary-50 to-primary-100">
-            <Loader2 className="h-8 w-8 text-primary-500" style={{ animation: 'spin 2s linear infinite' }} />
-          </div>
-          <h2 className="mb-2 text-2xl font-semibold text-gray-900">
-            Artikel wird hochgeladen
-          </h2>
-          <p className="mb-6 text-gray-600">
-            Bitte haben Sie einen Moment Geduld. Ihr Artikel wird verarbeitet und hochgeladen.
-          </p>
-          <div className="w-full space-y-3">
-            {/* Smooth progress bar with left-to-right motion */}
-            <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
-              <div
-                className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-primary-500"
-                style={{
-                  width: '100%',
-                  backgroundSize: '200% 100%',
-                  animation: 'progressFlow 2s ease-in-out infinite',
-                }}
-              />
-            </div>
-            <style dangerouslySetInnerHTML={{ __html: `
-              @keyframes progressFlow {
-                0% {
-                  background-position: 0% 0;
-                }
-                100% {
-                  background-position: 200% 0;
-                }
-              }
-              @keyframes spin {
-                from {
-                  transform: rotate(0deg);
-                }
-                to {
-                  transform: rotate(360deg);
-                }
-              }
-            `}} />
-            <p className="text-sm text-gray-500">
-              Dies kann bei mehreren Bildern etwas länger dauern...
-            </p>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}
 
 export default function SellPage() {
   const { data: session, status } = useSession()
@@ -703,9 +644,68 @@ export default function SellPage() {
     return null
   }
 
+  // Full-Screen Loading Modal während Upload
+  const UploadLoadingModal = () => {
+    if (!isLoading) return null
+
+    return (
+      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300">
+        <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl animate-in fade-in duration-300">
+          <div className="flex flex-col items-center text-center">
+            {/* Softer spinner with reduced animation speed */}
+            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary-50 to-primary-100">
+              <Loader2 className="h-8 w-8 text-primary-500" style={{ animation: 'spin 2s linear infinite' }} />
+            </div>
+            <h2 className="mb-2 text-2xl font-semibold text-gray-900">
+              Artikel wird hochgeladen
+            </h2>
+            <p className="mb-6 text-gray-600">
+              Bitte haben Sie einen Moment Geduld. Ihr Artikel wird verarbeitet und hochgeladen.
+            </p>
+            <div className="w-full space-y-3">
+              {/* Smooth progress bar with left-to-right motion */}
+              <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+                <div
+                  className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-primary-500"
+                  style={{
+                    width: '100%',
+                    backgroundSize: '200% 100%',
+                    animation: 'progressFlow 2s ease-in-out infinite',
+                  }}
+                />
+              </div>
+              <style jsx global>{`
+                @keyframes progressFlow {
+                  0% {
+                    background-position: 0% 0;
+                  }
+                  100% {
+                    background-position: 200% 0;
+                  }
+                }
+                @keyframes spin {
+                  from {
+                    transform: rotate(0deg);
+                  }
+                  to {
+                    transform: rotate(360deg);
+                  }
+                }
+              `}</style>
+              <p className="text-sm text-gray-500">
+                Dies kann bei mehreren Bildern etwas länger dauern...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
   // Zeige Loading während Verifizierungsstatus geprüft wird
   if (isCheckingVerification) {
-    return (<div className="min-h-screen bg-gray-50">
+    return (
+      <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
@@ -718,8 +718,9 @@ export default function SellPage() {
     )
   }
 
-  return (<div className="min-h-screen bg-gray-50">
-      <UploadLoadingModal isLoading={isLoading} />
+  return (
+    <div className="min-h-screen bg-gray-50">
+      <UploadLoadingModal />
       <Header />
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-6">
@@ -808,7 +809,8 @@ export default function SellPage() {
               {verificationInProgress ? t.common.view : t.selling.verifyNow}
             </Link>
           </div>
-        ) : (<div className="rounded-lg bg-white p-8 shadow-md">
+        ) : (
+          <div className="rounded-lg bg-white p-8 shadow-md">
             <form onSubmit={handleSubmit} className="space-y-8">
 
               {/* Wizard Progress Indicator */}
@@ -843,7 +845,6 @@ export default function SellPage() {
                   currentStep={currentWizardStep}
                   onStepClick={(step) => {
                     setCurrentWizardStep(step)
-                    // Scroll to section
                     const sectionIds = ['images-section', 'details-section', 'price-section', 'shipping-section']
                     const element = document.getElementById(sectionIds[step])
                     element?.scrollIntoView({ behavior: 'smooth', block: 'start' })
@@ -1463,13 +1464,715 @@ export default function SellPage() {
                     </div>
                   </div>
 
-                  {/* Kategorie-spezifische Felder */}
+                  {/* Kategorie-spezifische Felder NACH Titel/Beschreibung */}
                   <CategoryFields
                     category={selectedCategory}
                     subcategory={selectedSubcategory}
                     formData={formData}
                     onChange={handleInputChange}
                   />
+
+                  {/* Preis und Verkaufsart */}
+                  <div>
+                    <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
+                      <Shield className="mr-2 h-5 w-5" />
+                      Preis und Verkaufsart
+                    </h2>
+
+                    {/* Verkaufsart-Auswahl: Auktion oder Sofortkauf */}
+                    <div className="mb-6">
+                      <label className="mb-3 block text-sm font-medium text-gray-700">
+                        Verkaufsart *
+                      </label>
+                      <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+                        <label
+                          className={`relative flex cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                            formData.isAuction
+                              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
+                              : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="saleType"
+                            checked={formData.isAuction}
+                            onChange={() => setFormData(prev => ({ ...prev, isAuction: true }))}
+                            className="sr-only"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                                  <Clock className="h-5 w-5 text-primary-600" />
+                                  Auktion
+                                </p>
+                                <p className="mt-1 text-sm text-gray-600">
+                                  Artikel wird versteigert. Höchstbietender erhält den Artikel.
+                                </p>
+                              </div>
+                              {formData.isAuction && (
+                                <CheckCircle className="ml-3 h-5 w-5 text-primary-600" />
+                              )}
+                            </div>
+                          </div>
+                        </label>
+
+                        <label
+                          className={`relative flex cursor-pointer rounded-lg border-2 p-4 transition-all ${
+                            !formData.isAuction
+                              ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
+                              : 'border-gray-300 bg-white hover:border-gray-400'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="saleType"
+                            checked={!formData.isAuction}
+                            onChange={() =>
+                              setFormData(prev => ({
+                                ...prev,
+                                isAuction: false,
+                                auctionDuration: '',
+                                auctionStart: '',
+                                autoRenew: false,
+                              }))
+                            }
+                            className="sr-only"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
+                                  <CheckCircle className="h-5 w-5 text-green-600" />
+                                  Sofortkauf
+                                </p>
+                                <p className="mt-1 text-sm text-gray-600">
+                                  Artikel wird zu einem festen Preis verkauft.
+                                </p>
+                              </div>
+                              {!formData.isAuction && (
+                                <CheckCircle className="ml-3 h-5 w-5 text-primary-600" />
+                              )}
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                      <div>
+                        <div className="mb-2 flex items-center justify-between">
+                          <label className="block text-sm font-medium text-gray-700">
+                            {formData.isAuction ? 'Startpreis (CHF) *' : 'Preis (CHF) *'}
+                          </label>
+                          {formData.price && parseFloat(formData.price) > 0 && (
+                            <span className="flex items-center gap-1 text-xs text-purple-600">
+                              <Sparkles className="h-3 w-3" />
+                              KI-Vorschlag
+                            </span>
+                          )}
+                        </div>
+                        <input
+                          type="number"
+                          name="price"
+                          required
+                          value={formData.price}
+                          onChange={handleInputChange}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                          placeholder={formData.isAuction ? 'z.B. 5000' : 'z.B. 5000'}
+                        />
+                        {formData.isAuction && (
+                          <p className="mt-1 text-xs text-gray-500">
+                            Der Mindestpreis, ab dem geboten werden kann.
+                          </p>
+                        )}
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                          {formData.isAuction ? (
+                            <>
+                              Sofortkaufpreis (CHF){' '}
+                              <span className="text-xs font-normal text-gray-400">(Optional)</span>
+                            </>
+                          ) : (
+                            <>
+                              Sofortkaufpreis (CHF){' '}
+                              <span className="text-xs font-normal text-gray-400">(Optional)</span>
+                            </>
+                          )}
+                        </label>
+                        <input
+                          type="number"
+                          name="buyNowPrice"
+                          value={formData.buyNowPrice}
+                          onChange={handleInputChange}
+                          className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
+                            formData.buyNowPrice &&
+                            formData.price &&
+                            parseFloat(formData.buyNowPrice) > 0 &&
+                            parseFloat(formData.price) > 0 &&
+                            parseFloat(formData.buyNowPrice) <= parseFloat(formData.price)
+                              ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
+                              : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                          }`}
+                          placeholder={formData.isAuction ? 'z.B. 8000 (optional)' : 'z.B. 8000'}
+                        />
+                        <p className="mt-1 text-xs text-gray-500">
+                          {formData.isAuction
+                            ? 'Falls leer gelassen, gibt es keinen Sofortkaufpreis. Käufer können nur bieten.'
+                            : 'Optional: Falls leer, wird nur der normale Preis angezeigt.'}
+                          {formData.buyNowPrice &&
+                            formData.price &&
+                            parseFloat(formData.buyNowPrice) > 0 &&
+                            parseFloat(formData.price) > 0 &&
+                            parseFloat(formData.buyNowPrice) <= parseFloat(formData.price) && (
+                              <span className="mt-1 block text-red-600">
+                                Der Sofortkaufpreis muss höher sein als der Verkaufspreis.
+                              </span>
+                            )}
+                        </p>
+                      </div>
+
+                      {/* Auktionsfelder - nur anzeigen wenn Auktion gewählt */}
+                      {formData.isAuction && (
+                        <>
+                          <div className="grid grid-cols-1 items-end gap-6 md:col-span-2 md:grid-cols-2">
+                            <div className="flex flex-col">
+                              <label className="mb-2 block whitespace-nowrap text-sm font-medium text-gray-700">
+                                Laufzeit in Tagen *
+                              </label>
+                              <input
+                                type="number"
+                                name="auctionDuration"
+                                required={formData.isAuction}
+                                value={formData.auctionDuration}
+                                onChange={handleInputChange}
+                                min="1"
+                                max="30"
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                                placeholder="z.B. 7, 14, 30"
+                              />
+                              <p className="mt-1 text-xs text-gray-500">
+                                Wählen Sie die Dauer der Auktion (1-30 Tage, max. 30 Tage)
+                              </p>
+                            </div>
+                            <div className="flex flex-col">
+                              <label className="mb-2 block whitespace-nowrap text-sm font-medium text-gray-700">
+                                Starttermin (Optional)
+                              </label>
+                              <input
+                                type="datetime-local"
+                                name="auctionStart"
+                                value={formData.auctionStart}
+                                onChange={handleInputChange}
+                                min={new Date().toISOString().slice(0, 16)}
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                              />
+                              <p className="mt-1 text-xs text-gray-500">
+                                Optional: Starttermin für die Auktion. Falls leer, startet sie
+                                sofort.
+                              </p>
+                            </div>
+                          </div>
+                          <div className="md:col-span-2">
+                            <p className="-mt-2 mb-3 text-xs text-gray-500">
+                              Die Laufzeit beginnt ab dem Starttermin oder sofort, falls kein
+                              Starttermin gewählt wurde.
+                            </p>
+                            <div>
+                              <label className="flex items-center">
+                                <input
+                                  type="checkbox"
+                                  name="autoRenew"
+                                  checked={formData.autoRenew}
+                                  onChange={handleInputChange}
+                                  className="mr-3"
+                                />
+                                <span className="text-sm font-medium text-gray-700">
+                                  Auktion automatisch verlängern
+                                </span>
+                              </label>
+                              <p className="ml-6 mt-1 text-xs text-gray-500">
+                                Wenn aktiviert, wird die Auktion automatisch um die gewählte
+                                Laufzeit verlängert, sobald sie abgelaufen ist (solange kein Kauf
+                                zustande gekommen ist).
+                              </p>
+                            </div>
+                          </div>
+                        </>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Lieferumfang - NUR für Uhren & Schmuck */}
+                  {selectedCategory === 'uhren-schmuck' && (
+                    <div>
+                      <h2 className="mb-4 text-xl font-semibold text-gray-900">
+                        Lieferumfang (inkl. Uhr selbst)
+                      </h2>
+                      <div className="space-y-3">
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="fullset"
+                            checked={formData.fullset}
+                            onChange={() => setExclusiveSupply('fullset')}
+                            className="mr-3"
+                          />
+                          <span className="text-sm font-medium text-gray-700">
+                            Fullset (Box, Papiere, alle Glieder und Kaufbeleg)
+                          </span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="onlyBox"
+                            checked={formData.onlyBox}
+                            onChange={() => setExclusiveSupply('onlyBox')}
+                            className="mr-3"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Nur Box</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="onlyPapers"
+                            checked={formData.onlyPapers}
+                            onChange={() => setExclusiveSupply('onlyPapers')}
+                            className="mr-3"
+                          />
+                          <span className="text-sm font-medium text-gray-700">Nur Papiere</span>
+                        </label>
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            name="onlyAllLinks"
+                            checked={formData.onlyAllLinks}
+                            onChange={() => setExclusiveSupply('onlyAllLinks')}
+                            className="mr-3"
+                          />
+                          <span className="text-sm font-medium text-gray-700">
+                            Nur Box und Papiere
+                          </span>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Garantie - NUR für Uhren & Schmuck */}
+                  {selectedCategory === 'uhren-schmuck' && (
+                    <div>
+                      <h2 className="mb-4 text-xl font-semibold text-gray-900">Garantie</h2>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              name="hasWarranty"
+                              checked={formData.hasWarranty}
+                              onChange={handleInputChange}
+                              className="mr-3"
+                            />
+                            <span className="text-sm font-medium text-gray-700">
+                              Herstellergarantie vorhanden
+                            </span>
+                          </label>
+                        </div>
+
+                        {formData.hasWarranty && (
+                          <div className="grid grid-cols-1 gap-6 pl-6 md:grid-cols-2">
+                            <div>
+                              <label className="mb-2 block text-sm font-medium text-gray-700">
+                                Garantie in Monaten
+                              </label>
+                              <input
+                                type="number"
+                                name="warrantyMonths"
+                                value={formData.warrantyMonths}
+                                onChange={handleInputChange}
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                                placeholder="z.B. 24"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-2 block text-sm font-medium text-gray-700">
+                                Garantie in Jahren
+                              </label>
+                              <input
+                                type="number"
+                                name="warrantyYears"
+                                value={formData.warrantyYears}
+                                onChange={handleInputChange}
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                                placeholder="z.B. 2"
+                              />
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="border-t border-gray-200 pt-4">
+                          <label className="flex items-center">
+                            <input
+                              type="checkbox"
+                              name="hasSellerWarranty"
+                              checked={formData.hasSellerWarranty}
+                              onChange={handleInputChange}
+                              className="mr-3"
+                            />
+                            <span className="text-sm font-medium text-gray-700">
+                              Garantie durch Verkäufer
+                            </span>
+                          </label>
+                        </div>
+
+                        {formData.hasSellerWarranty && (
+                          <div className="grid grid-cols-1 gap-6 pl-6 md:grid-cols-2">
+                            <div>
+                              <label className="mb-2 block text-sm font-medium text-gray-700">
+                                Verkäufer-Garantie in Monaten
+                              </label>
+                              <input
+                                type="number"
+                                name="sellerWarrantyMonths"
+                                value={formData.sellerWarrantyMonths}
+                                onChange={handleInputChange}
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                                placeholder="z.B. 12"
+                              />
+                            </div>
+                            <div>
+                              <label className="mb-2 block text-sm font-medium text-gray-700">
+                                Verkäufer-Garantie in Jahren
+                              </label>
+                              <input
+                                type="number"
+                                name="sellerWarrantyYears"
+                                value={formData.sellerWarrantyYears}
+                                onChange={handleInputChange}
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                                placeholder="z.B. 1"
+                              />
+                            </div>
+                            <div className="md:col-span-2">
+                              <label className="mb-2 block text-sm font-medium text-gray-700">
+                                Bemerkungen zur Verkäufer-Garantie
+                              </label>
+                              <textarea
+                                name="sellerWarrantyNote"
+                                value={formData.sellerWarrantyNote}
+                                onChange={handleInputChange}
+                                rows={3}
+                                className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                                placeholder="z.B. Garantie nur bei normaler Nutzung..."
+                              />
+                            </div>
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Lieferart */}
+                  <div>
+                    <h2 className="mb-4 text-xl font-semibold text-gray-900">
+                      Lieferart <span className="text-red-500">*</span>
+                    </h2>
+                    <div className="space-y-3">
+                      <label className="flex cursor-pointer items-center rounded-lg border border-gray-300 p-4 hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={formData.shippingMethods.includes('pickup')}
+                          onChange={e => handleShippingMethodChange('pickup', e.target.checked)}
+                          className="mr-3"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-700">Abholung</span>
+                          <span className="ml-2 text-sm font-semibold text-green-600">
+                            (kostenlos)
+                          </span>
+                        </div>
+                      </label>
+                      <label className="flex cursor-pointer items-center rounded-lg border border-gray-300 p-4 hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={formData.shippingMethods.includes('b-post')}
+                          onChange={e => handleShippingMethodChange('b-post', e.target.checked)}
+                          className="mr-3"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-700">
+                            Versand als Paket B-Post, bis 2 KG
+                          </span>
+                          <span className="ml-2 text-sm text-gray-600">CHF 8.50</span>
+                        </div>
+                      </label>
+                      <label className="flex cursor-pointer items-center rounded-lg border border-gray-300 p-4 hover:bg-gray-50">
+                        <input
+                          type="checkbox"
+                          checked={formData.shippingMethods.includes('a-post')}
+                          onChange={e => handleShippingMethodChange('a-post', e.target.checked)}
+                          className="mr-3"
+                        />
+                        <div className="flex-1">
+                          <span className="text-sm font-medium text-gray-700">
+                            Versand als Paket A-Post, bis 2 KG
+                          </span>
+                          <span className="ml-2 text-sm text-gray-600">CHF 12.50</span>
+                        </div>
+                      </label>
+                    </div>
+                    <p className="mt-2 text-xs text-gray-500">
+                      Die Versandkosten werden dem Käufer zusätzlich zum Kaufbetrag berechnet. Es
+                      wird der höchste Betrag der ausgewählten Lieferarten berechnet.
+                    </p>
+                    {formData.shippingMethods.length === 0 && (
+                      <p className="mt-2 text-xs text-red-500">
+                        Bitte wählen Sie mindestens eine Lieferart aus.
+                      </p>
+                    )}
+                  </div>
+
+                  {/* Booster */}
+                  <div>
+                    <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
+                      <Sparkles className="mr-2 h-5 w-5" />
+                      Booster-Option
+                    </h2>
+                    <p className="mb-4 text-sm text-gray-600">
+                      Wählen Sie, wie Ihr Angebot hervorgehoben werden soll
+                    </p>
+                    {boosters.length === 0 ? (
+                      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                        <p className="text-sm text-yellow-800">
+                          Booster-Optionen werden geladen...
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2 lg:grid-cols-4">
+                        {boosters.map(booster => {
+                          const isSelected = selectedBooster === booster.code
+                          const isSuperBoost = booster.code === 'super-boost'
+                          const isTurboBoost = booster.code === 'turbo-boost'
+                          const isBoost = booster.code === 'boost'
+
+                          // Gaming-ähnliche Styles für jeden Booster (helles Design)
+                          let cardStyles = ''
+                          let badgeStyles = ''
+                          let priceStyles = ''
+
+                          if (isSuperBoost) {
+                            cardStyles = isSelected
+                              ? 'border-2 border-yellow-400 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 shadow-lg ring-2 ring-yellow-200/50'
+                              : 'border-2 border-yellow-300 bg-gradient-to-br from-yellow-50/50 via-orange-50/50 to-red-50/50 hover:border-yellow-400 hover:shadow-md'
+                            badgeStyles =
+                              'bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white'
+                            priceStyles = 'text-yellow-600'
+                          } else if (isTurboBoost) {
+                            cardStyles = isSelected
+                              ? 'border-2 border-purple-500 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 shadow-lg ring-2 ring-purple-200/50'
+                              : 'border-2 border-purple-300 bg-gradient-to-br from-purple-50/50 via-blue-50/50 to-indigo-50/50 hover:border-purple-400 hover:shadow-md'
+                            badgeStyles =
+                              'bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 text-white'
+                            priceStyles = 'text-purple-600'
+                          } else if (isBoost) {
+                            cardStyles = isSelected
+                              ? 'border-2 border-emerald-500 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 shadow-lg ring-2 ring-emerald-200/50'
+                              : 'border-2 border-emerald-300 bg-gradient-to-br from-emerald-50/50 via-green-50/50 to-teal-50/50 hover:border-emerald-400 hover:shadow-md'
+                            badgeStyles =
+                              'bg-gradient-to-r from-emerald-500 via-green-500 to-teal-600 text-white'
+                            priceStyles = 'text-blue-600'
+                          } else {
+                            // Für "none" - Standard-Style
+                            cardStyles = isSelected
+                              ? 'border-2 border-gray-400 bg-gray-50 shadow-md ring-2 ring-gray-200'
+                              : 'border-2 border-gray-300 bg-white hover:border-gray-400'
+                            badgeStyles = 'bg-gray-500 text-white'
+                            priceStyles = 'text-gray-600'
+                          }
+
+                          return (
+                            <label
+                              key={booster.id}
+                              className={`relative flex cursor-pointer flex-col rounded-lg p-3 transition-all ${
+                                isSelected ? 'scale-[1.02]' : 'hover:scale-[1.01]'
+                              } ${cardStyles}`}
+                            >
+                              <input
+                                type="radio"
+                                name="booster"
+                                value={booster.code}
+                                checked={isSelected}
+                                onChange={e => setSelectedBooster(e.target.value)}
+                                className="sr-only"
+                              />
+
+                              {/* Badge/Tier Indicator */}
+                              <div className="mb-2 flex items-center justify-between">
+                                <span
+                                  className={`rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${badgeStyles}`}
+                                >
+                                  {isSuperBoost
+                                    ? '⭐ Premium'
+                                    : isTurboBoost
+                                      ? '🚀 Turbo'
+                                      : isBoost
+                                        ? '⚡ Boost'
+                                        : 'Standard'}
+                                </span>
+                                {isSelected && (
+                                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 shadow-md">
+                                    <svg
+                                      className="h-3 w-3 text-white"
+                                      fill="none"
+                                      stroke="currentColor"
+                                      viewBox="0 0 24 24"
+                                    >
+                                      <path
+                                        strokeLinecap="round"
+                                        strokeLinejoin="round"
+                                        strokeWidth={3}
+                                        d="M5 13l4 4L19 7"
+                                      />
+                                    </svg>
+                                  </div>
+                                )}
+                              </div>
+
+                              {/* Booster Name */}
+                              <div className="mb-1">
+                                <h3
+                                  className={`text-base font-bold ${isSuperBoost ? 'text-orange-900' : isTurboBoost ? 'text-purple-900' : isBoost ? 'text-blue-900' : 'text-gray-900'}`}
+                                >
+                                  {booster.name}
+                                </h3>
+                              </div>
+
+                              {/* Description */}
+                              <p className="mb-3 line-clamp-2 flex-1 text-xs leading-snug text-gray-700">
+                                {booster.description}
+                              </p>
+
+                              {/* Price Section */}
+                              <div className="mt-auto border-t border-gray-200/50 pt-2">
+                                <div className="flex items-baseline justify-between">
+                                  <span className="text-[10px] uppercase text-gray-500">Preis</span>
+                                  <div className={`text-lg font-bold ${priceStyles}`}>
+                                    CHF {booster.price.toFixed(2)}
+                                  </div>
+                                </div>
+                              </div>
+
+                              {/* Special glow effect for Super-Boost when selected */}
+                              {isSuperBoost && isSelected && (
+                                <div className="pointer-events-none absolute inset-0 animate-pulse rounded-lg bg-gradient-to-r from-yellow-400/15 via-orange-400/15 to-red-400/15" />
+                              )}
+                            </label>
+                          )
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Bilder */}
+                  <div>
+                    <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
+                      <Upload className="mr-2 h-5 w-5" />
+                      Bilder
+                    </h2>
+
+                    {formData.images.length === 0 ? (
+                      <div className="mb-4">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                          Titelbild *
+                        </label>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
+                        />
+                        <p className="mt-1 text-sm text-gray-500">
+                          Laden Sie das Titelbild hoch (JPG, PNG, max. 10MB). Dieses Bild wird automatisch als Titelbild verwendet.
+                        </p>
+                      </div>
+                    ) : (
+                      <div className="mb-4">
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                          Weitere Bilder hinzufügen (Optional)
+                        </label>
+                        <input
+                          type="file"
+                          multiple
+                          accept="image/*"
+                          onChange={handleImageUpload}
+                          className="block w-full text-sm text-gray-500 file:mr-4 file:rounded-full file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100"
+                        />
+                        <p className="mt-1 text-sm text-gray-500">
+                          Fügen Sie weitere Bilder hinzu (JPG, PNG, max. 10MB pro Bild). Sie können bis zu 10 Bilder insgesamt hochladen.
+                        </p>
+                      </div>
+                    )}
+
+                    {formData.images.length > 0 && (
+                      <div className="space-y-3">
+                        {detectedConfidence > 0 && (
+                          <p className="flex items-center gap-2 text-sm text-gray-600">
+                            <Sparkles className="h-4 w-4 text-green-600" />
+                            Das erste Bild wurde von der KI analysiert
+                          </p>
+                        )}
+                        <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
+                          {formData.images.map((image, index) => (
+                            <div key={index} className="relative">
+                              <img
+                                src={image}
+                                alt={`Artikel ${index + 1}`}
+                                className={`h-32 w-full cursor-pointer rounded-lg border-2 object-cover ${
+                                  index === titleImageIndex
+                                    ? 'border-primary-500 ring-2 ring-primary-200'
+                                    : 'border-gray-200 hover:border-gray-300'
+                                }`}
+                                onClick={() => setSelectedImageIndex(index)}
+                              />
+
+                              {/* KI-Badge für erstes Bild */}
+                              {index === 0 && detectedConfidence > 0 && (
+                                <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded bg-green-500 px-2 py-1 text-xs font-medium text-white">
+                                  <Sparkles className="h-3 w-3" />
+                                  KI
+                                </div>
+                              )}
+
+                              {/* Titelbild-Button */}
+                              <button
+                                type="button"
+                                onClick={() => setTitleImageIndex(index)}
+                                className={`absolute left-2 top-2 rounded px-2 py-1 text-xs font-medium ${
+                                  index === titleImageIndex
+                                    ? 'bg-primary-500 text-white'
+                                    : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                                }`}
+                              >
+                                {index === titleImageIndex ? 'Titelbild' : 'Als Titelbild'}
+                              </button>
+
+                              {/* Entfernen-Button */}
+                              <button
+                                type="button"
+                                onClick={() => removeImage(index)}
+                                className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-sm text-white shadow-sm hover:bg-red-600"
+                                title="Bild entfernen"
+                              >
+                                ×
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                  </div>
 
                   {/* Submit Button */}
                   <div className="border-t border-gray-200 pt-6">
@@ -1491,13 +2194,13 @@ export default function SellPage() {
                       )}
                     </button>
                   </div>
-                </form>
-              </div>
-            )}
+                </>
+              ) : null}
+            </form>
           </div>
-          <Footer />
-        </div>
+        )}
       </div>
-    )
-  }
-
+      <Footer />
+    </div>
+  )
+}
