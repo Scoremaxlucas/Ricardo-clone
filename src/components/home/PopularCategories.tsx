@@ -1,6 +1,6 @@
 /**
  * PopularCategories - Beliebte Kategorien Section
- * 
+ *
  * Server Component für SEO
  * Zeigt 6-8 Top-Kategorien mit Icons und Namen
  * Clean, minimal design mit weißem Hintergrund
