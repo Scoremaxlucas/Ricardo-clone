@@ -1499,6 +1499,7 @@ export default function SellPage() {
           </div>
           <Footer />
         </div>
-      )
-    }
+      </div>
+    )
+  }
 
