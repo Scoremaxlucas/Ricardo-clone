@@ -1055,7 +1055,7 @@ export default function SellPage() {
                   </div>
 
                   {/* Titel und Beschreibung ZUERST */}
-                  <div>
+                  <div id="details-section">
                     <h2 className="mb-4 text-xl font-semibold text-gray-900">
                       Artikel-Informationen
                     </h2>
@@ -1473,7 +1473,7 @@ export default function SellPage() {
                   />
 
                   {/* Preis und Verkaufsart */}
-                  <div>
+                  <div id="price-section">
                     <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
                       <Shield className="mr-2 h-5 w-5" />
                       Preis und Verkaufsart
@@ -1874,7 +1874,7 @@ export default function SellPage() {
                   )}
 
                   {/* Lieferart */}
-                  <div>
+                  <div id="shipping-section">
                     <h2 className="mb-4 text-xl font-semibold text-gray-900">
                       Lieferart <span className="text-red-500">*</span>
                     </h2>
@@ -2075,7 +2075,7 @@ export default function SellPage() {
                   </div>
 
                   {/* Bilder */}
-                  <div>
+                  <div id="images-section">
                     <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
                       <Upload className="mr-2 h-5 w-5" />
                       Bilder
