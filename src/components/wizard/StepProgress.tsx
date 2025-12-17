@@ -118,25 +118,25 @@ export function WizardFooter({
   return (
     <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-4 py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8">
       <div className="mx-auto flex max-w-4xl items-center justify-between">
-        <div className="flex items-center gap-3">
-          {currentStep > 0 && (
+        <div className="flex items-center gap-2 sm:gap-3">
+          {currentStep > 0 ? (
             <button
               type="button"
               onClick={onPrevious}
-              className="rounded-lg border-2 border-gray-300 px-4 py-2.5 font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50"
+              className="whitespace-nowrap rounded-lg border-2 border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50 sm:px-4 sm:py-2.5 sm:text-base"
             >
               ← Zurück
             </button>
-          )}
-          {onSaveDraft && (
+          ) : null}
+          {onSaveDraft ? (
             <button
               type="button"
               onClick={onSaveDraft}
-              className="hidden rounded-lg border-2 border-primary-300 px-4 py-2.5 font-medium text-primary-600 transition-colors hover:bg-primary-50 sm:block"
+              className="whitespace-nowrap rounded-lg border-2 border-primary-300 px-3 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 sm:px-4 sm:py-2.5 sm:text-base"
             >
               Entwurf speichern
             </button>
-          )}
+          ) : null}
         </div>
 
         <div className="flex items-center gap-3">
