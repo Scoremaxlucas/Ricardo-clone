@@ -10,6 +10,7 @@
  */
 
 import Link from 'next/link'
+import { TrustMiniBullets } from './TrustMiniBullets'
 
 interface HeroServerProps {
   title?: string
@@ -53,6 +54,10 @@ export function HeroServer({
           <div className="mx-auto max-w-3xl mb-3">
             {children}
           </div>
+          
+          {/* Trust Mini-Bullets - Under search bar */}
+          <TrustMiniBullets variant="hero" />
+          
           {/* Secondary CTA: Artikel verkaufen */}
           <div className="text-center">
             <Link

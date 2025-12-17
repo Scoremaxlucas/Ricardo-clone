@@ -23,9 +23,6 @@ const LazyTrendingNow = lazy(() =>
 const LazyCategorySpotlight = lazy(() =>
   import('@/components/home/CategorySpotlight').then(m => ({ default: m.CategorySpotlight }))
 )
-const LazySocialProofWidget = lazy(() =>
-  import('@/components/home/SocialProofWidget').then(m => ({ default: m.SocialProofWidget }))
-)
 
 const LazyDailyDeals = lazy(() =>
   import('@/components/home/DailyDeals').then(m => ({ default: m.DailyDeals }))
@@ -116,13 +113,6 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
       {/* Erst rendern wenn sichtbar oder fast sichtbar */}
       {isVisible ? (
         <>
-          {/* Social Proof Widget */}
-          {featuredProductIds.length > 0 && (
-            <Suspense fallback={<SectionSkeleton bg="bg-gradient-to-br from-primary-50 to-primary-100" />}>
-              <LazySocialProofWidget watchIds={featuredProductIds} />
-            </Suspense>
-          )}
-
           {/* Daily Deals */}
           <Suspense fallback={<SectionSkeleton bg="bg-gradient-to-br from-orange-50 to-red-50" />}>
             <LazyDailyDeals />

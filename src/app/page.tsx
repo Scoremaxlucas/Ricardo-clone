@@ -2,7 +2,6 @@ import { FeaturedProductsServer } from '@/components/home/FeaturedProductsServer
 import { HeroServer } from '@/components/home/HeroServer'
 import { HeroSearch } from '@/components/home/HeroSearch'
 import { PopularCategories } from '@/components/home/PopularCategories'
-import { TrustMiniBullets } from '@/components/home/TrustMiniBullets'
 import { HomeClient } from '@/components/home/HomeClient'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
@@ -12,19 +11,19 @@ import type { Metadata } from 'next'
 
 /**
  * Homepage - TTI & LCP Optimiert
- * 
+ *
  * Homepage Struktur (nach UX Refactoring):
  * 1. Header (simplified, Categories dropdown)
  * 2. HeroServer (search-focused, sell secondary)
  * 3. PopularCategories (6-8 top categories)
  * 4. FeaturedProductsServer ("Neu eingestellt")
  * 5. HomeClient (below-the-fold lazy-loaded)
- * 
+ *
  * JavaScript Loading Priorität:
  * 1. Kritisch (0ms): Header, HeroServer (Text), FeaturedProducts
  * 2. Nach Paint: HeroSearch
  * 3. Nach Scroll: HomeClient
- * 
+ *
  * TTI Ziel: <100ms (User kann sofort interagieren)
  * LCP Ziel: <2.5s (Hero H1 ist sichtbar)
  */
@@ -61,7 +60,7 @@ export default async function Home() {
     <div className="flex min-h-screen flex-col bg-[#FAFAFA]">
       <Header />
       <main id="main-content" className="flex-1 pb-8" tabIndex={-1}>
-        {/* 
+        {/*
           Hero Section - Kritisch für LCP
           Server Component rendert H1/H2 sofort
         */}
@@ -81,9 +80,6 @@ export default async function Home() {
 
         {/* Beliebte Kategorien */}
         <PopularCategories />
-
-        {/* Trust Mini-Bullets */}
-        <TrustMiniBullets />
 
         {/* Featured Products - Server-Side gerendert */}
         <FeaturedProductsServer initialProducts={featuredProducts} />
