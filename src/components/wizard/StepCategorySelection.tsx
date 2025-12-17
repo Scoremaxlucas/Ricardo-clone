@@ -76,7 +76,7 @@ export function StepCategorySelection({
   setTitleImageIndex,
 }: StepCategorySelectionProps) {
   const confidenceLevel = getConfidenceLevel(detectedConfidence)
-  
+
   return (
     <div className="space-y-6">
       <div className="text-center">
@@ -148,7 +148,7 @@ export function StepCategorySelection({
                       {confidenceLevel.label}
                     </span>
                   </div>
-                  
+
                   {/* Warning banner */}
                   <div className="mb-4 flex items-start gap-2 rounded-lg bg-white/60 p-3 text-sm text-amber-800">
                     <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
@@ -156,7 +156,7 @@ export function StepCategorySelection({
                       Die KI-Erkennung ist ein <strong>Vorschlag</strong>. Bitte überprüfen Sie, ob die Kategorie korrekt ist.
                     </span>
                   </div>
-                  
+
                   <div className="space-y-2 text-sm text-gray-700">
                     {detectedProductName && (
                       <div className="flex items-center gap-2">
@@ -175,7 +175,7 @@ export function StepCategorySelection({
                       <span>Konfidenz: <span className={`font-medium ${confidenceLevel.color}`}>{formatConfidence(detectedConfidence)}</span></span>
                     </div>
                   </div>
-                  
+
                   {/* AI image transferred note */}
                   {formData.images.length > 0 && (
                     <div className="mt-4 flex items-center gap-2 text-sm text-green-700">

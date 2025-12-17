@@ -27,7 +27,7 @@ export function StepPrice({
   onFormDataChange,
 }: StepPriceProps) {
   // Validate buy-now price against start price for auctions
-  const buyNowValid = !formData.buyNowPrice || 
+  const buyNowValid = !formData.buyNowPrice ||
     (parseFloat(formData.buyNowPrice) > parseFloat(formData.price || '0'))
 
   return (

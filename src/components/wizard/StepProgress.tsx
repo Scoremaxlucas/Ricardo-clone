@@ -153,7 +153,7 @@ export function WizardFooter({
           <span className="hidden text-sm text-gray-500 sm:block">
             {currentStep + 1} / {totalSteps}
           </span>
-          
+
           {/* Weiter/Publish button with tooltip */}
           <div className="relative">
             <button
@@ -181,7 +181,7 @@ export function WizardFooter({
                 <>Weiter →</>
               )}
             </button>
-            
+
             {/* Disabled reason tooltip */}
             {showTooltip && !canProceed && disabledReason && (
               <div className="absolute bottom-full right-0 mb-2 w-64 rounded-lg bg-gray-900 px-3 py-2 text-sm text-white shadow-lg">
@@ -195,7 +195,7 @@ export function WizardFooter({
           </div>
         </div>
       </div>
-      
+
       {/* Mobile disabled reason */}
       {!canProceed && disabledReason && (
         <div className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-red-600 sm:hidden">
