@@ -32,6 +32,64 @@ const AIDetection = dynamic(
   }
 )
 
+// Full-Screen Loading Modal während Upload
+const UploadLoadingModal = ({ isLoading }: { isLoading: boolean }) => {
+  if (!isLoading) return null
+
+  return (
+    <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300">
+      <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl animate-in fade-in duration-300">
+        <div className="flex flex-col items-center text-center">
+          {/* Softer spinner with reduced animation speed */}
+          <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary-50 to-primary-100">
+            <Loader2 className="h-8 w-8 text-primary-500" style={{ animation: 'spin 2s linear infinite' }} />
+          </div>
+          <h2 className="mb-2 text-2xl font-semibold text-gray-900">
+            Artikel wird hochgeladen
+          </h2>
+          <p className="mb-6 text-gray-600">
+            Bitte haben Sie einen Moment Geduld. Ihr Artikel wird verarbeitet und hochgeladen.
+          </p>
+          <div className="w-full space-y-3">
+            {/* Smooth progress bar with left-to-right motion */}
+            <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
+              <div
+                className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-primary-500"
+                style={{
+                  width: '100%',
+                  backgroundSize: '200% 100%',
+                  animation: 'progressFlow 2s ease-in-out infinite',
+                }}
+              />
+            </div>
+            <style jsx global>{`
+              @keyframes progressFlow {
+                0% {
+                  background-position: 0% 0;
+                }
+                100% {
+                  background-position: 200% 0;
+                }
+              }
+              @keyframes spin {
+                from {
+                  transform: rotate(0deg);
+                }
+                to {
+                  transform: rotate(360deg);
+                }
+              }
+            `}</style>
+            <p className="text-sm text-gray-500">
+              Dies kann bei mehreren Bildern etwas länger dauern...
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function SellPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -644,64 +702,6 @@ export default function SellPage() {
     return null
   }
 
-  // Full-Screen Loading Modal während Upload
-  const UploadLoadingModal = () => {
-    if (!isLoading) return null
-
-    return (
-      <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 backdrop-blur-sm transition-opacity duration-300">
-        <div className="mx-4 w-full max-w-md rounded-2xl bg-white p-8 shadow-2xl animate-in fade-in duration-300">
-          <div className="flex flex-col items-center text-center">
-            {/* Softer spinner with reduced animation speed */}
-            <div className="mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-gradient-to-br from-primary-50 to-primary-100">
-              <Loader2 className="h-8 w-8 text-primary-500" style={{ animation: 'spin 2s linear infinite' }} />
-            </div>
-            <h2 className="mb-2 text-2xl font-semibold text-gray-900">
-              Artikel wird hochgeladen
-            </h2>
-            <p className="mb-6 text-gray-600">
-              Bitte haben Sie einen Moment Geduld. Ihr Artikel wird verarbeitet und hochgeladen.
-            </p>
-            <div className="w-full space-y-3">
-              {/* Smooth progress bar with left-to-right motion */}
-              <div className="relative h-2.5 w-full overflow-hidden rounded-full bg-gray-100">
-                <div
-                  className="absolute left-0 top-0 h-full rounded-full bg-gradient-to-r from-primary-500 via-primary-400 to-primary-500"
-                  style={{
-                    width: '100%',
-                    backgroundSize: '200% 100%',
-                    animation: 'progressFlow 2s ease-in-out infinite',
-                  }}
-                />
-              </div>
-              <style jsx global>{`
-                @keyframes progressFlow {
-                  0% {
-                    background-position: 0% 0;
-                  }
-                  100% {
-                    background-position: 200% 0;
-                  }
-                }
-                @keyframes spin {
-                  from {
-                    transform: rotate(0deg);
-                  }
-                  to {
-                    transform: rotate(360deg);
-                  }
-                }
-              `}</style>
-              <p className="text-sm text-gray-500">
-                Dies kann bei mehreren Bildern etwas länger dauern...
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    )
-  }
-
   // Zeige Loading während Verifizierungsstatus geprüft wird
   if (isCheckingVerification) {
     return (
@@ -720,7 +720,7 @@ export default function SellPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <UploadLoadingModal />
+      <UploadLoadingModal isLoading={isLoading} />
       <Header />
       <div className="mx-auto max-w-4xl px-4 py-8">
         <div className="mb-6">
