@@ -704,8 +704,7 @@ export default function SellPage() {
 
   // Zeige Loading während Verifizierungsstatus geprüft wird
   if (isCheckingVerification) {
-    return (
-      <div className="min-h-screen bg-gray-50">
+    return (<div className="min-h-screen bg-gray-50">
         <Header />
         <div className="flex min-h-[60vh] items-center justify-center">
           <div className="text-center">
@@ -809,8 +808,7 @@ export default function SellPage() {
               {verificationInProgress ? t.common.view : t.selling.verifyNow}
             </Link>
           </div>
-        ) : (
-          <div className="rounded-lg bg-white p-8 shadow-md">
+        ) : (<div className="rounded-lg bg-white p-8 shadow-md">
             <form onSubmit={handleSubmit} className="space-y-8">
 
               {/* Wizard Progress Indicator */}
