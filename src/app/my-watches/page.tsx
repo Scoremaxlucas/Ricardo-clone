@@ -87,12 +87,25 @@ export default function MyWatchesPage() {
       setItems(itemsList)
 
       // Berechne Statistiken
-      setStats({
+      setStats(prev => ({
+        ...prev,
         active: itemsList.filter((w: Item) => !w.isSold).length,
         sold: itemsList.filter((w: Item) => w.isSold).length,
-        drafts: 0, // TODO: Lade Entwürfe
-        offers: 0, // TODO: Lade Preisvorschläge
-      })
+      }))
+
+      // Lade Entwürfe
+      try {
+        const draftsRes = await fetch('/api/drafts')
+        if (draftsRes.ok) {
+          const draftsData = await draftsRes.json()
+          setStats(prev => ({
+            ...prev,
+            drafts: (draftsData.drafts || []).length,
+          }))
+        }
+      } catch (error) {
+        console.error('Error loading drafts:', error)
+      }
     } catch (error) {
       console.error('Error loading items:', error)
     } finally {
@@ -281,6 +294,14 @@ export default function MyWatchesPage() {
       href: '/my-watches/selling/active',
       color: 'bg-green-100 text-green-600',
       count: stats.active,
+    },
+    {
+      title: 'Entwürfe',
+      description: 'Noch nicht veröffentlichte Anzeigen',
+      icon: FileText,
+      href: '/my-watches/selling/drafts',
+      color: 'bg-gray-100 text-gray-600',
+      count: stats.drafts,
     },
     {
       title: t.myWatches.sold,
