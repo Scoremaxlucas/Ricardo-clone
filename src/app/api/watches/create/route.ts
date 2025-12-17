@@ -601,8 +601,7 @@ export async function POST(request: NextRequest) {
           return null
         }
       })(),
-      // paymentProtectionEnabled will be added once DB migration is complete
-      // paymentProtectionEnabled: paymentProtectionEnabled === true || paymentProtectionEnabled === 'true' || false,
+      paymentProtectionEnabled: paymentProtectionEnabled === true || paymentProtectionEnabled === 'true' || false,
     }
 
     // Füge Auktionsfelder nur hinzu, wenn es eine aktive Auktion ist
