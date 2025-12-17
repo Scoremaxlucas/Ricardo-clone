@@ -74,8 +74,8 @@ export function StepProgress({ steps, currentStep, completedSteps, onStepClick }
 
                 {/* Step label */}
                 <div className="ml-3 hidden flex-1 lg:block">
-                  <p className={`text-sm font-medium ${isCurrent ? 'text-primary-600' : isCompleted ? 'text-gray-700' : 'text-gray-400'}`}>
-                    {step.title}
+                  <p className={`whitespace-nowrap text-sm font-medium ${isCurrent ? 'text-primary-600' : isCompleted ? 'text-gray-700' : 'text-gray-400'}`}>
+                    {step.shortTitle || step.title}
                   </p>
                 </div>
 

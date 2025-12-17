@@ -86,7 +86,7 @@ export function StepShippingPayment({
                   onChange={(e) => onShippingMethodChange(option.id, e.target.checked)}
                   className="sr-only"
                 />
-                
+
                 {isSelected && (
                   <div className="absolute right-3 top-3">
                     <CheckCircle className="h-5 w-5 text-primary-600" />
@@ -102,7 +102,7 @@ export function StepShippingPayment({
                 <h3 className={`mb-1 font-semibold ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}>
                   {option.label}
                 </h3>
-                
+
                 {option.weight && (
                   <p className="mb-2 text-xs text-gray-500">{option.weight}</p>
                 )}
@@ -183,7 +183,7 @@ export function StepShippingPayment({
                 <Sparkles className="h-4 w-4 text-primary-500" />
                 <span>So funktioniert der Zahlungsschutz:</span>
               </div>
-              
+
               <div className="grid grid-cols-1 gap-2.5 sm:grid-cols-2">
                 <div className="flex items-start gap-2 text-sm text-gray-700">
                   <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
