@@ -178,3 +178,5 @@ self.addEventListener('sync', (event) => {
     // Handle syncing favorites when back online
   }
 })
+
+

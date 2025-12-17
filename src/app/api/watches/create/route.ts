@@ -273,6 +273,7 @@ export async function POST(request: NextRequest) {
       booster,
       category: rawCategory,
       subcategory,
+      paymentProtectionEnabled,
     } = rawData
 
     // Normalisiere Kategorie
@@ -600,6 +601,7 @@ export async function POST(request: NextRequest) {
           return null
         }
       })(),
+      paymentProtectionEnabled: paymentProtectionEnabled === true || paymentProtectionEnabled === 'true' || false,
     }
 
     // Füge Auktionsfelder nur hinzu, wenn es eine aktive Auktion ist

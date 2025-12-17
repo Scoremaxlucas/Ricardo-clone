@@ -193,6 +193,7 @@ model Watch {
   referenceNumber     String?
   shippingMethod      String?
   boosters            String?
+  paymentProtectionEnabled Boolean @default(false)
   sellerId            String
   moderationStatus    String?             @default("pending") // 'pending', 'approved', 'rejected', 'reviewing'
   moderatedBy         String?
