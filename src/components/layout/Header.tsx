@@ -394,6 +394,8 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             <div
               className="relative z-50 ml-2"
               onMouseEnter={() => {
+                setIsLanguageMenuOpen(false)
+                setIsProfileMenuOpen(false)
                 handleMenuEnter(setIsSellMenuOpen)
                 handlePrefetch('/sell')
               }}
@@ -483,6 +485,8 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   <div
                     className="relative"
                     onMouseEnter={() => {
+                      setIsLanguageMenuOpen(false)
+                      setIsSellMenuOpen(false)
                       handleMenuEnter(setIsProfileMenuOpen)
                       handlePrefetch('/profile')
                       handlePrefetch('/my-watches')
