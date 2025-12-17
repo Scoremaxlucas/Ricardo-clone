@@ -8,7 +8,7 @@ import { toast } from 'react-hot-toast'
 
 /**
  * HomeClient - Below-the-fold Komponenten
- * 
+ *
  * TTI-Optimierung:
  * - Alle Komponenten sind lazy loaded
  * - Intersection Observer basiertes Loading
@@ -57,7 +57,7 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
   const hasShownToast = useRef(false)
   const { t } = useLanguage()
   const { data: session } = useSession()
-  
+
   // Intersection Observer State
   const [isVisible, setIsVisible] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)

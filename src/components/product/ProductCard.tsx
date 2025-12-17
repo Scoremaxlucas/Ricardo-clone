@@ -152,20 +152,20 @@ export function ProductCard({
 
   // Get badges (max 2)
   const badges = getListingBadges(product)
-  
+
   // Get delivery label
   const deliveryLabel = getDeliveryLabel(product)
-  
+
   // Determine price display
   const isAuction = product.isAuction === true
   // Calculate currentBid from bids if not provided
-  const currentBid = product.currentBid ?? 
-    (product.bids && product.bids.length > 0 
+  const currentBid = product.currentBid ??
+    (product.bids && product.bids.length > 0
       ? Math.max(...product.bids.map((b: any) => typeof b === 'object' ? b.amount : b))
       : undefined)
   const mainPrice = isAuction ? (currentBid ?? product.price) : product.price
   const hasBuyNowPrice = product.buyNowPrice && product.buyNowPrice > 0
-  
+
   // Format bid count and time left for auctions
   const bidCount = product.bids?.length || 0
   const timeLeft = product.auctionEnd ? formatTimeLeft(product.auctionEnd) : ''
