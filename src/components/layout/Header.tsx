@@ -195,6 +195,23 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
     }
   }, [])
 
+  // === Close all dropdown menus on scroll ===
+  useEffect(() => {
+    if (!isLanguageMenuOpen && !isProfileMenuOpen && !isSellMenuOpen) return
+
+    const handleScroll = () => {
+      setIsLanguageMenuOpen(false)
+      setIsProfileMenuOpen(false)
+      setIsSellMenuOpen(false)
+    }
+
+    window.addEventListener('scroll', handleScroll, true) // Use capture phase to catch all scroll events
+
+    return () => {
+      window.removeEventListener('scroll', handleScroll, true)
+    }
+  }, [isLanguageMenuOpen, isProfileMenuOpen, isSellMenuOpen])
+
   // === OPTIMIERT: Prefetch bei Hover ===
   const handlePrefetch = useCallback((href: string) => {
     if (prefetchedRef.current.has(href)) return
