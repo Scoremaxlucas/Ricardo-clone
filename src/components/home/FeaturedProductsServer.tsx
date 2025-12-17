@@ -334,7 +334,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
           <p className="text-lg leading-relaxed text-gray-600">Die neuesten Artikel auf Helvenda</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5">
           {products.map((product, index) => (
             <div
               key={product.id}
