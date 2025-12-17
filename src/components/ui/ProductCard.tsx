@@ -1,6 +1,5 @@
 'use client'
 
-import { memo } from 'react'
 import { ProductCard as BaseProductCard, ProductCardData } from '@/components/product/ProductCard'
 
 interface ProductCardProps extends Partial<ProductCardData> {
@@ -12,10 +11,13 @@ interface ProductCardProps extends Partial<ProductCardData> {
   viewButtonText?: string
   variant?: 'default' | 'compact' | 'list'
   className?: string
+  // Support both old API (spread props) and new API (product prop)
+  product?: ProductCardData
 }
 
-export const ProductCard = memo(function ProductCard(props: ProductCardProps) {
+export const ProductCard = function ProductCard(props: ProductCardProps) {
   const {
+    product: productProp,
     favorites,
     onFavoriteToggle,
     showCondition,
@@ -24,27 +26,31 @@ export const ProductCard = memo(function ProductCard(props: ProductCardProps) {
     viewButtonText,
     variant,
     className,
-    ...productProps
+    ...restProps
   } = props
 
-  // Ensure required fields have defaults
-  const product: ProductCardData = {
-    id: productProps.id || '',
-    title: productProps.title || '',
-    price: productProps.price || 0,
-    images: productProps.images || [],
-    brand: productProps.brand,
-    model: productProps.model,
-    condition: productProps.condition,
-    city: productProps.city,
-    postalCode: productProps.postalCode,
-    auctionEnd: productProps.auctionEnd,
-    buyNowPrice: productProps.buyNowPrice,
-    isAuction: productProps.isAuction,
-    bids: productProps.bids,
-    boosters: productProps.boosters,
-    currentBid: productProps.currentBid,
-    href: productProps.href,
+  // If product prop is provided, use it directly
+  // Otherwise, construct from individual props (backward compatibility)
+  const product: ProductCardData = productProp || {
+    id: restProps.id || '',
+    title: restProps.title || '',
+    price: restProps.price || 0,
+    images: restProps.images || [],
+    brand: restProps.brand,
+    model: restProps.model,
+    condition: restProps.condition,
+    city: restProps.city,
+    postalCode: restProps.postalCode,
+    auctionEnd: restProps.auctionEnd,
+    buyNowPrice: restProps.buyNowPrice,
+    isAuction: restProps.isAuction,
+    bids: restProps.bids,
+    boosters: restProps.boosters,
+    currentBid: restProps.currentBid,
+    href: restProps.href,
+    paymentProtectionEnabled: restProps.paymentProtectionEnabled,
+    createdAt: restProps.createdAt,
+    shippingMethods: restProps.shippingMethods,
   }
 
   return (
@@ -57,4 +63,4 @@ export const ProductCard = memo(function ProductCard(props: ProductCardProps) {
       className={className}
     />
   )
-})
+}

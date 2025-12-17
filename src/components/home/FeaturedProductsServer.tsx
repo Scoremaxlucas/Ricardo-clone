@@ -334,7 +334,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
           <p className="text-lg leading-relaxed text-gray-600">Die neuesten Artikel auf Helvenda</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4 lg:grid-cols-4">
           {products.map((product, index) => (
             <div
               key={product.id}
@@ -342,29 +342,24 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
               style={{ animationDelay: `${index * 30}ms` }}
             >
               <ProductCard
-                id={product.id}
-                title={product.title}
-                brand={product.brand}
-                model={product.model}
-                price={product.price}
-                buyNowPrice={product.buyNowPrice ?? undefined}
-                isAuction={product.isAuction}
-                auctionEnd={product.auctionEnd ?? undefined}
-                images={
-                  // KRITISCH: WIE RICARDO - Verwende IMMER product.images direkt!
-                  // Kein imagesLoaded State mehr - eliminiert Verzögerung
-                  // Stelle sicher, dass immer ein Array zurückgegeben wird
-                  Array.isArray(product.images) && product.images.length > 0 ? product.images : []
-                }
-                condition={product.condition}
-                city={product.city ?? undefined}
-                postalCode={product.postalCode ?? undefined}
-                boosters={product.boosters}
-                href={product.href} // WICHTIG: Verwende expliziten href, falls vorhanden
+                product={{
+                  id: product.id,
+                  title: product.title,
+                  brand: product.brand,
+                  model: product.model,
+                  price: product.price,
+                  buyNowPrice: product.buyNowPrice ?? undefined,
+                  isAuction: product.isAuction,
+                  auctionEnd: product.auctionEnd ?? undefined,
+                  images: Array.isArray(product.images) && product.images.length > 0 ? product.images : [],
+                  condition: product.condition,
+                  city: product.city ?? undefined,
+                  postalCode: product.postalCode ?? undefined,
+                  boosters: product.boosters,
+                  href: product.href,
+                  createdAt: product.createdAt,
+                }}
                 showCondition={true}
-                showViewButton={true}
-                viewButtonText={t.home.viewOffer}
-                favorites={favorites}
                 className="w-full"
                 onFavoriteToggle={(id, isFavorite) => {
                   setFavorites(prev => {

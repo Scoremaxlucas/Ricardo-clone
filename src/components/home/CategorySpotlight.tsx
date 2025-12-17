@@ -379,7 +379,13 @@ export function CategorySpotlight() {
     return null
   }
 
-  if (categories.length === 0) {
+  // Filter categories: only show if they have at least 3 items (featured + 2 products)
+  const minItems = 3
+  const validCategories = categories.filter(
+    category => (category.featured ? 1 : 0) + category.products.length >= minItems
+  )
+
+  if (validCategories.length === 0) {
     return null
   }
 
@@ -391,7 +397,7 @@ export function CategorySpotlight() {
         </div>
 
         <div className="space-y-6">
-          {categories.map(category => (
+          {validCategories.map(category => (
             <div
               key={category.category}
               className="rounded-lg border border-gray-200 bg-white shadow-sm"
@@ -446,7 +452,7 @@ export function CategorySpotlight() {
                   </button>
                 )}
 
-                {/* Scrollable Container */}
+                {/* Scrollable Container - Carousel with snap */}
                 <div
                   ref={el => {
                     scrollRefs.current[category.category] = el
@@ -454,15 +460,14 @@ export function CategorySpotlight() {
                       checkScrollButtons(category.category)
                     }
                   }}
-                  className="scrollbar-hide flex gap-4 overflow-x-auto scroll-smooth"
+                  className="scrollbar-hide flex gap-4 overflow-x-auto scroll-smooth snap-x snap-mandatory px-2"
                   style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}
                 >
                   {/* Alle Produkte (inkl. Featured) */}
                   {category.featured && (
-                    <div className="w-[200px] flex-shrink-0">
+                    <div className="min-w-[240px] flex-shrink-0 snap-start">
                       <ProductCard
-                        {...category.featured}
-                        favorites={favorites}
+                        product={category.featured}
                         onFavoriteToggle={(id, isFavorite) => {
                           setFavorites(prev => {
                             const newSet = new Set(prev)
@@ -481,10 +486,9 @@ export function CategorySpotlight() {
                   {/* Other Items */}
                   {category.products.length > 0 ? (
                     category.products.map(product => (
-                      <div key={product.id} className="w-[200px] flex-shrink-0">
+                      <div key={product.id} className="min-w-[240px] flex-shrink-0 snap-start">
                         <ProductCard
-                          {...product}
-                          favorites={favorites}
+                          product={product}
                           onFavoriteToggle={(id, isFavorite) => {
                             setFavorites(prev => {
                               const newSet = new Set(prev)

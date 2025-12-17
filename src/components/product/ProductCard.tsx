@@ -1,30 +1,21 @@
 'use client'
 
-import { Clock, Flame, Gavel, Heart, MapPin, Sparkles, Zap } from 'lucide-react'
+import { Heart, MapPin, Package, Clock, Shield, Sparkles } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { ProductStats } from './ProductStats'
+import { formatCHF, formatTimeLeft, getListingBadges, getDeliveryLabel, type ListingData } from '@/lib/product-utils'
 
-export interface ProductCardData {
-  id: string
-  title: string
-  brand?: string
-  model?: string
-  price: number
+export interface ProductCardData extends ListingData {
   images: string[] | string
-  condition?: string
   city?: string
   postalCode?: string
-  auctionEnd?: string
-  buyNowPrice?: number
-  isAuction?: boolean
-  bids?: any[]
-  boosters?: string[]
-  currentBid?: number
   href?: string
+  brand?: string
+  model?: string
+  boosters?: string[]
 }
 
 interface ProductCardProps {
@@ -46,38 +37,24 @@ export function ProductCard({
 }: ProductCardProps) {
   const { data: session } = useSession()
   const [isFavorite, setIsFavorite] = useState(false)
-  // WICHTIG: imageError wird nur auf true gesetzt, wenn ein Bild-Fehler auftritt
-  // Initial false, damit Bilder geladen werden können
-  const [imageError, setImageError] = useState(false)
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
-  const [showSecondImage, setShowSecondImage] = useState(false)
 
-  // KRITISCH: Reagiere auf Änderungen in product.images
-  // Reset imageError wenn neue Bilder vorhanden sind
-  useEffect(() => {
-    let isMounted = true
+  // Parse images
+  const images =
+    typeof product.images === 'string'
+      ? (() => {
+          try {
+            const parsed = JSON.parse(product.images)
+            return Array.isArray(parsed) ? parsed : []
+          } catch {
+            return product.images.split(',').filter(Boolean)
+          }
+        })()
+      : Array.isArray(product.images)
+        ? product.images
+        : []
 
-    const images =
-      typeof product.images === 'string'
-        ? (() => {
-            try {
-              return JSON.parse(product.images)
-            } catch {
-              return product.images.split(',').filter(Boolean)
-            }
-          })()
-        : Array.isArray(product.images)
-          ? product.images
-          : []
-
-    if (images.length > 0 && isMounted) {
-      setImageError(false) // Reset error wenn Bilder vorhanden sind
-    }
-
-    return () => {
-      isMounted = false
-    }
-  }, [product.images])
+  const mainImage = images.length > 0 ? images[0] : null
 
   // Check if product is favorite on mount
   useEffect(() => {
@@ -86,9 +63,7 @@ export function ProductCard({
 
     const checkFavorite = async () => {
       if (!session?.user) {
-        if (isMounted) {
-          setIsFavorite(false)
-        }
+        if (isMounted) setIsFavorite(false)
         return
       }
 
@@ -117,102 +92,11 @@ export function ProductCard({
     }
   }, [product.id, session?.user])
 
-  // Parse images
-  // KRITISCH: Stelle sicher, dass IMMER das erste Bild (Titelbild) verwendet wird
-  // KEINE Sortierung, KEINE Filterung - verwende exakt die Reihenfolge aus product.images
-  const images =
-    typeof product.images === 'string'
-      ? (() => {
-          try {
-            const parsed = JSON.parse(product.images)
-            // Stelle sicher, dass es ein Array ist und die Reihenfolge beibehalten wird
-            return Array.isArray(parsed) ? parsed : []
-          } catch {
-            // Fallback: Split by comma, behalte Reihenfolge
-            return product.images.split(',').filter(Boolean)
-          }
-        })()
-      : Array.isArray(product.images)
-        ? product.images
-        : []
-
-  // KRITISCH: Immer das ERSTE Bild (Titelbild) verwenden, NIEMALS ein anderes
-  // Verwende images[0] direkt - keine Filterung, keine Sortierung
-  const mainImage = images.length > 0 ? images[0] : null
-  const secondImage = images.length > 1 ? images[1] : null
-
-  // DEBUG: Log wenn falsches Bild verwendet wird
-  if (images.length > 1 && product.id) {
-    console.log(
-      `[ProductCard] Product ${product.id} (${product.title}) using title image (first of ${images.length} images)`
-    )
-  }
-
-  // OPTIMIERT: Preload image when it becomes available for instant display
-  useEffect(() => {
-    if (
-      mainImage &&
-      typeof window !== 'undefined' &&
-      !mainImage.startsWith('data:') &&
-      !mainImage.startsWith('blob:')
-    ) {
-      // Preload URL images for instant display
-      const link = document.createElement('link')
-      link.rel = 'preload'
-      link.as = 'image'
-      link.href = mainImage
-      link.setAttribute('fetchpriority', 'high')
-      document.head.appendChild(link)
-
-      return () => {
-        if (document.head.contains(link)) {
-          document.head.removeChild(link)
-        }
-      }
-    }
-  }, [mainImage])
-
-  // Parse boosters
-  const boosters = product.boosters || []
-  const hasSuperBoost = boosters.includes('super-boost')
-  const hasTurboBoost = boosters.includes('turbo-boost') && !hasSuperBoost
-  const hasBoost = boosters.includes('boost') && !hasSuperBoost && !hasTurboBoost
-
-  // Format price
-  // WICHTIG: Immer 2 Dezimalstellen anzeigen, damit Preise wie CHF 1.80 korrekt angezeigt werden
-  const formatPrice = (price: number) => {
-    return new Intl.NumberFormat('de-CH', {
-      style: 'currency',
-      currency: 'CHF',
-      minimumFractionDigits: 2,
-      maximumFractionDigits: 2,
-    }).format(price)
-  }
-
-  // Format auction end time
-  const formatAuctionEnd = (auctionEnd?: string) => {
-    if (!auctionEnd) return null
-    const end = new Date(auctionEnd)
-    const now = new Date()
-    const diff = end.getTime() - now.getTime()
-
-    if (diff <= 0) return 'Beendet'
-
-    return end.toLocaleString('de-CH', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    })
-  }
-
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
 
     if (!session?.user) {
-      // Redirect to login if not authenticated
       const currentUrl =
         typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
       window.location.href = `/login?callbackUrl=${encodeURIComponent(currentUrl)}`
@@ -224,29 +108,23 @@ export function ProductCard({
     setIsLoadingFavorite(true)
     const newFavoriteState = !isFavorite
 
-    // OPTIMISTIC UI UPDATE: Update UI immediately before API call
     setIsFavorite(newFavoriteState)
     onFavoriteToggle?.(product.id, newFavoriteState)
 
     try {
       if (isFavorite) {
-        // Entfernen: DELETE /api/favorites/${watchId}
         const response = await fetch(`/api/favorites/${product.id}`, {
           method: 'DELETE',
         })
 
         if (!response.ok) {
-          // Revert on error
           setIsFavorite(!newFavoriteState)
           onFavoriteToggle?.(product.id, !newFavoriteState)
-          const errorData = await response.json()
-          console.error('Error removing favorite:', errorData.message)
           toast.error('Fehler beim Entfernen aus Favoriten')
         } else {
           toast.success('Aus Favoriten entfernt', { icon: '❤️' })
         }
       } else {
-        // Hinzufügen: POST /api/favorites mit watchId im Body
         const response = await fetch('/api/favorites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -254,18 +132,14 @@ export function ProductCard({
         })
 
         if (!response.ok) {
-          // Revert on error
           setIsFavorite(!newFavoriteState)
           onFavoriteToggle?.(product.id, !newFavoriteState)
-          const errorData = await response.json()
-          console.error('Error adding favorite:', errorData.message)
           toast.error('Fehler beim Hinzufügen zu Favoriten')
         } else {
           toast.success('Zu Favoriten hinzugefügt', { icon: '❤️' })
         }
       }
     } catch (error) {
-      // Revert on error
       setIsFavorite(!newFavoriteState)
       onFavoriteToggle?.(product.id, !newFavoriteState)
       console.error('Error toggling favorite:', error)
@@ -276,469 +150,36 @@ export function ProductCard({
 
   const productHref = product.href || `/products/${product.id}`
 
-  // Compact variant (smaller, for dense grids)
-  if (variant === 'compact') {
-    return (
-      <Link
-        href={productHref}
-        prefetch={true}
-        className={`group overflow-hidden rounded-[20px] bg-white transition-all duration-200 ease-out ${className}`}
-        style={{
-          border: '1px solid rgba(0, 0, 0, 0.1)',
-          boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.transform = 'translateY(-2px)'
-          e.currentTarget.style.boxShadow = '0px 8px 24px rgba(0, 0, 0, 0.12)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.transform = 'translateY(0)'
-          e.currentTarget.style.boxShadow =
-            '0px 4px 16px rgba(0, 0, 0, 0.1)'
-        }}
-      >
-        <div
-          className="relative aspect-[5/4] overflow-hidden bg-gray-100"
-          onMouseEnter={() => setShowSecondImage(true)}
-          onMouseLeave={() => setShowSecondImage(false)}
-        >
-          {/* Hauptbild */}
-          {mainImage ? (
-            mainImage.startsWith('data:image/') ||
-            mainImage.startsWith('blob:') ||
-            mainImage.length > 1000 ||
-            mainImage.includes('blob.vercel-storage.com') ? (
-              <img
-                src={mainImage}
-                alt={product.title}
-                className={`h-full w-full object-cover transition-all duration-200 ease-out ${
-                  showSecondImage && secondImage
-                    ? 'scale-110 opacity-0'
-                    : 'scale-100 opacity-100 group-hover:scale-[1.01]'
-                }`}
-                loading="eager"
-                onError={() => {
-                  setImageError(true)
-                }}
-                onLoad={() => {
-                  setImageError(false)
-                }}
-              />
-            ) : (
-              <Image
-                src={mainImage}
-                alt={product.title}
-                fill
-                className={`object-cover transition-all duration-200 ease-out ${
-                  showSecondImage && secondImage
-                    ? 'scale-110 opacity-0'
-                    : 'scale-100 opacity-100 group-hover:scale-[1.01]'
-                }`}
-                loading="eager"
-                priority
-                quality={85}
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                onError={() => {
-                  setImageError(true)
-                }}
-                onLoad={() => {
-                  setImageError(false)
-                }}
-              />
-            )
-          ) : imageError ? (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-xs text-gray-400">
-              <Sparkles className="h-6 w-6 opacity-50" />
-              <span className="ml-2 text-xs">Kein Bild</span>
-            </div>
-          ) : (
-            // OPTIMIERT: Zeige subtilen Placeholder statt Spinner (wie Ricardo)
-            <div className="h-full w-full bg-gradient-to-br from-gray-50 to-gray-100" />
-          )}
+  // Get badges (max 2)
+  const badges = getListingBadges(product)
+  
+  // Get delivery label
+  const deliveryLabel = getDeliveryLabel(product)
+  
+  // Determine price display
+  const isAuction = product.isAuction === true
+  // Calculate currentBid from bids if not provided
+  const currentBid = product.currentBid ?? 
+    (product.bids && product.bids.length > 0 
+      ? Math.max(...product.bids.map((b: any) => typeof b === 'object' ? b.amount : b))
+      : undefined)
+  const mainPrice = isAuction ? (currentBid ?? product.price) : product.price
+  const hasBuyNowPrice = product.buyNowPrice && product.buyNowPrice > 0
+  
+  // Format bid count and time left for auctions
+  const bidCount = product.bids?.length || 0
+  const timeLeft = product.auctionEnd ? formatTimeLeft(product.auctionEnd) : ''
 
-          {/* Zweites Bild auf Hover */}
-          {secondImage && (
-            <>
-              {secondImage.startsWith('data:image/') ||
-              secondImage.startsWith('blob:') ||
-              secondImage.length > 1000 ||
-              secondImage.includes('blob.vercel-storage.com') ? (
-                <img
-                  src={secondImage}
-                  alt={product.title}
-                  className={`absolute inset-0 h-full w-full object-cover transition-all duration-200 ease-out ${
-                    showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
-                  }`}
-                  loading="lazy"
-                />
-              ) : (
-                <Image
-                  src={secondImage}
-                  alt={product.title}
-                  fill
-                  className={`object-cover transition-all duration-200 ease-out ${
-                    showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
-                  }`}
-                  loading="lazy"
-                  quality={85}
-                  sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-                />
-              )}
-            </>
-          )}
-
-          {/* Schnellansicht Button auf Hover */}
-          <div
-            className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-200 ease-out ${
-              showSecondImage ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
-            }`}
-          >
-            <Link
-              href={productHref}
-              onClick={e => e.stopPropagation()}
-              className="rounded-full bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-orange-600"
-            >
-              Schnellansicht
-            </Link>
-          </div>
-
-          {/* Favorite Button - Größer auf Mobile */}
-          <button
-            onClick={handleFavoriteClick}
-            className={`absolute right-1 top-1 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2 shadow-md transition-all md:min-h-0 md:min-w-0 md:p-1.5 ${
-              isFavorite
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-            } ${isLoadingFavorite ? 'cursor-wait opacity-50' : ''}`}
-            aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
-          >
-            <Heart className={`h-4 w-4 md:h-3 md:w-3 ${isFavorite ? 'fill-current' : ''}`} />
-          </button>
-
-          {/* Booster Badges */}
-          {hasSuperBoost && (
-            <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-orange-600 p-1 text-white shadow-md">
-              <Sparkles className="h-3 w-3" />
-            </div>
-          )}
-          {hasTurboBoost && (
-            <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-primary-400 to-primary-600 p-1 text-white shadow-md">
-              <Zap className="h-3 w-3" />
-            </div>
-          )}
-          {hasBoost && (
-            <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-primary-600 p-1 text-white shadow-md">
-              <Flame className="h-3 w-3" />
-            </div>
-          )}
-        </div>
-
-        <div className="p-4 md:p-4">
-          {product.brand && (
-            <div className="mb-1 truncate text-xs font-medium text-primary-600 md:text-xs">
-              {product.brand}
-            </div>
-          )}
-          {/* Preis - Prominent hervorgehoben, subtile Scale-Animation auf Hover */}
-          <div className="mb-2 flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-[1.01]">
-            <span className="text-sm font-medium text-gray-600">CHF</span>
-            <span className="text-2xl font-bold text-primary-700 md:text-3xl">
-              {new Intl.NumberFormat('de-CH', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }).format(product.currentBid || product.price)}
-            </span>
-          </div>
-          {product.buyNowPrice && (
-            <div className="mb-2 text-xs text-gray-500 md:text-xs">
-              Sofort: CHF{' '}
-              {new Intl.NumberFormat('de-CH', {
-                minimumFractionDigits: 2,
-                maximumFractionDigits: 2,
-              }).format(product.buyNowPrice)}
-            </div>
-          )}
-          {product.isAuction && (
-            <div className="mb-1 flex items-center gap-1">
-              <Gavel className="h-3 w-3 text-orange-600" />
-              <span className="text-xs font-medium text-orange-600">Auktion</span>
-            </div>
-          )}
-          <div className="mb-1 line-clamp-2 min-h-[44px] text-sm font-medium leading-tight text-gray-900 md:min-h-[40px] md:text-sm">
-            {product.title}
-          </div>
-          {/* Location - IMMER sichtbar, sehr prominent - AUSSERHALB des flex-wrap Containers */}
-          {(product.city || product.postalCode) && (
-            <div className="mb-2 flex items-center gap-1.5 rounded-md bg-gray-50 px-2 py-1.5 text-[12px] font-bold text-gray-800">
-              <MapPin className="h-4 w-4 flex-shrink-0 text-primary-600" />
-              <span className="truncate font-semibold">
-                {product.postalCode && product.city
-                  ? `${product.postalCode} ${product.city}`
-                  : product.postalCode || product.city || ''}
-              </span>
-            </div>
-          )}
-          <div className="mb-1 flex flex-wrap items-center gap-1.5 text-xs text-gray-600">
-            {/* Condition - IMMER sichtbar (nicht mehr nur wenn showCondition) */}
-            {product.condition && (
-              <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700">
-                {product.condition}
-              </span>
-            )}
-            {product.isAuction && product.bids && product.bids.length > 0 && (
-              <span className="text-gray-600">
-                ({product.bids.length} {product.bids.length === 1 ? 'Gebot' : 'Gebote'})
-              </span>
-            )}
-          </div>
-          {product.isAuction && product.auctionEnd && (
-            <div className="flex items-center gap-1 text-xs font-medium text-orange-600">
-              <Clock className="h-3 w-3" />
-              <span>Endet: {formatAuctionEnd(product.auctionEnd)}</span>
-            </div>
-          )}
-          {/* Product Stats - Feature 2: Social Proof (Compact) */}
-          <div className="mt-2">
-            <ProductStats watchId={product.id} compact={true} showViewersNow={false} />
-          </div>
-        </div>
-      </Link>
-    )
-  }
-
-  // List variant (horizontal layout)
-  if (variant === 'list') {
-    return (
-      <Link
-        href={productHref}
-        prefetch={true}
-        className={`group flex overflow-hidden rounded-[20px] bg-white transition-all duration-200 ease-out ${className}`}
-        style={{
-          border: '1px solid rgba(0, 0, 0, 0.1)',
-          boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
-        }}
-        onMouseEnter={e => {
-          e.currentTarget.style.boxShadow = '0px 8px 24px rgba(0, 0, 0, 0.12)'
-        }}
-        onMouseLeave={e => {
-          e.currentTarget.style.boxShadow =
-            '0px 4px 16px rgba(0, 0, 0, 0.1)'
-        }}
-      >
-        <div
-          className="relative w-64 flex-shrink-0 bg-gray-100"
-          onMouseEnter={() => setShowSecondImage(true)}
-          onMouseLeave={() => setShowSecondImage(false)}
-        >
-          <div className="relative aspect-[5/4]">
-            {/* Hauptbild */}
-            {mainImage ? (
-              mainImage.startsWith('data:image/') ||
-              mainImage.startsWith('blob:') ||
-              mainImage.length > 1000 ||
-              mainImage.includes('blob.vercel-storage.com') ? (
-                <img
-                  src={mainImage}
-                  alt={product.title}
-                  className={`h-full w-full object-cover transition-all duration-200 ease-out ${
-                    showSecondImage && secondImage
-                      ? 'scale-110 opacity-0'
-                      : 'scale-100 opacity-100 group-hover:scale-[1.01]'
-                  }`}
-                  onError={() => setImageError(true)}
-                  onLoad={() => setImageError(false)}
-                  loading="lazy"
-                />
-              ) : (
-                <Image
-                  src={mainImage}
-                  alt={product.title}
-                  fill
-                  className={`object-cover transition-all duration-200 ease-out ${
-                    showSecondImage && secondImage
-                      ? 'scale-110 opacity-0'
-                      : 'scale-100 opacity-100 group-hover:scale-[1.01]'
-                  }`}
-                  onError={() => setImageError(true)}
-                  onLoad={() => setImageError(false)}
-                  sizes="256px"
-                  loading="lazy"
-                />
-              )
-            ) : imageError ? (
-              <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
-                <Sparkles className="mb-2 h-8 w-8 opacity-50" />
-                <span className="text-xs">Kein Bild</span>
-              </div>
-            ) : null}
-
-            {/* Zweites Bild auf Hover */}
-            {secondImage && (
-              <>
-                {secondImage.startsWith('data:image/') ||
-                secondImage.startsWith('blob:') ||
-                secondImage.length > 1000 ||
-                secondImage.includes('blob.vercel-storage.com') ? (
-                  <img
-                    src={secondImage}
-                    alt={product.title}
-                    className={`absolute inset-0 h-full w-full object-cover transition-all duration-200 ease-out ${
-                      showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
-                    }`}
-                    loading="lazy"
-                  />
-                ) : (
-                  <Image
-                    src={secondImage}
-                    alt={product.title}
-                    fill
-                    className={`object-cover transition-all duration-200 ease-out ${
-                      showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
-                    }`}
-                    loading="lazy"
-                    quality={85}
-                    sizes="256px"
-                  />
-                )}
-              </>
-            )}
-          </div>
-          <button
-            onClick={handleFavoriteClick}
-            className={`absolute right-1 top-1 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2 shadow-md transition-all md:min-h-0 md:min-w-0 md:p-1.5 ${
-              isFavorite
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-            }`}
-          >
-            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-          </button>
-          {hasSuperBoost && (
-            <div className="absolute left-2 top-2 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-orange-600 p-1.5 text-white shadow-md">
-              <Sparkles className="h-3.5 w-3.5" />
-            </div>
-          )}
-          {hasTurboBoost && (
-            <div className="absolute left-2 top-2 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-primary-400 to-primary-600 p-1.5 text-white shadow-md">
-              <Zap className="h-3.5 w-3.5" />
-            </div>
-          )}
-          {hasBoost && (
-            <div className="absolute left-2 top-2 z-10 flex items-center justify-center rounded-full bg-primary-600 p-1.5 text-white shadow-md">
-              <Flame className="h-3.5 w-3.5" />
-            </div>
-          )}
-        </div>
-        <div className="flex flex-1 flex-col justify-between p-4">
-          <div>
-            {product.brand && (
-              <div className="mb-1 text-base font-semibold text-primary-600">{product.brand}</div>
-            )}
-            <div
-              className="group/title relative mb-2 text-lg font-semibold text-gray-900"
-              title={product.title}
-            >
-              {product.title}
-              {/* Tooltip für vollständigen Titel */}
-              {product.title.length > 60 && (
-                <div className="invisible absolute bottom-full left-0 z-20 mb-2 w-72 rounded-lg bg-gray-900 px-3 py-2 text-xs text-white opacity-0 shadow-lg transition-opacity group-hover/title:visible group-hover/title:opacity-100">
-                  {product.title}
-                  <div className="absolute left-4 top-full h-0 w-0 border-l-4 border-r-4 border-t-4 border-transparent border-t-gray-900"></div>
-                </div>
-              )}
-            </div>
-            {product.isAuction && (
-              <div className="mb-2 flex items-center gap-1">
-                <Gavel className="h-3 w-3 text-orange-600" />
-                <span className="text-xs font-medium text-orange-600">Auktion</span>
-              </div>
-            )}
-            {/* Location - IMMER sichtbar, sehr prominent */}
-            {(product.city || product.postalCode) && (
-              <div className="mb-2 flex items-center gap-1.5 rounded-md bg-gray-50 px-2 py-1.5 text-[12px] font-bold text-gray-800">
-                <MapPin className="h-4 w-4 flex-shrink-0 text-primary-600" />
-                <span className="truncate font-semibold">
-                  {product.postalCode && product.city
-                    ? `${product.postalCode} ${product.city}`
-                    : product.postalCode || product.city || ''}
-                </span>
-              </div>
-            )}
-            <div className="mb-2 flex items-center gap-3 text-sm text-gray-600">
-              {product.isAuction && product.bids && product.bids.length > 0 && (
-                <span className="text-gray-600">
-                  {product.bids.length} {product.bids.length === 1 ? 'Gebot' : 'Gebote'}
-                </span>
-              )}
-            </div>
-            {product.isAuction && product.auctionEnd && (
-              <div className="mb-2 flex items-center gap-1 text-sm font-medium text-orange-600">
-                <Clock className="h-4 w-4" />
-                <span>Endet: {formatAuctionEnd(product.auctionEnd)}</span>
-              </div>
-            )}
-          </div>
-          <div className="mt-2 flex items-center justify-between">
-            <div>
-              {/* Preis - Prominent hervorgehoben, subtile Scale-Animation auf Hover */}
-              <div className="flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-[1.01]">
-                <span className="text-sm font-medium text-gray-600">CHF</span>
-                <span className="text-2xl font-bold text-primary-700 md:text-3xl">
-                  {new Intl.NumberFormat('de-CH', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }).format(product.currentBid || product.price)}
-                </span>
-              </div>
-              {product.buyNowPrice && (
-                <div className="mt-1 text-sm text-gray-500">
-                  Sofort: CHF{' '}
-                  {new Intl.NumberFormat('de-CH', {
-                    minimumFractionDigits: 2,
-                    maximumFractionDigits: 2,
-                  }).format(product.buyNowPrice)}
-                </div>
-              )}
-            </div>
-            {showBuyNowButton && (
-              <button className="rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors duration-200 ease-out hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2">
-                Jetzt kaufen
-              </button>
-            )}
-          </div>
-        </div>
-      </Link>
-    )
-  }
-
-  // Default variant (standard card)
+  // Default variant - exact spec implementation
   return (
     <Link
       href={productHref}
       prefetch={true}
-      className={`group flex h-full w-full min-w-0 flex-col overflow-hidden rounded-[20px] bg-white transition-all duration-200 ease-out ${className}`}
-      style={{
-        border: '1px solid rgba(0, 0, 0, 0.1)',
-          boxShadow: '0px 4px 16px rgba(0, 0, 0, 0.1)',
-      }}
-      onMouseEnter={e => {
-          e.currentTarget.style.transform = 'translateY(-2px)'
-        e.currentTarget.style.boxShadow = '0px 8px 24px rgba(0, 0, 0, 0.12)'
-        e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.15)'
-      }}
-      onMouseLeave={e => {
-          e.currentTarget.style.transform = 'translateY(0)'
-        e.currentTarget.style.boxShadow =
-          '0px 4px 16px rgba(0, 0, 0, 0.1)'
-        e.currentTarget.style.borderColor = 'rgba(0, 0, 0, 0.1)'
-      }}
+      className={`group w-full overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-md ${className}`}
     >
-      <div
-        className="relative aspect-[5/4] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100"
-        onMouseEnter={() => setShowSecondImage(true)}
-        onMouseLeave={() => setShowSecondImage(false)}
-      >
-        {/* Hauptbild */}
+      {/* Media Container - Fixed 4:3 ratio */}
+      <div className="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden">
+        {/* Image */}
         {mainImage ? (
           mainImage.startsWith('data:image/') ||
           mainImage.startsWith('blob:') ||
@@ -747,195 +188,99 @@ export function ProductCard({
             <img
               src={mainImage}
               alt={product.title}
-              className={`h-full w-full object-cover transition-all duration-200 ease-out ${
-                showSecondImage && secondImage
-                  ? 'scale-110 opacity-0'
-                  : 'scale-100 opacity-100 group-hover:scale-[1.01]'
-              }`}
-              onError={() => setImageError(true)}
-              onLoad={() => setImageError(false)}
-              loading="lazy"
+              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.02]"
             />
           ) : (
             <Image
               src={mainImage}
               alt={product.title}
               fill
-              className={`object-cover transition-all duration-200 ease-out ${
-                showSecondImage && secondImage
-                  ? 'scale-110 opacity-0'
-                  : 'scale-100 opacity-100 group-hover:scale-[1.01]'
-              }`}
-              onError={() => setImageError(true)}
-              onLoad={() => setImageError(false)}
+              className="object-cover transition-transform duration-300 group-hover:scale-[1.02]"
               sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              loading="lazy"
             />
           )
-        ) : imageError ? (
-          <div className="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-gray-100 to-gray-200 text-gray-400">
-            <Sparkles className="mb-2 h-8 w-8 opacity-50" />
-            <span className="text-xs">Kein Bild</span>
+        ) : (
+          /* Placeholder when no image */
+          <div className="flex h-full w-full flex-col items-center justify-center text-gray-400">
+            <Sparkles className="h-8 w-8 opacity-50" />
+            <span className="mt-2 text-sm">Kein Bild</span>
           </div>
-        ) : null}
-
-        {/* Zweites Bild auf Hover */}
-        {secondImage && (
-          <>
-            {secondImage.startsWith('data:image/') ||
-            secondImage.startsWith('blob:') ||
-            secondImage.length > 1000 ||
-            secondImage.includes('blob.vercel-storage.com') ? (
-              <img
-                src={secondImage}
-                alt={product.title}
-                className={`absolute inset-0 h-full w-full object-cover transition-all duration-200 ease-out ${
-                  showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
-                }`}
-                loading="lazy"
-              />
-            ) : (
-              <Image
-                src={secondImage}
-                alt={product.title}
-                fill
-                className={`object-cover transition-all duration-200 ease-out ${
-                  showSecondImage ? 'scale-110 opacity-100' : 'scale-100 opacity-0'
-                }`}
-                loading="lazy"
-                quality={85}
-                sizes="(max-width: 768px) 50vw, (max-width: 1200px) 33vw, 25vw"
-              />
-            )}
-          </>
         )}
 
-        {/* Schnellansicht Button auf Hover */}
-        <div
-          className={`absolute bottom-4 left-1/2 z-20 -translate-x-1/2 transform transition-all duration-200 ease-out ${
-            showSecondImage ? 'translate-y-0 opacity-100' : 'translate-y-2 opacity-0'
-          }`}
-        >
-          <Link
-            href={productHref}
-            onClick={e => e.stopPropagation()}
-            className="rounded-full bg-orange-500 px-6 py-2 text-sm font-bold text-white shadow-lg transition-all hover:scale-105 hover:bg-orange-600"
-          >
-            Schnellansicht
-          </Link>
-        </div>
+        {/* Top-left Badge Stack (max 2) */}
+        {badges.length > 0 && (
+          <div className="absolute left-2 top-2 flex flex-col gap-1">
+            {badges.slice(0, 2).map((badge, index) => (
+              <span
+                key={index}
+                className="inline-flex items-center rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-gray-900 shadow-sm backdrop-blur"
+              >
+                {badge === 'Zahlungsschutz' && <Shield className="mr-1 h-3 w-3" />}
+                {badge}
+              </span>
+            ))}
+          </div>
+        )}
 
-        {/* Favorite Button */}
+        {/* Top-right Heart Button */}
         <button
           onClick={handleFavoriteClick}
-          className={`absolute right-1 top-1 z-10 flex min-h-[44px] min-w-[44px] items-center justify-center rounded-full p-2 shadow-md transition-all md:min-h-0 md:min-w-0 md:p-1 ${
-            isFavorite
-              ? 'bg-red-500 text-white hover:bg-red-600'
-              : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-          } ${isLoadingFavorite ? 'cursor-wait opacity-50' : ''}`}
+          className="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:bg-white"
           aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
         >
-          <Heart className={`h-3 w-3 ${isFavorite ? 'fill-current' : ''}`} />
+          <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
         </button>
-
-        {/* Booster Badges */}
-        {hasSuperBoost && (
-          <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-orange-400 to-orange-600 p-1 text-white shadow-md">
-            <Sparkles className="h-3 w-3" />
-          </div>
-        )}
-        {hasTurboBoost && (
-          <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-gradient-to-r from-primary-400 to-primary-600 p-1 text-white shadow-md">
-            <Zap className="h-3 w-3" />
-          </div>
-        )}
-        {hasBoost && (
-          <div className="absolute left-1.5 top-1.5 z-10 flex items-center justify-center rounded-full bg-primary-600 p-1 text-white shadow-md">
-            <Flame className="h-3 w-3" />
-          </div>
-        )}
-
-        {/* Auction Badge - Immer sichtbar wenn Auktion (auch mit Boostern) - Subtiler */}
-        {product.isAuction && (
-          <div
-            className={`absolute left-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm ${
-              hasSuperBoost || hasTurboBoost || hasBoost ? 'top-10' : 'top-1.5'
-            }`}
-          >
-            <Gavel className="h-2.5 w-2.5" />
-            <span>Auktion</span>
-          </div>
-        )}
       </div>
 
-      <div className="relative p-4">
-        {/* Title - Immer sichtbar, 1 Zeile */}
-        <div
-          className="group/title relative mb-1 line-clamp-1 text-sm font-medium leading-tight text-gray-900"
-          title={product.title}
-        >
+      {/* Content Wrapper */}
+      <div className="p-3">
+        {/* Title */}
+        <h3 className="text-[13px] font-medium leading-5 text-gray-900 line-clamp-2 min-h-[40px]">
           {product.title}
-        </div>
+        </h3>
 
-        {/* Preis - Immer sichtbar, subtile Scale-Animation auf Hover */}
-        <div className="mb-1 flex items-baseline gap-1 transition-transform duration-300 group-hover:scale-[1.01]">
-          <span className="text-xs font-medium text-gray-600">CHF</span>
-          <span className="text-xl font-bold text-primary-700 md:text-2xl">
-            {new Intl.NumberFormat('de-CH', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }).format(product.currentBid || product.price)}
+        {/* Price Block */}
+        <div className="mt-2 flex items-baseline gap-2">
+          <span className="text-[12px] font-medium text-gray-600">CHF</span>
+          <span className="text-[20px] font-semibold leading-6 text-gray-900">
+            {formatCHF(mainPrice).replace('CHF ', '')}
           </span>
         </div>
 
-        {/* Buy Now Price - IMMER sichtbar bei normalen Angeboten */}
-        {!product.isAuction && product.buyNowPrice && (
-          <div className="mb-1.5 text-xs font-semibold text-primary-600">
-            Sofort: CHF{' '}
-            {new Intl.NumberFormat('de-CH', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            }).format(product.buyNowPrice)}
+        {/* Secondary Price (only for Auction + BuyNowPrice) */}
+        {isAuction && hasBuyNowPrice && (
+          <div className="mt-0.5 text-[12px] text-gray-600">
+            Sofort: {formatCHF(product.buyNowPrice!)}
           </div>
         )}
 
-        {/* Auktion Info - Prominent wenn Auktion */}
-        {product.isAuction && product.auctionEnd && (
-          <div className="mb-1.5 flex items-center gap-1.5 rounded-md bg-orange-50 px-2 py-1">
-            <Clock className="h-3 w-3 flex-shrink-0 text-orange-600" />
-            <span className="text-[10px] font-semibold text-orange-700">
-              {formatAuctionEnd(product.auctionEnd)}
-            </span>
-            {product.bids && product.bids.length > 0 && (
-              <span className="ml-auto text-[10px] text-orange-600">
-                {product.bids.length} {product.bids.length === 1 ? 'Gebot' : 'Gebote'}
+        {/* Meta Row */}
+        <div className="mt-2 flex items-center justify-between gap-2 text-[12px] text-gray-600">
+          {/* Left Meta: Location + Delivery */}
+          <div className="flex items-center gap-2 min-w-0">
+            {(product.city || product.postalCode) && (
+              <span className="inline-flex items-center gap-1 truncate">
+                <MapPin className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">
+                  {product.postalCode && product.city
+                    ? `${product.postalCode} ${product.city}`
+                    : product.postalCode || product.city || ''}
+                </span>
               </span>
             )}
-          </div>
-        )}
-
-        {/* Location - IMMER sichtbar, sehr prominent */}
-        {(product.city || product.postalCode) && (
-          <div className="mb-2 flex items-center gap-1.5 rounded-md bg-gray-50 px-2 py-1.5 text-[12px] font-bold text-gray-800">
-            <MapPin className="h-4 w-4 flex-shrink-0 text-primary-600" />
-            <span className="truncate font-semibold">
-              {product.postalCode && product.city
-                ? `${product.postalCode} ${product.city}`
-                : product.postalCode || product.city || ''}
+            <span className="inline-flex items-center gap-1 shrink-0">
+              <Package className="h-3 w-3" />
+              {deliveryLabel}
             </span>
           </div>
-        )}
 
-        {/* Zusätzliche Details - Brand IMMER sichtbar, Condition immer sichtbar */}
-        <div className="flex flex-wrap items-center gap-1.5 text-xs text-gray-600">
-          {/* Brand - IMMER sichtbar */}
-          {product.brand && <span className="font-medium text-primary-600">{product.brand}</span>}
-
-          {/* Condition - IMMER sichtbar */}
-          {product.condition && (
-            <span className="rounded bg-gray-100 px-1.5 py-0.5 text-xs text-gray-700">
-              {product.condition}
-            </span>
+          {/* Right Meta (only for Auction): bidCount + timeLeft */}
+          {isAuction && (bidCount > 0 || timeLeft) && (
+            <div className="shrink-0">
+              {bidCount > 0 && `${bidCount} Gebote`}
+              {bidCount > 0 && timeLeft && ' · '}
+              {timeLeft && timeLeft}
+            </div>
           )}
         </div>
       </div>

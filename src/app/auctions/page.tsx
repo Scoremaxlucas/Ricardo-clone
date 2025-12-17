@@ -224,19 +224,20 @@ export default function AuctionsPage() {
             {watches.slice(0, visibleCount).map((w, index) => (
               <div key={w.id} className={`animate-in fade-in slide-in-from-bottom-4 ${index < 12 ? '' : 'duration-300'}`}>
                 <ProductCard
-                  id={w.id}
-                  title={w.title}
-                  brand={w.brand}
-                  price={w.price}
-                  images={w.images}
-                  city={w.city}
-                  postalCode={w.postalCode}
-                  auctionEnd={w.auctionEnd}
-                  buyNowPrice={w.buyNowPrice}
-                  isAuction={w.isAuction}
-                  bids={w.bids}
-                  boosters={w.boosters}
-                  favorites={favorites}
+                  product={{
+                    id: w.id,
+                    title: w.title,
+                    brand: w.brand,
+                    price: w.price,
+                    images: w.images,
+                    city: w.city,
+                    postalCode: w.postalCode,
+                    auctionEnd: w.auctionEnd,
+                    buyNowPrice: w.buyNowPrice,
+                    isAuction: w.isAuction,
+                    bids: w.bids,
+                    boosters: w.boosters,
+                  }}
                   onFavoriteToggle={(id, isFavorite) => {
                     setFavorites(prev => {
                       const newSet = new Set(prev)

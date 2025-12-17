@@ -26,9 +26,6 @@ const LazyCategorySpotlight = lazy(() =>
 const LazySocialProofWidget = lazy(() =>
   import('@/components/home/SocialProofWidget').then(m => ({ default: m.SocialProofWidget }))
 )
-const LazyLocationMap = lazy(() =>
-  import('@/components/home/LocationMap').then(m => ({ default: m.LocationMap }))
-)
 
 const LazyDailyDeals = lazy(() =>
   import('@/components/home/DailyDeals').then(m => ({ default: m.DailyDeals }))
@@ -139,11 +136,6 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
           {/* Category Spotlight */}
           <Suspense fallback={<SectionSkeleton />}>
             <LazyCategorySpotlight />
-          </Suspense>
-
-          {/* Location Map */}
-          <Suspense fallback={<SectionSkeleton bg="bg-white" />}>
-            <LazyLocationMap />
           </Suspense>
         </>
       ) : (
