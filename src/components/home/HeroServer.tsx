@@ -1,11 +1,11 @@
 /**
  * HeroServer - Pure Server Component für LCP-Optimierung
- * 
+ *
  * Der statische Hero-Content wird server-side gerendert für:
  * - Schnelleres LCP (Largest Contentful Paint)
  * - Besseres SEO (Text ist sofort im HTML)
  * - Reduziertes JavaScript Bundle
- * 
+ *
  * Client-Components (Search, CategoryLinks) werden separat geladen.
  */
 
@@ -54,10 +54,10 @@ export function HeroServer({
           <div className="mx-auto max-w-3xl mb-3">
             {children}
           </div>
-          
+
           {/* Trust Mini-Bullets - Under search bar */}
           <TrustMiniBullets variant="hero" />
-          
+
           {/* Secondary CTA: Artikel verkaufen */}
           <div className="text-center">
             <Link
