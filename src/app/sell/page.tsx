@@ -1432,3 +1432,73 @@ export default function SellPage() {
                                                                                                       : selectedCategory ===
                                                                                                           'elektrogeraete'
                                                                                                         ? 'z.B. Küchenmaschine KitchenAid Artisan, rot, 4.7L, wenig benutzt, mit Zubehör...'
+                                                                                                        : selectedCategory ===
+                                                                                                            'baustoffe'
+                                                                                                          ? 'z.B. Dämmstoff 10cm 20m², neu, originalverpackt. Restbestand aus Renovation...'
+                                                                                                          : selectedCategory ===
+                                                                                                              'kunst-handwerk'
+                                                                                                            ? 'z.B. Handgemachte Keramik-Vase, einzigartig, Höhe 30cm, signiert vom Künstler...'
+                                                                                                            : 'Beschreiben Sie Ihren Artikel ausführlich: Zustand, Besonderheiten, Lieferumfang...'
+                          }
+                        />
+                      </div>
+
+                      <div>
+                        <label className="mb-2 block text-sm font-medium text-gray-700">
+                          Zustand *
+                        </label>
+                        <select
+                          name="condition"
+                          required
+                          value={formData.condition}
+                          onChange={handleInputChange}
+                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:ring-2 focus:ring-primary-500"
+                        >
+                          <option value="">Bitte wählen</option>
+                          <option value="neu">Neu</option>
+                          <option value="wie-neu">Wie neu</option>
+                          <option value="sehr-gut">Sehr gut</option>
+                          <option value="gut">Gut</option>
+                          <option value="gebraucht">Gebraucht</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Kategorie-spezifische Felder */}
+                  <CategoryFields
+                    category={selectedCategory}
+                    subcategory={selectedSubcategory}
+                    formData={formData}
+                    onChange={handleInputChange}
+                  />
+
+                  {/* Submit Button */}
+                  <div className="border-t border-gray-200 pt-6">
+                    <button
+                      type="submit"
+                      disabled={isLoading}
+                      className="flex w-full items-center justify-center rounded-md bg-primary-600 px-4 py-3 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {isLoading ? (
+                        <>
+                          <Clock className="mr-2 h-5 w-5 animate-spin" />
+                          Wird gespeichert...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="mr-2 h-5 w-5" />
+                          Artikel anbieten
+                        </>
+                      )}
+                    </button>
+                  </div>
+                </form>
+              </div>
+            )}
+          </div>
+          <Footer />
+        </div>
+      )
+    }
+
