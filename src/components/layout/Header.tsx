@@ -588,7 +588,11 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             {/* Language Selector */}
             <div
               className="relative flex-shrink-0"
-              onMouseEnter={() => handleMenuEnter(setIsLanguageMenuOpen)}
+              onMouseEnter={() => {
+                setIsProfileMenuOpen(false)
+                setIsSellMenuOpen(false)
+                handleMenuEnter(setIsLanguageMenuOpen)
+              }}
               onMouseLeave={() => handleMenuLeave(setIsLanguageMenuOpen)}
             >
               <button
@@ -602,7 +606,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
               {isLanguageMenuOpen && (
                 <div
-                  className="absolute right-0 top-full z-[9999] w-36 rounded-md border border-gray-200 bg-white py-0.5 shadow-lg"
+                  className="absolute left-0 top-full z-[10000] w-36 rounded-md border border-gray-200 bg-white py-0.5 shadow-lg"
                   style={{ marginTop: '4px', pointerEvents: 'auto' }}
                 >
                   {languages.map(lang => (
