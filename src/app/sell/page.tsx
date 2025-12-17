@@ -707,8 +707,8 @@ function SellPageContent() {
           onStepClick={(step) => goToStep(step, false)}
         />
 
-        {/* Form */}
-        <form ref={formRef} onSubmit={handleSubmit} className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
+        {/* Form - prevent default submission, only submit via explicit button click */}
+        <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="rounded-2xl bg-white p-6 shadow-lg sm:p-8">
           {/* Step 0: Category */}
           {currentStep === 0 && (
             <StepCategorySelection
@@ -803,6 +803,7 @@ function SellPageContent() {
             totalSteps={WIZARD_STEPS.length}
             onPrevious={prevStep}
             onNext={nextStep}
+            onPublish={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)}
             onSaveDraft={saveDraftData}
             isLastStep={currentStep === WIZARD_STEPS.length - 1}
             canProceed={validateStep(currentStep)}

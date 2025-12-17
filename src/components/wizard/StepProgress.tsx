@@ -99,6 +99,7 @@ interface WizardFooterProps {
   totalSteps: number
   onPrevious: () => void
   onNext: () => void
+  onPublish: () => void
   onSaveDraft?: () => void
   isLastStep: boolean
   canProceed: boolean
@@ -110,6 +111,7 @@ export function WizardFooter({
   totalSteps,
   onPrevious,
   onNext,
+  onPublish,
   onSaveDraft,
   isLastStep,
   canProceed,
@@ -144,8 +146,8 @@ export function WizardFooter({
             {currentStep + 1} / {totalSteps}
           </span>
           <button
-            type={isLastStep ? 'submit' : 'button'}
-            onClick={isLastStep ? undefined : onNext}
+            type="button"
+            onClick={isLastStep ? onPublish : onNext}
             disabled={!canProceed || isSubmitting}
             className={`
               rounded-full px-6 py-2.5 font-bold text-white transition-all duration-300
