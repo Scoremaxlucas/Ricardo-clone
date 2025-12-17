@@ -258,16 +258,17 @@ export function StepReviewPublish({
         </div>
       </div>
 
-      {/* Booster selection */}
-      <div className="space-y-4">
-        <div className="flex items-center gap-2">
-          <Sparkles className="h-5 w-5 text-primary-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Booster-Option</h3>
-          <span className="text-sm text-gray-500">(Optional)</span>
+      {/* Booster selection - PROMINENT, direkt nach Summary */}
+      <div className="rounded-2xl border-2 border-primary-200 bg-gradient-to-br from-primary-50 to-white p-6 shadow-sm">
+        <div className="mb-4 flex items-center gap-3">
+          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100">
+            <Sparkles className="h-6 w-6 text-primary-600" />
+          </div>
+          <div>
+            <h3 className="text-xl font-bold text-gray-900">Ihr Angebot hervorheben?</h3>
+            <p className="text-sm text-gray-600">Optional - Wählen Sie einen Booster für mehr Sichtbarkeit</p>
+          </div>
         </div>
-        <p className="text-sm text-gray-600">
-          Wählen Sie, wie Ihr Angebot hervorgehoben werden soll
-        </p>
 
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
           {/* No booster option */}
