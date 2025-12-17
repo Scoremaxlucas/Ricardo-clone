@@ -114,10 +114,10 @@ export function StepCategorySelection({
     : true
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4 md:space-y-6">
       <div className="text-center">
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">Kategorie wählen</h2>
-        <p className="text-gray-600">
+        <h2 className="mb-1 md:mb-2 text-xl md:text-2xl font-bold text-gray-900">Kategorie wählen</h2>
+        <p className="text-sm md:text-base text-gray-600">
           Laden Sie ein Bild hoch und unsere KI erkennt automatisch die passende Kategorie
         </p>
       </div>

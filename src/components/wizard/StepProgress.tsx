@@ -144,7 +144,7 @@ export function WizardFooter({
   }
 
   return (
-    <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-4 py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8">
+    <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-4 py-4 pb-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
       <div className="mx-auto flex max-w-4xl items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
           {currentStep > 0 ? (

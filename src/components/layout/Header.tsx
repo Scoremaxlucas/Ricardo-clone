@@ -2,7 +2,7 @@
 
 /**
  * HeaderOptimized - Performance-optimierter Header
- * 
+ *
  * Optimierungen:
  * 1. Deferred Data Loading - Nicht-kritische Daten verzögert
  * 2. Minimal Initial JS - Event Listener bei Interaktion
@@ -35,6 +35,8 @@ import { useRouter } from 'next/navigation'
 import { memo, useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
 import { CategorySidebarNew } from './CategorySidebarNew'
+import { Sheet, SheetContent } from '@/components/ui/Sheet'
+import { Menu, Search } from 'lucide-react'
 
 // Deferred data types
 interface DeferredData {
@@ -58,6 +60,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   const [isSellMenuOpen, setIsSellMenuOpen] = useState(false)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
   // === DEFERRED STATE (nicht-kritisch, verzögert laden) ===
   const [deferredData, setDeferredData] = useState<DeferredData>({
@@ -210,7 +213,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   const getInitials = (name?: string | null) => {
     if (!name) return 'U'
     const parts = name.split(' ')
-    return parts.length >= 2 
+    return parts.length >= 2
       ? (parts[0][0] + parts[1][0]).toUpperCase()
       : name.substring(0, 2).toUpperCase()
   }
@@ -222,18 +225,103 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   return (
     <header id="navigation" className="sticky top-0 z-50 border-b bg-white shadow-md" tabIndex={-1}>
       <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
-        {/* ERSTE ZEILE: Logo, Navigation, User Actions */}
-        <div className="flex h-12 min-w-0 items-center justify-between py-1 md:h-14">
+        {/* MOBILE HEADER */}
+        <div className="flex h-14 items-center justify-between md:hidden">
           {/* Logo */}
-          <div className="flex-shrink-0">
-            <Link href="/" prefetch={true} className="inline-flex items-center">
-              <Logo size="sm" className="md:hidden" />
-              <Logo size="md" className="hidden md:block" />
-            </Link>
-          </div>
+          <Link href="/" prefetch={true} className="flex-shrink-0">
+            <Logo size="sm" />
+          </Link>
 
-          {/* Navigation - Kategorien als erster Punkt (Design-Optimierung) */}
-          <div className="ml-1 hidden min-w-0 flex-1 items-center justify-start gap-1 sm:ml-2 sm:flex sm:gap-1.5 md:ml-4 md:gap-2 lg:ml-8 lg:gap-3">
+          {/* Actions Row */}
+          <div className="flex items-center gap-2">
+            {/* Search Icon */}
+            <Link
+              href="/search"
+              className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+              title="Suchen"
+            >
+              <Search className="h-5 w-5" />
+            </Link>
+
+            {/* Sell Button - Always visible */}
+            <Link
+              href="/sell"
+              className="flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700"
+              title={t.header.sell}
+            >
+              <Plus className="h-4 w-4" />
+              <span className="hidden xs:inline">Verkaufen</span>
+            </Link>
+
+            {/* Notifications */}
+            {session && (
+              <Link
+                href="/notifications"
+                className="relative flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                title={t.header.notifications}
+              >
+                <Bell className="h-5 w-5" />
+                {deferredData.unreadNotifications > 0 && (
+                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
+                    {deferredData.unreadNotifications > 9 ? '9+' : deferredData.unreadNotifications}
+                  </span>
+                )}
+              </Link>
+            )}
+
+            {/* Profile Avatar */}
+            {session ? (
+              <button
+                type="button"
+                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary-600 text-white transition-all hover:bg-primary-700"
+                title={t.header.profileMenu}
+              >
+                {getProfileImage() ? (
+                  <img
+                    src={getProfileImage() || undefined}
+                    alt={session.user?.name || t.header.myProfile}
+                    className="h-full w-full rounded-full object-cover"
+                  />
+                ) : (
+                  <span className="text-xs font-semibold">{getInitials(session.user?.name)}</span>
+                )}
+              </button>
+            ) : (
+              <Link
+                href="/login"
+                className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                title={t.header.login}
+              >
+                <User className="h-5 w-5" />
+              </Link>
+            )}
+
+            {/* Hamburger Menu */}
+            <button
+              type="button"
+              onClick={() => setIsMobileMenuOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+              title="Menü"
+            >
+              <Menu className="h-5 w-5" />
+            </button>
+          </div>
+        </div>
+
+        {/* DESKTOP HEADER */}
+        <div className="hidden md:block">
+          {/* ERSTE ZEILE: Logo, Navigation, User Actions */}
+          <div className="flex h-14 min-w-0 w-full items-center justify-between py-1">
+            {/* Logo */}
+            <div className="flex-shrink-0">
+              <Link href="/" prefetch={true} className="inline-flex items-center">
+                <Logo size="md" />
+              </Link>
+            </div>
+
+            {/* Navigation - Kategorien als erster Punkt (Design-Optimierung) */}
+            <div className="ml-4 min-w-0 flex-1 items-center justify-start gap-2 lg:ml-8 lg:gap-3 flex">
             {/* Kategorien Button - Öffnet Sidebar - Primary Navigation Entry Point */}
             <button
               onClick={() => setIsSidebarOpen(true)}
@@ -335,10 +423,9 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 </>
               )}
             </div>
-          </div>
 
-          {/* User Actions */}
-          <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2 md:gap-2 lg:gap-3">
+            {/* User Actions */}
+            <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2 md:gap-2 lg:gap-3">
             {/* Notifications */}
             <Link
               href="/notifications"
@@ -522,10 +609,168 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 </div>
               )}
             </div>
+            </div>
+          </div>
           </div>
         </div>
-
       </div>
+
+      {/* Mobile Menu Sheet */}
+      <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
+        <SheetContent onClose={() => setIsMobileMenuOpen(false)}>
+          <div className="space-y-1 p-4">
+            {/* Kategorien */}
+            <button
+              onClick={() => {
+                setIsSidebarOpen(true)
+                setIsMobileMenuOpen(false)
+              }}
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+            >
+              <Grid3x3 className="h-5 w-5" />
+              <span className="font-medium">Kategorien</span>
+            </button>
+
+            {/* Favoriten */}
+            {session ? (
+              <Link
+                href="/favorites"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="relative flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+              >
+                <Heart className="h-5 w-5" />
+                <span className="font-medium">{t.header.favorites}</span>
+                {deferredData.favoritesCount > 0 && (
+                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
+                    {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
+                  </span>
+                )}
+              </Link>
+            ) : (
+              <button
+                onClick={() => {
+                  setIsLoginModalOpen(true)
+                  setIsMobileMenuOpen(false)
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+              >
+                <Heart className="h-5 w-5" />
+                <span className="font-medium">{t.header.favorites}</span>
+              </button>
+            )}
+
+            {/* Auktionen */}
+            <Link
+              href="/auctions"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+            >
+              <Gavel className="h-5 w-5" />
+              <span className="font-medium">{t.header.auctions}</span>
+            </Link>
+
+            {/* Verkaufen */}
+            <Link
+              href="/sell"
+              onClick={() => setIsMobileMenuOpen(false)}
+              className="flex w-full items-center gap-3 rounded-lg bg-primary-50 px-4 py-3 text-left font-semibold text-primary-700 transition-colors hover:bg-primary-100"
+            >
+              <Plus className="h-5 w-5" />
+              <span>{t.header.sell}</span>
+            </Link>
+
+            {/* Divider */}
+            {session && (
+              <>
+                <div className="my-2 border-t border-gray-200" />
+                <Link
+                  href="/my-watches"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+                >
+                  <Package className="h-5 w-5" />
+                  <span className="font-medium">{t.header.mySelling}</span>
+                </Link>
+                <Link
+                  href="/profile"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+                >
+                  <User className="h-5 w-5" />
+                  <span className="font-medium">{t.header.myProfile}</span>
+                </Link>
+                <Link
+                  href="/my-watches/account"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+                >
+                  <Settings className="h-5 w-5" />
+                  <span className="font-medium">{t.header.settings}</span>
+                </Link>
+                <div className="my-2 border-t border-gray-200" />
+                <button
+                  onClick={async () => {
+                    setIsMobileMenuOpen(false)
+                    await signOut({ callbackUrl: '/' })
+                  }}
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-600 transition-colors hover:bg-red-50"
+                >
+                  <LogOut className="h-5 w-5" />
+                  <span className="font-medium">{t.header.logout}</span>
+                </button>
+              </>
+            )}
+          </div>
+        </SheetContent>
+      </Sheet>
+
+      {/* Mobile Profile Menu (when clicking avatar) */}
+      {session && isProfileMenuOpen && (
+        <>
+          <div
+            className="fixed inset-0 z-40 bg-black/50 md:hidden"
+            onClick={() => setIsProfileMenuOpen(false)}
+          />
+          <div className="fixed bottom-0 left-0 right-0 z-50 rounded-t-xl border-t bg-white p-4 shadow-lg md:hidden">
+            <div className="mb-4 border-b pb-4">
+              <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                <UserName
+                  userId={(session?.user as any)?.id || ''}
+                  userName={displayName}
+                  badgeSize="sm"
+                />
+              </p>
+              <p className="truncate text-sm text-gray-500">{session.user?.email}</p>
+            </div>
+            <Link
+              href="/profile"
+              onClick={() => setIsProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100"
+            >
+              <User className="h-5 w-5" />
+              <span>{t.header.myProfile}</span>
+            </Link>
+            <Link
+              href="/my-watches"
+              onClick={() => setIsProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100"
+            >
+              <Package className="h-5 w-5" />
+              <span>{t.header.mySelling}</span>
+            </Link>
+            <button
+              onClick={() => setIsProfileMenuOpen(false)}
+              className="w-full text-left"
+            >
+              <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100">
+                <X className="h-5 w-5" />
+                <span>Schließen</span>
+              </div>
+            </button>
+          </div>
+        </>
+      )}
+
       <CategorySidebarNew isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
       <LoginPromptModal
         isOpen={isLoginModalOpen}

@@ -925,7 +925,7 @@ function SellPageContent() {
                               )}
 
       {/* Wizard container with min-height to prevent global footer interference */}
-      <div ref={wizardContainerRef} className="mx-auto min-h-[calc(100vh-200px)] max-w-4xl px-4 py-8">
+      <div ref={wizardContainerRef} className="mx-auto min-h-[calc(100vh-200px)] max-w-4xl px-4 py-4 md:py-8">
         {/* Back link */}
         <div className="mb-6">
           <Link
@@ -954,7 +954,7 @@ function SellPageContent() {
 
         {/* Form - prevent default submission, only submit via explicit button click */}
         {/* Added pb-24 for sticky footer and chat bubble spacing */}
-        <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="rounded-2xl bg-white p-6 pb-28 shadow-lg sm:p-8 sm:pb-28">
+        <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="rounded-2xl bg-white p-4 pb-28 shadow-lg sm:p-6 md:p-8 sm:pb-28">
           {/* Step 0: Category */}
           {currentStep === 0 && (
             <StepCategorySelection

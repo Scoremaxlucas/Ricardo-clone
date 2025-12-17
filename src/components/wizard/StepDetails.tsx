@@ -55,10 +55,10 @@ export function StepDetails({
   setExclusiveSupply,
 }: StepDetailsProps) {
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 md:space-y-8">
       <div className="text-center">
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">Artikel-Details</h2>
-        <p className="text-gray-600">
+        <h2 className="mb-1 md:mb-2 text-xl md:text-2xl font-bold text-gray-900">Artikel-Details</h2>
+        <p className="text-sm md:text-base text-gray-600">
           Beschreiben Sie Ihren Artikel so genau wie möglich
         </p>
       </div>

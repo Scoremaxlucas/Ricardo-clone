@@ -12,7 +12,9 @@ import {
   Shield,
   Sparkles,
   CheckCircle,
-  Clock
+  Clock,
+  ChevronDown,
+  ChevronUp
 } from 'lucide-react'
 import { useEffect, useState, useRef } from 'react'
 
@@ -112,6 +114,7 @@ export function StepReviewPublish({
   isSubmitting,
 }: StepReviewPublishProps) {
   const [boosters, setBoosters] = useState<BoosterOption[]>([])
+  const [expandedBooster, setExpandedBooster] = useState<string | null>(null)
   const stepHeadingRef = useRef<HTMLHeadingElement | null>(null)
 
   // Load boosters
@@ -151,10 +154,10 @@ export function StepReviewPublish({
     : boosters.find(b => b.id === selectedBooster)
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 md:space-y-8">
       <div className="text-center">
-        <h2 ref={(el) => { if (el) (window as any).stepHeadingRef = el }} tabIndex={-1} className="mb-2 text-2xl font-bold text-gray-900">Überprüfen & Veröffentlichen</h2>
-        <p className="text-gray-600">
+        <h2 ref={(el) => { if (el) (window as any).stepHeadingRef = el }} tabIndex={-1} className="mb-1 md:mb-2 text-xl md:text-2xl font-bold text-gray-900">Überprüfen & Veröffentlichen</h2>
+        <p className="text-sm md:text-base text-gray-600">
           Überprüfen Sie Ihre Angaben und wählen Sie optional einen Booster
         </p>
       </div>
@@ -359,7 +362,13 @@ export function StepReviewPublish({
             <button
               key={booster.id}
               type="button"
-              onClick={() => onBoosterChange(booster.id)}
+              onClick={() => {
+                onBoosterChange(booster.id)
+                // Auto-expand on mobile when selecting
+                if (booster.id !== selectedBooster) {
+                  setExpandedBooster(booster.id)
+                }
+              }}
               className={`relative flex flex-col rounded-xl border-2 p-4 text-left transition-all ${
                 selectedBooster === booster.id
                   ? 'border-primary-500 bg-white ring-2 ring-primary-200'
@@ -376,7 +385,7 @@ export function StepReviewPublish({
                 {booster.badge}
               </div>
               <h4 className="font-semibold text-gray-900">{booster.name}</h4>
-              <p className="mt-1 text-sm text-gray-500">{booster.short || booster.description}</p>
+              <p className="mt-1 text-sm text-gray-500 line-clamp-2 md:line-clamp-none">{booster.short || booster.description}</p>
               <div className="mt-auto pt-3">
                 <span className="text-lg font-bold" style={{ color: booster.badgeColor }}>
                   {formatCHF(booster.price)}
@@ -391,24 +400,61 @@ export function StepReviewPublish({
           ))}
         </div>
 
-        {/* Detail Panel - Only show when booster is selected */}
+        {/* Detail Panel - Desktop: Always show when selected, Mobile: Accordion */}
         {selectedBoosterData && (
-          <div className="mt-6 rounded-xl border border-gray-200 bg-gray-50/50 p-6">
-            <h4 className="mb-4 text-lg font-semibold text-gray-900">
-              {selectedBoosterData.detailsTitle || `${selectedBoosterData.name} – Details`}
-            </h4>
-            <ul className="space-y-2.5">
-              {selectedBoosterData.bullets?.map((bullet, index) => (
-                <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                  <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500" />
-                  <span>{bullet}</span>
-                </li>
-              ))}
-            </ul>
-            {selectedBoosterData.fineprint && (
-              <p className="mt-4 text-xs text-gray-500">{selectedBoosterData.fineprint}</p>
-            )}
-          </div>
+          <>
+            {/* Desktop: Always visible detail panel */}
+            <div className="hidden md:block mt-6 rounded-xl border border-gray-200 bg-gray-50/50 p-6">
+              <h4 className="mb-4 text-lg font-semibold text-gray-900">
+                {selectedBoosterData.detailsTitle || `${selectedBoosterData.name} – Details`}
+              </h4>
+              <ul className="space-y-2.5">
+                {selectedBoosterData.bullets?.map((bullet, index) => (
+                  <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                    <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500" />
+                    <span>{bullet}</span>
+                  </li>
+                ))}
+              </ul>
+              {selectedBoosterData.fineprint && (
+                <p className="mt-4 text-xs text-gray-500">{selectedBoosterData.fineprint}</p>
+              )}
+            </div>
+
+            {/* Mobile: Accordion for booster details */}
+            <div className="md:hidden mt-4">
+              <button
+                type="button"
+                onClick={() => setExpandedBooster(expandedBooster === selectedBooster ? null : selectedBooster)}
+                className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition-colors hover:bg-gray-50"
+              >
+                <span className="font-medium text-gray-900">Details anzeigen</span>
+                {expandedBooster === selectedBooster ? (
+                  <ChevronUp className="h-5 w-5 text-gray-500" />
+                ) : (
+                  <ChevronDown className="h-5 w-5 text-gray-500" />
+                )}
+              </button>
+              {expandedBooster === selectedBooster && (
+                <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/50 p-4">
+                  <h4 className="mb-3 text-base font-semibold text-gray-900">
+                    {selectedBoosterData.detailsTitle || `${selectedBoosterData.name} – Details`}
+                  </h4>
+                  <ul className="space-y-2">
+                    {selectedBoosterData.bullets?.map((bullet, index) => (
+                      <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500" />
+                        <span>{bullet}</span>
+                      </li>
+                    ))}
+                  </ul>
+                  {selectedBoosterData.fineprint && (
+                    <p className="mt-3 text-xs text-gray-500">{selectedBoosterData.fineprint}</p>
+                  )}
+                </div>
+              )}
+            </div>
+          </>
         )}
       </div>
 

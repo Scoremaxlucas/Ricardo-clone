@@ -31,9 +31,9 @@ export function StepPrice({
     (parseFloat(formData.buyNowPrice) > parseFloat(formData.price || '0'))
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-4 md:space-y-8">
       <div className="text-center">
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">Preis festlegen</h2>
+        <h2 className="mb-1 md:mb-2 text-xl md:text-2xl font-bold text-gray-900">Preis festlegen</h2>
         <p className="text-gray-600">
           Wählen Sie zwischen Festpreis oder Auktion
         </p>
