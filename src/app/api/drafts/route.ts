@@ -61,13 +61,13 @@ export async function POST(request: NextRequest) {
         const imagesToUpload = images.filter(
           (img: string) => !img.startsWith('blob:') && !img.includes('blob.vercel-storage.com') && !img.startsWith('http')
         )
-        
+
         if (imagesToUpload.length > 0) {
           const basePath = `drafts/${session.user.id}/${Date.now()}`
           const uploadedUrls = await uploadImagesToBlob(imagesToUpload, basePath)
           imageUrls = [...uploadedUrls]
         }
-        
+
         // Keep existing blob URLs and HTTP URLs
         const existingUrls = images.filter(
           (img: string) => img.startsWith('blob:') || img.includes('blob.vercel-storage.com') || img.startsWith('http')

@@ -136,7 +136,7 @@ export function WizardFooter({
     const diff = now.getTime() - date.getTime()
     const seconds = Math.floor(diff / 1000)
     const minutes = Math.floor(seconds / 60)
-    
+
     if (seconds < 10) return 'Gerade gespeichert'
     if (seconds < 60) return `Vor ${seconds}s gespeichert`
     if (minutes < 60) return `Vor ${minutes}min gespeichert`

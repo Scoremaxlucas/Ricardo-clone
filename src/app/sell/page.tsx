@@ -414,7 +414,7 @@ function SellPageContent() {
         if (response.ok) {
           const data = await response.json()
           const drafts = data.drafts || []
-          
+
           if (drafts.length > 0) {
             // Use most recent draft
             const latestDraft = drafts[0]

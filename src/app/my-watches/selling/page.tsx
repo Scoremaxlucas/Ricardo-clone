@@ -6,7 +6,7 @@ import { Footer } from '@/components/layout/Footer'
 import { MySellingClient } from './MySellingClient'
 import { getMySellingArticles, MySellingItem } from '@/lib/my-selling'
 import Link from 'next/link'
-import { Package, Plus } from 'lucide-react'
+import { Package, Plus, FileText } from 'lucide-react'
 
 // Revalidate every 30 seconds for fresh data
 export const revalidate = 30
@@ -65,13 +65,22 @@ export default async function MySellingPage() {
                 <p className="mt-1 text-gray-600">Verwalten Sie Ihre Verkaufsanzeigen</p>
               </div>
             </div>
-            <Link
-              href="/sell"
-              className="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Artikel anbieten
-            </Link>
+            <div className="flex items-center gap-3">
+              <Link
+                href="/my-watches/selling/drafts"
+                className="inline-flex items-center rounded-md border-2 border-primary-300 bg-white px-4 py-2 text-primary-600 transition-colors hover:bg-primary-50"
+              >
+                <FileText className="mr-2 h-4 w-4" />
+                Entwürfe
+              </Link>
+              <Link
+                href="/sell"
+                className="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700"
+              >
+                <Plus className="mr-2 h-4 w-4" />
+                Artikel anbieten
+              </Link>
+            </div>
           </div>
 
           {/* Server-Side Rendered Articles - Instant Display */}
