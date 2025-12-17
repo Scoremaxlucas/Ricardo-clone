@@ -141,6 +141,7 @@ model User {
   ordersAsBuyer                 Order[]              @relation("OrderBuyer")
   ordersAsSeller                Order[]              @relation("OrderSeller")
   pricingHistory                PricingHistory[]
+  drafts                        Draft[]
 
   @@map("users")
 }
@@ -155,71 +156,71 @@ model VerificationToken {
 }
 
 model Watch {
-  id                  String              @id @default(cuid())
-  articleNumber       Int?                @unique
-  title               String
-  description         String?
-  brand               String
-  model               String
-  year                Int?
-  condition           String
-  material            String?
-  movement            String?
-  caseSize            Float?
-  caseDiameter        Float?
-  price               Float
-  buyNowPrice         Float?
-  isAuction           Boolean             @default(false)
-  auctionStart        DateTime?
-  auctionEnd          DateTime?
-  auctionDuration     Int?
-  autoRenew           Boolean             @default(false)
-  lastBidAt           DateTime?
-  images              String
-  video               String?
-  createdAt           DateTime            @default(now())
-  updatedAt           DateTime            @updatedAt
-  lastRevision        DateTime?
-  accuracy            String?
-  fullset             Boolean             @default(false)
-  allLinks            Boolean             @default(false)
-  box                 Boolean             @default(false)
-  papers              Boolean             @default(false)
-  warranty            String?
-  warrantyMonths      Int?
-  warrantyYears       Int?
-  warrantyNote        String?
-  warrantyDescription String?
-  referenceNumber     String?
-  shippingMethod      String?
-  boosters            String?
-  paymentProtectionEnabled Boolean @default(false)
-  sellerId            String
-  moderationStatus    String?             @default("pending") // 'pending', 'approved', 'rejected', 'reviewing'
-  moderatedBy         String?
-  moderatedAt         DateTime?
-  moderationNotes     String?
-  bids                Bid[]
-  favorites           Favorite[]
-  invoiceItems        InvoiceItem[]
-  messages            Message[]
-  priceOffers         PriceOffer[]
-  purchases           Purchase[]
-  sales               Sale[]
-  orders              Order[]
-  categories          WatchCategory[]
-  seller              User                @relation(fields: [sellerId], references: [id])
-  reports             Report[]
-  adminNotes          AdminNote[]
-  moderationHistory   ModerationHistory[]
-  views               WatchView[]
-  maxBids             MaxBid[]
-  productStats        ProductStats?
-  collectionItems     CollectionItem[]
-  auctionViewers      AuctionViewer[]
-  stories             Story[]
-  browsingHistory     BrowsingHistory[]
-  aiSearchResults     AISearchResult[]
+  id                       String              @id @default(cuid())
+  articleNumber            Int?                @unique
+  title                    String
+  description              String?
+  brand                    String
+  model                    String
+  year                     Int?
+  condition                String
+  material                 String?
+  movement                 String?
+  caseSize                 Float?
+  caseDiameter             Float?
+  price                    Float
+  buyNowPrice              Float?
+  isAuction                Boolean             @default(false)
+  auctionStart             DateTime?
+  auctionEnd               DateTime?
+  auctionDuration          Int?
+  autoRenew                Boolean             @default(false)
+  lastBidAt                DateTime?
+  images                   String
+  video                    String?
+  createdAt                DateTime            @default(now())
+  updatedAt                DateTime            @updatedAt
+  lastRevision             DateTime?
+  accuracy                 String?
+  fullset                  Boolean             @default(false)
+  allLinks                 Boolean             @default(false)
+  box                      Boolean             @default(false)
+  papers                   Boolean             @default(false)
+  warranty                 String?
+  warrantyMonths           Int?
+  warrantyYears            Int?
+  warrantyNote             String?
+  warrantyDescription      String?
+  referenceNumber          String?
+  shippingMethod           String?
+  boosters                 String?
+  paymentProtectionEnabled Boolean             @default(false)
+  sellerId                 String
+  moderationStatus         String?             @default("pending") // 'pending', 'approved', 'rejected', 'reviewing'
+  moderatedBy              String?
+  moderatedAt              DateTime?
+  moderationNotes          String?
+  bids                     Bid[]
+  favorites                Favorite[]
+  invoiceItems             InvoiceItem[]
+  messages                 Message[]
+  priceOffers              PriceOffer[]
+  purchases                Purchase[]
+  sales                    Sale[]
+  orders                   Order[]
+  categories               WatchCategory[]
+  seller                   User                @relation(fields: [sellerId], references: [id])
+  reports                  Report[]
+  adminNotes               AdminNote[]
+  moderationHistory        ModerationHistory[]
+  views                    WatchView[]
+  maxBids                  MaxBid[]
+  productStats             ProductStats?
+  collectionItems          CollectionItem[]
+  auctionViewers           AuctionViewer[]
+  stories                  Story[]
+  browsingHistory          BrowsingHistory[]
+  aiSearchResults          AISearchResult[]
 
   @@index([moderationStatus])
   @@index([createdAt])
@@ -967,62 +968,62 @@ model AISearchResult {
 }
 
 model Order {
-  id                    String          @id @default(cuid())
-  orderNumber           String          @unique
-  watchId               String
-  buyerId               String
-  sellerId              String
+  id          String @id @default(cuid())
+  orderNumber String @unique
+  watchId     String
+  buyerId     String
+  sellerId    String
 
   // Pricing
-  itemPrice             Float
-  shippingCost          Float
-  platformFee           Float
-  protectionFee         Float?
-  totalAmount           Float
+  itemPrice     Float
+  shippingCost  Float
+  platformFee   Float
+  protectionFee Float?
+  totalAmount   Float
 
   // Stripe IDs
-  stripePaymentIntentId String?
-  stripeChargeId        String?
+  stripePaymentIntentId   String?
+  stripeChargeId          String?
   stripeCheckoutSessionId String?
-  stripeTransferId      String?
-  stripeRefundId        String?
+  stripeTransferId        String?
+  stripeRefundId          String?
 
   // Status
-  orderStatus           String          @default("awaiting_payment")
-  paymentStatus         String          @default("created")
+  orderStatus   String @default("awaiting_payment")
+  paymentStatus String @default("created")
 
   // Timeline
-  paidAt                DateTime?
-  shippedAt             DateTime?
-  deliveredAt           DateTime?
-  releasedAt            DateTime?
-  refundedAt            DateTime?
-  autoReleaseAt         DateTime?
+  paidAt        DateTime?
+  shippedAt     DateTime?
+  deliveredAt   DateTime?
+  releasedAt    DateTime?
+  refundedAt    DateTime?
+  autoReleaseAt DateTime?
 
   // Buyer confirmation
-  buyerConfirmedReceipt Boolean         @default(false)
+  buyerConfirmedReceipt Boolean   @default(false)
   buyerConfirmedAt      DateTime?
 
   // Dispute
-  disputeStatus         String          @default("none")
-  disputeOpenedAt       DateTime?
-  disputeReason         String?
-  disputeDescription    String?
-  disputeResolvedAt     DateTime?
-  disputeResolvedBy     String?
+  disputeStatus      String    @default("none")
+  disputeOpenedAt    DateTime?
+  disputeReason      String?
+  disputeDescription String?
+  disputeResolvedAt  DateTime?
+  disputeResolvedBy  String?
 
   // Tracking
-  trackingNumber        String?
-  trackingProvider      String?
+  trackingNumber   String?
+  trackingProvider String?
 
   // Relations
-  watch                 Watch           @relation(fields: [watchId], references: [id])
-  buyer                 User            @relation("OrderBuyer", fields: [buyerId], references: [id])
-  seller                User            @relation("OrderSeller", fields: [sellerId], references: [id])
-  paymentRecord         PaymentRecord?
+  watch         Watch          @relation(fields: [watchId], references: [id])
+  buyer         User           @relation("OrderBuyer", fields: [buyerId], references: [id])
+  seller        User           @relation("OrderSeller", fields: [sellerId], references: [id])
+  paymentRecord PaymentRecord?
 
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([buyerId])
   @@index([sellerId])
@@ -1035,34 +1036,34 @@ model Order {
 }
 
 model PaymentRecord {
-  id                    String          @id @default(cuid())
-  orderId               String          @unique
-  order                 Order           @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  id      String @id @default(cuid())
+  orderId String @unique
+  order   Order  @relation(fields: [orderId], references: [id], onDelete: Cascade)
 
   // Stripe IDs
-  stripePaymentIntentId String          @unique
-  stripeChargeId        String?
+  stripePaymentIntentId   String  @unique
+  stripeChargeId          String?
   stripeCheckoutSessionId String?
-  stripeTransferId      String?
-  stripeRefundId        String?
+  stripeTransferId        String?
+  stripeRefundId          String?
 
   // Amounts
-  amount                Float
-  currency              String          @default("chf")
-  platformFee           Float
-  sellerAmount          Float
+  amount       Float
+  currency     String @default("chf")
+  platformFee  Float
+  sellerAmount Float
 
   // Status tracking
-  paymentStatus         String
-  transferStatus        String?
-  refundStatus          String?
+  paymentStatus  String
+  transferStatus String?
+  refundStatus   String?
 
   // Webhook tracking
-  lastWebhookEvent      String?
-  lastWebhookAt        DateTime?
+  lastWebhookEvent String?
+  lastWebhookAt    DateTime?
 
-  createdAt             DateTime        @default(now())
-  updatedAt             DateTime        @updatedAt
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([stripePaymentIntentId])
   @@index([stripeChargeId])
@@ -1073,7 +1074,7 @@ model PaymentRecord {
 model PricingHistory {
   id                 String   @id @default(cuid())
   platformMarginRate Float?
-  protectionFeeRate  Float?   // Zahlungsschutz-Gebühr (z.B. 0.02 = 2%)
+  protectionFeeRate  Float? // Zahlungsschutz-Gebühr (z.B. 0.02 = 2%)
   vatRate            Float?
   minimumCommission  Float?
   maximumCommission  Float?
@@ -1086,4 +1087,36 @@ model PricingHistory {
   @@index([changedAt])
   @@index([changedBy])
   @@map("pricing_history")
+}
+
+// Listing Drafts - Server-seitige Entwürfe für Verkaufsanzeigen
+model Draft {
+  id     String @id @default(cuid())
+  userId String
+
+  // Form data (JSON)
+  formData String // JSON string mit allen Formularfeldern
+
+  // Images (gespeichert in Blob Storage)
+  images String? // JSON Array von Blob URLs
+
+  // Metadata
+  selectedCategory         String?
+  selectedSubcategory      String?
+  selectedBooster          String?
+  paymentProtectionEnabled Boolean @default(false)
+  currentStep              Int     @default(0)
+  titleImageIndex          Int     @default(0)
+
+  // Timestamps
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([userId, updatedAt])
+  @@index([createdAt])
+  @@map("drafts")
 }

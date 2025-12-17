@@ -109,6 +109,8 @@ interface WizardFooterProps {
   canProceed: boolean
   isSubmitting?: boolean
   disabledReason?: string
+  isSavingDraft?: boolean
+  lastSavedAt?: Date | null
 }
 
 export function WizardFooter({
@@ -122,8 +124,24 @@ export function WizardFooter({
   canProceed,
   isSubmitting,
   disabledReason,
+  isSavingDraft,
+  lastSavedAt,
 }: WizardFooterProps) {
   const [showTooltip, setShowTooltip] = useState(false)
+
+  // Format last saved time
+  const formatLastSaved = (date: Date | null): string => {
+    if (!date) return ''
+    const now = new Date()
+    const diff = now.getTime() - date.getTime()
+    const seconds = Math.floor(diff / 1000)
+    const minutes = Math.floor(seconds / 60)
+    
+    if (seconds < 10) return 'Gerade gespeichert'
+    if (seconds < 60) return `Vor ${seconds}s gespeichert`
+    if (minutes < 60) return `Vor ${minutes}min gespeichert`
+    return `Vor ${Math.floor(minutes / 60)}h gespeichert`
+  }
 
   return (
     <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-4 py-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8">
@@ -139,13 +157,28 @@ export function WizardFooter({
             </button>
           ) : null}
           {onSaveDraft ? (
-            <button
-              type="button"
-              onClick={onSaveDraft}
-              className="whitespace-nowrap rounded-lg border-2 border-primary-300 px-3 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 sm:px-4 sm:py-2.5 sm:text-base"
-            >
-              Entwurf speichern
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={onSaveDraft}
+                disabled={isSavingDraft}
+                className="whitespace-nowrap rounded-lg border-2 border-primary-300 px-3 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed sm:px-4 sm:py-2.5 sm:text-base"
+              >
+                {isSavingDraft ? (
+                  <span className="flex items-center gap-2">
+                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
+                    Speichert...
+                  </span>
+                ) : (
+                  'Entwurf speichern'
+                )}
+              </button>
+              {lastSavedAt && !isSavingDraft && (
+                <span className="hidden text-xs text-gray-500 sm:block">
+                  {formatLastSaved(lastSavedAt)}
+                </span>
+              )}
+            </div>
           ) : null}
         </div>
 

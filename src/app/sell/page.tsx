@@ -282,56 +282,204 @@ function SellPageContent() {
     goToStep(currentStep - 1, true)
   }
 
-  // Draft save/restore
-  const saveDraftData = useCallback(() => {
-    saveDraft({
-      formData: {
-        ...formData,
-        images: [], // Exclude images
-      },
-      imageMetadata: {
-        count: formData.images.length,
-        titleImageIndex,
-      },
-      selectedCategory,
-      selectedSubcategory,
-      selectedBooster,
-      paymentProtectionEnabled,
-      currentStep,
-    })
-  }, [formData, titleImageIndex, selectedCategory, selectedSubcategory, selectedBooster, paymentProtectionEnabled, currentStep])
+  // Draft save state for visual feedback
+  const [isSavingDraft, setIsSavingDraft] = useState(false)
+  const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
 
-  // Restore draft on mount
-  useEffect(() => {
-    const draft = loadDraft()
-    if (draft) {
-      setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
-      setSelectedCategory(draft.selectedCategory || '')
-      setSelectedSubcategory(draft.selectedSubcategory || '')
-      setSelectedBooster(draft.selectedBooster || 'none')
-      setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
-      setCurrentStep(draft.currentStep || 0)
-      setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
-      setShowDraftRestored(true)
+  // Draft save/restore - Server-seitig
+  const saveDraftData = useCallback(async () => {
+    if (!session?.user) return // Only save if logged in
 
-      // Note: Images will be lost - user must re-upload
-      if (draft.imageMetadata?.count > 0) {
-        toast('Bilder müssen erneut hochgeladen werden', {
-          icon: 'ℹ️',
-          position: 'top-right',
-          duration: 5000,
+    setIsSavingDraft(true)
+    try {
+      const response = await fetch('/api/drafts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          formData: {
+            ...formData,
+            // Include images for server-side storage
+          },
+          images: formData.images, // Include images for Blob Storage upload
+          selectedCategory,
+          selectedSubcategory,
+          selectedBooster,
+          paymentProtectionEnabled,
+          currentStep,
+          titleImageIndex,
+        }),
+      })
+
+      if (response.ok) {
+        setLastSavedAt(new Date())
+        // Also save to localStorage as backup
+        saveDraft({
+          formData: {
+            ...formData,
+            images: [], // Exclude images from localStorage
+          },
+          imageMetadata: {
+            count: formData.images.length,
+            titleImageIndex,
+          },
+          selectedCategory,
+          selectedSubcategory,
+          selectedBooster,
+          paymentProtectionEnabled,
+          currentStep,
         })
       }
+    } catch (error) {
+      console.error('[Draft] Error saving to server:', error)
+      // Fallback to localStorage if server save fails
+      saveDraft({
+        formData: {
+          ...formData,
+          images: [],
+        },
+        imageMetadata: {
+          count: formData.images.length,
+          titleImageIndex,
+        },
+        selectedCategory,
+        selectedSubcategory,
+        selectedBooster,
+        paymentProtectionEnabled,
+        currentStep,
+      })
+    } finally {
+      setIsSavingDraft(false)
     }
-  }, [])
+  }, [formData, titleImageIndex, selectedCategory, selectedSubcategory, selectedBooster, paymentProtectionEnabled, currentStep, session?.user])
 
-  // Auto-save on changes (debounced)
+  // Restore draft on mount - Try server first, fallback to localStorage
+  useEffect(() => {
+    const restoreDraft = async () => {
+      // Check if we should restore a specific draft (from drafts page)
+      const restoreDraftId = localStorage.getItem('helvenda_restore_draft_id')
+      if (restoreDraftId) {
+        localStorage.removeItem('helvenda_restore_draft_id')
+        try {
+          const response = await fetch(`/api/drafts/${restoreDraftId}`)
+          if (response.ok) {
+            const data = await response.json()
+            const draft = data.draft
+            setFormData(prev => ({
+              ...prev,
+              ...draft.formData,
+              images: draft.images || [],
+            }))
+            setSelectedCategory(draft.selectedCategory || '')
+            setSelectedSubcategory(draft.selectedSubcategory || '')
+            setSelectedBooster(draft.selectedBooster || 'none')
+            setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
+            setCurrentStep(draft.currentStep || 0)
+            setTitleImageIndex(draft.titleImageIndex || 0)
+            setShowDraftRestored(true)
+            setLastSavedAt(new Date(draft.updatedAt))
+            router.push(`/sell?step=${draft.currentStep}`)
+            return
+          }
+        } catch (error) {
+          console.error('[Draft] Error loading specific draft:', error)
+        }
+      }
+
+      if (!session?.user) {
+        // Fallback to localStorage if not logged in
+        const draft = loadDraft()
+        if (draft) {
+          setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
+          setSelectedCategory(draft.selectedCategory || '')
+          setSelectedSubcategory(draft.selectedSubcategory || '')
+          setSelectedBooster(draft.selectedBooster || 'none')
+          setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
+          setCurrentStep(draft.currentStep || 0)
+          setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
+          setShowDraftRestored(true)
+          if (draft.imageMetadata?.count > 0) {
+            toast('Bilder müssen erneut hochgeladen werden', {
+              icon: 'ℹ️',
+              position: 'top-right',
+              duration: 5000,
+            })
+          }
+        }
+        return
+      }
+
+      try {
+        // Try server first
+        const response = await fetch('/api/drafts')
+        if (response.ok) {
+          const data = await response.json()
+          const drafts = data.drafts || []
+          
+          if (drafts.length > 0) {
+            // Use most recent draft
+            const latestDraft = drafts[0]
+            setFormData(prev => ({
+              ...prev,
+              ...latestDraft.formData,
+              images: latestDraft.images || [],
+            }))
+            setSelectedCategory(latestDraft.selectedCategory || '')
+            setSelectedSubcategory(latestDraft.selectedSubcategory || '')
+            setSelectedBooster(latestDraft.selectedBooster || 'none')
+            setPaymentProtectionEnabled(latestDraft.paymentProtectionEnabled || false)
+            setCurrentStep(latestDraft.currentStep || 0)
+            setTitleImageIndex(latestDraft.titleImageIndex || 0)
+            setShowDraftRestored(true)
+            setLastSavedAt(new Date(latestDraft.updatedAt))
+          } else {
+            // Fallback to localStorage
+            const draft = loadDraft()
+            if (draft) {
+              setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
+              setSelectedCategory(draft.selectedCategory || '')
+              setSelectedSubcategory(draft.selectedSubcategory || '')
+              setSelectedBooster(draft.selectedBooster || 'none')
+              setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
+              setCurrentStep(draft.currentStep || 0)
+              setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
+              setShowDraftRestored(true)
+              if (draft.imageMetadata?.count > 0) {
+                toast('Bilder müssen erneut hochgeladen werden', {
+                  icon: 'ℹ️',
+                  position: 'top-right',
+                  duration: 5000,
+                })
+              }
+            }
+          }
+        }
+      } catch (error) {
+        console.error('[Draft] Error loading from server:', error)
+        // Fallback to localStorage
+        const draft = loadDraft()
+        if (draft) {
+          setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
+          setSelectedCategory(draft.selectedCategory || '')
+          setSelectedSubcategory(draft.selectedSubcategory || '')
+          setSelectedBooster(draft.selectedBooster || 'none')
+          setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
+          setCurrentStep(draft.currentStep || 0)
+          setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
+          setShowDraftRestored(true)
+        }
+      }
+    }
+
+    restoreDraft()
+  }, [session?.user])
+
+  // Auto-save on changes (debounced) - Server-seitig
   useEffect(() => {
     const timer = setTimeout(() => {
       if (selectedCategory || formData.title || formData.description) {
         saveDraftData()
       }
-    }, 500)
+    }, 2000) // Increased debounce for server requests
     return () => clearTimeout(timer)
   }, [formData, selectedCategory, selectedSubcategory, currentStep, saveDraftData])
 
@@ -599,7 +747,20 @@ function SellPageContent() {
       })
 
       if (response.ok) {
-        clearDraft() // Clear draft on success
+        // Clear draft on success (both server and localStorage)
+        clearDraft()
+        try {
+          const draftsResponse = await fetch('/api/drafts')
+          if (draftsResponse.ok) {
+            const draftsData = await draftsResponse.json()
+            const drafts = draftsData.drafts || []
+            if (drafts.length > 0) {
+              await fetch(`/api/drafts?id=${drafts[0].id}`, { method: 'DELETE' })
+            }
+          }
+        } catch (error) {
+          console.error('[Draft] Error clearing server draft:', error)
+        }
         toast.success('Artikel erfolgreich veröffentlicht!', {
           position: 'top-right',
           duration: 3000,
@@ -841,6 +1002,8 @@ function SellPageContent() {
             onNext={nextStep}
             onPublish={() => handleSubmit({ preventDefault: () => {} } as React.FormEvent)}
             onSaveDraft={saveDraftData}
+            isSavingDraft={isSavingDraft}
+            lastSavedAt={lastSavedAt}
             isLastStep={currentStep === WIZARD_STEPS.length - 1}
             canProceed={validateStep(currentStep)}
             isSubmitting={isLoading}
