@@ -73,6 +73,7 @@ function SellPageContent() {
   // Wizard state
   const [currentStep, setCurrentStep] = useState(0)
   const [showDraftRestored, setShowDraftRestored] = useState(false)
+  const [touchedSteps, setTouchedSteps] = useState<Set<number>>(new Set()) // Track which steps user has interacted with
 
   // Form state
   const [titleImageIndex, setTitleImageIndex] = useState<number>(0)
@@ -100,7 +101,7 @@ function SellPageContent() {
     auctionStart: '',
     auctionDuration: '',
     autoRenew: false,
-    shippingMethods: [] as string[],
+    shippingMethods: ['pickup'] as string[], // Default: preselect Abholung
     lastRevision: '',
     accuracy: '',
     fullset: false,

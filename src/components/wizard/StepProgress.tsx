@@ -167,7 +167,7 @@ export function WizardFooter({
               >
                 Entwurf speichern
               </button>
-              
+
               {/* Autosave status */}
               {isSavingDraft ? (
                 <span className="flex items-center gap-1.5 text-xs text-gray-500">
