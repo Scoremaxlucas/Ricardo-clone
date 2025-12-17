@@ -21,23 +21,30 @@ export interface ListingData {
 
 /**
  * Format CHF amount with Swiss locale
- * Output: CHF 2.– or CHF 2.00 (consistent across platform)
+ * Output: CHF 2.– or CHF 2.80 (always 2 decimals if not .00)
+ * Critical: No CHF 1.8 - always CHF 1.80
  */
 export function formatCHF(amount: number): string {
   if (isNaN(amount) || amount < 0) return 'CHF 0.–'
 
-  // Use Swiss locale with thousands separator
-  const formatted = amount.toLocaleString('de-CH', {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 2,
-  })
+  // Check if amount is whole number (.00)
+  const isWholeNumber = amount % 1 === 0
 
-  // Variant A: CHF 2.– (recommended for marketplace)
-  // If amount is whole number, show CHF 2.–, otherwise CHF 2.50
-  if (amount % 1 === 0) {
+  if (isWholeNumber) {
+    // Whole number: CHF 2.–
+    const formatted = amount.toLocaleString('de-CH', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    })
     return `CHF ${formatted}.–`
+  } else {
+    // Has decimals: Always show 2 decimals (CHF 1.80, not CHF 1.8)
+    const formatted = amount.toLocaleString('de-CH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
+    return `CHF ${formatted}`
   }
-  return `CHF ${formatted}`
 }
 
 /**
@@ -73,13 +80,18 @@ export function formatTimeLeft(auctionEndsAt: string | Date | null | undefined):
 }
 
 /**
- * Get listing badges (max 2)
+ * Get listing badges (strict rules)
+ * Rules:
+ * - Default: max 1 badge
+ * - Exception: max 2 badges only if one is "Zahlungsschutz" (trust) and the other is a status badge
+ * - Never show "Neu eingestellt" and "Neu" together
  * Priority: Payment Protection > New Listing > Condition
  */
 export function getListingBadges(listing: ListingData): string[] {
   const badges: string[] = []
+  let hasNewListing = false
 
-  // Priority 1: Payment Protection
+  // Priority 1: Payment Protection (trust badge)
   if (listing.paymentProtectionEnabled) {
     badges.push('Zahlungsschutz')
   }
@@ -93,6 +105,7 @@ export function getListingBadges(listing: ListingData): string[] {
 
       if (hoursDiff < 48) {
         badges.push('Neu eingestellt')
+        hasNewListing = true
       }
     } catch {
       // Ignore date parsing errors
@@ -100,7 +113,8 @@ export function getListingBadges(listing: ListingData): string[] {
   }
 
   // Priority 3: Condition (only if we have space and condition is meaningful)
-  if (badges.length < 2 && listing.condition) {
+  // CRITICAL: Never show condition "Neu" if "Neu eingestellt" is already shown
+  if (listing.condition) {
     const conditionMap: Record<string, string> = {
       'new': 'Neu',
       'like-new': 'Wie neu',
@@ -110,12 +124,32 @@ export function getListingBadges(listing: ListingData): string[] {
     }
 
     const conditionLabel = conditionMap[listing.condition.toLowerCase()] || listing.condition
-    if (conditionLabel && conditionLabel !== listing.condition) {
+    
+    // Only add condition if:
+    // 1. We have space (max 1 badge normally, max 2 if Zahlungsschutz exists)
+    // 2. Condition label is meaningful (mapped, not raw slug)
+    // 3. NOT "Neu" if "Neu eingestellt" is already shown
+    const canAddCondition = 
+      (badges.length === 0 || (badges.length === 1 && badges[0] === 'Zahlungsschutz')) &&
+      conditionLabel !== listing.condition &&
+      !(hasNewListing && conditionLabel === 'Neu')
+
+    if (canAddCondition) {
       badges.push(conditionLabel)
     }
   }
 
-  return badges.slice(0, 2)
+  // Enforce max 2 badges (only if Zahlungsschutz + status badge)
+  if (badges.length > 2) {
+    return badges.slice(0, 2)
+  }
+
+  // If we have 2 badges and first is not Zahlungsschutz, only keep first
+  if (badges.length === 2 && badges[0] !== 'Zahlungsschutz') {
+    return [badges[0]]
+  }
+
+  return badges
 }
 
 /**

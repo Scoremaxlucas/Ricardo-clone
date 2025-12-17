@@ -5,6 +5,7 @@ import Link from 'next/link'
 import { TrendingUp, Flame, ArrowRight } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getCategoryConfig } from '@/data/categories'
+import { getCategoryDisplayName } from '@/lib/product-utils'
 
 interface TrendingCategory {
   category: string
@@ -125,7 +126,7 @@ export function TrendingNow() {
                 </div>
 
                 <h3 className="mb-0.5 line-clamp-1 text-sm font-semibold text-gray-900 transition-colors group-hover:text-primary-600">
-                  {item.name}
+                  {getCategoryDisplayName(item.category)}
                 </h3>
                 <p className="text-xs text-gray-600">{item.count} Artikel</p>
               </div>

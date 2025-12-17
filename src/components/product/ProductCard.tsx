@@ -200,11 +200,8 @@ export function ProductCard({
             />
           )
         ) : (
-          /* Placeholder when no image */
-          <div className="flex h-full w-full flex-col items-center justify-center text-gray-400">
-            <Sparkles className="h-8 w-8 opacity-50" />
-            <span className="mt-2 text-sm">Kein Bild</span>
-          </div>
+          /* Empty neutral background - no placeholder text */
+          <div className="h-full w-full bg-gray-50" />
         )}
 
         {/* Top-left Badge Stack (max 2) */}
