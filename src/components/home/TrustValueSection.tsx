@@ -1,9 +1,9 @@
 /**
  * TrustValueSection - Optimized Trust & Value Props Row
- * 
+ *
  * Subtle but clear trust widgets that are perceived as real benefits.
  * Consistent with Helvenda aesthetics, clean spacing between categories and "Neu eingestellt".
- * 
+ *
  * Design principles:
  * - Centered container (max-w-6xl)
  * - Grid layout (2 cols mobile, 4 cols desktop)
@@ -12,7 +12,7 @@
  * - No "Lokal/In Ihrer Nähe" (Map/PLZ removed)
  */
 
-import { Shield, ShieldCheck, MessageCircle, Zap, ChevronRight } from 'lucide-react'
+import { ChevronRight, MessageCircle, Shield, ShieldCheck, Zap } from 'lucide-react'
 import Link from 'next/link'
 
 const TRUST_ITEMS = [
@@ -65,9 +65,7 @@ export function TrustValueSection() {
                   <h3 className="text-[13px] font-semibold leading-5 text-gray-900">
                     {item.title}
                   </h3>
-                  <p className="text-[12px] leading-4 text-gray-600">
-                    {item.subtitle}
-                  </p>
+                  <p className="text-[12px] leading-4 text-gray-600">{item.subtitle}</p>
                 </div>
 
                 {/* Chevron (Desktop only) */}
