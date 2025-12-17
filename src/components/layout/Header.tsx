@@ -593,16 +593,16 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             >
               <button
                 type="button"
-                className="flex items-center justify-center rounded-md p-1.5 font-medium text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-primary-600 sm:p-2"
+                className="flex items-center justify-center rounded-md p-1.5 text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-primary-600"
                 title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
               >
-                <span className="text-lg sm:text-xl">{languages.find(l => l.code === language)?.flag}</span>
-                <ChevronDown className={`ml-0.5 h-3 w-3 transition-transform sm:h-4 sm:w-4 ${isLanguageMenuOpen ? 'rotate-180' : ''}`} />
+                <span className="text-base">{languages.find(l => l.code === language)?.flag}</span>
+                <ChevronDown className={`ml-0.5 h-3 w-3 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`} />
               </button>
 
               {isLanguageMenuOpen && (
                 <div
-                  className="absolute right-0 top-full z-[9999] w-48 rounded-lg border border-gray-100 bg-white py-1 shadow-lg"
+                  className="absolute right-0 top-full z-[9999] w-36 rounded-md border border-gray-200 bg-white py-0.5 shadow-lg"
                   style={{ marginTop: '4px', pointerEvents: 'auto' }}
                 >
                   {languages.map(lang => (
@@ -612,15 +612,15 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                         setLanguage(lang.code)
                         setIsLanguageMenuOpen(false)
                       }}
-                      className={`flex w-full items-center gap-3 px-4 py-2 text-left text-sm transition-colors hover:bg-gray-50 ${
+                      className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-gray-50 ${
                         language === lang.code
                           ? 'bg-primary-50 font-medium text-primary-600'
                           : 'text-gray-700 hover:text-primary-600'
                       }`}
                     >
-                      <span className="text-xl">{lang.flag}</span>
-                      <span>{lang.name}</span>
-                      {language === lang.code && <span className="ml-auto text-primary-600">✓</span>}
+                      <span className="text-base">{lang.flag}</span>
+                      <span className="flex-1">{lang.name}</span>
+                      {language === lang.code && <span className="text-primary-600 text-xs">✓</span>}
                     </button>
                   ))}
                 </div>
