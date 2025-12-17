@@ -2,7 +2,7 @@
 
 import { useLanguage } from '@/contexts/LanguageContext'
 import { AlertCircle, Image as ImageIcon, Loader2, Search, Sparkles, Upload, X } from 'lucide-react'
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 
 interface AIDetectionProps {
   onCategoryDetected: (
@@ -18,6 +18,7 @@ interface AIDetectionProps {
     title?: string
     description?: string
   }) => void
+  imageUrl?: string | null // Optional: Use a stored image URL instead of uploading
 }
 
 // Intelligentes Mapping von MobileNet Labels zu Helvenda Kategorien
@@ -3923,9 +3924,10 @@ const categoryMapping: Record<
 export function AIDetection({
   onCategoryDetected,
   onSuggestionGenerated,
+  imageUrl: propImageUrl,
 }: AIDetectionProps) {
   const { t } = useLanguage()
-  const [uploadedImage, setUploadedImage] = useState<string | null>(null)
+  const [uploadedImage, setUploadedImage] = useState<string | null>(propImageUrl || null)
   const [textQuery, setTextQuery] = useState('')
   const [isAnalyzing, setIsAnalyzing] = useState(false)
   const [dragActive, setDragActive] = useState(false)
@@ -3943,6 +3945,20 @@ export function AIDetection({
   } | null>(null)
   const [error, setError] = useState<string | null>(null)
   const modelRef = useRef<any>(null)
+
+  // Automatically analyze image if propImageUrl is provided
+  useEffect(() => {
+    if (propImageUrl && propImageUrl !== uploadedImage) {
+      setUploadedImage(propImageUrl)
+      // Only auto-analyze if we're in image mode and haven't analyzed yet
+      if (activeMode === 'image' && !isAnalyzing && !aiSuggestion) {
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        analyzeImage(propImageUrl)
+      }
+    }
+    // Note: analyzeImage is intentionally not in dependencies as it's recreated on each render
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [propImageUrl, activeMode, uploadedImage, isAnalyzing, aiSuggestion])
 
   // VERBESSERTES MODELL LADEN - Nutzt mehrere Modelle für bessere Genauigkeit
   const loadModel = async () => {

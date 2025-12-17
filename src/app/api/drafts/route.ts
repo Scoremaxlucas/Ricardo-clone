@@ -17,12 +17,28 @@ export async function GET(request: NextRequest) {
       where: {
         userId: session.user.id,
       },
+      include: {
+        draftImages: {
+          orderBy: {
+            sortOrder: 'asc',
+          },
+        },
+      },
       orderBy: {
         updatedAt: 'desc',
       },
     })
 
-    return NextResponse.json({ drafts })
+    // Parse formData and include image URLs from draftImages
+    const parsedDrafts = drafts.map(draft => ({
+      ...draft,
+      formData: JSON.parse(draft.formData),
+      images: draft.images ? JSON.parse(draft.images) : [],
+      // Include image URLs from draftImages for easier access
+      draftImages: draft.draftImages,
+    }))
+
+    return NextResponse.json({ drafts: parsedDrafts })
   } catch (error) {
     console.error('[Drafts API] Error fetching drafts:', error)
     return NextResponse.json(
@@ -123,6 +139,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json({
+      draftId: draft.id,
       draft: {
         ...draft,
         formData: JSON.parse(draft.formData),

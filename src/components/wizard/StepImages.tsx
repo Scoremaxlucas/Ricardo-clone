@@ -1,34 +1,59 @@
 'use client'
 
-import { Sparkles, Upload, X, Star, Bot } from 'lucide-react'
+import { Sparkles, Upload, X, Star, Bot, Loader2 } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { compressImage } from '@/lib/image-compression'
+import { useState } from 'react'
+
+interface DraftImage {
+  id: string
+  url: string
+  storageKey: string
+  sortOrder: number
+}
 
 interface StepImagesProps {
   formData: {
     images: string[]
   }
   titleImageIndex: number
-  aiDetectedImageIndex?: number  // Track which image came from AI detection
+  draftId: string | null
+  aiDetectedImageIndex?: number
   onImagesChange: (images: string[]) => void
-  onTitleImageChange: (index: number) => void
+  onTitleImageChange: (index: number) => Promise<void>
 }
 
 export function StepImages({
   formData,
   titleImageIndex,
-  aiDetectedImageIndex = 0,  // Default to first image (AI-detected image is typically first)
+  draftId,
+  aiDetectedImageIndex = 0,
   onImagesChange,
   onTitleImageChange,
 }: StepImagesProps) {
+  const [uploadingIndexes, setUploadingIndexes] = useState<Set<number>>(new Set())
+
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
-    const newImages: string[] = []
-    let processedCount = 0
+    if (files.length === 0) return
+
+    // Ensure we have a draft ID
+    if (!draftId) {
+      toast.error('Bitte warten Sie, bis der Entwurf geladen ist', {
+        position: 'top-right',
+        duration: 3000,
+      })
+      return
+    }
 
     const currentImageCount = formData.images.length
+    const newImageUrls: string[] = []
+    let processedCount = 0
 
-    for (const file of files) {
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      const tempIndex = currentImageCount + i
+
       // Check file type
       if (!file.type.startsWith('image/')) {
         toast.error(`${file.name} ist kein Bild. Bitte wählen Sie nur Bilddateien aus.`, {
@@ -48,6 +73,8 @@ export function StepImages({
       }
 
       try {
+        setUploadingIndexes(prev => new Set(prev).add(tempIndex))
+
         // Compress image
         const compressedImage = await compressImage(file, {
           maxWidth: 1600,
@@ -56,30 +83,57 @@ export function StepImages({
           maxSizeMB: 1.5,
         })
 
-        // Check final size
-        const base64SizeMB = (compressedImage.length * 0.75) / (1024 * 1024)
-        if (base64SizeMB > 1.5) {
-          console.warn(`Bild ${file.name} ist nach Komprimierung noch ${base64SizeMB.toFixed(2)}MB groß`)
-          toast(`Bild ${file.name} ist sehr groß (${base64SizeMB.toFixed(2)}MB). Bitte verwenden Sie ein kleineres Bild.`, {
-            position: 'top-right',
-            duration: 5000,
-          })
-        }
-
-        newImages.push(compressedImage)
-        processedCount++
-
         // Show progress for multiple images
         if (files.length > 1) {
-          toast.loading(`Bild ${processedCount} von ${files.length} wird verarbeitet...`, {
+          toast.loading(`Bild ${processedCount + 1} von ${files.length} wird hochgeladen...`, {
             id: 'image-upload-progress',
             position: 'top-right',
           })
         }
+
+        // Convert base64 to File for upload
+        const base64Response = await fetch(compressedImage)
+        const blob = await base64Response.blob()
+        const uploadFile = new File([blob], file.name, { type: file.type })
+
+        // Upload immediately to server
+        const uploadFormData = new FormData()
+        uploadFormData.append('file', uploadFile)
+
+        const uploadResponse = await fetch(`/api/drafts/${draftId}/images`, {
+          method: 'POST',
+          body: uploadFormData,
+        })
+
+        if (!uploadResponse.ok) {
+          const errorData = await uploadResponse.json().catch(() => ({}))
+          throw new Error(errorData.message || 'Upload fehlgeschlagen')
+        }
+
+        const { image } = await uploadResponse.json()
+        newImageUrls.push(image.url)
+
+        processedCount++
+
+        // Update UI immediately
+        const updatedImages = [...formData.images, image.url]
+        onImagesChange(updatedImages)
+
+        // Set first image as title image if none set
+        if (currentImageCount === 0 && processedCount === 1) {
+          await onTitleImageChange(0)
+        }
       } catch (error) {
-        console.error('Error processing image:', error)
-        toast.error(`Fehler beim Verarbeiten von ${file.name}`, {
+        console.error('Error uploading image:', error)
+        toast.error(`Fehler beim Hochladen von ${file.name}: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`, {
           position: 'top-right',
+          duration: 5000,
+        })
+      } finally {
+        setUploadingIndexes(prev => {
+          const next = new Set(prev)
+          next.delete(tempIndex)
+          return next
         })
       }
     }
@@ -88,43 +142,69 @@ export function StepImages({
       toast.dismiss('image-upload-progress')
     }
 
-    if (newImages.length > 0) {
-      const updatedImages = [...formData.images, ...newImages]
-      onImagesChange(updatedImages)
-
-      // Set first image as title image if none set
-      if (currentImageCount === 0) {
-        onTitleImageChange(0)
-        toast.success(`${newImages.length} Bild${newImages.length > 1 ? 'er' : ''} hinzugefügt. Das erste Bild ist das Titelbild.`, {
-          position: 'top-right',
-          duration: 3000,
-        })
-      } else {
-        toast.success(`${newImages.length} Bild${newImages.length > 1 ? 'er' : ''} hinzugefügt.`, {
-          position: 'top-right',
-          duration: 3000,
-        })
-      }
+    if (newImageUrls.length > 0) {
+      toast.success(`${newImageUrls.length} Bild${newImageUrls.length > 1 ? 'er' : ''} erfolgreich hochgeladen.`, {
+        position: 'top-right',
+        duration: 3000,
+      })
     }
 
     // Reset input
     e.target.value = ''
   }
 
-  const removeImage = (index: number) => {
-    const newImages = formData.images.filter((_, i) => i !== index)
-    onImagesChange(newImages)
+  const removeImage = async (index: number) => {
+    if (!draftId) {
+      toast.error('Bitte warten Sie, bis der Entwurf geladen ist', {
+        position: 'top-right',
+        duration: 3000,
+      })
+      return
+    }
 
-    // Adjust title image index if needed
-    if (index === titleImageIndex) {
-      onTitleImageChange(0)
-    } else if (index < titleImageIndex) {
-      onTitleImageChange(titleImageIndex - 1)
+    const imageUrl = formData.images[index]
+
+    try {
+      // Find image ID from draft
+      const response = await fetch(`/api/drafts/${draftId}`)
+      if (response.ok) {
+        const data = await response.json()
+        const draft = data.draft
+        const image = draft.draftImages?.find((img: DraftImage) => img.url === imageUrl)
+
+        if (image) {
+          // Delete from server
+          const deleteResponse = await fetch(`/api/drafts/${draftId}/images/${image.id}`, {
+            method: 'DELETE',
+          })
+
+          if (!deleteResponse.ok) {
+            throw new Error('Löschen fehlgeschlagen')
+          }
+        }
+      }
+
+      // Update UI
+      const newImages = formData.images.filter((_, i) => i !== index)
+      onImagesChange(newImages)
+
+      // Adjust title image index if needed
+      if (index === titleImageIndex) {
+        await onTitleImageChange(0)
+      } else if (index < titleImageIndex) {
+        await onTitleImageChange(titleImageIndex - 1)
+      }
+    } catch (error) {
+      console.error('Error removing image:', error)
+      toast.error('Fehler beim Löschen des Bildes', {
+        position: 'top-right',
+        duration: 3000,
+      })
     }
   }
 
-  const setAsTitleImage = (index: number) => {
-    onTitleImageChange(index)
+  const setAsTitleImage = async (index: number) => {
+    await onTitleImageChange(index)
     toast.success('Titelbild geändert', {
       position: 'top-right',
       duration: 2000,
@@ -177,10 +257,11 @@ export function StepImages({
             accept="image/*"
             multiple
             onChange={handleImageUpload}
+            disabled={!draftId || uploadingIndexes.size > 0}
             className="hidden"
           />
-          <span className="rounded-full bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700">
-            Dateien auswählen
+          <span className="rounded-full bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed">
+            {uploadingIndexes.size > 0 ? 'Wird hochgeladen...' : 'Dateien auswählen'}
           </span>
         </label>
       </div>
@@ -201,51 +282,64 @@ export function StepImages({
           </div>
 
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
-            {formData.images.map((image, index) => (
-              <div
-                key={index}
-                className={`group relative aspect-square overflow-hidden rounded-xl border-2 ${
-                  index === titleImageIndex
-                    ? 'border-primary-500 ring-2 ring-primary-200'
-                    : 'border-gray-200 hover:border-gray-300'
-                }`}
-              >
-                <img
-                  src={image}
-                  alt={`Bild ${index + 1}`}
-                  className="h-full w-full cursor-pointer object-cover transition-transform group-hover:scale-105"
-                  onClick={() => setAsTitleImage(index)}
-                />
+            {formData.images.map((image, index) => {
+              const isUploading = uploadingIndexes.has(index)
 
-                {/* Title image badge */}
-                {index === titleImageIndex && (
-                  <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-primary-600 px-2 py-1 text-xs font-medium text-white">
-                    <Star className="h-3 w-3" />
-                    Titelbild
-                  </div>
-                )}
-
-                {/* AI badge if first image (from AI detection) */}
-                {index === 0 && (
-                  <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-green-600/90 px-2 py-1 text-xs font-medium text-white">
-                    <Bot className="h-3 w-3" />
-                    Von KI
-                  </div>
-                )}
-
-                {/* Remove button */}
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation()
-                    removeImage(index)
-                  }}
-                  className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600"
+              return (
+                <div
+                  key={index}
+                  className={`group relative aspect-square overflow-hidden rounded-xl border-2 ${
+                    index === titleImageIndex
+                      ? 'border-primary-500 ring-2 ring-primary-200'
+                      : 'border-gray-200 hover:border-gray-300'
+                  }`}
                 >
-                  <X className="h-4 w-4" />
-                </button>
-              </div>
-            ))}
+                  {isUploading ? (
+                    <div className="flex h-full w-full items-center justify-center bg-gray-100">
+                      <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+                    </div>
+                  ) : (
+                    <>
+                      <img
+                        src={image}
+                        alt={`Bild ${index + 1}`}
+                        className="h-full w-full cursor-pointer object-cover transition-transform group-hover:scale-105"
+                        onClick={() => setAsTitleImage(index)}
+                      />
+
+                      {/* Title image badge */}
+                      {index === titleImageIndex && (
+                        <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-primary-600 px-2 py-1 text-xs font-medium text-white">
+                          <Star className="h-3 w-3" />
+                          Titelbild
+                        </div>
+                      )}
+
+                      {/* AI badge if first image (from AI detection) */}
+                      {index === 0 && (
+                        <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-green-600/90 px-2 py-1 text-xs font-medium text-white">
+                          <Bot className="h-3 w-3" />
+                          Von KI
+                        </div>
+                      )}
+
+                      {/* Remove button */}
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation()
+                          removeImage(index)
+                        }}
+                        disabled={!draftId}
+                        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 disabled:opacity-50"
+                      >
+                        <X className="h-4 w-4" />
+                      </button>
+                    </>
+                  )}
+                </div>
+              )
+            })}
           </div>
         </div>
       )}

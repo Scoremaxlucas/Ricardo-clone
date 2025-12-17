@@ -125,6 +125,7 @@ export function StepCategorySelection({
       {showAIDetection && !selectedCategory ? (
         <AIDetection
           onCategoryDetected={onCategoryDetected}
+          imageUrl={formData.images?.[0] || null}
         />
       ) : selectedCategory ? (
         <div className="space-y-4">

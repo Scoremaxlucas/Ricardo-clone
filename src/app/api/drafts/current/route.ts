@@ -3,21 +3,24 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
-// GET: Einzelnen Entwurf abrufen
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+/**
+ * GET /api/drafts/current
+ * Returns the current draft for the authenticated user
+ * Creates one if it doesn't exist
+ */
+export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    const { id } = await params
 
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    const draft = await prisma.draft.findUnique({
-      where: { id },
+    // Find or create draft
+    let draft = await prisma.draft.findFirst({
+      where: {
+        userId: session.user.id,
+      },
       include: {
         draftImages: {
           orderBy: {
@@ -25,32 +28,34 @@ export async function GET(
           },
         },
       },
+      orderBy: {
+        updatedAt: 'desc',
+      },
     })
 
     if (!draft) {
-      return NextResponse.json({ message: 'Entwurf nicht gefunden' }, { status: 404 })
+      // Create new draft
+      draft = await prisma.draft.create({
+        data: {
+          userId: session.user.id,
+          formData: JSON.stringify({}),
+        },
+        include: {
+          draftImages: true,
+        },
+      })
     }
-
-    if (draft.userId !== session.user.id) {
-      return NextResponse.json(
-        { message: 'Sie sind nicht berechtigt, diesen Entwurf anzusehen' },
-        { status: 403 }
-      )
-    }
-
-    // Legacy support: include images array from draftImages
-    const imageUrls = draft.draftImages.map(img => img.url)
 
     return NextResponse.json({
       draft: {
         ...draft,
         formData: JSON.parse(draft.formData),
-        images: imageUrls, // Legacy support
+        images: draft.draftImages.map(img => img.url), // Legacy support
         draftImages: draft.draftImages,
       },
     })
   } catch (error) {
-    console.error('[Drafts API] Error fetching draft:', error)
+    console.error('[Drafts API] Error fetching/creating current draft:', error)
     return NextResponse.json(
       { message: 'Fehler beim Laden des Entwurfs' },
       { status: 500 }

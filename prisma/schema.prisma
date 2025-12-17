@@ -1098,7 +1098,10 @@ model Draft {
   formData String // JSON string mit allen Formularfeldern
 
   // Images (gespeichert in Blob Storage)
-  images String? // JSON Array von Blob URLs
+  images String? // JSON Array von Blob URLs (deprecated, use draftImages relation)
+
+  // Cover/Title image reference
+  coverImageId String? // FK to DraftImage.id
 
   // Metadata
   selectedCategory         String?
@@ -1113,10 +1116,29 @@ model Draft {
   updatedAt DateTime @updatedAt
 
   // Relations
-  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+  user        User         @relation(fields: [userId], references: [id], onDelete: Cascade)
+  draftImages DraftImage[]
 
   @@index([userId])
   @@index([userId, updatedAt])
   @@index([createdAt])
+  @@index([coverImageId])
   @@map("drafts")
+}
+
+// Draft Images - Persistierte Bilder für Entwürfe
+model DraftImage {
+  id        String   @id @default(cuid())
+  draftId   String
+  storageKey String  @unique // Path/key in storage bucket
+  url       String   // Public URL from blob storage
+  sortOrder Int      @default(0) // Optional: für Reihenfolge
+  createdAt DateTime @default(now())
+
+  // Relations
+  draft Draft @relation(fields: [draftId], references: [id], onDelete: Cascade)
+
+  @@index([draftId])
+  @@index([draftId, sortOrder])
+  @@map("draft_images")
 }

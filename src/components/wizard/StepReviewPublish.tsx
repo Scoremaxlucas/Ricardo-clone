@@ -317,7 +317,7 @@ export function StepReviewPublish({
       </div>
 
       {/* Booster selection - PROMINENT, direkt nach Summary */}
-      <div className="rounded-2xl border-2 border-primary-200 bg-gradient-to-br from-primary-50 to-white p-6 shadow-sm">
+      <div className="rounded-2xl border-2 border-primary-200 bg-white p-6 shadow-sm">
         <div className="mb-4 flex items-center gap-3">
           <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100">
             <Sparkles className="h-6 w-6 text-primary-600" />
@@ -335,7 +335,7 @@ export function StepReviewPublish({
             onClick={() => onBoosterChange('none')}
             className={`relative flex flex-col rounded-xl border-2 p-4 text-left transition-all ${
               selectedBooster === 'none'
-                ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
+                ? 'border-primary-500 bg-white ring-2 ring-primary-200'
                 : 'border-gray-200 hover:border-gray-300'
             }`}
           >
@@ -362,7 +362,7 @@ export function StepReviewPublish({
               onClick={() => onBoosterChange(booster.id)}
               className={`relative flex flex-col rounded-xl border-2 p-4 text-left transition-all ${
                 selectedBooster === booster.id
-                  ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
+                  ? 'border-primary-500 bg-white ring-2 ring-primary-200'
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >

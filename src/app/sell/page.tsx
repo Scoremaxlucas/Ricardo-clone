@@ -76,6 +76,7 @@ function SellPageContent() {
   const [currentStep, setCurrentStep] = useState(0)
   const [showDraftRestored, setShowDraftRestored] = useState(false)
   const [touchedSteps, setTouchedSteps] = useState<Set<number>>(new Set()) // Track which steps user has interacted with
+  const [currentDraftId, setCurrentDraftId] = useState<string | null>(null) // Current draft ID for image operations
 
   // Form state
   const [titleImageIndex, setTitleImageIndex] = useState<number>(0)
@@ -399,14 +400,22 @@ function SellPageContent() {
             setFormData(prev => ({
               ...prev,
               ...draft.formData,
-              images: draft.images || [],
+              // Use draftImages URLs if available, otherwise fallback to images array
+              images: draft.draftImages?.map((img: any) => img.url) || draft.images || [],
             }))
             setSelectedCategory(draft.selectedCategory || '')
             setSelectedSubcategory(draft.selectedSubcategory || '')
             setSelectedBooster(draft.selectedBooster || 'none')
             setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
             setCurrentStep(draft.currentStep || 0)
-            setTitleImageIndex(draft.titleImageIndex || 0)
+            // Set titleImageIndex based on coverImageId if available
+            if (draft.coverImageId && draft.draftImages) {
+              const coverIndex = draft.draftImages.findIndex((img: any) => img.id === draft.coverImageId)
+              setTitleImageIndex(coverIndex >= 0 ? coverIndex : draft.titleImageIndex || 0)
+            } else {
+              setTitleImageIndex(draft.titleImageIndex || 0)
+            }
+            setCurrentDraftId(draft.id) // Set draft ID for image operations
             setShowDraftRestored(true)
             setLastSavedAt(new Date(draft.updatedAt))
             router.push(`/sell?step=${draft.currentStep}`)
@@ -453,14 +462,22 @@ function SellPageContent() {
             setFormData(prev => ({
               ...prev,
               ...latestDraft.formData,
-              images: latestDraft.images || [],
+              // Use draftImages URLs if available, otherwise fallback to images array
+              images: latestDraft.draftImages?.map((img: any) => img.url) || latestDraft.images || [],
             }))
             setSelectedCategory(latestDraft.selectedCategory || '')
             setSelectedSubcategory(latestDraft.selectedSubcategory || '')
             setSelectedBooster(latestDraft.selectedBooster || 'none')
             setPaymentProtectionEnabled(latestDraft.paymentProtectionEnabled || false)
             setCurrentStep(latestDraft.currentStep || 0)
-            setTitleImageIndex(latestDraft.titleImageIndex || 0)
+            // Set titleImageIndex based on coverImageId if available
+            if (latestDraft.coverImageId && latestDraft.draftImages) {
+              const coverIndex = latestDraft.draftImages.findIndex((img: any) => img.id === latestDraft.coverImageId)
+              setTitleImageIndex(coverIndex >= 0 ? coverIndex : latestDraft.titleImageIndex || 0)
+            } else {
+              setTitleImageIndex(latestDraft.titleImageIndex || 0)
+            }
+            setCurrentDraftId(latestDraft.id) // Set draft ID for image operations
             setShowDraftRestored(true)
             setLastSavedAt(new Date(latestDraft.updatedAt))
           } else {
@@ -971,8 +988,33 @@ function SellPageContent() {
             <StepImages
               formData={formData}
               titleImageIndex={titleImageIndex}
+              draftId={currentDraftId}
               onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
-              onTitleImageChange={setTitleImageIndex}
+              onTitleImageChange={async (index) => {
+                setTitleImageIndex(index)
+                // Update cover image in DB if draftId exists
+                if (currentDraftId && formData.images[index]) {
+                  try {
+                    // Find image ID from URL
+                    const response = await fetch(`/api/drafts/${currentDraftId}`)
+                    if (response.ok) {
+                      const data = await response.json()
+                      const draft = data.draft
+                      const imageUrl = formData.images[index]
+                      const image = draft.draftImages?.find((img: any) => img.url === imageUrl)
+                      if (image) {
+                        await fetch(`/api/drafts/${currentDraftId}/cover`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ coverImageId: image.id }),
+                        })
+                      }
+                    }
+                  } catch (error) {
+                    console.error('[Draft] Error updating cover image:', error)
+                  }
+                }
+              }}
             />
           )}
 
