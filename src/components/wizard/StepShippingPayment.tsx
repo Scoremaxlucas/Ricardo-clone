@@ -62,7 +62,7 @@ export function StepShippingPayment({
           {SHIPPING_OPTIONS.map((option) => {
             const isSelected = formData.shippingMethods.includes(option.id)
             const Icon = option.icon
-            
+
             return (
               <label
                 key={option.id}
@@ -96,7 +96,7 @@ export function StepShippingPayment({
             )
           })}
         </div>
-        
+
         <p className="text-sm text-gray-500">
           Die Versandkosten werden dem Käufer zusätzlich zum Kaufbetrag berechnet.
           Es wird der höchste Betrag der ausgewählten Lieferarten berechnet.
@@ -115,7 +115,7 @@ export function StepShippingPayment({
           <Shield className="h-5 w-5 text-primary-600" />
           <h3 className="text-lg font-semibold text-gray-900">Helvenda Zahlungsschutz</h3>
         </div>
-        
+
         <div className={`rounded-xl border-2 p-6 transition-all ${
           paymentProtectionEnabled
             ? 'border-primary-500 bg-gradient-to-br from-primary-50 to-green-50'

@@ -146,12 +146,6 @@ export function StepDetails({
       {/* Category-specific fields */}
       {selectedCategory && (
         <div className="rounded-xl border border-gray-200 bg-gray-50 p-6">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900">
-            {selectedCategory === 'uhren-schmuck' ? 'Uhren-Details' : 
-             selectedCategory === 'auto-motorrad' ? 'Fahrzeug-Details' :
-             selectedCategory === 'sport-freizeit' ? 'Sport-Details' :
-             'Kategorie-Details'}
-          </h3>
           <CategoryFields
             category={selectedCategory}
             subcategory={selectedSubcategory}

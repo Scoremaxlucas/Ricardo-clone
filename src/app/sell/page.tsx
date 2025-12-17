@@ -58,7 +58,7 @@ function SellPageContent() {
   const { t } = useLanguage()
   const formRef = useRef<HTMLFormElement>(null)
   const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
-  
+
   // State
   const [isLoading, setIsLoading] = useState(false)
   const [isGeneratingTitle, setIsGeneratingTitle] = useState(false)
@@ -69,11 +69,11 @@ function SellPageContent() {
   const [verificationStatus, setVerificationStatus] = useState<string | null>(null)
   const [verificationInProgress, setVerificationInProgress] = useState(false)
   const [isCheckingVerification, setIsCheckingVerification] = useState(true)
-  
+
   // Wizard state
   const [currentStep, setCurrentStep] = useState(0)
   const [showDraftRestored, setShowDraftRestored] = useState(false)
-  
+
   // Form state
   const [titleImageIndex, setTitleImageIndex] = useState<number>(0)
   const [selectedBooster, setSelectedBooster] = useState<string>('none')
@@ -83,7 +83,7 @@ function SellPageContent() {
   const [detectedConfidence, setDetectedConfidence] = useState<number>(0)
   const [showAIDetection, setShowAIDetection] = useState<boolean>(true)
   const [paymentProtectionEnabled, setPaymentProtectionEnabled] = useState(false)
-  
+
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
@@ -202,14 +202,14 @@ function SellPageContent() {
   // Navigation
   const goToStep = useCallback((step: number, skipValidation: boolean = false) => {
     const clampedStep = Math.max(0, Math.min(WIZARD_STEPS.length - 1, step))
-    
+
     // Always allow backward navigation
     if (clampedStep < currentStep) {
       setCurrentStep(clampedStep)
       router.push(`/sell?step=${clampedStep}`, { scroll: false })
       return
     }
-    
+
     // Forward navigation: validate current step
     if (!skipValidation && clampedStep > currentStep) {
       if (!validateStep(currentStep)) {
@@ -220,7 +220,7 @@ function SellPageContent() {
         return
       }
     }
-    
+
     // Check max allowed step
     const maxAllowed = computeMaxAllowedStep()
     if (clampedStep > maxAllowed) {
@@ -228,7 +228,7 @@ function SellPageContent() {
       router.push(`/sell?step=${maxAllowed}`, { scroll: false })
       return
     }
-    
+
     setCurrentStep(clampedStep)
     router.push(`/sell?step=${clampedStep}`, { scroll: false })
   }, [currentStep, router, selectedCategory, formData])
@@ -279,7 +279,7 @@ function SellPageContent() {
       setCurrentStep(draft.currentStep || 0)
       setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
       setShowDraftRestored(true)
-      
+
       // Note: Images will be lost - user must re-upload
       if (draft.imageMetadata?.count > 0) {
         toast('Bilder müssen erneut hochgeladen werden', {
@@ -354,7 +354,7 @@ function SellPageContent() {
     confidence: number
   ) => {
     console.log('[sell/page] Kategorie erkannt:', { category, subcategory, productName, confidence })
-    
+
     setSelectedCategory(category)
     setSelectedSubcategory(subcategory || '')
     setDetectedProductName(productName || '')
@@ -405,7 +405,7 @@ function SellPageContent() {
   // Generate title with AI
   const handleGenerateTitle = async () => {
     if (formData.images.length === 0) return
-    
+
     try {
       setIsGeneratingTitle(true)
       const response = await fetch('/api/ai/generate-title', {
@@ -423,13 +423,13 @@ function SellPageContent() {
           // Typing effect
           const fullText = data.title
           let currentIndex = 0
-          
+
           if (typingIntervalRef.current) {
             clearInterval(typingIntervalRef.current)
           }
-          
+
           setFormData(prev => ({ ...prev, title: '' }))
-          
+
           typingIntervalRef.current = setInterval(() => {
             if (currentIndex < fullText.length) {
               setFormData(prev => ({
@@ -456,7 +456,7 @@ function SellPageContent() {
   // Generate description with AI
   const handleGenerateDescription = async () => {
     if (formData.images.length === 0) return
-    
+
     try {
       setIsGeneratingDescription(true)
       const response = await fetch('/api/ai/generate-description', {
@@ -512,8 +512,8 @@ function SellPageContent() {
       }
 
       // Clean images
-      let cleanImages = formData.images.filter(img => 
-        typeof img === 'string' && 
+      let cleanImages = formData.images.filter(img =>
+        typeof img === 'string' &&
         (img.startsWith('data:image/') || img.startsWith('http://') || img.startsWith('https://'))
       )
       cleanImages = Array.from(new Set(cleanImages))
@@ -656,7 +656,7 @@ function SellPageContent() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
+
       {/* Draft restored banner */}
       {showDraftRestored && (
         <div className="fixed right-4 top-20 z-50 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3 shadow-lg">

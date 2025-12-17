@@ -59,7 +59,7 @@ export function saveDraft(draft: Omit<ListingDraft, 'timestamp'>): boolean {
       ...draft,
       timestamp: Date.now(),
     }
-    
+
     const draftJson = JSON.stringify(draftWithTimestamp)
     localStorage.setItem(DRAFT_KEY, draftJson)
     return true

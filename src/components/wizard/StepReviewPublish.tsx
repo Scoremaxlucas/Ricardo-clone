@@ -1,13 +1,13 @@
 'use client'
 
 import { getCategoryConfig } from '@/data/categories'
-import { 
-  Edit2, 
-  Image as ImageIcon, 
-  FileText, 
-  Tag, 
-  Truck, 
-  Shield, 
+import {
+  Edit2,
+  Image as ImageIcon,
+  FileText,
+  Tag,
+  Truck,
+  Shield,
   Sparkles,
   CheckCircle,
   Clock
@@ -193,7 +193,7 @@ export function StepReviewPublish({
               <div>
                 <span className="font-medium text-gray-700">Preis</span>
                 <p className="text-sm text-gray-500">
-                  {formData.isAuction 
+                  {formData.isAuction
                     ? `Startpreis: CHF ${parseFloat(formData.price || '0').toLocaleString('de-CH')} • ${formData.auctionDuration} Tage`
                     : `Festpreis: CHF ${parseFloat(formData.price || '0').toLocaleString('de-CH')}`
                   }
@@ -307,11 +307,11 @@ export function StepReviewPublish({
                   : 'border-gray-200 hover:border-gray-300'
               }`}
             >
-              <div 
+              <div
                 className="mb-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
-                style={{ 
+                style={{
                   backgroundColor: booster.badgeColor + '20',
-                  color: booster.badgeColor 
+                  color: booster.badgeColor
                 }}
               >
                 {booster.badge}

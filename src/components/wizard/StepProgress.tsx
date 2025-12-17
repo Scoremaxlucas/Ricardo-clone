@@ -27,7 +27,7 @@ export function StepProgress({ steps, currentStep, completedSteps, onStepClick }
           {steps[currentStep]?.title}
         </span>
       </div>
-      
+
       {/* Mobile: Progress bar */}
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200 sm:hidden">
         <div
@@ -43,7 +43,7 @@ export function StepProgress({ steps, currentStep, completedSteps, onStepClick }
             const isCompleted = completedSteps.includes(index)
             const isCurrent = index === currentStep
             const isClickable = isCompleted || index <= currentStep
-            
+
             return (
               <div key={step.id} className="flex flex-1 items-center">
                 {/* Step circle */}
@@ -67,14 +67,14 @@ export function StepProgress({ steps, currentStep, completedSteps, onStepClick }
                     <span>{index + 1}</span>
                   )}
                 </button>
-                
+
                 {/* Step label */}
                 <div className="ml-3 hidden flex-1 lg:block">
                   <p className={`text-sm font-medium ${isCurrent ? 'text-primary-600' : isCompleted ? 'text-gray-700' : 'text-gray-400'}`}>
                     {step.title}
                   </p>
                 </div>
-                
+
                 {/* Connector line */}
                 {index < steps.length - 1 && (
                   <div className="mx-2 h-0.5 flex-1 bg-gray-200 lg:mx-4">
@@ -138,7 +138,7 @@ export function WizardFooter({
             </button>
           )}
         </div>
-        
+
         <div className="flex items-center gap-3">
           <span className="hidden text-sm text-gray-500 sm:block">
             {currentStep + 1} / {totalSteps}
