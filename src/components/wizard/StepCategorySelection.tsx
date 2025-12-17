@@ -1,7 +1,9 @@
 'use client'
 
 import { getCategoryConfig } from '@/data/categories'
-import { Sparkles, AlertTriangle, CheckCircle2, Info } from 'lucide-react'
+import { getCategoryDisplayName, getSubcategoryDisplayName } from '@/lib/product-utils'
+import { Sparkles, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle, Info } from 'lucide-react'
+import { useState } from 'react'
 import dynamic from 'next/dynamic'
 
 // Lazy load AIDetection to avoid bundling TensorFlow.js on every page
@@ -44,19 +46,45 @@ interface StepCategorySelectionProps {
 
 // Format confidence with Swiss locale (clamped 0-100)
 function formatConfidence(confidence: number): string {
+  if (!confidence || isNaN(confidence)) return 'N/A'
   const clamped = Math.min(100, Math.max(0, Math.round(confidence * 100)))
   return clamped.toLocaleString('de-CH') + ' %'
 }
 
-// Get confidence level label
-function getConfidenceLevel(confidence: number): { label: string; color: string; bgColor: string } {
-  const percent = Math.min(100, Math.max(0, confidence * 100))
-  if (percent >= 85) {
-    return { label: 'Hohe Konfidenz', color: 'text-green-700', bgColor: 'bg-green-100' }
+// Get confidence-based styling and copy
+function getConfidenceStyle(confidence: number): {
+  bgColor: string
+  borderColor: string
+  iconColor: string
+  title: string
+  note: string
+} {
+  const percent = confidence && !isNaN(confidence) ? Math.min(100, Math.max(0, confidence * 100)) : 0
+
+  if (percent >= 90) {
+    return {
+      bgColor: 'bg-green-50',
+      borderColor: 'border-green-200',
+      iconColor: 'text-green-600',
+      title: 'Kategorie automatisch erkannt',
+      note: 'Wir haben die Kategorie vorausgewählt. Du kannst sie jederzeit ändern.',
+    }
   } else if (percent >= 60) {
-    return { label: 'Mittlere Konfidenz', color: 'text-yellow-700', bgColor: 'bg-yellow-100' }
+    return {
+      bgColor: 'bg-blue-50',
+      borderColor: 'border-blue-200',
+      iconColor: 'text-blue-600',
+      title: 'KI-Vorschlag',
+      note: 'Bitte kurz prüfen, ob die Kategorie stimmt.',
+    }
   } else {
-    return { label: 'Niedrige Konfidenz', color: 'text-red-700', bgColor: 'bg-red-100' }
+    return {
+      bgColor: 'bg-amber-50',
+      borderColor: 'border-amber-200',
+      iconColor: 'text-amber-600',
+      title: 'Unsicherer Vorschlag',
+      note: 'Bitte wähle die Kategorie manuell aus.',
+    }
   }
 }
 
@@ -75,7 +103,15 @@ export function StepCategorySelection({
   setFormData,
   setTitleImageIndex,
 }: StepCategorySelectionProps) {
-  const confidenceLevel = getConfidenceLevel(detectedConfidence)
+  const [showAIDetails, setShowAIDetails] = useState(false)
+  const confidenceStyle = getConfidenceStyle(detectedConfidence)
+  const hasManualOverride = selectedCategory && (!detectedConfidence || detectedConfidence === 0)
+  const aiImage = formData.images?.[0] || null
+
+  // Check if suggested subcategory is valid for selected category
+  const isSubcategoryValid = selectedCategory && selectedSubcategory
+    ? true // Simplified - could add validation logic here
+    : true
 
   return (
     <div className="space-y-6">
@@ -109,7 +145,7 @@ export function StepCategorySelection({
                         <IconComponent className="h-5 w-5 text-white" />
                       </div>
                       <span className="text-lg font-bold text-primary-700">
-                        {config.name}
+                        {getCategoryDisplayName(selectedCategory)}
                       </span>
                     </div>
                   )
@@ -128,62 +164,123 @@ export function StepCategorySelection({
               <div className="mt-3 flex items-center gap-2">
                 <span className="text-sm text-gray-600">Unterkategorie:</span>
                 <span className="rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-700">
-                  {selectedSubcategory}
+                  {getSubcategoryDisplayName(selectedSubcategory)}
                 </span>
               </div>
             )}
           </div>
 
-          {/* AI Detection info - Enhanced with trust indicators */}
-          {detectedConfidence > 0 && (
-            <div className="rounded-xl border border-amber-200 bg-amber-50 p-6">
-              <div className="flex items-start gap-3">
-                <Sparkles className="mt-0.5 h-6 w-6 flex-shrink-0 text-amber-600" />
-                <div className="flex-1">
-                  <div className="mb-3 flex items-center gap-2">
-                    <p className="text-lg font-semibold text-gray-900">
-                      Vorschlag der KI
-                    </p>
-                    <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${confidenceLevel.bgColor} ${confidenceLevel.color}`}>
-                      {confidenceLevel.label}
-                    </span>
-                  </div>
-
-                  {/* Warning banner */}
-                  <div className="mb-4 flex items-start gap-2 rounded-lg bg-white/60 p-3 text-sm text-amber-800">
-                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0" />
-                    <span>
-                      Die KI-Erkennung ist ein <strong>Vorschlag</strong>. Bitte überprüfen Sie, ob die Kategorie korrekt ist.
-                    </span>
-                  </div>
-
-                  <div className="space-y-2 text-sm text-gray-700">
-                    {detectedProductName && (
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        <span>Erkannt: <span className="font-medium">{detectedProductName}</span></span>
-                      </div>
-                    )}
-                    {selectedSubcategory && (
-                      <div className="flex items-center gap-2">
-                        <CheckCircle2 className="h-4 w-4 text-green-600" />
-                        <span>Unterkategorie: <span className="font-medium">{selectedSubcategory}</span></span>
-                      </div>
-                    )}
-                    <div className="flex items-center gap-2">
-                      <CheckCircle2 className="h-4 w-4 text-green-600" />
-                      <span>Konfidenz: <span className={`font-medium ${confidenceLevel.color}`}>{formatConfidence(detectedConfidence)}</span></span>
+          {/* AI Detection info - Compact with accordion */}
+          {detectedConfidence > 0 && !hasManualOverride && (
+            <div className={`rounded-xl border ${confidenceStyle.borderColor} ${confidenceStyle.bgColor} p-4`}>
+              {/* Summary line */}
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-3 flex-1 min-w-0">
+                  {/* Thumbnail */}
+                  {aiImage && (
+                    <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
+                      <img
+                        src={aiImage}
+                        alt="Analysiertes Bild"
+                        className="h-full w-full object-cover"
+                      />
                     </div>
+                  )}
+                  
+                  {/* Summary text */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2">
+                      <Sparkles className={`h-4 w-4 flex-shrink-0 ${confidenceStyle.iconColor}`} />
+                      <p className="text-sm font-semibold text-gray-900 truncate">
+                        {confidenceStyle.title}
+                      </p>
+                    </div>
+                    <p className="mt-0.5 text-xs text-gray-600 truncate">
+                      {getCategoryDisplayName(selectedCategory)}
+                      {selectedSubcategory && ` → ${getSubcategoryDisplayName(selectedSubcategory)}`}
+                      {' · Konfidenz: '}
+                      <span className="font-medium">{formatConfidence(detectedConfidence)}</span>
+                    </p>
+                  </div>
+                </div>
+
+                {/* Accordion toggle */}
+                <button
+                  type="button"
+                  onClick={() => setShowAIDetails(!showAIDetails)}
+                  className="ml-2 flex-shrink-0 rounded p-1 text-gray-400 transition-colors hover:bg-white/50 hover:text-gray-600"
+                  aria-label={showAIDetails ? 'Details ausblenden' : 'Details anzeigen'}
+                >
+                  {showAIDetails ? (
+                    <ChevronUp className="h-4 w-4" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4" />
+                  )}
+                </button>
+              </div>
+
+              {/* Accordion details */}
+              {showAIDetails && (
+                <div className="mt-4 space-y-3 border-t border-gray-200 pt-4">
+                  {/* Detected item name */}
+                  {detectedProductName && (
+                    <div className="flex items-start gap-2 text-sm text-gray-700">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+                      <span>
+                        Erkannt: <span className="font-medium">{detectedProductName}</span>
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Subcategory suggestion */}
+                  {selectedSubcategory && (
+                    <div className="flex items-start gap-2 text-sm text-gray-700">
+                      <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
+                      <span>
+                        Unterkategorie: <span className="font-medium">{getSubcategoryDisplayName(selectedSubcategory)}</span>
+                      </span>
+                    </div>
+                  )}
+
+                  {/* Confidence */}
+                  <div className="flex items-start gap-2 text-sm text-gray-700">
+                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+                    <span>
+                      Konfidenz: <span className="font-medium">{formatConfidence(detectedConfidence)}</span>
+                    </span>
                   </div>
 
-                  {/* AI image transferred note */}
+                  {/* Subcategory validity warning */}
+                  {selectedCategory && selectedSubcategory && !isSubcategoryValid && (
+                    <div className="flex items-start gap-2 rounded-lg bg-amber-100 p-2 text-sm text-amber-800">
+                      <AlertTriangle className="mt-0.5 h-4 w-4 flex-shrink-0" />
+                      <span>Vorschlag passt nicht zur gewählten Kategorie</span>
+                    </div>
+                  )}
+
+                  {/* Note */}
+                  <div className="mt-3 rounded-lg bg-white/60 p-2 text-xs text-gray-600">
+                    {confidenceStyle.note}
+                  </div>
+
+                  {/* Image transferred note */}
                   {formData.images.length > 0 && (
-                    <div className="mt-4 flex items-center gap-2 text-sm text-green-700">
-                      <CheckCircle2 className="h-4 w-4" />
+                    <div className="flex items-center gap-2 text-xs text-green-700">
+                      <CheckCircle2 className="h-3 w-3" />
                       <span>Das hochgeladene Bild wurde automatisch als Listing-Bild übernommen.</span>
                     </div>
                   )}
                 </div>
+              )}
+            </div>
+          )}
+
+          {/* Manual selection indicator */}
+          {hasManualOverride && (
+            <div className="rounded-xl border border-gray-200 bg-gray-50 p-4">
+              <div className="flex items-center gap-2 text-sm text-gray-600">
+                <CheckCircle2 className="h-4 w-4 text-gray-500" />
+                <span>Manuell ausgewählt</span>
               </div>
             </div>
           )}

@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, ChevronRight, AlertCircle } from 'lucide-react'
+import { Check, ChevronRight, AlertCircle, CheckCircle } from 'lucide-react'
 import { useState } from 'react'
 
 export interface WizardStepInfo {
@@ -158,26 +158,28 @@ export function WizardFooter({
           ) : null}
           {onSaveDraft ? (
             <div className="flex items-center gap-2">
+              {/* Manual save button */}
               <button
                 type="button"
                 onClick={onSaveDraft}
                 disabled={isSavingDraft}
                 className="whitespace-nowrap rounded-lg border-2 border-primary-300 px-3 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed sm:px-4 sm:py-2.5 sm:text-base"
               >
-                {isSavingDraft ? (
-                  <span className="flex items-center gap-2">
-                    <span className="h-3 w-3 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
-                    Speichert...
-                  </span>
-                ) : (
-                  'Entwurf speichern'
-                )}
+                Entwurf speichern
               </button>
-              {lastSavedAt && !isSavingDraft && (
-                <span className="hidden text-xs text-gray-500 sm:block">
-                  {formatLastSaved(lastSavedAt)}
+              
+              {/* Autosave status */}
+              {isSavingDraft ? (
+                <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                  <span className="hidden sm:inline">Wird gespeichert…</span>
                 </span>
-              )}
+              ) : lastSavedAt ? (
+                <span className="hidden items-center gap-1.5 text-xs text-gray-500 sm:flex">
+                  <CheckCircle className="h-3 w-3 text-green-500" />
+                  <span>{formatLastSaved(lastSavedAt)}</span>
+                </span>
+              ) : null}
             </div>
           ) : null}
         </div>

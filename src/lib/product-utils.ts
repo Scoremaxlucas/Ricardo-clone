@@ -176,24 +176,48 @@ export function getDeliveryLabel(listing: ListingData): string {
 /**
  * Get category display name from slug
  * Maps slug to user-friendly name
+ * Uses categoryConfig from @/data/categories for consistency
  */
 export function getCategoryDisplayName(slug: string): string {
-  const categoryMap: Record<string, string> = {
-    'sport-freizeit': 'Sport & Freizeit',
-    'auto-motorrad': 'Auto & Motorrad',
-    'computer-netzwerk': 'Computer & Netzwerk',
-    'uhren-schmuck': 'Uhren & Schmuck',
-    'kleidung-accessoires': 'Kleidung & Accessoires',
-    'haushalt-wohnen': 'Haushalt & Wohnen',
-    'elektronik': 'Elektronik',
-    'musik-instrumente': 'Musik & Instrumente',
-    'buecher-filme': 'Bücher & Filme',
-    'spielzeug-hobby': 'Spielzeug & Hobby',
-    'tierbedarf': 'Tierbedarf',
-    'garten': 'Garten',
+  // Import dynamically to avoid circular dependencies
+  try {
+    const { getCategoryConfig } = require('@/data/categories')
+    const config = getCategoryConfig(slug)
+    return config.name || slug
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
+  } catch {
+    // Fallback if import fails
+    const categoryMap: Record<string, string> = {
+      'sport-freizeit': 'Sport & Freizeit',
+      'auto-motorrad': 'Auto & Motorrad',
+      'computer-netzwerk': 'Computer & Netzwerk',
+      'uhren-schmuck': 'Uhren & Schmuck',
+      'kleidung-accessoires': 'Kleidung & Accessoires',
+      'haushalt-wohnen': 'Haushalt & Wohnen',
+      'elektronik': 'Elektronik',
+      'musik-instrumente': 'Musik & Instrumente',
+      'buecher-filme': 'Bücher & Filme',
+      'spielzeug-hobby': 'Spielzeug & Hobby',
+      'tierbedarf': 'Tierbedarf',
+      'garten': 'Garten',
+    }
+    return categoryMap[slug] || slug
+      .split('-')
+      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+      .join(' ')
   }
+}
 
-  return categoryMap[slug] || slug
+/**
+ * Get subcategory display name from slug
+ * Returns formatted label or slug if no mapping exists
+ */
+export function getSubcategoryDisplayName(subcategory: string): string {
+  if (!subcategory) return ''
+  // Capitalize first letter and replace dashes with spaces
+  return subcategory
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
