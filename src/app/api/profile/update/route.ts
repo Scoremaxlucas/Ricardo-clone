@@ -11,8 +11,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    const { name, nickname, phone, street, streetNumber, postalCode, city, country } =
-      await request.json()
+    const {
+      name,
+      nickname,
+      phone,
+      street,
+      streetNumber,
+      postalCode,
+      city,
+      country,
+      addresszusatz,
+      kanton,
+    } = await request.json()
 
     if (!name || !name.trim()) {
       return NextResponse.json({ message: 'Name ist erforderlich' }, { status: 400 })
@@ -25,8 +35,15 @@ export async function POST(request: NextRequest) {
     if (!streetNumber || !streetNumber.trim()) {
       return NextResponse.json({ message: 'Hausnummer ist erforderlich' }, { status: 400 })
     }
+    // Validate postal code format (4 digits for Switzerland)
     if (!postalCode || !postalCode.trim()) {
       return NextResponse.json({ message: 'Postleitzahl ist erforderlich' }, { status: 400 })
+    }
+    if (!/^[0-9]{4}$/.test(postalCode.trim())) {
+      return NextResponse.json(
+        { message: 'Postleitzahl muss 4 Ziffern haben (z.B. 8000)' },
+        { status: 400 }
+      )
     }
     if (!city || !city.trim()) {
       return NextResponse.json({ message: 'Ort ist erforderlich' }, { status: 400 })
@@ -47,10 +64,13 @@ export async function POST(request: NextRequest) {
         lastName: name.trim().split(' ').slice(1).join(' ') || null,
         // Adressdaten
         street: street.trim(),
-        streetNumber: streetNumber.trim(),
-        postalCode: postalCode.trim(),
+        streetNumber: streetNumber.trim(), // Already String in schema, supports alphanumeric
+        postalCode: postalCode.trim(), // Already String in schema, preserves leading zeros
         city: city.trim(),
         country: country.trim(),
+        // Optional fields
+        addresszusatz: addresszusatz?.trim() || null,
+        kanton: kanton?.trim() || null,
       },
       select: {
         id: true,
@@ -66,6 +86,8 @@ export async function POST(request: NextRequest) {
         postalCode: true,
         city: true,
         country: true,
+        addresszusatz: true,
+        kanton: true,
       },
     })
 

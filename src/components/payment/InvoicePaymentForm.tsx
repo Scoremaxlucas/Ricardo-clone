@@ -184,13 +184,17 @@ export function InvoicePaymentForm({
   useEffect(() => {
     // Prüfe Stripe Key
     if (!stripeKey || stripeKey.trim() === '') {
-      setError('Kreditkartenzahlung ist derzeit nicht verfügbar. Bitte verwenden Sie Banküberweisung.')
+      setError(
+        'Kreditkartenzahlung ist derzeit nicht verfügbar. Bitte verwenden Sie Banküberweisung.'
+      )
       setLoading(false)
       return
     }
 
     if (!stripePromise) {
-      setError('Kreditkartenzahlung ist derzeit nicht verfügbar. Bitte verwenden Sie Banküberweisung.')
+      setError(
+        'Kreditkartenzahlung ist derzeit nicht verfügbar. Bitte verwenden Sie Banküberweisung.'
+      )
       setLoading(false)
       return
     }
@@ -218,15 +222,18 @@ export function InvoicePaymentForm({
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}))
           console.error('Payment Intent Error:', errorData)
-          
+
           // Benutzerfreundliche Fehlermeldung
           let errorMessage = 'Kreditkartenzahlung ist derzeit nicht verfügbar.'
-          if (errorData.error === 'STRIPE_SECRET_KEY_MISSING' || errorData.error === 'STRIPE_AUTH_ERROR') {
+          if (
+            errorData.error === 'STRIPE_SECRET_KEY_MISSING' ||
+            errorData.error === 'STRIPE_AUTH_ERROR'
+          ) {
             errorMessage = 'Kreditkartenzahlung ist noch nicht eingerichtet.'
           } else if (errorData.message) {
             errorMessage = errorData.message
           }
-          
+
           setError(errorMessage)
           setLoading(false)
           return
@@ -253,7 +260,7 @@ export function InvoicePaymentForm({
         if (cancelled) return
 
         console.error('Payment Intent Fetch Error:', err)
-        
+
         if (err.name === 'AbortError') {
           setError('Zeitüberschreitung beim Laden. Bitte verwenden Sie Banküberweisung.')
         } else {

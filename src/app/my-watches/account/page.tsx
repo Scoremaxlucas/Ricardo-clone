@@ -1,41 +1,110 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
-import { ArrowLeft, User, Mail, Phone, MapPin } from 'lucide-react'
+import { ArrowLeft, User, Mail, Phone, MapPin, Info, Loader2, AlertCircle } from 'lucide-react'
 import { toast } from 'react-hot-toast'
+import { useForm } from 'react-hook-form'
+import { zodResolver } from '@hookform/resolvers/zod'
+import * as z from 'zod'
+
+// Validation schema
+const accountSchema = z.object({
+  name: z.string().min(1, 'Name ist erforderlich').trim(),
+  phone: z.string().optional(),
+  street: z.string().min(1, 'Strasse ist erforderlich').trim(),
+  streetNumber: z
+    .string()
+    .min(1, 'Hausnummer ist erforderlich')
+    .regex(/^[0-9]+[a-zA-Z]?(-[0-9]+[a-zA-Z]?)?$/, 'Ungültige Hausnummer (z.B. 6a, 12B, 4-6)'),
+  postalCode: z
+    .string()
+    .min(1, 'Postleitzahl ist erforderlich')
+    .regex(/^[0-9]{4}$/, 'Postleitzahl muss 4 Ziffern haben (z.B. 8000)'),
+  city: z.string().min(1, 'Ort ist erforderlich').trim(),
+  country: z.string().min(1, 'Land ist erforderlich'),
+  addresszusatz: z.string().optional(),
+  kanton: z.string().optional(),
+})
+
+type AccountFormData = z.infer<typeof accountSchema>
 
 export default function AccountPage() {
   const { data: session, status, update } = useSession()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '',
-    phone: '',
-    street: '',
-    streetNumber: '',
-    postalCode: '',
-    city: '',
-    country: 'Schweiz',
+  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
+  const formRef = useRef<HTMLFormElement>(null)
+
+  const {
+    register,
+    handleSubmit,
+    formState: { errors, isDirty, isValid },
+    reset,
+    watch,
+  } = useForm<AccountFormData>({
+    resolver: zodResolver(accountSchema),
+    mode: 'onChange',
+    defaultValues: {
+      name: '',
+      phone: '',
+      street: '',
+      streetNumber: '',
+      postalCode: '',
+      city: '',
+      country: 'Schweiz',
+      addresszusatz: '',
+      kanton: '',
+    },
   })
 
+  // Track form changes
+  const watchedValues = watch()
   useEffect(() => {
-    // Warte bis Session geladen ist
+    setHasUnsavedChanges(isDirty)
+  }, [isDirty])
+
+  // Warn about unsaved changes
+  useEffect(() => {
+    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+      if (hasUnsavedChanges) {
+        e.preventDefault()
+        e.returnValue = ''
+      }
+    }
+
+    const handleRouteChange = () => {
+      if (hasUnsavedChanges) {
+        const confirmed = window.confirm(
+          'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich fortfahren?'
+        )
+        if (!confirmed) {
+          router.push(window.location.pathname)
+          return false
+        }
+      }
+    }
+
+    window.addEventListener('beforeunload', handleBeforeUnload)
+    return () => {
+      window.removeEventListener('beforeunload', handleBeforeUnload)
+    }
+  }, [hasUnsavedChanges, router])
+
+  useEffect(() => {
     if (status === 'loading') {
       return
     }
 
-    // Wenn nicht authentifiziert, leite um
     if (status === 'unauthenticated' || !session) {
       const currentPath = window.location.pathname
       router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
       return
     }
 
-    // Lade Benutzerdaten
     const userId = (session?.user as { id?: string })?.id
     if (userId) {
       loadUserData()
@@ -49,7 +118,7 @@ export default function AccountPage() {
       const res = await fetch(`/api/user/${userId}`)
       if (res.ok) {
         const data = await res.json()
-        setFormData({
+        reset({
           name: data.name || session?.user?.name || '',
           phone: data.phone || '',
           street: data.street || '',
@@ -57,45 +126,19 @@ export default function AccountPage() {
           postalCode: data.postalCode || '',
           city: data.city || '',
           country: data.country || 'Schweiz',
+          addresszusatz: data.addresszusatz || '',
+          kanton: data.kanton || '',
         })
       }
     } catch (error) {
       console.error('Error loading user data:', error)
+      toast.error('Fehler beim Laden der Benutzerdaten')
     } finally {
       setIsLoading(false)
     }
   }
 
-  const handleInputChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
-  ) => {
-    const { name, value } = e.target
-    setFormData(prev => ({ ...prev, [name]: value }))
-  }
-
-  const handleSaveProfile = async () => {
-    // Validierung: Adresse ist Pflichtfeld
-    if (!formData.street || !formData.street.trim()) {
-      toast.error('Bitte geben Sie eine Strasse ein')
-      return
-    }
-    if (!formData.streetNumber || !formData.streetNumber.trim()) {
-      toast.error('Bitte geben Sie eine Hausnummer ein')
-      return
-    }
-    if (!formData.postalCode || !formData.postalCode.trim()) {
-      toast.error('Bitte geben Sie eine Postleitzahl ein')
-      return
-    }
-    if (!formData.city || !formData.city.trim()) {
-      toast.error('Bitte geben Sie einen Ort ein')
-      return
-    }
-    if (!formData.country || !formData.country.trim()) {
-      toast.error('Bitte geben Sie ein Land ein')
-      return
-    }
-
+  const onSubmit = async (data: AccountFormData) => {
     setIsSaving(true)
 
     try {
@@ -105,26 +148,29 @@ export default function AccountPage() {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          name: formData.name,
-          phone: formData.phone,
-          street: formData.street.trim(),
-          streetNumber: formData.streetNumber.trim(),
-          postalCode: formData.postalCode.trim(),
-          city: formData.city.trim(),
-          country: formData.country.trim(),
+          name: data.name,
+          phone: data.phone || null,
+          street: data.street,
+          streetNumber: data.streetNumber,
+          postalCode: data.postalCode,
+          city: data.city,
+          country: data.country,
+          addresszusatz: data.addresszusatz || null,
+          kanton: data.kanton || null,
         }),
       })
 
-      const data = await res.json()
+      const responseData = await res.json()
 
       if (res.ok) {
-        toast.success('Profil erfolgreich gespeichert!')
-        // Aktualisiere Session
+        toast.success('Gespeichert')
+        setHasUnsavedChanges(false)
+        reset(data, { keepValues: true })
         if (update) {
           await update()
         }
       } else {
-        toast.error(data.message || 'Fehler beim Speichern')
+        toast.error(responseData.message || 'Fehler beim Speichern')
       }
     } catch (error) {
       console.error('Error saving profile:', error)
@@ -135,10 +181,13 @@ export default function AccountPage() {
   }
 
   if (status === 'loading' || isLoading) {
-    return <div className="flex min-h-screen items-center justify-center">Lädt...</div>
+    return (
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
+      </div>
+    )
   }
 
-  // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
   if (status === 'unauthenticated' || !session) {
     return (
       <div className="flex min-h-screen items-center justify-center">
@@ -148,7 +197,7 @@ export default function AccountPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
+    <div className="min-h-screen bg-gray-50 py-6 md:py-12">
       <div className="mx-auto max-w-4xl px-4">
         <Link
           href="/my-watches"
@@ -158,147 +207,336 @@ export default function AccountPage() {
           Zurück zu Mein Verkaufen
         </Link>
 
-        <h1 className="mb-8 text-3xl font-bold text-gray-900">Benutzerkonto</h1>
+        <h1 className="mb-8 text-2xl font-bold text-gray-900 md:text-3xl">Benutzerkonto</h1>
 
-        <div className="space-y-6 rounded-lg bg-white p-8 shadow-md">
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              <User className="mr-2 inline h-4 w-4" />
-              Name
-            </label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-            />
-          </div>
+        <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+          <div className="rounded-lg bg-white p-6 shadow-sm md:p-8">
+            {/* Name */}
+            <div className="mb-6">
+              <label
+                htmlFor="name"
+                className="mb-2 flex items-center text-sm font-medium text-gray-700"
+              >
+                <User className="mr-2 h-4 w-4" />
+                Name <span className="ml-1 text-red-500">*</span>
+              </label>
+              <input
+                {...register('name')}
+                type="text"
+                id="name"
+                className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
+                  errors.name
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                }`}
+                {...(errors.name && { 'aria-invalid': true, 'aria-describedby': 'name-error' })}
+              />
+              {errors.name && (
+                <p id="name-error" className="mt-1 text-sm text-red-600" role="alert">
+                  {errors.name.message}
+                </p>
+              )}
+            </div>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              <Mail className="mr-2 inline h-4 w-4" />
-              E-Mail
-            </label>
-            <input
-              type="email"
-              value={session.user?.email || ''}
-              disabled
-              className="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              <Phone className="mr-2 inline h-4 w-4" />
-              Telefonnummer (optional)
-            </label>
-            <input
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={handleInputChange}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-              placeholder="+41 79 123 45 67"
-            />
-          </div>
-
-          <div className="border-t pt-6">
-            <h3 className="mb-4 text-lg font-semibold text-gray-900">Adresse</h3>
-            <div className="space-y-4">
-              <div className="grid grid-cols-3 gap-4">
-                <div className="col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Strasse <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="street"
-                    value={formData.street}
-                    onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                    placeholder="Musterstrasse"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Hausnummer <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="streetNumber"
-                    value={formData.streetNumber}
-                    onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                    placeholder="12"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Postleitzahl <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="postalCode"
-                    value={formData.postalCode}
-                    onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                    placeholder="8000"
-                    required
-                  />
-                </div>
-                <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Ort <span className="text-red-500">*</span>
-                  </label>
-                  <input
-                    type="text"
-                    name="city"
-                    value={formData.city}
-                    onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                    placeholder="Zürich"
-                    required
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Land <span className="text-red-500">*</span>
-                </label>
-                <select
-                  name="country"
-                  value={formData.country}
-                  onChange={handleInputChange}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                  required
+            {/* Email - Non-editable */}
+            <div className="mb-6">
+              <label
+                htmlFor="email"
+                className="mb-2 flex items-center text-sm font-medium text-gray-700"
+              >
+                <Mail className="mr-2 h-4 w-4" />
+                E-Mail (nicht änderbar)
+              </label>
+              <input
+                type="email"
+                id="email"
+                value={session.user?.email || ''}
+                disabled
+                className="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600 cursor-not-allowed"
+                aria-label="E-Mail-Adresse (nicht änderbar)"
+              />
+              <p className="mt-1 text-xs text-gray-500">
+                Kontaktieren Sie den{' '}
+                <Link
+                  href="/hilfe"
+                  className="text-primary-600 underline hover:text-primary-700"
                 >
-                  <option value="Schweiz">Schweiz</option>
-                  <option value="Deutschland">Deutschland</option>
-                  <option value="Österreich">Österreich</option>
-                  <option value="Frankreich">Frankreich</option>
-                  <option value="Italien">Italien</option>
-                  <option value="Liechtenstein">Liechtenstein</option>
-                </select>
+                  Support
+                </Link>
+                , falls Sie die E-Mail ändern möchten.
+              </p>
+            </div>
+
+            {/* Phone */}
+            <div className="mb-6">
+              <label
+                htmlFor="phone"
+                className="mb-2 flex items-center text-sm font-medium text-gray-700"
+              >
+                <Phone className="mr-2 h-4 w-4" />
+                Telefonnummer (optional)
+              </label>
+              <input
+                {...register('phone')}
+                type="tel"
+                id="phone"
+                className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
+                  errors.phone
+                    ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                    : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                }`}
+                placeholder="+41 79 123 45 67"
+                {...(errors.phone && { 'aria-invalid': true, 'aria-describedby': 'phone-error' })}
+              />
+              {errors.phone && (
+                <p id="phone-error" className="mt-1 text-sm text-red-600" role="alert">
+                  {errors.phone.message}
+                </p>
+              )}
+            </div>
+
+            {/* Address Section */}
+            <div className="border-t border-gray-200 pt-6">
+              <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
+                <MapPin className="mr-2 h-5 w-5" />
+                Adresse
+              </h3>
+
+              <div className="space-y-4">
+                {/* Street and Street Number */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                  <div className="sm:col-span-2">
+                    <label
+                      htmlFor="street"
+                      className="mb-2 block text-sm font-medium text-gray-700"
+                    >
+                      Strasse <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      {...register('street')}
+                      type="text"
+                      id="street"
+                      className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
+                        errors.street
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                      }`}
+                      placeholder="Musterstrasse"
+                      {...(errors.street && { 'aria-invalid': true, 'aria-describedby': 'street-error' })}
+                    />
+                    {errors.street && (
+                      <p id="street-error" className="mt-1 text-sm text-red-600" role="alert">
+                        {errors.street.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="streetNumber"
+                      className="mb-2 block text-sm font-medium text-gray-700"
+                    >
+                      Hausnummer <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      {...register('streetNumber')}
+                      type="text"
+                      id="streetNumber"
+                      className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
+                        errors.streetNumber
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                      }`}
+                      placeholder="12a"
+                      {...(errors.streetNumber && { 'aria-invalid': true, 'aria-describedby': 'streetNumber-error' })}
+                    />
+                    {errors.streetNumber && (
+                      <p
+                        id="streetNumber-error"
+                        className="mt-1 text-sm text-red-600"
+                        role="alert"
+                      >
+                        {errors.streetNumber.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Addresszusatz (optional) */}
+                <div>
+                  <label
+                    htmlFor="addresszusatz"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Adresszusatz (optional)
+                  </label>
+                  <input
+                    {...register('addresszusatz')}
+                    type="text"
+                    id="addresszusatz"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="c/o, Appartment, etc."
+                  />
+                </div>
+
+                {/* Postal Code and City */}
+                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                  <div>
+                    <label
+                      htmlFor="postalCode"
+                      className="mb-2 block text-sm font-medium text-gray-700"
+                    >
+                      Postleitzahl (PLZ) <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      {...register('postalCode')}
+                      type="text"
+                      id="postalCode"
+                      inputMode="numeric"
+                      maxLength={4}
+                      className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
+                        errors.postalCode
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                      }`}
+                      placeholder="8000"
+                      {...(errors.postalCode && { 'aria-invalid': true, 'aria-describedby': 'postalCode-error' })}
+                    />
+                    {errors.postalCode && (
+                      <p
+                        id="postalCode-error"
+                        className="mt-1 text-sm text-red-600"
+                        role="alert"
+                      >
+                        {errors.postalCode.message}
+                      </p>
+                    )}
+                  </div>
+                  <div>
+                    <label
+                      htmlFor="city"
+                      className="mb-2 block text-sm font-medium text-gray-700"
+                    >
+                      Ort <span className="text-red-500">*</span>
+                    </label>
+                    <input
+                      {...register('city')}
+                      type="text"
+                      id="city"
+                      className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
+                        errors.city
+                          ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                          : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                      }`}
+                      placeholder="Zürich"
+                      {...(errors.city && { 'aria-invalid': true, 'aria-describedby': 'city-error' })}
+                    />
+                    {errors.city && (
+                      <p id="city-error" className="mt-1 text-sm text-red-600" role="alert">
+                        {errors.city.message}
+                      </p>
+                    )}
+                  </div>
+                </div>
+
+                {/* Kanton (optional) */}
+                <div>
+                  <label htmlFor="kanton" className="mb-2 block text-sm font-medium text-gray-700">
+                    Kanton (optional)
+                  </label>
+                  <select
+                    {...register('kanton')}
+                    id="kanton"
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  >
+                    <option value="">Bitte wählen</option>
+                    <option value="AG">Aargau</option>
+                    <option value="AI">Appenzell Innerrhoden</option>
+                    <option value="AR">Appenzell Ausserrhoden</option>
+                    <option value="BE">Bern</option>
+                    <option value="BL">Basel-Landschaft</option>
+                    <option value="BS">Basel-Stadt</option>
+                    <option value="FR">Freiburg</option>
+                    <option value="GE">Genf</option>
+                    <option value="GL">Glarus</option>
+                    <option value="GR">Graubünden</option>
+                    <option value="JU">Jura</option>
+                    <option value="LU">Luzern</option>
+                    <option value="NE">Neuenburg</option>
+                    <option value="NW">Nidwalden</option>
+                    <option value="OW">Obwalden</option>
+                    <option value="SG">St. Gallen</option>
+                    <option value="SH">Schaffhausen</option>
+                    <option value="SO">Solothurn</option>
+                    <option value="SZ">Schwyz</option>
+                    <option value="TG">Thurgau</option>
+                    <option value="TI">Tessin</option>
+                    <option value="UR">Uri</option>
+                    <option value="VD">Waadt</option>
+                    <option value="VS">Wallis</option>
+                    <option value="ZG">Zug</option>
+                    <option value="ZH">Zürich</option>
+                  </select>
+                </div>
+
+                {/* Country */}
+                <div>
+                  <label
+                    htmlFor="country"
+                    className="mb-2 block text-sm font-medium text-gray-700"
+                  >
+                    Land <span className="text-red-500">*</span>
+                  </label>
+                  <select
+                    {...register('country')}
+                    id="country"
+                    className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
+                      errors.country
+                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
+                        : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
+                    }`}
+                    {...(errors.country && { 'aria-invalid': true, 'aria-describedby': 'country-error' })}
+                  >
+                    <option value="Schweiz">Schweiz</option>
+                  </select>
+                  {errors.country && (
+                    <p id="country-error" className="mt-1 text-sm text-red-600" role="alert">
+                      {errors.country.message}
+                    </p>
+                  )}
+                </div>
+
+                {/* Privacy Info */}
+                <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <div className="flex items-start gap-2">
+                    <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
+                    <p className="text-xs text-gray-600">
+                      Ihre Adresse wird nicht öffentlich angezeigt und nur bei Kauf/Versand
+                      relevant.
+                    </p>
+                  </div>
+                </div>
               </div>
             </div>
+
+            {/* Save Button */}
+            <div className="mt-8 border-t border-gray-200 pt-6">
+              <button
+                type="submit"
+                disabled={!isDirty || !isValid || isSaving}
+                className="w-full rounded-md bg-primary-600 py-3 px-4 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto sm:min-w-[200px]"
+              >
+                {isSaving ? (
+                  <span className="flex items-center justify-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin" />
+                    Wird gespeichert...
+                  </span>
+                ) : (
+                  'Änderungen speichern'
+                )}
+              </button>
+            </div>
           </div>
-
-          <button
-            onClick={handleSaveProfile}
-            disabled={isSaving}
-            className="w-full rounded-md bg-primary-600 py-3 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSaving ? 'Wird gespeichert...' : 'Änderungen speichern'}
-          </button>
-
-        </div>
+        </form>
       </div>
     </div>
   )

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
 
 // Stripe Client wird in der Route erstellt, wenn STRIPE_SECRET_KEY vorhanden ist
@@ -66,7 +66,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       console.error('[invoices/create-payment-intent] STRIPE_SECRET_KEY ist nicht gesetzt')
       return NextResponse.json(
         {
-          message: 'Stripe Secret Key ist nicht konfiguriert. Bitte setzen Sie STRIPE_SECRET_KEY in Vercel Environment Variables.',
+          message:
+            'Stripe Secret Key ist nicht konfiguriert. Bitte setzen Sie STRIPE_SECRET_KEY in Vercel Environment Variables.',
           error: 'STRIPE_SECRET_KEY_MISSING',
         },
         { status: 500 }
@@ -78,7 +79,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       console.error('[invoices/create-payment-intent] STRIPE_SECRET_KEY hat ungültiges Format')
       return NextResponse.json(
         {
-          message: 'Stripe Secret Key hat ungültiges Format. Der Key sollte mit "sk_test_" oder "sk_live_" beginnen.',
+          message:
+            'Stripe Secret Key hat ungültiges Format. Der Key sollte mit "sk_test_" oder "sk_live_" beginnen.',
           error: 'STRIPE_SECRET_KEY_INVALID_FORMAT',
         },
         { status: 500 }
@@ -98,10 +100,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         apiVersion: '2023-10-16',
       })
     } catch (stripeInitError: any) {
-      console.error('[invoices/create-payment-intent] Fehler beim Initialisieren von Stripe:', stripeInitError)
+      console.error(
+        '[invoices/create-payment-intent] Fehler beim Initialisieren von Stripe:',
+        stripeInitError
+      )
       return NextResponse.json(
         {
-          message: 'Fehler beim Initialisieren von Stripe. Bitte prüfen Sie Ihren STRIPE_SECRET_KEY.',
+          message:
+            'Fehler beim Initialisieren von Stripe. Bitte prüfen Sie Ihren STRIPE_SECRET_KEY.',
           error: 'STRIPE_INIT_ERROR',
           details: stripeInitError.message,
         },
@@ -194,7 +200,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     if (error.type === 'StripeAuthenticationError') {
-      errorMessage += ' (Stripe Authentifizierungsfehler - bitte prüfen Sie Ihre API Keys in Vercel)'
+      errorMessage +=
+        ' (Stripe Authentifizierungsfehler - bitte prüfen Sie Ihre API Keys in Vercel)'
       errorType = 'STRIPE_AUTH_ERROR'
     }
 

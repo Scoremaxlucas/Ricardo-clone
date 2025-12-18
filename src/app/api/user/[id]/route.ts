@@ -30,6 +30,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         postalCode: true,
         city: true,
         country: true,
+        addresszusatz: true,
+        kanton: true,
         nickname: true,
         firstName: true,
         lastName: true,

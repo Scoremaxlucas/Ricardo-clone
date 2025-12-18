@@ -64,6 +64,8 @@ model User {
   postalCode                    String?
   city                          String?
   country                       String?
+  addresszusatz                 String? // Optional: c/o, apartment, etc.
+  kanton                        String? // Optional: Swiss canton
   billingStreet                 String?
   billingStreetNumber           String?
   billingPostalCode             String?
