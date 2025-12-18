@@ -1,53 +1,72 @@
 'use client'
 
-import { CategoryFields } from '@/components/forms/CategoryFieldsNew'
+/**
+ * NEW Edit Page using Wizard Components with EditPolicy
+ *
+ * This replaces the old edit page with a wizard-based approach that:
+ * - Uses the same wizard components as the sell flow
+ * - Enforces EditPolicy restrictions in UI
+ * - Handles append-only mode for auctions with bids
+ * - Shows policy banners and locked field indicators
+ */
+
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import {
-  AlertCircle,
-  CheckCircle,
-  Clock,
-  Loader2,
-  Lock,
-  Shield,
-  Sparkles,
-  Upload,
-} from 'lucide-react'
+  PolicyBanner,
+  StepCategorySelection,
+  StepDetails,
+  StepImages,
+  StepPrice,
+  StepProgress,
+  StepReviewPublish,
+  StepShippingPayment,
+  WizardFooter,
+} from '@/components/wizard'
+import { EditPolicy } from '@/lib/edit-policy'
+import { AlertCircle, Loader2 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useParams, useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 
-/**
- * Bearbeitungsseite für Artikel
- *
- * Regeln:
- * - Wenn Gebote vorhanden: Nur Beschreibung und Bilder können ergänzt werden
- * - Wenn kein Kauf: Vollständige Bearbeitung möglich
- * - Gleiche Maske wie beim Erstellen
- */
+const WIZARD_STEPS = [
+  { id: 'category', title: 'Kategorie', shortTitle: 'Kategorie' },
+  { id: 'images', title: 'Bilder', shortTitle: 'Bilder' },
+  { id: 'details', title: 'Details', shortTitle: 'Details' },
+  { id: 'price', title: 'Preis', shortTitle: 'Preis' },
+  { id: 'shipping', title: 'Versand & Zahlung', shortTitle: 'Versand' },
+  { id: 'review', title: 'Überprüfung', shortTitle: 'Fertig' },
+]
+
 export default function EditWatchPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const params = useParams()
   const watchId = params.id as string
+  const wizardContainerRef = useRef<HTMLDivElement>(null)
 
-  const [isLoading, setIsLoading] = useState(false)
   const [loadingData, setLoadingData] = useState(true)
+  const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
-  const [hasBids, setHasBids] = useState(false)
-  const [hasActivePurchase, setHasActivePurchase] = useState(false)
 
-  const [selectedImageIndex, setSelectedImageIndex] = useState<number>(0)
+  // Policy and listing state
+  const [policy, setPolicy] = useState<EditPolicy | null>(null)
+  const [listingState, setListingState] = useState<any>(null)
+
+  // Wizard state
+  const [currentStep, setCurrentStep] = useState(0)
+  const [touchedSteps, setTouchedSteps] = useState<Set<number>>(new Set())
+
+  // Form state (same structure as sell wizard)
   const [titleImageIndex, setTitleImageIndex] = useState<number>(0)
-  const [boosters, setBoosters] = useState<any[]>([])
   const [selectedBooster, setSelectedBooster] = useState<string>('none')
   const [currentBooster, setCurrentBooster] = useState<string>('none')
   const [selectedCategory, setSelectedCategory] = useState<string>('')
   const [selectedSubcategory, setSelectedSubcategory] = useState<string>('')
-  const fileInputRef = useRef<HTMLInputElement>(null)
-  const [isDragging, setIsDragging] = useState(false)
+  const [paymentProtectionEnabled, setPaymentProtectionEnabled] = useState(false)
+  const [boosters, setBoosters] = useState<any[]>([])
 
   const [formData, setFormData] = useState({
     brand: '',
@@ -80,111 +99,62 @@ export default function EditWatchPage() {
     sellerWarrantyNote: '',
     title: '',
     description: '',
+    descriptionAddendum: '', // For append-only mode
     images: [] as string[],
+    newImages: [] as string[], // For append-only mode
     shippingMethods: [] as string[],
   })
 
-  // Paste from clipboard support
+  // Load watch data and policy
   useEffect(() => {
-    const handlePaste = async (e: ClipboardEvent) => {
-      const items = e.clipboardData?.items
-      if (!items) return
-
-      const imageItems = Array.from(items).filter(item => item.type.startsWith('image/'))
-      if (imageItems.length === 0) return
-
-      e.preventDefault()
-
-      for (const item of imageItems) {
-        const file = item.getAsFile()
-        if (!file) continue
-
-        try {
-          const { compressImage } = await import('@/lib/image-compression')
-          const compressedImage = await compressImage(file, {
-            maxWidth: 1600,
-            maxHeight: 1600,
-            quality: 0.75,
-            maxSizeMB: 1.5,
-          })
-
-          setFormData(prev => ({
-            ...prev,
-            images: [...prev.images, compressedImage],
-          }))
-
-          toast.success('Bild aus Zwischenablage hinzugefügt.', {
-            position: 'top-right',
-            duration: 3000,
-          })
-        } catch (error) {
-          console.error('Fehler beim Verarbeiten von Bild aus Zwischenablage:', error)
-          toast.error('Fehler beim Verarbeiten des Bildes aus der Zwischenablage.', {
-            position: 'top-right',
-            duration: 4000,
-          })
-        }
-      }
-    }
-
-    window.addEventListener('paste', handlePaste)
-    return () => {
-      window.removeEventListener('paste', handlePaste)
-    }
-  }, [])
-
-  // Lade Watch-Daten
-  useEffect(() => {
-    const loadWatch = async () => {
+    const loadWatchAndPolicy = async () => {
       if (!watchId || !session?.user) return
 
       try {
         setLoadingData(true)
         setError('')
 
-        const res = await fetch(`/api/watches/${watchId}`)
-        if (!res.ok) {
-          const errorData = await res.json().catch(() => ({}))
-          throw new Error(errorData.message || 'Artikel nicht gefunden')
-        }
-
-        const data = await res.json()
-        const watch = data.watch
-
-        if (!watch) {
+        // Load watch data
+        const watchRes = await fetch(`/api/watches/${watchId}`)
+        if (!watchRes.ok) {
           throw new Error('Artikel nicht gefunden')
         }
+        const watchData = await watchRes.json()
+        const watch = watchData.watch
 
-        // Prüfe Status
-        setHasBids(watch.bids && watch.bids.length > 0)
+        // Load edit policy
+        const policyRes = await fetch(`/api/watches/${watchId}/edit-status`)
+        if (!policyRes.ok) {
+          throw new Error('Fehler beim Laden der Bearbeitungsrechte')
+        }
+        const policyData = await policyRes.json()
+        setPolicy(policyData.policy)
+        setListingState(policyData.listingState)
 
-        // Prüfe ob aktiver Kauf vorhanden (lade zusätzlich Purchases und Sales)
-        try {
-          const resStatus = await fetch(`/api/watches/${watchId}/edit-status`)
-          if (resStatus.ok) {
-            const statusData = await resStatus.json()
-            setHasActivePurchase(statusData.hasActivePurchase || false)
-          }
-        } catch (err) {
-          console.error('Error checking purchase status:', err)
-          // Fallback: Prüfe direkt über Watch-Daten
-          // Wenn keine Purchases/Sales in der Antwort sind, nehmen wir an, dass keine vorhanden sind
+        // READ_ONLY: Redirect or show message
+        if (policyData.policy.level === 'READ_ONLY') {
+          toast.error(policyData.policy.reason, { duration: 5000 })
+          router.push('/my-watches')
+          return
         }
 
-        // Lade Kategorie
-        if (watch.categories && Array.isArray(watch.categories) && watch.categories.length > 0) {
-          const primaryCategory = watch.categories[0]
-          setSelectedCategory(primaryCategory.slug || '')
-        }
-
-        // Parse Bilder
+        // Parse images
         const images = Array.isArray(watch.images)
           ? watch.images
           : watch.images
             ? JSON.parse(watch.images)
             : []
 
-        // Parse Booster
+        // Parse shipping methods
+        const shippingMethods = watch.shippingMethod ? JSON.parse(watch.shippingMethod) : []
+
+        // Parse category
+        if (watch.categories && Array.isArray(watch.categories) && watch.categories.length > 0) {
+          const primaryCategory = watch.categories[0]
+          setSelectedCategory(primaryCategory.slug || '')
+        }
+
+        // Parse booster
         let currentBoosterCode = 'none'
         if (watch.boosters) {
           try {
@@ -200,32 +170,19 @@ export default function EditWatchPage() {
         setCurrentBooster(currentBoosterCode)
         setSelectedBooster(currentBoosterCode)
 
-        // Parse Versandmethoden
-        let shippingMethods: string[] = []
-        if (watch.shippingMethod) {
-          try {
-            const parsed =
-              typeof watch.shippingMethod === 'string'
-                ? JSON.parse(watch.shippingMethod)
-                : watch.shippingMethod
-            shippingMethods = Array.isArray(parsed) ? parsed : []
-          } catch (e) {
-            console.error('Error parsing shippingMethod:', e)
-          }
-        }
-
-        // Berechne Auktionsdauer
+        // Calculate auction duration
         let auctionDuration = ''
         if (watch.auctionStart && watch.auctionEnd) {
           const start = new Date(watch.auctionStart)
           const end = new Date(watch.auctionEnd)
-          const diffDays = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24))
-          if (diffDays > 0 && diffDays <= 30) {
+          const diffMs = end.getTime() - start.getTime()
+          const diffDays = Math.ceil(diffMs / (1000 * 60 * 60 * 24))
+          if (diffDays > 0) {
             auctionDuration = diffDays.toString()
           }
         }
 
-        // Setze Formular-Daten
+        // Set form data
         setFormData({
           brand: watch.brand || '',
           model: watch.model || '',
@@ -261,11 +218,14 @@ export default function EditWatchPage() {
           sellerWarrantyNote: watch.warrantyNote || '',
           title: watch.title || '',
           description: watch.description || '',
+          descriptionAddendum: '',
           images: images,
+          newImages: [],
           shippingMethods: shippingMethods,
         })
 
         setTitleImageIndex(0)
+        setPaymentProtectionEnabled(watch.paymentProtectionEnabled || false)
       } catch (err: any) {
         console.error('Error loading watch:', err)
         setError('Fehler beim Laden: ' + (err.message || 'Unbekannter Fehler'))
@@ -275,24 +235,17 @@ export default function EditWatchPage() {
       }
     }
 
-    loadWatch()
-  }, [watchId, session?.user])
+    loadWatchAndPolicy()
+  }, [watchId, session?.user, router])
 
-  // Lade Booster
+  // Load boosters
   useEffect(() => {
     const loadBoosters = async () => {
       try {
-        const res = await fetch('/api/admin/boosters')
+        const res = await fetch('/api/boosters')
         if (res.ok) {
           const data = await res.json()
-          const boostersArray = Array.isArray(data) ? data : data.boosters || []
-          const filteredBoosters = boostersArray.filter(
-            (booster: any) =>
-              booster.code !== 'none' &&
-              booster.name?.toLowerCase() !== 'kein booster' &&
-              booster.name?.toLowerCase() !== 'no booster'
-          )
-          setBoosters(filteredBoosters)
+          setBoosters(data.boosters || [])
         }
       } catch (error) {
         console.error('Error loading boosters:', error)
@@ -301,31 +254,116 @@ export default function EditWatchPage() {
     loadBoosters()
   }, [])
 
+  // Navigation
+  const goToStep = useCallback(
+    (step: number, skipValidation: boolean = false) => {
+      if (!policy) return
+
+      const clampedStep = Math.max(0, Math.min(WIZARD_STEPS.length - 1, step))
+
+      // Skip locked steps
+      if (policy.lockedSteps.includes(clampedStep) && clampedStep > currentStep) {
+        toast.error('Dieser Schritt ist gesperrt')
+        return
+      }
+
+      // Always allow backward navigation
+      if (clampedStep < currentStep) {
+        setCurrentStep(clampedStep)
+        if (wizardContainerRef.current) {
+          wizardContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+        }
+        return
+      }
+
+      setCurrentStep(clampedStep)
+      if (wizardContainerRef.current) {
+        wizardContainerRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    },
+    [currentStep, policy]
+  )
+
+  const nextStep = () => {
+    setTouchedSteps(prev => new Set(prev).add(currentStep))
+    goToStep(currentStep + 1)
+  }
+
+  const prevStep = () => {
+    goToStep(currentStep - 1, true)
+  }
+
+  // Validation (simplified - can be enhanced)
+  const validateStep = (step: number): boolean => {
+    if (!policy) return false
+
+    // Skip validation for locked steps
+    if (policy.lockedSteps.includes(step)) return true
+
+    switch (step) {
+      case 0: // Category
+        return !!selectedCategory
+      case 1: // Images
+        return formData.images.length > 0
+      case 2: // Details
+        if (policy.level === 'LIMITED_APPEND_ONLY') {
+          return !!formData.descriptionAddendum?.trim()
+        }
+        return !!formData.title && !!formData.description && !!formData.condition
+      case 3: // Price
+        return !!formData.price && parseFloat(formData.price) > 0
+      case 4: // Shipping
+        return formData.shippingMethods.length > 0
+      case 5: // Review
+        return true
+      default:
+        return true
+    }
+  }
+
+  const getDisabledReason = (step: number): string | undefined => {
+    if (!validateStep(step)) {
+      switch (step) {
+        case 0:
+          return 'Bitte wählen Sie eine Kategorie'
+        case 1:
+          return 'Bitte laden Sie mindestens ein Bild hoch'
+        case 2:
+          return policy?.level === 'LIMITED_APPEND_ONLY'
+            ? 'Bitte geben Sie eine Ergänzung ein'
+            : 'Bitte füllen Sie alle erforderlichen Felder aus'
+        case 3:
+          return 'Bitte geben Sie einen gültigen Preis ein'
+        case 4:
+          return 'Bitte wählen Sie mindestens eine Versandmethode'
+        default:
+          return undefined
+      }
+    }
+    return undefined
+  }
+
+  const getCompletedSteps = (): number[] => {
+    const completed: number[] = []
+    for (let i = 0; i < currentStep; i++) {
+      if (validateStep(i)) completed.push(i)
+    }
+    return completed
+  }
+
+  // Handle input changes
   const handleInputChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
   ) => {
     const { name, value, type } = e.target
 
-    // Blockiere gesperrte Felder bei Geboten
-    if (
-      hasBids &&
-      [
-        'price',
-        'buyNowPrice',
-        'isAuction',
-        'auctionDuration',
-        'auctionStart',
-        'auctionEnd',
-        'autoRenew',
-        'shippingMethods',
-        'brand',
-        'model',
-        'condition',
-        'title',
-      ].includes(name)
-    ) {
-      toast.error('Dieses Feld kann bei vorhandenen Geboten nicht geändert werden.')
-      return
+    // Check policy locks
+    if (policy) {
+      const fieldName = name === 'descriptionAddendum' ? 'descriptionAddendum' : name
+      if (!policy.allowedFields.includes('*') && !policy.allowedFields.includes(fieldName)) {
+        toast.error('Dieses Feld kann nicht mehr geändert werden')
+        return
+      }
     }
 
     setFormData(prev => ({
@@ -334,178 +372,34 @@ export default function EditWatchPage() {
     }))
   }
 
-  const processFiles = async (files: File[]) => {
-    const newImages: string[] = []
-    let processedCount = 0
-
-    for (const file of files) {
-      // Prüfe Dateityp - nur Bilder erlauben
-      if (!file.type.startsWith('image/')) {
-        toast.error(`${file.name} ist kein Bild. Bitte wählen Sie nur Bilddateien aus.`, {
-          position: 'top-right',
-          duration: 4000,
-        })
-        continue
-      }
-
-      // Prüfe Dateigröße (max 10MB pro Bild vor Komprimierung)
-      if (file.size > 10 * 1024 * 1024) {
-        toast.error(`${file.name} ist zu groß. Maximale Größe: 10MB`, {
-          position: 'top-right',
-          duration: 4000,
-        })
-        continue
-      }
-
-      try {
-        // WICHTIG: Verwende Bildkomprimierung wie auf der Sell-Seite
-        const { compressImage } = await import('@/lib/image-compression')
-
-        // Aggressive Komprimierung um 413 Fehler zu vermeiden
-        const compressedImage = await compressImage(file, {
-          maxWidth: 1600,
-          maxHeight: 1600,
-          quality: 0.75,
-          maxSizeMB: 1.5,
-        })
-
-        // Prüfe finale Größe des komprimierten Bildes
-        const base64SizeMB = (compressedImage.length * 3) / 4 / (1024 * 1024)
-        if (base64SizeMB > 1.5) {
-          console.warn(
-            `Bild ${file.name} ist nach Komprimierung noch ${base64SizeMB.toFixed(2)}MB groß`
-          )
-          toast(
-            `Bild ${file.name} ist sehr groß (${base64SizeMB.toFixed(2)}MB). Bitte verwenden Sie ein kleineres Bild.`,
-            {
-              icon: '⚠️',
-              position: 'top-right',
-              duration: 5000,
-            }
-          )
-        }
-
-        newImages.push(compressedImage)
-        processedCount++
-
-        // Wenn alle Dateien verarbeitet sind
-        if (processedCount === files.length) {
-          setFormData(prev => ({
-            ...prev,
-            images: [...prev.images, ...newImages],
-          }))
-
-          if (newImages.length > 0) {
-            toast.success(
-              `${newImages.length} Bild${newImages.length > 1 ? 'er' : ''} hinzugefügt.`,
-              {
-                position: 'top-right',
-                duration: 3000,
-              }
-            )
-          }
-        }
-      } catch (error) {
-        console.error('Fehler beim Komprimieren von Bild:', file.name, error)
-        toast.error(`Fehler beim Verarbeiten von ${file.name}`, {
-          position: 'top-right',
-          duration: 4000,
-        })
-      }
-    }
-  }
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || [])
-
-    // Reset input
-    e.target.value = ''
-
-    await processFiles(files)
-  }
-
-  const removeImage = (index: number) => {
-    if (hasBids) {
-      toast.error('Bilder können bei vorhandenen Geboten nicht entfernt werden')
+  // Handle submission
+  const handleSubmit = async () => {
+    if (!policy || policy.level === 'READ_ONLY') {
+      toast.error('Dieses Angebot kann nicht mehr bearbeitet werden')
       return
     }
 
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index),
-    }))
-
-    if (selectedImageIndex >= index) {
-      setSelectedImageIndex(Math.max(0, selectedImageIndex - 1))
-    }
-    if (titleImageIndex >= index) {
-      setTitleImageIndex(Math.max(0, titleImageIndex - 1))
-    }
-
-    toast.success('Bild entfernt')
-  }
-
-  const setExclusiveSupply = (option: 'fullset' | 'onlyBox' | 'onlyPapers' | 'onlyAllLinks') => {
-    if (hasBids) {
-      toast.error('Lieferumfang kann bei vorhandenen Geboten nicht geändert werden')
-      return
-    }
-
-    setFormData(prev => ({
-      ...prev,
-      fullset: option === 'fullset',
-      onlyBox: option === 'onlyBox',
-      onlyPapers: option === 'onlyPapers',
-      onlyAllLinks: option === 'onlyAllLinks',
-    }))
-  }
-
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
     setIsLoading(true)
     setError('')
 
     try {
-      // Validierung
-      if (!hasBids) {
-        if (!formData.title || !formData.title.trim()) {
-          setError('Bitte geben Sie einen Titel ein')
-          setIsLoading(false)
-          return
-        }
-        if (!formData.description || !formData.description.trim()) {
-          setError('Bitte geben Sie eine Beschreibung ein')
-          setIsLoading(false)
-          return
-        }
-        if (!formData.condition) {
-          setError('Bitte wählen Sie einen Zustand aus')
-          setIsLoading(false)
-          return
-        }
-        if (!formData.price || parseFloat(formData.price) <= 0) {
-          toast.error('Bitte geben Sie einen gültigen Preis ein', {
-            position: 'top-right',
-            duration: 4000,
-          })
-          setIsLoading(false)
-          return
-        }
+      // Prepare payload based on policy level
+      let payload: any = {}
 
-        // Validierung: Sofortkaufpreis muss höher sein als Verkaufspreis (falls angegeben)
-        if (
-          formData.buyNowPrice &&
-          formData.price &&
-          parseFloat(formData.buyNowPrice) > 0 &&
-          parseFloat(formData.price) > 0 &&
-          parseFloat(formData.buyNowPrice) <= parseFloat(formData.price)
-        ) {
-          toast.error('Der Sofortkaufpreis muss höher sein als der Verkaufspreis', {
-            position: 'top-right',
-            duration: 4000,
-          })
-          setIsLoading(false)
-          return
+      if (policy.level === 'LIMITED_APPEND_ONLY') {
+        // Append-only mode: only send addendum and new images
+        payload = {
+          descriptionAddendum: formData.descriptionAddendum,
+          newImages: formData.newImages || [],
+          booster: selectedBooster !== 'none' ? selectedBooster : undefined,
+        }
+      } else {
+        // Normal edit mode
+        payload = {
+          ...formData,
+          booster: selectedBooster !== 'none' ? selectedBooster : undefined,
+          category: selectedCategory,
+          subcategory: selectedSubcategory,
         }
       }
 
@@ -514,33 +408,38 @@ export default function EditWatchPage() {
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          ...formData,
-          booster: selectedBooster,
-          category: selectedCategory,
-          subcategory: selectedSubcategory,
-        }),
+        body: JSON.stringify(payload),
       })
 
       if (response.ok) {
-        toast.success('Angebot erfolgreich aktualisiert!')
+        toast.success('Angebot erfolgreich aktualisiert!', {
+          position: 'top-right',
+          duration: 3000,
+        })
         router.push('/my-watches')
         router.refresh()
       } else {
         const errorData = await response.json()
         const errorMessage = errorData.message || errorData.error || 'Ein Fehler ist aufgetreten'
         setError(errorMessage)
-        toast.error(errorMessage)
+        toast.error(errorMessage, {
+          position: 'top-right',
+          duration: 5000,
+        })
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error updating watch:', err)
       setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
-      toast.error('Fehler beim Aktualisieren')
+      toast.error('Fehler beim Aktualisieren', {
+        position: 'top-right',
+        duration: 5000,
+      })
     } finally {
       setIsLoading(false)
     }
   }
 
+  // Loading state
   if (status === 'loading' || loadingData) {
     return (
       <div className="min-h-screen bg-gray-50">
@@ -557,27 +456,20 @@ export default function EditWatchPage() {
   }
 
   if (!session) {
-    router.push('/login')
+    router.push(`/login?callbackUrl=${encodeURIComponent(`/my-watches/edit/${watchId}`)}`)
     return null
   }
 
-  if (hasActivePurchase) {
+  if (error && !policy) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="mx-auto max-w-4xl px-4 py-8">
-          <div className="rounded-lg border border-red-200 bg-red-50 p-8 text-center">
-            <AlertCircle className="mx-auto mb-4 h-16 w-16 text-red-600" />
-            <h2 className="mb-4 text-2xl font-bold text-gray-900">Bearbeitung nicht möglich</h2>
-            <p className="mb-6 text-gray-700">
-              Das Angebot kann nicht mehr bearbeitet werden, da bereits ein Kauf stattgefunden hat.
-            </p>
-            <Link
-              href="/my-watches"
-              className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-3 text-white hover:bg-primary-700"
-            >
-              Zurück zu Meine Angebote
-            </Link>
+          <div className="rounded-lg border border-red-200 bg-red-50 p-6">
+            <div className="flex items-center gap-3">
+              <AlertCircle className="h-5 w-5 text-red-600" />
+              <p className="text-red-800">{error}</p>
+            </div>
           </div>
         </div>
         <Footer />
@@ -585,772 +477,216 @@ export default function EditWatchPage() {
     )
   }
 
+  if (!policy) {
+    return null
+  }
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="mx-auto max-w-4xl px-4 py-8">
+
+      <div
+        ref={wizardContainerRef}
+        className="mx-auto min-h-[calc(100vh-200px)] max-w-4xl px-4 py-4 md:py-8"
+      >
+        {/* Back link */}
         <div className="mb-6">
           <Link
             href="/my-watches"
             className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700"
           >
-            ← Zurück zu Meine Angebote
+            ← Zurück zu Mein Verkaufen
           </Link>
         </div>
 
-        <div className="mb-8">
-          <h1 className="mb-2 text-3xl font-bold text-gray-900">Angebot bearbeiten</h1>
-          <p className="text-gray-600">
-            Bearbeiten Sie Ihr Angebot.{' '}
-            {hasBids &&
-              'Bei vorhandenen Geboten können nur Beschreibung und Bilder ergänzt werden.'}
+        {/* Page title */}
+        <div className="mb-8 text-center">
+          <h1 className="text-3xl font-bold text-gray-900">Angebot bearbeiten</h1>
+          <p className="mt-2 text-gray-600">
+            Bearbeiten Sie Ihr Angebot. Einige Angaben können nach Veröffentlichung nicht mehr
+            geändert werden.
           </p>
         </div>
 
-        {hasBids && (
-          <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-            <div className="flex items-start gap-3">
-              <Lock className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
-              <div>
-                <p className="mb-1 font-semibold text-yellow-800">Wichtig: Gebote vorhanden</p>
-                <p className="text-sm text-yellow-700">
-                  Es existieren bereits Gebote auf dieses Angebot. Sie können nur noch die
-                  Beschreibung ändern sowie zusätzliche Bilder hinzufügen. Preis, Auktionsdauer und
-                  andere wichtige Felder sind gesperrt.
-                </p>
-              </div>
-            </div>
-          </div>
-        )}
+        {/* Progress indicator */}
+        <StepProgress
+          steps={WIZARD_STEPS}
+          currentStep={currentStep}
+          completedSteps={getCompletedSteps()}
+          lockedSteps={policy.lockedSteps}
+          onStepClick={step => goToStep(step, false)}
+        />
 
-        {error && (
-          <div className="mb-6 flex items-center rounded-md border border-red-200 bg-red-50 px-4 py-3 text-red-700">
-            <AlertCircle className="mr-2 h-5 w-5 flex-shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
+        {/* Form */}
+        <form
+          onSubmit={e => e.preventDefault()}
+          className="rounded-2xl bg-white p-4 pb-28 shadow-lg sm:p-6 sm:pb-28 md:p-8"
+        >
+          {/* Policy Banner */}
+          {policy.level !== 'FULL' && <PolicyBanner policy={policy} />}
 
-        <div className="rounded-lg bg-white p-8 shadow-md">
-          <form onSubmit={handleSubmit} className="space-y-8">
-            {/* Titel und Beschreibung */}
-            <div>
-              <h2 className="mb-4 text-xl font-semibold text-gray-900">Artikel-Informationen</h2>
-              <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Titel {!hasBids && '*'}
-                  </label>
-                  <input
-                    type="text"
-                    name="title"
-                    required={!hasBids}
-                    disabled={hasBids}
-                    value={formData.title}
-                    onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:bg-gray-100"
-                    placeholder="z.B. Rolex Submariner Date, 2020"
-                  />
-                </div>
+          {/* Step 0: Category */}
+          {currentStep === 0 && (
+            <StepCategorySelection
+              selectedCategory={selectedCategory}
+              selectedSubcategory={selectedSubcategory}
+              detectedProductName=""
+              detectedConfidence={0}
+              showAIDetection={false}
+              formData={formData}
+              titleImageIndex={titleImageIndex}
+              onCategoryDetected={async () => {}}
+              onCategoryChange={(cat, sub) => {
+                if (!policy?.uiLocks.category) {
+                  setSelectedCategory(cat)
+                  setSelectedSubcategory(sub)
+                }
+              }}
+              onResetCategory={() => {
+                if (!policy?.uiLocks.category) {
+                  setSelectedCategory('')
+                  setSelectedSubcategory('')
+                }
+              }}
+              setShowAIDetection={() => {}}
+              setFormData={setFormData}
+              setTitleImageIndex={setTitleImageIndex}
+              policy={policy}
+              mode="edit"
+            />
+          )}
 
-                <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Beschreibung {!hasBids && '*'}
-                    {hasBids && (
-                      <span className="ml-2 text-xs font-normal text-gray-500">
-                        (kann ergänzt werden)
-                      </span>
-                    )}
-                  </label>
-                  <textarea
-                    name="description"
-                    required={!hasBids}
-                    rows={6}
-                    value={formData.description}
-                    onChange={handleInputChange}
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Beschreiben Sie Ihren Artikel detailliert..."
-                  />
-                </div>
-              </div>
-            </div>
+          {/* Step 1: Images */}
+          {currentStep === 1 && (
+            <StepImages
+              formData={{
+                ...formData,
+                // In append-only mode, combine existing + new images for display
+                images:
+                  policy?.level === 'LIMITED_APPEND_ONLY'
+                    ? [...formData.images, ...(formData.newImages || [])]
+                    : formData.images,
+              }}
+              titleImageIndex={titleImageIndex}
+              draftId={null} // Not using drafts in edit mode
+              onImagesChange={images => {
+                if (policy?.level === 'LIMITED_APPEND_ONLY') {
+                  // In append-only mode, track new images separately
+                  // Filter out existing images, only keep new ones
+                  const existingImages = formData.images || []
+                  const newOnes = images.filter(img => !existingImages.includes(img))
+                  setFormData(prev => ({ ...prev, newImages: newOnes }))
+                } else {
+                  setFormData(prev => ({ ...prev, images }))
+                }
+              }}
+              onTitleImageChange={async index => {
+                if (!policy?.uiLocks.imagesAppendOnly) {
+                  setTitleImageIndex(index)
+                }
+              }}
+              policy={policy}
+              mode="edit"
+            />
+          )}
 
-            {/* Kategorie-spezifische Felder */}
-            {selectedCategory && !hasBids && (
-              <CategoryFields
-                category={selectedCategory}
-                subcategory={selectedSubcategory}
-                formData={formData}
-                onChange={handleInputChange}
-                disabled={hasBids}
-              />
-            )}
+          {/* Step 2: Details */}
+          {currentStep === 2 && (
+            <StepDetails
+              formData={formData}
+              selectedCategory={selectedCategory}
+              selectedSubcategory={selectedSubcategory}
+              isGeneratingTitle={false}
+              isGeneratingDescription={false}
+              onInputChange={handleInputChange}
+              onFormDataChange={data => setFormData(prev => ({ ...prev, ...data }))}
+              onGenerateTitle={async () => {}}
+              onGenerateDescription={async () => {}}
+              setExclusiveSupply={option => {
+                setFormData(prev => ({
+                  ...prev,
+                  fullset: option === 'fullset',
+                  onlyBox: option === 'onlyBox',
+                  onlyPapers: option === 'onlyPapers',
+                  onlyAllLinks: option === 'onlyAllLinks',
+                }))
+              }}
+              policy={policy}
+              mode="edit"
+            />
+          )}
 
-            {/* Preis und Verkaufsart */}
-            {!hasBids && (
-              <div>
-                <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
-                  <Shield className="mr-2 h-5 w-5" />
-                  Preis und Verkaufsart
-                </h2>
+          {/* Step 3: Price */}
+          {currentStep === 3 && (
+            <StepPrice
+              formData={formData}
+              onInputChange={handleInputChange}
+              onFormDataChange={data => setFormData(prev => ({ ...prev, ...data }))}
+              policy={policy}
+              mode="edit"
+            />
+          )}
 
-                <div className="mb-6">
-                  <label className="mb-3 block text-sm font-medium text-gray-700">
-                    Verkaufsart *
-                  </label>
-                  <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
-                    <label
-                      className={`relative flex cursor-pointer rounded-lg border-2 p-4 transition-all ${
-                        formData.isAuction
-                          ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="saleType"
-                        checked={formData.isAuction}
-                        onChange={() => setFormData(prev => ({ ...prev, isAuction: true }))}
-                        className="sr-only"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                              <Clock className="h-5 w-5 text-primary-600" />
-                              Auktion
-                            </p>
-                            <p className="mt-1 text-sm text-gray-600">Artikel wird versteigert</p>
-                          </div>
-                          {formData.isAuction && (
-                            <CheckCircle className="ml-3 h-5 w-5 text-primary-600" />
-                          )}
-                        </div>
-                      </div>
-                    </label>
+          {/* Step 4: Shipping & Payment */}
+          {currentStep === 4 && (
+            <StepShippingPayment
+              formData={formData}
+              paymentProtectionEnabled={paymentProtectionEnabled}
+              onShippingMethodChange={(method, checked) => {
+                setTouchedSteps(prev => new Set(prev).add(4))
+                setFormData(prev => ({
+                  ...prev,
+                  shippingMethods: checked
+                    ? [...prev.shippingMethods, method]
+                    : prev.shippingMethods.filter(m => m !== method),
+                }))
+              }}
+              onPaymentProtectionChange={setPaymentProtectionEnabled}
+              hasInteracted={touchedSteps.has(4)}
+              showValidation={touchedSteps.has(4) && !validateStep(4)}
+              policy={policy}
+              mode="edit"
+            />
+          )}
 
-                    <label
-                      className={`relative flex cursor-pointer rounded-lg border-2 p-4 transition-all ${
-                        !formData.isAuction
-                          ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
-                          : 'border-gray-300 bg-white hover:border-gray-400'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="saleType"
-                        checked={!formData.isAuction}
-                        onChange={() =>
-                          setFormData(prev => ({
-                            ...prev,
-                            isAuction: false,
-                            auctionDuration: '',
-                            auctionStart: '',
-                            autoRenew: false,
-                          }))
-                        }
-                        className="sr-only"
-                      />
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div>
-                            <p className="flex items-center gap-2 text-sm font-semibold text-gray-900">
-                              <CheckCircle className="h-5 w-5 text-green-600" />
-                              Sofortkauf
-                            </p>
-                            <p className="mt-1 text-sm text-gray-600">
-                              Artikel wird zu einem festen Preis verkauft
-                            </p>
-                          </div>
-                          {!formData.isAuction && (
-                            <CheckCircle className="ml-3 h-5 w-5 text-primary-600" />
-                          )}
-                        </div>
-                      </div>
-                    </label>
-                  </div>
-                </div>
+          {/* Step 5: Review & Publish */}
+          {currentStep === 5 && (
+            <StepReviewPublish
+              formData={formData}
+              selectedCategory={selectedCategory}
+              selectedSubcategory={selectedSubcategory}
+              selectedBooster={selectedBooster}
+              paymentProtectionEnabled={paymentProtectionEnabled}
+              titleImageIndex={titleImageIndex}
+              onGoToStep={step => goToStep(step, true)}
+              onBoosterChange={boosterId => {
+                if (!policy?.uiLocks.boosters) {
+                  setSelectedBooster(boosterId)
+                }
+              }}
+              isSubmitting={isLoading}
+              policy={policy}
+              mode="edit"
+            />
+          )}
 
-                <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      {formData.isAuction ? 'Startpreis (CHF) *' : 'Preis (CHF) *'}
-                    </label>
-                    <input
-                      type="number"
-                      name="price"
-                      required
-                      value={formData.price}
-                      onChange={handleInputChange}
-                      className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                      placeholder="z.B. 5000"
-                      step="0.01"
-                      min="0"
-                    />
-                  </div>
-
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Sofortkaufpreis (CHF){' '}
-                      <span className="text-xs font-normal text-gray-400">(Optional)</span>
-                    </label>
-                    <input
-                      type="number"
-                      name="buyNowPrice"
-                      value={formData.buyNowPrice}
-                      onChange={handleInputChange}
-                      disabled={hasBids}
-                      className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
-                        hasBids
-                          ? 'cursor-not-allowed border-gray-300 bg-gray-100'
-                          : formData.buyNowPrice &&
-                              formData.price &&
-                              parseFloat(formData.buyNowPrice) > 0 &&
-                              parseFloat(formData.price) > 0 &&
-                              parseFloat(formData.buyNowPrice) <= parseFloat(formData.price)
-                            ? 'border-red-500 focus:border-red-500 focus:ring-red-500'
-                            : 'border-gray-300 focus:ring-primary-500'
-                      }`}
-                      placeholder={formData.isAuction ? 'z.B. 8000 (optional)' : 'z.B. 8000'}
-                      step="0.01"
-                      min="0"
-                    />
-                    <p className="mt-1 text-xs text-gray-500">
-                      {formData.isAuction
-                        ? 'Falls leer gelassen, gibt es keinen Sofortkaufpreis. Käufer können nur bieten.'
-                        : 'Optional: Falls leer, wird nur der normale Preis angezeigt.'}
-                      {formData.buyNowPrice &&
-                        parseFloat(formData.buyNowPrice) > 0 &&
-                        formData.price &&
-                        parseFloat(formData.price) > 0 &&
-                        parseFloat(formData.buyNowPrice) <= parseFloat(formData.price) && (
-                          <span className="mt-1 block text-red-600">
-                            Der Sofortkaufpreis muss höher sein als der Verkaufspreis.
-                          </span>
-                        )}
-                    </p>
-                  </div>
-
-                  {formData.isAuction && (
-                    <>
-                      <div>
-                        <label
-                          htmlFor="auctionDuration"
-                          className="mb-2 block text-sm font-medium text-gray-700"
-                        >
-                          Auktionsdauer (Tage) *
-                        </label>
-                        <select
-                          id="auctionDuration"
-                          name="auctionDuration"
-                          required={formData.isAuction}
-                          value={formData.auctionDuration}
-                          onChange={handleInputChange}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        >
-                          <option value="">Bitte wählen</option>
-                          {[1, 2, 3, 5, 7, 10, 14, 21, 30].map(days => (
-                            <option key={days} value={days}>
-                              {days} Tag{days > 1 ? 'e' : ''}
-                            </option>
-                          ))}
-                        </select>
-                      </div>
-
-                      <div>
-                        <label
-                          htmlFor="auctionStart"
-                          className="mb-2 block text-sm font-medium text-gray-700"
-                        >
-                          Starttermin (optional)
-                        </label>
-                        <input
-                          id="auctionStart"
-                          type="datetime-local"
-                          name="auctionStart"
-                          value={formData.auctionStart}
-                          onChange={handleInputChange}
-                          min={new Date().toISOString().slice(0, 16)}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                        />
-                      </div>
-
-                      <div className="md:col-span-2">
-                        <label className="flex items-center">
-                          <input
-                            type="checkbox"
-                            name="autoRenew"
-                            checked={formData.autoRenew}
-                            onChange={handleInputChange}
-                            className="mr-3"
-                          />
-                          <span className="text-sm text-gray-700">
-                            Automatisch verlängern, wenn keine Gebote vorhanden sind
-                          </span>
-                        </label>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Lieferumfang - NUR für Uhren & Schmuck */}
-            {!hasBids && selectedCategory === 'uhren-schmuck' && (
-              <div>
-                <h2 className="mb-4 text-xl font-semibold text-gray-900">
-                  Lieferumfang (inkl. Uhr selbst)
-                </h2>
-                <div className="space-y-3">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="fullset"
-                      checked={formData.fullset}
-                      onChange={() => setExclusiveSupply('fullset')}
-                      className="mr-3"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      Fullset (Box, Papiere, alle Glieder)
-                    </span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="onlyBox"
-                      checked={formData.onlyBox}
-                      onChange={() => setExclusiveSupply('onlyBox')}
-                      className="mr-3"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Nur Box</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="onlyPapers"
-                      checked={formData.onlyPapers}
-                      onChange={() => setExclusiveSupply('onlyPapers')}
-                      className="mr-3"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Nur Papiere</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="onlyAllLinks"
-                      checked={formData.onlyAllLinks}
-                      onChange={() => setExclusiveSupply('onlyAllLinks')}
-                      className="mr-3"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Box und Papiere</span>
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {/* Garantie - NUR für Uhren & Schmuck */}
-            {!hasBids && selectedCategory === 'uhren-schmuck' && (
-              <div>
-                <h2 className="mb-4 text-xl font-semibold text-gray-900">Garantie</h2>
-                <div className="space-y-4">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      name="hasWarranty"
-                      checked={formData.hasWarranty}
-                      onChange={handleInputChange}
-                      className="mr-3"
-                    />
-                    <span className="text-sm font-medium text-gray-700">
-                      Herstellergarantie vorhanden
-                    </span>
-                  </label>
-
-                  {formData.hasWarranty && (
-                    <div className="grid grid-cols-1 gap-6 pl-6 md:grid-cols-2">
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                          Garantie in Monaten
-                        </label>
-                        <input
-                          type="number"
-                          name="warrantyMonths"
-                          value={formData.warrantyMonths}
-                          onChange={handleInputChange}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          placeholder="z.B. 24"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                          Garantie in Jahren
-                        </label>
-                        <input
-                          type="number"
-                          name="warrantyYears"
-                          value={formData.warrantyYears}
-                          onChange={handleInputChange}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          placeholder="z.B. 2"
-                        />
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="border-t border-gray-200 pt-4">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        name="hasSellerWarranty"
-                        checked={formData.hasSellerWarranty}
-                        onChange={handleInputChange}
-                        className="mr-3"
-                      />
-                      <span className="text-sm font-medium text-gray-700">
-                        Garantie durch Verkäufer
-                      </span>
-                    </label>
-                  </div>
-
-                  {formData.hasSellerWarranty && (
-                    <div className="grid grid-cols-1 gap-6 pl-6 md:grid-cols-2">
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                          Verkäufer-Garantie in Monaten
-                        </label>
-                        <input
-                          type="number"
-                          name="sellerWarrantyMonths"
-                          value={formData.sellerWarrantyMonths}
-                          onChange={handleInputChange}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          placeholder="z.B. 12"
-                        />
-                      </div>
-                      <div>
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                          Verkäufer-Garantie in Jahren
-                        </label>
-                        <input
-                          type="number"
-                          name="sellerWarrantyYears"
-                          value={formData.sellerWarrantyYears}
-                          onChange={handleInputChange}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          placeholder="z.B. 1"
-                        />
-                      </div>
-                      <div className="md:col-span-2">
-                        <label className="mb-2 block text-sm font-medium text-gray-700">
-                          Bemerkungen zur Verkäufer-Garantie
-                        </label>
-                        <textarea
-                          name="sellerWarrantyNote"
-                          value={formData.sellerWarrantyNote}
-                          onChange={handleInputChange}
-                          rows={3}
-                          className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                          placeholder="z.B. Garantie nur bei normaler Nutzung..."
-                        />
-                      </div>
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Versand */}
-            {!hasBids && (
-              <div>
-                <h2 className="mb-4 text-xl font-semibold text-gray-900">Versand</h2>
-                <div className="space-y-3">
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.shippingMethods.includes('pickup')}
-                      onChange={e => {
-                        if (e.target.checked) {
-                          setFormData(prev => ({
-                            ...prev,
-                            shippingMethods: [...prev.shippingMethods, 'pickup'],
-                          }))
-                        } else {
-                          setFormData(prev => ({
-                            ...prev,
-                            shippingMethods: prev.shippingMethods.filter(m => m !== 'pickup'),
-                          }))
-                        }
-                      }}
-                      className="mr-3"
-                    />
-                    <span className="text-sm font-medium text-gray-700">Abholung</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.shippingMethods.includes('b-post')}
-                      onChange={e => {
-                        if (e.target.checked) {
-                          setFormData(prev => ({
-                            ...prev,
-                            shippingMethods: [...prev.shippingMethods, 'b-post'],
-                          }))
-                        } else {
-                          setFormData(prev => ({
-                            ...prev,
-                            shippingMethods: prev.shippingMethods.filter(m => m !== 'b-post'),
-                          }))
-                        }
-                      }}
-                      className="mr-3"
-                    />
-                    <span className="text-sm font-medium text-gray-700">B-Post</span>
-                  </label>
-                  <label className="flex items-center">
-                    <input
-                      type="checkbox"
-                      checked={formData.shippingMethods.includes('a-post')}
-                      onChange={e => {
-                        if (e.target.checked) {
-                          setFormData(prev => ({
-                            ...prev,
-                            shippingMethods: [...prev.shippingMethods, 'a-post'],
-                          }))
-                        } else {
-                          setFormData(prev => ({
-                            ...prev,
-                            shippingMethods: prev.shippingMethods.filter(m => m !== 'a-post'),
-                          }))
-                        }
-                      }}
-                      className="mr-3"
-                    />
-                    <span className="text-sm font-medium text-gray-700">A-Post</span>
-                  </label>
-                </div>
-              </div>
-            )}
-
-            {/* Bilder */}
-            <div>
-              <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
-                <Upload className="mr-2 h-5 w-5" />
-                Bilder
-                {hasBids && (
-                  <span className="ml-2 text-sm text-gray-500">
-                    (Nur zusätzliche Bilder möglich)
-                  </span>
-                )}
-              </h2>
-
-              {/* Verstecktes File Input */}
-                  <input
-                ref={fileInputRef}
-                    type="file"
-                    multiple
-                    accept="image/*"
-                    onChange={handleImageUpload}
-                className="hidden"
-                aria-label="Bilder hochladen"
-                  />
-
-              {/* Drag and Drop Zone - Anklickbar */}
-              <div
-                className={`relative mb-4 cursor-pointer rounded-lg border-2 border-dashed p-8 text-center transition-all ${
-                  isDragging
-                    ? 'border-primary-500 bg-primary-50'
-                    : 'border-gray-300 bg-gray-50 hover:border-primary-400 hover:bg-primary-50/50'
-                }`}
-                onClick={() => fileInputRef.current?.click()}
-                  onDragOver={e => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                  setIsDragging(true)
-                  }}
-                  onDragLeave={e => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                  setIsDragging(false)
-                  }}
-                  onDrop={async e => {
-                    e.preventDefault()
-                    e.stopPropagation()
-                  setIsDragging(false)
-
-                    const files = Array.from(e.dataTransfer.files).filter(file =>
-                      file.type.startsWith('image/')
-                    )
-                    if (files.length > 0) {
-                    await processFiles(files)
-                    }
-                  }}
-                >
-                <Upload className="mx-auto mb-3 h-12 w-12 text-gray-400" />
-                <p className="text-sm font-medium text-gray-700">
-                  {formData.images.length === 0
-                    ? 'Klicken Sie hier oder ziehen Sie Bilder hierher'
-                    : 'Klicken Sie hier oder ziehen Sie weitere Bilder hierher'}
-                  </p>
-                  <p className="mt-1 text-xs text-gray-500">
-                  {formData.images.length === 0
-                    ? 'Titelbild hochladen (JPG, PNG, max. 10MB)'
-                    : 'Weitere Bilder hinzufügen (JPG, PNG, max. 10MB pro Bild). Bis zu 10 Bilder insgesamt.'}
-                  </p>
-              </div>
-
-              {formData.images.length > 0 && (
-                <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-                  {formData.images.map((image, index) => (
-                    <div key={index} className="relative">
-                      <img
-                        src={image}
-                        alt={`Bild ${index + 1}`}
-                        className={`h-32 w-full cursor-pointer rounded-lg border-2 object-cover ${
-                          index === titleImageIndex
-                            ? 'border-primary-500 ring-2 ring-primary-200'
-                            : 'border-gray-200 hover:border-gray-300'
-                        }`}
-                        onClick={() => setSelectedImageIndex(index)}
-                      />
-
-                      <button
-                        type="button"
-                        onClick={() => setTitleImageIndex(index)}
-                        className={`absolute left-2 top-2 rounded px-2 py-1 text-xs font-medium ${
-                          index === titleImageIndex
-                            ? 'bg-primary-500 text-white'
-                            : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-                        }`}
-                      >
-                        {index === titleImageIndex ? 'Titelbild' : 'Als Titelbild'}
-                      </button>
-
-                      {!hasBids && (
-                        <button
-                          type="button"
-                          onClick={() => removeImage(index)}
-                          className="absolute right-2 top-2 flex h-6 w-6 items-center justify-center rounded-full border border-gray-300 bg-white text-sm text-black shadow-sm hover:bg-gray-100"
-                        >
-                          ×
-                        </button>
-                      )}
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-
-            {/* Booster */}
-            <div>
-              <h2 className="mb-4 flex items-center text-xl font-semibold text-gray-900">
-                <Sparkles className="mr-2 h-5 w-5" />
-                Booster auswählen
-              </h2>
-
-              {currentBooster !== 'none' && (
-                <div className="mb-4 rounded-md border border-green-200 bg-green-50 px-4 py-3 text-green-800">
-                  <p className="text-sm font-medium">
-                    ✓ Aktuell aktiver Booster:{' '}
-                    <strong>
-                      {boosters.find(b => b.code === currentBooster)?.name || currentBooster}
-                    </strong>
-                    {boosters.find(b => b.code === currentBooster) && (
-                      <span className="ml-2">
-                        (CHF {boosters.find(b => b.code === currentBooster)!.price.toFixed(2)})
-                      </span>
-                    )}
-                  </p>
-                </div>
-              )}
-
-              <div className="grid grid-cols-1 gap-4 md:grid-cols-2 lg:grid-cols-3">
-                <label
-                  className={`relative flex cursor-pointer flex-col rounded-lg border-2 p-4 transition-all ${
-                    selectedBooster === 'none'
-                      ? 'border-primary-500 bg-primary-50'
-                      : 'border-gray-200 bg-white hover:border-gray-300'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="booster"
-                    value="none"
-                    checked={selectedBooster === 'none'}
-                    onChange={e => setSelectedBooster(e.target.value)}
-                    className="sr-only"
-                  />
-                  <div className="mb-2 flex items-center justify-between">
-                    <span className="font-semibold text-gray-900">Kein Booster</span>
-                    <span className="text-sm text-gray-600">CHF 0.00</span>
-                  </div>
-                  <p className="text-sm text-gray-600">Standard-Anzeige</p>
-                </label>
-
-                {boosters.map(booster => {
-                  const isSelected = selectedBooster === booster.code
-                  const isCurrent = currentBooster === booster.code
-
-                  return (
-                    <label
-                      key={booster.code}
-                      className={`relative flex cursor-pointer flex-col rounded-lg border-2 p-4 transition-all ${
-                        isSelected
-                          ? 'border-primary-500 bg-primary-50'
-                          : isCurrent
-                            ? 'border-green-400 bg-green-50'
-                            : 'border-gray-200 bg-white hover:border-gray-300'
-                      }`}
-                    >
-                      <input
-                        type="radio"
-                        name="booster"
-                        value={booster.code}
-                        checked={isSelected}
-                        onChange={e => setSelectedBooster(e.target.value)}
-                        className="sr-only"
-                      />
-                      <div className="mb-2 flex items-center justify-between">
-                        <span className="flex items-center font-semibold text-gray-900">
-                          {booster.name}
-                          {isCurrent && (
-                            <span className="ml-2 rounded-full bg-green-600 px-2 py-0.5 text-xs text-white">
-                              AKTIV
-                            </span>
-                          )}
-                        </span>
-                        <span className="text-sm font-medium text-primary-600">
-                          CHF {booster.price.toFixed(2)}
-                        </span>
-                      </div>
-                      <p className="text-sm text-gray-600">{booster.description}</p>
-                    </label>
-                  )
-                })}
-              </div>
-            </div>
-
-            {/* Submit */}
-            <div className="border-t border-gray-200 pt-6">
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="flex w-full items-center justify-center rounded-md bg-primary-600 px-4 py-3 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {isLoading ? (
-                  <>
-                    <Clock className="mr-2 h-5 w-5 animate-spin" />
-                    Wird gespeichert...
-                  </>
-                ) : (
-                  <>
-                    <CheckCircle className="mr-2 h-5 w-5" />
-                    Änderungen speichern
-                  </>
-                )}
-              </button>
-            </div>
-          </form>
-        </div>
+          {/* Wizard footer */}
+          <WizardFooter
+            currentStep={currentStep}
+            totalSteps={WIZARD_STEPS.length}
+            onPrevious={prevStep}
+            onNext={nextStep}
+            onPublish={handleSubmit}
+            isLastStep={currentStep === WIZARD_STEPS.length - 1}
+            canProceed={validateStep(currentStep) && policy.level !== 'READ_ONLY'}
+            isSubmitting={isLoading}
+            disabledReason={getDisabledReason(currentStep)}
+            mode="edit"
+            policyLevel={policy.level}
+          />
+        </form>
       </div>
+
       <Footer />
     </div>
   )
