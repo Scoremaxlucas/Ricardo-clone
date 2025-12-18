@@ -383,7 +383,7 @@ export default function MyWatchesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="mx-auto max-w-7xl px-4 py-8 pb-24 sm:px-6 lg:px-8 md:pb-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 lg:px-8 md:pb-8">
         {/* Breadcrumb */}
         <div className="mb-4 text-sm text-gray-600">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
@@ -463,8 +463,8 @@ export default function MyWatchesPage() {
           </div>
         )}
 
-        {/* Dashboard Tiles - Balanced grid for 5 cards */}
-        <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-[repeat(3,1fr)] xl:grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
+        {/* Dashboard Tiles - Responsive grid */}
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
           {menuItems.map(item => (
             <DashboardTile
               key={item.href}
@@ -482,7 +482,7 @@ export default function MyWatchesPage() {
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Link
             href="/sell"
-            className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 active:scale-[0.98]"
+            className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 active:scale-[0.98] sm:justify-start"
           >
             <Plus className="mr-2 h-5 w-5" />
             Neuen Artikel verkaufen
@@ -490,7 +490,7 @@ export default function MyWatchesPage() {
           {hasDraft && draftId && (
             <Link
               href={`/sell?draft=${draftId}`}
-              className="inline-flex items-center justify-center rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:justify-start"
             >
               <FileText className="mr-2 h-5 w-5" />
               Entwurf fortsetzen
