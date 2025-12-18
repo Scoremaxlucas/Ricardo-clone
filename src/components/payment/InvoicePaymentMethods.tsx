@@ -172,32 +172,21 @@ Fälligkeitsdatum: ${new Date().toLocaleDateString('de-CH')}`
         <div className="rounded-lg bg-white p-4 shadow-sm sm:p-6">
           <h3 className="mb-4 text-base font-semibold text-gray-900 sm:text-lg">Zahlungsmethode wählen</h3>
           <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Kreditkarte */}
+            {/* Kreditkarte / TWINT - kombiniert */}
             <button
               onClick={() => setSelectedMethod('card_or_twint')}
               className="group rounded-xl border-2 border-gray-200 bg-white p-5 text-left transition-all hover:border-primary-500 hover:bg-primary-50 hover:shadow-md sm:p-6"
             >
               <div className="mb-3 flex items-center gap-2">
                 <CreditCard className="h-8 w-8 text-gray-500 group-hover:text-primary-600 sm:h-10 sm:w-10" />
-              </div>
-              <h4 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">
-                Kreditkarte
-              </h4>
-              <p className="text-sm text-gray-600 sm:text-base">Sofort bestätigt</p>
-            </button>
-
-            {/* TWINT */}
-            <button
-              onClick={() => setSelectedMethod('card_or_twint')}
-              className="group rounded-xl border-2 border-gray-200 bg-white p-5 text-left transition-all hover:border-primary-500 hover:bg-primary-50 hover:shadow-md sm:p-6"
-            >
-              <div className="mb-3 flex items-center gap-2">
-                <Smartphone className="h-8 w-8 text-gray-500 group-hover:text-primary-600 sm:h-10 sm:w-10" />
+                <Smartphone className="h-7 w-7 text-gray-500 group-hover:text-primary-600 sm:h-8 sm:w-8" />
                 <span className="rounded bg-[#00A3FF] px-2 py-0.5 text-xs font-bold text-white">
                   TWINT
                 </span>
               </div>
-              <h4 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">TWINT</h4>
+              <h4 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">
+                Kreditkarte / TWINT
+              </h4>
               <p className="text-sm text-gray-600 sm:text-base">Sofort bestätigt</p>
             </button>
 
