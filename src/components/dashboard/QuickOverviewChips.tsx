@@ -23,7 +23,22 @@ export function QuickOverviewChip({
   value,
   highlight = false,
 }: QuickOverviewChipProps) {
-  if (value === 0 || value === '0' || value === '—') {
+  // If value is empty string, render label only (for custom formatted labels)
+  if (value === '' || value === 0 || value === '0' || value === '—') {
+    if (value === '') {
+      // Empty value means label contains everything
+      return (
+        <div
+          className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-medium ${
+            highlight
+              ? 'bg-amber-100 text-amber-800 ring-1 ring-amber-200'
+              : 'bg-gray-100 text-gray-700'
+          }`}
+        >
+          <span>{label}</span>
+        </div>
+      )
+    }
     return null // Don't render if zero
   }
 

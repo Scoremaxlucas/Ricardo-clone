@@ -30,7 +30,7 @@ export function DashboardTile({
   return (
     <Link
       href={href}
-      className="group relative flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:border-primary-300 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+      className="group relative flex flex-col rounded-lg border border-gray-200 bg-white p-6 shadow-sm transition-all hover:border-primary-300 hover:shadow-md hover:-translate-y-0.5 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 cursor-pointer"
       aria-label={ariaLabel || `Zu ${title} navigieren`}
     >
       {/* Icon and Badge/Count */}
@@ -38,17 +38,14 @@ export function DashboardTile({
         <div className={`inline-flex rounded-lg p-3 ${color}`}>
           <Icon className="h-6 w-6" />
         </div>
-        {badge || (
-          <span
-            className={`rounded-full px-2.5 py-1 text-xs font-semibold ${
-              count && count > 0
-                ? 'bg-primary-600 text-white'
-                : 'bg-gray-100 text-gray-500'
-            }`}
-          >
-            {displayCount}
-          </span>
-        )}
+        {/* Reserve space for badge but only show if count > 0 */}
+        <div className="min-w-[2rem] text-right">
+          {badge || (count !== undefined && count !== null && count > 0 ? (
+            <span className="inline-flex rounded-full bg-primary-600 px-2.5 py-1 text-xs font-semibold text-white">
+              {count}
+            </span>
+          ) : null)}
+        </div>
       </div>
 
       {/* Title */}

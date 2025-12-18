@@ -423,8 +423,8 @@ export default function MyWatchesPage() {
             )}
             {stats.pendingInvoices > 0 && (
               <QuickOverviewChip
-                label={`Offene Gebühren (CHF ${stats.pendingInvoiceAmount.toFixed(2)})`}
-                value={stats.pendingInvoices}
+                label={`Offene Rechnungen: ${stats.pendingInvoices} · CHF ${stats.pendingInvoiceAmount.toFixed(2)}`}
+                value=""
                 highlight={true}
               />
             )}
@@ -463,8 +463,8 @@ export default function MyWatchesPage() {
           </div>
         )}
 
-        {/* Dashboard Tiles */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        {/* Dashboard Tiles - Balanced grid for 5 cards */}
+        <div className="mb-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-[repeat(3,1fr)] xl:grid-cols-[repeat(auto-fit,minmax(260px,1fr))]">
           {menuItems.map(item => (
             <DashboardTile
               key={item.href}
@@ -482,7 +482,7 @@ export default function MyWatchesPage() {
         <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Link
             href="/sell"
-            className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-6 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 active:scale-[0.98]"
           >
             <Plus className="mr-2 h-5 w-5" />
             Neuen Artikel verkaufen
@@ -490,7 +490,7 @@ export default function MyWatchesPage() {
           {hasDraft && draftId && (
             <Link
               href={`/sell?draft=${draftId}`}
-              className="inline-flex items-center justify-center rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
             >
               <FileText className="mr-2 h-5 w-5" />
               Entwurf fortsetzen
@@ -502,7 +502,7 @@ export default function MyWatchesPage() {
         <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white p-4 shadow-lg md:hidden">
           <Link
             href="/sell"
-            className="flex w-full items-center justify-center rounded-lg bg-primary-600 px-6 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            className="flex w-full items-center justify-center rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 active:scale-[0.98]"
           >
             <Plus className="mr-2 h-5 w-5" />
             Neuen Artikel verkaufen
