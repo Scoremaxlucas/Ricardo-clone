@@ -8,23 +8,21 @@ import {
   AlertCircle,
   CheckCircle,
   Loader2,
-  User,
-  Sparkles,
-  Zap,
-  Flame,
-  Package,
-  FileText,
+  Settings,
   TrendingUp,
+  FileText,
   Wallet,
   Tag,
   Plus,
-  Settings,
+  Package,
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { DashboardTile } from '@/components/dashboard/DashboardTile'
+import { QuickOverviewChips, QuickOverviewChip } from '@/components/dashboard/QuickOverviewChips'
 
 interface BuyerInfo {
   id: string
@@ -75,7 +73,11 @@ export default function MyWatchesPage() {
     sold: 0,
     drafts: 0,
     offers: 0,
+    pendingInvoices: 0,
+    pendingInvoiceAmount: 0,
   })
+  const [hasDraft, setHasDraft] = useState(false)
+  const [draftId, setDraftId] = useState<string | null>(null)
 
   const loadItems = async () => {
     try {
@@ -98,13 +100,55 @@ export default function MyWatchesPage() {
         const draftsRes = await fetch('/api/drafts')
         if (draftsRes.ok) {
           const draftsData = await draftsRes.json()
+          const drafts = draftsData.drafts || []
           setStats(prev => ({
             ...prev,
-            drafts: (draftsData.drafts || []).length,
+            drafts: drafts.length,
           }))
+          setHasDraft(drafts.length > 0)
+          setDraftId(drafts.length > 0 ? drafts[0].id : null)
         }
       } catch (error) {
         console.error('Error loading drafts:', error)
+      }
+
+      // Lade offene Rechnungen
+      try {
+        const invoicesRes = await fetch('/api/invoices/my-invoices')
+        if (invoicesRes.ok) {
+          const invoicesData = await invoicesRes.json()
+          const invoices = invoicesData.invoices || []
+          const pending = invoices.filter(
+            (inv: any) => inv.status === 'pending' || inv.status === 'overdue'
+          )
+          const pendingAmount = pending.reduce((sum: number, inv: any) => sum + inv.total, 0)
+          setStats(prev => ({
+            ...prev,
+            pendingInvoices: pending.length,
+            pendingInvoiceAmount: pendingAmount,
+          }))
+        }
+      } catch (error) {
+        console.error('Error loading invoices:', error)
+      }
+
+      // Lade Preisvorschläge
+      try {
+        const offersRes = await fetch('/api/offers?type=received')
+        if (offersRes.ok) {
+          const offersData = await offersRes.json()
+          const offers = offersData.offers || []
+          // Zähle nur neue/offene Angebote
+          const newOffers = offers.filter(
+            (offer: any) => offer.status === 'pending' || offer.status === 'new'
+          )
+          setStats(prev => ({
+            ...prev,
+            offers: newOffers.length,
+          }))
+        }
+      } catch (error) {
+        console.error('Error loading offers:', error)
       }
     } catch (error) {
       console.error('Error loading items:', error)
@@ -288,8 +332,8 @@ export default function MyWatchesPage() {
 
   const menuItems = [
     {
-      title: t.myWatches.currentlySelling,
-      description: t.myWatches.currentlySellingDesc,
+      title: 'Aktive Angebote',
+      description: 'Ihre aktuell aktiven Verkaufsanzeigen',
       icon: TrendingUp,
       href: '/my-watches/selling/active',
       color: 'bg-green-100 text-green-600',
@@ -304,24 +348,24 @@ export default function MyWatchesPage() {
       count: stats.drafts,
     },
     {
-      title: t.myWatches.sold,
-      description: t.myWatches.soldDesc,
+      title: 'Verkaufte Artikel',
+      description: 'Erfolgreich verkaufte Artikel',
       icon: CheckCircle,
       href: '/my-watches/selling/sold',
       color: 'bg-blue-100 text-blue-600',
       count: stats.sold,
     },
     {
-      title: t.myWatches.fees,
-      description: t.myWatches.feesDesc,
+      title: 'Gebühren & Rechnungen',
+      description: 'Übersicht Ihrer Gebühren und Rechnungen',
       icon: Wallet,
       href: '/my-watches/selling/fees',
       color: 'bg-yellow-100 text-yellow-600',
-      count: 0,
+      count: stats.pendingInvoices > 0 ? stats.pendingInvoices : null,
     },
     {
-      title: t.myWatches.priceOffers,
-      description: t.myWatches.priceOffersDesc,
+      title: 'Preisvorschläge',
+      description: 'Erhaltene Preisvorschläge von Käufern',
       icon: Tag,
       href: '/my-watches/selling/offers',
       color: 'bg-purple-100 text-purple-600',
@@ -329,40 +373,68 @@ export default function MyWatchesPage() {
     },
   ]
 
+  // Quick overview chips data
+  const hasQuickOverview =
+    stats.active > 0 ||
+    stats.drafts > 0 ||
+    stats.pendingInvoices > 0 ||
+    stats.offers > 0
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 pb-24 sm:px-6 lg:px-8 md:pb-8">
         {/* Breadcrumb */}
         <div className="mb-4 text-sm text-gray-600">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
             {t.myWatches.homepage}
           </Link>
           <span className="mx-2">›</span>
-          <span>{t.myWatches.title}</span>
+          <span>Mein Verkaufen</span>
         </div>
 
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-primary-100 p-2">
-              <Settings className="h-6 w-6 text-primary-600" />
+              <Package className="h-6 w-6 text-primary-600" />
             </div>
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">{t.myWatches.title}</h1>
-              <p className="mt-1 text-gray-600">{t.myWatches.subtitle}</p>
+              <h1 className="text-3xl font-bold text-gray-900">Mein Verkaufen</h1>
+              <p className="mt-1 text-sm text-gray-600">Verwalten Sie Ihre Verkaufsanzeigen</p>
             </div>
           </div>
           {isVerified === true && (
             <div className="flex items-center rounded-lg border border-green-300 bg-green-100 px-4 py-2">
               <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
-              <span className="font-medium text-green-800">{t.myWatches.verified}</span>
+              <span className="text-sm font-medium text-green-800">Verifiziert</span>
             </div>
           )}
         </div>
 
+        {/* Quick Overview Chips */}
+        {hasQuickOverview && (
+          <QuickOverviewChips>
+            {stats.active > 0 && (
+              <QuickOverviewChip label="Aktive Angebote" value={stats.active} />
+            )}
+            {stats.drafts > 0 && (
+              <QuickOverviewChip label="Entwürfe" value={stats.drafts} />
+            )}
+            {stats.pendingInvoices > 0 && (
+              <QuickOverviewChip
+                label={`Offene Gebühren (CHF ${stats.pendingInvoiceAmount.toFixed(2)})`}
+                value={stats.pendingInvoices}
+                highlight={true}
+              />
+            )}
+            {stats.offers > 0 && (
+              <QuickOverviewChip label="Neue Preisvorschläge" value={stats.offers} highlight={true} />
+            )}
+          </QuickOverviewChips>
+        )}
+
         {/* Verifizierungs-Button/Banner */}
-        {/* Verifizierungs-Button/Banner - NUR anzeigen wenn NICHT verifiziert */}
         {isVerified === false && (
           <div className="mb-6">
             {verificationInProgress ? (
@@ -391,47 +463,49 @@ export default function MyWatchesPage() {
           </div>
         )}
 
-        {/* Dashboard Karten */}
+        {/* Dashboard Tiles */}
         <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {menuItems.map(item => {
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group relative cursor-pointer rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary-300 hover:shadow-xl"
-                onClick={e => {
-                  e.preventDefault()
-                  router.push(item.href)
-                }}
-              >
-                <div className="mb-4 flex items-start justify-between">
-                  <div className={`inline-flex rounded-lg p-3 ${item.color}`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  {item.count > 0 && (
-                    <span className="rounded-full bg-primary-600 px-2 py-1 text-xs font-bold text-white">
-                      {item.count}
-                    </span>
-                  )}
-                </div>
-                <h3 className="mb-2 text-xl font-semibold text-gray-900 transition-colors group-hover:text-primary-600">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-gray-600">{item.description}</p>
-              </Link>
-            )
-          })}
+          {menuItems.map(item => (
+            <DashboardTile
+              key={item.href}
+              title={item.title}
+              description={item.description}
+              icon={item.icon}
+              href={item.href}
+              count={item.count}
+              color={item.color}
+            />
+          ))}
         </div>
 
-        {/* Schnellzugriff: Artikel verkaufen */}
-        <div className="mb-8">
+        {/* Primary CTA + Resume Draft */}
+        <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center">
           <Link
             href="/sell"
-            className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary-700 hover:shadow-lg"
+            className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-6 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
           >
             <Plus className="mr-2 h-5 w-5" />
-            {t.myWatches.sellNewItem}
+            Neuen Artikel verkaufen
+          </Link>
+          {hasDraft && draftId && (
+            <Link
+              href={`/sell?draft=${draftId}`}
+              className="inline-flex items-center justify-center rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+            >
+              <FileText className="mr-2 h-5 w-5" />
+              Entwurf fortsetzen
+            </Link>
+          )}
+        </div>
+
+        {/* Mobile-only sticky CTA */}
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white p-4 shadow-lg md:hidden">
+          <Link
+            href="/sell"
+            className="flex w-full items-center justify-center rounded-lg bg-primary-600 px-6 py-3 font-medium text-white shadow-md transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          >
+            <Plus className="mr-2 h-5 w-5" />
+            Neuen Artikel verkaufen
           </Link>
         </div>
       </div>
@@ -451,7 +525,7 @@ export default function MyWatchesPage() {
         />
       )}
 
-      {/* Booster Modal */}
+      {/* Booster Modal - Keep existing implementation */}
       {showBoosterModal &&
         selectedItemForBooster &&
         (() => {
@@ -464,7 +538,7 @@ export default function MyWatchesPage() {
               <div className="max-h-[90vh] w-full max-w-3xl overflow-y-auto rounded-lg bg-white p-6 shadow-2xl">
                 <div className="mb-6">
                   <h2 className="mb-4 flex items-center text-2xl font-semibold text-gray-900">
-                    <Sparkles className="mr-2 h-5 w-5" />
+                    <Package className="mr-2 h-5 w-5" />
                     {currentBooster ? t.myWatches.boosterUpgrade : t.myWatches.addBooster}
                   </h2>
                   <p className="mb-4 text-sm text-gray-600">
@@ -515,54 +589,18 @@ export default function MyWatchesPage() {
                         .map((booster: any) => {
                           const isSelected = selectedBooster === booster.code
                           const isCurrent = booster.code === currentBoosterCode
-                          const isSuperBoost = booster.code === 'super-boost'
-                          const isTurboBoost = booster.code === 'turbo-boost'
-                          const isBoost = booster.code === 'boost'
-
-                          // Berechne Differenz
-                          const currentPrice = currentBooster?.price || 0
-                          const priceDifference = booster.price - currentPrice
-
-                          // Gaming-ähnliche Styles für jeden Booster (helles Design)
-                          let cardStyles = ''
-                          let badgeStyles = ''
-                          let priceStyles = ''
-
-                          if (isSuperBoost) {
-                            cardStyles = isSelected
-                              ? 'border-2 border-yellow-400 bg-gradient-to-br from-yellow-50 via-orange-50 to-red-50 shadow-lg ring-2 ring-yellow-200/50'
-                              : isCurrent
-                                ? 'border-2 border-yellow-300 bg-gradient-to-br from-yellow-50/80 via-orange-50/80 to-red-50/80'
-                                : 'border-2 border-yellow-300 bg-gradient-to-br from-yellow-50/50 via-orange-50/50 to-red-50/50 hover:border-yellow-400 hover:shadow-md'
-                            badgeStyles =
-                              'bg-gradient-to-r from-yellow-400 via-orange-500 to-red-500 text-white'
-                            priceStyles = 'text-yellow-600'
-                          } else if (isTurboBoost) {
-                            cardStyles = isSelected
-                              ? 'border-2 border-purple-500 bg-gradient-to-br from-purple-50 via-blue-50 to-indigo-50 shadow-lg ring-2 ring-purple-200/50'
-                              : isCurrent
-                                ? 'border-2 border-purple-300 bg-gradient-to-br from-purple-50/80 via-blue-50/80 to-indigo-50/80'
-                                : 'border-2 border-purple-300 bg-gradient-to-br from-purple-50/50 via-blue-50/50 to-indigo-50/50 hover:border-purple-400 hover:shadow-md'
-                            badgeStyles =
-                              'bg-gradient-to-r from-purple-500 via-blue-500 to-indigo-600 text-white'
-                            priceStyles = 'text-purple-600'
-                          } else if (isBoost) {
-                            cardStyles = isSelected
-                              ? 'border-2 border-emerald-500 bg-gradient-to-br from-emerald-50 via-green-50 to-teal-50 shadow-lg ring-2 ring-emerald-200/50'
-                              : isCurrent
-                                ? 'border-2 border-emerald-300 bg-gradient-to-br from-emerald-50/80 via-green-50/80 to-teal-50/80'
-                                : 'border-2 border-emerald-300 bg-gradient-to-br from-emerald-50/50 via-green-50/50 to-teal-50/50 hover:border-emerald-400 hover:shadow-md'
-                            badgeStyles =
-                              'bg-gradient-to-r from-emerald-500 via-green-500 to-teal-600 text-white'
-                            priceStyles = 'text-blue-600'
-                          }
+                          const priceDifference = booster.price - (currentBooster?.price || 0)
 
                           return (
                             <label
                               key={booster.id}
-                              className={`relative flex cursor-pointer flex-col rounded-lg p-3 transition-all ${
-                                isSelected ? 'scale-[1.02]' : 'hover:scale-[1.01]'
-                              } ${cardStyles}`}
+                              className={`relative flex cursor-pointer flex-col rounded-lg border-2 p-3 transition-all ${
+                                isSelected
+                                  ? 'border-primary-500 bg-primary-50'
+                                  : isCurrent
+                                    ? 'border-green-300 bg-green-50'
+                                    : 'border-gray-200 bg-white hover:border-gray-300'
+                              }`}
                             >
                               <input
                                 type="radio"
@@ -573,88 +611,25 @@ export default function MyWatchesPage() {
                                 className="sr-only"
                                 disabled={isCurrent}
                               />
-
                               {isCurrent && (
                                 <div className="absolute right-2 top-2 rounded-full bg-green-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
                                   {t.myWatches.active}
                                 </div>
                               )}
-
-                              {/* Badge/Tier Indicator */}
-                              <div className="mb-2 flex items-center justify-between">
-                                <div
-                                  className={`flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide ${badgeStyles}`}
-                                >
-                                  {isSuperBoost ? (
-                                    <>
-                                      <Sparkles className="h-3 w-3" />
-                                      <span>Premium</span>
-                                    </>
-                                  ) : isTurboBoost ? (
-                                    <>
-                                      <Zap className="h-3 w-3" />
-                                      <span>Turbo</span>
-                                    </>
-                                  ) : (
-                                    <>
-                                      <Flame className="h-3 w-3" />
-                                      <span>Boost</span>
-                                    </>
-                                  )}
-                                </div>
-                                {isSelected && !isCurrent && (
-                                  <div className="flex h-5 w-5 items-center justify-center rounded-full bg-green-500 shadow-md">
-                                    <svg
-                                      className="h-3 w-3 text-white"
-                                      fill="none"
-                                      stroke="currentColor"
-                                      viewBox="0 0 24 24"
-                                    >
-                                      <path
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth={3}
-                                        d="M5 13l4 4L19 7"
-                                      />
-                                    </svg>
-                                  </div>
-                                )}
+                              <div className="mb-2">
+                                <h3 className="text-base font-bold text-gray-900">{booster.name}</h3>
                               </div>
-
-                              {/* Booster Name */}
-                              <div className="mb-1">
-                                <h3
-                                  className={`mb-0.5 text-base font-bold ${isSuperBoost ? 'text-orange-900' : isTurboBoost ? 'text-purple-900' : 'text-blue-900'}`}
-                                >
-                                  {booster.name}
-                                </h3>
-                              </div>
-
-                              {/* Description */}
                               <p className="mb-2 flex-1 text-xs leading-relaxed text-gray-700">
                                 {booster.description}
                               </p>
-
-                              {/* Price Section */}
                               <div className="mt-auto border-t border-gray-200/50 pt-2">
                                 {currentBoosterCode && !isCurrent ? (
-                                  <div className="space-y-1">
-                                    <div className="flex items-baseline justify-between">
-                                      <span className="text-[10px] uppercase tracking-wide text-gray-500">
-                                        {t.myWatches.upgrade}
-                                      </span>
-                                      <div className={`text-lg font-bold ${priceStyles}`}>
-                                        CHF {priceDifference.toFixed(2)}
-                                      </div>
-                                    </div>
-                                    <div className="flex items-center justify-between text-[10px]">
-                                      <span className="text-gray-400 line-through">
-                                        CHF {booster.price.toFixed(2)}
-                                      </span>
-                                      <span className="text-green-600">
-                                        {t.myWatches.save} CHF{' '}
-                                        {(booster.price - priceDifference).toFixed(2)}
-                                      </span>
+                                  <div className="flex items-baseline justify-between">
+                                    <span className="text-[10px] uppercase tracking-wide text-gray-500">
+                                      {t.myWatches.upgrade}
+                                    </span>
+                                    <div className="text-lg font-bold text-primary-600">
+                                      CHF {priceDifference.toFixed(2)}
                                     </div>
                                   </div>
                                 ) : (
@@ -662,17 +637,12 @@ export default function MyWatchesPage() {
                                     <span className="text-[10px] uppercase tracking-wide text-gray-500">
                                       {t.myWatches.price}
                                     </span>
-                                    <div className={`text-lg font-bold ${priceStyles}`}>
+                                    <div className="text-lg font-bold text-primary-600">
                                       CHF {booster.price.toFixed(2)}
                                     </div>
                                   </div>
                                 )}
                               </div>
-
-                              {/* Special glow effect for Super-Boost when selected */}
-                              {isSuperBoost && isSelected && (
-                                <div className="pointer-events-none absolute inset-0 animate-pulse rounded-lg bg-gradient-to-r from-yellow-400/15 via-orange-400/15 to-red-400/15" />
-                              )}
                             </label>
                           )
                         })

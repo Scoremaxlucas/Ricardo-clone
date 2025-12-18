@@ -397,6 +397,43 @@ function SellPageContent() {
   // Restore draft on mount - Try server first, fallback to localStorage
   useEffect(() => {
     const restoreDraft = async () => {
+      // Check URL query parameter first (for "Entwurf fortsetzen" link)
+      const urlDraftId = searchParams.get('draft')
+      if (urlDraftId) {
+        try {
+          const response = await fetch(`/api/drafts/${urlDraftId}`)
+          if (response.ok) {
+            const data = await response.json()
+            const draft = data.draft
+            setFormData(prev => ({
+              ...prev,
+              ...draft.formData,
+              images: draft.draftImages?.map((img: any) => img.url) || draft.images || [],
+            }))
+            setSelectedCategory(draft.selectedCategory || '')
+            setSelectedSubcategory(draft.selectedSubcategory || '')
+            setSelectedBooster(draft.selectedBooster || 'none')
+            setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
+            setCurrentStep(draft.currentStep || 0)
+            if (draft.coverImageId && draft.draftImages) {
+              const coverIndex = draft.draftImages.findIndex(
+                (img: any) => img.id === draft.coverImageId
+              )
+              setTitleImageIndex(coverIndex >= 0 ? coverIndex : draft.titleImageIndex || 0)
+            } else {
+              setTitleImageIndex(draft.titleImageIndex || 0)
+            }
+            setCurrentDraftId(draft.id)
+            setShowDraftRestored(true)
+            setLastSavedAt(new Date(draft.updatedAt))
+            router.push(`/sell?step=${draft.currentStep}`)
+            return
+          }
+        } catch (error) {
+          console.error('[Draft] Error loading draft from URL:', error)
+        }
+      }
+
       // Check if we should restore a specific draft (from drafts page)
       const restoreDraftId = localStorage.getItem('helvenda_restore_draft_id')
       if (restoreDraftId) {
