@@ -11,6 +11,8 @@ import {
   Loader2,
   AlertCircle,
   Wallet,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 import { InvoicePaymentForm } from './InvoicePaymentForm'
@@ -88,6 +90,24 @@ export function InvoicePaymentMethods({
     }
   }
 
+  const copyAllBankDetails = async () => {
+    if (!paymentInfo) return
+
+    const formattedText = `Empfänger: ${paymentInfo.accountHolder}
+IBAN: ${paymentInfo.iban}
+BIC: ${paymentInfo.bic}
+Referenz: ${paymentInfo.reference}
+Betrag: ${paymentInfo.currency} ${paymentInfo.amount.toFixed(2)}
+Fälligkeitsdatum: ${new Date().toLocaleDateString('de-CH')}`
+
+    try {
+      await navigator.clipboard.writeText(formattedText)
+      toast.success('Alle Bankdaten kopiert!')
+    } catch (error) {
+      toast.error('Fehler beim Kopieren')
+    }
+  }
+
   const formatIban = (iban: string) => {
     return iban.replace(/(.{4})/g, '$1 ').trim()
   }
@@ -149,45 +169,57 @@ export function InvoicePaymentMethods({
     <div className="space-y-6">
       {/* Zahlungsmethoden-Auswahl */}
       {!selectedMethod && (
-        <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
-          <h3 className="mb-4 text-lg font-semibold text-gray-900">Zahlungsmethode wählen</h3>
+        <div className="rounded-lg bg-white p-4 shadow-sm sm:p-6">
+          <h3 className="mb-4 text-base font-semibold text-gray-900 sm:text-lg">Zahlungsmethode wählen</h3>
           <div className="grid grid-cols-1 gap-3 sm:gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {/* Kreditkarte / TWINT - kombiniert - Prominent auf Mobile */}
+            {/* Kreditkarte */}
             <button
               onClick={() => setSelectedMethod('card_or_twint')}
-              className="order-1 rounded-lg border-2 border-purple-300 bg-gradient-to-br from-purple-50 to-green-50 p-5 text-left transition-all hover:border-purple-500 hover:shadow-md sm:p-6"
+              className="group rounded-xl border-2 border-gray-200 bg-white p-5 text-left transition-all hover:border-primary-500 hover:bg-primary-50 hover:shadow-md sm:p-6"
             >
               <div className="mb-3 flex items-center gap-2">
-                <CreditCard className="h-8 w-8 text-purple-600 sm:h-10 sm:w-10" />
-                <Smartphone className="h-7 w-7 text-green-600 sm:h-8 sm:w-8" />
+                <CreditCard className="h-8 w-8 text-gray-500 group-hover:text-primary-600 sm:h-10 sm:w-10" />
               </div>
-              <h4 className="mb-1 text-base font-bold text-gray-900 sm:text-lg">
-                Kreditkarte / TWINT
+              <h4 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">
+                Kreditkarte
               </h4>
-              <p className="text-sm font-medium text-green-700 sm:text-base">Sofortige Zahlung</p>
-              <div className="mt-2 flex items-center gap-1 text-xs text-green-600 sm:text-sm">
-                <Smartphone className="h-3 w-3 sm:h-4 sm:w-4" />
-                <span>TWINT verfügbar</span>
+              <p className="text-sm text-gray-600 sm:text-base">Sofort bestätigt</p>
+            </button>
+
+            {/* TWINT */}
+            <button
+              onClick={() => setSelectedMethod('card_or_twint')}
+              className="group rounded-xl border-2 border-gray-200 bg-white p-5 text-left transition-all hover:border-primary-500 hover:bg-primary-50 hover:shadow-md sm:p-6"
+            >
+              <div className="mb-3 flex items-center gap-2">
+                <Smartphone className="h-8 w-8 text-gray-500 group-hover:text-primary-600 sm:h-10 sm:w-10" />
+                <span className="rounded bg-[#00A3FF] px-2 py-0.5 text-xs font-bold text-white">
+                  TWINT
+                </span>
               </div>
+              <h4 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">TWINT</h4>
+              <p className="text-sm text-gray-600 sm:text-base">Sofort bestätigt</p>
             </button>
 
             {/* Banküberweisung */}
             <button
               onClick={() => setSelectedMethod('bank')}
-              className="order-2 rounded-lg border-2 border-gray-200 p-5 text-left transition-all hover:border-blue-500 hover:bg-blue-50 sm:p-6"
+              className="group rounded-xl border-2 border-gray-200 bg-white p-5 text-left transition-all hover:border-primary-500 hover:bg-primary-50 hover:shadow-md sm:p-6"
             >
-              <Building2 className="mb-3 h-8 w-8 text-blue-600 sm:h-10 sm:w-10" />
-              <h4 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">Banküberweisung</h4>
-              <p className="text-sm text-gray-600 sm:text-base">Mit QR-Code oder manuell</p>
+              <Building2 className="mb-3 h-8 w-8 text-gray-500 group-hover:text-primary-600 sm:h-10 sm:w-10" />
+              <h4 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">
+                Banküberweisung (QR)
+              </h4>
+              <p className="text-sm text-gray-600 sm:text-base">Kann 1–2 Werktage dauern</p>
             </button>
 
             {/* PayPal */}
             {process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
               <button
                 onClick={() => setSelectedMethod('paypal')}
-                className="order-3 rounded-lg border-2 border-gray-200 p-5 text-left transition-all hover:border-blue-500 hover:bg-blue-50 sm:p-6"
+                className="group rounded-xl border-2 border-gray-200 bg-white p-5 text-left transition-all hover:border-primary-500 hover:bg-primary-50 hover:shadow-md sm:p-6"
               >
-                <Wallet className="mb-3 h-8 w-8 text-blue-600 sm:h-10 sm:w-10" />
+                <Wallet className="mb-3 h-8 w-8 text-gray-500 group-hover:text-primary-600 sm:h-10 sm:w-10" />
                 <h4 className="mb-1 text-base font-semibold text-gray-900 sm:text-lg">PayPal</h4>
                 <p className="text-sm text-gray-600 sm:text-base">Schnell und sicher</p>
               </button>
@@ -198,15 +230,15 @@ export function InvoicePaymentMethods({
 
       {/* Banküberweisung */}
       {selectedMethod === 'bank' && (
-        <div className="rounded-lg bg-white p-6 shadow-md">
+        <div className="rounded-lg bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <Building2 className="h-5 w-5 text-blue-600" />
+              <Building2 className="h-5 w-5 text-gray-500" />
               Banküberweisung
             </h3>
             <button
               onClick={() => setSelectedMethod(null)}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
             >
               Zurück
             </button>
@@ -214,12 +246,21 @@ export function InvoicePaymentMethods({
 
           <div className="space-y-4">
             {/* Betrag */}
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+            <div className="rounded-lg border border-primary-200 bg-primary-50 p-3">
               <div className="mb-1 text-sm text-gray-600">Zu zahlender Betrag</div>
-              <div className="text-2xl font-bold text-blue-700">
+              <div className="text-2xl font-bold text-primary-700">
                 {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
               </div>
             </div>
+
+            {/* Alles kopieren Button */}
+            <button
+              onClick={copyAllBankDetails}
+              className="w-full rounded-lg border-2 border-primary-500 bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
+            >
+              <Copy className="mr-2 inline h-4 w-4" />
+              Alles kopieren
+            </button>
 
             {/* Bankverbindung */}
             <div className="space-y-3">
@@ -300,13 +341,22 @@ export function InvoicePaymentMethods({
               <div>
                 <button
                   onClick={() => setShowQR(!showQR)}
-                  className="mb-2 flex items-center gap-2 text-sm font-medium text-blue-600 hover:text-blue-700"
+                  className="mb-2 flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition-colors hover:bg-gray-50"
                 >
-                  <QrCode className="h-4 w-4" />
-                  {showQR ? 'QR-Code ausblenden' : 'QR-Code anzeigen'}
+                  <div className="flex items-center gap-2">
+                    <QrCode className="h-4 w-4 text-gray-500" />
+                    <span className="text-sm font-medium text-gray-700">
+                      {showQR ? 'QR-Code ausblenden' : 'QR-Code anzeigen'}
+                    </span>
+                  </div>
+                  {showQR ? (
+                    <ChevronUp className="h-4 w-4 text-gray-400" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-gray-400" />
+                  )}
                 </button>
                 {showQR && (
-                  <div className="flex justify-center rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <div className="mt-2 flex justify-center rounded-lg border border-gray-200 bg-gray-50 p-4">
                     <img
                       src={paymentInfo.qrCodeDataUrl}
                       alt="QR-Code für Zahlung"
@@ -325,10 +375,10 @@ export function InvoicePaymentMethods({
             </div>
 
             {/* Hinweis */}
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+            <div className="rounded-lg border border-primary-200 bg-primary-50 p-3">
               <div className="flex items-start gap-2">
-                <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-                <div className="text-sm text-blue-800">
+                <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-600" />
+                <div className="text-sm text-primary-800">
                   <strong>Wichtig:</strong> Bitte überweisen Sie den Betrag bis zum
                   Fälligkeitsdatum. Verwenden Sie die Referenz bei der Überweisung, damit die
                   Zahlung zugeordnet werden kann.
@@ -341,15 +391,10 @@ export function InvoicePaymentMethods({
 
       {/* Kreditkarte / TWINT - kombiniert */}
       {selectedMethod === 'card_or_twint' && (
-        <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
+        <div className="rounded-lg bg-white p-4 shadow-sm sm:p-6">
           <div className="mb-4 flex items-center justify-between">
-            <h3 className="flex flex-col gap-1 text-base font-semibold text-gray-900 sm:flex-row sm:items-center sm:gap-2 sm:text-lg">
-              <div className="flex items-center gap-2">
-                <CreditCard className="h-5 w-5 text-purple-600 sm:h-6 sm:w-6" />
-                <span className="hidden text-gray-400 sm:inline">/</span>
-                <Smartphone className="h-5 w-5 text-green-600 sm:h-6 sm:w-6" />
-              </div>
-              <span className="sm:ml-0">Kreditkarte / TWINT</span>
+            <h3 className="text-lg font-semibold text-gray-900">
+              Kreditkarte / TWINT
             </h3>
             <button
               onClick={() => setSelectedMethod(null)}
@@ -361,23 +406,15 @@ export function InvoicePaymentMethods({
 
           <div className="space-y-4 sm:space-y-6">
             {/* Betrag */}
-            <div className="rounded-lg border-2 border-purple-200 bg-gradient-to-br from-purple-50 to-green-50 p-4">
+            <div className="rounded-lg border border-primary-200 bg-primary-50 p-4">
               <div className="mb-1 text-sm font-medium text-gray-600">Zu zahlender Betrag</div>
-              <div className="text-2xl font-bold text-purple-700 sm:text-3xl">
+              <div className="text-2xl font-bold text-primary-700 sm:text-3xl">
                 {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
               </div>
             </div>
 
             {/* Kreditkarte / TWINT - Einheitliches Formular */}
             <div className="border-t border-gray-200 pt-4 sm:pt-6">
-              <h4 className="mb-3 flex items-center gap-2 text-base font-semibold text-gray-900 sm:text-lg">
-                <div className="flex items-center gap-2">
-                  <CreditCard className="h-5 w-5 text-purple-600" />
-                  <span className="text-gray-400">/</span>
-                  <Smartphone className="h-5 w-5 text-green-600" />
-                </div>
-                <span>Kreditkarte / TWINT</span>
-              </h4>
               <InvoicePaymentForm
                 invoiceId={invoiceId}
                 invoiceNumber={invoiceNumber}
@@ -391,15 +428,15 @@ export function InvoicePaymentMethods({
 
       {/* PayPal */}
       {selectedMethod === 'paypal' && process.env.NEXT_PUBLIC_PAYPAL_CLIENT_ID && (
-        <div className="rounded-lg bg-white p-6 shadow-md">
+        <div className="rounded-lg bg-white p-6 shadow-sm">
           <div className="mb-4 flex items-center justify-between">
             <h3 className="flex items-center gap-2 text-lg font-semibold text-gray-900">
-              <Wallet className="h-5 w-5 text-blue-600" />
+              <Wallet className="h-5 w-5 text-gray-500" />
               PayPal-Zahlung
             </h3>
             <button
               onClick={() => setSelectedMethod(null)}
-              className="text-sm text-gray-600 hover:text-gray-900"
+              className="text-sm font-medium text-gray-600 hover:text-gray-900"
             >
               Zurück
             </button>
@@ -407,9 +444,9 @@ export function InvoicePaymentMethods({
 
           <div className="space-y-4">
             {/* Betrag */}
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+            <div className="rounded-lg border border-primary-200 bg-primary-50 p-3">
               <div className="mb-1 text-sm text-gray-600">Zu zahlender Betrag</div>
-              <div className="text-2xl font-bold text-blue-700">
+              <div className="text-2xl font-bold text-primary-700">
                 {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
               </div>
             </div>

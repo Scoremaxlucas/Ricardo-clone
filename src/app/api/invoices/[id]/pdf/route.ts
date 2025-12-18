@@ -231,42 +231,54 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // ============================================
     yPos += 10
 
-    // Tabellenkopf
-    pdf.setFillColor(245, 245, 245)
-    pdf.rect(margin, yPos - 5, contentWidth, 8, 'F')
+    // Check if we have line items
+    const hasLineItems = invoice.items && invoice.items.length > 0
 
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(0, 0, 0)
-    pdf.text('Beschreibung', margin + 2, yPos)
-    pdf.text('Betrag', pageWidth - margin - 2, yPos, { align: 'right' })
+    if (hasLineItems) {
+      // Tabellenkopf
+      pdf.setFillColor(245, 245, 245)
+      pdf.rect(margin, yPos - 5, contentWidth, 8, 'F')
 
-    yPos += 8
-    pdf.setDrawColor(200, 200, 200)
-    pdf.line(margin, yPos, pageWidth - margin, yPos)
-    yPos += 5
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(0, 0, 0)
+      pdf.text('Beschreibung', margin + 2, yPos)
+      pdf.text('Betrag', pageWidth - margin - 2, yPos, { align: 'right' })
 
-    // Rechnungsposten
-    pdf.setFontSize(9)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(0, 0, 0)
+      yPos += 8
+      pdf.setDrawColor(200, 200, 200)
+      pdf.line(margin, yPos, pageWidth - margin, yPos)
+      yPos += 5
 
-    for (const item of invoice.items) {
-      const description = item.watch
-        ? `${item.description}${item.watch.brand || item.watch.model ? ` (${[item.watch.brand, item.watch.model].filter(Boolean).join(' ')})` : ''}`
-        : item.description
+      // Rechnungsposten
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(0, 0, 0)
 
-      // Zeilenumbruch für lange Beschreibungen
-      const lines = pdf.splitTextToSize(description, contentWidth - 50)
+      for (const item of invoice.items) {
+        const description = item.watch
+          ? `${item.description}${item.watch.brand || item.watch.model ? ` (${[item.watch.brand, item.watch.model].filter(Boolean).join(' ')})` : ''}`
+          : item.description
 
-      for (let i = 0; i < lines.length; i++) {
-        pdf.text(lines[i], margin + 2, yPos)
-        if (i === 0) {
-          pdf.text(`CHF ${item.total.toFixed(2)}`, pageWidth - margin - 2, yPos, { align: 'right' })
+        // Zeilenumbruch für lange Beschreibungen
+        const lines = pdf.splitTextToSize(description, contentWidth - 50)
+
+        for (let i = 0; i < lines.length; i++) {
+          pdf.text(lines[i], margin + 2, yPos)
+          if (i === 0) {
+            pdf.text(`CHF ${item.total.toFixed(2)}`, pageWidth - margin - 2, yPos, { align: 'right' })
+          }
+          yPos += 5
         }
-        yPos += 5
+        yPos += 2
       }
-      yPos += 2
+    } else {
+      // Fallback: Show message if no line items
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('Rechnungsdetails: Siehe Plattformübersicht', margin + 2, yPos)
+      yPos += 8
     }
 
     // ============================================

@@ -4,10 +4,11 @@ import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useEffect, useState, useRef } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Wallet, Download, CheckCircle, Clock, FileText, CreditCard } from 'lucide-react'
+import { ArrowLeft, Wallet, CheckCircle, Clock, FileText } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { InvoicePaymentModal } from '@/components/payment/InvoicePaymentModal'
+import { InvoiceList } from '@/components/invoices/InvoiceList'
 
 interface InvoiceItem {
   id: string
@@ -155,30 +156,6 @@ export default function SellingFeesPage() {
     }
   }
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'paid':
-        return (
-          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-            <CheckCircle className="mr-1 h-3 w-3" />
-            Bezahlt
-          </span>
-        )
-      case 'overdue':
-        return (
-          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-            Überfällig
-          </span>
-        )
-      default:
-        return (
-          <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-            <Clock className="mr-1 h-3 w-3" />
-            Offen
-          </span>
-        )
-    }
-  }
 
   if (status === 'loading' || loading) {
     return (
@@ -221,7 +198,7 @@ export default function SellingFeesPage() {
         </div>
 
         {/* Statistiken */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-3">
+        <div className="mb-8 grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-3">
           <div className="rounded-lg bg-white p-6 shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -271,7 +248,7 @@ export default function SellingFeesPage() {
 
         {/* Rechnungsliste */}
         {invoices.length === 0 ? (
-          <div className="rounded-lg bg-white p-12 shadow-md">
+          <div className="rounded-lg bg-white p-12 shadow-sm">
             <div className="text-center">
               <FileText className="mx-auto mb-4 h-16 w-16 text-gray-400" />
               <h3 className="mb-2 text-lg font-semibold text-gray-900">Keine Rechnungen</h3>
@@ -279,169 +256,13 @@ export default function SellingFeesPage() {
             </div>
           </div>
         ) : (
-          <div className="space-y-4">
-            {invoices.map(invoice => (
-              <div
-                key={invoice.id}
-                ref={el => {
-                  invoiceRefs.current[invoice.id] = el
-                }}
-                className={`rounded-lg bg-white p-6 shadow-md transition-all duration-500 ${
-                  highlightedInvoiceId === invoice.id
-                    ? 'bg-primary-50 ring-4 ring-primary-500 ring-offset-2'
-                    : ''
-                }`}
-              >
-                <div className="mb-4 flex items-start justify-between">
-                  <div>
-                    <div className="mb-2 flex items-center gap-3">
-                      <h3 className="text-lg font-semibold text-gray-900">
-                        {invoice.invoiceNumber}
-                      </h3>
-                      {invoice.invoiceNumber.startsWith('KORR-') && (
-                        <span className="rounded bg-green-100 px-2 py-1 text-xs font-semibold text-green-800">
-                          Korrektur-Abrechnung
-                        </span>
-                      )}
-                      {getStatusBadge(invoice.status)}
-                    </div>
-                    {invoice.invoiceNumber.startsWith('KORR-') ? (
-                      <p className="text-sm font-medium text-green-600">
-                        Gutschrift - Keine Zahlung erforderlich
-                      </p>
-                    ) : (
-                      <>
-                        <p className="text-sm text-gray-600">
-                          Fälligkeitsdatum: {new Date(invoice.dueDate).toLocaleDateString('de-CH')}
-                        </p>
-                        {invoice.paidAt && (
-                          <p className="mt-1 text-sm text-green-600">
-                            Bezahlt am: {new Date(invoice.paidAt).toLocaleDateString('de-CH')}
-                          </p>
-                        )}
-                      </>
-                    )}
-                  </div>
-                  <div className="text-right">
-                    <p
-                      className={`text-2xl font-bold ${invoice.invoiceNumber.startsWith('KORR-') ? 'text-green-600' : 'text-gray-900'}`}
-                    >
-                      CHF{' '}
-                      {new Intl.NumberFormat('de-CH', {
-                        minimumFractionDigits: 2,
-                        maximumFractionDigits: 2,
-                      }).format(Math.abs(invoice.total))}
-                    </p>
-                    {invoice.invoiceNumber.startsWith('KORR-') && (
-                      <p className="mt-1 text-xs text-green-600">(Gutschrift)</p>
-                    )}
-                    <div className="mt-2 flex gap-2">
-                      {invoice.status !== 'paid' && !invoice.invoiceNumber.startsWith('KORR-') && (
-                        <button
-                          onClick={() => setSelectedInvoiceForPayment(invoice)}
-                          className="inline-flex items-center rounded bg-green-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-green-700"
-                        >
-                          <CreditCard className="mr-2 h-4 w-4" />
-                          Jetzt bezahlen
-                        </button>
-                      )}
-                      <button
-                        onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}
-                        className="inline-flex items-center rounded bg-primary-600 px-3 py-1.5 text-sm text-white transition-colors hover:bg-primary-700"
-                      >
-                        <Download className="mr-2 h-4 w-4" />
-                        PDF
-                      </button>
-                    </div>
-                  </div>
-                </div>
-
-                {/* Rechnungsposten */}
-                <div className="border-t pt-4">
-                  <div className="space-y-3">
-                    {invoice.items.map(item => {
-                      const itemVat = item.price * invoice.vatRate
-                      const itemTotal = item.price + itemVat
-                      return (
-                        <div
-                          key={item.id}
-                          className="border-b border-gray-100 pb-3 last:border-b-0"
-                        >
-                          <div className="mb-1 flex justify-between text-sm">
-                            <div>
-                              <span className="font-medium text-gray-700">{item.description}</span>
-                              {item.watch && (
-                                <span className="ml-2 text-gray-500">
-                                  ({item.watch.brand} {item.watch.model})
-                                </span>
-                              )}
-                            </div>
-                          </div>
-                          <div className="ml-2 flex justify-between text-xs text-gray-600">
-                            <div className="flex gap-4">
-                              <span>
-                                Netto: CHF{' '}
-                                {new Intl.NumberFormat('de-CH', {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }).format(item.price)}
-                              </span>
-                              <span>
-                                MwSt: CHF{' '}
-                                {new Intl.NumberFormat('de-CH', {
-                                  minimumFractionDigits: 2,
-                                  maximumFractionDigits: 2,
-                                }).format(itemVat)}
-                              </span>
-                            </div>
-                            <span className="font-semibold text-gray-900">
-                              CHF{' '}
-                              {new Intl.NumberFormat('de-CH', {
-                                minimumFractionDigits: 2,
-                                maximumFractionDigits: 2,
-                              }).format(itemTotal)}
-                            </span>
-                          </div>
-                        </div>
-                      )
-                    })}
-                  </div>
-                  <div className="mt-4 space-y-1 border-t pt-4">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Zwischensumme:</span>
-                      <span className="font-medium">
-                        CHF{' '}
-                        {new Intl.NumberFormat('de-CH', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }).format(invoice.subtotal)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">MwSt ({invoice.vatRate * 100}%):</span>
-                      <span className="font-medium">
-                        CHF{' '}
-                        {new Intl.NumberFormat('de-CH', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }).format(invoice.vatAmount)}
-                      </span>
-                    </div>
-                    <div className="flex justify-between border-t pt-2 text-lg font-semibold">
-                      <span>Total:</span>
-                      <span className="text-primary-600">
-                        CHF{' '}
-                        {new Intl.NumberFormat('de-CH', {
-                          minimumFractionDigits: 2,
-                          maximumFractionDigits: 2,
-                        }).format(invoice.total)}
-                      </span>
-                    </div>
-                  </div>
-                </div>
-              </div>
-            ))}
-          </div>
+          <InvoiceList
+            invoices={invoices}
+            onPay={invoice => setSelectedInvoiceForPayment(invoice)}
+            onDownloadPDF={handleDownloadPDF}
+            highlightedInvoiceId={highlightedInvoiceId}
+            invoiceRefs={invoiceRefs.current}
+          />
         )}
       </div>
       <Footer />
