@@ -122,6 +122,8 @@ interface WizardFooterProps {
   disabledReason?: string
   isSavingDraft?: boolean
   lastSavedAt?: Date | null
+  mode?: 'create' | 'edit'
+  policyLevel?: 'FULL' | 'PUBLISHED_LIMITED' | 'LIMITED_APPEND_ONLY' | 'READ_ONLY'
 }
 
 export function WizardFooter({
