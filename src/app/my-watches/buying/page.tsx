@@ -8,6 +8,8 @@ import { Package, Gavel, Tag, ShoppingBag, Star, Search, Settings } from 'lucide
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { DashboardTile } from '@/components/dashboard/DashboardTile'
+import { QuickOverviewChips, QuickOverviewChip } from '@/components/dashboard/QuickOverviewChips'
 
 interface Bid {
   id: string
@@ -263,10 +265,14 @@ export default function MyBuyingPage() {
     },
   ]
 
+  // Quick overview chips data
+  const hasQuickOverview =
+    stats.bidding > 0 || stats.offers > 0 || stats.purchased > 0 || stats.favorites > 0 || stats.searches > 0
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 sm:px-6 lg:px-8">
         {/* Breadcrumb */}
         <div className="mb-4 text-sm text-gray-600">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
@@ -277,45 +283,52 @@ export default function MyBuyingPage() {
         </div>
 
         {/* Header */}
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-3">
             <div className="rounded-lg bg-primary-100 p-2">
-              <Settings className="h-6 w-6 text-primary-600" />
+              <Package className="h-6 w-6 text-primary-600" />
             </div>
             <div>
               <h1 className="text-3xl font-bold text-gray-900">{t.myBuying.title}</h1>
-              <p className="mt-1 text-gray-600">{t.myBuying.subtitle}</p>
+              <p className="mt-1 text-sm text-gray-600">{t.myBuying.subtitle}</p>
             </div>
           </div>
         </div>
 
-        {/* Dashboard Karten */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {menuItems.map(item => {
-            const Icon = item.icon
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className="group relative cursor-pointer rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-all hover:border-primary-300 hover:shadow-xl"
-              >
-                <div className="mb-4 flex items-start justify-between">
-                  <div className={`inline-flex rounded-lg p-3 ${item.color}`}>
-                    <Icon className="h-6 w-6" />
-                  </div>
-                  {item.count > 0 && (
-                    <span className="rounded-full bg-primary-600 px-2 py-1 text-xs font-bold text-white">
-                      {item.count}
-                    </span>
-                  )}
-                </div>
-                <h3 className="mb-2 text-xl font-semibold text-gray-900 transition-colors group-hover:text-primary-600">
-                  {item.title}
-                </h3>
-                <p className="text-sm text-gray-600">{item.description}</p>
-              </Link>
-            )
-          })}
+        {/* Quick Overview Chips */}
+        {hasQuickOverview && (
+          <QuickOverviewChips>
+            {stats.bidding > 0 && (
+              <QuickOverviewChip label="Aktive Gebote" value={stats.bidding} />
+            )}
+            {stats.offers > 0 && (
+              <QuickOverviewChip label="Preisvorschläge" value={stats.offers} highlight={true} />
+            )}
+            {stats.purchased > 0 && (
+              <QuickOverviewChip label="Gekaufte Artikel" value={stats.purchased} />
+            )}
+            {stats.favorites > 0 && (
+              <QuickOverviewChip label="Favoriten" value={stats.favorites} />
+            )}
+            {stats.searches > 0 && (
+              <QuickOverviewChip label="Suchaufträge" value={stats.searches} />
+            )}
+          </QuickOverviewChips>
+        )}
+
+        {/* Dashboard Tiles - Responsive grid */}
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-3">
+          {menuItems.map(item => (
+            <DashboardTile
+              key={item.href}
+              title={item.title}
+              description={item.description}
+              icon={item.icon}
+              href={item.href}
+              count={item.count}
+              color={item.color}
+            />
+          ))}
         </div>
       </div>
       <Footer />
