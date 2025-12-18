@@ -422,6 +422,20 @@ Fälligkeitsdatum: ${new Date().toLocaleDateString('de-CH')}`
                 onSuccess={onPaymentSuccess}
               />
             </div>
+
+            {/* Alternative Zahlungsmethode */}
+            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <p className="text-sm text-gray-600">
+                Probleme mit der Kreditkarte?{' '}
+                <button
+                  type="button"
+                  onClick={() => setSelectedMethod('bank')}
+                  className="font-medium text-primary-600 hover:text-primary-700 underline"
+                >
+                  Verwenden Sie Banküberweisung
+                </button>
+              </p>
+            </div>
           </div>
         </div>
       )}

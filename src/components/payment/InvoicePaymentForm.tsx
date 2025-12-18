@@ -197,12 +197,19 @@ export function InvoicePaymentForm({
 
     const fetchPaymentIntent = async () => {
       try {
+        // Timeout-AbortController für den Fetch
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 Sekunden Timeout
+
         const res = await fetch(`/api/invoices/${invoiceId}/create-payment-intent`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
+          signal: controller.signal,
         })
+
+        clearTimeout(timeoutId)
 
         if (cancelled) return
 
@@ -236,11 +243,15 @@ export function InvoicePaymentForm({
           setError('Kein gültiges clientSecret erhalten')
           setLoading(false)
         }
-      } catch (err) {
-        if (!cancelled) {
-          setError('Fehler beim Laden der Zahlungsinformationen')
-          setLoading(false)
+      } catch (err: any) {
+        if (cancelled) return
+
+        if (err.name === 'AbortError') {
+          setError('Zeitüberschreitung beim Laden. Bitte versuchen Sie es erneut oder verwenden Sie Banküberweisung.')
+        } else {
+          setError('Fehler beim Laden der Zahlungsinformationen: ' + (err.message || 'Unbekannter Fehler'))
         }
+        setLoading(false)
       }
     }
 
@@ -270,13 +281,18 @@ export function InvoicePaymentForm({
     }
   }, [clientSecret])
 
-  // Loading State
+  // Loading State mit Timeout-Warnung
   if (loading || !ready) {
     return (
-      <div className="rounded-lg bg-white p-6 shadow-md">
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="ml-2 text-gray-600">Lade Zahlungsformular...</span>
+      <div className="rounded-lg bg-white p-6 shadow-sm">
+        <div className="flex flex-col items-center justify-center py-8">
+          <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
+          <span className="mt-3 text-sm text-gray-600">Lade Zahlungsformular...</span>
+          {loading && (
+            <p className="mt-2 text-xs text-gray-500">
+              Dauert es zu lange? Verwenden Sie alternativ Banküberweisung.
+            </p>
+          )}
         </div>
       </div>
     )
@@ -285,16 +301,19 @@ export function InvoicePaymentForm({
   // Error State
   if (error) {
     return (
-      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-        <div className="flex items-start gap-2">
-          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
-          <div className="text-sm text-yellow-800">
-            <strong>Hinweis:</strong> {error}
-            <br />
-            <br />
-            Bitte verwenden Sie eine andere Zahlungsmethode (Banküberweisung, TWINT oder PayPal)
-            oder kontaktieren Sie den Support.
+      <div className="space-y-4">
+        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
+            <div className="text-sm text-yellow-800">
+              <strong>Hinweis:</strong> {error}
+            </div>
           </div>
+        </div>
+        <div className="rounded-lg border border-primary-200 bg-primary-50 p-4">
+          <p className="text-sm text-primary-800">
+            <strong>Alternative:</strong> Verwenden Sie Banküberweisung für eine zuverlässige Zahlung.
+          </p>
         </div>
       </div>
     )
