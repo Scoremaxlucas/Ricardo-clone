@@ -1,5 +1,6 @@
 'use client'
 
+import { ProfileCompletionGate } from '@/components/account/ProfileCompletionGate'
 import { EditPolicy } from '@/lib/edit-policy'
 import { formatCHF } from '@/lib/product-utils'
 import {
@@ -16,7 +17,6 @@ import {
   Truck,
 } from 'lucide-react'
 import { useState } from 'react'
-import { ProfileCompletionGate } from '@/components/account/ProfileCompletionGate'
 
 interface StepShippingPaymentProps {
   formData: {

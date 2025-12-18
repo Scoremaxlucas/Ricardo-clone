@@ -1,10 +1,10 @@
 'use client'
 
-import { AlertCircle, ArrowRight, CheckCircle, X } from 'lucide-react'
+import { groupMissingFields, type MissingField, type PolicyContext } from '@/lib/profilePolicy'
+import { AlertCircle, ArrowRight, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect } from 'react'
-import { groupMissingFields, type MissingField, type PolicyContext } from '@/lib/profilePolicy'
 
 interface ProfileCompletionGateProps {
   context: PolicyContext
@@ -70,9 +70,7 @@ export function ProfileCompletionGate({
       case 'SELL_ENABLE_SHIPPING':
         return {
           title: title || 'Adresse erforderlich',
-          description:
-            description ||
-            'Für den Versand benötigen wir Ihre vollständige Adresse.',
+          description: description || 'Für den Versand benötigen wir Ihre vollständige Adresse.',
         }
       case 'PAYMENT_PROTECTION':
         return {
@@ -91,9 +89,7 @@ export function ProfileCompletionGate({
       case 'CHAT_ONLY':
         return {
           title: title || 'Anzeigename erforderlich',
-          description:
-            description ||
-            'Um Nachrichten zu senden, benötigen wir einen Anzeigenamen.',
+          description: description || 'Um Nachrichten zu senden, benötigen wir einen Anzeigenamen.',
         }
       default:
         return {

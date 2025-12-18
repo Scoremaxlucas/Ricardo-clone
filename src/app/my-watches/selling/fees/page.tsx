@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useState, useRef, useMemo } from 'react'
 import Link from 'next/link'
 import { ArrowLeft, Wallet, CheckCircle, Clock, FileText } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
@@ -223,6 +223,19 @@ export default function SellingFeesPage() {
     }
   }
 
+  // Statistiken berechnen (mit useMemo für Performance)
+  const totalPending = useMemo(
+    () =>
+      invoices
+        .filter(inv => inv.status === 'pending' || inv.status === 'overdue')
+        .reduce((sum, inv) => sum + inv.total, 0),
+    [invoices]
+  )
+
+  const totalPaid = useMemo(
+    () => invoices.filter(inv => inv.status === 'paid').reduce((sum, inv) => sum + inv.total, 0),
+    [invoices]
+  )
 
   if (status === 'loading' || loading) {
     return (
@@ -234,15 +247,6 @@ export default function SellingFeesPage() {
       </div>
     )
   }
-
-  // Statistiken berechnen
-  const totalPending = invoices
-    .filter(inv => inv.status === 'pending' || inv.status === 'overdue')
-    .reduce((sum, inv) => sum + inv.total, 0)
-
-  const totalPaid = invoices
-    .filter(inv => inv.status === 'paid')
-    .reduce((sum, inv) => sum + inv.total, 0)
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -349,6 +353,7 @@ export default function SellingFeesPage() {
             loadInvoices() // Reload invoices to update status
           }}
         />
+      )}
 
       {/* Profile Completion Gate */}
       <ProfileCompletionGate

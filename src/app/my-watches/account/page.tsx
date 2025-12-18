@@ -17,7 +17,10 @@ const accountSchema = z.object({
   street: z.string().trim().optional(),
   streetNumber: z
     .string()
-    .regex(/^[0-9]+[a-zA-Z]?(-[0-9]+[a-zA-Z]?)?(\s+[a-zA-Z])?$/, 'Ungültige Hausnummer (z.B. 6a, 12B, 4-6)')
+    .regex(
+      /^[0-9]+[a-zA-Z]?(-[0-9]+[a-zA-Z]?)?(\s+[a-zA-Z])?$/,
+      'Ungültige Hausnummer (z.B. 6a, 12B, 4-6)'
+    )
     .optional()
     .refine(val => !val || val.trim().length > 0, 'Hausnummer darf nicht leer sein'),
   postalCode: z
@@ -221,7 +224,9 @@ export default function AccountPage() {
               >
                 <User className="mr-2 h-4 w-4" />
                 Name
-                <span className="ml-1 text-xs font-normal text-gray-500">(bei Rechnungen erforderlich)</span>
+                <span className="ml-1 text-xs font-normal text-gray-500">
+                  (bei Rechnungen erforderlich)
+                </span>
               </label>
               <input
                 {...register('name')}
@@ -320,7 +325,9 @@ export default function AccountPage() {
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
                       Strasse
-                      <span className="ml-1 text-xs font-normal text-gray-500">(bei Versand/Zahlungsschutz/Rechnungen)</span>
+                      <span className="ml-1 text-xs font-normal text-gray-500">
+                        (bei Versand/Zahlungsschutz/Rechnungen)
+                      </span>
                     </label>
                     <input
                       {...register('street')}
@@ -349,7 +356,9 @@ export default function AccountPage() {
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
                       Hausnummer
-                      <span className="ml-1 text-xs font-normal text-gray-500">(bei Versand/Zahlungsschutz/Rechnungen)</span>
+                      <span className="ml-1 text-xs font-normal text-gray-500">
+                        (bei Versand/Zahlungsschutz/Rechnungen)
+                      </span>
                     </label>
                     <input
                       {...register('streetNumber')}
@@ -399,7 +408,9 @@ export default function AccountPage() {
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
                       Postleitzahl (PLZ)
-                      <span className="ml-1 text-xs font-normal text-gray-500">(bei Versand/Zahlungsschutz/Rechnungen)</span>
+                      <span className="ml-1 text-xs font-normal text-gray-500">
+                        (bei Versand/Zahlungsschutz/Rechnungen)
+                      </span>
                     </label>
                     <input
                       {...register('postalCode')}
@@ -427,7 +438,9 @@ export default function AccountPage() {
                   <div>
                     <label htmlFor="city" className="mb-2 block text-sm font-medium text-gray-700">
                       Ort
-                      <span className="ml-1 text-xs font-normal text-gray-500">(bei Versand/Zahlungsschutz/Rechnungen)</span>
+                      <span className="ml-1 text-xs font-normal text-gray-500">
+                        (bei Versand/Zahlungsschutz/Rechnungen)
+                      </span>
                     </label>
                     <input
                       {...register('city')}
@@ -496,7 +509,9 @@ export default function AccountPage() {
                 <div>
                   <label htmlFor="country" className="mb-2 block text-sm font-medium text-gray-700">
                     Land
-                    <span className="ml-1 text-xs font-normal text-gray-500">(bei Versand/Zahlungsschutz/Rechnungen)</span>
+                    <span className="ml-1 text-xs font-normal text-gray-500">
+                      (bei Versand/Zahlungsschutz/Rechnungen)
+                    </span>
                   </label>
                   <select
                     {...register('country')}

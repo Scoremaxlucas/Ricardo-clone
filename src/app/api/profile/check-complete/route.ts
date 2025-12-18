@@ -1,5 +1,3 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import {
@@ -7,6 +5,8 @@ import {
   type PolicyContext,
   type PolicyOptions,
 } from '@/lib/profilePolicy'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {
   try {
@@ -27,10 +27,7 @@ export async function POST(request: NextRequest) {
       'CHAT_ONLY',
     ]
     if (!validContexts.includes(context)) {
-      return NextResponse.json(
-        { message: 'Ungültiger Kontext' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Ungültiger Kontext' }, { status: 400 })
     }
 
     // Load user profile

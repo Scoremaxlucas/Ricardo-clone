@@ -62,10 +62,7 @@ export async function POST(request: NextRequest) {
       }
       // If country is provided, it should be Switzerland
       if (country.trim() !== 'Schweiz') {
-        return NextResponse.json(
-          { message: 'Land muss "Schweiz" sein' },
-          { status: 400 }
-        )
+        return NextResponse.json({ message: 'Land muss "Schweiz" sein' }, { status: 400 })
       }
     }
 

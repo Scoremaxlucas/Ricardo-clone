@@ -1,37 +1,27 @@
 'use client'
 
-import { CategoryFields } from '@/components/forms/category-fields'
+import { ProfileCompletionGate } from '@/components/account/ProfileCompletionGate'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
-import { useLanguage } from '@/contexts/LanguageContext'
-import { getCategoryConfig } from '@/data/categories'
 import {
-  StepProgress,
-  WizardFooter,
   StepCategorySelection,
-  StepImages,
   StepDetails,
+  StepImages,
   StepPrice,
-  StepShippingPayment,
+  StepProgress,
   StepReviewPublish,
+  StepShippingPayment,
+  WizardFooter,
 } from '@/components/wizard'
-import { saveDraft, loadDraft, clearDraft } from '@/lib/draft-storage'
-import {
-  AlertCircle,
-  CheckCircle,
-  Loader2,
-  Shield,
-  Sparkles,
-  X
-} from 'lucide-react'
-import { ProfileCompletionGate } from '@/components/account/ProfileCompletionGate'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { clearDraft, loadDraft, saveDraft } from '@/lib/draft-storage'
+import { AlertCircle, CheckCircle, Loader2, Shield, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState, useRef, useCallback, Suspense } from 'react'
+import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
-import { compressImage } from '@/lib/image-compression'
 
 // Lazy load AIDetection to avoid bundling TensorFlow.js on every page
 const AIDetection = dynamic(
@@ -174,7 +164,11 @@ function SellPageContent() {
       case 3: // Price
         const price = parseFloat(formData.price)
         if (!price || price <= 0) return false
-        if (formData.isAuction && (!formData.auctionDuration || parseInt(formData.auctionDuration) < 1)) return false
+        if (
+          formData.isAuction &&
+          (!formData.auctionDuration || parseInt(formData.auctionDuration) < 1)
+        )
+          return false
         if (formData.buyNowPrice) {
           const buyNow = parseFloat(formData.buyNowPrice)
           if (buyNow > 0 && buyNow <= price) return false
@@ -206,14 +200,16 @@ function SellPageContent() {
       case 3:
         const price = parseFloat(formData.price)
         if (!price || price <= 0) return 'Bitte geben Sie einen gültigen Preis ein'
-        if (formData.isAuction && !formData.auctionDuration) return 'Bitte wählen Sie die Auktionsdauer'
+        if (formData.isAuction && !formData.auctionDuration)
+          return 'Bitte wählen Sie die Auktionsdauer'
         if (formData.buyNowPrice) {
           const buyNow = parseFloat(formData.buyNowPrice)
           if (buyNow > 0 && buyNow <= price) return 'Sofortkaufpreis muss höher als Startpreis sein'
         }
         return undefined
       case 4:
-        if (formData.shippingMethods.length === 0) return 'Bitte wählen Sie mindestens eine Lieferart'
+        if (formData.shippingMethods.length === 0)
+          return 'Bitte wählen Sie mindestens eine Lieferart'
         return undefined
       case 5:
         return undefined
@@ -239,38 +235,41 @@ function SellPageContent() {
   }
 
   // Navigation
-  const goToStep = useCallback((step: number, skipValidation: boolean = false) => {
-    const clampedStep = Math.max(0, Math.min(WIZARD_STEPS.length - 1, step))
+  const goToStep = useCallback(
+    (step: number, skipValidation: boolean = false) => {
+      const clampedStep = Math.max(0, Math.min(WIZARD_STEPS.length - 1, step))
 
-    // Always allow backward navigation
-    if (clampedStep < currentStep) {
-      setCurrentStep(clampedStep)
-      router.push(`/sell?step=${clampedStep}`, { scroll: false })
-      return
-    }
-
-    // Forward navigation: validate current step
-    if (!skipValidation && clampedStep > currentStep) {
-      if (!validateStep(currentStep)) {
-        toast.error('Bitte füllen Sie alle erforderlichen Felder aus', {
-            position: 'top-right',
-          duration: 3000,
-        })
+      // Always allow backward navigation
+      if (clampedStep < currentStep) {
+        setCurrentStep(clampedStep)
+        router.push(`/sell?step=${clampedStep}`, { scroll: false })
         return
       }
-    }
 
-    // Check max allowed step
-    const maxAllowed = computeMaxAllowedStep()
-    if (clampedStep > maxAllowed) {
-      setCurrentStep(maxAllowed)
-      router.push(`/sell?step=${maxAllowed}`, { scroll: false })
-      return
-    }
+      // Forward navigation: validate current step
+      if (!skipValidation && clampedStep > currentStep) {
+        if (!validateStep(currentStep)) {
+          toast.error('Bitte füllen Sie alle erforderlichen Felder aus', {
+            position: 'top-right',
+            duration: 3000,
+          })
+          return
+        }
+      }
 
-    setCurrentStep(clampedStep)
-    router.push(`/sell?step=${clampedStep}`, { scroll: false })
-  }, [currentStep, router, selectedCategory, formData])
+      // Check max allowed step
+      const maxAllowed = computeMaxAllowedStep()
+      if (clampedStep > maxAllowed) {
+        setCurrentStep(maxAllowed)
+        router.push(`/sell?step=${maxAllowed}`, { scroll: false })
+        return
+      }
+
+      setCurrentStep(clampedStep)
+      router.push(`/sell?step=${clampedStep}`, { scroll: false })
+    },
+    [currentStep, router, selectedCategory, formData]
+  )
 
   const nextStep = () => {
     // Mark current step as touched when user tries to proceed
@@ -280,11 +279,11 @@ function SellPageContent() {
       goToStep(currentStep + 1)
     } else {
       toast.error('Bitte füllen Sie alle erforderlichen Felder aus', {
-              position: 'top-right',
-              duration: 3000,
-            })
-          }
-        }
+        position: 'top-right',
+        duration: 3000,
+      })
+    }
+  }
 
   const prevStep = () => {
     goToStep(currentStep - 1, true)
@@ -358,7 +357,16 @@ function SellPageContent() {
     } finally {
       setIsSavingDraft(false)
     }
-  }, [formData, titleImageIndex, selectedCategory, selectedSubcategory, selectedBooster, paymentProtectionEnabled, currentStep, session?.user])
+  }, [
+    formData,
+    titleImageIndex,
+    selectedCategory,
+    selectedSubcategory,
+    selectedBooster,
+    paymentProtectionEnabled,
+    currentStep,
+    session?.user,
+  ])
 
   // Scroll to top and focus heading when step changes
   useEffect(() => {
@@ -411,7 +419,9 @@ function SellPageContent() {
             setCurrentStep(draft.currentStep || 0)
             // Set titleImageIndex based on coverImageId if available
             if (draft.coverImageId && draft.draftImages) {
-              const coverIndex = draft.draftImages.findIndex((img: any) => img.id === draft.coverImageId)
+              const coverIndex = draft.draftImages.findIndex(
+                (img: any) => img.id === draft.coverImageId
+              )
               setTitleImageIndex(coverIndex >= 0 ? coverIndex : draft.titleImageIndex || 0)
             } else {
               setTitleImageIndex(draft.titleImageIndex || 0)
@@ -464,7 +474,8 @@ function SellPageContent() {
               ...prev,
               ...latestDraft.formData,
               // Use draftImages URLs if available, otherwise fallback to images array
-              images: latestDraft.draftImages?.map((img: any) => img.url) || latestDraft.images || [],
+              images:
+                latestDraft.draftImages?.map((img: any) => img.url) || latestDraft.images || [],
             }))
             setSelectedCategory(latestDraft.selectedCategory || '')
             setSelectedSubcategory(latestDraft.selectedSubcategory || '')
@@ -473,7 +484,9 @@ function SellPageContent() {
             setCurrentStep(latestDraft.currentStep || 0)
             // Set titleImageIndex based on coverImageId if available
             if (latestDraft.coverImageId && latestDraft.draftImages) {
-              const coverIndex = latestDraft.draftImages.findIndex((img: any) => img.id === latestDraft.coverImageId)
+              const coverIndex = latestDraft.draftImages.findIndex(
+                (img: any) => img.id === latestDraft.coverImageId
+              )
               setTitleImageIndex(coverIndex >= 0 ? coverIndex : latestDraft.titleImageIndex || 0)
             } else {
               setTitleImageIndex(latestDraft.titleImageIndex || 0)
@@ -567,10 +580,10 @@ function SellPageContent() {
           setIsVerified(userData.verified === true)
           setVerificationStatus(userData.verificationStatus || null)
           setVerificationInProgress(userData.verificationStatus === 'pending')
-          }
-        } catch (error) {
-          console.error('Error loading verification status:', error)
-        } finally {
+        }
+      } catch (error) {
+        console.error('Error loading verification status:', error)
+      } finally {
         setIsCheckingVerification(false)
       }
     }
@@ -585,7 +598,12 @@ function SellPageContent() {
     imageUrl: string | null,
     confidence: number
   ) => {
-    console.log('[sell/page] Kategorie erkannt:', { category, subcategory, productName, confidence })
+    console.log('[sell/page] Kategorie erkannt:', {
+      category,
+      subcategory,
+      productName,
+      confidence,
+    })
 
     setSelectedCategory(category)
     setSelectedSubcategory(subcategory || '')
@@ -666,7 +684,7 @@ function SellPageContent() {
             if (currentIndex < fullText.length) {
               setFormData(prev => ({
                 ...prev,
-                title: fullText.substring(0, currentIndex + 1)
+                title: fullText.substring(0, currentIndex + 1),
               }))
               currentIndex++
             } else {
@@ -716,14 +734,22 @@ function SellPageContent() {
 
   // Profile completion gate state
   const [profileGateOpen, setProfileGateOpen] = useState(false)
-  const [profileGateContext, setProfileGateContext] = useState<'SELL_PUBLISH' | 'SELL_ENABLE_SHIPPING' | 'PAYMENT_PROTECTION'>('SELL_PUBLISH')
+  const [profileGateContext, setProfileGateContext] = useState<
+    'SELL_PUBLISH' | 'SELL_ENABLE_SHIPPING' | 'PAYMENT_PROTECTION'
+  >('SELL_PUBLISH')
   const [profileGateMissingFields, setProfileGateMissingFields] = useState<any[]>([])
 
   // Check profile completeness before publish
   const checkProfileBeforePublish = async (): Promise<boolean> => {
     try {
-      const hasShipping = formData.shippingMethods && formData.shippingMethods.length > 0 && !formData.shippingMethods.includes('pickup')
-      const isPickupOnly = formData.shippingMethods && formData.shippingMethods.length === 1 && formData.shippingMethods[0] === 'pickup'
+      const hasShipping =
+        formData.shippingMethods &&
+        formData.shippingMethods.length > 0 &&
+        !formData.shippingMethods.includes('pickup')
+      const isPickupOnly =
+        formData.shippingMethods &&
+        formData.shippingMethods.length === 1 &&
+        formData.shippingMethods[0] === 'pickup'
 
       // Determine context based on listing options
       let context: 'SELL_PUBLISH' | 'SELL_ENABLE_SHIPPING' | 'PAYMENT_PROTECTION' = 'SELL_PUBLISH'
@@ -794,15 +820,19 @@ function SellPageContent() {
       // Clean description
       let cleanDescription = ''
       if (formData.description && typeof formData.description === 'string') {
-        if (!formData.description.startsWith('data:image/') && formData.description.length < 10000) {
-            cleanDescription = formData.description.trim()
+        if (
+          !formData.description.startsWith('data:image/') &&
+          formData.description.length < 10000
+        ) {
+          cleanDescription = formData.description.trim()
         }
       }
 
       // Clean images
-      let cleanImages = formData.images.filter(img =>
-            typeof img === 'string' &&
-        (img.startsWith('data:image/') || img.startsWith('http://') || img.startsWith('https://'))
+      let cleanImages = formData.images.filter(
+        img =>
+          typeof img === 'string' &&
+          (img.startsWith('data:image/') || img.startsWith('http://') || img.startsWith('https://'))
       )
       cleanImages = Array.from(new Set(cleanImages))
 
@@ -875,17 +905,17 @@ function SellPageContent() {
         router.push('/my-watches')
       } else {
         const errorData = await response.json().catch(() => ({}))
-          toast.error(errorData.message || 'Ein Fehler ist aufgetreten', {
-            position: 'top-right',
-            duration: 5000,
-          })
+        toast.error(errorData.message || 'Ein Fehler ist aufgetreten', {
+          position: 'top-right',
+          duration: 5000,
+        })
         setIsLoading(false)
       }
     } catch (err: any) {
       console.error('Error submitting form:', err)
       toast.error(`Ein Fehler ist aufgetreten: ${err?.message || 'Unbekannter Fehler'}`, {
-          position: 'top-right',
-          duration: 5000,
+        position: 'top-right',
+        duration: 5000,
       })
       setIsLoading(false)
     }
@@ -902,7 +932,8 @@ function SellPageContent() {
 
   // Not logged in
   if (!session) {
-    const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/sell'
+    const currentUrl =
+      typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/sell'
     router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`)
     return null
   }
@@ -925,9 +956,9 @@ function SellPageContent() {
 
   // Not verified
   if (isVerified === false) {
-  return (
-    <div className="min-h-screen bg-gray-50">
-      <Header />
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
         <div className="mx-auto max-w-2xl px-4 py-16">
           <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
             <AlertCircle className="mx-auto mb-6 h-16 w-16 text-yellow-500" />
@@ -954,7 +985,7 @@ function SellPageContent() {
   }
 
   // Main wizard UI
-                            return (
+  return (
     <div className="min-h-screen bg-gray-50">
       <Header />
 
@@ -963,26 +994,29 @@ function SellPageContent() {
         <div className="fixed right-4 top-20 z-50 flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-3 shadow-lg">
           <CheckCircle className="h-5 w-5 text-green-600" />
           <span className="text-sm text-green-800">Entwurf wiederhergestellt</span>
-                      <button
-                        onClick={() => {
+          <button
+            onClick={() => {
               clearDraft()
               setShowDraftRestored(false)
             }}
             className="ml-2 text-xs text-green-600 underline hover:text-green-800"
           >
             Verwerfen
-                      </button>
+          </button>
           <button
             onClick={() => setShowDraftRestored(false)}
             className="ml-1 text-green-600 hover:text-green-800"
           >
             <X className="h-4 w-4" />
           </button>
-                                </div>
-                              )}
+        </div>
+      )}
 
       {/* Wizard container with min-height to prevent global footer interference */}
-      <div ref={wizardContainerRef} className="mx-auto min-h-[calc(100vh-200px)] max-w-4xl px-4 py-4 md:py-8">
+      <div
+        ref={wizardContainerRef}
+        className="mx-auto min-h-[calc(100vh-200px)] max-w-4xl px-4 py-4 md:py-8"
+      >
         {/* Back link */}
         <div className="mb-6">
           <Link
@@ -991,7 +1025,7 @@ function SellPageContent() {
           >
             ← Zurück zu Mein Verkaufen
           </Link>
-                        </div>
+        </div>
 
         {/* Page title */}
         <div className="mb-8 text-center">
@@ -999,19 +1033,23 @@ function SellPageContent() {
           <p className="mt-2 text-gray-600">
             Wählen Sie zunächst die Kategorie und füllen Sie dann alle relevanten Felder aus.
           </p>
-                      </div>
+        </div>
 
         {/* Progress indicator */}
         <StepProgress
           steps={WIZARD_STEPS}
           currentStep={currentStep}
           completedSteps={getCompletedSteps()}
-          onStepClick={(step) => goToStep(step, false)}
+          onStepClick={step => goToStep(step, false)}
         />
 
         {/* Form - prevent default submission, only submit via explicit button click */}
         {/* Added pb-24 for sticky footer and chat bubble spacing */}
-        <form ref={formRef} onSubmit={(e) => e.preventDefault()} className="rounded-2xl bg-white p-4 pb-28 shadow-lg sm:p-6 md:p-8 sm:pb-28">
+        <form
+          ref={formRef}
+          onSubmit={e => e.preventDefault()}
+          className="rounded-2xl bg-white p-4 pb-28 shadow-lg sm:p-6 sm:pb-28 md:p-8"
+        >
           {/* Step 0: Category */}
           {currentStep === 0 && (
             <StepCategorySelection
@@ -1046,8 +1084,8 @@ function SellPageContent() {
               formData={formData}
               titleImageIndex={titleImageIndex}
               draftId={currentDraftId}
-              onImagesChange={(images) => setFormData(prev => ({ ...prev, images }))}
-              onTitleImageChange={async (index) => {
+              onImagesChange={images => setFormData(prev => ({ ...prev, images }))}
+              onTitleImageChange={async index => {
                 setTitleImageIndex(index)
                 // Update cover image in DB if draftId exists
                 if (currentDraftId && formData.images[index]) {
@@ -1084,7 +1122,7 @@ function SellPageContent() {
               isGeneratingTitle={isGeneratingTitle}
               isGeneratingDescription={isGeneratingDescription}
               onInputChange={handleInputChange}
-              onFormDataChange={(data) => setFormData(prev => ({ ...prev, ...data }))}
+              onFormDataChange={data => setFormData(prev => ({ ...prev, ...data }))}
               onGenerateTitle={handleGenerateTitle}
               onGenerateDescription={handleGenerateDescription}
               setExclusiveSupply={setExclusiveSupply}
@@ -1094,9 +1132,9 @@ function SellPageContent() {
           {/* Step 3: Price */}
           {currentStep === 3 && (
             <StepPrice
-                    formData={formData}
+              formData={formData}
               onInputChange={handleInputChange}
-              onFormDataChange={(data) => setFormData(prev => ({ ...prev, ...data }))}
+              onFormDataChange={data => setFormData(prev => ({ ...prev, ...data }))}
             />
           )}
 
@@ -1124,7 +1162,7 @@ function SellPageContent() {
               selectedBooster={selectedBooster}
               paymentProtectionEnabled={paymentProtectionEnabled}
               titleImageIndex={titleImageIndex}
-              onGoToStep={(step) => goToStep(step, true)}
+              onGoToStep={step => goToStep(step, true)}
               onBoosterChange={setSelectedBooster}
               isSubmitting={isLoading}
             />
@@ -1145,30 +1183,32 @@ function SellPageContent() {
             isSubmitting={isLoading}
             disabledReason={getDisabledReason(currentStep)}
           />
-                </form>
-              </div>
+        </form>
+      </div>
 
-          {/* Profile Completion Gate */}
-          <ProfileCompletionGate
-            context={profileGateContext}
-            missingFields={profileGateMissingFields}
-            isOpen={profileGateOpen}
-            onClose={() => setProfileGateOpen(false)}
-            blocking={true}
-          />
+      {/* Profile Completion Gate */}
+      <ProfileCompletionGate
+        context={profileGateContext}
+        missingFields={profileGateMissingFields}
+        isOpen={profileGateOpen}
+        onClose={() => setProfileGateOpen(false)}
+        blocking={true}
+      />
 
-          <Footer />
-        </div>
-      )
-    }
+      <Footer />
+    </div>
+  )
+}
 
 export default function SellPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
-      </div>
-    }>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        </div>
+      }
+    >
       <SellPageContent />
     </Suspense>
   )
