@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, useMemo } from 'react'
+import { Elements, PaymentElement, useElements, useStripe } from '@stripe/react-stripe-js'
 import { loadStripe } from '@stripe/stripe-js'
-import { Elements, PaymentElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { CreditCard, Loader2, AlertCircle } from 'lucide-react'
-import { toast } from 'react-hot-toast'
+import { AlertCircle, CreditCard, Loader2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useEffect, useMemo, useState } from 'react'
+import { toast } from 'react-hot-toast'
 
 const stripeKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY || ''
 const stripePromise = stripeKey.trim() !== '' ? loadStripe(stripeKey.trim()) : null
@@ -29,43 +29,45 @@ function CheckoutForm({
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  
+
   // Deaktiviere Link nach dem Laden des Elements
   useEffect(() => {
     if (typeof window !== 'undefined') {
       // Link komplett verstecken durch CSS
       const hideLink = () => {
         // Verstecke Link-Button und Link-Authentifizierung
-        const linkButtons = document.querySelectorAll('[data-testid="link-button"], [data-testid="link-authentication-element"], [id*="link"], .LinkButton, [class*="Link"]')
+        const linkButtons = document.querySelectorAll(
+          '[data-testid="link-button"], [data-testid="link-authentication-element"], [id*="link"], .LinkButton, [class*="Link"]'
+        )
         linkButtons.forEach(el => {
-          (el as HTMLElement).style.display = 'none'
+          ;(el as HTMLElement).style.display = 'none'
         })
-        
+
         // Verstecke auch Text der Link erwähnt
         const allElements = document.querySelectorAll('*')
         allElements.forEach(el => {
           const text = el.textContent || ''
-          if (text.includes('Link') && text.includes('schneller') || text.includes('sicherer')) {
+          if ((text.includes('Link') && text.includes('schneller')) || text.includes('sicherer')) {
             const parent = el.closest('[class*="payment"], [class*="wallet"], [class*="element"]')
             if (parent) {
-              (parent as HTMLElement).style.display = 'none'
+              ;(parent as HTMLElement).style.display = 'none'
             }
           }
         })
       }
-      
+
       // Sofort ausführen
       hideLink()
-      
+
       // Auch nach kurzer Verzögerung (wenn Stripe Element geladen ist)
       setTimeout(hideLink, 500)
       setTimeout(hideLink, 1000)
       setTimeout(hideLink, 2000)
-      
+
       // Observer für dynamisch hinzugefügte Elemente
       const observer = new MutationObserver(hideLink)
       observer.observe(document.body, { childList: true, subtree: true })
-      
+
       return () => observer.disconnect()
     }
   }, [elements])
@@ -181,14 +183,14 @@ export function InvoicePaymentForm({
 
   useEffect(() => {
     // Prüfe Stripe Key
-    if (stripeKey.trim() === '') {
-      setError('Stripe ist nicht konfiguriert')
+    if (!stripeKey || stripeKey.trim() === '') {
+      setError('Kreditkartenzahlung ist derzeit nicht verfügbar. Bitte verwenden Sie Banküberweisung.')
       setLoading(false)
       return
     }
 
     if (!stripePromise) {
-      setError('Stripe konnte nicht initialisiert werden')
+      setError('Kreditkartenzahlung ist derzeit nicht verfügbar. Bitte verwenden Sie Banküberweisung.')
       setLoading(false)
       return
     }
@@ -199,7 +201,7 @@ export function InvoicePaymentForm({
       try {
         // Timeout-AbortController für den Fetch
         const controller = new AbortController()
-        const timeoutId = setTimeout(() => controller.abort(), 10000) // 10 Sekunden Timeout
+        const timeoutId = setTimeout(() => controller.abort(), 8000) // 8 Sekunden Timeout
 
         const res = await fetch(`/api/invoices/${invoiceId}/create-payment-intent`, {
           method: 'POST',
@@ -215,7 +217,16 @@ export function InvoicePaymentForm({
 
         if (!res.ok) {
           const errorData = await res.json().catch(() => ({}))
-          const errorMessage = errorData.message || 'Fehler beim Erstellen des Payment Intents'
+          console.error('Payment Intent Error:', errorData)
+          
+          // Benutzerfreundliche Fehlermeldung
+          let errorMessage = 'Kreditkartenzahlung ist derzeit nicht verfügbar.'
+          if (errorData.error === 'STRIPE_SECRET_KEY_MISSING' || errorData.error === 'STRIPE_AUTH_ERROR') {
+            errorMessage = 'Kreditkartenzahlung ist noch nicht eingerichtet.'
+          } else if (errorData.message) {
+            errorMessage = errorData.message
+          }
+          
           setError(errorMessage)
           setLoading(false)
           return
@@ -232,24 +243,21 @@ export function InvoicePaymentForm({
         ) {
           const secret = data.clientSecret.trim()
           setClientSecret(secret)
-          // Warte einen Moment, um sicherzustellen, dass alles bereit ist
-          setTimeout(() => {
-            if (!cancelled) {
-              setReady(true)
-              setLoading(false)
-            }
-          }, 100)
+          setReady(true)
+          setLoading(false)
         } else {
-          setError('Kein gültiges clientSecret erhalten')
+          setError('Kreditkartenzahlung ist derzeit nicht verfügbar.')
           setLoading(false)
         }
       } catch (err: any) {
         if (cancelled) return
 
+        console.error('Payment Intent Fetch Error:', err)
+        
         if (err.name === 'AbortError') {
-          setError('Zeitüberschreitung beim Laden. Bitte versuchen Sie es erneut oder verwenden Sie Banküberweisung.')
+          setError('Zeitüberschreitung beim Laden. Bitte verwenden Sie Banküberweisung.')
         } else {
-          setError('Fehler beim Laden der Zahlungsinformationen: ' + (err.message || 'Unbekannter Fehler'))
+          setError('Kreditkartenzahlung ist derzeit nicht verfügbar.')
         }
         setLoading(false)
       }
@@ -281,123 +289,55 @@ export function InvoicePaymentForm({
     }
   }, [clientSecret])
 
-  // Loading State mit Timeout-Warnung
-  if (loading || !ready) {
+  // Loading State
+  if (loading) {
     return (
-      <div className="rounded-lg bg-white p-6 shadow-sm">
-        <div className="flex flex-col items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
-          <span className="mt-3 text-sm text-gray-600">Lade Zahlungsformular...</span>
-          {loading && (
-            <p className="mt-2 text-xs text-gray-500">
-              Dauert es zu lange? Verwenden Sie alternativ Banküberweisung.
-            </p>
-          )}
-        </div>
+      <div className="flex flex-col items-center justify-center py-6">
+        <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
+        <span className="mt-3 text-sm text-gray-600">Lade Zahlungsformular...</span>
       </div>
     )
   }
 
-  // Error State
-  if (error) {
-    return (
-      <div className="space-y-4">
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-          <div className="flex items-start gap-2">
-            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
-            <div className="text-sm text-yellow-800">
-              <strong>Hinweis:</strong> {error}
-            </div>
-          </div>
-        </div>
-        <div className="rounded-lg border border-primary-200 bg-primary-50 p-4">
-          <p className="text-sm text-primary-800">
-            <strong>Alternative:</strong> Verwenden Sie Banküberweisung für eine zuverlässige Zahlung.
-          </p>
-        </div>
-      </div>
-    )
-  }
-
-  // Kein clientSecret
-  if (!clientSecret || typeof clientSecret !== 'string' || clientSecret.trim() === '') {
-    return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-        <div className="flex items-start gap-2">
-          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-          <div className="text-sm text-red-800">
-            <strong>Fehler:</strong> Kein gültiges clientSecret verfügbar. Bitte laden Sie die Seite
-            neu.
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // Kein stripePromise
-  if (!stripePromise) {
+  // Error State - zeige klare Fehlermeldung
+  if (error || !ready) {
     return (
       <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
         <div className="flex items-start gap-2">
           <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
           <div className="text-sm text-yellow-800">
-            <strong>Hinweis:</strong> Stripe ist nicht konfiguriert. Bitte verwenden Sie
-            Banküberweisung.
+            <strong>Hinweis:</strong> {error || 'Kreditkartenzahlung ist derzeit nicht verfügbar.'}
+            <br />
+            <span className="text-yellow-700">Bitte verwenden Sie die Banküberweisung.</span>
           </div>
         </div>
       </div>
     )
   }
 
-  // Keine gültigen Options
-  if (!elementsOptions) {
+  // Prüfe ob alle erforderlichen Daten vorhanden sind
+  if (!clientSecret || !stripePromise || !elementsOptions) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
+      <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4">
         <div className="flex items-start gap-2">
-          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-          <div className="text-sm text-red-800">
-            <strong>Fehler:</strong> Ungültige Element-Optionen. Bitte laden Sie die Seite neu.
+          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
+          <div className="text-sm text-yellow-800">
+            <strong>Hinweis:</strong> Kreditkartenzahlung ist derzeit nicht verfügbar.
+            <br />
+            <span className="text-yellow-700">Bitte verwenden Sie die Banküberweisung.</span>
           </div>
         </div>
       </div>
     )
   }
 
-  // FINALE PRÜFUNG: Alles muss vorhanden sein
-  if (!ready || !clientSecret || !stripePromise || !elementsOptions) {
-    return (
-      <div className="rounded-lg bg-white p-6 shadow-md">
-        <div className="flex items-center justify-center py-8">
-          <Loader2 className="h-6 w-6 animate-spin text-blue-600" />
-          <span className="ml-2 text-gray-600">Bereite Zahlungsformular vor...</span>
-        </div>
-      </div>
-    )
-  }
-
-  // ABSOLUTE FINALE VALIDIERUNG
-  const finalClientSecret =
-    typeof clientSecret === 'string' && clientSecret.trim() !== '' ? clientSecret.trim() : null
-  if (!finalClientSecret) {
-    return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-        <div className="flex items-start gap-2">
-          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-          <div className="text-sm text-red-800">
-            <strong>Fehler:</strong> Kritischer Fehler: clientSecret ist ungültig.
-          </div>
-        </div>
-      </div>
-    )
-  }
-
-  // JETZT erst Elements rendern - mit allen Checks
+  // Stripe Elements rendern
   return (
     <Elements
-      key={`elements-${finalClientSecret.substring(0, 20)}`}
+      key={`elements-${clientSecret.substring(0, 20)}`}
       stripe={stripePromise}
       options={{
-        clientSecret: finalClientSecret,
+        clientSecret: clientSecret,
         appearance: {
           theme: 'stripe',
         },

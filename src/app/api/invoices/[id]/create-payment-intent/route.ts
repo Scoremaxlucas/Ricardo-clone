@@ -111,6 +111,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Erstelle Payment Intent
     try {
+      // Verwende automatic_payment_methods für maximale Kompatibilität
+      // Stripe aktiviert automatisch die verfügbaren Zahlungsmethoden
       const paymentIntent = await stripe.paymentIntents.create({
         amount: amountInRappen,
         currency: 'chf',
@@ -120,10 +122,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           sellerId: invoice.sellerId,
           type: 'invoice_payment',
         },
-        // Explizit nur Card und TWINT aktivieren - Link wird dadurch ausgeschlossen
-        payment_method_types: ['card', 'twint'],
+        // Verwende automatic_payment_methods statt expliziter Liste
+        // Dies vermeidet Fehler wenn TWINT nicht aktiviert ist
         automatic_payment_methods: {
-          enabled: false, // Deaktiviert, da wir payment_method_types verwenden
+          enabled: true,
         },
         description: `Rechnung ${invoice.invoiceNumber}`,
       })
