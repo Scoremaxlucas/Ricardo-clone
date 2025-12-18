@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, ChevronRight, AlertCircle, CheckCircle } from 'lucide-react'
+import { AlertCircle, Check, CheckCircle, Lock } from 'lucide-react'
 import { useState } from 'react'
 
 export interface WizardStepInfo {
@@ -14,9 +14,16 @@ interface StepProgressProps {
   currentStep: number
   completedSteps: number[]
   onStepClick?: (stepIndex: number) => void
+  lockedSteps?: number[] // Step indices that are locked/readonly
 }
 
-export function StepProgress({ steps, currentStep, completedSteps, onStepClick }: StepProgressProps) {
+export function StepProgress({
+  steps,
+  currentStep,
+  completedSteps,
+  onStepClick,
+  lockedSteps = [],
+}: StepProgressProps) {
   return (
     <div className="mb-8">
       {/* Mobile: Compact progress */}
@@ -24,9 +31,7 @@ export function StepProgress({ steps, currentStep, completedSteps, onStepClick }
         <span className="text-sm font-medium text-gray-700">
           Schritt {currentStep + 1} von {steps.length}
         </span>
-        <span className="text-sm font-semibold text-primary-600">
-          {steps[currentStep]?.title}
-        </span>
+        <span className="text-sm font-semibold text-primary-600">{steps[currentStep]?.title}</span>
       </div>
 
       {/* Mobile: Progress bar */}
@@ -46,7 +51,9 @@ export function StepProgress({ steps, currentStep, completedSteps, onStepClick }
             // 2. We've moved past this step (index < currentStep)
             const isCompleted = completedSteps.includes(index) && index < currentStep
             const isCurrent = index === currentStep
-            const isClickable = index < currentStep || (isCompleted && index <= currentStep)
+            const isLocked = lockedSteps.includes(index)
+            const isClickable =
+              !isLocked && (index < currentStep || (isCompleted && index <= currentStep))
 
             return (
               <div key={step.id} className="flex flex-1 items-center">
@@ -54,18 +61,20 @@ export function StepProgress({ steps, currentStep, completedSteps, onStepClick }
                 <button
                   onClick={() => isClickable && onStepClick?.(index)}
                   disabled={!isClickable}
-                  className={`
-                    relative flex h-10 w-10 items-center justify-center rounded-full border-2 font-semibold transition-all duration-300
-                    ${isCompleted
-                      ? 'border-primary-500 bg-primary-500 text-white'
-                      : isCurrent
-                        ? 'border-primary-500 bg-white text-primary-600 ring-4 ring-primary-100'
-                        : 'border-gray-300 bg-white text-gray-400'
-                    }
-                    ${isClickable ? 'cursor-pointer hover:scale-110' : 'cursor-default'}
-                  `}
+                  title={isLocked ? 'Dieser Schritt ist gesperrt' : undefined}
+                  className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 font-semibold transition-all duration-300 ${
+                    isLocked
+                      ? 'cursor-not-allowed border-gray-200 bg-gray-100 text-gray-400'
+                      : isCompleted
+                        ? 'border-primary-500 bg-primary-500 text-white'
+                        : isCurrent
+                          ? 'border-primary-500 bg-white text-primary-600 ring-4 ring-primary-100'
+                          : 'border-gray-300 bg-white text-gray-400'
+                  } ${isClickable && !isLocked ? 'cursor-pointer hover:scale-110' : 'cursor-default'} `}
                 >
-                  {isCompleted ? (
+                  {isLocked ? (
+                    <Lock className="h-4 w-4" />
+                  ) : isCompleted ? (
                     <Check className="h-5 w-5" />
                   ) : (
                     <span>{index + 1}</span>
@@ -74,7 +83,9 @@ export function StepProgress({ steps, currentStep, completedSteps, onStepClick }
 
                 {/* Step label */}
                 <div className="ml-3 hidden flex-1 lg:block">
-                  <p className={`whitespace-nowrap text-sm font-medium ${isCurrent ? 'text-primary-600' : isCompleted ? 'text-gray-700' : 'text-gray-400'}`}>
+                  <p
+                    className={`whitespace-nowrap text-sm font-medium ${isCurrent ? 'text-primary-600' : isCompleted ? 'text-gray-700' : 'text-gray-400'}`}
+                  >
                     {step.shortTitle || step.title}
                   </p>
                 </div>
@@ -126,6 +137,8 @@ export function WizardFooter({
   disabledReason,
   isSavingDraft,
   lastSavedAt,
+  mode = 'create',
+  policyLevel,
 }: WizardFooterProps) {
   const [showTooltip, setShowTooltip] = useState(false)
 
@@ -144,7 +157,10 @@ export function WizardFooter({
   }
 
   return (
-    <div className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-4 py-4 pb-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8" style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}>
+    <div
+      className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-4 py-4 pb-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8"
+      style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+    >
       <div className="mx-auto flex max-w-4xl items-center justify-between">
         <div className="flex items-center gap-2 sm:gap-3">
           {currentStep > 0 ? (
@@ -163,7 +179,7 @@ export function WizardFooter({
                 type="button"
                 onClick={onSaveDraft}
                 disabled={isSavingDraft}
-                className="whitespace-nowrap rounded-lg border-2 border-primary-300 px-3 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 disabled:opacity-50 disabled:cursor-not-allowed sm:px-4 sm:py-2.5 sm:text-base"
+                className="whitespace-nowrap rounded-lg border-2 border-primary-300 px-3 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:py-2.5 sm:text-base"
               >
                 Entwurf speichern
               </button>
@@ -197,21 +213,27 @@ export function WizardFooter({
               disabled={!canProceed || isSubmitting}
               onMouseEnter={() => !canProceed && disabledReason && setShowTooltip(true)}
               onMouseLeave={() => setShowTooltip(false)}
-              className={`
-                rounded-full px-6 py-2.5 font-bold text-white transition-all duration-300
-                ${canProceed && !isSubmitting
+              className={`rounded-full px-6 py-2.5 font-bold text-white transition-all duration-300 ${
+                canProceed && !isSubmitting
                   ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg hover:-translate-y-0.5 hover:shadow-xl'
                   : 'cursor-not-allowed bg-gray-300'
-                }
-              `}
+              } `}
             >
               {isSubmitting ? (
                 <span className="flex items-center gap-2">
                   <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  Wird erstellt...
+                  {mode === 'edit' ? 'Wird gespeichert...' : 'Wird erstellt...'}
                 </span>
               ) : isLastStep ? (
-                'Artikel veröffentlichen'
+                mode === 'edit' ? (
+                  policyLevel === 'LIMITED_APPEND_ONLY' ? (
+                    'Ergänzung speichern'
+                  ) : (
+                    'Änderungen speichern'
+                  )
+                ) : (
+                  'Artikel veröffentlichen'
+                )
               ) : (
                 <>Weiter →</>
               )}

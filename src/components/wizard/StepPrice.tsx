@@ -1,6 +1,7 @@
 'use client'
 
-import { Clock, Tag, CheckCircle, Info } from 'lucide-react'
+import { EditPolicy } from '@/lib/edit-policy'
+import { CheckCircle, Clock, Info, Lock, Tag } from 'lucide-react'
 
 interface StepPriceProps {
   formData: {
@@ -10,8 +11,12 @@ interface StepPriceProps {
     auctionDuration: string
     autoRenew: boolean
   }
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
+  onInputChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void
   onFormDataChange: (data: Record<string, any>) => void
+  policy?: EditPolicy
+  mode?: 'create' | 'edit'
 }
 
 // Format number with Swiss thousands separator
@@ -25,34 +30,57 @@ export function StepPrice({
   formData,
   onInputChange,
   onFormDataChange,
+  policy,
+  mode = 'create',
 }: StepPriceProps) {
   // Validate buy-now price against start price for auctions
-  const buyNowValid = !formData.buyNowPrice ||
-    (parseFloat(formData.buyNowPrice) > parseFloat(formData.price || '0'))
+  const buyNowValid =
+    !formData.buyNowPrice || parseFloat(formData.buyNowPrice) > parseFloat(formData.price || '0')
+
+  const isSaleTypeLocked = policy?.uiLocks.saleType || false
+  const isPriceLocked = policy?.uiLocks.price || false
+  const isBuyNowPriceLocked = policy?.uiLocks.buyNowPrice || false
+  const isAuctionStartLocked = policy?.uiLocks.auctionStart || false
+  const isAuctionEndLocked = policy?.uiLocks.auctionEnd || false
+  const isAuctionDurationLocked = policy?.uiLocks.auctionDuration || false
 
   return (
     <div className="space-y-4 md:space-y-8">
       <div className="text-center">
-        <h2 className="mb-1 md:mb-2 text-xl md:text-2xl font-bold text-gray-900">Preis festlegen</h2>
-        <p className="text-gray-600">
-          Wählen Sie zwischen Festpreis oder Auktion
-        </p>
+        <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
+          Preis festlegen
+        </h2>
+        <p className="text-gray-600">Wählen Sie zwischen Festpreis oder Auktion</p>
       </div>
 
       {/* Sale type selection */}
       <div className="space-y-4">
-        <label className="block text-sm font-medium text-gray-700">
-          Verkaufsart <span className="text-red-500">*</span>
-        </label>
+        <div className="flex items-center justify-between">
+          <label className="block text-sm font-medium text-gray-700">
+            Verkaufsart <span className="text-red-500">*</span>
+          </label>
+          {isSaleTypeLocked && mode === 'edit' && (
+            <div className="flex items-center gap-1 text-xs text-gray-500">
+              <Lock className="h-3 w-3" />
+              <span>Gesperrt</span>
+            </div>
+          )}
+        </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {/* Fixed price option */}
           <button
             type="button"
-            onClick={() => onFormDataChange({ isAuction: false, auctionDuration: '', buyNowPrice: '' })}
+            onClick={() =>
+              !isSaleTypeLocked &&
+              onFormDataChange({ isAuction: false, auctionDuration: '', buyNowPrice: '' })
+            }
+            disabled={isSaleTypeLocked}
             className={`relative flex flex-col items-center gap-3 rounded-xl border-2 p-6 transition-all ${
-              !formData.isAuction
-                ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
-                : 'border-gray-200 hover:border-gray-300'
+              isSaleTypeLocked
+                ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
+                : !formData.isAuction
+                  ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
+                  : 'border-gray-200 hover:border-gray-300'
             }`}
           >
             {!formData.isAuction && (
@@ -60,13 +88,19 @@ export function StepPrice({
                 <CheckCircle className="h-6 w-6 text-primary-600" />
               </div>
             )}
-            <div className={`flex h-14 w-14 items-center justify-center rounded-full ${
-              !formData.isAuction ? 'bg-primary-100' : 'bg-gray-100'
-            }`}>
-              <Tag className={`h-7 w-7 ${!formData.isAuction ? 'text-primary-600' : 'text-gray-500'}`} />
+            <div
+              className={`flex h-14 w-14 items-center justify-center rounded-full ${
+                !formData.isAuction ? 'bg-primary-100' : 'bg-gray-100'
+              }`}
+            >
+              <Tag
+                className={`h-7 w-7 ${!formData.isAuction ? 'text-primary-600' : 'text-gray-500'}`}
+              />
             </div>
             <div className="text-center">
-              <h3 className={`font-semibold ${!formData.isAuction ? 'text-primary-700' : 'text-gray-700'}`}>
+              <h3
+                className={`font-semibold ${!formData.isAuction ? 'text-primary-700' : 'text-gray-700'}`}
+              >
                 Festpreis
               </h3>
               <p className="mt-1 text-sm text-gray-500">
@@ -78,11 +112,14 @@ export function StepPrice({
           {/* Auction option */}
           <button
             type="button"
-            onClick={() => onFormDataChange({ isAuction: true })}
+            onClick={() => !isSaleTypeLocked && onFormDataChange({ isAuction: true })}
+            disabled={isSaleTypeLocked}
             className={`relative flex flex-col items-center gap-3 rounded-xl border-2 p-6 transition-all ${
-              formData.isAuction
-                ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
-                : 'border-gray-200 hover:border-gray-300'
+              isSaleTypeLocked
+                ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
+                : formData.isAuction
+                  ? 'border-primary-500 bg-primary-50 ring-2 ring-primary-200'
+                  : 'border-gray-200 hover:border-gray-300'
             }`}
           >
             {formData.isAuction && (
@@ -90,18 +127,22 @@ export function StepPrice({
                 <CheckCircle className="h-6 w-6 text-primary-600" />
               </div>
             )}
-            <div className={`flex h-14 w-14 items-center justify-center rounded-full ${
-              formData.isAuction ? 'bg-primary-100' : 'bg-gray-100'
-            }`}>
-              <Clock className={`h-7 w-7 ${formData.isAuction ? 'text-primary-600' : 'text-gray-500'}`} />
+            <div
+              className={`flex h-14 w-14 items-center justify-center rounded-full ${
+                formData.isAuction ? 'bg-primary-100' : 'bg-gray-100'
+              }`}
+            >
+              <Clock
+                className={`h-7 w-7 ${formData.isAuction ? 'text-primary-600' : 'text-gray-500'}`}
+              />
             </div>
             <div className="text-center">
-              <h3 className={`font-semibold ${formData.isAuction ? 'text-primary-700' : 'text-gray-700'}`}>
+              <h3
+                className={`font-semibold ${formData.isAuction ? 'text-primary-700' : 'text-gray-700'}`}
+              >
                 Auktion
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Bieter konkurrieren um Ihren Artikel
-              </p>
+              <p className="mt-1 text-sm text-gray-500">Bieter konkurrieren um Ihren Artikel</p>
             </div>
           </button>
         </div>
@@ -122,11 +163,22 @@ export function StepPrice({
                 required
                 value={formData.price}
                 onChange={onInputChange}
+                disabled={isPriceLocked}
                 min="0"
                 step="0.01"
-                className="w-full rounded-lg border border-gray-300 py-3 pl-14 pr-4 text-lg font-medium text-gray-900 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                className={`w-full rounded-lg border py-3 pl-14 pr-4 text-lg font-medium transition-colors ${
+                  isPriceLocked
+                    ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
+                    : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
+                }`}
                 placeholder="5'000"
               />
+              {isPriceLocked && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                  <Lock className="h-3 w-3" />
+                  Preis kann nicht mehr geändert werden
+                </p>
+              )}
               <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-gray-500">
                 CHF
               </span>
@@ -150,11 +202,22 @@ export function StepPrice({
                   required
                   value={formData.price}
                   onChange={onInputChange}
+                  disabled={isPriceLocked}
                   min="0"
                   step="0.01"
-                  className="w-full rounded-lg border border-gray-300 py-3 pl-14 pr-4 text-lg font-medium text-gray-900 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                  className={`w-full rounded-lg border py-3 pl-14 pr-4 text-lg font-medium transition-colors ${
+                    isPriceLocked
+                      ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
+                      : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
+                  }`}
                   placeholder="1'000"
                 />
+                {isPriceLocked && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                    <Lock className="h-3 w-3" />
+                    Startpreis kann nach Veröffentlichung nicht mehr geändert werden
+                  </p>
+                )}
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-gray-500">
                   CHF
                 </span>
@@ -174,7 +237,12 @@ export function StepPrice({
                 value={formData.auctionDuration}
                 onChange={onInputChange}
                 required={formData.isAuction}
-                className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                disabled={isAuctionDurationLocked}
+                className={`w-full rounded-lg border px-4 py-3 transition-colors ${
+                  isAuctionDurationLocked
+                    ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
+                    : 'border-gray-300 bg-white text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
+                }`}
               >
                 <option value="">Bitte wählen</option>
                 <option value="1">1 Tag</option>
@@ -185,13 +253,21 @@ export function StepPrice({
                 <option value="14">14 Tage</option>
                 <option value="30">30 Tage</option>
               </select>
+              {isAuctionDurationLocked && (
+                <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                  <Lock className="h-3 w-3" />
+                  Auktionsdauer kann nach Veröffentlichung nicht mehr geändert werden
+                </p>
+              )}
             </div>
 
             {/* Optional buy-now price for auctions */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
                 Sofortkaufpreis (CHF)
-                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">Optional</span>
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                  Optional
+                </span>
               </label>
               <div className="relative">
                 <input
@@ -199,13 +275,24 @@ export function StepPrice({
                   name="buyNowPrice"
                   value={formData.buyNowPrice}
                   onChange={onInputChange}
+                  disabled={isBuyNowPriceLocked}
                   min="0"
                   step="0.01"
-                  className={`w-full rounded-lg border py-3 pl-14 pr-4 text-gray-900 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-200 ${
-                    !buyNowValid ? 'border-red-300 bg-red-50' : 'border-gray-300'
+                  className={`w-full rounded-lg border py-3 pl-14 pr-4 transition-colors ${
+                    isBuyNowPriceLocked
+                      ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
+                      : !buyNowValid
+                        ? 'border-red-300 bg-red-50 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
+                        : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
                   }`}
                   placeholder="8'000"
                 />
+                {isBuyNowPriceLocked && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                    <Lock className="h-3 w-3" />
+                    Sofortkaufpreis kann nach Veröffentlichung nicht mehr geändert werden
+                  </p>
+                )}
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-gray-500">
                   CHF
                 </span>
@@ -244,8 +331,8 @@ export function StepPrice({
       <div className="flex items-start gap-3 rounded-lg bg-blue-50 p-4">
         <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
         <div className="text-sm text-blue-800">
-          <strong>Tipp:</strong> Recherchieren Sie vergleichbare Artikel auf Helvenda, um einen fairen Preis festzulegen.
-          Ein realistischer Preis erhöht Ihre Verkaufschancen deutlich.
+          <strong>Tipp:</strong> Recherchieren Sie vergleichbare Artikel auf Helvenda, um einen
+          fairen Preis festzulegen. Ein realistischer Preis erhöht Ihre Verkaufschancen deutlich.
         </div>
       </div>
     </div>

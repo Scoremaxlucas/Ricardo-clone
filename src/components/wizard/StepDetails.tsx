@@ -1,13 +1,14 @@
 'use client'
 
 import { CategoryFields } from '@/components/forms/category-fields'
-import { Sparkles } from 'lucide-react'
-import { useRef } from 'react'
+import { EditPolicy } from '@/lib/edit-policy'
+import { Lock, Sparkles } from 'lucide-react'
 
 interface StepDetailsProps {
   formData: {
     title: string
     description: string
+    descriptionAddendum?: string // For append-only mode
     condition: string
     brand: string
     model: string
@@ -35,11 +36,15 @@ interface StepDetailsProps {
   selectedSubcategory: string
   isGeneratingTitle: boolean
   isGeneratingDescription: boolean
-  onInputChange: (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => void
+  onInputChange: (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => void
   onFormDataChange: (data: Record<string, any>) => void
   onGenerateTitle: () => Promise<void>
   onGenerateDescription: () => Promise<void>
   setExclusiveSupply: (option: 'fullset' | 'onlyBox' | 'onlyPapers' | 'onlyAllLinks') => void
+  policy?: EditPolicy
+  mode?: 'create' | 'edit'
 }
 
 export function StepDetails({
@@ -53,12 +58,19 @@ export function StepDetails({
   onGenerateTitle,
   onGenerateDescription,
   setExclusiveSupply,
+  policy,
+  mode = 'create',
 }: StepDetailsProps) {
+  const isTitleLocked = policy?.uiLocks.title || false
+  const isDescriptionLocked = policy?.uiLocks.description || false
+  const isDescriptionAppendOnly = policy?.uiLocks.descriptionAppendOnly || false
   return (
     <div className="space-y-4 md:space-y-8">
       <div className="text-center">
-        <h2 className="mb-1 md:mb-2 text-xl md:text-2xl font-bold text-gray-900">Artikel-Details</h2>
-        <p className="text-sm md:text-base text-gray-600">
+        <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
+          Artikel-Details
+        </h2>
+        <p className="text-sm text-gray-600 md:text-base">
           Beschreiben Sie Ihren Artikel so genau wie möglich
         </p>
       </div>
@@ -87,38 +99,95 @@ export function StepDetails({
           required
           value={formData.title}
           onChange={onInputChange}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+          disabled={isTitleLocked}
+          className={`w-full rounded-lg border px-4 py-3 transition-colors ${
+            isTitleLocked
+              ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
+              : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
+          }`}
           placeholder="z.B. Beschreibender Titel Ihres Artikels"
         />
+        {isTitleLocked && (
+          <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+            <Lock className="h-3 w-3" />
+            Titel kann nicht mehr geändert werden
+          </p>
+        )}
       </div>
 
       {/* Description */}
       <div className="space-y-2">
-        <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-gray-700">
-            Beschreibung <span className="text-red-500">*</span>
-          </label>
-          {formData.images.length > 0 && (
-            <button
-              type="button"
-              onClick={onGenerateDescription}
-              disabled={isGeneratingTitle || isGeneratingDescription}
-              className="flex items-center gap-1 rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
-            >
-              <Sparkles className="h-3 w-3" />
-              {isGeneratingDescription ? 'Generiere...' : 'KI-Beschreibung generieren'}
-            </button>
-          )}
-        </div>
-        <textarea
-          name="description"
-          required
-          value={formData.description}
-          onChange={onInputChange}
-          rows={5}
-          className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
-          placeholder="Beschreiben Sie Ihren Artikel ausführlich: Zustand, Besonderheiten, Lieferumfang..."
-        />
+        {isDescriptionAppendOnly ? (
+          <>
+            {/* Show existing description as read-only */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Aktuelle Beschreibung
+              </label>
+              <div className="whitespace-pre-wrap rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-gray-700">
+                {formData.description || '(Keine Beschreibung)'}
+              </div>
+            </div>
+            {/* Addendum input */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Ergänzung hinzufügen <span className="text-red-500">*</span>
+              </label>
+              <textarea
+                name="descriptionAddendum"
+                required
+                value={formData.descriptionAddendum || ''}
+                onChange={onInputChange}
+                rows={4}
+                className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
+                placeholder="Fügen Sie hier eine Ergänzung zur Beschreibung hinzu..."
+              />
+              <p className="text-xs text-gray-500">
+                Die Ergänzung wird automatisch mit Datum und Uhrzeit zur bestehenden Beschreibung
+                hinzugefügt.
+              </p>
+            </div>
+          </>
+        ) : (
+          <>
+            <div className="flex items-center justify-between">
+              <label className="block text-sm font-medium text-gray-700">
+                Beschreibung <span className="text-red-500">*</span>
+              </label>
+              {formData.images.length > 0 && !isDescriptionLocked && (
+                <button
+                  type="button"
+                  onClick={onGenerateDescription}
+                  disabled={isGeneratingTitle || isGeneratingDescription}
+                  className="flex items-center gap-1 rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
+                >
+                  <Sparkles className="h-3 w-3" />
+                  {isGeneratingDescription ? 'Generiere...' : 'KI-Beschreibung generieren'}
+                </button>
+              )}
+            </div>
+            <textarea
+              name="description"
+              required
+              value={formData.description}
+              onChange={onInputChange}
+              disabled={isDescriptionLocked}
+              rows={5}
+              className={`w-full rounded-lg border px-4 py-3 transition-colors ${
+                isDescriptionLocked
+                  ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
+                  : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
+              }`}
+              placeholder="Beschreiben Sie Ihren Artikel ausführlich: Zustand, Besonderheiten, Lieferumfang..."
+            />
+            {isDescriptionLocked && (
+              <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                <Lock className="h-3 w-3" />
+                Beschreibung kann nicht mehr geändert werden
+              </p>
+            )}
+          </>
+        )}
       </div>
 
       {/* Condition */}
@@ -160,9 +229,7 @@ export function StepDetails({
         <>
           {/* Supply scope */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">
-              Lieferumfang (inkl. Uhr selbst)
-            </h3>
+            <h3 className="text-lg font-semibold text-gray-900">Lieferumfang (inkl. Uhr selbst)</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {[
                 { key: 'fullset', label: 'Fullset (Box, Papiere, alle Links)' },
@@ -296,4 +363,3 @@ export function StepDetails({
     </div>
   )
 }
-

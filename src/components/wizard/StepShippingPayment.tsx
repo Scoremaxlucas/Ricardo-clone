@@ -1,8 +1,21 @@
 'use client'
 
-import { Package, MapPin, Truck, Shield, Info, ExternalLink, CheckCircle, Clock, ChevronDown, ChevronUp } from 'lucide-react'
-import { useState } from 'react'
+import { EditPolicy } from '@/lib/edit-policy'
 import { formatCHF } from '@/lib/product-utils'
+import {
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
+  Clock,
+  ExternalLink,
+  Info,
+  Lock,
+  MapPin,
+  Package,
+  Shield,
+  Truck,
+} from 'lucide-react'
+import { useState } from 'react'
 
 interface StepShippingPaymentProps {
   formData: {
@@ -13,6 +26,8 @@ interface StepShippingPaymentProps {
   onPaymentProtectionChange: (enabled: boolean) => void
   hasInteracted?: boolean // Track if user has interacted with this step
   showValidation?: boolean // Show validation errors
+  policy?: EditPolicy
+  mode?: 'create' | 'edit'
 }
 
 const SHIPPING_OPTIONS = [
@@ -48,17 +63,23 @@ export function StepShippingPayment({
   onPaymentProtectionChange,
   hasInteracted = false,
   showValidation = false,
+  policy,
+  mode = 'create',
 }: StepShippingPaymentProps) {
+  const isShippingLocked = policy?.uiLocks.shipping || false
   const [showPaymentDetails, setShowPaymentDetails] = useState(false)
   const hasShippingError = showValidation && formData.shippingMethods.length === 0
-  const onlyPickup = formData.shippingMethods.length === 1 && formData.shippingMethods[0] === 'pickup'
+  const onlyPickup =
+    formData.shippingMethods.length === 1 && formData.shippingMethods[0] === 'pickup'
   const paymentProtectionApplies = !onlyPickup || formData.shippingMethods.length > 1
 
   return (
     <div className="space-y-4 md:space-y-8">
       <div className="text-center">
-        <h2 className="mb-1 md:mb-2 text-xl md:text-2xl font-bold text-gray-900">Versand & Zahlung</h2>
-        <p className="text-sm md:text-base text-gray-600">
+        <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
+          Versand & Zahlung
+        </h2>
+        <p className="text-sm text-gray-600 md:text-base">
           Legen Sie fest, welche Versandoptionen Sie anbieten möchten
         </p>
       </div>
@@ -66,26 +87,39 @@ export function StepShippingPayment({
       {/* Shipping methods - Explicit checkbox cards */}
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-medium text-gray-700">
-            Angebotene Lieferarten <span className="text-red-500">*</span>
-          </label>
+          <div className="flex items-center justify-between">
+            <label className="block text-sm font-medium text-gray-700">
+              Angebotene Lieferarten <span className="text-red-500">*</span>
+            </label>
+            {isShippingLocked && mode === 'edit' && (
+              <div className="flex items-center gap-1 text-xs text-gray-500">
+                <Lock className="h-3 w-3" />
+                <span>Gesperrt</span>
+              </div>
+            )}
+          </div>
           <p className="mt-1 text-sm text-gray-500">
-            Hinweis: Versandkosten kommen zum Artikelpreis dazu. Wenn du mehrere Optionen anbietest, wählt der Käufer beim Kauf.
+            {isShippingLocked && mode === 'edit'
+              ? 'Versandoptionen können nicht mehr geändert werden.'
+              : 'Hinweis: Versandkosten kommen zum Artikelpreis dazu. Wenn du mehrere Optionen anbietest, wählt der Käufer beim Kauf.'}
           </p>
         </div>
 
-        <div className={`grid grid-cols-1 gap-4 sm:grid-cols-3 ${hasShippingError ? 'rounded-xl border-2 border-red-300 bg-red-50/30 p-4' : ''}`}>
-          {SHIPPING_OPTIONS.map((option) => {
+        <div
+          className={`grid grid-cols-1 gap-4 sm:grid-cols-3 ${hasShippingError ? 'rounded-xl border-2 border-red-300 bg-red-50/30 p-4' : ''}`}
+        >
+          {SHIPPING_OPTIONS.map(option => {
             const isSelected = formData.shippingMethods.includes(option.id)
             const Icon = option.icon
-            const priceDisplay = option.priceValue === 0
-              ? formatCHF(0) + ' (kostenlos)'
-              : formatCHF(option.priceValue)
+            const priceDisplay =
+              option.priceValue === 0 ? formatCHF(0) + ' (kostenlos)' : formatCHF(option.priceValue)
 
             return (
               <label
                 key={option.id}
-                className={`group relative flex cursor-pointer flex-col rounded-xl border-2 p-5 transition-all ${
+                className={`group relative flex flex-col rounded-xl border-2 p-5 transition-all ${
+                  isShippingLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
+                } ${
                   isSelected
                     ? 'border-primary-500 bg-primary-50 shadow-md ring-2 ring-primary-200'
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
@@ -96,8 +130,13 @@ export function StepShippingPayment({
                   <input
                     type="checkbox"
                     checked={isSelected}
-                    onChange={(e) => onShippingMethodChange(option.id, e.target.checked)}
-                    className="h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500"
+                    onChange={e =>
+                      !isShippingLocked && onShippingMethodChange(option.id, e.target.checked)
+                    }
+                    disabled={isShippingLocked}
+                    className={`h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500 ${
+                      isShippingLocked ? 'cursor-not-allowed opacity-50' : ''
+                    }`}
                   />
                 </div>
 
@@ -109,30 +148,34 @@ export function StepShippingPayment({
                 )}
 
                 {/* Icon */}
-                <div className={`mb-3 mt-8 flex h-12 w-12 items-center justify-center rounded-lg ${
-                  isSelected ? 'bg-primary-100' : 'bg-gray-100 group-hover:bg-gray-200'
-                }`}>
-                  <Icon className={`h-6 w-6 ${isSelected ? 'text-primary-600' : 'text-gray-500'}`} />
+                <div
+                  className={`mb-3 mt-8 flex h-12 w-12 items-center justify-center rounded-lg ${
+                    isSelected ? 'bg-primary-100' : 'bg-gray-100 group-hover:bg-gray-200'
+                  }`}
+                >
+                  <Icon
+                    className={`h-6 w-6 ${isSelected ? 'text-primary-600' : 'text-gray-500'}`}
+                  />
                 </div>
 
                 {/* Label */}
-                <h3 className={`mb-1 font-semibold ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}>
+                <h3
+                  className={`mb-1 font-semibold ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}
+                >
                   {option.label}
                 </h3>
 
                 {/* Weight info */}
-                {option.weight && (
-                  <p className="mb-2 text-xs text-gray-500">{option.weight}</p>
-                )}
+                {option.weight && <p className="mb-2 text-xs text-gray-500">{option.weight}</p>}
 
                 {/* Description */}
-                <p className="mb-3 flex-1 text-sm text-gray-600">
-                  {option.description}
-                </p>
+                <p className="mb-3 flex-1 text-sm text-gray-600">{option.description}</p>
 
                 {/* Price */}
                 <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-3">
-                  <span className={`text-sm font-semibold ${option.priceValue === 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                  <span
+                    className={`text-sm font-semibold ${option.priceValue === 0 ? 'text-green-600' : 'text-gray-900'}`}
+                  >
                     {priceDisplay}
                   </span>
                 </div>
@@ -143,9 +186,7 @@ export function StepShippingPayment({
 
         {/* Inline error - only show after validation */}
         {hasShippingError && (
-          <p className="text-sm text-red-600">
-            Bitte wählen Sie mindestens eine Lieferart aus.
-          </p>
+          <p className="text-sm text-red-600">Bitte wählen Sie mindestens eine Lieferart aus.</p>
         )}
       </div>
 
@@ -156,23 +197,27 @@ export function StepShippingPayment({
           <h3 className="text-lg font-semibold text-gray-900">Helvenda Zahlungsschutz</h3>
         </div>
 
-        <div className={`overflow-hidden rounded-xl border-2 transition-all ${
-          paymentProtectionEnabled
-            ? 'border-primary-500 bg-white shadow-lg ring-2 ring-primary-200'
-            : 'border-gray-200 bg-white'
-        }`}>
+        <div
+          className={`overflow-hidden rounded-xl border-2 transition-all ${
+            paymentProtectionEnabled
+              ? 'border-primary-500 bg-white shadow-lg ring-2 ring-primary-200'
+              : 'border-gray-200 bg-white'
+          }`}
+        >
           {/* Header - Checkbox row */}
           <label className="flex cursor-pointer items-start gap-4 p-6">
             <input
               type="checkbox"
               checked={paymentProtectionEnabled}
-              onChange={(e) => onPaymentProtectionChange(e.target.checked)}
+              onChange={e => onPaymentProtectionChange(e.target.checked)}
               disabled={!paymentProtectionApplies}
-              className="mt-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="mt-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
             />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <span className="text-lg font-semibold text-gray-900">Zahlungsschutz aktivieren</span>
+                <span className="text-lg font-semibold text-gray-900">
+                  Zahlungsschutz aktivieren
+                </span>
                 {paymentProtectionEnabled && (
                   <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
                     Aktiviert
@@ -184,7 +229,8 @@ export function StepShippingPayment({
               </p>
               {!paymentProtectionApplies && (
                 <p className="mt-2 text-xs text-amber-600">
-                  Zahlungsschutz ist nur bei Versand möglich. Bitte wählen Sie mindestens eine Versandoption zusätzlich zur Abholung.
+                  Zahlungsschutz ist nur bei Versand möglich. Bitte wählen Sie mindestens eine
+                  Versandoption zusätzlich zur Abholung.
                 </p>
               )}
             </div>
@@ -237,7 +283,9 @@ export function StepShippingPayment({
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                       <div>
                         <div className="text-xs font-medium text-gray-500">Gebühr</div>
-                        <div className="mt-0.5 text-sm font-semibold text-gray-900">3.9% + CHF 0.30</div>
+                        <div className="mt-0.5 text-sm font-semibold text-gray-900">
+                          3.9% + CHF 0.30
+                        </div>
                         <div className="mt-1 text-xs text-gray-500">(vom Verkäufer)</div>
                       </div>
                       <div>
@@ -264,7 +312,8 @@ export function StepShippingPayment({
                   <div className="mt-4 flex items-start gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-800">
                     <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
                     <span>
-                      <strong>Zahlungsschutz aktiviert.</strong> Nach Veröffentlichung kann diese Option nicht mehr geändert werden.
+                      <strong>Zahlungsschutz aktiviert.</strong> Nach Veröffentlichung kann diese
+                      Option nicht mehr geändert werden.
                     </span>
                   </div>
                 </div>

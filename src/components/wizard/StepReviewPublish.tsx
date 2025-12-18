@@ -1,22 +1,21 @@
 'use client'
 
-import { getCategoryDisplayName } from '@/lib/product-utils'
-import { formatCHF } from '@/lib/product-utils'
 import { getCategoryConfig } from '@/data/categories'
+import { EditPolicy } from '@/lib/edit-policy'
+import { formatCHF } from '@/lib/product-utils'
 import {
+  CheckCircle,
+  ChevronDown,
+  ChevronUp,
   Edit2,
-  Image as ImageIcon,
   FileText,
-  Tag,
-  Truck,
+  Image as ImageIcon,
   Shield,
   Sparkles,
-  CheckCircle,
-  Clock,
-  ChevronDown,
-  ChevronUp
+  Tag,
+  Truck,
 } from 'lucide-react'
-import { useEffect, useState, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface BoosterOption {
   id: string
@@ -51,33 +50,38 @@ interface StepReviewPublishProps {
   onGoToStep: (step: number) => void
   onBoosterChange: (boosterId: string) => void
   isSubmitting: boolean
+  policy?: EditPolicy
+  mode?: 'create' | 'edit'
 }
 
 const CONDITION_LABELS: Record<string, string> = {
-  'new': 'Neu',
+  new: 'Neu',
   'like-new': 'Wie neu',
   'very-good': 'Sehr gut',
-  'good': 'Gut',
-  'acceptable': 'Akzeptabel',
-  'defective': 'Defekt',
+  good: 'Gut',
+  acceptable: 'Akzeptabel',
+  defective: 'Defekt',
 }
 
 const SHIPPING_LABELS: Record<string, string> = {
-  'pickup': 'Abholung',
+  pickup: 'Abholung',
   'b-post': 'B-Post (CHF 8.50)',
   'a-post': 'A-Post (CHF 12.50)',
 }
 
 // Booster-Datenstruktur mit short/details/bullets
-const BOOSTER_DETAILS: Record<string, { short: string; detailsTitle: string; bullets: string[]; fineprint?: string }> = {
-  'boost': {
+const BOOSTER_DETAILS: Record<
+  string,
+  { short: string; detailsTitle: string; bullets: string[]; fineprint?: string }
+> = {
+  boost: {
     short: 'Fett hervorgehoben in Listen',
     detailsTitle: 'Boost – Details',
     bullets: [
       'Das Angebot wird in einer Liste von ähnlichen Modellen fett hervorgehoben',
       'Bessere Sichtbarkeit bei Suchergebnissen',
       'Erhöht die Aufmerksamkeit potenzieller Käufer',
-      'Geeignet für Standard-Angebote'
+      'Geeignet für Standard-Angebote',
     ],
   },
   'turbo-boost': {
@@ -87,7 +91,7 @@ const BOOSTER_DETAILS: Record<string, { short: string; detailsTitle: string; bul
       'Das Angebot wird nicht nur hervorgehoben, sondern erscheint teilweise auf der Hauptseite als "Turbo-Boost-Angebot"',
       'Zusätzliche Sichtbarkeit auf der Startseite',
       'Erhöht die Reichweite deutlich',
-      'Ideal für schnellverkaufende Artikel'
+      'Ideal für schnellverkaufende Artikel',
     ],
   },
   'super-boost': {
@@ -97,7 +101,7 @@ const BOOSTER_DETAILS: Record<string, { short: string; detailsTitle: string; bul
       'Das Angebot wird hervorgehoben und erscheint teilweise auf der Hauptseite',
       'Wird immer zuoberst in der Liste angezeigt',
       'Maximale Sichtbarkeit und Reichweite',
-      'Perfekt für Premium-Artikel oder schnelle Verkäufe'
+      'Perfekt für Premium-Artikel oder schnelle Verkäufe',
     ],
   },
 }
@@ -112,10 +116,13 @@ export function StepReviewPublish({
   onGoToStep,
   onBoosterChange,
   isSubmitting,
+  policy,
+  mode = 'create',
 }: StepReviewPublishProps) {
   const [boosters, setBoosters] = useState<BoosterOption[]>([])
   const [expandedBooster, setExpandedBooster] = useState<string | null>(null)
   const stepHeadingRef = useRef<HTMLHeadingElement | null>(null)
+  const isBoostersLocked = policy?.uiLocks.boosters || false
 
   // Load boosters
   useEffect(() => {
@@ -149,15 +156,22 @@ export function StepReviewPublish({
 
   const categoryConfig = selectedCategory ? getCategoryConfig(selectedCategory) : null
   const titleImage = formData.images[titleImageIndex] || formData.images[0]
-  const selectedBoosterData = selectedBooster === 'none'
-    ? null
-    : boosters.find(b => b.id === selectedBooster)
+  const selectedBoosterData =
+    selectedBooster === 'none' ? null : boosters.find(b => b.id === selectedBooster)
 
   return (
     <div className="space-y-4 md:space-y-8">
       <div className="text-center">
-        <h2 ref={(el) => { if (el) (window as any).stepHeadingRef = el }} tabIndex={-1} className="mb-1 md:mb-2 text-xl md:text-2xl font-bold text-gray-900">Überprüfen & Veröffentlichen</h2>
-        <p className="text-sm md:text-base text-gray-600">
+        <h2
+          ref={el => {
+            if (el) (window as any).stepHeadingRef = el
+          }}
+          tabIndex={-1}
+          className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl"
+        >
+          Überprüfen & Veröffentlichen
+        </h2>
+        <p className="text-sm text-gray-600 md:text-base">
           Überprüfen Sie Ihre Angaben und wählen Sie optional einen Booster
         </p>
       </div>
@@ -168,18 +182,16 @@ export function StepReviewPublish({
         <div className="flex gap-6 border-b border-gray-100 p-6">
           {titleImage && (
             <div className="relative h-32 w-32 flex-shrink-0 overflow-hidden rounded-xl">
-              <img
-                src={titleImage}
-                alt={formData.title}
-                className="h-full w-full object-cover"
-              />
+              <img src={titleImage} alt={formData.title} className="h-full w-full object-cover" />
               <div className="absolute bottom-1 right-1 rounded-full bg-black/60 px-2 py-0.5 text-xs text-white">
                 {formData.images.length} Bilder
               </div>
             </div>
           )}
-          <div className="flex-1 min-w-0">
-            <h3 className="mb-2 text-xl font-bold text-gray-900">{formData.title || 'Kein Titel'}</h3>
+          <div className="min-w-0 flex-1">
+            <h3 className="mb-2 text-xl font-bold text-gray-900">
+              {formData.title || 'Kein Titel'}
+            </h3>
             {categoryConfig && (
               <div className="mb-3 flex items-center gap-2">
                 <categoryConfig.icon className="h-4 w-4 flex-shrink-0 text-primary-600" />
@@ -233,7 +245,8 @@ export function StepReviewPublish({
               <div>
                 <span className="font-medium text-gray-700">Details</span>
                 <p className="text-sm text-gray-500">
-                  Zustand: {CONDITION_LABELS[formData.condition] || formData.condition || 'Nicht angegeben'}
+                  Zustand:{' '}
+                  {CONDITION_LABELS[formData.condition] || formData.condition || 'Nicht angegeben'}
                 </p>
               </div>
             </div>
@@ -256,9 +269,9 @@ export function StepReviewPublish({
                 <p className="text-sm text-gray-500">
                   {formData.isAuction
                     ? `Startpreis: ${formatCHF(parseFloat(formData.price || '0'))} • ${formData.auctionDuration} Tage`
-                    : `Festpreis: ${formatCHF(parseFloat(formData.price || '0'))}`
-                  }
-                  {formData.buyNowPrice && ` • Sofortkauf: ${formatCHF(parseFloat(formData.buyNowPrice))}`}
+                    : `Festpreis: ${formatCHF(parseFloat(formData.price || '0'))}`}
+                  {formData.buyNowPrice &&
+                    ` • Sofortkauf: ${formatCHF(parseFloat(formData.buyNowPrice))}`}
                 </p>
               </div>
             </div>
@@ -281,8 +294,7 @@ export function StepReviewPublish({
                 <p className="text-sm text-gray-500">
                   {formData.shippingMethods.length > 0
                     ? formData.shippingMethods.map(m => SHIPPING_LABELS[m] || m).join(', ')
-                    : 'Keine Versandart gewählt'
-                  }
+                    : 'Keine Versandart gewählt'}
                 </p>
               </div>
             </div>
@@ -299,7 +311,9 @@ export function StepReviewPublish({
           {/* Payment protection */}
           <div className="flex items-center justify-between p-4">
             <div className="flex items-center gap-3">
-              <Shield className={`h-5 w-5 flex-shrink-0 ${paymentProtectionEnabled ? 'text-green-500' : 'text-gray-400'}`} />
+              <Shield
+                className={`h-5 w-5 flex-shrink-0 ${paymentProtectionEnabled ? 'text-green-500' : 'text-gray-400'}`}
+              />
               <div>
                 <span className="font-medium text-gray-700">Zahlungsschutz</span>
                 <p className="text-sm text-gray-500">
@@ -327,7 +341,9 @@ export function StepReviewPublish({
           </div>
           <div>
             <h3 className="text-xl font-bold text-gray-900">Ihr Angebot hervorheben?</h3>
-            <p className="text-sm text-gray-600">Optional - Wählen Sie einen Booster für mehr Sichtbarkeit</p>
+            <p className="text-sm text-gray-600">
+              Optional - Wählen Sie einen Booster für mehr Sichtbarkeit
+            </p>
           </div>
         </div>
 
@@ -335,18 +351,23 @@ export function StepReviewPublish({
           {/* No booster option */}
           <button
             type="button"
-            onClick={() => onBoosterChange('none')}
+            onClick={() => !isBoostersLocked && onBoosterChange('none')}
+            disabled={isBoostersLocked}
             className={`relative flex flex-col rounded-xl border-2 p-4 text-left transition-all ${
-              selectedBooster === 'none'
-                ? 'border-primary-500 bg-white ring-2 ring-primary-200'
-                : 'border-gray-200 hover:border-gray-300'
+              isBoostersLocked
+                ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
+                : selectedBooster === 'none'
+                  ? 'border-primary-500 bg-white ring-2 ring-primary-200'
+                  : 'border-gray-200 hover:border-gray-300'
             }`}
           >
             <div className="mb-2 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
               STANDARD
             </div>
             <h4 className="font-semibold text-gray-900">Kein Booster</h4>
-            <p className="mt-1 text-sm text-gray-500">Das Angebot wird nicht besonders hervorgehoben</p>
+            <p className="mt-1 text-sm text-gray-500">
+              Das Angebot wird nicht besonders hervorgehoben
+            </p>
             <div className="mt-auto pt-3">
               <span className="text-lg font-bold text-gray-900">CHF 0.00</span>
             </div>
@@ -358,34 +379,41 @@ export function StepReviewPublish({
           </button>
 
           {/* Dynamic boosters */}
-          {boosters.map((booster) => (
+          {boosters.map(booster => (
             <button
               key={booster.id}
               type="button"
               onClick={() => {
-                onBoosterChange(booster.id)
-                // Auto-expand on mobile when selecting
-                if (booster.id !== selectedBooster) {
-                  setExpandedBooster(booster.id)
+                if (!isBoostersLocked) {
+                  onBoosterChange(booster.id)
+                  // Auto-expand on mobile when selecting
+                  if (booster.id !== selectedBooster) {
+                    setExpandedBooster(booster.id)
+                  }
                 }
               }}
+              disabled={isBoostersLocked}
               className={`relative flex flex-col rounded-xl border-2 p-4 text-left transition-all ${
-                selectedBooster === booster.id
-                  ? 'border-primary-500 bg-white ring-2 ring-primary-200'
-                  : 'border-gray-200 hover:border-gray-300'
+                isBoostersLocked
+                  ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
+                  : selectedBooster === booster.id
+                    ? 'border-primary-500 bg-white ring-2 ring-primary-200'
+                    : 'border-gray-200 hover:border-gray-300'
               }`}
             >
               <div
                 className="mb-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
                 style={{
                   backgroundColor: booster.badgeColor + '20',
-                  color: booster.badgeColor
+                  color: booster.badgeColor,
                 }}
               >
                 {booster.badge}
               </div>
               <h4 className="font-semibold text-gray-900">{booster.name}</h4>
-              <p className="mt-1 text-sm text-gray-500 line-clamp-2 md:line-clamp-none">{booster.short || booster.description}</p>
+              <p className="mt-1 line-clamp-2 text-sm text-gray-500 md:line-clamp-none">
+                {booster.short || booster.description}
+              </p>
               <div className="mt-auto pt-3">
                 <span className="text-lg font-bold" style={{ color: booster.badgeColor }}>
                   {formatCHF(booster.price)}
@@ -404,7 +432,7 @@ export function StepReviewPublish({
         {selectedBoosterData && (
           <>
             {/* Desktop: Always visible detail panel */}
-            <div className="hidden md:block mt-6 rounded-xl border border-gray-200 bg-gray-50/50 p-6">
+            <div className="mt-6 hidden rounded-xl border border-gray-200 bg-gray-50/50 p-6 md:block">
               <h4 className="mb-4 text-lg font-semibold text-gray-900">
                 {selectedBoosterData.detailsTitle || `${selectedBoosterData.name} – Details`}
               </h4>
@@ -422,10 +450,12 @@ export function StepReviewPublish({
             </div>
 
             {/* Mobile: Accordion for booster details */}
-            <div className="md:hidden mt-4">
+            <div className="mt-4 md:hidden">
               <button
                 type="button"
-                onClick={() => setExpandedBooster(expandedBooster === selectedBooster ? null : selectedBooster)}
+                onClick={() =>
+                  setExpandedBooster(expandedBooster === selectedBooster ? null : selectedBooster)
+                }
                 className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition-colors hover:bg-gray-50"
               >
                 <span className="font-medium text-gray-900">Details anzeigen</span>
@@ -461,9 +491,13 @@ export function StepReviewPublish({
       {/* Final validation message */}
       <div className="rounded-xl bg-green-50 p-6 text-center">
         <CheckCircle className="mx-auto mb-3 h-12 w-12 text-green-500" />
-        <h3 className="mb-2 text-lg font-semibold text-green-800">Bereit zur Veröffentlichung</h3>
+        <h3 className="mb-2 text-lg font-semibold text-green-800">
+          {mode === 'edit' ? 'Bereit zum Speichern' : 'Bereit zur Veröffentlichung'}
+        </h3>
         <p className="text-sm text-green-700">
-          Klicken Sie auf "Artikel veröffentlichen", um Ihren Artikel zu listen.
+          {mode === 'edit'
+            ? 'Klicken Sie auf "Änderungen speichern", um Ihre Bearbeitungen zu speichern.'
+            : 'Klicken Sie auf "Artikel veröffentlichen", um Ihren Artikel zu listen.'}
         </p>
       </div>
     </div>

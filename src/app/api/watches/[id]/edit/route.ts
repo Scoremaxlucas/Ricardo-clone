@@ -1,17 +1,18 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { deleteImageFromBlob, uploadImagesToBlob } from '@/lib/blob-storage'
+import { canEditField, getEditPolicy, type ListingState } from '@/lib/edit-policy'
 import { prisma } from '@/lib/prisma'
-import { uploadImagesToBlob, isBlobUrl, deleteImageFromBlob } from '@/lib/blob-storage'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
- * Bearbeitung von Artikeln
+ * Bearbeitung von Artikeln mit Ricardo-like EditPolicy Enforcement
  *
- * Regeln:
- * 1. Wenn bereits ein aktiver Kauf stattgefunden hat → Keine Bearbeitung möglich
- * 2. Wenn Gebote vorhanden sind → Nur Beschreibung, Bilder, Video können ergänzt werden
- * 3. Wenn keine Gebote → Vollständige Bearbeitung möglich
- * 4. Stornierte Purchases zählen nicht - Artikel kann wieder bearbeitet werden
+ * Regeln werden durch EditPolicy bestimmt:
+ * - READ_ONLY: Keine Bearbeitung möglich
+ * - LIMITED_APPEND_ONLY: Nur Beschreibungs-Ergänzung und neue Bilder
+ * - PUBLISHED_LIMITED: Eingeschränkte Bearbeitung (Kategorie/Verkaufsart gesperrt)
+ * - FULL: Vollständige Bearbeitung (Draft)
  */
 
 // WICHTIG: Erhöhe Body-Size-Limit für große Bild-Uploads
@@ -40,6 +41,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           },
         },
         sales: true,
+        categories: {
+          include: {
+            category: true,
+          },
+        },
       },
     })
 
@@ -55,89 +61,124 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       )
     }
 
-    // Prüfe ob bereits ein aktiver Kauf stattgefunden hat
-    if (watch.purchases.length > 0 || watch.sales.length > 0) {
+    // Compute EditPolicy
+    const isPublished = watch.moderationStatus === 'approved'
+    const isDraft = !isPublished || watch.moderationStatus === 'pending' || !watch.moderationStatus
+    const listingState: ListingState = {
+      isPublished,
+      isDraft,
+      isAuction: watch.isAuction || false,
+      isFixedPrice: !watch.isAuction,
+      bidsCount: watch.bids.length,
+      hasActivePurchase: watch.purchases.length > 0,
+      hasActiveSale: watch.sales.length > 0,
+      purchaseStatus: watch.purchases[0]?.status || undefined,
+      moderationStatus: watch.moderationStatus || undefined,
+    }
+
+    const policy = getEditPolicy(listingState)
+
+    // READ_ONLY: Reject all updates
+    if (policy.level === 'READ_ONLY') {
       return NextResponse.json(
         {
-          message:
-            'Das Angebot kann nicht mehr bearbeitet werden, da bereits ein Kauf stattgefunden hat',
+          message: policy.reason,
+          policyLevel: policy.level,
+        },
+        { status: 403 }
+      )
+    }
+
+    const data = await request.json()
+
+    // Enforce policy: Check attempted changes against allowedFields
+    // For LIMITED_APPEND_ONLY, only allow descriptionAddendum and newImages
+    // For other modes, check against allowedFields
+    const attemptedChanges = Object.keys(data).filter(
+      key => data[key] !== undefined && data[key] !== null && key !== 'booster'
+    )
+
+    const blockedFields: string[] = []
+    for (const field of attemptedChanges) {
+      // Map UI field names to policy field names for append-only mode
+      let fieldToCheck = field
+      if (policy.level === 'LIMITED_APPEND_ONLY') {
+        // In append-only mode, block 'description' and 'images', only allow 'descriptionAddendum' and 'newImages'
+        if (field === 'description' || field === 'images') {
+          blockedFields.push(field)
+          continue
+        }
+        // Map 'descriptionAddendum' -> 'descriptionAddendum', 'newImages' -> 'newImages'
+        fieldToCheck = field
+      } else {
+        // For other modes, use field name as-is
+        fieldToCheck = field
+      }
+
+      if (!canEditField(policy, fieldToCheck)) {
+        blockedFields.push(field)
+      }
+    }
+
+    if (blockedFields.length > 0) {
+      return NextResponse.json(
+        {
+          message: policy.reason || 'Diese Felder können nicht mehr geändert werden.',
+          blockedFields,
+          policyLevel: policy.level,
         },
         { status: 400 }
       )
     }
 
-    const hasBids = watch.bids.length > 0
-    const data = await request.json()
-
-    // Bei vorhandenen Geboten nur erlaubte Felder
-    if (hasBids) {
-      const allowedFields = ['description', 'images', 'video']
-      const attemptedChanges = Object.keys(data).filter(
-        key =>
-          !allowedFields.includes(key) &&
-          key !== 'booster' && // Booster kann immer geändert werden
-          data[key] !== undefined &&
-          data[key] !== null
-      )
-
-      if (attemptedChanges.length > 0) {
-        return NextResponse.json(
-          {
-            message:
-              'Bei vorhandenen Geboten können nur Beschreibung, Bilder und Video ergänzt werden. Preis, Auktionsdauer und andere Felder sind gesperrt.',
-            blockedFields: attemptedChanges,
-          },
-          { status: 400 }
-        )
-      }
-    }
-
     // Bereite Update-Daten vor
     const updateData: any = {}
 
-    if (hasBids) {
-      // NUR Beschreibung, Bilder, Video
-      if (data.description !== undefined) {
-        updateData.description = data.description || ''
+    // LIMITED_APPEND_ONLY: Handle append-only mode
+    if (policy.level === 'LIMITED_APPEND_ONLY') {
+      // Append-only description: Add addendum with separator
+      if (data.descriptionAddendum !== undefined && data.descriptionAddendum.trim()) {
+        const existingDescription = watch.description || ''
+        const now = new Date()
+        const timestamp = now.toLocaleString('de-CH', {
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+          hour: '2-digit',
+          minute: '2-digit',
+        })
+        const addendum = `\n\n---\nErgänzung (${timestamp}): ${data.descriptionAddendum.trim()}`
+        updateData.description = existingDescription + addendum
       }
 
-      if (data.images !== undefined) {
-        // Kombiniere alte und neue Bilder
+      // Append-only images: Only add new images, never delete/reorder
+      if (
+        data.newImages !== undefined &&
+        Array.isArray(data.newImages) &&
+        data.newImages.length > 0
+      ) {
         const oldImages = watch.images ? JSON.parse(watch.images) : []
-        const newImages = Array.isArray(data.images) ? data.images : []
+        const newImages = data.newImages.filter(
+          (img: string) => typeof img === 'string' && img.startsWith('data:image/')
+        )
 
-        // KRITISCH: Upload neue Base64-Bilder zu Blob Storage
-        try {
-          const base64Images = newImages.filter((img: string) =>
-            typeof img === 'string' && img.startsWith('data:image/')
-          )
-          const existingUrls = newImages.filter((img: string) =>
-            typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))
-          )
-
-          // Upload neue Base64-Bilder zu Blob Storage
-          let blobUrls: string[] = [...oldImages, ...existingUrls]
-          if (base64Images.length > 0) {
+        if (newImages.length > 0) {
+          try {
             const basePath = `watches/${id}`
-            const uploadedUrls = await uploadImagesToBlob(base64Images, basePath)
-            blobUrls = [...oldImages, ...existingUrls, ...uploadedUrls]
+            const uploadedUrls = await uploadImagesToBlob(newImages, basePath)
+            // Append new images to existing ones (never delete)
+            const combinedImages = [...oldImages, ...uploadedUrls]
+            updateData.images = JSON.stringify(combinedImages)
+          } catch (error) {
+            console.error('[Watch Edit] Error uploading append-only images:', error)
+            // Don't update images on error
           }
-
-          // Entferne Duplikate
-          const combinedImages = Array.from(new Set(blobUrls))
-          updateData.images = JSON.stringify(combinedImages)
-        } catch (error) {
-          console.error('[Watch Edit] Error uploading images to Blob Storage:', error)
-          // Fallback: Original-Logik
-          const combinedImages = Array.from(new Set([...oldImages, ...newImages]))
-          updateData.images = JSON.stringify(combinedImages)
         }
       }
 
-      if (data.video !== undefined) {
-        updateData.video = data.video || null
-      }
-    } else {
+      // No other fields allowed in append-only mode
+    } else if (policy.level === 'PUBLISHED_LIMITED' || policy.level === 'FULL') {
+      // PUBLISHED_LIMITED or FULL: Normal editing (with policy restrictions already enforced)
       // VOLLSTÄNDIGE BEARBEITUNG
 
       // Grunddaten
@@ -217,11 +258,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           })
 
           // Trenne Base64-Bilder (neu) von URLs (bereits hochgeladen)
-          const base64Images = imagesArray.filter((img: string) =>
-            typeof img === 'string' && img.startsWith('data:image/')
+          const base64Images = imagesArray.filter(
+            (img: string) => typeof img === 'string' && img.startsWith('data:image/')
           )
-          const existingUrls = imagesArray.filter((img: string) =>
-            typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))
+          const existingUrls = imagesArray.filter(
+            (img: string) =>
+              typeof img === 'string' && (img.startsWith('http://') || img.startsWith('https://'))
           )
 
           // Upload neue Base64-Bilder zu Blob Storage
@@ -238,10 +280,11 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           if (watch?.images) {
             try {
               const oldImages = JSON.parse(watch.images as string)
-              const imagesToDelete = oldImages.filter((oldImg: string) =>
-                typeof oldImg === 'string' &&
-                oldImg.startsWith('https://') &&
-                !blobUrls.includes(oldImg)
+              const imagesToDelete = oldImages.filter(
+                (oldImg: string) =>
+                  typeof oldImg === 'string' &&
+                  oldImg.startsWith('https://') &&
+                  !blobUrls.includes(oldImg)
               )
 
               for (const oldImg of imagesToDelete) {
@@ -325,17 +368,20 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
-    // Booster kann immer geändert werden
-    if (data.booster !== undefined) {
+    // Booster: Only editable if policy allows
+    if (data.booster !== undefined && canEditField(policy, 'boosters')) {
       if (data.booster && data.booster !== 'none') {
         updateData.boosters = JSON.stringify([data.booster])
       } else {
         updateData.boosters = null
       }
+    } else if (data.booster !== undefined && !canEditField(policy, 'boosters')) {
+      // Booster change attempted but blocked by policy
+      console.warn(`[watches/edit] Booster change blocked by policy for watch ${id}`)
     }
 
-    // Kategorie-Update (nur wenn keine Gebote und Kategorie geändert wurde)
-    if (!hasBids && data.category) {
+    // Kategorie-Update (only if policy allows)
+    if (canEditField(policy, 'category') && data.category) {
       // Prüfe ob Kategorie geändert wurde
       const currentCategories = await prisma.watchCategory.findMany({
         where: { watchId: id },
@@ -364,6 +410,17 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
           })
         }
       }
+    } else if (data.category && !canEditField(policy, 'category')) {
+      // Category change attempted but blocked by policy
+      console.warn(`[watches/edit] Category change blocked by policy for watch ${id}`)
+    }
+
+    // Only proceed if there are updates to apply
+    if (Object.keys(updateData).length === 0) {
+      return NextResponse.json({
+        message: 'Keine Änderungen vorgenommen',
+        watch: watch,
+      })
     }
 
     // Erfasse alle Änderungen für Historie
@@ -432,7 +489,8 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
               editedBy: 'seller', // Markiere als Verkäufer-Bearbeitung
               sellerId: session.user.id,
               changes: changes,
-              hasBids: hasBids,
+              policyLevel: policy.level,
+              bidsCount: listingState.bidsCount,
               timestamp: new Date().toISOString(),
             }),
           },

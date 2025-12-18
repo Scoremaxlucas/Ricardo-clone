@@ -1,8 +1,8 @@
-export { StepProgress, WizardFooter } from './StepProgress'
+export { PolicyBanner } from './PolicyBanner'
 export { StepCategorySelection } from './StepCategorySelection'
-export { StepImages } from './StepImages'
 export { StepDetails } from './StepDetails'
+export { StepImages } from './StepImages'
 export { StepPrice } from './StepPrice'
-export { StepShippingPayment } from './StepShippingPayment'
+export { StepProgress, WizardFooter } from './StepProgress'
 export { StepReviewPublish } from './StepReviewPublish'
-
+export { StepShippingPayment } from './StepShippingPayment'

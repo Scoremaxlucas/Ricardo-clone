@@ -1,10 +1,19 @@
 'use client'
 
 import { getCategoryConfig } from '@/data/categories'
+import { EditPolicy } from '@/lib/edit-policy'
 import { getCategoryDisplayName, getSubcategoryDisplayName } from '@/lib/product-utils'
-import { Sparkles, CheckCircle2, ChevronDown, ChevronUp, AlertTriangle, Info } from 'lucide-react'
-import { useState } from 'react'
+import {
+  AlertTriangle,
+  CheckCircle2,
+  ChevronDown,
+  ChevronUp,
+  Info,
+  Lock,
+  Sparkles,
+} from 'lucide-react'
 import dynamic from 'next/dynamic'
+import { useState } from 'react'
 
 // Lazy load AIDetection to avoid bundling TensorFlow.js on every page
 const AIDetection = dynamic(
@@ -42,6 +51,8 @@ interface StepCategorySelectionProps {
   setShowAIDetection: (show: boolean) => void
   setFormData: React.Dispatch<React.SetStateAction<any>>
   setTitleImageIndex: React.Dispatch<React.SetStateAction<number>>
+  policy?: EditPolicy // Optional policy for edit mode
+  mode?: 'create' | 'edit' // Mode: create or edit
 }
 
 // Format confidence with Swiss locale (clamped 0-100)
@@ -59,7 +70,8 @@ function getConfidenceStyle(confidence: number): {
   title: string
   note: string
 } {
-  const percent = confidence && !isNaN(confidence) ? Math.min(100, Math.max(0, confidence * 100)) : 0
+  const percent =
+    confidence && !isNaN(confidence) ? Math.min(100, Math.max(0, confidence * 100)) : 0
 
   if (percent >= 90) {
     return {
@@ -102,27 +114,47 @@ export function StepCategorySelection({
   setShowAIDetection,
   setFormData,
   setTitleImageIndex,
+  policy,
+  mode = 'create',
 }: StepCategorySelectionProps) {
   const [showAIDetails, setShowAIDetails] = useState(false)
   const confidenceStyle = getConfidenceStyle(detectedConfidence)
   const hasManualOverride = selectedCategory && (!detectedConfidence || detectedConfidence === 0)
   const aiImage = formData.images?.[0] || null
+  const isLocked = policy?.uiLocks.category || false
 
   // Check if suggested subcategory is valid for selected category
-  const isSubcategoryValid = selectedCategory && selectedSubcategory
-    ? true // Simplified - could add validation logic here
-    : true
+  const isSubcategoryValid =
+    selectedCategory && selectedSubcategory
+      ? true // Simplified - could add validation logic here
+      : true
 
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="text-center">
-        <h2 className="mb-1 md:mb-2 text-xl md:text-2xl font-bold text-gray-900">Kategorie wählen</h2>
-        <p className="text-sm md:text-base text-gray-600">
-          Laden Sie ein Bild hoch und unsere KI erkennt automatisch die passende Kategorie
+        <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
+          Kategorie wählen
+        </h2>
+        <p className="text-sm text-gray-600 md:text-base">
+          {mode === 'edit' && isLocked
+            ? 'Die Kategorie kann nach Veröffentlichung nicht mehr geändert werden.'
+            : 'Laden Sie ein Bild hoch und unsere KI erkennt automatisch die passende Kategorie'}
         </p>
       </div>
 
-      {showAIDetection && !selectedCategory ? (
+      {/* Locked state banner */}
+      {isLocked && mode === 'edit' && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <div className="flex items-center gap-2">
+            <Lock className="h-4 w-4 text-amber-600" />
+            <p className="text-sm text-amber-800">
+              Kategorie kann nach Veröffentlichung nicht mehr geändert werden.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {showAIDetection && !selectedCategory && !isLocked ? (
         <AIDetection
           onCategoryDetected={onCategoryDetected}
           imageUrl={formData.images?.[0] || null}
@@ -152,13 +184,21 @@ export function StepCategorySelection({
                   )
                 })()}
               </div>
-              <button
-                type="button"
-                onClick={onResetCategory}
-                className="rounded-lg border border-primary-300 px-4 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-100"
-              >
-                Kategorie ändern
-              </button>
+              {!isLocked && (
+                <button
+                  type="button"
+                  onClick={onResetCategory}
+                  className="rounded-lg border border-primary-300 px-4 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-100"
+                >
+                  Kategorie ändern
+                </button>
+              )}
+              {isLocked && (
+                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-500">
+                  <Lock className="h-4 w-4" />
+                  <span>Gesperrt</span>
+                </div>
+              )}
             </div>
 
             {selectedSubcategory && (
@@ -173,10 +213,12 @@ export function StepCategorySelection({
 
           {/* AI Detection info - Compact with accordion */}
           {detectedConfidence > 0 && !hasManualOverride && (
-            <div className={`rounded-xl border ${confidenceStyle.borderColor} ${confidenceStyle.bgColor} p-4`}>
+            <div
+              className={`rounded-xl border ${confidenceStyle.borderColor} ${confidenceStyle.bgColor} p-4`}
+            >
               {/* Summary line */}
               <div className="flex items-center justify-between">
-                <div className="flex items-center gap-3 flex-1 min-w-0">
+                <div className="flex min-w-0 flex-1 items-center gap-3">
                   {/* Thumbnail */}
                   {aiImage && (
                     <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
@@ -189,16 +231,17 @@ export function StepCategorySelection({
                   )}
 
                   {/* Summary text */}
-                  <div className="flex-1 min-w-0">
+                  <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <Sparkles className={`h-4 w-4 flex-shrink-0 ${confidenceStyle.iconColor}`} />
-                      <p className="text-sm font-semibold text-gray-900 truncate">
+                      <p className="truncate text-sm font-semibold text-gray-900">
                         {confidenceStyle.title}
                       </p>
                     </div>
-                    <p className="mt-0.5 text-xs text-gray-600 truncate">
+                    <p className="mt-0.5 truncate text-xs text-gray-600">
                       {getCategoryDisplayName(selectedCategory)}
-                      {selectedSubcategory && ` → ${getSubcategoryDisplayName(selectedSubcategory)}`}
+                      {selectedSubcategory &&
+                        ` → ${getSubcategoryDisplayName(selectedSubcategory)}`}
                       {' · Konfidenz: '}
                       <span className="font-medium">{formatConfidence(detectedConfidence)}</span>
                     </p>
@@ -238,7 +281,10 @@ export function StepCategorySelection({
                     <div className="flex items-start gap-2 text-sm text-gray-700">
                       <CheckCircle2 className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
                       <span>
-                        Unterkategorie: <span className="font-medium">{getSubcategoryDisplayName(selectedSubcategory)}</span>
+                        Unterkategorie:{' '}
+                        <span className="font-medium">
+                          {getSubcategoryDisplayName(selectedSubcategory)}
+                        </span>
                       </span>
                     </div>
                   )}
@@ -247,7 +293,8 @@ export function StepCategorySelection({
                   <div className="flex items-start gap-2 text-sm text-gray-700">
                     <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
                     <span>
-                      Konfidenz: <span className="font-medium">{formatConfidence(detectedConfidence)}</span>
+                      Konfidenz:{' '}
+                      <span className="font-medium">{formatConfidence(detectedConfidence)}</span>
                     </span>
                   </div>
 
@@ -268,7 +315,9 @@ export function StepCategorySelection({
                   {formData.images.length > 0 && (
                     <div className="flex items-center gap-2 text-xs text-green-700">
                       <CheckCircle2 className="h-3 w-3" />
-                      <span>Das hochgeladene Bild wurde automatisch als Listing-Bild übernommen.</span>
+                      <span>
+                        Das hochgeladene Bild wurde automatisch als Listing-Bild übernommen.
+                      </span>
                     </div>
                   )}
                 </div>

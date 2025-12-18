@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { getEditPolicy, type ListingState } from '@/lib/edit-policy'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
- * Prüft ob ein Artikel bearbeitet werden kann
- * Artikel kann nicht bearbeitet werden wenn bereits ein aktiver Kauf stattgefunden hat
+ * Prüft ob ein Artikel bearbeitet werden kann und gibt EditPolicy zurück
  */
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -25,6 +25,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           },
         },
         sales: true,
+        bids: {
+          select: { id: true },
+        },
+        categories: {
+          include: {
+            category: true,
+          },
+        },
       },
     })
 
@@ -37,11 +45,32 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: 'Sie sind nicht berechtigt' }, { status: 403 })
     }
 
-    const hasActivePurchase = watch.purchases.length > 0 || watch.sales.length > 0
+    // Determine listing state
+    const isPublished = watch.moderationStatus === 'approved'
+    const isDraft = !isPublished || watch.moderationStatus === 'pending' || !watch.moderationStatus
+    const hasActivePurchase = watch.purchases.length > 0
+    const hasActiveSale = watch.sales.length > 0
+    const purchaseStatus = watch.purchases[0]?.status || undefined
+
+    const listingState: ListingState = {
+      isPublished,
+      isDraft,
+      isAuction: watch.isAuction || false,
+      isFixedPrice: !watch.isAuction,
+      bidsCount: watch.bids.length,
+      hasActivePurchase,
+      hasActiveSale,
+      purchaseStatus,
+      moderationStatus: watch.moderationStatus || undefined,
+    }
+
+    const policy = getEditPolicy(listingState)
 
     return NextResponse.json({
       hasActivePurchase,
-      canEdit: !hasActivePurchase,
+      canEdit: policy.level !== 'READ_ONLY',
+      policy,
+      listingState,
     })
   } catch (error: any) {
     console.error('[watches/edit-status] Error:', error)
@@ -148,7 +177,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     const now = new Date()
     const auctionEndDate = updatedWatch?.auctionEnd ? new Date(updatedWatch.auctionEnd) : null
     // WICHTIG: Nur nicht-stornierte Purchases zählen als "verkauft" (wie in admin/watches)
-    const activePurchases = (updatedWatch?.purchases || []).filter((p: any) => p.status !== 'cancelled')
+    const activePurchases = (updatedWatch?.purchases || []).filter(
+      (p: any) => p.status !== 'cancelled'
+    )
     const isSold = activePurchases.length > 0
     const isExpired = auctionEndDate ? auctionEndDate <= now : false
     const hasAnyPurchases = (updatedWatch?.purchases || []).length > 0
@@ -167,12 +198,15 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       calculatedIsActive = !isSold
       // Double-check: Wenn approved aber trotzdem false, log error
       if (!calculatedIsActive && !isSold) {
-        console.error('[edit-status] CRITICAL: Approved watch calculated as inactive but not sold!', {
-          watchId: id,
-          moderationStatus: updatedWatch?.moderationStatus,
-          isSold,
-          activePurchases: activePurchases.length,
-        })
+        console.error(
+          '[edit-status] CRITICAL: Approved watch calculated as inactive but not sold!',
+          {
+            watchId: id,
+            moderationStatus: updatedWatch?.moderationStatus,
+            isSold,
+            activePurchases: activePurchases.length,
+          }
+        )
         // Force to true as fallback
         calculatedIsActive = true
       }

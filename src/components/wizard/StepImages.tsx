@@ -1,9 +1,10 @@
 'use client'
 
-import { Sparkles, Upload, X, Star, Bot, Loader2 } from 'lucide-react'
-import toast from 'react-hot-toast'
+import { EditPolicy } from '@/lib/edit-policy'
 import { compressImage } from '@/lib/image-compression'
+import { Bot, Loader2, Lock, Star, Upload, X } from 'lucide-react'
 import { useState } from 'react'
+import toast from 'react-hot-toast'
 
 interface DraftImage {
   id: string
@@ -15,12 +16,15 @@ interface DraftImage {
 interface StepImagesProps {
   formData: {
     images: string[]
+    newImages?: string[] // For append-only mode
   }
   titleImageIndex: number
   draftId: string | null
   aiDetectedImageIndex?: number
   onImagesChange: (images: string[]) => void
   onTitleImageChange: (index: number) => Promise<void>
+  policy?: EditPolicy
+  mode?: 'create' | 'edit'
 }
 
 export function StepImages({
@@ -30,14 +34,85 @@ export function StepImages({
   aiDetectedImageIndex = 0,
   onImagesChange,
   onTitleImageChange,
+  policy,
+  mode = 'create',
 }: StepImagesProps) {
   const [uploadingIndexes, setUploadingIndexes] = useState<Set<number>>(new Set())
+  const isImagesLocked = policy?.uiLocks.images || false
+  const isImagesAppendOnly = policy?.uiLocks.imagesAppendOnly || false
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
 
-    // Ensure we have a draft ID
+    // In edit mode without draftId, use base64 images (uploaded on submit)
+    if (mode === 'edit' && !draftId) {
+      const currentImageCount = formData.images.length
+      const newImageUrls: string[] = []
+      let processedCount = 0
+
+      for (let i = 0; i < files.length; i++) {
+        const file = files[i]
+        const tempIndex = currentImageCount + i
+
+        if (!file.type.startsWith('image/')) {
+          toast.error(`${file.name} ist kein Bild.`, { position: 'top-right', duration: 4000 })
+          continue
+        }
+
+        if (file.size > 10 * 1024 * 1024) {
+          toast.error(`${file.name} ist zu groß. Maximale Größe: 10MB`, {
+            position: 'top-right',
+            duration: 4000,
+          })
+          continue
+        }
+
+        try {
+          setUploadingIndexes(prev => new Set(prev).add(tempIndex))
+          const compressedImage = await compressImage(file, {
+            maxWidth: 1600,
+            maxHeight: 1600,
+            quality: 0.75,
+            maxSizeMB: 1.5,
+          })
+          newImageUrls.push(compressedImage)
+          processedCount++
+
+          if (processedCount === files.length) {
+            if (isImagesAppendOnly) {
+              // Append-only: add to newImages
+              onImagesChange([...formData.images, ...newImageUrls])
+            } else {
+              // Normal edit: add to images
+              onImagesChange([...formData.images, ...newImageUrls])
+            }
+            toast.success(
+              `${newImageUrls.length} Bild${newImageUrls.length > 1 ? 'er' : ''} hinzugefügt.`,
+              {
+                position: 'top-right',
+                duration: 3000,
+              }
+            )
+          }
+        } catch (error) {
+          console.error('Error compressing image:', error)
+          toast.error(`Fehler beim Verarbeiten von ${file.name}`, {
+            position: 'top-right',
+            duration: 4000,
+          })
+        } finally {
+          setUploadingIndexes(prev => {
+            const next = new Set(prev)
+            next.delete(tempIndex)
+            return next
+          })
+        }
+      }
+      return
+    }
+
+    // Ensure we have a draft ID for create mode
     if (!draftId) {
       toast.error('Bitte warten Sie, bis der Entwurf geladen ist', {
         position: 'top-right',
@@ -125,10 +200,13 @@ export function StepImages({
         }
       } catch (error) {
         console.error('Error uploading image:', error)
-        toast.error(`Fehler beim Hochladen von ${file.name}: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`, {
-          position: 'top-right',
-          duration: 5000,
-        })
+        toast.error(
+          `Fehler beim Hochladen von ${file.name}: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+          {
+            position: 'top-right',
+            duration: 5000,
+          }
+        )
       } finally {
         setUploadingIndexes(prev => {
           const next = new Set(prev)
@@ -143,10 +221,13 @@ export function StepImages({
     }
 
     if (newImageUrls.length > 0) {
-      toast.success(`${newImageUrls.length} Bild${newImageUrls.length > 1 ? 'er' : ''} erfolgreich hochgeladen.`, {
-        position: 'top-right',
-        duration: 3000,
-      })
+      toast.success(
+        `${newImageUrls.length} Bild${newImageUrls.length > 1 ? 'er' : ''} erfolgreich hochgeladen.`,
+        {
+          position: 'top-right',
+          duration: 3000,
+        }
+      )
     }
 
     // Reset input
@@ -217,11 +298,28 @@ export function StepImages({
   return (
     <div className="space-y-4 md:space-y-6">
       <div className="text-center">
-        <h2 className="mb-1 md:mb-2 text-xl md:text-2xl font-bold text-gray-900">Bilder hochladen</h2>
-        <p className="text-sm md:text-base text-gray-600">
-          Fügen Sie bis zu 10 Bilder hinzu. Das erste Bild wird als Titelbild verwendet.
+        <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
+          Bilder hochladen
+        </h2>
+        <p className="text-sm text-gray-600 md:text-base">
+          {isImagesAppendOnly
+            ? 'Sie können nur zusätzliche Bilder hinzufügen. Bestehende Bilder können nicht gelöscht oder geändert werden.'
+            : 'Fügen Sie bis zu 10 Bilder hinzu. Das erste Bild wird als Titelbild verwendet.'}
         </p>
       </div>
+
+      {/* Append-only mode banner */}
+      {isImagesAppendOnly && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+          <div className="flex items-center gap-2">
+            <Lock className="h-4 w-4 text-amber-600" />
+            <p className="text-sm text-amber-800">
+              Bei vorhandenen Geboten können nur neue Bilder hinzugefügt werden. Bestehende Bilder
+              können nicht gelöscht oder neu angeordnet werden.
+            </p>
+          </div>
+        </div>
+      )}
 
       {/* AI-detected image notice */}
       {hasAIDetectedImage && formData.images.length === 1 && (
@@ -232,51 +330,87 @@ export function StepImages({
           <div className="flex-1">
             <p className="font-medium text-green-800">Bild von KI-Erkennung übernommen</p>
             <p className="text-sm text-green-700">
-              Das Bild aus der Kategorie-Erkennung wurde automatisch als erstes Listing-Bild gesetzt.
+              Das Bild aus der Kategorie-Erkennung wurde automatisch als erstes Listing-Bild
+              gesetzt.
             </p>
           </div>
         </div>
       )}
 
       {/* Upload area */}
-      <div className="rounded-xl border-2 border-dashed border-gray-300 bg-gray-50 p-8 transition-colors hover:border-primary-400 hover:bg-primary-50">
-        <label className="flex cursor-pointer flex-col items-center gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary-100">
-            <Upload className="h-8 w-8 text-primary-600" />
-          </div>
-          <div className="text-center">
-            <span className="text-lg font-semibold text-gray-700">
-              {formData.images.length > 0 ? 'Weitere Bilder hinzufügen' : 'Bilder hochladen'}
+      {!isImagesLocked && (
+        <div
+          className={`rounded-xl border-2 border-dashed p-8 transition-colors ${
+            isImagesAppendOnly
+              ? 'border-gray-200 bg-gray-50'
+              : 'border-gray-300 bg-gray-50 hover:border-primary-400 hover:bg-primary-50'
+          }`}
+        >
+          <label
+            className={`flex flex-col items-center gap-4 ${isImagesAppendOnly ? 'cursor-pointer' : 'cursor-pointer'}`}
+          >
+            <div
+              className={`flex h-16 w-16 items-center justify-center rounded-full ${
+                isImagesAppendOnly ? 'bg-gray-100' : 'bg-primary-100'
+              }`}
+            >
+              <Upload
+                className={`h-8 w-8 ${isImagesAppendOnly ? 'text-gray-500' : 'text-primary-600'}`}
+              />
+            </div>
+            <div className="text-center">
+              <span
+                className={`text-lg font-semibold ${
+                  isImagesAppendOnly ? 'text-gray-600' : 'text-gray-700'
+                }`}
+              >
+                {isImagesAppendOnly
+                  ? 'Zusätzliche Bilder hinzufügen'
+                  : formData.images.length > 0
+                    ? 'Weitere Bilder hinzufügen'
+                    : 'Bilder hochladen'}
+              </span>
+              <p className="mt-1 text-sm text-gray-500">JPG, PNG, max. 10MB pro Bild</p>
+            </div>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              onChange={handleImageUpload}
+              disabled={!draftId || uploadingIndexes.size > 0 || isImagesLocked}
+              className="hidden"
+            />
+            <span
+              className={`rounded-full px-6 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                isImagesAppendOnly
+                  ? 'bg-gray-400 text-white'
+                  : 'bg-primary-600 text-white hover:bg-primary-700'
+              }`}
+            >
+              {uploadingIndexes.size > 0 ? 'Wird hochgeladen...' : 'Dateien auswählen'}
             </span>
-            <p className="mt-1 text-sm text-gray-500">
-              JPG, PNG, max. 10MB pro Bild
-            </p>
-          </div>
-          <input
-            type="file"
-            accept="image/*"
-            multiple
-            onChange={handleImageUpload}
-            disabled={!draftId || uploadingIndexes.size > 0}
-            className="hidden"
-          />
-          <span className="rounded-full bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:opacity-50 disabled:cursor-not-allowed">
-            {uploadingIndexes.size > 0 ? 'Wird hochgeladen...' : 'Dateien auswählen'}
-          </span>
-        </label>
-      </div>
+          </label>
+        </div>
+      )}
 
       {/* Image preview grid */}
       {formData.images.length > 0 && (
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-gray-900">
-              Hochgeladene Bilder ({formData.images.length}/10)
+              {isImagesAppendOnly ? 'Bestehende Bilder' : 'Hochgeladene Bilder'} (
+              {formData.images.length}/10)
             </h3>
-            {formData.images.length > 0 && (
+            {formData.images.length > 0 && !isImagesAppendOnly && (
               <span className="flex items-center gap-1 text-sm text-gray-500">
                 <Star className="h-4 w-4 text-yellow-500" />
                 Klicken Sie auf ein Bild, um es als Titelbild zu setzen
+              </span>
+            )}
+            {isImagesAppendOnly && (
+              <span className="flex items-center gap-1 text-sm text-amber-600">
+                <Lock className="h-4 w-4" />
+                Bestehende Bilder können nicht geändert werden
               </span>
             )}
           </div>
@@ -303,8 +437,12 @@ export function StepImages({
                       <img
                         src={image}
                         alt={`Bild ${index + 1}`}
-                        className="h-full w-full cursor-pointer object-cover transition-transform group-hover:scale-105"
-                        onClick={() => setAsTitleImage(index)}
+                        className={`h-full w-full object-cover transition-transform ${
+                          isImagesAppendOnly
+                            ? 'cursor-default'
+                            : 'cursor-pointer group-hover:scale-105'
+                        }`}
+                        onClick={() => !isImagesAppendOnly && setAsTitleImage(index)}
                       />
 
                       {/* Title image badge */}
@@ -323,18 +461,20 @@ export function StepImages({
                         </div>
                       )}
 
-                      {/* Remove button */}
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          removeImage(index)
-                        }}
-                        disabled={!draftId}
-                        className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity group-hover:opacity-100 hover:bg-red-600 disabled:opacity-50"
-                      >
-                        <X className="h-4 w-4" />
-                      </button>
+                      {/* Remove button - hidden in append-only mode */}
+                      {!isImagesAppendOnly && (
+                        <button
+                          type="button"
+                          onClick={e => {
+                            e.stopPropagation()
+                            removeImage(index)
+                          }}
+                          disabled={!draftId}
+                          className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity hover:bg-red-600 disabled:opacity-50 group-hover:opacity-100"
+                        >
+                          <X className="h-4 w-4" />
+                        </button>
+                      )}
                     </>
                   )}
                 </div>
