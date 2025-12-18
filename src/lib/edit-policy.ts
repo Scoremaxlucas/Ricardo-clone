@@ -182,7 +182,9 @@ export function getEditPolicy(state: ListingState): EditPolicy {
     }
   }
 
-  // D) ACTIVE + AUCTION with bids = 0 → PUBLISHED_LIMITED (but auction structure locked)
+  // B) ACTIVE + AUCTION with bids = 0 → PUBLISHED_LIMITED (Ricardo: Full editing allowed before any bid)
+  // Ricardo rule: "Before Any Bid Is Placed - Listings can be fully edited by the seller"
+  // We allow full editing except category/sale type (post-publish locks)
   if (state.isAuction && state.bidsCount === 0) {
     return {
       level: 'PUBLISHED_LIMITED',
@@ -190,13 +192,17 @@ export function getEditPolicy(state: ListingState): EditPolicy {
         'title',
         'description',
         'images',
+        'price', // Starting price editable before bids
+        'buyNowPrice', // Buy-now price editable before bids
+        'auctionStart', // Auction start editable before bids
+        'auctionEnd', // Auction end editable before bids
+        'auctionDuration', // Duration editable before bids
         'shippingMethods',
         'shippingMethod', // Alternative field name
         'boosters',
-        // Price fields are locked (auction structure)
         // Category and sale type are locked (post-publish locks)
       ],
-      lockedSteps: [0, 3], // Category and Price steps locked
+      lockedSteps: [0], // Only category step locked (post-publish lock)
       uiLocks: {
         category: true,
         subcategory: true,
@@ -206,16 +212,16 @@ export function getEditPolicy(state: ListingState): EditPolicy {
         descriptionAppendOnly: false,
         images: false,
         imagesAppendOnly: false,
-        price: true, // Starting price locked after publish
-        buyNowPrice: true, // Buy-now price locked after publish
-        auctionStart: true, // Auction start locked after publish
-        auctionEnd: true, // Auction end locked after publish (no shortening)
-        auctionDuration: true, // Duration locked after publish
+        price: false, // Starting price editable before bids (Ricardo rule)
+        buyNowPrice: false, // Buy-now price editable before bids
+        auctionStart: false, // Auction start editable before bids
+        auctionEnd: false, // Auction end editable before bids
+        auctionDuration: false, // Duration editable before bids
         shipping: false,
         boosters: false,
       },
       reason:
-        'Dieses Angebot ist veröffentlicht. Einige Angaben (z.B. Kategorie/Verkaufsart/Auktionsstruktur) können nicht mehr geändert werden.',
+        'Dieses Angebot ist veröffentlicht. Einige Angaben (z.B. Kategorie/Verkaufsart) können nicht mehr geändert werden.',
     }
   }
 

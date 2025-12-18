@@ -46,16 +46,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // REGEL: Auktionen können nicht manuell beendet werden
-    // Auktionen enden nur automatisch nach Ablauf der Frist
+    // REGEL: Auktionen können nur beendet werden wenn keine Gebote vorhanden sind
+    // Ricardo rule: "Before Any Bid Is Placed - You can also end or delete the offer"
+    // "After a Bid Has Been Placed - the listing cannot be ended"
     if (watch.isAuction) {
-      return NextResponse.json(
-        {
-          message:
-            'Auktionen können nicht manuell beendet werden. Die Auktion endet automatisch nach Ablauf der festgelegten Frist.',
-        },
-        { status: 400 }
-      )
+      const bidsCount = watch.bids.length
+      if (bidsCount > 0) {
+        return NextResponse.json(
+          {
+            message:
+              'Auktionen mit Geboten können nicht beendet werden. Die Auktion endet automatisch nach Ablauf der festgelegten Frist.',
+          },
+          { status: 400 }
+        )
+      }
+      // If auction has 0 bids, allow ending (Ricardo rule)
     }
 
     // Stoppe das Angebot durch Setzen des auctionEnd auf jetzt
