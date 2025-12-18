@@ -1,30 +1,32 @@
 'use client'
 
-import { useEffect, useState, useRef } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { ArrowLeft, User, Mail, Phone, MapPin, Info, Loader2, AlertCircle } from 'lucide-react'
-import { toast } from 'react-hot-toast'
-import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
+import { ArrowLeft, Info, Loader2, Mail, MapPin, Phone, User } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { useForm } from 'react-hook-form'
+import { toast } from 'react-hot-toast'
 import * as z from 'zod'
 
-// Validation schema
+// Validation schema - Address fields are optional (only required when shipping/payment protection/invoices are used)
 const accountSchema = z.object({
   name: z.string().min(1, 'Name ist erforderlich').trim(),
   phone: z.string().optional(),
-  street: z.string().min(1, 'Strasse ist erforderlich').trim(),
+  street: z.string().trim().optional(),
   streetNumber: z
     .string()
-    .min(1, 'Hausnummer ist erforderlich')
-    .regex(/^[0-9]+[a-zA-Z]?(-[0-9]+[a-zA-Z]?)?$/, 'Ungültige Hausnummer (z.B. 6a, 12B, 4-6)'),
+    .regex(/^[0-9]+[a-zA-Z]?(-[0-9]+[a-zA-Z]?)?(\s+[a-zA-Z])?$/, 'Ungültige Hausnummer (z.B. 6a, 12B, 4-6)')
+    .optional()
+    .refine(val => !val || val.trim().length > 0, 'Hausnummer darf nicht leer sein'),
   postalCode: z
     .string()
-    .min(1, 'Postleitzahl ist erforderlich')
-    .regex(/^[0-9]{4}$/, 'Postleitzahl muss 4 Ziffern haben (z.B. 8000)'),
-  city: z.string().min(1, 'Ort ist erforderlich').trim(),
-  country: z.string().min(1, 'Land ist erforderlich'),
+    .regex(/^[0-9]{4}$/, 'Postleitzahl muss 4 Ziffern haben (z.B. 8000)')
+    .optional()
+    .refine(val => !val || val.trim().length > 0, 'Postleitzahl darf nicht leer sein'),
+  city: z.string().trim().optional(),
+  country: z.string().optional(),
   addresszusatz: z.string().optional(),
   kanton: z.string().optional(),
 })
@@ -150,11 +152,11 @@ export default function AccountPage() {
         body: JSON.stringify({
           name: data.name,
           phone: data.phone || null,
-          street: data.street,
-          streetNumber: data.streetNumber,
-          postalCode: data.postalCode,
-          city: data.city,
-          country: data.country,
+          street: data.street || null,
+          streetNumber: data.streetNumber || null,
+          postalCode: data.postalCode || null,
+          city: data.city || null,
+          country: data.country || null,
           addresszusatz: data.addresszusatz || null,
           kanton: data.kanton || null,
         }),
@@ -218,7 +220,8 @@ export default function AccountPage() {
                 className="mb-2 flex items-center text-sm font-medium text-gray-700"
               >
                 <User className="mr-2 h-4 w-4" />
-                Name <span className="ml-1 text-red-500">*</span>
+                Name
+                <span className="ml-1 text-xs font-normal text-gray-500">(bei Rechnungen erforderlich)</span>
               </label>
               <input
                 {...register('name')}
@@ -252,15 +255,12 @@ export default function AccountPage() {
                 id="email"
                 value={session.user?.email || ''}
                 disabled
-                className="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600 cursor-not-allowed"
+                className="w-full cursor-not-allowed rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600"
                 aria-label="E-Mail-Adresse (nicht änderbar)"
               />
               <p className="mt-1 text-xs text-gray-500">
                 Kontaktieren Sie den{' '}
-                <Link
-                  href="/hilfe"
-                  className="text-primary-600 underline hover:text-primary-700"
-                >
+                <Link href="/hilfe" className="text-primary-600 underline hover:text-primary-700">
                   Support
                 </Link>
                 , falls Sie die E-Mail ändern möchten.
@@ -286,7 +286,10 @@ export default function AccountPage() {
                     : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                 }`}
                 placeholder="+41 79 123 45 67"
-                {...(errors.phone && { 'aria-invalid': true, 'aria-describedby': 'phone-error' })}
+                {...(errors.phone && {
+                  'aria-invalid': true,
+                  'aria-describedby': 'phone-error',
+                })}
               />
               {errors.phone && (
                 <p id="phone-error" className="mt-1 text-sm text-red-600" role="alert">
@@ -297,10 +300,16 @@ export default function AccountPage() {
 
             {/* Address Section */}
             <div className="border-t border-gray-200 pt-6">
-              <h3 className="mb-4 flex items-center text-lg font-semibold text-gray-900">
-                <MapPin className="mr-2 h-5 w-5" />
-                Adresse
-              </h3>
+              <div className="mb-4 flex items-start justify-between">
+                <h3 className="flex items-center text-lg font-semibold text-gray-900">
+                  <MapPin className="mr-2 h-5 w-5" />
+                  Adresse
+                </h3>
+              </div>
+              <p className="mb-4 text-xs text-gray-500">
+                Diese Angaben werden nur benötigt, wenn Sie Versand/Zahlungsschutz nutzen oder
+                Rechnungen erhalten.
+              </p>
 
               <div className="space-y-4">
                 {/* Street and Street Number */}
@@ -310,7 +319,8 @@ export default function AccountPage() {
                       htmlFor="street"
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
-                      Strasse <span className="text-red-500">*</span>
+                      Strasse
+                      <span className="ml-1 text-xs font-normal text-gray-500">(bei Versand/Zahlungsschutz/Rechnungen)</span>
                     </label>
                     <input
                       {...register('street')}
@@ -322,7 +332,10 @@ export default function AccountPage() {
                           : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                       }`}
                       placeholder="Musterstrasse"
-                      {...(errors.street && { 'aria-invalid': true, 'aria-describedby': 'street-error' })}
+                      {...(errors.street && {
+                        'aria-invalid': true,
+                        'aria-describedby': 'street-error',
+                      })}
                     />
                     {errors.street && (
                       <p id="street-error" className="mt-1 text-sm text-red-600" role="alert">
@@ -335,7 +348,8 @@ export default function AccountPage() {
                       htmlFor="streetNumber"
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
-                      Hausnummer <span className="text-red-500">*</span>
+                      Hausnummer
+                      <span className="ml-1 text-xs font-normal text-gray-500">(bei Versand/Zahlungsschutz/Rechnungen)</span>
                     </label>
                     <input
                       {...register('streetNumber')}
@@ -347,14 +361,13 @@ export default function AccountPage() {
                           : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                       }`}
                       placeholder="12a"
-                      {...(errors.streetNumber && { 'aria-invalid': true, 'aria-describedby': 'streetNumber-error' })}
+                      {...(errors.streetNumber && {
+                        'aria-invalid': true,
+                        'aria-describedby': 'streetNumber-error',
+                      })}
                     />
                     {errors.streetNumber && (
-                      <p
-                        id="streetNumber-error"
-                        className="mt-1 text-sm text-red-600"
-                        role="alert"
-                      >
+                      <p id="streetNumber-error" className="mt-1 text-sm text-red-600" role="alert">
                         {errors.streetNumber.message}
                       </p>
                     )}
@@ -385,7 +398,8 @@ export default function AccountPage() {
                       htmlFor="postalCode"
                       className="mb-2 block text-sm font-medium text-gray-700"
                     >
-                      Postleitzahl (PLZ) <span className="text-red-500">*</span>
+                      Postleitzahl (PLZ)
+                      <span className="ml-1 text-xs font-normal text-gray-500">(bei Versand/Zahlungsschutz/Rechnungen)</span>
                     </label>
                     <input
                       {...register('postalCode')}
@@ -399,24 +413,21 @@ export default function AccountPage() {
                           : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                       }`}
                       placeholder="8000"
-                      {...(errors.postalCode && { 'aria-invalid': true, 'aria-describedby': 'postalCode-error' })}
+                      {...(errors.postalCode && {
+                        'aria-invalid': true,
+                        'aria-describedby': 'postalCode-error',
+                      })}
                     />
                     {errors.postalCode && (
-                      <p
-                        id="postalCode-error"
-                        className="mt-1 text-sm text-red-600"
-                        role="alert"
-                      >
+                      <p id="postalCode-error" className="mt-1 text-sm text-red-600" role="alert">
                         {errors.postalCode.message}
                       </p>
                     )}
                   </div>
                   <div>
-                    <label
-                      htmlFor="city"
-                      className="mb-2 block text-sm font-medium text-gray-700"
-                    >
-                      Ort <span className="text-red-500">*</span>
+                    <label htmlFor="city" className="mb-2 block text-sm font-medium text-gray-700">
+                      Ort
+                      <span className="ml-1 text-xs font-normal text-gray-500">(bei Versand/Zahlungsschutz/Rechnungen)</span>
                     </label>
                     <input
                       {...register('city')}
@@ -428,7 +439,10 @@ export default function AccountPage() {
                           : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                       }`}
                       placeholder="Zürich"
-                      {...(errors.city && { 'aria-invalid': true, 'aria-describedby': 'city-error' })}
+                      {...(errors.city && {
+                        'aria-invalid': true,
+                        'aria-describedby': 'city-error',
+                      })}
                     />
                     {errors.city && (
                       <p id="city-error" className="mt-1 text-sm text-red-600" role="alert">
@@ -480,11 +494,9 @@ export default function AccountPage() {
 
                 {/* Country */}
                 <div>
-                  <label
-                    htmlFor="country"
-                    className="mb-2 block text-sm font-medium text-gray-700"
-                  >
-                    Land <span className="text-red-500">*</span>
+                  <label htmlFor="country" className="mb-2 block text-sm font-medium text-gray-700">
+                    Land
+                    <span className="ml-1 text-xs font-normal text-gray-500">(bei Versand/Zahlungsschutz/Rechnungen)</span>
                   </label>
                   <select
                     {...register('country')}
@@ -494,7 +506,10 @@ export default function AccountPage() {
                         ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
                         : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                     }`}
-                    {...(errors.country && { 'aria-invalid': true, 'aria-describedby': 'country-error' })}
+                    {...(errors.country && {
+                      'aria-invalid': true,
+                      'aria-describedby': 'country-error',
+                    })}
                   >
                     <option value="Schweiz">Schweiz</option>
                   </select>
@@ -523,7 +538,7 @@ export default function AccountPage() {
               <button
                 type="submit"
                 disabled={!isDirty || !isValid || isSaving}
-                className="w-full rounded-md bg-primary-600 py-3 px-4 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto sm:min-w-[200px]"
+                className="w-full rounded-md bg-primary-600 px-4 py-3 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[200px]"
               >
                 {isSaving ? (
                   <span className="flex items-center justify-center gap-2">

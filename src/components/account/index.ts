@@ -1,0 +1,1 @@
+export { ProfileCompletionGate } from './ProfileCompletionGate'

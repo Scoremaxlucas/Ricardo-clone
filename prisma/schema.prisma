@@ -1130,12 +1130,12 @@ model Draft {
 
 // Draft Images - Persistierte Bilder für Entwürfe
 model DraftImage {
-  id        String   @id @default(cuid())
-  draftId   String
-  storageKey String  @unique // Path/key in storage bucket
-  url       String   // Public URL from blob storage
-  sortOrder Int      @default(0) // Optional: für Reihenfolge
-  createdAt DateTime @default(now())
+  id         String   @id @default(cuid())
+  draftId    String
+  storageKey String   @unique // Path/key in storage bucket
+  url        String // Public URL from blob storage
+  sortOrder  Int      @default(0) // Optional: für Reihenfolge
+  createdAt  DateTime @default(now())
 
   // Relations
   draft Draft @relation(fields: [draftId], references: [id], onDelete: Cascade)

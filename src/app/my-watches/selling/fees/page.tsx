@@ -9,6 +9,7 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { InvoicePaymentModal } from '@/components/payment/InvoicePaymentModal'
 import { InvoiceList } from '@/components/invoices/InvoiceList'
+import { ProfileCompletionGate } from '@/components/account/ProfileCompletionGate'
 
 interface InvoiceItem {
   id: string
@@ -49,6 +50,9 @@ export default function SellingFeesPage() {
   const invoiceRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
   const [highlightedInvoiceId, setHighlightedInvoiceId] = useState<string | null>(null)
   const [selectedInvoiceForPayment, setSelectedInvoiceForPayment] = useState<Invoice | null>(null)
+  const [profileGateOpen, setProfileGateOpen] = useState(false)
+  const [profileGateMissingFields, setProfileGateMissingFields] = useState<any[]>([])
+  const [blockedAction, setBlockedAction] = useState<(() => void) | null>(null)
 
   useEffect(() => {
     // Warte bis Session geladen ist
@@ -111,7 +115,43 @@ export default function SellingFeesPage() {
     }
   }
 
+  const checkProfileBeforeAction = async (action: () => void): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/profile/check-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          context: 'INVOICE_ACTION',
+          options: {},
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (!data.isComplete) {
+          setProfileGateMissingFields(data.missingFields)
+          setBlockedAction(() => action)
+          setProfileGateOpen(true)
+          return false
+        }
+      }
+      return true
+    } catch (error) {
+      console.error('Error checking profile:', error)
+      return true // Allow action if check fails (fail open)
+    }
+  }
+
   const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
+    const canProceed = await checkProfileBeforeAction(() => {
+      downloadPDFInternal(invoiceId, invoiceNumber)
+    })
+    if (canProceed) {
+      downloadPDFInternal(invoiceId, invoiceNumber)
+    }
+  }
+
+  const downloadPDFInternal = async (invoiceId: string, invoiceNumber: string) => {
     try {
       const res = await fetch(`/api/invoices/${invoiceId}/pdf`)
       if (res.ok) {
@@ -138,6 +178,15 @@ export default function SellingFeesPage() {
       return
     }
 
+    const canProceed = await checkProfileBeforeAction(() => {
+      markAsPaidInternal(invoiceId)
+    })
+    if (canProceed) {
+      markAsPaidInternal(invoiceId)
+    }
+  }
+
+  const markAsPaidInternal = async (invoiceId: string) => {
     try {
       const res = await fetch(`/api/invoices/${invoiceId}/mark-paid`, {
         method: 'POST',
@@ -153,6 +202,24 @@ export default function SellingFeesPage() {
     } catch (error) {
       console.error('Error marking as paid:', error)
       alert('Fehler beim Markieren als bezahlt')
+    }
+  }
+
+  const handlePayInvoice = async (invoice: Invoice) => {
+    const canProceed = await checkProfileBeforeAction(() => {
+      setSelectedInvoiceForPayment(invoice)
+    })
+    if (canProceed) {
+      setSelectedInvoiceForPayment(invoice)
+    }
+  }
+
+  const handleGateClose = () => {
+    setProfileGateOpen(false)
+    if (blockedAction) {
+      // Retry the blocked action after user closes gate
+      // User should complete profile first, so we don't auto-retry
+      setBlockedAction(null)
     }
   }
 
@@ -258,7 +325,7 @@ export default function SellingFeesPage() {
         ) : (
           <InvoiceList
             invoices={invoices}
-            onPay={invoice => setSelectedInvoiceForPayment(invoice)}
+            onPay={handlePayInvoice}
             onDownloadPDF={handleDownloadPDF}
             highlightedInvoiceId={highlightedInvoiceId}
             invoiceRefs={invoiceRefs.current}
@@ -282,7 +349,15 @@ export default function SellingFeesPage() {
             loadInvoices() // Reload invoices to update status
           }}
         />
-      )}
+
+      {/* Profile Completion Gate */}
+      <ProfileCompletionGate
+        context="INVOICE_ACTION"
+        missingFields={profileGateMissingFields}
+        isOpen={profileGateOpen}
+        onClose={handleGateClose}
+        blocking={true}
+      />
     </div>
   )
 }

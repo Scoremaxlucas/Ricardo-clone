@@ -16,6 +16,7 @@ import {
   Truck,
 } from 'lucide-react'
 import { useState } from 'react'
+import { ProfileCompletionGate } from '@/components/account/ProfileCompletionGate'
 
 interface StepShippingPaymentProps {
   formData: {
@@ -68,10 +69,42 @@ export function StepShippingPayment({
 }: StepShippingPaymentProps) {
   const isShippingLocked = policy?.uiLocks.shipping || false
   const [showPaymentDetails, setShowPaymentDetails] = useState(false)
+  const [profileGateOpen, setProfileGateOpen] = useState(false)
+  const [profileGateMissingFields, setProfileGateMissingFields] = useState<any[]>([])
   const hasShippingError = showValidation && formData.shippingMethods.length === 0
   const onlyPickup =
     formData.shippingMethods.length === 1 && formData.shippingMethods[0] === 'pickup'
   const paymentProtectionApplies = !onlyPickup || formData.shippingMethods.length > 1
+
+  const handlePaymentProtectionToggle = async (checked: boolean) => {
+    if (checked) {
+      // Check profile before enabling payment protection
+      try {
+        const res = await fetch('/api/profile/check-complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            context: 'PAYMENT_PROTECTION',
+            options: {},
+          }),
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          if (!data.isComplete) {
+            setProfileGateMissingFields(data.missingFields)
+            setProfileGateOpen(true)
+            return // Don't enable payment protection
+          }
+        }
+      } catch (error) {
+        console.error('Error checking profile:', error)
+        // Allow enabling if check fails (fail open)
+      }
+    }
+    // Enable/disable payment protection
+    onPaymentProtectionChange(checked)
+  }
 
   return (
     <div className="space-y-4 md:space-y-8">
@@ -209,7 +242,7 @@ export function StepShippingPayment({
             <input
               type="checkbox"
               checked={paymentProtectionEnabled}
-              onChange={e => onPaymentProtectionChange(e.target.checked)}
+              onChange={e => handlePaymentProtectionToggle(e.target.checked)}
               disabled={!paymentProtectionApplies}
               className="mt-1 h-5 w-5 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500 disabled:cursor-not-allowed disabled:opacity-50"
             />
@@ -322,6 +355,15 @@ export function StepShippingPayment({
           )}
         </div>
       </div>
+
+      {/* Profile Completion Gate */}
+      <ProfileCompletionGate
+        context="PAYMENT_PROTECTION"
+        missingFields={profileGateMissingFields}
+        isOpen={profileGateOpen}
+        onClose={() => setProfileGateOpen(false)}
+        blocking={true}
+      />
     </div>
   )
 }

@@ -24,6 +24,7 @@ import {
   Sparkles,
   X
 } from 'lucide-react'
+import { ProfileCompletionGate } from '@/components/account/ProfileCompletionGate'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
@@ -713,9 +714,65 @@ function SellPageContent() {
     }
   }
 
+  // Profile completion gate state
+  const [profileGateOpen, setProfileGateOpen] = useState(false)
+  const [profileGateContext, setProfileGateContext] = useState<'SELL_PUBLISH' | 'SELL_ENABLE_SHIPPING' | 'PAYMENT_PROTECTION'>('SELL_PUBLISH')
+  const [profileGateMissingFields, setProfileGateMissingFields] = useState<any[]>([])
+
+  // Check profile completeness before publish
+  const checkProfileBeforePublish = async (): Promise<boolean> => {
+    try {
+      const hasShipping = formData.shippingMethods && formData.shippingMethods.length > 0 && !formData.shippingMethods.includes('pickup')
+      const isPickupOnly = formData.shippingMethods && formData.shippingMethods.length === 1 && formData.shippingMethods[0] === 'pickup'
+
+      // Determine context based on listing options
+      let context: 'SELL_PUBLISH' | 'SELL_ENABLE_SHIPPING' | 'PAYMENT_PROTECTION' = 'SELL_PUBLISH'
+      if (paymentProtectionEnabled) {
+        context = 'PAYMENT_PROTECTION'
+      } else if (hasShipping) {
+        context = 'SELL_ENABLE_SHIPPING'
+      }
+
+      const res = await fetch('/api/profile/check-complete', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          context,
+          options: {
+            hasShippingEnabled: hasShipping,
+            hasPaymentProtection: paymentProtectionEnabled,
+            isPickupOnly,
+          },
+        }),
+      })
+
+      if (res.ok) {
+        const data = await res.json()
+        if (!data.isComplete) {
+          setProfileGateContext(context)
+          setProfileGateMissingFields(data.missingFields)
+          setProfileGateOpen(true)
+          return false
+        }
+        return true
+      }
+      return true // Allow publish if check fails (fail open)
+    } catch (error) {
+      console.error('Error checking profile:', error)
+      return true // Allow publish if check fails (fail open)
+    }
+  }
+
   // Submit handler
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    // Check profile completeness before publishing
+    const canPublish = await checkProfileBeforePublish()
+    if (!canPublish) {
+      return // Gate modal is already shown
+    }
+
     setIsLoading(true)
     setError('')
     setSuccess('')
@@ -1090,6 +1147,15 @@ function SellPageContent() {
           />
                 </form>
               </div>
+
+          {/* Profile Completion Gate */}
+          <ProfileCompletionGate
+            context={profileGateContext}
+            missingFields={profileGateMissingFields}
+            isOpen={profileGateOpen}
+            onClose={() => setProfileGateOpen(false)}
+            blocking={true}
+          />
 
           <Footer />
         </div>
