@@ -1,10 +1,10 @@
 'use client'
 
-import { BadgeDisplay } from '@/components/user/BadgeDisplay'
-import { BadgeProgress } from '@/components/user/BadgeProgress'
+import { BadgesSection } from '@/components/profile/BadgesSection'
 import { RewardDisplay } from '@/components/user/RewardDisplay'
+import { Card } from '@/components/ui/Card'
 import { useBadgeNotifications } from '@/hooks/useBadgeNotifications'
-import { Camera, X } from 'lucide-react'
+import { Award, Camera, CheckCircle, Lock, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -326,33 +326,24 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="mx-auto max-w-4xl px-4">
+    <div className="min-h-screen bg-gray-50 py-6 sm:py-12">
+      <div className="mx-auto max-w-4xl px-4 sm:px-6">
+        {/* Back Link */}
         <div className="mb-4 text-sm text-gray-600">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
             ← Zurück zur Hauptseite
           </Link>
         </div>
-        <div className="mb-8 flex items-center justify-between">
-          <h1 className="text-3xl font-bold text-gray-900">Mein Profil</h1>
+
+        {/* Page Header */}
+        <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Mein Profil</h1>
           {isVerified === true && (
-            <div className="flex items-center rounded-lg border border-green-300 bg-green-100 px-4 py-2">
-              <svg
-                className="mr-2 h-5 w-5 text-green-600"
-                fill="none"
-                stroke="currentColor"
-                viewBox="0 0 24 24"
-              >
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth={2}
-                  d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"
-                />
-              </svg>
-              <span className="font-medium text-green-800">Konto verifiziert</span>
+            <div className="flex items-center rounded-lg border border-green-300 bg-green-100 px-3 py-2 sm:px-4">
+              <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
+              <span className="text-sm font-medium text-green-800 sm:text-base">Konto verifiziert</span>
               {verifiedAt && (
-                <span className="ml-2 text-sm text-green-600">
+                <span className="ml-2 hidden text-sm text-green-600 sm:inline">
                   (seit {new Date(verifiedAt).toLocaleDateString('de-CH')})
                 </span>
               )}
@@ -360,258 +351,273 @@ export default function ProfilePage() {
           )}
         </div>
 
-        <div className="space-y-6 rounded-lg bg-white p-8 shadow-md">
-          {/* Profilbild */}
-          <div className="flex items-center space-x-6 border-b pb-6">
-            <div className="relative">
-              <div className="flex h-24 w-24 items-center justify-center overflow-hidden rounded-full bg-primary-600 text-white">
-                {previewImage ? (
-                  <img
-                    src={previewImage}
-                    alt="Profilbild Vorschau"
-                    className="h-full w-full object-cover"
-                  />
-                ) : profileImage ? (
-                  <img src={profileImage} alt="Profilbild" className="h-full w-full object-cover" />
-                ) : (
-                  <span className="text-2xl font-semibold">{getInitials(session.user?.name)}</span>
-                )}
+        <div className="space-y-6">
+          {/* Profile Header Card */}
+          <Card className="p-4 sm:p-6">
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:gap-6">
+              {/* Avatar */}
+              <div className="relative flex-shrink-0">
+                <div className="group relative flex h-20 w-20 items-center justify-center overflow-hidden rounded-full bg-primary-600 text-white sm:h-24 sm:w-24">
+                  {previewImage ? (
+                    <img
+                      src={previewImage}
+                      alt="Profilbild Vorschau"
+                      className="h-full w-full object-cover"
+                    />
+                  ) : profileImage ? (
+                    <img src={profileImage} alt="Profilbild" className="h-full w-full object-cover" />
+                  ) : (
+                    <span className="text-xl font-semibold sm:text-2xl">
+                      {getInitials(session.user?.name)}
+                    </span>
+                  )}
+                  {/* Hover Overlay */}
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/50 opacity-0 transition-opacity group-hover:opacity-100">
+                    <span className="text-xs font-medium text-white">Ändern</span>
+                  </div>
+                </div>
+                <button
+                  onClick={() => fileInputRef.current?.click()}
+                  className="absolute bottom-0 right-0 flex h-8 w-8 items-center justify-center rounded-full bg-primary-600 p-1.5 text-white shadow-lg transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:h-9 sm:w-9"
+                  title="Profilbild ändern"
+                  aria-label="Profilbild ändern"
+                >
+                  <Camera className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  onChange={handleImageSelect}
+                  className="hidden"
+                />
               </div>
-              <button
-                onClick={() => fileInputRef.current?.click()}
-                className="absolute bottom-0 right-0 rounded-full bg-primary-600 p-2 text-white shadow-lg transition-colors hover:bg-primary-700"
-                title="Profilbild ändern"
-              >
-                <Camera className="h-4 w-4" />
-              </button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageSelect}
-                className="hidden"
-              />
-            </div>
-            <div className="flex-1">
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">Profilbild</h3>
-              {(formData.nickname || session.user?.name) && (
-                <div className="mb-2">
-                  <p className="text-lg font-medium text-gray-900">
-                    {formData.nickname || session.user?.name}
-                  </p>
-                  {positivePercentage !== null && (
-                    <div className="mt-1 flex items-center space-x-2">
-                      <span className="text-2xl font-bold text-primary-600">
-                        {positivePercentage}%
-                      </span>
-                      <span className="text-sm text-gray-600">positive Bewertungen</span>
-                    </div>
+
+              {/* Name & Info */}
+              <div className="flex-1 min-w-0">
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">Profilbild</h3>
+                {(formData.nickname || session.user?.name) && (
+                  <div className="mb-2">
+                    <p className="text-lg font-medium text-gray-900">
+                      {formData.nickname || session.user?.name}
+                    </p>
+                    {positivePercentage !== null && (
+                      <div className="mt-1 flex items-center gap-2">
+                        <span className="text-xl font-bold text-primary-600 sm:text-2xl">
+                          {positivePercentage}%
+                        </span>
+                        <span className="text-sm text-gray-600">positive Bewertungen</span>
+                      </div>
+                    )}
+                  </div>
+                )}
+                <p className="mb-4 text-xs text-gray-600 sm:text-sm">
+                  Klicken Sie auf das Kamera-Icon, um Ihr Profilbild zu ändern. Unterstützte Formate:
+                  JPG, PNG, GIF (max. 5MB)
+                </p>
+                <div className="flex flex-wrap gap-2">
+                  {previewImage && (
+                    <>
+                      <button
+                        onClick={handleImageUpload}
+                        disabled={isUploading}
+                        className="min-h-[44px] rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {isUploading ? 'Wird hochgeladen...' : 'Speichern'}
+                      </button>
+                      <button
+                        onClick={() => {
+                          setPreviewImage(null)
+                          fileInputRef.current!.value = ''
+                        }}
+                        className="min-h-[44px] rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-300"
+                      >
+                        Abbrechen
+                      </button>
+                    </>
+                  )}
+                  {profileImage && !previewImage && (
+                    <button
+                      onClick={handleRemoveImage}
+                      className="flex min-h-[44px] items-center gap-1 rounded-md bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-200"
+                    >
+                      <X className="h-4 w-4" />
+                      Entfernen
+                    </button>
                   )}
                 </div>
-              )}
-              <p className="mb-4 text-sm text-gray-600">
-                Klicken Sie auf das Kamera-Icon, um Ihr Profilbild zu ändern. Unterstützte Formate:
-                JPG, PNG, GIF (max. 5MB)
-              </p>
-              <div className="flex gap-2">
-                {previewImage && (
-                  <>
-                    <button
-                      onClick={handleImageUpload}
-                      disabled={isUploading}
-                      className="rounded-md bg-primary-600 px-4 py-2 text-sm text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      {isUploading ? 'Wird hochgeladen...' : 'Speichern'}
-                    </button>
-                    <button
-                      onClick={() => {
-                        setPreviewImage(null)
-                        fileInputRef.current!.value = ''
-                      }}
-                      className="rounded-md bg-gray-200 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-300"
-                    >
-                      Abbrechen
-                    </button>
-                  </>
-                )}
-                {profileImage && !previewImage && (
-                  <button
-                    onClick={handleRemoveImage}
-                    className="flex items-center gap-1 rounded-md bg-red-100 px-4 py-2 text-sm text-red-700 transition-colors hover:bg-red-200"
-                  >
-                    <X className="h-4 w-4" />
-                    Entfernen
-                  </button>
-                )}
               </div>
             </div>
-          </div>
+          </Card>
 
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">Name</label>
-            <input
-              type="text"
-              name="name"
-              value={formData.name}
-              onChange={handleInputChange}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-              placeholder="Ihr vollständiger Name"
-            />
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">Nickname</label>
-            <input
-              type="text"
-              name="nickname"
-              value={formData.nickname}
-              onChange={handleInputChange}
-              className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-              placeholder="Ihr Nickname (wird im Header angezeigt)"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Ihr Nickname wird im Header angezeigt (z.B. "Hallo, Administrator2000")
-            </p>
-          </div>
-
-          <div>
-            <label className="mb-2 block text-sm font-medium text-gray-700">E-Mail</label>
-            <input
-              type="email"
-              value={formData.email}
-              disabled
-              className="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600"
-            />
-            <p className="mt-1 text-xs text-gray-500">
-              Die E-Mail-Adresse kann nicht geändert werden
-            </p>
-          </div>
-
-          <button
-            onClick={handleSaveProfile}
-            disabled={isSaving}
-            className="w-full rounded-md bg-primary-600 py-3 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {isSaving ? 'Wird gespeichert...' : 'Profil speichern'}
-          </button>
-        </div>
-
-        {/* Badges Sektion - Feature 9 */}
-        {(session?.user as { id?: string })?.id && (
-          <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
-            <BadgeDisplay userId={(session?.user as { id?: string })?.id || ''} />
-          </div>
-        )}
-
-        {/* Badge Progress Sektion - Feature 9 */}
-        {(session?.user as { id?: string })?.id && (
-          <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
-            <BadgeProgress />
-          </div>
-        )}
-
-        {/* Rewards Sektion - Feature 9 */}
-        {(session?.user as { id?: string })?.id && (
-          <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
-            <RewardDisplay userId={(session?.user as { id?: string })?.id || ''} />
-          </div>
-        )}
-
-        {/* Passwort ändern Sektion */}
-        <div className="mt-8 rounded-lg bg-white p-8 shadow-md">
-          <div className="mb-6 flex items-center justify-between">
-            <div>
-              <h2 className="mb-2 text-xl font-semibold text-gray-900">Passwort ändern</h2>
-              <p className="text-sm text-gray-600">
-                Ändern Sie Ihr Passwort für zusätzliche Sicherheit
-              </p>
-            </div>
-            <button
-              onClick={() => {
-                setShowPasswordForm(!showPasswordForm)
-                setPasswordError('')
-                setPasswordSuccess('')
-                if (!showPasswordForm) {
-                  setPasswordData({
-                    currentPassword: '',
-                    newPassword: '',
-                    confirmPassword: '',
-                  })
-                }
-              }}
-              className="rounded-md bg-gray-100 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-200"
-            >
-              {showPasswordForm ? 'Ausblenden' : 'Passwort ändern'}
-            </button>
-          </div>
-
-          {showPasswordForm && (
-            <div className="space-y-4 border-t pt-6">
-              {passwordError && (
-                <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
-                  {passwordError}
-                </div>
-              )}
-              {passwordSuccess && (
-                <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
-                  {passwordSuccess}
-                </div>
-              )}
-
+          {/* Profile Form Card */}
+          <Card className="p-4 sm:p-6">
+            <h2 className="mb-4 text-xl font-semibold text-gray-900">Profilinformationen</h2>
+            <div className="space-y-4">
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Aktuelles Passwort
-                </label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">Name</label>
                 <input
-                  type="password"
-                  name="currentPassword"
-                  value={passwordData.currentPassword}
-                  onChange={handlePasswordChange}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                  placeholder="Geben Sie Ihr aktuelles Passwort ein"
+                  type="text"
+                  name="name"
+                  value={formData.name}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Ihr vollständiger Name"
                 />
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Neues Passwort
-                </label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">Nickname</label>
                 <input
-                  type="password"
-                  name="newPassword"
-                  value={passwordData.newPassword}
-                  onChange={handlePasswordChange}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                  placeholder="Mindestens 6 Zeichen, eine Zahl und ein Sonderzeichen"
+                  type="text"
+                  name="nickname"
+                  value={formData.nickname}
+                  onChange={handleInputChange}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder="Ihr Nickname (wird im Header angezeigt)"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Mindestens 6 Zeichen, eine Zahl und ein Sonderzeichen erforderlich
+                  Ihr Nickname wird im Header angezeigt (z.B. "Hallo, Administrator2000")
                 </p>
               </div>
 
               <div>
-                <label className="mb-2 block text-sm font-medium text-gray-700">
-                  Neues Passwort bestätigen
-                </label>
+                <label className="mb-2 block text-sm font-medium text-gray-700">E-Mail</label>
                 <input
-                  type="password"
-                  name="confirmPassword"
-                  value={passwordData.confirmPassword}
-                  onChange={handlePasswordChange}
-                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                  placeholder="Bestätigen Sie Ihr neues Passwort"
+                  type="email"
+                  value={formData.email}
+                  disabled
+                  className="w-full rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600"
                 />
+                <p className="mt-1 text-xs text-gray-500">
+                  Die E-Mail-Adresse kann nicht geändert werden
+                </p>
               </div>
 
               <button
-                onClick={handleChangePassword}
-                disabled={isChangingPassword}
-                className="w-full rounded-md bg-primary-600 py-3 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={handleSaveProfile}
+                disabled={isSaving}
+                className="w-full min-h-[44px] rounded-md bg-primary-600 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
               >
-                {isChangingPassword ? 'Wird geändert...' : 'Passwort ändern'}
+                {isSaving ? 'Speichert...' : 'Profil speichern'}
               </button>
             </div>
+          </Card>
+
+          {/* Badges Section */}
+          {userId && (
+            <Card className="p-4 sm:p-6">
+              <div className="mb-4 flex items-center gap-2">
+                <Award className="h-5 w-5 text-primary-600" />
+                <h2 className="text-xl font-semibold text-gray-900">Badges & Fortschritt</h2>
+              </div>
+              <BadgesSection userId={userId} />
+            </Card>
           )}
+
+          {/* Rewards Section */}
+          {userId && (
+            <Card className="p-4 sm:p-6">
+              <RewardDisplay userId={userId} showTitle={true} />
+            </Card>
+          )}
+
+          {/* Security Card */}
+          <Card className="p-4 sm:p-6">
+            <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+              <div>
+                <h2 className="mb-2 text-xl font-semibold text-gray-900">Sicherheit</h2>
+                <p className="text-sm text-gray-600">
+                  Ändern Sie Ihr Passwort für zusätzliche Sicherheit
+                </p>
+              </div>
+              <button
+                onClick={() => {
+                  setShowPasswordForm(!showPasswordForm)
+                  setPasswordError('')
+                  setPasswordSuccess('')
+                  if (!showPasswordForm) {
+                    setPasswordData({
+                      currentPassword: '',
+                      newPassword: '',
+                      confirmPassword: '',
+                    })
+                  }
+                }}
+                className="min-h-[44px] w-full rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200 sm:w-auto"
+              >
+                {showPasswordForm ? 'Ausblenden' : 'Passwort ändern'}
+              </button>
+            </div>
+
+            {showPasswordForm && (
+              <div className="space-y-4 border-t pt-6">
+                {passwordError && (
+                  <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+                    {passwordError}
+                  </div>
+                )}
+                {passwordSuccess && (
+                  <div className="rounded-md border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-700">
+                    {passwordSuccess}
+                  </div>
+                )}
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Aktuelles Passwort
+                  </label>
+                  <input
+                    type="password"
+                    name="currentPassword"
+                    value={passwordData.currentPassword}
+                    onChange={handlePasswordChange}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Geben Sie Ihr aktuelles Passwort ein"
+                  />
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Neues Passwort
+                  </label>
+                  <input
+                    type="password"
+                    name="newPassword"
+                    value={passwordData.newPassword}
+                    onChange={handlePasswordChange}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Mindestens 6 Zeichen, eine Zahl und ein Sonderzeichen"
+                  />
+                  <p className="mt-1 text-xs text-gray-500">
+                    Mindestens 6 Zeichen, eine Zahl und ein Sonderzeichen erforderlich
+                  </p>
+                </div>
+
+                <div>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">
+                    Neues Passwort bestätigen
+                  </label>
+                  <input
+                    type="password"
+                    name="confirmPassword"
+                    value={passwordData.confirmPassword}
+                    onChange={handlePasswordChange}
+                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    placeholder="Bestätigen Sie Ihr neues Passwort"
+                  />
+                </div>
+
+                <button
+                  onClick={handleChangePassword}
+                  disabled={isChangingPassword}
+                  className="w-full min-h-[44px] rounded-md bg-primary-600 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:text-base"
+                >
+                  {isChangingPassword ? 'Wird geändert...' : 'Passwort ändern'}
+                </button>
+              </div>
+            )}
+          </Card>
         </div>
       </div>
     </div>
