@@ -335,7 +335,7 @@ export async function POST(request: NextRequest) {
       email: normalizedEmail,
       password: hashedPassword,
     }
-    
+
     // Only set emailVerified fields if they exist in schema (defensive)
     // Email verification disabled - users can login immediately
     userData.emailVerified = true
@@ -348,12 +348,14 @@ export async function POST(request: NextRequest) {
       nameLength: userData.name?.length || 0,
       hasPassword: !!hashedPassword,
     })
-    let user
+    let user: any = null
+    let userCreated = false
     try {
       // Try creating user with all fields first
       user = await prisma.user.create({
         data: userData,
       })
+      userCreated = true // Mark that user was created
       console.log('[register] User created successfully:', user.id)
     } catch (createError: any) {
       console.error('[register] User creation failed:', {
@@ -363,7 +365,7 @@ export async function POST(request: NextRequest) {
         name: createError?.name,
         stack: createError?.stack?.substring(0, 500),
       })
-      
+
       // If it's a field-related error, try without emailVerifiedAt
       if (createError?.code === 'P2011' || createError?.code === 'P2012') {
         console.log('[register] Retrying without emailVerifiedAt...')
@@ -373,6 +375,7 @@ export async function POST(request: NextRequest) {
           user = await prisma.user.create({
             data: userDataWithoutVerifiedAt,
           })
+          userCreated = true // Mark that user was created
           console.log('[register] User created successfully (without emailVerifiedAt):', user.id)
         } catch (retryError: any) {
           console.error('[register] Retry also failed:', retryError?.code, retryError?.message)
@@ -407,6 +410,8 @@ export async function POST(request: NextRequest) {
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user
 
+    // CRITICAL: Only return success if user was created successfully
+    // If we reach here, user creation succeeded, so it's safe to return success
     return NextResponse.json(
       {
         message: 'Benutzer erfolgreich erstellt. Sie können sich jetzt anmelden.',
@@ -415,6 +420,22 @@ export async function POST(request: NextRequest) {
       { status: 201 }
     )
   } catch (error: any) {
+    // CRITICAL: If user was created but an error occurred, clean it up to prevent orphaned users
+    // This ensures atomicity: if registration fails, no user record remains
+    if (userCreated && user?.id) {
+      console.error('[register] Error occurred after user creation, cleaning up user:', user.id)
+      console.error('[register] This prevents orphaned user records when registration fails')
+      try {
+        await prisma.user.delete({
+          where: { id: user.id },
+        })
+        console.log('[register] ✅ Successfully deleted user after error:', user.id)
+      } catch (deleteError: any) {
+        console.error('[register] ❌ Failed to delete user after error:', deleteError)
+        console.error('[register] User may remain in database:', user.id, user.email)
+        // Log but don't throw - we still want to return the original error
+      }
+    }
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
       method: 'POST',
@@ -542,7 +563,10 @@ export async function POST(request: NextRequest) {
     if (error.code?.startsWith('P')) {
       console.error('[register] Prisma error:', error.code, error.message)
       console.error('[register] Prisma error meta:', JSON.stringify(error.meta, null, 2))
-      console.error('[register] Full error object:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
+      console.error(
+        '[register] Full error object:',
+        JSON.stringify(error, Object.getOwnPropertyNames(error), 2)
+      )
       // Return error code even in production for debugging (safe to expose)
       return NextResponse.json(
         {
