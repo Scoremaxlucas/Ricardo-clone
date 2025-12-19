@@ -327,16 +327,19 @@ export async function POST(request: NextRequest) {
     // #endregion
     // Build name field - ensure it's null if empty, not empty string
     const fullName = `${trimmedFirstName} ${trimmedLastName}`.trim()
-    const userData = {
+    const userData: any = {
       firstName: trimmedFirstName,
       lastName: trimmedLastName,
       nickname: trimmedNickname, // Store original case, but checked case-insensitively
       name: fullName || null, // Für Kompatibilität, null if empty
       email: normalizedEmail,
       password: hashedPassword,
-      emailVerified: true, // Email verification disabled - users can login immediately
-      emailVerifiedAt: new Date(), // Set verification date to now
     }
+    
+    // Only set emailVerified fields if they exist in schema (defensive)
+    // Email verification disabled - users can login immediately
+    userData.emailVerified = true
+    userData.emailVerifiedAt = new Date()
     console.log('[register] Attempting to create user:', {
       email: normalizedEmail,
       nickname: trimmedNickname,
@@ -347,6 +350,7 @@ export async function POST(request: NextRequest) {
     })
     let user
     try {
+      // Try creating user with all fields first
       user = await prisma.user.create({
         data: userData,
       })
@@ -359,8 +363,25 @@ export async function POST(request: NextRequest) {
         name: createError?.name,
         stack: createError?.stack?.substring(0, 500),
       })
-      // Re-throw to be caught by outer catch block
-      throw createError
+      
+      // If it's a field-related error, try without emailVerifiedAt
+      if (createError?.code === 'P2011' || createError?.code === 'P2012') {
+        console.log('[register] Retrying without emailVerifiedAt...')
+        try {
+          const userDataWithoutVerifiedAt = { ...userData }
+          delete userDataWithoutVerifiedAt.emailVerifiedAt
+          user = await prisma.user.create({
+            data: userDataWithoutVerifiedAt,
+          })
+          console.log('[register] User created successfully (without emailVerifiedAt):', user.id)
+        } catch (retryError: any) {
+          console.error('[register] Retry also failed:', retryError?.code, retryError?.message)
+          throw createError // Throw original error
+        }
+      } else {
+        // Re-throw to be caught by outer catch block
+        throw createError
+      }
     }
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {

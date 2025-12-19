@@ -96,7 +96,19 @@ export default function RegisterPage() {
         router.push(`/login?registered=true&email=${encodeURIComponent(formData.email.trim())}`)
       } else {
         const data = await response.json()
-        setError(data.message || 'Ein Fehler ist aufgetreten')
+        // Show detailed error including errorCode if available
+        const errorMessage = data.message || 'Ein Fehler ist aufgetreten'
+        const errorDetails = data.errorCode
+          ? `${errorMessage} (Fehlercode: ${data.errorCode})`
+          : errorMessage
+        console.error('[register] Registration failed:', {
+          status: response.status,
+          errorCode: data.errorCode,
+          errorMessage: data.errorMessage,
+          errorMeta: data.errorMeta,
+          response: data,
+        })
+        setError(errorDetails)
       }
     } catch (error) {
       setError('Ein Fehler ist aufgetreten')
@@ -255,9 +267,7 @@ export default function RegisterPage() {
                       <XCircle className="h-3.5 w-3.5 text-gray-400" />
                     )}
                     <span
-                      className={
-                        passwordValidation.minLength ? 'text-green-700' : 'text-gray-500'
-                      }
+                      className={passwordValidation.minLength ? 'text-green-700' : 'text-gray-500'}
                     >
                       mind. 6 Zeichen
                     </span>
@@ -269,9 +279,7 @@ export default function RegisterPage() {
                       <XCircle className="h-3.5 w-3.5 text-gray-400" />
                     )}
                     <span
-                      className={
-                        passwordValidation.hasNumber ? 'text-green-700' : 'text-gray-500'
-                      }
+                      className={passwordValidation.hasNumber ? 'text-green-700' : 'text-gray-500'}
                     >
                       mind. 1 Zahl
                     </span>
@@ -321,9 +329,7 @@ export default function RegisterPage() {
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={isLoading}
                   className="absolute inset-y-0 right-0 flex items-center pr-3"
-                  aria-label={
-                    showConfirmPassword ? 'Passwort verbergen' : 'Passwort anzeigen'
-                  }
+                  aria-label={showConfirmPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
                 >
                   {showConfirmPassword ? (
                     <EyeOff className="h-5 w-5 text-gray-400" />
