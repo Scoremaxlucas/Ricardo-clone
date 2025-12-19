@@ -48,20 +48,50 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
 
   const loadProfile = async () => {
     try {
+      setLoading(true)
       const res = await fetch('/api/payout/profile')
+      const data = await res.json()
+      
+      console.log('loadProfile response:', { status: res.status, data })
+      
       if (res.ok) {
-        const data = await res.json()
+        // Check if profile exists and has valid data
         if (data.status === 'UNSET' || !data.hasProfile) {
           setProfile({ status: 'UNSET', hasProfile: false })
+        } else if (data.status && data.accountHolderName) {
+          // Profile exists with valid data
+          setProfile({
+            status: data.status,
+            hasProfile: true,
+            accountHolderName: data.accountHolderName,
+            ibanMasked: data.ibanMasked,
+            ibanLast4: data.ibanLast4,
+            country: data.country || 'CH',
+            hasOpenChangeRequest: data.hasOpenChangeRequest || false,
+            verifiedAt: data.verifiedAt,
+            lockedReason: data.lockedReason,
+          })
+          console.log('Profile loaded successfully:', {
+            status: data.status,
+            accountHolderName: data.accountHolderName,
+            ibanMasked: data.ibanMasked,
+          })
         } else {
-          setProfile(data)
+          // Invalid data structure
+          console.warn('Invalid profile data structure:', data)
+          setProfile({ status: 'UNSET', hasProfile: false })
         }
         setShowInitialForm(false)
         setShowChangeForm(false)
+      } else {
+        console.error('Failed to load profile:', data)
+        toast.error(data.message || 'Fehler beim Laden der Bankverbindung')
+        setProfile({ status: 'UNSET', hasProfile: false })
       }
     } catch (error) {
       console.error('Error loading payout profile:', error)
       toast.error('Fehler beim Laden der Bankverbindung')
+      setProfile({ status: 'UNSET', hasProfile: false })
     } finally {
       setLoading(false)
     }
@@ -91,15 +121,23 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
 
       const data = await res.json()
 
+      console.log('Payout profile POST response:', { status: res.status, data })
+
       if (res.ok) {
         toast.success('Bankverbindung erfolgreich hinterlegt')
         setShowInitialForm(false)
         setInitialForm({ accountHolderName: '', iban: '', confirmAccountOwner: false })
-        // Use response data directly to update profile immediately
-        console.log('Payout profile POST response:', data)
-        if (data.hasProfile || data.status === 'ACTIVE') {
+        
+        // Always reload profile to ensure we have the latest data from DB
+        // Small delay to ensure DB write is complete
+        setTimeout(async () => {
+          await loadProfile()
+        }, 500)
+        
+        // Also update state immediately if we have the data
+        if (data.hasProfile && data.status === 'ACTIVE' && data.accountHolderName) {
           setProfile({
-            status: data.status || 'ACTIVE',
+            status: data.status,
             hasProfile: true,
             accountHolderName: data.accountHolderName,
             ibanMasked: data.ibanMasked,
@@ -109,11 +147,18 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
             verifiedAt: data.verifiedAt,
             lockedReason: data.lockedReason,
           })
-        } else {
-          await loadProfile()
+          console.log('Profile state updated immediately:', {
+            status: data.status,
+            accountHolderName: data.accountHolderName,
+            ibanMasked: data.ibanMasked,
+          })
         }
       } else {
+        console.error('Payout profile POST failed:', data)
         toast.error(data.message || 'Fehler beim Speichern')
+        if (data.errorCode === 'ENCRYPTION_KEY_MISSING') {
+          console.error('ENCRYPTION_KEY_MISSING: PAYOUT_ENCRYPTION_KEY not set in Vercel')
+        }
       }
     } catch (error) {
       console.error('Error submitting payout profile:', error)

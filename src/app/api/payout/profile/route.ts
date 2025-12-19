@@ -55,7 +55,18 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error fetching payout profile:', error)
-    return NextResponse.json({ message: 'Fehler beim Laden der Bankverbindung' }, { status: 500 })
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+    })
+    return NextResponse.json(
+      {
+        message: 'Fehler beim Laden der Bankverbindung',
+        errorCode: error.code || 'UNKNOWN_ERROR',
+      },
+      { status: 500 }
+    )
   }
 }
 
