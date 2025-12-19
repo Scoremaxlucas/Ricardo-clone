@@ -1,6 +1,6 @@
 'use client'
 
-import { Shield, Info } from 'lucide-react'
+import { Shield } from 'lucide-react'
 import { useState } from 'react'
 import { PaymentProtectionInfoModal } from './PaymentProtectionInfoModal'
 
@@ -28,8 +28,8 @@ export function PaymentProtectionBadge({
           compact ? 'text-sm' : 'text-base'
         } ${compact ? 'py-1.5' : 'py-2'} ${compact ? 'px-2' : 'px-3'} rounded-lg ${
           enabled
-            ? 'bg-teal-50 border border-teal-200 text-teal-700'
-            : 'bg-gray-50 border border-gray-200 text-gray-600'
+            ? 'border border-teal-200 bg-teal-50 text-teal-700'
+            : 'border border-gray-200 bg-gray-50 text-gray-600'
         }`}
       >
         <Shield
@@ -43,7 +43,7 @@ export function PaymentProtectionBadge({
         {showInfoLink && (
           <button
             onClick={() => setShowModal(true)}
-            className={`ml-auto text-primary-600 hover:text-primary-700 underline ${
+            className={`ml-auto text-primary-600 underline hover:text-primary-700 ${
               compact ? 'text-xs' : 'text-sm'
             } font-medium transition-colors`}
           >
@@ -51,7 +51,9 @@ export function PaymentProtectionBadge({
           </button>
         )}
       </div>
-      {showModal && <PaymentProtectionInfoModal isOpen={showModal} onClose={() => setShowModal(false)} />}
+      {showModal && (
+        <PaymentProtectionInfoModal isOpen={showModal} onClose={() => setShowModal(false)} />
+      )}
     </>
   )
 }

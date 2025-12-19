@@ -1,28 +1,23 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { toast } from 'react-hot-toast'
+import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
+import { ShippingMethodSelector } from '@/components/shipping/ShippingMethodSelector'
+import { VerificationModal } from '@/components/verification/VerificationModal'
+import { ShippingMethod, getShippingCostForMethod } from '@/lib/shipping'
 import {
-  MessageSquare,
-  Send,
-  Zap,
-  ShoppingCart,
-  Tag,
-  Info,
   AlertCircle,
   ChevronDown,
   ChevronUp,
+  Info,
+  Send,
+  ShoppingCart,
+  Tag,
+  Zap,
 } from 'lucide-react'
-import { VerificationModal } from '@/components/verification/VerificationModal'
-import { ShippingMethodSelector } from '@/components/shipping/ShippingMethodSelector'
-import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
-import {
-  ShippingMethod,
-  ShippingMethodArray,
-  getShippingCostForMethod,
-} from '@/lib/shipping'
+import { useSession } from 'next-auth/react'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
+import { toast } from 'react-hot-toast'
 
 interface PriceOfferComponentProps {
   watchId: string
@@ -460,7 +455,8 @@ export function PriceOfferComponent({
                 <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
                   <Info className="h-3 w-3" />
                   <span>
-                    Gültigkeitsbereich: CHF {minimumPrice.toFixed(2)} - CHF {maximumPrice.toFixed(2)}
+                    Gültigkeitsbereich: CHF {minimumPrice.toFixed(2)} - CHF{' '}
+                    {maximumPrice.toFixed(2)}
                   </span>
                 </div>
               </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { Shield, X, CheckCircle2 } from 'lucide-react'
+import { CheckCircle2, Shield, X } from 'lucide-react'
 import Link from 'next/link'
 
 interface PaymentProtectionInfoModalProps {
@@ -47,7 +47,8 @@ export function PaymentProtectionInfoModal({ isOpen, onClose }: PaymentProtectio
             <div>
               <p className="font-semibold text-gray-900">Sichere Zahlung</p>
               <p className="text-sm text-gray-600">
-                Der Verkäufer erhält das Geld erst nach Ihrer Bestätigung, dass der Artikel wie beschrieben angekommen ist.
+                Der Verkäufer erhält das Geld erst nach Ihrer Bestätigung, dass der Artikel wie
+                beschrieben angekommen ist.
               </p>
             </div>
           </div>
@@ -57,7 +58,8 @@ export function PaymentProtectionInfoModal({ isOpen, onClose }: PaymentProtectio
             <div>
               <p className="font-semibold text-gray-900">Hilfe bei Problemen</p>
               <p className="text-sm text-gray-600">
-                Bei Problemen mit Lieferung oder Artikel erhalten Sie Unterstützung durch unseren Support.
+                Bei Problemen mit Lieferung oder Artikel erhalten Sie Unterstützung durch unseren
+                Support.
               </p>
             </div>
           </div>
@@ -67,7 +69,8 @@ export function PaymentProtectionInfoModal({ isOpen, onClose }: PaymentProtectio
             <div>
               <p className="font-semibold text-gray-900">Unterstützung durch Support</p>
               <p className="text-sm text-gray-600">
-                Unser Team steht Ihnen bei Fragen oder Problemen zur Verfügung und vermittelt bei Streitigkeiten.
+                Unser Team steht Ihnen bei Fragen oder Problemen zur Verfügung und vermittelt bei
+                Streitigkeiten.
               </p>
             </div>
           </div>
@@ -77,7 +80,7 @@ export function PaymentProtectionInfoModal({ isOpen, onClose }: PaymentProtectio
         <div className="mt-6 border-t border-gray-200 pt-4">
           <Link
             href="/hilfe/zahlungsschutz"
-            className="text-sm font-medium text-primary-600 hover:text-primary-700 transition-colors"
+            className="text-sm font-medium text-primary-600 transition-colors hover:text-primary-700"
             onClick={onClose}
           >
             Mehr Informationen zum Zahlungsschutz →

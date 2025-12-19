@@ -4,11 +4,11 @@ import { BidComponent } from '@/components/bids/BidComponent'
 import { FavoriteButton } from '@/components/favorites/FavoriteButton'
 import { ReportModal } from '@/components/moderation/ReportModal'
 import { PriceOfferComponent } from '@/components/offers/PriceOfferComponent'
+import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
 import { PickupMap } from '@/components/product/PickupMap'
 import { ProductQuestions } from '@/components/product/ProductQuestions'
 import { ProductStats } from '@/components/product/ProductStats'
 import { SimilarProducts } from '@/components/product/SimilarProducts'
-import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
 import { SellerProfile } from '@/components/seller/SellerProfile'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { ChevronLeft, ChevronRight, Flag, X } from 'lucide-react'
@@ -282,7 +282,7 @@ export function ProductPageClient({
                   {/* Hauptbild mit Zoom-Effekt - Container passt sich an Bildformat an */}
                   <div
                     ref={imageContainerRef}
-                    className="relative w-full cursor-pointer overflow-hidden rounded-lg bg-white flex items-center justify-center"
+                    className="relative flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-white"
                     style={{
                       aspectRatio: imageAspectRatio ? `${imageAspectRatio}` : 'auto',
                       minHeight: '400px',
@@ -307,7 +307,7 @@ export function ProductPageClient({
                         ref={zoomImageRef}
                         src={images[selectedImageIndex]}
                         alt={watch.title}
-                        className={`max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-200 ease-out ${
+                        className={`h-auto max-h-full w-auto max-w-full object-contain transition-transform duration-200 ease-out ${
                           isZoomed ? 'scale-[4]' : 'scale-100'
                         }`}
                         style={{
@@ -414,7 +414,7 @@ export function ProductPageClient({
                   )}
                 </>
               ) : (
-                <div className="relative flex h-96 w-full items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-400">
+                <div className="relative flex h-96 w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400">
                   {t.home.noImage}
                   <div className="absolute right-4 top-4">
                     <FavoriteButton watchId={watch.id} />
@@ -449,7 +449,11 @@ export function ProductPageClient({
                     <div className="mb-2 flex items-center justify-between">
                       <div className="text-sm text-gray-600">{t.product.buyNowPrice}</div>
                       {(watch as any).paymentProtectionEnabled && (
-                        <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={false} />
+                        <PaymentProtectionBadge
+                          enabled={true}
+                          compact={true}
+                          showInfoLink={false}
+                        />
                       )}
                     </div>
                     <div className="text-3xl font-bold text-green-600">

@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Package, Gavel, Tag, ShoppingBag, Star, Search, Settings } from 'lucide-react'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
-import { useLanguage } from '@/contexts/LanguageContext'
 import { DashboardTile } from '@/components/dashboard/DashboardTile'
-import { QuickOverviewChips, QuickOverviewChip } from '@/components/dashboard/QuickOverviewChips'
+import { QuickOverviewChip, QuickOverviewChips } from '@/components/dashboard/QuickOverviewChips'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { Gavel, Package, Search, ShoppingBag, Star, Tag } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface Bid {
   id: string
@@ -267,7 +267,11 @@ export default function MyBuyingPage() {
 
   // Quick overview chips data
   const hasQuickOverview =
-    stats.bidding > 0 || stats.offers > 0 || stats.purchased > 0 || stats.favorites > 0 || stats.searches > 0
+    stats.bidding > 0 ||
+    stats.offers > 0 ||
+    stats.purchased > 0 ||
+    stats.favorites > 0 ||
+    stats.searches > 0
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -298,18 +302,14 @@ export default function MyBuyingPage() {
         {/* Quick Overview Chips */}
         {hasQuickOverview && (
           <QuickOverviewChips>
-            {stats.bidding > 0 && (
-              <QuickOverviewChip label="Aktive Gebote" value={stats.bidding} />
-            )}
+            {stats.bidding > 0 && <QuickOverviewChip label="Aktive Gebote" value={stats.bidding} />}
             {stats.offers > 0 && (
               <QuickOverviewChip label="Preisvorschläge" value={stats.offers} highlight={true} />
             )}
             {stats.purchased > 0 && (
               <QuickOverviewChip label="Gekaufte Artikel" value={stats.purchased} />
             )}
-            {stats.favorites > 0 && (
-              <QuickOverviewChip label="Favoriten" value={stats.favorites} />
-            )}
+            {stats.favorites > 0 && <QuickOverviewChip label="Favoriten" value={stats.favorites} />}
             {stats.searches > 0 && (
               <QuickOverviewChip label="Suchaufträge" value={stats.searches} />
             )}

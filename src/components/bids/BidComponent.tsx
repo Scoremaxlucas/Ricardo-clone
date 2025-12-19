@@ -1,8 +1,8 @@
 'use client'
 
+import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
 import { UserName } from '@/components/ui/UserName'
 import { VerificationModal } from '@/components/verification/VerificationModal'
-import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getShippingCost, ShippingMethod, ShippingMethodArray } from '@/lib/shipping'
 import { AlertCircle, CheckCircle, Clock, Gavel, Zap } from 'lucide-react'
