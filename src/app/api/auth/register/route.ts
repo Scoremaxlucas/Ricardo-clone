@@ -332,7 +332,7 @@ export async function POST(request: NextRequest) {
     // #endregion
     // Build name field - ensure it's null if empty, not empty string
     const fullName = `${trimmedFirstName} ${trimmedLastName}`.trim()
-    
+
     console.log('[register] Attempting to create user:', {
       email: normalizedEmail,
       nickname: trimmedNickname,
@@ -341,7 +341,7 @@ export async function POST(request: NextRequest) {
       nameLength: fullName?.length || 0,
       hasPassword: !!hashedPassword,
     })
-    
+
     // DEFENSIVE: Start with minimal required fields that are guaranteed to exist
     // Then progressively try adding more fields
     const createUserWithFallback = async () => {
@@ -356,7 +356,7 @@ export async function POST(request: NextRequest) {
         emailVerified: true,
         emailVerifiedAt: new Date(),
       }
-      
+
       console.log('[register] Attempt 1: Creating user with all fields')
       try {
         const createdUser = await prisma.user.create({ data: fullUserData })
@@ -364,33 +364,41 @@ export async function POST(request: NextRequest) {
         return createdUser
       } catch (err1: any) {
         console.error('[register] Attempt 1 failed:', err1?.code, err1?.message?.substring(0, 200))
-        
+
         // Attempt 2: Try without emailVerifiedAt (DateTime might be problematic)
         if (err1?.code === 'P2022' || err1?.code === 'P2011' || err1?.code === 'P2012') {
           console.log('[register] Attempt 2: Creating user without emailVerifiedAt')
           const dataWithoutVerifiedAt = { ...fullUserData }
           delete (dataWithoutVerifiedAt as any).emailVerifiedAt
-          
+
           try {
             const createdUser = await prisma.user.create({ data: dataWithoutVerifiedAt })
             console.log('[register] ✅ Attempt 2 succeeded:', createdUser.id)
             return createdUser
           } catch (err2: any) {
-            console.error('[register] Attempt 2 failed:', err2?.code, err2?.message?.substring(0, 200))
-            
+            console.error(
+              '[register] Attempt 2 failed:',
+              err2?.code,
+              err2?.message?.substring(0, 200)
+            )
+
             // Attempt 3: Try without emailVerified as well
             if (err2?.code === 'P2022' || err2?.code === 'P2011' || err2?.code === 'P2012') {
               console.log('[register] Attempt 3: Creating user without emailVerified fields')
               const dataWithoutVerified = { ...dataWithoutVerifiedAt }
               delete (dataWithoutVerified as any).emailVerified
-              
+
               try {
                 const createdUser = await prisma.user.create({ data: dataWithoutVerified })
                 console.log('[register] ✅ Attempt 3 succeeded:', createdUser.id)
                 return createdUser
               } catch (err3: any) {
-                console.error('[register] Attempt 3 failed:', err3?.code, err3?.message?.substring(0, 200))
-                
+                console.error(
+                  '[register] Attempt 3 failed:',
+                  err3?.code,
+                  err3?.message?.substring(0, 200)
+                )
+
                 // Attempt 4: Try with minimal fields only (email, password, nickname)
                 if (err3?.code === 'P2022' || err3?.code === 'P2011' || err3?.code === 'P2012') {
                   console.log('[register] Attempt 4: Creating user with minimal fields only')
@@ -399,11 +407,11 @@ export async function POST(request: NextRequest) {
                     password: hashedPassword,
                     nickname: trimmedNickname,
                   }
-                  
+
                   try {
                     const createdUser = await prisma.user.create({ data: minimalData })
                     console.log('[register] ✅ Attempt 4 succeeded (minimal):', createdUser.id)
-                    
+
                     // Try to update with additional fields (non-critical)
                     try {
                       await prisma.user.update({
@@ -416,13 +424,20 @@ export async function POST(request: NextRequest) {
                       })
                       console.log('[register] ✅ Updated user with additional fields')
                     } catch (updateErr: any) {
-                      console.warn('[register] ⚠️ Could not update additional fields:', updateErr?.message?.substring(0, 100))
+                      console.warn(
+                        '[register] ⚠️ Could not update additional fields:',
+                        updateErr?.message?.substring(0, 100)
+                      )
                       // Not critical - user was created successfully
                     }
-                    
+
                     return createdUser
                   } catch (err4: any) {
-                    console.error('[register] Attempt 4 failed:', err4?.code, err4?.message?.substring(0, 200))
+                    console.error(
+                      '[register] Attempt 4 failed:',
+                      err4?.code,
+                      err4?.message?.substring(0, 200)
+                    )
                     // All attempts failed, throw the original error
                     throw err1
                   }
@@ -436,7 +451,7 @@ export async function POST(request: NextRequest) {
         throw err1
       }
     }
-    
+
     try {
       user = await createUserWithFallback()
       userCreated = true // Mark that user was created

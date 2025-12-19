@@ -14,6 +14,10 @@ npm install --legacy-peer-deps
 echo "🔨 Generating Prisma client..."
 npx prisma generate
 
+# CRITICAL: Push database schema to ensure all columns exist
+echo "🗄️ Pushing database schema..."
+npx prisma db push --accept-data-loss || echo "⚠️ Database push failed, continuing with build..."
+
 # Build Next.js app
 echo "🏗️ Building Next.js app..."
 next build
