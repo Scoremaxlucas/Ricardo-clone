@@ -550,7 +550,9 @@ export default function AccountPage() {
             </div>
 
             {/* Payout / Bank Details Section */}
-            {session?.user?.id && <PayoutSection userId={session.user.id} />}
+            {(session?.user as { id?: string })?.id && (
+              <PayoutSection userId={(session.user as { id?: string }).id!} />
+            )}
 
             {/* Save Button */}
             <div className="mt-8 border-t border-gray-200 pt-6">
