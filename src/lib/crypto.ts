@@ -113,14 +113,9 @@ export function decrypt(encryptedData: string): string {
  * Format: CH•• •••• •••• •••• •••• 1234
  */
 export function maskIban(iban: string, last4?: string): string {
-  if (!iban || iban.length < 4) {
-    return '•••• •••• •••• •••• •••• ••••'
-  }
+  // If we have last4 provided, use it even without full IBAN
+  const lastFour = last4 || (iban && iban.length >= 4 ? iban.slice(-4) : '••••')
+  const countryCode = iban && iban.length >= 2 ? iban.slice(0, 2).toUpperCase() : 'CH'
 
-  const lastFour = last4 || iban.slice(-4)
-  const countryCode = iban.slice(0, 2).toUpperCase()
-  const masked = '••'.repeat(10) // 20 dots total
-  const formatted = `${countryCode}${masked.slice(0, 2)} ${masked.slice(2, 6)} ${masked.slice(6, 10)} ${masked.slice(10, 14)} ${masked.slice(14, 18)} ${masked.slice(18, 22)} ${lastFour}`
-
-  return formatted
+  return `${countryCode}•• •••• •••• •••• •••• ${lastFour}`
 }
