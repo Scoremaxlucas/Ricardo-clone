@@ -160,10 +160,18 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Return complete profile data so UI can update immediately
     return NextResponse.json({
       message: 'Bankverbindung erfolgreich hinterlegt',
       status: profile.status,
+      hasProfile: true,
+      accountHolderName: profile.accountHolderName,
       ibanMasked: maskIban('', profile.ibanLast4),
+      ibanLast4: profile.ibanLast4,
+      country: profile.country,
+      hasOpenChangeRequest: false,
+      verifiedAt: profile.verifiedAt?.toISOString() || null,
+      lockedReason: profile.lockedReason,
     })
   } catch (error: any) {
     console.error('Error creating payout profile:', error)

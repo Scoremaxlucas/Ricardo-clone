@@ -95,7 +95,12 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
         toast.success('Bankverbindung erfolgreich hinterlegt')
         setShowInitialForm(false)
         setInitialForm({ accountHolderName: '', iban: '', confirmAccountOwner: false })
-        await loadProfile()
+        // Use response data directly to update profile immediately
+        if (data.hasProfile) {
+          setProfile(data)
+        } else {
+          await loadProfile()
+        }
       } else {
         toast.error(data.message || 'Fehler beim Speichern')
       }
