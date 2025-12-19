@@ -241,7 +241,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
   return (
     <header id="navigation" className="sticky top-0 z-50 border-b bg-white shadow-md" tabIndex={-1}>
-      <div className="mx-auto w-full px-4 sm:px-6 md:px-8 lg:px-12 xl:px-16">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* MOBILE HEADER */}
         <div className="flex h-14 items-center justify-between md:hidden">
           {/* Logo */}
