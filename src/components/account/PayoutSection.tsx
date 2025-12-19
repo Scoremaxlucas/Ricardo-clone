@@ -51,9 +51,9 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
       setLoading(true)
       const res = await fetch('/api/payout/profile')
       const data = await res.json()
-      
+
       console.log('loadProfile response:', { status: res.status, data })
-      
+
       if (res.ok) {
         // Check if profile exists and has valid data
         if (data.status === 'UNSET' || !data.hasProfile) {
@@ -127,13 +127,13 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
         toast.success('Bankverbindung erfolgreich hinterlegt')
         setShowInitialForm(false)
         setInitialForm({ accountHolderName: '', iban: '', confirmAccountOwner: false })
-        
+
         // Always reload profile to ensure we have the latest data from DB
         // Small delay to ensure DB write is complete
         setTimeout(async () => {
           await loadProfile()
         }, 500)
-        
+
         // Also update state immediately if we have the data
         if (data.hasProfile && data.status === 'ACTIVE' && data.accountHolderName) {
           setProfile({
@@ -217,6 +217,7 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
   }
 
   const status = profile?.status || 'UNSET'
+  const hasProfile = profile?.hasProfile || (status !== 'UNSET' && profile?.accountHolderName)
 
   return (
     <div className="border-t border-gray-200 pt-6">
@@ -227,7 +228,7 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
             Auszahlungen / Bankverbindung
           </h3>
           <p className="text-xs text-gray-500">
-            {status === 'UNSET'
+            {!hasProfile
               ? 'Damit wir Ihnen Verkäufe auszahlen können, hinterlegen Sie Ihre IBAN. Diese Information wird nie öffentlich angezeigt.'
               : 'Ihre Bankverbindung für Auszahlungen'}
           </p>
@@ -235,7 +236,7 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
       </div>
 
       {/* Status Display */}
-      {status !== 'UNSET' && (
+      {hasProfile && (
         <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
           <div className="flex items-start justify-between">
             <div className="flex-1">
