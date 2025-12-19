@@ -7,6 +7,7 @@ import toast from 'react-hot-toast'
 
 interface PayoutProfile {
   status: 'UNSET' | 'ACTIVE' | 'CHANGE_REQUESTED' | 'SUSPENDED'
+  hasProfile?: boolean
   accountHolderName?: string
   ibanMasked?: string
   ibanLast4?: string
