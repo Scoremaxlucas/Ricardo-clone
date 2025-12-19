@@ -38,11 +38,11 @@ export async function POST(request: NextRequest) {
     }),
   }).catch(() => {})
   // #endregion
-  
+
   // Declare variables outside try block so they're accessible in catch block
   let user: any = null
   let userCreated = false
-  
+
   try {
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
@@ -353,8 +353,6 @@ export async function POST(request: NextRequest) {
       nameLength: userData.name?.length || 0,
       hasPassword: !!hashedPassword,
     })
-    let user: any = null
-    let userCreated = false
     try {
       // Try creating user with all fields first
       user = await prisma.user.create({
@@ -427,17 +425,23 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     // CRITICAL: If user was created but an error occurred, clean it up to prevent orphaned users
     // This ensures atomicity: if registration fails, no user record remains
+    // This cleanup happens BEFORE error-specific handling to ensure it always runs
     if (userCreated && user?.id) {
       console.error('[register] Error occurred after user creation, cleaning up user:', user.id)
+      console.error('[register] Error code:', error?.code, 'Error message:', error?.message?.substring(0, 200))
       console.error('[register] This prevents orphaned user records when registration fails')
       try {
         await prisma.user.delete({
           where: { id: user.id },
         })
-        console.log('[register] ✅ Successfully deleted user after error:', user.id)
+        console.log('[register] ✅ Successfully deleted user after error:', user.id, user.email)
+        // Reset flag to prevent double-deletion attempts
+        userCreated = false
+        user = null
       } catch (deleteError: any) {
         console.error('[register] ❌ Failed to delete user after error:', deleteError)
         console.error('[register] User may remain in database:', user.id, user.email)
+        console.error('[register] Manual cleanup may be required for:', user.email)
         // Log but don't throw - we still want to return the original error
       }
     }
@@ -471,15 +475,36 @@ export async function POST(request: NextRequest) {
       stack: error.stack?.substring(0, 500),
     })
 
-    // Prüfe auf eindeutigen Constraint-Fehler (falls die Prüfung oben fehlgeschlagen ist)
+    // Prüfe auf eindeutigen Constraint-Fehler (P2002 = unique constraint violation)
     if (error.code === 'P2002') {
       // Prisma unique constraint violation
       const target = error.meta?.target || []
+      console.error('[register] Unique constraint violation:', {
+        code: error.code,
+        target,
+        meta: error.meta,
+      })
+      
+      // CRITICAL: If user was created but hit unique constraint, delete it
+      // This can happen in race conditions where duplicate checks pass but DB constraint fails
+      if (userCreated && user?.id) {
+        console.error('[register] Unique constraint error after user creation - cleaning up:', user.id)
+        try {
+          await prisma.user.delete({
+            where: { id: user.id },
+          })
+          console.log('[register] ✅ Deleted user after unique constraint error:', user.id)
+        } catch (deleteError: any) {
+          console.error('[register] ❌ Failed to delete user after unique constraint error:', deleteError)
+        }
+      }
+      
       if (Array.isArray(target) && target.includes('email')) {
         return NextResponse.json(
           {
             message:
               'Diese E-Mail-Adresse wird bereits von einem anderen Benutzer verwendet. Bitte verwenden Sie eine andere E-Mail-Adresse oder melden Sie sich mit Ihrem bestehenden Konto an.',
+            errorCode: error.code,
           },
           { status: 400 }
         )
@@ -489,6 +514,7 @@ export async function POST(request: NextRequest) {
           {
             message:
               'Dieser Nickname ist bereits vergeben. Bitte wählen Sie einen anderen Nickname.',
+            errorCode: error.code,
           },
           { status: 400 }
         )
@@ -497,8 +523,44 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         {
           message: 'Ein Wert ist bereits vergeben. Bitte verwenden Sie andere Angaben.',
+          errorCode: error.code,
         },
         { status: 400 }
+      )
+    }
+
+    // P2022: Column does not exist (schema mismatch)
+    if (error.code === 'P2022') {
+      console.error('[register] Schema mismatch error (P2022):', {
+        code: error.code,
+        message: error.message,
+        meta: error.meta,
+      })
+      
+      // CRITICAL: If user was created but schema error occurred, delete it
+      if (userCreated && user?.id) {
+        console.error('[register] Schema error after user creation - cleaning up:', user.id)
+        try {
+          await prisma.user.delete({
+            where: { id: user.id },
+          })
+          console.log('[register] ✅ Deleted user after schema error:', user.id)
+        } catch (deleteError: any) {
+          console.error('[register] ❌ Failed to delete user after schema error:', deleteError)
+        }
+      }
+      
+      return NextResponse.json(
+        {
+          message:
+            'Ein Datenbankfehler ist aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.',
+          errorCode: error.code,
+          ...(process.env.NODE_ENV === 'development' && {
+            errorMessage: error.message,
+            errorMeta: error.meta,
+          }),
+        },
+        { status: 500 }
       )
     }
 
