@@ -38,6 +38,11 @@ export async function POST(request: NextRequest) {
     }),
   }).catch(() => {})
   // #endregion
+  
+  // Declare variables outside try block so they're accessible in catch block
+  let user: any = null
+  let userCreated = false
+  
   try {
     // #region agent log
     fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
