@@ -788,6 +788,39 @@ function SellPageContent() {
         formData.shippingMethods.length === 1 &&
         formData.shippingMethods[0] === 'pickup'
 
+      // Check payout profile if payment protection is enabled
+      if (paymentProtectionEnabled) {
+        try {
+          const payoutRes = await fetch('/api/payout/profile')
+          if (payoutRes.ok) {
+            const payoutData = await payoutRes.json()
+            if (!payoutData.hasProfile || payoutData.status !== 'ACTIVE') {
+              // Block publish - show payout requirement
+              setError(
+                'Für den Zahlungsschutz benötigen Sie eine hinterlegte Bankverbindung. Bitte hinterlegen Sie diese in Ihren Kontoeinstellungen.'
+              )
+              toast.error('Bankverbindung erforderlich für Zahlungsschutz', {
+                duration: 5000,
+              })
+              return false
+            }
+            if (payoutData.status === 'CHANGE_REQUESTED') {
+              // Allow publish but warn about delayed payouts
+              toast(
+                'Hinweis: Ihre Bankverbindung wird derzeit geprüft. Auszahlungen können verzögert sein.',
+                {
+                  duration: 5000,
+                  icon: '⚠️',
+                }
+              )
+            }
+          }
+        } catch (error) {
+          console.error('Error checking payout profile:', error)
+          // Fail open - allow publish but log error
+        }
+      }
+
       // Determine context based on listing options
       let context: 'SELL_PUBLISH' | 'SELL_ENABLE_SHIPPING' | 'PAYMENT_PROTECTION' = 'SELL_PUBLISH'
       if (paymentProtectionEnabled) {

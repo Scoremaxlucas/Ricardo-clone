@@ -144,6 +144,9 @@ model User {
   ordersAsSeller                Order[]              @relation("OrderSeller")
   pricingHistory                PricingHistory[]
   drafts                        Draft[]
+  payoutProfile                 PayoutProfile?
+  payoutChangeRequestsDecided   PayoutChangeRequest[] @relation("PayoutChangeDecider")
+  payoutAuditLogs               PayoutAuditLog[]     @relation("PayoutAuditActor")
 
   @@map("users")
 }
@@ -1143,4 +1146,71 @@ model DraftImage {
   @@index([draftId])
   @@index([draftId, sortOrder])
   @@map("draft_images")
+}
+
+// ============================================
+// PAYOUT / BANK DETAILS POLICY (Ricardo-like)
+// ============================================
+
+// Payout Profile - Stores encrypted IBAN and bank details for sellers
+model PayoutProfile {
+  id                String   @id @default(cuid())
+  userId            String   @unique
+  status            String   @default("UNSET") // 'UNSET' | 'ACTIVE' | 'CHANGE_REQUESTED' | 'SUSPENDED'
+  accountHolderName String
+  ibanEncrypted     String   // Encrypted IBAN (AES-256-GCM)
+  ibanLast4         String   // Last 4 digits for display
+  country           String   @default("CH")
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  verifiedAt        DateTime?
+  lockedReason      String?  // e.g. "Change requires approval"
+
+  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  changeRequests    PayoutChangeRequest[]
+  auditLogs         PayoutAuditLog[]
+
+  @@index([userId])
+  @@index([status])
+  @@map("payout_profiles")
+}
+
+// Payout Change Requests - Tracks requests to change bank details
+model PayoutChangeRequest {
+  id                        String   @id @default(cuid())
+  userId                    String
+  requestedAccountHolderName String
+  requestedIbanEncrypted     String   // Encrypted requested IBAN
+  requestedIbanLast4         String   // Last 4 digits for display
+  reason                    String?  // Optional reason for change
+  status                    String   @default("PENDING") // 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+  createdAt                 DateTime @default(now())
+  decidedAt                 DateTime?
+  decidedBy                 String?  // Admin user ID
+
+  profile                   PayoutProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  decider                   User?          @relation("PayoutChangeDecider", fields: [decidedBy], references: [id])
+
+  @@index([userId])
+  @@index([status])
+  @@index([createdAt])
+  @@map("payout_change_requests")
+}
+
+// Payout Audit Log - Tracks all changes to payout profiles
+model PayoutAuditLog {
+  id          String   @id @default(cuid())
+  userId      String
+  action      String   // 'PROFILE_CREATED' | 'CHANGE_REQUESTED' | 'CHANGE_APPROVED' | 'CHANGE_REJECTED'
+  metadata    String?  // JSON string with masked values, request id, etc.
+  createdAt   DateTime @default(now())
+  actorUserId String   // Who performed the action (user for own actions, admin for approvals)
+
+  profile     PayoutProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  actor       User          @relation("PayoutAuditActor", fields: [actorUserId], references: [id])
+
+  @@index([userId])
+  @@index([createdAt])
+  @@index([action])
+  @@map("payout_audit_logs")
 }

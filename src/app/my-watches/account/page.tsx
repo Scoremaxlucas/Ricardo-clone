@@ -1,5 +1,6 @@
 'use client'
 
+import { PayoutSection } from '@/components/account/PayoutSection'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, Info, Loader2, Mail, MapPin, Phone, User } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -547,6 +548,9 @@ export default function AccountPage() {
                 </div>
               </div>
             </div>
+
+            {/* Payout / Bank Details Section */}
+            {session?.user?.id && <PayoutSection userId={session.user.id} />}
 
             {/* Save Button */}
             <div className="mt-8 border-t border-gray-200 pt-6">

@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { checkAdmin } from '@/lib/auth-utils'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -75,6 +74,7 @@ export async function GET(request: NextRequest) {
       verifiedUsers,
       pendingVerifications,
       pendingDisputes,
+      pendingPayoutChangeRequests,
     ] = await Promise.all([
       // Benutzer-Statistiken
       prisma.user.count(),
@@ -108,6 +108,10 @@ export async function GET(request: NextRequest) {
       // Dispute-Statistiken
       prisma.purchase.count({
         where: { disputeStatus: 'pending', disputeOpenedAt: { not: null } },
+      }),
+      // Payout Change Requests
+      prisma.payoutChangeRequest.count({
+        where: { status: 'PENDING' },
       }),
     ])
 
@@ -145,6 +149,7 @@ export async function GET(request: NextRequest) {
       verifiedUsers: verifiedUsers || 0,
       pendingVerifications: pendingVerifications || 0,
       pendingDisputes: pendingDisputes || 0,
+      pendingPayoutChangeRequests: pendingPayoutChangeRequests || 0,
     }
 
     console.log('Stats calculated:', result)

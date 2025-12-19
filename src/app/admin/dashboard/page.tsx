@@ -5,6 +5,7 @@ import { Header } from '@/components/layout/Header'
 import {
   AlertCircle,
   AlertTriangle,
+  Banknote,
   BarChart3,
   DollarSign,
   FileCheck,
@@ -31,6 +32,7 @@ interface Stats {
   pendingVerifications: number
   verifiedUsers: number
   pendingDisputes: number
+  pendingPayoutChangeRequests?: number
 }
 
 export default function AdminDashboard() {
@@ -320,6 +322,14 @@ export default function AdminDashboard() {
             href="/admin/disputes"
             color="orange"
             badge={stats?.pendingDisputes || 0}
+          />
+          <ActionCard
+            title="Bankverbindungs-Änderungen"
+            description="Anfragen zur Änderung von Bankverbindungen bearbeiten"
+            icon={Banknote}
+            href="/admin/payout-change-requests"
+            color="teal"
+            badge={stats?.pendingPayoutChangeRequests || 0}
           />
         </div>
       </div>
