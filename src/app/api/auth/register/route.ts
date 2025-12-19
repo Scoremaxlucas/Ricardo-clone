@@ -428,7 +428,12 @@ export async function POST(request: NextRequest) {
     // This cleanup happens BEFORE error-specific handling to ensure it always runs
     if (userCreated && user?.id) {
       console.error('[register] Error occurred after user creation, cleaning up user:', user.id)
-      console.error('[register] Error code:', error?.code, 'Error message:', error?.message?.substring(0, 200))
+      console.error(
+        '[register] Error code:',
+        error?.code,
+        'Error message:',
+        error?.message?.substring(0, 200)
+      )
       console.error('[register] This prevents orphaned user records when registration fails')
       try {
         await prisma.user.delete({
@@ -484,21 +489,27 @@ export async function POST(request: NextRequest) {
         target,
         meta: error.meta,
       })
-      
+
       // CRITICAL: If user was created but hit unique constraint, delete it
       // This can happen in race conditions where duplicate checks pass but DB constraint fails
       if (userCreated && user?.id) {
-        console.error('[register] Unique constraint error after user creation - cleaning up:', user.id)
+        console.error(
+          '[register] Unique constraint error after user creation - cleaning up:',
+          user.id
+        )
         try {
           await prisma.user.delete({
             where: { id: user.id },
           })
           console.log('[register] ✅ Deleted user after unique constraint error:', user.id)
         } catch (deleteError: any) {
-          console.error('[register] ❌ Failed to delete user after unique constraint error:', deleteError)
+          console.error(
+            '[register] ❌ Failed to delete user after unique constraint error:',
+            deleteError
+          )
         }
       }
-      
+
       if (Array.isArray(target) && target.includes('email')) {
         return NextResponse.json(
           {
@@ -530,25 +541,13 @@ export async function POST(request: NextRequest) {
     }
 
     // P2022: Column does not exist (schema mismatch)
+    // Note: Cleanup already happened above, so we don't need to delete again here
     if (error.code === 'P2022') {
       console.error('[register] Schema mismatch error (P2022):', {
         code: error.code,
         message: error.message,
         meta: error.meta,
       })
-      
-      // CRITICAL: If user was created but schema error occurred, delete it
-      if (userCreated && user?.id) {
-        console.error('[register] Schema error after user creation - cleaning up:', user.id)
-        try {
-          await prisma.user.delete({
-            where: { id: user.id },
-          })
-          console.log('[register] ✅ Deleted user after schema error:', user.id)
-        } catch (deleteError: any) {
-          console.error('[register] ❌ Failed to delete user after schema error:', deleteError)
-        }
-      }
       
       return NextResponse.json(
         {
