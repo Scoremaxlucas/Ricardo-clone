@@ -1,12 +1,11 @@
 'use client'
 
-import { useState } from 'react'
-import { signIn } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { Eye, EyeOff } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
+import { Eye, EyeOff } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -68,16 +67,17 @@ export default function RegisterPage() {
     }
 
     try {
+      // Trim all fields before sending to backend
       const response = await fetch('/api/auth/register', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          nickname: formData.nickname,
-          email: formData.email,
+          firstName: formData.firstName.trim(),
+          lastName: formData.lastName.trim(),
+          nickname: formData.nickname.trim(),
+          email: formData.email.trim(),
           password: formData.password,
         }),
       })
@@ -99,8 +99,9 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="w-full max-w-md space-y-8">
-      <div>
+    <div className="w-full max-w-md">
+      <div className="space-y-8 rounded-xl bg-white px-8 py-10 shadow-lg ring-1 ring-gray-100">
+        <div className="text-center">
           <div className="mb-6 flex justify-center">
             <Logo size="lg" />
           </div>
@@ -109,7 +110,10 @@ export default function RegisterPage() {
           </h2>
           <p className="mt-3 text-center text-sm text-gray-600">
             Oder{' '}
-            <Link href="/login" className="font-semibold text-primary-600 transition-colors hover:text-primary-700">
+            <Link
+              href="/login"
+              className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
+            >
               melden Sie sich mit Ihrem bestehenden Konto an
             </Link>
           </p>
@@ -117,7 +121,7 @@ export default function RegisterPage() {
 
         <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-red-600">
+            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               {error}
             </div>
           )}
@@ -134,7 +138,8 @@ export default function RegisterPage() {
                 required
                 value={formData.firstName}
                 onChange={handleChange}
-                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 sm:text-sm"
+                disabled={isLoading}
+                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
                 placeholder="Max"
               />
             </div>
@@ -150,7 +155,8 @@ export default function RegisterPage() {
                 required
                 value={formData.lastName}
                 onChange={handleChange}
-                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 sm:text-sm"
+                disabled={isLoading}
+                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
                 placeholder="Mustermann"
               />
             </div>
@@ -167,7 +173,8 @@ export default function RegisterPage() {
                 minLength={6}
                 value={formData.nickname}
                 onChange={handleChange}
-                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 sm:text-sm"
+                disabled={isLoading}
+                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
                 placeholder="Mindestens 6 Zeichen"
               />
               <p className="mt-1 text-xs text-gray-500">
@@ -186,7 +193,8 @@ export default function RegisterPage() {
                 required
                 value={formData.email}
                 onChange={handleChange}
-                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 sm:text-sm"
+                disabled={isLoading}
+                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
                 placeholder="max@beispiel.com"
               />
             </div>
@@ -204,12 +212,14 @@ export default function RegisterPage() {
                   minLength={6}
                   value={formData.password}
                   onChange={handleChange}
-                  className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 pr-10 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 sm:text-sm"
+                  disabled={isLoading}
+                  className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
                   placeholder="Mind. 6 Zeichen, 1 Zahl, 1 Sonderzeichen"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
+                  disabled={isLoading}
                   className="absolute inset-y-0 right-0 flex items-center pr-3"
                 >
                   {showPassword ? (
@@ -236,12 +246,14 @@ export default function RegisterPage() {
                   required
                   value={formData.confirmPassword}
                   onChange={handleChange}
-                  className="relative block w-full appearance-none rounded-md border border-gray-300 px-3 py-2 pr-10 text-gray-900 placeholder-gray-500 focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 sm:text-sm"
+                  disabled={isLoading}
+                  className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
                   placeholder="Passwort wiederholen"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                  disabled={isLoading}
                   className="absolute inset-y-0 right-0 flex items-center pr-3"
                 >
                   {showConfirmPassword ? (
@@ -260,7 +272,8 @@ export default function RegisterPage() {
               name="terms"
               type="checkbox"
               required
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-2 focus:ring-primary-500/20"
+              disabled={isLoading}
+              className="h-4 w-4 rounded border-gray-300 text-primary-600 transition-colors focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
             />
             <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
               Ich akzeptiere die{' '}
@@ -277,6 +290,7 @@ export default function RegisterPage() {
           <div>
             <Button
               type="submit"
+              variant="primary-teal"
               disabled={isLoading}
               loading={isLoading}
               className="w-full"
@@ -285,6 +299,7 @@ export default function RegisterPage() {
             </Button>
           </div>
         </form>
+      </div>
     </div>
   )
 }
