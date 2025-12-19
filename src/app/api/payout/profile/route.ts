@@ -123,7 +123,23 @@ export async function POST(request: NextRequest) {
 
     // Encrypt IBAN
     const cleanedIban = iban.replace(/\s/g, '').toUpperCase()
-    const ibanEncrypted = encrypt(cleanedIban)
+    let ibanEncrypted: string
+    try {
+      ibanEncrypted = encrypt(cleanedIban)
+    } catch (encryptError: any) {
+      console.error('Encryption error:', encryptError)
+      if (encryptError.message?.includes('PAYOUT_ENCRYPTION_KEY')) {
+        return NextResponse.json(
+          {
+            message:
+              'Konfigurationsfehler: Verschlüsselungsschlüssel fehlt. Bitte kontaktieren Sie den Support.',
+            errorCode: 'ENCRYPTION_KEY_MISSING',
+          },
+          { status: 500 }
+        )
+      }
+      throw encryptError
+    }
     const ibanLast4 = getIbanLast4(cleanedIban)
 
     // Create or update profile
@@ -175,8 +191,17 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error creating payout profile:', error)
+    console.error('Error details:', {
+      message: error.message,
+      stack: error.stack,
+      code: error.code,
+    })
     return NextResponse.json(
-      { message: 'Fehler beim Speichern der Bankverbindung' },
+      {
+        message: 'Fehler beim Speichern der Bankverbindung',
+        errorCode: error.code || 'UNKNOWN_ERROR',
+        errorMessage: process.env.NODE_ENV === 'development' ? error.message : undefined,
+      },
       { status: 500 }
     )
   }
