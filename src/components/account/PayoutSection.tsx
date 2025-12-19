@@ -96,8 +96,19 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
         setShowInitialForm(false)
         setInitialForm({ accountHolderName: '', iban: '', confirmAccountOwner: false })
         // Use response data directly to update profile immediately
-        if (data.hasProfile) {
-          setProfile(data)
+        console.log('Payout profile POST response:', data)
+        if (data.hasProfile || data.status === 'ACTIVE') {
+          setProfile({
+            status: data.status || 'ACTIVE',
+            hasProfile: true,
+            accountHolderName: data.accountHolderName,
+            ibanMasked: data.ibanMasked,
+            ibanLast4: data.ibanLast4,
+            country: data.country || 'CH',
+            hasOpenChangeRequest: data.hasOpenChangeRequest || false,
+            verifiedAt: data.verifiedAt,
+            lockedReason: data.lockedReason,
+          })
         } else {
           await loadProfile()
         }

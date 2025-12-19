@@ -131,9 +131,9 @@ export default function AccountPage() {
           streetNumber: data.streetNumber || '',
           postalCode: data.postalCode || '',
           city: data.city || '',
-          country: data.country || 'Schweiz',
+          country: 'Schweiz', // Always Switzerland
           addresszusatz: data.addresszusatz || '',
-          kanton: data.kanton || '',
+          kanton: '', // Hidden field, not displayed
         })
       }
     } catch (error) {
@@ -160,9 +160,9 @@ export default function AccountPage() {
           streetNumber: data.streetNumber || null,
           postalCode: data.postalCode || null,
           city: data.city || null,
-          country: data.country || null,
+          country: 'Schweiz', // Always Switzerland
           addresszusatz: data.addresszusatz || null,
-          kanton: data.kanton || null,
+          kanton: null, // Removed - no longer used
         }),
       })
 
@@ -466,47 +466,7 @@ export default function AccountPage() {
                   </div>
                 </div>
 
-                {/* Kanton (optional) */}
-                <div>
-                  <label htmlFor="kanton" className="mb-2 block text-sm font-medium text-gray-700">
-                    Kanton (optional)
-                  </label>
-                  <select
-                    {...register('kanton')}
-                    id="kanton"
-                    className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                  >
-                    <option value="">Bitte wählen</option>
-                    <option value="AG">Aargau</option>
-                    <option value="AI">Appenzell Innerrhoden</option>
-                    <option value="AR">Appenzell Ausserrhoden</option>
-                    <option value="BE">Bern</option>
-                    <option value="BL">Basel-Landschaft</option>
-                    <option value="BS">Basel-Stadt</option>
-                    <option value="FR">Freiburg</option>
-                    <option value="GE">Genf</option>
-                    <option value="GL">Glarus</option>
-                    <option value="GR">Graubünden</option>
-                    <option value="JU">Jura</option>
-                    <option value="LU">Luzern</option>
-                    <option value="NE">Neuenburg</option>
-                    <option value="NW">Nidwalden</option>
-                    <option value="OW">Obwalden</option>
-                    <option value="SG">St. Gallen</option>
-                    <option value="SH">Schaffhausen</option>
-                    <option value="SO">Solothurn</option>
-                    <option value="SZ">Schwyz</option>
-                    <option value="TG">Thurgau</option>
-                    <option value="TI">Tessin</option>
-                    <option value="UR">Uri</option>
-                    <option value="VD">Waadt</option>
-                    <option value="VS">Wallis</option>
-                    <option value="ZG">Zug</option>
-                    <option value="ZH">Zürich</option>
-                  </select>
-                </div>
-
-                {/* Country */}
+                {/* Country - Fixed to Switzerland, not editable */}
                 <div>
                   <label htmlFor="country" className="mb-2 block text-sm font-medium text-gray-700">
                     Land
@@ -514,26 +474,15 @@ export default function AccountPage() {
                       (bei Versand/Zahlungsschutz/Rechnungen)
                     </span>
                   </label>
-                  <select
-                    {...register('country')}
+                  <input
+                    type="text"
                     id="country"
-                    className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
-                      errors.country
-                        ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
-                        : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
-                    }`}
-                    {...(errors.country && {
-                      'aria-invalid': true,
-                      'aria-describedby': 'country-error',
-                    })}
-                  >
-                    <option value="Schweiz">Schweiz</option>
-                  </select>
-                  {errors.country && (
-                    <p id="country-error" className="mt-1 text-sm text-red-600" role="alert">
-                      {errors.country.message}
-                    </p>
-                  )}
+                    value="Schweiz"
+                    disabled
+                    className="w-full cursor-not-allowed rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600"
+                    readOnly
+                  />
+                  <input type="hidden" {...register('country')} value="Schweiz" />
                 </div>
 
                 {/* Privacy Info */}
