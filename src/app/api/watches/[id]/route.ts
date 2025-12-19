@@ -43,6 +43,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         video: true,
         shippingMethod: true,
         boosters: true,
+        paymentProtectionEnabled: true,
         sellerId: true,
         createdAt: true,
         updatedAt: true,
@@ -125,6 +126,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         bids: watch.bids || [],
         shippingMethod: (watch as any).shippingMethod,
         boosters: (watch as any).boosters,
+        paymentProtectionEnabled: watch.paymentProtectionEnabled ?? false,
         categories:
           watch.categories?.map((wc: any) => ({
             id: wc.category.id,

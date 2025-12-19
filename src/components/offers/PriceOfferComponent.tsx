@@ -4,9 +4,20 @@ import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { toast } from 'react-hot-toast'
-import { MessageSquare, Send, Zap, ShoppingCart, Tag, Info, AlertCircle } from 'lucide-react'
+import {
+  MessageSquare,
+  Send,
+  Zap,
+  ShoppingCart,
+  Tag,
+  Info,
+  AlertCircle,
+  ChevronDown,
+  ChevronUp,
+} from 'lucide-react'
 import { VerificationModal } from '@/components/verification/VerificationModal'
 import { ShippingMethodSelector } from '@/components/shipping/ShippingMethodSelector'
+import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
 import {
   ShippingMethod,
   ShippingMethodArray,
@@ -19,6 +30,7 @@ interface PriceOfferComponentProps {
   sellerId: string
   buyNowPrice?: number | null
   shippingMethod?: string | null
+  paymentProtectionEnabled?: boolean
 }
 
 export function PriceOfferComponent({
@@ -27,6 +39,7 @@ export function PriceOfferComponent({
   sellerId,
   buyNowPrice,
   shippingMethod,
+  paymentProtectionEnabled = false,
 }: PriceOfferComponentProps) {
   const { data: session } = useSession()
   const router = useRouter()
@@ -40,6 +53,7 @@ export function PriceOfferComponent({
   const [verificationAction, setVerificationAction] = useState<'buy' | 'offer' | 'bid'>('offer')
   const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
   const [availableShippingMethods, setAvailableShippingMethods] = useState<ShippingMethod[]>([])
+  const [showPriceOfferForm, setShowPriceOfferForm] = useState(false)
 
   useEffect(() => {
     if ((session?.user as { id?: string })?.id === sellerId) {
@@ -223,6 +237,7 @@ export function PriceOfferComponent({
       )
       setOfferAmount('')
       setMessage('')
+      setShowPriceOfferForm(false) // Collapse form after successful submission
     } catch (error: any) {
       console.error('Error creating price offer:', error)
       toast.error(error.message || 'Fehler beim Erstellen des Preisvorschlags')
@@ -253,35 +268,28 @@ export function PriceOfferComponent({
   if (!(session?.user as { id?: string })?.id) {
     return (
       <div className="rounded-lg border-2 border-gray-200 bg-white p-6 shadow-lg">
-        <div className="mb-6 flex items-center gap-3">
-          <div className="rounded-lg bg-primary-100 p-2">
-            <Tag className="h-5 w-5 text-primary-600" />
-          </div>
-          <h3 className="text-xl font-bold text-gray-900">Preisvorschlag machen</h3>
-        </div>
-
-        <div className="mb-6 rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4">
-          <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
-            <div>
-              <p className="mb-1 text-sm font-medium text-yellow-800">Anmeldung erforderlich</p>
-              <p className="text-sm text-yellow-700">
-                Bitte melden Sie sich an, um einen Preisvorschlag zu machen.
-              </p>
+        {/* Sofortkauf-Option für nicht angemeldete Benutzer */}
+        <div className="mb-6">
+          <div className="mb-4 rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5">
+            <div className="mb-2 flex items-center justify-between">
+              <div className="text-xs font-semibold uppercase tracking-wide text-green-700">
+                Sofortkauf verfügbar
+              </div>
+              <Zap className="h-4 w-4 text-green-600" />
             </div>
-          </div>
-        </div>
-
-        {/* Sofortkauf-Option auch für nicht angemeldete Benutzer */}
-        <div className="border-t-2 border-gray-200 pt-6">
-          <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
-              Sofortkauf
-            </div>
-            <div className="text-3xl font-bold text-primary-600">
+            <div className="mb-1 text-3xl font-bold text-green-700">
               CHF {new Intl.NumberFormat('de-CH').format(price)}
             </div>
+            <p className="text-xs text-green-600">Artikel sofort kaufen ohne Verhandlung</p>
           </div>
+
+          {/* Payment Protection Badge */}
+          {paymentProtectionEnabled && (
+            <div className="mb-4">
+              <PaymentProtectionBadge enabled={paymentProtectionEnabled} />
+            </div>
+          )}
+
           <button
             disabled
             className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-gray-300 px-6 py-3 font-semibold text-gray-500 shadow-sm"
@@ -293,105 +301,36 @@ export function PriceOfferComponent({
             Bitte melden Sie sich an, um zu kaufen
           </p>
         </div>
+
+        {/* Preisvorschlag Info für nicht angemeldete */}
+        <div className="border-t-2 border-gray-200 pt-6">
+          <div className="mb-4 flex items-center gap-3">
+            <div className="rounded-lg bg-primary-100 p-2">
+              <Tag className="h-5 w-5 text-primary-600" />
+            </div>
+            <h3 className="text-xl font-bold text-gray-900">Preisvorschlag machen</h3>
+          </div>
+
+          <div className="rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
+              <div>
+                <p className="mb-1 text-sm font-medium text-yellow-800">Anmeldung erforderlich</p>
+                <p className="text-sm text-yellow-700">
+                  Bitte melden Sie sich an, um einen Preisvorschlag zu machen.
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
       </div>
     )
   }
 
   return (
     <div className="rounded-lg border-2 border-gray-200 bg-white p-6 shadow-lg">
-      {/* Header */}
-      <div className="mb-6 flex items-center gap-3">
-        <div className="rounded-lg bg-primary-100 p-2">
-          <Tag className="h-5 w-5 text-primary-600" />
-        </div>
-        <div>
-          <h3 className="text-xl font-bold text-gray-900">Preisvorschlag machen</h3>
-          <p className="mt-0.5 text-sm text-gray-500">
-            Mindestens CHF {minimumPrice.toFixed(2)} (60% des Verkaufspreises)
-          </p>
-        </div>
-      </div>
-
-      <form onSubmit={handleSubmit} className="space-y-5">
-        {/* Preisvorschlag Input */}
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-gray-700">
-            Ihr Preisvorschlag (CHF)
-          </label>
-          <div className="relative">
-            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-              <span className="font-medium text-gray-500">CHF</span>
-            </div>
-            <input
-              type="text"
-              value={offerAmount}
-              onChange={e => setOfferAmount(e.target.value)}
-              placeholder={`z.B. ${minimumPrice.toFixed(2)}`}
-              className="w-full rounded-lg border-2 border-gray-300 py-3 pl-16 pr-4 text-lg font-medium text-gray-900 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-              disabled={loading}
-              required
-            />
-          </div>
-          <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-            <Info className="h-3 w-3" />
-            <span>
-              Gültigkeitsbereich: CHF {minimumPrice.toFixed(2)} - CHF {maximumPrice.toFixed(2)}
-            </span>
-          </div>
-        </div>
-
-        {/* Nachricht Input */}
-        <div>
-          <label className="mb-2 block text-sm font-semibold text-gray-700">
-            Nachricht an den Verkäufer <span className="font-normal text-gray-400">(optional)</span>
-          </label>
-          <textarea
-            value={message}
-            onChange={e => setMessage(e.target.value)}
-            placeholder="Teilen Sie dem Verkäufer mit, warum Sie diesen Preis vorschlagen..."
-            rows={4}
-            className="w-full resize-y rounded-lg border-2 border-gray-300 px-4 py-3 text-gray-900 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-            disabled={loading}
-          />
-        </div>
-
-        {/* Submit Button */}
-        <button
-          type="submit"
-          disabled={loading || !offerAmount}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {loading ? (
-            <>
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-              Wird gesendet...
-            </>
-          ) : (
-            <>
-              <Send className="h-5 w-5" />
-              Preisvorschlag senden
-            </>
-          )}
-        </button>
-      </form>
-
-      {/* Info Box */}
-      <div className="mt-5 rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-        <div className="flex items-start gap-2">
-          <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
-          <div className="text-xs text-blue-800">
-            <p className="mb-1 font-semibold">Wichtige Informationen:</p>
-            <ul className="list-inside list-disc space-y-0.5 text-blue-700">
-              <li>Der Preisvorschlag ist 48 Stunden gültig</li>
-              <li>Sie können maximal 3 aktive Preisvorschläge pro Artikel haben</li>
-              <li>Der Verkäufer wird per E-Mail benachrichtigt</li>
-            </ul>
-          </div>
-        </div>
-      </div>
-
-      {/* Sofortkauf-Option */}
-      <div className="mt-6 border-t-2 border-gray-200 pt-6">
+      {/* PRIMARY: Sofortkauf-Option - PRIORITIZED */}
+      <div className="mb-6">
         <div className="mb-4 rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5">
           <div className="mb-2 flex items-center justify-between">
             <div className="text-xs font-semibold uppercase tracking-wide text-green-700">
@@ -404,6 +343,13 @@ export function PriceOfferComponent({
           </div>
           <p className="text-xs text-green-600">Artikel sofort kaufen ohne Verhandlung</p>
         </div>
+
+        {/* Payment Protection Badge */}
+        {paymentProtectionEnabled && (
+          <div className="mb-4">
+            <PaymentProtectionBadge enabled={paymentProtectionEnabled} />
+          </div>
+        )}
 
         {/* Liefermethoden-Auswahl */}
         {availableShippingMethods.length > 0 && (
@@ -461,6 +407,116 @@ export function PriceOfferComponent({
             </>
           )}
         </button>
+      </div>
+
+      {/* SECONDARY: Preisvorschlag machen - COLLAPSIBLE */}
+      <div className="border-t-2 border-gray-200 pt-6">
+        <button
+          type="button"
+          onClick={() => setShowPriceOfferForm(!showPriceOfferForm)}
+          className="flex w-full items-center justify-between rounded-lg border-2 border-gray-200 bg-gray-50 p-4 transition-all hover:border-primary-300 hover:bg-gray-100"
+        >
+          <div className="flex items-center gap-3">
+            <div className="rounded-lg bg-primary-100 p-2">
+              <Tag className="h-5 w-5 text-primary-600" />
+            </div>
+            <div className="text-left">
+              <h3 className="text-lg font-bold text-gray-900">Preisvorschlag machen</h3>
+              <p className="text-sm text-gray-500">
+                Mindestens CHF {minimumPrice.toFixed(2)} (60% des Verkaufspreises)
+              </p>
+            </div>
+          </div>
+          {showPriceOfferForm ? (
+            <ChevronUp className="h-5 w-5 text-gray-500" />
+          ) : (
+            <ChevronDown className="h-5 w-5 text-gray-500" />
+          )}
+        </button>
+
+        {/* Collapsible Form */}
+        {showPriceOfferForm && (
+          <div className="mt-4 space-y-5 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <form onSubmit={handleSubmit} className="space-y-5">
+              {/* Preisvorschlag Input */}
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Ihr Preisvorschlag (CHF)
+                </label>
+                <div className="relative">
+                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
+                    <span className="font-medium text-gray-500">CHF</span>
+                  </div>
+                  <input
+                    type="text"
+                    value={offerAmount}
+                    onChange={e => setOfferAmount(e.target.value)}
+                    placeholder={`z.B. ${minimumPrice.toFixed(2)}`}
+                    className="w-full rounded-lg border-2 border-gray-300 bg-white py-3 pl-16 pr-4 text-lg font-medium text-gray-900 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                    disabled={loading}
+                    required
+                  />
+                </div>
+                <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
+                  <Info className="h-3 w-3" />
+                  <span>
+                    Gültigkeitsbereich: CHF {minimumPrice.toFixed(2)} - CHF {maximumPrice.toFixed(2)}
+                  </span>
+                </div>
+              </div>
+
+              {/* Nachricht Input */}
+              <div>
+                <label className="mb-2 block text-sm font-semibold text-gray-700">
+                  Nachricht an den Verkäufer{' '}
+                  <span className="font-normal text-gray-400">(optional)</span>
+                </label>
+                <textarea
+                  value={message}
+                  onChange={e => setMessage(e.target.value)}
+                  placeholder="Teilen Sie dem Verkäufer mit, warum Sie diesen Preis vorschlagen..."
+                  rows={4}
+                  className="w-full resize-y rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  disabled={loading}
+                />
+              </div>
+
+              {/* Submit Button */}
+              <button
+                type="submit"
+                disabled={loading || !offerAmount}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                {loading ? (
+                  <>
+                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                    Wird gesendet...
+                  </>
+                ) : (
+                  <>
+                    <Send className="h-5 w-5" />
+                    Preisvorschlag senden
+                  </>
+                )}
+              </button>
+            </form>
+
+            {/* Info Box */}
+            <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
+              <div className="flex items-start gap-2">
+                <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
+                <div className="text-xs text-blue-800">
+                  <p className="mb-1 font-semibold">Wichtige Informationen:</p>
+                  <ul className="list-inside list-disc space-y-0.5 text-blue-700">
+                    <li>Der Preisvorschlag ist 48 Stunden gültig</li>
+                    <li>Sie können maximal 3 aktive Preisvorschläge pro Artikel haben</li>
+                    <li>Der Verkäufer wird per E-Mail benachrichtigt</li>
+                  </ul>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
 
       <VerificationModal

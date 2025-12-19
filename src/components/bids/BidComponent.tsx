@@ -2,6 +2,7 @@
 
 import { UserName } from '@/components/ui/UserName'
 import { VerificationModal } from '@/components/verification/VerificationModal'
+import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getShippingCost, ShippingMethod, ShippingMethodArray } from '@/lib/shipping'
 import { AlertCircle, CheckCircle, Clock, Gavel, Zap } from 'lucide-react'
@@ -31,6 +32,7 @@ interface BidComponentProps {
   auctionEnd: Date | null
   sellerId: string
   shippingMethod?: ShippingMethodArray | ShippingMethod | string | null
+  paymentProtectionEnabled?: boolean
 }
 
 export function BidComponent({
@@ -40,6 +42,7 @@ export function BidComponent({
   auctionEnd,
   sellerId,
   shippingMethod,
+  paymentProtectionEnabled = false,
 }: BidComponentProps) {
   const { data: session } = useSession()
   const router = useRouter()
@@ -607,6 +610,12 @@ export function BidComponent({
           {/* Sofortkauf */}
           {buyNowPrice && (
             <div className="border-t pt-4">
+              {/* Payment Protection Badge */}
+              {paymentProtectionEnabled && (
+                <div className="mb-3">
+                  <PaymentProtectionBadge enabled={paymentProtectionEnabled} />
+                </div>
+              )}
               <button
                 onClick={handleBuyNowClick}
                 disabled={loading || !isAuctionActive || isSeller}

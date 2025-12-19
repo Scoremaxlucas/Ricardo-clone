@@ -8,6 +8,7 @@ import { PickupMap } from '@/components/product/PickupMap'
 import { ProductQuestions } from '@/components/product/ProductQuestions'
 import { ProductStats } from '@/components/product/ProductStats'
 import { SimilarProducts } from '@/components/product/SimilarProducts'
+import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
 import { SellerProfile } from '@/components/seller/SellerProfile'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { ChevronLeft, ChevronRight, Flag, X } from 'lucide-react'
@@ -252,7 +253,9 @@ export function ProductPageClient({
           {t.search.title}
         </Link>
         <span className="mx-2">›</span>
-        <span className="line-clamp-1">{watch.title}</span>
+        <span className="line-clamp-1">
+          {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
+        </span>
       </div>
 
       {/* Haupt-Grid: Links Bilder & Details, Rechts Sidebar */}
@@ -279,7 +282,7 @@ export function ProductPageClient({
                   {/* Hauptbild mit Zoom-Effekt - Container passt sich an Bildformat an */}
                   <div
                     ref={imageContainerRef}
-                    className="relative w-full cursor-pointer overflow-hidden rounded-lg bg-gray-100"
+                    className="relative w-full cursor-pointer overflow-hidden rounded-lg bg-white flex items-center justify-center"
                     style={{
                       aspectRatio: imageAspectRatio ? `${imageAspectRatio}` : 'auto',
                       minHeight: '400px',
@@ -304,7 +307,7 @@ export function ProductPageClient({
                         ref={zoomImageRef}
                         src={images[selectedImageIndex]}
                         alt={watch.title}
-                        className={`h-full w-full object-contain transition-transform duration-200 ease-out ${
+                        className={`max-h-full max-w-full w-auto h-auto object-contain transition-transform duration-200 ease-out ${
                           isZoomed ? 'scale-[4]' : 'scale-100'
                         }`}
                         style={{
@@ -411,7 +414,7 @@ export function ProductPageClient({
                   )}
                 </>
               ) : (
-                <div className="relative flex h-96 w-full items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                <div className="relative flex h-96 w-full items-center justify-center rounded-lg bg-white border border-gray-200 text-gray-400">
                   {t.home.noImage}
                   <div className="absolute right-4 top-4">
                     <FavoriteButton watchId={watch.id} />
@@ -422,7 +425,9 @@ export function ProductPageClient({
 
             {/* Titel & Artikelnummer */}
             <div className="mb-4 flex items-start justify-between">
-              <h1 className="flex-1 text-3xl font-bold text-gray-900">{watch.title}</h1>
+              <h1 className="flex-1 text-3xl font-bold text-gray-900">
+                {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
+              </h1>
               {watch.articleNumber && (
                 <div className="ml-4 text-sm text-gray-500">
                   <span className="font-medium">Artikelnummer:</span>{' '}
@@ -441,7 +446,12 @@ export function ProductPageClient({
                     </div>
                   </div>
                   <div className="border-t border-gray-200 pt-3">
-                    <div className="text-sm text-gray-600">{t.product.buyNowPrice}</div>
+                    <div className="mb-2 flex items-center justify-between">
+                      <div className="text-sm text-gray-600">{t.product.buyNowPrice}</div>
+                      {(watch as any).paymentProtectionEnabled && (
+                        <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={false} />
+                      )}
+                    </div>
                     <div className="text-3xl font-bold text-green-600">
                       {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice)}
                     </div>
@@ -449,7 +459,12 @@ export function ProductPageClient({
                 </>
               ) : (
                 <div>
-                  <div className="text-sm text-gray-600">{t.product.price}</div>
+                  <div className="mb-2 flex items-center justify-between">
+                    <div className="text-sm text-gray-600">{t.product.price}</div>
+                    {(watch as any).paymentProtectionEnabled && (
+                      <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={false} />
+                    )}
+                  </div>
                   <div className="text-3xl font-bold text-primary-600">
                     {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.price)}
                   </div>
@@ -538,6 +553,7 @@ export function ProductPageClient({
               auctionEnd={watch.auctionEnd}
               sellerId={watch.sellerId}
               shippingMethod={(watch as any).shippingMethod}
+              paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
             />
           ) : (
             <PriceOfferComponent
@@ -546,6 +562,7 @@ export function ProductPageClient({
               sellerId={watch.sellerId}
               buyNowPrice={watch.buyNowPrice}
               shippingMethod={(watch as any).shippingMethod}
+              paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
             />
           )}
 
