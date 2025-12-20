@@ -643,7 +643,7 @@ function SellPageContent() {
           setIsCheckingVerification(false)
           return
         }
-        const response = await fetch(`/api/users/${userId}`)
+        const response = await fetch(`/api/user/${userId}`)
         if (response.ok) {
           const userData = await response.json()
           // Check: verified=true AND verificationStatus='approved'

@@ -35,6 +35,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         nickname: true,
         firstName: true,
         lastName: true,
+        verified: true,
+        verificationStatus: true,
+        isBlocked: true,
       },
     })
 
