@@ -276,7 +276,7 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
 
       {/* Actions */}
       <div className="space-y-3">
-        {status === 'UNSET' && !showInitialForm && (
+        {!hasProfile && !showInitialForm && (
           <button
             type="button"
             onClick={() => setShowInitialForm(true)}
@@ -286,7 +286,7 @@ export function PayoutSection({ userId }: PayoutSectionProps) {
           </button>
         )}
 
-        {status === 'ACTIVE' && !showChangeForm && (
+        {hasProfile && status === 'ACTIVE' && !showChangeForm && (
           <button
             type="button"
             onClick={() => {

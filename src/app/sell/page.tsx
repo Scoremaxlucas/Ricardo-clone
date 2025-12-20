@@ -14,7 +14,7 @@ import {
   WizardFooter,
 } from '@/components/wizard'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { clearDraft, loadDraft, saveDraft } from '@/lib/draft-storage'
+import { clearDraft, clearOtherUserDrafts, loadDraft, saveDraft } from '@/lib/draft-storage'
 import { AlertCircle, CheckCircle, Loader2, Shield, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
@@ -319,11 +319,36 @@ function SellPageContent() {
 
       if (response.ok) {
         setLastSavedAt(new Date())
-        // Also save to localStorage as backup
-        saveDraft({
+        // Also save to localStorage as backup (userId-scoped)
+        const userId = (session?.user as { id?: string })?.id
+        saveDraft(
+          {
+            formData: {
+              ...formData,
+              images: [], // Exclude images from localStorage
+            },
+            imageMetadata: {
+              count: formData.images.length,
+              titleImageIndex,
+            },
+            selectedCategory,
+            selectedSubcategory,
+            selectedBooster,
+            paymentProtectionEnabled,
+            currentStep,
+          },
+          userId
+        )
+      }
+    } catch (error) {
+      console.error('[Draft] Error saving to server:', error)
+      // Fallback to localStorage if server save fails (userId-scoped)
+      const userId = (session?.user as { id?: string })?.id
+      saveDraft(
+        {
           formData: {
             ...formData,
-            images: [], // Exclude images from localStorage
+            images: [],
           },
           imageMetadata: {
             count: formData.images.length,
@@ -334,26 +359,9 @@ function SellPageContent() {
           selectedBooster,
           paymentProtectionEnabled,
           currentStep,
-        })
-      }
-    } catch (error) {
-      console.error('[Draft] Error saving to server:', error)
-      // Fallback to localStorage if server save fails
-      saveDraft({
-        formData: {
-          ...formData,
-          images: [],
         },
-        imageMetadata: {
-          count: formData.images.length,
-          titleImageIndex,
-        },
-        selectedCategory,
-        selectedSubcategory,
-        selectedBooster,
-        paymentProtectionEnabled,
-        currentStep,
-      })
+        userId
+      )
     } finally {
       setIsSavingDraft(false)
     }
@@ -475,9 +483,19 @@ function SellPageContent() {
       }
 
       if (!session?.user) {
-        // Fallback to localStorage if not logged in
-        const draft = loadDraft()
-        if (draft) {
+        // Not logged in - cannot restore draft (must be logged in to sell)
+        return
+      }
+
+      // Clear drafts from other users on mount
+      const userId = (session.user as { id?: string })?.id
+      if (userId) {
+        clearOtherUserDrafts(userId)
+      }
+
+      // Try localStorage fallback (userId-scoped)
+      const draft = loadDraft(userId)
+      if (draft) {
           setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
           setSelectedCategory(draft.selectedCategory || '')
           setSelectedSubcategory(draft.selectedSubcategory || '')
@@ -532,8 +550,9 @@ function SellPageContent() {
             setShowDraftRestored(true)
             setLastSavedAt(new Date(latestDraft.updatedAt))
           } else {
-            // Fallback to localStorage
-            const draft = loadDraft()
+            // Fallback to localStorage (userId-scoped)
+            const userId = (session.user as { id?: string })?.id
+            const draft = loadDraft(userId)
             if (draft) {
               setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
               setSelectedCategory(draft.selectedCategory || '')
@@ -555,8 +574,9 @@ function SellPageContent() {
         }
       } catch (error) {
         console.error('[Draft] Error loading from server:', error)
-        // Fallback to localStorage
-        const draft = loadDraft()
+        // Fallback to localStorage (userId-scoped)
+        const userId = (session.user as { id?: string })?.id
+        const draft = loadDraft(userId)
         if (draft) {
           setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
           setSelectedCategory(draft.selectedCategory || '')
@@ -594,6 +614,19 @@ function SellPageContent() {
     }
   }, [searchParams])
 
+  // Clear drafts from other users when user changes
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      const userId = (session.user as { id?: string })?.id
+      if (userId) {
+        clearOtherUserDrafts(userId)
+      }
+    } else if (status === 'unauthenticated') {
+      // Clear all drafts when logged out
+      clearOtherUserDrafts(null)
+    }
+  }, [status, session?.user])
+
   // Load verification status
   useEffect(() => {
     setVerificationInProgress(false)
@@ -614,7 +647,9 @@ function SellPageContent() {
         const response = await fetch(`/api/users/${userId}`)
         if (response.ok) {
           const userData = await response.json()
-          setIsVerified(userData.verified === true)
+          // Check: verified=true AND verificationStatus='approved'
+          const isApproved = userData.verified === true && userData.verificationStatus === 'approved'
+          setIsVerified(isApproved)
           setVerificationStatus(userData.verificationStatus || null)
           setVerificationInProgress(userData.verificationStatus === 'pending')
         }
@@ -954,7 +989,8 @@ function SellPageContent() {
 
       if (response.ok) {
         // Clear draft on success (both server and localStorage)
-        clearDraft()
+        const userId = (session?.user as { id?: string })?.id
+        clearDraft(userId)
         try {
           const draftsResponse = await fetch('/api/drafts')
           if (draftsResponse.ok) {
@@ -1024,8 +1060,8 @@ function SellPageContent() {
     )
   }
 
-  // Not verified
-  if (isVerified === false) {
+  // Not verified - block access to selling
+  if (isVerified === false || (verificationStatus && verificationStatus !== 'approved')) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -1066,7 +1102,8 @@ function SellPageContent() {
           <span className="text-sm text-green-800">Entwurf wiederhergestellt</span>
           <button
             onClick={() => {
-              clearDraft()
+              const userId = (session?.user as { id?: string })?.id
+              clearDraft(userId)
               setShowDraftRestored(false)
             }}
             className="ml-2 text-xs text-green-600 underline hover:text-green-800"

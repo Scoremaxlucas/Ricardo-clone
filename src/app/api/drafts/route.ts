@@ -57,6 +57,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
+    // Check verification status - users must be verified to save drafts
+    const user = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        verified: true,
+        verificationStatus: true,
+        isBlocked: true,
+      },
+    })
+
+    if (!user) {
+      return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
+    }
+
+    if (user.isBlocked) {
+      return NextResponse.json(
+        { message: 'Ihr Konto wurde gesperrt. Sie können keine Entwürfe speichern.' },
+        { status: 403 }
+      )
+    }
+
+    // Note: We allow draft saving even if not verified (for UX during verification process)
+    // But publishing will be blocked by /api/watches/create
+
     const body = await request.json()
     const {
       formData,
