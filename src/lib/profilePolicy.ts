@@ -98,13 +98,7 @@ export function getMissingProfileFields(
           reason: 'Erforderlich für Versand',
         })
       }
-      if (!user.country || user.country.trim() !== 'Schweiz') {
-        missing.push({
-          field: 'country',
-          label: 'Land',
-          reason: 'Erforderlich für Versand (muss Schweiz sein)',
-        })
-      }
+      // Land wird nicht mehr geprüft - alle Helvenda-Nutzer sind aus der Schweiz
     }
   }
 
@@ -138,13 +132,7 @@ export function getMissingProfileFields(
         reason: 'Erforderlich für Zahlungsschutz',
       })
     }
-    if (!user.country || user.country.trim() !== 'Schweiz') {
-      missing.push({
-        field: 'country',
-        label: 'Land',
-        reason: 'Erforderlich für Zahlungsschutz (muss Schweiz sein)',
-      })
-    }
+    // Land wird nicht mehr geprüft - alle Helvenda-Nutzer sind aus der Schweiz
     // Phone is recommended but not required
   }
 
@@ -185,13 +173,7 @@ export function getMissingProfileFields(
         reason: 'Erforderlich für Rechnungen',
       })
     }
-    if (!user.country || user.country.trim() !== 'Schweiz') {
-      missing.push({
-        field: 'country',
-        label: 'Land',
-        reason: 'Erforderlich für Rechnungen (muss Schweiz sein)',
-      })
-    }
+    // Land wird nicht mehr geprüft - alle Helvenda-Nutzer sind aus der Schweiz
   }
 
   // E) CHAT_ONLY: Require nickname (for display)
