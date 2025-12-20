@@ -2,6 +2,8 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { encrypt } from '@/lib/crypto'
+import { getIbanLast4 } from '@/lib/iban-validator'
 
 export async function POST(request: NextRequest) {
   try {
@@ -260,6 +262,39 @@ export async function POST(request: NextRequest) {
         verificationStatus: 'pending', // Status auf "pending" setzen, bis Admin prüft
       },
     })
+
+    // Wenn Bankdaten vorhanden, automatisch PayoutProfile erstellen
+    if (bankMethod) {
+      const ibanCleaned = bankMethod.iban.replace(/[\s-]/g, '').toUpperCase()
+      const accountHolderName = `${bankMethod.accountHolderFirstName} ${bankMethod.accountHolderLastName}`
+
+      try {
+        const ibanEncrypted = encrypt(ibanCleaned)
+        const ibanLast4 = getIbanLast4(ibanCleaned)
+
+        await prisma.payoutProfile.upsert({
+          where: { userId: session.user.id },
+          create: {
+            userId: session.user.id,
+            status: 'ACTIVE',
+            accountHolderName,
+            ibanEncrypted,
+            ibanLast4,
+            country: 'CH',
+          },
+          update: {
+            status: 'ACTIVE',
+            accountHolderName,
+            ibanEncrypted,
+            ibanLast4,
+          },
+        })
+        console.log('PayoutProfile erstellt für User:', session.user.id)
+      } catch (payoutError: any) {
+        console.error('Fehler beim Erstellen des PayoutProfile:', payoutError)
+        // Fehler nicht blockierend - User kann später manuell hinzufügen
+      }
+    }
 
     return NextResponse.json({
       message:
