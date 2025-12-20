@@ -650,7 +650,7 @@ function SellPageContent() {
           const isApproved = userData.verified === true && userData.verificationStatus === 'approved'
           setIsVerified(isApproved)
           setVerificationStatus(userData.verificationStatus || null)
-          setVerificationInProgress(userData.verificationStatus === 'pending')
+          setVerificationInProgress(userData.verified === true && userData.verificationStatus === 'pending')
         }
       } catch (error) {
         console.error('Error loading verification status:', error)
