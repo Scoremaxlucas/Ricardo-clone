@@ -67,7 +67,7 @@ function getDraftKey(userId: string | null | undefined): string | null {
  */
 function migrateLegacyDraft(userId: string | null | undefined): void {
   if (!userId || typeof window === 'undefined') return
-  
+
   try {
     const legacyDraft = localStorage.getItem(LEGACY_DRAFT_KEY)
     if (!legacyDraft) return
@@ -116,7 +116,7 @@ export function clearOtherUserDrafts(currentUserId: string | null | undefined): 
 
     // Remove all non-current keys
     keysToRemove.forEach(key => localStorage.removeItem(key))
-    
+
     if (keysToRemove.length > 0) {
       console.log(`[Draft] Cleared ${keysToRemove.length} draft keys for other users`)
     }
@@ -228,4 +228,3 @@ export function getDraftAgeDays(userId?: string | null): number | null {
   if (age === null) return null
   return age / (1000 * 60 * 60 * 24)
 }
-

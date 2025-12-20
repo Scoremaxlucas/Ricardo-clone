@@ -30,7 +30,7 @@ export function getVerificationStatus(user: {
   if (!user.verified) {
     return 'unverified'
   }
-  
+
   const status = user.verificationStatus?.toLowerCase()
   if (status === 'approved') {
     return 'approved'
@@ -41,7 +41,7 @@ export function getVerificationStatus(user: {
   if (status === 'rejected') {
     return 'rejected'
   }
-  
+
   // Default to unverified if verified=true but status is unclear
   return user.verified ? 'pending' : 'unverified'
 }
