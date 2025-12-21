@@ -22,17 +22,17 @@ export async function POST(request: NextRequest) {
     // Lade User
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        stripeConnectedAccountId: true,
-        connectOnboardingStatus: true,
-        stripeOnboardingComplete: true,
-      },
     })
 
     if (!user) {
       return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
+
+    // Extrahiere Felder (können undefined sein wenn Migration noch nicht ausgeführt wurde)
+    const connectOnboardingStatus = (user as any).connectOnboardingStatus as
+      | string
+      | undefined
+    const payoutsEnabled = (user as any).payoutsEnabled as boolean | undefined
 
     // Stelle sicher dass ein Account existiert
     let accountId = user.stripeConnectedAccountId
@@ -56,14 +56,23 @@ export async function POST(request: NextRequest) {
 
       accountId = account.id
 
+      // Update mit Fallback für fehlende Felder
+      const createData: any = {
+        stripeConnectedAccountId: accountId,
+        stripeOnboardingComplete: false,
+      }
+
+      // Nur hinzufügen wenn Felder existieren
+      if (connectOnboardingStatus !== undefined) {
+        createData.connectOnboardingStatus = 'INCOMPLETE'
+      }
+      if (payoutsEnabled !== undefined) {
+        createData.payoutsEnabled = false
+      }
+
       await prisma.user.update({
         where: { id: userId },
-        data: {
-          stripeConnectedAccountId: accountId,
-          connectOnboardingStatus: 'INCOMPLETE',
-          stripeOnboardingComplete: false,
-          payoutsEnabled: false,
-        },
+        data: createData,
       })
 
       console.log(`[connect/account-link] ✅ Account ${accountId} erstellt`)
@@ -111,10 +120,17 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('[connect/account-link] Fehler:', error)
+    console.error('[connect/account-link] Error stack:', error.stack)
+    console.error('[connect/account-link] Error details:', {
+      message: error.message,
+      code: error.code,
+      type: error.type,
+    })
     return NextResponse.json(
       {
         message: 'Fehler beim Erstellen des Einrichtungs-Links',
         error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }
     )

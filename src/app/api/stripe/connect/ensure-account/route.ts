@@ -22,21 +22,17 @@ export async function POST(request: NextRequest) {
     // Lade User
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        id: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        stripeConnectedAccountId: true,
-        connectOnboardingStatus: true,
-        stripeOnboardingComplete: true,
-        payoutsEnabled: true,
-      },
     })
 
     if (!user) {
       return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
+
+    // Extrahiere Felder (können undefined sein wenn Migration noch nicht ausgeführt wurde)
+    const connectOnboardingStatus = (user as any).connectOnboardingStatus as
+      | string
+      | undefined
+    const payoutsEnabled = (user as any).payoutsEnabled as boolean | undefined
 
     // Falls bereits ein Account existiert, prüfe Status
     if (user.stripeConnectedAccountId) {
@@ -51,17 +47,23 @@ export async function POST(request: NextRequest) {
 
         const status = isComplete ? 'COMPLETE' : 'INCOMPLETE'
 
-        // Update lokalen Status falls nötig
-        if (status !== user.connectOnboardingStatus || isComplete !== user.stripeOnboardingComplete) {
-          await prisma.user.update({
-            where: { id: userId },
-            data: {
-              connectOnboardingStatus: status,
-              stripeOnboardingComplete: isComplete,
-              payoutsEnabled: account.payouts_enabled === true,
-            },
-          })
+        // Update lokalen Status (mit Fallback für fehlende Felder)
+        const updateData: any = {
+          stripeOnboardingComplete: isComplete,
         }
+
+        // Nur hinzufügen wenn Felder existieren
+        if (connectOnboardingStatus !== undefined) {
+          updateData.connectOnboardingStatus = status
+        }
+        if (payoutsEnabled !== undefined) {
+          updateData.payoutsEnabled = account.payouts_enabled === true
+        }
+
+        await prisma.user.update({
+          where: { id: userId },
+          data: updateData,
+        })
 
         return NextResponse.json({
           success: true,
@@ -103,15 +105,23 @@ export async function POST(request: NextRequest) {
 
     console.log(`[connect/ensure-account] ✅ Stripe Account ${account.id} erstellt für User ${userId}`)
 
-    // Speichere Account ID und setze Status auf INCOMPLETE
+    // Speichere Account ID und setze Status auf INCOMPLETE (mit Fallback für fehlende Felder)
+    const createData: any = {
+      stripeConnectedAccountId: account.id,
+      stripeOnboardingComplete: false,
+    }
+
+    // Nur hinzufügen wenn Felder existieren
+    if (connectOnboardingStatus !== undefined) {
+      createData.connectOnboardingStatus = 'INCOMPLETE'
+    }
+    if (payoutsEnabled !== undefined) {
+      createData.payoutsEnabled = false
+    }
+
     await prisma.user.update({
       where: { id: userId },
-      data: {
-        stripeConnectedAccountId: account.id,
-        connectOnboardingStatus: 'INCOMPLETE',
-        stripeOnboardingComplete: false,
-        payoutsEnabled: false,
-      },
+      data: createData,
     })
 
     return NextResponse.json({
@@ -125,10 +135,17 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('[connect/ensure-account] Fehler:', error)
+    console.error('[connect/ensure-account] Error stack:', error.stack)
+    console.error('[connect/ensure-account] Error details:', {
+      message: error.message,
+      code: error.code,
+      type: error.type,
+    })
     return NextResponse.json(
       {
         message: 'Fehler beim Erstellen des Auszahlungskontos',
         error: error.message,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }
     )
@@ -152,17 +169,17 @@ export async function GET(request: NextRequest) {
     // Lade User
     const user = await prisma.user.findUnique({
       where: { id: userId },
-      select: {
-        stripeConnectedAccountId: true,
-        connectOnboardingStatus: true,
-        stripeOnboardingComplete: true,
-        payoutsEnabled: true,
-      },
     })
 
     if (!user) {
       return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
+
+    // Extrahiere Felder (können undefined sein wenn Migration noch nicht ausgeführt wurde)
+    const connectOnboardingStatus = (user as any).connectOnboardingStatus as
+      | string
+      | undefined
+    const payoutsEnabled = (user as any).payoutsEnabled as boolean | undefined
 
     // Falls kein Account, Status ist NOT_STARTED
     if (!user.stripeConnectedAccountId) {
