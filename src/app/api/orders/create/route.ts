@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    const { watchId, shippingMethod } = await request.json()
+    const { watchId, shippingMethod, purchaseId } = await request.json()
 
     if (!watchId) {
       return NextResponse.json({ message: 'watchId ist erforderlich' }, { status: 400 })
@@ -42,6 +42,7 @@ export async function POST(request: NextRequest) {
         },
         orders: {
           where: {
+            buyerId: buyerId, // Only check orders for THIS buyer
             orderStatus: {
               not: 'canceled',
             },
@@ -54,15 +55,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Uhr nicht gefunden' }, { status: 404 })
     }
 
-    // Prüfe ob bereits eine aktive Order existiert
-    const activeOrders = watch.orders.filter(
+    // Prüfe ob bereits eine aktive Order für DIESEN Käufer existiert
+    const existingOrder = watch.orders.find(
       o => o.orderStatus !== 'canceled' && o.paymentStatus !== 'refunded'
     )
-    if (activeOrders.length > 0) {
-      return NextResponse.json(
-        { message: 'Für diese Uhr existiert bereits eine aktive Bestellung' },
-        { status: 400 }
-      )
+
+    // If an active order exists for this buyer, return it (idempotent)
+    if (existingOrder) {
+      return NextResponse.json({
+        success: true,
+        order: {
+          id: existingOrder.id,
+          orderNumber: existingOrder.orderNumber,
+          totalAmount: existingOrder.totalAmount,
+          orderStatus: existingOrder.orderStatus,
+          paymentStatus: existingOrder.paymentStatus,
+        },
+        existing: true, // Indicate this was an existing order
+      })
     }
 
     // Prüfe ob Käufer nicht Verkäufer ist

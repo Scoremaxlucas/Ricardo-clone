@@ -13,6 +13,7 @@ import {
   CheckCircle,
   Clock,
   CreditCard,
+  Loader2,
   Mail,
   MessageSquare,
   Package,
@@ -20,10 +21,12 @@ import {
   CreditCard as PaymentIcon,
   Phone,
   Search,
+  Shield,
   ShoppingBag,
   User,
 } from 'lucide-react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
@@ -32,6 +35,7 @@ interface MyPurchasesClientProps {
 }
 
 export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) {
+  const router = useRouter()
   const [purchases, setPurchases] = useState<MyPurchaseItem[]>(initialPurchases)
   const [isInitialLoad, setIsInitialLoad] = useState(true) // Track if initial data has been confirmed
   const [selectedPurchase, setSelectedPurchase] = useState<MyPurchaseItem | null>(null)
@@ -43,6 +47,8 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
   const [sortBy, setSortBy] = useState<'newest' | 'deadline_soon' | 'price_high' | 'price_low'>(
     'newest'
   )
+  const [processingStripePayment, setProcessingStripePayment] = useState<string | null>(null) // purchaseId being processed
+  const [protectionUnavailable, setProtectionUnavailable] = useState(false) // true when protection was expected but seller lacks Stripe
 
   // OPTIMIERT: Lade Updates non-blocking im Hintergrund (Polling)
   // WICHTIG: Initial purchases werden sofort angezeigt, Updates kommen später
@@ -168,6 +174,78 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
     }
   }
 
+  /**
+   * Handle payment for a purchase - routes to Stripe if protection is enabled
+   * Otherwise shows bank transfer modal
+   */
+  const handlePayment = async (purchase: MyPurchaseItem) => {
+    // Check if payment protection is enabled AND seller has Stripe Connect
+    const hasProtection = purchase.paymentProtectionEnabled
+    const sellerHasStripe =
+      purchase.watch.seller?.stripeConnectedAccountId &&
+      purchase.watch.seller?.stripeOnboardingComplete
+
+    if (hasProtection && sellerHasStripe) {
+      // Route to Stripe checkout for protected payment
+      setProcessingStripePayment(purchase.id)
+
+      try {
+        // Check if Order already exists
+        let orderId = purchase.orderId
+
+        if (!orderId) {
+          // Create Order first
+          const createOrderRes = await fetch('/api/orders/create', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              watchId: purchase.watch.id,
+              purchaseId: purchase.id,
+              shippingMethod: purchase.shippingMethod || 'pickup',
+            }),
+          })
+
+          if (!createOrderRes.ok) {
+            const errorData = await createOrderRes.json()
+            throw new Error(errorData.message || 'Fehler beim Erstellen der Bestellung')
+          }
+
+          const orderData = await createOrderRes.json()
+          orderId = orderData.order.id
+        }
+
+        // Create Checkout Session and redirect
+        const checkoutRes = await fetch(`/api/orders/${orderId}/checkout`, {
+          method: 'POST',
+        })
+
+        if (!checkoutRes.ok) {
+          const errorData = await checkoutRes.json()
+          throw new Error(errorData.message || 'Fehler beim Erstellen der Checkout Session')
+        }
+
+        const checkoutData = await checkoutRes.json()
+
+        if (checkoutData.checkoutUrl) {
+          // Redirect to Stripe Checkout
+          window.location.href = checkoutData.checkoutUrl
+        } else {
+          throw new Error('Keine Checkout URL erhalten')
+        }
+      } catch (error: any) {
+        console.error('Error initiating Stripe payment:', error)
+        toast.error(error.message || 'Fehler beim Starten der Zahlung')
+        setProcessingStripePayment(null)
+      }
+    } else {
+      // No protection or seller doesn't have Stripe - show bank transfer modal
+      setSelectedPurchase(purchase)
+      // Set flag if protection was expected but seller lacks Stripe
+      setProtectionUnavailable(!!(hasProtection && !sellerHasStripe))
+      setShowPaymentModal(true)
+    }
+  }
+
   // Filtere Purchases nach Status und Suche
   const filteredPurchases = purchases.filter(purchase => {
     // Status filter
@@ -200,12 +278,13 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
       const matchesTitle = purchase.watch.title.toLowerCase().includes(query)
       const matchesBrand = purchase.watch.brand.toLowerCase().includes(query)
       const matchesModel = purchase.watch.model.toLowerCase().includes(query)
-      const matchesSeller =
-        `${purchase.watch.seller.firstName || ''} ${purchase.watch.seller.lastName || ''}`
-          .toLowerCase()
-          .includes(query) ||
-        purchase.watch.seller.name?.toLowerCase().includes(query) ||
-        purchase.watch.seller.email?.toLowerCase().includes(query)
+      const matchesSeller = purchase.watch.seller
+        ? `${purchase.watch.seller.firstName || ''} ${purchase.watch.seller.lastName || ''}`
+            .toLowerCase()
+            .includes(query) ||
+          purchase.watch.seller.name?.toLowerCase().includes(query) ||
+          purchase.watch.seller.email?.toLowerCase().includes(query)
+        : false
       if (!matchesTitle && !matchesBrand && !matchesModel && !matchesSeller) return false
     }
 
@@ -595,11 +674,13 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                           <div className="mb-2">
                             <div className="mb-1 text-xs text-gray-500">Verkäufer</div>
                             <div className="text-sm font-medium text-gray-900">
-                              {purchase.watch.seller.firstName && purchase.watch.seller.lastName
-                                ? `${purchase.watch.seller.firstName} ${purchase.watch.seller.lastName}`
-                                : purchase.watch.seller.name ||
-                                  purchase.watch.seller.email ||
-                                  'Unbekannt'}
+                              {purchase.watch.seller
+                                ? purchase.watch.seller.firstName && purchase.watch.seller.lastName
+                                  ? `${purchase.watch.seller.firstName} ${purchase.watch.seller.lastName}`
+                                  : purchase.watch.seller.name ||
+                                    purchase.watch.seller.email ||
+                                    'Unbekannt'
+                                : 'Unbekannt'}
                             </div>
                           </div>
 
@@ -632,15 +713,18 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                                   setSelectedPurchase(purchase)
                                   setShowSellerInfo(true)
                                 } else if (stateInfo.nextAction?.action === 'pay') {
-                                  setSelectedPurchase(purchase)
-                                  setShowPaymentModal(true)
+                                  handlePayment(purchase)
                                 } else if (stateInfo.nextAction?.action === 'confirm_receipt') {
                                   handleConfirmReceived(purchase.id)
                                 } else if (stateInfo.nextAction?.action === 'view_dispute') {
                                   setExpandedPurchaseId(purchase.id)
                                 }
                               }}
-                              className={`mb-2 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors ${
+                              disabled={
+                                stateInfo.nextAction?.action === 'pay' &&
+                                processingStripePayment === purchase.id
+                              }
+                              className={`mb-2 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 ${
                                 stateInfo.nextAction.type === 'primary'
                                   ? 'bg-primary-600 hover:bg-primary-700'
                                   : stateInfo.nextAction.type === 'danger'
@@ -648,7 +732,22 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                                     : 'bg-gray-600 hover:bg-gray-700'
                               }`}
                             >
-                              {stateInfo.nextAction.label}
+                              {stateInfo.nextAction?.action === 'pay' &&
+                              processingStripePayment === purchase.id ? (
+                                <span className="flex items-center justify-center gap-2">
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                  Wird vorbereitet...
+                                </span>
+                              ) : stateInfo.nextAction?.action === 'pay' &&
+                                purchase.paymentProtectionEnabled &&
+                                purchase.watch.seller?.stripeOnboardingComplete ? (
+                                <span className="flex items-center justify-center gap-2">
+                                  <Shield className="h-4 w-4" />
+                                  Sicher bezahlen
+                                </span>
+                              ) : (
+                                stateInfo.nextAction.label
+                              )}
                             </button>
                           )}
 
@@ -819,19 +918,20 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                             </button>
                           </div>
                           <div className="space-y-1 text-xs text-gray-700">
-                            {(purchase.watch.seller.firstName ||
-                              purchase.watch.seller.lastName) && (
-                              <div className="font-medium text-gray-900">
-                                {purchase.watch.seller.firstName} {purchase.watch.seller.lastName}
-                              </div>
-                            )}
-                            {purchase.watch.seller.phone && (
+                            {purchase.watch.seller &&
+                              (purchase.watch.seller.firstName ||
+                                purchase.watch.seller.lastName) && (
+                                <div className="font-medium text-gray-900">
+                                  {purchase.watch.seller.firstName} {purchase.watch.seller.lastName}
+                                </div>
+                              )}
+                            {purchase.watch.seller?.phone && (
                               <div className="flex items-center gap-1">
                                 <Phone className="h-3 w-3" />
                                 {purchase.watch.seller.phone}
                               </div>
                             )}
-                            {purchase.watch.seller.email && (
+                            {purchase.watch.seller?.email && (
                               <div className="flex items-center gap-1">
                                 <Mail className="h-3 w-3" />
                                 {purchase.watch.seller.email}
@@ -916,14 +1016,27 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                         {/* Jetzt bezahlen Button */}
                         {purchase.status === 'pending' && (
                           <button
-                            onClick={() => {
-                              setSelectedPurchase(purchase)
-                              setShowPaymentModal(true)
-                            }}
-                            className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                            onClick={() => handlePayment(purchase)}
+                            disabled={processingStripePayment === purchase.id}
+                            className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
                           >
-                            <PaymentIcon className="h-4 w-4" />
-                            Jetzt Artikel bezahlen
+                            {processingStripePayment === purchase.id ? (
+                              <>
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                                Wird vorbereitet...
+                              </>
+                            ) : purchase.paymentProtectionEnabled &&
+                              purchase.watch.seller?.stripeOnboardingComplete ? (
+                              <>
+                                <Shield className="h-4 w-4" />
+                                Sicher bezahlen
+                              </>
+                            ) : (
+                              <>
+                                <PaymentIcon className="h-4 w-4" />
+                                Jetzt Artikel bezahlen
+                              </>
+                            )}
                           </button>
                         )}
 
@@ -962,15 +1075,17 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
       {/* Modals */}
       {selectedPurchase && (
         <>
-          <SellerInfoModal
-            sellerId={selectedPurchase.watch.seller.id}
-            watchTitle={selectedPurchase.watch.title}
-            isOpen={showSellerInfo}
-            onClose={() => {
-              setShowSellerInfo(false)
-              setSelectedPurchase(null)
-            }}
-          />
+          {selectedPurchase.watch.seller && (
+            <SellerInfoModal
+              sellerId={selectedPurchase.watch.seller.id}
+              watchTitle={selectedPurchase.watch.title}
+              isOpen={showSellerInfo}
+              onClose={() => {
+                setShowSellerInfo(false)
+                setSelectedPurchase(null)
+              }}
+            />
+          )}
           <PaymentModal
             purchaseId={selectedPurchase.id}
             watchTitle={selectedPurchase.watch.title}
@@ -979,8 +1094,10 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
             onClose={() => {
               setShowPaymentModal(false)
               setSelectedPurchase(null)
+              setProtectionUnavailable(false)
             }}
             onMarkPaid={handleMarkPaid}
+            protectionUnavailable={protectionUnavailable}
           />
         </>
       )}

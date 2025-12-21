@@ -34,6 +34,7 @@ export interface MyPurchaseItem {
   // Payment method tracking
   hasStripePayment?: boolean // true if paid via Stripe (protected), false if bank transfer (unprotected)
   paymentProtectionEnabled?: boolean // from watch
+  orderId?: string | null // Order ID if exists (for Stripe checkout)
   watch: {
     id: string
     title: string
@@ -52,7 +53,9 @@ export interface MyPurchaseItem {
       postalCode: string | null
       city: string | null
       paymentMethods: string | null
-    }
+      stripeConnectedAccountId: string | null
+      stripeOnboardingComplete: boolean
+    } | null
     price: number
     finalPrice: number
     purchaseType: 'auction' | 'buy-now'
@@ -143,6 +146,8 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
                 postalCode: true,
                 city: true,
                 paymentMethods: true,
+                stripeConnectedAccountId: true,
+                stripeOnboardingComplete: true,
               },
             },
           },
@@ -217,13 +222,20 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
         // Payment method tracking
         hasStripePayment,
         paymentProtectionEnabled,
+        orderId: order?.id || null,
         watch: {
           id: watch.id,
           title: watch.title || 'Unbekanntes Produkt',
           brand: watch.brand || '',
           model: watch.model || '',
           images: images || [],
-          seller: watch.seller || null,
+          seller: watch.seller
+            ? {
+                ...watch.seller,
+                stripeConnectedAccountId: watch.seller.stripeConnectedAccountId || null,
+                stripeOnboardingComplete: watch.seller.stripeOnboardingComplete || false,
+              }
+            : null,
           price: watch.price || 0,
           finalPrice,
           purchaseType,

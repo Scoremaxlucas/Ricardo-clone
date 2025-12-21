@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X } from 'lucide-react'
+import { AlertCircle, Shield, X } from 'lucide-react'
 import { PaymentInfoCard } from '@/components/payment/PaymentInfoCard'
 
 interface PaymentModalProps {
@@ -11,6 +11,8 @@ interface PaymentModalProps {
   isOpen: boolean
   onClose: () => void
   onMarkPaid?: () => void
+  /** If protection was desired but seller lacks Stripe Connect */
+  protectionUnavailable?: boolean
 }
 
 export function PaymentModal({
@@ -20,6 +22,7 @@ export function PaymentModal({
   isOpen,
   onClose,
   onMarkPaid,
+  protectionUnavailable = false,
 }: PaymentModalProps) {
   const [isMarkingPaid, setIsMarkingPaid] = useState(false)
 
@@ -64,6 +67,23 @@ export function PaymentModal({
           <div className="mb-4 text-sm text-gray-600">
             Für: <span className="font-semibold text-gray-900">{watchTitle}</span>
           </div>
+
+          {/* Warning if protection was expected but unavailable */}
+          {protectionUnavailable && (
+            <div className="mb-4 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+              <div className="flex items-start gap-3">
+                <Shield className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
+                <div>
+                  <p className="font-medium text-yellow-800">Helvenda Schutz nicht verfügbar</p>
+                  <p className="mt-1 text-sm text-yellow-700">
+                    Der Verkäufer hat noch keinen Stripe Account eingerichtet. Die Zahlung erfolgt
+                    daher per Banküberweisung ohne Käuferschutz. Bei Fragen kontaktieren Sie bitte
+                    den Verkäufer.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Zahlungsinformationen */}
           <PaymentInfoCard purchaseId={purchaseId} showQRCode={true} />
