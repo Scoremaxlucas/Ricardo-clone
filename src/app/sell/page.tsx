@@ -489,22 +489,24 @@ function SellPageContent() {
           } else {
             // Fallback to localStorage (userId-scoped)
             const userId = (session.user as { id?: string })?.id
-            const draft = loadDraft(userId)
-            if (draft) {
-              setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
-              setSelectedCategory(draft.selectedCategory || '')
-              setSelectedSubcategory(draft.selectedSubcategory || '')
-              setSelectedBooster(draft.selectedBooster || 'none')
-              setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
-              setCurrentStep(draft.currentStep || 0)
-              setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
-              setShowDraftRestored(true)
-              if (draft.imageMetadata?.count > 0) {
-                toast('Bilder müssen erneut hochgeladen werden', {
-                  icon: 'ℹ️',
-                  position: 'top-right',
-                  duration: 5000,
-                })
+            if (userId) {
+              const draft = await loadDraft(userId)
+              if (draft) {
+                setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
+                setSelectedCategory(draft.selectedCategory || '')
+                setSelectedSubcategory(draft.selectedSubcategory || '')
+                setSelectedBooster(draft.selectedBooster || 'none')
+                setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
+                setCurrentStep(draft.currentStep || 0)
+                setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
+                setShowDraftRestored(true)
+                if (draft.imageMetadata?.count > 0) {
+                  toast('Bilder müssen erneut hochgeladen werden', {
+                    icon: 'ℹ️',
+                    position: 'top-right',
+                    duration: 5000,
+                  })
+                }
               }
             }
           }
