@@ -79,7 +79,16 @@ export async function POST(request: NextRequest) {
     }
 
     // Bestimme URLs
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000'
+    let baseUrl = process.env.NEXTAUTH_URL || ''
+    if (!baseUrl && process.env.VERCEL_URL) {
+      // VERCEL_URL enthält kein Protokoll
+      baseUrl = `https://${process.env.VERCEL_URL}`
+    }
+    if (!baseUrl) {
+      baseUrl = 'http://localhost:3000'
+    }
+    
+    console.log(`[connect/account-link] Using baseUrl: ${baseUrl}`)
 
     // Lese optionalen return_to Parameter
     let returnTo = '/my-watches/account'
@@ -93,10 +102,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Erstelle AccountLink für Onboarding
+    const refreshUrl = `${baseUrl}/my-watches/account?payout_refresh=1`
+    const returnUrl = `${baseUrl}${returnTo}?payout_return=1`
+    
+    console.log(`[connect/account-link] Creating account link for ${accountId}`)
+    console.log(`[connect/account-link] refresh_url: ${refreshUrl}`)
+    console.log(`[connect/account-link] return_url: ${returnUrl}`)
+    
     const accountLink = await stripe.accountLinks.create({
       account: accountId,
-      refresh_url: `${baseUrl}/my-watches/account?payout_refresh=1`,
-      return_url: `${baseUrl}${returnTo}?payout_return=1`,
+      refresh_url: refreshUrl,
+      return_url: returnUrl,
       type: 'account_onboarding',
     })
 
