@@ -72,9 +72,9 @@ export async function GET(
     // Admins können auch alle Orders sehen
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true },
+      select: { isAdmin: true },
     })
-    const isAdmin = user?.role === 'ADMIN' || user?.role === 'SUPER_ADMIN'
+    const isAdmin = user?.isAdmin === true
 
     if (!isOwner && !isAdmin) {
       return NextResponse.json(
