@@ -14,7 +14,7 @@ import {
   WizardFooter,
 } from '@/components/wizard'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { clearDraft, clearOtherUserDrafts, loadDraft, saveDraft } from '@/lib/draft-storage'
+import { clearDraft, clearOtherUserDrafts } from '@/lib/draft-storage'
 import { canSell, getVerificationStatus } from '@/lib/verification'
 import { AlertCircle, CheckCircle, Loader2, Shield, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -462,7 +462,19 @@ function SellPageContent() {
         clearOtherUserDrafts(userId)
       }
 
-      // Try DB-backed API first (new endpoint)
+      // DO NOT auto-restore drafts!
+      // Each new listing should start fresh.
+      // Drafts are only restored when explicitly requested via:
+      // 1. URL parameter ?draft=xxx
+      // 2. localStorage flag helvenda_restore_draft_id (set by "Entwurf fortsetzen" button)
+      // 
+      // The code above already handles these cases, so we just return here.
+      // Old drafts will be cleared when a new article is published.
+      return
+
+      // REMOVED: Automatic draft restoration - this was causing the problem
+      // where old listing data was being shown for new listings
+      /*
       try {
         const response = await fetch('/api/sell/drafts/current')
         if (response.ok) {
@@ -472,7 +484,6 @@ function SellPageContent() {
             setFormData(prev => ({
               ...prev,
               ...draft.formData,
-              // Use draftImages URLs if available, otherwise fallback to images array
               images: draft.draftImages?.map((img: any) => img.url) || draft.images || [],
             }))
             setSelectedCategory(draft.selectedCategory || '')
@@ -480,7 +491,6 @@ function SellPageContent() {
             setSelectedBooster(draft.selectedBooster || 'none')
             setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
             setCurrentStep(draft.currentStep || 0)
-            // Set titleImageIndex based on coverImageId if available
             if (draft.coverImageId && draft.draftImages) {
               const coverIndex = draft.draftImages.findIndex(
                 (img: any) => img.id === draft.coverImageId
@@ -489,53 +499,11 @@ function SellPageContent() {
             } else {
               setTitleImageIndex(draft.titleImageIndex || 0)
             }
-            setCurrentDraftId(draft.id) // Set draft ID for image operations
+            setCurrentDraftId(draft.id)
             setShowDraftRestored(true)
             setLastSavedAt(new Date(draft.updatedAt))
           } else {
-            // Fallback to localStorage (userId-scoped)
-            const userId = (session.user as { id?: string })?.id
-            if (userId) {
-              const draft = await loadDraft(userId)
-              if (draft) {
-                setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
-                setSelectedCategory(draft.selectedCategory || '')
-                setSelectedSubcategory(draft.selectedSubcategory || '')
-                setSelectedBooster(draft.selectedBooster || 'none')
-                setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
-                setCurrentStep(draft.currentStep || 0)
-                setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
-                setShowDraftRestored(true)
-                if (draft.imageMetadata?.count > 0) {
-                  toast('Bilder müssen erneut hochgeladen werden', {
-                    icon: 'ℹ️',
-                    position: 'top-right',
-                    duration: 5000,
-                  })
-                }
-              }
-            }
-          }
-        }
-      } catch (error) {
-        console.error('[Draft] Error loading from DB API:', error)
-        // Fallback to localStorage (userId-scoped)
-        const userId = (session.user as { id?: string })?.id
-        if (userId) {
-          loadDraft(userId).then(draft => {
-            if (draft) {
-              setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
-              setSelectedCategory(draft.selectedCategory || '')
-              setSelectedSubcategory(draft.selectedSubcategory || '')
-              setSelectedBooster(draft.selectedBooster || 'none')
-              setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
-              setCurrentStep(draft.currentStep || 0)
-              setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
-              setShowDraftRestored(true)
-            }
-          })
-        }
-      }
+      */
     }
 
     restoreDraft()
