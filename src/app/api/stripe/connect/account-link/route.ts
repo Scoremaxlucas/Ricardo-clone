@@ -29,9 +29,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Extrahiere Felder (können undefined sein wenn Migration noch nicht ausgeführt wurde)
-    const connectOnboardingStatus = (user as any).connectOnboardingStatus as
-      | string
-      | undefined
+    const connectOnboardingStatus = (user as any).connectOnboardingStatus as string | undefined
     const payoutsEnabled = (user as any).payoutsEnabled as boolean | undefined
 
     // Stelle sicher dass ein Account existiert
@@ -87,34 +85,58 @@ export async function POST(request: NextRequest) {
     if (!baseUrl) {
       baseUrl = 'http://localhost:3000'
     }
-    
+
     console.log(`[connect/account-link] Using baseUrl: ${baseUrl}`)
 
     // Lese optionalen return_to Parameter
     let returnTo = '/my-watches/account'
     try {
-      const body = await request.json().catch(() => ({}))
-      if (body.return_to) {
-        returnTo = body.return_to
+      const contentType = request.headers.get('content-type')
+      if (contentType?.includes('application/json')) {
+        const body = await request.json()
+        if (body && typeof body === 'object' && body.return_to) {
+          returnTo = body.return_to
+        }
       }
-    } catch {
-      // Ignore parse errors
+    } catch (error: any) {
+      // Ignore parse errors - use default returnTo
+      console.log('[connect/account-link] Could not parse body, using default returnTo:', error.message)
+    }
+
+    // Validiere dass Account ID existiert
+    if (!accountId) {
+      throw new Error('Stripe Connected Account ID fehlt')
     }
 
     // Erstelle AccountLink für Onboarding
     const refreshUrl = `${baseUrl}/my-watches/account?payout_refresh=1`
     const returnUrl = `${baseUrl}${returnTo}?payout_return=1`
-    
+
     console.log(`[connect/account-link] Creating account link for ${accountId}`)
     console.log(`[connect/account-link] refresh_url: ${refreshUrl}`)
     console.log(`[connect/account-link] return_url: ${returnUrl}`)
-    
-    const accountLink = await stripe.accountLinks.create({
-      account: accountId,
-      refresh_url: refreshUrl,
-      return_url: returnUrl,
-      type: 'account_onboarding',
-    })
+
+    let accountLink
+    try {
+      accountLink = await stripe.accountLinks.create({
+        account: accountId,
+        refresh_url: refreshUrl,
+        return_url: returnUrl,
+        type: 'account_onboarding',
+      })
+    } catch (stripeError: any) {
+      console.error('[connect/account-link] Stripe API Error:', stripeError)
+      console.error('[connect/account-link] Stripe Error Details:', {
+        type: stripeError.type,
+        code: stripeError.code,
+        message: stripeError.message,
+        param: stripeError.param,
+        decline_code: stripeError.decline_code,
+      })
+      throw new Error(
+        `Stripe Fehler: ${stripeError.message || 'Unbekannter Fehler beim Erstellen des Onboarding-Links'}`
+      )
+    }
 
     console.log(`[connect/account-link] ✅ Onboarding-Link erstellt für Account ${accountId}`)
 
