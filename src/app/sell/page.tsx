@@ -462,12 +462,22 @@ function SellPageContent() {
         clearOtherUserDrafts(userId)
       }
 
+      // Clear any leftover localStorage data to ensure fresh start
+      try {
+        localStorage.removeItem('helvenda_restore_draft_id')
+        // Clear user-scoped draft key to prevent any accidental restore
+        localStorage.removeItem(`helvenda:sellDraft:${userId}`)
+        localStorage.removeItem('helvenda_listing_draft')
+      } catch (e) {
+        // Ignore localStorage errors
+      }
+
       // DO NOT auto-restore drafts!
       // Each new listing should start fresh.
       // Drafts are only restored when explicitly requested via:
       // 1. URL parameter ?draft=xxx
       // 2. localStorage flag helvenda_restore_draft_id (set by "Entwurf fortsetzen" button)
-      // 
+      //
       // The code above already handles these cases, so we just return here.
       // Old drafts will be cleared when a new article is published.
       return
@@ -530,7 +540,16 @@ function SellPageContent() {
       }
     }, 5000) // Increased debounce to 5 seconds
     return () => clearTimeout(timer)
-  }, [formData.title, formData.description, formData.images, selectedCategory, selectedSubcategory, currentStep, saveDraftData, hasPublished])
+  }, [
+    formData.title,
+    formData.description,
+    formData.images,
+    selectedCategory,
+    selectedSubcategory,
+    currentStep,
+    saveDraftData,
+    hasPublished,
+  ])
 
   // URL navigation
   useEffect(() => {
