@@ -22,6 +22,8 @@ export interface PaymentInfo {
   twintQRCodeDataUrl?: string | null // TWINT QR-Code für Zahlung
   twintDeepLink?: string | null // TWINT Deep Link für mobile Zahlung
   hasSellerBankDetails: boolean // true wenn Verkäufer eigene IBAN hat, false wenn Plattform-IBAN verwendet wird
+  hasStripePayment: boolean // true if paid via Stripe (protected), false if bank transfer (unprotected)
+  paymentProtectionEnabled: boolean // true if watch has payment protection enabled
 }
 
 /**
