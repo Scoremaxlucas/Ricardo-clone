@@ -707,69 +707,93 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
 
                       {/* Fristen - Kompakt */}
                       <div className="flex flex-wrap gap-2">
-                        {contactDeadline && (
-                          <div
-                            className={`rounded px-3 py-2 text-xs font-medium ${
-                              contactIsOverdue || purchase.contactDeadlineMissed
-                                ? 'bg-red-100 text-red-800'
-                                : contactDaysRemaining && contactDaysRemaining <= 2
-                                  ? 'bg-orange-100 text-orange-800'
-                                  : 'bg-yellow-100 text-yellow-800'
-                            }`}
-                          >
-                            {contactIsOverdue || purchase.contactDeadlineMissed
-                              ? '❌ Kontaktfrist überschritten'
-                              : contactDaysRemaining && contactDaysRemaining > 0
-                                ? `⏰ Kontakt: ${contactDaysRemaining} Tag${contactDaysRemaining !== 1 ? 'e' : ''}`
-                                : '⏰ Kontaktfrist läuft heute ab'}
-                            {!purchase.buyerContactedAt && (
-                              <button
-                                onClick={async () => {
-                                  try {
-                                    const res = await fetch(
-                                      `/api/purchases/${purchase.id}/mark-contacted`,
-                                      {
-                                        method: 'POST',
-                                        headers: { 'Content-Type': 'application/json' },
-                                        body: JSON.stringify({ role: 'buyer' }),
-                                      }
-                                    )
-                                    if (res.ok) {
-                                      toast.success('Kontaktaufnahme markiert!')
-                                      handleMarkPaid()
-                                    } else {
-                                      const data = await res.json()
-                                      toast.error(data.message || 'Fehler beim Markieren')
-                                    }
-                                  } catch (error) {
-                                    console.error('Error marking contact:', error)
-                                    toast.error('Fehler beim Markieren der Kontaktaufnahme')
-                                  }
-                                }}
-                                className="ml-2 rounded bg-white px-2 py-0.5 text-xs hover:bg-gray-50"
+                        {/* Contact Deadline */}
+                        {purchase.contactDeadline && (
+                          (() => {
+                            const contactDeadline = new Date(purchase.contactDeadline)
+                            const contactDaysRemaining = Math.ceil(
+                              (contactDeadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+                            )
+                            const contactIsOverdue =
+                              purchase.contactDeadlineMissed || contactDeadline.getTime() < new Date().getTime()
+
+                            return (
+                              <div
+                                className={`rounded px-3 py-2 text-xs font-medium ${
+                                  contactIsOverdue
+                                    ? 'bg-red-100 text-red-800'
+                                    : contactDaysRemaining <= 2
+                                      ? 'bg-orange-100 text-orange-800'
+                                      : 'bg-yellow-100 text-yellow-800'
+                                }`}
                               >
-                                ✓ Markieren
-                              </button>
-                            )}
-                          </div>
+                                {contactIsOverdue
+                                  ? '❌ Kontaktfrist überschritten'
+                                  : contactDaysRemaining > 0
+                                    ? `⏰ Kontakt: ${contactDaysRemaining} Tag${contactDaysRemaining !== 1 ? 'e' : ''}`
+                                    : '⏰ Kontaktfrist läuft heute ab'}
+                                {!purchase.buyerContactedAt && (
+                                  <button
+                                    onClick={async () => {
+                                      try {
+                                        const res = await fetch(
+                                          `/api/purchases/${purchase.id}/mark-contacted`,
+                                          {
+                                            method: 'POST',
+                                            headers: { 'Content-Type': 'application/json' },
+                                            body: JSON.stringify({ role: 'buyer' }),
+                                          }
+                                        )
+                                        if (res.ok) {
+                                          toast.success('Kontaktaufnahme markiert!')
+                                          handleMarkPaid()
+                                        } else {
+                                          const data = await res.json()
+                                          toast.error(data.message || 'Fehler beim Markieren')
+                                        }
+                                      } catch (error) {
+                                        console.error('Error marking contact:', error)
+                                        toast.error('Fehler beim Markieren der Kontaktaufnahme')
+                                      }
+                                    }}
+                                    className="ml-2 rounded bg-white px-2 py-0.5 text-xs hover:bg-gray-50"
+                                  >
+                                    ✓ Markieren
+                                  </button>
+                                )}
+                              </div>
+                            )
+                          })()
                         )}
 
-                        {paymentDeadline && (
-                          <div
-                            className={`rounded px-3 py-2 text-xs font-medium ${
-                              paymentIsOverdue || purchase.paymentDeadlineMissed
-                                ? 'bg-red-100 text-red-800'
-                                : paymentDaysRemaining && paymentDaysRemaining <= 3
-                                  ? 'bg-orange-100 text-orange-800'
-                                  : 'bg-blue-100 text-blue-800'
-                            }`}
-                          >
-                            {paymentIsOverdue || purchase.paymentDeadlineMissed
-                              ? '❌ Zahlungsfrist überschritten'
-                              : paymentDaysRemaining && paymentDaysRemaining > 0
-                                ? `💳 Zahlung: ${paymentDaysRemaining} Tag${paymentDaysRemaining !== 1 ? 'e' : ''}`
-                                : '💳 Zahlungsfrist läuft heute ab'}
-                          </div>
+                        {/* Payment Deadline */}
+                        {purchase.paymentDeadline && (
+                          (() => {
+                            const paymentDeadline = new Date(purchase.paymentDeadline)
+                            const paymentDaysRemaining = Math.ceil(
+                              (paymentDeadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+                            )
+                            const paymentIsOverdue =
+                              purchase.paymentDeadlineMissed || paymentDeadline.getTime() < new Date().getTime()
+
+                            return (
+                              <div
+                                className={`rounded px-3 py-2 text-xs font-medium ${
+                                  paymentIsOverdue
+                                    ? 'bg-red-100 text-red-800'
+                                    : paymentDaysRemaining <= 3
+                                      ? 'bg-orange-100 text-orange-800'
+                                      : 'bg-blue-100 text-blue-800'
+                                }`}
+                              >
+                                {paymentIsOverdue
+                                  ? '❌ Zahlungsfrist überschritten'
+                                  : paymentDaysRemaining > 0
+                                    ? `💳 Zahlung: ${paymentDaysRemaining} Tag${paymentDaysRemaining !== 1 ? 'e' : ''}`
+                                    : '💳 Zahlungsfrist läuft heute ab'}
+                              </div>
+                            )
+                          })()
                         )}
                       </div>
 
