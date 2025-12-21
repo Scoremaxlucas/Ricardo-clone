@@ -475,17 +475,17 @@ function SellPageContent() {
             setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
             setCurrentStep(draft.currentStep || 0)
             // Set titleImageIndex based on coverImageId if available
-            if (latestDraft.coverImageId && latestDraft.draftImages) {
-              const coverIndex = latestDraft.draftImages.findIndex(
-                (img: any) => img.id === latestDraft.coverImageId
+            if (draft.coverImageId && draft.draftImages) {
+              const coverIndex = draft.draftImages.findIndex(
+                (img: any) => img.id === draft.coverImageId
               )
-              setTitleImageIndex(coverIndex >= 0 ? coverIndex : latestDraft.titleImageIndex || 0)
+              setTitleImageIndex(coverIndex >= 0 ? coverIndex : draft.titleImageIndex || 0)
             } else {
-              setTitleImageIndex(latestDraft.titleImageIndex || 0)
+              setTitleImageIndex(draft.titleImageIndex || 0)
             }
-            setCurrentDraftId(latestDraft.id) // Set draft ID for image operations
+            setCurrentDraftId(draft.id) // Set draft ID for image operations
             setShowDraftRestored(true)
-            setLastSavedAt(new Date(latestDraft.updatedAt))
+            setLastSavedAt(new Date(draft.updatedAt))
           } else {
             // Fallback to localStorage (userId-scoped)
             const userId = (session.user as { id?: string })?.id
