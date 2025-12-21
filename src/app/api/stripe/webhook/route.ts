@@ -603,6 +603,7 @@ async function handleChargeRefunded(charge: Stripe.Charge) {
 
 /**
  * Verarbeitet Account Updates (für Connect Onboarding)
+ * Just-in-Time Onboarding: Aktualisiert Status und ermöglicht ausstehende Auszahlungen
  */
 async function handleAccountUpdated(account: Stripe.Account) {
   try {
@@ -611,7 +612,13 @@ async function handleAccountUpdated(account: Stripe.Account) {
     // Finde User mit diesem Connected Account
     const user = await prisma.user.findFirst({
       where: { stripeConnectedAccountId: account.id },
-      select: { id: true, email: true },
+      select: {
+        id: true,
+        email: true,
+        connectOnboardingStatus: true,
+        stripeOnboardingComplete: true,
+        payoutsEnabled: true,
+      },
     })
 
     if (!user) {
@@ -625,29 +632,65 @@ async function handleAccountUpdated(account: Stripe.Account) {
       account.charges_enabled === true &&
       account.payouts_enabled === true
 
-    if (isComplete) {
-      await prisma.user.update({
-        where: { id: user.id },
-        data: {
-          stripeOnboardingComplete: true,
-        },
-      })
+    const newStatus = isComplete ? 'COMPLETE' : 'INCOMPLETE'
+    const wasIncomplete = user.connectOnboardingStatus !== 'COMPLETE'
 
+    // Update User Status
+    await prisma.user.update({
+      where: { id: user.id },
+      data: {
+        connectOnboardingStatus: newStatus,
+        stripeOnboardingComplete: isComplete,
+        payoutsEnabled: account.payouts_enabled === true,
+      },
+    })
+
+    console.log(`[stripe/webhook] ✅ Onboarding-Status aktualisiert für User ${user.id}: ${newStatus}`)
+
+    // Wenn Onboarding jetzt abgeschlossen ist und vorher nicht war
+    if (isComplete && wasIncomplete) {
       console.log(`[stripe/webhook] ✅ Onboarding abgeschlossen für User ${user.id}`)
 
-      // Benachrichtigung an User
+      // Benachrichtigung an User (Helvenda-Wording, keine Stripe-Erwähnung)
       try {
         await prisma.notification.create({
           data: {
             userId: user.id,
             type: 'ACCOUNT_UPDATED',
-            title: 'Stripe Onboarding abgeschlossen',
-            message: 'Ihr Stripe Connect Account ist jetzt aktiviert. Sie können jetzt Zahlungen empfangen.',
-            link: '/seller/onboarding/success',
+            title: 'Auszahlung eingerichtet',
+            message: 'Ihre Auszahlungsdaten wurden erfolgreich hinterlegt. Sie können jetzt Zahlungen empfangen.',
+            link: '/my-watches/account',
           },
         })
       } catch (error: any) {
         console.error(`[stripe/webhook] Fehler beim Erstellen der Notification:`, error)
+      }
+
+      // Prüfe ob ausstehende Auszahlungen (RELEASE_PENDING_ONBOARDING) existieren
+      const pendingOrders = await prisma.order.findMany({
+        where: {
+          sellerId: user.id,
+          paymentStatus: 'release_pending_onboarding',
+        },
+      })
+
+      if (pendingOrders.length > 0) {
+        console.log(`[stripe/webhook] ${pendingOrders.length} ausstehende Auszahlungen für User ${user.id}`)
+
+        // Benachrichtige User über ausstehende Auszahlungen
+        try {
+          await prisma.notification.create({
+            data: {
+              userId: user.id,
+              type: 'PAYOUT_READY',
+              title: 'Auszahlungen bereit',
+              message: `${pendingOrders.length} Auszahlung${pendingOrders.length > 1 ? 'en' : ''} kann jetzt verarbeitet werden.`,
+              link: '/my-watches/selling/payouts',
+            },
+          })
+        } catch (error: any) {
+          console.error(`[stripe/webhook] Fehler beim Erstellen der Notification:`, error)
+        }
       }
     }
   } catch (error: any) {

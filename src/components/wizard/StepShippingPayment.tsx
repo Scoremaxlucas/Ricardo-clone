@@ -4,6 +4,7 @@ import { ProfileCompletionGate } from '@/components/account/ProfileCompletionGat
 import { EditPolicy } from '@/lib/edit-policy'
 import { formatCHF } from '@/lib/product-utils'
 import {
+  AlertCircle,
   CheckCircle,
   ChevronDown,
   ChevronUp,
@@ -16,7 +17,8 @@ import {
   Shield,
   Truck,
 } from 'lucide-react'
-import { useState } from 'react'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
 
 interface StepShippingPaymentProps {
   formData: {
@@ -71,10 +73,27 @@ export function StepShippingPayment({
   const [showPaymentDetails, setShowPaymentDetails] = useState(false)
   const [profileGateOpen, setProfileGateOpen] = useState(false)
   const [profileGateMissingFields, setProfileGateMissingFields] = useState<any[]>([])
+  const [payoutOnboardingStatus, setPayoutOnboardingStatus] = useState<
+    'NOT_STARTED' | 'INCOMPLETE' | 'COMPLETE' | null
+  >(null)
   const hasShippingError = showValidation && formData.shippingMethods.length === 0
   const onlyPickup =
     formData.shippingMethods.length === 1 && formData.shippingMethods[0] === 'pickup'
   const paymentProtectionApplies = !onlyPickup || formData.shippingMethods.length > 1
+
+  // Check payout onboarding status when payment protection is enabled
+  useEffect(() => {
+    if (paymentProtectionEnabled) {
+      fetch('/api/stripe/connect/ensure-account')
+        .then(res => res.json())
+        .then(data => {
+          setPayoutOnboardingStatus(data.status || 'NOT_STARTED')
+        })
+        .catch(() => {
+          setPayoutOnboardingStatus('NOT_STARTED')
+        })
+    }
+  }, [paymentProtectionEnabled])
 
   const handlePaymentProtectionToggle = async (checked: boolean) => {
     if (checked) {
@@ -349,6 +368,25 @@ export function StepShippingPayment({
                       Option nicht mehr geändert werden.
                     </span>
                   </div>
+
+                  {/* Payout onboarding hint - non-blocking */}
+                  {payoutOnboardingStatus && payoutOnboardingStatus !== 'COMPLETE' && (
+                    <div className="mt-3 flex items-start gap-2 rounded-lg bg-amber-50 p-3 text-sm text-amber-800">
+                      <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
+                      <div>
+                        <span>
+                          Für Auszahlungen brauchst du einmalig Auszahlungsdaten.{' '}
+                          <Link
+                            href="/my-watches/account?setup_payout=1"
+                            className="font-medium text-amber-700 underline hover:text-amber-800"
+                          >
+                            Jetzt einrichten
+                          </Link>{' '}
+                          oder später erledigen.
+                        </span>
+                      </div>
+                    </div>
+                  )}
                 </div>
               )}
             </div>

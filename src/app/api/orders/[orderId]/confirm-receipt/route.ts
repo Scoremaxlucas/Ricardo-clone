@@ -72,20 +72,29 @@ export async function POST(
       },
     })
 
-    // Gib Gelder frei
-    const transferId = await releaseFunds(orderId)
+    // Gib Gelder frei (mit Just-in-Time Onboarding Support)
+    const result = await releaseFunds(orderId)
 
-    if (!transferId) {
+    if (result.pendingOnboarding) {
+      // Verkäufer muss noch Auszahlung einrichten
+      return NextResponse.json({
+        success: true,
+        message: 'Erhalt bestätigt. Der Verkäufer muss noch seine Auszahlungsdaten einrichten.',
+        pendingOnboarding: true,
+      })
+    }
+
+    if (!result.success) {
       return NextResponse.json(
-        { message: 'Fehler bei der Freigabe der Zahlung' },
+        { message: result.message || 'Fehler bei der Freigabe der Zahlung' },
         { status: 500 }
       )
     }
 
     return NextResponse.json({
       success: true,
-      message: 'Zahlung erfolgreich freigegeben',
-      transferId,
+      message: 'Erhalt bestätigt und Auszahlung an Verkäufer erfolgt.',
+      transferId: result.transferId,
     })
   } catch (error: any) {
     console.error('Error confirming receipt:', error)

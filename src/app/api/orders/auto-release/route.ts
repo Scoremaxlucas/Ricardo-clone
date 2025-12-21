@@ -55,14 +55,26 @@ export async function POST(request: NextRequest) {
     )
 
     let releasedCount = 0
+    let pendingOnboardingCount = 0
     const errors: string[] = []
 
-    // Gib jede Order frei
+    // Gib jede Order frei (mit Just-in-Time Onboarding Support)
     for (const order of ordersToRelease) {
       try {
-        await releaseFunds(order.id)
-        releasedCount++
-        console.log(`[auto-release] ✅ Order ${order.orderNumber} automatisch freigegeben`)
+        const result = await releaseFunds(order.id)
+
+        if (result.success) {
+          releasedCount++
+          console.log(`[auto-release] ✅ Order ${order.orderNumber} automatisch freigegeben`)
+        } else if (result.pendingOnboarding) {
+          pendingOnboardingCount++
+          console.log(
+            `[auto-release] ⏳ Order ${order.orderNumber} wartet auf Verkäufer-Auszahlungseinrichtung`
+          )
+        } else {
+          const errorMsg = `Order ${order.orderNumber}: ${result.message}`
+          errors.push(errorMsg)
+        }
       } catch (error: any) {
         const errorMsg = `Order ${order.orderNumber}: ${error.message}`
         errors.push(errorMsg)
@@ -74,6 +86,7 @@ export async function POST(request: NextRequest) {
       success: true,
       message: `Auto-Release abgeschlossen`,
       released: releasedCount,
+      pendingOnboarding: pendingOnboardingCount,
       total: ordersToRelease.length,
       errors: errors.length > 0 ? errors : undefined,
     })

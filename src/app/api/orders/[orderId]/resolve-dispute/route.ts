@@ -165,12 +165,31 @@ export async function POST(
         )
       }
 
-      // Gib Gelder frei
-      const transferId = await releaseFunds(orderId)
+      // Gib Gelder frei (mit Just-in-Time Onboarding Support)
+      const result = await releaseFunds(orderId)
 
-      if (!transferId) {
+      if (result.pendingOnboarding) {
+        // Update Order Dispute Status - aber Auszahlung wartet auf Onboarding
+        await prisma.order.update({
+          where: { id: orderId },
+          data: {
+            disputeStatus: 'resolved_release',
+            disputeResolvedAt: new Date(),
+            disputeResolvedBy: adminId,
+          },
+        })
+
+        return NextResponse.json({
+          success: true,
+          message:
+            'Dispute gelöst - Auszahlung wartet auf Verkäufer-Auszahlungseinrichtung',
+          pendingOnboarding: true,
+        })
+      }
+
+      if (!result.success) {
         return NextResponse.json(
-          { message: 'Fehler bei der Freigabe der Zahlung' },
+          { message: result.message || 'Fehler bei der Freigabe der Zahlung' },
           { status: 500 }
         )
       }
@@ -188,7 +207,7 @@ export async function POST(
       return NextResponse.json({
         success: true,
         message: 'Dispute gelöst - Geld freigegeben',
-        transferId,
+        transferId: result.transferId,
       })
     }
   } catch (error: any) {
