@@ -100,7 +100,8 @@ export async function POST(
 
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'payment',
-      payment_method_types: ['card', 'twint'],
+      // Use automatic_payment_methods to enable all methods configured in Stripe Dashboard
+      // This includes Card, TWINT, etc. based on your Stripe settings
       customer_email: order.buyer.email || undefined,
       line_items: [
         {

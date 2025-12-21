@@ -1,9 +1,9 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter, useSearchParams } from 'next/navigation'
-import { CheckCircle, Shield, Package, Clock, ArrowRight } from 'lucide-react'
+import { ArrowRight, CheckCircle, Clock, Shield } from 'lucide-react'
 import Link from 'next/link'
+import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface Order {
   id: string
@@ -59,8 +59,8 @@ export default function CheckoutSuccessPage() {
   if (error || !order) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="rounded-lg bg-white p-8 shadow-md text-center">
-          <div className="text-red-600 mb-4">{error || 'Bestellung nicht gefunden'}</div>
+        <div className="rounded-lg bg-white p-8 text-center shadow-md">
+          <div className="mb-4 text-red-600">{error || 'Bestellung nicht gefunden'}</div>
           <Link href="/my-watches/buying" className="text-primary-600 hover:underline">
             Zu meinen Bestellungen
           </Link>
@@ -73,7 +73,7 @@ export default function CheckoutSuccessPage() {
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="mx-auto max-w-2xl px-4">
         {/* Success Header */}
-        <div className="text-center mb-8">
+        <div className="mb-8 text-center">
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
             <CheckCircle className="h-10 w-10 text-green-600" />
           </div>
@@ -84,8 +84,8 @@ export default function CheckoutSuccessPage() {
         </div>
 
         {/* Order Card */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <h2 className="font-semibold text-lg mb-4">Bestelldetails</h2>
+        <div className="mb-6 rounded-lg border bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold">Bestelldetails</h2>
           <div className="space-y-3">
             <div className="flex justify-between">
               <span className="text-gray-600">Bestellnummer:</span>
@@ -105,26 +105,25 @@ export default function CheckoutSuccessPage() {
         </div>
 
         {/* Payment Protection Info */}
-        <div className="bg-blue-50 rounded-lg border border-blue-200 p-6 mb-6">
+        <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-6">
           <div className="flex items-start">
-            <Shield className="h-6 w-6 text-blue-600 mr-3 mt-0.5" />
+            <Shield className="mr-3 mt-0.5 h-6 w-6 text-blue-600" />
             <div>
               <h3 className="font-semibold text-blue-900">Helvenda Zahlungsschutz aktiv</h3>
-              <p className="text-sm text-blue-700 mt-1">
-                Ihr Geld wird sicher verwahrt, bis Sie den Erhalt der Ware bestätigen.
-                Sie haben 72 Stunden Zeit, die Ware zu prüfen und bei Problemen einen
-                Dispute zu eröffnen.
+              <p className="mt-1 text-sm text-blue-700">
+                Ihr Geld wird sicher verwahrt, bis Sie den Erhalt der Ware bestätigen. Sie haben 72
+                Stunden Zeit, die Ware zu prüfen und bei Problemen einen Dispute zu eröffnen.
               </p>
             </div>
           </div>
         </div>
 
         {/* Next Steps */}
-        <div className="bg-white rounded-lg shadow-sm border p-6 mb-6">
-          <h2 className="font-semibold text-lg mb-4">Nächste Schritte</h2>
+        <div className="mb-6 rounded-lg border bg-white p-6 shadow-sm">
+          <h2 className="mb-4 text-lg font-semibold">Nächste Schritte</h2>
           <div className="space-y-4">
             <div className="flex items-start">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 text-sm font-medium mr-3">
+              <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600">
                 1
               </div>
               <div>
@@ -135,7 +134,7 @@ export default function CheckoutSuccessPage() {
               </div>
             </div>
             <div className="flex items-start">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 text-sm font-medium mr-3">
+              <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600">
                 2
               </div>
               <div>
@@ -146,7 +145,7 @@ export default function CheckoutSuccessPage() {
               </div>
             </div>
             <div className="flex items-start">
-              <div className="flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-gray-600 text-sm font-medium mr-3">
+              <div className="mr-3 flex h-8 w-8 items-center justify-center rounded-full bg-gray-100 text-sm font-medium text-gray-600">
                 3
               </div>
               <div>
@@ -160,26 +159,26 @@ export default function CheckoutSuccessPage() {
         </div>
 
         {/* Auto-Release Notice */}
-        <div className="flex items-center bg-amber-50 rounded-lg border border-amber-200 p-4 mb-6">
-          <Clock className="h-5 w-5 text-amber-600 mr-3" />
+        <div className="mb-6 flex items-center rounded-lg border border-amber-200 bg-amber-50 p-4">
+          <Clock className="mr-3 h-5 w-5 text-amber-600" />
           <p className="text-sm text-amber-800">
-            Die Zahlung wird automatisch nach 72 Stunden freigegeben, falls Sie nicht 
-            reagieren und kein Dispute eröffnet wurde.
+            Die Zahlung wird automatisch nach 72 Stunden freigegeben, falls Sie nicht reagieren und
+            kein Dispute eröffnet wurde.
           </p>
         </div>
 
         {/* Actions */}
-        <div className="flex flex-col sm:flex-row gap-4">
+        <div className="flex flex-col gap-4 sm:flex-row">
           <Link
             href={`/orders/${order.id}`}
-            className="flex-1 flex items-center justify-center px-6 py-3 bg-primary-600 text-white rounded-lg hover:bg-primary-700 transition"
+            className="flex flex-1 items-center justify-center rounded-lg bg-primary-600 px-6 py-3 text-white transition hover:bg-primary-700"
           >
             Bestellung ansehen
             <ArrowRight className="ml-2 h-4 w-4" />
           </Link>
           <Link
             href="/my-watches/buying"
-            className="flex-1 flex items-center justify-center px-6 py-3 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 transition"
+            className="flex flex-1 items-center justify-center rounded-lg bg-gray-100 px-6 py-3 text-gray-700 transition hover:bg-gray-200"
           >
             Alle Bestellungen
           </Link>
