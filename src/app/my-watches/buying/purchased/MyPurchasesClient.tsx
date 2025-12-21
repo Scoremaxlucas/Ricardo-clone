@@ -732,8 +732,12 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                                 </>
                               ) : uiState.primaryAction.icon ? (
                                 <>
-                                  {iconMap[uiState.primaryAction.icon] &&
-                                    iconMap[uiState.primaryAction.icon]({ className: 'h-4 w-4' })}
+                                  {(() => {
+                                    const IconComponent = iconMap[uiState.primaryAction.icon!]
+                                    return IconComponent ? (
+                                      <IconComponent className="h-4 w-4" />
+                                    ) : null
+                                  })()}
                                   {uiState.primaryAction.label}
                                 </>
                               ) : (
