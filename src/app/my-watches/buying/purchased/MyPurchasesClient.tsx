@@ -5,12 +5,15 @@ import { PaymentModal } from '@/components/payment/PaymentModal'
 import { SellerInfoModal } from '@/components/seller/SellerInfoModal'
 import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
 import { MyPurchaseItem } from '@/lib/my-purchases'
+import { getOrderUIState } from '@/lib/order-ui-state'
 import { getPurchaseStateInfo } from '@/lib/purchase-state-machine'
 import { getShippingCost } from '@/lib/shipping'
 import {
   AlertCircle,
   ArrowUpDown,
   CheckCircle,
+  ChevronDown,
+  ChevronUp,
   Clock,
   CreditCard,
   Loader2,
@@ -18,12 +21,10 @@ import {
   MessageSquare,
   Package,
   PackageCheck,
-  CreditCard as PaymentIcon,
   Phone,
   Search,
   Shield,
   ShoppingBag,
-  User,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -383,30 +384,6 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
 
   return (
     <>
-      {/* Statistiken */}
-      <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-5">
-        <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-          <div className="text-2xl font-bold text-gray-900">{stats.total}</div>
-          <div className="text-sm text-gray-600">Gesamt</div>
-        </div>
-        <div className="rounded-lg border border-yellow-200 bg-yellow-50 p-4 shadow-sm">
-          <div className="text-2xl font-bold text-yellow-700">{stats.pending}</div>
-          <div className="text-sm text-yellow-600">Ausstehend</div>
-        </div>
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 shadow-sm">
-          <div className="text-2xl font-bold text-blue-700">{stats.payment_confirmed}</div>
-          <div className="text-sm text-blue-600">Zahlung bestätigt</div>
-        </div>
-        <div className="rounded-lg border border-orange-200 bg-orange-50 p-4 shadow-sm">
-          <div className="text-2xl font-bold text-orange-700">{stats.item_received}</div>
-          <div className="text-sm text-orange-600">Erhalt bestätigt</div>
-        </div>
-        <div className="rounded-lg border border-green-200 bg-green-50 p-4 shadow-sm">
-          <div className="text-2xl font-bold text-green-700">{stats.completed}</div>
-          <div className="text-sm text-green-600">Abgeschlossen</div>
-        </div>
-      </div>
-
       {/* Search and Sort */}
       <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
         {/* Search */}
@@ -429,6 +406,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
             onChange={e =>
               setSortBy(e.target.value as 'newest' | 'deadline_soon' | 'price_high' | 'price_low')
             }
+            aria-label="Sortierung"
             className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
           >
             <option value="newest">Neueste zuerst</option>
@@ -439,54 +417,54 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
         </div>
       </div>
 
-      {/* Filter */}
-      <div className="mb-6 flex flex-wrap gap-2">
+      {/* Filter Tabs */}
+      <div className="mb-6 flex flex-wrap gap-2 border-b border-gray-200 pb-2">
         <button
           onClick={() => setStatusFilter('all')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
             statusFilter === 'all'
-              ? 'bg-primary-600 text-white'
-              : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+              ? 'border-b-2 border-primary-600 text-primary-600'
+              : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           Alle ({stats.total})
         </button>
         <button
           onClick={() => setStatusFilter('pending')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
             statusFilter === 'pending'
-              ? 'bg-yellow-600 text-white'
-              : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+              ? 'border-b-2 border-yellow-600 text-yellow-600'
+              : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           Ausstehend ({stats.pending})
         </button>
         <button
           onClick={() => setStatusFilter('payment_confirmed')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
             statusFilter === 'payment_confirmed'
-              ? 'bg-blue-600 text-white'
-              : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+              ? 'border-b-2 border-blue-600 text-blue-600'
+              : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           Zahlung bestätigt ({stats.payment_confirmed})
         </button>
         <button
           onClick={() => setStatusFilter('item_received')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
             statusFilter === 'item_received'
-              ? 'bg-orange-600 text-white'
-              : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+              ? 'border-b-2 border-orange-600 text-orange-600'
+              : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           Erhalt bestätigt ({stats.item_received})
         </button>
         <button
           onClick={() => setStatusFilter('completed')}
-          className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
             statusFilter === 'completed'
-              ? 'bg-green-600 text-white'
-              : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+              ? 'border-b-2 border-green-600 text-green-600'
+              : 'text-gray-600 hover:text-gray-900'
           }`}
         >
           Abgeschlossen ({stats.completed})
@@ -557,515 +535,368 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
               purchase.id
             )
 
+            // Get clean UI state
+            const uiState = getOrderUIState(
+              purchase,
+              stateInfo,
+              {
+                onContactSeller: () => {
+                  setSelectedPurchase(purchase)
+                  setShowSellerInfo(true)
+                },
+                onPay: () => handlePayment(purchase),
+                onConfirmReceipt: () => handleConfirmReceived(purchase.id),
+                onViewDispute: () => setExpandedPurchaseId(purchase.id),
+                onCancel:
+                  purchase.status === 'pending' &&
+                  purchase.contactDeadlineMissed &&
+                  !purchase.sellerContactedAt
+                    ? async () => {
+                        if (
+                          !confirm(
+                            'Möchten Sie diesen Kauf wirklich stornieren? Der Verkäufer hat nicht innerhalb von 7 Tagen kontaktiert.'
+                          )
+                        ) {
+                          return
+                        }
+                        try {
+                          const res = await fetch(`/api/purchases/${purchase.id}/cancel-by-buyer`, {
+                            method: 'POST',
+                          })
+                          const data = await res.json()
+                          if (res.ok) {
+                            toast.success(
+                              'Kauf erfolgreich storniert. Die Kommission wurde zurückerstattet.'
+                            )
+                            handleMarkPaid()
+                          } else {
+                            toast.error(data.message || 'Fehler beim Stornieren')
+                          }
+                        } catch (error) {
+                          console.error('Error cancelling purchase:', error)
+                          toast.error('Fehler beim Stornieren')
+                        }
+                      }
+                    : undefined,
+                onShowDetails: () => setExpandedPurchaseId(isExpanded ? null : purchase.id),
+              },
+              isExpanded,
+              processingStripePayment === purchase.id
+            )
+
+            // Icon mapping
+            const iconMap: Record<string, any> = {
+              MessageSquare,
+              CreditCard,
+              Shield,
+              PackageCheck,
+              AlertCircle,
+              Loader2,
+            }
+
             return (
               <div
                 key={purchase.id}
-                className="rounded-lg border-2 border-gray-200 bg-white shadow-md transition-all hover:border-primary-300"
-                onClick={e => {
-                  e.stopPropagation()
-                }}
+                className="rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
               >
-                {/* Hauptzeile - Kompaktansicht */}
+                {/* Header Row */}
                 <div className="p-4">
                   <div className="flex items-start gap-4">
-                    {/* Produktbild */}
+                    {/* Product Image */}
                     <div className="flex-shrink-0">
                       {purchase.watch.images && purchase.watch.images.length > 0 ? (
                         <img
                           src={purchase.watch.images[0]}
                           alt={purchase.watch.title}
-                          className="h-24 w-24 rounded-lg border border-gray-200 object-cover"
+                          className="h-20 w-20 rounded-lg border border-gray-200 object-cover"
                         />
                       ) : (
-                        <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-gray-200 text-xs text-gray-500">
+                        <div className="flex h-20 w-20 items-center justify-center rounded-lg bg-gray-100 text-xs text-gray-400">
                           Kein Bild
                         </div>
                       )}
                     </div>
 
-                    {/* Hauptinformationen */}
+                    {/* Main Content */}
                     <div className="min-w-0 flex-1">
                       <div className="flex items-start justify-between gap-4">
                         <div className="min-w-0 flex-1">
-                          <div className="mb-1 flex items-center gap-2">
+                          {/* Title Row */}
+                          <div className="mb-2 flex items-start justify-between gap-2">
+                            <div className="min-w-0 flex-1">
+                              <h3 className="mb-1 line-clamp-2 text-base font-semibold text-gray-900">
+                                {purchase.watch.title}
+                              </h3>
+                              <div className="mb-2 text-sm text-gray-600">
+                                {purchase.watch.brand} {purchase.watch.model}
+                              </div>
+                            </div>
+                            {/* Price */}
+                            <div className="flex-shrink-0 text-right">
+                              <div className="text-lg font-bold text-gray-900">
+                                CHF {new Intl.NumberFormat('de-CH').format(total)}
+                              </div>
+                              {purchase.itemPrice && purchase.shippingCost !== undefined && (
+                                <div className="text-xs text-gray-500">
+                                  {purchase.shippingCost > 0 && `inkl. Versand`}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+
+                          {/* Metadata Row */}
+                          <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
                             <span
-                              className={`rounded-full px-2 py-1 text-xs font-semibold ${
+                              className={`rounded px-2 py-0.5 font-medium ${
                                 purchase.watch.purchaseType === 'auction'
-                                  ? 'bg-purple-100 text-purple-700'
-                                  : 'bg-blue-100 text-blue-700'
+                                  ? 'bg-purple-50 text-purple-700'
+                                  : 'bg-blue-50 text-blue-700'
                               }`}
                             >
                               {purchase.watch.purchaseType === 'auction'
                                 ? 'Ersteigert'
                                 : 'Sofortkauf'}
                             </span>
-                            <span className="text-xs text-gray-500">
+                            <span>
                               {new Date(purchase.purchasedAt).toLocaleDateString('de-CH', {
                                 day: '2-digit',
                                 month: '2-digit',
                                 year: 'numeric',
                               })}
                             </span>
-                          </div>
-                          <h3 className="mb-1 line-clamp-1 text-lg font-semibold text-gray-900">
-                            {purchase.watch.title}
-                          </h3>
-                          <div className="mb-2 text-sm text-gray-600">
-                            {purchase.watch.brand} {purchase.watch.model}
+                            {purchase.watch.seller && (
+                              <span>
+                                Verkäufer:{' '}
+                                {purchase.watch.seller.firstName && purchase.watch.seller.lastName
+                                  ? `${purchase.watch.seller.firstName} ${purchase.watch.seller.lastName}`
+                                  : purchase.watch.seller.name || 'Unbekannt'}
+                              </span>
+                            )}
+                            {purchase.shippingMethod && (
+                              <span>
+                                {purchase.shippingMethod === 'pickup'
+                                  ? 'Abholung'
+                                  : purchase.shippingMethod === 'b-post'
+                                    ? 'B-Post'
+                                    : purchase.shippingMethod === 'a-post'
+                                      ? 'A-Post'
+                                      : 'Versand'}
+                              </span>
+                            )}
                           </div>
 
-                          {/* Status-Badge - Use state machine */}
-                          <div className="mb-2 flex items-center gap-2">
+                          {/* Status Badge */}
+                          <div className="mb-3 flex items-center gap-2">
                             <span
-                              className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium ${
-                                stateInfo.state === 'COMPLETED'
-                                  ? 'bg-green-100 text-green-700'
-                                  : stateInfo.state === 'PAYMENT_CONFIRMED' ||
-                                      stateInfo.state === 'SHIPPED'
-                                    ? 'bg-blue-100 text-blue-700'
-                                    : stateInfo.state === 'RECEIPT_PENDING' ||
-                                        stateInfo.state === 'RECEIPT_CONFIRMED'
-                                      ? 'bg-orange-100 text-orange-700'
-                                      : stateInfo.state === 'DISPUTE_OPEN'
-                                        ? 'bg-red-100 text-red-700'
-                                        : 'bg-yellow-100 text-yellow-700'
+                              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ${
+                                uiState.statusTone === 'success'
+                                  ? 'bg-green-50 text-green-700'
+                                  : uiState.statusTone === 'danger'
+                                    ? 'bg-red-50 text-red-700'
+                                    : uiState.statusTone === 'warn'
+                                      ? 'bg-yellow-50 text-yellow-700'
+                                      : 'bg-gray-50 text-gray-700'
                               }`}
                             >
-                              {stateInfo.state === 'COMPLETED' ? (
+                              {uiState.statusTone === 'success' ? (
                                 <CheckCircle className="h-3 w-3" />
-                              ) : stateInfo.state === 'PAYMENT_PENDING' ? (
-                                <CreditCard className="h-3 w-3" />
-                              ) : stateInfo.state === 'RECEIPT_PENDING' ? (
-                                <PackageCheck className="h-3 w-3" />
+                              ) : uiState.statusTone === 'danger' ? (
+                                <AlertCircle className="h-3 w-3" />
                               ) : (
                                 <Clock className="h-3 w-3" />
                               )}
-                              {stateInfo.label}
+                              {uiState.statusLabel}
                             </span>
-                          </div>
-
-                          {/* Preis mit Breakdown */}
-                          <div className="mb-2">
-                            {purchase.itemPrice && purchase.shippingCost !== undefined ? (
-                              <div className="text-sm text-gray-600">
-                                <div className="text-xl font-bold text-green-700">
-                                  CHF {new Intl.NumberFormat('de-CH').format(total)}
-                                </div>
-                                <div className="text-xs">
-                                  Artikel CHF{' '}
-                                  {new Intl.NumberFormat('de-CH').format(purchase.itemPrice)}
-                                  {purchase.shippingCost > 0 &&
-                                    ` + Versand CHF ${new Intl.NumberFormat('de-CH').format(purchase.shippingCost)}`}
-                                  {purchase.platformFee &&
-                                    purchase.platformFee > 0 &&
-                                    ` + Gebühr CHF ${new Intl.NumberFormat('de-CH').format(purchase.platformFee)}`}
-                                </div>
-                              </div>
-                            ) : (
-                              <div className="text-xl font-bold text-green-700">
-                                CHF {new Intl.NumberFormat('de-CH').format(total)}
-                              </div>
+                            {uiState.deadlineText && (
+                              <span className="text-xs text-gray-600">{uiState.deadlineText}</span>
                             )}
                           </div>
                         </div>
 
-                        {/* Rechte Seite - Verkäufer & Aktionen */}
-                        <div className="flex-shrink-0 text-right">
-                          <div className="mb-2">
-                            <div className="mb-1 text-xs text-gray-500">Verkäufer</div>
-                            <div className="text-sm font-medium text-gray-900">
-                              {purchase.watch.seller
-                                ? purchase.watch.seller.firstName && purchase.watch.seller.lastName
-                                  ? `${purchase.watch.seller.firstName} ${purchase.watch.seller.lastName}`
-                                  : purchase.watch.seller.name ||
-                                    purchase.watch.seller.email ||
-                                    'Unbekannt'
-                                : 'Unbekannt'}
-                            </div>
-                          </div>
-
-                          {/* Deadline Info */}
-                          {stateInfo.deadline && stateInfo.deadline.date && (
-                            <div
-                              className={`mb-2 rounded px-2 py-1 text-xs font-medium ${
-                                stateInfo.deadline.isOverdue
-                                  ? 'bg-red-100 text-red-700'
-                                  : stateInfo.deadline.daysRemaining !== null &&
-                                      stateInfo.deadline.daysRemaining <= 2
-                                    ? 'bg-orange-100 text-orange-700'
-                                    : 'bg-yellow-100 text-yellow-700'
-                              }`}
-                            >
-                              {stateInfo.deadline.isOverdue
-                                ? `⚠️ ${stateInfo.deadline.label} überschritten`
-                                : stateInfo.deadline.daysRemaining !== null &&
-                                    stateInfo.deadline.daysRemaining > 0
-                                  ? `⏰ ${stateInfo.deadline.daysRemaining} Tag${stateInfo.deadline.daysRemaining !== 1 ? 'e' : ''} bis ${stateInfo.deadline.label}`
-                                  : `⏰ ${stateInfo.deadline.label} läuft heute ab`}
-                            </div>
-                          )}
-
-                          {/* Primary CTA - Next Action */}
-                          {stateInfo.nextAction && (
+                        {/* Right Side - Primary Action */}
+                        <div className="flex-shrink-0">
+                          {uiState.primaryAction ? (
                             <button
-                              onClick={() => {
-                                if (stateInfo.nextAction?.action === 'contact_seller') {
-                                  setSelectedPurchase(purchase)
-                                  setShowSellerInfo(true)
-                                } else if (stateInfo.nextAction?.action === 'pay') {
-                                  handlePayment(purchase)
-                                } else if (stateInfo.nextAction?.action === 'confirm_receipt') {
-                                  handleConfirmReceived(purchase.id)
-                                } else if (stateInfo.nextAction?.action === 'view_dispute') {
-                                  setExpandedPurchaseId(purchase.id)
-                                }
-                              }}
-                              disabled={
-                                stateInfo.nextAction?.action === 'pay' &&
-                                processingStripePayment === purchase.id
-                              }
-                              className={`mb-2 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 ${
-                                stateInfo.nextAction.type === 'primary'
-                                  ? 'bg-primary-600 hover:bg-primary-700'
-                                  : stateInfo.nextAction.type === 'danger'
-                                    ? 'bg-red-600 hover:bg-red-700'
-                                    : 'bg-gray-600 hover:bg-gray-700'
+                              onClick={uiState.primaryAction.onClick}
+                              disabled={processingStripePayment === purchase.id}
+                              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors disabled:opacity-50 ${
+                                uiState.primaryAction.variant === 'danger'
+                                  ? 'bg-red-600 hover:bg-red-700'
+                                  : 'bg-primary-600 hover:bg-primary-700'
                               }`}
                             >
-                              {stateInfo.nextAction?.action === 'pay' &&
-                              processingStripePayment === purchase.id ? (
-                                <span className="flex items-center justify-center gap-2">
+                              {processingStripePayment === purchase.id ? (
+                                <>
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                   Wird vorbereitet...
-                                </span>
-                              ) : stateInfo.nextAction?.action === 'pay' &&
-                                purchase.paymentProtectionEnabled &&
-                                purchase.watch.seller?.stripeOnboardingComplete ? (
-                                <span className="flex items-center justify-center gap-2">
-                                  <Shield className="h-4 w-4" />
-                                  Sicher bezahlen
-                                </span>
+                                </>
+                              ) : uiState.primaryAction.icon ? (
+                                <>
+                                  {iconMap[uiState.primaryAction.icon] &&
+                                    iconMap[uiState.primaryAction.icon]({ className: 'h-4 w-4' })}
+                                  {uiState.primaryAction.label}
+                                </>
                               ) : (
-                                stateInfo.nextAction.label
+                                uiState.primaryAction.label
                               )}
                             </button>
+                          ) : (
+                            <div className="h-10" /> // Spacer when no action
                           )}
-
-                          {/* Secondary: Details */}
-                          <button
-                            onClick={() => setExpandedPurchaseId(isExpanded ? null : purchase.id)}
-                            className="w-full rounded border border-primary-300 px-3 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50 hover:text-primary-700"
-                          >
-                            {isExpanded ? 'Weniger anzeigen' : 'Details anzeigen'}
-                          </button>
                         </div>
                       </div>
                     </div>
                   </div>
                 </div>
 
-                {/* Erweiterte Ansicht */}
+                {/* Expanded Details */}
                 {isExpanded && (
-                  <div className="border-t border-gray-200 bg-gray-50 p-4">
+                  <div className="border-t border-gray-100 bg-gray-50 p-4">
                     <div className="space-y-4">
-                      {/* Status-Timeline - Kompakt */}
+                      {/* Timeline */}
                       <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
-                        <div className="flex items-center gap-1">
-                          <div
-                            className={`h-2 w-2 rounded-full ${
-                              purchase.status === 'pending' ? 'bg-yellow-500' : 'bg-green-500'
-                            }`}
-                          />
+                        <div className="flex items-center gap-1.5">
+                          <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                           <span>Kauf abgeschlossen</span>
                         </div>
                         {(purchase.sellerContactedAt || purchase.buyerContactedAt) && (
-                          <div className="flex items-center gap-1">
-                            <div className="h-2 w-2 rounded-full bg-blue-500" />
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
                             <span>Kontakt aufgenommen</span>
                           </div>
                         )}
                         {purchase.paymentConfirmed && (
-                          <div className="flex items-center gap-1">
-                            <div className="h-2 w-2 rounded-full bg-green-500" />
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                             <span>Zahlung bestätigt</span>
                           </div>
                         )}
+                        {purchase.trackingNumber && (
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
+                            <span>Versandt</span>
+                          </div>
+                        )}
                         {purchase.itemReceived && (
-                          <div className="flex items-center gap-1">
-                            <div className="h-2 w-2 rounded-full bg-green-500" />
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                             <span>Erhalt bestätigt</span>
                           </div>
                         )}
                         {purchase.status === 'completed' && (
-                          <div className="flex items-center gap-1">
-                            <div className="h-2 w-2 rounded-full bg-green-500" />
+                          <div className="flex items-center gap-1.5">
+                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
                             <span className="font-medium text-gray-900">Abgeschlossen</span>
                           </div>
                         )}
                       </div>
 
-                      {/* Fristen - Kompakt */}
-                      <div className="flex flex-wrap gap-2">
-                        {/* Contact Deadline */}
-                        {purchase.contactDeadline &&
-                          (() => {
-                            const contactDeadline = new Date(purchase.contactDeadline)
-                            const contactDaysRemaining = Math.ceil(
-                              (contactDeadline.getTime() - new Date().getTime()) /
-                                (1000 * 60 * 60 * 24)
-                            )
-                            const contactIsOverdue =
-                              purchase.contactDeadlineMissed ||
-                              contactDeadline.getTime() < new Date().getTime()
-
-                            return (
-                              <div
-                                className={`rounded px-3 py-2 text-xs font-medium ${
-                                  contactIsOverdue
-                                    ? 'bg-red-100 text-red-800'
-                                    : contactDaysRemaining <= 2
-                                      ? 'bg-orange-100 text-orange-800'
-                                      : 'bg-yellow-100 text-yellow-800'
-                                }`}
-                              >
-                                {contactIsOverdue
-                                  ? '❌ Kontaktfrist überschritten'
-                                  : contactDaysRemaining > 0
-                                    ? `⏰ Kontakt: ${contactDaysRemaining} Tag${contactDaysRemaining !== 1 ? 'e' : ''}`
-                                    : '⏰ Kontaktfrist läuft heute ab'}
-                                {!purchase.buyerContactedAt && (
-                                  <button
-                                    onClick={async () => {
-                                      try {
-                                        const res = await fetch(
-                                          `/api/purchases/${purchase.id}/mark-contacted`,
-                                          {
-                                            method: 'POST',
-                                            headers: { 'Content-Type': 'application/json' },
-                                            body: JSON.stringify({ role: 'buyer' }),
-                                          }
-                                        )
-                                        if (res.ok) {
-                                          toast.success('Kontaktaufnahme markiert!')
-                                          handleMarkPaid()
-                                        } else {
-                                          const data = await res.json()
-                                          toast.error(data.message || 'Fehler beim Markieren')
-                                        }
-                                      } catch (error) {
-                                        console.error('Error marking contact:', error)
-                                        toast.error('Fehler beim Markieren der Kontaktaufnahme')
-                                      }
-                                    }}
-                                    className="ml-2 rounded bg-white px-2 py-0.5 text-xs hover:bg-gray-50"
-                                  >
-                                    ✓ Markieren
-                                  </button>
-                                )}
-                              </div>
-                            )
-                          })()}
-
-                        {/* Payment Deadline */}
-                        {purchase.paymentDeadline &&
-                          (() => {
-                            const paymentDeadline = new Date(purchase.paymentDeadline)
-                            const paymentDaysRemaining = Math.ceil(
-                              (paymentDeadline.getTime() - new Date().getTime()) /
-                                (1000 * 60 * 60 * 24)
-                            )
-                            const paymentIsOverdue =
-                              purchase.paymentDeadlineMissed ||
-                              paymentDeadline.getTime() < new Date().getTime()
-
-                            return (
-                              <div
-                                className={`rounded px-3 py-2 text-xs font-medium ${
-                                  paymentIsOverdue
-                                    ? 'bg-red-100 text-red-800'
-                                    : paymentDaysRemaining <= 3
-                                      ? 'bg-orange-100 text-orange-800'
-                                      : 'bg-blue-100 text-blue-800'
-                                }`}
-                              >
-                                {paymentIsOverdue
-                                  ? '❌ Zahlungsfrist überschritten'
-                                  : paymentDaysRemaining > 0
-                                    ? `💳 Zahlung: ${paymentDaysRemaining} Tag${paymentDaysRemaining !== 1 ? 'e' : ''}`
-                                    : '💳 Zahlungsfrist läuft heute ab'}
-                              </div>
-                            )
-                          })()}
-                      </div>
-
-                      {/* Verkäufer & Zahlung - Kompakt */}
-                      <div className="space-y-3">
-                        {/* Verkäufer-Kontaktdaten - Kompakt */}
-                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                      {/* Seller Contact */}
+                      {purchase.watch.seller && (
+                        <div className="rounded-lg border border-gray-200 bg-white p-3">
                           <div className="mb-2 flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4 text-blue-600" />
-                              <span className="text-sm font-semibold text-gray-900">Verkäufer</span>
-                            </div>
+                            <span className="text-sm font-semibold text-gray-900">Verkäufer</span>
                             <button
                               onClick={() => {
                                 setSelectedPurchase(purchase)
                                 setShowSellerInfo(true)
                               }}
-                              className="text-xs text-blue-700 underline hover:text-blue-800"
+                              className="text-xs text-primary-600 hover:text-primary-700 hover:underline"
                             >
-                              Details
+                              Vollständige Details
                             </button>
                           </div>
-                          <div className="space-y-1 text-xs text-gray-700">
-                            {purchase.watch.seller &&
-                              (purchase.watch.seller.firstName ||
-                                purchase.watch.seller.lastName) && (
-                                <div className="font-medium text-gray-900">
-                                  {purchase.watch.seller.firstName} {purchase.watch.seller.lastName}
-                                </div>
-                              )}
-                            {purchase.watch.seller?.phone && (
-                              <div className="flex items-center gap-1">
-                                <Phone className="h-3 w-3" />
+                          <div className="space-y-1.5 text-sm text-gray-700">
+                            {(purchase.watch.seller.firstName ||
+                              purchase.watch.seller.lastName) && (
+                              <div className="font-medium text-gray-900">
+                                {purchase.watch.seller.firstName} {purchase.watch.seller.lastName}
+                              </div>
+                            )}
+                            {purchase.watch.seller.phone && (
+                              <div className="flex items-center gap-1.5">
+                                <Phone className="h-3.5 w-3.5 text-gray-400" />
                                 {purchase.watch.seller.phone}
                               </div>
                             )}
-                            {purchase.watch.seller?.email && (
-                              <div className="flex items-center gap-1">
-                                <Mail className="h-3 w-3" />
+                            {purchase.watch.seller.email && (
+                              <div className="flex items-center gap-1.5">
+                                <Mail className="h-3.5 w-3.5 text-gray-400" />
                                 {purchase.watch.seller.email}
                               </div>
                             )}
                           </div>
                         </div>
+                      )}
 
-                        {/* Zahlungsinformationen - Kompakt */}
-                        {(purchase.sellerContactedAt || purchase.buyerContactedAt) &&
-                          !purchase.paymentConfirmed && (
-                            <div>
-                              <div className="mb-2 flex items-center gap-2">
-                                <CreditCard className="h-4 w-4 text-gray-600" />
-                                <span className="text-sm font-semibold text-gray-900">
-                                  Zahlungsinformationen
-                                </span>
-                              </div>
-                              <PaymentInfoCard purchaseId={purchase.id} showQRCode={false} />
-                            </div>
-                          )}
-
-                        {/* Versand-Tracking - Kompakt */}
-                        {purchase.trackingNumber && (
-                          <div>
+                      {/* Payment Info */}
+                      {(purchase.sellerContactedAt || purchase.buyerContactedAt) &&
+                        !purchase.paymentConfirmed && (
+                          <div className="rounded-lg border border-gray-200 bg-white p-3">
                             <div className="mb-2 flex items-center gap-2">
-                              <Package className="h-4 w-4 text-gray-600" />
+                              <CreditCard className="h-4 w-4 text-gray-600" />
                               <span className="text-sm font-semibold text-gray-900">
-                                Versand-Tracking
+                                Zahlungsinformationen
                               </span>
                             </div>
-                            <ShippingInfoCard purchaseId={purchase.id} />
+                            <PaymentInfoCard purchaseId={purchase.id} showQRCode={false} />
                           </div>
                         )}
-                      </div>
-                    </div>
 
-                    {/* Aktionen - Kompakt */}
-                    <div className="mt-4 border-t border-gray-200 pt-3">
-                      <div className="flex flex-wrap gap-2">
-                        {/* Stornierungs-Button */}
-                        {purchase.status === 'pending' &&
-                          purchase.contactDeadlineMissed &&
-                          !purchase.sellerContactedAt && (
-                            <button
-                              onClick={async () => {
-                                if (
-                                  !confirm(
-                                    'Möchten Sie diesen Kauf wirklich stornieren? Der Verkäufer hat nicht innerhalb von 7 Tagen kontaktiert.'
-                                  )
-                                ) {
-                                  return
-                                }
-                                try {
-                                  const res = await fetch(
-                                    `/api/purchases/${purchase.id}/cancel-by-buyer`,
-                                    {
-                                      method: 'POST',
-                                    }
-                                  )
-                                  const data = await res.json()
-                                  if (res.ok) {
-                                    toast.success(
-                                      'Kauf erfolgreich storniert. Die Kommission wurde zurückerstattet.'
-                                    )
-                                    handleMarkPaid()
-                                  } else {
-                                    toast.error(data.message || 'Fehler beim Stornieren')
-                                  }
-                                } catch (error) {
-                                  console.error('Error cancelling purchase:', error)
-                                  toast.error('Fehler beim Stornieren')
-                                }
-                              }}
-                              className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700"
-                            >
-                              <AlertCircle className="h-4 w-4" />
-                              Kauf stornieren
-                            </button>
-                          )}
+                      {/* Shipping Tracking */}
+                      {purchase.trackingNumber && (
+                        <div className="rounded-lg border border-gray-200 bg-white p-3">
+                          <div className="mb-2 flex items-center gap-2">
+                            <Package className="h-4 w-4 text-gray-600" />
+                            <span className="text-sm font-semibold text-gray-900">
+                              Versand-Tracking
+                            </span>
+                          </div>
+                          <ShippingInfoCard purchaseId={purchase.id} />
+                        </div>
+                      )}
 
-                        {/* Jetzt bezahlen Button */}
-                        {purchase.status === 'pending' && (
-                          <button
-                            onClick={() => handlePayment(purchase)}
-                            disabled={processingStripePayment === purchase.id}
-                            className="flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700 disabled:opacity-50"
-                          >
-                            {processingStripePayment === purchase.id ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Wird vorbereitet...
-                              </>
-                            ) : purchase.paymentProtectionEnabled &&
-                              purchase.watch.seller?.stripeOnboardingComplete ? (
-                              <>
-                                <Shield className="h-4 w-4" />
-                                Sicher bezahlen
-                              </>
-                            ) : (
-                              <>
-                                <PaymentIcon className="h-4 w-4" />
-                                Jetzt Artikel bezahlen
-                              </>
-                            )}
-                          </button>
-                        )}
-
-                        {/* Artikel erhalten Button */}
-                        {!purchase.itemReceived && (
-                          <button
-                            onClick={() => handleConfirmReceived(purchase.id)}
-                            className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700"
-                          >
-                            <PackageCheck className="h-4 w-4" />
-                            Artikel erhalten bestätigen
-                          </button>
-                        )}
-
-                        {/* Verkäufer kontaktieren */}
-                        <button
-                          onClick={() => {
-                            setSelectedPurchase(purchase)
-                            setShowSellerInfo(true)
-                          }}
-                          className="flex items-center gap-2 rounded-lg bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-200"
-                        >
-                          <MessageSquare className="h-4 w-4" />
-                          Verkäufer kontaktieren
-                        </button>
-                      </div>
+                      {/* Secondary Actions */}
+                      {uiState.secondaryActions.length > 0 && (
+                        <div className="flex flex-wrap gap-2 border-t border-gray-200 pt-3">
+                          {uiState.secondaryActions.map((action, idx) => {
+                            const Icon = action.icon ? iconMap[action.icon] : null
+                            return (
+                              <button
+                                key={idx}
+                                onClick={action.onClick}
+                                className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                              >
+                                {Icon && <Icon className="h-4 w-4" />}
+                                {action.label}
+                              </button>
+                            )
+                          })}
+                        </div>
+                      )}
                     </div>
                   </div>
                 )}
+
+                {/* Expand/Collapse Button */}
+                <div className="border-t border-gray-100 px-4 py-2">
+                  <button
+                    onClick={() => setExpandedPurchaseId(isExpanded ? null : purchase.id)}
+                    className="flex w-full items-center justify-center gap-2 text-sm text-gray-600 hover:text-gray-900"
+                  >
+                    {isExpanded ? (
+                      <>
+                        <ChevronUp className="h-4 w-4" />
+                        Weniger anzeigen
+                      </>
+                    ) : (
+                      <>
+                        <ChevronDown className="h-4 w-4" />
+                        Details anzeigen
+                      </>
+                    )}
+                  </button>
+                </div>
               </div>
             )
           })}

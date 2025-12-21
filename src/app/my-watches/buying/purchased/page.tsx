@@ -1,11 +1,11 @@
-import { redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { MyPurchasesClient } from './MyPurchasesClient'
+import { Header } from '@/components/layout/Header'
+import { authOptions } from '@/lib/auth'
 import { getMyPurchases, MyPurchaseItem } from '@/lib/my-purchases'
+import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
+import { redirect } from 'next/navigation'
+import { MyPurchasesClient } from './MyPurchasesClient'
 
 // Revalidate every 30 seconds for fresh data
 export const revalidate = 30
@@ -25,7 +25,9 @@ export default async function MyPurchasedPage() {
     purchases = await getMyPurchases(session.user.id)
     // WICHTIG: Wenn leeres Array, könnte temporärer Fehler sein - Client wird API-Route verwenden
     if (purchases.length === 0) {
-      console.warn('[my-purchases] Server-side returned empty array, client will try API fallback...')
+      console.warn(
+        '[my-purchases] Server-side returned empty array, client will try API fallback...'
+      )
     }
   } catch (error) {
     console.error('[my-purchases] Error fetching purchases server-side:', error)
@@ -42,7 +44,7 @@ export default async function MyPurchasedPage() {
             href="/my-watches/buying"
             className="inline-flex items-center font-medium text-primary-600 hover:text-primary-700"
           >
-            ← Zurück zu Mein Kaufen
+            ← Zurück zu Meinen Käufen
           </Link>
         </div>
 
