@@ -36,8 +36,19 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ draft: null })
     }
 
-    // Parse formData and include image URLs from draftImages
-    const imageUrls = draft.draftImages.map(img => img.url)
+    // Parse images from the images field (JSON string) or draftImages relation
+    let imageUrls: string[] = []
+    if (draft.images) {
+      try {
+        imageUrls = JSON.parse(draft.images)
+      } catch {
+        imageUrls = []
+      }
+    }
+    // Fallback to draftImages relation if images field is empty
+    if (imageUrls.length === 0 && draft.draftImages.length > 0) {
+      imageUrls = draft.draftImages.map(img => img.url)
+    }
 
     return NextResponse.json({
       draft: {

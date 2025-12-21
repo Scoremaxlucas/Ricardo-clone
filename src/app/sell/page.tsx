@@ -301,26 +301,31 @@ function SellPageContent() {
     setIsSavingDraft(true)
     try {
       const userId = (session?.user as { id?: string })?.id
-      const saved = await saveDraft(
-        {
+
+      // Send images to API (they'll be uploaded to Blob Storage)
+      const response = await fetch('/api/sell/drafts/upsert', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
           formData: {
             ...formData,
-            images: [], // Exclude images from formData (stored separately)
+            images: undefined, // Don't include in formData JSON
           },
-          imageMetadata: {
-            count: formData.images.length,
-            titleImageIndex,
-          },
+          images: formData.images || [], // Send actual image URLs/data
           selectedCategory,
           selectedSubcategory,
           selectedBooster,
           paymentProtectionEnabled,
           currentStep,
-        },
-        userId
-      )
+          titleImageIndex,
+        }),
+      })
 
-      if (saved) {
+      if (response.ok) {
+        const data = await response.json()
+        if (data.draftId && !currentDraftId) {
+          setCurrentDraftId(data.draftId)
+        }
         setLastSavedAt(new Date())
       }
     } catch (error) {
@@ -337,6 +342,7 @@ function SellPageContent() {
     paymentProtectionEnabled,
     currentStep,
     titleImageIndex,
+    currentDraftId,
   ])
 
   // Scroll to top and focus heading when step changes
@@ -536,14 +542,27 @@ function SellPageContent() {
   }, [session?.user])
 
   // Auto-save on changes (debounced) - Server-seitig
+  // ONLY save when user has meaningful content AND hasn't just published
+  const [hasPublished, setHasPublished] = useState(false)
   useEffect(() => {
+    // Don't auto-save if user just published
+    if (hasPublished) return
+
+    // Only save if there's meaningful content (not just initial form)
+    const hasMeaningfulContent =
+      (formData.title && formData.title.trim().length > 3) ||
+      (formData.description && formData.description.trim().length > 10) ||
+      (formData.images && formData.images.length > 0)
+
+    if (!hasMeaningfulContent) return
+
     const timer = setTimeout(() => {
       if (selectedCategory || formData.title || formData.description) {
         saveDraftData()
       }
-    }, 2000) // Increased debounce for server requests
+    }, 5000) // Increased debounce to 5 seconds
     return () => clearTimeout(timer)
-  }, [formData, selectedCategory, selectedSubcategory, currentStep, saveDraftData])
+  }, [formData.title, formData.description, formData.images, selectedCategory, selectedSubcategory, currentStep, saveDraftData, hasPublished])
 
   // URL navigation
   useEffect(() => {
@@ -938,9 +957,24 @@ function SellPageContent() {
       })
 
       if (response.ok) {
-        // Clear draft on success (both server and localStorage)
+        // Mark as published to stop auto-save
+        setHasPublished(true)
+
+        // Clear ALL drafts for this user (both server and localStorage)
         const userId = (session?.user as { id?: string })?.id
-        await clearDraft(userId, currentDraftId || null)
+        if (userId) {
+          // Clear by ID if we have it
+          if (currentDraftId) {
+            await clearDraft(userId, currentDraftId)
+          }
+          // Also call API to clear all user drafts
+          try {
+            await fetch('/api/sell/drafts/clear-all', { method: 'DELETE' })
+          } catch (e) {
+            // Ignore errors, draft was already deleted
+          }
+        }
+
         toast.success('Artikel erfolgreich veröffentlicht!', {
           position: 'top-right',
           duration: 3000,
