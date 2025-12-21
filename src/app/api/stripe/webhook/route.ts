@@ -29,54 +29,80 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Ungültige Signatur' }, { status: 400 })
     }
 
-    console.log(`[stripe/webhook] Event empfangen: ${event.type}`)
+    console.log(`[stripe/webhook] Event empfangen: ${event.type} (${event.id})`)
 
-    // Verarbeite verschiedene Event-Typen
-    switch (event.type) {
-      case 'payment_intent.succeeded':
-        // Prüfe ob es eine Order-Zahlung ist
-        const paymentIntent = event.data.object as Stripe.PaymentIntent
-        if (paymentIntent.metadata?.orderId) {
-          await handlePaymentIntentSucceeded(paymentIntent)
-        } else {
-          // Alte Invoice-Logik
-          await handlePaymentSuccess(paymentIntent)
-        }
-        break
+    // Global Idempotency Check: Prüfe ob Event bereits verarbeitet wurde
+    if (await isEventProcessed(event.id, event.type)) {
+      console.log(`[stripe/webhook] Event ${event.id} bereits verarbeitet, überspringe`)
+      return NextResponse.json({ received: true, skipped: true })
+    }
 
-      case 'payment_intent.payment_failed':
-        await handlePaymentFailed(event.data.object as Stripe.PaymentIntent)
-        break
+    let orderId: string | undefined
+    let processingError: string | undefined
 
-      case 'payment_intent.amount_capturable_updated':
-        // TWINT-Zahlungen können hier behandelt werden
-        const twintPaymentIntent = event.data.object as Stripe.PaymentIntent
-        if (
-          twintPaymentIntent.metadata?.type === 'invoice_payment_twint' &&
-          twintPaymentIntent.status === 'succeeded'
-        ) {
-          await handlePaymentSuccess(twintPaymentIntent)
-        }
-        break
+    try {
+      // Verarbeite verschiedene Event-Typen
+      switch (event.type) {
+        case 'payment_intent.succeeded':
+          // Prüfe ob es eine Order-Zahlung ist
+          const paymentIntent = event.data.object as Stripe.PaymentIntent
+          orderId = paymentIntent.metadata?.orderId
+          if (orderId) {
+            await handlePaymentIntentSucceeded(paymentIntent)
+          } else {
+            // Alte Invoice-Logik
+            await handlePaymentSuccess(paymentIntent)
+          }
+          break
 
-      case 'checkout.session.completed':
-        await handleCheckoutSessionCompleted(event.data.object as Stripe.Checkout.Session)
-        break
+        case 'payment_intent.payment_failed':
+          await handlePaymentFailed(event.data.object as Stripe.PaymentIntent)
+          break
 
-      case 'transfer.created':
-        await handleTransferCreated(event.data.object as Stripe.Transfer)
-        break
+        case 'payment_intent.amount_capturable_updated':
+          // TWINT-Zahlungen können hier behandelt werden
+          const twintPaymentIntent = event.data.object as Stripe.PaymentIntent
+          if (
+            twintPaymentIntent.metadata?.type === 'invoice_payment_twint' &&
+            twintPaymentIntent.status === 'succeeded'
+          ) {
+            await handlePaymentSuccess(twintPaymentIntent)
+          }
+          break
 
-      case 'charge.refunded':
-        await handleChargeRefunded(event.data.object as Stripe.Charge)
-        break
+        case 'checkout.session.completed':
+          const session = event.data.object as Stripe.Checkout.Session
+          orderId = session.metadata?.orderId
+          await handleCheckoutSessionCompleted(session)
+          break
 
-      case 'account.updated':
-        await handleAccountUpdated(event.data.object as Stripe.Account)
-        break
+        case 'transfer.created':
+          const transfer = event.data.object as Stripe.Transfer
+          orderId = transfer.metadata?.orderId
+          await handleTransferCreated(transfer)
+          break
 
-      default:
-        console.log(`[stripe/webhook] Unbehandeltes Event: ${event.type}`)
+        case 'charge.refunded':
+          const charge = event.data.object as Stripe.Charge
+          orderId = charge.metadata?.orderId
+          await handleChargeRefunded(charge)
+          break
+
+        case 'account.updated':
+          await handleAccountUpdated(event.data.object as Stripe.Account)
+          break
+
+        default:
+          console.log(`[stripe/webhook] Unbehandeltes Event: ${event.type}`)
+      }
+
+      // Mark event as successfully processed
+      await markEventProcessed(event.id, event.type, orderId, true)
+    } catch (processingErr: any) {
+      processingError = processingErr.message
+      // Mark event as failed (so we can retry or investigate)
+      await markEventProcessed(event.id, event.type, orderId, false, processingError)
+      throw processingErr // Re-throw to return 500 to Stripe
     }
 
     return NextResponse.json({ received: true })

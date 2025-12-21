@@ -1214,3 +1214,20 @@ model PayoutAuditLog {
   @@index([action])
   @@map("payout_audit_logs")
 }
+
+// Stripe Webhook Events - Tracks processed webhook events for idempotency
+model WebhookEvent {
+  id           String   @id @default(cuid())
+  stripeEventId String  @unique // Stripe Event ID (evt_xxx)
+  eventType    String   // Event type (e.g., 'checkout.session.completed')
+  orderId      String?  // Related order if applicable
+  processedAt  DateTime @default(now())
+  success      Boolean  @default(true)
+  errorMessage String?  // Error message if processing failed
+
+  @@index([stripeEventId])
+  @@index([orderId])
+  @@index([eventType])
+  @@index([processedAt])
+  @@map("webhook_events")
+}

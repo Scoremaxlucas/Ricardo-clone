@@ -708,14 +708,16 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                       {/* Fristen - Kompakt */}
                       <div className="flex flex-wrap gap-2">
                         {/* Contact Deadline */}
-                        {purchase.contactDeadline && (
+                        {purchase.contactDeadline &&
                           (() => {
                             const contactDeadline = new Date(purchase.contactDeadline)
                             const contactDaysRemaining = Math.ceil(
-                              (contactDeadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+                              (contactDeadline.getTime() - new Date().getTime()) /
+                                (1000 * 60 * 60 * 24)
                             )
                             const contactIsOverdue =
-                              purchase.contactDeadlineMissed || contactDeadline.getTime() < new Date().getTime()
+                              purchase.contactDeadlineMissed ||
+                              contactDeadline.getTime() < new Date().getTime()
 
                             return (
                               <div
@@ -763,18 +765,19 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                                 )}
                               </div>
                             )
-                          })()
-                        )}
+                          })()}
 
                         {/* Payment Deadline */}
-                        {purchase.paymentDeadline && (
+                        {purchase.paymentDeadline &&
                           (() => {
                             const paymentDeadline = new Date(purchase.paymentDeadline)
                             const paymentDaysRemaining = Math.ceil(
-                              (paymentDeadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
+                              (paymentDeadline.getTime() - new Date().getTime()) /
+                                (1000 * 60 * 60 * 24)
                             )
                             const paymentIsOverdue =
-                              purchase.paymentDeadlineMissed || paymentDeadline.getTime() < new Date().getTime()
+                              purchase.paymentDeadlineMissed ||
+                              paymentDeadline.getTime() < new Date().getTime()
 
                             return (
                               <div
@@ -793,8 +796,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                                     : '💳 Zahlungsfrist läuft heute ab'}
                               </div>
                             )
-                          })()
-                        )}
+                          })()}
                       </div>
 
                       {/* Verkäufer & Zahlung - Kompakt */}
