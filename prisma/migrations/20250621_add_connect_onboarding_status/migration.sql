@@ -8,10 +8,10 @@ ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "connectOnboardingStatus" TEXT NOT N
 ALTER TABLE "User" ADD COLUMN IF NOT EXISTS "payoutsEnabled" BOOLEAN NOT NULL DEFAULT false;
 
 -- Update existing users who have completed Stripe onboarding
-UPDATE "User" 
+UPDATE "User"
 SET "connectOnboardingStatus" = 'COMPLETE',
     "payoutsEnabled" = true
-WHERE "stripeOnboardingComplete" = true 
+WHERE "stripeOnboardingComplete" = true
   AND "stripeConnectedAccountId" IS NOT NULL;
 
 -- Update existing users who have started but not completed Stripe onboarding
