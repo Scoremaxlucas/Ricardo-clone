@@ -1,10 +1,11 @@
 import { generateArticleNumber } from '@/lib/article-number'
 import { authOptions } from '@/lib/auth'
 import { moderateWatch } from '@/lib/auto-moderation'
+import { isBlobUrl, uploadImagesToBlob } from '@/lib/blob-storage'
 import { prisma } from '@/lib/prisma'
+import { canSell } from '@/lib/verification'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
-import { uploadImagesToBlob, isBlobUrl } from '@/lib/blob-storage'
 
 // WICHTIG: Erhöhe Body-Size-Limit für große Bild-Uploads
 export const runtime = 'nodejs'
@@ -471,19 +472,21 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prüfe Verifizierung: User muss verified=true UND verificationStatus='approved' haben
-    if (!seller.verified || seller.verificationStatus !== 'approved') {
+    // Prüfe Verifizierung: Use single source of truth - canSell helper
+    if (!canSell(seller)) {
       console.log('Seller not verified:', {
         id: seller.id,
         email: seller.email,
         verified: seller.verified,
         verificationStatus: seller.verificationStatus,
+        isBlocked: seller.isBlocked,
       })
       return NextResponse.json(
         {
           message:
             'Sie müssen sich zuerst verifizieren, um Artikel verkaufen zu können. Bitte besuchen Sie die Verifizierungsseite.',
           requiresVerification: true,
+          errorCode: 'VERIFICATION_REQUIRED',
         },
         { status: 403 }
       )
@@ -629,7 +632,8 @@ export async function POST(request: NextRequest) {
           return null
         }
       })(),
-      paymentProtectionEnabled: paymentProtectionEnabled === true || paymentProtectionEnabled === 'true' || false,
+      paymentProtectionEnabled:
+        paymentProtectionEnabled === true || paymentProtectionEnabled === 'true' || false,
     }
 
     // Füge Auktionsfelder nur hinzu, wenn es eine aktive Auktion ist
@@ -787,22 +791,29 @@ export async function POST(request: NextRequest) {
     // Jetzt haben wir die Watch-ID für den Blob-Pfad
     if (allImages.length > 0 && watch.id) {
       try {
-        console.log(`[Watch Create] Uploading ${allImages.length} images to Blob Storage for watch ${watch.id}...`)
+        console.log(
+          `[Watch Create] Uploading ${allImages.length} images to Blob Storage for watch ${watch.id}...`
+        )
 
         const basePath = `watches/${watch.id}`
 
         // Upload alle Bilder zu Blob Storage
         const blobImageUrls = await uploadImagesToBlob(allImages, basePath)
 
-        console.log(`[Watch Create] Successfully uploaded ${blobImageUrls.length} images to Blob Storage`)
+        console.log(
+          `[Watch Create] Successfully uploaded ${blobImageUrls.length} images to Blob Storage`
+        )
 
         // Filtere bereits vorhandene URLs (werden nicht erneut hochgeladen)
-        const existingUrls = allImages.filter(img =>
-          typeof img === 'string' && isBlobUrl(img)
+        const existingUrls = allImages.filter(
+          img => typeof img === 'string' && isBlobUrl(img)
         ) as string[]
 
         // Kombiniere neue Blob URLs mit bestehenden URLs
-        const finalImageUrls = [...existingUrls, ...blobImageUrls.filter(url => !existingUrls.includes(url))]
+        const finalImageUrls = [
+          ...existingUrls,
+          ...blobImageUrls.filter(url => !existingUrls.includes(url)),
+        ]
 
         // Update Watch mit Blob URLs statt Base64
         if (finalImageUrls.length > 0) {
@@ -813,7 +824,9 @@ export async function POST(request: NextRequest) {
             },
           })
 
-          console.log(`[Watch Create] Updated watch ${watch.id} with ${finalImageUrls.length} Blob URLs`)
+          console.log(
+            `[Watch Create] Updated watch ${watch.id} with ${finalImageUrls.length} Blob URLs`
+          )
         }
       } catch (error) {
         console.error('[Watch Create] Error uploading images to Blob Storage:', error)

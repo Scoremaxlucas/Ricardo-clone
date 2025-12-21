@@ -2,6 +2,7 @@ import { authOptions } from '@/lib/auth'
 import { deleteImageFromBlob, uploadImagesToBlob } from '@/lib/blob-storage'
 import { canEditField, getEditPolicy, type ListingState } from '@/lib/edit-policy'
 import { prisma } from '@/lib/prisma'
+import { canSell } from '@/lib/verification'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -57,6 +58,28 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     if (watch.sellerId !== session.user.id) {
       return NextResponse.json(
         { message: 'Sie sind nicht berechtigt, dieses Angebot zu bearbeiten' },
+        { status: 403 }
+      )
+    }
+
+    // Prüfe Verifizierung: Use single source of truth - canSell helper
+    const seller = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        verified: true,
+        verificationStatus: true,
+        isBlocked: true,
+      },
+    })
+
+    if (!seller || !canSell(seller)) {
+      return NextResponse.json(
+        {
+          message:
+            'Sie müssen sich zuerst verifizieren, um Artikel bearbeiten zu können. Bitte besuchen Sie die Verifizierungsseite.',
+          requiresVerification: true,
+          errorCode: 'VERIFICATION_REQUIRED',
+        },
         { status: 403 }
       )
     }

@@ -15,6 +15,7 @@ import {
 } from '@/components/wizard'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { clearDraft, clearOtherUserDrafts, loadDraft, saveDraft } from '@/lib/draft-storage'
+import { canSell, getVerificationStatus } from '@/lib/verification'
 import { AlertCircle, CheckCircle, Loader2, Shield, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
@@ -293,62 +294,18 @@ function SellPageContent() {
   const [isSavingDraft, setIsSavingDraft] = useState(false)
   const [lastSavedAt, setLastSavedAt] = useState<Date | null>(null)
 
-  // Draft save/restore - Server-seitig
+  // Draft save/restore - Server-seitig via new API
   const saveDraftData = useCallback(async () => {
     if (!session?.user) return // Only save if logged in
 
     setIsSavingDraft(true)
     try {
-      const response = await fetch('/api/drafts', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          formData: {
-            ...formData,
-            // Include images for server-side storage
-          },
-          images: formData.images, // Include images for Blob Storage upload
-          selectedCategory,
-          selectedSubcategory,
-          selectedBooster,
-          paymentProtectionEnabled,
-          currentStep,
-          titleImageIndex,
-        }),
-      })
-
-      if (response.ok) {
-        setLastSavedAt(new Date())
-        // Also save to localStorage as backup (userId-scoped)
-        const userId = (session?.user as { id?: string })?.id
-        saveDraft(
-          {
-            formData: {
-              ...formData,
-              images: [], // Exclude images from localStorage
-            },
-            imageMetadata: {
-              count: formData.images.length,
-              titleImageIndex,
-            },
-            selectedCategory,
-            selectedSubcategory,
-            selectedBooster,
-            paymentProtectionEnabled,
-            currentStep,
-          },
-          userId
-        )
-      }
-    } catch (error) {
-      console.error('[Draft] Error saving to server:', error)
-      // Fallback to localStorage if server save fails (userId-scoped)
       const userId = (session?.user as { id?: string })?.id
-      saveDraft(
+      const saved = await saveDraft(
         {
           formData: {
             ...formData,
-            images: [],
+            images: [], // Exclude images from formData (stored separately)
           },
           imageMetadata: {
             count: formData.images.length,
@@ -362,18 +319,24 @@ function SellPageContent() {
         },
         userId
       )
+
+      if (saved) {
+        setLastSavedAt(new Date())
+      }
+    } catch (error) {
+      console.error('[Draft] Error saving draft:', error)
     } finally {
       setIsSavingDraft(false)
     }
   }, [
+    session?.user,
     formData,
-    titleImageIndex,
     selectedCategory,
     selectedSubcategory,
     selectedBooster,
     paymentProtectionEnabled,
     currentStep,
-    session?.user,
+    titleImageIndex,
   ])
 
   // Scroll to top and focus heading when step changes
@@ -493,49 +456,24 @@ function SellPageContent() {
         clearOtherUserDrafts(userId)
       }
 
-      // Try localStorage fallback (userId-scoped)
-      const draft = loadDraft(userId)
-      if (draft) {
-        setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
-        setSelectedCategory(draft.selectedCategory || '')
-        setSelectedSubcategory(draft.selectedSubcategory || '')
-        setSelectedBooster(draft.selectedBooster || 'none')
-        setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
-        setCurrentStep(draft.currentStep || 0)
-        setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
-        setShowDraftRestored(true)
-        if (draft.imageMetadata?.count > 0) {
-          toast('Bilder müssen erneut hochgeladen werden', {
-            icon: 'ℹ️',
-            position: 'top-right',
-            duration: 5000,
-          })
-        }
-        return
-      }
-
+      // Try DB-backed API first (new endpoint)
       try {
-        // Try server first
-        const response = await fetch('/api/drafts')
+        const response = await fetch('/api/sell/drafts/current')
         if (response.ok) {
           const data = await response.json()
-          const drafts = data.drafts || []
-
-          if (drafts.length > 0) {
-            // Use most recent draft
-            const latestDraft = drafts[0]
+          if (data.draft) {
+            const draft = data.draft
             setFormData(prev => ({
               ...prev,
-              ...latestDraft.formData,
+              ...draft.formData,
               // Use draftImages URLs if available, otherwise fallback to images array
-              images:
-                latestDraft.draftImages?.map((img: any) => img.url) || latestDraft.images || [],
+              images: draft.draftImages?.map((img: any) => img.url) || draft.images || [],
             }))
-            setSelectedCategory(latestDraft.selectedCategory || '')
-            setSelectedSubcategory(latestDraft.selectedSubcategory || '')
-            setSelectedBooster(latestDraft.selectedBooster || 'none')
-            setPaymentProtectionEnabled(latestDraft.paymentProtectionEnabled || false)
-            setCurrentStep(latestDraft.currentStep || 0)
+            setSelectedCategory(draft.selectedCategory || '')
+            setSelectedSubcategory(draft.selectedSubcategory || '')
+            setSelectedBooster(draft.selectedBooster || 'none')
+            setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
+            setCurrentStep(draft.currentStep || 0)
             // Set titleImageIndex based on coverImageId if available
             if (latestDraft.coverImageId && latestDraft.draftImages) {
               const coverIndex = latestDraft.draftImages.findIndex(
@@ -572,19 +510,22 @@ function SellPageContent() {
           }
         }
       } catch (error) {
-        console.error('[Draft] Error loading from server:', error)
+        console.error('[Draft] Error loading from DB API:', error)
         // Fallback to localStorage (userId-scoped)
         const userId = (session.user as { id?: string })?.id
-        const draft = loadDraft(userId)
-        if (draft) {
-          setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
-          setSelectedCategory(draft.selectedCategory || '')
-          setSelectedSubcategory(draft.selectedSubcategory || '')
-          setSelectedBooster(draft.selectedBooster || 'none')
-          setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
-          setCurrentStep(draft.currentStep || 0)
-          setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
-          setShowDraftRestored(true)
+        if (userId) {
+          loadDraft(userId).then(draft => {
+            if (draft) {
+              setFormData(prev => ({ ...prev, ...draft.formData, images: [] }))
+              setSelectedCategory(draft.selectedCategory || '')
+              setSelectedSubcategory(draft.selectedSubcategory || '')
+              setSelectedBooster(draft.selectedBooster || 'none')
+              setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
+              setCurrentStep(draft.currentStep || 0)
+              setTitleImageIndex(draft.imageMetadata?.titleImageIndex || 0)
+              setShowDraftRestored(true)
+            }
+          })
         }
       }
     }
@@ -646,11 +587,19 @@ function SellPageContent() {
         const response = await fetch(`/api/user/${userId}`)
         if (response.ok) {
           const userData = await response.json()
-          // Check: verified=true AND verificationStatus='approved'
-          const isApproved = userData.verified === true && userData.verificationStatus === 'approved'
-          setIsVerified(isApproved)
-          setVerificationStatus(userData.verificationStatus || null)
-          setVerificationInProgress(userData.verified === true && userData.verificationStatus === 'pending')
+          // Use single source of truth: canSell helper
+          const userCanSell = canSell({
+            verified: userData.verified,
+            verificationStatus: userData.verificationStatus,
+            isBlocked: userData.isBlocked,
+          })
+          const vStatus = getVerificationStatus({
+            verified: userData.verified,
+            verificationStatus: userData.verificationStatus,
+          })
+          setIsVerified(userCanSell)
+          setVerificationStatus(vStatus)
+          setVerificationInProgress(vStatus === 'pending')
         }
       } catch (error) {
         console.error('Error loading verification status:', error)
@@ -989,19 +938,7 @@ function SellPageContent() {
       if (response.ok) {
         // Clear draft on success (both server and localStorage)
         const userId = (session?.user as { id?: string })?.id
-        clearDraft(userId)
-        try {
-          const draftsResponse = await fetch('/api/drafts')
-          if (draftsResponse.ok) {
-            const draftsData = await draftsResponse.json()
-            const drafts = draftsData.drafts || []
-            if (drafts.length > 0) {
-              await fetch(`/api/drafts?id=${drafts[0].id}`, { method: 'DELETE' })
-            }
-          }
-        } catch (error) {
-          console.error('[Draft] Error clearing server draft:', error)
-        }
+        await clearDraft(userId, currentDraftId || null)
         toast.success('Artikel erfolgreich veröffentlicht!', {
           position: 'top-right',
           duration: 3000,
@@ -1060,7 +997,10 @@ function SellPageContent() {
   }
 
   // Not verified - block access to selling
-  if (isVerified === false || (verificationStatus && verificationStatus !== 'approved')) {
+  // Use single source of truth: canSell logic
+  const userCanSell = isVerified === true
+  if (!userCanSell && isCheckingVerification === false) {
+    const returnUrl = encodeURIComponent('/sell')
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -1068,19 +1008,19 @@ function SellPageContent() {
           <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
             <AlertCircle className="mx-auto mb-6 h-16 w-16 text-yellow-500" />
             <h2 className="mb-4 text-2xl font-bold text-gray-900">
-              {t.selling.verificationRequired}
+              Verifizierung erforderlich zum Verkaufen
             </h2>
             <p className="mb-6 text-gray-600">
               {verificationInProgress
-                ? t.selling.verificationPendingFull
-                : t.selling.verificationRequiredDesc}
+                ? 'Die Verifizierung ist im Gange. Sie erhalten eine Benachrichtigung, sobald die Verifizierung abgeschlossen ist.'
+                : 'Um Artikel auf Helvenda verkaufen zu können, müssen Sie sich zuerst als Verkäufer verifizieren. Dies schützt sowohl Käufer als auch Verkäufer.'}
             </p>
             <Link
-              href="/verification"
+              href={`/verification?return_url=${returnUrl}`}
               className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-primary-700"
             >
               <Shield className="h-5 w-5" />
-              {verificationInProgress ? t.common.view : t.selling.verifyNow}
+              {verificationInProgress ? 'Verifizierung ansehen' : 'Jetzt verifizieren'}
             </Link>
           </div>
         </div>
@@ -1100,9 +1040,9 @@ function SellPageContent() {
           <CheckCircle className="h-5 w-5 text-green-600" />
           <span className="text-sm text-green-800">Entwurf wiederhergestellt</span>
           <button
-            onClick={() => {
+            onClick={async () => {
               const userId = (session?.user as { id?: string })?.id
-              clearDraft(userId)
+              await clearDraft(userId, currentDraftId || null)
               setShowDraftRestored(false)
             }}
             className="ml-2 text-xs text-green-600 underline hover:text-green-800"

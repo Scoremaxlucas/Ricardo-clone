@@ -25,6 +25,15 @@ export interface MyPurchaseItem {
   trackingNumber?: string | null
   trackingProvider?: string | null
   shippedAt?: string | null
+  // Price breakdown fields
+  itemPrice?: number
+  shippingCost?: number
+  platformFee?: number
+  protectionFee?: number
+  totalAmount?: number
+  // Payment method tracking
+  hasStripePayment?: boolean // true if paid via Stripe (protected), false if bank transfer (unprotected)
+  paymentProtectionEnabled?: boolean // from watch
   watch: {
     id: string
     title: string
@@ -59,67 +68,88 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
     // ULTRA-MINIMALE Query: purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
     // KEINE bids Query nötig - das würde N+1 Problem verursachen
     const purchases = await prisma.purchase.findMany({
-    where: {
-      buyerId: userId,
-      status: { not: 'cancelled' },
-    },
-    select: {
-      id: true,
-      price: true, // purchase.price ist bereits der finale Preis
-      createdAt: true,
-      shippingMethod: true,
-      paymentConfirmed: true,
-      paid: true,
-      status: true,
-      itemReceived: true,
-      itemReceivedAt: true,
-      paymentConfirmedAt: true,
-      contactDeadline: true,
-      sellerContactedAt: true,
-      buyerContactedAt: true,
-      contactWarningSentAt: true,
-      contactDeadlineMissed: true,
-      paymentDeadline: true,
-      paymentReminderSentAt: true,
-      paymentDeadlineMissed: true,
-      disputeOpenedAt: true,
-      disputeReason: true,
-      disputeStatus: true,
-      disputeResolvedAt: true,
-      trackingNumber: true,
-      trackingProvider: true,
-      shippedAt: true,
-      watch: {
-        select: {
-          id: true,
-          title: true,
-          brand: true,
-          model: true,
-          images: true,
-          price: true,
-          buyNowPrice: true,
-          shippingMethod: true,
-          isAuction: true,
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              phone: true,
-              firstName: true,
-              lastName: true,
-              street: true,
-              streetNumber: true,
-              postalCode: true,
-              city: true,
-              paymentMethods: true,
+      where: {
+        buyerId: userId,
+        status: { not: 'cancelled' },
+      },
+      select: {
+        id: true,
+        price: true, // purchase.price ist bereits der finale Preis
+        createdAt: true,
+        shippingMethod: true,
+        paymentConfirmed: true,
+        paid: true,
+        status: true,
+        itemReceived: true,
+        itemReceivedAt: true,
+        paymentConfirmedAt: true,
+        contactDeadline: true,
+        sellerContactedAt: true,
+        buyerContactedAt: true,
+        contactWarningSentAt: true,
+        contactDeadlineMissed: true,
+        paymentDeadline: true,
+        paymentReminderSentAt: true,
+        paymentDeadlineMissed: true,
+        disputeOpenedAt: true,
+        disputeReason: true,
+        disputeStatus: true,
+        disputeResolvedAt: true,
+        trackingNumber: true,
+        trackingProvider: true,
+        shippedAt: true,
+        watch: {
+          select: {
+            id: true,
+            title: true,
+            brand: true,
+            model: true,
+            images: true,
+            price: true,
+            buyNowPrice: true,
+            shippingMethod: true,
+            isAuction: true,
+            paymentProtectionEnabled: true,
+            orders: {
+              where: {
+                buyerId: userId,
+              },
+              select: {
+                id: true,
+                stripePaymentIntentId: true,
+                stripeChargeId: true,
+                paymentStatus: true,
+                itemPrice: true,
+                shippingCost: true,
+                platformFee: true,
+                protectionFee: true,
+                totalAmount: true,
+              },
+              take: 1,
+              orderBy: {
+                createdAt: 'desc',
+              },
+            },
+            seller: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                firstName: true,
+                lastName: true,
+                street: true,
+                streetNumber: true,
+                postalCode: true,
+                city: true,
+                paymentMethods: true,
+              },
             },
           },
         },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
+      orderBy: { createdAt: 'desc' },
+    })
 
     return purchases.map(purchase => {
       const watch = purchase.watch
@@ -142,10 +172,16 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
         }
       }
 
+      // Check if there's a Stripe payment (protected) or bank transfer (unprotected)
+      const order = watch.orders?.[0]
+      const hasStripePayment = !!(order?.stripePaymentIntentId || order?.stripeChargeId)
+      const paymentProtectionEnabled = watch.paymentProtectionEnabled || false
+
       // purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
       const finalPrice = purchase.price || watch.price || 0
       // Bestimme purchaseType basierend auf isAuction und buyNowPrice
-      const purchaseType = watch.isAuction && finalPrice !== watch.buyNowPrice ? 'auction' : 'buy-now'
+      const purchaseType =
+        watch.isAuction && finalPrice !== watch.buyNowPrice ? 'auction' : 'buy-now'
 
       return {
         id: purchase.id,
@@ -172,6 +208,15 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
         trackingNumber: purchase.trackingNumber || null,
         trackingProvider: purchase.trackingProvider || null,
         shippedAt: purchase.shippedAt?.toISOString() || null,
+        // Price breakdown from Order if available
+        itemPrice: order?.itemPrice || undefined,
+        shippingCost: order?.shippingCost || undefined,
+        platformFee: order?.platformFee || undefined,
+        protectionFee: order?.protectionFee || undefined,
+        totalAmount: order?.totalAmount || undefined,
+        // Payment method tracking
+        hasStripePayment,
+        paymentProtectionEnabled,
         watch: {
           id: watch.id,
           title: watch.title || 'Unbekanntes Produkt',
@@ -191,4 +236,3 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
     return []
   }
 }
-

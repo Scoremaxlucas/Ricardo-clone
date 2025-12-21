@@ -1,33 +1,31 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { PaymentInfoCard } from '@/components/payment/PaymentInfoCard'
+import { PaymentModal } from '@/components/payment/PaymentModal'
+import { SellerInfoModal } from '@/components/seller/SellerInfoModal'
+import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
+import { MyPurchaseItem } from '@/lib/my-purchases'
+import { getPurchaseStateInfo } from '@/lib/purchase-state-machine'
+import { getShippingCost } from '@/lib/shipping'
 import {
+  AlertCircle,
+  ArrowUpDown,
   CheckCircle,
   Clock,
-  ShoppingBag,
-  User,
+  CreditCard,
+  Mail,
+  MessageSquare,
   Package,
   PackageCheck,
-  CreditCard,
-  AlertCircle,
   CreditCard as PaymentIcon,
-  X,
-  Mail,
   Phone,
-  MapPin,
-  Calendar,
-  TrendingUp,
-  MessageSquare,
-  FileText,
+  Search,
+  ShoppingBag,
+  User,
 } from 'lucide-react'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { SellerInfoModal } from '@/components/seller/SellerInfoModal'
-import { PaymentModal } from '@/components/payment/PaymentModal'
-import { PaymentInfoCard } from '@/components/payment/PaymentInfoCard'
-import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
-import { getShippingLabels, getShippingCost } from '@/lib/shipping'
-import { MyPurchaseItem } from '@/lib/my-purchases'
 
 interface MyPurchasesClientProps {
   initialPurchases: MyPurchaseItem[]
@@ -41,6 +39,10 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
   const [showPaymentModal, setShowPaymentModal] = useState(false)
   const [expandedPurchaseId, setExpandedPurchaseId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
+  const [searchQuery, setSearchQuery] = useState<string>('')
+  const [sortBy, setSortBy] = useState<'newest' | 'deadline_soon' | 'price_high' | 'price_low'>(
+    'newest'
+  )
 
   // OPTIMIERT: Lade Updates non-blocking im Hintergrund (Polling)
   // WICHTIG: Initial purchases werden sofort angezeigt, Updates kommen später
@@ -78,7 +80,10 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
             )
             localStorage.setItem('readPurchases', JSON.stringify(newReadPurchases))
             window.dispatchEvent(new CustomEvent('purchases-viewed'))
-          } else if (initialPurchases.length === 0 && (!data.purchases || data.purchases.length === 0)) {
+          } else if (
+            initialPurchases.length === 0 &&
+            (!data.purchases || data.purchases.length === 0)
+          ) {
             // Wenn initialPurchases leer ist UND API auch leer ist, versuche es nochmal
             // (könnte temporärer Fehler sein)
             setTimeout(loadPurchases, 2000)
@@ -163,17 +168,129 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
     }
   }
 
-  // Filtere Purchases nach Status
+  // Filtere Purchases nach Status und Suche
   const filteredPurchases = purchases.filter(purchase => {
-    if (statusFilter === 'all') return true
-    return purchase.status === statusFilter
+    // Status filter
+    if (statusFilter !== 'all') {
+      const stateInfo = getPurchaseStateInfo(
+        {
+          status: purchase.status,
+          contactDeadline: purchase.contactDeadline,
+          sellerContactedAt: purchase.sellerContactedAt,
+          buyerContactedAt: purchase.buyerContactedAt,
+          contactDeadlineMissed: purchase.contactDeadlineMissed,
+          paymentDeadline: purchase.paymentDeadline,
+          paymentConfirmed: purchase.paymentConfirmed,
+          paymentDeadlineMissed: purchase.paymentDeadlineMissed,
+          paid: purchase.paid,
+          itemReceived: purchase.itemReceived,
+          trackingNumber: purchase.trackingNumber || null,
+          shippedAt: purchase.shippedAt || null,
+          disputeOpenedAt: purchase.disputeOpenedAt,
+          disputeStatus: purchase.disputeStatus,
+        },
+        purchase.id
+      )
+      if (statusFilter !== stateInfo.state) return false
+    }
+
+    // Search filter
+    if (searchQuery.trim()) {
+      const query = searchQuery.toLowerCase()
+      const matchesTitle = purchase.watch.title.toLowerCase().includes(query)
+      const matchesBrand = purchase.watch.brand.toLowerCase().includes(query)
+      const matchesModel = purchase.watch.model.toLowerCase().includes(query)
+      const matchesSeller =
+        `${purchase.watch.seller.firstName || ''} ${purchase.watch.seller.lastName || ''}`
+          .toLowerCase()
+          .includes(query) ||
+        purchase.watch.seller.name?.toLowerCase().includes(query) ||
+        purchase.watch.seller.email?.toLowerCase().includes(query)
+      if (!matchesTitle && !matchesBrand && !matchesModel && !matchesSeller) return false
+    }
+
+    return true
   })
 
-  // Sortiere: Pending zuerst, dann nach Datum
+  // Sortiere nach gewählter Option
   const sortedPurchases = [...filteredPurchases].sort((a, b) => {
-    if (a.status === 'pending' && b.status !== 'pending') return -1
-    if (a.status !== 'pending' && b.status === 'pending') return 1
-    return new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
+    const shippingMethodsA = a.shippingMethod
+      ? (() => {
+          try {
+            return JSON.parse(a.shippingMethod)
+          } catch {
+            return []
+          }
+        })()
+      : []
+    const shippingCostA = a.shippingCost || getShippingCost(shippingMethodsA)
+    const totalA = a.totalAmount || a.watch.finalPrice + shippingCostA
+
+    const shippingMethodsB = b.shippingMethod
+      ? (() => {
+          try {
+            return JSON.parse(b.shippingMethod)
+          } catch {
+            return []
+          }
+        })()
+      : []
+    const shippingCostB = b.shippingCost || getShippingCost(shippingMethodsB)
+    const totalB = b.totalAmount || b.watch.finalPrice + shippingCostB
+
+    switch (sortBy) {
+      case 'newest':
+        return new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
+      case 'deadline_soon': {
+        const stateInfoA = getPurchaseStateInfo(
+          {
+            status: a.status,
+            contactDeadline: a.contactDeadline,
+            sellerContactedAt: a.sellerContactedAt,
+            buyerContactedAt: a.buyerContactedAt,
+            contactDeadlineMissed: a.contactDeadlineMissed,
+            paymentDeadline: a.paymentDeadline,
+            paymentConfirmed: a.paymentConfirmed,
+            paymentDeadlineMissed: a.paymentDeadlineMissed,
+            paid: a.paid,
+            itemReceived: a.itemReceived,
+            trackingNumber: a.trackingNumber || null,
+            shippedAt: a.shippedAt || null,
+            disputeOpenedAt: a.disputeOpenedAt,
+            disputeStatus: a.disputeStatus,
+          },
+          a.id
+        )
+        const stateInfoB = getPurchaseStateInfo(
+          {
+            status: b.status,
+            contactDeadline: b.contactDeadline,
+            sellerContactedAt: b.sellerContactedAt,
+            buyerContactedAt: b.buyerContactedAt,
+            contactDeadlineMissed: b.contactDeadlineMissed,
+            paymentDeadline: b.paymentDeadline,
+            paymentConfirmed: b.paymentConfirmed,
+            paymentDeadlineMissed: b.paymentDeadlineMissed,
+            paid: b.paid,
+            itemReceived: b.itemReceived,
+            trackingNumber: b.trackingNumber || null,
+            shippedAt: b.shippedAt || null,
+            disputeOpenedAt: b.disputeOpenedAt,
+            disputeStatus: b.disputeStatus,
+          },
+          b.id
+        )
+        const deadlineA = stateInfoA.deadline?.date?.getTime() || Infinity
+        const deadlineB = stateInfoB.deadline?.date?.getTime() || Infinity
+        return deadlineA - deadlineB
+      }
+      case 'price_high':
+        return totalB - totalA
+      case 'price_low':
+        return totalA - totalB
+      default:
+        return new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime()
+    }
   })
 
   // Berechne Statistiken
@@ -208,6 +325,38 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
         <div className="rounded-lg border border-green-200 bg-green-50 p-4 shadow-sm">
           <div className="text-2xl font-bold text-green-700">{stats.completed}</div>
           <div className="text-sm text-green-600">Abgeschlossen</div>
+        </div>
+      </div>
+
+      {/* Search and Sort */}
+      <div className="mb-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        {/* Search */}
+        <div className="relative flex-1">
+          <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+          <input
+            type="text"
+            placeholder="Suche nach Artikel, Marke, Modell oder Verkäufer..."
+            value={searchQuery}
+            onChange={e => setSearchQuery(e.target.value)}
+            className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-10 pr-4 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          />
+        </div>
+
+        {/* Sort */}
+        <div className="flex items-center gap-2">
+          <ArrowUpDown className="h-4 w-4 text-gray-400" />
+          <select
+            value={sortBy}
+            onChange={e =>
+              setSortBy(e.target.value as 'newest' | 'deadline_soon' | 'price_high' | 'price_low')
+            }
+            className="rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+          >
+            <option value="newest">Neueste zuerst</option>
+            <option value="deadline_soon">Frist bald ablaufend</option>
+            <option value="price_high">Preis: Hoch → Niedrig</option>
+            <option value="price_low">Preis: Niedrig → Hoch</option>
+          </select>
         </div>
       </div>
 
@@ -305,32 +454,29 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                   }
                 })()
               : []
-            const shippingCost = getShippingCost(shippingMethods)
-            const total = purchase.watch.finalPrice + shippingCost
+            const shippingCost = purchase.shippingCost || getShippingCost(shippingMethods)
+            const total = purchase.totalAmount || purchase.watch.finalPrice + shippingCost
 
-            // Berechne Kontaktfrist
-            const contactDeadline = purchase.contactDeadline
-              ? new Date(purchase.contactDeadline)
-              : null
-            const contactDaysRemaining = contactDeadline
-              ? Math.ceil(
-                  (contactDeadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-                )
-              : null
-            const contactIsOverdue =
-              contactDeadline && contactDeadline.getTime() < new Date().getTime()
-
-            // Berechne Zahlungsfrist
-            const paymentDeadline = purchase.paymentDeadline
-              ? new Date(purchase.paymentDeadline)
-              : null
-            const paymentDaysRemaining = paymentDeadline
-              ? Math.ceil(
-                  (paymentDeadline.getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)
-                )
-              : null
-            const paymentIsOverdue =
-              paymentDeadline && paymentDeadline.getTime() < new Date().getTime()
+            // Use state machine to compute state and next action
+            const stateInfo = getPurchaseStateInfo(
+              {
+                status: purchase.status,
+                contactDeadline: purchase.contactDeadline,
+                sellerContactedAt: purchase.sellerContactedAt,
+                buyerContactedAt: purchase.buyerContactedAt,
+                contactDeadlineMissed: purchase.contactDeadlineMissed,
+                paymentDeadline: purchase.paymentDeadline,
+                paymentConfirmed: purchase.paymentConfirmed,
+                paymentDeadlineMissed: purchase.paymentDeadlineMissed,
+                paid: purchase.paid,
+                itemReceived: purchase.itemReceived,
+                trackingNumber: purchase.trackingNumber || null,
+                shippedAt: purchase.shippedAt || null,
+                disputeOpenedAt: purchase.disputeOpenedAt,
+                disputeStatus: purchase.disputeStatus,
+              },
+              purchase.id
+            )
 
             return (
               <div
@@ -389,34 +535,58 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                             {purchase.watch.brand} {purchase.watch.model}
                           </div>
 
-                          {/* Status-Badge */}
+                          {/* Status-Badge - Use state machine */}
                           <div className="mb-2 flex items-center gap-2">
-                            {purchase.status === 'completed' ? (
-                              <span className="inline-flex items-center gap-1 rounded bg-green-100 px-2 py-1 text-xs font-medium text-green-700">
+                            <span
+                              className={`inline-flex items-center gap-1 rounded px-2 py-1 text-xs font-medium ${
+                                stateInfo.state === 'COMPLETED'
+                                  ? 'bg-green-100 text-green-700'
+                                  : stateInfo.state === 'PAYMENT_CONFIRMED' ||
+                                      stateInfo.state === 'SHIPPED'
+                                    ? 'bg-blue-100 text-blue-700'
+                                    : stateInfo.state === 'RECEIPT_PENDING' ||
+                                        stateInfo.state === 'RECEIPT_CONFIRMED'
+                                      ? 'bg-orange-100 text-orange-700'
+                                      : stateInfo.state === 'DISPUTE_OPEN'
+                                        ? 'bg-red-100 text-red-700'
+                                        : 'bg-yellow-100 text-yellow-700'
+                              }`}
+                            >
+                              {stateInfo.state === 'COMPLETED' ? (
                                 <CheckCircle className="h-3 w-3" />
-                                Abgeschlossen
-                              </span>
-                            ) : purchase.status === 'payment_confirmed' ? (
-                              <span className="inline-flex items-center gap-1 rounded bg-blue-100 px-2 py-1 text-xs font-medium text-blue-700">
+                              ) : stateInfo.state === 'PAYMENT_PENDING' ? (
                                 <CreditCard className="h-3 w-3" />
-                                Zahlung bestätigt
-                              </span>
-                            ) : purchase.status === 'item_received' ? (
-                              <span className="inline-flex items-center gap-1 rounded bg-orange-100 px-2 py-1 text-xs font-medium text-orange-700">
+                              ) : stateInfo.state === 'RECEIPT_PENDING' ? (
                                 <PackageCheck className="h-3 w-3" />
-                                Erhalt bestätigt
-                              </span>
-                            ) : (
-                              <span className="inline-flex items-center gap-1 rounded bg-yellow-100 px-2 py-1 text-xs font-medium text-yellow-700">
+                              ) : (
                                 <Clock className="h-3 w-3" />
-                                Ausstehend
-                              </span>
-                            )}
+                              )}
+                              {stateInfo.label}
+                            </span>
                           </div>
 
-                          {/* Preis */}
-                          <div className="text-xl font-bold text-green-700">
-                            CHF {new Intl.NumberFormat('de-CH').format(total)}
+                          {/* Preis mit Breakdown */}
+                          <div className="mb-2">
+                            {purchase.itemPrice && purchase.shippingCost !== undefined ? (
+                              <div className="text-sm text-gray-600">
+                                <div className="text-xl font-bold text-green-700">
+                                  CHF {new Intl.NumberFormat('de-CH').format(total)}
+                                </div>
+                                <div className="text-xs">
+                                  Artikel CHF{' '}
+                                  {new Intl.NumberFormat('de-CH').format(purchase.itemPrice)}
+                                  {purchase.shippingCost > 0 &&
+                                    ` + Versand CHF ${new Intl.NumberFormat('de-CH').format(purchase.shippingCost)}`}
+                                  {purchase.platformFee &&
+                                    purchase.platformFee > 0 &&
+                                    ` + Gebühr CHF ${new Intl.NumberFormat('de-CH').format(purchase.platformFee)}`}
+                                </div>
+                              </div>
+                            ) : (
+                              <div className="text-xl font-bold text-green-700">
+                                CHF {new Intl.NumberFormat('de-CH').format(total)}
+                              </div>
+                            )}
                           </div>
                         </div>
 
@@ -433,48 +603,59 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                             </div>
                           </div>
 
-                          {/* Kritische Fristen */}
-                          {purchase.status === 'pending' &&
-                            contactDeadline &&
-                            !purchase.buyerContactedAt && (
-                              <div
-                                className={`mb-2 rounded px-2 py-1 text-xs font-medium ${
-                                  contactIsOverdue || purchase.contactDeadlineMissed
-                                    ? 'bg-red-100 text-red-700'
-                                    : contactDaysRemaining && contactDaysRemaining <= 2
-                                      ? 'bg-orange-100 text-orange-700'
-                                      : 'bg-yellow-100 text-yellow-700'
-                                }`}
-                              >
-                                {contactIsOverdue || purchase.contactDeadlineMissed
-                                  ? '⚠️ Kontaktfrist überschritten'
-                                  : contactDaysRemaining && contactDaysRemaining > 0
-                                    ? `⏰ ${contactDaysRemaining} Tag${contactDaysRemaining !== 1 ? 'e' : ''} bis Kontaktfrist`
-                                    : '⏰ Kontaktfrist läuft heute ab'}
-                              </div>
-                            )}
-
-                          {purchase.paymentDeadline && !purchase.paymentConfirmed && (
+                          {/* Deadline Info */}
+                          {stateInfo.deadline && stateInfo.deadline.date && (
                             <div
                               className={`mb-2 rounded px-2 py-1 text-xs font-medium ${
-                                paymentIsOverdue || purchase.paymentDeadlineMissed
+                                stateInfo.deadline.isOverdue
                                   ? 'bg-red-100 text-red-700'
-                                  : paymentDaysRemaining && paymentDaysRemaining <= 3
+                                  : stateInfo.deadline.daysRemaining !== null &&
+                                      stateInfo.deadline.daysRemaining <= 2
                                     ? 'bg-orange-100 text-orange-700'
-                                    : 'bg-blue-100 text-blue-700'
+                                    : 'bg-yellow-100 text-yellow-700'
                               }`}
                             >
-                              {paymentIsOverdue || purchase.paymentDeadlineMissed
-                                ? '⚠️ Zahlungsfrist überschritten'
-                                : paymentDaysRemaining && paymentDaysRemaining > 0
-                                  ? `💳 ${paymentDaysRemaining} Tag${paymentDaysRemaining !== 1 ? 'e' : ''} bis Zahlungsfrist`
-                                  : '💳 Zahlungsfrist läuft heute ab'}
+                              {stateInfo.deadline.isOverdue
+                                ? `⚠️ ${stateInfo.deadline.label} überschritten`
+                                : stateInfo.deadline.daysRemaining !== null &&
+                                    stateInfo.deadline.daysRemaining > 0
+                                  ? `⏰ ${stateInfo.deadline.daysRemaining} Tag${stateInfo.deadline.daysRemaining !== 1 ? 'e' : ''} bis ${stateInfo.deadline.label}`
+                                  : `⏰ ${stateInfo.deadline.label} läuft heute ab`}
                             </div>
                           )}
 
+                          {/* Primary CTA - Next Action */}
+                          {stateInfo.nextAction && (
+                            <button
+                              onClick={() => {
+                                if (stateInfo.nextAction?.action === 'contact_seller') {
+                                  setSelectedPurchase(purchase)
+                                  setShowSellerInfo(true)
+                                } else if (stateInfo.nextAction?.action === 'pay') {
+                                  setSelectedPurchase(purchase)
+                                  setShowPaymentModal(true)
+                                } else if (stateInfo.nextAction?.action === 'confirm_receipt') {
+                                  handleConfirmReceived(purchase.id)
+                                } else if (stateInfo.nextAction?.action === 'view_dispute') {
+                                  setExpandedPurchaseId(purchase.id)
+                                }
+                              }}
+                              className={`mb-2 w-full rounded-lg px-4 py-2 text-sm font-medium text-white transition-colors ${
+                                stateInfo.nextAction.type === 'primary'
+                                  ? 'bg-primary-600 hover:bg-primary-700'
+                                  : stateInfo.nextAction.type === 'danger'
+                                    ? 'bg-red-600 hover:bg-red-700'
+                                    : 'bg-gray-600 hover:bg-gray-700'
+                              }`}
+                            >
+                              {stateInfo.nextAction.label}
+                            </button>
+                          )}
+
+                          {/* Secondary: Details */}
                           <button
                             onClick={() => setExpandedPurchaseId(isExpanded ? null : purchase.id)}
-                            className="mt-2 rounded border border-primary-300 px-3 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50 hover:text-primary-700"
+                            className="w-full rounded border border-primary-300 px-3 py-1 text-xs font-medium text-primary-600 hover:bg-primary-50 hover:text-primary-700"
                           >
                             {isExpanded ? 'Weniger anzeigen' : 'Details anzeigen'}
                           </button>
@@ -612,7 +793,8 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                             </button>
                           </div>
                           <div className="space-y-1 text-xs text-gray-700">
-                            {(purchase.watch.seller.firstName || purchase.watch.seller.lastName) && (
+                            {(purchase.watch.seller.firstName ||
+                              purchase.watch.seller.lastName) && (
                               <div className="font-medium text-gray-900">
                                 {purchase.watch.seller.firstName} {purchase.watch.seller.lastName}
                               </div>

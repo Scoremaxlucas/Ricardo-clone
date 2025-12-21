@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect } from 'react'
 import {
-  CreditCard,
-  Copy,
-  CheckCircle,
-  QrCode,
   AlertCircle,
+  CheckCircle,
+  Copy,
+  CreditCard,
   Loader2,
+  QrCode,
   Smartphone,
 } from 'lucide-react'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface PaymentInfo {
@@ -19,6 +19,7 @@ interface PaymentInfo {
   amount: number
   currency: string
   reference: string
+  referenceType?: 'SCOR' | 'NON'
   qrCodeDataUrl?: string
   qrCodeString?: string
   paymentInstructions: string
@@ -26,6 +27,8 @@ interface PaymentInfo {
   twintQRCodeDataUrl?: string | null
   twintDeepLink?: string | null
   hasSellerBankDetails?: boolean
+  hasStripePayment?: boolean // true if paid via Stripe (protected), false if bank transfer (unprotected)
+  paymentProtectionEnabled?: boolean // from watch
 }
 
 interface PaymentInfoCardProps {
@@ -127,8 +130,20 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
       {/* Betrag */}
       <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
         <div className="mb-1 text-sm text-gray-600">Zu zahlender Betrag</div>
-        <div className="text-2xl font-bold text-blue-700">
-          {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
+        <div className="flex items-center justify-between">
+          <div className="text-2xl font-bold text-blue-700">
+            {paymentInfo.currency} {paymentInfo.amount.toFixed(2)}
+          </div>
+          <button
+            onClick={() => copyToClipboard(paymentInfo.amount.toFixed(2), 'Betrag')}
+            className="rounded p-1 hover:bg-blue-100"
+          >
+            {copied === 'Betrag' ? (
+              <CheckCircle className="h-4 w-4 text-green-600" />
+            ) : (
+              <Copy className="h-4 w-4 text-blue-600" />
+            )}
+          </button>
         </div>
       </div>
 
@@ -186,7 +201,9 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
         </div>
 
         <div>
-          <label className="text-sm font-medium text-gray-700">Referenz</label>
+          <label className="text-sm font-medium text-gray-700">
+            Referenz {paymentInfo.referenceType && `(${paymentInfo.referenceType})`}
+          </label>
           <div className="mt-1 flex items-center gap-2">
             <span className="font-mono text-gray-900">{paymentInfo.reference}</span>
             <button
@@ -201,7 +218,9 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
             </button>
           </div>
           <p className="mt-1 text-xs text-gray-500">
-            Bitte verwenden Sie diese Referenz bei der Überweisung
+            {paymentInfo.referenceType === 'SCOR'
+              ? 'SCOR-Referenz (RF...): Bitte verwenden Sie diese Referenz bei der Überweisung'
+              : 'Bitte verwenden Sie diese Referenz bei der Überweisung'}
           </p>
         </div>
       </div>
@@ -280,17 +299,62 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
         </div>
       </div>
 
-      {/* Hinweis */}
-      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
-        <div className="flex items-start gap-2">
-          <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-          <div className="text-sm text-blue-800">
-            <strong>Wichtig:</strong> Bitte überweisen Sie den Betrag innerhalb von 14 Tagen nach
-            Kontaktaufnahme. Verwenden Sie die Referenz bei der Überweisung, damit die Zahlung
-            zugeordnet werden kann.
+      {/* Helvenda Protection Status */}
+      {paymentInfo.hasStripePayment !== undefined && (
+        <div
+          className={`mt-4 rounded-lg border p-3 ${
+            paymentInfo.hasStripePayment && paymentInfo.paymentProtectionEnabled
+              ? 'border-green-200 bg-green-50'
+              : 'border-yellow-200 bg-yellow-50'
+          }`}
+        >
+          <div className="flex items-start gap-2">
+            <AlertCircle
+              className={`mt-0.5 h-5 w-5 flex-shrink-0 ${
+                paymentInfo.hasStripePayment && paymentInfo.paymentProtectionEnabled
+                  ? 'text-green-600'
+                  : 'text-yellow-600'
+              }`}
+            />
+            <div
+              className={`text-sm ${
+                paymentInfo.hasStripePayment && paymentInfo.paymentProtectionEnabled
+                  ? 'text-green-800'
+                  : 'text-yellow-800'
+              }`}
+            >
+              {paymentInfo.hasStripePayment && paymentInfo.paymentProtectionEnabled ? (
+                <>
+                  <strong>Helvenda Schutz aktiv:</strong> Diese Zahlung wird über Stripe abgewickelt
+                  und ist durch Helvenda Zahlungsschutz geschützt. Die Zahlung wird erst an den
+                  Verkäufer freigegeben, nachdem Sie den Erhalt bestätigt haben.
+                </>
+              ) : (
+                <>
+                  <strong>Direktzahlung – kein Helvenda Schutz:</strong> Diese Zahlung erfolgt
+                  direkt an den Verkäufer per Banküberweisung. Es gibt keine Treuhandfunktion. Bitte
+                  überweisen Sie den Betrag innerhalb von 14 Tagen nach Kontaktaufnahme. Verwenden
+                  Sie die Referenz bei der Überweisung, damit die Zahlung zugeordnet werden kann.
+                </>
+              )}
+            </div>
           </div>
         </div>
-      </div>
+      )}
+
+      {/* Standard Hinweis (if no protection info) */}
+      {paymentInfo.hasStripePayment === undefined && (
+        <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3">
+          <div className="flex items-start gap-2">
+            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+            <div className="text-sm text-blue-800">
+              <strong>Wichtig:</strong> Bitte überweisen Sie den Betrag innerhalb von 14 Tagen nach
+              Kontaktaufnahme. Verwenden Sie die Referenz bei der Überweisung, damit die Zahlung
+              zugeordnet werden kann.
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

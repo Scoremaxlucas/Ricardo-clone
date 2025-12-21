@@ -125,75 +125,180 @@ export function clearOtherUserDrafts(currentUserId: string | null | undefined): 
   }
 }
 
-export function saveDraft(draft: Omit<ListingDraft, 'timestamp'>, userId?: string | null): boolean {
+/**
+ * Save draft to DB via API (primary method)
+ * Falls back to localStorage if API fails
+ */
+export async function saveDraft(
+  draft: Omit<ListingDraft, 'timestamp'>,
+  userId?: string | null
+): Promise<boolean> {
   if (typeof window === 'undefined') return false
 
-  try {
-    // Migrate legacy draft if needed
-    if (userId) {
-      migrateLegacyDraft(userId)
-    }
-
-    const draftKey = getDraftKey(userId)
-    if (!draftKey) {
-      console.warn('[Draft] Cannot save draft: userId required')
-      return false
-    }
-
-    const draftWithTimestamp: ListingDraft = {
-      ...draft,
-      timestamp: Date.now(),
-    }
-
-    const draftJson = JSON.stringify(draftWithTimestamp)
-    localStorage.setItem(draftKey, draftJson)
-    return true
-  } catch (error: any) {
-    if (error.name === 'QuotaExceededError') {
-      console.warn('[Draft] localStorage quota exceeded, skipping save')
-    } else {
-      console.error('[Draft] Error saving draft:', error)
-    }
+  if (!userId) {
+    console.warn('[Draft] Cannot save draft: userId required')
     return false
   }
-}
-
-export function loadDraft(userId?: string | null): ListingDraft | null {
-  if (typeof window === 'undefined') return null
 
   try {
-    // Migrate legacy draft if needed
-    if (userId) {
+    // Try DB-backed API first
+    const response = await fetch('/api/sell/drafts/upsert', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        formData: draft.formData,
+        images: draft.imageMetadata ? Array(draft.imageMetadata.count).fill('') : [],
+        selectedCategory: draft.selectedCategory,
+        selectedSubcategory: draft.selectedSubcategory,
+        selectedBooster: draft.selectedBooster,
+        paymentProtectionEnabled: draft.paymentProtectionEnabled,
+        currentStep: draft.currentStep,
+        titleImageIndex: draft.imageMetadata?.titleImageIndex || 0,
+      }),
+    })
+
+    if (response.ok) {
+      const data = await response.json()
+      console.log('[Draft] Saved to DB:', data.draftId)
+      // Also save to localStorage as backup (without images)
+      const draftWithTimestamp: ListingDraft = {
+        ...draft,
+        timestamp: Date.now(),
+      }
+      const draftKey = getDraftKey(userId)
+      if (draftKey) {
+        try {
+          localStorage.setItem(draftKey, JSON.stringify(draftWithTimestamp))
+        } catch (e) {
+          // Ignore localStorage errors
+        }
+      }
+      return true
+    } else {
+      console.warn('[Draft] API save failed, falling back to localStorage')
+      throw new Error('API save failed')
+    }
+  } catch (error: any) {
+    // Fallback to localStorage
+    console.warn('[Draft] Falling back to localStorage:', error.message)
+    try {
+      // Migrate legacy draft if needed
       migrateLegacyDraft(userId)
+
+      const draftKey = getDraftKey(userId)
+      if (!draftKey) {
+        return false
+      }
+
+      const draftWithTimestamp: ListingDraft = {
+        ...draft,
+        timestamp: Date.now(),
+      }
+
+      const draftJson = JSON.stringify(draftWithTimestamp)
+      localStorage.setItem(draftKey, draftJson)
+      return true
+    } catch (localError: any) {
+      if (localError.name === 'QuotaExceededError') {
+        console.warn('[Draft] localStorage quota exceeded, skipping save')
+      } else {
+        console.error('[Draft] Error saving draft:', localError)
+      }
+      return false
     }
-
-    const draftKey = getDraftKey(userId)
-    if (!draftKey) return null
-
-    const draftJson = localStorage.getItem(draftKey)
-    if (!draftJson) return null
-
-    const draft: ListingDraft = JSON.parse(draftJson)
-    const draftAge = Date.now() - draft.timestamp
-    const maxAge = MAX_DRAFT_AGE_DAYS * 24 * 60 * 60 * 1000
-
-    if (draftAge > maxAge) {
-      // Draft too old, remove it
-      clearDraft(userId)
-      return null
-    }
-
-    return draft
-  } catch (error) {
-    console.error('[Draft] Error loading draft:', error)
-    clearDraft(userId) // Clear corrupted draft
-    return null
   }
 }
 
-export function clearDraft(userId?: string | null): void {
+/**
+ * Load draft from DB via API (primary method)
+ * Falls back to localStorage if API fails
+ */
+export async function loadDraft(userId?: string | null): Promise<ListingDraft | null> {
+  if (typeof window === 'undefined') return null
+
+  if (!userId) return null
+
+  try {
+    // Try DB-backed API first
+    const response = await fetch('/api/sell/drafts/current')
+    if (response.ok) {
+      const data = await response.json()
+      if (data.draft) {
+        const draft = data.draft
+        // Convert DB draft to ListingDraft format
+        const listingDraft: ListingDraft = {
+          formData: draft.formData,
+          imageMetadata: {
+            count: draft.images?.length || draft.draftImages?.length || 0,
+            titleImageIndex: draft.titleImageIndex || 0,
+          },
+          selectedCategory: draft.selectedCategory || '',
+          selectedSubcategory: draft.selectedSubcategory || '',
+          selectedBooster: draft.selectedBooster || 'none',
+          paymentProtectionEnabled: draft.paymentProtectionEnabled || false,
+          currentStep: draft.currentStep || 0,
+          timestamp: new Date(draft.updatedAt).getTime(),
+        }
+        console.log('[Draft] Loaded from DB:', draft.id)
+        return listingDraft
+      }
+      // No draft found in DB, return null
+      return null
+    } else {
+      throw new Error('API load failed')
+    }
+  } catch (error: any) {
+    // Fallback to localStorage
+    console.warn('[Draft] API load failed, trying localStorage:', error.message)
+    try {
+      // Migrate legacy draft if needed
+      migrateLegacyDraft(userId)
+
+      const draftKey = getDraftKey(userId)
+      if (!draftKey) return null
+
+      const draftJson = localStorage.getItem(draftKey)
+      if (!draftJson) return null
+
+      const draft: ListingDraft = JSON.parse(draftJson)
+      const draftAge = Date.now() - draft.timestamp
+      const maxAge = MAX_DRAFT_AGE_DAYS * 24 * 60 * 60 * 1000
+
+      if (draftAge > maxAge) {
+        // Draft too old, remove it
+        clearDraft(userId)
+        return null
+      }
+
+      return draft
+    } catch (localError) {
+      console.error('[Draft] Error loading draft:', localError)
+      clearDraft(userId) // Clear corrupted draft
+      return null
+    }
+  }
+}
+
+/**
+ * Clear draft from DB via API (primary method)
+ * Also clears localStorage
+ */
+export async function clearDraft(userId?: string | null, draftId?: string | null): Promise<void> {
   if (typeof window === 'undefined') return
 
+  // Clear from DB if draftId provided
+  if (draftId && userId) {
+    try {
+      await fetch(`/api/sell/drafts/${draftId}`, {
+        method: 'DELETE',
+      })
+      console.log('[Draft] Cleared from DB:', draftId)
+    } catch (error) {
+      console.error('[Draft] Error clearing draft from DB:', error)
+    }
+  }
+
+  // Also clear localStorage
   try {
     const draftKey = getDraftKey(userId)
     if (draftKey) {
@@ -202,7 +307,7 @@ export function clearDraft(userId?: string | null): void {
     // Also clear legacy key if exists
     localStorage.removeItem(LEGACY_DRAFT_KEY)
   } catch (error) {
-    console.error('[Draft] Error clearing draft:', error)
+    console.error('[Draft] Error clearing draft from localStorage:', error)
   }
 }
 

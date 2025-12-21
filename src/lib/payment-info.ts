@@ -1,6 +1,7 @@
-import { prisma } from './prisma'
-import { PAYMENT_CONFIG } from './payment-config'
 import QRCode from 'qrcode'
+import { PAYMENT_CONFIG } from './payment-config'
+import { prisma } from './prisma'
+import { generateSCORReference, getReferenceType } from './qr-reference-scor'
 
 /**
  * Generiert Zahlungsinformationen für einen Kauf
@@ -13,6 +14,7 @@ export interface PaymentInfo {
   amount: number
   currency: string
   reference: string
+  referenceType?: 'SCOR' | 'NON' // Reference type for Swiss QR-Bill
   qrCodeDataUrl?: string
   qrCodeString?: string
   paymentInstructions: string
@@ -41,6 +43,27 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
   if (!purchase) {
     throw new Error('Purchase nicht gefunden')
   }
+
+  // Check if there's a Stripe payment (protected) or bank transfer (unprotected)
+  // Query Order separately to check for Stripe payment
+  const order = await prisma.order.findFirst({
+    where: {
+      watchId: purchase.watchId,
+      buyerId: purchase.buyerId,
+    },
+    select: {
+      id: true,
+      stripePaymentIntentId: true,
+      stripeChargeId: true,
+      paymentStatus: true,
+    },
+    orderBy: {
+      createdAt: 'desc',
+    },
+  })
+
+  const hasStripePayment = !!(order?.stripePaymentIntentId || order?.stripeChargeId)
+  const paymentProtectionEnabled = purchase.watch.paymentProtectionEnabled || false
 
   // Hole Verkäufer-Zahlungsinformationen
   const seller = purchase.watch.seller
@@ -104,7 +127,10 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
           // Kein JSON, also einzelner String
           method = purchase.shippingMethod
         }
-      } else if (Array.isArray(purchase.shippingMethod) && (purchase.shippingMethod as any[]).length > 0) {
+      } else if (
+        Array.isArray(purchase.shippingMethod) &&
+        (purchase.shippingMethod as any[]).length > 0
+      ) {
         method = (purchase.shippingMethod as any[])[0] // Legacy: Nimm erste Methode
       }
 
@@ -118,8 +144,10 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
 
   const totalAmount = (purchase.price || purchase.watch.price || 0) + shippingCost
 
-  // Generiere Referenz (Purchase-ID als Referenz)
-  const reference = `PUR-${purchaseId.substring(0, 8).toUpperCase()}`
+  // Generiere Referenz: SCOR (RF...) für bessere Kompatibilität
+  const referenceType = getReferenceType(sellerIban)
+  const reference =
+    referenceType === 'SCOR' ? generateSCORReference(purchaseId) : ''.padEnd(25, ' ')
 
   // Generiere QR-Code String (Swiss QR-Bill Format)
   const qrCodeString = generateQRCodeString({
@@ -127,6 +155,7 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     amount: totalAmount,
     currency: 'CHF',
     reference: reference,
+    referenceType: referenceType,
     creditorName: accountHolder || PAYMENT_CONFIG.creditorName,
     creditorAddress: {
       street: seller.street || PAYMENT_CONFIG.address.street,
@@ -201,7 +230,8 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     accountHolder: accountHolder || PAYMENT_CONFIG.creditorName,
     amount: totalAmount,
     currency: 'CHF',
-    reference: reference,
+    reference: reference.trim(), // Return trimmed reference for display
+    referenceType: referenceType, // Include reference type
     qrCodeDataUrl,
     qrCodeString,
     paymentInstructions,
@@ -209,6 +239,8 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     twintQRCodeDataUrl,
     twintDeepLink,
     hasSellerBankDetails: true, // Immer true, da wir einen Fehler werfen, wenn keine IBAN vorhanden ist
+    hasStripePayment, // true if paid via Stripe (protected), false if bank transfer (unprotected)
+    paymentProtectionEnabled, // from watch
   }
 }
 
@@ -220,6 +252,7 @@ function generateQRCodeString(params: {
   amount: number
   currency: string
   reference: string
+  referenceType: 'SCOR' | 'NON'
   creditorName: string
   creditorAddress: {
     street: string
@@ -270,8 +303,8 @@ function generateQRCodeString(params: {
     `${debtorAddress.street} ${debtorAddress.streetNumber}`.substring(0, 70), // Debtor Street
     `${debtorAddress.postalCode} ${debtorAddress.city}`.substring(0, 70), // Debtor City
     debtorAddress.country, // Debtor Country
-    'SCOR', // Reference Type (SCOR = Creditor Reference)
-    reference.padEnd(25, ' ').substring(0, 25), // Reference (max 25 Zeichen)
+    params.referenceType, // Reference Type (SCOR or NON)
+    params.reference.substring(0, 25).padEnd(25, ' '), // Reference (exactly 25 characters)
     '', // Additional information (optional)
     'EPD', // Trailer (End of Payment Data)
   ].join('\n')
