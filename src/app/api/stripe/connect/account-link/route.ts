@@ -91,19 +91,19 @@ export async function POST(request: NextRequest) {
 
     // Bestimme URLs
     let baseUrl = process.env.NEXTAUTH_URL || ''
-    
+
     // Fallback: Verwende VERCEL_URL mit Protokoll
     if (!baseUrl && process.env.VERCEL_URL) {
       // VERCEL_URL enthält kein Protokoll
       baseUrl = `https://${process.env.VERCEL_URL}`
     }
-    
+
     // Fallback: Konstruiere aus Request URL
     if (!baseUrl) {
       const url = new URL(request.url)
       baseUrl = `${url.protocol}//${url.host}`
     }
-    
+
     // Letzter Fallback: localhost
     if (!baseUrl || baseUrl === 'http://undefined' || baseUrl === 'https://undefined') {
       baseUrl = 'http://localhost:3000'
@@ -127,7 +127,10 @@ export async function POST(request: NextRequest) {
       }
     } catch (error: any) {
       // Ignore parse errors - use default returnTo
-      console.log('[connect/account-link] Could not parse body, using default returnTo:', error.message)
+      console.log(
+        '[connect/account-link] Could not parse body, using default returnTo:',
+        error.message
+      )
     }
 
     // Validiere dass Account ID existiert

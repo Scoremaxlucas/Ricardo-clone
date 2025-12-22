@@ -127,11 +127,23 @@ export function StripePayoutSection() {
         // Redirect to onboarding
         window.location.href = data.url
       } else {
-        toast.error(data.message || 'Fehler beim Starten der Einrichtung')
+        // Zeige detaillierte Fehlermeldung
+        const errorMessage =
+          data.error || data.message || 'Fehler beim Starten der Einrichtung'
+        console.error('[StripePayoutSection] API Error:', {
+          status: res.status,
+          statusText: res.statusText,
+          data,
+        })
+        toast.error(
+          `${errorMessage}${data.errorCode ? ` (Code: ${data.errorCode})` : ''}`
+        )
       }
-    } catch (error) {
-      console.error('Error starting onboarding:', error)
-      toast.error('Fehler beim Starten der Einrichtung')
+    } catch (error: any) {
+      console.error('[StripePayoutSection] Error starting onboarding:', error)
+      toast.error(
+        `Fehler beim Starten der Einrichtung: ${error.message || 'Unbekannter Fehler'}`
+      )
     } finally {
       setProcessingOnboarding(false)
     }
