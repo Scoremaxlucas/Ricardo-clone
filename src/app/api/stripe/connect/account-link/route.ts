@@ -11,6 +11,18 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function POST(request: NextRequest) {
   try {
+    // Prüfe Stripe Konfiguration
+    if (!process.env.STRIPE_SECRET_KEY) {
+      console.error('[connect/account-link] STRIPE_SECRET_KEY fehlt!')
+      return NextResponse.json(
+        {
+          message: 'Stripe ist nicht konfiguriert',
+          error: 'STRIPE_SECRET_KEY environment variable fehlt',
+        },
+        { status: 500 }
+      )
+    }
+
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
@@ -18,6 +30,7 @@ export async function POST(request: NextRequest) {
     }
 
     const userId = session.user.id
+    console.log(`[connect/account-link] Request von User ${userId}`)
 
     // Lade User
     const user = await prisma.user.findUnique({
@@ -78,15 +91,29 @@ export async function POST(request: NextRequest) {
 
     // Bestimme URLs
     let baseUrl = process.env.NEXTAUTH_URL || ''
+    
+    // Fallback: Verwende VERCEL_URL mit Protokoll
     if (!baseUrl && process.env.VERCEL_URL) {
       // VERCEL_URL enthält kein Protokoll
       baseUrl = `https://${process.env.VERCEL_URL}`
     }
+    
+    // Fallback: Konstruiere aus Request URL
     if (!baseUrl) {
+      const url = new URL(request.url)
+      baseUrl = `${url.protocol}//${url.host}`
+    }
+    
+    // Letzter Fallback: localhost
+    if (!baseUrl || baseUrl === 'http://undefined' || baseUrl === 'https://undefined') {
       baseUrl = 'http://localhost:3000'
     }
 
-    console.log(`[connect/account-link] Using baseUrl: ${baseUrl}`)
+    console.log(`[connect/account-link] Environment check:`, {
+      NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'not set',
+      VERCEL_URL: process.env.VERCEL_URL || 'not set',
+      computedBaseUrl: baseUrl,
+    })
 
     // Lese optionalen return_to Parameter
     let returnTo = '/my-watches/account'
@@ -163,14 +190,31 @@ export async function POST(request: NextRequest) {
       message: error.message,
       code: error.code,
       type: error.type,
+      name: error.name,
     })
-    return NextResponse.json(
-      {
-        message: 'Fehler beim Erstellen des Einrichtungs-Links',
-        error: error.message,
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
-      },
-      { status: 500 }
-    )
+
+    // Detaillierte Fehlerantwort für Debugging
+    const errorResponse: any = {
+      message: 'Fehler beim Erstellen des Einrichtungs-Links',
+      error: error.message || 'Unbekannter Fehler',
+    }
+
+    // Füge mehr Details hinzu für Debugging (ohne sensible Daten)
+    if (error.type) {
+      errorResponse.errorType = error.type
+    }
+    if (error.code) {
+      errorResponse.errorCode = error.code
+    }
+    if (error.param) {
+      errorResponse.param = error.param
+    }
+
+    // Stack nur in Development oder wenn explizit gewünscht
+    if (process.env.NODE_ENV === 'development' || process.env.DEBUG_ERRORS === 'true') {
+      errorResponse.stack = error.stack
+    }
+
+    return NextResponse.json(errorResponse, { status: 500 })
   }
 }
