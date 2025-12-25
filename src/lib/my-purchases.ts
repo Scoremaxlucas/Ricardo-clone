@@ -181,6 +181,11 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
       const order = watch.orders?.[0]
       const hasStripePayment = !!(order?.stripePaymentIntentId || order?.stripeChargeId)
       const paymentProtectionEnabled = watch.paymentProtectionEnabled || false
+      
+      // IMPORTANT: Derive payment status from Order if Stripe payment exists
+      // This ensures the UI reflects Stripe payment status correctly
+      const isPaidViaStripe = order?.paymentStatus === 'paid' || order?.paymentStatus === 'released'
+      const effectivePaid = purchase.paymentConfirmed || purchase.paid || isPaidViaStripe
 
       // purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
       const finalPrice = purchase.price || watch.price || 0
@@ -192,11 +197,11 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
         id: purchase.id,
         purchasedAt: purchase.createdAt.toISOString(),
         shippingMethod: purchase.shippingMethod || watch.shippingMethod || null,
-        paid: purchase.paymentConfirmed || purchase.paid || false,
+        paid: effectivePaid,
         status: purchase.status || 'pending',
         itemReceived: purchase.itemReceived || false,
         itemReceivedAt: purchase.itemReceivedAt?.toISOString() || null,
-        paymentConfirmed: purchase.paymentConfirmed || false,
+        paymentConfirmed: purchase.paymentConfirmed || isPaidViaStripe,
         paymentConfirmedAt: purchase.paymentConfirmedAt?.toISOString() || null,
         contactDeadline: purchase.contactDeadline?.toISOString() || null,
         sellerContactedAt: purchase.sellerContactedAt?.toISOString() || null,

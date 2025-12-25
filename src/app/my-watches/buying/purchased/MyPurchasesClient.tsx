@@ -657,24 +657,11 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                             {/* Helvenda Zahlungsschutz Badge */}
                             {purchase.paymentProtectionEnabled && (
                               <span
-                                className={`flex items-center gap-1 rounded px-2 py-0.5 font-medium ${
-                                  purchase.watch.seller?.stripeConnectedAccountId &&
-                                  purchase.watch.seller?.stripeOnboardingComplete
-                                    ? 'bg-green-50 text-green-700'
-                                    : 'bg-yellow-50 text-yellow-700'
-                                }`}
-                                title={
-                                  purchase.watch.seller?.stripeConnectedAccountId &&
-                                  purchase.watch.seller?.stripeOnboardingComplete
-                                    ? 'Sicher bezahlen via Helvenda'
-                                    : 'Zahlungsschutz aktiviert, Auszahlung noch nicht eingerichtet'
-                                }
+                                className="flex items-center gap-1 rounded bg-green-50 px-2 py-0.5 font-medium text-green-700"
+                                title="Helvenda Zahlungsschutz aktiv - Ihre Zahlung wird sicher verwahrt"
                               >
                                 <Shield className="h-3 w-3" />
-                                {purchase.watch.seller?.stripeConnectedAccountId &&
-                                purchase.watch.seller?.stripeOnboardingComplete
-                                  ? 'Geschützt'
-                                  : 'Schutz ausstehend'}
+                                Geschützt
                               </span>
                             )}
                             <span>

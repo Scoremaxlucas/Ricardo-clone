@@ -342,6 +342,46 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
     console.log(`[stripe/webhook] ✅ Order ${order.orderNumber} als bezahlt markiert`)
 
+    // WICHTIG: Aktualisiere auch das zugehörige Purchase-Record
+    // Purchase und Order sind verknüpft über watchId und buyerId
+    try {
+      const purchaseUpdate = await prisma.purchase.updateMany({
+        where: {
+          watchId: order.watchId,
+          buyerId: order.buyerId,
+        },
+        data: {
+          paymentConfirmed: true,
+          paymentConfirmedAt: new Date(),
+          paid: true,
+          status: 'processing',
+        },
+      })
+      console.log(`[stripe/webhook] ✅ ${purchaseUpdate.count} Purchase(s) als bezahlt markiert`)
+    } catch (purchaseError: any) {
+      console.error(`[stripe/webhook] Fehler beim Aktualisieren des Purchases:`, purchaseError)
+      // Nicht kritisch - Order ist bereits aktualisiert
+    }
+
+    // WICHTIG: Benachrichtige Verkäufer über Stripe-Onboarding wenn noch nicht eingerichtet
+    // JIT-Onboarding: Verkäufer muss Stripe einrichten um Auszahlung zu erhalten
+    if (!order.seller.stripeConnectedAccountId || !order.seller.stripeOnboardingComplete) {
+      try {
+        await prisma.notification.create({
+          data: {
+            userId: order.sellerId,
+            type: 'PAYOUT_SETUP_REQUIRED',
+            title: 'Auszahlung einrichten',
+            message: `Sie haben eine Zahlung für "${order.watch.title || 'Artikel'}" erhalten. Richten Sie Ihre Auszahlungsdaten ein, um das Geld zu erhalten.`,
+            link: '/my-watches/account?setup_payout=1',
+          },
+        })
+        console.log(`[stripe/webhook] ✅ Verkäufer-Benachrichtigung für Stripe-Onboarding erstellt`)
+      } catch (notifError: any) {
+        console.error(`[stripe/webhook] Fehler beim Erstellen der Onboarding-Notification:`, notifError)
+      }
+    }
+
     // Benachrichtigungen
     try {
       // Benachrichtigung an Käufer
