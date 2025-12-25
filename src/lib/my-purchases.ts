@@ -181,7 +181,7 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
       const order = watch.orders?.[0]
       const hasStripePayment = !!(order?.stripePaymentIntentId || order?.stripeChargeId)
       const paymentProtectionEnabled = watch.paymentProtectionEnabled || false
-      
+
       // IMPORTANT: Derive payment status from Order if Stripe payment exists
       // This ensures the UI reflects Stripe payment status correctly
       const isPaidViaStripe = order?.paymentStatus === 'paid' || order?.paymentStatus === 'released'
