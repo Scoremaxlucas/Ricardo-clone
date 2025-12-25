@@ -561,12 +561,10 @@ export default function SoldPage() {
               <div className="flex items-start gap-3">
                 <Wallet className="mt-0.5 h-6 w-6 flex-shrink-0 text-primary-600" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-primary-900">
-                    Auszahlung einrichten
-                  </h3>
+                  <h3 className="font-semibold text-primary-900">Auszahlung einrichten</h3>
                   <p className="mt-1 text-sm text-primary-700">
-                    Sie haben Zahlungen über Helvenda Zahlungsschutz erhalten. Richten Sie
-                    Ihre Auszahlungsdaten ein, um das Geld zu erhalten.
+                    Sie haben Zahlungen über Helvenda Zahlungsschutz erhalten. Richten Sie Ihre
+                    Auszahlungsdaten ein, um das Geld zu erhalten.
                   </p>
                   <Link
                     href="/my-watches/account?setup_payout=1"
@@ -903,25 +901,28 @@ export default function SoldPage() {
                     )}
 
                     {/* Helvenda Zahlungsschutz - Zahlung erhalten */}
-                    {sale.paymentProtectionEnabled && sale.isPaidViaStripe && !sale.itemReceived && (
-                      <div className="w-full rounded border border-primary-200 bg-primary-50 px-4 py-2 text-sm text-primary-700">
-                        <div className="flex items-center gap-2">
-                          <Shield className="h-4 w-4" />
-                          <span className="font-medium">Zahlung sicher erhalten</span>
+                    {sale.paymentProtectionEnabled &&
+                      sale.isPaidViaStripe &&
+                      !sale.itemReceived && (
+                        <div className="w-full rounded border border-primary-200 bg-primary-50 px-4 py-2 text-sm text-primary-700">
+                          <div className="flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            <span className="font-medium">Zahlung sicher erhalten</span>
+                          </div>
+                          <p className="mt-1 text-xs">
+                            Das Geld wird sicher verwahrt und nach Erhalt-Bestätigung des Käufers
+                            freigegeben.
+                            {!sellerStripeStatus?.isOnboardingComplete && (
+                              <Link
+                                href="/my-watches/account?setup_payout=1"
+                                className="ml-1 font-medium text-primary-800 underline"
+                              >
+                                Auszahlung einrichten →
+                              </Link>
+                            )}
+                          </p>
                         </div>
-                        <p className="mt-1 text-xs">
-                          Das Geld wird sicher verwahrt und nach Erhalt-Bestätigung des Käufers freigegeben.
-                          {!sellerStripeStatus?.isOnboardingComplete && (
-                            <Link
-                              href="/my-watches/account?setup_payout=1"
-                              className="ml-1 font-medium text-primary-800 underline"
-                            >
-                              Auszahlung einrichten →
-                            </Link>
-                          )}
-                        </p>
-                      </div>
-                    )}
+                      )}
 
                     {/* Hinweis wenn Käufer noch nicht bezahlt hat (nur für nicht-geschützte Verkäufe) */}
                     {!sale.paid && !sale.paymentConfirmed && (

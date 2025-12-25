@@ -68,7 +68,9 @@ export function StripePayoutSection() {
             toast.success('Willkommen zurück! Prüfen Sie Ihren Auszahlungsstatus.')
           }
         } else if (payoutRefresh === '1') {
-          toast.info('Die Einrichtung wurde unterbrochen. Sie können jederzeit fortfahren.')
+          toast('Die Einrichtung wurde unterbrochen. Sie können jederzeit fortfahren.', {
+            icon: 'ℹ️',
+          })
         }
       })
     }
