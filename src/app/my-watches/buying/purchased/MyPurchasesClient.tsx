@@ -16,6 +16,7 @@ import {
   ChevronUp,
   Clock,
   CreditCard,
+  ExternalLink,
   Loader2,
   Mail,
   MessageSquare,
@@ -865,6 +866,17 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                           </div>
                           <ShippingInfoCard purchaseId={purchase.id} />
                         </div>
+                      )}
+
+                      {/* Bestelldetails - nur bei Zahlungsschutz mit Order */}
+                      {purchase.paymentProtectionEnabled && purchase.orderId && (
+                        <Link
+                          href={`/orders/${purchase.orderId}`}
+                          className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-primary-600 bg-white px-4 py-3 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Bestelldetails & Zahlungsschutz-Status
+                        </Link>
                       )}
 
                       {/* Secondary Actions */}

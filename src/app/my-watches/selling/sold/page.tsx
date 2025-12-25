@@ -11,6 +11,7 @@ import {
   CheckCircle,
   Clock,
   CreditCard,
+  ExternalLink,
   Package,
   PackageCheck,
   Shield,
@@ -962,6 +963,18 @@ export default function SoldPage() {
                       <User className="h-4 w-4" />
                       Käufer-Kontakt
                     </button>
+
+                    {/* Bestelldetails - nur bei Zahlungsschutz mit Order */}
+                    {sale.paymentProtectionEnabled && sale.orderId && (
+                      <Link
+                        href={`/orders/${sale.orderId}`}
+                        className="flex w-full items-center justify-center gap-2 rounded border-2 border-primary-600 bg-white px-4 py-2 text-center text-sm font-medium text-primary-600 hover:bg-primary-50"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Bestelldetails ansehen
+                      </Link>
+                    )}
+
                     <Link
                       href={`/products/${sale.watch.id}`}
                       className="block w-full rounded bg-primary-600 px-4 py-2 text-center text-sm text-white hover:bg-primary-700"
