@@ -66,23 +66,17 @@ export async function POST(
       return NextResponse.json({ message: 'Bestellung nicht gefunden' }, { status: 404 })
     }
 
-    // Prüfe ob Order überhaupt bezahlt wurde
+    // Prüfe ob Order im richtigen Status ist (paid oder release_pending)
+    // Bereits freigegebene oder erstattete Orders können nicht zurückgehalten werden
     if (order.paymentStatus !== 'paid' && order.paymentStatus !== 'release_pending') {
+      const isReleased = order.paymentStatus === 'released'
       return NextResponse.json(
         {
-          message: `Bestellung kann nicht zurückgehalten werden. Status: ${order.paymentStatus}`,
+          message: isReleased
+            ? 'Bestellung wurde bereits freigegeben und kann nicht mehr zurückgehalten werden'
+            : `Bestellung kann nicht zurückgehalten werden. Status: ${order.paymentStatus}`,
           currentStatus: order.paymentStatus,
-        },
-        { status: 400 }
-      )
-    }
-
-    // Prüfe ob bereits freigegeben
-    if (order.paymentStatus === 'released') {
-      return NextResponse.json(
-        {
-          message: 'Bestellung wurde bereits freigegeben und kann nicht mehr zurückgehalten werden',
-          releasedAt: order.releasedAt,
+          releasedAt: isReleased ? order.releasedAt : undefined,
         },
         { status: 400 }
       )
