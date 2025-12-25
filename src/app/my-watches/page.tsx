@@ -335,7 +335,7 @@ export default function MyWatchesPage() {
       title: 'Aktive Angebote',
       description: 'Ihre aktuell aktiven Verkaufsanzeigen',
       icon: TrendingUp,
-      href: '/my-watches/selling/active',
+      href: '/my-watches/selling',
       color: 'bg-green-100 text-green-600',
       count: stats.active,
     },

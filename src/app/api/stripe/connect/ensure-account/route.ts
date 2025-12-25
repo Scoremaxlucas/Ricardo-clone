@@ -44,9 +44,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Extrahiere Felder (können undefined sein wenn Migration noch nicht ausgeführt wurde)
-    const connectOnboardingStatus = (user as any).connectOnboardingStatus as
-      | string
-      | undefined
+    const connectOnboardingStatus = (user as any).connectOnboardingStatus as string | undefined
     const payoutsEnabled = (user as any).payoutsEnabled as boolean | undefined
 
     // Falls bereits ein Account existiert, prüfe Status
@@ -90,13 +88,18 @@ export async function POST(request: NextRequest) {
           existing: true,
         })
       } catch (stripeError: any) {
-        console.error('[connect/ensure-account] Fehler beim Abrufen des Stripe Accounts:', stripeError)
+        console.error(
+          '[connect/ensure-account] Fehler beim Abrufen des Stripe Accounts:',
+          stripeError
+        )
         // Account existiert möglicherweise nicht mehr, erstelle neuen
       }
     }
 
     // Erstelle neuen Stripe Express Account mit Pre-fill von Helvenda-Profildaten
-    console.log(`[connect/ensure-account] Erstelle neuen Stripe Connected Account für User ${userId}`)
+    console.log(
+      `[connect/ensure-account] Erstelle neuen Stripe Connected Account für User ${userId}`
+    )
     console.log(`[connect/ensure-account] Pre-filling mit Profildaten:`, {
       hasEmail: !!user.email,
       hasFirstName: !!user.firstName,
@@ -149,7 +152,9 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    console.log(`[connect/ensure-account] ✅ Stripe Account ${account.id} erstellt für User ${userId}`)
+    console.log(
+      `[connect/ensure-account] ✅ Stripe Account ${account.id} erstellt für User ${userId}`
+    )
 
     // Speichere Account ID und setze Status auf INCOMPLETE (mit Fallback für fehlende Felder)
     const createData: any = {
@@ -222,9 +227,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Extrahiere Felder (können undefined sein wenn Migration noch nicht ausgeführt wurde)
-    const connectOnboardingStatus = (user as any).connectOnboardingStatus as
-      | string
-      | undefined
+    const connectOnboardingStatus = (user as any).connectOnboardingStatus as string | undefined
     const payoutsEnabled = (user as any).payoutsEnabled as boolean | undefined
 
     // Falls kein Account, Status ist NOT_STARTED
@@ -283,7 +286,10 @@ export async function GET(request: NextRequest) {
         onboardingComplete: isComplete,
       })
     } catch (stripeError: any) {
-      console.error('[connect/ensure-account] Fehler beim Abrufen des Stripe Accounts:', stripeError)
+      console.error(
+        '[connect/ensure-account] Fehler beim Abrufen des Stripe Accounts:',
+        stripeError
+      )
       return NextResponse.json({
         hasAccount: false,
         status: 'NOT_STARTED',

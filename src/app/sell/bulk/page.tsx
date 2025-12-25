@@ -480,7 +480,7 @@ export default function BulkUploadPage() {
       setSelectedProducts(new Set())
 
       setTimeout(() => {
-        router.push('/my-watches/selling/active')
+        router.push('/my-watches/selling')
       }, 2000)
     } catch (err) {
       setError('Fehler: ' + (err as Error).message)
