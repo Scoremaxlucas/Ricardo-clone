@@ -50,6 +50,9 @@ export async function GET(request: NextRequest) {
         city: true,
         phone: true,
         paymentMethods: true,
+        // Stripe Connect Status für Zahlungsschutz
+        stripeConnectedAccountId: true,
+        stripeOnboardingComplete: true,
       },
     })
 

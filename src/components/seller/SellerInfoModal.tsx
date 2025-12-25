@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X } from 'lucide-react'
+import { X, Shield, Loader2, CreditCard } from 'lucide-react'
 
 interface SellerInfo {
   id: string
@@ -15,6 +15,8 @@ interface SellerInfo {
   city: string | null
   phone: string | null
   paymentMethods: string | null
+  stripeConnectedAccountId?: string | null
+  stripeOnboardingComplete?: boolean
 }
 
 interface SellerInfoModalProps {
@@ -25,6 +27,10 @@ interface SellerInfoModalProps {
   isOpen: boolean
   onClose: () => void
   onMarkPaid?: () => void
+  // NEW: Payment protection props
+  paymentProtectionEnabled?: boolean
+  onPayViaStripe?: () => void
+  isProcessingStripePayment?: boolean
 }
 
 export function SellerInfoModal({
@@ -35,6 +41,9 @@ export function SellerInfoModal({
   isOpen,
   onClose,
   onMarkPaid,
+  paymentProtectionEnabled,
+  onPayViaStripe,
+  isProcessingStripePayment,
 }: SellerInfoModalProps) {
   const [sellerInfo, setSellerInfo] = useState<SellerInfo | null>(null)
   const [loading, setLoading] = useState(false)
@@ -101,7 +110,11 @@ export function SellerInfoModal({
       <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl">
         <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <h2 className="text-xl font-bold text-gray-900">Verkäuferinformationen</h2>
-          <button onClick={onClose} className="text-gray-400 transition-colors hover:text-gray-600">
+          <button
+            onClick={onClose}
+            className="text-gray-400 transition-colors hover:text-gray-600"
+            aria-label="Schliessen"
+          >
             <X className="h-6 w-6" />
           </button>
         </div>
@@ -242,11 +255,67 @@ export function SellerInfoModal({
                 </div>
               )}
 
-              {paymentMethods.length === 0 && (
+              {paymentMethods.length === 0 && !paymentProtectionEnabled && (
                 <div className="text-sm italic text-gray-500">
                   Keine Zahlungsmethoden hinterlegt
                 </div>
               )}
+
+              {/* Helvenda Zahlungsschutz - Stripe Payment Option */}
+              {paymentProtectionEnabled &&
+                sellerInfo?.stripeConnectedAccountId &&
+                sellerInfo?.stripeOnboardingComplete &&
+                onPayViaStripe && (
+                  <div className="mt-6 rounded-lg border-2 border-green-200 bg-green-50 p-4">
+                    <div className="mb-3 flex items-center gap-2">
+                      <Shield className="h-5 w-5 text-green-600" />
+                      <h3 className="font-semibold text-green-800">Helvenda Zahlungsschutz</h3>
+                    </div>
+                    <p className="mb-4 text-sm text-green-700">
+                      Bei diesem Artikel ist der Helvenda Zahlungsschutz aktiviert. Bezahlen Sie
+                      sicher über unsere Plattform - Ihr Geld wird erst nach Erhalt und Prüfung der
+                      Ware an den Verkäufer freigegeben.
+                    </p>
+                    <button
+                      onClick={() => {
+                        onPayViaStripe()
+                        onClose()
+                      }}
+                      disabled={isProcessingStripePayment}
+                      className="flex w-full items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-3 font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
+                    >
+                      {isProcessingStripePayment ? (
+                        <>
+                          <Loader2 className="h-5 w-5 animate-spin" />
+                          Wird vorbereitet...
+                        </>
+                      ) : (
+                        <>
+                          <Shield className="h-5 w-5" />
+                          Sicher bezahlen
+                        </>
+                      )}
+                    </button>
+                  </div>
+                )}
+
+              {/* Info wenn Zahlungsschutz aktiviert aber Verkäufer nicht onboarded */}
+              {paymentProtectionEnabled &&
+                (!sellerInfo?.stripeConnectedAccountId ||
+                  !sellerInfo?.stripeOnboardingComplete) && (
+                  <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <CreditCard className="h-5 w-5 text-yellow-600" />
+                      <h3 className="font-semibold text-yellow-800">Zahlungsschutz ausstehend</h3>
+                    </div>
+                    <p className="text-sm text-yellow-700">
+                      Der Verkäufer hat den Helvenda Zahlungsschutz für diesen Artikel aktiviert,
+                      aber die Auszahlungseinrichtung noch nicht abgeschlossen. Bitte nutzen Sie
+                      vorerst die oben angezeigten Zahlungsmethoden oder kontaktieren Sie den
+                      Verkäufer.
+                    </p>
+                  </div>
+                )}
             </div>
           ) : (
             <div className="py-12 text-center text-gray-500">

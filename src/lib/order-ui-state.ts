@@ -82,15 +82,33 @@ export function getOrderUIState(
     statusTone = 'warn'
   }
 
+  // Check if this is a protected purchase where Stripe payment should be primary
+  const hasProtection = purchase.paymentProtectionEnabled
+  const sellerHasStripe =
+    purchase.watch.seller?.stripeConnectedAccountId &&
+    purchase.watch.seller?.stripeOnboardingComplete
+  const canPayViaStripe = hasProtection && sellerHasStripe
+
   // Primary action based on state (only one!)
   if (stateInfo.nextAction) {
     switch (stateInfo.nextAction.action) {
       case 'contact_seller':
-        primaryAction = {
-          label: 'Verkäufer kontaktieren',
-          onClick: handlers.onContactSeller,
-          icon: 'MessageSquare',
-          variant: 'primary',
+        // For protected purchases with Stripe, show "Sicher bezahlen" as primary even in CONTACT_PENDING
+        // The buyer can pay immediately via Stripe without needing to contact seller first
+        if (canPayViaStripe) {
+          primaryAction = {
+            label: isProcessingPayment ? 'Wird vorbereitet...' : 'Sicher bezahlen',
+            onClick: handlers.onPay,
+            icon: 'Shield',
+            variant: 'primary',
+          }
+        } else {
+          primaryAction = {
+            label: 'Verkäufer kontaktieren',
+            onClick: handlers.onContactSeller,
+            icon: 'MessageSquare',
+            variant: 'primary',
+          }
         }
         break
 
@@ -98,14 +116,11 @@ export function getOrderUIState(
         primaryAction = {
           label: isProcessingPayment
             ? 'Wird vorbereitet...'
-            : purchase.paymentProtectionEnabled && purchase.watch.seller?.stripeOnboardingComplete
+            : canPayViaStripe
               ? 'Sicher bezahlen'
               : 'Jetzt bezahlen',
           onClick: handlers.onPay,
-          icon:
-            purchase.paymentProtectionEnabled && purchase.watch.seller?.stripeOnboardingComplete
-              ? 'Shield'
-              : 'CreditCard',
+          icon: canPayViaStripe ? 'Shield' : 'CreditCard',
           variant: 'primary',
         }
         break
@@ -136,8 +151,15 @@ export function getOrderUIState(
   // Secondary actions (only when primary action exists and state allows)
   // Never show contradictory actions
   if (stateInfo.state === 'CONTACT_PENDING') {
-    // Only contact seller is relevant
-    // No secondary actions
+    // For protected purchases, "Sicher bezahlen" is primary, so contact seller is secondary
+    if (canPayViaStripe) {
+      secondaryActions.push({
+        label: 'Verkäufer kontaktieren',
+        onClick: handlers.onContactSeller,
+        icon: 'MessageSquare',
+      })
+    }
+    // For unprotected purchases, contact seller is primary, no secondary actions
   } else if (stateInfo.state === 'PAYMENT_PENDING') {
     // Payment is primary, contact seller is secondary
     secondaryActions.push({

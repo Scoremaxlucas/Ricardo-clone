@@ -657,6 +657,29 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                                 ? 'Ersteigert'
                                 : 'Sofortkauf'}
                             </span>
+                            {/* Helvenda Zahlungsschutz Badge */}
+                            {purchase.paymentProtectionEnabled && (
+                              <span
+                                className={`flex items-center gap-1 rounded px-2 py-0.5 font-medium ${
+                                  purchase.watch.seller?.stripeConnectedAccountId &&
+                                  purchase.watch.seller?.stripeOnboardingComplete
+                                    ? 'bg-green-50 text-green-700'
+                                    : 'bg-yellow-50 text-yellow-700'
+                                }`}
+                                title={
+                                  purchase.watch.seller?.stripeConnectedAccountId &&
+                                  purchase.watch.seller?.stripeOnboardingComplete
+                                    ? 'Sicher bezahlen via Helvenda'
+                                    : 'Zahlungsschutz aktiviert, Auszahlung noch nicht eingerichtet'
+                                }
+                              >
+                                <Shield className="h-3 w-3" />
+                                {purchase.watch.seller?.stripeConnectedAccountId &&
+                                purchase.watch.seller?.stripeOnboardingComplete
+                                  ? 'Geschützt'
+                                  : 'Schutz ausstehend'}
+                              </span>
+                            )}
                             <span>
                               {new Date(purchase.purchasedAt).toLocaleDateString('de-CH', {
                                 day: '2-digit',
@@ -919,6 +942,10 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                 setShowSellerInfo(false)
                 setSelectedPurchase(null)
               }}
+              // Payment protection props for Stripe payment
+              paymentProtectionEnabled={selectedPurchase.paymentProtectionEnabled}
+              onPayViaStripe={() => handlePayment(selectedPurchase)}
+              isProcessingStripePayment={processingStripePayment === selectedPurchase.id}
             />
           )}
           <PaymentModal
