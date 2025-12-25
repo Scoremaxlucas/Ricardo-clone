@@ -7,6 +7,7 @@ import {
   AlertTriangle,
   Banknote,
   BarChart3,
+  CreditCard,
   DollarSign,
   FileCheck,
   Receipt,
@@ -322,6 +323,13 @@ export default function AdminDashboard() {
             href="/admin/disputes"
             color="orange"
             badge={stats?.pendingDisputes || 0}
+          />
+          <ActionCard
+            title="Bestellungen & Zahlungen"
+            description="Zahlungen freigeben, zurückhalten, Auszahlungen verwalten"
+            icon={CreditCard}
+            href="/admin/orders"
+            color="emerald"
           />
           <ActionCard
             title="Bankverbindungs-Änderungen"
