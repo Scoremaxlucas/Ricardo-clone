@@ -246,10 +246,37 @@ export async function GET(request: NextRequest) {
         account.charges_enabled === true &&
         account.payouts_enabled === true
 
+      const newStatus = isComplete ? 'COMPLETE' : 'INCOMPLETE'
+
+      // Synchronisiere Datenbank mit Stripe-Status (falls abweichend)
+      const updateData: any = {
+        stripeOnboardingComplete: isComplete,
+      }
+      if (connectOnboardingStatus !== undefined) {
+        updateData.connectOnboardingStatus = newStatus
+      }
+      if (payoutsEnabled !== undefined) {
+        updateData.payoutsEnabled = account.payouts_enabled === true
+      }
+
+      // Nur updaten wenn sich etwas geändert hat
+      const needsUpdate =
+        user.stripeOnboardingComplete !== isComplete ||
+        (connectOnboardingStatus !== undefined && connectOnboardingStatus !== newStatus) ||
+        (payoutsEnabled !== undefined && payoutsEnabled !== account.payouts_enabled)
+
+      if (needsUpdate) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: updateData,
+        })
+        console.log(`[connect/ensure-account] ✅ Status synchronisiert: ${newStatus}`)
+      }
+
       return NextResponse.json({
         hasAccount: true,
         accountId: user.stripeConnectedAccountId,
-        status: isComplete ? 'COMPLETE' : 'INCOMPLETE',
+        status: newStatus,
         payoutsEnabled: account.payouts_enabled === true,
         chargesEnabled: account.charges_enabled === true,
         detailsSubmitted: account.details_submitted === true,

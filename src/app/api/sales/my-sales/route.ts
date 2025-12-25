@@ -190,12 +190,18 @@ export async function GET(request: NextRequest) {
       }
     })
 
+    // Prüfe ob Onboarding abgeschlossen ist (mehrere Felder für Robustheit)
+    const isOnboardingComplete =
+      seller?.connectOnboardingStatus === 'COMPLETE' ||
+      seller?.payoutsEnabled === true ||
+      seller?.stripeOnboardingComplete === true
+
     return NextResponse.json({
       sales: salesWithDetails,
       // Seller Stripe Status für Auszahlungs-Setup CTA
       sellerStripeStatus: {
         hasStripeAccount: !!seller?.stripeConnectedAccountId,
-        isOnboardingComplete: seller?.stripeOnboardingComplete || false,
+        isOnboardingComplete: isOnboardingComplete,
         connectOnboardingStatus: seller?.connectOnboardingStatus || 'NOT_STARTED',
         payoutsEnabled: seller?.payoutsEnabled || false,
       },
