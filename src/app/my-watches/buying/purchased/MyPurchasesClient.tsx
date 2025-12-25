@@ -180,13 +180,11 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
    * Otherwise shows bank transfer modal
    */
   const handlePayment = async (purchase: MyPurchaseItem) => {
-    // Check if payment protection is enabled AND seller has Stripe Connect
+    // JUST-IN-TIME ONBOARDING: Route to Stripe checkout whenever payment protection is enabled
+    // The seller's Stripe account will be created/onboarded when they want to receive payout
     const hasProtection = purchase.paymentProtectionEnabled
-    const sellerHasStripe =
-      purchase.watch.seller?.stripeConnectedAccountId &&
-      purchase.watch.seller?.stripeOnboardingComplete
 
-    if (hasProtection && sellerHasStripe) {
+    if (hasProtection) {
       // Route to Stripe checkout for protected payment
       setProcessingStripePayment(purchase.id)
 
@@ -239,10 +237,9 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
         setProcessingStripePayment(null)
       }
     } else {
-      // No protection or seller doesn't have Stripe - show bank transfer modal
+      // No protection - show bank transfer modal
       setSelectedPurchase(purchase)
-      // Set flag if protection was expected but seller lacks Stripe
-      setProtectionUnavailable(!!(hasProtection && !sellerHasStripe))
+      setProtectionUnavailable(false)
       setShowPaymentModal(true)
     }
   }

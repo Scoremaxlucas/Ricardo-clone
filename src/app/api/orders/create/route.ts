@@ -83,16 +83,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prüfe ob Verkäufer Stripe Connect Account hat
-    if (!watch.seller.stripeConnectedAccountId || !watch.seller.stripeOnboardingComplete) {
-      return NextResponse.json(
-        {
-          message:
-            'Der Verkäufer hat noch keinen Stripe Connect Account eingerichtet. Bitte kontaktieren Sie den Verkäufer.',
-        },
-        { status: 400 }
-      )
-    }
+    // JUST-IN-TIME ONBOARDING: Keine Prüfung ob Verkäufer Stripe hat
+    // Die Zahlung geht an Helvenda (Platform), Auszahlung an Verkäufer erfolgt später
+    // Verkäufer muss Stripe erst einrichten wenn er die Auszahlung erhalten möchte
 
     // Berechne Preise
     const itemPrice = watch.buyNowPrice || watch.price

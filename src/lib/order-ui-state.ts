@@ -83,11 +83,10 @@ export function getOrderUIState(
   }
 
   // Check if this is a protected purchase where Stripe payment should be primary
+  // JUST-IN-TIME ONBOARDING: Show "Sicher bezahlen" whenever protection is enabled
+  // The seller's Stripe account will be created/onboarded when payout is needed
   const hasProtection = purchase.paymentProtectionEnabled
-  const sellerHasStripe =
-    purchase.watch.seller?.stripeConnectedAccountId &&
-    purchase.watch.seller?.stripeOnboardingComplete
-  const canPayViaStripe = hasProtection && sellerHasStripe
+  const canPayViaStripe = hasProtection // No longer requires seller to have Stripe pre-configured
 
   // Primary action based on state (only one!)
   if (stateInfo.nextAction) {

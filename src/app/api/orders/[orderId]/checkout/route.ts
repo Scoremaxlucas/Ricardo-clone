@@ -71,16 +71,10 @@ export async function POST(
       )
     }
 
-    // Prüfe ob Verkäufer Stripe Connect hat
-    if (!order.seller.stripeConnectedAccountId || !order.seller.stripeOnboardingComplete) {
-      return NextResponse.json(
-        {
-          message:
-            'Der Verkäufer hat noch keinen Stripe Connect Account eingerichtet. Bitte kontaktieren Sie den Verkäufer.',
-        },
-        { status: 400 }
-      )
-    }
+    // JUST-IN-TIME ONBOARDING: Keine Prüfung ob Verkäufer Stripe hat
+    // Die Zahlung geht an Helvenda (Platform), nicht direkt an den Verkäufer
+    // Verkäufer muss Stripe erst einrichten wenn er die Auszahlung erhalten möchte
+    // Das Geld wird bis dahin sicher bei Helvenda/Stripe gehalten
 
     // Parse watch images
     let imageUrl: string | undefined
