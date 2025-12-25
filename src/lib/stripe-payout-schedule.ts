@@ -59,8 +59,7 @@ export async function checkInstantPayoutSupport(accountId: string): Promise<{
     const account = await stripe.accounts.retrieve(accountId)
 
     // Check if instant payouts are available
-    const instantPayoutsEnabled =
-      account.settings?.payouts?.schedule?.interval === 'instant'
+    const instantPayoutsEnabled = account.settings?.payouts?.schedule?.interval === 'instant'
 
     return {
       supported: true, // Express accounts generally support instant payouts

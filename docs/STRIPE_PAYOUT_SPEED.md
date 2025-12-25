@@ -5,16 +5,19 @@
 Es gibt mehrere Gründe für Verzögerungen bei Stripe-Auszahlungen:
 
 ### 1. **Bankfeiertage**
+
 - Schweizer Banken sind an Feiertagen geschlossen
 - Auszahlungen werden nur an Werktagen verarbeitet
 - Beispiel: Weihnachten (25.-26. Dez.) verzögert Auszahlungen
 
 ### 2. **Erste Auszahlung**
+
 - Erste Auszahlung benötigt zusätzliche Verifizierung
 - Kann 7-14 Tage dauern
 - Nachfolgende Auszahlungen sind schneller
 
 ### 3. **Standard Payout-Schedule**
+
 - Standard: **Wöchentlich** (2-7 Werktage)
 - Wir konfigurieren automatisch: **Täglich** (1-2 Werktage)
 - Wochenenden werden standardmäßig übersprungen
@@ -28,11 +31,13 @@ Helvenda konfiguriert automatisch **tägliche Auszahlungen** für alle neuen Str
 ### Option 1: Instant Payouts (Empfohlen für schnelle Auszahlungen)
 
 **Vorteile:**
+
 - ✅ Verfügbar 24/7 (auch Wochenenden und Feiertage)
 - ✅ Geld innerhalb von 30 Minuten auf dem Bankkonto
 - ✅ Keine Wartezeit auf Bankfeiertage
 
 **Nachteile:**
+
 - ❌ Zusätzliche Gebühren (~1% oder Mindestgebühr)
 - ❌ Nicht für alle Banken verfügbar
 
@@ -58,17 +63,18 @@ Helvenda konfiguriert automatisch **tägliche Auszahlungen** für alle neuen Str
 
 ## Aktuelle Auszahlungsgeschwindigkeit
 
-| Methode | Geschwindigkeit | Wochenenden | Gebühren |
-|---------|----------------|-------------|----------|
-| Standard (wöchentlich) | 2-7 Werktage | ❌ Nein | Standard |
-| **Täglich (automatisch)** | **1-2 Werktage** | ❌ Nein | Standard |
-| **Instant Payouts** | **30 Minuten** | ✅ Ja | +1% oder Mindestgebühr |
+| Methode                   | Geschwindigkeit  | Wochenenden | Gebühren               |
+| ------------------------- | ---------------- | ----------- | ---------------------- |
+| Standard (wöchentlich)    | 2-7 Werktage     | ❌ Nein     | Standard               |
+| **Täglich (automatisch)** | **1-2 Werktage** | ❌ Nein     | Standard               |
+| **Instant Payouts**       | **30 Minuten**   | ✅ Ja       | +1% oder Mindestgebühr |
 
 ## Häufige Fragen
 
 ### Warum sehe ich "Expected 5 Jan 2026" für meine Auszahlung?
 
 Dies liegt an:
+
 1. Bankfeiertagen (Weihnachten 25.-26. Dez.)
 2. Erster Auszahlung (zusätzliche Verifizierung)
 3. Standard-Schedule (wird automatisch auf täglich geändert)
@@ -112,6 +118,7 @@ Falls die automatische Konfiguration fehlschlägt (z.B. bei bestimmten Account-T
 ## Support
 
 Bei Fragen zur Auszahlungsgeschwindigkeit:
+
 1. Prüfen Sie Ihr Stripe Dashboard für aktuelle Auszahlungszeiten
 2. Aktivieren Sie Instant Payouts für schnellste Auszahlungen
 3. Kontaktieren Sie Stripe Support bei technischen Problemen

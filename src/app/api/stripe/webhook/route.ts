@@ -1,9 +1,9 @@
+import { unblockUserAccountAfterPayment } from '@/lib/invoice-reminders'
+import { prisma } from '@/lib/prisma'
+import { stripe, STRIPE_WEBHOOK_SECRET } from '@/lib/stripe-server'
+import { isEventProcessed, markEventProcessed } from '@/lib/webhook-idempotency'
 import { NextRequest, NextResponse } from 'next/server'
 import Stripe from 'stripe'
-import { prisma } from '@/lib/prisma'
-import { unblockUserAccountAfterPayment } from '@/lib/invoice-reminders'
-import { stripe, STRIPE_WEBHOOK_SECRET } from '@/lib/stripe-server'
-import { isEventProcessed, markEventProcessed, isTransferCreated, isRefundCreated } from '@/lib/webhook-idempotency'
 
 const webhookSecret = STRIPE_WEBHOOK_SECRET
 
@@ -238,7 +238,9 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
 
     // Idempotency Check: Prüfe ob Event bereits verarbeitet wurde
     if (await isEventProcessed(session.id, 'checkout.session.completed')) {
-      console.log(`[stripe/webhook] Checkout Session ${session.id} bereits verarbeitet (Idempotency)`)
+      console.log(
+        `[stripe/webhook] Checkout Session ${session.id} bereits verarbeitet (Idempotency)`
+      )
       return
     }
 
@@ -378,7 +380,10 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
         })
         console.log(`[stripe/webhook] ✅ Verkäufer-Benachrichtigung für Stripe-Onboarding erstellt`)
       } catch (notifError: any) {
-        console.error(`[stripe/webhook] Fehler beim Erstellen der Onboarding-Notification:`, notifError)
+        console.error(
+          `[stripe/webhook] Fehler beim Erstellen der Onboarding-Notification:`,
+          notifError
+        )
       }
     }
 
@@ -434,7 +439,9 @@ async function handlePaymentIntentSucceeded(paymentIntent: Stripe.PaymentIntent)
     })
 
     if (!paymentRecord) {
-      console.log(`[stripe/webhook] PaymentRecord für Order ${orderId} noch nicht erstellt, warte auf checkout.session.completed`)
+      console.log(
+        `[stripe/webhook] PaymentRecord für Order ${orderId} noch nicht erstellt, warte auf checkout.session.completed`
+      )
       return
     }
 
@@ -512,7 +519,9 @@ async function handleTransferCreated(transfer: Stripe.Transfer) {
       },
     })
 
-    console.log(`[stripe/webhook] ✅ Order ${order.orderNumber} - Transfer erfolgreich, Geld freigegeben`)
+    console.log(
+      `[stripe/webhook] ✅ Order ${order.orderNumber} - Transfer erfolgreich, Geld freigegeben`
+    )
 
     // Benachrichtigungen
     try {
@@ -685,7 +694,9 @@ async function handleAccountUpdated(account: Stripe.Account) {
       },
     })
 
-    console.log(`[stripe/webhook] ✅ Onboarding-Status aktualisiert für User ${user.id}: ${newStatus}`)
+    console.log(
+      `[stripe/webhook] ✅ Onboarding-Status aktualisiert für User ${user.id}: ${newStatus}`
+    )
 
     // Wenn Onboarding jetzt abgeschlossen ist und vorher nicht war
     if (isComplete && wasIncomplete) {
@@ -698,11 +709,15 @@ async function handleAccountUpdated(account: Stripe.Account) {
         if (scheduleResult.success) {
           console.log(`[stripe/webhook] ✅ Payout schedule configured: ${scheduleResult.schedule}`)
         } else {
-          console.log(`[stripe/webhook] ⚠️ Could not auto-configure payout schedule: ${scheduleResult.message}`)
+          console.log(
+            `[stripe/webhook] ⚠️ Could not auto-configure payout schedule: ${scheduleResult.message}`
+          )
         }
       } catch (scheduleError: any) {
         // Nicht kritisch - Seller kann es manuell in Stripe Dashboard konfigurieren
-        console.log(`[stripe/webhook] ⚠️ Payout schedule configuration skipped: ${scheduleError.message}`)
+        console.log(
+          `[stripe/webhook] ⚠️ Payout schedule configuration skipped: ${scheduleError.message}`
+        )
       }
 
       // Benachrichtigung an User (Helvenda-Wording, keine Stripe-Erwähnung)
@@ -712,7 +727,8 @@ async function handleAccountUpdated(account: Stripe.Account) {
             userId: user.id,
             type: 'ACCOUNT_UPDATED',
             title: 'Auszahlung eingerichtet',
-            message: 'Ihre Auszahlungsdaten wurden erfolgreich hinterlegt. Sie können jetzt Zahlungen empfangen.',
+            message:
+              'Ihre Auszahlungsdaten wurden erfolgreich hinterlegt. Sie können jetzt Zahlungen empfangen.',
             link: '/my-watches/account',
           },
         })
@@ -729,7 +745,9 @@ async function handleAccountUpdated(account: Stripe.Account) {
       })
 
       if (pendingOrders.length > 0) {
-        console.log(`[stripe/webhook] ${pendingOrders.length} ausstehende Auszahlungen für User ${user.id}`)
+        console.log(
+          `[stripe/webhook] ${pendingOrders.length} ausstehende Auszahlungen für User ${user.id}`
+        )
 
         // Benachrichtige User über ausstehende Auszahlungen
         try {

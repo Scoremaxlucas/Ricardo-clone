@@ -133,13 +133,25 @@ export async function GET(request: NextRequest) {
         if (!order.seller.stripeConnectedAccountId) {
           diagnosis.push('Verkäufer hat kein Stripe-Konto')
         }
-        // Prüfe Onboarding-Status konsistent mit my-sales/route.ts
-        const isOnboardingComplete =
-          order.seller.connectOnboardingStatus === 'COMPLETE' ||
-          order.seller.payoutsEnabled === true ||
-          order.seller.stripeOnboardingComplete === true
-        if (order.seller.stripeConnectedAccountId && !isOnboardingComplete) {
-          diagnosis.push('Verkäufer-Onboarding nicht abgeschlossen')
+        // Prüfe Onboarding-Status konsistent mit release-funds.ts
+        // ALLE drei Bedingungen müssen erfüllt sein für vollständiges Onboarding
+        const sellerOnboardingComplete =
+          order.seller.stripeConnectedAccountId &&
+          order.seller.stripeOnboardingComplete &&
+          order.seller.connectOnboardingStatus === 'COMPLETE'
+        
+        if (order.seller.stripeConnectedAccountId && !sellerOnboardingComplete) {
+          // Detaillierte Diagnose
+          const missing: string[] = []
+          if (!order.seller.stripeOnboardingComplete) {
+            missing.push('stripeOnboardingComplete=false')
+          }
+          if (order.seller.connectOnboardingStatus !== 'COMPLETE') {
+            missing.push(`connectOnboardingStatus=${order.seller.connectOnboardingStatus || 'null'}`)
+          }
+          diagnosis.push(
+            `Verkäufer-Onboarding nicht abgeschlossen (${missing.join(', ')})`
+          )
         }
         if (!order.paymentRecord?.stripeChargeId) {
           diagnosis.push('Keine Charge-ID vorhanden')
@@ -191,6 +203,17 @@ export async function GET(request: NextRequest) {
           stripeOnboardingComplete: order.seller.stripeOnboardingComplete,
           connectOnboardingStatus: order.seller.connectOnboardingStatus,
           payoutsEnabled: order.seller.payoutsEnabled,
+          // Debug-Info für Admin
+          onboardingDebug: {
+            hasAccount: !!order.seller.stripeConnectedAccountId,
+            stripeOnboardingComplete: order.seller.stripeOnboardingComplete,
+            connectOnboardingStatus: order.seller.connectOnboardingStatus,
+            payoutsEnabled: order.seller.payoutsEnabled,
+            allComplete:
+              !!order.seller.stripeConnectedAccountId &&
+              order.seller.stripeOnboardingComplete === true &&
+              order.seller.connectOnboardingStatus === 'COMPLETE',
+          },
         },
         paymentRecord: order.paymentRecord,
         diagnosis,

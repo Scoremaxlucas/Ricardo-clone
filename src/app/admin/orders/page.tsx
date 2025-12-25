@@ -67,6 +67,13 @@ interface Order {
     stripeOnboardingComplete: boolean
     connectOnboardingStatus: string
     payoutsEnabled: boolean
+    onboardingDebug?: {
+      hasAccount: boolean
+      stripeOnboardingComplete: boolean
+      connectOnboardingStatus: string | null
+      payoutsEnabled: boolean
+      allComplete: boolean
+    }
   }
   paymentRecord: {
     stripeChargeId: string | null
@@ -423,7 +430,35 @@ export default function AdminOrdersPage() {
                           <span className="font-medium">V:</span> {order.seller.email}
                         </div>
                         {order.seller.stripeConnectedAccountId ? (
-                          <span className="text-green-600">✓ Stripe verbunden</span>
+                          <div className="mt-1 space-y-0.5">
+                            <span className="text-green-600">✓ Stripe verbunden</span>
+                            {order.seller.onboardingDebug && (
+                              <div className="text-[10px] text-gray-500">
+                                <div>
+                                  Onboarding:{' '}
+                                  {order.seller.onboardingDebug.allComplete ? (
+                                    <span className="text-green-600">✓ Komplett</span>
+                                  ) : (
+                                    <span className="text-orange-600">✗ Unvollständig</span>
+                                  )}
+                                </div>
+                                <div className="pl-2">
+                                  • stripeOnboardingComplete:{' '}
+                                  {order.seller.onboardingDebug.stripeOnboardingComplete
+                                    ? '✓'
+                                    : '✗'}
+                                </div>
+                                <div className="pl-2">
+                                  • connectOnboardingStatus:{' '}
+                                  {order.seller.onboardingDebug.connectOnboardingStatus || 'null'}
+                                </div>
+                                <div className="pl-2">
+                                  • payoutsEnabled:{' '}
+                                  {order.seller.onboardingDebug.payoutsEnabled ? '✓' : '✗'}
+                                </div>
+                              </div>
+                            )}
+                          </div>
                         ) : (
                           <span className="text-red-600">✗ Kein Stripe</span>
                         )}
