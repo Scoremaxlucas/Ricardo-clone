@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Helper function to check admin status
 async function checkAdmin(session: any): Promise<boolean> {
@@ -139,7 +139,7 @@ export async function GET(request: NextRequest) {
           order.seller.stripeConnectedAccountId &&
           order.seller.stripeOnboardingComplete &&
           order.seller.connectOnboardingStatus === 'COMPLETE'
-        
+
         if (order.seller.stripeConnectedAccountId && !sellerOnboardingComplete) {
           // Detaillierte Diagnose
           const missing: string[] = []
@@ -147,11 +147,11 @@ export async function GET(request: NextRequest) {
             missing.push('stripeOnboardingComplete=false')
           }
           if (order.seller.connectOnboardingStatus !== 'COMPLETE') {
-            missing.push(`connectOnboardingStatus=${order.seller.connectOnboardingStatus || 'null'}`)
+            missing.push(
+              `connectOnboardingStatus=${order.seller.connectOnboardingStatus || 'null'}`
+            )
           }
-          diagnosis.push(
-            `Verkäufer-Onboarding nicht abgeschlossen (${missing.join(', ')})`
-          )
+          diagnosis.push(`Verkäufer-Onboarding nicht abgeschlossen (${missing.join(', ')})`)
         }
         if (!order.paymentRecord?.stripeChargeId) {
           diagnosis.push('Keine Charge-ID vorhanden')
@@ -225,7 +225,8 @@ export async function GET(request: NextRequest) {
       total: orders.length,
       paid: orders.filter(o => o.paymentStatus === 'paid').length,
       released: orders.filter(o => o.paymentStatus === 'released').length,
-      pendingOnboarding: orders.filter(o => o.paymentStatus === 'release_pending_onboarding').length,
+      pendingOnboarding: orders.filter(o => o.paymentStatus === 'release_pending_onboarding')
+        .length,
       refunded: orders.filter(o => o.paymentStatus === 'refunded').length,
       awaitingPayment: orders.filter(o => o.paymentStatus === 'created').length,
     }

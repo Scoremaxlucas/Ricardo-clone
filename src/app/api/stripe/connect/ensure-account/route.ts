@@ -262,6 +262,10 @@ export async function GET(request: NextRequest) {
         updateData.payoutsEnabled = account.payouts_enabled === true
       }
 
+      // Prüfe ob Status von INCOMPLETE auf COMPLETE gewechselt ist
+      const wasIncomplete = connectOnboardingStatus !== 'COMPLETE' || !user.stripeOnboardingComplete
+      const isNowComplete = isComplete && newStatus === 'COMPLETE'
+
       // Nur updaten wenn sich etwas geändert hat
       const needsUpdate =
         user.stripeOnboardingComplete !== isComplete ||
@@ -274,6 +278,26 @@ export async function GET(request: NextRequest) {
           data: updateData,
         })
         console.log(`[connect/ensure-account] ✅ Status synchronisiert: ${newStatus}`)
+
+        // AUTOMATISCHE VERARBEITUNG: Wenn Onboarding gerade abgeschlossen wurde, verarbeite ausstehende Auszahlungen
+        if (isNowComplete && wasIncomplete) {
+          console.log(
+            `[connect/ensure-account] Onboarding abgeschlossen - verarbeite ausstehende Auszahlungen für User ${userId}`
+          )
+          try {
+            const { processPendingPayoutsForSeller } = await import('@/lib/release-funds')
+            const processedCount = await processPendingPayoutsForSeller(userId)
+            console.log(
+              `[connect/ensure-account] ✅ ${processedCount} Auszahlung${processedCount > 1 ? 'en' : ''} automatisch verarbeitet`
+            )
+          } catch (processError: any) {
+            console.error(
+              `[connect/ensure-account] ⚠️ Fehler bei automatischer Verarbeitung:`,
+              processError
+            )
+            // Nicht kritisch - kann später manuell verarbeitet werden
+          }
+        }
       }
 
       return NextResponse.json({

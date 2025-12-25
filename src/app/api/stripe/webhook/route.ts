@@ -746,22 +746,52 @@ async function handleAccountUpdated(account: Stripe.Account) {
 
       if (pendingOrders.length > 0) {
         console.log(
-          `[stripe/webhook] ${pendingOrders.length} ausstehende Auszahlungen für User ${user.id}`
+          `[stripe/webhook] ${pendingOrders.length} ausstehende Auszahlungen für User ${user.id} - verarbeite automatisch`
         )
 
-        // Benachrichtige User über ausstehende Auszahlungen
+        // AUTOMATISCHE VERARBEITUNG: Verarbeite alle ausstehenden Auszahlungen sofort
         try {
-          await prisma.notification.create({
-            data: {
-              userId: user.id,
-              type: 'PAYOUT_READY',
-              title: 'Auszahlungen bereit',
-              message: `${pendingOrders.length} Auszahlung${pendingOrders.length > 1 ? 'en' : ''} kann jetzt verarbeitet werden.`,
-              link: '/my-watches/selling/payouts',
-            },
-          })
-        } catch (error: any) {
-          console.error(`[stripe/webhook] Fehler beim Erstellen der Notification:`, error)
+          const { processPendingPayoutsForSeller } = await import('@/lib/release-funds')
+          const processedCount = await processPendingPayoutsForSeller(user.id)
+
+          console.log(
+            `[stripe/webhook] ✅ ${processedCount} Auszahlung${processedCount > 1 ? 'en' : ''} automatisch verarbeitet für User ${user.id}`
+          )
+
+          // Benachrichtige User über erfolgreiche Auszahlungen
+          try {
+            await prisma.notification.create({
+              data: {
+                userId: user.id,
+                type: 'PAYOUT_PROCESSED',
+                title: 'Auszahlungen verarbeitet',
+                message: `${processedCount} Auszahlung${processedCount > 1 ? 'en' : ''} wurde${processedCount === 1 ? '' : 'n'} automatisch auf Ihr Bankkonto überwiesen.`,
+                link: '/my-watches/selling/sold',
+              },
+            })
+          } catch (error: any) {
+            console.error(`[stripe/webhook] Fehler beim Erstellen der Notification:`, error)
+          }
+        } catch (processError: any) {
+          console.error(
+            `[stripe/webhook] ❌ Fehler bei automatischer Verarbeitung der Auszahlungen:`,
+            processError
+          )
+
+          // Fallback: Benachrichtige User, dass manuelle Verarbeitung nötig ist
+          try {
+            await prisma.notification.create({
+              data: {
+                userId: user.id,
+                type: 'PAYOUT_READY',
+                title: 'Auszahlungen bereit',
+                message: `${pendingOrders.length} Auszahlung${pendingOrders.length > 1 ? 'en' : ''} kann jetzt verarbeitet werden.`,
+                link: '/my-watches/account?setup_payout=1',
+              },
+            })
+          } catch (error: any) {
+            console.error(`[stripe/webhook] Fehler beim Erstellen der Fallback-Notification:`, error)
+          }
         }
       }
     }
