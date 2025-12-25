@@ -13,7 +13,9 @@ import {
   CreditCard,
   Package,
   PackageCheck,
+  Shield,
   User,
+  Wallet,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -32,6 +34,11 @@ interface Sale {
   itemReceivedAt: string | null
   paymentConfirmed: boolean
   paymentConfirmedAt: string | null
+  // Helvenda Zahlungsschutz
+  paymentProtectionEnabled?: boolean
+  isPaidViaStripe?: boolean
+  stripePaymentStatus?: string | null
+  orderId?: string | null
   // Kontaktfrist-Felder
   contactDeadline: string | null
   sellerContactedAt: string | null
@@ -68,6 +75,13 @@ interface Sale {
   }
 }
 
+interface SellerStripeStatus {
+  hasStripeAccount: boolean
+  isOnboardingComplete: boolean
+  connectOnboardingStatus: string
+  payoutsEnabled: boolean
+}
+
 export default function SoldPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
@@ -75,6 +89,7 @@ export default function SoldPage() {
   const [loading, setLoading] = useState(true)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
   const [showBuyerInfo, setShowBuyerInfo] = useState(false)
+  const [sellerStripeStatus, setSellerStripeStatus] = useState<SellerStripeStatus | null>(null)
   const hasInitializedRef = useRef(false)
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
   const initialLoadDoneRef = useRef(false) // Permanente Markierung für ersten Load
@@ -312,6 +327,9 @@ export default function SoldPage() {
           }).catch(() => {})
           // #endregion
           setSales(data.sales || [])
+          if (data.sellerStripeStatus) {
+            setSellerStripeStatus(data.sellerStripeStatus)
+          }
         }
       } catch (error) {
         console.error('Error loading sales:', error)
@@ -534,6 +552,33 @@ export default function SoldPage() {
           </div>
         </div>
 
+        {/* Auszahlungs-Setup Banner für Verkäufer ohne Stripe */}
+        {sellerStripeStatus &&
+          !sellerStripeStatus.isOnboardingComplete &&
+          sales.some(s => s.paymentProtectionEnabled && s.isPaidViaStripe) && (
+            <div className="mb-6 rounded-lg border-2 border-primary-200 bg-primary-50 p-4">
+              <div className="flex items-start gap-3">
+                <Wallet className="mt-0.5 h-6 w-6 flex-shrink-0 text-primary-600" />
+                <div className="flex-1">
+                  <h3 className="font-semibold text-primary-900">
+                    Auszahlung einrichten
+                  </h3>
+                  <p className="mt-1 text-sm text-primary-700">
+                    Sie haben Zahlungen über Helvenda Zahlungsschutz erhalten. Richten Sie
+                    Ihre Auszahlungsdaten ein, um das Geld zu erhalten.
+                  </p>
+                  <Link
+                    href="/my-watches/account?setup_payout=1"
+                    className="mt-3 inline-flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                  >
+                    <Wallet className="h-4 w-4" />
+                    Jetzt einrichten
+                  </Link>
+                </div>
+              </div>
+            </div>
+          )}
+
         {sales.length === 0 ? (
           <div className="rounded-lg bg-white p-8 shadow-md">
             <div className="py-12 text-center">
@@ -567,11 +612,18 @@ export default function SoldPage() {
                   </div>
                 )}
                 <div className="p-4">
-                  <div className="mb-2 flex items-center justify-between">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
                     <div className="rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
                       {sale.watch.purchaseType === 'auction' ? 'Auktion' : 'Sofortkauf'}
                     </div>
-                    <div className="text-xs text-gray-500">
+                    {/* Helvenda Zahlungsschutz Badge */}
+                    {sale.paymentProtectionEnabled && (
+                      <div className="flex items-center gap-1 rounded-full bg-primary-100 px-2 py-1 text-xs font-semibold text-primary-700">
+                        <Shield className="h-3 w-3" />
+                        Zahlungsschutz
+                      </div>
+                    )}
+                    <div className="ml-auto text-xs text-gray-500">
                       {new Date(sale.soldAt).toLocaleDateString('de-CH')}
                     </div>
                   </div>
@@ -776,7 +828,14 @@ export default function SoldPage() {
                         <CheckCircle className="h-4 w-4" />
                         <span className="text-xs font-medium">Abgeschlossen</span>
                       </div>
-                    ) : sale.status === 'payment_confirmed' ? (
+                    ) : sale.isPaidViaStripe && !sale.itemReceived ? (
+                      <div className="flex items-center gap-2 border-primary-200 bg-primary-50 text-primary-700">
+                        <Shield className="h-4 w-4" />
+                        <span className="text-xs font-medium">
+                          Bezahlt - Warten auf Erhalt-Bestätigung
+                        </span>
+                      </div>
+                    ) : sale.status === 'payment_confirmed' || sale.paymentConfirmed ? (
                       <div className="flex items-center gap-2 border-blue-200 bg-blue-50 text-blue-700">
                         <CreditCard className="h-4 w-4" />
                         <span className="text-xs font-medium">
@@ -793,7 +852,7 @@ export default function SoldPage() {
                     ) : (
                       <div className="flex items-center gap-2 border-gray-200 bg-gray-50 text-gray-700">
                         <Clock className="h-4 w-4" />
-                        <span className="text-xs font-medium">Ausstehend</span>
+                        <span className="text-xs font-medium">Warten auf Zahlung</span>
                       </div>
                     )}
                   </div>
@@ -842,11 +901,34 @@ export default function SoldPage() {
                       </button>
                     )}
 
-                    {/* Hinweis wenn Käufer noch nicht bezahlt hat */}
+                    {/* Helvenda Zahlungsschutz - Zahlung erhalten */}
+                    {sale.paymentProtectionEnabled && sale.isPaidViaStripe && !sale.itemReceived && (
+                      <div className="w-full rounded border border-primary-200 bg-primary-50 px-4 py-2 text-sm text-primary-700">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          <span className="font-medium">Zahlung sicher erhalten</span>
+                        </div>
+                        <p className="mt-1 text-xs">
+                          Das Geld wird sicher verwahrt und nach Erhalt-Bestätigung des Käufers freigegeben.
+                          {!sellerStripeStatus?.isOnboardingComplete && (
+                            <Link
+                              href="/my-watches/account?setup_payout=1"
+                              className="ml-1 font-medium text-primary-800 underline"
+                            >
+                              Auszahlung einrichten →
+                            </Link>
+                          )}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* Hinweis wenn Käufer noch nicht bezahlt hat (nur für nicht-geschützte Verkäufe) */}
                     {!sale.paid && !sale.paymentConfirmed && (
                       <div className="w-full rounded border border-yellow-200 bg-yellow-50 px-4 py-2 text-center text-sm text-yellow-700">
                         <Clock className="mr-2 inline h-4 w-4" />
-                        Warten auf Käufer-Bestätigung der Zahlung
+                        {sale.paymentProtectionEnabled
+                          ? 'Warten auf sichere Zahlung durch Käufer'
+                          : 'Warten auf Käufer-Bestätigung der Zahlung'}
                       </div>
                     )}
 

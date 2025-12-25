@@ -11,6 +11,17 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
+    // Hole Seller-Info für Stripe-Status
+    const seller = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        stripeConnectedAccountId: true,
+        stripeOnboardingComplete: true,
+        connectOnboardingStatus: true,
+        payoutsEnabled: true,
+      },
+    })
+
     // Hole alle Purchases, bei denen der eingeloggte User der Verkäufer ist
     // WICHTIG: Nur nicht-stornierte Purchases zählen als "verkauft"
     // Stornierte Purchases (z.B. durch Dispute) bedeuten, dass der Artikel wieder verfügbar ist
@@ -29,6 +40,21 @@ export async function GET(request: NextRequest) {
           include: {
             bids: {
               orderBy: { amount: 'desc' },
+              take: 1,
+            },
+            // Lade Orders für Stripe-Zahlungsstatus
+            orders: {
+              where: {
+                sellerId: session.user.id,
+              },
+              select: {
+                id: true,
+                paymentStatus: true,
+                stripePaymentIntentId: true,
+                paidAt: true,
+                orderNumber: true,
+              },
+              orderBy: { createdAt: 'desc' },
               take: 1,
             },
           },
@@ -76,23 +102,36 @@ export async function GET(request: NextRequest) {
       }
 
       const winningBid = watch.bids?.[0]
+      const order = watch.orders?.[0]
 
       // Bestimme finalPrice und purchaseType
       const finalPrice = winningBid?.amount || purchase.price || watch.price
       const isBuyNow = watch.buyNowPrice && winningBid && winningBid.amount === watch.buyNowPrice
       const purchaseType = isBuyNow ? 'buy-now' : winningBid ? 'auction' : 'buy-now'
 
+      // Helvenda Zahlungsschutz Status
+      const paymentProtectionEnabled = watch.paymentProtectionEnabled || false
+      const isPaidViaStripe = order?.paymentStatus === 'paid' || order?.paymentStatus === 'released'
+      const stripePaymentStatus = order?.paymentStatus || null
+
       return {
         id: purchase.id,
         soldAt: purchase.createdAt,
         shippingMethod: purchase.shippingMethod || watch.shippingMethod,
-        paid: purchase.paymentConfirmed || purchase.paid || false,
-        paidAt: purchase.paymentConfirmedAt || purchase.paidAt,
+        // Payment status - berücksichtige Stripe-Zahlungen
+        paid: purchase.paymentConfirmed || purchase.paid || isPaidViaStripe,
+        paidAt: purchase.paymentConfirmedAt || purchase.paidAt || order?.paidAt,
+        // Helvenda Zahlungsschutz
+        paymentProtectionEnabled,
+        isPaidViaStripe,
+        stripePaymentStatus,
+        orderId: order?.id || null,
         status: purchase.status || 'pending',
         itemReceived: purchase.itemReceived || false,
         itemReceivedAt: purchase.itemReceivedAt,
-        paymentConfirmed: purchase.paymentConfirmed || false,
-        paymentConfirmedAt: purchase.paymentConfirmedAt,
+        // Payment confirmed - berücksichtige Stripe-Zahlungen
+        paymentConfirmed: purchase.paymentConfirmed || isPaidViaStripe,
+        paymentConfirmedAt: purchase.paymentConfirmedAt || order?.paidAt,
         // Kontaktfrist-Felder
         contactDeadline: purchase.contactDeadline?.toISOString() || null,
         sellerContactedAt: purchase.sellerContactedAt?.toISOString() || null,
@@ -123,7 +162,16 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    return NextResponse.json({ sales: salesWithDetails })
+    return NextResponse.json({
+      sales: salesWithDetails,
+      // Seller Stripe Status für Auszahlungs-Setup CTA
+      sellerStripeStatus: {
+        hasStripeAccount: !!seller?.stripeConnectedAccountId,
+        isOnboardingComplete: seller?.stripeOnboardingComplete || false,
+        connectOnboardingStatus: seller?.connectOnboardingStatus || 'NOT_STARTED',
+        payoutsEnabled: seller?.payoutsEnabled || false,
+      },
+    })
   } catch (error: any) {
     console.error('Error fetching sales:', error)
     return NextResponse.json(
