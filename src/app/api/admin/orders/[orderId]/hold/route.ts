@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Helper function to check admin status
 async function checkAdmin(session: any): Promise<boolean> {
@@ -51,7 +51,10 @@ export async function POST(
     const { reason } = body
 
     if (!reason) {
-      return NextResponse.json({ message: 'Grund für das Zurückhalten ist erforderlich' }, { status: 400 })
+      return NextResponse.json(
+        { message: 'Grund für das Zurückhalten ist erforderlich' },
+        { status: 400 }
+      )
     }
 
     console.log(`[admin/hold] Admin ${session?.user?.email} hält Order ${orderId} zurück`)

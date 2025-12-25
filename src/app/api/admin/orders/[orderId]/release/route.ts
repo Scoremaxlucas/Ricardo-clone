@@ -74,28 +74,18 @@ export async function POST(
       return NextResponse.json({ message: 'Bestellung nicht gefunden' }, { status: 404 })
     }
 
-    // Prüfe ob Order überhaupt bezahlt wurde
-    if (
-      order.paymentStatus !== 'paid' &&
-      order.paymentStatus !== 'release_pending' &&
-      order.paymentStatus !== 'release_pending_onboarding'
-    ) {
+    // Prüfe ob Order im richtigen Status ist
+    const validStatuses = ['paid', 'release_pending', 'release_pending_onboarding']
+    if (!validStatuses.includes(order.paymentStatus)) {
+      const isReleased = order.paymentStatus === 'released'
       return NextResponse.json(
         {
-          message: `Bestellung kann nicht freigegeben werden. Status: ${order.paymentStatus}`,
+          message: isReleased
+            ? 'Bestellung wurde bereits freigegeben'
+            : `Bestellung kann nicht freigegeben werden. Status: ${order.paymentStatus}`,
           currentStatus: order.paymentStatus,
-        },
-        { status: 400 }
-      )
-    }
-
-    // Prüfe ob bereits freigegeben
-    if (order.paymentStatus === 'released') {
-      return NextResponse.json(
-        {
-          message: 'Bestellung wurde bereits freigegeben',
-          releasedAt: order.releasedAt,
-          stripeTransferId: order.stripeTransferId,
+          releasedAt: isReleased ? order.releasedAt : undefined,
+          stripeTransferId: isReleased ? order.stripeTransferId : undefined,
         },
         { status: 400 }
       )
