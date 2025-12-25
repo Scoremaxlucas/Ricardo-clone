@@ -133,7 +133,12 @@ export async function GET(request: NextRequest) {
         if (!order.seller.stripeConnectedAccountId) {
           diagnosis.push('Verkäufer hat kein Stripe-Konto')
         }
-        if (!order.seller.stripeOnboardingComplete) {
+        // Prüfe Onboarding-Status konsistent mit my-sales/route.ts
+        const isOnboardingComplete =
+          order.seller.connectOnboardingStatus === 'COMPLETE' ||
+          order.seller.payoutsEnabled === true ||
+          order.seller.stripeOnboardingComplete === true
+        if (order.seller.stripeConnectedAccountId && !isOnboardingComplete) {
           diagnosis.push('Verkäufer-Onboarding nicht abgeschlossen')
         }
         if (!order.paymentRecord?.stripeChargeId) {
