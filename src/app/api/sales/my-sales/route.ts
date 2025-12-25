@@ -42,21 +42,6 @@ export async function GET(request: NextRequest) {
               orderBy: { amount: 'desc' },
               take: 1,
             },
-            // Lade Orders für Stripe-Zahlungsstatus
-            orders: {
-              where: {
-                sellerId: session.user.id,
-              },
-              select: {
-                id: true,
-                paymentStatus: true,
-                stripePaymentIntentId: true,
-                paidAt: true,
-                orderNumber: true,
-              },
-              orderBy: { createdAt: 'desc' },
-              take: 1,
-            },
           },
         },
         buyer: {
@@ -77,6 +62,39 @@ export async function GET(request: NextRequest) {
       },
       orderBy: { createdAt: 'desc' },
     })
+
+    // Lade Orders separat - verknüpft über watchId UND buyerId für korrektes Matching
+    const watchIds = purchases.map(p => p.watchId)
+    const buyerIds = purchases.map(p => p.buyerId)
+    
+    const orders = await prisma.order.findMany({
+      where: {
+        watchId: { in: watchIds },
+        buyerId: { in: buyerIds },
+        sellerId: session.user.id,
+      },
+      select: {
+        id: true,
+        watchId: true,
+        buyerId: true,
+        paymentStatus: true,
+        stripePaymentIntentId: true,
+        paidAt: true,
+        orderNumber: true,
+      },
+    })
+
+    // Erstelle Lookup-Map für schnellen Zugriff: key = watchId:buyerId
+    const orderMap = new Map<string, typeof orders[0]>()
+    for (const order of orders) {
+      const key = `${order.watchId}:${order.buyerId}`
+      // Nehme die neueste Order (falls mehrere existieren)
+      if (!orderMap.has(key)) {
+        orderMap.set(key, order)
+      }
+    }
+
+    console.log(`[my-sales] Gefunden: ${purchases.length} Purchases, ${orders.length} Orders`)
 
     // Formatiere Daten
     const salesWithDetails = purchases.map(purchase => {
@@ -102,7 +120,10 @@ export async function GET(request: NextRequest) {
       }
 
       const winningBid = watch.bids?.[0]
-      const order = watch.orders?.[0]
+      
+      // Finde die Order für diesen Purchase via watchId:buyerId
+      const orderKey = `${purchase.watchId}:${purchase.buyerId}`
+      const order = orderMap.get(orderKey)
 
       // Bestimme finalPrice und purchaseType
       const finalPrice = winningBid?.amount || purchase.price || watch.price
@@ -113,6 +134,11 @@ export async function GET(request: NextRequest) {
       const paymentProtectionEnabled = watch.paymentProtectionEnabled || false
       const isPaidViaStripe = order?.paymentStatus === 'paid' || order?.paymentStatus === 'released'
       const stripePaymentStatus = order?.paymentStatus || null
+
+      // Debug logging
+      if (paymentProtectionEnabled) {
+        console.log(`[my-sales] Purchase ${purchase.id}: protection=${paymentProtectionEnabled}, order=${order?.id || 'NONE'}, orderStatus=${stripePaymentStatus}, isPaidViaStripe=${isPaidViaStripe}`)
+      }
 
       return {
         id: purchase.id,
