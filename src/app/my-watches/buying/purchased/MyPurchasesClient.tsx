@@ -158,17 +158,49 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
 
   const handleConfirmReceived = async (purchaseId: string) => {
     try {
-      const res = await fetch(`/api/purchases/${purchaseId}/confirm-received`, {
-        method: 'POST',
-      })
+      // Finde den Purchase um zu prüfen ob es ein geschützter Kauf ist
+      const purchase = purchases.find(p => p.id === purchaseId)
 
-      const data = await res.json()
+      // Für geschützte Käufe mit Order → Nutze Order-API um Geld freizugeben
+      if (purchase?.paymentProtectionEnabled && purchase?.orderId) {
+        console.log(`[handleConfirmReceived] Geschützter Kauf - nutze Order-API für ${purchase.orderId}`)
 
-      if (res.ok) {
-        toast.success('Erhalt erfolgreich bestätigt!')
-        handleMarkPaid()
+        const res = await fetch(`/api/orders/${purchase.orderId}/confirm-receipt`, {
+          method: 'POST',
+        })
+
+        const data = await res.json()
+
+        if (res.ok) {
+          if (data.pendingOnboarding) {
+            toast.success('Erhalt bestätigt! Der Verkäufer muss noch seine Auszahlungsdaten einrichten.')
+          } else {
+            toast.success('Erhalt bestätigt und Auszahlung an Verkäufer erfolgt!')
+          }
+
+          // Auch Purchase aktualisieren
+          await fetch(`/api/purchases/${purchaseId}/confirm-received`, {
+            method: 'POST',
+          })
+
+          handleMarkPaid()
+        } else {
+          toast.error(data.message || 'Fehler beim Bestätigen des Erhalts')
+        }
       } else {
-        toast.error(data.message || 'Fehler beim Bestätigen des Erhalts')
+        // Für nicht-geschützte Käufe → Nutze Purchase-API
+        const res = await fetch(`/api/purchases/${purchaseId}/confirm-received`, {
+          method: 'POST',
+        })
+
+        const data = await res.json()
+
+        if (res.ok) {
+          toast.success('Erhalt erfolgreich bestätigt!')
+          handleMarkPaid()
+        } else {
+          toast.error(data.message || 'Fehler beim Bestätigen des Erhalts')
+        }
       }
     } catch (error) {
       console.error('Error confirming received:', error)
@@ -663,6 +695,16 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                               >
                                 <Shield className="h-3 w-3" />
                                 Geschützt
+                              </span>
+                            )}
+                            {/* Bezahlt Badge - zeigt wenn Zahlung erfolgt ist */}
+                            {purchase.paymentConfirmed && (
+                              <span
+                                className="flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700"
+                                title="Zahlung erfolgreich"
+                              >
+                                <CheckCircle className="h-3 w-3" />
+                                Bezahlt
                               </span>
                             )}
                             <span>
