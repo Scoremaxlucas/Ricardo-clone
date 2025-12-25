@@ -691,6 +691,20 @@ async function handleAccountUpdated(account: Stripe.Account) {
     if (isComplete && wasIncomplete) {
       console.log(`[stripe/webhook] ✅ Onboarding abgeschlossen für User ${user.id}`)
 
+      // Konfiguriere Payout-Schedule für schnellere Auszahlungen (täglich statt wöchentlich)
+      try {
+        const { configurePayoutSchedule } = await import('@/lib/stripe-payout-schedule')
+        const scheduleResult = await configurePayoutSchedule(account.id)
+        if (scheduleResult.success) {
+          console.log(`[stripe/webhook] ✅ Payout schedule configured: ${scheduleResult.schedule}`)
+        } else {
+          console.log(`[stripe/webhook] ⚠️ Could not auto-configure payout schedule: ${scheduleResult.message}`)
+        }
+      } catch (scheduleError: any) {
+        // Nicht kritisch - Seller kann es manuell in Stripe Dashboard konfigurieren
+        console.log(`[stripe/webhook] ⚠️ Payout schedule configuration skipped: ${scheduleError.message}`)
+      }
+
       // Benachrichtigung an User (Helvenda-Wording, keine Stripe-Erwähnung)
       try {
         await prisma.notification.create({
