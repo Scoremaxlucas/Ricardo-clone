@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Alle Verkäufe des eingeloggten Users abrufen
 export async function GET(request: NextRequest) {
@@ -66,7 +66,7 @@ export async function GET(request: NextRequest) {
     // Lade Orders separat - verknüpft über watchId UND buyerId für korrektes Matching
     const watchIds = purchases.map(p => p.watchId)
     const buyerIds = purchases.map(p => p.buyerId)
-    
+
     const orders = await prisma.order.findMany({
       where: {
         watchId: { in: watchIds },
@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     })
 
     // Erstelle Lookup-Map für schnellen Zugriff: key = watchId:buyerId
-    const orderMap = new Map<string, typeof orders[0]>()
+    const orderMap = new Map<string, (typeof orders)[0]>()
     for (const order of orders) {
       const key = `${order.watchId}:${order.buyerId}`
       // Nehme die neueste Order (falls mehrere existieren)
@@ -120,7 +120,7 @@ export async function GET(request: NextRequest) {
       }
 
       const winningBid = watch.bids?.[0]
-      
+
       // Finde die Order für diesen Purchase via watchId:buyerId
       const orderKey = `${purchase.watchId}:${purchase.buyerId}`
       const order = orderMap.get(orderKey)
@@ -137,7 +137,9 @@ export async function GET(request: NextRequest) {
 
       // Debug logging
       if (paymentProtectionEnabled) {
-        console.log(`[my-sales] Purchase ${purchase.id}: protection=${paymentProtectionEnabled}, order=${order?.id || 'NONE'}, orderStatus=${stripePaymentStatus}, isPaidViaStripe=${isPaidViaStripe}`)
+        console.log(
+          `[my-sales] Purchase ${purchase.id}: protection=${paymentProtectionEnabled}, order=${order?.id || 'NONE'}, orderStatus=${stripePaymentStatus}, isPaidViaStripe=${isPaidViaStripe}`
+        )
       }
 
       return {

@@ -32,9 +32,25 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id
     console.log(`[connect/account-link] Request von User ${userId}`)
 
-    // Lade User
+    // Lade User mit allen Profildaten für Pre-fill
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        street: true,
+        streetNumber: true,
+        postalCode: true,
+        city: true,
+        stripeConnectedAccountId: true,
+        stripeOnboardingComplete: true,
+        connectOnboardingStatus: true,
+        payoutsEnabled: true,
+        stripeOnboardingLinkExpiresAt: true,
+      },
     })
 
     if (!user) {
@@ -49,19 +65,54 @@ export async function POST(request: NextRequest) {
     let accountId = user.stripeConnectedAccountId
 
     if (!accountId) {
-      // Erstelle Account automatisch
+      // Erstelle Account automatisch mit Pre-fill von Helvenda-Profildaten
       console.log(`[connect/account-link] Erstelle Account für User ${userId}`)
+      console.log(`[connect/account-link] Pre-filling mit Profildaten:`, {
+        hasEmail: !!user.email,
+        hasFirstName: !!user.firstName,
+        hasLastName: !!user.lastName,
+        hasPhone: !!user.phone,
+        hasAddress: !!(user.street && user.city && user.postalCode),
+      })
+
+      // Baue Adresse auf wenn vorhanden
+      const addressData: any = {}
+      if (user.street || user.streetNumber) {
+        addressData.line1 = [user.street, user.streetNumber].filter(Boolean).join(' ') || undefined
+      }
+      if (user.city) {
+        addressData.city = user.city
+      }
+      if (user.postalCode) {
+        addressData.postal_code = user.postalCode
+      }
+      addressData.country = 'CH'
 
       const account = await stripe.accounts.create({
         type: 'express',
         country: 'CH',
+        email: user.email || undefined,
         capabilities: {
           card_payments: { requested: true },
           transfers: { requested: true },
         },
+        business_type: 'individual',
+        // Pre-fill Individual-Daten aus Helvenda-Profil
+        individual: {
+          first_name: user.firstName || undefined,
+          last_name: user.lastName || undefined,
+          email: user.email || undefined,
+          phone: user.phone || undefined,
+          address: Object.keys(addressData).length > 1 ? addressData : undefined,
+        },
+        business_profile: {
+          mcc: '5999',
+          url: 'https://helvenda.ch',
+        },
         metadata: {
           userId: userId,
           platform: 'helvenda',
+          prefilled: 'true',
         },
       })
 

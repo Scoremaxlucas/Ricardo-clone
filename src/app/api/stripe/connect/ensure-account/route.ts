@@ -19,9 +19,24 @@ export async function POST(request: NextRequest) {
 
     const userId = session.user.id
 
-    // Lade User
+    // Lade User mit allen Profildaten für Pre-fill
     const user = await prisma.user.findUnique({
       where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+        street: true,
+        streetNumber: true,
+        postalCode: true,
+        city: true,
+        stripeConnectedAccountId: true,
+        stripeOnboardingComplete: true,
+        connectOnboardingStatus: true,
+        payoutsEnabled: true,
+      },
     })
 
     if (!user) {
@@ -80,8 +95,28 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Erstelle neuen Stripe Express Account
+    // Erstelle neuen Stripe Express Account mit Pre-fill von Helvenda-Profildaten
     console.log(`[connect/ensure-account] Erstelle neuen Stripe Connected Account für User ${userId}`)
+    console.log(`[connect/ensure-account] Pre-filling mit Profildaten:`, {
+      hasEmail: !!user.email,
+      hasFirstName: !!user.firstName,
+      hasLastName: !!user.lastName,
+      hasPhone: !!user.phone,
+      hasAddress: !!(user.street && user.city && user.postalCode),
+    })
+
+    // Baue Adresse auf wenn vorhanden
+    const addressData: any = {}
+    if (user.street || user.streetNumber) {
+      addressData.line1 = [user.street, user.streetNumber].filter(Boolean).join(' ') || undefined
+    }
+    if (user.city) {
+      addressData.city = user.city
+    }
+    if (user.postalCode) {
+      addressData.postal_code = user.postalCode
+    }
+    addressData.country = 'CH'
 
     const account = await stripe.accounts.create({
       type: 'express',
@@ -92,14 +127,25 @@ export async function POST(request: NextRequest) {
         transfers: { requested: true },
       },
       business_type: 'individual',
+      // Pre-fill Individual-Daten aus Helvenda-Profil
       individual: {
         first_name: user.firstName || undefined,
         last_name: user.lastName || undefined,
         email: user.email || undefined,
+        phone: user.phone || undefined,
+        // Adresse nur wenn mindestens eine Zeile vorhanden
+        address: Object.keys(addressData).length > 1 ? addressData : undefined,
+      },
+      // Business Profile für Express Accounts
+      business_profile: {
+        // MCC für Online-Marktplatz
+        mcc: '5999', // Misc Retail
+        url: 'https://helvenda.ch',
       },
       metadata: {
         userId: userId,
         platform: 'helvenda',
+        prefilled: 'true',
       },
     })
 

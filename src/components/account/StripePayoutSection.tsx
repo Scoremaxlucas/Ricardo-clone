@@ -13,6 +13,7 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
+import { StripeOnboardingGuide } from './StripeOnboardingGuide'
 
 interface PayoutStatus {
   hasAccount: boolean
@@ -39,6 +40,7 @@ export function StripePayoutSection() {
   const [loading, setLoading] = useState(true)
   const [processingOnboarding, setProcessingOnboarding] = useState(false)
   const [processingPayouts, setProcessingPayouts] = useState(false)
+  const [showOnboardingGuide, setShowOnboardingGuide] = useState(false)
 
   // Check for return from Stripe onboarding
   useEffect(() => {
@@ -55,14 +57,25 @@ export function StripePayoutSection() {
         url.searchParams.delete('payout_refresh')
         router.replace(url.pathname + url.search)
 
+        // Hide onboarding guide after return
+        setShowOnboardingGuide(false)
+
         if (payoutReturn === '1') {
-          toast.success('Willkommen zurück! Prüfen Sie Ihren Auszahlungsstatus.')
+          // Check if onboarding was successful
+          if (status?.status === 'COMPLETE') {
+            toast.success('🎉 Auszahlung erfolgreich eingerichtet!')
+          } else {
+            toast.success('Willkommen zurück! Prüfen Sie Ihren Auszahlungsstatus.')
+          }
+        } else if (payoutRefresh === '1') {
+          toast.info('Die Einrichtung wurde unterbrochen. Sie können jederzeit fortfahren.')
         }
       })
     }
 
     if (setupPayout === '1') {
-      // Scroll to this section and show setup prompt
+      // Show onboarding guide and scroll to section
+      setShowOnboardingGuide(true)
       const section = document.getElementById('stripe-payout-section')
       if (section) {
         section.scrollIntoView({ behavior: 'smooth', block: 'center' })
@@ -72,7 +85,7 @@ export function StripePayoutSection() {
       url.searchParams.delete('setup_payout')
       router.replace(url.pathname + url.search)
     }
-  }, [searchParams, router])
+  }, [searchParams, router, status?.status])
 
   const loadStatus = useCallback(async () => {
     try {
@@ -308,12 +321,30 @@ export function StripePayoutSection() {
         </div>
       )}
 
+      {/* Onboarding Guide - zeigt was benötigt wird */}
+      {showOnboardingGuide && !isComplete && (
+        <div className="mb-4">
+          <StripeOnboardingGuide
+            onContinue={handleStartOnboarding}
+            isLoading={processingOnboarding}
+          />
+        </div>
+      )}
+
       {/* CTA Buttons */}
       <div className="space-y-3">
-        {!isComplete && (
+        {!isComplete && !showOnboardingGuide && (
           <button
             type="button"
-            onClick={handleStartOnboarding}
+            onClick={() => {
+              // Bei NOT_STARTED: Zeige Guide zuerst
+              // Bei INCOMPLETE: Direkt fortsetzen
+              if (status?.status === 'NOT_STARTED') {
+                setShowOnboardingGuide(true)
+              } else {
+                handleStartOnboarding()
+              }
+            }}
             disabled={processingOnboarding}
             className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
           >
@@ -336,22 +367,51 @@ export function StripePayoutSection() {
           </button>
         )}
 
+        {/* Progress Indicator für INCOMPLETE Status */}
+        {status?.status === 'INCOMPLETE' && !showOnboardingGuide && (
+          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <div className="mb-2 flex items-center justify-between text-sm">
+              <span className="text-amber-700">Einrichtungs-Fortschritt</span>
+              <span className="font-medium text-amber-800">Fast fertig!</span>
+            </div>
+            <div className="h-2 w-full overflow-hidden rounded-full bg-amber-200">
+              <div
+                className="h-full bg-amber-500 transition-all duration-300"
+                style={{
+                  width: status.detailsSubmitted
+                    ? status.chargesEnabled
+                      ? '90%'
+                      : '70%'
+                    : '40%',
+                }}
+              />
+            </div>
+            <p className="mt-2 text-xs text-amber-600">
+              {status.detailsSubmitted
+                ? 'Daten übermittelt - Verifizierung läuft...'
+                : 'Bitte vervollständigen Sie Ihre Angaben.'}
+            </p>
+          </div>
+        )}
+
         {/* Info Text */}
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <div className="flex items-start gap-2">
-            <Shield className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600" />
-            <div>
-              <p className="text-xs text-gray-600">
-                <strong>Was ist der Helvenda Zahlungsschutz?</strong>
-              </p>
-              <p className="mt-1 text-xs text-gray-500">
-                Beim Helvenda Zahlungsschutz werden Zahlungen sicher gehalten, bis der Käufer den
-                Erhalt bestätigt oder ein Zeitfenster abgelaufen ist. Dann wird das Geld automatisch
-                an Sie überwiesen.
-              </p>
+        {!showOnboardingGuide && (
+          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+            <div className="flex items-start gap-2">
+              <Shield className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600" />
+              <div>
+                <p className="text-xs text-gray-600">
+                  <strong>Was ist der Helvenda Zahlungsschutz?</strong>
+                </p>
+                <p className="mt-1 text-xs text-gray-500">
+                  Beim Helvenda Zahlungsschutz werden Zahlungen sicher gehalten, bis der Käufer den
+                  Erhalt bestätigt oder ein Zeitfenster abgelaufen ist. Dann wird das Geld automatisch
+                  an Sie überwiesen.
+                </p>
+              </div>
             </div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   )
