@@ -101,8 +101,10 @@ model User {
   stripeConnectedAccountId      String?
   stripeOnboardingComplete      Boolean              @default(false)
   stripeOnboardingLinkExpiresAt DateTime?
-  connectOnboardingStatus       String               @default("NOT_STARTED") // NOT_STARTED, INCOMPLETE, COMPLETE
+  connectOnboardingStatus       String               @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, ACTION_REQUIRED, VERIFIED
   payoutsEnabled                Boolean              @default(false)
+  chargesEnabled                Boolean              @default(false)
+  stripeRequirements            Json?                // Snapshot of Stripe requirements for UI
   accounts                      Account[]
   bids                          Bid[]
   favorites                     Favorite[]

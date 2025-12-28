@@ -675,22 +675,47 @@ async function handleAccountUpdated(account: Stripe.Account) {
       return
     }
 
-    // Prüfe ob Onboarding abgeschlossen ist
-    const isComplete =
-      account.details_submitted === true &&
-      account.charges_enabled === true &&
-      account.payouts_enabled === true
+    // Determine new status based on requirements and capabilities
+    const currentlyDue = account.requirements?.currently_due || []
+    const pendingVerification = account.requirements?.pending_verification || []
+    const pastDue = account.requirements?.past_due || []
 
-    const newStatus = isComplete ? 'COMPLETE' : 'INCOMPLETE'
-    const wasIncomplete = user.connectOnboardingStatus !== 'COMPLETE'
+    let newStatus: string
+    if (pastDue.length > 0 || currentlyDue.length > 0) {
+      newStatus = 'ACTION_REQUIRED'
+    } else if (pendingVerification.length > 0) {
+      newStatus = 'IN_PROGRESS'
+    } else if (account.payouts_enabled && account.details_submitted) {
+      newStatus = 'VERIFIED'
+    } else if (account.details_submitted) {
+      newStatus = 'IN_PROGRESS'
+    } else {
+      newStatus = 'NOT_STARTED'
+    }
+
+    const isComplete = newStatus === 'VERIFIED'
+    const wasNotVerified = user.connectOnboardingStatus !== 'VERIFIED'
+
+    // Build requirements snapshot
+    const requirements = account.requirements
+      ? {
+          currently_due: account.requirements.currently_due || [],
+          eventually_due: account.requirements.eventually_due || [],
+          past_due: account.requirements.past_due || [],
+          pending_verification: account.requirements.pending_verification || [],
+          disabled_reason: account.requirements.disabled_reason ?? null,
+        }
+      : undefined
 
     // Update User Status
     await prisma.user.update({
       where: { id: user.id },
       data: {
         connectOnboardingStatus: newStatus,
-        stripeOnboardingComplete: isComplete,
-        payoutsEnabled: account.payouts_enabled === true,
+        stripeOnboardingComplete: account.details_submitted ?? false,
+        payoutsEnabled: account.payouts_enabled ?? false,
+        chargesEnabled: account.charges_enabled ?? false,
+        stripeRequirements: requirements,
       },
     })
 
@@ -699,7 +724,7 @@ async function handleAccountUpdated(account: Stripe.Account) {
     )
 
     // Wenn Onboarding jetzt abgeschlossen ist und vorher nicht war
-    if (isComplete && wasIncomplete) {
+    if (isComplete && wasNotVerified) {
       console.log(`[stripe/webhook] ✅ Onboarding abgeschlossen für User ${user.id}`)
 
       // Konfiguriere Payout-Schedule für schnellere Auszahlungen (täglich statt wöchentlich)

@@ -12,22 +12,23 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { EmbeddedOnboardingModal } from './EmbeddedOnboardingModal'
+import { PayoutOnboardingModal } from './PayoutOnboardingModal'
 
-type PayoutStatus = 'not_started' | 'pending' | 'enabled'
+type ConnectStatus = 'NOT_STARTED' | 'IN_PROGRESS' | 'ACTION_REQUIRED' | 'VERIFIED'
 
-interface ConnectStatus {
-  status: PayoutStatus
+interface AccountStatus {
+  accountId: string | null
+  status: ConnectStatus
   payoutsEnabled: boolean
   chargesEnabled: boolean
   detailsSubmitted: boolean
-  requirements?: {
+  requirements: {
     currently_due: string[]
     eventually_due: string[]
     past_due: string[]
+    pending_verification: string[]
     disabled_reason: string | null
-  }
-  accountId?: string
+  } | null
 }
 
 interface PendingPayouts {
@@ -40,13 +41,13 @@ export function StripePayoutSection() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const [status, setStatus] = useState<ConnectStatus | null>(null)
+  const [status, setStatus] = useState<AccountStatus | null>(null)
   const [pendingPayouts, setPendingPayouts] = useState<PendingPayouts | null>(null)
   const [loading, setLoading] = useState(true)
   const [processingPayouts, setProcessingPayouts] = useState(false)
   const [showOnboardingModal, setShowOnboardingModal] = useState(false)
 
-  // Check for return from Stripe onboarding (legacy redirect flow)
+  // Check for return from Stripe onboarding (redirect flow)
   useEffect(() => {
     const payoutReturn = searchParams.get('payout_return')
     const payoutRefresh = searchParams.get('payout_refresh')
@@ -77,17 +78,19 @@ export function StripePayoutSection() {
     try {
       setLoading(true)
 
-      // Load payout status from new endpoint
-      const statusRes = await fetch('/api/stripe/connect/status')
+      // Load account status
+      const statusRes = await fetch('/api/stripe/connect/account')
       if (statusRes.ok) {
-        const data: ConnectStatus = await statusRes.json()
+        const data: AccountStatus = await statusRes.json()
         setStatus(data)
       } else {
         setStatus({
-          status: 'not_started',
+          accountId: null,
+          status: 'NOT_STARTED',
           payoutsEnabled: false,
           chargesEnabled: false,
           detailsSubmitted: false,
+          requirements: null,
         })
       }
 
@@ -99,7 +102,7 @@ export function StripePayoutSection() {
       }
     } catch (error) {
       console.error('Error loading payout status:', error)
-      toast.error('Fehler beim Laden des Auszahlungsstatus')
+      toast.error('Fehler beim Laden des Status')
     } finally {
       setLoading(false)
     }
@@ -113,20 +116,12 @@ export function StripePayoutSection() {
     setShowOnboardingModal(true)
   }
 
-  const handleOnboardingComplete = async () => {
-    setShowOnboardingModal(false)
-    toast.success('🎉 Auszahlung erfolgreich eingerichtet!')
-    await loadStatus()
-  }
-
-  const handleOnboardingExit = async () => {
-    setShowOnboardingModal(false)
-    toast('Du kannst die Einrichtung jederzeit fortsetzen.', { icon: 'ℹ️' })
-    await loadStatus()
-  }
-
   const handleOnboardingClose = () => {
     setShowOnboardingModal(false)
+  }
+
+  const handleStatusChange = async () => {
+    await loadStatus()
   }
 
   const handleProcessPendingPayouts = async () => {
@@ -168,44 +163,51 @@ export function StripePayoutSection() {
     )
   }
 
-  const isEnabled = status?.status === 'enabled'
-  const isPending = status?.status === 'pending'
-  const isNotStarted = status?.status === 'not_started'
+  const currentStatus = status?.status || 'NOT_STARTED'
   const hasPendingPayouts = (pendingPayouts?.count || 0) > 0
-  const hasRequirements =
+  const hasActionRequired =
     (status?.requirements?.currently_due?.length || 0) > 0 ||
     (status?.requirements?.past_due?.length || 0) > 0
 
   // Get status display info
   const getStatusInfo = () => {
-    if (isEnabled) {
-      return {
-        icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
-        label: 'Aktiv',
-        labelClass: 'bg-green-100 text-green-700',
-        title: 'Auszahlungen aktiv',
-        description:
-          'Ihre Auszahlungsdaten sind eingerichtet. Erlöse werden nach Freigabe automatisch überwiesen.',
-      }
-    }
-    if (isPending) {
-      return {
-        icon: <Clock className="h-5 w-5 text-amber-500" />,
-        label: 'In Prüfung',
-        labelClass: 'bg-amber-100 text-amber-700',
-        title: 'Einrichtung unvollständig',
-        description: hasRequirements
-          ? 'Bitte vervollständigen Sie Ihre Angaben, um Auszahlungen zu erhalten.'
-          : 'Ihre Angaben werden geprüft. Dies kann einige Minuten dauern.',
-      }
-    }
-    return {
-      icon: <Banknote className="h-5 w-5 text-gray-400" />,
-      label: 'Nicht eingerichtet',
-      labelClass: 'bg-gray-100 text-gray-600',
-      title: 'Auszahlung nicht eingerichtet',
-      description:
-        'Richten Sie Auszahlungen ein, um Verkaufserlöse aus Zahlungsschutz-Verkäufen zu erhalten.',
+    switch (currentStatus) {
+      case 'VERIFIED':
+        return {
+          icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
+          label: 'Verifiziert',
+          labelClass: 'bg-green-100 text-green-700',
+          title: 'Auszahlungen aktiv',
+          description:
+            'Ihre Auszahlungsdaten sind verifiziert. Erlöse werden nach Freigabe automatisch überwiesen.',
+        }
+      case 'IN_PROGRESS':
+        return {
+          icon: <Clock className="h-5 w-5 text-blue-500" />,
+          label: 'In Prüfung',
+          labelClass: 'bg-blue-100 text-blue-700',
+          title: 'Verifizierung läuft',
+          description:
+            'Ihre Angaben werden geprüft. Dies kann einige Minuten bis Tage dauern.',
+        }
+      case 'ACTION_REQUIRED':
+        return {
+          icon: <AlertCircle className="h-5 w-5 text-amber-500" />,
+          label: 'Aktion erforderlich',
+          labelClass: 'bg-amber-100 text-amber-700',
+          title: 'Angaben erforderlich',
+          description:
+            'Bitte vervollständigen Sie Ihre Angaben, um Auszahlungen zu aktivieren.',
+        }
+      default:
+        return {
+          icon: <Banknote className="h-5 w-5 text-gray-400" />,
+          label: 'Nicht eingerichtet',
+          labelClass: 'bg-gray-100 text-gray-600',
+          title: 'Auszahlung nicht eingerichtet',
+          description:
+            'Richten Sie Auszahlungen ein, um Verkaufserlöse aus Zahlungsschutz-Verkäufen zu erhalten.',
+        }
     }
   }
 
@@ -213,27 +215,27 @@ export function StripePayoutSection() {
 
   // Get CTA button info
   const getCtaInfo = () => {
-    if (isEnabled) {
-      return {
-        text: 'Auszahlungsdaten aktualisieren',
-        variant: 'secondary' as const,
-      }
-    }
-    if (isPending && hasRequirements) {
-      return {
-        text: 'Angaben vervollständigen',
-        variant: 'primary' as const,
-      }
-    }
-    if (isPending) {
-      return {
-        text: 'Status aktualisieren',
-        variant: 'secondary' as const,
-      }
-    }
-    return {
-      text: 'Auszahlung einrichten',
-      variant: 'primary' as const,
+    switch (currentStatus) {
+      case 'VERIFIED':
+        return {
+          text: 'Auszahlungsdaten verwalten',
+          variant: 'secondary' as const,
+        }
+      case 'ACTION_REQUIRED':
+        return {
+          text: 'Weiter einrichten',
+          variant: 'primary' as const,
+        }
+      case 'IN_PROGRESS':
+        return {
+          text: 'Status ansehen',
+          variant: 'secondary' as const,
+        }
+      default:
+        return {
+          text: 'Jetzt einrichten',
+          variant: 'primary' as const,
+        }
     }
   }
 
@@ -249,7 +251,9 @@ export function StripePayoutSection() {
               <Shield className="mr-2 h-5 w-5 text-primary-600" />
               Auszahlungen (Zahlungsschutz)
             </h3>
-            <p className="text-xs text-gray-500">Verkaufserlöse aus Zahlungsschutz-Transaktionen</p>
+            <p className="text-xs text-gray-500">
+              Verkaufserlöse aus Zahlungsschutz-Transaktionen • Abwicklung über Stripe
+            </p>
           </div>
           <button
             type="button"
@@ -293,7 +297,7 @@ export function StripePayoutSection() {
                 <p className="mt-1 text-sm text-amber-700">
                   Gesamtbetrag: CHF {pendingPayouts!.totalAmount.toFixed(2)}
                 </p>
-                {!isEnabled && (
+                {currentStatus !== 'VERIFIED' && (
                   <p className="mt-1 text-sm text-amber-600">
                     Bitte richten Sie Ihre Auszahlungsdaten ein, um diese Beträge zu erhalten.
                   </p>
@@ -301,7 +305,7 @@ export function StripePayoutSection() {
               </div>
             </div>
 
-            {isEnabled && (
+            {currentStatus === 'VERIFIED' && (
               <div className="mt-3">
                 <button
                   type="button"
@@ -330,13 +334,7 @@ export function StripePayoutSection() {
         <div className="space-y-3">
           <button
             type="button"
-            onClick={() => {
-              if (isPending && !hasRequirements) {
-                loadStatus()
-              } else {
-                handleOpenOnboarding()
-              }
-            }}
+            onClick={handleOpenOnboarding}
             className={`inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto ${
               ctaInfo.variant === 'primary'
                 ? 'bg-primary-600 text-white hover:bg-primary-700'
@@ -347,31 +345,64 @@ export function StripePayoutSection() {
             {ctaInfo.text}
           </button>
 
-          {/* Requirements Progress (for pending status) */}
-          {isPending && hasRequirements && (
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+          {/* Requirements Progress (for action required or in progress) */}
+          {(currentStatus === 'ACTION_REQUIRED' || currentStatus === 'IN_PROGRESS') && (
+            <div
+              className={`rounded-lg border p-3 ${
+                currentStatus === 'ACTION_REQUIRED'
+                  ? 'border-amber-200 bg-amber-50'
+                  : 'border-blue-200 bg-blue-50'
+              }`}
+            >
               <div className="mb-2 flex items-center justify-between text-sm">
-                <span className="text-amber-700">Einrichtungs-Fortschritt</span>
-                <span className="font-medium text-amber-800">
-                  {status?.detailsSubmitted ? 'Fast fertig!' : 'Angaben erforderlich'}
+                <span
+                  className={
+                    currentStatus === 'ACTION_REQUIRED' ? 'text-amber-700' : 'text-blue-700'
+                  }
+                >
+                  Einrichtungs-Fortschritt
+                </span>
+                <span
+                  className={`font-medium ${
+                    currentStatus === 'ACTION_REQUIRED' ? 'text-amber-800' : 'text-blue-800'
+                  }`}
+                >
+                  {currentStatus === 'IN_PROGRESS' ? 'Wird geprüft' : 'Angaben erforderlich'}
                 </span>
               </div>
-              <div className="h-2 w-full overflow-hidden rounded-full bg-amber-200">
+              <div
+                className={`h-2 w-full overflow-hidden rounded-full ${
+                  currentStatus === 'ACTION_REQUIRED' ? 'bg-amber-200' : 'bg-blue-200'
+                }`}
+              >
                 <div
-                  className="h-full bg-amber-500 transition-all duration-300"
+                  className={`h-full transition-all duration-300 ${
+                    currentStatus === 'ACTION_REQUIRED' ? 'bg-amber-500' : 'bg-blue-500'
+                  }`}
                   style={{
-                    width: status?.detailsSubmitted
-                      ? status?.chargesEnabled
-                        ? '90%'
-                        : '70%'
-                      : '30%',
+                    width:
+                      currentStatus === 'IN_PROGRESS'
+                        ? '80%'
+                        : hasActionRequired
+                          ? '30%'
+                          : '50%',
                   }}
                 />
               </div>
               {status?.requirements?.currently_due &&
                 status.requirements.currently_due.length > 0 && (
-                  <p className="mt-2 text-xs text-amber-600">
+                  <p
+                    className={`mt-2 text-xs ${
+                      currentStatus === 'ACTION_REQUIRED' ? 'text-amber-600' : 'text-blue-600'
+                    }`}
+                  >
                     {status.requirements.currently_due.length} Angabe(n) noch erforderlich
+                  </p>
+                )}
+              {status?.requirements?.pending_verification &&
+                status.requirements.pending_verification.length > 0 && (
+                  <p className="mt-2 text-xs text-blue-600">
+                    {status.requirements.pending_verification.length} Prüfung(en) ausstehend
                   </p>
                 )}
             </div>
@@ -395,12 +426,11 @@ export function StripePayoutSection() {
         </div>
       </div>
 
-      {/* Embedded Onboarding Modal */}
-      <EmbeddedOnboardingModal
-        isOpen={showOnboardingModal}
+      {/* Onboarding Modal */}
+      <PayoutOnboardingModal
+        open={showOnboardingModal}
         onClose={handleOnboardingClose}
-        onComplete={handleOnboardingComplete}
-        onExit={handleOnboardingExit}
+        onStatusChange={handleStatusChange}
       />
     </>
   )

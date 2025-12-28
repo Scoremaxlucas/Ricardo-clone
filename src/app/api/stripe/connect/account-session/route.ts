@@ -4,21 +4,74 @@ import { validateSwissPostalCode } from '@/lib/profilePolicy'
 import { stripe } from '@/lib/stripe-server'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
-import type Stripe from 'stripe'
+
+/**
+ * Helper function to prefill Stripe account with Helvenda user data
+ */
+async function prefillStripeAccount(
+  accountId: string,
+  user: {
+    email: string | null
+    firstName: string | null
+    lastName: string | null
+    phone: string | null
+    street: string | null
+    streetNumber: string | null
+    postalCode: string | null
+    city: string | null
+  }
+) {
+  try {
+    const updateParams: any = {}
+
+    // Update email if available
+    if (user.email) {
+      updateParams.email = user.email
+    }
+
+    // Build individual data
+    const individual: any = {}
+
+    if (user.email) individual.email = user.email
+    if (user.phone) individual.phone = user.phone
+    if (user.firstName) individual.first_name = user.firstName
+    if (user.lastName) individual.last_name = user.lastName
+
+    // Build address if we have valid postal code
+    if (user.postalCode && validateSwissPostalCode(user.postalCode)) {
+      individual.address = {
+        country: 'CH',
+        postal_code: user.postalCode.trim(),
+      }
+      if (user.street || user.streetNumber) {
+        individual.address.line1 = [user.street, user.streetNumber].filter(Boolean).join(' ')
+      }
+      if (user.city) {
+        individual.address.city = user.city
+      }
+    }
+
+    if (Object.keys(individual).length > 0) {
+      updateParams.individual = individual
+    }
+
+    // Only update if we have something to update
+    if (Object.keys(updateParams).length > 0) {
+      await stripe.accounts.update(accountId, updateParams)
+      console.log(`[connect/account-session] Prefilled account ${accountId}`)
+    }
+  } catch (error: any) {
+    // Don't fail if prefill fails - account may already have data submitted
+    console.log(`[connect/account-session] Could not prefill: ${error.message}`)
+  }
+}
 
 /**
  * POST /api/stripe/connect/account-session
- * Creates an AccountSession for Stripe Connect Embedded Onboarding
- * Used by the embedded onboarding component in the frontend
+ * Creates an AccountSession for Stripe Connect embedded onboarding
  */
 export async function POST(_request: NextRequest) {
   try {
-    // Verify Stripe configuration
-    if (!process.env.STRIPE_SECRET_KEY) {
-      console.error('[connect/account-session] STRIPE_SECRET_KEY missing!')
-      return NextResponse.json({ message: 'Stripe ist nicht konfiguriert' }, { status: 500 })
-    }
-
     // Verify authentication
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -26,9 +79,8 @@ export async function POST(_request: NextRequest) {
     }
 
     const userId = session.user.id
-    console.log(`[connect/account-session] Request from User ${userId}`)
 
-    // Load user with all profile data for prefilling
+    // Load user with profile data
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -42,8 +94,6 @@ export async function POST(_request: NextRequest) {
         postalCode: true,
         city: true,
         stripeConnectedAccountId: true,
-        stripeOnboardingComplete: true,
-        payoutsEnabled: true,
       },
     })
 
@@ -53,31 +103,24 @@ export async function POST(_request: NextRequest) {
 
     let accountId = user.stripeConnectedAccountId
 
-    // Create or get existing Stripe Connect account
+    // Create account if it doesn't exist
     if (!accountId) {
-      console.log(`[connect/account-session] Creating new account for User ${userId}`)
+      console.log(`[connect/account-session] Creating new account for user ${userId}`)
 
-      // Build address data if available
-      const addressData: {
-        line1?: string
-        city?: string
-        postal_code?: string
-        country: string
-      } = { country: 'CH' }
-
-      if (user.street || user.streetNumber) {
-        addressData.line1 = [user.street, user.streetNumber].filter(Boolean).join(' ') || undefined
-      }
-      if (user.city) {
-        addressData.city = user.city
-      }
+      // Build address data
+      const addressData: any = { country: 'CH' }
       if (user.postalCode && validateSwissPostalCode(user.postalCode)) {
         addressData.postal_code = user.postalCode.trim()
+        if (user.street || user.streetNumber) {
+          addressData.line1 = [user.street, user.streetNumber].filter(Boolean).join(' ')
+        }
+        if (user.city) {
+          addressData.city = user.city
+        }
       }
 
-      const hasValidAddress = (addressData.line1 || addressData.city) && addressData.postal_code
+      const hasValidAddress = addressData.line1 || addressData.city
 
-      // Create Express account with prefilled data
       const account = await stripe.accounts.create({
         type: 'express',
         country: 'CH',
@@ -95,71 +138,32 @@ export async function POST(_request: NextRequest) {
           address: hasValidAddress ? addressData : undefined,
         },
         business_profile: {
-          mcc: '5999', // Misc Retail
+          mcc: '5999',
           url: 'https://helvenda.ch',
         },
         metadata: {
           userId: userId,
           platform: 'helvenda',
-          prefilled: 'true',
         },
       })
 
       accountId = account.id
 
-      // Save account ID to database
       await prisma.user.update({
         where: { id: userId },
         data: {
           stripeConnectedAccountId: accountId,
-          stripeOnboardingComplete: false,
+          connectOnboardingStatus: 'NOT_STARTED',
           payoutsEnabled: false,
+          chargesEnabled: false,
+          stripeOnboardingComplete: false,
         },
       })
 
-      console.log(`[connect/account-session] ✅ Account ${accountId} created`)
+      console.log(`[connect/account-session] Created account ${accountId}`)
     } else {
-      // Update existing account with latest profile data if possible
-      console.log(`[connect/account-session] Using existing account ${accountId}`)
-
-      try {
-        // Try to update account with prefilled data
-        const updateData: Stripe.AccountUpdateParams = {}
-
-        // Only update individual fields if they have values
-        if (user.email || user.phone || user.firstName || user.lastName) {
-          updateData.individual = {}
-          if (user.email) updateData.individual.email = user.email
-          if (user.phone) updateData.individual.phone = user.phone
-          if (user.firstName) updateData.individual.first_name = user.firstName
-          if (user.lastName) updateData.individual.last_name = user.lastName
-
-          // Add address if valid
-          if (user.postalCode && validateSwissPostalCode(user.postalCode)) {
-            updateData.individual.address = {
-              country: 'CH',
-              postal_code: user.postalCode.trim(),
-            }
-            if (user.street || user.streetNumber) {
-              updateData.individual.address.line1 =
-                [user.street, user.streetNumber].filter(Boolean).join(' ') || undefined
-            }
-            if (user.city) {
-              updateData.individual.address.city = user.city
-            }
-          }
-        }
-
-        if (Object.keys(updateData).length > 0) {
-          await stripe.accounts.update(accountId, updateData)
-          console.log(`[connect/account-session] ✅ Updated account with prefilled data`)
-        }
-      } catch (updateError: any) {
-        // Ignore update errors - account may already have data submitted
-        console.log(
-          `[connect/account-session] Could not update account (may already have data): ${updateError.message}`
-        )
-      }
+      // Prefill existing account with latest data
+      await prefillStripeAccount(accountId, user)
     }
 
     // Create AccountSession for embedded onboarding
@@ -169,27 +173,22 @@ export async function POST(_request: NextRequest) {
         account_onboarding: {
           enabled: true,
           features: {
-            // Enable external account collection (bank accounts)
             external_account_collection: true,
           },
         },
       },
     })
 
-    console.log(`[connect/account-session] ✅ AccountSession created for ${accountId}`)
+    console.log(`[connect/account-session] Created session for account ${accountId}`)
 
     return NextResponse.json({
-      client_secret: accountSession.client_secret,
+      clientSecret: accountSession.client_secret,
       accountId: accountId,
     })
   } catch (error: any) {
     console.error('[connect/account-session] Error:', error)
-
     return NextResponse.json(
-      {
-        message: 'Fehler beim Erstellen der Onboarding-Session',
-        error: error.message || 'Unbekannter Fehler',
-      },
+      { message: 'Fehler beim Erstellen der Session', error: error.message },
       { status: 500 }
     )
   }
