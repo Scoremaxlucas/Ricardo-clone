@@ -19,7 +19,7 @@ export interface SellerListing {
   status: ListingStatus
   bidCount: number
   highestBid: number | null
-  purchaseId: string | null // For sold items - links to sale details
+  purchaseId: string | null
 }
 
 export interface ListingCounts {
@@ -29,36 +29,37 @@ export interface ListingCounts {
   sold: number
 }
 
-/**
- * GET /api/seller/listings
- * Returns seller's listings with status filter and counts
- * Query params:
- *   - status: 'active' | 'ended' | 'sold' | 'all' (default: 'active')
- *   - search: string (optional)
- */
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET(request: NextRequest) {
-  console.log('[seller/listings] Starting GET request...')
-
   try {
-    const session = await getServerSession(authOptions)
-    console.log('[seller/listings] User:', session?.user?.email || 'no session')
+    // Get session with error handling
+    let session
+    try {
+      session = await getServerSession(authOptions)
+    } catch (sessionError: unknown) {
+      const err = sessionError as Error
+      console.error('[seller/listings] Session error:', err.message)
+      return NextResponse.json(
+        { error: 'Session Fehler: ' + err.message },
+        { status: 500 }
+      )
+    }
 
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    const userId = session.user.id
     const { searchParams } = new URL(request.url)
     const statusFilter = searchParams.get('status') || 'active'
-    console.log('[seller/listings] Filter:', statusFilter)
     const search = searchParams.get('search') || ''
     const now = new Date()
 
     // Base where clause for all queries
-    const baseWhere: any = {
-      sellerId: session.user.id,
+    const baseWhere: Record<string, unknown> = {
+      sellerId: userId,
       OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
     }
 
@@ -113,7 +114,7 @@ export async function GET(request: NextRequest) {
 
     // Fetch drafts count separately
     const draftsCount = await prisma.draft.count({
-      where: { userId: session.user.id },
+      where: { userId },
     })
 
     // Calculate status for each listing

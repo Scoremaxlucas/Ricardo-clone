@@ -9,35 +9,34 @@ export const revalidate = 0
 // GET: Alle Angebote für Admin-Moderation (inkl. inaktive)
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Get session with error handling
+    let session
+    try {
+      session = await getServerSession(authOptions)
+    } catch (sessionError: unknown) {
+      const err = sessionError as Error
+      console.error('[admin/watches] Session error:', err.message)
+      return NextResponse.json(
+        { message: 'Session Fehler: ' + err.message },
+        { status: 500 }
+      )
+    }
 
     if (!session?.user) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
-    const isAdminInSession = session?.user?.isAdmin === true
+    // Check admin status from session first, then database
+    let isAdmin = session.user.isAdmin === true
 
-    // Prüfe ob User Admin ist (per ID oder E-Mail)
-    let user = null
-    if (session.user.id) {
-      user = await prisma.user.findUnique({
+    // Verify against database if not admin in session
+    if (!isAdmin && session.user.id) {
+      const user = await prisma.user.findUnique({
         where: { id: session.user.id },
-        select: { isAdmin: true, email: true },
+        select: { isAdmin: true },
       })
+      isAdmin = user?.isAdmin === true
     }
-
-    // Falls nicht gefunden per ID, versuche per E-Mail
-    if (!user && session.user.email) {
-      user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        select: { isAdmin: true, email: true },
-      })
-    }
-
-    // Prüfe Admin-Status: Session ODER Datenbank
-    const isAdminInDb = user?.isAdmin === true
-    const isAdmin = isAdminInSession || isAdminInDb
 
     if (!isAdmin) {
       return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
