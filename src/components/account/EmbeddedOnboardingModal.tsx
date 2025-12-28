@@ -1,8 +1,8 @@
 'use client'
 
-import { loadConnectAndInitialize, StripeConnectInstance } from '@stripe/connect-js'
-import { Loader2, Shield, X } from 'lucide-react'
-import { useCallback, useEffect, useRef, useState } from 'react'
+import { ExternalLink, Loader2, Shield, X } from 'lucide-react'
+import { useCallback, useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 
 interface EmbeddedOnboardingModalProps {
   isOpen: boolean
@@ -11,128 +11,75 @@ interface EmbeddedOnboardingModalProps {
   onExit: () => void
 }
 
+/**
+ * Modal for Stripe Connect onboarding
+ * Uses the redirect flow (account-link) which is more reliable for Express accounts
+ * The embedded components SDK has limitations with Express accounts
+ */
 export function EmbeddedOnboardingModal({
   isOpen,
   onClose,
   onComplete,
   onExit,
 }: EmbeddedOnboardingModalProps) {
-  const [loading, setLoading] = useState(true)
+  const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const containerRef = useRef<HTMLDivElement>(null)
-  const stripeConnectRef = useRef<StripeConnectInstance | null>(null)
-  const mountedRef = useRef(false)
 
-  const fetchClientSecret = useCallback(async (): Promise<string> => {
-    const response = await fetch('/api/stripe/connect/account-session', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-    })
+  // Start the onboarding redirect flow
+  const handleStartOnboarding = useCallback(async () => {
+    setLoading(true)
+    setError(null)
 
-    if (!response.ok) {
+    try {
+      const response = await fetch('/api/stripe/connect/account-link', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ return_to: '/my-watches/account' }),
+      })
+
       const data = await response.json()
-      throw new Error(data.message || 'Fehler beim Laden der Onboarding-Session')
-    }
 
-    const data = await response.json()
-    return data.client_secret
+      if (response.ok && data.url) {
+        // Redirect to Stripe onboarding
+        window.location.href = data.url
+      } else {
+        throw new Error(data.message || data.error || 'Fehler beim Starten der Einrichtung')
+      }
+    } catch (err: any) {
+      console.error('[EmbeddedOnboarding] Error:', err)
+      setError(err.message || 'Fehler beim Starten der Einrichtung')
+      setLoading(false)
+    }
   }, [])
-
-  useEffect(() => {
-    if (!isOpen || mountedRef.current) return
-
-    const initializeStripeConnect = async () => {
-      try {
-        setLoading(true)
-        setError(null)
-
-        const publishableKey = process.env.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY
-        if (!publishableKey) {
-          throw new Error('Stripe Publishable Key fehlt')
-        }
-
-        // Initialize Stripe Connect
-        const stripeConnect = await loadConnectAndInitialize({
-          publishableKey,
-          fetchClientSecret,
-          appearance: {
-            overlays: 'dialog',
-            variables: {
-              colorPrimary: '#008080', // Helvenda primary color
-              colorBackground: '#ffffff',
-              fontFamily: 'system-ui, -apple-system, sans-serif',
-              borderRadius: '8px',
-            },
-          },
-          locale: 'de', // German locale
-        })
-
-        stripeConnectRef.current = stripeConnect
-        mountedRef.current = true
-
-        // Create and mount the onboarding component
-        if (containerRef.current) {
-          const onboardingComponent = stripeConnect.create('account-onboarding')
-
-          // Listen for exit events
-          onboardingComponent.setOnExit(() => {
-            console.log('[EmbeddedOnboarding] User exited onboarding')
-            onExit()
-          })
-
-          // Clear container and mount
-          containerRef.current.innerHTML = ''
-          containerRef.current.appendChild(onboardingComponent)
-        }
-
-        setLoading(false)
-      } catch (err: any) {
-        console.error('[EmbeddedOnboarding] Initialization error:', err)
-        setError(err.message || 'Fehler beim Laden des Onboarding')
-        setLoading(false)
-      }
-    }
-
-    initializeStripeConnect()
-
-    return () => {
-      // Cleanup on unmount
-      if (stripeConnectRef.current) {
-        // Note: Stripe Connect doesn't have an explicit destroy method
-        stripeConnectRef.current = null
-      }
-      mountedRef.current = false
-    }
-  }, [isOpen, fetchClientSecret, onExit])
 
   // Handle modal close
   const handleClose = useCallback(() => {
-    mountedRef.current = false
-    stripeConnectRef.current = null
-    onClose()
-  }, [onClose])
+    if (!loading) {
+      onClose()
+    }
+  }, [loading, onClose])
 
   // Handle backdrop click
   const handleBackdropClick = useCallback(
     (e: React.MouseEvent) => {
-      if (e.target === e.currentTarget) {
+      if (e.target === e.currentTarget && !loading) {
         handleClose()
       }
     },
-    [handleClose]
+    [handleClose, loading]
   )
 
   // Handle escape key
   useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isOpen) {
+      if (e.key === 'Escape' && isOpen && !loading) {
         handleClose()
       }
     }
 
     document.addEventListener('keydown', handleEscape)
     return () => document.removeEventListener('keydown', handleEscape)
-  }, [isOpen, handleClose])
+  }, [isOpen, handleClose, loading])
 
   // Prevent body scroll when modal is open
   useEffect(() => {
@@ -153,7 +100,7 @@ export function EmbeddedOnboardingModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="relative w-full max-w-lg overflow-hidden rounded-xl bg-white shadow-2xl">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-gray-200 bg-gray-50 px-6 py-4">
           <div className="flex items-center gap-3">
@@ -162,15 +109,13 @@ export function EmbeddedOnboardingModal({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Auszahlung einrichten</h2>
-              <p className="text-sm text-gray-500">
-                Sie bleiben auf Helvenda. Die Eingaben werden sicher von Stripe verarbeitet.
-              </p>
             </div>
           </div>
           <button
             type="button"
             onClick={handleClose}
-            className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+            disabled={loading}
+            className="rounded-full p-2 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600 disabled:cursor-not-allowed disabled:opacity-50"
             aria-label="Schliessen"
           >
             <X className="h-5 w-5" />
@@ -178,37 +123,72 @@ export function EmbeddedOnboardingModal({
         </div>
 
         {/* Content */}
-        <div className="max-h-[calc(90vh-80px)] overflow-y-auto p-6">
-          {loading && (
-            <div className="flex flex-col items-center justify-center py-16">
-              <Loader2 className="mb-4 h-8 w-8 animate-spin text-primary-600" />
-              <p className="text-sm text-gray-500">Onboarding wird geladen...</p>
-            </div>
-          )}
+        <div className="p-6">
+          <div className="mb-6 text-center">
+            <p className="text-sm text-gray-600">
+              Um Verkaufserlöse aus Zahlungsschutz-Verkäufen zu erhalten, müssen Sie Ihre
+              Auszahlungsdaten bei unserem Zahlungspartner Stripe einrichten.
+            </p>
+          </div>
 
+          {/* What you'll need */}
+          <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <h3 className="mb-3 text-sm font-medium text-gray-900">Was Sie benötigen:</h3>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-xs text-primary-700">
+                  ✓
+                </span>
+                Schweizer Bankverbindung (IBAN)
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-xs text-primary-700">
+                  ✓
+                </span>
+                Ausweisdokument (ID oder Pass)
+              </li>
+              <li className="flex items-center gap-2">
+                <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-100 text-xs text-primary-700">
+                  ✓
+                </span>
+                Persönliche Angaben
+              </li>
+            </ul>
+            <p className="mt-3 text-xs text-gray-500">Der Prozess dauert ca. 5 Minuten.</p>
+          </div>
+
+          {/* Error display */}
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-              <p className="text-sm font-medium text-red-800">Fehler beim Laden</p>
-              <p className="mt-1 text-sm text-red-600">{error}</p>
-              <button
-                type="button"
-                onClick={() => {
-                  mountedRef.current = false
-                  setError(null)
-                  setLoading(true)
-                  // Re-trigger initialization
-                  const event = new Event('reinit')
-                  window.dispatchEvent(event)
-                }}
-                className="mt-3 rounded-md bg-red-100 px-3 py-1.5 text-sm font-medium text-red-700 hover:bg-red-200"
-              >
-                Erneut versuchen
-              </button>
+            <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
+              <p className="text-sm text-red-700">{error}</p>
             </div>
           )}
 
-          {/* Stripe Connect Embedded Component Container */}
-          <div ref={containerRef} className={loading || error ? 'hidden' : 'min-h-[400px]'} />
+          {/* CTA Button */}
+          <button
+            type="button"
+            onClick={handleStartOnboarding}
+            disabled={loading}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {loading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                Wird gestartet...
+              </>
+            ) : (
+              <>
+                <ExternalLink className="h-4 w-4" />
+                Jetzt einrichten
+              </>
+            )}
+          </button>
+
+          {/* Info text */}
+          <p className="mt-4 text-center text-xs text-gray-500">
+            Sie werden zu Stripe weitergeleitet und nach Abschluss automatisch zurück zu Helvenda
+            gebracht.
+          </p>
         </div>
 
         {/* Footer info */}
