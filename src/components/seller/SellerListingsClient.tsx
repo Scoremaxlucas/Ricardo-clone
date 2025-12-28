@@ -1,7 +1,7 @@
 'use client'
 
 import { AlertTriangle, Loader2, Search, Trash2 } from 'lucide-react'
-import { useRouter } from 'next/navigation'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
 import { ListingCardProps } from './ListingCard'
@@ -25,7 +25,14 @@ interface SellerListingsClientProps {
 
 export function SellerListingsClient({ initialTab = 'active' }: SellerListingsClientProps) {
   const router = useRouter()
-  const [activeTab, setActiveTab] = useState<TabType>(initialTab)
+  const searchParams = useSearchParams()
+  
+  // Read tab from URL params, fallback to initialTab
+  const urlTab = searchParams.get('tab') as TabType | null
+  const validTabs: TabType[] = ['active', 'drafts', 'archive', 'sold']
+  const startTab = urlTab && validTabs.includes(urlTab) ? urlTab : initialTab
+  
+  const [activeTab, setActiveTab] = useState<TabType>(startTab)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [loading, setLoading] = useState(true)
@@ -101,10 +108,18 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
     fetchData()
   }, [fetchData])
 
-  // Handle tab change
+  // Handle tab change - update URL for bookmarkable tabs
   const handleTabChange = (tab: TabType) => {
     setActiveTab(tab)
     setSearchQuery('')
+    // Update URL without full page reload
+    const url = new URL(window.location.href)
+    if (tab === 'active') {
+      url.searchParams.delete('tab')
+    } else {
+      url.searchParams.set('tab', tab)
+    }
+    router.replace(url.pathname + url.search, { scroll: false })
   }
 
   // Open delete modal

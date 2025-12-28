@@ -538,18 +538,18 @@ export default function SoldPage() {
       <Header />
       <div className="mx-auto max-w-7xl px-4 py-12">
         <Link
-          href="/my-watches"
+          href="/my-watches/selling"
           className="mb-6 inline-flex items-center text-primary-600 hover:text-primary-700"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Zurück zu Mein Verkaufen
+          Zurück zu Meine Angebote
         </Link>
 
         <div className="mb-8 flex items-center">
           <CheckCircle className="mr-3 h-8 w-8 text-green-600" />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Verkauft</h1>
-            <p className="mt-1 text-gray-600">Ihre erfolgreichen Verkäufe</p>
+            <h1 className="text-3xl font-bold text-gray-900">Verkäufe verwalten</h1>
+            <p className="mt-1 text-gray-600">Zahlungen und Versand Ihrer Verkäufe</p>
           </div>
         </div>
 

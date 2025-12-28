@@ -2,7 +2,8 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { SellerListingsClient } from '@/components/seller'
 import { authOptions } from '@/lib/auth'
-import { Package, Plus } from 'lucide-react'
+import { prisma } from '@/lib/prisma'
+import { Package, Plus, Receipt, ShoppingBag, Tag } from 'lucide-react'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -16,6 +17,29 @@ export default async function MySellingPage() {
     redirect('/login?callbackUrl=/my-watches/selling')
   }
 
+  // Fetch counts for secondary nav badges
+  const [pendingInvoicesCount, pendingOffersCount, pendingSalesCount] = await Promise.all([
+    prisma.invoice.count({
+      where: {
+        sellerId: session.user.id,
+        status: { in: ['pending', 'overdue'] },
+      },
+    }),
+    prisma.priceOffer.count({
+      where: {
+        watch: { sellerId: session.user.id },
+        status: { in: ['pending', 'new'] },
+      },
+    }),
+    // Count sales that need attention (not completed)
+    prisma.purchase.count({
+      where: {
+        watch: { sellerId: session.user.id },
+        status: { notIn: ['completed', 'cancelled'] },
+      },
+    }),
+  ])
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
@@ -25,8 +49,8 @@ export default async function MySellingPage() {
           <nav className="mb-4 text-sm text-gray-500" aria-label="Breadcrumb">
             <ol className="flex items-center gap-2">
               <li>
-                <Link href="/my-watches" className="hover:text-primary-600">
-                  Mein Bereich
+                <Link href="/" className="hover:text-primary-600">
+                  Startseite
                 </Link>
               </li>
               <li aria-hidden="true">›</li>
@@ -53,6 +77,46 @@ export default async function MySellingPage() {
             >
               <Plus className="h-5 w-5" />
               Artikel anbieten
+            </Link>
+          </div>
+
+          {/* Secondary Navigation - Sales Management, Fees & Offers */}
+          <div className="mb-6 flex flex-wrap gap-3">
+            <Link
+              href="/my-watches/selling/sold"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+            >
+              <ShoppingBag className="h-4 w-4 text-gray-500" />
+              Verkäufe verwalten
+              {pendingSalesCount > 0 && (
+                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
+                  {pendingSalesCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/my-watches/selling/fees"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+            >
+              <Receipt className="h-4 w-4 text-gray-500" />
+              Gebühren & Rechnungen
+              {pendingInvoicesCount > 0 && (
+                <span className="rounded-full bg-amber-100 px-2 py-0.5 text-xs font-semibold text-amber-700">
+                  {pendingInvoicesCount}
+                </span>
+              )}
+            </Link>
+            <Link
+              href="/my-watches/selling/offers"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+            >
+              <Tag className="h-4 w-4 text-gray-500" />
+              Preisvorschläge
+              {pendingOffersCount > 0 && (
+                <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-semibold text-primary-700">
+                  {pendingOffersCount}
+                </span>
+              )}
             </Link>
           </div>
 
