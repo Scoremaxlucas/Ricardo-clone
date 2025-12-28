@@ -1,5 +1,6 @@
 'use client'
 
+import { PayoutSection } from '@/components/account/PayoutSection'
 import { StripePayoutSection } from '@/components/account/StripePayoutSection'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, Info, Loader2, Mail, MapPin, Phone, User } from 'lucide-react'
@@ -497,6 +498,9 @@ export default function AccountPage() {
                 </div>
               </div>
             </div>
+
+            {/* Bankverbindung für Verkäufer-Verifizierung */}
+            <PayoutSection userId={(session?.user as { id?: string })?.id || ''} />
 
             {/* Auszahlungen (Zahlungsschutz) - Stripe Connect */}
             <StripePayoutSection />
