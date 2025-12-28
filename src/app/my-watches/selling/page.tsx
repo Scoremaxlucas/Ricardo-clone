@@ -3,12 +3,10 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { MySellingClient } from './MySellingClient'
-import { getMySellingArticles, MySellingItem } from '@/lib/my-selling'
+import { SellerListingsClient } from '@/components/seller'
 import Link from 'next/link'
-import { Package, Plus, FileText } from 'lucide-react'
+import { Package, Plus } from 'lucide-react'
 
-// Revalidate every 30 seconds for fresh data
 export const revalidate = 30
 
 export default async function MySellingPage() {
@@ -18,77 +16,51 @@ export default async function MySellingPage() {
     redirect('/login?callbackUrl=/my-watches/selling')
   }
 
-  // OPTIMIERT: Fetch articles server-side für instant rendering (wie Ricardo)
-  // Artikel sind bereits im initial HTML, kein Client-Side API-Call nötig
-  // WICHTIG: Wenn Server-Side-Funktion fehlschlägt oder leer ist, Client wird API-Route verwenden
-  let items: MySellingItem[] = []
-  try {
-    items = await getMySellingArticles(session.user.id)
-    // WICHTIG: Wenn leeres Array, Client wird API-Route verwenden (könnte temporärer Fehler sein)
-    if (items.length === 0) {
-      console.warn('[my-selling] Server-side returned empty array, client will try API fallback...')
-    }
-  } catch (error) {
-    console.error('[my-selling] Error fetching articles server-side:', error)
-    // WICHTIG: Bei Fehler leeres Array zurückgeben, aber Client wird API-Route verwenden
-    items = []
-  }
-
-  const stats = {
-    total: items.length,
-    active: items.filter(item => item.isActive).length,
-    inactive: items.filter(item => !item.isActive).length,
-  }
-
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
-      <div className="flex-1 py-8">
+      <main className="flex-1 py-6">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
-          <div className="mb-4 text-sm text-gray-600">
-            <Link href="/my-watches" className="text-primary-600 hover:text-primary-700">
-              Mein Verkaufen
-            </Link>
-            <span className="mx-2">›</span>
-            <span>Mein Verkaufen</span>
-          </div>
+          <nav className="mb-4 text-sm text-gray-500" aria-label="Breadcrumb">
+            <ol className="flex items-center gap-2">
+              <li>
+                <Link href="/my-watches" className="hover:text-primary-600">
+                  Mein Bereich
+                </Link>
+              </li>
+              <li aria-hidden="true">›</li>
+              <li className="text-gray-900">Meine Angebote</li>
+            </ol>
+          </nav>
 
           {/* Header */}
-          <div className="mb-8 flex items-center justify-between">
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
             <div className="flex items-center gap-3">
-              <div className="rounded-lg bg-primary-100 p-2">
+              <div className="rounded-xl bg-primary-100 p-2.5">
                 <Package className="h-6 w-6 text-primary-600" />
               </div>
               <div>
-                <h1 className="text-3xl font-bold text-gray-900">Mein Verkaufen</h1>
-                <p className="mt-1 text-gray-600">Verwalten Sie Ihre Verkaufsanzeigen</p>
+                <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Meine Angebote</h1>
+                <p className="text-sm text-gray-500">Verwalten Sie Ihre Verkaufsanzeigen</p>
               </div>
             </div>
-            <div className="flex items-center gap-3">
-              <Link
-                href="/my-watches/selling/drafts"
-                className="inline-flex items-center rounded-md border-2 border-primary-300 bg-white px-4 py-2 text-primary-600 transition-colors hover:bg-primary-50"
-              >
-                <FileText className="mr-2 h-4 w-4" />
-                Entwürfe
-              </Link>
-              <Link
-                href="/sell"
-                className="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700"
-              >
-                <Plus className="mr-2 h-4 w-4" />
-                Artikel anbieten
-              </Link>
-            </div>
+
+            {/* Primary CTA */}
+            <Link
+              href="/sell"
+              className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-3 font-semibold text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md"
+            >
+              <Plus className="h-5 w-5" />
+              Artikel anbieten
+            </Link>
           </div>
 
-          {/* Server-Side Rendered Articles - Instant Display */}
-          <MySellingClient initialItems={items} initialStats={stats} />
+          {/* Client Component with Tabs and Grid */}
+          <SellerListingsClient />
         </div>
-      </div>
+      </main>
       <Footer />
     </div>
   )
 }
-

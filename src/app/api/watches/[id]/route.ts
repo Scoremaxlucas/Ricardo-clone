@@ -324,10 +324,10 @@ export async function DELETE(
     // RICARDO-REGEL: Verkäufer können nicht löschen wenn Gebote vorhanden
     if (!isAdmin && watch.bids.length > 0) {
       return NextResponse.json(
-        { 
+        {
           message: 'Dieser Artikel kann nicht gelöscht werden, da bereits Gebote vorhanden sind.',
           code: 'HAS_BIDS',
-          bidCount: watch.bids.length
+          bidCount: watch.bids.length,
         },
         { status: 400 }
       )
@@ -337,9 +337,9 @@ export async function DELETE(
     const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
     if (!isAdmin && activePurchases.length > 0) {
       return NextResponse.json(
-        { 
+        {
           message: 'Dieser Artikel kann nicht gelöscht werden, da er bereits verkauft wurde.',
-          code: 'ALREADY_SOLD'
+          code: 'ALREADY_SOLD',
         },
         { status: 400 }
       )
