@@ -47,6 +47,7 @@ interface Item {
   images: string[]
   createdAt: string
   isSold?: boolean
+  isActive?: boolean
   buyer?: BuyerInfo | null
   finalPrice?: number
   boosters?: string[]
@@ -89,10 +90,11 @@ export default function MyWatchesPage() {
       setItems(itemsList)
 
       // Berechne Statistiken
+      // Verwende isActive für korrekte Filterung (berücksichtigt abgelaufene Auktionen)
       setStats(prev => ({
         ...prev,
-        active: itemsList.filter((w: Item) => !w.isSold).length,
-        sold: itemsList.filter((w: Item) => w.isSold).length,
+        active: itemsList.filter((w: Item) => w.isActive === true).length,
+        sold: itemsList.filter((w: Item) => w.isSold === true).length,
       }))
 
       // Lade Entwürfe

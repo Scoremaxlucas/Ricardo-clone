@@ -30,14 +30,11 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
   try {
     const now = new Date()
 
-    // ABSOLUT MINIMALE Query: Nur die wichtigsten Felder (wie mine-instant)
-    // WICHTIG: Zeige ALLE Artikel des Users, auch neue ohne moderationStatus
-    // KEINE bids oder purchases - das würde N+1 Problem verursachen und langsam sein
+    // Query mit Purchases für korrekten isSold Status
     const watches = await prisma.watch.findMany({
     where: {
       sellerId: userId,
-      // WICHTIG: Zeige ALLE Artikel außer explizit 'rejected'
-      // Neue Artikel ohne moderationStatus (null) werden angezeigt
+      // Zeige ALLE Artikel außer explizit 'rejected'
       AND: [
         {
           OR: [
@@ -58,17 +55,23 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
       isAuction: true,
       auctionEnd: true,
       articleNumber: true,
-      moderationStatus: true, // WICHTIG: Für Debugging
+      moderationStatus: true,
+      // WICHTIG: Purchases für korrekten isSold-Status
+      purchases: {
+        select: {
+          id: true,
+          status: true,
+        },
+      },
     },
     orderBy: { createdAt: 'desc' },
-    // OPTIMIERT: Nutze Index watches_sellerId_createdAt_idx
   })
 
-  // ULTRA-MINIMALE Verarbeitung für maximale Geschwindigkeit
+  // Verarbeitung mit korrektem isSold und isActive Status
   const result: MySellingItem[] = []
 
   for (const w of watches) {
-    // OPTIMIERT: Nur erstes Bild parsen wenn wirklich vorhanden
+    // Parse images
     let images: string[] = []
     if (w.images && typeof w.images === 'string') {
       try {
@@ -79,7 +82,7 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
       }
     }
 
-    // OPTIMIERT: Minimale Date-Konvertierung
+    // Date-Konvertierung
     const createdAt = w.createdAt instanceof Date
       ? w.createdAt.toISOString()
       : new Date(w.createdAt).toISOString()
@@ -88,15 +91,18 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
       ? (w.auctionEnd instanceof Date ? w.auctionEnd.toISOString() : new Date(w.auctionEnd).toISOString())
       : null
 
-    // Vereinfachte isActive Berechnung (ohne Purchase-Check für Geschwindigkeit)
+    // KORREKT: isSold basierend auf nicht-stornierten Purchases
+    const activePurchases = w.purchases.filter(p => p.status !== 'cancelled')
+    const isSold = activePurchases.length > 0
+
+    // isActive Berechnung:
+    // 1. Wenn verkauft → nicht aktiv
+    // 2. Wenn Auktion abgelaufen → nicht aktiv
+    // 3. Sonst → aktiv
     const isAuctionActive = !!w.isAuction || !!w.auctionEnd
-    let isActive = true // Default: aktiv
-    if (isAuctionActive && auctionEnd) {
-      const auctionEndDate = new Date(auctionEnd)
-      if (auctionEndDate <= now) {
-        isActive = false
-      }
-    }
+    const auctionEndDate = auctionEnd ? new Date(auctionEnd) : null
+    const isAuctionExpired = auctionEndDate && auctionEndDate <= now
+    const isActive = !isSold && !isAuctionExpired
 
     result.push({
       id: w.id,
@@ -107,11 +113,11 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
       price: w.price,
       images,
       createdAt,
-      isSold: false, // Vereinfacht: wird client-side aktualisiert wenn nötig
+      isSold,
       isAuction: isAuctionActive,
       auctionEnd,
-      highestBid: null, // Wird client-side nachgeladen wenn nötig
-      bidCount: 0, // Wird client-side nachgeladen wenn nötig
+      highestBid: null,
+      bidCount: 0,
       finalPrice: w.price,
       isActive,
     })

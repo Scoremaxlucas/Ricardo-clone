@@ -12,9 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ watches: [] }, { status: 200 })
     }
 
-    // ULTRA-MINIMALE Query: Nur die absolut notwendigsten Felder
-    // OPTIMIERT: Verwende Index für maximale Geschwindigkeit
-    // OPTIMIERT: Reduziere auf absolute Minimum-Felder
+    // OPTIMIERT: Laden der wichtigsten Felder plus Purchases für korrekten Status
     const watches = await prisma.watch.findMany({
       where: { sellerId: session.user.id },
       select: {
@@ -28,29 +26,41 @@ export async function GET(request: NextRequest) {
         isAuction: true,
         auctionEnd: true,
         articleNumber: true,
+        // WICHTIG: Purchases für korrekten isSold-Status
+        purchases: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
       },
       orderBy: { createdAt: 'desc' },
-      // OPTIMIERT: Verwende den Index watches_sellerId_createdAt_idx
-      // OPTIMIERT: Keine weiteren Filter oder Joins
     })
 
-    // ULTRA-OPTIMIERT: Minimale Verarbeitung für maximale Geschwindigkeit
+    // Verarbeitung mit korrektem isSold und isActive Status
     const now = Date.now()
     const watchesWithImages = watches.map(w => {
-      // OPTIMIERT: Nur parse images wenn wirklich vorhanden
+      // Parse images
       let images: string[] = []
       if (w.images && typeof w.images === 'string') {
         try {
           images = JSON.parse(w.images)
         } catch {
-          // Fallback: versuche als Array zu behandeln
           images = []
         }
       }
 
-      // OPTIMIERT: Schnelle Berechnung ohne zusätzliche Date-Objekte
+      // KORREKT: isSold basierend auf nicht-stornierten Purchases
+      const activePurchases = w.purchases.filter(p => p.status !== 'cancelled')
+      const isSold = activePurchases.length > 0
+
+      // isActive Berechnung:
+      // 1. Wenn verkauft → nicht aktiv
+      // 2. Wenn Auktion abgelaufen → nicht aktiv
+      // 3. Sonst → aktiv
       const auctionEndTime = w.auctionEnd ? w.auctionEnd.getTime() : null
-      const isActive = !auctionEndTime || auctionEndTime > now
+      const isAuctionExpired = auctionEndTime && auctionEndTime <= now
+      const isActive = !isSold && !isAuctionExpired
 
       return {
         id: w.id,
@@ -61,7 +71,7 @@ export async function GET(request: NextRequest) {
         price: w.price,
         images,
         createdAt: w.createdAt.toISOString(),
-        isSold: false,
+        isSold,
         isAuction: !!w.isAuction || !!w.auctionEnd,
         auctionEnd: w.auctionEnd ? w.auctionEnd.toISOString() : null,
         highestBid: null,
