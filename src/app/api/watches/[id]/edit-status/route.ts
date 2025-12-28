@@ -16,18 +16,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Separate queries to avoid complex nested filters that might fail
+    // Simplified query - only essential fields
     const watch = await prisma.watch.findUnique({
       where: { id },
-      include: {
-        purchases: true, // Fetch all, filter in JS
-        sales: true,
-        bids: {
-          select: { id: true },
-        },
-        categories: {
-          include: {
-            category: true,
+      select: {
+        id: true,
+        sellerId: true,
+        isAuction: true,
+        moderationStatus: true,
+        _count: {
+          select: {
+            bids: true,
+            purchases: true,
+            sales: true,
           },
         },
       },
@@ -42,25 +43,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: 'Sie sind nicht berechtigt' }, { status: 403 })
     }
 
-    // Filter purchases in JS to avoid Prisma query issues
-    const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
+    // Get active purchases count separately
+    const activePurchasesCount = await prisma.purchase.count({
+      where: {
+        watchId: id,
+        NOT: { status: 'cancelled' },
+      },
+    })
 
     // Determine listing state
     const isPublished = watch.moderationStatus === 'approved'
     const isDraft = !isPublished || watch.moderationStatus === 'pending' || !watch.moderationStatus
-    const hasActivePurchase = activePurchases.length > 0
-    const hasActiveSale = watch.sales.length > 0
-    const purchaseStatus = activePurchases[0]?.status || undefined
+    const hasActivePurchase = activePurchasesCount > 0
+    const hasActiveSale = watch._count.sales > 0
 
     const listingState: ListingState = {
       isPublished,
       isDraft,
       isAuction: watch.isAuction || false,
       isFixedPrice: !watch.isAuction,
-      bidsCount: watch.bids.length,
+      bidsCount: watch._count.bids,
       hasActivePurchase,
       hasActiveSale,
-      purchaseStatus,
+      purchaseStatus: undefined, // Not needed for policy calculation
       moderationStatus: watch.moderationStatus || undefined,
     }
 
