@@ -308,7 +308,7 @@ export function ProductPageClient({
                         src={images[selectedImageIndex]}
                         alt={watch.title}
                         className={`h-auto max-h-full w-auto max-w-full object-contain transition-transform duration-200 ease-out ${
-                          isZoomed ? 'scale-[4]' : 'scale-100'
+                          isZoomed ? 'scale-[2.5]' : 'scale-100'
                         }`}
                         style={{
                           transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
@@ -321,7 +321,7 @@ export function ProductPageClient({
                         alt={watch.title}
                         fill
                         className={`object-contain transition-transform duration-200 ease-out ${
-                          isZoomed ? 'scale-[4]' : 'scale-100'
+                          isZoomed ? 'scale-[2.5]' : 'scale-100'
                         }`}
                         style={{
                           transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
