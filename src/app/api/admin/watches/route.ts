@@ -6,220 +6,94 @@ import { NextRequest, NextResponse } from 'next/server'
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// GET: Alle Angebote für Admin-Moderation (inkl. inaktive)
 export async function GET(request: NextRequest) {
   try {
+    // 1. Check session
     const session = await getServerSession(authOptions)
-
-    if (!session?.user) {
+    if (!session?.user?.isAdmin) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Check admin status
-    const isAdmin = session.user.isAdmin === true
-
-    if (!isAdmin) {
-      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
-    }
-
-    const { searchParams } = new URL(request.url)
-    const page = parseInt(searchParams.get('page') || '1')
-    const limit = parseInt(searchParams.get('limit') || '100')
-    const skip = (page - 1) * limit
-    const filter = searchParams.get('filter') || 'all'
-    const category = searchParams.get('category')
-    const sellerVerified = searchParams.get('sellerVerified')
-    const dateFrom = searchParams.get('dateFrom')
-    const dateTo = searchParams.get('dateTo')
-
-    // Build where clause
-    const where: Record<string, unknown> = {}
-
-    if (category) {
-      where.categories = {
-        some: {
-          category: {
-            OR: [{ slug: category }, { name: category }],
+    // 2. Simple query - just get watches with seller
+    const watches = await prisma.watch.findMany({
+      include: {
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            nickname: true,
+            verified: true,
           },
         },
-      }
-    }
-
-    if (dateFrom || dateTo) {
-      where.createdAt = {}
-      if (dateFrom) {
-        ;(where.createdAt as Record<string, Date>).gte = new Date(dateFrom)
-      }
-      if (dateTo) {
-        ;(where.createdAt as Record<string, Date>).lte = new Date(dateTo)
-      }
-    }
-
-    if (sellerVerified === 'true' || sellerVerified === 'false') {
-      where.seller = {
-        verified: sellerVerified === 'true',
-      }
-    }
-
-    // SIMPLIFIED QUERY - Only load essential relations (no _count to avoid missing table errors)
-    const [allWatches, totalCount] = await Promise.all([
-      prisma.watch.findMany({
-        where,
-        include: {
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              nickname: true,
-              verified: true,
-            },
-          },
-          purchases: {
-            select: {
-              id: true,
-              status: true,
-            },
-          },
-          categories: {
-            include: {
-              category: true,
-            },
-          },
-          _count: {
-            select: {
-              favorites: true,
-              bids: true,
-            },
+        purchases: {
+          select: {
+            id: true,
+            status: true,
           },
         },
-        orderBy: { createdAt: 'desc' },
-      }),
-      prisma.watch.count({ where }),
-    ])
+      },
+      orderBy: { createdAt: 'desc' },
+    })
 
-    // Parse images und berechne isActive für jedes Watch
+    // 3. Process watches
     const now = new Date()
-    const watchesWithCalculatedStatus = allWatches.map((watch: any) => {
-      const images = watch.images ? JSON.parse(watch.images) : []
+    const processedWatches = watches.map(watch => {
+      // Parse images
+      let images: string[] = []
+      try {
+        images = watch.images ? JSON.parse(watch.images) : []
+      } catch {
+        images = []
+      }
 
-      // Berechne isActive basierend auf Purchase-Status und Auktion-Status
-      // Nur nicht-stornierte Purchases zählen als "verkauft"
-      const activePurchases = (watch.purchases || []).filter((p: any) => p.status !== 'cancelled')
+      // Calculate status
+      const activePurchases = (watch.purchases || []).filter(p => p.status !== 'cancelled')
       const isSold = activePurchases.length > 0
-
-      const auctionEndDate = watch.auctionEnd ? new Date(watch.auctionEnd) : null
-      const isExpired = auctionEndDate ? auctionEndDate <= now : false
-      const hasAnyPurchases = (watch.purchases || []).length > 0
-
-      // WICHTIG: moderationStatus 'rejected' bedeutet deaktiviert (Admin hat es manuell deaktiviert)
-      const isRejected = watch.moderationStatus === 'rejected'
-      const isApproved = watch.moderationStatus === 'approved'
-
-      // KRITISCH: Wenn moderationStatus = 'approved', ist das Produkt IMMER aktiv (außer verkauft)
-      // Dies überschreibt alle anderen Berechnungen
-      let calculatedIsActive: boolean
-      if (isRejected) {
-        calculatedIsActive = false // Rejected = immer inaktiv
-      } else if (isApproved) {
-        // KRITISCH: Approved = IMMER aktiv, außer es wurde verkauft
-        // Ignoriere alle anderen Bedingungen (Auktion-Status, etc.)
-        calculatedIsActive = !isSold
-        // Double-check: Wenn approved aber trotzdem false, log error
-        if (!calculatedIsActive && !isSold) {
-          console.error(
-            '[admin/watches] CRITICAL: Approved watch calculated as inactive but not sold!',
-            {
-              watchId: watch.id,
-              moderationStatus: watch.moderationStatus,
-              isSold,
-              activePurchases: activePurchases.length,
-            }
-          )
-          // Force to true as fallback
-          calculatedIsActive = true
-        }
-      } else {
-        // Für andere Status (pending, null): Berechne basierend auf Auktion
-        calculatedIsActive = !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
-      }
-
-      // Debug logging für approved watches die trotzdem inaktiv sind
-      if (isApproved && !calculatedIsActive) {
-        console.error('[admin/watches] Approved watch is inactive!', {
-          watchId: watch.id,
-          moderationStatus: watch.moderationStatus,
-          isSold,
-          activePurchasesCount: activePurchases.length,
-          allPurchasesCount: (watch.purchases || []).length,
-        })
-      }
-
-      // Use _count for efficient counting
-      const favoriteCount = watch._count?.favorites || 0
-      const bidCount = watch._count?.bids || 0
+      const auctionEnd = watch.auctionEnd ? new Date(watch.auctionEnd) : null
+      const isExpired = auctionEnd ? auctionEnd <= now : false
+      const isActive = !isSold && !isExpired && watch.moderationStatus !== 'rejected'
 
       return {
         ...watch,
         images,
-        isActive: calculatedIsActive,
-        viewCount: 0, // Not tracked for now
-        favoriteCount,
-        bidCount,
-        pendingReports: 0, // Not tracked for now
-        noteCount: 0, // Not tracked for now
-        categories: (watch.categories || []).map((wc: any) => wc.category),
-        // Remove _count from output
-        _count: undefined,
+        isActive,
+        isSold,
+        categories: [],
+        viewCount: 0,
+        favoriteCount: 0,
+        pendingReports: 0,
+        noteCount: 0,
       }
     })
 
-    // Filtere basierend auf berechneter Aktivität, Reports und Moderation-Status
-    let filteredWatches = watchesWithCalculatedStatus
+    // 4. Filter based on query params
+    const { searchParams } = new URL(request.url)
+    const filter = searchParams.get('filter') || 'all'
+
+    let filteredWatches = processedWatches
     if (filter === 'active') {
-      filteredWatches = watchesWithCalculatedStatus.filter(w => w.isActive)
+      filteredWatches = processedWatches.filter(w => w.isActive)
     } else if (filter === 'inactive') {
-      filteredWatches = watchesWithCalculatedStatus.filter(w => !w.isActive)
-    } else if (filter === 'reported') {
-      filteredWatches = watchesWithCalculatedStatus.filter((w: any) => w.pendingReports > 0)
+      filteredWatches = processedWatches.filter(w => !w.isActive)
     } else if (filter === 'pending') {
-      filteredWatches = watchesWithCalculatedStatus.filter(
-        (w: any) => !w.isActive && (w.moderationStatus === 'pending' || !w.moderationStatus)
+      filteredWatches = processedWatches.filter(
+        w => w.moderationStatus === 'pending' || !w.moderationStatus
       )
     }
 
-    // Pagination auf gefilterte Ergebnisse anwenden
-    const total = filteredWatches.length
-    const watches = filteredWatches.slice(skip, skip + limit)
-
     return NextResponse.json({
-      watches,
-      total,
-      page,
-      limit,
-      totalPages: Math.ceil(total / limit),
+      watches: filteredWatches,
+      total: filteredWatches.length,
+      page: 1,
+      limit: 100,
+      totalPages: 1,
     })
-  } catch (error: any) {
-    console.error('[admin/watches] CRITICAL ERROR:', error.message)
-    console.error('[admin/watches] Error stack:', error.stack)
-    console.error('[admin/watches] Error name:', error.name)
-    console.error('[admin/watches] Error code:', error.code)
-
-    // Check for common database errors
-    const errorMessage = error.message || 'Unbekannter Fehler'
-    const isDbError =
-      errorMessage.includes('prisma') ||
-      errorMessage.includes('database') ||
-      errorMessage.includes('connect') ||
-      errorMessage.includes('P1') ||
-      errorMessage.includes('P2')
-
+  } catch (error: unknown) {
+    const err = error as Error
+    console.error('[admin/watches] Error:', err.message, err.stack)
     return NextResponse.json(
-      {
-        message: 'Fehler beim Laden der Angebote: ' + errorMessage,
-        isDbError,
-        errorCode: error.code,
-      },
+      { message: 'Fehler: ' + err.message },
       { status: 500 }
     )
   }
