@@ -40,14 +40,19 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export async function GET(request: NextRequest) {
+  console.log('[seller/listings] Starting GET request...')
+
   try {
     const session = await getServerSession(authOptions)
+    console.log('[seller/listings] User:', session?.user?.email || 'no session')
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     const statusFilter = searchParams.get('status') || 'active'
+    console.log('[seller/listings] Filter:', statusFilter)
     const search = searchParams.get('search') || ''
     const now = new Date()
 
@@ -182,7 +187,16 @@ export async function GET(request: NextRequest) {
       counts,
     })
   } catch (error: any) {
-    console.error('[seller/listings] Error:', error)
-    return NextResponse.json({ error: error.message }, { status: 500 })
+    console.error('[seller/listings] CRITICAL ERROR:', error.message)
+    console.error('[seller/listings] Stack:', error.stack)
+    console.error('[seller/listings] Code:', error.code)
+    return NextResponse.json(
+      {
+        error: error.message,
+        errorCode: error.code,
+        timestamp: new Date().toISOString(),
+      },
+      { status: 500 }
+    )
   }
 }

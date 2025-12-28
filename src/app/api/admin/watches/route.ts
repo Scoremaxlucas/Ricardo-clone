@@ -3,10 +3,17 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // GET: Alle Angebote für Admin-Moderation (inkl. inaktive)
 export async function GET(request: NextRequest) {
+  console.log('[admin/watches] Starting GET request...')
+
   try {
     const session = await getServerSession(authOptions)
+    console.log('[admin/watches] Session:', session?.user?.email || 'no session')
+
     if (!session?.user) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
@@ -84,6 +91,8 @@ export async function GET(request: NextRequest) {
     let allWatches: any[]
     let totalCount: number
 
+    console.log('[admin/watches] Querying database with where:', JSON.stringify(where))
+
     try {
       const result = await Promise.all([
         prisma.watch.findMany({
@@ -138,9 +147,11 @@ export async function GET(request: NextRequest) {
       ])
       allWatches = result[0]
       totalCount = result[1]
+      console.log('[admin/watches] Query successful, found', allWatches.length, 'watches')
     } catch (relationError: any) {
       // Fallback: Lade ohne neue Relationen falls sie noch nicht existieren
-      console.warn('Error loading with new relations, using fallback:', relationError.message)
+      console.error('[admin/watches] Error loading with relations:', relationError.message)
+      console.error('[admin/watches] Stack:', relationError.stack)
       const result = await Promise.all([
         prisma.watch.findMany({
           where,
@@ -281,10 +292,26 @@ export async function GET(request: NextRequest) {
       totalPages: Math.ceil(total / limit),
     })
   } catch (error: any) {
-    console.error('Error fetching watches for moderation:', error)
-    console.error('Error stack:', error.stack)
+    console.error('[admin/watches] CRITICAL ERROR:', error.message)
+    console.error('[admin/watches] Error stack:', error.stack)
+    console.error('[admin/watches] Error name:', error.name)
+    console.error('[admin/watches] Error code:', error.code)
+
+    // Check for common database errors
+    const errorMessage = error.message || 'Unbekannter Fehler'
+    const isDbError =
+      errorMessage.includes('prisma') ||
+      errorMessage.includes('database') ||
+      errorMessage.includes('connect') ||
+      errorMessage.includes('P1') ||
+      errorMessage.includes('P2')
+
     return NextResponse.json(
-      { message: 'Fehler beim Laden der Angebote: ' + (error.message || 'Unbekannter Fehler') },
+      {
+        message: 'Fehler beim Laden der Angebote: ' + errorMessage,
+        isDbError,
+        errorCode: error.code,
+      },
       { status: 500 }
     )
   }

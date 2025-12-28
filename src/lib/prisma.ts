@@ -4,31 +4,37 @@ const globalForPrisma = globalThis as unknown as {
   prisma: PrismaClient | undefined
 }
 
-// Erstelle neuen Prisma Client
-// WICHTIG: In Development wird der Client gecacht, daher muss der Server
-// nach Schema-Änderungen neu gestartet werden!
+// Debug: Log database connection status
+const dbUrl = process.env.DATABASE_URL
+if (!dbUrl) {
+  console.error('[Prisma] CRITICAL: DATABASE_URL is not set!')
+} else {
+  // Mask the password for logging
+  const maskedUrl = dbUrl.replace(/:([^:@]+)@/, ':***@')
+  console.log('[Prisma] Connecting to:', maskedUrl.substring(0, 80) + '...')
+}
+
+// Erstelle neuen Prisma Client mit Vercel Postgres Optimierungen
 export const prisma =
   globalForPrisma.prisma ??
   new PrismaClient({
-    log: process.env.NODE_ENV === 'development' ? ['error', 'warn'] : ['error'],
-    // OPTIMIERT: Connection Pooling für maximale Performance
-    datasources: {
-      db: {
-        url: process.env.DATABASE_URL,
-      },
-    },
-    // OPTIMIERT: Connection Pool Einstellungen für bessere Performance
-    // Diese werden über DATABASE_URL Parameter gesetzt, aber hier dokumentiert:
-    // ?connection_limit=10&pool_timeout=20 für optimale Performance
-    // Für Production: connection_limit=20, pool_timeout=30 für bessere Skalierung
+    log:
+      process.env.NODE_ENV === 'development'
+        ? ['query', 'error', 'warn']
+        : ['error', 'warn'],
   })
 
-// OPTIMIERT: Connection Pool Configuration für Millionen von Usern
-// Prisma verwendet standardmäßig Connection Pooling, aber wir können es optimieren:
-// - connection_limit: Maximale Anzahl gleichzeitiger Verbindungen (Standard: 10)
-// - pool_timeout: Timeout für Pool-Verbindungen in Sekunden (Standard: 10)
-// Diese werden über DATABASE_URL gesetzt: postgresql://...?connection_limit=20&pool_timeout=30
-
+// Cache the client in development only
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma
 }
+
+// Test connection on startup
+prisma
+  .$connect()
+  .then(() => {
+    console.log('[Prisma] Successfully connected to database')
+  })
+  .catch((err) => {
+    console.error('[Prisma] Failed to connect to database:', err)
+  })
