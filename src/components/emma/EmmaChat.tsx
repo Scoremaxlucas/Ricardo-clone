@@ -134,7 +134,7 @@ export function EmmaChat({ productId, className = '' }: EmmaChatProps) {
         <div className="flex items-center gap-2">
           <Bot className="h-5 w-5" />
           <div>
-            <h3 className="font-semibold">Emma</h3>
+            <h3 className="font-semibold text-white">Emma</h3>
             <p className="text-xs text-primary-100">Helvenda Assistentin</p>
           </div>
         </div>
