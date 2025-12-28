@@ -57,46 +57,51 @@ export default async function ProductPage({ params }: Props) {
       `[ProductPage] Looking for product with ID: ${id}, isNumeric: ${isNumeric}, isArticleNumber: ${isArticleNumber}`
     )
 
-    // ROBUST: Versuche alle möglichen Suchmethoden
-    // 1. Wenn numerisch, suche zuerst nach Artikelnummer
-    // 2. Dann nach CUID
-    // 3. Dies stellt sicher, dass Produkte gefunden werden
+    // SIMPLIFIED: Find watch by ID or articleNumber
     let watch = null
 
-    const sellerInclude = {
-      seller: {
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          city: true,
-          postalCode: true,
-          verified: true,
-        },
-      },
-    }
-
-    if (isNumeric) {
-      // Zuerst nach Artikelnummer suchen
-      watch = await prisma.watch.findUnique({
-        where: { articleNumber: parseInt(id) },
-        include: sellerInclude,
-      })
-
-      // Falls nicht gefunden, versuche nach CUID (falls id zufällig nur aus Zahlen besteht)
-      if (!watch) {
-        console.log(`[ProductPage] Not found by articleNumber, trying CUID...`)
-        watch = await prisma.watch.findUnique({
-          where: { id },
-          include: sellerInclude,
-        })
-      }
-    } else {
-      // CUID-Format - zuerst nach ID suchen
+    // Try to find the watch - first by ID, then by articleNumber if numeric
+    try {
+      // Always try by ID first (works for both CUID and numeric strings)
       watch = await prisma.watch.findUnique({
         where: { id },
-        include: sellerInclude,
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              city: true,
+              postalCode: true,
+              verified: true,
+            },
+          },
+        },
       })
+
+      // If not found and ID is numeric, try as articleNumber
+      if (!watch && isNumeric) {
+        console.log(`[ProductPage] Not found by ID, trying articleNumber: ${parseInt(id)}`)
+        watch = await prisma.watch.findUnique({
+          where: { articleNumber: parseInt(id) },
+          include: {
+            seller: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                city: true,
+                postalCode: true,
+                verified: true,
+              },
+            },
+          },
+        })
+      }
+    } catch (dbError: unknown) {
+      const err = dbError as Error
+      console.error(`[ProductPage] Database error:`, err.message)
+      // Continue - watch will be null
     }
 
     // DEBUG: Log the result
