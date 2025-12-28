@@ -16,14 +16,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
+    // Separate queries to avoid complex nested filters that might fail
     const watch = await prisma.watch.findUnique({
       where: { id },
       include: {
-        purchases: {
-          where: {
-            status: { not: 'cancelled' },
-          },
-        },
+        purchases: true, // Fetch all, filter in JS
         sales: true,
         bids: {
           select: { id: true },
@@ -45,12 +42,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: 'Sie sind nicht berechtigt' }, { status: 403 })
     }
 
+    // Filter purchases in JS to avoid Prisma query issues
+    const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
+
     // Determine listing state
     const isPublished = watch.moderationStatus === 'approved'
     const isDraft = !isPublished || watch.moderationStatus === 'pending' || !watch.moderationStatus
-    const hasActivePurchase = watch.purchases.length > 0
+    const hasActivePurchase = activePurchases.length > 0
     const hasActiveSale = watch.sales.length > 0
-    const purchaseStatus = watch.purchases[0]?.status || undefined
+    const purchaseStatus = activePurchases[0]?.status || undefined
 
     const listingState: ListingState = {
       isPublished,
