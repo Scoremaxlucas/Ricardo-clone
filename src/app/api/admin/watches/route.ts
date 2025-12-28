@@ -1,50 +1,25 @@
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { cookies } from 'next/headers'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
-// Helper to check admin via cookie token
-async function checkAdminFromCookie(): Promise<{ isAdmin: boolean; userId?: string }> {
-  try {
-    const cookieStore = await cookies()
-    const sessionToken =
-      cookieStore.get('next-auth.session-token')?.value ||
-      cookieStore.get('__Secure-next-auth.session-token')?.value
-
-    if (!sessionToken) {
-      return { isAdmin: false }
-    }
-
-    // Find session in database
-    const session = await prisma.session.findUnique({
-      where: { sessionToken },
-      include: { user: { select: { id: true, isAdmin: true } } },
-    })
-
-    if (!session?.user) {
-      return { isAdmin: false }
-    }
-
-    return { isAdmin: session.user.isAdmin === true, userId: session.user.id }
-  } catch {
-    // Session table might not exist - fall back to allowing access for now
-    return { isAdmin: true } // TEMP: Allow for debugging
-  }
-}
-
 // GET: Alle Angebote für Admin-Moderation (inkl. inaktive)
 export async function GET(request: NextRequest) {
   try {
-    // Check admin status from cookie
-    const { isAdmin } = await checkAdminFromCookie()
+    const session = await getServerSession(authOptions)
 
-    // For now, skip auth check to debug the data issue
-    // TODO: Re-enable proper auth after fixing the session issue
+    if (!session?.user) {
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    // Check admin status
+    const isAdmin = session.user.isAdmin === true
+
     if (!isAdmin) {
-      // TEMP: Allow access for debugging
-      console.warn('[admin/watches] Skipping auth check for debugging')
+      return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
@@ -86,7 +61,7 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // SIMPLIFIED QUERY - Only load essential relations
+    // SIMPLIFIED QUERY - Only load essential relations (no _count to avoid missing table errors)
     const [allWatches, totalCount] = await Promise.all([
       prisma.watch.findMany({
         where,
@@ -111,16 +86,10 @@ export async function GET(request: NextRequest) {
               category: true,
             },
           },
-          favorites: {
-            select: {
-              id: true,
-            },
-          },
           _count: {
             select: {
-              views: true,
-              reports: true,
-              adminNotes: true,
+              favorites: true,
+              bids: true,
             },
           },
         },
@@ -187,19 +156,18 @@ export async function GET(request: NextRequest) {
       }
 
       // Use _count for efficient counting
-      const viewCount = watch._count?.views || 0
-      const favoriteCount = (watch.favorites || []).length
-      const pendingReports = watch._count?.reports || 0
-      const noteCount = watch._count?.adminNotes || 0
+      const favoriteCount = watch._count?.favorites || 0
+      const bidCount = watch._count?.bids || 0
 
       return {
         ...watch,
         images,
         isActive: calculatedIsActive,
-        viewCount,
+        viewCount: 0, // Not tracked for now
         favoriteCount,
-        pendingReports,
-        noteCount,
+        bidCount,
+        pendingReports: 0, // Not tracked for now
+        noteCount: 0, // Not tracked for now
         categories: (watch.categories || []).map((wc: any) => wc.category),
         // Remove _count from output
         _count: undefined,
