@@ -19,6 +19,7 @@ export interface SellerListing {
   status: ListingStatus
   bidCount: number
   highestBid: number | null
+  purchaseId: string | null // For sold items - links to sale details
 }
 
 export interface ListingCounts {
@@ -133,6 +134,9 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Get purchaseId for sold items (first active purchase)
+      const purchaseId = isSold ? activePurchases[0]?.id || null : null
+
       return {
         id: listing.id,
         articleNumber: listing.articleNumber,
@@ -147,6 +151,7 @@ export async function GET(request: NextRequest) {
         status,
         bidCount: listing._count.bids,
         highestBid: listing.bids[0]?.amount || null,
+        purchaseId,
       }
     })
 

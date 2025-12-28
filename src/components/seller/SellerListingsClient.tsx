@@ -228,6 +228,7 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
         status: 'active' as const, // Drafts show as "active" in grid
         bidCount: 0,
         highestBid: null,
+        purchaseId: null,
       }
     }
   )

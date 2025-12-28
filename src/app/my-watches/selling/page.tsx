@@ -3,7 +3,7 @@ import { Header } from '@/components/layout/Header'
 import { SellerListingsClient } from '@/components/seller'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { Package, Plus, Receipt, ShoppingBag, Tag } from 'lucide-react'
+import { Package, Plus, Receipt, Tag } from 'lucide-react'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -18,7 +18,7 @@ export default async function MySellingPage() {
   }
 
   // Fetch counts for secondary nav badges
-  const [pendingInvoicesCount, pendingOffersCount, pendingSalesCount] = await Promise.all([
+  const [pendingInvoicesCount, pendingOffersCount] = await Promise.all([
     prisma.invoice.count({
       where: {
         sellerId: session.user.id,
@@ -29,13 +29,6 @@ export default async function MySellingPage() {
       where: {
         watch: { sellerId: session.user.id },
         status: { in: ['pending', 'new'] },
-      },
-    }),
-    // Count sales that need attention (not completed)
-    prisma.purchase.count({
-      where: {
-        watch: { sellerId: session.user.id },
-        status: { notIn: ['completed', 'cancelled'] },
       },
     }),
   ])
@@ -80,20 +73,8 @@ export default async function MySellingPage() {
             </Link>
           </div>
 
-          {/* Secondary Navigation - Sales Management, Fees & Offers */}
+          {/* Secondary Navigation - Fees & Offers */}
           <div className="mb-6 flex flex-wrap gap-3">
-            <Link
-              href="/my-watches/selling/sold"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
-            >
-              <ShoppingBag className="h-4 w-4 text-gray-500" />
-              Verkäufe verwalten
-              {pendingSalesCount > 0 && (
-                <span className="rounded-full bg-green-100 px-2 py-0.5 text-xs font-semibold text-green-700">
-                  {pendingSalesCount}
-                </span>
-              )}
-            </Link>
             <Link
               href="/my-watches/selling/fees"
               className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
