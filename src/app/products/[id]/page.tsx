@@ -1,11 +1,15 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { prisma } from '@/lib/prisma'
-import dynamic from 'next/dynamic'
+import dynamicImport from 'next/dynamic'
 import { redirect } from 'next/navigation'
 
+// Force dynamic rendering - no caching for product pages
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 // OPTIMIERT: Dynamic Import für große Komponente - reduziert initial Bundle Size
-const ProductPageClient = dynamic(
+const ProductPageClient = dynamicImport(
   () => import('@/components/product/ProductPageClient').then(mod => mod.ProductPageClient),
   {
     loading: () => (
