@@ -79,7 +79,7 @@ export function PaymentProtectionInfoModal({ isOpen, onClose }: PaymentProtectio
         {/* Footer */}
         <div className="mt-6 border-t border-gray-200 pt-4">
           <Link
-            href="/hilfe/zahlungsschutz"
+            href="/help/moneyguard-terms"
             className="text-sm font-medium text-primary-600 transition-colors hover:text-primary-700"
             onClick={onClose}
           >

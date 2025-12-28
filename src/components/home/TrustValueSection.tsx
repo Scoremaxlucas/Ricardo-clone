@@ -26,7 +26,7 @@ const TRUST_ITEMS = [
     title: 'Zahlungsschutz (optional)',
     subtitle: 'Geld wird erst nach Erhalt freigegeben',
     icon: ShieldCheck,
-    href: '/help/zahlungsschutz',
+    href: '/help/moneyguard-terms',
   },
   {
     title: 'Sichere Kommunikation',
