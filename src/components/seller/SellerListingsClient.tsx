@@ -1,12 +1,12 @@
 'use client'
 
-import { useCallback, useEffect, useState } from 'react'
+import { AlertTriangle, Loader2, Search, Trash2 } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Search, Loader2, Trash2, AlertTriangle, Package } from 'lucide-react'
-import { ListingsTabs, TabType } from './ListingsTabs'
-import { ListingsGrid } from './ListingsGrid'
 import { ListingCardProps } from './ListingCard'
+import { ListingsGrid } from './ListingsGrid'
+import { ListingsTabs, TabType } from './ListingsTabs'
 
 interface Draft {
   id: string
@@ -248,7 +248,7 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
         listings={currentListings}
         loading={loading}
         activeTab={activeTab}
-        onDelete={(id) => {
+        onDelete={id => {
           const item = currentListings.find(l => l.id === id)
           if (item) {
             openDeleteModal(id, item.title, activeTab === 'drafts' ? 'draft' : 'listing')
@@ -292,9 +292,8 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
                 </div>
               ) : (
                 <p className="mb-4 text-gray-600">
-                  Möchten Sie{' '}
-                  {itemToDelete.type === 'draft' ? 'diesen Entwurf' : 'diesen Artikel'} wirklich
-                  löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                  Möchten Sie {itemToDelete.type === 'draft' ? 'diesen Entwurf' : 'diesen Artikel'}{' '}
+                  wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
                 </p>
               )}
             </div>

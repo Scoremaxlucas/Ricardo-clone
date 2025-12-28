@@ -1,8 +1,8 @@
 'use client'
 
-import { ListingCard, ListingCardProps } from './ListingCard'
 import { Package, Plus } from 'lucide-react'
 import Link from 'next/link'
+import { ListingCard, ListingCardProps } from './ListingCard'
 import { TabType } from './ListingsTabs'
 
 interface ListingsGridProps {
@@ -13,15 +13,15 @@ interface ListingsGridProps {
   onDuplicate: (id: string) => void
 }
 
-// Loading Skeleton for cards
+// Loading Skeleton for cards - Compact
 function CardSkeleton() {
   return (
-    <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
-      <div className="aspect-square animate-pulse bg-gray-200" />
-      <div className="p-3">
-        <div className="mb-2 h-4 w-3/4 animate-pulse rounded bg-gray-200" />
-        <div className="mb-2 h-3 w-1/2 animate-pulse rounded bg-gray-200" />
-        <div className="h-5 w-1/3 animate-pulse rounded bg-gray-200" />
+    <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
+      <div className="aspect-[4/3] animate-pulse bg-gray-200" />
+      <div className="p-2">
+        <div className="mb-1 h-3 w-3/4 animate-pulse rounded bg-gray-200" />
+        <div className="mb-1 h-2 w-1/2 animate-pulse rounded bg-gray-200" />
+        <div className="h-4 w-1/3 animate-pulse rounded bg-gray-200" />
       </div>
     </div>
   )
@@ -67,8 +67,8 @@ export function ListingsGrid({
   // Loading state
   if (loading) {
     return (
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-        {[...Array(8)].map((_, i) => (
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
+        {[...Array(12)].map((_, i) => (
           <CardSkeleton key={i} />
         ))}
       </div>
@@ -96,16 +96,11 @@ export function ListingsGrid({
     )
   }
 
-  // Grid of cards
+  // Grid of cards - Compact with more columns
   return (
-    <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {listings.map(listing => (
-        <ListingCard
-          key={listing.id}
-          {...listing}
-          onDelete={onDelete}
-          onDuplicate={onDuplicate}
-        />
+        <ListingCard key={listing.id} {...listing} onDelete={onDelete} onDuplicate={onDuplicate} />
       ))}
     </div>
   )

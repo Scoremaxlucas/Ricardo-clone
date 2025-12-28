@@ -8,10 +8,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * Creates a draft copy of an existing listing for "Erneut anbieten"
  * Returns the new draft ID to redirect to the sell wizard
  */
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
@@ -38,7 +35,10 @@ export async function POST(
 
     // Verify ownership
     if (originalListing.sellerId !== session.user.id) {
-      return NextResponse.json({ error: 'Not authorized to duplicate this listing' }, { status: 403 })
+      return NextResponse.json(
+        { error: 'Not authorized to duplicate this listing' },
+        { status: 403 }
+      )
     }
 
     // Parse images

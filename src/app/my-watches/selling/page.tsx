@@ -1,11 +1,11 @@
-import { redirect } from 'next/navigation'
-import { getServerSession } from 'next-auth/next'
-import { authOptions } from '@/lib/auth'
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
 import { SellerListingsClient } from '@/components/seller'
-import Link from 'next/link'
+import { authOptions } from '@/lib/auth'
 import { Package, Plus } from 'lucide-react'
+import { getServerSession } from 'next-auth/next'
+import Link from 'next/link'
+import { redirect } from 'next/navigation'
 
 export const revalidate = 30
 

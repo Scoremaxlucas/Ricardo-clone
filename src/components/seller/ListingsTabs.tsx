@@ -58,23 +58,17 @@ export function ListingsTabs({ activeTab, onTabChange, counts }: ListingsTabsPro
               aria-selected={isActive}
               aria-controls={`tabpanel-${tab.id}`}
               onClick={() => onTabChange(tab.id)}
-              className={`
-                flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors
-                ${
-                  isActive
-                    ? 'border-primary-600 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                }
-              `}
+              className={`flex items-center gap-2 whitespace-nowrap border-b-2 px-4 py-3 text-sm font-medium transition-colors ${
+                isActive
+                  ? 'border-primary-600 text-primary-600'
+                  : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
+              } `}
             >
               {tab.icon}
               <span>{tab.label}</span>
               {count > 0 && (
                 <span
-                  className={`
-                    rounded-full px-2 py-0.5 text-xs font-semibold
-                    ${isActive ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'}
-                  `}
+                  className={`rounded-full px-2 py-0.5 text-xs font-semibold ${isActive ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'} `}
                 >
                   {count}
                 </span>
