@@ -130,10 +130,9 @@ export default function FavoritesPage() {
             </p>
             <Link
               href="/search"
-              className="inline-flex items-center justify-center rounded-[50px] px-6 py-3 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-[0.98]"
+              className="inline-flex items-center justify-center rounded-[50px] bg-primary-600 px-6 py-3 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-primary-700 active:translate-y-0 active:scale-[0.98]"
               style={{
-                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                boxShadow: '0px 4px 20px rgba(249, 115, 22, 0.3)',
+                boxShadow: '0px 4px 20px rgba(13, 148, 136, 0.3)',
               }}
             >
               Artikel durchstöbern
