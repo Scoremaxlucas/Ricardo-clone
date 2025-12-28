@@ -24,6 +24,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         sellerId: true,
         isAuction: true,
         moderationStatus: true,
+        articleNumber: true, // For determining if published
         _count: {
           select: {
             bids: true,
@@ -52,8 +53,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     // Determine listing state
-    const isPublished = watch.moderationStatus === 'approved'
-    const isDraft = !isPublished || watch.moderationStatus === 'pending' || !watch.moderationStatus
+    // WICHTIG: Ein Artikel gilt als "veröffentlicht" wenn:
+    // 1. Er eine Artikelnummer hat (wurde im System veröffentlicht)
+    // 2. ODER moderationStatus = 'approved'
+    // Nach Veröffentlichung: Kategorie + Verkaufsart sind gesperrt (Ricardo-Regel)
+    const hasArticleNumber = !!watch.articleNumber
+    const isApproved = watch.moderationStatus === 'approved'
+    const isPublished = hasArticleNumber || isApproved
+    const isDraft = !isPublished
     const hasActivePurchase = activePurchasesCount > 0
     const hasActiveSale = watch._count.sales > 0
 
