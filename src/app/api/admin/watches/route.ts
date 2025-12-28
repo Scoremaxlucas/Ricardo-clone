@@ -8,11 +8,8 @@ export const revalidate = 0
 
 // GET: Alle Angebote für Admin-Moderation (inkl. inaktive)
 export async function GET(request: NextRequest) {
-  console.log('[admin/watches] Starting GET request...')
-
   try {
     const session = await getServerSession(authOptions)
-    console.log('[admin/watches] Session:', session?.user?.email || 'no session')
 
     if (!session?.user) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
@@ -50,16 +47,15 @@ export async function GET(request: NextRequest) {
     const page = parseInt(searchParams.get('page') || '1')
     const limit = parseInt(searchParams.get('limit') || '100')
     const skip = (page - 1) * limit
-    const filter = searchParams.get('filter') || 'all' // all, active, inactive, reported
+    const filter = searchParams.get('filter') || 'all'
     const category = searchParams.get('category')
     const sellerVerified = searchParams.get('sellerVerified')
     const dateFrom = searchParams.get('dateFrom')
     const dateTo = searchParams.get('dateTo')
 
-    // WICHTIG: Lade ALLE Watches (kein Filter auf DB-Ebene), da wir isActive berechnen müssen
-    const where: any = {}
+    // Build where clause
+    const where: Record<string, unknown> = {}
 
-    // Erweiterte Filter
     if (category) {
       where.categories = {
         some: {
@@ -73,10 +69,10 @@ export async function GET(request: NextRequest) {
     if (dateFrom || dateTo) {
       where.createdAt = {}
       if (dateFrom) {
-        where.createdAt.gte = new Date(dateFrom)
+        ;(where.createdAt as Record<string, Date>).gte = new Date(dateFrom)
       }
       if (dateTo) {
-        where.createdAt.lte = new Date(dateTo)
+        ;(where.createdAt as Record<string, Date>).lte = new Date(dateTo)
       }
     }
 
@@ -86,114 +82,48 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Versuche alle Watches mit allen Relationen zu laden
-    // Falls neue Relationen noch nicht existieren, verwende Fallback
-    let allWatches: any[]
-    let totalCount: number
-
-    console.log('[admin/watches] Querying database with where:', JSON.stringify(where))
-
-    try {
-      const result = await Promise.all([
-        prisma.watch.findMany({
-          where,
-          include: {
-            seller: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                nickname: true,
-                verified: true,
-              },
-            },
-            purchases: {
-              select: {
-                id: true,
-                status: true,
-              },
-            },
-            categories: {
-              include: {
-                category: true,
-              },
-            },
-            views: {
-              select: {
-                id: true,
-              },
-            },
-            favorites: {
-              select: {
-                id: true,
-              },
-            },
-            reports: {
-              select: {
-                id: true,
-                status: true,
-                reason: true,
-              },
-            },
-            adminNotes: {
-              select: {
-                id: true,
-              },
+    // SIMPLIFIED QUERY - Only load essential relations
+    const [allWatches, totalCount] = await Promise.all([
+      prisma.watch.findMany({
+        where,
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              nickname: true,
+              verified: true,
             },
           },
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.watch.count({ where }),
-      ])
-      allWatches = result[0]
-      totalCount = result[1]
-      console.log('[admin/watches] Query successful, found', allWatches.length, 'watches')
-    } catch (relationError: any) {
-      // Fallback: Lade ohne neue Relationen falls sie noch nicht existieren
-      console.error('[admin/watches] Error loading with relations:', relationError.message)
-      console.error('[admin/watches] Stack:', relationError.stack)
-      const result = await Promise.all([
-        prisma.watch.findMany({
-          where,
-          include: {
-            seller: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                nickname: true,
-                verified: true,
-              },
-            },
-            purchases: {
-              select: {
-                id: true,
-                status: true,
-              },
-            },
-            categories: {
-              include: {
-                category: true,
-              },
-            },
-            favorites: {
-              select: {
-                id: true,
-              },
+          purchases: {
+            select: {
+              id: true,
+              status: true,
             },
           },
-          orderBy: { createdAt: 'desc' },
-        }),
-        prisma.watch.count({ where }),
-      ])
-      allWatches = result[0].map((w: any) => ({
-        ...w,
-        views: [],
-        reports: [],
-        adminNotes: [],
-      }))
-      totalCount = result[1]
-    }
+          categories: {
+            include: {
+              category: true,
+            },
+          },
+          favorites: {
+            select: {
+              id: true,
+            },
+          },
+          _count: {
+            select: {
+              views: true,
+              reports: true,
+              adminNotes: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      }),
+      prisma.watch.count({ where }),
+    ])
 
     // Parse images und berechne isActive für jedes Watch
     const now = new Date()
@@ -252,20 +182,23 @@ export async function GET(request: NextRequest) {
         })
       }
 
-      const pendingReports = (watch.reports || []).filter((r: any) => r.status === 'pending').length
-      const viewCount = (watch.views || []).length
+      // Use _count for efficient counting
+      const viewCount = watch._count?.views || 0
       const favoriteCount = (watch.favorites || []).length
-      const noteCount = (watch.adminNotes || []).length
+      const pendingReports = watch._count?.reports || 0
+      const noteCount = watch._count?.adminNotes || 0
 
       return {
         ...watch,
         images,
-        isActive: calculatedIsActive, // Verwende berechnete Aktivität statt DB-Feld
+        isActive: calculatedIsActive,
         viewCount,
         favoriteCount,
         pendingReports,
         noteCount,
         categories: (watch.categories || []).map((wc: any) => wc.category),
+        // Remove _count from output
+        _count: undefined,
       }
     })
 
