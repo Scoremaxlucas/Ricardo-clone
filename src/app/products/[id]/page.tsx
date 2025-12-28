@@ -43,8 +43,10 @@ export default function ProductPage() {
       <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
         <main className="flex-1 pb-8">
-          <div className="flex min-h-[400px] items-center justify-center">
-            <div className="text-gray-600">Lade Produkt...</div>
+          <div className="mx-auto max-w-[1400px] px-4 py-8">
+            <div className="flex min-h-[400px] items-center justify-center">
+              <div className="text-gray-600">Lade Produkt...</div>
+            </div>
           </div>
         </main>
         <Footer />
@@ -56,13 +58,15 @@ export default function ProductPage() {
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
       <main className="flex-1 pb-8">
-        <ProductPageClient
-          watch={data?.watch || null}
-          images={data?.images || []}
-          conditionMap={data?.conditionMap || {}}
-          lieferumfang=""
-          seller={data?.seller || null}
-        />
+        <div className="mx-auto max-w-[1400px] px-4 py-8">
+          <ProductPageClient
+            watch={data?.watch || null}
+            images={data?.images || []}
+            conditionMap={data?.conditionMap || {}}
+            lieferumfang=""
+            seller={data?.seller || null}
+          />
+        </div>
       </main>
       <Footer />
     </div>
