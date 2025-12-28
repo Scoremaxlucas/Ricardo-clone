@@ -18,7 +18,18 @@ export async function GET(
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    const { orderId } = await params
+    let orderId: string
+    try {
+      const resolvedParams = await params
+      orderId = resolvedParams.orderId
+    } catch (paramError) {
+      console.error('Error resolving params:', paramError)
+      return NextResponse.json({ message: 'Ungültige Anfrage' }, { status: 400 })
+    }
+
+    if (!orderId) {
+      return NextResponse.json({ message: 'Order-ID fehlt' }, { status: 400 })
+    }
 
     // Lade Order mit allen Details
     const order = await prisma.order.findUnique({

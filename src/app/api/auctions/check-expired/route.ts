@@ -1,6 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
+// GET - Return info about the route (prevent 405/500 on GET requests)
+export async function GET() {
+  return NextResponse.json({
+    message: 'Diese Route verarbeitet abgelaufene Auktionen. Verwenden Sie POST.',
+    method: 'POST required',
+  })
+}
+
 // Prüfe abgelaufene Auktionen und erstelle Purchases für Gewinner
 export async function POST(request: NextRequest) {
   try {
@@ -369,9 +377,14 @@ export async function POST(request: NextRequest) {
       processed: processedWatches,
     })
   } catch (error: any) {
-    console.error('Error processing expired auctions:', error)
+    console.error('[check-expired] Error processing expired auctions:', error)
+    console.error('[check-expired] Stack:', error.stack)
     return NextResponse.json(
-      { message: 'Ein Fehler ist aufgetreten: ' + error.message },
+      { 
+        message: 'Ein Fehler ist aufgetreten', 
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     )
   }
