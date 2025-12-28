@@ -1194,20 +1194,6 @@ export const fr: Translation = {
         'Si une panne système survient pendant qu\'un booster est actif, les frais de booster sont automatiquement crédités. Les frais de commission ne sont pas affectés par les pannes système.',
       ],
     },
-    'buyer-protection': {
-      title: 'Dispositions de protection de l\'acheteur',
-      category: 'Sécurité',
-      content: [
-        '1 Champ d\'application',
-        'Les présentes dispositions de protection de l\'acheteur de Score-Max GmbH, Hauswiese 2, CH-Zollikerberg, Suisse (ci-après: "Helvenda") s\'appliquent aux achats d\'articles via la place de marché d\'Helvenda dans les conditions énumérées ci-dessous.',
-        '',
-        '2 Quel est l\'objectif de la protection de l\'acheteur?',
-        'Helvenda poursuit avec la protection de l\'acheteur d\'une part l\'objectif d\'éliminer ou au moins de réduire le préjudice d\'un acheteur résultant d\'une transaction non satisfaisante (cf. chiffre 4). D\'autre part, avec un recouvrement conséquent des créances des vendeurs non performants, la plateforme doit être rendue plus sûre.',
-        '',
-        '3 Portée de la couverture et coûts',
-        'La protection de l\'acheteur couvre les transactions sur Helvenda jusqu\'à un montant de CHF 10\'000 par transaction. Les coûts de la protection de l\'acheteur sont supportés par Helvenda.',
-      ],
-    },
     'prohibited-items': {
       title: 'Liste des articles interdits',
       category: 'Général',

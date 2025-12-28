@@ -85,7 +85,6 @@ export default function HelpPage() {
         { id: 'safe-selling', slug: 'safe-selling' },
         { id: 'disputes', slug: 'disputes' },
         { id: 'scams', slug: 'scams' },
-        { id: 'buyer-protection', slug: 'buyer-protection' },
         { id: 'moneyguard-terms', slug: 'moneyguard-terms' },
       ],
     },

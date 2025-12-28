@@ -1194,20 +1194,6 @@ export const it: Translation = {
         'Se si verifica un\'interruzione del sistema mentre un booster è attivo, le commissioni del booster vengono automaticamente accreditate. Le commissioni non sono influenzate dalle interruzioni del sistema.',
       ],
     },
-    'buyer-protection': {
-      title: 'Disposizioni di protezione dell\'acquirente',
-      category: 'Sicurezza',
-      content: [
-        '1 Campo di applicazione',
-        'Le presenti disposizioni di protezione dell\'acquirente di Score-Max GmbH, Hauswiese 2, CH-Zollikerberg, Svizzera (di seguito: "Helvenda") si applicano agli acquisti di articoli tramite il marketplace di Helvenda alle condizioni elencate di seguito.',
-        '',
-        '2 Qual è l\'obiettivo della protezione dell\'acquirente?',
-        'Helvenda persegue con la protezione dell\'acquirente da un lato l\'obiettivo di eliminare o almeno ridurre il danno di un acquirente derivante da una transazione insoddisfacente (cfr. cifra 4). D\'altra parte, con un recupero conseguente dei crediti dei venditori non performanti, la piattaforma deve essere resa più sicura.',
-        '',
-        '3 Portata della copertura e costi',
-        'La protezione dell\'acquirente copre le transazioni su Helvenda fino a un importo di CHF 10\'000 per transazione. I costi della protezione dell\'acquirente sono sostenuti da Helvenda.',
-      ],
-    },
     'prohibited-items': {
       title: 'Lista degli articoli vietati',
       category: 'Generale',
