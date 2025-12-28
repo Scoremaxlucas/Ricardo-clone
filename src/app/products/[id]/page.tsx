@@ -1,10 +1,8 @@
-import { prisma } from '@/lib/prisma'
-import { redirect } from 'next/navigation'
-import Link from 'next/link'
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { prisma } from '@/lib/prisma'
 import dynamic from 'next/dynamic'
-import { Suspense } from 'react'
+import { redirect } from 'next/navigation'
 
 // OPTIMIERT: Dynamic Import für große Komponente - reduziert initial Bundle Size
 const ProductPageClient = dynamic(
@@ -51,14 +49,16 @@ export default async function ProductPage({ params }: Props) {
     const isNumeric = /^\d+$/.test(id)
     const isArticleNumber = /^\d{6,10}$/.test(id)
 
-    console.log(`[ProductPage] Looking for product with ID: ${id}, isNumeric: ${isNumeric}, isArticleNumber: ${isArticleNumber}`)
+    console.log(
+      `[ProductPage] Looking for product with ID: ${id}, isNumeric: ${isNumeric}, isArticleNumber: ${isArticleNumber}`
+    )
 
     // ROBUST: Versuche alle möglichen Suchmethoden
     // 1. Wenn numerisch, suche zuerst nach Artikelnummer
     // 2. Dann nach CUID
     // 3. Dies stellt sicher, dass Produkte gefunden werden
     let watch = null
-    
+
     const sellerInclude = {
       seller: {
         select: {
@@ -78,7 +78,7 @@ export default async function ProductPage({ params }: Props) {
         where: { articleNumber: parseInt(id) },
         include: sellerInclude,
       })
-      
+
       // Falls nicht gefunden, versuche nach CUID (falls id zufällig nur aus Zahlen besteht)
       if (!watch) {
         console.log(`[ProductPage] Not found by articleNumber, trying CUID...`)
@@ -94,80 +94,54 @@ export default async function ProductPage({ params }: Props) {
         include: sellerInclude,
       })
     }
-    
+
     // DEBUG: Log the result
     if (watch) {
-      console.log(`[ProductPage] Found: ${watch.title} (ID: ${watch.id}, ArticleNumber: ${watch.articleNumber})`)
+      console.log(
+        `[ProductPage] Found: ${watch.title} (ID: ${watch.id}, ArticleNumber: ${watch.articleNumber})`
+      )
     } else {
       console.log(`[ProductPage] NOT FOUND for ID: ${id}`)
     }
 
-  // WICHTIG: Erlaube sowohl CUID als auch Artikelnummer-URLs
-  // Redirect nur wenn Artikelnummer-URL verwendet wurde, aber nicht mit der gefundenen übereinstimmt
-  // CUID-URLs sollten funktionieren ohne Redirect, um Race Conditions zu vermeiden
-  if (
-    watch &&
-    isArticleNumber &&
-    watch.articleNumber &&
-    watch.articleNumber.toString() !== id
-  ) {
-    // Nur redirect wenn Artikelnummer-URL verwendet wurde und nicht übereinstimmt
-    redirect(`/products/${watch.articleNumber}`)
-  }
-
-  // KEIN Redirect von CUID zu Artikelnummer mehr - beide URLs sollen funktionieren
-  // Dies verhindert Race Conditions und "not found" Fehler
-
-  if (!watch) {
-    console.error(`[ProductPage] Product not found with ID: ${id}, isArticleNumber: ${isArticleNumber}`)
-
-    // WICHTIG: Versuche auch eine Suche nach ähnlichen IDs für Debugging
-    try {
-      const similarWatches = await prisma.watch.findMany({
-        where: {
-          OR: [
-            { id: { contains: id.substring(0, 10) } },
-            { title: { contains: id } },
-          ],
-        },
-        take: 5,
-        select: {
-          id: true,
-          articleNumber: true,
-          title: true,
-        },
-      })
-      console.error(`[ProductPage] Similar watches found:`, similarWatches)
-    } catch (searchError) {
-      console.error(`[ProductPage] Error searching for similar watches:`, searchError)
+    // WICHTIG: Erlaube sowohl CUID als auch Artikelnummer-URLs
+    // Redirect nur wenn Artikelnummer-URL verwendet wurde, aber nicht mit der gefundenen übereinstimmt
+    // CUID-URLs sollten funktionieren ohne Redirect, um Race Conditions zu vermeiden
+    if (watch && isArticleNumber && watch.articleNumber && watch.articleNumber.toString() !== id) {
+      // Nur redirect wenn Artikelnummer-URL verwendet wurde und nicht übereinstimmt
+      redirect(`/products/${watch.articleNumber}`)
     }
 
-    return (
-      <div className="flex min-h-screen flex-col bg-gray-50">
-        <Header />
-        <main className="flex-1 pb-8">
-          <ProductPageClient
-            watch={null}
-            images={[]}
-            conditionMap={{}}
-            lieferumfang=""
-            seller={null}
-          />
-        </main>
-        <Footer />
-      </div>
-    )
-  }
+    // KEIN Redirect von CUID zu Artikelnummer mehr - beide URLs sollen funktionieren
+    // Dies verhindert Race Conditions und "not found" Fehler
 
-  // KRITISCH: Prüfe ob Produkt deaktiviert wurde (moderationStatus: 'rejected')
-  // Deaktivierte Produkte sollten nicht angezeigt werden
-  if (watch && watch.moderationStatus === 'rejected') {
-    console.log(`[ProductPage] Product ${id} is deactivated (rejected), showing 404`)
-    return (
-      <div className="flex min-h-screen flex-col bg-gray-50">
-        <Header />
-        <main className="flex-1 pb-8">
-          <div className="mx-auto max-w-[1400px] px-4 py-8">
+    if (!watch) {
+      console.error(
+        `[ProductPage] Product not found with ID: ${id}, isArticleNumber: ${isArticleNumber}`
+      )
+
+      // WICHTIG: Versuche auch eine Suche nach ähnlichen IDs für Debugging
+      try {
+        const similarWatches = await prisma.watch.findMany({
+          where: {
+            OR: [{ id: { contains: id.substring(0, 10) } }, { title: { contains: id } }],
+          },
+          take: 5,
+          select: {
+            id: true,
+            articleNumber: true,
+            title: true,
+          },
+        })
+        console.error(`[ProductPage] Similar watches found:`, similarWatches)
+      } catch (searchError) {
+        console.error(`[ProductPage] Error searching for similar watches:`, searchError)
+      }
+
+      return (
+        <div className="flex min-h-screen flex-col bg-gray-50">
+          <Header />
+          <main className="flex-1 pb-8">
             <ProductPageClient
               watch={null}
               images={[]}
@@ -175,14 +149,38 @@ export default async function ProductPage({ params }: Props) {
               lieferumfang=""
               seller={null}
             />
-          </div>
-        </main>
-        <Footer />
-      </div>
-    )
-  }
+          </main>
+          <Footer />
+        </div>
+      )
+    }
 
-  console.log(`[ProductPage] Product found: ${watch.title} (ID: ${watch.id}, ArticleNumber: ${watch.articleNumber})`)
+    // KRITISCH: Prüfe ob Produkt deaktiviert wurde (moderationStatus: 'rejected')
+    // Deaktivierte Produkte sollten nicht angezeigt werden
+    if (watch && watch.moderationStatus === 'rejected') {
+      console.log(`[ProductPage] Product ${id} is deactivated (rejected), showing 404`)
+      return (
+        <div className="flex min-h-screen flex-col bg-gray-50">
+          <Header />
+          <main className="flex-1 pb-8">
+            <div className="mx-auto max-w-[1400px] px-4 py-8">
+              <ProductPageClient
+                watch={null}
+                images={[]}
+                conditionMap={{}}
+                lieferumfang=""
+                seller={null}
+              />
+            </div>
+          </main>
+          <Footer />
+        </div>
+      )
+    }
+
+    console.log(
+      `[ProductPage] Product found: ${watch.title} (ID: ${watch.id}, ArticleNumber: ${watch.articleNumber})`
+    )
 
     // Prüfe ob Auktion abgelaufen ist und verarbeite sie falls nötig
     if (watch.auctionEnd && new Date(watch.auctionEnd) <= new Date()) {

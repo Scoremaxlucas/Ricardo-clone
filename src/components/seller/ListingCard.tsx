@@ -62,7 +62,7 @@ export function ListingCard({
   // Die Produktseite kann beides auflösen
   const articleUrl = `/products/${id}`
   const displayPrice = highestBid || price
-  
+
   // For sold items, link to sale details page
   const saleUrl = purchaseId ? `/my-watches/selling/sold#${purchaseId}` : articleUrl
 
