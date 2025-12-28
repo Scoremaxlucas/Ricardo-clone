@@ -14,39 +14,64 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Try to find the watch
     let watch = null
 
+    // Use select to only get columns that exist in DB
+    const selectFields = {
+      id: true,
+      articleNumber: true,
+      title: true,
+      description: true,
+      brand: true,
+      model: true,
+      year: true,
+      condition: true,
+      material: true,
+      movement: true,
+      caseSize: true,
+      caseDiameter: true,
+      price: true,
+      buyNowPrice: true,
+      isAuction: true,
+      auctionStart: true,
+      auctionEnd: true,
+      createdAt: true,
+      images: true,
+      accuracy: true,
+      fullset: true,
+      allLinks: true,
+      box: true,
+      papers: true,
+      warranty: true,
+      warrantyMonths: true,
+      warrantyYears: true,
+      warrantyNote: true,
+      warrantyDescription: true,
+      referenceNumber: true,
+      shippingMethod: true,
+      sellerId: true,
+      moderationStatus: true,
+      seller: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          city: true,
+          postalCode: true,
+          verified: true,
+        },
+      },
+    }
+
     // First try by CUID
     watch = await prisma.watch.findUnique({
       where: { id },
-      include: {
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            city: true,
-            postalCode: true,
-            verified: true,
-          },
-        },
-      },
+      select: selectFields,
     })
 
     // If not found and ID looks numeric, try articleNumber
     if (!watch && /^\d+$/.test(id)) {
       watch = await prisma.watch.findUnique({
         where: { articleNumber: parseInt(id) },
-        include: {
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              city: true,
-              postalCode: true,
-              verified: true,
-            },
-          },
-        },
+        select: selectFields,
       })
     }
 
@@ -90,9 +115,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         price: watch.price,
         buyNowPrice: watch.buyNowPrice,
         isAuction: watch.isAuction,
-        auctionStart: watch.auctionStart?.toISOString() || null,
-        auctionEnd: watch.auctionEnd?.toISOString() || null,
-        createdAt: watch.createdAt.toISOString(),
+        auctionStart: watch.auctionStart ? new Date(watch.auctionStart).toISOString() : null,
+        auctionEnd: watch.auctionEnd ? new Date(watch.auctionEnd).toISOString() : null,
+        createdAt: watch.createdAt ? new Date(watch.createdAt).toISOString() : null,
         accuracy: watch.accuracy,
         fullset: watch.fullset,
         allLinks: watch.allLinks,
@@ -105,9 +130,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         warrantyDescription: watch.warrantyDescription,
         referenceNumber: watch.referenceNumber,
         shippingMethod: watch.shippingMethod,
-        deliveryMode: watch.deliveryMode,
-        pickupLocationCity: watch.pickupLocationCity,
-        pickupLocationZip: watch.pickupLocationZip,
         sellerId: watch.sellerId,
         moderationStatus: watch.moderationStatus,
       },

@@ -14,9 +14,22 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // 2. Simple query - just get watches with seller
+    // 2. Simple query - only select columns that exist in DB
     const watches = await prisma.watch.findMany({
-      include: {
+      select: {
+        id: true,
+        articleNumber: true,
+        title: true,
+        description: true,
+        brand: true,
+        model: true,
+        price: true,
+        images: true,
+        createdAt: true,
+        isAuction: true,
+        auctionEnd: true,
+        moderationStatus: true,
+        sellerId: true,
         seller: {
           select: {
             id: true,
