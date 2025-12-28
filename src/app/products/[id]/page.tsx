@@ -3,16 +3,13 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { ProductPageClient } from '@/components/product/ProductPageClient'
-import { use, useEffect, useState } from 'react'
+import { useParams } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
-interface Props {
-  params: Promise<{ id: string }>
-}
+export default function ProductPage() {
+  const params = useParams()
+  const id = params?.id as string
 
-export default function ProductPage({ params }: Props) {
-  // In Next.js 15, use() unwraps the Promise in client components
-  const { id } = use(params)
-  
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<{
     watch: any
