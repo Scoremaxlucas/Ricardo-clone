@@ -48,67 +48,58 @@ export default async function ProductPage({ params }: Props) {
     }
 
     // Prüfe ob params.id eine Artikelnummer ist (numerisch)
+    const isNumeric = /^\d+$/.test(id)
     const isArticleNumber = /^\d{6,10}$/.test(id)
 
-    console.log(`[ProductPage] Looking for product with ID: ${id}, isArticleNumber: ${isArticleNumber}`)
+    console.log(`[ProductPage] Looking for product with ID: ${id}, isNumeric: ${isNumeric}, isArticleNumber: ${isArticleNumber}`)
 
-    // WICHTIG: Versuche zuerst nach CUID, dann nach Artikelnummer
-    // Dies stellt sicher, dass Produkte gefunden werden, unabhängig davon, wie sie verlinkt sind
+    // ROBUST: Versuche alle möglichen Suchmethoden
+    // 1. Wenn numerisch, suche zuerst nach Artikelnummer
+    // 2. Dann nach CUID
+    // 3. Dies stellt sicher, dass Produkte gefunden werden
     let watch = null
+    
+    const sellerInclude = {
+      seller: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          city: true,
+          postalCode: true,
+          verified: true,
+        },
+      },
+    }
 
-    if (isArticleNumber) {
-      // Wenn es eine Artikelnummer ist, suche nach Artikelnummer
+    if (isNumeric) {
+      // Zuerst nach Artikelnummer suchen
       watch = await prisma.watch.findUnique({
         where: { articleNumber: parseInt(id) },
-        include: {
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              city: true,
-              postalCode: true,
-              verified: true,
-            },
-          },
-        },
+        include: sellerInclude,
       })
-    } else {
-      // Wenn es eine CUID ist, suche nach CUID
-      watch = await prisma.watch.findUnique({
-        where: { id },
-        include: {
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              city: true,
-              postalCode: true,
-              verified: true,
-            },
-          },
-        },
-      })
-
-      // Falls nicht gefunden, versuche es als Artikelnummer (falls es doch numerisch ist)
-      if (!watch && /^\d+$/.test(id)) {
+      
+      // Falls nicht gefunden, versuche nach CUID (falls id zufällig nur aus Zahlen besteht)
+      if (!watch) {
+        console.log(`[ProductPage] Not found by articleNumber, trying CUID...`)
         watch = await prisma.watch.findUnique({
-          where: { articleNumber: parseInt(id) },
-          include: {
-            seller: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                city: true,
-                postalCode: true,
-                verified: true,
-              },
-            },
-          },
+          where: { id },
+          include: sellerInclude,
         })
       }
+    } else {
+      // CUID-Format - zuerst nach ID suchen
+      watch = await prisma.watch.findUnique({
+        where: { id },
+        include: sellerInclude,
+      })
+    }
+    
+    // DEBUG: Log the result
+    if (watch) {
+      console.log(`[ProductPage] Found: ${watch.title} (ID: ${watch.id}, ArticleNumber: ${watch.articleNumber})`)
+    } else {
+      console.log(`[ProductPage] NOT FOUND for ID: ${id}`)
     }
 
   // WICHTIG: Erlaube sowohl CUID als auch Artikelnummer-URLs
