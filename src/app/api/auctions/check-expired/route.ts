@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
 // GET - Return info about the route (prevent 405/500 on GET requests)
 export async function GET() {
@@ -380,10 +380,10 @@ export async function POST(request: NextRequest) {
     console.error('[check-expired] Error processing expired auctions:', error)
     console.error('[check-expired] Stack:', error.stack)
     return NextResponse.json(
-      { 
-        message: 'Ein Fehler ist aufgetreten', 
+      {
+        message: 'Ein Fehler ist aufgetreten',
         error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }
     )

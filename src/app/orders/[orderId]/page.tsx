@@ -93,7 +93,12 @@ export default function OrderDetailPage() {
     try {
       const res = await fetch(`/api/orders/${orderId}`)
       if (!res.ok) {
-        throw new Error('Bestellung nicht gefunden')
+        const errorData = await res.json().catch(() => ({}))
+        console.error('[OrderDetail] Order not found:', orderId, errorData)
+        
+        // Don't redirect immediately - show error state
+        setLoading(false)
+        return
       }
       const data = await res.json()
       const orderData = data.order
@@ -102,8 +107,8 @@ export default function OrderDetailPage() {
       setIsBuyer(orderData.buyerId === ((session?.user as { id?: string })?.id ?? ''))
       setIsSeller(orderData.sellerId === ((session?.user as { id?: string })?.id ?? ''))
     } catch (err: any) {
-      toast.error(err.message || 'Fehler beim Laden der Bestellung')
-      router.push('/my-watches/buying')
+      console.error('[OrderDetail] Error:', err)
+      // Don't redirect - show error state instead
     } finally {
       setLoading(false)
     }
@@ -232,8 +237,26 @@ export default function OrderDetailPage() {
     return (
       <div className="flex min-h-screen flex-col">
         <Header />
-        <div className="flex flex-1 items-center justify-center">
-          <div className="text-red-600">Bestellung nicht gefunden</div>
+        <div className="flex flex-1 items-center justify-center px-4">
+          <div className="max-w-md text-center">
+            <AlertTriangle className="mx-auto mb-4 h-16 w-16 text-amber-500" />
+            <h2 className="mb-2 text-xl font-bold text-gray-900">Bestellung nicht gefunden</h2>
+            <p className="mb-6 text-gray-600">
+              Die angeforderte Bestellung existiert nicht oder wurde noch nicht erstellt.
+              Dies kann passieren, wenn die Zahlung noch nicht abgeschlossen wurde.
+            </p>
+            <div className="space-y-3">
+              <Link
+                href="/my-watches/buying/purchased"
+                className="block w-full rounded-lg bg-primary-600 px-4 py-3 text-center font-medium text-white transition-colors hover:bg-primary-700"
+              >
+                Zurück zu Gekaufte Artikel
+              </Link>
+              <p className="text-sm text-gray-500">
+                Falls Sie ein Problem haben, kontaktieren Sie bitte unseren Support.
+              </p>
+            </div>
+          </div>
         </div>
         <Footer />
       </div>
