@@ -32,96 +32,96 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
 
     // Query mit Purchases für korrekten isSold Status
     const watches = await prisma.watch.findMany({
-    where: {
-      sellerId: userId,
-      // Zeige ALLE Artikel außer explizit 'rejected'
-      AND: [
-        {
-          OR: [
-            { moderationStatus: null },
-            { moderationStatus: { not: 'rejected' } },
-          ],
-        },
-      ],
-    },
-    select: {
-      id: true,
-      title: true,
-      brand: true,
-      model: true,
-      price: true,
-      images: true,
-      createdAt: true,
-      isAuction: true,
-      auctionEnd: true,
-      articleNumber: true,
-      moderationStatus: true,
-      // WICHTIG: Purchases für korrekten isSold-Status
-      purchases: {
-        select: {
-          id: true,
-          status: true,
+      where: {
+        sellerId: userId,
+        // Zeige ALLE Artikel außer explizit 'rejected'
+        AND: [
+          {
+            OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
+          },
+        ],
+      },
+      select: {
+        id: true,
+        title: true,
+        brand: true,
+        model: true,
+        price: true,
+        images: true,
+        createdAt: true,
+        isAuction: true,
+        auctionEnd: true,
+        articleNumber: true,
+        moderationStatus: true,
+        // WICHTIG: Purchases für korrekten isSold-Status
+        purchases: {
+          select: {
+            id: true,
+            status: true,
+          },
         },
       },
-    },
-    orderBy: { createdAt: 'desc' },
-  })
-
-  // Verarbeitung mit korrektem isSold und isActive Status
-  const result: MySellingItem[] = []
-
-  for (const w of watches) {
-    // Parse images
-    let images: string[] = []
-    if (w.images && typeof w.images === 'string') {
-      try {
-        const parsed = JSON.parse(w.images)
-        images = Array.isArray(parsed) && parsed.length > 0 ? [parsed[0]] : []
-      } catch {
-        images = []
-      }
-    }
-
-    // Date-Konvertierung
-    const createdAt = w.createdAt instanceof Date
-      ? w.createdAt.toISOString()
-      : new Date(w.createdAt).toISOString()
-
-    const auctionEnd = w.auctionEnd
-      ? (w.auctionEnd instanceof Date ? w.auctionEnd.toISOString() : new Date(w.auctionEnd).toISOString())
-      : null
-
-    // KORREKT: isSold basierend auf nicht-stornierten Purchases
-    const activePurchases = w.purchases.filter(p => p.status !== 'cancelled')
-    const isSold = activePurchases.length > 0
-
-    // isActive Berechnung:
-    // 1. Wenn verkauft → nicht aktiv
-    // 2. Wenn Auktion abgelaufen → nicht aktiv
-    // 3. Sonst → aktiv
-    const isAuctionActive = !!w.isAuction || !!w.auctionEnd
-    const auctionEndDate = auctionEnd ? new Date(auctionEnd) : null
-    const isAuctionExpired = auctionEndDate && auctionEndDate <= now
-    const isActive = !isSold && !isAuctionExpired
-
-    result.push({
-      id: w.id,
-      articleNumber: w.articleNumber,
-      title: w.title || '',
-      brand: w.brand || '',
-      model: w.model || '',
-      price: w.price,
-      images,
-      createdAt,
-      isSold,
-      isAuction: isAuctionActive,
-      auctionEnd,
-      highestBid: null,
-      bidCount: 0,
-      finalPrice: w.price,
-      isActive,
+      orderBy: { createdAt: 'desc' },
     })
-  }
+
+    // Verarbeitung mit korrektem isSold und isActive Status
+    const result: MySellingItem[] = []
+
+    for (const w of watches) {
+      // Parse images
+      let images: string[] = []
+      if (w.images && typeof w.images === 'string') {
+        try {
+          const parsed = JSON.parse(w.images)
+          images = Array.isArray(parsed) && parsed.length > 0 ? [parsed[0]] : []
+        } catch {
+          images = []
+        }
+      }
+
+      // Date-Konvertierung
+      const createdAt =
+        w.createdAt instanceof Date
+          ? w.createdAt.toISOString()
+          : new Date(w.createdAt).toISOString()
+
+      const auctionEnd = w.auctionEnd
+        ? w.auctionEnd instanceof Date
+          ? w.auctionEnd.toISOString()
+          : new Date(w.auctionEnd).toISOString()
+        : null
+
+      // KORREKT: isSold basierend auf nicht-stornierten Purchases
+      const activePurchases = w.purchases.filter(p => p.status !== 'cancelled')
+      const isSold = activePurchases.length > 0
+
+      // isActive Berechnung:
+      // 1. Wenn verkauft → nicht aktiv
+      // 2. Wenn Auktion abgelaufen → nicht aktiv
+      // 3. Sonst → aktiv
+      const isAuctionActive = !!w.isAuction || !!w.auctionEnd
+      const auctionEndDate = auctionEnd ? new Date(auctionEnd) : null
+      const isAuctionExpired = auctionEndDate && auctionEndDate <= now
+      const isActive = !isSold && !isAuctionExpired
+
+      result.push({
+        id: w.id,
+        articleNumber: w.articleNumber,
+        title: w.title || '',
+        brand: w.brand || '',
+        model: w.model || '',
+        price: w.price,
+        images,
+        createdAt,
+        isSold,
+        isAuction: isAuctionActive,
+        auctionEnd,
+        highestBid: null,
+        bidCount: 0,
+        finalPrice: w.price,
+        isActive,
+      })
+    }
 
     return result
   } catch (error) {
@@ -130,4 +130,3 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
     return []
   }
 }
-

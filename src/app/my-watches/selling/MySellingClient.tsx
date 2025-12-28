@@ -11,9 +11,12 @@ import {
   Edit,
   Trash2,
   X,
+  AlertTriangle,
+  Loader2,
 } from 'lucide-react'
 import { getArticleUrl } from '@/lib/article-url'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { toast } from 'react-hot-toast'
 
 interface Item {
   id: string
@@ -54,6 +57,12 @@ export function MySellingClient({ initialItems, initialStats }: MySellingClientP
   const [filter, setFilter] = useState<FilterType>('all')
   const [searchQuery, setSearchQuery] = useState('')
   const [loadingDetails, setLoadingDetails] = useState(false)
+  
+  // Delete Modal State
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false)
+  const [itemToDelete, setItemToDelete] = useState<Item | null>(null)
+  const [deleteLoading, setDeleteLoading] = useState(false)
+  const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // OPTIMIERT: Lade Details (bids, purchases) non-blocking im Hintergrund
   // WICHTIG: Wenn initialItems leer ist, versuche sofort API-Route zu laden
@@ -117,25 +126,60 @@ export function MySellingClient({ initialItems, initialStats }: MySellingClientP
     return true
   }
 
-  const handleDelete = async (itemId: string) => {
-    if (!confirm(t.actions.deleteConfirm)) {
-      return
-    }
+  // Öffne Lösch-Modal
+  const openDeleteModal = (item: Item) => {
+    setItemToDelete(item)
+    setDeleteError(null)
+    setDeleteModalOpen(true)
+  }
+
+  // Schließe Lösch-Modal
+  const closeDeleteModal = () => {
+    setDeleteModalOpen(false)
+    setItemToDelete(null)
+    setDeleteError(null)
+  }
+
+  // Lösche Artikel
+  const handleDelete = async () => {
+    if (!itemToDelete) return
+
+    setDeleteLoading(true)
+    setDeleteError(null)
 
     try {
-      const res = await fetch(`/api/watches/${itemId}`, {
+      const res = await fetch(`/api/watches/${itemToDelete.id}`, {
         method: 'DELETE',
       })
 
+      const data = await res.json()
+
       if (res.ok) {
-        window.location.reload() // Reload to get fresh data
+        toast.success('Artikel erfolgreich gelöscht')
+        closeDeleteModal()
+        // Aktualisiere Liste ohne Reload
+        setItems(prev => prev.filter(item => item.id !== itemToDelete.id))
+        setStats(prev => ({
+          ...prev,
+          total: prev.total - 1,
+          active: itemToDelete.isActive ? prev.active - 1 : prev.active,
+          inactive: !itemToDelete.isActive ? prev.inactive - 1 : prev.inactive,
+        }))
       } else {
-        const data = await res.json()
-        alert(`${t.actions.error}: ${data.message}`)
+        // Spezielle Fehlermeldungen
+        if (data.code === 'HAS_BIDS') {
+          setDeleteError(`Dieser Artikel kann nicht gelöscht werden, da bereits ${data.bidCount} ${data.bidCount === 1 ? 'Gebot' : 'Gebote'} vorhanden ${data.bidCount === 1 ? 'ist' : 'sind'}.`)
+        } else if (data.code === 'ALREADY_SOLD') {
+          setDeleteError('Dieser Artikel kann nicht gelöscht werden, da er bereits verkauft wurde.')
+        } else {
+          setDeleteError(data.message || 'Fehler beim Löschen des Artikels')
+        }
       }
     } catch (error) {
       console.error('Error deleting item:', error)
-      alert(t.actions.deleteError)
+      setDeleteError('Ein unerwarteter Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
+    } finally {
+      setDeleteLoading(false)
     }
   }
 
@@ -377,7 +421,7 @@ export function MySellingClient({ initialItems, initialStats }: MySellingClientP
                           <Edit className="h-5 w-5" />
                         </Link>
                         <button
-                          onClick={() => handleDelete(item.id)}
+                          onClick={() => openDeleteModal(item)}
                           className="rounded-full bg-red-100 p-2 text-red-700 transition-colors hover:bg-red-200"
                           title={t.myWatches.delete}
                         >
@@ -390,6 +434,124 @@ export function MySellingClient({ initialItems, initialStats }: MySellingClientP
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Helvenda Lösch-Modal */}
+      {deleteModalOpen && itemToDelete && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          {/* Backdrop */}
+          <div 
+            className="absolute inset-0 bg-black/50 backdrop-blur-sm"
+            onClick={closeDeleteModal}
+          />
+          
+          {/* Modal */}
+          <div className="relative mx-4 w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* Header mit Warnung */}
+            <div className="bg-gradient-to-r from-red-500 to-red-600 px-6 py-4">
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-white/20 p-2">
+                  <Trash2 className="h-6 w-6 text-white" />
+                </div>
+                <h3 className="text-lg font-semibold text-white">
+                  Artikel löschen
+                </h3>
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              {/* Artikel-Vorschau */}
+              <div className="mb-4 flex items-center gap-4 rounded-xl bg-gray-50 p-4">
+                {itemToDelete.images.length > 0 ? (
+                  <img
+                    src={itemToDelete.images[0]}
+                    alt={itemToDelete.title}
+                    className="h-16 w-16 rounded-lg object-cover"
+                  />
+                ) : (
+                  <div className="flex h-16 w-16 items-center justify-center rounded-lg bg-gray-200">
+                    <Package className="h-8 w-8 text-gray-400" />
+                  </div>
+                )}
+                <div className="flex-1 overflow-hidden">
+                  <p className="truncate font-medium text-gray-900">{itemToDelete.title}</p>
+                  <p className="text-sm text-gray-500">
+                    {itemToDelete.brand} {itemToDelete.model}
+                  </p>
+                  {itemToDelete.articleNumber && (
+                    <p className="text-xs text-gray-400">#{itemToDelete.articleNumber}</p>
+                  )}
+                </div>
+              </div>
+
+              {/* Fehlermeldung */}
+              {deleteError ? (
+                <div className="mb-4 flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-500" />
+                  <div>
+                    <p className="font-medium text-red-800">Löschen nicht möglich</p>
+                    <p className="mt-1 text-sm text-red-600">{deleteError}</p>
+                  </div>
+                </div>
+              ) : (
+                <p className="mb-4 text-gray-600">
+                  Möchten Sie diesen Artikel wirklich unwiderruflich löschen? 
+                  Diese Aktion kann nicht rückgängig gemacht werden.
+                </p>
+              )}
+
+              {/* Info-Box für Auktionen */}
+              {itemToDelete.isAuction && !deleteError && (
+                <div className="mb-4 flex items-start gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
+                  <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-500" />
+                  <p className="text-sm text-amber-700">
+                    <strong>Hinweis:</strong> Sobald auf eine Auktion geboten wurde, 
+                    kann diese nicht mehr gelöscht werden.
+                  </p>
+                </div>
+              )}
+            </div>
+
+            {/* Footer mit Buttons */}
+            <div className="flex gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
+              <button
+                onClick={closeDeleteModal}
+                disabled={deleteLoading}
+                className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              >
+                Abbrechen
+              </button>
+              {!deleteError && (
+                <button
+                  onClick={handleDelete}
+                  disabled={deleteLoading}
+                  className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-red-600 px-4 py-3 font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
+                >
+                  {deleteLoading ? (
+                    <>
+                      <Loader2 className="h-5 w-5 animate-spin" />
+                      Löschen...
+                    </>
+                  ) : (
+                    <>
+                      <Trash2 className="h-5 w-5" />
+                      Ja, löschen
+                    </>
+                  )}
+                </button>
+              )}
+              {deleteError && (
+                <button
+                  onClick={closeDeleteModal}
+                  className="flex-1 rounded-xl bg-primary-600 px-4 py-3 font-medium text-white transition-colors hover:bg-primary-700"
+                >
+                  Verstanden
+                </button>
+              )}
+            </div>
+          </div>
         </div>
       )}
     </>

@@ -264,7 +264,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
-// DELETE: Angebot löschen (nur für Admins)
+// DELETE: Angebot löschen (Verkäufer oder Admin)
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -283,14 +283,7 @@ export async function DELETE(
       select: { isAdmin: true },
     })
 
-    if (!user?.isAdmin) {
-      return NextResponse.json(
-        { message: 'Nur Administratoren können Angebote löschen' },
-        { status: 403 }
-      )
-    }
-
-    // Hole Watch mit Seller-Informationen für Benachrichtigung
+    // Hole Watch mit Seller-Informationen und Geboten
     const watch = await prisma.watch.findUnique({
       where: { id },
       include: {
@@ -304,11 +297,52 @@ export async function DELETE(
             nickname: true,
           },
         },
+        bids: {
+          select: { id: true },
+        },
+        purchases: {
+          select: { id: true, status: true },
+        },
       },
     })
 
     if (!watch) {
       return NextResponse.json({ message: 'Angebot nicht gefunden' }, { status: 404 })
+    }
+
+    const isAdmin = user?.isAdmin === true
+    const isOwner = watch.sellerId === session.user.id
+
+    // Prüfe Berechtigung: Admin oder Eigentümer
+    if (!isAdmin && !isOwner) {
+      return NextResponse.json(
+        { message: 'Nur der Verkäufer oder Administratoren können dieses Angebot löschen' },
+        { status: 403 }
+      )
+    }
+
+    // RICARDO-REGEL: Verkäufer können nicht löschen wenn Gebote vorhanden
+    if (!isAdmin && watch.bids.length > 0) {
+      return NextResponse.json(
+        { 
+          message: 'Dieser Artikel kann nicht gelöscht werden, da bereits Gebote vorhanden sind.',
+          code: 'HAS_BIDS',
+          bidCount: watch.bids.length
+        },
+        { status: 400 }
+      )
+    }
+
+    // Verkäufer können nicht löschen wenn bereits verkauft
+    const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
+    if (!isAdmin && activePurchases.length > 0) {
+      return NextResponse.json(
+        { 
+          message: 'Dieser Artikel kann nicht gelöscht werden, da er bereits verkauft wurde.',
+          code: 'ALREADY_SOLD'
+        },
+        { status: 400 }
+      )
     }
 
     // Hole Admin-Informationen für Moderation History

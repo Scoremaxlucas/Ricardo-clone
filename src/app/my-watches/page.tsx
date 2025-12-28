@@ -1,28 +1,27 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
+import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
+import { DashboardTile } from '@/components/dashboard/DashboardTile'
+import { QuickOverviewChip, QuickOverviewChips } from '@/components/dashboard/QuickOverviewChips'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { useLanguage } from '@/contexts/LanguageContext'
 import {
   AlertCircle,
   CheckCircle,
-  Loader2,
-  Settings,
-  TrendingUp,
   FileText,
-  Wallet,
-  Tag,
-  Plus,
+  Loader2,
   Package,
+  Plus,
+  Tag,
+  TrendingUp,
+  Wallet,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
-import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
-import { useLanguage } from '@/contexts/LanguageContext'
-import { DashboardTile } from '@/components/dashboard/DashboardTile'
-import { QuickOverviewChips, QuickOverviewChip } from '@/components/dashboard/QuickOverviewChips'
 
 interface BuyerInfo {
   id: string
@@ -377,15 +376,12 @@ export default function MyWatchesPage() {
 
   // Quick overview chips data
   const hasQuickOverview =
-    stats.active > 0 ||
-    stats.drafts > 0 ||
-    stats.pendingInvoices > 0 ||
-    stats.offers > 0
+    stats.active > 0 || stats.drafts > 0 || stats.pendingInvoices > 0 || stats.offers > 0
 
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 lg:px-8 md:pb-8">
+      <div className="mx-auto max-w-6xl px-4 py-8 pb-24 sm:px-6 md:pb-8 lg:px-8">
         {/* Breadcrumb */}
         <div className="mb-4 text-sm text-gray-600">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
@@ -417,12 +413,8 @@ export default function MyWatchesPage() {
         {/* Quick Overview Chips */}
         {hasQuickOverview && (
           <QuickOverviewChips>
-            {stats.active > 0 && (
-              <QuickOverviewChip label="Aktive Angebote" value={stats.active} />
-            )}
-            {stats.drafts > 0 && (
-              <QuickOverviewChip label="Entwürfe" value={stats.drafts} />
-            )}
+            {stats.active > 0 && <QuickOverviewChip label="Aktive Angebote" value={stats.active} />}
+            {stats.drafts > 0 && <QuickOverviewChip label="Entwürfe" value={stats.drafts} />}
             {stats.pendingInvoices > 0 && (
               <QuickOverviewChip
                 label={`Offene Rechnungen: ${stats.pendingInvoices} · CHF ${stats.pendingInvoiceAmount.toFixed(2)}`}
@@ -431,7 +423,11 @@ export default function MyWatchesPage() {
               />
             )}
             {stats.offers > 0 && (
-              <QuickOverviewChip label="Neue Preisvorschläge" value={stats.offers} highlight={true} />
+              <QuickOverviewChip
+                label="Neue Preisvorschläge"
+                value={stats.offers}
+                highlight={true}
+              />
             )}
           </QuickOverviewChips>
         )}
@@ -492,7 +488,7 @@ export default function MyWatchesPage() {
           {hasDraft && draftId && (
             <Link
               href={`/sell?draft=${draftId}`}
-              className="inline-flex items-center justify-center rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 hover:border-gray-400 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:justify-start"
+              className="inline-flex items-center justify-center rounded-lg border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:justify-start"
             >
               <FileText className="mr-2 h-5 w-5" />
               Entwurf fortsetzen
@@ -619,7 +615,9 @@ export default function MyWatchesPage() {
                                 </div>
                               )}
                               <div className="mb-2">
-                                <h3 className="text-base font-bold text-gray-900">{booster.name}</h3>
+                                <h3 className="text-base font-bold text-gray-900">
+                                  {booster.name}
+                                </h3>
                               </div>
                               <p className="mb-2 flex-1 text-xs leading-relaxed text-gray-700">
                                 {booster.description}
