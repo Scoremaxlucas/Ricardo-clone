@@ -1,6 +1,5 @@
 'use client'
 
-import { getArticleUrl } from '@/lib/article-url'
 import { Clock, Copy, Edit, Eye, Gavel, Package, ShoppingBag, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -59,7 +58,9 @@ export function ListingCard({
   onDuplicate,
 }: ListingCardProps) {
   const mainImage = images[0] || null
-  const articleUrl = getArticleUrl({ id, articleNumber })
+  // Für interne Navigation: Verwende CUID (zuverlässiger als Artikelnummer)
+  // Die Produktseite kann beides auflösen
+  const articleUrl = `/products/${id}`
   const displayPrice = highestBid || price
   
   // For sold items, link to sale details page
