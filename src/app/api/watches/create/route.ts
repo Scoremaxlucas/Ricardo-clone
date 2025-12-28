@@ -270,11 +270,20 @@ export async function POST(request: NextRequest) {
       sellerWarrantyNote,
       title,
       video,
-      shippingMethods,
+      shippingMethods, // Deprecated - keep for backward compatibility
       booster,
       category: rawCategory,
       subcategory,
       paymentProtectionEnabled,
+      // New shipping fields
+      deliveryMode,
+      freeShippingThresholdChf,
+      pickupLocationZip,
+      pickupLocationCity,
+      pickupLocationAddress,
+      shippingService,
+      shippingWeightTier,
+      addonsAllowed,
     } = rawData
 
     // Normalisiere Kategorie
@@ -614,6 +623,22 @@ export async function POST(request: NextRequest) {
           return null
         }
       })(),
+      // New shipping fields (Ricardo-style)
+      deliveryMode: deliveryMode || 'shipping_and_pickup',
+      freeShippingThresholdChf: freeShippingThresholdChf
+        ? parseFloat(String(freeShippingThresholdChf))
+        : null,
+      pickupLocationZip: pickupLocationZip || null,
+      pickupLocationCity: pickupLocationCity || null,
+      pickupLocationAddress: pickupLocationAddress || null,
+      shippingProfile:
+        shippingService && shippingWeightTier
+          ? JSON.stringify({
+              base_service: shippingService,
+              weight_tier: parseInt(String(shippingWeightTier)),
+              addons_allowed: addonsAllowed || { sperrgut: false, pickhome: false },
+            })
+          : null,
       boosters: (() => {
         try {
           // Booster kann ein einzelner Code sein (z.B. 'boost') oder ein Array

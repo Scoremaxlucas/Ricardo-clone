@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
-import { getShippingCostForMethod } from '@/lib/shipping'
 import { calculateOrderFees } from '@/lib/order-fees'
+import { prisma } from '@/lib/prisma'
+import { calculateShippingCost, ShippingSelection } from '@/lib/shipping-calculator'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * POST /api/orders/create
@@ -17,14 +17,25 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    const { watchId, shippingMethod, purchaseId } = await request.json()
+    const {
+      watchId,
+      shippingMethod, // Deprecated - use shippingSelection
+      purchaseId,
+      // New shipping fields
+      selectedDeliveryMode, // 'shipping' | 'pickup'
+      selectedShippingCode, // e.g. 'post_economy_2kg'
+      selectedAddons, // ['sperrgut', 'pickhome']
+    } = await request.json()
 
     if (!watchId) {
       return NextResponse.json({ message: 'watchId ist erforderlich' }, { status: 400 })
     }
 
-    if (!shippingMethod) {
-      return NextResponse.json({ message: 'shippingMethod ist erforderlich' }, { status: 400 })
+    if (!selectedDeliveryMode) {
+      return NextResponse.json(
+        { message: 'selectedDeliveryMode ist erforderlich' },
+        { status: 400 }
+      )
     }
 
     const buyerId = session.user.id
@@ -89,10 +100,78 @@ export async function POST(request: NextRequest) {
 
     // Berechne Preise
     const itemPrice = watch.buyNowPrice || watch.price
-    const shippingCost = getShippingCostForMethod(shippingMethod as any)
+    let shippingCostChfFinal = 0
+    let shippingCostBreakdown: any = {
+      base: 0,
+      sperrgut: 0,
+      pickhome: 0,
+      freeShippingApplied: false,
+    }
+    let shippingCode = selectedShippingCode || null
+
+    // Berechne Versandkosten (nur wenn Versand gewählt)
+    if (selectedDeliveryMode === 'shipping' && selectedShippingCode) {
+      // Parse shipping code (z.B. 'post_economy_2kg')
+      const match = selectedShippingCode.match(/post_(economy|priority)_(\d+)kg/)
+      if (!match) {
+        return NextResponse.json({ message: 'Ungültiger shippingCode' }, { status: 400 })
+      }
+
+      const [, service, weightTierStr] = match
+      const weightTier = parseInt(weightTierStr) as 2 | 10 | 30
+
+      // Parse shipping profile für allowed addons
+      const shippingProfile = watch.shippingProfile
+        ? (JSON.parse(watch.shippingProfile) as {
+            addons_allowed?: { sperrgut?: boolean; pickhome?: boolean }
+          })
+        : null
+
+      const allowedAddons = shippingProfile?.addons_allowed || {
+        sperrgut: false,
+        pickhome: false,
+      }
+
+      // Build selection
+      const selection: ShippingSelection = {
+        service: service as 'economy' | 'priority',
+        weightTier,
+        addons: {
+          sperrgut: selectedAddons?.includes('sperrgut') && allowedAddons.sperrgut,
+          pickhome: selectedAddons?.includes('pickhome') && allowedAddons.pickhome,
+        },
+      }
+
+      // Calculate shipping cost
+      const shippingResult = await calculateShippingCost(
+        selection,
+        itemPrice,
+        watch.freeShippingThresholdChf,
+        allowedAddons
+      )
+
+      shippingCostChfFinal = shippingResult.total
+      shippingCostBreakdown = shippingResult.breakdown
+      shippingCode = shippingResult.shippingCode
+    } else if (selectedDeliveryMode === 'pickup') {
+      // Abholung = kostenlos
+      shippingCostChfFinal = 0
+      shippingCostBreakdown = {
+        base: 0,
+        sperrgut: 0,
+        pickhome: 0,
+        freeShippingApplied: false,
+      }
+    } else {
+      // Fallback für alte API-Calls
+      const legacyShippingCost = shippingMethod
+        ? (await import('@/lib/shipping')).getShippingCostForMethod(shippingMethod as any)
+        : 0
+      shippingCostChfFinal = legacyShippingCost
+    }
 
     // Berechne Gebühren
-    const fees = await calculateOrderFees(itemPrice, shippingCost, true)
+    const fees = await calculateOrderFees(itemPrice, shippingCostChfFinal, true)
 
     // Generiere Order-Nummer
     const year = new Date().getFullYear()
@@ -123,7 +202,13 @@ export async function POST(request: NextRequest) {
         buyerId,
         sellerId: watch.sellerId,
         itemPrice: fees.itemPrice,
-        shippingCost: fees.shippingCost,
+        shippingCost: shippingCostChfFinal, // Deprecated - use shippingCostChfFinal
+        shippingCostChfFinal,
+        shippingCostBreakdown: JSON.stringify(shippingCostBreakdown),
+        selectedDeliveryMode,
+        selectedShippingCode: shippingCode,
+        selectedAddons: selectedAddons ? JSON.stringify(selectedAddons) : null,
+        shippingRateSetId: 'default_ch_post',
         platformFee: fees.platformFee,
         protectionFee: fees.protectionFee,
         totalAmount: fees.totalAmount,

@@ -1,6 +1,7 @@
 'use client'
 
 import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
+import { ShippingSelector } from '@/components/product/ShippingSelector'
 import { ShippingMethodSelector } from '@/components/shipping/ShippingMethodSelector'
 import { VerificationModal } from '@/components/verification/VerificationModal'
 import { ShippingMethod, getShippingCostForMethod } from '@/lib/shipping'
@@ -24,8 +25,19 @@ interface PriceOfferComponentProps {
   price: number
   sellerId: string
   buyNowPrice?: number | null
-  shippingMethod?: string | null
+  shippingMethod?: string | null // Deprecated - use watch object
   paymentProtectionEnabled?: boolean
+  // New shipping fields (Ricardo-style)
+  watch?: {
+    id: string
+    price: number
+    buyNowPrice?: number | null
+    deliveryMode?: 'shipping_only' | 'pickup_only' | 'shipping_and_pickup' | null
+    freeShippingThresholdChf?: number | null
+    shippingProfile?: string | null
+    pickupLocationZip?: string | null
+    pickupLocationCity?: string | null
+  }
 }
 
 export function PriceOfferComponent({
@@ -35,6 +47,7 @@ export function PriceOfferComponent({
   buyNowPrice,
   shippingMethod,
   paymentProtectionEnabled = false,
+  watch,
 }: PriceOfferComponentProps) {
   const { data: session } = useSession()
   const router = useRouter()
@@ -49,6 +62,13 @@ export function PriceOfferComponent({
   const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
   const [availableShippingMethods, setAvailableShippingMethods] = useState<ShippingMethod[]>([])
   const [showPriceOfferForm, setShowPriceOfferForm] = useState(false)
+
+  // New shipping selection (Ricardo-style)
+  const [shippingSelection, setShippingSelection] = useState<{
+    deliveryMode: 'shipping' | 'pickup'
+    shippingCode?: string
+    addons?: string[]
+  } | null>(null)
 
   useEffect(() => {
     if ((session?.user as { id?: string })?.id === sellerId) {
@@ -119,28 +139,61 @@ export function PriceOfferComponent({
       return
     }
 
-    // Prüfe ob Liefermethode ausgewählt wurde (wenn Methoden verfügbar sind)
-    if (availableShippingMethods.length > 0 && !selectedShippingMethod) {
-      toast.error('Bitte wählen Sie eine Liefermethode aus.', {
-        position: 'top-right',
-        duration: 4000,
-      })
-      return
+    // Prüfe ob Liefermethode ausgewählt wurde
+    // Neue Logik: Wenn watch-Objekt vorhanden, verwende neue Shipping-Logik
+    if (watch) {
+      if (!shippingSelection) {
+        toast.error('Bitte wählen Sie eine Liefermethode aus.', {
+          position: 'top-right',
+          duration: 4000,
+        })
+        return
+      }
+
+      if (shippingSelection.deliveryMode === 'shipping' && !shippingSelection.shippingCode) {
+        toast.error('Bitte wählen Sie eine Versandoption aus.', {
+          position: 'top-right',
+          duration: 4000,
+        })
+        return
+      }
+    } else {
+      // Fallback: Alte Logik
+      if (availableShippingMethods.length > 0 && !selectedShippingMethod) {
+        toast.error('Bitte wählen Sie eine Liefermethode aus.', {
+          position: 'top-right',
+          duration: 4000,
+        })
+        return
+      }
     }
 
     setBuyNowLoading(true)
 
     try {
-      const response = await fetch('/api/purchases/create', {
+      // Verwende neue Order API wenn watch vorhanden, sonst alte Purchase API
+      const endpoint =
+        watch && paymentProtectionEnabled ? '/api/orders/create' : '/api/purchases/create'
+      const payload =
+        watch && paymentProtectionEnabled
+          ? {
+              watchId,
+              selectedDeliveryMode: shippingSelection!.deliveryMode,
+              selectedShippingCode: shippingSelection!.shippingCode,
+              selectedAddons: shippingSelection!.addons || [],
+            }
+          : {
+              watchId,
+              price,
+              shippingMethod: selectedShippingMethod || null,
+            }
+
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          watchId,
-          price,
-          shippingMethod: selectedShippingMethod || null, // Nur die gewählte Methode, nicht das Array
-        }),
+        body: JSON.stringify(payload),
       })
 
       const data = await response.json()
@@ -154,7 +207,12 @@ export function PriceOfferComponent({
       // Aktualisiere Benachrichtigungen sofort
       window.dispatchEvent(new CustomEvent('notifications-update'))
 
-      router.push('/my-watches/buying/purchased')
+      // Weiterleitung: Order → Order-Detail, Purchase → Purchased-Liste
+      if (watch && paymentProtectionEnabled && data.order?.id) {
+        router.push(`/orders/${data.order.id}`)
+      } else {
+        router.push('/my-watches/buying/purchased')
+      }
     } catch (error: any) {
       console.error('Error buying now:', error)
       toast.error(error.message || 'Fehler beim Kauf')
@@ -347,42 +405,62 @@ export function PriceOfferComponent({
         )}
 
         {/* Liefermethoden-Auswahl */}
-        {availableShippingMethods.length > 0 && (
+        {watch ? (
+          // Neue Ricardo-style Shipping-Logik
           <div className="mb-4">
-            <ShippingMethodSelector
-              availableMethods={availableShippingMethods}
-              selectedMethod={selectedShippingMethod}
-              onMethodChange={setSelectedShippingMethod}
-              showCosts={true}
+            <ShippingSelector
+              watch={{
+                id: watch.id,
+                price: watch.price,
+                buyNowPrice: watch.buyNowPrice,
+                deliveryMode: watch.deliveryMode || null,
+                freeShippingThresholdChf: watch.freeShippingThresholdChf || null,
+                shippingProfile: watch.shippingProfile || null,
+                pickupLocationZip: watch.pickupLocationZip || null,
+                pickupLocationCity: watch.pickupLocationCity || null,
+              }}
+              onSelectionChange={setShippingSelection}
             />
-            {selectedShippingMethod && (
-              <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                <div className="flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Artikelpreis:</span>
-                  <span className="font-semibold text-gray-900">
-                    CHF {new Intl.NumberFormat('de-CH').format(price)}
-                  </span>
-                </div>
-                <div className="mt-1 flex items-center justify-between text-sm">
-                  <span className="text-gray-600">Versandkosten:</span>
-                  <span className="font-semibold text-gray-900">
-                    {getShippingCostForMethod(selectedShippingMethod) === 0
-                      ? 'Kostenlos'
-                      : `CHF ${getShippingCostForMethod(selectedShippingMethod).toFixed(2)}`}
-                  </span>
-                </div>
-                <div className="mt-2 flex items-center justify-between border-t border-gray-200 pt-2 text-base font-bold">
-                  <span className="text-gray-900">Gesamtpreis:</span>
-                  <span className="text-primary-600">
-                    CHF{' '}
-                    {new Intl.NumberFormat('de-CH').format(
-                      price + getShippingCostForMethod(selectedShippingMethod)
-                    )}
-                  </span>
-                </div>
-              </div>
-            )}
           </div>
+        ) : (
+          // Fallback: Alte Shipping-Logik
+          availableShippingMethods.length > 0 && (
+            <div className="mb-4">
+              <ShippingMethodSelector
+                availableMethods={availableShippingMethods}
+                selectedMethod={selectedShippingMethod}
+                onMethodChange={setSelectedShippingMethod}
+                showCosts={true}
+              />
+              {selectedShippingMethod && (
+                <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Artikelpreis:</span>
+                    <span className="font-semibold text-gray-900">
+                      CHF {new Intl.NumberFormat('de-CH').format(price)}
+                    </span>
+                  </div>
+                  <div className="mt-1 flex items-center justify-between text-sm">
+                    <span className="text-gray-600">Versandkosten:</span>
+                    <span className="font-semibold text-gray-900">
+                      {getShippingCostForMethod(selectedShippingMethod) === 0
+                        ? 'Kostenlos'
+                        : `CHF ${getShippingCostForMethod(selectedShippingMethod).toFixed(2)}`}
+                    </span>
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t border-gray-200 pt-2 text-base font-bold">
+                    <span className="text-gray-900">Gesamtpreis:</span>
+                    <span className="text-primary-600">
+                      CHF{' '}
+                      {new Intl.NumberFormat('de-CH').format(
+                        price + getShippingCostForMethod(selectedShippingMethod)
+                      )}
+                    </span>
+                  </div>
+                </div>
+              )}
+            </div>
+          )
         )}
 
         <button

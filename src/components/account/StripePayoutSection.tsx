@@ -2,10 +2,9 @@
 
 import {
   AlertCircle,
-  ArrowRight,
   Banknote,
   CheckCircle2,
-  ExternalLink,
+  Clock,
   Loader2,
   RefreshCw,
   Shield,
@@ -13,16 +12,22 @@ import {
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
-import { StripeOnboardingGuide } from './StripeOnboardingGuide'
+import { EmbeddedOnboardingModal } from './EmbeddedOnboardingModal'
 
-interface PayoutStatus {
-  hasAccount: boolean
-  accountId?: string
-  status: 'NOT_STARTED' | 'INCOMPLETE' | 'COMPLETE'
+type PayoutStatus = 'not_started' | 'pending' | 'enabled'
+
+interface ConnectStatus {
+  status: PayoutStatus
   payoutsEnabled: boolean
-  chargesEnabled?: boolean
-  detailsSubmitted?: boolean
-  onboardingComplete: boolean
+  chargesEnabled: boolean
+  detailsSubmitted: boolean
+  requirements?: {
+    currently_due: string[]
+    eventually_due: string[]
+    past_due: string[]
+    disabled_reason: string | null
+  }
+  accountId?: string
 }
 
 interface PendingPayouts {
@@ -35,75 +40,54 @@ export function StripePayoutSection() {
   const router = useRouter()
   const searchParams = useSearchParams()
 
-  const [status, setStatus] = useState<PayoutStatus | null>(null)
+  const [status, setStatus] = useState<ConnectStatus | null>(null)
   const [pendingPayouts, setPendingPayouts] = useState<PendingPayouts | null>(null)
   const [loading, setLoading] = useState(true)
-  const [processingOnboarding, setProcessingOnboarding] = useState(false)
   const [processingPayouts, setProcessingPayouts] = useState(false)
-  const [showOnboardingGuide, setShowOnboardingGuide] = useState(false)
+  const [showOnboardingModal, setShowOnboardingModal] = useState(false)
 
-  // Check for return from Stripe onboarding
+  // Check for return from Stripe onboarding (legacy redirect flow)
   useEffect(() => {
     const payoutReturn = searchParams.get('payout_return')
     const payoutRefresh = searchParams.get('payout_refresh')
     const setupPayout = searchParams.get('setup_payout')
 
     if (payoutReturn === '1' || payoutRefresh === '1') {
-      // Returned from onboarding - refresh status
       loadStatus().then(() => {
-        // Clear the URL parameter
         const url = new URL(window.location.href)
         url.searchParams.delete('payout_return')
         url.searchParams.delete('payout_refresh')
         router.replace(url.pathname + url.search)
 
-        // Hide onboarding guide after return
-        setShowOnboardingGuide(false)
-
         if (payoutReturn === '1') {
-          // Check if onboarding was successful
-          if (status?.status === 'COMPLETE') {
-            toast.success('🎉 Auszahlung erfolgreich eingerichtet!')
-          } else {
-            toast.success('Willkommen zurück! Prüfen Sie Ihren Auszahlungsstatus.')
-          }
-        } else if (payoutRefresh === '1') {
-          toast('Die Einrichtung wurde unterbrochen. Sie können jederzeit fortfahren.', {
-            icon: 'ℹ️',
-          })
+          toast.success('Willkommen zurück! Status wird aktualisiert.')
         }
       })
     }
 
     if (setupPayout === '1') {
-      // Show onboarding guide and scroll to section
-      setShowOnboardingGuide(true)
-      const section = document.getElementById('stripe-payout-section')
-      if (section) {
-        section.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      }
-      // Clear the URL parameter
+      setShowOnboardingModal(true)
       const url = new URL(window.location.href)
       url.searchParams.delete('setup_payout')
       router.replace(url.pathname + url.search)
     }
-  }, [searchParams, router, status?.status])
+  }, [searchParams, router])
 
   const loadStatus = useCallback(async () => {
     try {
       setLoading(true)
 
-      // Load payout status
-      const statusRes = await fetch('/api/stripe/connect/ensure-account')
+      // Load payout status from new endpoint
+      const statusRes = await fetch('/api/stripe/connect/status')
       if (statusRes.ok) {
-        const data = await statusRes.json()
+        const data: ConnectStatus = await statusRes.json()
         setStatus(data)
       } else {
         setStatus({
-          hasAccount: false,
-          status: 'NOT_STARTED',
+          status: 'not_started',
           payoutsEnabled: false,
-          onboardingComplete: false,
+          chargesEnabled: false,
+          detailsSubmitted: false,
         })
       }
 
@@ -125,43 +109,24 @@ export function StripePayoutSection() {
     loadStatus()
   }, [loadStatus])
 
-  const handleStartOnboarding = async () => {
-    setProcessingOnboarding(true)
+  const handleOpenOnboarding = () => {
+    setShowOnboardingModal(true)
+  }
 
-    try {
-      // Get onboarding link
-      const res = await fetch('/api/stripe/connect/account-link', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ return_to: '/my-watches/account' }),
-      })
+  const handleOnboardingComplete = async () => {
+    setShowOnboardingModal(false)
+    toast.success('🎉 Auszahlung erfolgreich eingerichtet!')
+    await loadStatus()
+  }
 
-      const data = await res.json()
+  const handleOnboardingExit = async () => {
+    setShowOnboardingModal(false)
+    toast('Du kannst die Einrichtung jederzeit fortsetzen.', { icon: 'ℹ️' })
+    await loadStatus()
+  }
 
-      if (res.ok && data.url) {
-        // Redirect to onboarding
-        window.location.href = data.url
-      } else {
-        // Zeige detaillierte Fehlermeldung
-        const errorMessage =
-          data.error || data.message || 'Fehler beim Starten der Einrichtung'
-        console.error('[StripePayoutSection] API Error:', {
-          status: res.status,
-          statusText: res.statusText,
-          data,
-        })
-        toast.error(
-          `${errorMessage}${data.errorCode ? ` (Code: ${data.errorCode})` : ''}`
-        )
-      }
-    } catch (error: any) {
-      console.error('[StripePayoutSection] Error starting onboarding:', error)
-      toast.error(
-        `Fehler beim Starten der Einrichtung: ${error.message || 'Unbekannter Fehler'}`
-      )
-    } finally {
-      setProcessingOnboarding(false)
-    }
+  const handleOnboardingClose = () => {
+    setShowOnboardingModal(false)
   }
 
   const handleProcessPendingPayouts = async () => {
@@ -176,12 +141,11 @@ export function StripePayoutSection() {
 
       if (res.ok) {
         toast.success(data.message || 'Auszahlungen verarbeitet')
-        // Reload to refresh pending payouts count
         await loadStatus()
       } else {
         if (data.needsOnboarding) {
           toast.error('Bitte richten Sie zuerst Ihre Auszahlungsdaten ein.')
-          handleStartOnboarding()
+          handleOpenOnboarding()
         } else {
           toast.error(data.message || 'Fehler bei der Verarbeitung')
         }
@@ -204,217 +168,240 @@ export function StripePayoutSection() {
     )
   }
 
-  const isComplete = status?.status === 'COMPLETE' && status?.onboardingComplete
+  const isEnabled = status?.status === 'enabled'
+  const isPending = status?.status === 'pending'
+  const isNotStarted = status?.status === 'not_started'
   const hasPendingPayouts = (pendingPayouts?.count || 0) > 0
+  const hasRequirements =
+    (status?.requirements?.currently_due?.length || 0) > 0 ||
+    (status?.requirements?.past_due?.length || 0) > 0
+
+  // Get status display info
+  const getStatusInfo = () => {
+    if (isEnabled) {
+      return {
+        icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
+        label: 'Aktiv',
+        labelClass: 'bg-green-100 text-green-700',
+        title: 'Auszahlungen aktiv',
+        description:
+          'Ihre Auszahlungsdaten sind eingerichtet. Erlöse werden nach Freigabe automatisch überwiesen.',
+      }
+    }
+    if (isPending) {
+      return {
+        icon: <Clock className="h-5 w-5 text-amber-500" />,
+        label: 'In Prüfung',
+        labelClass: 'bg-amber-100 text-amber-700',
+        title: 'Einrichtung unvollständig',
+        description: hasRequirements
+          ? 'Bitte vervollständigen Sie Ihre Angaben, um Auszahlungen zu erhalten.'
+          : 'Ihre Angaben werden geprüft. Dies kann einige Minuten dauern.',
+      }
+    }
+    return {
+      icon: <Banknote className="h-5 w-5 text-gray-400" />,
+      label: 'Nicht eingerichtet',
+      labelClass: 'bg-gray-100 text-gray-600',
+      title: 'Auszahlung nicht eingerichtet',
+      description:
+        'Richten Sie Auszahlungen ein, um Verkaufserlöse aus Zahlungsschutz-Verkäufen zu erhalten.',
+    }
+  }
+
+  const statusInfo = getStatusInfo()
+
+  // Get CTA button info
+  const getCtaInfo = () => {
+    if (isEnabled) {
+      return {
+        text: 'Auszahlungsdaten aktualisieren',
+        variant: 'secondary' as const,
+      }
+    }
+    if (isPending && hasRequirements) {
+      return {
+        text: 'Angaben vervollständigen',
+        variant: 'primary' as const,
+      }
+    }
+    if (isPending) {
+      return {
+        text: 'Status aktualisieren',
+        variant: 'secondary' as const,
+      }
+    }
+    return {
+      text: 'Auszahlung einrichten',
+      variant: 'primary' as const,
+    }
+  }
+
+  const ctaInfo = getCtaInfo()
 
   return (
-    <div id="stripe-payout-section" className="border-t border-gray-200 pt-6">
-      <div className="mb-4 flex items-start justify-between">
-        <div>
-          <h3 className="mb-1 flex items-center text-lg font-semibold text-gray-900">
-            <Shield className="mr-2 h-5 w-5 text-primary-600" />
-            Helvenda Zahlungsschutz - Auszahlungen
-          </h3>
-          <p className="text-xs text-gray-500">
-            Richten Sie Ihre Auszahlungsdaten ein, um Verkaufserlöse aus geschützten Verkäufen zu
-            erhalten.
-          </p>
-        </div>
-      </div>
-
-      {/* Status Card */}
-      <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            {isComplete ? (
-              // Complete Status
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="h-5 w-5 text-green-600" />
-                <div>
-                  <p className="font-medium text-gray-900">Auszahlung aktiv</p>
-                  <p className="text-sm text-gray-600">
-                    Ihre Auszahlungsdaten sind eingerichtet. Verkaufserlöse werden automatisch
-                    überwiesen.
-                  </p>
-                </div>
-              </div>
-            ) : status?.status === 'INCOMPLETE' ? (
-              // Incomplete Status
-              <div className="flex items-center gap-2">
-                <AlertCircle className="h-5 w-5 text-amber-500" />
-                <div>
-                  <p className="font-medium text-gray-900">Einrichtung unvollständig</p>
-                  <p className="text-sm text-gray-600">
-                    Bitte schliessen Sie die Einrichtung ab, um Auszahlungen zu erhalten.
-                  </p>
-                </div>
-              </div>
-            ) : (
-              // Not Started Status
-              <div className="flex items-center gap-2">
-                <Banknote className="h-5 w-5 text-gray-400" />
-                <div>
-                  <p className="font-medium text-gray-900">Auszahlung nicht eingerichtet</p>
-                  <p className="text-sm text-gray-600">
-                    Richten Sie Ihre Auszahlungsdaten ein, um Erlöse aus geschützten Verkäufen zu
-                    erhalten.
-                  </p>
-                </div>
-              </div>
-            )}
+    <>
+      <div id="stripe-payout-section" className="border-t border-gray-200 pt-6">
+        {/* Header */}
+        <div className="mb-4 flex items-start justify-between">
+          <div>
+            <h3 className="mb-1 flex items-center text-lg font-semibold text-gray-900">
+              <Shield className="mr-2 h-5 w-5 text-primary-600" />
+              Auszahlungen (Zahlungsschutz)
+            </h3>
+            <p className="text-xs text-gray-500">Verkaufserlöse aus Zahlungsschutz-Transaktionen</p>
           </div>
-
-          {/* Refresh Button */}
           <button
             type="button"
             onClick={() => loadStatus()}
             disabled={loading}
-            className="ml-2 rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             title="Status aktualisieren"
           >
             <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
-      </div>
 
-      {/* Pending Payouts Alert */}
-      {hasPendingPayouts && (
-        <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+        {/* Status Card */}
+        <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4">
           <div className="flex items-start gap-3">
-            <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+            <div className="mt-0.5">{statusInfo.icon}</div>
             <div className="flex-1">
-              <p className="font-medium text-amber-800">
-                {pendingPayouts!.count} Auszahlung{pendingPayouts!.count > 1 ? 'en' : ''} ausstehend
-              </p>
-              <p className="mt-1 text-sm text-amber-700">
-                Gesamtbetrag: CHF {pendingPayouts!.totalAmount.toFixed(2)}
-              </p>
-              <p className="mt-1 text-sm text-amber-600">
-                {isComplete
-                  ? 'Klicken Sie unten, um die ausstehenden Auszahlungen zu verarbeiten.'
-                  : 'Bitte richten Sie Ihre Auszahlungsdaten ein, um diese Beträge zu erhalten.'}
-              </p>
+              <div className="mb-1 flex items-center gap-2">
+                <span className="font-medium text-gray-900">{statusInfo.title}</span>
+                <span
+                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo.labelClass}`}
+                >
+                  {statusInfo.label}
+                </span>
+              </div>
+              <p className="text-sm text-gray-600">{statusInfo.description}</p>
             </div>
           </div>
+        </div>
 
-          {/* Process pending payouts button (only if onboarding is complete) */}
-          {isComplete && (
-            <div className="mt-3">
-              <button
-                type="button"
-                onClick={handleProcessPendingPayouts}
-                disabled={processingPayouts}
-                className="inline-flex items-center gap-2 rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                {processingPayouts ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Wird verarbeitet...
-                  </>
-                ) : (
-                  <>
-                    <Banknote className="h-4 w-4" />
-                    Auszahlungen verarbeiten
-                  </>
+        {/* Pending Payouts Alert */}
+        {hasPendingPayouts && (
+          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+            <div className="flex items-start gap-3">
+              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+              <div className="flex-1">
+                <p className="font-medium text-amber-800">
+                  {pendingPayouts!.count} Auszahlung{pendingPayouts!.count > 1 ? 'en' : ''}{' '}
+                  ausstehend
+                </p>
+                <p className="mt-1 text-sm text-amber-700">
+                  Gesamtbetrag: CHF {pendingPayouts!.totalAmount.toFixed(2)}
+                </p>
+                {!isEnabled && (
+                  <p className="mt-1 text-sm text-amber-600">
+                    Bitte richten Sie Ihre Auszahlungsdaten ein, um diese Beträge zu erhalten.
+                  </p>
                 )}
-              </button>
+              </div>
             </div>
-          )}
-        </div>
-      )}
 
-      {/* Onboarding Guide - zeigt was benötigt wird */}
-      {showOnboardingGuide && !isComplete && (
-        <div className="mb-4">
-          <StripeOnboardingGuide
-            onContinue={handleStartOnboarding}
-            isLoading={processingOnboarding}
-          />
-        </div>
-      )}
+            {isEnabled && (
+              <div className="mt-3">
+                <button
+                  type="button"
+                  onClick={handleProcessPendingPayouts}
+                  disabled={processingPayouts}
+                  className="inline-flex items-center gap-2 rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                >
+                  {processingPayouts ? (
+                    <>
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                      Wird verarbeitet...
+                    </>
+                  ) : (
+                    <>
+                      <Banknote className="h-4 w-4" />
+                      Auszahlungen verarbeiten
+                    </>
+                  )}
+                </button>
+              </div>
+            )}
+          </div>
+        )}
 
-      {/* CTA Buttons */}
-      <div className="space-y-3">
-        {!isComplete && !showOnboardingGuide && (
+        {/* CTA Button */}
+        <div className="space-y-3">
           <button
             type="button"
             onClick={() => {
-              // Bei NOT_STARTED: Zeige Guide zuerst
-              // Bei INCOMPLETE: Direkt fortsetzen
-              if (status?.status === 'NOT_STARTED') {
-                setShowOnboardingGuide(true)
+              if (isPending && !hasRequirements) {
+                loadStatus()
               } else {
-                handleStartOnboarding()
+                handleOpenOnboarding()
               }
             }}
-            disabled={processingOnboarding}
-            className="inline-flex w-full items-center justify-center gap-2 rounded-md bg-primary-600 px-4 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
+            className={`inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto ${
+              ctaInfo.variant === 'primary'
+                ? 'bg-primary-600 text-white hover:bg-primary-700'
+                : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+            }`}
           >
-            {processingOnboarding ? (
-              <>
-                <Loader2 className="h-4 w-4 animate-spin" />
-                Wird gestartet...
-              </>
-            ) : status?.status === 'INCOMPLETE' ? (
-              <>
-                <ArrowRight className="h-4 w-4" />
-                Einrichtung fortsetzen
-              </>
-            ) : (
-              <>
-                <ExternalLink className="h-4 w-4" />
-                Auszahlung einrichten
-              </>
-            )}
+            <Shield className="h-4 w-4" />
+            {ctaInfo.text}
           </button>
-        )}
 
-        {/* Progress Indicator für INCOMPLETE Status */}
-        {status?.status === 'INCOMPLETE' && !showOnboardingGuide && (
-          <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
-            <div className="mb-2 flex items-center justify-between text-sm">
-              <span className="text-amber-700">Einrichtungs-Fortschritt</span>
-              <span className="font-medium text-amber-800">Fast fertig!</span>
+          {/* Requirements Progress (for pending status) */}
+          {isPending && hasRequirements && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+              <div className="mb-2 flex items-center justify-between text-sm">
+                <span className="text-amber-700">Einrichtungs-Fortschritt</span>
+                <span className="font-medium text-amber-800">
+                  {status?.detailsSubmitted ? 'Fast fertig!' : 'Angaben erforderlich'}
+                </span>
+              </div>
+              <div className="h-2 w-full overflow-hidden rounded-full bg-amber-200">
+                <div
+                  className="h-full bg-amber-500 transition-all duration-300"
+                  style={{
+                    width: status?.detailsSubmitted
+                      ? status?.chargesEnabled
+                        ? '90%'
+                        : '70%'
+                      : '30%',
+                  }}
+                />
+              </div>
+              {status?.requirements?.currently_due &&
+                status.requirements.currently_due.length > 0 && (
+                  <p className="mt-2 text-xs text-amber-600">
+                    {status.requirements.currently_due.length} Angabe(n) noch erforderlich
+                  </p>
+                )}
             </div>
-            <div className="h-2 w-full overflow-hidden rounded-full bg-amber-200">
-              <div
-                className="h-full bg-amber-500 transition-all duration-300"
-                style={{
-                  width: status.detailsSubmitted
-                    ? status.chargesEnabled
-                      ? '90%'
-                      : '70%'
-                    : '40%',
-                }}
-              />
-            </div>
-            <p className="mt-2 text-xs text-amber-600">
-              {status.detailsSubmitted
-                ? 'Daten übermittelt - Verifizierung läuft...'
-                : 'Bitte vervollständigen Sie Ihre Angaben.'}
-            </p>
-          </div>
-        )}
+          )}
 
-        {/* Info Text */}
-        {!showOnboardingGuide && (
+          {/* Info Box */}
           <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
             <div className="flex items-start gap-2">
               <Shield className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600" />
               <div>
-                <p className="text-xs text-gray-600">
-                  <strong>Was ist der Helvenda Zahlungsschutz?</strong>
+                <p className="text-xs font-medium text-gray-700">
+                  Was ist der Helvenda Zahlungsschutz?
                 </p>
                 <p className="mt-1 text-xs text-gray-500">
-                  Beim Helvenda Zahlungsschutz werden Zahlungen sicher gehalten, bis der Käufer den
-                  Erhalt bestätigt oder ein Zeitfenster abgelaufen ist. Dann wird das Geld automatisch
-                  an Sie überwiesen.
+                  Beim Zahlungsschutz werden Zahlungen sicher gehalten, bis der Käufer den Erhalt
+                  bestätigt. Dann wird das Geld automatisch an Sie überwiesen.
                 </p>
               </div>
             </div>
           </div>
-        )}
+        </div>
       </div>
-    </div>
+
+      {/* Embedded Onboarding Modal */}
+      <EmbeddedOnboardingModal
+        isOpen={showOnboardingModal}
+        onClose={handleOnboardingClose}
+        onComplete={handleOnboardingComplete}
+        onExit={handleOnboardingExit}
+      />
+    </>
   )
 }

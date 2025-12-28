@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { validateSwissPostalCode } from '@/lib/profilePolicy'
 import { stripe } from '@/lib/stripe-server'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -116,10 +117,19 @@ export async function POST(request: NextRequest) {
     if (user.city) {
       addressData.city = user.city
     }
-    if (user.postalCode) {
-      addressData.postal_code = user.postalCode
+    // Validiere Postleitzahl bevor sie an Stripe gesendet wird
+    if (user.postalCode && validateSwissPostalCode(user.postalCode)) {
+      addressData.postal_code = user.postalCode.trim()
+    } else if (user.postalCode) {
+      console.warn(
+        `[connect/ensure-account] Ungültige Postleitzahl für User ${userId}: "${user.postalCode}". Überspringe Adresse.`
+      )
+      // Wenn Postleitzahl ungültig ist, keine Adresse senden (Stripe würde sonst Fehler werfen)
     }
     addressData.country = 'CH'
+
+    // Nur Adresse senden wenn mindestens line1 oder city vorhanden UND postal_code gültig ist
+    const hasValidAddress = (addressData.line1 || addressData.city) && addressData.postal_code
 
     const account = await stripe.accounts.create({
       type: 'express',
@@ -136,8 +146,8 @@ export async function POST(request: NextRequest) {
         last_name: user.lastName || undefined,
         email: user.email || undefined,
         phone: user.phone || undefined,
-        // Adresse nur wenn mindestens eine Zeile vorhanden
-        address: Object.keys(addressData).length > 1 ? addressData : undefined,
+        // Adresse nur wenn gültige Postleitzahl vorhanden
+        address: hasValidAddress ? addressData : undefined,
       },
       // Business Profile für Express Accounts
       business_profile: {

@@ -1,10 +1,10 @@
 'use client'
 
+import { ArrowLeft, DollarSign, Edit, Save, Shield, Sparkles } from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
-import { DollarSign, Save, ArrowLeft, Edit, Sparkles, Shield } from 'lucide-react'
-import Link from 'next/link'
 
 interface PricingSettings {
   platformMarginRate: number // Prozent (0.1 = 10%)
@@ -37,7 +37,7 @@ export default function AdminPricingPage() {
   const [boosters, setBoosters] = useState<BoosterPrice[]>([])
   const [settings, setSettings] = useState<PricingSettings>({
     platformMarginRate: 0.1, // 10%
-    protectionFeeRate: 0.02, // 2% Zahlungsschutz-Gebühr
+    protectionFeeRate: 0.03, // 3% Zahlungsschutz-Gebühr
     vatRate: 0.081, // 8.1%
     minimumCommission: 0,
     maximumCommission: 220, // Kostendach CHF 220.-
@@ -313,8 +313,9 @@ export default function AdminPricingPage() {
                   </span>
                 </div>
                 <p className="mt-2 text-xs text-gray-600">
-                  Gebühr für Zahlungsschutz bei Orders (z.B. 0.02 = 2%). Diese Gebühr wird zusätzlich
-                  zum Artikelpreis berechnet und bietet Käufern und Verkäufern Sicherheit.
+                  Gebühr für Zahlungsschutz bei Orders (z.B. 0.02 = 2%). Diese Gebühr wird
+                  zusätzlich zum Artikelpreis berechnet und bietet Käufern und Verkäufern
+                  Sicherheit.
                 </p>
                 <div className="mt-3 rounded bg-white p-3 text-xs text-gray-600">
                   <strong>Beispiel:</strong> Bei einem CHF 1'000 Artikel beträgt die

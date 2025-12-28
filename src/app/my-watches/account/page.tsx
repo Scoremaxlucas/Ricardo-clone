@@ -1,6 +1,5 @@
 'use client'
 
-import { PayoutSection } from '@/components/account/PayoutSection'
 import { StripePayoutSection } from '@/components/account/StripePayoutSection'
 import { zodResolver } from '@hookform/resolvers/zod'
 import { ArrowLeft, Info, Loader2, Mail, MapPin, Phone, User } from 'lucide-react'
@@ -499,12 +498,7 @@ export default function AccountPage() {
               </div>
             </div>
 
-            {/* Payout / Bank Details Section (for direct bank transfers) */}
-            {(session?.user as { id?: string })?.id && (
-              <PayoutSection userId={(session.user as { id?: string }).id!} />
-            )}
-
-            {/* Helvenda Zahlungsschutz - Stripe Connect Payout Section */}
+            {/* Auszahlungen (Zahlungsschutz) - Stripe Connect */}
             <StripePayoutSection />
 
             {/* Save Button */}

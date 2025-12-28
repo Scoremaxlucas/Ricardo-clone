@@ -1,8 +1,8 @@
+import { apiCache, generateCacheKey } from '@/lib/api-cache'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
-import { apiCache, generateCacheKey } from '@/lib/api-cache'
 
 export async function POST(request: NextRequest) {
   try {
@@ -36,6 +36,15 @@ export async function POST(request: NextRequest) {
       description,
       imageDataUrls,
       titleImage,
+      // Shipping fields
+      deliveryMode,
+      freeShippingThresholdChf,
+      pickupLocationZip,
+      pickupLocationCity,
+      pickupLocationAddress,
+      shippingService,
+      shippingWeightTier,
+      addonsAllowed,
     } = body
 
     // Validierung: Mindestens Startpreis oder Sofortkaufpreis
@@ -82,6 +91,22 @@ export async function POST(request: NextRequest) {
         warrantyYears: warrantyYears ? parseInt(warrantyYears) : null,
         warrantyNote: warrantyNote || '',
         warrantyDescription: warrantyDescription || '',
+        // New shipping fields
+        deliveryMode: deliveryMode || 'shipping_and_pickup',
+        freeShippingThresholdChf: freeShippingThresholdChf
+          ? parseFloat(freeShippingThresholdChf)
+          : null,
+        pickupLocationZip: pickupLocationZip || null,
+        pickupLocationCity: pickupLocationCity || null,
+        pickupLocationAddress: pickupLocationAddress || null,
+        shippingProfile:
+          shippingService && shippingWeightTier
+            ? JSON.stringify({
+                base_service: shippingService,
+                weight_tier: shippingWeightTier,
+                addons_allowed: addonsAllowed || { sperrgut: false, pickhome: false },
+              })
+            : null,
       },
     })
 
@@ -113,10 +138,7 @@ export async function GET(request: NextRequest) {
         {
           // GOLDEN RULE: Zeige ALLE Artikel außer explizit 'rejected'
           // Explizit null UND alle anderen Werte außer 'rejected' einschließen
-          OR: [
-            { moderationStatus: null },
-            { moderationStatus: { not: 'rejected' } },
-          ],
+          OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
         },
         {
           // Verkaufte Artikel ausschließen (nur nicht-stornierte Purchases zählen als "verkauft")
@@ -191,9 +213,7 @@ export async function GET(request: NextRequest) {
     }
 
     // OPTIMIERT: Check cache first (only for non-search queries to avoid stale results)
-    const cacheKey = search
-      ? null
-      : generateCacheKey('/api/watches', { page, limit, category })
+    const cacheKey = search ? null : generateCacheKey('/api/watches', { page, limit, category })
     const cached = cacheKey ? apiCache.get(cacheKey) : null
 
     if (cached) {
@@ -342,9 +362,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(responseData, {
       headers: {
-        'Cache-Control': search
-          ? 'no-cache'
-          : 'public, s-maxage=60, stale-while-revalidate=120',
+        'Cache-Control': search ? 'no-cache' : 'public, s-maxage=60, stale-while-revalidate=120',
         'X-Cache': cached ? 'HIT' : 'MISS',
       },
     })

@@ -238,6 +238,11 @@ async function main() {
     console.log(`✅ ${existingWatches} Artikel bereits vorhanden`)
   }
 
+  // Shipping Rate Catalog seeden
+  console.log('📦 Seeding Shipping Rate Catalog...')
+  const { seedShippingRateCatalog } = await import('../prisma/seeds/shipping-rate-catalog')
+  await seedShippingRateCatalog()
+
   console.log('')
   console.log('✅ Database seeded successfully!')
   console.log('')

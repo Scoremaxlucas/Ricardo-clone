@@ -199,9 +199,18 @@ model Watch {
   warrantyNote             String?
   warrantyDescription      String?
   referenceNumber          String?
-  shippingMethod           String?
+  shippingMethod           String? // Deprecated - use delivery_mode + shipping_profile
   boosters                 String?
   paymentProtectionEnabled Boolean             @default(false)
+
+  // Delivery & Shipping (Ricardo-style)
+  deliveryMode             String?             @default("shipping_and_pickup") // 'shipping_only' | 'pickup_only' | 'shipping_and_pickup'
+  freeShippingThresholdChf Float?              // Optional: kostenloser Versand ab diesem Betrag
+  pickupLocationZip        String?            // Öffentlich: PLZ für Abholung
+  pickupLocationCity        String?            // Öffentlich: Ort für Abholung
+  pickupLocationAddress     String?            // Privat: Adresse (erst nach Kauf sichtbar)
+  shippingProfile           String?            // JSON: {base_service: 'economy'|'priority', weight_tier: 2|10|30, addons_allowed: {sperrgut: bool, pickhome: bool}}
+
   sellerId                 String
   moderationStatus         String?             @default("pending") // 'pending', 'approved', 'rejected', 'reviewing'
   moderatedBy              String?
@@ -983,10 +992,18 @@ model Order {
 
   // Pricing
   itemPrice     Float
-  shippingCost  Float
+  shippingCost  Float // Deprecated - use shippingCostChfFinal
   platformFee   Float
   protectionFee Float?
   totalAmount   Float
+
+  // Shipping Details (Ricardo-style)
+  selectedDeliveryMode      String?            // 'shipping' | 'pickup'
+  selectedShippingCode      String?            // z.B. 'post_economy_2kg'
+  selectedAddons            String?            // JSON Array: ['sperrgut', 'pickhome']
+  shippingCostChfFinal      Float              @default(0) // Finaler Versandpreis (inkl. Add-ons, free shipping)
+  shippingCostBreakdown      String?            // JSON: {base: number, sperrgut: number, pickhome: number, free_shipping_applied: bool}
+  shippingRateSetId         String?           @default("default_ch_post") // Rate-Set Identifier
 
   // Stripe IDs
   stripePaymentIntentId   String?
@@ -1232,4 +1249,26 @@ model WebhookEvent {
   @@index([eventType])
   @@index([processedAt])
   @@map("webhook_events")
+}
+
+// Shipping Rate Catalog - Zentrale Preisliste für Versandoptionen (Ricardo-style)
+model ShippingRateCatalog {
+  id          String   @id @default(cuid())
+  code        String   @unique // z.B. 'post_economy_2kg', 'addon_sperrgut'
+  labelDe     String   // Deutsche Bezeichnung für UI
+  basePriceChf Float   // Preis in CHF
+  rateSetId   String   @default("default_ch_post") // Rate-Set Identifier (für zukünftige Erweiterungen)
+  isAddon     Boolean  @default(false) // true für Add-ons (sperrgut, pickhome)
+  addonType   String?  // 'sperrgut' | 'pickhome' | null
+  service     String?  // 'economy' | 'priority' | null (nur für Base-Rates)
+  weightTier  Int?     // 2 | 10 | 30 | null (nur für Base-Rates)
+  isActive    Boolean  @default(true)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  @@index([rateSetId])
+  @@index([code])
+  @@index([isActive])
+  @@index([isAddon])
+  @@map("shipping_rate_catalog")
 }

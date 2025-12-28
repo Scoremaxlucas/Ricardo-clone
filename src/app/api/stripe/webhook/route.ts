@@ -790,7 +790,10 @@ async function handleAccountUpdated(account: Stripe.Account) {
               },
             })
           } catch (error: any) {
-            console.error(`[stripe/webhook] Fehler beim Erstellen der Fallback-Notification:`, error)
+            console.error(
+              `[stripe/webhook] Fehler beim Erstellen der Fallback-Notification:`,
+              error
+            )
           }
         }
       }

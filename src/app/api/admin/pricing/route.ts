@@ -1,12 +1,12 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Default Pricing Settings
 const DEFAULT_PRICING = {
   platformMarginRate: 0.1, // 10%
-  protectionFeeRate: 0.02, // 2% Zahlungsschutz-Gebühr
+  protectionFeeRate: 0.03, // 3% Zahlungsschutz-Gebühr
   vatRate: 0.081, // 8.1% MwSt
   minimumCommission: 0,
   maximumCommission: 220, // Maximum CHF 220.- für Plattform-Gebühr
@@ -132,11 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (protectionFeeRate !== undefined) {
-      if (
-        typeof protectionFeeRate !== 'number' ||
-        protectionFeeRate < 0 ||
-        protectionFeeRate > 1
-      ) {
+      if (typeof protectionFeeRate !== 'number' || protectionFeeRate < 0 || protectionFeeRate > 1) {
         return NextResponse.json(
           { message: 'Zahlungsschutz-Gebühr muss zwischen 0 und 1 liegen (0 = 0%, 1 = 100%)' },
           { status: 400 }

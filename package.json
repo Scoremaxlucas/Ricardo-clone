@@ -38,6 +38,7 @@
     "@next/font": "^14.0.0",
     "@paypal/react-paypal-js": "^8.9.2",
     "@prisma/client": "^6.0.1",
+    "@stripe/connect-js": "^3.3.31",
     "@stripe/react-stripe-js": "^2.1.0",
     "@stripe/stripe-js": "^2.1.0",
     "@tensorflow-models/mobilenet": "^2.1.1",

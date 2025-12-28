@@ -15,7 +15,7 @@ export interface PricingConfig {
   // Platform Fee (Kommission) - Standard 10%
   platformFeeRate: number
 
-  // Zahlungsschutz-Gebühr - Standard 2%
+  // Zahlungsschutz-Gebühr - Standard 3%
   protectionFeeRate: number
 
   // MwSt Rate (für Invoices) - Standard 8.1%
@@ -69,9 +69,7 @@ export async function getPricingConfig(): Promise<PricingConfig> {
     process.env.PROTECTION_FEE_RATE || String(DEFAULT_PRICING.protectionFeeRate)
   )
 
-  const vatRate = parseFloat(
-    process.env.VAT_RATE || String(DEFAULT_PRICING.vatRate)
-  )
+  const vatRate = parseFloat(process.env.VAT_RATE || String(DEFAULT_PRICING.vatRate))
 
   const minimumCommission = process.env.MINIMUM_COMMISSION
     ? parseFloat(process.env.MINIMUM_COMMISSION)
@@ -97,7 +95,9 @@ export async function calculatePlatformFee(
   itemPrice: number,
   config?: Partial<PricingConfig>
 ): Promise<number> {
-  const pricingConfig = config ? { ...(await getPricingConfig()), ...config } : await getPricingConfig()
+  const pricingConfig = config
+    ? { ...(await getPricingConfig()), ...config }
+    : await getPricingConfig()
 
   let fee = itemPrice * pricingConfig.platformFeeRate
 
@@ -121,7 +121,9 @@ export async function calculateProtectionFee(
   itemPrice: number,
   config?: Partial<PricingConfig>
 ): Promise<number> {
-  const pricingConfig = config ? { ...(await getPricingConfig()), ...config } : await getPricingConfig()
+  const pricingConfig = config
+    ? { ...(await getPricingConfig()), ...config }
+    : await getPricingConfig()
   return Math.round(itemPrice * pricingConfig.protectionFeeRate * 100) / 100
 }
 
@@ -130,7 +132,7 @@ export async function calculateProtectionFee(
  */
 export const DEFAULT_PRICING = {
   platformFeeRate: 0.1, // 10%
-  protectionFeeRate: 0.02, // 2%
+  protectionFeeRate: 0.03, // 3%
   vatRate: 0.081, // 8.1%
   minimumCommission: 0,
   maximumCommission: 220, // CHF 220.- Maximum (wie im Admin Pricing)

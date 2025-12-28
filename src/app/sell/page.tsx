@@ -13,6 +13,7 @@ import {
   StepShippingPayment,
   WizardFooter,
 } from '@/components/wizard'
+import { DeliveryFormData, DeliveryStep } from '@/components/wizard/DeliveryStep'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { clearDraft, clearOtherUserDrafts } from '@/lib/draft-storage'
 import { canSell, getVerificationStatus } from '@/lib/verification'
@@ -79,6 +80,21 @@ function SellPageContent() {
   const [detectedConfidence, setDetectedConfidence] = useState<number>(0)
   const [showAIDetection, setShowAIDetection] = useState<boolean>(true)
   const [paymentProtectionEnabled, setPaymentProtectionEnabled] = useState(false)
+
+  // Delivery/Shipping data (new Ricardo-style)
+  const [deliveryData, setDeliveryData] = useState<DeliveryFormData>({
+    deliveryMode: 'shipping_and_pickup',
+    freeShippingThresholdChf: null,
+    pickupLocationZip: '',
+    pickupLocationCity: '',
+    pickupLocationAddress: '',
+    shippingService: '',
+    shippingWeightTier: null,
+    addonsAllowed: {
+      sperrgut: false,
+      pickhome: false,
+    },
+  })
 
   const [formData, setFormData] = useState({
     brand: '',
@@ -176,7 +192,18 @@ function SellPageContent() {
         }
         return true
       case 4: // Shipping
-        return formData.shippingMethods.length > 0
+        // Validate delivery data
+        if (deliveryData.deliveryMode === 'pickup_only') {
+          return (
+            deliveryData.pickupLocationZip.length > 0 && deliveryData.pickupLocationCity.length > 0
+          )
+        } else if (
+          deliveryData.deliveryMode === 'shipping_only' ||
+          deliveryData.deliveryMode === 'shipping_and_pickup'
+        ) {
+          return deliveryData.shippingService.length > 0 && deliveryData.shippingWeightTier !== null
+        }
+        return true
       case 5: // Review
         return true
       default:
@@ -209,6 +236,19 @@ function SellPageContent() {
         }
         return undefined
       case 4:
+        // Validate delivery data
+        if (deliveryData.deliveryMode === 'pickup_only') {
+          if (!deliveryData.pickupLocationZip || !deliveryData.pickupLocationCity) {
+            return 'Bitte geben Sie PLZ und Ort für die Abholung an.'
+          }
+        } else if (
+          deliveryData.deliveryMode === 'shipping_only' ||
+          deliveryData.deliveryMode === 'shipping_and_pickup'
+        ) {
+          if (!deliveryData.shippingService || !deliveryData.shippingWeightTier) {
+            return 'Bitte wählen Sie Versandart und Gewichtsklasse.'
+          }
+        }
         if (formData.shippingMethods.length === 0)
           return 'Bitte wählen Sie mindestens eine Lieferart'
         return undefined
@@ -913,7 +953,16 @@ function SellPageContent() {
         auctionStart: formData.auctionStart || '',
         auctionDuration: formData.auctionDuration || '',
         autoRenew: formData.autoRenew || false,
-        shippingMethods: formData.shippingMethods || [],
+        shippingMethods: formData.shippingMethods || [], // Deprecated - keep for backward compatibility
+        // New shipping fields
+        deliveryMode: deliveryData.deliveryMode,
+        freeShippingThresholdChf: deliveryData.freeShippingThresholdChf,
+        pickupLocationZip: deliveryData.pickupLocationZip,
+        pickupLocationCity: deliveryData.pickupLocationCity,
+        pickupLocationAddress: deliveryData.pickupLocationAddress,
+        shippingService: deliveryData.shippingService,
+        shippingWeightTier: deliveryData.shippingWeightTier,
+        addonsAllowed: deliveryData.addonsAllowed,
         lastRevision: formData.lastRevision || '',
         accuracy: formData.accuracy || '',
         fullset: formData.fullset || false,
@@ -1209,17 +1258,33 @@ function SellPageContent() {
 
           {/* Step 4: Shipping & Payment */}
           {currentStep === 4 && (
-            <StepShippingPayment
-              formData={formData}
-              paymentProtectionEnabled={paymentProtectionEnabled}
-              onShippingMethodChange={(method, checked) => {
-                setTouchedSteps(prev => new Set(prev).add(4))
-                handleShippingMethodChange(method, checked)
-              }}
-              onPaymentProtectionChange={setPaymentProtectionEnabled}
-              hasInteracted={touchedSteps.has(4)}
-              showValidation={touchedSteps.has(4) && !validateStep(4)}
-            />
+            <div className="space-y-6">
+              <DeliveryStep
+                formData={deliveryData}
+                itemPrice={parseFloat(formData.price) || parseFloat(formData.buyNowPrice) || 0}
+                onFormDataChange={data => {
+                  setTouchedSteps(prev => new Set(prev).add(4))
+                  setDeliveryData(prev => ({ ...prev, ...data }))
+                }}
+                hasInteracted={touchedSteps.has(4)}
+                showValidation={touchedSteps.has(4) && !validateStep(4)}
+              />
+
+              {/* Payment Protection (separate section) */}
+              <div className="rounded-lg border border-gray-200 bg-white p-4">
+                <StepShippingPayment
+                  formData={formData}
+                  paymentProtectionEnabled={paymentProtectionEnabled}
+                  onShippingMethodChange={(method, checked) => {
+                    setTouchedSteps(prev => new Set(prev).add(4))
+                    handleShippingMethodChange(method, checked)
+                  }}
+                  onPaymentProtectionChange={setPaymentProtectionEnabled}
+                  hasInteracted={touchedSteps.has(4)}
+                  showValidation={false}
+                />
+              </div>
+            </div>
           )}
 
           {/* Step 5: Review & Publish */}
