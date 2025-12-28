@@ -288,6 +288,12 @@ export function Footer() {
               </Link>
             </div>
           </div>
+          {/* Score-Max GmbH Information */}
+          <div className="mt-6 text-center">
+            <p className="text-sm text-white/70">
+              Inhaber und Betreiber von helvenda.ch ist die Firma Score-Max GmbH, in der Hauswiese 2, 8125 Zollikerberg
+            </p>
+          </div>
         </div>
       </div>
     </footer>

@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { Bot, Loader2, MessageCircle, Send, User, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
-import { MessageCircle, X, Send, Bot, User, Loader2 } from 'lucide-react'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface Message {
