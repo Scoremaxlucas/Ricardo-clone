@@ -1,55 +1,21 @@
 import { withAuth } from 'next-auth/middleware'
 import { NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 
-// OPTIMIERT: Cache für Admin-Checks (5 Minuten TTL)
-const adminCache = new Map<string, { isAdmin: boolean; expires: number }>()
-const CACHE_TTL = 5 * 60 * 1000 // 5 Minuten
-
-async function checkAdminStatus(userId: string): Promise<boolean> {
-  // Prüfe Cache zuerst
-  const cached = adminCache.get(userId)
-  if (cached && cached.expires > Date.now()) {
-    return cached.isAdmin
-  }
-
-  // Falls nicht im Cache, prüfe Datenbank
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId },
-      select: { isAdmin: true },
-    })
-    const isAdmin = user?.isAdmin === true
-
-    // Speichere im Cache
-    adminCache.set(userId, {
-      isAdmin,
-      expires: Date.now() + CACHE_TTL,
-    })
-
-    return isAdmin
-  } catch (error) {
-    console.error('[MIDDLEWARE] Error checking admin status:', error)
-    return false
-  }
-}
+// NOTE: Middleware runs on Edge Runtime - NO Prisma/database access allowed!
+// Admin checks are done via JWT token only. If token doesn't have isAdmin,
+// the API routes will verify against the database.
 
 export default withAuth(
-  async function middleware(req) {
+  function middleware(req) {
     const token = req.nextauth.token
     const isAdminRoute = req.nextUrl.pathname.startsWith('/admin')
 
-    // Wenn es eine Admin-Route ist, prüfe Admin-Rechte
+    // For admin routes, check the isAdmin flag in the JWT token
     if (isAdminRoute) {
-      // Prüfe Admin-Status aus Token zuerst
-      let isAdmin = token?.isAdmin === true
-
-      // Falls nicht im Token, prüfe mit Cache
-      if (!isAdmin && token?.id) {
-        isAdmin = await checkAdminStatus(token.id as string)
-      }
+      const isAdmin = token?.isAdmin === true
 
       if (!isAdmin) {
+        // Redirect non-admins to homepage
         return NextResponse.redirect(new URL('/', req.url))
       }
     }
@@ -61,12 +27,12 @@ export default withAuth(
       authorized: ({ token, req }) => {
         const isAdminRoute = req.nextUrl.pathname.startsWith('/admin')
 
-        // Für Admin-Routes muss der User eingeloggt sein
+        // For admin routes, user must be logged in
         if (isAdminRoute) {
           return !!token
         }
 
-        // Für andere Routes ist es OK wenn kein Token vorhanden ist
+        // For other routes, allow without token
         return true
       },
     },

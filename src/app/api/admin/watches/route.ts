@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
@@ -224,12 +224,15 @@ export async function GET(request: NextRequest) {
         calculatedIsActive = !isSold
         // Double-check: Wenn approved aber trotzdem false, log error
         if (!calculatedIsActive && !isSold) {
-          console.error('[admin/watches] CRITICAL: Approved watch calculated as inactive but not sold!', {
-            watchId: watch.id,
-            moderationStatus: watch.moderationStatus,
-            isSold,
-            activePurchases: activePurchases.length,
-          })
+          console.error(
+            '[admin/watches] CRITICAL: Approved watch calculated as inactive but not sold!',
+            {
+              watchId: watch.id,
+              moderationStatus: watch.moderationStatus,
+              isSold,
+              activePurchases: activePurchases.length,
+            }
+          )
           // Force to true as fallback
           calculatedIsActive = true
         }
