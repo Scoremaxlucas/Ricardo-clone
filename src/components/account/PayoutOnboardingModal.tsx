@@ -5,7 +5,7 @@ import {
   ConnectComponentsProvider,
 } from '@stripe/react-connect-js'
 import { loadConnectAndInitialize } from '@stripe/connect-js'
-import { ExternalLink, Loader2, Shield, X } from 'lucide-react'
+import { Check, Copy, ExternalLink, Info, Loader2, Shield, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -13,6 +13,23 @@ interface PayoutOnboardingModalProps {
   open: boolean
   onClose: () => void
   onStatusChange?: () => void
+}
+
+interface PrefillData {
+  personalData: {
+    firstName: string | null
+    lastName: string | null
+    email: string | null
+    phone: string | null
+    dateOfBirth: string | null
+    address: string | null
+  }
+  bankData: {
+    accountHolderName: string | null
+    ibanMasked: string | null
+    bank: string | null
+  } | null
+  hasBankData: boolean
 }
 
 type ConnectInstance = Awaited<ReturnType<typeof loadConnectAndInitialize>>
@@ -31,6 +48,9 @@ export function PayoutOnboardingModal({
   const [error, setError] = useState<string | null>(null)
   const [fallbackMode, setFallbackMode] = useState(false)
   const [fallbackLoading, setFallbackLoading] = useState(false)
+  const [prefillData, setPrefillData] = useState<PrefillData | null>(null)
+  const [showPrefillInfo, setShowPrefillInfo] = useState(true)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
 
   // Fetch client secret for embedded onboarding
   const fetchClientSecret = useCallback(async (): Promise<string> => {
@@ -48,6 +68,30 @@ export function PayoutOnboardingModal({
     return data.clientSecret
   }, [])
 
+  // Fetch prefill data from Helvenda
+  const fetchPrefillData = useCallback(async () => {
+    try {
+      const response = await fetch('/api/stripe/connect/prefill-data')
+      if (response.ok) {
+        const data = await response.json()
+        setPrefillData(data)
+      }
+    } catch (err) {
+      console.error('[PayoutOnboardingModal] Error fetching prefill data:', err)
+    }
+  }, [])
+
+  // Copy to clipboard helper
+  const copyToClipboard = useCallback(async (text: string, field: string) => {
+    try {
+      await navigator.clipboard.writeText(text)
+      setCopiedField(field)
+      setTimeout(() => setCopiedField(null), 2000)
+    } catch (err) {
+      console.error('Failed to copy:', err)
+    }
+  }, [])
+
   // Initialize Stripe Connect
   useEffect(() => {
     if (!open) {
@@ -56,8 +100,12 @@ export function PayoutOnboardingModal({
       setLoading(true)
       setError(null)
       setFallbackMode(false)
+      setShowPrefillInfo(true)
       return
     }
+
+    // Fetch prefill data first
+    fetchPrefillData()
 
     const initializeConnect = async () => {
       try {
@@ -95,7 +143,7 @@ export function PayoutOnboardingModal({
     }
 
     initializeConnect()
-  }, [open, fetchClientSecret])
+  }, [open, fetchClientSecret, fetchPrefillData])
 
   // Handle onboarding exit (user completed or left early)
   const handleOnboardingExit = useCallback(() => {
@@ -257,6 +305,105 @@ export function PayoutOnboardingModal({
           {/* Embedded Onboarding Component */}
           {stripeConnectInstance && !loading && !fallbackMode && (
             <div className="p-6">
+              {/* Prefill Data Info Box - Shows user's existing Helvenda data */}
+              {showPrefillInfo && prefillData && (
+                <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                  <div className="mb-3 flex items-start justify-between">
+                    <div className="flex items-center gap-2">
+                      <Info className="h-5 w-5 text-blue-600" />
+                      <span className="font-medium text-blue-800">
+                        Ihre hinterlegten Helvenda-Daten
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setShowPrefillInfo(false)}
+                      className="text-blue-500 hover:text-blue-700"
+                      aria-label="Schliessen"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+
+                  <p className="mb-3 text-sm text-blue-700">
+                    Folgende Daten werden automatisch vorausgefüllt. Bankdaten müssen aus Sicherheitsgründen bei Stripe erneut eingegeben werden.
+                  </p>
+
+                  {/* Personal Data */}
+                  <div className="mb-3 space-y-1.5">
+                    <p className="text-xs font-medium uppercase text-blue-600">Persönliche Daten (vorausgefüllt)</p>
+                    <div className="grid grid-cols-2 gap-2 text-sm">
+                      {prefillData.personalData.firstName && prefillData.personalData.lastName && (
+                        <div className="text-blue-800">
+                          <span className="text-blue-600">Name:</span>{' '}
+                          {prefillData.personalData.firstName} {prefillData.personalData.lastName}
+                        </div>
+                      )}
+                      {prefillData.personalData.dateOfBirth && (
+                        <div className="text-blue-800">
+                          <span className="text-blue-600">Geb.:</span>{' '}
+                          {prefillData.personalData.dateOfBirth}
+                        </div>
+                      )}
+                      {prefillData.personalData.address && (
+                        <div className="col-span-2 text-blue-800">
+                          <span className="text-blue-600">Adresse:</span>{' '}
+                          {prefillData.personalData.address}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  {/* Bank Data - For copying */}
+                  {prefillData.hasBankData && prefillData.bankData && (
+                    <div className="rounded-md border border-blue-300 bg-white p-3">
+                      <p className="mb-2 text-xs font-medium uppercase text-blue-600">
+                        Bankdaten (zum Kopieren)
+                      </p>
+                      <div className="space-y-2">
+                        {prefillData.bankData.accountHolderName && (
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm">
+                              <span className="text-gray-500">Kontoinhaber:</span>{' '}
+                              <span className="font-medium">{prefillData.bankData.accountHolderName}</span>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={() => copyToClipboard(prefillData.bankData!.accountHolderName!, 'name')}
+                              className="flex items-center gap-1 rounded px-2 py-1 text-xs text-blue-600 hover:bg-blue-50"
+                            >
+                              {copiedField === 'name' ? (
+                                <Check className="h-3.5 w-3.5" />
+                              ) : (
+                                <Copy className="h-3.5 w-3.5" />
+                              )}
+                              {copiedField === 'name' ? 'Kopiert' : 'Kopieren'}
+                            </button>
+                          </div>
+                        )}
+                        {prefillData.bankData.ibanMasked && (
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm">
+                              <span className="text-gray-500">IBAN:</span>{' '}
+                              <span className="font-mono font-medium">{prefillData.bankData.ibanMasked}</span>
+                            </div>
+                          </div>
+                        )}
+                        {prefillData.bankData.bank && (
+                          <div className="text-sm">
+                            <span className="text-gray-500">Bank:</span>{' '}
+                            <span className="font-medium">{prefillData.bankData.bank}</span>
+                          </div>
+                        )}
+                      </div>
+                      <p className="mt-2 text-xs text-gray-500">
+                        💡 Geben Sie bei Stripe die gleiche IBAN ein, die Sie bei Helvenda hinterlegt haben.
+                      </p>
+                    </div>
+                  )}
+                </div>
+              )}
+
               <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
                 <ConnectAccountOnboarding
                   onExit={handleOnboardingExit}

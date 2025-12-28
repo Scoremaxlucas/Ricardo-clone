@@ -58,6 +58,7 @@ async function prefillStripeAccount(
     streetNumber: string | null
     postalCode: string | null
     city: string | null
+    dateOfBirth: Date | null
   }
 ) {
   try {
@@ -75,6 +76,16 @@ async function prefillStripeAccount(
     if (user.phone) individual.phone = user.phone
     if (user.firstName) individual.first_name = user.firstName
     if (user.lastName) individual.last_name = user.lastName
+
+    // Add date of birth if available
+    if (user.dateOfBirth) {
+      const dob = new Date(user.dateOfBirth)
+      individual.dob = {
+        day: dob.getDate(),
+        month: dob.getMonth() + 1,
+        year: dob.getFullYear(),
+      }
+    }
 
     // Build address if we have valid postal code
     if (user.postalCode && validateSwissPostalCode(user.postalCode)) {
@@ -120,7 +131,7 @@ export async function POST(request: NextRequest) {
 
     const userId = session.user.id
 
-    // Load user with profile data
+    // Load user with profile data including date of birth
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -133,6 +144,7 @@ export async function POST(request: NextRequest) {
         streetNumber: true,
         postalCode: true,
         city: true,
+        dateOfBirth: true,
         stripeConnectedAccountId: true,
         connectOnboardingStatus: true,
         payoutsEnabled: true,
@@ -213,6 +225,25 @@ export async function POST(request: NextRequest) {
 
     const hasValidAddress = addressData.line1 || addressData.city
 
+    // Build individual data including date of birth
+    const individualData: any = {
+      first_name: user.firstName || undefined,
+      last_name: user.lastName || undefined,
+      email: user.email || undefined,
+      phone: user.phone || undefined,
+      address: hasValidAddress ? addressData : undefined,
+    }
+
+    // Add date of birth if available
+    if (user.dateOfBirth) {
+      const dob = new Date(user.dateOfBirth)
+      individualData.dob = {
+        day: dob.getDate(),
+        month: dob.getMonth() + 1,
+        year: dob.getFullYear(),
+      }
+    }
+
     const account = await stripe.accounts.create({
       type: 'express',
       country: 'CH',
@@ -222,13 +253,7 @@ export async function POST(request: NextRequest) {
         transfers: { requested: true },
       },
       business_type: 'individual',
-      individual: {
-        first_name: user.firstName || undefined,
-        last_name: user.lastName || undefined,
-        email: user.email || undefined,
-        phone: user.phone || undefined,
-        address: hasValidAddress ? addressData : undefined,
-      },
+      individual: individualData,
       business_profile: {
         mcc: '5999', // Misc Retail
         url: 'https://helvenda.ch',
