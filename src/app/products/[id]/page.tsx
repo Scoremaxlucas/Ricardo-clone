@@ -3,14 +3,16 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { ProductPageClient } from '@/components/product/ProductPageClient'
-import { useEffect, useState } from 'react'
+import { use, useEffect, useState } from 'react'
 
 interface Props {
   params: Promise<{ id: string }>
 }
 
 export default function ProductPage({ params }: Props) {
-  const [id, setId] = useState<string | null>(null)
+  // In Next.js 15, use() unwraps the Promise in client components
+  const { id } = use(params)
+  
   const [loading, setLoading] = useState(true)
   const [data, setData] = useState<{
     watch: any
@@ -18,10 +20,6 @@ export default function ProductPage({ params }: Props) {
     conditionMap: Record<string, string>
     seller: any
   } | null>(null)
-
-  useEffect(() => {
-    params.then(p => setId(p.id))
-  }, [params])
 
   useEffect(() => {
     if (!id) return
