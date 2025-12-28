@@ -21,9 +21,7 @@ export async function GET(
     // Handle both Promise and direct params (for compatibility)
     let orderId: string
     try {
-      const resolvedParams = 'then' in context.params 
-        ? await context.params 
-        : context.params
+      const resolvedParams = 'then' in context.params ? await context.params : context.params
       orderId = resolvedParams.orderId
     } catch (paramError) {
       console.error('[orders/[orderId]] Error resolving params:', paramError)
@@ -80,25 +78,28 @@ export async function GET(
 
     if (!order) {
       console.log(`[orders/[orderId]] Order not found: ${orderId}`)
-      
+
       // Try to find the order by checking all orders for this user
       const userOrders = await prisma.order.findMany({
         where: {
-          OR: [
-            { buyerId: session.user.id },
-            { sellerId: session.user.id },
-          ],
+          OR: [{ buyerId: session.user.id }, { sellerId: session.user.id }],
         },
         select: { id: true, orderNumber: true },
         take: 5,
       })
-      console.log(`[orders/[orderId]] User's recent orders:`, userOrders.map(o => o.id))
-      
-      return NextResponse.json({ 
-        message: 'Bestellung nicht gefunden',
-        requestedId: orderId,
-        hint: 'Die Order-ID existiert nicht in der Datenbank. Möglicherweise wurde die Bestellung nicht erstellt oder gelöscht.'
-      }, { status: 404 })
+      console.log(
+        `[orders/[orderId]] User's recent orders:`,
+        userOrders.map(o => o.id)
+      )
+
+      return NextResponse.json(
+        {
+          message: 'Bestellung nicht gefunden',
+          requestedId: orderId,
+          hint: 'Die Order-ID existiert nicht in der Datenbank. Möglicherweise wurde die Bestellung nicht erstellt oder gelöscht.',
+        },
+        { status: 404 }
+      )
     }
 
     // Prüfe ob User Käufer oder Verkäufer ist

@@ -163,7 +163,9 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
 
       // Für geschützte Käufe mit Order → Nutze Order-API um Geld freizugeben
       if (purchase?.paymentProtectionEnabled && purchase?.orderId) {
-        console.log(`[handleConfirmReceived] Geschützter Kauf - nutze Order-API für ${purchase.orderId}`)
+        console.log(
+          `[handleConfirmReceived] Geschützter Kauf - nutze Order-API für ${purchase.orderId}`
+        )
 
         const res = await fetch(`/api/orders/${purchase.orderId}/confirm-receipt`, {
           method: 'POST',
@@ -173,7 +175,9 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
 
         if (res.ok) {
           if (data.pendingOnboarding) {
-            toast.success('Erhalt bestätigt! Der Verkäufer muss noch seine Auszahlungsdaten einrichten.')
+            toast.success(
+              'Erhalt bestätigt! Der Verkäufer muss noch seine Auszahlungsdaten einrichten.'
+            )
           } else {
             toast.success('Erhalt bestätigt und Auszahlung an Verkäufer erfolgt!')
           }
@@ -911,8 +915,8 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                       )}
 
                       {/* Bestelldetails - nur bei Zahlungsschutz */}
-                      {purchase.paymentProtectionEnabled && (
-                        purchase.orderId ? (
+                      {purchase.paymentProtectionEnabled &&
+                        (purchase.orderId ? (
                           <Link
                             href={`/orders/${purchase.orderId}`}
                             className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-primary-600 bg-white px-4 py-3 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50"
@@ -943,8 +947,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                               </>
                             )}
                           </button>
-                        )
-                      )}
+                        ))}
 
                       {/* Secondary Actions */}
                       {uiState.secondaryActions.length > 0 && (

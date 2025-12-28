@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import Link from 'next/link'
-import { ChevronDown } from 'lucide-react'
 import { Logo } from '@/components/ui/Logo'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { ChevronDown } from 'lucide-react'
+import Link from 'next/link'
+import { useState } from 'react'
 
 export function Footer() {
   const { t } = useLanguage()
@@ -32,7 +32,7 @@ export function Footer() {
     >
       <div className="relative z-10 mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8">
         {/* Mobile: Accordion Sections, Desktop: Grid */}
-        <div className="space-y-4 md:grid md:grid-cols-2 md:gap-8 lg:grid-cols-5 md:space-y-0">
+        <div className="space-y-4 md:grid md:grid-cols-2 md:gap-8 md:space-y-0 lg:grid-cols-5">
           {/* Company Info - Always visible */}
           <div className="col-span-1 lg:col-span-2">
             <div className="mb-4 flex items-center">
@@ -102,18 +102,18 @@ export function Footer() {
           <div>
             <button
               onClick={() => toggleSection('buyers')}
-              className="mb-4 flex w-full items-center justify-between text-lg font-semibold text-accent-500 md:mb-4 md:block"
+              className="mb-4 flex w-full items-center justify-between text-left text-lg font-semibold text-accent-500 md:mb-4 md:block md:w-auto"
               aria-expanded={openSections.has('buyers') || undefined}
             >
               <span>{t.footer.forBuyers}</span>
               <ChevronDown
-                className={`h-5 w-5 transition-transform md:hidden ${
+                className={`h-5 w-5 flex-shrink-0 transition-transform md:hidden ${
                   openSections.has('buyers') ? 'rotate-180' : ''
                 }`}
               />
             </button>
             <ul
-              className={`space-y-2.5 transition-all md:block ${
+              className={`space-y-2.5 text-left transition-all md:block ${
                 openSections.has('buyers') ? 'block' : 'hidden md:block'
               }`}
             >
@@ -156,18 +156,18 @@ export function Footer() {
           <div>
             <button
               onClick={() => toggleSection('sellers')}
-              className="mb-4 flex w-full items-center justify-between text-lg font-semibold text-accent-500 md:mb-4 md:block"
+              className="mb-4 flex w-full items-center justify-between text-left text-lg font-semibold text-accent-500 md:mb-4 md:block md:w-auto"
               aria-expanded={openSections.has('sellers') || undefined}
             >
               <span>{t.footer.forSellers}</span>
               <ChevronDown
-                className={`h-5 w-5 transition-transform md:hidden ${
+                className={`h-5 w-5 flex-shrink-0 transition-transform md:hidden ${
                   openSections.has('sellers') ? 'rotate-180' : ''
                 }`}
               />
             </button>
             <ul
-              className={`space-y-2.5 transition-all md:block ${
+              className={`space-y-2.5 text-left transition-all md:block ${
                 openSections.has('sellers') ? 'block' : 'hidden md:block'
               }`}
             >
@@ -202,18 +202,18 @@ export function Footer() {
           <div>
             <button
               onClick={() => toggleSection('help')}
-              className="mb-4 flex w-full items-center justify-between text-lg font-semibold text-accent-500 md:mb-4 md:block"
+              className="mb-4 flex w-full items-center justify-between text-left text-lg font-semibold text-accent-500 md:mb-4 md:block md:w-auto"
               aria-expanded={openSections.has('help') || undefined}
             >
               <span>{t.footer.help}</span>
               <ChevronDown
-                className={`h-5 w-5 transition-transform md:hidden ${
+                className={`h-5 w-5 flex-shrink-0 transition-transform md:hidden ${
                   openSections.has('help') ? 'rotate-180' : ''
                 }`}
               />
             </button>
             <ul
-              className={`space-y-2.5 transition-all md:block ${
+              className={`space-y-2.5 text-left transition-all md:block ${
                 openSections.has('help') ? 'block' : 'hidden md:block'
               }`}
             >

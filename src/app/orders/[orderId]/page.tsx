@@ -1,24 +1,22 @@
 'use client'
 
-import { useEffect, useState } from 'react'
-import { useParams, useRouter } from 'next/navigation'
-import { useSession } from 'next-auth/react'
-import {
-  Package,
-  Shield,
-  Clock,
-  CheckCircle,
-  XCircle,
-  AlertTriangle,
-  Truck,
-  CreditCard,
-  User,
-  Calendar,
-  FileText,
-} from 'lucide-react'
-import Link from 'next/link'
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  CreditCard,
+  FileText,
+  Shield,
+  Truck,
+  User,
+  XCircle,
+} from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface Order {
@@ -95,7 +93,7 @@ export default function OrderDetailPage() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({}))
         console.error('[OrderDetail] Order not found:', orderId, errorData)
-        
+
         // Don't redirect immediately - show error state
         setLoading(false)
         return
@@ -186,7 +184,9 @@ export default function OrderDetailPage() {
 
     const statusInfo = statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800' }
     return (
-      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusInfo.color}`}>
+      <span
+        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusInfo.color}`}
+      >
         {statusInfo.label}
       </span>
     )
@@ -205,7 +205,9 @@ export default function OrderDetailPage() {
 
     const statusInfo = statusMap[status] || { label: status, color: 'bg-gray-100 text-gray-800' }
     return (
-      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusInfo.color}`}>
+      <span
+        className={`inline-flex rounded-full px-3 py-1 text-xs font-semibold ${statusInfo.color}`}
+      >
         {statusInfo.label}
       </span>
     )
@@ -242,8 +244,8 @@ export default function OrderDetailPage() {
             <AlertTriangle className="mx-auto mb-4 h-16 w-16 text-amber-500" />
             <h2 className="mb-2 text-xl font-bold text-gray-900">Bestellung nicht gefunden</h2>
             <p className="mb-6 text-gray-600">
-              Die angeforderte Bestellung existiert nicht oder wurde noch nicht erstellt.
-              Dies kann passieren, wenn die Zahlung noch nicht abgeschlossen wurde.
+              Die angeforderte Bestellung existiert nicht oder wurde noch nicht erstellt. Dies kann
+              passieren, wenn die Zahlung noch nicht abgeschlossen wurde.
             </p>
             <div className="space-y-3">
               <Link
@@ -265,7 +267,11 @@ export default function OrderDetailPage() {
 
   const images = parseImages(order.watch.images)
   const isBuyerView = isBuyer
-  const canConfirmReceipt = isBuyer && order.paymentStatus === 'paid' && !order.buyerConfirmedReceipt && order.disputeStatus === 'none'
+  const canConfirmReceipt =
+    isBuyer &&
+    order.paymentStatus === 'paid' &&
+    !order.buyerConfirmedReceipt &&
+    order.disputeStatus === 'none'
   const canOpenDispute = isBuyer && order.paymentStatus === 'paid' && order.disputeStatus === 'none'
 
   return (
@@ -298,7 +304,7 @@ export default function OrderDetailPage() {
 
         <div className="grid gap-8 lg:grid-cols-3">
           {/* Main Content */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="space-y-6 lg:col-span-2">
             {/* Artikel-Info */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
               <h2 className="mb-4 text-xl font-semibold text-gray-900">Artikel</h2>
@@ -332,8 +338,8 @@ export default function OrderDetailPage() {
                   <h3 className="mb-2 font-semibold text-blue-900">Zahlungsschutz Status</h3>
                   {order.paymentStatus === 'paid' && !order.buyerConfirmedReceipt && (
                     <p className="text-sm text-blue-800">
-                      Ihr Geld wird geschützt gehalten. Bitte bestätigen Sie den Erhalt der Ware,
-                      um die Zahlung freizugeben.
+                      Ihr Geld wird geschützt gehalten. Bitte bestätigen Sie den Erhalt der Ware, um
+                      die Zahlung freizugeben.
                     </p>
                   )}
                   {order.buyerConfirmedReceipt && (
@@ -347,9 +353,7 @@ export default function OrderDetailPage() {
                     </p>
                   )}
                   {order.paymentStatus === 'refunded' && (
-                    <p className="text-sm text-blue-800">
-                      Die Zahlung wurde zurückerstattet.
-                    </p>
+                    <p className="text-sm text-blue-800">Die Zahlung wurde zurückerstattet.</p>
                   )}
                   {order.disputeStatus !== 'none' && (
                     <p className="mt-2 text-sm text-orange-800">
@@ -491,7 +495,9 @@ export default function OrderDetailPage() {
 
                 {canOpenDispute && (
                   <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-                    <h3 className="mb-4 font-semibold text-gray-900">Problem mit der Bestellung?</h3>
+                    <h3 className="mb-4 font-semibold text-gray-900">
+                      Problem mit der Bestellung?
+                    </h3>
                     <p className="mb-4 text-sm text-gray-600">
                       Öffnen Sie einen Dispute, wenn Sie Probleme mit der Ware haben.
                     </p>
@@ -507,7 +513,9 @@ export default function OrderDetailPage() {
                         >
                           <option value="">Bitte wählen...</option>
                           <option value="item_not_received">Ware nicht erhalten</option>
-                          <option value="item_not_as_described">Ware entspricht nicht der Beschreibung</option>
+                          <option value="item_not_as_described">
+                            Ware entspricht nicht der Beschreibung
+                          </option>
                           <option value="damaged_item">Ware beschädigt</option>
                           <option value="wrong_item">Falsche Ware erhalten</option>
                           <option value="seller_not_responding">Verkäufer antwortet nicht</option>
@@ -528,7 +536,9 @@ export default function OrderDetailPage() {
                       </div>
                       <button
                         onClick={handleOpenDispute}
-                        disabled={openingDispute || !disputeReason || disputeDescription.trim().length < 10}
+                        disabled={
+                          openingDispute || !disputeReason || disputeDescription.trim().length < 10
+                        }
                         className="rounded-md bg-orange-600 px-4 py-2 text-white hover:bg-orange-700 disabled:opacity-50"
                       >
                         {openingDispute ? 'Wird verarbeitet...' : 'Dispute öffnen'}
@@ -584,7 +594,9 @@ export default function OrderDetailPage() {
                 <div className="flex items-center">
                   <User className="mr-2 h-4 w-4 text-gray-400" />
                   <span className="font-medium">
-                    {isBuyer ? order.seller.name || order.seller.email : order.buyer.name || order.buyer.email}
+                    {isBuyer
+                      ? order.seller.name || order.seller.email
+                      : order.buyer.name || order.buyer.email}
                   </span>
                 </div>
                 <div className="flex items-center">
