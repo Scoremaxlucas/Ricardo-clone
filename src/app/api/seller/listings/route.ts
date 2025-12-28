@@ -1,6 +1,5 @@
-import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
+import { cookies } from 'next/headers'
 import { NextRequest, NextResponse } from 'next/server'
 
 export type ListingStatus = 'active' | 'ended' | 'sold'
@@ -32,26 +31,39 @@ export interface ListingCounts {
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
+// Helper to get user ID from cookie token
+async function getUserIdFromCookie(): Promise<string | null> {
+  try {
+    const cookieStore = await cookies()
+    const sessionToken =
+      cookieStore.get('next-auth.session-token')?.value ||
+      cookieStore.get('__Secure-next-auth.session-token')?.value
+
+    if (!sessionToken) {
+      return null
+    }
+
+    // Find session in database
+    const session = await prisma.session.findUnique({
+      where: { sessionToken },
+      include: { user: { select: { id: true } } },
+    })
+
+    return session?.user?.id || null
+  } catch {
+    // Session table might not exist
+    return null
+  }
+}
+
 export async function GET(request: NextRequest) {
   try {
-    // Get session with error handling
-    let session
-    try {
-      session = await getServerSession(authOptions)
-    } catch (sessionError: unknown) {
-      const err = sessionError as Error
-      console.error('[seller/listings] Session error:', err.message)
-      return NextResponse.json(
-        { error: 'Session Fehler: ' + err.message },
-        { status: 500 }
-      )
-    }
+    // Get user ID from cookie
+    const userId = await getUserIdFromCookie()
 
-    if (!session?.user?.id) {
+    if (!userId) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
-
-    const userId = session.user.id
     const { searchParams } = new URL(request.url)
     const statusFilter = searchParams.get('status') || 'active'
     const search = searchParams.get('search') || ''
