@@ -15,7 +15,7 @@
   --color-accent-orange: #f97316; /* Orange: Nur für wichtige CTAs (Verkaufen, Kaufen) - höhere Conversion */
   --color-accent-pink: #ec4899; /* Pink: Deprecated - nicht mehr verwenden */
   --color-accent-green: #10b981; /* Grün: Erfolg/Positive Aktionen */
-  
+
   /* Primary-Farbe: Teal für vertrauenswürdige Primary-Actions und Links */
 
   /* Wärmere Neutrale */
@@ -29,8 +29,10 @@
    * Verwendung: box-shadow: var(--shadow-sm);
    */
   --shadow-sm: 0px 2px 8px rgba(0, 0, 0, 0.08); /* Subtile Schatten für kleine Elemente */
-  --shadow-md: 0px 4px 20px rgba(0, 0, 0, 0.1), 0px 2px 8px rgba(20, 184, 166, 0.1); /* Standard-Karten */
-  --shadow-lg: 0px 8px 30px rgba(0, 0, 0, 0.12), 0px 4px 12px rgba(20, 184, 166, 0.15); /* Hervorgehobene Elemente */
+  --shadow-md:
+    0px 4px 20px rgba(0, 0, 0, 0.1), 0px 2px 8px rgba(20, 184, 166, 0.1); /* Standard-Karten */
+  --shadow-lg:
+    0px 8px 30px rgba(0, 0, 0, 0.12), 0px 4px 12px rgba(20, 184, 166, 0.15); /* Hervorgehobene Elemente */
   --shadow-xl: 0px 12px 40px rgba(20, 184, 166, 0.25); /* Modals, Dropdowns */
   --shadow-header: 0px 2px 12px rgba(0, 0, 0, 0.08); /* Header-Schatten */
   --shadow-card-hover: 0px 10px 35px rgba(20, 184, 166, 0.3); /* Card Hover-Effekt */
@@ -120,7 +122,12 @@ html {
     @apply border-gray-200;
   }
 
-  h1, h2, h3, h4, h5, h6 {
+  h1,
+  h2,
+  h3,
+  h4,
+  h5,
+  h6 {
     @apply font-bold text-gray-900;
     letter-spacing: -0.02em;
   }
@@ -157,7 +164,7 @@ html {
   }
 
   p {
-    @apply text-base  text-gray-700;
+    @apply text-base text-gray-700;
     line-height: 1.6;
   }
 
@@ -305,70 +312,68 @@ html {
 
 @layer utilities {
   /* PHASE 3.2: Spacing Utilities */
-  
+
   /* Section Spacing */
   .section-padding {
     @apply py-12 md:py-16 lg:py-20;
-  
+  }
 
-}
-  
   .section-padding-sm {
     @apply py-8 md:py-12;
   }
-  
+
   .section-margin {
     @apply my-12 md:my-16 lg:my-20;
   }
-  
+
   /* Container Widths */
   .container-content {
     @apply mx-auto max-w-[1400px] px-4 sm:px-6 lg:px-8;
   }
-  
+
   .container-wide {
     @apply mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8;
   }
-  
+
   .container-narrow {
     @apply mx-auto max-w-3xl px-4 sm:px-6;
   }
-  
+
   .container-prose {
     @apply mx-auto max-w-[75ch] px-4;
   }
-  
+
   /* Card Grid Gaps */
   .grid-cards {
     @apply grid gap-4 md:gap-6;
   }
-  
+
   .grid-cards-tight {
     @apply grid gap-2 md:gap-3;
   }
-  
+
   /* Stack Spacing (Vertical) */
   .stack {
     @apply flex flex-col gap-4;
   }
-  
+
   .stack-sm {
     @apply flex flex-col gap-2;
   }
-  
+
   .stack-lg {
     @apply flex flex-col gap-6;
   }
-  
+
   /* Cluster Spacing (Horizontal) */
   .cluster {
     @apply flex flex-wrap gap-4;
   }
-  
+
   .cluster-sm {
     @apply flex flex-wrap gap-2;
   }
-  
+
   .cluster-lg {
     @apply flex flex-wrap gap-6;
   }
@@ -378,141 +383,223 @@ html {
 
 /* Neue Keyframe-Animationen */
 @keyframes spin {
-  from { transform: rotate(0deg); }
-  to { transform: rotate(360deg); }
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(360deg);
+  }
 }
 
 @keyframes bounce {
-  0%, 100% { transform: translateY(0); }
-  50% { transform: translateY(-10px); }
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
 }
 
 @keyframes shake {
-  0%, 100% { transform: translateX(0); }
-  10%, 30%, 50%, 70%, 90% { transform: translateX(-4px); }
-  20%, 40%, 60%, 80% { transform: translateX(4px); }
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  10%,
+  30%,
+  50%,
+  70%,
+  90% {
+    transform: translateX(-4px);
+  }
+  20%,
+  40%,
+  60%,
+  80% {
+    transform: translateX(4px);
+  }
 }
 
 @keyframes successPop {
-  0% { transform: scale(0); opacity: 0; }
-  50% { transform: scale(1.2); }
-  100% { transform: scale(1); opacity: 1; }
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInRight {
-  from { transform: translateX(100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInLeft {
-  from { transform: translateX(-100%); opacity: 0; }
-  to { transform: translateX(0); opacity: 1; }
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInUp {
-  from { transform: translateY(20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes slideInDown {
-  from { transform: translateY(-20px); opacity: 0; }
-  to { transform: translateY(0); opacity: 1; }
+  from {
+    transform: translateY(-20px);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
 }
 
 @keyframes scaleIn {
-  from { transform: scale(0.9); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
 }
 
 @keyframes heartbeat {
-  0%, 100% { transform: scale(1); }
-  25% { transform: scale(1.1); }
-  50% { transform: scale(1); }
-  75% { transform: scale(1.1); }
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  25% {
+    transform: scale(1.1);
+  }
+  50% {
+    transform: scale(1);
+  }
+  75% {
+    transform: scale(1.1);
+  }
 }
 
 @keyframes ripple {
-  0% { transform: scale(0); opacity: 1; }
-  100% { transform: scale(4); opacity: 0; }
+  0% {
+    transform: scale(0);
+    opacity: 1;
+  }
+  100% {
+    transform: scale(4);
+    opacity: 0;
+  }
 }
 
 @keyframes checkmark {
-  0% { stroke-dashoffset: 100; }
-  100% { stroke-dashoffset: 0; }
+  0% {
+    stroke-dashoffset: 100;
+  }
+  100% {
+    stroke-dashoffset: 0;
+  }
 }
 
 @keyframes skeleton {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 @layer utilities {
   /* PHASE 3.3: Micro-Interaction Utilities */
-  
+
   /* === Animation Classes === */
   .animate-spin {
     animation: spin 1s linear infinite;
-  
+  }
 
-}
-  
   .animate-bounce {
     animation: bounce 1s ease-in-out infinite;
   }
-  
+
   .animate-shake {
     animation: shake 0.5s ease-in-out;
   }
-  
+
   .animate-success {
     animation: successPop 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
-  
+
   .animate-slide-in-right {
     animation: slideInRight 0.3s ease-out;
   }
-  
+
   .animate-slide-in-left {
     animation: slideInLeft 0.3s ease-out;
   }
-  
+
   .animate-slide-in-up {
     animation: slideInUp 0.3s ease-out;
   }
-  
+
   .animate-slide-in-down {
     animation: slideInDown 0.3s ease-out;
   }
-  
+
   .animate-scale-in {
     animation: scaleIn 0.2s ease-out;
   }
-  
+
   .animate-heartbeat {
     animation: heartbeat 1s ease-in-out;
   }
-  
+
   /* === Transition Presets === */
   .transition-fast {
     @apply transition-all duration-150 ease-out;
   }
-  
+
   .transition-normal {
     @apply transition-all duration-200 ease-out;
   }
-  
+
   .transition-slow {
     @apply transition-all duration-500 ease-out;
   }
-  
+
   .transition-bounce {
     transition: all 0.3s cubic-bezier(0.68, -0.55, 0.265, 1.55);
   }
-  
+
   .transition-spring {
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
   }
-  
+
   /* === Hover Effects === */
   .hover-lift {
     @apply transition-transform duration-200;
@@ -520,38 +607,38 @@ html {
   .hover-lift:hover {
     @apply -translate-y-1;
   }
-  
+
   .hover-scale {
     @apply transition-transform duration-200;
   }
   .hover-scale:hover {
     @apply scale-105;
   }
-  
+
   .hover-glow {
     @apply transition-shadow duration-200;
   }
   .hover-glow:hover {
     box-shadow: 0 0 20px rgba(20, 184, 166, 0.4);
   }
-  
+
   .hover-brighten {
     @apply transition-all duration-200;
   }
   .hover-brighten:hover {
     @apply brightness-110;
   }
-  
+
   /* === Focus States === */
   .focus-ring {
     @apply outline-none ring-2 ring-primary-500 ring-offset-2;
   }
-  
+
   .focus-glow {
     @apply outline-none;
     box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.3);
   }
-  
+
   /* === Loading States === */
   .loading-skeleton {
     @apply relative overflow-hidden bg-gray-200;
@@ -559,34 +646,44 @@ html {
     background-size: 200% 100%;
     animation: skeleton 1.5s ease-in-out infinite;
   }
-  
+
   .loading-spinner {
     @apply inline-block h-5 w-5 animate-spin rounded-full border-2 border-current border-t-transparent;
   }
-  
+
   .loading-dots::after {
     content: '';
     animation: dots 1.5s steps(4, end) infinite;
   }
-  
+
   @keyframes dots {
-    0%, 20% { content: ''; }
-    40% { content: '.'; }
-    60% { content: '..'; }
-    80%, 100% { content: '...'; }
+    0%,
+    20% {
+      content: '';
+    }
+    40% {
+      content: '.';
+    }
+    60% {
+      content: '..';
+    }
+    80%,
+    100% {
+      content: '...';
+    }
   }
-  
+
   /* === Success/Error States === */
   .success-flash {
     animation: successPop 0.4s ease-out;
     @apply bg-green-100 text-green-800;
   }
-  
+
   .error-shake {
     animation: shake 0.5s ease-in-out;
     @apply bg-red-100 text-red-800;
   }
-  
+
   /* === Button Press Effect === */
   .press-effect {
     @apply transition-transform duration-100;
@@ -594,30 +691,40 @@ html {
   .press-effect:active {
     @apply scale-95;
   }
-  
+
   /* === Ripple Effect Container === */
   .ripple-container {
     @apply relative overflow-hidden;
   }
-  
+
   .ripple-container::after {
     content: '';
-    @apply absolute inset-0 pointer-events-none;
-    background: radial-gradient(circle, rgba(255,255,255,0.3) 0%, transparent 70%);
+    @apply pointer-events-none absolute inset-0;
+    background: radial-gradient(circle, rgba(255, 255, 255, 0.3) 0%, transparent 70%);
     transform: scale(0);
     opacity: 0;
   }
-  
+
   .ripple-container:active::after {
     animation: ripple 0.6s ease-out;
   }
-  
+
   /* === Stagger Animation Delays === */
-  .stagger-1 { animation-delay: 0.1s; }
-  .stagger-2 { animation-delay: 0.2s; }
-  .stagger-3 { animation-delay: 0.3s; }
-  .stagger-4 { animation-delay: 0.4s; }
-  .stagger-5 { animation-delay: 0.5s; }
+  .stagger-1 {
+    animation-delay: 0.1s;
+  }
+  .stagger-2 {
+    animation-delay: 0.2s;
+  }
+  .stagger-3 {
+    animation-delay: 0.3s;
+  }
+  .stagger-4 {
+    animation-delay: 0.4s;
+  }
+  .stagger-5 {
+    animation-delay: 0.5s;
+  }
 }
 
 /* ===== PHASE 3.4: Accessibility (WCAG 2.1 AA) ===== */
@@ -634,10 +741,8 @@ html {
     clip: rect(0, 0, 0, 0);
     white-space: nowrap;
     border: 0;
-  
+  }
 
-}
-  
   .not-sr-only {
     position: static;
     width: auto;
@@ -648,7 +753,7 @@ html {
     clip: auto;
     white-space: normal;
   }
-  
+
   /* === Focus Visible (Keyboard Only) === */
   .focus-visible-ring:focus {
     outline: none;
@@ -656,7 +761,7 @@ html {
   .focus-visible-ring:focus-visible {
     @apply outline-none ring-2 ring-primary-500 ring-offset-2;
   }
-  
+
   .focus-visible-glow:focus {
     outline: none;
   }
@@ -664,24 +769,23 @@ html {
     @apply outline-none;
     box-shadow: 0 0 0 3px rgba(20, 184, 166, 0.4);
   }
-  
+
   /* High Contrast Focus for Dark Backgrounds */
   .focus-visible-light:focus-visible {
     @apply outline-none ring-2 ring-white ring-offset-2 ring-offset-primary-700;
   }
-  
-  
+
   .skip-link:focus {
     @apply not-sr-only fixed left-4 top-4 z-[9999] rounded-xl bg-primary-600 px-4 py-2 text-white shadow-lg;
   }
-  
+
   /* === Reduced Motion === */
   @media (prefers-reduced-motion: reduce) {
     .motion-safe {
       animation: none !important;
       transition: none !important;
     }
-    
+
     *,
     *::before,
     *::after {
@@ -691,74 +795,74 @@ html {
       scroll-behavior: auto !important;
     }
   }
-  
+
   .motion-reduce {
     animation: none !important;
     transition: none !important;
   }
-  
+
   /* === High Contrast Mode Support === */
   @media (prefers-contrast: high) {
     .contrast-auto {
       forced-color-adjust: auto;
     }
-    
+
     .btn-primary,
     .btn-secondary {
       border: 2px solid currentColor !important;
     }
-    
+
     .card,
     .product-card {
       border: 2px solid currentColor !important;
     }
   }
-  
+
   /* === Touch Target Sizes (44x44px minimum) === */
   .touch-target {
     @apply min-h-[44px] min-w-[44px];
   }
-  
+
   .touch-target-lg {
     @apply min-h-[48px] min-w-[48px];
   }
-  
+
   /* === Interactive Element States === */
   .interactive {
     @apply cursor-pointer select-none;
   }
-  
+
   .interactive:focus-visible {
     @apply outline-none ring-2 ring-primary-500 ring-offset-2;
   }
-  
+
   .interactive:disabled,
-  .interactive[aria-disabled="true"] {
+  .interactive[aria-disabled='true'] {
     @apply cursor-not-allowed opacity-50;
   }
-  
+
   /* === Text Contrast Helpers === */
   .text-high-contrast {
     @apply text-gray-900;
   }
-  
+
   .text-medium-contrast {
     @apply text-gray-700;
   }
-  
+
   .text-low-contrast {
     @apply text-gray-500;
   }
-  
+
   /* On Dark Backgrounds */
   .text-on-dark {
     @apply text-white;
   }
-  
+
   .text-on-dark-muted {
     @apply text-white/80;
   }
-  
+
   /* === Link Accessibility === */
   .link-accessible {
     @apply text-primary-700 underline decoration-1 underline-offset-2 transition-colors;
@@ -769,7 +873,7 @@ html {
   .link-accessible:focus-visible {
     @apply outline-none ring-2 ring-primary-500 ring-offset-2;
   }
-  
+
   /* === Form Accessibility === */
   .input-accessible {
     @apply rounded-xl border-2 border-gray-300 px-4 py-3 transition-all;
@@ -780,55 +884,55 @@ html {
   .input-accessible:invalid {
     @apply border-red-500;
   }
-  .input-accessible[aria-invalid="true"] {
+  .input-accessible[aria-invalid='true'] {
     @apply border-red-500 ring-2 ring-red-500/20;
   }
-  
+
   /* Error Message Styling */
   .error-message {
     @apply mt-1 text-sm text-red-600;
   }
   .error-message::before {
-    content: "⚠ ";
+    content: '⚠ ';
   }
-  
+
   /* === ARIA Live Regions === */
   .live-polite {
     /* For screen readers: announce when idle */
   }
-  
+
   .live-assertive {
     /* For screen readers: announce immediately */
   }
-  
+
   /* === Selection Colors (WCAG Compliant) === */
   ::selection {
     background-color: rgba(20, 184, 166, 0.3);
     color: inherit;
   }
-  
+
   /* === Scrollbar Accessibility === */
   .scrollbar-accessible {
     scrollbar-width: auto;
     scrollbar-color: #0d9488 #f0f0f0;
   }
-  
+
   .scrollbar-accessible::-webkit-scrollbar {
     width: 12px;
     height: 12px;
   }
-  
+
   .scrollbar-accessible::-webkit-scrollbar-track {
     background: #f0f0f0;
     border-radius: 6px;
   }
-  
+
   .scrollbar-accessible::-webkit-scrollbar-thumb {
     background: #0d9488;
     border-radius: 6px;
     border: 2px solid #f0f0f0;
   }
-  
+
   .scrollbar-accessible::-webkit-scrollbar-thumb:hover {
     background: #0f766e;
   }
@@ -845,37 +949,37 @@ html {
   [tabindex]:focus-visible {
     @apply outline-none ring-2 ring-primary-500 ring-offset-2;
   }
-  
+
   /* Ensure sufficient line height for readability */
   body {
     line-height: 1.6;
     -webkit-text-size-adjust: 100%;
     text-size-adjust: 100%;
   }
-  
+
   /* Ensure images have alt text indicator when missing */
   img:not([alt]) {
     outline: 3px dashed red;
   }
-  
+
   /* Ensure links are distinguishable */
   a:not([class]) {
     @apply text-primary-700 underline decoration-1 underline-offset-2;
   }
-  
+
   a:not([class]):hover {
     @apply text-primary-900;
   }
-  
+
   /* Ensure buttons have pointer cursor */
   button,
-  [role="button"] {
+  [role='button'] {
     cursor: pointer;
   }
-  
+
   /* Ensure disabled elements are visually distinct */
   [disabled],
-  [aria-disabled="true"] {
+  [aria-disabled='true'] {
     @apply cursor-not-allowed opacity-50;
   }
 }
@@ -901,7 +1005,61 @@ div.min-h-screen > footer {
   flex-shrink: 0;
 }
 
+/* ===== MOBILE: Bottom Sheet & Touch Animations ===== */
 
+/* Bottom Sheet Slide-up Animation */
+@keyframes slideInFromBottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes slideOutToBottom {
+  from {
+    transform: translateY(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+}
+
+/* Tailwind animate-in utility support */
+.animate-in {
+  animation-duration: 300ms;
+  animation-fill-mode: both;
+}
+
+.slide-in-from-bottom {
+  animation-name: slideInFromBottom;
+}
+
+/* Safe area padding for iOS */
+.safe-area-inset-bottom {
+  padding-bottom: env(safe-area-inset-bottom, 0);
+}
+
+.safe-area-inset-top {
+  padding-top: env(safe-area-inset-top, 0);
+}
+
+/* Prevent overscroll bounce on iOS */
+.overscroll-contain {
+  overscroll-behavior: contain;
+}
+
+/* Touch-friendly targets */
+@layer utilities {
+  .touch-manipulation {
+    touch-action: manipulation;
+  }
+}
 
 /* Skip Links - WCAG 2.1 AA Accessibility */
 .skip-links-container {

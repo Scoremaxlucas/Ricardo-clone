@@ -3,13 +3,16 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { AISearchAssistant } from '@/components/search/AISearchAssistant'
-import { ProductCard } from '@/components/ui/ProductCard'
+import { MobileActiveFilterChips } from '@/components/search/MobileActiveFilterChips'
+import { MobileFilterSheet } from '@/components/search/MobileFilterSheet'
+import { MobileSearchControls } from '@/components/search/MobileSearchControls'
+import { MobileSortSheet } from '@/components/search/MobileSortSheet'
 import { FilterChips } from '@/components/ui/FilterChips'
+import { ProductCard } from '@/components/ui/ProductCard'
 
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
-import { ChevronDown, Filter, Grid3x3, List, Package, Search, X } from 'lucide-react'
-import { Loader2 } from 'lucide-react'
+import { ChevronDown, Filter, Grid3x3, List, Loader2, Package, Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
@@ -34,7 +37,7 @@ interface WatchItem {
 
 function SearchPageContent() {
   const router = useRouter()
-  const searchParams = useSearchParams() // OPTIMIERT: Next.js Hook statt Polling
+  const searchParams = useSearchParams()
   const { t, translateSubcategory } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [watches, setWatches] = useState<WatchItem[]>([])
@@ -47,10 +50,13 @@ function SearchPageContent() {
   const [localMinPrice, setLocalMinPrice] = useState<string>('')
   const [localMaxPrice, setLocalMaxPrice] = useState<string>('')
   const sliderContainerRef = useRef<HTMLDivElement>(null)
-  const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
-  // OPTIMIERT: Parse URL-Parameter direkt aus searchParams
+  // Mobile sheet states
+  const [isFilterSheetOpen, setIsFilterSheetOpen] = useState(false)
+  const [isSortSheetOpen, setIsSortSheetOpen] = useState(false)
+
+  // Parse URL parameters
   const urlParams = searchParams
 
   const query = (urlParams?.get('q') || '').trim()
@@ -66,7 +72,7 @@ function SearchPageContent() {
 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
 
-  // Aktualisiere selectedBrands wenn brand sich ändert
+  // Update selectedBrands when brand changes
   useEffect(() => {
     if (brand) {
       setSelectedBrands([brand])
@@ -75,24 +81,18 @@ function SearchPageContent() {
     }
   }, [brand])
 
-  // Initialisiere lokale Preis-Werte
+  // Initialize local price values
   useEffect(() => {
     setLocalMinPrice(minPrice || '0.05')
     setLocalMaxPrice(maxPrice || '1000000')
   }, [minPrice, maxPrice])
 
-  // Aktualisiere selectedBrands wenn brand sich ändert
-  useEffect(() => {
-    setSelectedBrands(brand ? [brand] : [])
-  }, [brand])
-
-  // OPTIMIERT: Lade Favoriten mit Session-Check
+  // Load favorites
   useEffect(() => {
     const fetchFavorites = async () => {
       try {
-        // Use cached response if available (handled by API cache)
         const response = await fetch('/api/favorites', {
-          cache: 'force-cache', // Use browser cache
+          cache: 'force-cache',
         })
         if (response.ok) {
           const data = await response.json()
@@ -129,12 +129,11 @@ function SearchPageContent() {
     }
   }
 
-  // OPTIMIERT: Debounced Search Function
+  // Search function
   const performSearch = useCallback(async (params: URLSearchParams, signal?: AbortSignal) => {
     setLoading(true)
 
     try {
-      // OPTIMIERT: Verwende die vollständige Such-API mit Synonymen und Fuzzy-Search
       let url = '/api/watches/search'
       const searchParams = new URLSearchParams()
 
@@ -164,50 +163,22 @@ function SearchPageContent() {
         url += '?' + searchParams.toString()
       }
 
-      // OPTIMIERT: AbortController für Cancellation
-      console.log(`🔍 Starting search for: "${q}"`, {
-        url,
-        cat,
-        subcat,
-        min,
-        max,
-        cond,
-        br,
-        auction,
-      })
+      console.log(`🔍 Starting search for: "${q}"`)
       const res = await fetch(url, { signal })
-      if (signal?.aborted) {
-        console.log('❌ Search aborted')
-        return // Request wurde abgebrochen
-      }
+      if (signal?.aborted) return
 
       if (!res.ok) {
-        const errorText = await res.text()
-        console.error(`❌ API error ${res.status}:`, errorText)
         throw new Error(`API error: ${res.status}`)
       }
       const data = await res.json()
-      console.log(`📦 API Response:`, {
-        watchesCount: data.watches?.length,
-        total: data.total,
-        hasError: !!data.error,
-      })
 
       const watchesData = Array.isArray(data.watches) ? data.watches : []
 
-      if (signal?.aborted) {
-        console.log('❌ Search aborted after response')
-        return // Request wurde abgebrochen
-      }
-
-      console.log(`✅ Search for "${q}": Found ${watchesData.length} articles`)
-      if (watchesData.length === 0 && q) {
-        console.warn(`⚠️ No articles found for "${q}". Check filters and database.`)
-      }
+      if (signal?.aborted) return
 
       setWatches(watchesData)
 
-      // OPTIMIERT: Parallele API-Calls für Brand Counts (nicht blockierend)
+      // Load brand counts in background
       const brandCountsParams = new URLSearchParams()
       if (cat) brandCountsParams.append('category', cat)
       if (subcat) brandCountsParams.append('subcategory', subcat)
@@ -218,13 +189,10 @@ function SearchPageContent() {
       if (plz) brandCountsParams.append('postalCode', plz)
       if (q) brandCountsParams.append('q', q)
 
-      // OPTIMIERT: Brand Counts im Hintergrund laden (nicht blockierend)
       fetch(`/api/watches/brand-counts?${brandCountsParams.toString()}`, { signal })
         .then(res => {
           if (signal?.aborted) return
-          if (res.ok) {
-            return res.json()
-          }
+          if (res.ok) return res.json()
         })
         .then(data => {
           if (signal?.aborted) return
@@ -235,7 +203,6 @@ function SearchPageContent() {
         .catch(error => {
           if (!signal?.aborted) {
             console.error('Error loading brand counts:', error)
-            // Fallback: Zähle aus aktuellen Ergebnissen
             const counts: Record<string, number> = {}
             watchesData.forEach((w: WatchItem) => {
               if (w.brand) {
@@ -246,12 +213,11 @@ function SearchPageContent() {
           }
         })
 
-      // Extrahiere verfügbare Marken für Dropdown
+      // Extract available brands
       const brands = Array.from(
         new Set(watchesData.map((w: WatchItem) => w.brand).filter(Boolean))
       ).sort() as string[]
 
-      // OPTIMIERT: Marken synchron setzen (schneller)
       if (cat) {
         const categoryBrands = getBrandsForCategory(cat)
         const allAvailableBrands = Array.from(new Set([...brands, ...categoryBrands])).sort()
@@ -271,22 +237,16 @@ function SearchPageContent() {
     }
   }, [])
 
-  // OPTIMIERT: Sofortige Suche ohne Debounce für bessere UX (wie Ricardo)
+  // Immediate search on params change
   useEffect(() => {
-    // Abbreche vorherige Requests
     if (abortControllerRef.current) {
       abortControllerRef.current.abort()
     }
 
-    // Erstelle neuen AbortController
     const abortController = new AbortController()
     abortControllerRef.current = abortController
 
-    // OPTIMIERT: Sofortige Suche ohne Debounce (wie Ricardo)
-    // Zeige Loading-State sofort für besseres Feedback
     setLoading(true)
-
-    // Starte Suche sofort
     performSearch(searchParams, abortController.signal)
 
     return () => {
@@ -298,7 +258,6 @@ function SearchPageContent() {
     (key: string, value: string) => {
       const params = new URLSearchParams(searchParams.toString())
 
-      // Setze neuen Filter
       if (value && value.trim() !== '') {
         params.set(key, value)
       } else {
@@ -306,7 +265,7 @@ function SearchPageContent() {
       }
 
       const newUrl = `/search?${params.toString()}`
-      router.replace(newUrl) // OPTIMIERT: replace statt push für schnellere Navigation
+      router.replace(newUrl)
     },
     [searchParams, router]
   )
@@ -314,13 +273,13 @@ function SearchPageContent() {
   const applyBrandFilter = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
     if (selectedBrands.length > 0) {
-      params.set('brand', selectedBrands[0]) // Für jetzt nur erste Marke, später können wir mehrere unterstützen
+      params.set('brand', selectedBrands[0])
     } else {
       params.delete('brand')
     }
 
     const newUrl = `/search?${params.toString()}`
-    router.replace(newUrl) // OPTIMIERT: replace statt push
+    router.replace(newUrl)
   }, [selectedBrands, searchParams, router])
 
   const toggleBrand = (brandName: string) => {
@@ -340,14 +299,12 @@ function SearchPageContent() {
   const applyPriceFilter = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
 
-    // Setze minPrice nur wenn es gesetzt ist und nicht der Standardwert
     if (localMinPrice && localMinPrice !== '0.05' && localMinPrice.trim() !== '') {
       params.set('minPrice', localMinPrice)
     } else {
       params.delete('minPrice')
     }
 
-    // Setze maxPrice nur wenn es gesetzt ist und nicht der Standardwert
     if (localMaxPrice && localMaxPrice !== '1000000' && localMaxPrice.trim() !== '') {
       params.set('maxPrice', localMaxPrice)
     } else {
@@ -355,7 +312,7 @@ function SearchPageContent() {
     }
 
     const newUrl = `/search?${params.toString()}`
-    router.replace(newUrl) // OPTIMIERT: replace statt push
+    router.replace(newUrl)
   }, [localMinPrice, localMaxPrice, searchParams, router])
 
   const handleSortChange = useCallback(
@@ -364,12 +321,12 @@ function SearchPageContent() {
       params.set('sortBy', newSort)
 
       const newUrl = `/search?${params.toString()}`
-      router.replace(newUrl) // OPTIMIERT: replace statt push
+      router.replace(newUrl)
     },
     [searchParams, router]
   )
 
-  // Schließe Filter-Dropdowns beim Klick außerhalb
+  // Close filter dropdowns on outside click (desktop only)
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement
@@ -384,18 +341,34 @@ function SearchPageContent() {
     }
   }, [openFilter])
 
-  // OPTIMIERT: Kein mounted-Check mehr nötig, da useSearchParams sofort verfügbar ist
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
-      {/* Aktive Filter als Chips */}
-      <Suspense fallback={null}>
-        <FilterChips />
-      </Suspense>
+
+      {/* Desktop Filter Chips */}
+      <div className="hidden md:block">
+        <Suspense fallback={null}>
+          <FilterChips />
+        </Suspense>
+      </div>
+
+      {/* Mobile Controls - Sticky */}
+      <MobileSearchControls
+        viewMode={viewMode}
+        onViewModeChange={setViewMode}
+        onFilterOpen={() => setIsFilterSheetOpen(true)}
+        onSortOpen={() => setIsSortSheetOpen(true)}
+        resultsCount={watches.length}
+        loading={loading}
+      />
+
+      {/* Mobile Active Filter Chips */}
+      <MobileActiveFilterChips />
+
       <main className="flex-1 pb-8">
-        <div className="mx-auto w-full max-w-[1400px] px-4 py-8">
-          {/* Breadcrumb */}
-          <div className="mb-4 text-sm text-gray-600">
+        <div className="mx-auto w-full max-w-[1400px] px-4 py-4 md:py-8">
+          {/* Breadcrumb - Desktop only */}
+          <div className="mb-4 hidden text-sm text-gray-600 md:block">
             <Link href="/" className="text-primary-600 hover:text-primary-700">
               {t.search.homepage}
             </Link>
@@ -422,9 +395,8 @@ function SearchPageContent() {
             )}
           </div>
 
-
-          {/* Filter Bar */}
-          <div className="mb-6 rounded-lg border border-gray-200 bg-white p-4">
+          {/* Desktop Filter Bar - Hidden on mobile */}
+          <div className="mb-6 hidden rounded-lg border border-gray-200 bg-white p-4 md:block">
             <div className="mb-4 flex items-center gap-2">
               <Filter className="h-5 w-5 text-gray-600" />
               <h3 className="font-semibold text-gray-900">{t.search.filters}</h3>
@@ -450,7 +422,6 @@ function SearchPageContent() {
                     onClick={e => e.stopPropagation()}
                   >
                     <div className="space-y-4">
-                      {/* Preis-Range Slider */}
                       <div className="price-filter-container" ref={sliderContainerRef}>
                         <label className="mb-3 block text-sm font-medium text-gray-700">
                           {t.search.price}: CHF{' '}
@@ -458,10 +429,7 @@ function SearchPageContent() {
                           {parseFloat(localMaxPrice || '1000000').toLocaleString('de-CH')}
                         </label>
                         <div className="relative h-12">
-                          {/* Background Track */}
                           <div className="absolute left-0 right-0 top-5 h-2 rounded-lg bg-gray-200"></div>
-
-                          {/* Visual Range Indicator */}
                           <div
                             className="pointer-events-none absolute top-5 h-2 rounded-lg bg-primary-600"
                             style={{
@@ -469,8 +437,6 @@ function SearchPageContent() {
                               width: `${Math.max(0, ((parseFloat(localMaxPrice || '1000000') - parseFloat(localMinPrice || '0.05')) / 1000000) * 100)}%`,
                             }}
                           />
-
-                          {/* Min Slider - Volle Breite, aber nur Min-Thumb ist klickbar */}
                           <input
                             type="range"
                             min="0.05"
@@ -481,20 +447,6 @@ function SearchPageContent() {
                               const val = e.target.value
                               const minVal = parseFloat(val)
                               const maxVal = parseFloat(localMaxPrice || '1000000')
-                              // Min muss IMMER kleiner als Max sein (mindestens 0.05 Differenz)
-                              // Wenn Min >= Max, setze Min auf (Max - 0.05)
-                              const newMin =
-                                minVal < maxVal
-                                  ? Math.min(minVal, maxVal - 0.05)
-                                  : Math.max(0.05, maxVal - 0.05)
-                              setLocalMinPrice(newMin.toString())
-                            }}
-                            onInput={e => {
-                              const val = (e.target as HTMLInputElement).value
-                              const minVal = parseFloat(val)
-                              const maxVal = parseFloat(localMaxPrice || '1000000')
-                              // Min muss IMMER kleiner als Max sein (mindestens 0.05 Differenz)
-                              // Wenn Min >= Max, setze Min auf (Max - 0.05)
                               const newMin =
                                 minVal < maxVal
                                   ? Math.min(minVal, maxVal - 0.05)
@@ -502,14 +454,9 @@ function SearchPageContent() {
                               setLocalMinPrice(newMin.toString())
                             }}
                             className="absolute top-0 z-20 h-12 w-full cursor-pointer appearance-none bg-transparent"
-                            style={{
-                              WebkitAppearance: 'none',
-                              MozAppearance: 'none',
-                              pointerEvents: 'none',
-                            }}
+                            style={{ pointerEvents: 'none' }}
+                            aria-label="Mindestpreis"
                           />
-
-                          {/* Max Slider - Volle Breite, aber nur Max-Thumb ist klickbar */}
                           <input
                             type="range"
                             min="0.05"
@@ -520,20 +467,6 @@ function SearchPageContent() {
                               const val = e.target.value
                               const minVal = parseFloat(localMinPrice || '0.05')
                               const maxVal = parseFloat(val)
-                              // Max muss IMMER größer als Min sein (mindestens 0.05 Differenz)
-                              // Wenn Max <= Min, setze Max auf (Min + 0.05)
-                              const newMax =
-                                maxVal > minVal
-                                  ? Math.max(maxVal, minVal + 0.05)
-                                  : Math.min(1000000, minVal + 0.05)
-                              setLocalMaxPrice(newMax.toString())
-                            }}
-                            onInput={e => {
-                              const val = (e.target as HTMLInputElement).value
-                              const minVal = parseFloat(localMinPrice || '0.05')
-                              const maxVal = parseFloat(val)
-                              // Max muss IMMER größer als Min sein (mindestens 0.05 Differenz)
-                              // Wenn Max <= Min, setze Max auf (Min + 0.05)
                               const newMax =
                                 maxVal > minVal
                                   ? Math.max(maxVal, minVal + 0.05)
@@ -541,91 +474,29 @@ function SearchPageContent() {
                               setLocalMaxPrice(newMax.toString())
                             }}
                             className="absolute top-0 z-30 h-12 w-full cursor-pointer appearance-none bg-transparent"
-                            style={{
-                              WebkitAppearance: 'none',
-                              MozAppearance: 'none',
-                              pointerEvents: 'none',
-                            }}
+                            style={{ pointerEvents: 'none' }}
+                            aria-label="Maximalpreis"
                           />
                         </div>
-
-                        {/* Slider Thumb Styles */}
                         <style
                           dangerouslySetInnerHTML={{
                             __html: `
-                        .price-filter-container {
-                          position: relative;
-                        }
-                        .price-filter-container input[type="range"] {
-                          pointer-events: none !important;
-                        }
+                        .price-filter-container input[type="range"] { pointer-events: none !important; }
                         .price-filter-container input[type="range"]::-webkit-slider-thumb {
-                          -webkit-appearance: none;
-                          appearance: none;
-                          width: 22px;
-                          height: 22px;
-                          border-radius: 50%;
-                          background: #10b981;
-                          cursor: grab;
-                          border: 3px solid white;
-                          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                          margin-top: -10px;
-                          position: relative;
-                          z-index: 100;
+                          -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
+                          background: #10b981; cursor: grab; border: 3px solid white;
+                          box-shadow: 0 2px 6px rgba(0,0,0,0.3); margin-top: -10px;
                           pointer-events: auto !important;
-                        }
-                        .price-filter-container input[type="range"]::-webkit-slider-thumb:active {
-                          cursor: grabbing;
-                          transform: scale(1.15);
-                          z-index: 200;
                         }
                         .price-filter-container input[type="range"]::-moz-range-thumb {
-                          width: 22px;
-                          height: 22px;
-                          border-radius: 50%;
-                          background: #10b981;
-                          cursor: grab;
-                          border: 3px solid white;
-                          box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                          position: relative;
-                          z-index: 100;
+                          width: 22px; height: 22px; border-radius: 50%; background: #10b981;
+                          cursor: grab; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
                           pointer-events: auto !important;
-                        }
-                        .price-filter-container input[type="range"]::-moz-range-thumb:active {
-                          cursor: grabbing;
-                          transform: scale(1.15);
-                          z-index: 200;
-                        }
-                        .price-filter-container input[type="range"]::-webkit-slider-runnable-track {
-                          background: transparent;
-                          height: 2px;
-                          pointer-events: none;
-                        }
-                        .price-filter-container input[type="range"]::-moz-range-track {
-                          background: transparent;
-                          height: 2px;
-                          pointer-events: none;
-                        }
-                        /* Min Slider - nur linker Thumb sichtbar */
-                        .price-filter-container input[type="range"]:nth-of-type(1)::-webkit-slider-thumb {
-                          z-index: 20;
-                        }
-                        .price-filter-container input[type="range"]:nth-of-type(1)::-webkit-slider-thumb:active {
-                          z-index: 200;
-                        }
-                        /* Max Slider - nur rechter Thumb sichtbar */
-                        .price-filter-container input[type="range"]:nth-of-type(2)::-webkit-slider-thumb {
-                          z-index: 30;
-                        }
-                        .price-filter-container input[type="range"]:nth-of-type(2)::-webkit-slider-thumb:active {
-                          z-index: 200;
                         }
                       `,
                           }}
                         />
                       </div>
-
-                      {/* Input-Felder */}
                       <div className="grid grid-cols-2 gap-3">
                         <div>
                           <label className="mb-1 block text-xs font-medium text-gray-600">
@@ -636,13 +507,7 @@ function SearchPageContent() {
                             min="0.05"
                             step="0.05"
                             value={localMinPrice}
-                            onChange={e => {
-                              const val = e.target.value
-                              setLocalMinPrice(val)
-                              if (val && parseFloat(val) > parseFloat(localMaxPrice || '1000000')) {
-                                setLocalMaxPrice(val)
-                              }
-                            }}
+                            onChange={e => setLocalMinPrice(e.target.value)}
                             className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
                             placeholder="0.05"
                           />
@@ -656,20 +521,12 @@ function SearchPageContent() {
                             min="0.05"
                             step="0.05"
                             value={localMaxPrice}
-                            onChange={e => {
-                              const val = e.target.value
-                              setLocalMaxPrice(val)
-                              if (val && parseFloat(val) < parseFloat(localMinPrice || '0.05')) {
-                                setLocalMinPrice(val)
-                              }
-                            }}
+                            onChange={e => setLocalMaxPrice(e.target.value)}
                             className="w-full rounded-md border border-gray-200 px-3 py-2 text-sm focus:ring-2 focus:ring-primary-500"
                             placeholder="1'000'000"
                           />
                         </div>
                       </div>
-
-                      {/* Button - ändert sich basierend auf Werten */}
                       <button
                         onClick={() => {
                           const hasCustomPrice =
@@ -677,10 +534,8 @@ function SearchPageContent() {
                             (localMaxPrice && localMaxPrice !== '1000000')
                           if (hasCustomPrice) {
                             applyPriceFilter()
-                            setOpenFilter(null)
-                          } else {
-                            setOpenFilter(null)
                           }
+                          setOpenFilter(null)
                         }}
                         className={`w-full rounded-md px-4 py-2 text-sm font-medium transition-colors ${
                           (localMinPrice && localMinPrice !== '0.05') ||
@@ -774,7 +629,6 @@ function SearchPageContent() {
                     className="filter-dropdown absolute left-0 top-full z-50 mt-2 flex max-h-96 w-80 flex-col rounded-lg border border-gray-200 bg-white p-4 shadow-lg"
                     onClick={e => e.stopPropagation()}
                   >
-                    {/* Suchfeld */}
                     <div className="relative mb-3">
                       <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400" />
                       <input
@@ -788,20 +642,18 @@ function SearchPageContent() {
                         <button
                           onClick={() => setBrandSearchQuery('')}
                           className="absolute right-3 top-1/2 -translate-y-1/2 transform text-gray-400 hover:text-gray-600"
+                          aria-label="Suche löschen"
                         >
                           <X className="h-4 w-4" />
                         </button>
                       )}
                     </div>
-
-                    {/* Marken-Liste mit Checkboxen */}
                     <div className="flex-1 space-y-1 overflow-y-auto">
                       {(brandSearchQuery
                         ? (() => {
                             try {
                               return searchBrands(brandSearchQuery, category)
-                            } catch (error) {
-                              console.error('Error searching brands:', error)
+                            } catch {
                               return availableBrands.filter(b =>
                                 b.toLowerCase().includes(brandSearchQuery.toLowerCase())
                               )
@@ -833,14 +685,7 @@ function SearchPageContent() {
                             </label>
                           )
                         })}
-                      {availableBrands.length === 0 && (
-                        <p className="py-4 text-center text-sm text-gray-500">
-                          {t.search.noBrandsFound}
-                        </p>
-                      )}
                     </div>
-
-                    {/* Button */}
                     <button
                       onClick={() => {
                         applyBrandFilter()
@@ -949,7 +794,7 @@ function SearchPageContent() {
                             const params = new URLSearchParams(searchParams.toString())
                             if (e.target.value) params.set('postalCode', e.target.value)
                             else params.delete('postalCode')
-                            router.replace(`/search?${params.toString()}`) // OPTIMIERT: replace statt push
+                            router.replace(`/search?${params.toString()}`)
                           }}
                           className="w-full rounded-md border border-gray-200 px-3 py-2 focus:ring-2 focus:ring-primary-500"
                           placeholder="z.B. 8001"
@@ -969,8 +814,8 @@ function SearchPageContent() {
             </div>
           </div>
 
-          {/* Results Header */}
-          <div className="mb-6 flex items-center justify-between">
+          {/* Desktop Results Header - Hidden on mobile */}
+          <div className="mb-6 hidden items-center justify-between md:flex">
             <div className="flex items-center gap-4">
               <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
                 {loading ? t.search.loading : `${watches.length} ${t.search.results}`}
@@ -1041,17 +886,19 @@ function SearchPageContent() {
                 )}
               </div>
 
-              {/* Ansicht */}
+              {/* View Toggle */}
               <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1">
                 <button
                   onClick={() => setViewMode('grid')}
                   className={`rounded p-2 transition-colors ${viewMode === 'grid' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:bg-gray-100'}`}
+                  aria-label="Rasteransicht"
                 >
                   <Grid3x3 className="h-5 w-5" />
                 </button>
                 <button
                   onClick={() => setViewMode('list')}
                   className={`rounded p-2 transition-colors ${viewMode === 'list' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:bg-gray-100'}`}
+                  aria-label="Listenansicht"
                 >
                   <List className="h-5 w-5" />
                 </button>
@@ -1061,17 +908,27 @@ function SearchPageContent() {
 
           {/* Results */}
           {loading ? (
-            <div className="flex items-center justify-center py-20">
-              <div className="text-center">
-                <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-                <p className="text-gray-600">{t.search.loadingResults}</p>
-              </div>
+            // Loading state - skeleton grid
+            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+              {Array.from({ length: 12 }).map((_, i) => (
+                <div key={i} className="animate-pulse rounded-lg border border-gray-200 bg-white">
+                  <div className="aspect-square bg-gray-200" />
+                  <div className="p-3">
+                    <div className="mb-2 h-4 rounded bg-gray-200" />
+                    <div className="mb-2 h-3 w-2/3 rounded bg-gray-200" />
+                    <div className="h-5 w-1/2 rounded bg-gray-200" />
+                  </div>
+                </div>
+              ))}
             </div>
           ) : watches.length === 0 ? (
-            <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-              <Package className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-              <h2 className="mb-2 text-xl font-semibold text-gray-900">{t.search.noResults}</h2>
-              <p className="mb-6 text-gray-600">
+            // Empty state
+            <div className="rounded-lg border border-gray-200 bg-white p-8 text-center md:p-12">
+              <Package className="mx-auto mb-4 h-12 w-12 text-gray-300 md:h-16 md:w-16" />
+              <h2 className="mb-2 text-lg font-semibold text-gray-900 md:text-xl">
+                {t.search.noResults}
+              </h2>
+              <p className="mb-6 text-sm text-gray-600 md:text-base">
                 {category && subcategory ? (
                   <>
                     {t.search.noCategoryItems}{' '}
@@ -1099,21 +956,21 @@ function SearchPageContent() {
               <div className="flex flex-col justify-center gap-3 sm:flex-row">
                 <Link
                   href="/categories"
-                  className="rounded-lg border-2 border-gray-200 bg-white px-6 py-3 font-medium text-gray-700 hover:bg-gray-50"
+                  className="rounded-lg border-2 border-gray-200 bg-white px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 md:text-base"
                 >
                   {t.search.browseCategories}
                 </Link>
                 <Link
                   href="/sell"
-                  className="rounded-lg bg-primary-600 px-6 py-3 font-medium text-white hover:bg-primary-700"
+                  className="rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-700 md:text-base"
                 >
                   {t.search.sellFirstItem}
                 </Link>
               </div>
             </div>
           ) : viewMode === 'grid' ? (
-            // GRID ANSICHT - Konsistent mit Homepage
-            <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+            // GRID VIEW - Mobile: 2 columns, tight spacing. Desktop: 4-6 columns
+            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
               {watches.map(w => (
                 <ProductCard
                   key={w.id}
@@ -1134,7 +991,7 @@ function SearchPageContent() {
               ))}
             </div>
           ) : (
-            // LIST ANSICHT - Verwende ProductCard mit variant="list"
+            // LIST VIEW
             <div className="space-y-3">
               {watches.map(w => (
                 <ProductCard
@@ -1162,6 +1019,16 @@ function SearchPageContent() {
       </main>
       <Footer />
       <AISearchAssistant />
+
+      {/* Mobile Bottom Sheets */}
+      <MobileFilterSheet
+        isOpen={isFilterSheetOpen}
+        onClose={() => setIsFilterSheetOpen(false)}
+        availableBrands={availableBrands}
+        brandCounts={brandCounts}
+        category={category}
+      />
+      <MobileSortSheet isOpen={isSortSheetOpen} onClose={() => setIsSortSheetOpen(false)} />
     </div>
   )
 }
@@ -1172,10 +1039,6 @@ export default function SearchPage() {
       fallback={
         <div className="flex min-h-screen flex-col bg-gray-50">
           <Header />
-      {/* Aktive Filter als Chips */}
-      <Suspense fallback={null}>
-        <FilterChips />
-      </Suspense>
           <div className="flex flex-1 items-center justify-center">
             <div className="text-center">
               <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
