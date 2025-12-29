@@ -171,7 +171,9 @@ model Watch {
   description              String?
   brand                    String
   model                    String
-  searchText               String              @default("") // Full-text search field combining all searchable content
+  // searchText is temporarily commented out - column doesn't exist in production DB yet
+  // Run migration 20250629_add_search_text_fts to enable full-text search
+  // searchText               String              @default("") // Full-text search field combining all searchable content
   year                     Int?
   condition                String
   material                 String?
@@ -247,7 +249,7 @@ model Watch {
   @@index([articleNumber]) // PERFORMANCE: Für schnelle Artikelnummer-Lookups
   @@index([auctionEnd]) // PERFORMANCE: Für schnelle Auktion-Filterung
   @@index([title, brand]) // PERFORMANCE: Composite Index für kombinierte Suche
-  @@index([searchText]) // PERFORMANCE: Index for full-text search (GIN index added via migration)
+  // @@index([searchText]) // DISABLED: searchText column not in production DB yet
   @@map("watches")
 }
 
