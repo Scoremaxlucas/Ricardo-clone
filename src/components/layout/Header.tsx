@@ -10,16 +10,19 @@
  * 4. Memo für teure Berechnungen
  */
 
-import { Logo } from '@/components/ui/Logo'
-import { UserName } from '@/components/ui/UserName'
+import { DesktopSearchOverlay } from '@/components/search/DesktopSearchOverlay'
 import { HeaderSearch } from '@/components/search/HeaderSearch'
 import { MobileSearchOverlay } from '@/components/search/MobileSearchOverlay'
+import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
+import { Logo } from '@/components/ui/Logo'
+import { Sheet, SheetContent } from '@/components/ui/Sheet'
+import { UserName } from '@/components/ui/UserName'
 import { useLanguage } from '@/contexts/LanguageContext'
 import {
   Bell,
   ChevronDown,
-  Grid3x3,
   Gavel,
+  Grid3x3,
   Heart,
   LogOut,
   Menu,
@@ -36,9 +39,7 @@ import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { memo, useCallback, useEffect, useRef, useState, useTransition } from 'react'
-import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
 import { CategorySidebarNew } from './CategorySidebarNew'
-import { Sheet, SheetContent } from '@/components/ui/Sheet'
 
 // Deferred data types
 interface DeferredData {
@@ -67,6 +68,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
   // === SEARCH STATE ===
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
+  const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false)
   const [isHeroVisible, setIsHeroVisible] = useState(true)
   const isHomepage = pathname === '/'
 
@@ -104,26 +106,40 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
     // Lade alle Daten parallel, aber verzögert
     const loadDeferredData = async () => {
-      const [nicknameRes, adminRes, verifiedRes, favoritesRes, notificationsRes] = await Promise.allSettled([
-        fetch(`/api/user/nickname?userId=${userId}`).then(r => r.json()).catch(() => ({})),
-        fetch(`/api/user/admin-status`).then(r => r.json()).catch(() => ({})),
-        fetch(`/api/user/verified?userId=${userId}`).then(r => r.json()).catch(() => ({})),
-        fetch('/api/favorites').then(r => r.json()).catch(() => ({})),
-        fetch('/api/notifications/unread-count').then(r => r.json()).catch(() => ({})),
-      ])
+      const [nicknameRes, adminRes, verifiedRes, favoritesRes, notificationsRes] =
+        await Promise.allSettled([
+          fetch(`/api/user/nickname?userId=${userId}`)
+            .then(r => r.json())
+            .catch(() => ({})),
+          fetch(`/api/user/admin-status`)
+            .then(r => r.json())
+            .catch(() => ({})),
+          fetch(`/api/user/verified?userId=${userId}`)
+            .then(r => r.json())
+            .catch(() => ({})),
+          fetch('/api/favorites')
+            .then(r => r.json())
+            .catch(() => ({})),
+          fetch('/api/notifications/unread-count')
+            .then(r => r.json())
+            .catch(() => ({})),
+        ])
 
       setDeferredData({
         nickname: nicknameRes.status === 'fulfilled' ? nicknameRes.value.nickname : null,
         isAdmin: adminRes.status === 'fulfilled' ? adminRes.value.isAdmin === true : false,
-        isVerified: verifiedRes.status === 'fulfilled' ? verifiedRes.value.verified === true : false,
-        favoritesCount: favoritesRes.status === 'fulfilled' ? favoritesRes.value.favorites?.length || 0 : 0,
-        unreadNotifications: notificationsRes.status === 'fulfilled' ? notificationsRes.value.count || 0 : 0,
+        isVerified:
+          verifiedRes.status === 'fulfilled' ? verifiedRes.value.verified === true : false,
+        favoritesCount:
+          favoritesRes.status === 'fulfilled' ? favoritesRes.value.favorites?.length || 0 : 0,
+        unreadNotifications:
+          notificationsRes.status === 'fulfilled' ? notificationsRes.value.count || 0 : 0,
       })
     }
 
     // Verzögere um 100ms nach Mount für besseren FCP
     if ('requestIdleCallback' in window) {
-      (window as any).requestIdleCallback(loadDeferredData, { timeout: 1000 })
+      ;(window as any).requestIdleCallback(loadDeferredData, { timeout: 1000 })
     } else {
       setTimeout(loadDeferredData, 100)
     }
@@ -252,19 +268,43 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
     }
   }, [isHomepage])
 
+  // === Keyboard shortcut: Cmd/Ctrl+K opens desktop search ===
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Only on desktop (not mobile), and not when typing in an input
+      if (
+        (e.metaKey || e.ctrlKey) &&
+        e.key === 'k' &&
+        !['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as Element)?.tagName)
+      ) {
+        e.preventDefault()
+        setIsDesktopSearchOpen(true)
+      }
+    }
+
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [])
+
   // === OPTIMIERT: Prefetch bei Hover ===
-  const handlePrefetch = useCallback((href: string) => {
-    if (prefetchedRef.current.has(href)) return
-    prefetchedRef.current.add(href)
-    router.prefetch(href)
-  }, [router])
+  const handlePrefetch = useCallback(
+    (href: string) => {
+      if (prefetchedRef.current.has(href)) return
+      prefetchedRef.current.add(href)
+      router.prefetch(href)
+    },
+    [router]
+  )
 
   // === OPTIMIERT: Schnelle Navigation mit startTransition ===
-  const handleNavigation = useCallback((href: string) => {
-    startTransition(() => {
-      router.push(href)
-    })
-  }, [router])
+  const handleNavigation = useCallback(
+    (href: string) => {
+      startTransition(() => {
+        router.push(href)
+      })
+    },
+    [router]
+  )
 
   // === HELPER FUNCTIONS ===
   const getInitials = (name?: string | null) => {
@@ -277,7 +317,8 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
   const getProfileImage = () => profileImage || session?.user?.image || null
 
-  const displayName = deferredData.nickname || (session?.user as any)?.nickname || session?.user?.name || 'Benutzer'
+  const displayName =
+    deferredData.nickname || (session?.user as any)?.nickname || session?.user?.name || 'Benutzer'
 
   return (
     <header id="navigation" className="sticky top-0 z-50 border-b bg-white shadow-md" tabIndex={-1}>
@@ -304,7 +345,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               title={t.header.sell}
             >
               <Plus className="h-4 w-4" />
-              <span className="hidden xs:inline">Verkaufen</span>
+              <span className="xs:inline hidden">Verkaufen</span>
             </Link>
 
             {/* Notifications */}
@@ -367,7 +408,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
         <div className="hidden md:block">
           {/* ERSTE ZEILE: 3-Zonen Layout (Left / Center / Right) */}
           <div className="flex h-14 w-full items-center gap-2 py-1 lg:gap-4">
-            
             {/* === LEFT ZONE: Logo + Navigation (shrink-0 auf lg+) === */}
             <div className="flex min-w-0 flex-shrink items-center gap-2 lg:flex-shrink-0 lg:gap-3">
               {/* Logo */}
@@ -445,7 +485,9 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 >
                   <Plus className="h-5 w-5 flex-shrink-0" />
                   <span className="hidden text-sm font-semibold lg:inline">{t.header.sell}</span>
-                  <ChevronDown className={`h-3 w-3 flex-shrink-0 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-3 w-3 flex-shrink-0 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`}
+                  />
                 </Link>
 
                 {isSellMenuOpen && (
@@ -480,207 +522,276 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               </div>
             </div>
 
-            {/* === CENTER ZONE: Search (flex-1, kann shrinken, aber clamped) === */}
-            <div className="hidden min-w-0 flex-1 justify-center lg:flex">
-              <div className="w-full max-w-[560px] min-w-0">
-                <HeaderSearch
-                  isHeroVisible={isHeroVisible}
-                  onMobileSearchOpen={() => setIsMobileSearchOpen(true)}
-                />
-              </div>
+            {/* === CENTER ZONE: Search Trigger (centered) === */}
+            <div className="hidden flex-1 justify-center lg:flex">
+              <HeaderSearch
+                onMobileSearchOpen={() => setIsMobileSearchOpen(true)}
+                onDesktopSearchOpen={() => setIsDesktopSearchOpen(true)}
+              />
             </div>
 
             {/* === RIGHT ZONE: User Actions (shrink-0 auf lg+) === */}
             <div className="flex min-w-0 flex-shrink items-center gap-1 lg:flex-shrink-0 lg:gap-2">
-            {/* Notifications */}
-            <Link
-              href="/notifications"
-              prefetch={true}
-              onMouseEnter={() => handlePrefetch('/notifications')}
-              className="relative flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
-              title={t.header.notifications}
-            >
-              <div className="relative">
-                <Bell className="h-5 w-5" />
-                {deferredData.unreadNotifications > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white sm:-right-2 sm:-top-2 sm:h-4 sm:w-4 sm:text-xs">
-                    {deferredData.unreadNotifications > 9 ? '9+' : deferredData.unreadNotifications}
-                  </span>
+              {/* Notifications */}
+              <Link
+                href="/notifications"
+                prefetch={true}
+                onMouseEnter={() => handlePrefetch('/notifications')}
+                className="relative flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
+                title={t.header.notifications}
+              >
+                <div className="relative">
+                  <Bell className="h-5 w-5" />
+                  {deferredData.unreadNotifications > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white sm:-right-2 sm:-top-2 sm:h-4 sm:w-4 sm:text-xs">
+                      {deferredData.unreadNotifications > 9
+                        ? '9+'
+                        : deferredData.unreadNotifications}
+                    </span>
+                  )}
+                </div>
+                <span className="hidden text-sm font-medium sm:inline">
+                  {t.header.notifications}
+                </span>
+              </Link>
+
+              {/* User Menu */}
+              <div className="relative flex items-center space-x-1 sm:space-x-2">
+                {session ? (
+                  <>
+                    {/* Username */}
+                    <div className="mr-0.5 hidden min-w-0 items-center gap-0.5 overflow-hidden text-xs text-gray-700 sm:flex md:mr-1 md:gap-1 md:text-sm">
+                      <span className="hidden lg:inline">{t.header.hello},</span>
+                      <div className="max-w-[35px] truncate sm:max-w-[50px] md:max-w-[65px] lg:max-w-[85px] xl:max-w-[110px]">
+                        <UserName
+                          userId={(session?.user as any)?.id || ''}
+                          userName={displayName}
+                          badgeSize="sm"
+                          className="truncate"
+                        />
+                      </div>
+                    </div>
+
+                    {/* Profile Dropdown */}
+                    <div
+                      className="relative"
+                      onMouseEnter={() => {
+                        setIsLanguageMenuOpen(false)
+                        setIsSellMenuOpen(false)
+                        handleMenuEnter(setIsProfileMenuOpen)
+                        handlePrefetch('/profile')
+                        handlePrefetch('/my-watches')
+                      }}
+                      onMouseLeave={() => handleMenuLeave(setIsProfileMenuOpen)}
+                    >
+                      <button
+                        type="button"
+                        className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 p-1 text-white transition-all duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:px-2 sm:py-1"
+                        title={t.header.profileMenu}
+                      >
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 sm:h-8 sm:w-8">
+                          {getProfileImage() ? (
+                            <img
+                              src={getProfileImage() || undefined}
+                              alt={session.user?.name || t.header.myProfile}
+                              className="h-full w-full rounded-full object-cover"
+                            />
+                          ) : (
+                            <span className="text-[10px] font-semibold sm:text-xs">
+                              {getInitials(session.user?.name)}
+                            </span>
+                          )}
+                        </div>
+                        <ChevronDown
+                          className={`h-3 w-3 transition-transform sm:h-4 sm:w-4 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
+                        />
+                      </button>
+
+                      {isProfileMenuOpen && (
+                        <div
+                          className="absolute right-0 top-full z-[9999] w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg"
+                          style={{ marginTop: '4px', pointerEvents: 'auto' }}
+                        >
+                          <div className="border-b border-gray-100 px-4 py-3">
+                            <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                              <UserName
+                                userId={(session?.user as any)?.id || ''}
+                                userName={displayName}
+                                badgeSize="sm"
+                              />
+                            </p>
+                            <p className="truncate text-sm text-gray-500">{session.user?.email}</p>
+                          </div>
+
+                          <Link
+                            href="/profile"
+                            prefetch={true}
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <User className="mr-2 h-4 w-4" />
+                              {t.header.myProfile}
+                            </div>
+                          </Link>
+                          <Link
+                            href="/my-watches"
+                            prefetch={true}
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <Package className="mr-2 h-4 w-4" />
+                              {t.header.mySelling}
+                            </div>
+                          </Link>
+                          <Link
+                            href="/my-watches/buying"
+                            prefetch={true}
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <ShoppingBag className="mr-2 h-4 w-4" />
+                              {t.header.myBuying}
+                            </div>
+                          </Link>
+                          <Link
+                            href="/my-watches/account"
+                            prefetch={true}
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <Settings className="mr-2 h-4 w-4" />
+                              {t.header.settings}
+                            </div>
+                          </Link>
+
+                          <div className="my-1 border-t border-gray-100" />
+
+                          <Link
+                            href="/my-watches/selling/fees"
+                            prefetch={true}
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <Wallet className="mr-2 h-4 w-4" />
+                              {t.header.feesAndInvoices}
+                            </div>
+                          </Link>
+                          <Link
+                            href="/my-watches/selling/cancel-request"
+                            prefetch={true}
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                          >
+                            <div className="flex items-center">
+                              <X className="mr-2 h-4 w-4" />
+                              {t.header.cancel}
+                            </div>
+                          </Link>
+
+                          {(deferredData.isAdmin || (session.user as any)?.isAdmin) && (
+                            <>
+                              <div className="my-1 border-t border-gray-100" />
+                              <Link
+                                href="/admin/dashboard"
+                                prefetch={true}
+                                onClick={() => setIsProfileMenuOpen(false)}
+                                className="block px-4 py-2 text-sm font-semibold text-primary-600 transition-colors hover:bg-gray-50 hover:text-primary-700"
+                              >
+                                <div className="flex items-center">
+                                  <Shield className="mr-2 h-4 w-4" />
+                                  {t.header.adminDashboard}
+                                </div>
+                              </Link>
+                            </>
+                          )}
+
+                          <div className="my-1 border-t border-gray-200" />
+                          <button
+                            onClick={async () => {
+                              setIsProfileMenuOpen(false)
+                              await signOut({ callbackUrl: '/' })
+                            }}
+                            className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                          >
+                            <div className="flex items-center">
+                              <LogOut className="mr-2 h-4 w-4" />
+                              {t.header.logout}
+                            </div>
+                          </button>
+                        </div>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <Link
+                    href="/login"
+                    prefetch={true}
+                    onMouseEnter={() => handlePrefetch('/login')}
+                    className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
+                    title={t.header.login}
+                  >
+                    <User className="h-5 w-5" />
+                    <span className="hidden text-sm font-medium sm:inline">{t.header.login}</span>
+                  </Link>
                 )}
               </div>
-              <span className="hidden text-sm font-medium sm:inline">{t.header.notifications}</span>
-            </Link>
 
-            {/* User Menu */}
-            <div className="relative flex items-center space-x-1 sm:space-x-2">
-              {session ? (
-                <>
-                  {/* Username */}
-                  <div className="mr-0.5 hidden min-w-0 items-center gap-0.5 overflow-hidden text-xs text-gray-700 sm:flex md:mr-1 md:gap-1 md:text-sm">
-                    <span className="hidden lg:inline">{t.header.hello},</span>
-                    <div className="max-w-[35px] truncate sm:max-w-[50px] md:max-w-[65px] lg:max-w-[85px] xl:max-w-[110px]">
-                      <UserName
-                        userId={(session?.user as any)?.id || ''}
-                        userName={displayName}
-                        badgeSize="sm"
-                        className="truncate"
-                      />
-                    </div>
-                  </div>
-
-                  {/* Profile Dropdown */}
-                  <div
-                    className="relative"
-                    onMouseEnter={() => {
-                      setIsLanguageMenuOpen(false)
-                      setIsSellMenuOpen(false)
-                      handleMenuEnter(setIsProfileMenuOpen)
-                      handlePrefetch('/profile')
-                      handlePrefetch('/my-watches')
-                    }}
-                    onMouseLeave={() => handleMenuLeave(setIsProfileMenuOpen)}
-                  >
-                    <button
-                      type="button"
-                      className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 p-1 text-white transition-all duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:px-2 sm:py-1"
-                      title={t.header.profileMenu}
-                    >
-                      <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 sm:h-8 sm:w-8">
-                        {getProfileImage() ? (
-                          <img
-                            src={getProfileImage() || undefined}
-                            alt={session.user?.name || t.header.myProfile}
-                            className="h-full w-full rounded-full object-cover"
-                          />
-                        ) : (
-                          <span className="text-[10px] font-semibold sm:text-xs">
-                            {getInitials(session.user?.name)}
-                          </span>
-                        )}
-                      </div>
-                      <ChevronDown className={`h-3 w-3 transition-transform sm:h-4 sm:w-4 ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
-                    </button>
-
-                    {isProfileMenuOpen && (
-                      <div
-                        className="absolute right-0 top-full z-[9999] w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg"
-                        style={{ marginTop: '4px', pointerEvents: 'auto' }}
-                      >
-                        <div className="border-b border-gray-100 px-4 py-3">
-                          <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
-                            <UserName
-                              userId={(session?.user as any)?.id || ''}
-                              userName={displayName}
-                              badgeSize="sm"
-                            />
-                          </p>
-                          <p className="truncate text-sm text-gray-500">{session.user?.email}</p>
-                        </div>
-
-                        <Link href="/profile" prefetch={true} onClick={() => setIsProfileMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600">
-                          <div className="flex items-center"><User className="mr-2 h-4 w-4" />{t.header.myProfile}</div>
-                        </Link>
-                        <Link href="/my-watches" prefetch={true} onClick={() => setIsProfileMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600">
-                          <div className="flex items-center"><Package className="mr-2 h-4 w-4" />{t.header.mySelling}</div>
-                        </Link>
-                        <Link href="/my-watches/buying" prefetch={true} onClick={() => setIsProfileMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600">
-                          <div className="flex items-center"><ShoppingBag className="mr-2 h-4 w-4" />{t.header.myBuying}</div>
-                        </Link>
-                        <Link href="/my-watches/account" prefetch={true} onClick={() => setIsProfileMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600">
-                          <div className="flex items-center"><Settings className="mr-2 h-4 w-4" />{t.header.settings}</div>
-                        </Link>
-
-                        <div className="my-1 border-t border-gray-100" />
-
-                        <Link href="/my-watches/selling/fees" prefetch={true} onClick={() => setIsProfileMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600">
-                          <div className="flex items-center"><Wallet className="mr-2 h-4 w-4" />{t.header.feesAndInvoices}</div>
-                        </Link>
-                        <Link href="/my-watches/selling/cancel-request" prefetch={true} onClick={() => setIsProfileMenuOpen(false)} className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600">
-                          <div className="flex items-center"><X className="mr-2 h-4 w-4" />{t.header.cancel}</div>
-                        </Link>
-
-                        {(deferredData.isAdmin || (session.user as any)?.isAdmin) && (
-                          <>
-                            <div className="my-1 border-t border-gray-100" />
-                            <Link href="/admin/dashboard" prefetch={true} onClick={() => setIsProfileMenuOpen(false)} className="block px-4 py-2 text-sm font-semibold text-primary-600 transition-colors hover:bg-gray-50 hover:text-primary-700">
-                              <div className="flex items-center"><Shield className="mr-2 h-4 w-4" />{t.header.adminDashboard}</div>
-                            </Link>
-                          </>
-                        )}
-
-                        <div className="my-1 border-t border-gray-200" />
-                        <button
-                          onClick={async () => {
-                            setIsProfileMenuOpen(false)
-                            await signOut({ callbackUrl: '/' })
-                          }}
-                          className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
-                        >
-                          <div className="flex items-center"><LogOut className="mr-2 h-4 w-4" />{t.header.logout}</div>
-                        </button>
-                      </div>
-                    )}
-                  </div>
-                </>
-              ) : (
-                <Link
-                  href="/login"
-                  prefetch={true}
-                  onMouseEnter={() => handlePrefetch('/login')}
-                  className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
-                  title={t.header.login}
-                >
-                  <User className="h-5 w-5" />
-                  <span className="hidden text-sm font-medium sm:inline">{t.header.login}</span>
-                </Link>
-              )}
-            </div>
-
-            {/* Language Selector */}
-            <div
-              className="relative flex-shrink-0"
-              onMouseEnter={() => {
-                setIsProfileMenuOpen(false)
-                setIsSellMenuOpen(false)
-                handleMenuEnter(setIsLanguageMenuOpen)
-              }}
-              onMouseLeave={() => handleMenuLeave(setIsLanguageMenuOpen)}
-            >
-              <button
-                type="button"
-                className="flex items-center justify-center rounded-md p-1.5 text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-primary-600"
-                title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
+              {/* Language Selector */}
+              <div
+                className="relative flex-shrink-0"
+                onMouseEnter={() => {
+                  setIsProfileMenuOpen(false)
+                  setIsSellMenuOpen(false)
+                  handleMenuEnter(setIsLanguageMenuOpen)
+                }}
+                onMouseLeave={() => handleMenuLeave(setIsLanguageMenuOpen)}
               >
-                <span className="text-base">{languages.find(l => l.code === language)?.flag}</span>
-                <ChevronDown className={`ml-0.5 h-3 w-3 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`} />
-              </button>
-
-              {isLanguageMenuOpen && (
-                <div
-                  className="absolute left-0 top-full z-[10000] w-36 rounded-md border border-gray-200 bg-white py-0.5 shadow-lg"
-                  style={{ marginTop: '4px', pointerEvents: 'auto' }}
+                <button
+                  type="button"
+                  className="flex items-center justify-center rounded-md p-1.5 text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-primary-600"
+                  title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
                 >
-                  {languages.map(lang => (
-                    <button
-                      key={lang.code}
-                      onClick={() => {
-                        setLanguage(lang.code)
-                        setIsLanguageMenuOpen(false)
-                      }}
-                      className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-gray-50 ${
-                        language === lang.code
-                          ? 'bg-primary-50 font-medium text-primary-600'
-                          : 'text-gray-700 hover:text-primary-600'
-                      }`}
-                    >
-                      <span className="text-base">{lang.flag}</span>
-                      <span className="flex-1">{lang.name}</span>
-                      {language === lang.code && <span className="text-primary-600 text-xs">✓</span>}
-                    </button>
-                  ))}
-                </div>
-              )}
-            </div>
+                  <span className="text-base">
+                    {languages.find(l => l.code === language)?.flag}
+                  </span>
+                  <ChevronDown
+                    className={`ml-0.5 h-3 w-3 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`}
+                  />
+                </button>
+
+                {isLanguageMenuOpen && (
+                  <div
+                    className="absolute left-0 top-full z-[10000] w-36 rounded-md border border-gray-200 bg-white py-0.5 shadow-lg"
+                    style={{ marginTop: '4px', pointerEvents: 'auto' }}
+                  >
+                    {languages.map(lang => (
+                      <button
+                        key={lang.code}
+                        onClick={() => {
+                          setLanguage(lang.code)
+                          setIsLanguageMenuOpen(false)
+                        }}
+                        className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-gray-50 ${
+                          language === lang.code
+                            ? 'bg-primary-50 font-medium text-primary-600'
+                            : 'text-gray-700 hover:text-primary-600'
+                        }`}
+                      >
+                        <span className="text-base">{lang.flag}</span>
+                        <span className="flex-1">{lang.name}</span>
+                        {language === lang.code && (
+                          <span className="text-xs text-primary-600">✓</span>
+                        )}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>
@@ -829,10 +940,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               <Package className="h-5 w-5" />
               <span>{t.header.mySelling}</span>
             </Link>
-            <button
-              onClick={() => setIsProfileMenuOpen(false)}
-              className="w-full text-left"
-            >
+            <button onClick={() => setIsProfileMenuOpen(false)} className="w-full text-left">
               <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100">
                 <X className="h-5 w-5" />
                 <span>Schließen</span>
@@ -853,6 +961,10 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
       <MobileSearchOverlay
         isOpen={isMobileSearchOpen}
         onClose={() => setIsMobileSearchOpen(false)}
+      />
+      <DesktopSearchOverlay
+        isOpen={isDesktopSearchOpen}
+        onClose={() => setIsDesktopSearchOpen(false)}
       />
     </header>
   )
