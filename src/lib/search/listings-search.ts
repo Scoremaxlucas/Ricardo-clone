@@ -166,7 +166,8 @@ async function executeSearchQuery(params: {
         WHERE wc."watchId" = w.id 
         AND (lower(c.slug) = lower($${paramIndex}) OR lower(c.name) = lower($${paramIndex}))
       )
-      OR lower(w."searchText") LIKE '%' || lower($${paramIndex}) || '%'
+      OR lower(w.title) LIKE '%' || lower($${paramIndex}) || '%'
+      OR lower(w.brand) LIKE '%' || lower($${paramIndex}) || '%'
     )`)
     parameters.push(filters.category)
     paramIndex++
@@ -235,15 +236,17 @@ async function executeSearchQuery(params: {
 
   // Build the main search condition with FTS and Trigram
   // This is the core of the semantic search
+  // Note: searchText column not yet deployed, using CONCAT of title, brand, model, description
+  const searchableText = `CONCAT(coalesce(w.title, ''), ' ', coalesce(w.brand, ''), ' ', coalesce(w.model, ''), ' ', coalesce(w.description, ''))`
   const searchCondition = `(
     -- Full-text search match
-    to_tsvector('german', unaccent(coalesce(w."searchText", ''))) @@ 
+    to_tsvector('german', unaccent(${searchableText})) @@ 
     websearch_to_tsquery('german', unaccent($${ftsQueryParamIndex}))
     
     OR
     
     -- Trigram similarity match (for typos)
-    similarity(unaccent(lower(coalesce(w."searchText", ''))), unaccent(lower($${plainQueryParamIndex}))) > 0.15
+    similarity(unaccent(lower(${searchableText})), unaccent(lower($${plainQueryParamIndex}))) > 0.15
     
     OR
     
@@ -262,13 +265,13 @@ async function executeSearchQuery(params: {
   const scoreExpression = `(
     -- FTS rank (weighted heavily)
     COALESCE(ts_rank_cd(
-      to_tsvector('german', unaccent(coalesce(w."searchText", ''))),
+      to_tsvector('german', unaccent(${searchableText})),
       websearch_to_tsquery('german', unaccent($${ftsQueryParamIndex}))
     ), 0) * 10.0
     +
     -- Trigram similarity
     COALESCE(similarity(
-      unaccent(lower(coalesce(w."searchText", ''))),
+      unaccent(lower(${searchableText})),
       unaccent(lower($${plainQueryParamIndex}))
     ), 0) * 2.0
     +
@@ -343,11 +346,11 @@ async function executeSearchQuery(params: {
       w."sellerId",
       ${scoreExpression} as score,
       ts_rank_cd(
-        to_tsvector('german', unaccent(coalesce(w."searchText", ''))),
+        to_tsvector('german', unaccent(${searchableText})),
         websearch_to_tsquery('german', unaccent($${ftsQueryParamIndex}))
       ) as fts_rank,
       similarity(
-        unaccent(lower(coalesce(w."searchText", ''))),
+        unaccent(lower(${searchableText})),
         unaccent(lower($${plainQueryParamIndex}))
       ) as trigram_sim
     FROM watches w
@@ -646,7 +649,7 @@ export async function getBrandCounts(
           { title: { contains: t, mode: 'insensitive' } },
           { brand: { contains: t, mode: 'insensitive' } },
           { model: { contains: t, mode: 'insensitive' } },
-          { searchText: { contains: t, mode: 'insensitive' } },
+          { description: { contains: t, mode: 'insensitive' } },
         ],
       })),
     })
