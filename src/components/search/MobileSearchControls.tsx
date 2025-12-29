@@ -65,33 +65,37 @@ export function MobileSearchControls({
         <span className="flex items-center gap-2 font-medium text-gray-900">
           {loading ? (
             <span className="text-gray-500">{t.search.loading}</span>
-          ) : (() => {
-            const query = searchParams?.get('q') || ''
-            if (query) {
-              return (
-                <>
-                  {resultsCount} {resultsCount === 1 ? 'Ergebnis' : 'Ergebnisse'} für{' '}
-                  <span className="flex items-center gap-1.5 text-primary-600">
-                    &quot;{query}&quot;
-                    <button
-                      type="button"
-                      onClick={() => {
-                        const params = new URLSearchParams(searchParams.toString())
-                        params.delete('q')
-                        router.push(`/categories${params.toString() ? `?${params.toString()}` : ''}`)
-                      }}
-                      className="flex h-5 w-5 items-center justify-center rounded-full border border-primary-300 bg-white text-primary-600 transition-colors hover:bg-primary-50 hover:border-primary-400"
-                      aria-label="Suche löschen und zu Alle Kategorien"
-                      title="Suche löschen"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
-                  </span>
-                </>
-              )
-            }
-            return `${resultsCount} ${resultsCount === 1 ? 'Resultat' : 'Resultate'}`
-          })()}
+          ) : (
+            (() => {
+              const query = searchParams?.get('q') || ''
+              if (query) {
+                return (
+                  <>
+                    {resultsCount} {resultsCount === 1 ? 'Ergebnis' : 'Ergebnisse'} für{' '}
+                    <span className="flex items-center gap-1.5 text-primary-600">
+                      &quot;{query}&quot;
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const params = new URLSearchParams(searchParams.toString())
+                          params.delete('q')
+                          router.push(
+                            `/categories${params.toString() ? `?${params.toString()}` : ''}`
+                          )
+                        }}
+                        className="flex h-5 w-5 items-center justify-center rounded-full border border-primary-300 bg-white text-primary-600 transition-colors hover:border-primary-400 hover:bg-primary-50"
+                        aria-label="Suche löschen und zu Alle Kategorien"
+                        title="Suche löschen"
+                      >
+                        <X className="h-3 w-3" />
+                      </button>
+                    </span>
+                  </>
+                )
+              }
+              return `${resultsCount} ${resultsCount === 1 ? 'Resultat' : 'Resultate'}`
+            })()
+          )}
         </span>
       </div>
 

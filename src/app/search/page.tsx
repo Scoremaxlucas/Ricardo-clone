@@ -830,9 +830,11 @@ function SearchPageContent() {
                         onClick={() => {
                           const params = new URLSearchParams(searchParams.toString())
                           params.delete('q')
-                          router.push(`/categories${params.toString() ? `?${params.toString()}` : ''}`)
+                          router.push(
+                            `/categories${params.toString() ? `?${params.toString()}` : ''}`
+                          )
                         }}
-                        className="flex h-6 w-6 items-center justify-center rounded-full border border-primary-300 bg-white text-primary-600 transition-colors hover:bg-primary-50 hover:border-primary-400"
+                        className="flex h-6 w-6 items-center justify-center rounded-full border border-primary-300 bg-white text-primary-600 transition-colors hover:border-primary-400 hover:bg-primary-50"
                         aria-label="Suche löschen und zu Alle Kategorien"
                         title="Suche löschen"
                       >
