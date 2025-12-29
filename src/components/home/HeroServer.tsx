@@ -6,7 +6,7 @@
  * - Besseres SEO (Text ist sofort im HTML)
  * - Reduziertes JavaScript Bundle
  *
- * Client-Components (Search, CategoryLinks) werden separat geladen.
+ * Search ist jetzt im Header (Ricardo-Style) - Hero zeigt nur Branding.
  */
 
 import { TrustMiniBullets } from './TrustMiniBullets'
@@ -14,18 +14,16 @@ import { TrustMiniBullets } from './TrustMiniBullets'
 interface HeroServerProps {
   title?: string
   subtitle?: string
-  children?: React.ReactNode // Für Search Component
 }
 
 export function HeroServer({
   title = 'Finden Sie lokale Deals in der Schweiz',
   subtitle = 'Tausende Artikel von Verkäufern in Ihrer Nähe',
-  children,
 }: HeroServerProps) {
   return (
     <section
       id="home-hero"
-      className="relative py-8 text-white md:py-12"
+      className="relative py-6 text-white md:py-8"
       style={{
         background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #10b981 100%)',
       }}
@@ -41,17 +39,14 @@ export function HeroServer({
       />
 
       <div className="relative z-10 mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
-        {/* Single-Column Layout: Search-focused */}
-        <div className="mx-auto max-w-3xl">
+        <div className="mx-auto max-w-3xl text-center">
           {/* LCP-OPTIMIERT: H1 ist sofort im HTML, kein JavaScript nötig */}
-          <h1 className="mb-3 text-center text-3xl font-bold text-white md:mb-4 md:text-4xl lg:text-5xl">
+          <h1 className="mb-2 text-2xl font-bold text-white md:mb-3 md:text-3xl lg:text-4xl">
             {title}
           </h1>
-          <p className="mb-6 text-center text-base text-white/90 md:mb-8 md:text-lg">{subtitle}</p>
-          {/* Slot für Client Component (Search) - Large, dominant */}
-          <div className="relative z-50 mx-auto mb-3 max-w-3xl">{children}</div>
+          <p className="mb-4 text-sm text-white/90 md:text-base">{subtitle}</p>
 
-          {/* Trust Mini-Bullets - Under search bar */}
+          {/* Trust Mini-Bullets */}
           <TrustMiniBullets variant="hero" />
         </div>
       </div>

@@ -355,76 +355,20 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
           </div>
         </div>
 
-        {/* DESKTOP HEADER - CSS Grid für stabile 3-Zonen Aufteilung */}
+        {/* DESKTOP HEADER - Ricardo-Style zweizeiliges Layout */}
         <div className="hidden md:block">
-          {/*
-            Desktop Grid Layout:
-            - Left: auto (Logo + Nav, kann nicht schrumpfen)
-            - Center: 1fr (Search, nimmt verfügbaren Platz, aber mit min/max)
-            - Right: auto (Actions, kann nicht schrumpfen)
-          */}
-          <div className="grid h-14 w-full grid-cols-[auto_1fr_auto] items-center gap-3 py-1 lg:gap-4 xl:gap-6">
-            {/* === LEFT ZONE: Logo + Navigation (flex-none = kann nie schrumpfen) === */}
-            <div className="flex flex-none items-center gap-1 lg:gap-1.5 xl:gap-2">
-              {/* Logo */}
-              <Link href="/" prefetch={true} className="flex-none">
-                <Logo size="md" />
-              </Link>
+          {/* === ROW 1: Logo + Navigation + User Actions === */}
+          <div className="flex h-12 items-center justify-between border-b border-gray-100">
+            {/* Left: Logo */}
+            <Link href="/" prefetch={true} className="flex-none">
+              <Logo size="md" />
+            </Link>
 
-              {/* Kategorien Button */}
-              <button
-                onClick={() => setIsSidebarOpen(true)}
-                className="flex flex-none items-center gap-1 whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-gray-700 transition-all duration-200 hover:border-primary-200 hover:bg-gray-100 hover:text-primary-600 xl:gap-1.5 xl:px-2.5"
-                title="Kategorien"
-              >
-                <Grid3x3 className="h-5 w-5 flex-none" />
-                <span className="hidden text-sm font-semibold xl:inline">Kategorien</span>
-                <ChevronDown className="hidden h-3 w-3 flex-none xl:inline" />
-              </button>
-
-              {/* Favoriten */}
-              {session ? (
-                <Link
-                  href="/favorites"
-                  prefetch={true}
-                  onMouseEnter={() => handlePrefetch('/favorites')}
-                  className="relative flex flex-none items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100"
-                  title={t.header.favorites}
-                >
-                  <Heart className="h-5 w-5 flex-none" />
-                  <span className="hidden text-sm font-normal 2xl:inline">{t.header.favorites}</span>
-                  {deferredData.favoritesCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
-                      {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
-                    </span>
-                  )}
-                </Link>
-              ) : (
-                <button
-                  onClick={() => setIsLoginModalOpen(true)}
-                  className="flex flex-none items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100"
-                  title={t.header.favorites}
-                >
-                  <Heart className="h-5 w-5 flex-none" />
-                  <span className="hidden text-sm font-normal 2xl:inline">{t.header.favorites}</span>
-                </button>
-              )}
-
-              {/* Auktionen - ab xl sichtbar */}
-              <Link
-                href="/auctions"
-                prefetch={true}
-                onMouseEnter={() => handlePrefetch('/auctions')}
-                className="hidden flex-none items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100 xl:flex"
-                title={t.header.auctions}
-              >
-                <Gavel className="h-5 w-5 flex-none" />
-                <span className="text-sm font-normal">{t.header.auctions}</span>
-              </Link>
-
+            {/* Right: Navigation + User Actions */}
+            <div className="flex items-center gap-1 lg:gap-2">
               {/* Verkaufen Dropdown */}
               <div
-                className="relative z-50 flex-none"
+                className="relative z-50"
                 onMouseEnter={() => {
                   setIsLanguageMenuOpen(false)
                   setIsProfileMenuOpen(false)
@@ -436,13 +380,13 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 <Link
                   href="/sell"
                   prefetch={true}
-                  className="flex items-center gap-1 whitespace-nowrap rounded-lg bg-primary-600 px-2.5 py-1.5 text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow-md xl:gap-1.5 xl:px-3"
+                  className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.sell}
                 >
-                  <Plus className="h-5 w-5 flex-none" />
-                  <span className="hidden text-sm font-semibold xl:inline">{t.header.sell}</span>
+                  <Plus className="h-4 w-4" />
+                  <span className="text-sm font-medium">Angebot erstellen</span>
                   <ChevronDown
-                    className={`hidden h-3 w-3 flex-none transition-transform xl:block ${isSellMenuOpen ? 'rotate-180' : ''}`}
+                    className={`h-3 w-3 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`}
                   />
                 </Link>
 
@@ -476,227 +420,222 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   </>
                 )}
               </div>
-            </div>
 
-            {/* === CENTER ZONE: Ricardo-Style Inline Searchbar === */}
-            <div className="flex min-w-0 flex-1 items-center justify-center px-2 lg:px-4">
-              <HeaderSearch
-                className="w-full max-w-xl"
-                placeholder="Suchen Sie nach Produkten, Marken, Kategorien..."
-              />
-            </div>
+              {/* Favoriten */}
+              {session ? (
+                <Link
+                  href="/favorites"
+                  prefetch={true}
+                  onMouseEnter={() => handlePrefetch('/favorites')}
+                  className="relative flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                  title={t.header.favorites}
+                >
+                  <Heart className="h-4 w-4" />
+                  <span className="text-sm font-medium">{t.header.favorites}</span>
+                  {deferredData.favoritesCount > 0 && (
+                    <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                  title={t.header.favorites}
+                >
+                  <Heart className="h-4 w-4" />
+                  <span className="text-sm font-medium">{t.header.favorites}</span>
+                </button>
+              )}
 
-            {/* === RIGHT ZONE: User Actions (flex-none = kann nie schrumpfen) === */}
-            <div className="flex flex-none items-center gap-0.5 lg:gap-1 xl:gap-1.5">
-              {/* Notifications - icon only, no label to save space */}
+              {/* Notifications */}
               <Link
                 href="/notifications"
                 prefetch={true}
                 onMouseEnter={() => handlePrefetch('/notifications')}
-                className="relative flex flex-none items-center justify-center rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                className="relative flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                 title={t.header.notifications}
               >
-                <div className="relative flex-none">
-                  <Bell className="h-5 w-5" />
-                  {deferredData.unreadNotifications > 0 && (
-                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
-                      {deferredData.unreadNotifications > 9
-                        ? '9+'
-                        : deferredData.unreadNotifications}
-                    </span>
-                  )}
-                </div>
+                <Bell className="h-4 w-4" />
+                <span className="hidden text-sm font-medium lg:inline">Benachrichtigungen</span>
+                {deferredData.unreadNotifications > 0 && (
+                  <span className="flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                    {deferredData.unreadNotifications > 9 ? '9+' : deferredData.unreadNotifications}
+                  </span>
+                )}
               </Link>
 
               {/* User Menu */}
-              <div className="relative flex flex-none items-center gap-0.5 xl:gap-1">
-                {session ? (
-                  <>
-                    {/* Username - only on 2xl+ to save space */}
-                    <div className="mr-0.5 hidden items-center gap-0.5 text-sm text-gray-700 2xl:flex">
-                      <span>{t.header.hello},</span>
-                      <div className="max-w-[90px] truncate">
-                        <UserName
-                          userId={(session?.user as any)?.id || ''}
-                          userName={displayName}
-                          badgeSize="sm"
-                          className="truncate"
+              {session ? (
+                <div
+                  className="relative"
+                  onMouseEnter={() => {
+                    setIsLanguageMenuOpen(false)
+                    setIsSellMenuOpen(false)
+                    handleMenuEnter(setIsProfileMenuOpen)
+                    handlePrefetch('/profile')
+                    handlePrefetch('/my-watches')
+                  }}
+                  onMouseLeave={() => handleMenuLeave(setIsProfileMenuOpen)}
+                >
+                  <button
+                    type="button"
+                    className="flex items-center gap-1.5 rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100"
+                    title={t.header.profileMenu}
+                  >
+                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-600 text-white">
+                      {getProfileImage() ? (
+                        <img
+                          src={getProfileImage() || undefined}
+                          alt={session.user?.name || t.header.myProfile}
+                          className="h-full w-full rounded-full object-cover"
                         />
-                      </div>
-                    </div>
-
-                    {/* Profile Dropdown */}
-                    <div
-                      className="relative flex-none"
-                      onMouseEnter={() => {
-                        setIsLanguageMenuOpen(false)
-                        setIsSellMenuOpen(false)
-                        handleMenuEnter(setIsProfileMenuOpen)
-                        handlePrefetch('/profile')
-                        handlePrefetch('/my-watches')
-                      }}
-                      onMouseLeave={() => handleMenuLeave(setIsProfileMenuOpen)}
-                    >
-                      <button
-                        type="button"
-                        className="relative flex items-center justify-center gap-0.5 rounded-full bg-primary-600 p-1 text-white transition-all duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 lg:px-1.5"
-                        title={t.header.profileMenu}
-                      >
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 lg:h-8 lg:w-8">
-                          {getProfileImage() ? (
-                            <img
-                              src={getProfileImage() || undefined}
-                              alt={session.user?.name || t.header.myProfile}
-                              className="h-full w-full rounded-full object-cover"
-                            />
-                          ) : (
-                            <span className="text-[10px] font-semibold lg:text-xs">
-                              {getInitials(session.user?.name)}
-                            </span>
-                          )}
-                        </div>
-                        <ChevronDown
-                          className={`h-3 w-3 transition-transform lg:h-4 lg:w-4 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
-                        />
-                      </button>
-
-                      {isProfileMenuOpen && (
-                        <div
-                          className="absolute right-0 top-full z-[9999] w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg"
-                          style={{ marginTop: '4px', pointerEvents: 'auto' }}
-                        >
-                          <div className="border-b border-gray-100 px-4 py-3">
-                            <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
-                              <UserName
-                                userId={(session?.user as any)?.id || ''}
-                                userName={displayName}
-                                badgeSize="sm"
-                              />
-                            </p>
-                            <p className="truncate text-sm text-gray-500">{session.user?.email}</p>
-                          </div>
-
-                          <Link
-                            href="/profile"
-                            prefetch={true}
-                            onClick={() => setIsProfileMenuOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                          >
-                            <div className="flex items-center">
-                              <User className="mr-2 h-4 w-4" />
-                              {t.header.myProfile}
-                            </div>
-                          </Link>
-                          <Link
-                            href="/my-watches"
-                            prefetch={true}
-                            onClick={() => setIsProfileMenuOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                          >
-                            <div className="flex items-center">
-                              <Package className="mr-2 h-4 w-4" />
-                              {t.header.mySelling}
-                            </div>
-                          </Link>
-                          <Link
-                            href="/my-watches/buying"
-                            prefetch={true}
-                            onClick={() => setIsProfileMenuOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                          >
-                            <div className="flex items-center">
-                              <ShoppingBag className="mr-2 h-4 w-4" />
-                              {t.header.myBuying}
-                            </div>
-                          </Link>
-                          <Link
-                            href="/my-watches/account"
-                            prefetch={true}
-                            onClick={() => setIsProfileMenuOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                          >
-                            <div className="flex items-center">
-                              <Settings className="mr-2 h-4 w-4" />
-                              {t.header.settings}
-                            </div>
-                          </Link>
-
-                          <div className="my-1 border-t border-gray-100" />
-
-                          <Link
-                            href="/my-watches/selling/fees"
-                            prefetch={true}
-                            onClick={() => setIsProfileMenuOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                          >
-                            <div className="flex items-center">
-                              <Wallet className="mr-2 h-4 w-4" />
-                              {t.header.feesAndInvoices}
-                            </div>
-                          </Link>
-                          <Link
-                            href="/my-watches/selling/cancel-request"
-                            prefetch={true}
-                            onClick={() => setIsProfileMenuOpen(false)}
-                            className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                          >
-                            <div className="flex items-center">
-                              <X className="mr-2 h-4 w-4" />
-                              {t.header.cancel}
-                            </div>
-                          </Link>
-
-                          {(deferredData.isAdmin || (session.user as any)?.isAdmin) && (
-                            <>
-                              <div className="my-1 border-t border-gray-100" />
-                              <Link
-                                href="/admin/dashboard"
-                                prefetch={true}
-                                onClick={() => setIsProfileMenuOpen(false)}
-                                className="block px-4 py-2 text-sm font-semibold text-primary-600 transition-colors hover:bg-gray-50 hover:text-primary-700"
-                              >
-                                <div className="flex items-center">
-                                  <Shield className="mr-2 h-4 w-4" />
-                                  {t.header.adminDashboard}
-                                </div>
-                              </Link>
-                            </>
-                          )}
-
-                          <div className="my-1 border-t border-gray-200" />
-                          <button
-                            onClick={async () => {
-                              setIsProfileMenuOpen(false)
-                              await signOut({ callbackUrl: '/' })
-                            }}
-                            className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
-                          >
-                            <div className="flex items-center">
-                              <LogOut className="mr-2 h-4 w-4" />
-                              {t.header.logout}
-                            </div>
-                          </button>
-                        </div>
+                      ) : (
+                        <span className="text-[10px] font-semibold">
+                          {getInitials(session.user?.name)}
+                        </span>
                       )}
                     </div>
-                  </>
-                ) : (
-                  <Link
-                    href="/login"
-                    prefetch={true}
-                    onMouseEnter={() => handlePrefetch('/login')}
-                    className="flex flex-none items-center justify-center gap-1.5 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 xl:px-3"
-                    title={t.header.login}
-                  >
-                    <User className="h-5 w-5 flex-none" />
-                    <span className="hidden text-sm font-medium xl:inline">{t.header.login}</span>
-                  </Link>
-                )}
-              </div>
+                    <span className="hidden text-sm font-medium lg:inline">{displayName}</span>
+                    <ChevronDown className={`h-3 w-3 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isProfileMenuOpen && (
+                    <div
+                      className="absolute right-0 top-full z-[9999] w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg"
+                      style={{ marginTop: '4px', pointerEvents: 'auto' }}
+                    >
+                      <div className="border-b border-gray-100 px-4 py-3">
+                        <p className="flex items-center gap-1 text-sm font-medium text-gray-900">
+                          <UserName
+                            userId={(session?.user as any)?.id || ''}
+                            userName={displayName}
+                            badgeSize="sm"
+                          />
+                        </p>
+                        <p className="truncate text-sm text-gray-500">{session.user?.email}</p>
+                      </div>
+
+                      <Link
+                        href="/profile"
+                        prefetch={true}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="flex items-center">
+                          <User className="mr-2 h-4 w-4" />
+                          {t.header.myProfile}
+                        </div>
+                      </Link>
+                      <Link
+                        href="/my-watches"
+                        prefetch={true}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="flex items-center">
+                          <Package className="mr-2 h-4 w-4" />
+                          {t.header.mySelling}
+                        </div>
+                      </Link>
+                      <Link
+                        href="/my-watches/buying"
+                        prefetch={true}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="flex items-center">
+                          <ShoppingBag className="mr-2 h-4 w-4" />
+                          {t.header.myBuying}
+                        </div>
+                      </Link>
+                      <Link
+                        href="/my-watches/account"
+                        prefetch={true}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="flex items-center">
+                          <Settings className="mr-2 h-4 w-4" />
+                          {t.header.settings}
+                        </div>
+                      </Link>
+
+                      <div className="my-1 border-t border-gray-100" />
+
+                      <Link
+                        href="/my-watches/selling/fees"
+                        prefetch={true}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="flex items-center">
+                          <Wallet className="mr-2 h-4 w-4" />
+                          {t.header.feesAndInvoices}
+                        </div>
+                      </Link>
+                      <Link
+                        href="/my-watches/selling/cancel-request"
+                        prefetch={true}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="flex items-center">
+                          <X className="mr-2 h-4 w-4" />
+                          {t.header.cancel}
+                        </div>
+                      </Link>
+
+                      {(deferredData.isAdmin || (session.user as any)?.isAdmin) && (
+                        <>
+                          <div className="my-1 border-t border-gray-100" />
+                          <Link
+                            href="/admin/dashboard"
+                            prefetch={true}
+                            onClick={() => setIsProfileMenuOpen(false)}
+                            className="block px-4 py-2 text-sm font-semibold text-primary-600 transition-colors hover:bg-gray-50 hover:text-primary-700"
+                          >
+                            <div className="flex items-center">
+                              <Shield className="mr-2 h-4 w-4" />
+                              {t.header.adminDashboard}
+                            </div>
+                          </Link>
+                        </>
+                      )}
+
+                      <div className="my-1 border-t border-gray-200" />
+                      <button
+                        onClick={async () => {
+                          setIsProfileMenuOpen(false)
+                          await signOut({ callbackUrl: '/' })
+                        }}
+                        className="block w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-gray-100"
+                      >
+                        <div className="flex items-center">
+                          <LogOut className="mr-2 h-4 w-4" />
+                          {t.header.logout}
+                        </div>
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  href="/login"
+                  prefetch={true}
+                  onMouseEnter={() => handlePrefetch('/login')}
+                  className="flex items-center gap-1.5 rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                  title={t.header.login}
+                >
+                  <User className="h-4 w-4" />
+                  <span className="text-sm font-medium">{t.header.login}</span>
+                </Link>
+              )}
 
               {/* Language Selector */}
               <div
-                className="relative flex-none"
+                className="relative"
                 onMouseEnter={() => {
                   setIsProfileMenuOpen(false)
                   setIsSellMenuOpen(false)
@@ -706,15 +645,12 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               >
                 <button
                   type="button"
-                  className="flex flex-none items-center justify-center rounded-md p-1.5 text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-primary-600"
+                  className="flex items-center gap-1 rounded-md px-2 py-2 text-gray-700 transition-colors hover:bg-gray-100"
                   title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
                 >
-                  <span className="text-base">
-                    {languages.find(l => l.code === language)?.flag}
-                  </span>
-                  <ChevronDown
-                    className={`ml-0.5 h-3 w-3 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`}
-                  />
+                  <span className="text-base">{languages.find(l => l.code === language)?.flag}</span>
+                  <span className="hidden text-sm lg:inline">{language.toUpperCase()}</span>
+                  <ChevronDown className={`h-3 w-3 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`} />
                 </button>
 
                 {isLanguageMenuOpen && (
@@ -737,15 +673,21 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                       >
                         <span className="text-base">{lang.flag}</span>
                         <span className="flex-1">{lang.name}</span>
-                        {language === lang.code && (
-                          <span className="text-xs text-primary-600">✓</span>
-                        )}
+                        {language === lang.code && <span className="text-xs text-primary-600">✓</span>}
                       </button>
                     ))}
                   </div>
                 )}
               </div>
             </div>
+          </div>
+
+          {/* === ROW 2: Ricardo-Style Full-Width Searchbar === */}
+          <div className="flex h-14 items-center">
+            <HeaderSearch
+              className="w-full"
+              placeholder="Suche nach Artikel, Verkäufer oder Artikelnummer"
+            />
           </div>
         </div>
       </div>

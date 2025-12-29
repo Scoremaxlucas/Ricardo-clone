@@ -1,6 +1,5 @@
 import { FeaturedProductsServer } from '@/components/home/FeaturedProductsServer'
 import { HeroServer } from '@/components/home/HeroServer'
-import { HeroSearch } from '@/components/home/HeroSearch'
 import { PopularCategories } from '@/components/home/PopularCategories'
 import { HomeClient } from '@/components/home/HomeClient'
 import { Footer } from '@/components/layout/Footer'
@@ -63,20 +62,12 @@ export default async function Home() {
         {/*
           Hero Section - Kritisch für LCP
           Server Component rendert H1/H2 sofort
+          Search ist jetzt im Header (Ricardo-Style)
         */}
         <HeroServer
           title="Finden Sie lokale Deals in der Schweiz"
           subtitle="Tausende Artikel von Verkäufern in Ihrer Nähe"
-        >
-          {/* Search - Client Component mit Skeleton Fallback */}
-          <Suspense fallback={
-            <div className="flex h-14 items-center rounded-full bg-white/90 px-6 shadow-lg">
-              <div className="h-5 w-64 animate-pulse rounded bg-gray-200" />
-            </div>
-          }>
-            <HeroSearch placeholder="Suchen Sie nach Produkten, Marken, Kategorien..." />
-          </Suspense>
-        </HeroServer>
+        />
 
         {/* Beliebte Kategorien */}
         <PopularCategories />

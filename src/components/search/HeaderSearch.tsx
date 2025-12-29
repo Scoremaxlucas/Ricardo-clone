@@ -10,16 +10,18 @@ interface HeaderSearchProps {
 }
 
 /**
- * HeaderSearch - Ricardo-Style Inline-Searchbar für den Header
+ * HeaderSearch - Ricardo-Style Searchbar mit separatem Such-Button
  *
  * Features:
- * - Echte Searchbar (kein Modal/Overlay)
+ * - Große, prominente Searchbar (wie Ricardo)
+ * - Separater grüner Such-Button
  * - Inline Dropdown mit Suggestions
- * - Keyboard-Navigation (Arrow keys, Enter, Escape)
- * - Click-outside schließt Dropdown
- * - Mobile: Zeigt nur Icon, Desktop: volle Searchbar
+ * - Keyboard-Navigation
  */
-export function HeaderSearch({ className = '', placeholder = 'Suchen...' }: HeaderSearchProps) {
+export function HeaderSearch({
+  className = '',
+  placeholder = 'Suche nach Artikel, Verkäufer oder Artikelnummer',
+}: HeaderSearchProps) {
   const router = useRouter()
   const [query, setQuery] = useState('')
   const [suggestions, setSuggestions] = useState<string[]>([])
@@ -35,7 +37,6 @@ export function HeaderSearch({ className = '', placeholder = 'Suchen...' }: Head
   // Fetch Suggestions
   const fetchSuggestions = useCallback(async (searchTerm: string) => {
     if (searchTerm.trim().length === 1) {
-      // Mindestens 2 Zeichen für Suggestions
       return
     }
 
@@ -146,7 +147,6 @@ export function HeaderSearch({ className = '', placeholder = 'Suchen...' }: Head
   // Handle Focus
   const handleFocus = () => {
     setIsOpen(true)
-    // Load popular suggestions on focus if empty
     if (query.trim().length === 0 && suggestions.length === 0) {
       fetchSuggestions('')
     }
@@ -162,16 +162,17 @@ export function HeaderSearch({ className = '', placeholder = 'Suchen...' }: Head
 
   return (
     <div ref={containerRef} className={`relative ${className}`}>
-      {/* Search Input */}
+      {/* Ricardo-Style Search Form: Input + Button */}
       <form
         onSubmit={e => {
           e.preventDefault()
           handleSubmit()
         }}
-        className="relative"
+        className="flex"
       >
-        <div className="relative flex items-center">
-          <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+        {/* Input Container */}
+        <div className="relative flex-1">
+          <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-gray-400" />
           <input
             ref={inputRef}
             type="text"
@@ -188,19 +189,28 @@ export function HeaderSearch({ className = '', placeholder = 'Suchen...' }: Head
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck="false"
-            className="h-10 w-full rounded-full border border-gray-200 bg-gray-50 pl-10 pr-10 text-sm text-gray-900 transition-all duration-200 placeholder:text-gray-500 hover:border-gray-300 hover:bg-white focus:border-primary-400 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-100"
+            className="h-12 w-full rounded-l-lg border border-r-0 border-gray-300 bg-white pl-12 pr-10 text-base text-gray-900 transition-colors placeholder:text-gray-500 hover:border-gray-400 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
           />
           {query && (
             <button
               type="button"
               onClick={handleClear}
-              className="absolute right-3 flex h-5 w-5 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+              className="absolute right-3 top-1/2 flex h-6 w-6 -translate-y-1/2 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
               aria-label="Suche löschen"
             >
-              <X className="h-3.5 w-3.5" />
+              <X className="h-4 w-4" />
             </button>
           )}
         </div>
+
+        {/* Ricardo-Style Search Button */}
+        <button
+          type="submit"
+          className="flex h-12 items-center justify-center rounded-r-lg bg-primary-600 px-6 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+          aria-label="Suchen"
+        >
+          <Search className="h-5 w-5" />
+        </button>
       </form>
 
       {/* Suggestions Dropdown */}
@@ -213,7 +223,7 @@ export function HeaderSearch({ className = '', placeholder = 'Suchen...' }: Head
           ) : (
             <>
               {showPopular && suggestions.length > 0 && (
-                <div className="border-b border-gray-100 px-3 py-2">
+                <div className="border-b border-gray-100 px-4 py-2">
                   <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
                     <TrendingUp className="h-3 w-3" />
                     Beliebte Suchbegriffe
@@ -227,13 +237,13 @@ export function HeaderSearch({ className = '', placeholder = 'Suchen...' }: Head
                       type="button"
                       onClick={() => handleSubmit(suggestion)}
                       onMouseEnter={() => setSelectedIndex(index)}
-                      className={`flex w-full items-center gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
                         index === selectedIndex
                           ? 'bg-primary-50 text-primary-700'
                           : 'text-gray-700 hover:bg-gray-50'
                       }`}
                     >
-                      <Search className="h-3.5 w-3.5 flex-shrink-0 text-gray-400" />
+                      <Search className="h-4 w-4 flex-shrink-0 text-gray-400" />
                       <span className="truncate">{suggestion}</span>
                     </button>
                   </li>
