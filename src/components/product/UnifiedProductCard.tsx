@@ -24,6 +24,7 @@ export interface UnifiedProductCardData {
   currentBid?: number
   href?: string
   createdAt?: string
+  paymentProtectionEnabled?: boolean
 }
 
 interface UnifiedProductCardProps {
@@ -275,6 +276,26 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
           >
             {product.title}
           </div>
+
+          {/* Helvenda Schutz Badge + Brand (like Ricardo's ® | Brand) */}
+          {(product.paymentProtectionEnabled || product.brand) && (
+            <div className="mb-1 flex items-center gap-1 text-[11px]">
+              {product.paymentProtectionEnabled && (
+                <span
+                  className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-green-600 bg-green-50 text-[9px] font-bold text-green-700"
+                  title="Helvenda Zahlungsschutz"
+                >
+                  H
+                </span>
+              )}
+              {product.brand && (
+                <>
+                  {product.paymentProtectionEnabled && <span className="text-gray-400">|</span>}
+                  <span className="font-medium text-primary-600">{product.brand}</span>
+                </>
+              )}
+            </div>
+          )}
 
           {/* Price - Immer sichtbar */}
           <div className="mb-1 flex items-center justify-between">

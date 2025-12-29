@@ -23,6 +23,7 @@ interface ModernProductCardProps {
   bids?: any[]
   boosters?: string[]
   verified?: boolean
+  paymentProtectionEnabled?: boolean
   href?: string
   onFavoriteToggle?: (id: string, isFavorite: boolean) => void
   favorites?: Set<string>
@@ -46,6 +47,7 @@ export function ModernProductCard({
   bids,
   boosters = [],
   verified = false,
+  paymentProtectionEnabled = false,
   href,
   onFavoriteToggle,
   favorites,
@@ -249,6 +251,26 @@ export function ModernProductCard({
         >
           {title}
         </div>
+
+        {/* Helvenda Schutz Badge + Brand (like Ricardo's ® | Brand) */}
+        {(paymentProtectionEnabled || brand) && (
+          <div className="mb-1.5 flex items-center gap-1 text-[11px]">
+            {paymentProtectionEnabled && (
+              <span
+                className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-green-600 bg-green-50 text-[9px] font-bold text-green-700"
+                title="Helvenda Zahlungsschutz"
+              >
+                H
+              </span>
+            )}
+            {brand && (
+              <>
+                {paymentProtectionEnabled && <span className="text-gray-400">|</span>}
+                <span className="font-medium text-primary-600">{brand}</span>
+              </>
+            )}
+          </div>
+        )}
 
         {/* Price - Immer sichtbar */}
         <div className="mb-1.5 flex-shrink-0 text-[17px] font-bold text-[#3A3A3A]">

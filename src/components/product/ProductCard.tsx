@@ -21,7 +21,6 @@ import {
   MapPin,
   Medal,
   Package,
-  Shield,
   Star,
   Truck,
 } from 'lucide-react'
@@ -318,6 +317,26 @@ export function ProductCard({
           {product.title}
         </h3>
 
+        {/* Helvenda Schutz Badge + Brand (like Ricardo's ® | Brand) */}
+        {(product.paymentProtectionEnabled || product.brand) && (
+          <div className="mt-1 flex items-center gap-1 text-[11px]">
+            {product.paymentProtectionEnabled && (
+              <span
+                className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-green-600 bg-green-50 text-[9px] font-bold text-green-700"
+                title="Helvenda Zahlungsschutz"
+              >
+                H
+              </span>
+            )}
+            {product.brand && (
+              <>
+                {product.paymentProtectionEnabled && <span className="text-gray-400">|</span>}
+                <span className="font-medium text-primary-600">{product.brand}</span>
+              </>
+            )}
+          </div>
+        )}
+
         {/* Price Block - Different for Auction vs Fixed */}
         {isAuction ? (
           <div className="mt-1.5">
@@ -405,21 +424,13 @@ export function ProductCard({
           </span>
         </div>
 
-        {/* Trust Row - Seller Verified + Payment Protection (compact) */}
-        {(product.sellerVerified || product.paymentProtectionEnabled) && (
+        {/* Trust Row - Seller Verified only (Payment Protection shown as Ⓗ badge above) */}
+        {product.sellerVerified && (
           <div className="mt-1.5 flex items-center gap-2 text-[10px] text-gray-500">
-            {product.sellerVerified && (
-              <span className="inline-flex items-center gap-0.5 text-blue-600">
-                <BadgeCheck className="h-3 w-3" />
-                <span className="hidden sm:inline">Verifiziert</span>
-              </span>
-            )}
-            {product.paymentProtectionEnabled && (
-              <span className="inline-flex items-center gap-0.5 text-green-600">
-                <Shield className="h-3 w-3" />
-                <span className="hidden sm:inline">Zahlungsschutz</span>
-              </span>
-            )}
+            <span className="inline-flex items-center gap-0.5 text-blue-600">
+              <BadgeCheck className="h-3 w-3" />
+              <span className="hidden sm:inline">Verifiziert</span>
+            </span>
           </div>
         )}
       </div>
