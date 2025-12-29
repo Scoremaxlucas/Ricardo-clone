@@ -21,7 +21,7 @@ export function HeroServer({
   return (
     <section
       id="home-hero"
-      className="relative py-4 text-white md:py-5 lg:py-3"
+      className="relative py-6 text-white md:py-8 lg:py-6"
       style={{
         background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #10b981 100%)',
       }}
@@ -39,7 +39,7 @@ export function HeroServer({
       <div className="relative z-10 mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="flex flex-col items-center justify-center text-center">
           {/* LCP-OPTIMIERT: H1 ist sofort im HTML, kein JavaScript nötig */}
-          <h1 className="text-xl font-bold text-white md:text-2xl lg:text-xl">
+          <h1 className="text-2xl font-bold text-white md:text-3xl lg:text-2xl">
             {title}
           </h1>
 
