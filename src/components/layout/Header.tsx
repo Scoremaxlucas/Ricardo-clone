@@ -10,7 +10,6 @@
  * 4. Memo für teure Berechnungen
  */
 
-import { DesktopSearchOverlay } from '@/components/search/DesktopSearchOverlay'
 import { HeaderSearch } from '@/components/search/HeaderSearch'
 import { MobileSearchOverlay } from '@/components/search/MobileSearchOverlay'
 import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
@@ -28,6 +27,7 @@ import {
   Menu,
   Package,
   Plus,
+  Search,
   Settings,
   Shield,
   ShoppingBag,
@@ -37,7 +37,7 @@ import {
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { usePathname, useRouter } from 'next/navigation'
+import { useRouter } from 'next/navigation'
 import { memo, useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { CategorySidebarNew } from './CategorySidebarNew'
 
@@ -54,7 +54,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   // === CRITICAL STATE (sofort benötigt) ===
   const { data: session, status } = useSession()
   const router = useRouter()
-  const pathname = usePathname()
   const { language, setLanguage, t } = useLanguage()
   const [isPending, startTransition] = useTransition()
 
@@ -68,9 +67,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
   // === SEARCH STATE ===
   const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
-  const [isDesktopSearchOpen, setIsDesktopSearchOpen] = useState(false)
-  const [isHeroVisible, setIsHeroVisible] = useState(true)
-  const isHomepage = pathname === '/'
 
   // === DEFERRED STATE (nicht-kritisch, verzögert laden) ===
   const [deferredData, setDeferredData] = useState<DeferredData>({
@@ -236,55 +232,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
     }
   }, [isLanguageMenuOpen, isProfileMenuOpen, isSellMenuOpen])
 
-  // === Hero Intersection Observer (for homepage search collapse) ===
-  useEffect(() => {
-    if (!isHomepage) {
-      setIsHeroVisible(false) // Not on homepage, so hero is "not visible"
-      return
-    }
-
-    const heroElement = document.getElementById('home-hero')
-    if (!heroElement) {
-      setIsHeroVisible(true) // Default to visible if element not found
-      return
-    }
-
-    const observer = new IntersectionObserver(
-      ([entry]) => {
-        // Consider hero visible if any part of it is in view
-        setIsHeroVisible(entry.isIntersecting)
-      },
-      {
-        root: null,
-        rootMargin: '-50px 0px 0px 0px', // Trigger slightly after hero starts leaving
-        threshold: 0,
-      }
-    )
-
-    observer.observe(heroElement)
-
-    return () => {
-      observer.disconnect()
-    }
-  }, [isHomepage])
-
-  // === Keyboard shortcut: Cmd/Ctrl+K opens desktop search ===
-  useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Only on desktop (not mobile), and not when typing in an input
-      if (
-        (e.metaKey || e.ctrlKey) &&
-        e.key === 'k' &&
-        !['INPUT', 'TEXTAREA', 'SELECT'].includes((e.target as Element)?.tagName)
-      ) {
-        e.preventDefault()
-        setIsDesktopSearchOpen(true)
-      }
-    }
-
-    document.addEventListener('keydown', handleKeyDown)
-    return () => document.removeEventListener('keydown', handleKeyDown)
-  }, [])
 
   // === OPTIMIERT: Prefetch bei Hover ===
   const handlePrefetch = useCallback(
@@ -333,10 +280,14 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
           {/* Actions Row */}
           <div className="flex items-center gap-2">
             {/* Search Icon - Opens Mobile Overlay */}
-            <HeaderSearch
-              isHeroVisible={isHeroVisible}
-              onMobileSearchOpen={() => setIsMobileSearchOpen(true)}
-            />
+            <button
+              type="button"
+              onClick={() => setIsMobileSearchOpen(true)}
+              className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+              aria-label="Suche öffnen"
+            >
+              <Search className="h-5 w-5" />
+            </button>
 
             {/* Sell Button - Always visible */}
             <Link
@@ -459,12 +410,12 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 </button>
               )}
 
-              {/* Auktionen - nur auf 2xl+ sichtbar */}
+              {/* Auktionen - ab xl sichtbar */}
               <Link
                 href="/auctions"
                 prefetch={true}
                 onMouseEnter={() => handlePrefetch('/auctions')}
-                className="hidden flex-none items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100 2xl:flex"
+                className="hidden flex-none items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100 xl:flex"
                 title={t.header.auctions}
               >
                 <Gavel className="h-5 w-5 flex-none" />
@@ -527,14 +478,12 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               </div>
             </div>
 
-            {/* === CENTER ZONE: Search Trigger (zentriert, mit min/max width) === */}
-            <div className="flex min-w-0 items-center justify-center px-2">
-              <div className="w-full max-w-md">
-                <HeaderSearch
-                  onMobileSearchOpen={() => setIsMobileSearchOpen(true)}
-                  onDesktopSearchOpen={() => setIsDesktopSearchOpen(true)}
-                />
-              </div>
+            {/* === CENTER ZONE: Ricardo-Style Inline Searchbar === */}
+            <div className="flex min-w-0 flex-1 items-center justify-center px-2 lg:px-4">
+              <HeaderSearch
+                className="w-full max-w-xl"
+                placeholder="Suchen Sie nach Produkten, Marken, Kategorien..."
+              />
             </div>
 
             {/* === RIGHT ZONE: User Actions (flex-none = kann nie schrumpfen) === */}
@@ -965,10 +914,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
       <MobileSearchOverlay
         isOpen={isMobileSearchOpen}
         onClose={() => setIsMobileSearchOpen(false)}
-      />
-      <DesktopSearchOverlay
-        isOpen={isDesktopSearchOpen}
-        onClose={() => setIsDesktopSearchOpen(false)}
       />
     </header>
   )
