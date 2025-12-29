@@ -1,13 +1,17 @@
 /**
  * Service for updating searchText field on Watch records
  * 
+ * NOTE: This service is temporarily disabled because the searchText column
+ * doesn't exist in the production database yet. 
+ * Run migration 20250629_add_search_text_fts to enable this functionality.
+ * 
  * This should be called:
  * - After creating a new watch
  * - After updating a watch
  * - During backfill for existing watches
  */
 
-import { prisma } from '@/lib/prisma'
+// import { prisma } from '@/lib/prisma'
 import { buildSearchText } from './search-text-builder'
 
 interface WatchWithRelations {
@@ -38,65 +42,27 @@ interface WatchWithRelations {
 
 /**
  * Update searchText for a single watch
+ * DISABLED: searchText column not in production DB
  */
 export async function updateWatchSearchText(watchId: string): Promise<void> {
-  // Fetch watch with all related data needed for search text
-  const watch = await prisma.watch.findUnique({
-    where: { id: watchId },
-    include: {
-      categories: {
-        include: {
-          category: {
-            select: { name: true, slug: true },
-          },
-        },
-      },
-      seller: {
-        select: { postalCode: true, city: true },
-      },
-    },
-  })
-
-  if (!watch) {
-    console.warn(`[SearchText] Watch not found: ${watchId}`)
-    return
-  }
-
-  const searchText = buildSearchText({
-    title: watch.title,
-    description: watch.description,
-    brand: watch.brand,
-    model: watch.model,
-    condition: watch.condition,
-    referenceNumber: watch.referenceNumber,
-    material: watch.material,
-    movement: watch.movement,
-    year: watch.year,
-    warranty: watch.warranty,
-    warrantyDescription: watch.warrantyDescription,
-    shippingMethod: watch.shippingMethod,
-    categories: watch.categories,
-    seller: watch.seller,
-  })
-
-  // Update the searchText field
-  await prisma.watch.update({
-    where: { id: watchId },
-    data: { searchText },
-  })
-
-  console.log(`[SearchText] Updated searchText for watch ${watchId}`)
+  // DISABLED: searchText column doesn't exist in production DB yet
+  console.log(`[SearchText] SKIPPED - searchText column not available. Watch: ${watchId}`)
+  return
 }
 
 /**
  * Update searchText for a watch with provided data (no DB fetch needed)
- * Use this when you already have the watch data available
+ * DISABLED: searchText column not in production DB
  */
 export async function updateWatchSearchTextDirect(
   watchId: string,
   watchData: WatchWithRelations
 ): Promise<string> {
-  const searchText = buildSearchText({
+  // DISABLED: searchText column doesn't exist in production DB yet
+  console.log(`[SearchText] SKIPPED - searchText column not available. Watch: ${watchId}`)
+  
+  // Still build and return the text for potential future use
+  return buildSearchText({
     title: watchData.title,
     description: watchData.description,
     brand: watchData.brand,
@@ -112,13 +78,6 @@ export async function updateWatchSearchTextDirect(
     categories: watchData.categories,
     seller: watchData.seller,
   })
-
-  await prisma.watch.update({
-    where: { id: watchId },
-    data: { searchText },
-  })
-
-  return searchText
 }
 
 /**
@@ -173,108 +132,36 @@ export function buildSearchTextForWatch(watchData: {
 
 /**
  * Batch update searchText for multiple watches
- * Used for backfill operations
+ * DISABLED: searchText column not in production DB
  */
 export async function batchUpdateSearchText(
   watchIds: string[],
   onProgress?: (completed: number, total: number) => void
 ): Promise<{ success: number; failed: number }> {
-  let success = 0
-  let failed = 0
-
-  for (let i = 0; i < watchIds.length; i++) {
-    try {
-      await updateWatchSearchText(watchIds[i])
-      success++
-    } catch (error) {
-      console.error(`[SearchText] Failed to update watch ${watchIds[i]}:`, error)
-      failed++
-    }
-
-    if (onProgress) {
-      onProgress(i + 1, watchIds.length)
-    }
+  // DISABLED: searchText column doesn't exist in production DB yet
+  console.log(`[SearchText] SKIPPED batch update - searchText column not available. Count: ${watchIds.length}`)
+  
+  if (onProgress) {
+    onProgress(watchIds.length, watchIds.length)
   }
-
-  return { success, failed }
+  
+  return { success: 0, failed: 0 }
 }
 
 /**
  * Backfill all watches with searchText
- * Use this for initial population or migration
+ * DISABLED: searchText column not in production DB
  */
 export async function backfillAllSearchText(
   batchSize: number = 100,
   onProgress?: (completed: number, total: number) => void
 ): Promise<{ success: number; failed: number; total: number }> {
-  // Get total count
-  const total = await prisma.watch.count()
-  console.log(`[SearchText] Starting backfill for ${total} watches...`)
-
-  let success = 0
-  let failed = 0
-  let offset = 0
-
-  while (offset < total) {
-    // Fetch batch of watches
-    const watches = await prisma.watch.findMany({
-      skip: offset,
-      take: batchSize,
-      include: {
-        categories: {
-          include: {
-            category: {
-              select: { name: true, slug: true },
-            },
-          },
-        },
-        seller: {
-          select: { postalCode: true, city: true },
-        },
-      },
-    })
-
-    // Process batch
-    for (const watch of watches) {
-      try {
-        const searchText = buildSearchText({
-          title: watch.title,
-          description: watch.description,
-          brand: watch.brand,
-          model: watch.model,
-          condition: watch.condition,
-          referenceNumber: watch.referenceNumber,
-          material: watch.material,
-          movement: watch.movement,
-          year: watch.year,
-          warranty: watch.warranty,
-          warrantyDescription: watch.warrantyDescription,
-          shippingMethod: watch.shippingMethod,
-          categories: watch.categories,
-          seller: watch.seller,
-        })
-
-        await prisma.watch.update({
-          where: { id: watch.id },
-          data: { searchText },
-        })
-
-        success++
-      } catch (error) {
-        console.error(`[SearchText] Failed to update watch ${watch.id}:`, error)
-        failed++
-      }
-    }
-
-    offset += batchSize
-
-    if (onProgress) {
-      onProgress(Math.min(offset, total), total)
-    }
-
-    console.log(`[SearchText] Progress: ${Math.min(offset, total)}/${total}`)
+  // DISABLED: searchText column doesn't exist in production DB yet
+  console.log('[SearchText] SKIPPED backfill - searchText column not available')
+  
+  if (onProgress) {
+    onProgress(0, 0)
   }
-
-  console.log(`[SearchText] Backfill complete. Success: ${success}, Failed: ${failed}`)
-  return { success, failed, total }
+  
+  return { success: 0, failed: 0, total: 0 }
 }
