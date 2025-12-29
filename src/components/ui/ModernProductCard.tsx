@@ -1,6 +1,6 @@
 'use client'
 
-import { Award, CheckCircle2, Clock, Gavel, Heart, MapPin, Medal, Star } from 'lucide-react'
+import { Award, CheckCircle2, Clock, Gavel, Heart, MapPin, Medal, Sparkles, Star } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
