@@ -436,54 +436,54 @@ export default function CategoriesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="mx-auto max-w-[1400px] px-4 py-12 sm:px-6 lg:px-8">
-        <div className="mb-10 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-gray-900">Alle Kategorien</h1>
-          <p className="text-lg text-gray-600">
+      <div className="mx-auto max-w-[1400px] px-3 py-6 sm:px-4 sm:py-8 md:py-12 lg:px-8">
+        <div className="mb-6 text-center md:mb-10">
+          <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl md:mb-4 md:text-4xl">Alle Kategorien</h1>
+          <p className="text-sm text-gray-600 md:text-lg">
             {categories.length} Hauptkategorien mit über{' '}
             {categories.reduce((sum, cat) => sum + cat.subcategories.length, 0)} Unterkategorien
           </p>
         </div>
 
-        <div className="space-y-8">
+        <div className="space-y-4 md:space-y-8">
           {categories.map(category => (
             <div
               key={category.slug}
-              className="rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+              className="overflow-hidden rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
             >
               {/* Hauptkategorie Header */}
               <Link
                 href={`/search?category=${category.slug}`}
-                className="block border-b border-gray-100 p-6 transition-colors hover:bg-gray-50"
+                className="block border-b border-gray-100 p-4 transition-colors hover:bg-gray-50 md:p-6"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-2 md:gap-3">
                   {(() => {
                     const config = getCategoryConfig(category.slug)
                     const IconComponent = config.icon
                     return (
                       <div
-                        className="flex h-12 w-12 items-center justify-center rounded-lg"
+                        className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg md:h-12 md:w-12"
                         style={{ backgroundColor: '#0f766e' }}
                       >
-                        <IconComponent className="h-7 w-7 text-white" />
+                        <IconComponent className="h-5 w-5 text-white md:h-7 md:w-7" />
                       </div>
                     )
                   })()}
-                  <h2 className="text-xl font-bold text-gray-900">{category.name}</h2>
-                  <span className="ml-auto text-sm text-gray-500">
+                  <h2 className="text-base font-bold text-gray-900 sm:text-lg md:text-xl">{category.name}</h2>
+                  <span className="ml-auto text-xs text-gray-500 md:text-sm">
                     {category.subcategories.length} Unterkategorien
                   </span>
                 </div>
               </Link>
 
               {/* Unterkategorien Grid */}
-              <div className="p-6">
-                <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5">
+              <div className="p-3 md:p-6">
+                <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 sm:gap-3 md:grid-cols-4 lg:grid-cols-5">
                   {category.subcategories.map(subcat => (
                     <Link
                       key={`${category.slug}-${subcat}`}
                       href={`/search?category=${category.slug}&subcategory=${encodeURIComponent(subcat)}`}
-                      className="rounded-md border border-transparent px-3 py-2 text-sm text-gray-700 transition-colors hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600"
+                      className="rounded-md border border-transparent px-2 py-1.5 text-xs text-gray-700 transition-colors hover:border-primary-200 hover:bg-primary-50 hover:text-primary-600 sm:px-3 sm:py-2 sm:text-sm"
                     >
                       {subcat}
                     </Link>

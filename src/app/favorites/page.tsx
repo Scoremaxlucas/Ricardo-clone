@@ -99,9 +99,9 @@ export default function FavoritesPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="mx-auto max-w-[1400px] px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <div className="mb-4 text-sm text-gray-600">
+      <div className="mx-auto max-w-[1400px] px-3 py-4 sm:px-4 sm:py-6 md:py-8 lg:px-8">
+        {/* Breadcrumb - hidden on small mobile */}
+        <div className="mb-3 hidden text-sm text-gray-600 sm:block md:mb-4">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
             Startseite
           </Link>
@@ -110,27 +110,27 @@ export default function FavoritesPage() {
         </div>
 
         {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div className="flex items-center gap-3">
-            <Heart className="h-8 w-8 fill-current text-red-500" />
-            <h1 className="text-3xl font-bold text-gray-900">Meine Favoriten</h1>
+        <div className="mb-4 flex items-center justify-between md:mb-6">
+          <div className="flex items-center gap-2 md:gap-3">
+            <Heart className="h-6 w-6 fill-current text-red-500 md:h-8 md:w-8" />
+            <h1 className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">Meine Favoriten</h1>
           </div>
-          <div className="text-sm text-gray-600">
+          <div className="text-xs text-gray-600 md:text-sm">
             {favorites.length} {favorites.length === 1 ? 'Artikel' : 'Artikel'}
           </div>
         </div>
 
         {/* Content */}
         {favorites.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-            <Heart className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-            <h2 className="mb-2 text-xl font-semibold text-gray-900">Noch keine Favoriten</h2>
-            <p className="mb-6 text-gray-600">
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-8 text-center md:p-12">
+            <Heart className="mx-auto mb-3 h-12 w-12 text-gray-300 md:mb-4 md:h-16 md:w-16" />
+            <h2 className="mb-2 text-lg font-semibold text-gray-900 md:text-xl">Noch keine Favoriten</h2>
+            <p className="mb-4 text-sm text-gray-600 md:mb-6 md:text-base">
               Fügen Sie Artikel zu Ihren Favoriten hinzu, um sie später schnell wiederzufinden.
             </p>
             <Link
               href="/search"
-              className="inline-flex items-center justify-center rounded-[50px] bg-primary-600 px-6 py-3 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-primary-700 active:translate-y-0 active:scale-[0.98]"
+              className="inline-flex items-center justify-center rounded-[50px] bg-primary-600 px-5 py-2.5 text-sm font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] hover:bg-primary-700 active:translate-y-0 active:scale-[0.98] md:px-6 md:py-3 md:text-base"
               style={{
                 boxShadow: '0px 4px 20px rgba(13, 148, 136, 0.3)',
               }}
@@ -139,7 +139,7 @@ export default function FavoritesPage() {
             </Link>
           </div>
         ) : (
-          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+          <div className="grid grid-cols-2 gap-3 sm:gap-4 md:grid-cols-3 md:gap-6 lg:grid-cols-4 xl:grid-cols-5">
             {favorites.map(product => {
               // Transform Product to ProductCardData format
               const productCardData: ProductCardData = {

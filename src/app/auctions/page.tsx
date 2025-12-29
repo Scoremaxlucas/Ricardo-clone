@@ -142,9 +142,9 @@ export default function AuctionsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="mx-auto max-w-[1600px] px-4 py-8 sm:px-6 lg:px-8">
-        {/* Breadcrumb */}
-        <div className="mb-4 text-sm text-gray-600">
+      <div className="mx-auto max-w-[1600px] px-3 py-4 sm:px-4 sm:py-6 md:py-8 lg:px-8">
+        {/* Breadcrumb - hidden on small mobile */}
+        <div className="mb-3 hidden text-sm text-gray-600 sm:block md:mb-4">
           <Link href="/" className="text-primary-600 hover:text-primary-700">
             {t.search.homepage}
           </Link>
@@ -152,48 +152,57 @@ export default function AuctionsPage() {
           <span>Auktionen</span>
         </div>
 
-        {/* Header */}
-        <div className="mb-6 flex items-center justify-between">
-          <div>
-            <h1 className="mb-2 flex items-center gap-3 text-3xl font-bold text-gray-900">
-              <Gavel className="h-8 w-8 text-primary-600" />
-              Auktionen
-            </h1>
-            <p className="text-gray-600">
-              {loading
-                ? 'Lädt...'
-                : `${watches.length} ${watches.length === 1 ? 'Auktion' : 'Auktionen'}`}
-            </p>
+        {/* Header - Mobile optimized */}
+        <div className="mb-4 md:mb-6">
+          {/* Title row */}
+          <div className="mb-3 flex items-center justify-between md:mb-4">
+            <div>
+              <h1 className="flex items-center gap-2 text-xl font-bold text-gray-900 md:gap-3 md:text-3xl">
+                <Gavel className="h-6 w-6 text-primary-600 md:h-8 md:w-8" />
+                Auktionen
+              </h1>
+              <p className="mt-1 text-sm text-gray-600 md:text-base">
+                {loading
+                  ? 'Lädt...'
+                  : `${watches.length} ${watches.length === 1 ? 'Auktion' : 'Auktionen'}`}
+              </p>
+            </div>
           </div>
 
-          <div className="flex items-center gap-4">
+          {/* Controls row - stacks on mobile */}
+          <div className="flex flex-wrap items-center justify-between gap-2">
             {/* Sortierung */}
             <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">Sortieren:</span>
+              <span className="hidden text-sm text-gray-600 sm:inline">Sortieren:</span>
               <select
                 value={sortBy}
                 onChange={e => setSortBy(e.target.value as any)}
-                className="rounded-lg border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500"
+                className="rounded-lg border border-gray-300 px-2 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary-500 md:px-3 md:py-2"
+                aria-label="Sortierung"
               >
                 <option value="ending">Endet bald</option>
                 <option value="newest">Neueste</option>
-                <option value="price">Preis (niedrig → hoch)</option>
-                <option value="bids">Meiste Gebote</option>
+                <option value="price">Preis ↑</option>
+                <option value="bids">Gebote</option>
               </select>
             </div>
 
             {/* Ansicht */}
-            <div className="flex items-center gap-2">
-              <span className="text-sm text-gray-600">{t.search.viewMode}:</span>
+            <div className="flex items-center gap-1 md:gap-2">
+              <span className="hidden text-sm text-gray-600 sm:inline">{t.search.viewMode}:</span>
               <button
                 onClick={() => setViewMode('grid')}
-                className={`rounded p-2 ${viewMode === 'grid' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:bg-gray-100'}`}
+                className={`rounded p-1.5 md:p-2 ${viewMode === 'grid' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:bg-gray-100'}`}
+                aria-label="Gitteransicht"
+                aria-pressed={viewMode === 'grid'}
               >
                 <Grid3x3 className="h-5 w-5" />
               </button>
               <button
                 onClick={() => setViewMode('list')}
-                className={`rounded p-2 ${viewMode === 'list' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:bg-gray-100'}`}
+                className={`rounded p-1.5 md:p-2 ${viewMode === 'list' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:bg-gray-100'}`}
+                aria-label="Listenansicht"
+                aria-pressed={viewMode === 'list'}
               >
                 <List className="h-5 w-5" />
               </button>
@@ -203,17 +212,17 @@ export default function AuctionsPage() {
 
         {/* Results */}
         {loading && watches.length === 0 ? (
-          <div className="py-8">
-            <ArticleSkeleton count={12} variant={viewMode} />
+          <div className="py-4 md:py-8">
+            <ArticleSkeleton count={8} variant={viewMode} />
           </div>
         ) : watches.length === 0 ? (
-          <div className="rounded-lg border border-gray-200 bg-white p-12 text-center">
-            <Gavel className="mx-auto mb-4 h-16 w-16 text-gray-300" />
-            <h2 className="mb-2 text-xl font-semibold text-gray-900">Keine Auktionen gefunden</h2>
-            <p className="mb-6 text-gray-600">Aktuell gibt es keine laufenden Auktionen.</p>
+          <div className="rounded-xl border border-gray-200 bg-white px-4 py-8 text-center md:p-12">
+            <Gavel className="mx-auto mb-3 h-12 w-12 text-gray-300 md:mb-4 md:h-16 md:w-16" />
+            <h2 className="mb-2 text-lg font-semibold text-gray-900 md:text-xl">Keine Auktionen gefunden</h2>
+            <p className="mb-4 text-sm text-gray-600 md:mb-6 md:text-base">Aktuell gibt es keine laufenden Auktionen.</p>
             <Link
               href="/sell"
-              className="inline-block rounded-lg bg-primary-600 px-6 py-3 font-medium text-white hover:bg-primary-700"
+              className="inline-block rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 md:px-6 md:py-3 md:text-base"
             >
               Erste Auktion erstellen
             </Link>
