@@ -12,6 +12,8 @@
 
 import { Logo } from '@/components/ui/Logo'
 import { UserName } from '@/components/ui/UserName'
+import { HeaderSearch } from '@/components/search/HeaderSearch'
+import { MobileSearchOverlay } from '@/components/search/MobileSearchOverlay'
 import { useLanguage } from '@/contexts/LanguageContext'
 import {
   Bell,
@@ -20,6 +22,7 @@ import {
   Gavel,
   Heart,
   LogOut,
+  Menu,
   Package,
   Plus,
   Settings,
@@ -31,12 +34,11 @@ import {
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { memo, useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
 import { CategorySidebarNew } from './CategorySidebarNew'
 import { Sheet, SheetContent } from '@/components/ui/Sheet'
-import { Menu, Search } from 'lucide-react'
 
 // Deferred data types
 interface DeferredData {
@@ -51,6 +53,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   // === CRITICAL STATE (sofort benötigt) ===
   const { data: session, status } = useSession()
   const router = useRouter()
+  const pathname = usePathname()
   const { language, setLanguage, t } = useLanguage()
   const [isPending, startTransition] = useTransition()
 
@@ -61,6 +64,11 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [isLoginModalOpen, setIsLoginModalOpen] = useState(false)
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
+
+  // === SEARCH STATE ===
+  const [isMobileSearchOpen, setIsMobileSearchOpen] = useState(false)
+  const [isHeroVisible, setIsHeroVisible] = useState(true)
+  const isHomepage = pathname === '/'
 
   // === DEFERRED STATE (nicht-kritisch, verzögert laden) ===
   const [deferredData, setDeferredData] = useState<DeferredData>({
@@ -212,6 +220,38 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
     }
   }, [isLanguageMenuOpen, isProfileMenuOpen, isSellMenuOpen])
 
+  // === Hero Intersection Observer (for homepage search collapse) ===
+  useEffect(() => {
+    if (!isHomepage) {
+      setIsHeroVisible(false) // Not on homepage, so hero is "not visible"
+      return
+    }
+
+    const heroElement = document.getElementById('home-hero')
+    if (!heroElement) {
+      setIsHeroVisible(true) // Default to visible if element not found
+      return
+    }
+
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        // Consider hero visible if any part of it is in view
+        setIsHeroVisible(entry.isIntersecting)
+      },
+      {
+        root: null,
+        rootMargin: '-50px 0px 0px 0px', // Trigger slightly after hero starts leaving
+        threshold: 0,
+      }
+    )
+
+    observer.observe(heroElement)
+
+    return () => {
+      observer.disconnect()
+    }
+  }, [isHomepage])
+
   // === OPTIMIERT: Prefetch bei Hover ===
   const handlePrefetch = useCallback((href: string) => {
     if (prefetchedRef.current.has(href)) return
@@ -251,14 +291,11 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
           {/* Actions Row */}
           <div className="flex items-center gap-2">
-            {/* Search Icon */}
-            <Link
-              href="/search"
-              className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
-              title="Suchen"
-            >
-              <Search className="h-5 w-5" />
-            </Link>
+            {/* Search Icon - Opens Mobile Overlay */}
+            <HeaderSearch
+              isHeroVisible={isHeroVisible}
+              onMobileSearchOpen={() => setIsMobileSearchOpen(true)}
+            />
 
             {/* Sell Button - Always visible */}
             <Link
@@ -441,6 +478,14 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   </div>
                 </>
               )}
+            </div>
+
+            {/* Header Search - Desktop */}
+            <div className="mx-4 hidden lg:block">
+              <HeaderSearch
+                isHeroVisible={isHeroVisible}
+                onMobileSearchOpen={() => setIsMobileSearchOpen(true)}
+              />
             </div>
 
             {/* User Actions */}
@@ -803,6 +848,10 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
         title="Anmeldung erforderlich"
         message={t.header.pleaseLoginForFavorites}
         loginButtonText="Anmelden"
+      />
+      <MobileSearchOverlay
+        isOpen={isMobileSearchOpen}
+        onClose={() => setIsMobileSearchOpen(false)}
       />
     </header>
   )

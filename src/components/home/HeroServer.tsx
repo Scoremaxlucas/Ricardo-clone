@@ -24,6 +24,7 @@ export function HeroServer({
 }: HeroServerProps) {
   return (
     <section
+      id="home-hero"
       className="relative py-8 text-white md:py-12"
       style={{
         background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #10b981 100%)',
@@ -46,13 +47,9 @@ export function HeroServer({
           <h1 className="mb-3 text-center text-3xl font-bold text-white md:mb-4 md:text-4xl lg:text-5xl">
             {title}
           </h1>
-          <p className="mb-6 text-center text-base text-white/90 md:mb-8 md:text-lg">
-            {subtitle}
-          </p>
+          <p className="mb-6 text-center text-base text-white/90 md:mb-8 md:text-lg">{subtitle}</p>
           {/* Slot für Client Component (Search) - Large, dominant */}
-          <div className="relative z-50 mx-auto mb-3 max-w-3xl">
-            {children}
-          </div>
+          <div className="relative z-50 mx-auto mb-3 max-w-3xl">{children}</div>
 
           {/* Trust Mini-Bullets - Under search bar */}
           <TrustMiniBullets variant="hero" />
