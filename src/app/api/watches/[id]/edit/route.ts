@@ -610,6 +610,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
+    // Update searchText for full-text search (async, non-blocking)
+    try {
+      const { updateWatchSearchText } = await import('@/lib/search/update-search-text')
+      const resolvedParams = await params
+      // Run in background without awaiting
+      updateWatchSearchText(resolvedParams.id).catch((err: any) => {
+        console.warn('[Watch Edit] Could not update searchText:', err.message)
+      })
+    } catch (searchTextError: any) {
+      console.warn('[Watch Edit] Could not import search module:', searchTextError.message)
+    }
+
     return NextResponse.json({
       message: 'Angebot erfolgreich aktualisiert',
       watch: updatedWatch,

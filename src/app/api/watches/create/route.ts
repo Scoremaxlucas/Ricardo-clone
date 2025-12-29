@@ -1194,6 +1194,17 @@ export async function POST(request: NextRequest) {
       console.warn('Could not create activity entry:', activityError)
     }
 
+    // Update searchText for full-text search (async, non-blocking)
+    try {
+      const { updateWatchSearchText } = await import('@/lib/search/update-search-text')
+      // Run in background without awaiting
+      updateWatchSearchText(watch.id).catch((err: any) => {
+        console.warn('[Watch Create] Could not update searchText:', err.message)
+      })
+    } catch (searchTextError: any) {
+      console.warn('[Watch Create] Could not import search module:', searchTextError.message)
+    }
+
     return NextResponse.json({
       message: 'Uhr erfolgreich zum Verkauf angeboten',
       watch: {

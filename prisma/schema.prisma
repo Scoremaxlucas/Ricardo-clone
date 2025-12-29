@@ -171,6 +171,7 @@ model Watch {
   description              String?
   brand                    String
   model                    String
+  searchText               String              @default("") // Full-text search field combining all searchable content
   year                     Int?
   condition                String
   material                 String?
@@ -246,6 +247,7 @@ model Watch {
   @@index([articleNumber]) // PERFORMANCE: Für schnelle Artikelnummer-Lookups
   @@index([auctionEnd]) // PERFORMANCE: Für schnelle Auktion-Filterung
   @@index([title, brand]) // PERFORMANCE: Composite Index für kombinierte Suche
+  @@index([searchText]) // PERFORMANCE: Index for full-text search (GIN index added via migration)
   @@map("watches")
 }
 

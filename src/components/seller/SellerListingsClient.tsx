@@ -26,12 +26,12 @@ interface SellerListingsClientProps {
 export function SellerListingsClient({ initialTab = 'active' }: SellerListingsClientProps) {
   const router = useRouter()
   const searchParams = useSearchParams()
-  
+
   // Read tab from URL params, fallback to initialTab
   const urlTab = searchParams.get('tab') as TabType | null
   const validTabs: TabType[] = ['active', 'drafts', 'archive', 'sold']
   const startTab = urlTab && validTabs.includes(urlTab) ? urlTab : initialTab
-  
+
   const [activeTab, setActiveTab] = useState<TabType>(startTab)
   const [searchQuery, setSearchQuery] = useState('')
   const [debouncedSearch, setDebouncedSearch] = useState('')
