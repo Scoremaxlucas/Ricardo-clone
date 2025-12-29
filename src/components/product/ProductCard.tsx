@@ -12,7 +12,19 @@ import {
   hasVisibilityBoost,
   type ListingData,
 } from '@/lib/product-utils'
-import { BadgeCheck, Clock, Gavel, Heart, MapPin, Package, Shield, Truck } from 'lucide-react'
+import {
+  BadgeCheck,
+  Clock,
+  Flame,
+  Gavel,
+  Heart,
+  MapPin,
+  Package,
+  Rocket,
+  Shield,
+  Truck,
+  Zap,
+} from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -228,8 +240,28 @@ export function ProductCard({
           <div className="h-full w-full bg-gray-50" />
         )}
 
-        {/* Top-left: Offer Type Badge (Auktion) + Condition/Sponsored Badges */}
+        {/* Top-left: Boost + Auction + Condition Badges */}
         <div className="absolute left-2 top-2 flex flex-col gap-1">
+          {/* Boost badges - different style per boost type */}
+          {isBoosted && boostType === 'super-boost' && (
+            <span className="inline-flex items-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm">
+              <Rocket className="mr-1 h-3 w-3" />
+              Super-Boost
+            </span>
+          )}
+          {isBoosted && boostType === 'turbo-boost' && (
+            <span className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm">
+              <Zap className="mr-1 h-3 w-3" />
+              Turbo-Boost
+            </span>
+          )}
+          {isBoosted && boostType === 'boost' && (
+            <span className="inline-flex items-center rounded-full bg-primary-600 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm">
+              <Flame className="mr-1 h-3 w-3" />
+              Boost
+            </span>
+          )}
+
           {/* Auction badge - always shown for auctions */}
           {isAuction && (
             <span className="inline-flex items-center rounded-full bg-orange-100/90 px-2 py-0.5 text-[11px] font-medium text-orange-800 shadow-sm backdrop-blur">
@@ -245,10 +277,10 @@ export function ProductCard({
             </span>
           )}
 
-          {/* Condition badges (Wie neu, Sehr gut, etc.) */}
+          {/* Condition badges (Wie neu, Sehr gut, etc.) - only if not too many badges */}
           {overlayBadges
             .filter(badge => badge !== 'Gesponsert')
-            .slice(0, isAuction ? 1 : 2)
+            .slice(0, isBoosted || isAuction ? 1 : 2)
             .map((badge, index) => (
               <span
                 key={index}
@@ -277,19 +309,6 @@ export function ProductCard({
             className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
           />
         </button>
-
-        {/* Subtle boost indicator (border glow, NOT badge) */}
-        {isBoosted && (
-          <div
-            className={`pointer-events-none absolute inset-0 rounded-t-2xl ${
-              boostType === 'super-boost'
-                ? 'ring-2 ring-inset ring-yellow-400/50'
-                : boostType === 'turbo-boost'
-                  ? 'ring-2 ring-inset ring-blue-400/50'
-                  : 'ring-1 ring-inset ring-primary-400/30'
-            }`}
-          />
-        )}
       </div>
 
       {/* Content Wrapper */}
