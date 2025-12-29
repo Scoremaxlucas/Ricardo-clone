@@ -64,9 +64,18 @@ export function MobileSearchControls({
         <span className="font-medium text-gray-900">
           {loading ? (
             <span className="text-gray-500">{t.search.loading}</span>
-          ) : (
-            `${resultsCount} ${resultsCount === 1 ? 'Resultat' : 'Resultate'}`
-          )}
+          ) : (() => {
+            const query = searchParams?.get('q') || ''
+            if (query) {
+              return (
+                <>
+                  {resultsCount} {resultsCount === 1 ? 'Ergebnis' : 'Ergebnisse'} für{' '}
+                  <span className="text-primary-600">&quot;{query}&quot;</span>
+                </>
+              )
+            }
+            return `${resultsCount} ${resultsCount === 1 ? 'Resultat' : 'Resultate'}`
+          })()}
         </span>
       </div>
 

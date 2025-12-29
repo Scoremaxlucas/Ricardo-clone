@@ -166,9 +166,9 @@ function DesktopSearchOverlayContent({ isOpen, onClose }: DesktopSearchOverlayPr
       />
 
       {/* Modal */}
-      <div className="fixed inset-0 z-[101] flex items-start justify-center pt-[20vh] px-4 pointer-events-none">
+      <div className="pointer-events-none fixed inset-0 z-[101] flex items-start justify-center px-4 pt-[20vh]">
         <div
-          className="w-full max-w-2xl rounded-2xl border border-gray-200 bg-white shadow-2xl pointer-events-auto animate-in fade-in slide-in-from-top-4 duration-200"
+          className="animate-in fade-in slide-in-from-top-4 pointer-events-auto w-full max-w-2xl rounded-2xl border border-gray-200 bg-white shadow-2xl duration-200"
           onClick={e => e.stopPropagation()}
         >
           {/* Search Input */}
