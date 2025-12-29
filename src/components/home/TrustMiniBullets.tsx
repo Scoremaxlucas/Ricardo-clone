@@ -10,8 +10,7 @@ import { Check } from 'lucide-react'
 
 const TRUST_BULLETS = [
   'Schweizer Marktplatz',
-  'Zahlungsschutz optional',
-  'Sicherer Chat',
+  'Optionaler Zahlungsschutz',
   'Schnell eingestellt',
 ]
 
