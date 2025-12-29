@@ -13,17 +13,17 @@ import {
   type ListingData,
 } from '@/lib/product-utils'
 import {
+  Award,
   BadgeCheck,
   Clock,
-  Flame,
   Gavel,
   Heart,
   MapPin,
+  Medal,
   Package,
-  Rocket,
   Shield,
+  Star,
   Truck,
-  Zap,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
@@ -242,23 +242,23 @@ export function ProductCard({
 
         {/* Top-left: Boost + Auction + Condition Badges */}
         <div className="absolute left-2 top-2 flex flex-col gap-1">
-          {/* Boost badges - different style per boost type */}
-          {isBoosted && boostType === 'super-boost' && (
-            <span className="inline-flex items-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm">
-              <Rocket className="mr-1 h-3 w-3" />
-              Super-Boost
+          {/* Boost badges - Ricardo-style: Gold > Silber > Bronze */}
+          {isBoosted && boostType === 'gold' && (
+            <span className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-2 py-0.5 text-[11px] font-semibold text-amber-900 shadow-sm">
+              <Award className="mr-1 h-3 w-3" />
+              Gold
             </span>
           )}
-          {isBoosted && boostType === 'turbo-boost' && (
-            <span className="inline-flex items-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm">
-              <Zap className="mr-1 h-3 w-3" />
-              Turbo-Boost
+          {isBoosted && boostType === 'silber' && (
+            <span className="inline-flex items-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 px-2 py-0.5 text-[11px] font-semibold text-slate-800 shadow-sm">
+              <Medal className="mr-1 h-3 w-3" />
+              Silber
             </span>
           )}
-          {isBoosted && boostType === 'boost' && (
-            <span className="inline-flex items-center rounded-full bg-primary-600 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm">
-              <Flame className="mr-1 h-3 w-3" />
-              Boost
+          {isBoosted && boostType === 'bronze' && (
+            <span className="inline-flex items-center rounded-full bg-gradient-to-r from-orange-300 to-amber-400 px-2 py-0.5 text-[11px] font-semibold text-orange-900 shadow-sm">
+              <Star className="mr-1 h-3 w-3" />
+              Bronze
             </span>
           )}
 

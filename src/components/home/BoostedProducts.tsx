@@ -1,7 +1,7 @@
 'use client'
 
 import { useLanguage } from '@/contexts/LanguageContext'
-import { Clock, Heart, Sparkles, Zap } from 'lucide-react'
+import { Award, Clock, Heart, Medal, Sparkles } from 'lucide-react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -25,7 +25,7 @@ interface Item {
 }
 
 interface BoostedProductsProps {
-  boosterType: 'turbo-boost' | 'super-boost'
+  boosterType: 'silber' | 'gold' | 'turbo-boost' | 'super-boost' // Support both old and new naming
 }
 
 export function BoostedProducts({ boosterType }: BoostedProductsProps) {
@@ -97,17 +97,18 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
     return null
   }
 
-  const isSuperBoost = boosterType === 'super-boost'
+  // Support both old and new naming
+  const isGold = boosterType === 'gold' || boosterType === 'super-boost'
 
   return (
     <section className="bg-gray-50 py-12 md:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
           <h2 className="mb-2 text-xl font-bold text-gray-900">
-            {isSuperBoost ? t.home.superBoostOffers : t.home.turboBoostFeatures}
+            {isGold ? '🏆 Gold Angebote' : '🥈 Silber Angebote'}
           </h2>
           <p className="text-sm text-gray-600">
-            {isSuperBoost ? t.home.premiumOffersDesc : t.home.highlightOffersDesc}
+            {isGold ? 'Unsere Premium-Angebote mit maximaler Sichtbarkeit' : 'Empfohlene Angebote mit erhöhter Sichtbarkeit'}
           </p>
         </div>
 
@@ -147,6 +148,7 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
                   )}
                   <button
                     onClick={() => toggleFavorite(product.id)}
+                    aria-label={favorites.includes(product.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
                     className={`absolute right-1.5 top-1.5 rounded-full p-1 transition-colors ${
                       favorites.includes(product.id)
                         ? 'bg-red-500 text-white'
@@ -155,14 +157,14 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
                   >
                     <Heart className="h-3 w-3" />
                   </button>
-                  {isSuperBoost && (
-                    <div className="absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 p-1 text-white shadow-md">
-                      <Sparkles className="h-3 w-3" />
+                  {isGold && (
+                    <div className="absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 p-1.5 text-amber-900 shadow-md">
+                      <Award className="h-3 w-3" />
                     </div>
                   )}
-                  {!isSuperBoost && (
-                    <div className="absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-1 text-white shadow-md">
-                      <Zap className="h-3 w-3" />
+                  {!isGold && (
+                    <div className="absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 p-1.5 text-slate-800 shadow-md">
+                      <Medal className="h-3 w-3" />
                     </div>
                   )}
                 </div>

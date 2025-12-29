@@ -69,40 +69,43 @@ const SHIPPING_LABELS: Record<string, string> = {
   'a-post': 'A-Post (CHF 12.50)',
 }
 
-// Booster-Datenstruktur mit short/details/bullets
+// Booster-Datenstruktur mit short/details/bullets (Ricardo-Style: Bronze/Silber/Gold)
 const BOOSTER_DETAILS: Record<
   string,
   { short: string; detailsTitle: string; bullets: string[]; fineprint?: string }
 > = {
-  boost: {
-    short: 'Fett hervorgehoben in Listen',
-    detailsTitle: 'Boost – Details',
+  bronze: {
+    short: 'Grundlegende Hervorhebung',
+    detailsTitle: 'Bronze – Vorteile',
     bullets: [
-      'Das Angebot wird in einer Liste von ähnlichen Modellen fett hervorgehoben',
-      'Bessere Sichtbarkeit bei Suchergebnissen',
-      'Erhöht die Aufmerksamkeit potenzieller Käufer',
-      'Geeignet für Standard-Angebote',
+      '✓ Fette Hervorhebung in allen Suchergebnissen',
+      '✓ Höhere Sichtbarkeit gegenüber Standard-Angeboten',
+      '✓ Ideal für Artikel mit kleinem Budget',
     ],
+    fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
   },
-  'turbo-boost': {
-    short: 'Hervorhebung + Hauptseite',
-    detailsTitle: 'Turbo-Boost – Details',
+  silber: {
+    short: 'Hervorhebung + Startseite',
+    detailsTitle: 'Silber – Vorteile',
     bullets: [
-      'Das Angebot wird nicht nur hervorgehoben, sondern erscheint teilweise auf der Hauptseite als "Turbo-Boost-Angebot"',
-      'Zusätzliche Sichtbarkeit auf der Startseite',
-      'Erhöht die Reichweite deutlich',
-      'Ideal für schnellverkaufende Artikel',
+      '✓ Alle Bronze-Vorteile inklusive',
+      '✓ Erscheint in der "Empfohlen"-Sektion auf der Startseite',
+      '✓ Bessere Platzierung in Suchergebnissen',
+      '✓ Erreicht deutlich mehr potenzielle Käufer',
     ],
+    fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
   },
-  'super-boost': {
-    short: 'Hervorhebung + Hauptseite + Top-Position',
-    detailsTitle: 'Super-Boost – Details',
+  gold: {
+    short: 'Maximale Sichtbarkeit + Top-Position',
+    detailsTitle: 'Gold – Vorteile',
     bullets: [
-      'Das Angebot wird hervorgehoben und erscheint teilweise auf der Hauptseite',
-      'Wird immer zuoberst in der Liste angezeigt',
-      'Maximale Sichtbarkeit und Reichweite',
-      'Perfekt für Premium-Artikel oder schnelle Verkäufe',
+      '✓ Alle Silber-Vorteile inklusive',
+      '✓ GARANTIERT ganz oben in allen Suchergebnissen',
+      '✓ Premium-Platzierung auf der Startseite',
+      '✓ Maximale Reichweite für schnellen Verkauf',
+      '✓ Perfekt für wertvolle Artikel',
     ],
+    fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
   },
 }
 

@@ -312,14 +312,16 @@ export function hasVisibilityBoost(listing: ListingData): boolean {
 }
 
 /**
- * Get boost type for styling (super > turbo > standard)
- * Used for subtle visual enhancement, NOT "Gesponsert" badge
+ * Get boost type for styling (gold > silber > bronze)
+ * Ricardo-style naming: Bronze, Silber, Gold
+ * Used for visual enhancement badges
  */
-export function getBoostType(listing: ListingData): 'super-boost' | 'turbo-boost' | 'boost' | null {
+export function getBoostType(listing: ListingData): 'gold' | 'silber' | 'bronze' | null {
   const boosters = listing.boosters || []
-  if (boosters.includes('super-boost')) return 'super-boost'
-  if (boosters.includes('turbo-boost')) return 'turbo-boost'
-  if (boosters.includes('boost')) return 'boost'
+  // Support both old and new naming during transition
+  if (boosters.includes('gold') || boosters.includes('super-boost')) return 'gold'
+  if (boosters.includes('silber') || boosters.includes('turbo-boost')) return 'silber'
+  if (boosters.includes('bronze') || boosters.includes('boost')) return 'bronze'
   return null
 }
 

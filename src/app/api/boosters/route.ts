@@ -22,26 +22,26 @@ export async function GET(request: NextRequest) {
 
       const defaultBoosters = [
         {
-          code: 'boost',
-          name: 'Boost',
-          description: 'Das Angebot wird in einer Liste von ähnlichen Modellen fett hervorgehoben',
-          price: 10.0,
+          code: 'bronze',
+          name: 'Bronze',
+          description: 'Grundlegende Hervorhebung: Ihr Angebot wird in Suchergebnissen fett hervorgehoben',
+          price: 5.0,
           isActive: true,
         },
         {
-          code: 'turbo-boost',
-          name: 'Turbo-Boost',
+          code: 'silber',
+          name: 'Silber',
           description:
-            'Das Angebot wird nicht nur hervorgehoben sondern erscheint teilweise auf der Hauptseite als "Turbo-Boost-Angebot"',
-          price: 25.0,
+            'Erhöhte Sichtbarkeit: Hervorhebung + Platzierung in der "Empfohlen"-Sektion auf der Startseite',
+          price: 15.0,
           isActive: true,
         },
         {
-          code: 'super-boost',
-          name: 'Super-Boost',
+          code: 'gold',
+          name: 'Gold',
           description:
-            'Das Angebot wird hervorgehoben, erscheint teilweise auf der Hauptseite und wird immer zuoberst in der Liste angezeigt',
-          price: 45.0,
+            'Maximale Sichtbarkeit: Premium-Platzierung ganz oben in allen Suchergebnissen + Startseite',
+          price: 30.0,
           isActive: true,
         },
       ]
@@ -74,8 +74,8 @@ export async function GET(request: NextRequest) {
         name: booster.name,
         description: booster.description || '',
         price: booster.price,
-        badge: booster.code === 'super-boost' ? 'SUPER' : booster.code === 'turbo-boost' ? 'TURBO' : 'BOOST',
-        badgeColor: booster.code === 'super-boost' ? '#dc2626' : booster.code === 'turbo-boost' ? '#ea580c' : '#059669',
+        badge: booster.code === 'gold' ? 'GOLD' : booster.code === 'silber' ? 'SILBER' : 'BRONZE',
+        badgeColor: booster.code === 'gold' ? '#d97706' : booster.code === 'silber' ? '#64748b' : '#b45309',
       }))
 
     return NextResponse.json({ boosters: boosterOptions })

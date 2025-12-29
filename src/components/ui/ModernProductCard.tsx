@@ -1,6 +1,6 @@
 'use client'
 
-import { CheckCircle2, Clock, Flame, Gavel, Heart, MapPin, Sparkles, Zap } from 'lucide-react'
+import { Award, CheckCircle2, Clock, Gavel, Heart, MapPin, Medal, Star } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -147,9 +147,10 @@ export function ModernProductCard({
   }
 
   const getHighestBooster = () => {
-    if (boosters.includes('super-boost')) return 'super-boost'
-    if (boosters.includes('turbo-boost')) return 'turbo-boost'
-    if (boosters.includes('boost')) return 'boost'
+    // Support both old and new naming
+    if (boosters.includes('gold') || boosters.includes('super-boost')) return 'gold'
+    if (boosters.includes('silber') || boosters.includes('turbo-boost')) return 'silber'
+    if (boosters.includes('bronze') || boosters.includes('boost')) return 'bronze'
     return null
   }
 
@@ -216,23 +217,23 @@ export function ModernProductCard({
               <span>Auktion</span>
             </div>
           )}
-          {/* Booster Badge - Unter Auktion wenn beide vorhanden */}
+          {/* Booster Badge - Ricardo-style: Gold > Silber > Bronze */}
           {booster && (
             <div
-              className={`flex items-center justify-center rounded-full p-1 shadow-md ${
-                booster === 'super-boost'
-                  ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
-                  : booster === 'turbo-boost'
-                    ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                    : 'bg-primary-600 text-white'
+              className={`flex items-center justify-center rounded-full p-1.5 shadow-md ${
+                booster === 'gold'
+                  ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-900'
+                  : booster === 'silber'
+                    ? 'bg-gradient-to-r from-slate-300 to-slate-400 text-slate-800'
+                    : 'bg-gradient-to-r from-orange-300 to-amber-400 text-orange-900'
               } `}
             >
-              {booster === 'super-boost' ? (
-                <Sparkles className="h-3 w-3" />
-              ) : booster === 'turbo-boost' ? (
-                <Zap className="h-3 w-3" />
+              {booster === 'gold' ? (
+                <Award className="h-3 w-3" />
+              ) : booster === 'silber' ? (
+                <Medal className="h-3 w-3" />
               ) : (
-                <Flame className="h-3 w-3" />
+                <Star className="h-3 w-3" />
               )}
             </div>
           )}

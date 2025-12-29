@@ -2,17 +2,20 @@ import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 
 /**
- * API-Endpoint für geboostete Produkte (Turbo-Boost und Super-Boost)
+ * API-Endpoint für geboostete Produkte (Silber und Gold)
+ * Ricardo-style naming: Bronze (basic), Silber (featured), Gold (premium)
  *
  * Query-Parameter:
- * - type: 'turbo-boost' | 'super-boost' | 'all' (default: 'all')
+ * - type: 'silber' | 'gold' | 'all' (default: 'all')
  * - limit: Anzahl der Produkte (default: 6)
  *
  * Algorithmus:
- * - Super-Boost hat höchste Priorität
- * - Turbo-Boost hat zweithöchste Priorität
- * - Sortierung: Super-Boost zuerst, dann Turbo-Boost, dann nach Erstellungsdatum
+ * - Gold hat höchste Priorität
+ * - Silber hat zweithöchste Priorität
+ * - Sortierung: Gold zuerst, dann Silber, dann nach Erstellungsdatum
  * - Nur aktive, nicht verkaufte Angebote
+ *
+ * Note: Old naming (super-boost, turbo-boost) is still supported for backwards compatibility
  */
 export async function GET(request: NextRequest) {
   try {
@@ -74,24 +77,35 @@ export async function GET(request: NextRequest) {
     // Da boosters ein JSON-String ist (z.B. '["super-boost"]'), suchen wir nach dem String
     const where: any = { ...baseWhere }
 
-    if (boosterType === 'super-boost') {
-      // Nur Super-Boost - suche nach "super-boost" im JSON-String
-      where.boosters = {
-        contains: 'super-boost',
-      }
-    } else if (boosterType === 'turbo-boost') {
-      // Nur Turbo-Boost (aber keine Super-Boost)
+    if (boosterType === 'gold' || boosterType === 'super-boost') {
+      // Gold (or legacy super-boost)
+      where.OR = [
+        { boosters: { contains: 'gold' } },
+        { boosters: { contains: 'super-boost' } },
+      ]
+    } else if (boosterType === 'silber' || boosterType === 'turbo-boost') {
+      // Silber (or legacy turbo-boost), but not Gold
       where.AND = [
-        { boosters: { contains: 'turbo-boost' } },
         {
-          OR: [{ boosters: { not: { contains: 'super-boost' } } }, { boosters: null }],
+          OR: [
+            { boosters: { contains: 'silber' } },
+            { boosters: { contains: 'turbo-boost' } },
+          ],
+        },
+        {
+          AND: [
+            { boosters: { not: { contains: 'gold' } } },
+            { boosters: { not: { contains: 'super-boost' } } },
+          ],
         },
       ]
     } else if (boosterType === 'all') {
-      // Turbo-Boost ODER Super-Boost
+      // Silber/Gold (or legacy turbo-boost/super-boost)
       where.OR = [
-        { boosters: { contains: 'turbo-boost' } },
+        { boosters: { contains: 'gold' } },
+        { boosters: { contains: 'silber' } },
         { boosters: { contains: 'super-boost' } },
+        { boosters: { contains: 'turbo-boost' } },
       ]
     }
 
@@ -178,12 +192,13 @@ export async function GET(request: NextRequest) {
     })
 
     // Sortiere nach Booster-Priorität
-    // Algorithmus: Super-Boost > Turbo-Boost > Erstellungsdatum
+    // Algorithmus: Gold > Silber > Bronze > Erstellungsdatum
     watchesWithBoosters = watchesWithBoosters.sort((a, b) => {
       const getBoostPriority = (boosters: string[]): number => {
-        if (boosters.includes('super-boost')) return 4
-        if (boosters.includes('turbo-boost')) return 3
-        if (boosters.includes('boost')) return 2
+        // Support both new (gold/silber/bronze) and legacy (super-boost/turbo-boost/boost) naming
+        if (boosters.includes('gold') || boosters.includes('super-boost')) return 4
+        if (boosters.includes('silber') || boosters.includes('turbo-boost')) return 3
+        if (boosters.includes('bronze') || boosters.includes('boost')) return 2
         return 1
       }
 

@@ -52,26 +52,26 @@ export async function GET(request: NextRequest) {
           isActive: true,
         },
         {
-          code: 'boost',
-          name: 'Boost',
-          description: 'Das Angebot wird in einer Liste von ähnlichen Modellen fett hervorgehoben',
-          price: 10.0,
+          code: 'bronze',
+          name: 'Bronze',
+          description: 'Grundlegende Hervorhebung: Ihr Angebot wird in Suchergebnissen fett hervorgehoben',
+          price: 5.0,
           isActive: true,
         },
         {
-          code: 'turbo-boost',
-          name: 'Turbo-Boost',
+          code: 'silber',
+          name: 'Silber',
           description:
-            'Das Angebot wird nicht nur hervorgehoben sondern erscheint teilweise auf der Hauptseite als "Turbo-Boost-Angebot"',
-          price: 25.0,
+            'Erhöhte Sichtbarkeit: Hervorhebung + Platzierung in der "Empfohlen"-Sektion auf der Startseite',
+          price: 15.0,
           isActive: true,
         },
         {
-          code: 'super-boost',
-          name: 'Super-Boost',
+          code: 'gold',
+          name: 'Gold',
           description:
-            'Das Angebot wird hervorgehoben, erscheint teilweise auf der Hauptseite und wird immer zuoberst in der Liste angezeigt',
-          price: 45.0,
+            'Maximale Sichtbarkeit: Premium-Platzierung ganz oben in allen Suchergebnissen + Startseite',
+          price: 30.0,
           isActive: true,
         },
       ]

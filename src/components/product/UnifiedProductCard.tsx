@@ -1,6 +1,6 @@
 'use client'
 
-import { Clock, Flame, Gavel, Heart, MapPin, Sparkles, TrendingUp, Zap } from 'lucide-react'
+import { Award, Clock, Gavel, Heart, MapPin, Medal, Sparkles, Star, TrendingUp } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -76,11 +76,11 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
 
   const mainImage = images[0] || null
 
-  // Parse boosters
+  // Parse boosters (support both old and new naming: gold/silber/bronze and super-boost/turbo-boost/boost)
   const boosters = product.boosters || []
-  const hasSuperBoost = boosters.includes('super-boost')
-  const hasTurboBoost = boosters.includes('turbo-boost') && !hasSuperBoost
-  const hasBoost = boosters.includes('boost') && !hasSuperBoost && !hasTurboBoost
+  const hasGold = boosters.includes('gold') || boosters.includes('super-boost')
+  const hasSilber = (boosters.includes('silber') || boosters.includes('turbo-boost')) && !hasGold
+  const hasBronze = (boosters.includes('bronze') || boosters.includes('boost')) && !hasGold && !hasSilber
 
   // Check if product is new (less than 7 days old)
   const isNew = product.createdAt
@@ -230,21 +230,21 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             />
           </button>
 
-          {/* Badges */}
+          {/* Badges - Ricardo-style: Gold > Silber > Bronze */}
           <div className="absolute left-1.5 top-1.5 z-10 flex flex-col gap-1">
-            {hasSuperBoost && (
-              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 p-1 text-white shadow-md">
-                <Sparkles className="h-3 w-3" />
+            {hasGold && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 p-1.5 text-amber-900 shadow-md">
+                <Award className="h-3 w-3" />
               </div>
             )}
-            {hasTurboBoost && (
-              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-1 text-white shadow-md">
-                <Zap className="h-3 w-3" />
+            {hasSilber && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 p-1.5 text-slate-800 shadow-md">
+                <Medal className="h-3 w-3" />
               </div>
             )}
-            {hasBoost && (
-              <div className="flex items-center justify-center rounded-full bg-primary-600 p-1 text-white shadow-md">
-                <Flame className="h-3 w-3" />
+            {hasBronze && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-orange-300 to-amber-400 p-1.5 text-orange-900 shadow-md">
+                <Star className="h-3 w-3" />
               </div>
             )}
             {isNew && !product.isAuction && (
@@ -257,7 +257,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             {product.isAuction && (
               <div
                 className={`absolute left-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm ${
-                  hasSuperBoost || hasTurboBoost || hasBoost ? 'top-8' : 'top-1.5'
+                  hasGold || hasSilber || hasBronze ? 'top-8' : 'top-1.5'
                 }`}
               >
                 <Gavel className="h-2.5 w-2.5" />
