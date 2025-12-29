@@ -409,20 +409,21 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
               className={`h-4 w-4 transition-all ${isFavorite ? 'scale-110 fill-current' : ''}`}
             />
           </button>
+          {/* Badges - Ricardo-style: Gold > Silber > Bronze */}
           <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
-            {hasSuperBoost && (
-              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 p-1.5 text-white shadow-md">
-                <Sparkles className="h-3.5 w-3.5" />
+            {hasGold && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 p-1.5 text-amber-900 shadow-md">
+                <Award className="h-3.5 w-3.5" />
               </div>
             )}
-            {hasTurboBoost && (
-              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-1.5 text-white shadow-md">
-                <Zap className="h-3.5 w-3.5" />
+            {hasSilber && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 p-1.5 text-slate-800 shadow-md">
+                <Medal className="h-3.5 w-3.5" />
               </div>
             )}
-            {hasBoost && (
-              <div className="flex items-center justify-center rounded-full bg-primary-600 p-1.5 text-white shadow-md">
-                <Flame className="h-3.5 w-3.5" />
+            {hasBronze && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-orange-300 to-amber-400 p-1.5 text-orange-900 shadow-md">
+                <Star className="h-3.5 w-3.5" />
               </div>
             )}
             {isNew && !product.isAuction && (
@@ -432,7 +433,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
               </div>
             )}
             {/* Auction Badge - Immer sichtbar wenn Auktion (falls kein Booster) - Subtiler */}
-            {product.isAuction && !hasSuperBoost && !hasTurboBoost && !hasBoost && (
+            {product.isAuction && !hasGold && !hasSilber && !hasBronze && (
               <div className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm">
                 <Gavel className="h-2.5 w-2.5" />
                 <span>Auktion</span>
@@ -552,21 +553,21 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
           />
         </button>
 
-        {/* Badges */}
+        {/* Badges - Ricardo-style: Gold > Silber > Bronze */}
         <div className="absolute left-1.5 top-1.5 z-10 flex flex-col gap-1">
-          {hasSuperBoost && (
-            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-yellow-400 to-orange-500 p-1 text-white shadow-md">
-              <Sparkles className="h-3 w-3" />
+          {hasGold && (
+            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 p-1 text-amber-900 shadow-md">
+              <Award className="h-3 w-3" />
             </div>
           )}
-          {hasTurboBoost && (
-            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-blue-500 to-purple-600 p-1 text-white shadow-md">
-              <Zap className="h-3 w-3" />
+          {hasSilber && (
+            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 p-1 text-slate-800 shadow-md">
+              <Medal className="h-3 w-3" />
             </div>
           )}
-          {hasBoost && (
-            <div className="flex items-center justify-center rounded-full bg-primary-600 p-1 text-white shadow-md">
-              <Flame className="h-3 w-3" />
+          {hasBronze && (
+            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-orange-300 to-amber-400 p-1 text-orange-900 shadow-md">
+              <Star className="h-3 w-3" />
             </div>
           )}
           {isNew && !product.isAuction && (
@@ -576,7 +577,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             </div>
           )}
           {/* Auction Badge - Immer sichtbar wenn Auktion (falls kein Booster) - Subtiler */}
-          {product.isAuction && !hasSuperBoost && !hasTurboBoost && !hasBoost && (
+          {product.isAuction && !hasGold && !hasSilber && !hasBronze && (
             <div className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm">
               <Gavel className="h-2.5 w-2.5" />
               <span>Auktion</span>
