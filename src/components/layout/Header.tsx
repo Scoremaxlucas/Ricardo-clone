@@ -404,26 +404,31 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
           </div>
         </div>
 
-        {/* DESKTOP HEADER */}
+        {/* DESKTOP HEADER - CSS Grid für stabile 3-Zonen Aufteilung */}
         <div className="hidden md:block">
-          {/* ERSTE ZEILE: 3-Zonen Layout (Left / Center / Right) */}
-          <div className="flex h-14 w-full items-center gap-2 py-1 lg:gap-4">
-            {/* === LEFT ZONE: Logo + Navigation (shrink-0 auf lg+) === */}
-            <div className="flex min-w-0 flex-shrink items-center gap-2 lg:flex-shrink-0 lg:gap-3">
+          {/*
+            Desktop Grid Layout:
+            - Left: auto (Logo + Nav, kann nicht schrumpfen)
+            - Center: 1fr (Search, nimmt verfügbaren Platz, aber mit min/max)
+            - Right: auto (Actions, kann nicht schrumpfen)
+          */}
+          <div className="grid h-14 w-full grid-cols-[auto_1fr_auto] items-center gap-3 py-1 lg:gap-4 xl:gap-6">
+            {/* === LEFT ZONE: Logo + Navigation (flex-none = kann nie schrumpfen) === */}
+            <div className="flex flex-none items-center gap-1.5 lg:gap-2 xl:gap-3">
               {/* Logo */}
-              <Link href="/" prefetch={true} className="flex-shrink-0">
+              <Link href="/" prefetch={true} className="flex-none">
                 <Logo size="md" />
               </Link>
 
               {/* Kategorien Button */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
-                className="flex items-center gap-1 whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-gray-700 transition-all duration-200 hover:border-primary-200 hover:bg-gray-100 hover:text-primary-600 lg:gap-2 lg:px-3 lg:py-2"
+                className="flex flex-none items-center gap-1 whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-gray-700 transition-all duration-200 hover:border-primary-200 hover:bg-gray-100 hover:text-primary-600 lg:gap-1.5 lg:px-2.5 xl:gap-2 xl:px-3 xl:py-2"
                 title="Kategorien"
               >
-                <Grid3x3 className="h-5 w-5 flex-shrink-0" />
+                <Grid3x3 className="h-5 w-5 flex-none" />
                 <span className="hidden text-sm font-semibold lg:inline">Kategorien</span>
-                <ChevronDown className="hidden h-3 w-3 flex-shrink-0 lg:inline" />
+                <ChevronDown className="hidden h-3 w-3 flex-none lg:inline" />
               </button>
 
               {/* Favoriten */}
@@ -432,11 +437,11 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   href="/favorites"
                   prefetch={true}
                   onMouseEnter={() => handlePrefetch('/favorites')}
-                  className="relative flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100"
+                  className="relative flex flex-none items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100"
                   title={t.header.favorites}
                 >
-                  <Heart className="h-5 w-5 flex-shrink-0" />
-                  <span className="hidden text-sm font-normal lg:inline">{t.header.favorites}</span>
+                  <Heart className="h-5 w-5 flex-none" />
+                  <span className="hidden text-sm font-normal xl:inline">{t.header.favorites}</span>
                   {deferredData.favoritesCount > 0 && (
                     <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
                       {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
@@ -446,29 +451,29 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               ) : (
                 <button
                   onClick={() => setIsLoginModalOpen(true)}
-                  className="flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100"
+                  className="flex flex-none items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100"
                   title={t.header.favorites}
                 >
-                  <Heart className="h-5 w-5 flex-shrink-0" />
-                  <span className="hidden text-sm font-normal lg:inline">{t.header.favorites}</span>
+                  <Heart className="h-5 w-5 flex-none" />
+                  <span className="hidden text-sm font-normal xl:inline">{t.header.favorites}</span>
                 </button>
               )}
 
-              {/* Auktionen */}
+              {/* Auktionen - nur auf xl+ sichtbar */}
               <Link
                 href="/auctions"
                 prefetch={true}
                 onMouseEnter={() => handlePrefetch('/auctions')}
-                className="hidden items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100 lg:flex"
+                className="hidden flex-none items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100 xl:flex"
                 title={t.header.auctions}
               >
-                <Gavel className="h-5 w-5 flex-shrink-0" />
-                <span className="hidden text-sm font-normal xl:inline">{t.header.auctions}</span>
+                <Gavel className="h-5 w-5 flex-none" />
+                <span className="hidden text-sm font-normal 2xl:inline">{t.header.auctions}</span>
               </Link>
 
               {/* Verkaufen Dropdown */}
               <div
-                className="relative z-50"
+                className="relative z-50 flex-none"
                 onMouseEnter={() => {
                   setIsLanguageMenuOpen(false)
                   setIsProfileMenuOpen(false)
@@ -480,13 +485,13 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 <Link
                   href="/sell"
                   prefetch={true}
-                  className="flex items-center gap-1 whitespace-nowrap rounded-lg bg-primary-600 px-3 py-1.5 text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow-md lg:gap-2 lg:px-4 lg:py-2"
+                  className="flex items-center gap-1 whitespace-nowrap rounded-lg bg-primary-600 px-2.5 py-1.5 text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow-md lg:gap-1.5 lg:px-3 xl:gap-2 xl:px-4 xl:py-2"
                   title={t.header.sell}
                 >
-                  <Plus className="h-5 w-5 flex-shrink-0" />
+                  <Plus className="h-5 w-5 flex-none" />
                   <span className="hidden text-sm font-semibold lg:inline">{t.header.sell}</span>
                   <ChevronDown
-                    className={`h-3 w-3 flex-shrink-0 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`}
+                    className={`hidden h-3 w-3 flex-none transition-transform lg:block ${isSellMenuOpen ? 'rotate-180' : ''}`}
                   />
                 </Link>
 
@@ -522,47 +527,49 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               </div>
             </div>
 
-            {/* === CENTER ZONE: Search Trigger (centered) === */}
-            <div className="hidden flex-1 justify-center lg:flex">
-              <HeaderSearch
-                onMobileSearchOpen={() => setIsMobileSearchOpen(true)}
-                onDesktopSearchOpen={() => setIsDesktopSearchOpen(true)}
-              />
+            {/* === CENTER ZONE: Search Trigger (zentriert, mit min/max width) === */}
+            <div className="flex min-w-0 items-center justify-center px-2">
+              <div className="w-full max-w-md">
+                <HeaderSearch
+                  onMobileSearchOpen={() => setIsMobileSearchOpen(true)}
+                  onDesktopSearchOpen={() => setIsDesktopSearchOpen(true)}
+                />
+              </div>
             </div>
 
-            {/* === RIGHT ZONE: User Actions (shrink-0 auf lg+) === */}
-            <div className="flex min-w-0 flex-shrink items-center gap-1 lg:flex-shrink-0 lg:gap-2">
-              {/* Notifications */}
+            {/* === RIGHT ZONE: User Actions (flex-none = kann nie schrumpfen) === */}
+            <div className="flex flex-none items-center gap-1 lg:gap-1.5 xl:gap-2">
+              {/* Notifications - icon only on md, with label on xl+ */}
               <Link
                 href="/notifications"
                 prefetch={true}
                 onMouseEnter={() => handlePrefetch('/notifications')}
-                className="relative flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
+                className="relative flex flex-none items-center justify-center gap-1.5 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 xl:px-3"
                 title={t.header.notifications}
               >
-                <div className="relative">
+                <div className="relative flex-none">
                   <Bell className="h-5 w-5" />
                   {deferredData.unreadNotifications > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white sm:-right-2 sm:-top-2 sm:h-4 sm:w-4 sm:text-xs">
+                    <span className="absolute -right-1.5 -top-1.5 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
                       {deferredData.unreadNotifications > 9
                         ? '9+'
                         : deferredData.unreadNotifications}
                     </span>
                   )}
                 </div>
-                <span className="hidden text-sm font-medium sm:inline">
+                <span className="hidden text-sm font-medium 2xl:inline">
                   {t.header.notifications}
                 </span>
               </Link>
 
               {/* User Menu */}
-              <div className="relative flex items-center space-x-1 sm:space-x-2">
+              <div className="relative flex flex-none items-center gap-1 xl:gap-1.5">
                 {session ? (
                   <>
-                    {/* Username */}
-                    <div className="mr-0.5 hidden min-w-0 items-center gap-0.5 overflow-hidden text-xs text-gray-700 sm:flex md:mr-1 md:gap-1 md:text-sm">
-                      <span className="hidden lg:inline">{t.header.hello},</span>
-                      <div className="max-w-[35px] truncate sm:max-w-[50px] md:max-w-[65px] lg:max-w-[85px] xl:max-w-[110px]">
+                    {/* Username - only on xl+ */}
+                    <div className="mr-0.5 hidden items-center gap-0.5 text-sm text-gray-700 xl:mr-1 xl:flex">
+                      <span className="hidden 2xl:inline">{t.header.hello},</span>
+                      <div className="max-w-[80px] truncate 2xl:max-w-[100px]">
                         <UserName
                           userId={(session?.user as any)?.id || ''}
                           userName={displayName}
@@ -574,7 +581,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
                     {/* Profile Dropdown */}
                     <div
-                      className="relative"
+                      className="relative flex-none"
                       onMouseEnter={() => {
                         setIsLanguageMenuOpen(false)
                         setIsSellMenuOpen(false)
@@ -586,10 +593,10 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                     >
                       <button
                         type="button"
-                        className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 p-1 text-white transition-all duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:px-2 sm:py-1"
+                        className="relative flex items-center justify-center gap-1 rounded-full bg-primary-600 p-1 text-white transition-all duration-200 hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 lg:px-1.5"
                         title={t.header.profileMenu}
                       >
-                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 sm:h-8 sm:w-8">
+                        <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-700 lg:h-8 lg:w-8">
                           {getProfileImage() ? (
                             <img
                               src={getProfileImage() || undefined}
@@ -597,13 +604,13 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                               className="h-full w-full rounded-full object-cover"
                             />
                           ) : (
-                            <span className="text-[10px] font-semibold sm:text-xs">
+                            <span className="text-[10px] font-semibold lg:text-xs">
                               {getInitials(session.user?.name)}
                             </span>
                           )}
                         </div>
                         <ChevronDown
-                          className={`h-3 w-3 transition-transform sm:h-4 sm:w-4 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
+                          className={`h-3 w-3 transition-transform lg:h-4 lg:w-4 ${isProfileMenuOpen ? 'rotate-180' : ''}`}
                         />
                       </button>
 
@@ -732,18 +739,18 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                     href="/login"
                     prefetch={true}
                     onMouseEnter={() => handlePrefetch('/login')}
-                    className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
+                    className="flex flex-none items-center justify-center gap-1.5 rounded-md p-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600 xl:px-3"
                     title={t.header.login}
                   >
-                    <User className="h-5 w-5" />
-                    <span className="hidden text-sm font-medium sm:inline">{t.header.login}</span>
+                    <User className="h-5 w-5 flex-none" />
+                    <span className="hidden text-sm font-medium xl:inline">{t.header.login}</span>
                   </Link>
                 )}
               </div>
 
               {/* Language Selector */}
               <div
-                className="relative flex-shrink-0"
+                className="relative flex-none"
                 onMouseEnter={() => {
                   setIsProfileMenuOpen(false)
                   setIsSellMenuOpen(false)
@@ -753,7 +760,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               >
                 <button
                   type="button"
-                  className="flex items-center justify-center rounded-md p-1.5 text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-primary-600"
+                  className="flex flex-none items-center justify-center rounded-md p-1.5 text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-primary-600"
                   title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
                 >
                   <span className="text-base">
@@ -766,7 +773,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
                 {isLanguageMenuOpen && (
                   <div
-                    className="absolute left-0 top-full z-[10000] w-36 rounded-md border border-gray-200 bg-white py-0.5 shadow-lg"
+                    className="absolute right-0 top-full z-[10000] w-36 rounded-md border border-gray-200 bg-white py-0.5 shadow-lg"
                     style={{ marginTop: '4px', pointerEvents: 'auto' }}
                   >
                     {languages.map(lang => (

@@ -17,25 +17,25 @@ interface HeaderSearchProps {
  * - Mobile: Icon that triggers mobile overlay (handled by parent)
  * - Keyboard shortcut: Cmd/Ctrl+K handled by parent
  */
-function HeaderSearchContent({
-  onMobileSearchOpen,
-  onDesktopSearchOpen,
-}: HeaderSearchProps) {
+function HeaderSearchContent({ onMobileSearchOpen, onDesktopSearchOpen }: HeaderSearchProps) {
   return (
     <>
-      {/* Desktop Search Trigger - Only visible on lg+ */}
+      {/* Desktop Search Trigger - Visible on md+ (desktop header) */}
       <button
         type="button"
         onClick={onDesktopSearchOpen}
-        className="hidden items-center gap-2 rounded-full border border-gray-200 bg-white px-4 py-2 text-sm text-gray-600 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-gray-50 hover:text-primary-600 lg:flex"
+        className="hidden w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-gray-50 hover:text-primary-600 md:flex lg:px-4"
         aria-label="Suche öffnen"
         title="Suche (⌘K oder Strg+K)"
       >
-        <Search className="h-4 w-4" />
-        <span className="hidden xl:inline">Suchen…</span>
+        <Search className="h-4 w-4 flex-none" />
+        <span className="hidden truncate lg:inline">Suchen…</span>
+        <kbd className="ml-auto hidden rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 xl:inline">
+          ⌘K
+        </kbd>
       </button>
 
-      {/* Mobile Search Icon */}
+      {/* Mobile Search Icon - Only visible below md */}
       <button
         type="button"
         onClick={onMobileSearchOpen}
