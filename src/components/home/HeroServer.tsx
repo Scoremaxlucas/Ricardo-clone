@@ -13,17 +13,15 @@ import { TrustMiniBullets } from './TrustMiniBullets'
 
 interface HeroServerProps {
   title?: string
-  subtitle?: string
 }
 
 export function HeroServer({
   title = 'Finden Sie lokale Deals in der Schweiz',
-  subtitle = 'Tausende Artikel von Verkäufern in Ihrer Nähe',
 }: HeroServerProps) {
   return (
     <section
       id="home-hero"
-      className="relative py-6 text-white md:py-6 lg:py-4"
+      className="relative py-4 text-white md:py-5 lg:py-3"
       style={{
         background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #10b981 100%)',
       }}
@@ -39,14 +37,13 @@ export function HeroServer({
       />
 
       <div className="relative z-10 mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
-        <div className="mx-auto max-w-3xl text-center">
+        <div className="flex flex-col items-center justify-center text-center">
           {/* LCP-OPTIMIERT: H1 ist sofort im HTML, kein JavaScript nötig */}
-          <h1 className="mb-2 text-2xl font-bold text-white md:mb-2 md:text-3xl lg:mb-1 lg:text-2xl">
+          <h1 className="text-xl font-bold text-white md:text-2xl lg:text-xl">
             {title}
           </h1>
-          <p className="mb-3 text-sm text-white/90 md:text-base lg:mb-2 lg:text-sm">{subtitle}</p>
 
-          {/* Trust Mini-Bullets */}
+          {/* Trust Mini-Bullets - direkt unter Titel */}
           <TrustMiniBullets variant="hero" />
         </div>
       </div>

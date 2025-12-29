@@ -61,13 +61,10 @@ export default async function Home() {
       <main id="main-content" className="flex-1 pb-8" tabIndex={-1}>
         {/*
           Hero Section - Kritisch für LCP
-          Server Component rendert H1/H2 sofort
+          Server Component rendert H1 sofort
           Search ist jetzt im Header (Ricardo-Style)
         */}
-        <HeroServer
-          title="Finden Sie lokale Deals in der Schweiz"
-          subtitle="Tausende Artikel von Verkäufern in Ihrer Nähe"
-        />
+        <HeroServer title="Finden Sie lokale Deals in der Schweiz" />
 
         {/* Beliebte Kategorien */}
         <PopularCategories />
