@@ -31,7 +31,8 @@
     "test-emoji-fix": "tsx scripts/test-emoji-fix.ts",
     "migrate:article-numbers": "tsx scripts/migrate-article-numbers.ts",
     "migrate:images-to-blob": "tsx scripts/migrate-images-to-blob.ts",
-    "test:visibility": "tsx scripts/test-visibility-pipeline.ts"
+    "test:visibility": "tsx scripts/test-visibility-pipeline.ts",
+    "test:product-utils": "tsx scripts/test-product-utils.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.0",

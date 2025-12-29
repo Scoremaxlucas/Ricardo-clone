@@ -130,6 +130,11 @@ export async function GET(request: NextRequest) {
       city: result.seller?.city || null,
       postalCode: result.seller?.postalCode || null,
       categorySlugs: result.categorySlugs,
+      // Enhanced fields for Ricardo-level cards
+      paymentProtectionEnabled: result.paymentProtectionEnabled,
+      shippingMethods: result.shippingMethods,
+      shippingMinCost: result.shippingMinCost,
+      sellerVerified: result.sellerVerified,
       // Include search metadata if present
       ...(result.score !== undefined && { _score: result.score }),
       ...(result.ftsRank !== undefined && { _ftsRank: result.ftsRank }),

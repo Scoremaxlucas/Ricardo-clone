@@ -51,6 +51,9 @@ export const ProductCard = function ProductCard(props: ProductCardProps) {
     paymentProtectionEnabled: restProps.paymentProtectionEnabled,
     createdAt: restProps.createdAt,
     shippingMethods: restProps.shippingMethods,
+    // Enhanced fields
+    shippingMinCost: restProps.shippingMinCost,
+    sellerVerified: restProps.sellerVerified,
   }
 
   return (

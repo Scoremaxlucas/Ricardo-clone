@@ -39,6 +39,41 @@ import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
 import { expandQuery, normalizeQuery } from './search-synonyms-enhanced'
 
+/**
+ * Calculate minimum shipping cost from shipping methods array
+ * Uses simple heuristics based on common Swiss Post rates
+ */
+function calculateMinShippingCost(shippingMethods: string[]): number | null {
+  if (!shippingMethods || shippingMethods.length === 0) return null
+
+  // Filter out pickup - we only want shipping costs
+  const shippingOnlyMethods = shippingMethods.filter(m => m !== 'pickup')
+  if (shippingOnlyMethods.length === 0) return null
+
+  // Common shipping rate estimates (Swiss Post)
+  const rateMap: Record<string, number> = {
+    post_economy_2kg: 7.0,
+    post_economy_10kg: 9.0,
+    post_economy_30kg: 15.0,
+    post_priority_2kg: 9.0,
+    post_priority_10kg: 12.0,
+    post_priority_30kg: 18.0,
+    // Generic fallback
+    versand: 7.0,
+    shipping: 7.0,
+  }
+
+  // Find minimum cost
+  let minCost = Infinity
+  for (const method of shippingOnlyMethods) {
+    const methodLower = method.toLowerCase()
+    const cost = rateMap[methodLower] ?? 7.0 // Default to economy 2kg rate
+    if (cost < minCost) minCost = cost
+  }
+
+  return minCost === Infinity ? null : minCost
+}
+
 // Types
 export interface SearchFilters {
   category?: string
@@ -85,9 +120,16 @@ export interface SearchResult {
   seller: {
     city: string | null
     postalCode: string | null
+    verified?: boolean
   } | null
   bids: Array<{ id: string; amount: number }>
   categorySlugs: string[]
+  // Enhanced fields for Ricardo-level cards
+  paymentProtectionEnabled: boolean
+  shippingMethod: string | null // JSON string with shipping methods
+  shippingMethods: string[] // Parsed shipping methods array
+  shippingMinCost: number | null // Minimum shipping cost in CHF
+  sellerVerified: boolean
   // Search metadata
   score?: number
   ftsRank?: number
@@ -372,6 +414,8 @@ async function executeSearchQuery(params: {
       w."auctionStart",
       w."createdAt",
       w."sellerId",
+      w."paymentProtectionEnabled",
+      w."shippingMethod",
       ${scoreExpression} as score,
       ts_rank_cd(
         to_tsvector('german', unaccent(${searchableText})),
@@ -414,7 +458,7 @@ async function executeSearchQuery(params: {
   const [sellers, categories, bids] = await Promise.all([
     prisma.user.findMany({
       where: { id: { in: rawResults.map(r => r.sellerId) } },
-      select: { id: true, city: true, postalCode: true },
+      select: { id: true, city: true, postalCode: true, verified: true },
     }),
     prisma.watchCategory.findMany({
       where: { watchId: { in: watchIds } },
@@ -447,6 +491,7 @@ async function executeSearchQuery(params: {
     // Parse JSON fields
     let images: string[] = []
     let boosters: string[] = []
+    let shippingMethods: string[] = []
 
     try {
       if (r.images) {
@@ -463,6 +508,21 @@ async function executeSearchQuery(params: {
     } catch {
       boosters = []
     }
+
+    // Parse shipping methods for delivery info
+    try {
+      if (r.shippingMethod) {
+        const parsed =
+          typeof r.shippingMethod === 'string' ? JSON.parse(r.shippingMethod) : r.shippingMethod
+        shippingMethods = Array.isArray(parsed) ? parsed : []
+      }
+    } catch {
+      shippingMethods = []
+    }
+
+    // Calculate minimum shipping cost from shipping methods
+    // Simple heuristic: if has shipping, estimate based on common rates
+    const shippingMinCost = calculateMinShippingCost(shippingMethods)
 
     const seller = sellerMap.get(r.sellerId)
     const watchBids = bidMap.get(r.id) || []
@@ -488,9 +548,18 @@ async function executeSearchQuery(params: {
       auctionStart: r.auctionStart,
       createdAt: r.createdAt,
       sellerId: r.sellerId,
-      seller: seller ? { city: seller.city, postalCode: seller.postalCode } : null,
+      seller: seller
+        ? { city: seller.city, postalCode: seller.postalCode, verified: seller.verified }
+        : null,
       bids: watchBids,
       categorySlugs: categoryMap.get(r.id) || [],
+      // Enhanced fields
+      paymentProtectionEnabled: r.paymentProtectionEnabled || false,
+      shippingMethod: r.shippingMethod || null,
+      shippingMethods,
+      shippingMinCost,
+      sellerVerified: seller?.verified || false,
+      // Score metadata
       score: r.score,
       ftsRank: r.fts_rank,
       trigramSimilarity: r.trigram_sim,
@@ -596,7 +665,7 @@ async function searchWithoutQuery(
       take: limit,
       skip: offset,
       include: {
-        seller: { select: { id: true, city: true, postalCode: true } },
+        seller: { select: { id: true, city: true, postalCode: true, verified: true } },
         categories: { include: { category: { select: { slug: true, name: true } } } },
         bids: { select: { id: true, amount: true }, orderBy: { amount: 'desc' } },
       },
@@ -608,6 +677,7 @@ async function searchWithoutQuery(
   const results: SearchResult[] = watches.map(w => {
     let images: string[] = []
     let boosters: string[] = []
+    let shippingMethods: string[] = []
 
     try {
       if (w.images) images = JSON.parse(w.images)
@@ -621,6 +691,16 @@ async function searchWithoutQuery(
       boosters = []
     }
 
+    try {
+      if (w.shippingMethod) {
+        const parsed = JSON.parse(w.shippingMethod)
+        shippingMethods = Array.isArray(parsed) ? parsed : []
+      }
+    } catch {
+      shippingMethods = []
+    }
+
+    const shippingMinCost = calculateMinShippingCost(shippingMethods)
     const highestBid = w.bids[0]
     const currentPrice = highestBid ? highestBid.amount : w.price
 
@@ -641,9 +721,17 @@ async function searchWithoutQuery(
       auctionStart: w.auctionStart,
       createdAt: w.createdAt,
       sellerId: w.sellerId,
-      seller: w.seller ? { city: w.seller.city, postalCode: w.seller.postalCode } : null,
+      seller: w.seller
+        ? { city: w.seller.city, postalCode: w.seller.postalCode, verified: w.seller.verified }
+        : null,
       bids: w.bids.map(b => ({ id: b.id, amount: b.amount })),
       categorySlugs: w.categories.map(c => c.category.slug),
+      // Enhanced fields
+      paymentProtectionEnabled: w.paymentProtectionEnabled,
+      shippingMethod: w.shippingMethod,
+      shippingMethods,
+      shippingMinCost,
+      sellerVerified: w.seller?.verified || false,
     }
   })
 

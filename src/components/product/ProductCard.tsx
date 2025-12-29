@@ -1,12 +1,30 @@
 'use client'
 
-import { Heart, MapPin, Package, Clock, Shield, Sparkles } from 'lucide-react'
+import {
+  Heart,
+  MapPin,
+  Package,
+  Clock,
+  Shield,
+  Sparkles,
+  BadgeCheck,
+  Truck,
+  Gavel,
+} from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { formatCHF, formatTimeLeft, getListingBadges, getDeliveryLabel, type ListingData } from '@/lib/product-utils'
+import {
+  formatCHF,
+  formatCHFCompact,
+  formatTimeLeft,
+  getListingBadges,
+  getDeliveryInfo,
+  getBoostType,
+  type ListingData,
+} from '@/lib/product-utils'
 
 export interface ProductCardData extends ListingData {
   images: string[] | string
@@ -16,6 +34,9 @@ export interface ProductCardData extends ListingData {
   brand?: string
   model?: string
   boosters?: string[]
+  // Enhanced fields
+  shippingMinCost?: number | null
+  sellerVerified?: boolean
 }
 
 interface ProductCardProps {
@@ -150,18 +171,22 @@ export function ProductCard({
 
   const productHref = product.href || `/products/${product.id}`
 
-  // Get badges (max 2)
+  // Get badges (max 2) - includes trust, promo, new, condition
   const badges = getListingBadges(product)
 
-  // Get delivery label
-  const deliveryLabel = getDeliveryLabel(product)
+  // Get delivery info (shipping cost, pickup availability)
+  const deliveryInfo = getDeliveryInfo(product)
+
+  // Get boost type for styling
+  const boostType = getBoostType(product)
 
   // Determine price display
   const isAuction = product.isAuction === true
   // Calculate currentBid from bids if not provided
-  const currentBid = product.currentBid ??
+  const currentBid =
+    product.currentBid ??
     (product.bids && product.bids.length > 0
-      ? Math.max(...product.bids.map((b: any) => typeof b === 'object' ? b.amount : b))
+      ? Math.max(...product.bids.map((b: any) => (typeof b === 'object' ? b.amount : b)))
       : undefined)
   const mainPrice = isAuction ? (currentBid ?? product.price) : product.price
   const hasBuyNowPrice = product.buyNowPrice && product.buyNowPrice > 0
@@ -170,7 +195,7 @@ export function ProductCard({
   const bidCount = product.bids?.length || 0
   const timeLeft = product.auctionEnd ? formatTimeLeft(product.auctionEnd) : ''
 
-  // Default variant - exact spec implementation
+  // Default variant - Ricardo-level implementation
   return (
     <Link
       href={productHref}
@@ -178,7 +203,7 @@ export function ProductCard({
       className={`group w-full overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-md ${className}`}
     >
       {/* Media Container - Fixed 4:3 ratio */}
-      <div className="relative w-full aspect-[4/3] bg-gray-100 overflow-hidden">
+      <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
         {/* Image */}
         {mainImage ? (
           mainImage.startsWith('data:image/') ||
@@ -210,12 +235,31 @@ export function ProductCard({
             {badges.slice(0, 2).map((badge, index) => (
               <span
                 key={index}
-                className="inline-flex items-center rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-gray-900 shadow-sm backdrop-blur"
+                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium shadow-sm backdrop-blur ${
+                  badge === 'Gesponsert'
+                    ? boostType === 'super-boost'
+                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
+                      : boostType === 'turbo-boost'
+                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
+                        : 'bg-primary-600 text-white'
+                    : badge === 'Zahlungsschutz'
+                      ? 'bg-green-100/90 text-green-800'
+                      : 'bg-white/90 text-gray-900'
+                }`}
               >
                 {badge === 'Zahlungsschutz' && <Shield className="mr-1 h-3 w-3" />}
+                {badge === 'Gesponsert' && <Sparkles className="mr-1 h-3 w-3" />}
                 {badge}
               </span>
             ))}
+          </div>
+        )}
+
+        {/* Auction indicator - Bottom left overlay */}
+        {isAuction && timeLeft && (
+          <div className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-orange-500/90 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm backdrop-blur">
+            <Gavel className="h-3 w-3" />
+            <span>{timeLeft}</span>
           </div>
         )}
 
@@ -225,61 +269,110 @@ export function ProductCard({
           className="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:bg-white"
           aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
         >
-          <Heart className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`} />
+          <Heart
+            className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+          />
         </button>
       </div>
 
       {/* Content Wrapper */}
       <div className="p-2.5">
         {/* Title - 1 line on desktop, 2 lines on mobile */}
-        <h3 className="text-[13px] font-medium leading-4 text-gray-900 line-clamp-2 md:line-clamp-1">
+        <h3 className="line-clamp-2 text-[13px] font-medium leading-4 text-gray-900 md:line-clamp-1">
           {product.title}
         </h3>
 
-        {/* Price Block */}
-        <div className="mt-1.5 flex items-baseline gap-2">
-          <span className="text-[12px] font-medium text-gray-600">CHF</span>
-          <span className="text-[20px] font-semibold leading-6 text-gray-900">
-            {formatCHF(mainPrice).replace('CHF ', '')}
-          </span>
-        </div>
-
-        {/* Secondary Price (only for Auction + BuyNowPrice) */}
-        {isAuction && hasBuyNowPrice && (
-          <div className="mt-0.5 text-[12px] text-gray-600">
-            Sofort: {formatCHF(product.buyNowPrice!)}
+        {/* Price Block - Different for Auction vs Fixed */}
+        {isAuction ? (
+          <div className="mt-1.5">
+            {/* Current Bid */}
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[11px] font-medium text-orange-600">Aktuelles Gebot</span>
+            </div>
+            <div className="flex items-baseline gap-2">
+              <span className="text-[12px] font-medium text-gray-600">CHF</span>
+              <span className="text-[20px] font-semibold leading-6 text-gray-900">
+                {formatCHFCompact(mainPrice)}
+              </span>
+            </div>
+            {/* Bid count */}
+            <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500">
+              <span>
+                {bidCount} {bidCount === 1 ? 'Gebot' : 'Gebote'}
+              </span>
+              {hasBuyNowPrice && (
+                <>
+                  <span>•</span>
+                  <span className="text-primary-600">Sofort: {formatCHF(product.buyNowPrice!)}</span>
+                </>
+              )}
+            </div>
+          </div>
+        ) : (
+          <div className="mt-1.5 flex items-baseline gap-2">
+            <span className="text-[12px] font-medium text-gray-600">CHF</span>
+            <span className="text-[20px] font-semibold leading-6 text-gray-900">
+              {formatCHFCompact(mainPrice)}
+            </span>
           </div>
         )}
 
-        {/* Meta Row - Compact single line */}
-        <div className="mt-1.5 flex items-center justify-between gap-2 text-[12px] text-gray-600">
-          {/* Left Meta: Location + Delivery */}
-          <div className="flex items-center gap-1.5 min-w-0 truncate">
-            {(product.city || product.postalCode) && (
-              <span className="inline-flex items-center gap-1 truncate">
-                <MapPin className="h-3.5 w-3.5 flex-shrink-0" />
-                <span className="truncate">
-                  {product.postalCode && product.city
-                    ? `${product.postalCode} ${product.city}`
-                    : product.postalCode || product.city || ''}
+        {/* Meta Row - Location + Delivery */}
+        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-gray-500">
+          {/* Location */}
+          {(product.city || product.postalCode) && (
+            <span className="inline-flex items-center gap-0.5 truncate">
+              <MapPin className="h-3 w-3 flex-shrink-0" />
+              <span className="truncate">
+                {product.postalCode && product.city
+                  ? `${product.postalCode} ${product.city}`
+                  : product.postalCode || product.city || ''}
+              </span>
             </span>
+          )}
+
+          {/* Separator */}
+          {(product.city || product.postalCode) && <span className="text-gray-300">•</span>}
+
+          {/* Delivery Info with Cost */}
+          <span className="inline-flex items-center gap-0.5 shrink-0">
+            {deliveryInfo.pickupOnly ? (
+              <>
+                <Package className="h-3 w-3" />
+                <span>Nur Abholung</span>
+              </>
+            ) : (
+              <>
+                <Truck className="h-3 w-3" />
+                {deliveryInfo.costLabel ? (
+                  <span className={deliveryInfo.costLabel === 'Gratis' ? 'text-green-600' : ''}>
+                    {deliveryInfo.costLabel === 'Gratis' ? 'Gratis Versand' : `Versand ${deliveryInfo.costLabel}`}
+                  </span>
+                ) : (
+                  <span>Versand</span>
+                )}
+              </>
+            )}
+          </span>
+        </div>
+
+        {/* Trust Row - Seller Verified + Payment Protection (compact) */}
+        {(product.sellerVerified || product.paymentProtectionEnabled) && (
+          <div className="mt-1.5 flex items-center gap-2 text-[10px] text-gray-500">
+            {product.sellerVerified && (
+              <span className="inline-flex items-center gap-0.5 text-blue-600">
+                <BadgeCheck className="h-3 w-3" />
+                <span className="hidden sm:inline">Verifiziert</span>
               </span>
             )}
-            <span className="inline-flex items-center gap-1 shrink-0">
-              <Package className="h-3.5 w-3.5" />
-              {deliveryLabel}
-            </span>
+            {product.paymentProtectionEnabled && (
+              <span className="inline-flex items-center gap-0.5 text-green-600">
+                <Shield className="h-3 w-3" />
+                <span className="hidden sm:inline">Zahlungsschutz</span>
+              </span>
+            )}
           </div>
-
-          {/* Right Meta (only for Auction): bidCount + timeLeft */}
-          {isAuction && (bidCount > 0 || timeLeft) && (
-            <div className="shrink-0 whitespace-nowrap">
-              {bidCount > 0 && `${bidCount} Gebote`}
-              {bidCount > 0 && timeLeft && ' · '}
-              {timeLeft && timeLeft}
-            </div>
-          )}
-        </div>
+        )}
       </div>
     </Link>
   )

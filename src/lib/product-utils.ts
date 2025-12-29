@@ -1,7 +1,72 @@
 /**
  * Product Card Utilities
  * Formatting and helper functions for product listings
+ *
+ * ============================================================================
+ * CARD DATA REQUIREMENTS (Ricardo-Level)
+ * ============================================================================
+ *
+ * Required fields for ProductCard:
+ *   - id: string
+ *   - title: string
+ *   - price: number (base price for fixed, start price for auction)
+ *   - images: string[] | string
+ *   - isAuction: boolean
+ *   - createdAt: string | Date
+ *
+ * Auction-specific:
+ *   - auctionEnd: string | Date (required if isAuction)
+ *   - currentBid: number (calculated from bids if not provided)
+ *   - bids: array (for bid count)
+ *
+ * Shipping/Delivery:
+ *   - shippingMethods: string[] (e.g., ['pickup', 'post_economy_2kg'])
+ *   - shippingMinCost: number | null (min shipping cost in CHF)
+ *   - pickupOnly: boolean (derived from shippingMethods)
+ *
+ * Trust indicators:
+ *   - paymentProtectionEnabled: boolean
+ *   - sellerVerified: boolean
+ *
+ * Boost/Promotion:
+ *   - boosters: string[] (e.g., ['boost', 'turbo-boost', 'super-boost'])
+ *   - isPromoted: boolean (derived from boosters.length > 0)
+ *
+ * Optional (feature flags):
+ *   - favoritesCount: number (show if > 0)
+ *   - viewsCount: number (show if > N)
+ *
+ * Location:
+ *   - city: string
+ *   - postalCode: string
+ *
+ * ============================================================================
+ * BADGE RULES
+ * ============================================================================
+ * - Max 2 badges per card
+ * - Priority: Zahlungsschutz > Gesponsert > Neu eingestellt > Zustand
+ * - "Gesponsert" only if boosters.length > 0
+ * - "Neu eingestellt" only if createdAt < 48 hours
+ * - "Zustand" only if condition is meaningful and space allows
+ * - Never show "Neu" (condition) if "Neu eingestellt" is shown
+ *
+ * ============================================================================
+ * FEATURE FLAGS
+ * ============================================================================
+ * - SHOW_SOCIAL_PROOF: boolean (show favorites/views count)
+ * - SOCIAL_PROOF_MIN_FAVORITES: number (min count to show, default: 3)
+ * - SOCIAL_PROOF_MIN_VIEWS: number (min count to show, default: 50)
+ *
+ * ============================================================================
  */
+
+// Feature flags (can be moved to env/config)
+export const CARD_FEATURE_FLAGS = {
+  SHOW_SOCIAL_PROOF: false, // Set to true to enable favorites/views display
+  SOCIAL_PROOF_MIN_FAVORITES: 3,
+  SOCIAL_PROOF_MIN_VIEWS: 50,
+  NEW_LISTING_HOURS: 48, // Hours after creation to show "Neu eingestellt"
+}
 
 export interface ListingData {
   id: string
@@ -13,37 +78,73 @@ export interface ListingData {
   auctionEnd?: string | Date
   bids?: any[]
   paymentProtectionEnabled?: boolean
+  sellerVerified?: boolean
   createdAt?: string | Date
   condition?: string
   shippingMethods?: string[]
+  shippingMinCost?: number | null
+  boosters?: string[]
   images?: string[] | string
+  favoritesCount?: number
+  viewsCount?: number
 }
 
 /**
  * Format CHF amount with Swiss locale
- * Output: CHF 2.– or CHF 2.80 (always 2 decimals if not .00)
- * Critical: No CHF 1.8 - always CHF 1.80
+ *
+ * Swiss formatting rules:
+ * - Thousand separator: apostrophe (')
+ * - Decimal separator: period (.)
+ * - Whole numbers: CHF 1'850.–
+ * - With decimals: CHF 1'850.50 (always 2 decimals)
+ *
+ * Examples:
+ *   formatCHF(1) => "CHF 1.–"
+ *   formatCHF(1.5) => "CHF 1.50"
+ *   formatCHF(1.80) => "CHF 1.80"
+ *   formatCHF(1850) => "CHF 1'850.–"
+ *   formatCHF(1850.50) => "CHF 1'850.50"
+ *   formatCHF(0) => "CHF 0.–"
  */
 export function formatCHF(amount: number): string {
   if (isNaN(amount) || amount < 0) return 'CHF 0.–'
 
   // Check if amount is whole number (.00)
-  const isWholeNumber = amount % 1 === 0
+  const isWholeNumber = Math.abs(amount % 1) < 0.001
 
+  // Format with Swiss locale (uses apostrophe as thousand separator)
   if (isWholeNumber) {
-    // Whole number: CHF 2.–
-    const formatted = amount.toLocaleString('de-CH', {
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    })
+    // Whole number: Use apostrophe for thousands, end with .–
+    const integerPart = Math.round(amount)
+    const formatted = integerPart.toLocaleString('de-CH')
     return `CHF ${formatted}.–`
   } else {
-    // Has decimals: Always show 2 decimals (CHF 1.80, not CHF 1.8)
+    // Has decimals: Always show 2 decimals with apostrophe thousands
     const formatted = amount.toLocaleString('de-CH', {
       minimumFractionDigits: 2,
       maximumFractionDigits: 2,
     })
     return `CHF ${formatted}`
+  }
+}
+
+/**
+ * Format CHF amount without currency prefix (just the number)
+ * Useful for compact displays where "CHF" is shown separately
+ */
+export function formatCHFCompact(amount: number): string {
+  if (isNaN(amount) || amount < 0) return '0.–'
+
+  const isWholeNumber = Math.abs(amount % 1) < 0.001
+
+  if (isWholeNumber) {
+    const integerPart = Math.round(amount)
+    return `${integerPart.toLocaleString('de-CH')}.–`
+  } else {
+    return amount.toLocaleString('de-CH', {
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    })
   }
 }
 
@@ -81,11 +182,19 @@ export function formatTimeLeft(auctionEndsAt: string | Date | null | undefined):
 
 /**
  * Get listing badges (strict rules)
+ *
  * Rules:
- * - Default: max 1 badge
- * - Exception: max 2 badges only if one is "Zahlungsschutz" (trust) and the other is a status badge
- * - Never show "Neu eingestellt" and "Neu" together
- * Priority: Payment Protection > New Listing > Condition
+ * - Max 2 badges per card
+ * - Priority: Zahlungsschutz > Gesponsert > Neu eingestellt > Zustand
+ * - "Gesponsert" only if boosters.length > 0
+ * - "Neu eingestellt" only if createdAt < NEW_LISTING_HOURS
+ * - Never show "Neu" (condition) if "Neu eingestellt" is shown
+ *
+ * Badge types:
+ * - Trust: "Zahlungsschutz" (Shield icon)
+ * - Promo: "Gesponsert" (Sparkles icon)
+ * - New: "Neu eingestellt"
+ * - Condition: "Wie neu", "Sehr gut", etc.
  */
 export function getListingBadges(listing: ListingData): string[] {
   const badges: string[] = []
@@ -96,14 +205,22 @@ export function getListingBadges(listing: ListingData): string[] {
     badges.push('Zahlungsschutz')
   }
 
-  // Priority 2: New Listing (< 48h)
-  if (listing.createdAt) {
+  // Priority 2: Sponsored/Boosted
+  const boosters = listing.boosters || []
+  const isPromoted = boosters.length > 0
+  if (isPromoted && badges.length < 2) {
+    badges.push('Gesponsert')
+  }
+
+  // Priority 3: New Listing (< configurable hours, default 48h)
+  if (listing.createdAt && badges.length < 2) {
     try {
-      const created = typeof listing.createdAt === 'string' ? new Date(listing.createdAt) : listing.createdAt
+      const created =
+        typeof listing.createdAt === 'string' ? new Date(listing.createdAt) : listing.createdAt
       const now = new Date()
       const hoursDiff = (now.getTime() - created.getTime()) / (1000 * 60 * 60)
 
-      if (hoursDiff < 48) {
+      if (hoursDiff < CARD_FEATURE_FLAGS.NEW_LISTING_HOURS) {
         badges.push('Neu eingestellt')
         hasNewListing = true
       }
@@ -112,65 +229,155 @@ export function getListingBadges(listing: ListingData): string[] {
     }
   }
 
-  // Priority 3: Condition (only if we have space and condition is meaningful)
+  // Priority 4: Condition (only if we have space and condition is meaningful)
   // CRITICAL: Never show condition "Neu" if "Neu eingestellt" is already shown
-  if (listing.condition) {
+  if (listing.condition && badges.length < 2) {
     const conditionMap: Record<string, string> = {
-      'new': 'Neu',
+      new: 'Neu',
       'like-new': 'Wie neu',
       'very-good': 'Sehr gut',
-      'good': 'Gut',
-      'acceptable': 'Akzeptabel',
+      good: 'Gut',
+      acceptable: 'Akzeptabel',
+      // German variants
+      neu: 'Neu',
+      'wie neu': 'Wie neu',
+      'sehr gut': 'Sehr gut',
+      gut: 'Gut',
+      akzeptabel: 'Akzeptabel',
     }
 
-    const conditionLabel = conditionMap[listing.condition.toLowerCase()] || listing.condition
+    const conditionLower = listing.condition.toLowerCase()
+    const conditionLabel = conditionMap[conditionLower] || listing.condition
 
-    // Only add condition if:
-    // 1. We have space (max 1 badge normally, max 2 if Zahlungsschutz exists)
-    // 2. Condition label is meaningful (mapped, not raw slug)
-    // 3. NOT "Neu" if "Neu eingestellt" is already shown
-    const canAddCondition =
-      (badges.length === 0 || (badges.length === 1 && badges[0] === 'Zahlungsschutz')) &&
-      conditionLabel !== listing.condition &&
-      !(hasNewListing && conditionLabel === 'Neu')
+    // Only add if:
+    // 1. We have space (< 2 badges)
+    // 2. NOT "Neu" if "Neu eingestellt" is already shown
+    const canAddCondition = !(hasNewListing && conditionLabel === 'Neu')
 
     if (canAddCondition) {
       badges.push(conditionLabel)
     }
   }
 
-  // Enforce max 2 badges (only if Zahlungsschutz + status badge)
-  if (badges.length > 2) {
-    return badges.slice(0, 2)
-  }
-
-  // If we have 2 badges and first is not Zahlungsschutz, only keep first
-  if (badges.length === 2 && badges[0] !== 'Zahlungsschutz') {
-    return [badges[0]]
-  }
-
-  return badges
+  // Enforce max 2 badges
+  return badges.slice(0, 2)
 }
 
 /**
- * Get delivery label
+ * Check if listing is promoted/boosted
+ */
+export function isListingPromoted(listing: ListingData): boolean {
+  const boosters = listing.boosters || []
+  return boosters.length > 0
+}
+
+/**
+ * Get boost type for styling (super > turbo > standard)
+ */
+export function getBoostType(
+  listing: ListingData
+): 'super-boost' | 'turbo-boost' | 'boost' | null {
+  const boosters = listing.boosters || []
+  if (boosters.includes('super-boost')) return 'super-boost'
+  if (boosters.includes('turbo-boost')) return 'turbo-boost'
+  if (boosters.includes('boost')) return 'boost'
+  return null
+}
+
+/**
+ * Get delivery label with optional cost
+ *
+ * Returns object with:
+ * - label: "Versand" | "Abholung" | "Versand/Abholung"
+ * - costLabel: "ab CHF X" | "Gratis" | null
+ * - pickupOnly: boolean
+ * - shippingAvailable: boolean
+ *
+ * Examples:
+ *   - { label: "Nur Abholung", pickupOnly: true, shippingAvailable: false }
+ *   - { label: "Versand ab CHF 7.–", costLabel: "ab CHF 7.–", pickupOnly: false }
+ *   - { label: "Gratis Versand", costLabel: "Gratis", pickupOnly: false }
+ */
+export interface DeliveryInfo {
+  label: string
+  costLabel: string | null
+  pickupOnly: boolean
+  shippingAvailable: boolean
+  pickupAvailable: boolean
+}
+
+export function getDeliveryInfo(listing: ListingData): DeliveryInfo {
+  const methods = listing.shippingMethods || []
+  const hasPickup = methods.includes('pickup')
+  const hasShipping = methods.some(m => m !== 'pickup')
+  const shippingMinCost = listing.shippingMinCost
+
+  // Default fallback
+  if (methods.length === 0) {
+    return {
+      label: 'Abholung',
+      costLabel: null,
+      pickupOnly: true,
+      shippingAvailable: false,
+      pickupAvailable: true,
+    }
+  }
+
+  // Pickup only
+  if (hasPickup && !hasShipping) {
+    return {
+      label: 'Nur Abholung',
+      costLabel: null,
+      pickupOnly: true,
+      shippingAvailable: false,
+      pickupAvailable: true,
+    }
+  }
+
+  // Shipping available
+  let costLabel: string | null = null
+  let label = 'Versand'
+
+  if (shippingMinCost !== undefined && shippingMinCost !== null) {
+    if (shippingMinCost === 0) {
+      costLabel = 'Gratis'
+      label = 'Gratis Versand'
+    } else {
+      costLabel = `ab ${formatCHF(shippingMinCost)}`
+      label = `Versand ${costLabel}`
+    }
+  }
+
+  if (hasPickup && hasShipping) {
+    return {
+      label: hasShipping ? label : 'Versand/Abholung',
+      costLabel,
+      pickupOnly: false,
+      shippingAvailable: true,
+      pickupAvailable: true,
+    }
+  }
+
+  return {
+    label,
+    costLabel,
+    pickupOnly: false,
+    shippingAvailable: true,
+    pickupAvailable: false,
+  }
+}
+
+/**
+ * Simple delivery label (backward compatible)
  * Returns: "Versand" | "Abholung" | "Versand/Abholung"
  */
 export function getDeliveryLabel(listing: ListingData): string {
-  if (!listing.shippingMethods || listing.shippingMethods.length === 0) {
-    return 'Abholung' // Default fallback
-  }
-
-  const hasPickup = listing.shippingMethods.includes('pickup')
-  const hasShipping = listing.shippingMethods.some(m => m !== 'pickup')
-
-  if (hasPickup && hasShipping) {
-    return 'Versand/Abholung'
-  } else if (hasShipping) {
-    return 'Versand'
-  } else {
-    return 'Abholung'
-  }
+  const info = getDeliveryInfo(listing)
+  // Return simplified label for backward compatibility
+  if (info.pickupOnly) return 'Abholung'
+  if (info.pickupAvailable && info.shippingAvailable) return 'Versand/Abholung'
+  if (info.shippingAvailable) return 'Versand'
+  return 'Abholung'
 }
 
 /**
