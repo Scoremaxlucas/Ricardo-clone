@@ -28,9 +28,12 @@
  *   - paymentProtectionEnabled: boolean
  *   - sellerVerified: boolean
  *
- * Boost/Promotion:
+ * Boost/Visibility (NOT sponsorship):
  *   - boosters: string[] (e.g., ['boost', 'turbo-boost', 'super-boost'])
- *   - isPromoted: boolean (derived from boosters.length > 0)
+ *   - NOTE: boosters are visibility features, NOT paid advertising/sponsorship
+ *
+ * Sponsorship (actual paid placement):
+ *   - isSponsored: boolean (ONLY show "Gesponsert" if this is true)
  *
  * Optional (feature flags):
  *   - favoritesCount: number (show if > 0)
@@ -41,22 +44,31 @@
  *   - postalCode: string
  *
  * ============================================================================
- * BADGE RULES
+ * BADGE RULES (Ricardo-Level)
  * ============================================================================
- * - Max 2 badges per card
- * - Priority: Zahlungsschutz > Gesponsert > Neu eingestellt > Zustand
- * - "Gesponsert" only if boosters.length > 0
- * - "Neu eingestellt" only if createdAt < 48 hours
- * - "Zustand" only if condition is meaningful and space allows
- * - Never show "Neu" (condition) if "Neu eingestellt" is shown
+ *
+ * OVERLAY BADGES (on image, max 2):
+ * 1. Offer Type Badge (always show exactly 1, top-left):
+ *    - isAuction=true => "Auktion" (neutral, professional)
+ *    - isAuction=false => (no badge, Sofort-Kaufen is default/implied)
+ *
+ * 2. Condition Badge (optional, if space allows):
+ *    - NEW => "Neu"
+ *    - LIKE_NEW => "Wie neu"
+ *    - VERY_GOOD => "Sehr gut"
+ *    - GOOD => "Gut"
+ *    - Note: Don't show "Neu" condition if "Neu eingestellt" is shown
+ *
+ * META BADGES (below price, subtle):
+ * - "Neu eingestellt" - only if createdAt < 7 days, shown as text not overlay
+ * - Timer/countdown - only for auctions, shown inline with bid info
+ *
+ * SPONSORED:
+ * - "Gesponsert" badge ONLY if listing.isSponsored === true
+ * - Do NOT show "Gesponsert" for boosted items (boosters are different!)
  *
  * ============================================================================
  * FEATURE FLAGS
- * ============================================================================
- * - SHOW_SOCIAL_PROOF: boolean (show favorites/views count)
- * - SOCIAL_PROOF_MIN_FAVORITES: number (min count to show, default: 3)
- * - SOCIAL_PROOF_MIN_VIEWS: number (min count to show, default: 50)
- *
  * ============================================================================
  */
 
@@ -65,7 +77,7 @@ export const CARD_FEATURE_FLAGS = {
   SHOW_SOCIAL_PROOF: false, // Set to true to enable favorites/views display
   SOCIAL_PROOF_MIN_FAVORITES: 3,
   SOCIAL_PROOF_MIN_VIEWS: 50,
-  NEW_LISTING_HOURS: 48, // Hours after creation to show "Neu eingestellt"
+  NEW_LISTING_DAYS: 7, // Days after creation to show "Neu eingestellt"
 }
 
 export interface ListingData {
@@ -83,7 +95,8 @@ export interface ListingData {
   condition?: string
   shippingMethods?: string[]
   shippingMinCost?: number | null
-  boosters?: string[]
+  boosters?: string[] // Visibility boost, NOT sponsorship
+  isSponsored?: boolean // TRUE paid placement - only show "Gesponsert" if this is true
   images?: string[] | string
   favoritesCount?: number
   viewsCount?: number
@@ -181,56 +194,36 @@ export function formatTimeLeft(auctionEndsAt: string | Date | null | undefined):
 }
 
 /**
- * Get listing badges (strict rules)
+ * Badge types for overlay (on image)
+ */
+export type OverlayBadgeType =
+  | 'condition' // Neu, Wie neu, Sehr gut, Gut
+  | 'sponsored' // Only if isSponsored === true
+
+/**
+ * Get overlay badges for the image area (max 2)
  *
- * Rules:
- * - Max 2 badges per card
- * - Priority: Zahlungsschutz > Gesponsert > Neu eingestellt > Zustand
- * - "Gesponsert" only if boosters.length > 0
- * - "Neu eingestellt" only if createdAt < NEW_LISTING_HOURS
- * - Never show "Neu" (condition) if "Neu eingestellt" is shown
+ * Rules (Ricardo-style):
+ * 1. Sponsored badge ONLY if isSponsored === true (actual paid placement)
+ *    - Do NOT show "Gesponsert" for boosted items (boosters ≠ sponsorship!)
+ * 2. Condition badge if meaningful and space allows
+ *    - Don't show "Neu" condition if listing is new (< 7 days)
  *
- * Badge types:
- * - Trust: "Zahlungsschutz" (Shield icon)
- * - Promo: "Gesponsert" (Sparkles icon)
- * - New: "Neu eingestellt"
- * - Condition: "Wie neu", "Sehr gut", etc.
+ * Note: "Neu eingestellt" is NOT an overlay badge - it's shown in meta area
  */
 export function getListingBadges(listing: ListingData): string[] {
   const badges: string[] = []
-  let hasNewListing = false
 
-  // Priority 1: Payment Protection (trust badge)
-  if (listing.paymentProtectionEnabled) {
-    badges.push('Zahlungsschutz')
-  }
+  // Check if listing is new (for avoiding "Neu" condition badge conflict)
+  const isNewListing = checkIsNewListing(listing)
 
-  // Priority 2: Sponsored/Boosted
-  const boosters = listing.boosters || []
-  const isPromoted = boosters.length > 0
-  if (isPromoted && badges.length < 2) {
+  // Priority 1: Sponsored (ONLY if isSponsored === true from backend)
+  // CRITICAL: Do NOT show "Gesponsert" for boosted items!
+  if (listing.isSponsored === true && badges.length < 2) {
     badges.push('Gesponsert')
   }
 
-  // Priority 3: New Listing (< configurable hours, default 48h)
-  if (listing.createdAt && badges.length < 2) {
-    try {
-      const created =
-        typeof listing.createdAt === 'string' ? new Date(listing.createdAt) : listing.createdAt
-      const now = new Date()
-      const hoursDiff = (now.getTime() - created.getTime()) / (1000 * 60 * 60)
-
-      if (hoursDiff < CARD_FEATURE_FLAGS.NEW_LISTING_HOURS) {
-        badges.push('Neu eingestellt')
-        hasNewListing = true
-      }
-    } catch {
-      // Ignore date parsing errors
-    }
-  }
-
-  // Priority 4: Condition (only if we have space and condition is meaningful)
-  // CRITICAL: Never show condition "Neu" if "Neu eingestellt" is already shown
+  // Priority 2: Condition badge
   if (listing.condition && badges.length < 2) {
     const conditionMap: Record<string, string> = {
       new: 'Neu',
@@ -247,36 +240,82 @@ export function getListingBadges(listing: ListingData): string[] {
     }
 
     const conditionLower = listing.condition.toLowerCase()
-    const conditionLabel = conditionMap[conditionLower] || listing.condition
+    const conditionLabel = conditionMap[conditionLower] || null
 
-    // Only add if:
-    // 1. We have space (< 2 badges)
-    // 2. NOT "Neu" if "Neu eingestellt" is already shown
-    const canAddCondition = !(hasNewListing && conditionLabel === 'Neu')
-
-    if (canAddCondition) {
+    // Only add condition if:
+    // 1. It's a recognized condition (in the map)
+    // 2. NOT "Neu" if listing is new (to avoid confusion)
+    if (conditionLabel && !(isNewListing && conditionLabel === 'Neu')) {
       badges.push(conditionLabel)
     }
   }
 
-  // Enforce max 2 badges
   return badges.slice(0, 2)
 }
 
 /**
- * Check if listing is promoted/boosted
+ * Check if listing is "new" (created within NEW_LISTING_DAYS)
+ * Used for "Neu eingestellt" label in meta area
  */
-export function isListingPromoted(listing: ListingData): boolean {
+export function checkIsNewListing(listing: ListingData): boolean {
+  if (!listing.createdAt) return false
+
+  try {
+    const created =
+      typeof listing.createdAt === 'string' ? new Date(listing.createdAt) : listing.createdAt
+    const now = new Date()
+    const daysDiff = (now.getTime() - created.getTime()) / (1000 * 60 * 60 * 24)
+    return daysDiff < CARD_FEATURE_FLAGS.NEW_LISTING_DAYS
+  } catch {
+    return false
+  }
+}
+
+/**
+ * Get relative time since creation (for "Neu eingestellt" display)
+ * Returns: "vor 2 Std.", "vor 3 Tagen", etc.
+ */
+export function getTimeSinceCreated(listing: ListingData): string {
+  if (!listing.createdAt) return ''
+
+  try {
+    const created =
+      typeof listing.createdAt === 'string' ? new Date(listing.createdAt) : listing.createdAt
+    const now = new Date()
+    const diffMs = now.getTime() - created.getTime()
+
+    const minutes = Math.floor(diffMs / (1000 * 60))
+    const hours = Math.floor(diffMs / (1000 * 60 * 60))
+    const days = Math.floor(diffMs / (1000 * 60 * 60 * 24))
+
+    if (days > 0) {
+      return `vor ${days} ${days === 1 ? 'Tag' : 'Tagen'}`
+    } else if (hours > 0) {
+      return `vor ${hours} Std.`
+    } else if (minutes > 0) {
+      return `vor ${minutes} Min.`
+    } else {
+      return 'gerade eben'
+    }
+  } catch {
+    return ''
+  }
+}
+
+/**
+ * Check if listing has visibility boost (NOT sponsorship)
+ * Boosters are visibility features, not paid advertising
+ */
+export function hasVisibilityBoost(listing: ListingData): boolean {
   const boosters = listing.boosters || []
   return boosters.length > 0
 }
 
 /**
  * Get boost type for styling (super > turbo > standard)
+ * Used for subtle visual enhancement, NOT "Gesponsert" badge
  */
-export function getBoostType(
-  listing: ListingData
-): 'super-boost' | 'turbo-boost' | 'boost' | null {
+export function getBoostType(listing: ListingData): 'super-boost' | 'turbo-boost' | 'boost' | null {
   const boosters = listing.boosters || []
   if (boosters.includes('super-boost')) return 'super-boost'
   if (boosters.includes('turbo-boost')) return 'turbo-boost'
@@ -390,10 +429,13 @@ export function getCategoryDisplayName(slug: string): string {
   try {
     const { getCategoryConfig } = require('@/data/categories')
     const config = getCategoryConfig(slug)
-    return config.name || slug
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
+    return (
+      config.name ||
+      slug
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+    )
   } catch {
     // Fallback if import fails
     const categoryMap: Record<string, string> = {
@@ -403,17 +445,20 @@ export function getCategoryDisplayName(slug: string): string {
       'uhren-schmuck': 'Uhren & Schmuck',
       'kleidung-accessoires': 'Kleidung & Accessoires',
       'haushalt-wohnen': 'Haushalt & Wohnen',
-      'elektronik': 'Elektronik',
+      elektronik: 'Elektronik',
       'musik-instrumente': 'Musik & Instrumente',
       'buecher-filme': 'Bücher & Filme',
       'spielzeug-hobby': 'Spielzeug & Hobby',
-      'tierbedarf': 'Tierbedarf',
-      'garten': 'Garten',
+      tierbedarf: 'Tierbedarf',
+      garten: 'Garten',
     }
-    return categoryMap[slug] || slug
-      .split('-')
-      .map(word => word.charAt(0).toUpperCase() + word.slice(1))
-      .join(' ')
+    return (
+      categoryMap[slug] ||
+      slug
+        .split('-')
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ')
+    )
   }
 }
 
@@ -429,4 +474,3 @@ export function getSubcategoryDisplayName(subcategory: string): string {
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ')
 }
-

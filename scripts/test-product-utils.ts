@@ -1,6 +1,6 @@
 /**
  * Tests for product-utils.ts
- * 
+ *
  * Run with: npx tsx scripts/test-product-utils.ts
  */
 
@@ -11,7 +11,9 @@ import {
   getListingBadges,
   getDeliveryInfo,
   getBoostType,
-  isListingPromoted,
+  hasVisibilityBoost,
+  checkIsNewListing,
+  getTimeSinceCreated,
   CARD_FEATURE_FLAGS,
   type ListingData,
 } from '../src/lib/product-utils'
@@ -103,7 +105,7 @@ assertEqual(formatTimeLeft(null), '', 'formatTimeLeft(null) should be empty stri
 assertEqual(formatTimeLeft(undefined), '', 'formatTimeLeft(undefined) should be empty string')
 
 // =============================================================================
-// getListingBadges Tests
+// getListingBadges Tests (Ricardo-Level Rules)
 // =============================================================================
 console.log('\n📝 getListingBadges Tests')
 console.log('─'.repeat(50))
@@ -116,29 +118,45 @@ const baseListing: ListingData = {
 
 // No badges for minimal listing
 const noBadges = getListingBadges(baseListing)
-assert(noBadges.length === 0 || noBadges.length <= 2, 'Minimal listing should have 0-2 badges')
+assert(noBadges.length === 0, 'Minimal listing should have 0 badges')
 
-// Payment protection badge
-const withProtection: ListingData = { ...baseListing, paymentProtectionEnabled: true }
-const protectionBadges = getListingBadges(withProtection)
-assert(protectionBadges.includes('Zahlungsschutz'), 'Should include Zahlungsschutz badge when enabled')
-
-// Boosted/Sponsored badge
+// CRITICAL: Boosted items should NOT show "Gesponsert"
 const boosted: ListingData = { ...baseListing, boosters: ['boost'] }
 const boostedBadges = getListingBadges(boosted)
-assert(boostedBadges.includes('Gesponsert'), 'Should include Gesponsert badge when boosted')
+assert(
+  !boostedBadges.includes('Gesponsert'),
+  'Boosted items should NOT show "Gesponsert" - boosters are visibility, not sponsorship!'
+)
 
-// New listing badge (< 48h)
-const newListing: ListingData = { ...baseListing, createdAt: new Date() }
-const newBadges = getListingBadges(newListing)
-assert(newBadges.includes('Neu eingestellt'), 'Should include "Neu eingestellt" badge for fresh listings')
+// Sponsored badge ONLY if isSponsored === true
+const sponsored: ListingData = { ...baseListing, isSponsored: true }
+const sponsoredBadges = getListingBadges(sponsored)
+assert(
+  sponsoredBadges.includes('Gesponsert'),
+  'Should include "Gesponsert" badge ONLY when isSponsored === true'
+)
+
+// Condition badge
+const withCondition: ListingData = { ...baseListing, condition: 'like-new' }
+const conditionBadges = getListingBadges(withCondition)
+assert(conditionBadges.includes('Wie neu'), 'Should include condition badge')
+
+// New listing should NOT show "Neu" condition
+const newWithNeuCondition: ListingData = {
+  ...baseListing,
+  createdAt: new Date(),
+  condition: 'new',
+}
+const newConditionBadges = getListingBadges(newWithNeuCondition)
+assert(
+  !newConditionBadges.includes('Neu'),
+  'New listing should NOT show "Neu" condition badge (would be confusing)'
+)
 
 // Max 2 badges
 const allFeatures: ListingData = {
   ...baseListing,
-  paymentProtectionEnabled: true,
-  boosters: ['boost'],
-  createdAt: new Date(),
+  isSponsored: true,
   condition: 'like-new',
 }
 const maxBadges = getListingBadges(allFeatures)
@@ -189,14 +207,42 @@ assertEqual(
 )
 
 // =============================================================================
-// isListingPromoted Tests
+// hasVisibilityBoost Tests (NOT sponsorship)
 // =============================================================================
-console.log('\n📝 isListingPromoted Tests')
+console.log('\n📝 hasVisibilityBoost Tests')
 console.log('─'.repeat(50))
 
-assert(isListingPromoted({ ...baseListing, boosters: ['boost'] }) === true, 'Should be promoted with boost')
-assert(isListingPromoted({ ...baseListing, boosters: [] }) === false, 'Should not be promoted without boosters')
-assert(isListingPromoted(baseListing) === false, 'Should not be promoted with undefined boosters')
+assert(hasVisibilityBoost({ ...baseListing, boosters: ['boost'] }) === true, 'Should have boost with boost')
+assert(hasVisibilityBoost({ ...baseListing, boosters: [] }) === false, 'Should not have boost without boosters')
+assert(hasVisibilityBoost(baseListing) === false, 'Should not have boost with undefined boosters')
+
+// =============================================================================
+// checkIsNewListing Tests
+// =============================================================================
+console.log('\n📝 checkIsNewListing Tests')
+console.log('─'.repeat(50))
+
+assert(checkIsNewListing({ ...baseListing, createdAt: new Date() }) === true, 'Just created should be new')
+const oldDate = new Date()
+oldDate.setDate(oldDate.getDate() - 10) // 10 days ago
+assert(checkIsNewListing({ ...baseListing, createdAt: oldDate }) === false, '10 days old should not be new')
+assert(checkIsNewListing(baseListing) === false, 'No createdAt should not be new')
+
+// =============================================================================
+// getTimeSinceCreated Tests
+// =============================================================================
+console.log('\n📝 getTimeSinceCreated Tests')
+console.log('─'.repeat(50))
+
+const justNow = new Date()
+const timeJustNow = getTimeSinceCreated({ ...baseListing, createdAt: justNow })
+assert(timeJustNow.includes('gerade') || timeJustNow.includes('Min'), 'Just created should say "gerade eben" or "X Min"')
+
+const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000)
+const timeOneHour = getTimeSinceCreated({ ...baseListing, createdAt: oneHourAgo })
+assert(timeOneHour.includes('Std'), 'One hour ago should include "Std"')
+
+assertEqual(getTimeSinceCreated(baseListing), '', 'No createdAt should return empty string')
 
 // =============================================================================
 // Summary

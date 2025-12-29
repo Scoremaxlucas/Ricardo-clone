@@ -1,30 +1,23 @@
 'use client'
 
 import {
-  Heart,
-  MapPin,
-  Package,
-  Clock,
-  Shield,
-  Sparkles,
-  BadgeCheck,
-  Truck,
-  Gavel,
-} from 'lucide-react'
-import { useSession } from 'next-auth/react'
-import toast from 'react-hot-toast'
-import Image from 'next/image'
-import Link from 'next/link'
-import { useEffect, useState } from 'react'
-import {
+  checkIsNewListing,
   formatCHF,
   formatCHFCompact,
   formatTimeLeft,
-  getListingBadges,
-  getDeliveryInfo,
   getBoostType,
+  getDeliveryInfo,
+  getListingBadges,
+  getTimeSinceCreated,
+  hasVisibilityBoost,
   type ListingData,
 } from '@/lib/product-utils'
+import { BadgeCheck, Clock, Gavel, Heart, MapPin, Package, Shield, Truck } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Image from 'next/image'
+import Link from 'next/link'
+import { useEffect, useState } from 'react'
+import toast from 'react-hot-toast'
 
 export interface ProductCardData extends ListingData {
   images: string[] | string
@@ -33,7 +26,8 @@ export interface ProductCardData extends ListingData {
   href?: string
   brand?: string
   model?: string
-  boosters?: string[]
+  boosters?: string[] // Visibility boost, NOT sponsorship
+  isSponsored?: boolean // TRUE paid placement
   // Enhanced fields
   shippingMinCost?: number | null
   sellerVerified?: boolean
@@ -61,19 +55,19 @@ export function ProductCard({
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
 
   // Parse images
-    const images =
-      typeof product.images === 'string'
-        ? (() => {
-            try {
+  const images =
+    typeof product.images === 'string'
+      ? (() => {
+          try {
             const parsed = JSON.parse(product.images)
             return Array.isArray(parsed) ? parsed : []
-            } catch {
-              return product.images.split(',').filter(Boolean)
-            }
-          })()
-        : Array.isArray(product.images)
-          ? product.images
-          : []
+          } catch {
+            return product.images.split(',').filter(Boolean)
+          }
+        })()
+      : Array.isArray(product.images)
+        ? product.images
+        : []
 
   const mainImage = images.length > 0 ? images[0] : null
 
@@ -171,14 +165,19 @@ export function ProductCard({
 
   const productHref = product.href || `/products/${product.id}`
 
-  // Get badges (max 2) - includes trust, promo, new, condition
-  const badges = getListingBadges(product)
+  // Get overlay badges (condition, sponsored only if isSponsored=true)
+  const overlayBadges = getListingBadges(product)
 
   // Get delivery info (shipping cost, pickup availability)
   const deliveryInfo = getDeliveryInfo(product)
 
-  // Get boost type for styling
+  // Check if listing has visibility boost (for subtle styling, NOT "Gesponsert" badge)
   const boostType = getBoostType(product)
+  const isBoosted = hasVisibilityBoost(product)
+
+  // Check if new listing (for "Neu eingestellt" meta label)
+  const isNewListing = checkIsNewListing(product)
+  const timeSinceCreated = isNewListing ? getTimeSinceCreated(product) : ''
 
   // Determine price display
   const isAuction = product.isAuction === true
@@ -229,37 +228,42 @@ export function ProductCard({
           <div className="h-full w-full bg-gray-50" />
         )}
 
-        {/* Top-left Badge Stack (max 2) */}
-        {badges.length > 0 && (
-          <div className="absolute left-2 top-2 flex flex-col gap-1">
-            {badges.slice(0, 2).map((badge, index) => (
+        {/* Top-left: Offer Type Badge (Auktion) + Condition/Sponsored Badges */}
+        <div className="absolute left-2 top-2 flex flex-col gap-1">
+          {/* Auction badge - always shown for auctions */}
+          {isAuction && (
+            <span className="inline-flex items-center rounded-full bg-orange-100/90 px-2 py-0.5 text-[11px] font-medium text-orange-800 shadow-sm backdrop-blur">
+              <Gavel className="mr-1 h-3 w-3" />
+              Auktion
+            </span>
+          )}
+
+          {/* Sponsored badge - ONLY if isSponsored === true */}
+          {product.isSponsored === true && (
+            <span className="inline-flex items-center rounded-full bg-gray-100/90 px-2 py-0.5 text-[11px] font-medium text-gray-700 shadow-sm backdrop-blur">
+              Gesponsert
+            </span>
+          )}
+
+          {/* Condition badges (Wie neu, Sehr gut, etc.) */}
+          {overlayBadges
+            .filter(badge => badge !== 'Gesponsert')
+            .slice(0, isAuction ? 1 : 2)
+            .map((badge, index) => (
               <span
                 key={index}
-                className={`inline-flex items-center rounded-full px-2 py-0.5 text-[11px] font-medium shadow-sm backdrop-blur ${
-                  badge === 'Gesponsert'
-                    ? boostType === 'super-boost'
-                      ? 'bg-gradient-to-r from-yellow-400 to-orange-500 text-white'
-                      : boostType === 'turbo-boost'
-                        ? 'bg-gradient-to-r from-blue-500 to-purple-600 text-white'
-                        : 'bg-primary-600 text-white'
-                    : badge === 'Zahlungsschutz'
-                      ? 'bg-green-100/90 text-green-800'
-                      : 'bg-white/90 text-gray-900'
-                }`}
+                className="inline-flex items-center rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-gray-900 shadow-sm backdrop-blur"
               >
-                {badge === 'Zahlungsschutz' && <Shield className="mr-1 h-3 w-3" />}
-                {badge === 'Gesponsert' && <Sparkles className="mr-1 h-3 w-3" />}
                 {badge}
               </span>
             ))}
-          </div>
-        )}
+        </div>
 
-        {/* Auction indicator - Bottom left overlay */}
-        {isAuction && timeLeft && (
-          <div className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-orange-500/90 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm backdrop-blur">
-            <Gavel className="h-3 w-3" />
-            <span>{timeLeft}</span>
+        {/* Bottom-left: Auction timer (subtle, not aggressive) */}
+        {isAuction && timeLeft && timeLeft !== 'Beendet' && (
+          <div className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-black/60 px-2 py-0.5 text-[10px] font-medium text-white backdrop-blur">
+            <Clock className="h-2.5 w-2.5" />
+            <span>endet in {timeLeft}</span>
           </div>
         )}
 
@@ -273,37 +277,51 @@ export function ProductCard({
             className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
           />
         </button>
+
+        {/* Subtle boost indicator (border glow, NOT badge) */}
+        {isBoosted && (
+          <div
+            className={`pointer-events-none absolute inset-0 rounded-t-2xl ${
+              boostType === 'super-boost'
+                ? 'ring-2 ring-inset ring-yellow-400/50'
+                : boostType === 'turbo-boost'
+                  ? 'ring-2 ring-inset ring-blue-400/50'
+                  : 'ring-1 ring-inset ring-primary-400/30'
+            }`}
+          />
+        )}
       </div>
 
       {/* Content Wrapper */}
       <div className="p-2.5">
-        {/* Title - 1 line on desktop, 2 lines on mobile */}
-        <h3 className="line-clamp-2 text-[13px] font-medium leading-4 text-gray-900 md:line-clamp-1">
+        {/* Title - 2 lines max with ellipsis */}
+        <h3 className="line-clamp-2 text-[13px] font-medium leading-4 text-gray-900">
           {product.title}
         </h3>
 
         {/* Price Block - Different for Auction vs Fixed */}
         {isAuction ? (
           <div className="mt-1.5">
-            {/* Current Bid */}
-            <div className="flex items-baseline gap-1.5">
-              <span className="text-[11px] font-medium text-orange-600">Aktuelles Gebot</span>
-            </div>
+            {/* Current Bid Label */}
+            <div className="text-[11px] font-medium text-orange-600">Aktuelles Gebot</div>
+            {/* Price */}
             <div className="flex items-baseline gap-2">
               <span className="text-[12px] font-medium text-gray-600">CHF</span>
               <span className="text-[20px] font-semibold leading-6 text-gray-900">
                 {formatCHFCompact(mainPrice)}
               </span>
             </div>
-            {/* Bid count */}
-            <div className="mt-0.5 flex items-center gap-2 text-[11px] text-gray-500">
+            {/* Bid count + Sofort-Kaufen option */}
+            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-gray-500">
               <span>
                 {bidCount} {bidCount === 1 ? 'Gebot' : 'Gebote'}
               </span>
               {hasBuyNowPrice && (
                 <>
                   <span>•</span>
-                  <span className="text-primary-600">Sofort: {formatCHF(product.buyNowPrice!)}</span>
+                  <span className="text-primary-600">
+                    Sofort: {formatCHF(product.buyNowPrice!)}
+                  </span>
                 </>
               )}
             </div>
@@ -317,25 +335,35 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Meta Row - Location + Delivery */}
-        <div className="mt-1.5 flex items-center gap-1.5 text-[11px] text-gray-500">
-          {/* Location */}
-          {(product.city || product.postalCode) && (
-            <span className="inline-flex items-center gap-0.5 truncate">
-              <MapPin className="h-3 w-3 flex-shrink-0" />
-              <span className="truncate">
-                {product.postalCode && product.city
-                  ? `${product.postalCode} ${product.city}`
-                  : product.postalCode || product.city || ''}
+        {/* Meta Row - "Neu eingestellt" + Location + Delivery */}
+        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-gray-500">
+          {/* "Neu eingestellt" label (subtle, only for new listings) */}
+          {isNewListing && (
+            <>
+              <span className="font-medium text-primary-600">
+                Neu eingestellt{timeSinceCreated ? ` · ${timeSinceCreated}` : ''}
               </span>
-            </span>
+              <span className="text-gray-300">•</span>
+            </>
           )}
 
-          {/* Separator */}
-          {(product.city || product.postalCode) && <span className="text-gray-300">•</span>}
+          {/* Location */}
+          {(product.city || product.postalCode) && (
+            <>
+              <span className="inline-flex items-center gap-0.5 truncate">
+                <MapPin className="h-3 w-3 flex-shrink-0" />
+                <span className="truncate">
+                  {product.postalCode && product.city
+                    ? `${product.postalCode} ${product.city}`
+                    : product.postalCode || product.city || ''}
+                </span>
+              </span>
+              <span className="text-gray-300">•</span>
+            </>
+          )}
 
           {/* Delivery Info with Cost */}
-          <span className="inline-flex items-center gap-0.5 shrink-0">
+          <span className="inline-flex shrink-0 items-center gap-0.5">
             {deliveryInfo.pickupOnly ? (
               <>
                 <Package className="h-3 w-3" />
@@ -346,7 +374,9 @@ export function ProductCard({
                 <Truck className="h-3 w-3" />
                 {deliveryInfo.costLabel ? (
                   <span className={deliveryInfo.costLabel === 'Gratis' ? 'text-green-600' : ''}>
-                    {deliveryInfo.costLabel === 'Gratis' ? 'Gratis Versand' : `Versand ${deliveryInfo.costLabel}`}
+                    {deliveryInfo.costLabel === 'Gratis'
+                      ? 'Gratis Versand'
+                      : `Versand ${deliveryInfo.costLabel}`}
                   </span>
                 ) : (
                   <span>Versand</span>

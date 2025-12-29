@@ -45,7 +45,8 @@ export const ProductCard = function ProductCard(props: ProductCardProps) {
     buyNowPrice: restProps.buyNowPrice,
     isAuction: restProps.isAuction,
     bids: restProps.bids,
-    boosters: restProps.boosters,
+    boosters: restProps.boosters, // Visibility boost, NOT sponsorship
+    isSponsored: restProps.isSponsored, // TRUE paid placement
     currentBid: restProps.currentBid,
     href: restProps.href,
     paymentProtectionEnabled: restProps.paymentProtectionEnabled,
