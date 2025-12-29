@@ -24,13 +24,12 @@ function HeaderSearchContent({ onMobileSearchOpen, onDesktopSearchOpen }: Header
       <button
         type="button"
         onClick={onDesktopSearchOpen}
-        className="hidden w-full items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-gray-50 hover:text-primary-600 md:flex lg:px-4"
-        aria-label="Suche öffnen"
-        title="Suche (⌘K oder Strg+K)"
+        className="hidden h-10 w-full min-w-[120px] items-center justify-center gap-2 rounded-full border border-gray-200 bg-white px-3 py-2 text-sm text-gray-500 shadow-sm transition-all duration-200 hover:border-primary-300 hover:bg-gray-50 hover:text-primary-600 md:flex lg:min-w-[180px] lg:px-4 xl:min-w-[220px]"
+        aria-label="Suche öffnen (⌘K)"
       >
         <Search className="h-4 w-4 flex-none" />
         <span className="hidden truncate lg:inline">Suchen…</span>
-        <kbd className="ml-auto hidden rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 xl:inline">
+        <kbd className="ml-auto hidden rounded border border-gray-200 bg-gray-100 px-1.5 py-0.5 text-[10px] font-medium text-gray-400 2xl:inline">
           ⌘K
         </kbd>
       </button>
