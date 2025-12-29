@@ -23,7 +23,7 @@ export function HeroServer({
   return (
     <section
       id="home-hero"
-      className="relative py-6 text-white md:py-8"
+      className="relative py-6 text-white md:py-6 lg:py-4"
       style={{
         background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #10b981 100%)',
       }}
@@ -41,10 +41,10 @@ export function HeroServer({
       <div className="relative z-10 mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           {/* LCP-OPTIMIERT: H1 ist sofort im HTML, kein JavaScript nötig */}
-          <h1 className="mb-2 text-2xl font-bold text-white md:mb-3 md:text-3xl lg:text-4xl">
+          <h1 className="mb-2 text-2xl font-bold text-white md:mb-2 md:text-3xl lg:mb-1 lg:text-2xl">
             {title}
           </h1>
-          <p className="mb-4 text-sm text-white/90 md:text-base">{subtitle}</p>
+          <p className="mb-3 text-sm text-white/90 md:text-base lg:mb-2 lg:text-sm">{subtitle}</p>
 
           {/* Trust Mini-Bullets */}
           <TrustMiniBullets variant="hero" />

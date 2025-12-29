@@ -22,12 +22,12 @@ export function TrustMiniBullets({ variant = 'default' }: TrustMiniBulletsProps)
   const isHero = variant === 'hero'
 
   return (
-    <div className={`mt-4 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[12px] ${
+    <div className={`mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-2 text-[12px] lg:mt-2 lg:gap-x-3 lg:text-[11px] ${
       isHero ? 'text-white/80' : 'text-gray-600'
     }`}>
       {TRUST_BULLETS.map((bullet, index) => (
-        <span key={index} className="inline-flex items-center gap-1.5">
-          <Check className={`h-4 w-4 ${isHero ? 'text-white/70' : 'text-gray-500'}`} />
+        <span key={index} className="inline-flex items-center gap-1.5 lg:gap-1">
+          <Check className={`h-4 w-4 lg:h-3 lg:w-3 ${isHero ? 'text-white/70' : 'text-gray-500'}`} />
           <span className="whitespace-nowrap">{bullet}</span>
         </span>
       ))}

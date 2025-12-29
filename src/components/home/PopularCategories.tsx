@@ -42,30 +42,33 @@ export function PopularCategories() {
   }>
 
   return (
-    <section className="bg-white py-12 md:py-16">
+    <section className="bg-white py-8 md:py-10 lg:py-4">
       <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
-        <div className="mb-8 text-center">
-          <h2 className="mb-2 text-2xl font-bold text-gray-900 md:text-3xl">
+        {/* Header - kompakter auf Desktop */}
+        <div className="mb-4 text-center lg:mb-3">
+          <h2 className="mb-1 text-xl font-bold text-gray-900 md:text-2xl lg:text-lg">
             Beliebte Kategorien
           </h2>
-          <p className="text-gray-600">
+          <p className="text-sm text-gray-600 lg:text-xs">
             Entdecken Sie unsere meistbesuchten Kategorien
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8">
+        {/* Kategorien Grid - kompakter auf Desktop */}
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 lg:gap-2">
           {categories.map(category => {
             const IconComponent = category.icon
             return (
               <Link
                 key={category.slug}
                 href={category.href}
-                className="group flex cursor-pointer flex-col items-center gap-3 rounded-xl border border-transparent bg-white p-4 transition-all duration-200 ease-out hover:border-primary-200 hover:bg-primary-50/50 hover:shadow-md hover:shadow-primary-100/50 hover:scale-[1.01] focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                className="group flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-transparent bg-white p-3 transition-all duration-200 ease-out hover:border-primary-200 hover:bg-primary-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 lg:gap-1.5 lg:p-2"
+                aria-label={`Kategorie ${category.name} durchsuchen`}
               >
-                <div className="flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 text-primary-600 transition-all duration-200 ease-out group-hover:bg-primary-100 group-hover:scale-105 md:h-16 md:w-16">
-                  <IconComponent className="h-7 w-7 transition-transform duration-200 group-hover:scale-110 md:h-8 md:w-8" />
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-600 transition-all duration-200 ease-out group-hover:bg-primary-100 md:h-14 md:w-14 lg:h-10 lg:w-10">
+                  <IconComponent className="h-6 w-6 transition-transform duration-200 group-hover:scale-110 md:h-7 md:w-7 lg:h-5 lg:w-5" />
                 </div>
-                <span className="text-center text-sm font-medium text-gray-700 transition-colors duration-200 group-hover:text-primary-600">
+                <span className="text-center text-xs font-medium text-gray-700 transition-colors duration-200 group-hover:text-primary-600 sm:text-sm lg:text-xs">
                   {category.name}
                 </span>
               </Link>

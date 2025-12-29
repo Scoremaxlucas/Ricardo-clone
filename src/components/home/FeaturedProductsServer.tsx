@@ -294,15 +294,15 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
 
   if (loading) {
     return (
-      <section className="bg-[#FAFAFA] py-12">
+      <section className="bg-[#FAFAFA] py-8 md:py-10 lg:py-6">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          <div className="mb-10 text-center">
-            <h2 className="mb-3 text-3xl font-extrabold text-gray-900 md:text-4xl">
+          <div className="mb-6 text-center lg:mb-4">
+            <h2 className="mb-2 text-2xl font-extrabold text-gray-900 md:text-3xl lg:text-2xl">
               Neu eingestellt
             </h2>
-            <p className="text-lg leading-relaxed text-gray-600">Die neuesten Artikel auf Helvenda</p>
+            <p className="text-base leading-relaxed text-gray-600 lg:text-sm">Die neuesten Artikel auf Helvenda</p>
           </div>
-          <div className="flex items-center justify-center py-12">
+          <div className="flex items-center justify-center py-8 lg:py-6">
             <Loader2 className="h-8 w-8 animate-spin text-primary-500" />
             <p className="ml-3 text-gray-600">Artikel werden geladen...</p>
           </div>
@@ -313,11 +313,11 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
 
   if (products.length === 0) {
     return (
-      <section className="bg-[#FAFAFA] py-12">
+      <section className="bg-[#FAFAFA] py-8 md:py-10 lg:py-6">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
-            <h2 className="mb-4 text-3xl font-bold text-gray-900">Neu eingestellt</h2>
-            <p className="text-lg text-gray-600">{t.home.noItemsYet}</p>
+            <h2 className="mb-3 text-2xl font-bold text-gray-900 lg:text-xl">Neu eingestellt</h2>
+            <p className="text-base text-gray-600 lg:text-sm">{t.home.noItemsYet}</p>
           </div>
         </div>
       </section>
@@ -325,13 +325,14 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   }
 
   return (
-    <section className="bg-[#FAFAFA] py-12">
+    <section className="bg-[#FAFAFA] py-8 md:py-10 lg:py-6">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        <div className="mb-10 text-center">
-          <h2 className="mb-3 text-3xl font-extrabold text-gray-900 md:text-4xl">
+        {/* Header - kompakter auf Desktop */}
+        <div className="mb-6 text-center lg:mb-4">
+          <h2 className="mb-2 text-2xl font-extrabold text-gray-900 md:text-3xl lg:text-2xl">
             Neu eingestellt
           </h2>
-          <p className="text-lg leading-relaxed text-gray-600">Die neuesten Artikel auf Helvenda</p>
+          <p className="text-base leading-relaxed text-gray-600 lg:text-sm">Die neuesten Artikel auf Helvenda</p>
         </div>
 
         <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5">
