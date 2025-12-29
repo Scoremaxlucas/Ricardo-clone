@@ -225,7 +225,7 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
         createdAt: draft.createdAt,
         auctionEnd: null,
         isAuction: formData.isAuction || false,
-        status: 'active' as const, // Drafts show as "active" in grid
+        status: 'draft' as const, // Drafts show as "Entwurf" status
         bidCount: 0,
         highestBid: null,
         purchaseId: null,

@@ -3,7 +3,7 @@
 import { Clock, Copy, Edit, Eye, Gavel, Package, ShoppingBag, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 
-export type ListingStatus = 'active' | 'ended' | 'sold'
+export type ListingStatus = 'active' | 'ended' | 'sold' | 'draft'
 
 export interface ListingCardProps {
   id: string
@@ -28,6 +28,10 @@ const statusConfig = {
   active: {
     label: 'Aktiv',
     className: 'bg-green-100 text-green-700',
+  },
+  draft: {
+    label: 'Entwurf',
+    className: 'bg-gray-100 text-gray-600',
   },
   ended: {
     label: 'Beendet',
@@ -137,6 +141,15 @@ export function ListingCard({
               aria-label="Verkaufsdetails"
             >
               <ShoppingBag className="h-4 w-4" />
+            </Link>
+          ) : status === 'draft' ? (
+            // Draft items: Edit in sell wizard
+            <Link
+              href={`/sell?draft=${id}`}
+              className="rounded-full bg-white p-2 text-gray-700 transition-colors hover:bg-gray-100"
+              aria-label="Entwurf bearbeiten"
+            >
+              <Edit className="h-4 w-4" />
             </Link>
           ) : (
             // Active/Ended items: Show view and edit
