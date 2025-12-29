@@ -817,13 +817,28 @@ function SearchPageContent() {
           {/* Desktop Results Header - Hidden on mobile */}
           <div className="mb-6 hidden items-center justify-between md:flex">
             <div className="flex items-center gap-4">
-              <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
+              <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900 md:text-4xl">
                 {loading ? (
                   t.search.loading
                 ) : query ? (
                   <>
                     {watches.length} {watches.length === 1 ? 'Ergebnis' : 'Ergebnisse'} für{' '}
-                    <span className="text-primary-600">&quot;{query}&quot;</span>
+                    <span className="flex items-center gap-2 text-primary-600">
+                      &quot;{query}&quot;
+                      <button
+                        type="button"
+                        onClick={() => {
+                          const params = new URLSearchParams(searchParams.toString())
+                          params.delete('q')
+                          router.push(`/categories${params.toString() ? `?${params.toString()}` : ''}`)
+                        }}
+                        className="flex h-6 w-6 items-center justify-center rounded-full border border-primary-300 bg-white text-primary-600 transition-colors hover:bg-primary-50 hover:border-primary-400"
+                        aria-label="Suche löschen und zu Alle Kategorien"
+                        title="Suche löschen"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    </span>
                   </>
                 ) : (
                   `${watches.length} ${t.search.results}`

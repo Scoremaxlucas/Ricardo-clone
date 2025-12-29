@@ -1,8 +1,8 @@
 'use client'
 
 import { useLanguage } from '@/contexts/LanguageContext'
-import { ChevronDown, Filter, Grid3x3, List } from 'lucide-react'
-import { useSearchParams } from 'next/navigation'
+import { ChevronDown, Filter, Grid3x3, List, X } from 'lucide-react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { useMemo } from 'react'
 
 interface MobileSearchControlsProps {
@@ -23,6 +23,7 @@ export function MobileSearchControls({
   loading,
 }: MobileSearchControlsProps) {
   const searchParams = useSearchParams()
+  const router = useRouter()
   const { t } = useLanguage()
 
   // Count active filters
@@ -61,7 +62,7 @@ export function MobileSearchControls({
     <div className="sticky top-0 z-40 border-b border-gray-200 bg-white md:hidden">
       {/* Results count */}
       <div className="flex items-center justify-between px-4 py-2 text-sm">
-        <span className="font-medium text-gray-900">
+        <span className="flex items-center gap-2 font-medium text-gray-900">
           {loading ? (
             <span className="text-gray-500">{t.search.loading}</span>
           ) : (() => {
@@ -70,7 +71,22 @@ export function MobileSearchControls({
               return (
                 <>
                   {resultsCount} {resultsCount === 1 ? 'Ergebnis' : 'Ergebnisse'} für{' '}
-                  <span className="text-primary-600">&quot;{query}&quot;</span>
+                  <span className="flex items-center gap-1.5 text-primary-600">
+                    &quot;{query}&quot;
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const params = new URLSearchParams(searchParams.toString())
+                        params.delete('q')
+                        router.push(`/categories${params.toString() ? `?${params.toString()}` : ''}`)
+                      }}
+                      className="flex h-5 w-5 items-center justify-center rounded-full border border-primary-300 bg-white text-primary-600 transition-colors hover:bg-primary-50 hover:border-primary-400"
+                      aria-label="Suche löschen und zu Alle Kategorien"
+                      title="Suche löschen"
+                    >
+                      <X className="h-3 w-3" />
+                    </button>
+                  </span>
                 </>
               )
             }
