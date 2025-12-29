@@ -109,11 +109,11 @@ function HeaderSearchContent({ isHeroVisible = true, onMobileSearchOpen }: Heade
   return (
     <>
       {/* Desktop Search */}
-      <div className="hidden md:block">
+      <div className="hidden min-w-0 md:block">
         {shouldShowExpanded ? (
-          <form onSubmit={handleSubmit} className="relative">
-            <div className="relative flex items-center">
-              <Search className="absolute left-3 h-4 w-4 text-gray-400" />
+          <form onSubmit={handleSubmit} className="relative min-w-0">
+            <div className="relative flex min-w-0 items-center">
+              <Search className="absolute left-3 h-4 w-4 flex-shrink-0 text-gray-400" />
               <input
                 ref={inputRef}
                 type="text"
@@ -122,13 +122,13 @@ function HeaderSearchContent({ isHeroVisible = true, onMobileSearchOpen }: Heade
                 onBlur={handleBlur}
                 placeholder="Suchen..."
                 aria-label="Suche"
-                className="h-10 w-64 rounded-full border border-gray-200 bg-gray-50 pl-10 pr-10 text-sm text-gray-900 transition-all duration-200 placeholder:text-gray-500 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-200 lg:w-80 xl:w-96"
+                className="h-10 w-full min-w-0 rounded-full border border-gray-200 bg-gray-50 pl-10 pr-10 text-sm text-gray-900 transition-all duration-200 placeholder:text-gray-500 hover:border-gray-300 focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-200"
               />
               {inputValue && (
                 <button
                   type="button"
                   onClick={handleClear}
-                  className="absolute right-3 rounded-full p-0.5 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+                  className="absolute right-3 flex-shrink-0 rounded-full p-0.5 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
                   aria-label="Suche löschen"
                 >
                   <X className="h-4 w-4" />
@@ -141,7 +141,7 @@ function HeaderSearchContent({ isHeroVisible = true, onMobileSearchOpen }: Heade
           <button
             type="button"
             onClick={handleExpandClick}
-            className="flex h-10 w-10 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-gray-600 transition-all duration-200 hover:border-gray-300 hover:bg-gray-100 hover:text-primary-600"
+            className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full border border-gray-200 bg-gray-50 text-gray-600 transition-all duration-200 hover:border-gray-300 hover:bg-gray-100 hover:text-primary-600"
             aria-label="Suche öffnen"
             title="Suche (Tastenkürzel: /)"
           >

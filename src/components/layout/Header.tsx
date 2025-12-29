@@ -365,131 +365,133 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
         {/* DESKTOP HEADER */}
         <div className="hidden md:block">
-          {/* ERSTE ZEILE: Logo, Navigation, User Actions */}
-          <div className="flex h-14 min-w-0 w-full items-center justify-between py-1">
-            {/* Logo */}
-            <div className="flex-shrink-0">
-              <Link href="/" prefetch={true} className="inline-flex items-center">
+          {/* ERSTE ZEILE: 3-Zonen Layout (Left / Center / Right) */}
+          <div className="flex h-14 w-full items-center gap-2 py-1 lg:gap-4">
+            
+            {/* === LEFT ZONE: Logo + Navigation (shrink-0 auf lg+) === */}
+            <div className="flex min-w-0 flex-shrink items-center gap-2 lg:flex-shrink-0 lg:gap-3">
+              {/* Logo */}
+              <Link href="/" prefetch={true} className="flex-shrink-0">
                 <Logo size="md" />
               </Link>
-            </div>
 
-            {/* Navigation - Kategorien als erster Punkt (Design-Optimierung) */}
-            <div className="ml-4 min-w-0 flex-1 items-center justify-start gap-2 lg:ml-8 lg:gap-3 flex">
-            {/* Kategorien Button - Öffnet Sidebar - Primary Navigation Entry Point */}
-            <button
-              onClick={() => setIsSidebarOpen(true)}
-              className="flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md border border-gray-200 bg-gray-50 p-2 text-gray-700 transition-all duration-200 hover:bg-gray-100 hover:text-primary-600 hover:border-primary-200 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2 sm:px-3 sm:py-2"
-              title="Kategorien"
-            >
-              <Grid3x3 className="h-5 w-5" />
-              <span className="hidden text-sm font-semibold sm:inline sm:text-base">Kategorien</span>
-              <ChevronDown className="h-3 w-3 flex-shrink-0 hidden sm:inline" />
-            </button>
-
-            {/* Favoriten */}
-            {session ? (
-              <Link
-                href="/favorites"
-                prefetch={true}
-                onMouseEnter={() => handlePrefetch('/favorites')}
-                className="relative flex min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 opacity-90 text-gray-600 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100 sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-1.5 sm:px-2 sm:py-1.5"
-                title={t.header.favorites}
-              >
-                <Heart className="h-5 w-5" />
-                <span className="hidden text-sm font-normal sm:inline">{t.header.favorites}</span>
-                {deferredData.favoritesCount > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white sm:-right-1 sm:-top-1 sm:h-4 sm:w-4 sm:text-xs">
-                    {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
-                  </span>
-                )}
-              </Link>
-            ) : (
+              {/* Kategorien Button */}
               <button
-                onClick={() => setIsLoginModalOpen(true)}
-                className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 opacity-90 text-gray-600 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-1.5 sm:px-2 sm:py-1.5"
-                title={t.header.favorites}
+                onClick={() => setIsSidebarOpen(true)}
+                className="flex items-center gap-1 whitespace-nowrap rounded-md border border-gray-200 bg-gray-50 px-2 py-1.5 text-gray-700 transition-all duration-200 hover:border-primary-200 hover:bg-gray-100 hover:text-primary-600 lg:gap-2 lg:px-3 lg:py-2"
+                title="Kategorien"
               >
-                <Heart className="h-5 w-5" />
-                <span className="hidden text-sm font-normal sm:inline">{t.header.favorites}</span>
+                <Grid3x3 className="h-5 w-5 flex-shrink-0" />
+                <span className="hidden text-sm font-semibold lg:inline">Kategorien</span>
+                <ChevronDown className="hidden h-3 w-3 flex-shrink-0 lg:inline" />
               </button>
-            )}
 
-            {/* Auktionen */}
-            <Link
-              href="/auctions"
-              prefetch={true}
-              onMouseEnter={() => handlePrefetch('/auctions')}
-              className="hidden min-h-[44px] min-w-[44px] items-center justify-center gap-1 rounded-md p-2 opacity-90 text-gray-600 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100 sm:flex sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-1.5 sm:px-2 sm:py-1.5"
-              title={t.header.auctions}
-            >
-              <Gavel className="h-5 w-5" />
-              <span className="hidden text-sm font-normal sm:inline">{t.header.auctions}</span>
-            </Link>
+              {/* Favoriten */}
+              {session ? (
+                <Link
+                  href="/favorites"
+                  prefetch={true}
+                  onMouseEnter={() => handlePrefetch('/favorites')}
+                  className="relative flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100"
+                  title={t.header.favorites}
+                >
+                  <Heart className="h-5 w-5 flex-shrink-0" />
+                  <span className="hidden text-sm font-normal lg:inline">{t.header.favorites}</span>
+                  {deferredData.favoritesCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
+                      {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
+                    </span>
+                  )}
+                </Link>
+              ) : (
+                <button
+                  onClick={() => setIsLoginModalOpen(true)}
+                  className="flex items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100"
+                  title={t.header.favorites}
+                >
+                  <Heart className="h-5 w-5 flex-shrink-0" />
+                  <span className="hidden text-sm font-normal lg:inline">{t.header.favorites}</span>
+                </button>
+              )}
 
-            {/* Verkaufen Dropdown - Single Emphasized CTA */}
-            <div
-              className="relative z-50 ml-2"
-              onMouseEnter={() => {
-                setIsLanguageMenuOpen(false)
-                setIsProfileMenuOpen(false)
-                handleMenuEnter(setIsSellMenuOpen)
-                handlePrefetch('/sell')
-              }}
-              onMouseLeave={() => handleMenuLeave(setIsSellMenuOpen)}
-            >
+              {/* Auktionen */}
               <Link
-                href="/sell"
+                href="/auctions"
                 prefetch={true}
-                className="flex min-h-[44px] min-w-[44px] w-full items-center justify-center gap-1 rounded-lg bg-primary-600 px-4 py-2 text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow-md sm:min-h-0 sm:min-w-0 sm:justify-start sm:gap-2"
-                title={t.header.sell}
+                onMouseEnter={() => handlePrefetch('/auctions')}
+                className="hidden items-center gap-1 whitespace-nowrap rounded-md px-2 py-1.5 text-gray-600 opacity-90 transition-colors duration-200 hover:bg-gray-100 hover:text-primary-600 hover:opacity-100 lg:flex"
+                title={t.header.auctions}
               >
-                <Plus className="h-5 w-5" />
-                <span className="hidden text-sm font-semibold sm:inline">{t.header.sell}</span>
-                <ChevronDown className={`h-3 w-3 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`} />
+                <Gavel className="h-5 w-5 flex-shrink-0" />
+                <span className="hidden text-sm font-normal xl:inline">{t.header.auctions}</span>
               </Link>
 
-              {isSellMenuOpen && (
-                <>
-                  <div className="absolute left-0 top-full z-[10001] h-1 w-full" />
-                  <div
-                    className="absolute left-0 top-full z-[10002] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg"
-                    style={{ pointerEvents: 'auto' }}
-                  >
-                    <Link
-                      href="/sell"
-                      prefetch={true}
-                      onClick={() => setIsSellMenuOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+              {/* Verkaufen Dropdown */}
+              <div
+                className="relative z-50"
+                onMouseEnter={() => {
+                  setIsLanguageMenuOpen(false)
+                  setIsProfileMenuOpen(false)
+                  handleMenuEnter(setIsSellMenuOpen)
+                  handlePrefetch('/sell')
+                }}
+                onMouseLeave={() => handleMenuLeave(setIsSellMenuOpen)}
+              >
+                <Link
+                  href="/sell"
+                  prefetch={true}
+                  className="flex items-center gap-1 whitespace-nowrap rounded-lg bg-primary-600 px-3 py-1.5 text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow-md lg:gap-2 lg:px-4 lg:py-2"
+                  title={t.header.sell}
+                >
+                  <Plus className="h-5 w-5 flex-shrink-0" />
+                  <span className="hidden text-sm font-semibold lg:inline">{t.header.sell}</span>
+                  <ChevronDown className={`h-3 w-3 flex-shrink-0 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`} />
+                </Link>
+
+                {isSellMenuOpen && (
+                  <>
+                    <div className="absolute left-0 top-full z-[10001] h-1 w-full" />
+                    <div
+                      className="absolute left-0 top-full z-[10002] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg"
+                      style={{ pointerEvents: 'auto' }}
                     >
-                      <div className="font-medium">{t.header.singleItem}</div>
-                      <div className="text-xs text-gray-500">{t.header.singleItemDesc}</div>
-                    </Link>
-                    <Link
-                      href="/sell/bulk"
-                      prefetch={true}
-                      onMouseEnter={() => handlePrefetch('/sell/bulk')}
-                      onClick={() => setIsSellMenuOpen(false)}
-                      className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                    >
-                      <div className="font-medium">{t.header.multipleItems}</div>
-                      <div className="text-xs text-gray-500">{t.header.multipleItemsDesc}</div>
-                    </Link>
-                  </div>
-                </>
-              )}
+                      <Link
+                        href="/sell"
+                        prefetch={true}
+                        onClick={() => setIsSellMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="font-medium">{t.header.singleItem}</div>
+                        <div className="text-xs text-gray-500">{t.header.singleItemDesc}</div>
+                      </Link>
+                      <Link
+                        href="/sell/bulk"
+                        prefetch={true}
+                        onMouseEnter={() => handlePrefetch('/sell/bulk')}
+                        onClick={() => setIsSellMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="font-medium">{t.header.multipleItems}</div>
+                        <div className="text-xs text-gray-500">{t.header.multipleItemsDesc}</div>
+                      </Link>
+                    </div>
+                  </>
+                )}
+              </div>
             </div>
 
-            {/* Header Search - Desktop */}
-            <div className="mx-4 hidden lg:block">
-              <HeaderSearch
-                isHeroVisible={isHeroVisible}
-                onMobileSearchOpen={() => setIsMobileSearchOpen(true)}
-              />
+            {/* === CENTER ZONE: Search (flex-1, kann shrinken, aber clamped) === */}
+            <div className="hidden min-w-0 flex-1 justify-center lg:flex">
+              <div className="w-full max-w-[560px] min-w-0">
+                <HeaderSearch
+                  isHeroVisible={isHeroVisible}
+                  onMobileSearchOpen={() => setIsMobileSearchOpen(true)}
+                />
+              </div>
             </div>
 
-            {/* User Actions */}
-            <div className="flex flex-shrink-0 items-center gap-1 sm:gap-2 md:gap-2 lg:gap-3">
+            {/* === RIGHT ZONE: User Actions (shrink-0 auf lg+) === */}
+            <div className="flex min-w-0 flex-shrink items-center gap-1 lg:flex-shrink-0 lg:gap-2">
             {/* Notifications */}
             <Link
               href="/notifications"
@@ -680,7 +682,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               )}
             </div>
             </div>
-          </div>
           </div>
         </div>
       </div>
