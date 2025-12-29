@@ -1,15 +1,42 @@
 /**
  * Advanced Listings Search Service
- * 
+ *
  * Uses PostgreSQL Full-Text Search (FTS) + pg_trgm for:
  * - Fast, relevant search results
  * - Fuzzy matching for typos (bal -> ball)
  * - Synonym expansion (fussball -> soccer, football)
  * - Weighted ranking (title > category > description)
+ *
+ * ============================================================================
+ * VISIBILITY FILTER DOCUMENTATION
+ * ============================================================================
+ *
+ * A listing is visible in public search if ALL of these conditions are met:
+ *
+ * 1. moderationStatus IS NULL OR moderationStatus != 'rejected'
+ *    - 'pending', 'approved', 'reviewing', or NULL are all visible
+ *    - Only 'rejected' is hidden
+ *
+ * 2. NOT SOLD - No active (non-cancelled) purchase exists
+ *    - purchases: { none: {} } OR purchases: { every: { status: 'cancelled' } }
+ *    - Once a purchase is completed (status != 'cancelled'), listing is hidden
+ *
+ * 3. AUCTION NOT EXPIRED (for auction listings)
+ *    - auctionEnd IS NULL (not an auction) OR auctionEnd > NOW
+ *    - Expired auctions without a purchase are hidden
+ *
+ * IMPORTANT: There is NO "isActive" or "isPublished" flag check!
+ * Listings become visible immediately upon creation if they meet the above.
+ *
+ * Compare with Seller Dashboard (/api/seller/listings):
+ * - Shows ALL listings for sellerId regardless of sold/expired status
+ * - Only excludes moderationStatus = 'rejected'
+ *
+ * ============================================================================
  */
 
-import { Prisma } from '@prisma/client'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { expandQuery, normalizeQuery } from './search-synonyms-enhanced'
 
 // Types
@@ -127,7 +154,8 @@ async function executeSearchQuery(params: {
   offset: number
   now: Date
 }): Promise<SearchResponse> {
-  const { ftsQuery, plainQuery, normalizedQuery, tokens, filters, sort, limit, offset, now } = params
+  const { ftsQuery, plainQuery, normalizedQuery, tokens, filters, sort, limit, offset, now } =
+    params
 
   // Build WHERE conditions
   const conditions: string[] = []
@@ -136,21 +164,21 @@ async function executeSearchQuery(params: {
 
   // Base conditions: not rejected, not sold
   conditions.push(`(w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')`)
-  
+
   // Not sold condition (no purchases or all cancelled)
   conditions.push(`(
     NOT EXISTS (
-      SELECT 1 FROM purchases p 
+      SELECT 1 FROM purchases p
       WHERE p."watchId" = w.id AND p.status != 'cancelled'
     )
   )`)
 
   // Exclude ended auctions without purchase
   conditions.push(`(
-    w."auctionEnd" IS NULL 
+    w."auctionEnd" IS NULL
     OR w."auctionEnd" > $${paramIndex}
     OR EXISTS (
-      SELECT 1 FROM purchases p 
+      SELECT 1 FROM purchases p
       WHERE p."watchId" = w.id AND p.status != 'cancelled'
     )
   )`)
@@ -163,7 +191,7 @@ async function executeSearchQuery(params: {
       EXISTS (
         SELECT 1 FROM watch_categories wc
         JOIN categories c ON c.id = wc."categoryId"
-        WHERE wc."watchId" = w.id 
+        WHERE wc."watchId" = w.id
         AND (lower(c.slug) = lower($${paramIndex}) OR lower(c.name) = lower($${paramIndex}))
       )
       OR lower(w.title) LIKE '%' || lower($${paramIndex}) || '%'
@@ -212,8 +240,8 @@ async function executeSearchQuery(params: {
   if (filters.postalCode) {
     conditions.push(`(
       EXISTS (
-        SELECT 1 FROM users u 
-        WHERE u.id = w."sellerId" 
+        SELECT 1 FROM users u
+        WHERE u.id = w."sellerId"
         AND u."postalCode" LIKE $${paramIndex} || '%'
       )
     )`)
@@ -240,16 +268,16 @@ async function executeSearchQuery(params: {
   const searchableText = `CONCAT(coalesce(w.title, ''), ' ', coalesce(w.brand, ''), ' ', coalesce(w.model, ''), ' ', coalesce(w.description, ''))`
   const searchCondition = `(
     -- Full-text search match
-    to_tsvector('german', unaccent(${searchableText})) @@ 
+    to_tsvector('german', unaccent(${searchableText})) @@
     websearch_to_tsquery('german', unaccent($${ftsQueryParamIndex}))
-    
+
     OR
-    
+
     -- Trigram similarity match (for typos)
     similarity(unaccent(lower(${searchableText})), unaccent(lower($${plainQueryParamIndex}))) > 0.15
-    
+
     OR
-    
+
     -- Direct contains match on key fields (fallback)
     lower(w.title) LIKE '%' || lower($${normalizedQueryParamIndex}) || '%'
     OR lower(w.brand) LIKE '%' || lower($${normalizedQueryParamIndex}) || '%'
@@ -260,7 +288,7 @@ async function executeSearchQuery(params: {
 
   // Build ORDER BY clause
   let orderByClause: string
-  
+
   // Calculate relevance score
   const scoreExpression = `(
     -- FTS rank (weighted heavily)
@@ -282,7 +310,7 @@ async function executeSearchQuery(params: {
     CASE WHEN lower(w.brand) LIKE '%' || lower($${normalizedQueryParamIndex}) || '%' THEN 3.0 ELSE 0 END
     +
     -- Booster bonus (only after relevance is established)
-    CASE 
+    CASE
       WHEN w.boosters LIKE '%super-boost%' THEN 1000.0
       WHEN w.boosters LIKE '%turbo-boost%' THEN 500.0
       WHEN w.boosters LIKE '%boost%' THEN 200.0
@@ -295,20 +323,20 @@ async function executeSearchQuery(params: {
       orderByClause = `${scoreExpression} DESC, w."createdAt" DESC`
       break
     case 'price':
-      orderByClause = sort.direction === 'asc' 
-        ? 'w.price ASC, w."createdAt" DESC'
-        : 'w.price DESC, w."createdAt" DESC'
+      orderByClause =
+        sort.direction === 'asc'
+          ? 'w.price ASC, w."createdAt" DESC'
+          : 'w.price DESC, w."createdAt" DESC'
       break
     case 'createdAt':
-      orderByClause = sort.direction === 'asc'
-        ? 'w."createdAt" ASC'
-        : 'w."createdAt" DESC'
+      orderByClause = sort.direction === 'asc' ? 'w."createdAt" ASC' : 'w."createdAt" DESC'
       break
     case 'auctionEnd':
       orderByClause = 'w."auctionEnd" ASC NULLS LAST, w."createdAt" DESC'
       break
     case 'bids':
-      orderByClause = '(SELECT COUNT(*) FROM bids b WHERE b."watchId" = w.id) DESC, w."createdAt" DESC'
+      orderByClause =
+        '(SELECT COUNT(*) FROM bids b WHERE b."watchId" = w.id) DESC, w."createdAt" DESC'
       break
     default:
       orderByClause = `${scoreExpression} DESC, w."createdAt" DESC`
@@ -316,18 +344,18 @@ async function executeSearchQuery(params: {
 
   // Build the final query
   const whereClause = conditions.join(' AND ')
-  
+
   // Add pagination parameters
   const limitParamIndex = paramIndex
   parameters.push(limit)
   paramIndex++
-  
+
   const offsetParamIndex = paramIndex
   parameters.push(offset)
   paramIndex++
 
   const sqlQuery = `
-    SELECT 
+    SELECT
       w.id,
       w.title,
       w.description,
@@ -370,14 +398,14 @@ async function executeSearchQuery(params: {
     WHERE ${whereClause}
   `
   const countResult = await prisma.$queryRawUnsafe<[{ total: bigint }]>(
-    countQuery, 
+    countQuery,
     ...parameters.slice(0, -2) // Remove limit and offset params
   )
   const total = Number(countResult[0]?.total || 0)
 
   // Get additional data (seller, categories, bids) for results
   const watchIds = rawResults.map(r => r.id)
-  
+
   if (watchIds.length === 0) {
     return { results: [], total: 0, limit, offset }
   }
@@ -419,22 +447,26 @@ async function executeSearchQuery(params: {
     // Parse JSON fields
     let images: string[] = []
     let boosters: string[] = []
-    
+
     try {
       if (r.images) {
         images = typeof r.images === 'string' ? JSON.parse(r.images) : r.images
       }
-    } catch { images = [] }
-    
+    } catch {
+      images = []
+    }
+
     try {
       if (r.boosters) {
         boosters = typeof r.boosters === 'string' ? JSON.parse(r.boosters) : r.boosters
       }
-    } catch { boosters = [] }
+    } catch {
+      boosters = []
+    }
 
     const seller = sellerMap.get(r.sellerId)
     const watchBids = bidMap.get(r.id) || []
-    
+
     // Calculate current price (highest bid or base price)
     const highestBid = watchBids[0]
     const currentPrice = highestBid ? highestBid.amount : r.price
@@ -483,31 +515,22 @@ async function searchWithoutQuery(
     AND: [
       // Not rejected
       {
-        OR: [
-          { moderationStatus: null },
-          { moderationStatus: { not: 'rejected' } },
-        ],
+        OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
       },
       // Not sold
       {
-        OR: [
-          { purchases: { none: {} } },
-          { purchases: { every: { status: 'cancelled' } } },
-        ],
+        OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
       },
       // Exclude ended auctions
       {
-        OR: [
-          { auctionEnd: null },
-          { auctionEnd: { gt: now } },
-        ],
+        OR: [{ auctionEnd: null }, { auctionEnd: { gt: now } }],
       },
     ],
   }
 
   // Add filters
   if (filters.category) {
-    (where.AND as any[]).push({
+    ;(where.AND as any[]).push({
       categories: {
         some: {
           category: {
@@ -522,35 +545,35 @@ async function searchWithoutQuery(
   }
 
   if (filters.minPrice !== undefined) {
-    (where.AND as any[]).push({ price: { gte: filters.minPrice } })
+    ;(where.AND as any[]).push({ price: { gte: filters.minPrice } })
   }
   if (filters.maxPrice !== undefined) {
-    (where.AND as any[]).push({ price: { lte: filters.maxPrice } })
+    ;(where.AND as any[]).push({ price: { lte: filters.maxPrice } })
   }
 
   if (filters.condition) {
-    (where.AND as any[]).push({ condition: filters.condition })
+    ;(where.AND as any[]).push({ condition: filters.condition })
   }
 
   if (filters.brand) {
-    (where.AND as any[]).push({ brand: { equals: filters.brand, mode: 'insensitive' } })
+    ;(where.AND as any[]).push({ brand: { equals: filters.brand, mode: 'insensitive' } })
   }
 
   if (filters.isAuction === true) {
-    (where.AND as any[]).push({ isAuction: true, auctionEnd: { gt: now } })
+    ;(where.AND as any[]).push({ isAuction: true, auctionEnd: { gt: now } })
   } else if (filters.isAuction === false) {
-    (where.AND as any[]).push({ isAuction: false })
+    ;(where.AND as any[]).push({ isAuction: false })
   }
 
   if (filters.postalCode) {
-    (where.AND as any[]).push({
+    ;(where.AND as any[]).push({
       seller: { postalCode: { startsWith: filters.postalCode } },
     })
   }
 
   // Build orderBy
   let orderBy: Prisma.WatchOrderByWithRelationInput | Prisma.WatchOrderByWithRelationInput[]
-  
+
   switch (sort.field) {
     case 'price':
       orderBy = [{ price: sort.direction }, { createdAt: 'desc' }]
@@ -585,14 +608,18 @@ async function searchWithoutQuery(
   const results: SearchResult[] = watches.map(w => {
     let images: string[] = []
     let boosters: string[] = []
-    
+
     try {
       if (w.images) images = JSON.parse(w.images)
-    } catch { images = [] }
-    
+    } catch {
+      images = []
+    }
+
     try {
       if (w.boosters) boosters = JSON.parse(w.boosters)
-    } catch { boosters = [] }
+    } catch {
+      boosters = []
+    }
 
     const highestBid = w.bids[0]
     const currentPrice = highestBid ? highestBid.amount : w.price
@@ -631,7 +658,7 @@ export async function getBrandCounts(
   category?: string
 ): Promise<Array<{ brand: string; count: number }>> {
   const now = new Date()
-  
+
   const where: Prisma.WatchWhereInput = {
     AND: [
       { OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }] },
@@ -656,7 +683,7 @@ export async function getBrandCounts(
   }
 
   if (category) {
-    (where.AND as any[]).push({
+    ;(where.AND as any[]).push({
       categories: {
         some: {
           category: {

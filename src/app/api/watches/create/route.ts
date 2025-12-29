@@ -798,6 +798,34 @@ export async function POST(request: NextRequest) {
       data: watchData,
     })
 
+    // =========================================================================
+    // VISIBILITY PIPELINE INSTRUMENTATION
+    // =========================================================================
+    // Listing is now created and SHOULD be visible in public search because:
+    // 1. moderationStatus = 'pending' (not 'rejected') ✓
+    // 2. No purchases exist yet ✓
+    // 3. If auction: auctionEnd is in the future ✓
+    //
+    // If the listing doesn't appear in search within 5 seconds, check:
+    // - Browser cache (use Ctrl+Shift+R to hard refresh)
+    // - API route cache (should have dynamic='force-dynamic')
+    // - Use /api/watches/{id}/visibility-check for diagnosis
+    // =========================================================================
+    console.log('[Watch Create] 🚀 VISIBILITY PIPELINE:', {
+      watchId: watch.id,
+      timestamp: new Date().toISOString(),
+      moderationStatus: watchData.moderationStatus,
+      isAuction: watchData.isAuction,
+      auctionEnd: watchData.auctionEnd?.toISOString() || null,
+      // Visibility checks that search will use:
+      visibility: {
+        moderationPassed: watchData.moderationStatus !== 'rejected',
+        notSold: true, // Just created, no purchases
+        auctionNotExpired: !watchData.auctionEnd || watchData.auctionEnd > new Date(),
+      },
+      expectedSearchVisibility: true,
+    })
+
     // KRITISCH: Upload Bilder zu Vercel Blob Storage NACH Watch-Erstellung
     // Jetzt haben wir die Watch-ID für den Blob-Pfad
     if (allImages.length > 0 && watch.id) {

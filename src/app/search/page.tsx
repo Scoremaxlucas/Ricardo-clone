@@ -164,7 +164,8 @@ function SearchPageContent() {
       }
 
       console.log(`🔍 Starting search for: "${q}"`)
-      const res = await fetch(url, { signal })
+      // CRITICAL: cache: 'no-store' ensures freshly published listings appear immediately
+      const res = await fetch(url, { signal, cache: 'no-store' })
       if (signal?.aborted) return
 
       if (!res.ok) {

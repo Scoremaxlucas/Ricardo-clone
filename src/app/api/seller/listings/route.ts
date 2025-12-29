@@ -3,6 +3,32 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
+/**
+ * Seller Listings API - "Mein Verkaufen" Dashboard
+ *
+ * ============================================================================
+ * VISIBILITY COMPARISON WITH PUBLIC SEARCH
+ * ============================================================================
+ *
+ * This endpoint shows ALL listings for the authenticated seller, including:
+ * - Active listings (visible in public search)
+ * - Sold items (hidden from public search)
+ * - Expired auctions (hidden from public search)
+ *
+ * The ONLY filter applied here is:
+ * - moderationStatus != 'rejected' (rejected listings are hidden everywhere)
+ *
+ * Compare with Public Search (/api/watches/search):
+ * - Additional filters: notSold, auctionNotExpired
+ * - A listing appearing here but NOT in search could be:
+ *   1. Sold (has active purchase)
+ *   2. Expired auction without purchase
+ *   3. Very new and browser/API cache issue (rare)
+ *
+ * For debugging, use: GET /api/watches/{id}/visibility-check
+ * ============================================================================
+ */
+
 export type ListingStatus = 'active' | 'ended' | 'sold'
 
 export interface SellerListing {

@@ -1,9 +1,19 @@
-import { searchListings, getBrandCounts, type SearchFilters, type SearchSort } from '@/lib/search'
+import { searchListings, type SearchFilters, type SearchSort } from '@/lib/search'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**
+ * CRITICAL: Force dynamic rendering to ensure fresh data
+ * Without this, Next.js might cache route responses and newly published
+ * listings won't appear in search results immediately.
+ *
+ * Required for <= 5 second visibility guarantee after publish.
+ */
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
+/**
  * Advanced Search API using PostgreSQL Full-Text Search + Trigram
- * 
+ *
  * Features:
  * - Full-text search with German language support
  * - Fuzzy matching for typos (ball, bal, baal all work)
@@ -11,7 +21,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * - Relevance ranking with weighted fields
  * - Filter support (category, price, condition, brand, auction, location)
  * - Pagination (limit/offset)
- * 
+ *
  * Query Parameters:
  * - q: Search query (optional)
  * - category: Category slug (optional)
@@ -29,7 +39,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
-    
+
     // Parse query parameters
     const query = searchParams.get('q') || undefined
     const category = searchParams.get('category') || undefined
@@ -43,18 +53,18 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'relevance'
     const limitStr = searchParams.get('limit')
     const offsetStr = searchParams.get('offset')
-    
+
     // Parse numeric values
     const minPrice = minPriceStr ? parseFloat(minPriceStr) : undefined
     const maxPrice = maxPriceStr ? parseFloat(maxPriceStr) : undefined
     const limit = Math.min(Math.max(parseInt(limitStr || '20', 10) || 20, 1), 100)
     const offset = Math.max(parseInt(offsetStr || '0', 10) || 0, 0)
-    
+
     // Parse boolean
     let isAuction: boolean | null = null
     if (isAuctionStr === 'true') isAuction = true
     else if (isAuctionStr === 'false') isAuction = false
-    
+
     // Build filters
     const filters: SearchFilters = {}
     if (category) filters.category = category
@@ -65,7 +75,7 @@ export async function GET(request: NextRequest) {
     if (brand) filters.brand = brand
     if (isAuction !== null) filters.isAuction = isAuction
     if (postalCode) filters.postalCode = postalCode
-    
+
     // Build sort
     let sort: SearchSort = { field: 'relevance', direction: 'desc' }
     switch (sortBy) {
@@ -87,7 +97,7 @@ export async function GET(request: NextRequest) {
       default:
         sort = { field: 'relevance', direction: 'desc' }
     }
-    
+
     // Execute search
     const searchResult = await searchListings({
       query,
@@ -96,7 +106,7 @@ export async function GET(request: NextRequest) {
       limit,
       offset,
     })
-    
+
     // Transform results to API response format (backward compatible)
     const watches = searchResult.results.map(result => ({
       id: result.id,
@@ -125,7 +135,7 @@ export async function GET(request: NextRequest) {
       ...(result.ftsRank !== undefined && { _ftsRank: result.ftsRank }),
       ...(result.trigramSimilarity !== undefined && { _trigramSim: result.trigramSimilarity }),
     }))
-    
+
     return NextResponse.json(
       {
         watches,
@@ -143,13 +153,13 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('[SEARCH] Search error:', error)
     console.error('[SEARCH] Error stack:', error?.stack)
-    
+
     // Check if it's a known database error (e.g., extension not installed)
     const errorMessage = error?.message || String(error)
     if (errorMessage.includes('pg_trgm') || errorMessage.includes('unaccent')) {
       console.error('[SEARCH] PostgreSQL extensions may not be installed. Run the migration first.')
     }
-    
+
     return NextResponse.json(
       {
         error: 'Ein Fehler ist aufgetreten bei der Suche',

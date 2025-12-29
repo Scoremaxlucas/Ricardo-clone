@@ -106,7 +106,8 @@ function CategoriesPageContent() {
         url += '?' + searchParams.toString()
       }
 
-      const res = await fetch(url, { signal })
+      // CRITICAL: cache: 'no-store' ensures freshly published listings appear immediately
+      const res = await fetch(url, { signal, cache: 'no-store' })
       if (signal?.aborted) return
 
       if (!res.ok) {
@@ -170,9 +171,7 @@ function CategoriesPageContent() {
 
       {/* Desktop Filter Chips - Hidden on mobile */}
       <div className="hidden md:block">
-        <Suspense fallback={null}>
-          {/* No filter chips - show all items */}
-        </Suspense>
+        <Suspense fallback={null}>{/* No filter chips - show all items */}</Suspense>
       </div>
 
       {/* Mobile Controls - Sticky */}

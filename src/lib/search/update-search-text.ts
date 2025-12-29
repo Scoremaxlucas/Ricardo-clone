@@ -1,10 +1,10 @@
 /**
  * Service for updating searchText field on Watch records
- * 
+ *
  * NOTE: This service is temporarily disabled because the searchText column
- * doesn't exist in the production database yet. 
+ * doesn't exist in the production database yet.
  * Run migration 20250629_add_search_text_fts to enable this functionality.
- * 
+ *
  * This should be called:
  * - After creating a new watch
  * - After updating a watch
@@ -60,7 +60,7 @@ export async function updateWatchSearchTextDirect(
 ): Promise<string> {
   // DISABLED: searchText column doesn't exist in production DB yet
   console.log(`[SearchText] SKIPPED - searchText column not available. Watch: ${watchId}`)
-  
+
   // Still build and return the text for potential future use
   return buildSearchText({
     title: watchData.title,
@@ -108,9 +108,10 @@ export function buildSearchTextForWatch(watchData: {
     : undefined
 
   // Build seller object
-  const seller = (watchData.sellerCity || watchData.sellerPostalCode)
-    ? { city: watchData.sellerCity || null, postalCode: watchData.sellerPostalCode || null }
-    : null
+  const seller =
+    watchData.sellerCity || watchData.sellerPostalCode
+      ? { city: watchData.sellerCity || null, postalCode: watchData.sellerPostalCode || null }
+      : null
 
   return buildSearchText({
     title: watchData.title,
@@ -139,12 +140,14 @@ export async function batchUpdateSearchText(
   onProgress?: (completed: number, total: number) => void
 ): Promise<{ success: number; failed: number }> {
   // DISABLED: searchText column doesn't exist in production DB yet
-  console.log(`[SearchText] SKIPPED batch update - searchText column not available. Count: ${watchIds.length}`)
-  
+  console.log(
+    `[SearchText] SKIPPED batch update - searchText column not available. Count: ${watchIds.length}`
+  )
+
   if (onProgress) {
     onProgress(watchIds.length, watchIds.length)
   }
-  
+
   return { success: 0, failed: 0 }
 }
 
@@ -158,10 +161,10 @@ export async function backfillAllSearchText(
 ): Promise<{ success: number; failed: number; total: number }> {
   // DISABLED: searchText column doesn't exist in production DB yet
   console.log('[SearchText] SKIPPED backfill - searchText column not available')
-  
+
   if (onProgress) {
     onProgress(0, 0)
   }
-  
+
   return { success: 0, failed: 0, total: 0 }
 }
