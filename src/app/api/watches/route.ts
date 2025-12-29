@@ -91,21 +91,7 @@ export async function POST(request: NextRequest) {
         warrantyYears: warrantyYears ? parseInt(warrantyYears) : null,
         warrantyNote: warrantyNote || '',
         warrantyDescription: warrantyDescription || '',
-        // New shipping fields (deliveryMode column doesn't exist in DB, using delivery_mode instead)
-        freeShippingThresholdChf: freeShippingThresholdChf
-          ? parseFloat(freeShippingThresholdChf)
-          : null,
-        pickupLocationZip: pickupLocationZip || null,
-        pickupLocationCity: pickupLocationCity || null,
-        pickupLocationAddress: pickupLocationAddress || null,
-        shippingProfile:
-          shippingService && shippingWeightTier
-            ? JSON.stringify({
-                base_service: shippingService,
-                weight_tier: shippingWeightTier,
-                addons_allowed: addonsAllowed || { sperrgut: false, pickhome: false },
-              })
-            : null,
+        // Note: Shipping columns (deliveryMode, freeShippingThresholdChf, etc.) don't exist in DB
       },
     })
 

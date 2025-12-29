@@ -40,10 +40,16 @@ export async function POST(request: NextRequest) {
 
     const buyerId = session.user.id
 
-    // Lade Watch mit Verkäufer
+    // Lade Watch mit Verkäufer - use select to avoid missing columns
     const watch = await prisma.watch.findUnique({
       where: { id: watchId },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        price: true,
+        buyNowPrice: true,
+        sellerId: true,
+        shippingMethod: true,
         seller: {
           select: {
             id: true,
@@ -120,14 +126,9 @@ export async function POST(request: NextRequest) {
       const [, service, weightTierStr] = match
       const weightTier = parseInt(weightTierStr) as 2 | 10 | 30
 
-      // Parse shipping profile für allowed addons
-      const shippingProfile = watch.shippingProfile
-        ? (JSON.parse(watch.shippingProfile) as {
-            addons_allowed?: { sperrgut?: boolean; pickhome?: boolean }
-          })
-        : null
-
-      const allowedAddons = shippingProfile?.addons_allowed || {
+      // Note: shippingProfile and freeShippingThresholdChf columns don't exist in DB
+      // Using default values for shipping calculation
+      const allowedAddons = {
         sperrgut: false,
         pickhome: false,
       }
@@ -142,11 +143,11 @@ export async function POST(request: NextRequest) {
         },
       }
 
-      // Calculate shipping cost
+      // Calculate shipping cost (no free shipping threshold available)
       const shippingResult = await calculateShippingCost(
         selection,
         itemPrice,
-        watch.freeShippingThresholdChf,
+        null, // freeShippingThresholdChf not available
         allowedAddons
       )
 

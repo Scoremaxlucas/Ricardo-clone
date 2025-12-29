@@ -201,17 +201,13 @@ model Watch {
   warrantyNote             String?
   warrantyDescription      String?
   referenceNumber          String?
-  shippingMethod           String? // Deprecated - use delivery_mode + shipping_profile
+  shippingMethod           String?
   boosters                 String?
   paymentProtectionEnabled Boolean             @default(false)
 
-  // Delivery & Shipping (Ricardo-style)
-  deliveryMode             String?             @default("shipping_and_pickup") // 'shipping_only' | 'pickup_only' | 'shipping_and_pickup'
-  freeShippingThresholdChf Float?              // Optional: kostenloser Versand ab diesem Betrag
-  pickupLocationZip        String?            // Öffentlich: PLZ für Abholung
-  pickupLocationCity        String?            // Öffentlich: Ort für Abholung
-  pickupLocationAddress     String?            // Privat: Adresse (erst nach Kauf sichtbar)
-  shippingProfile           String?            // JSON: {base_service: 'economy'|'priority', weight_tier: 2|10|30, addons_allowed: {sperrgut: bool, pickhome: bool}}
+  // Note: deliveryMode, freeShippingThresholdChf, pickupLocationZip, pickupLocationCity,
+  // pickupLocationAddress, shippingProfile columns are NOT in the database yet.
+  // These features are handled via shippingMethod JSON or will be added in a future migration.
 
   sellerId                 String
   moderationStatus         String?             @default("pending") // 'pending', 'approved', 'rejected', 'reviewing'

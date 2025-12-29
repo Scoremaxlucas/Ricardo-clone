@@ -623,22 +623,8 @@ export async function POST(request: NextRequest) {
           return null
         }
       })(),
-      // New shipping fields (Ricardo-style)
-      // Note: deliveryMode column doesn't exist in DB, using deliveryMode field in shippingProfile JSON instead
-      freeShippingThresholdChf: freeShippingThresholdChf
-        ? parseFloat(String(freeShippingThresholdChf))
-        : null,
-      pickupLocationZip: pickupLocationZip || null,
-      pickupLocationCity: pickupLocationCity || null,
-      pickupLocationAddress: pickupLocationAddress || null,
-      shippingProfile:
-        shippingService && shippingWeightTier
-          ? JSON.stringify({
-              base_service: shippingService,
-              weight_tier: parseInt(String(shippingWeightTier)),
-              addons_allowed: addonsAllowed || { sperrgut: false, pickhome: false },
-            })
-          : null,
+      // Note: Shipping fields (deliveryMode, freeShippingThresholdChf, pickupLocationZip, etc.)
+      // are NOT in the database. Shipping info is stored in shippingMethod JSON field.
       boosters: (() => {
         try {
           // Booster kann ein einzelner Code sein (z.B. 'boost') oder ein Array

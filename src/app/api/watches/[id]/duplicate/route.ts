@@ -46,9 +46,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         warrantyYears: true,
         warrantyNote: true,
         images: true,
-        shippingProfile: true,
-        pickupLocationZip: true,
-        pickupLocationCity: true,
+        shippingMethod: true,
         paymentProtectionEnabled: true,
         categories: {
           select: {
@@ -112,10 +110,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       warrantyMonths: originalListing.warrantyMonths?.toString() || '',
       warrantyYears: originalListing.warrantyYears?.toString() || '',
       warrantyNote: originalListing.warrantyNote || '',
-      deliveryMode: 'shipping_and_pickup', // Default value - column doesn't exist in DB
-      shippingProfile: originalListing.shippingProfile || '',
-      pickupLocationZip: originalListing.pickupLocationZip || '',
-      pickupLocationCity: originalListing.pickupLocationCity || '',
+      shippingMethod: originalListing.shippingMethod || '',
     }
 
     // Create the draft
