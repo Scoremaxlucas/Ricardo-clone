@@ -24,7 +24,7 @@ export function HeroServer({
 }: HeroServerProps) {
   return (
     <section
-      className="relative overflow-hidden py-8 text-white md:py-12"
+      className="relative py-8 text-white md:py-12"
       style={{
         background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #10b981 100%)',
       }}
@@ -50,7 +50,7 @@ export function HeroServer({
             {subtitle}
           </p>
           {/* Slot für Client Component (Search) - Large, dominant */}
-          <div className="mx-auto max-w-3xl mb-3">
+          <div className="relative z-50 mx-auto mb-3 max-w-3xl">
             {children}
           </div>
 
