@@ -91,8 +91,7 @@ export async function POST(request: NextRequest) {
         warrantyYears: warrantyYears ? parseInt(warrantyYears) : null,
         warrantyNote: warrantyNote || '',
         warrantyDescription: warrantyDescription || '',
-        // New shipping fields
-        deliveryMode: deliveryMode || 'shipping_and_pickup',
+        // New shipping fields (deliveryMode column doesn't exist in DB, using delivery_mode instead)
         freeShippingThresholdChf: freeShippingThresholdChf
           ? parseFloat(freeShippingThresholdChf)
           : null,

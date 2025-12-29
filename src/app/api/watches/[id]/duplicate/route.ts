@@ -17,13 +17,46 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Fetch the original listing
+    // Fetch the original listing - use select to avoid missing columns
     const originalListing = await prisma.watch.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        sellerId: true,
+        brand: true,
+        model: true,
+        title: true,
+        description: true,
+        condition: true,
+        year: true,
+        referenceNumber: true,
+        material: true,
+        movement: true,
+        caseDiameter: true,
+        price: true,
+        buyNowPrice: true,
+        isAuction: true,
+        auctionDuration: true,
+        fullset: true,
+        box: true,
+        papers: true,
+        allLinks: true,
+        warranty: true,
+        warrantyMonths: true,
+        warrantyYears: true,
+        warrantyNote: true,
+        images: true,
+        shippingProfile: true,
+        pickupLocationZip: true,
+        pickupLocationCity: true,
+        paymentProtectionEnabled: true,
         categories: {
-          include: {
-            category: true,
+          select: {
+            category: {
+              select: {
+                slug: true,
+              },
+            },
           },
         },
       },
@@ -79,7 +112,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       warrantyMonths: originalListing.warrantyMonths?.toString() || '',
       warrantyYears: originalListing.warrantyYears?.toString() || '',
       warrantyNote: originalListing.warrantyNote || '',
-      deliveryMode: originalListing.deliveryMode || 'shipping_and_pickup',
+      deliveryMode: 'shipping_and_pickup', // Default value - column doesn't exist in DB
       shippingProfile: originalListing.shippingProfile || '',
       pickupLocationZip: originalListing.pickupLocationZip || '',
       pickupLocationCity: originalListing.pickupLocationCity || '',

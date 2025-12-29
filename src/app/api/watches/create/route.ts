@@ -624,7 +624,7 @@ export async function POST(request: NextRequest) {
         }
       })(),
       // New shipping fields (Ricardo-style)
-      deliveryMode: deliveryMode || 'shipping_and_pickup',
+      // Note: deliveryMode column doesn't exist in DB, using deliveryMode field in shippingProfile JSON instead
       freeShippingThresholdChf: freeShippingThresholdChf
         ? parseFloat(String(freeShippingThresholdChf))
         : null,

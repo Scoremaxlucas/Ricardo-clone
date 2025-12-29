@@ -148,9 +148,18 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
+    // WICHTIG: Verwende select statt include, um nur existierende Felder zu laden
     const watch = await prisma.watch.findUnique({
       where: { id },
-      include: { bids: true },
+      select: {
+        id: true,
+        sellerId: true,
+        images: true,
+        description: true,
+        bids: {
+          select: { id: true },
+        },
+      },
     })
 
     if (!watch) {
@@ -284,9 +293,13 @@ export async function DELETE(
     })
 
     // Hole Watch mit Seller-Informationen und Geboten
+    // WICHTIG: Verwende select statt include, um nur existierende Felder zu laden
     const watch = await prisma.watch.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        title: true,
+        sellerId: true,
         seller: {
           select: {
             id: true,
