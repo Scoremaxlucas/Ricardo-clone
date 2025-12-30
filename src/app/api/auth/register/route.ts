@@ -2,6 +2,10 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Force dynamic - no caching
+export const dynamic = 'force-dynamic'
+export const revalidate = 0
+
 export async function POST(request: NextRequest) {
   // #region agent log
   fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
