@@ -248,14 +248,6 @@ export default function MyBuyingPage() {
       count: stats.reviews,
     },
     {
-      title: t.myBuying.watchlist,
-      description: t.myBuying.watchlistDesc,
-      icon: Package,
-      href: '/favorites',
-      color: 'bg-yellow-100 text-yellow-600',
-      count: stats.favorites,
-    },
-    {
       title: t.myBuying.searchSubscriptions,
       description: t.myBuying.searchSubscriptionsDesc,
       icon: Search,
@@ -267,11 +259,7 @@ export default function MyBuyingPage() {
 
   // Quick overview chips data
   const hasQuickOverview =
-    stats.bidding > 0 ||
-    stats.offers > 0 ||
-    stats.purchased > 0 ||
-    stats.favorites > 0 ||
-    stats.searches > 0
+    stats.bidding > 0 || stats.offers > 0 || stats.purchased > 0 || stats.searches > 0
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -309,7 +297,6 @@ export default function MyBuyingPage() {
             {stats.purchased > 0 && (
               <QuickOverviewChip label="Gekaufte Artikel" value={stats.purchased} />
             )}
-            {stats.favorites > 0 && <QuickOverviewChip label="Favoriten" value={stats.favorites} />}
             {stats.searches > 0 && (
               <QuickOverviewChip label="Suchaufträge" value={stats.searches} />
             )}
