@@ -124,11 +124,16 @@ export async function GET(request: NextRequest) {
       prisma.watch.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
 
       // Transaktionen
+      // WICHTIG: Explizites select verwenden, um disputeInitiatedBy zu vermeiden
       prisma.purchase.findMany({
-        include: {
+        select: {
+          id: true,
+          price: true,
+          status: true,
           watch: {
             select: { price: true, buyNowPrice: true, isAuction: true },
           },
+          // Nur benötigte Felder selektieren (disputeInitiatedBy wird NICHT selektiert)
         },
       }),
       prisma.purchase.count({ where: { status: 'completed' } }),

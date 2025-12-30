@@ -95,11 +95,15 @@ export async function GET(request: NextRequest) {
         },
       }),
       // Transaktions-Statistiken
+      // WICHTIG: Explizites select verwenden, um disputeInitiatedBy zu vermeiden
       prisma.purchase.findMany({
-        include: {
+        select: {
+          id: true,
+          price: true,
           watch: {
             select: { price: true },
           },
+          // Nur benötigte Felder selektieren (disputeInitiatedBy wird NICHT selektiert)
         },
       }),
       // Verifizierungs-Statistiken

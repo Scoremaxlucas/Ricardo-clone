@@ -41,8 +41,13 @@ export async function GET(request: NextRequest) {
     }
 
     // Lade alle Käufe
+    // WICHTIG: Explizites select verwenden, um disputeInitiatedBy zu vermeiden
     const purchases = await prisma.purchase.findMany({
-      include: {
+      select: {
+        id: true,
+        price: true,
+        status: true,
+        createdAt: true,
         buyer: {
           select: {
             name: true,
