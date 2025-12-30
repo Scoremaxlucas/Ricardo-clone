@@ -15,4 +15,3 @@ export const prisma =
 if (process.env.NODE_ENV !== 'production') {
   globalForPrisma.prisma = prisma
 }
-// Force rebuild Tue Dec 30 21:53:29 CET 2025
