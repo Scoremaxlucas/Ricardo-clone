@@ -93,163 +93,37 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   }
 }
 
-// PATCH: Status eines Angebots aktualisieren (für Admin)
+// ===========================================
+// RICARDO-STYLE: Kein Toggle mehr!
+// ===========================================
+//
+// DEPRECATED: Der isActive-Toggle wurde entfernt.
+//
+// Stattdessen verwenden Sie:
+// - POST /api/admin/watches/bulk mit action: 'approve' → Genehmigen
+// - DELETE /api/watches/[id]?action=remove → Entfernen (Soft Delete)
+// - DELETE /api/watches/[id]?action=block → Sperren (Soft Delete)
+//
+// Artikel folgen dem Ricardo-Lebenszyklus:
+// Entwurf → Genehmigt → Beendet (verkauft/abgelaufen) → Archiviert
+//
+// ===========================================
+
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { id } = await params
-    const session = await getServerSession(authOptions)
+  // RICARDO-STYLE: Toggle ist deaktiviert
+  console.warn('[DEPRECATED] edit-status PATCH called - isActive toggle is no longer supported')
 
-    if (!session?.user?.id) {
-      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    // Prüfe Admin-Status
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isAdmin: true },
-    })
-
-    if (!user?.isAdmin) {
-      return NextResponse.json(
-        { message: 'Nur Administratoren können den Status ändern' },
-        { status: 403 }
-      )
-    }
-
-    const body = await request.json()
-    const { isActive } = body
-
-    if (typeof isActive !== 'boolean') {
-      return NextResponse.json({ message: 'isActive muss ein Boolean sein' }, { status: 400 })
-    }
-
-    // Hole Watch mit Purchases
-    const watch = await prisma.watch.findUnique({
-      where: { id },
-      include: {
-        purchases: {
-          where: {
-            status: { not: 'cancelled' },
-          },
-        },
+  return NextResponse.json(
+    {
+      message:
+        'Diese Funktion wurde deaktiviert (Ricardo-Konformität). Verwenden Sie stattdessen: approve, remove oder block.',
+      deprecated: true,
+      alternatives: {
+        approve: 'POST /api/admin/watches/bulk mit action: "approve"',
+        remove: 'DELETE /api/watches/[id]?action=remove',
+        block: 'DELETE /api/watches/[id]?action=block',
       },
-    })
-
-    if (!watch) {
-      return NextResponse.json({ message: 'Angebot nicht gefunden' }, { status: 404 })
-    }
-
-    // Da isActive dynamisch berechnet wird, müssen wir Purchases stornieren oder moderationStatus ändern
-    if (!isActive) {
-      // Deaktivieren: Storniere alle aktiven Purchases und setze moderationStatus auf 'rejected'
-      if (watch.purchases.length > 0) {
-        await prisma.purchase.updateMany({
-          where: {
-            watchId: id,
-            status: { not: 'cancelled' },
-          },
-          data: {
-            status: 'cancelled',
-          },
-        })
-      }
-
-      await prisma.watch.update({
-        where: { id },
-        data: {
-          moderationStatus: 'rejected',
-          moderatedBy: session.user.id,
-          moderatedAt: new Date(),
-        },
-      })
-    } else {
-      // Aktivieren: Setze moderationStatus auf 'approved'
-      await prisma.watch.update({
-        where: { id },
-        data: {
-          moderationStatus: 'approved',
-          moderatedBy: session.user.id,
-          moderatedAt: new Date(),
-        },
-      })
-    }
-
-    // Berechne den neuen isActive Status
-    const updatedWatch = await prisma.watch.findUnique({
-      where: { id },
-      include: {
-        purchases: {
-          where: {
-            status: { not: 'cancelled' },
-          },
-        },
-      },
-    })
-
-    const now = new Date()
-    const auctionEndDate = updatedWatch?.auctionEnd ? new Date(updatedWatch.auctionEnd) : null
-    // WICHTIG: Nur nicht-stornierte Purchases zählen als "verkauft" (wie in admin/watches)
-    const activePurchases = (updatedWatch?.purchases || []).filter(
-      (p: any) => p.status !== 'cancelled'
-    )
-    const isSold = activePurchases.length > 0
-    const isExpired = auctionEndDate ? auctionEndDate <= now : false
-    const hasAnyPurchases = (updatedWatch?.purchases || []).length > 0
-
-    // WICHTIG: moderationStatus 'rejected' bedeutet deaktiviert
-    const isRejected = updatedWatch?.moderationStatus === 'rejected'
-    // WICHTIG: Wenn moderationStatus = 'approved', ist das Produkt aktiv (außer es wurde verkauft)
-    // Wenn moderationStatus = 'rejected', ist es immer inaktiv
-    // Ansonsten berechne basierend auf Auktion-Status
-    const isApproved = updatedWatch?.moderationStatus === 'approved'
-    let calculatedIsActive: boolean
-    if (isRejected) {
-      calculatedIsActive = false // Rejected = immer inaktiv
-    } else if (isApproved) {
-      // KRITISCH: Approved = IMMER aktiv, außer es wurde verkauft
-      calculatedIsActive = !isSold
-      // Double-check: Wenn approved aber trotzdem false, log error
-      if (!calculatedIsActive && !isSold) {
-        console.error(
-          '[edit-status] CRITICAL: Approved watch calculated as inactive but not sold!',
-          {
-            watchId: id,
-            moderationStatus: updatedWatch?.moderationStatus,
-            isSold,
-            activePurchases: activePurchases.length,
-          }
-        )
-        // Force to true as fallback
-        calculatedIsActive = true
-      }
-    } else {
-      // Für andere Status (pending, null): Berechne basierend auf Auktion
-      calculatedIsActive = !isSold && (!auctionEndDate || !isExpired || hasAnyPurchases)
-    }
-
-    console.log('[edit-status] Status update:', {
-      watchId: id,
-      requestedIsActive: isActive,
-      moderationStatus: updatedWatch?.moderationStatus,
-      isApproved: updatedWatch?.moderationStatus === 'approved',
-      isRejected: updatedWatch?.moderationStatus === 'rejected',
-      isSold,
-      calculatedIsActive,
-    })
-
-    return NextResponse.json({
-      message: `Angebot erfolgreich ${isActive ? 'aktiviert' : 'deaktiviert'}`,
-      watch: {
-        id: updatedWatch?.id,
-        isActive: calculatedIsActive,
-        moderationStatus: updatedWatch?.moderationStatus,
-      },
-    })
-  } catch (error: any) {
-    console.error('[watches/edit-status] Error updating status:', error)
-    return NextResponse.json(
-      { message: 'Fehler beim Aktualisieren des Status', error: error.message },
-      { status: 500 }
-    )
-  }
+    },
+    { status: 410 } // 410 Gone - Resource no longer available
+  )
 }

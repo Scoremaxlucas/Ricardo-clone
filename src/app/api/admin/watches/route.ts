@@ -49,7 +49,7 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
-    // 3. Process watches
+    // 3. Process watches - RICARDO-STYLE STATUS
     const now = new Date()
     const processedWatches = watches.map(watch => {
       // Parse images
@@ -60,18 +60,46 @@ export async function GET(request: NextRequest) {
         images = []
       }
 
-      // Calculate status
+      // Calculate Ricardo-style status
       const activePurchases = (watch.purchases || []).filter(p => p.status !== 'cancelled')
       const isSold = activePurchases.length > 0
       const auctionEnd = watch.auctionEnd ? new Date(watch.auctionEnd) : null
       const isExpired = auctionEnd ? auctionEnd <= now : false
-      const isActive = !isSold && !isExpired && watch.moderationStatus !== 'rejected'
+
+      // RICARDO-STYLE: Status-Logik
+      // moderationStatus: 'pending' | 'approved' | 'rejected' | 'blocked' | 'removed' | 'ended' | null
+      const status = watch.moderationStatus || 'pending'
+      const isBlocked = status === 'blocked'
+      const isRemoved = status === 'removed'
+      const isEnded = status === 'ended' || isSold || isExpired
+      const isApproved = status === 'approved' && !isSold && !isExpired
+      const isPending = status === 'pending' || !watch.moderationStatus
+
+      // Legacy isActive für Rückwärtskompatibilität (wird durch Ricardo-Status ersetzt)
+      const isActive = isApproved
+
+      // Ricardo-Style: Bestimme den angezeigten Status
+      let displayStatus: 'pending' | 'approved' | 'blocked' | 'removed' | 'ended' | 'sold'
+      if (isSold) {
+        displayStatus = 'sold'
+      } else if (isBlocked) {
+        displayStatus = 'blocked'
+      } else if (isRemoved) {
+        displayStatus = 'removed'
+      } else if (isExpired || status === 'ended') {
+        displayStatus = 'ended'
+      } else if (isApproved) {
+        displayStatus = 'approved'
+      } else {
+        displayStatus = 'pending'
+      }
 
       return {
         ...watch,
         images,
-        isActive,
+        isActive, // Legacy
         isSold,
+        displayStatus, // RICARDO-STYLE
         categories: [],
         viewCount: 0,
         favoriteCount: 0,
@@ -80,19 +108,40 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // 4. Filter based on query params
+    // 4. Filter based on query params - RICARDO-STYLE FILTERS
     const { searchParams } = new URL(request.url)
     const filter = searchParams.get('filter') || 'all'
 
     let filteredWatches = processedWatches
-    if (filter === 'active') {
-      filteredWatches = processedWatches.filter(w => w.isActive)
-    } else if (filter === 'inactive') {
-      filteredWatches = processedWatches.filter(w => !w.isActive)
-    } else if (filter === 'pending') {
-      filteredWatches = processedWatches.filter(
-        w => w.moderationStatus === 'pending' || !w.moderationStatus
-      )
+    switch (filter) {
+      case 'approved': // Genehmigt (Live)
+        filteredWatches = processedWatches.filter(w => w.displayStatus === 'approved')
+        break
+      case 'pending': // Ausstehend (Moderation)
+        filteredWatches = processedWatches.filter(w => w.displayStatus === 'pending')
+        break
+      case 'blocked': // Gesperrt
+        filteredWatches = processedWatches.filter(w => w.displayStatus === 'blocked')
+        break
+      case 'removed': // Entfernt
+        filteredWatches = processedWatches.filter(w => w.displayStatus === 'removed')
+        break
+      case 'ended': // Beendet (verkauft/abgelaufen)
+        filteredWatches = processedWatches.filter(
+          w => w.displayStatus === 'ended' || w.displayStatus === 'sold'
+        )
+        break
+      // Legacy Filter für Rückwärtskompatibilität
+      case 'active':
+        filteredWatches = processedWatches.filter(w => w.isActive)
+        break
+      case 'inactive':
+        filteredWatches = processedWatches.filter(w => !w.isActive)
+        break
+      case 'all':
+      default:
+        // Alle anzeigen
+        break
     }
 
     return NextResponse.json({
@@ -105,9 +154,6 @@ export async function GET(request: NextRequest) {
   } catch (error: unknown) {
     const err = error as Error
     console.error('[admin/watches] Error:', err.message, err.stack)
-    return NextResponse.json(
-      { message: 'Fehler: ' + err.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler: ' + err.message }, { status: 500 })
   }
 }

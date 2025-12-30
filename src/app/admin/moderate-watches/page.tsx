@@ -30,6 +30,9 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
+// RICARDO-STYLE: Status-Typen
+type DisplayStatus = 'pending' | 'approved' | 'blocked' | 'removed' | 'ended' | 'sold'
+
 interface Watch {
   id: string
   title: string
@@ -48,7 +51,8 @@ interface Watch {
     nickname: string | null
     verified: boolean
   }
-  isActive: boolean
+  isActive: boolean // Legacy
+  displayStatus?: DisplayStatus // RICARDO-STYLE
   moderationStatus?: string | null
   viewCount?: number
   favoriteCount?: number
@@ -88,7 +92,10 @@ export default function AdminModerateWatchesPage() {
   const [watches, setWatches] = useState<Watch[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  const [filter, setFilter] = useState<'all' | 'active' | 'inactive' | 'reported'>('all')
+  // RICARDO-STYLE: Neue Filter-Optionen
+  const [filter, setFilter] = useState<
+    'all' | 'pending' | 'approved' | 'blocked' | 'removed' | 'ended'
+  >('all')
   const [selectedWatch, setSelectedWatch] = useState<Watch | null>(null)
   const [selectedWatchNotes, setSelectedWatchNotes] = useState<AdminNote[]>([])
   const [selectedWatchHistory, setSelectedWatchHistory] = useState<ModerationHistoryItem[]>([])
@@ -198,98 +205,38 @@ export default function AdminModerateWatchesPage() {
     }
   }
 
-  const toggleWatchStatus = async (watchId: string, currentStatus: boolean) => {
-    const newStatus = !currentStatus
+  // ===========================================
+  // RICARDO-STYLE: Kein Toggle mehr!
+  // Artikel werden nur genehmigt, entfernt oder gesperrt
+  // ===========================================
+
+  // Genehmigen (für ausstehende Artikel)
+  const approveWatch = async (watchId: string) => {
     const watch = watches.find(w => w.id === watchId)
     const watchTitle = watch?.title || 'Angebot'
 
-    // Optimistisches Update - sofortiges UI-Feedback
-    setWatches(prevWatches =>
-      prevWatches.map((w: any) =>
-        w.id === watchId
-          ? {
-              ...w,
-              isActive: newStatus,
-              moderationStatus: newStatus ? 'approved' : 'rejected',
-            }
-          : w
-      )
-    )
-
     try {
-      const res = await fetch(`/api/watches/${watchId}/edit-status`, {
-        method: 'PATCH',
+      const res = await fetch('/api/admin/watches/bulk', {
+        method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ isActive: newStatus }),
+        body: JSON.stringify({
+          action: 'approve',
+          watchIds: [watchId],
+        }),
       })
 
-      const data = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
-
       if (res.ok) {
-        // Erfolgreiche Toast-Nachricht mit Details
-        toast.success(
-          newStatus
-            ? `✓ "${watchTitle}" wurde erfolgreich aktiviert`
-            : `✓ "${watchTitle}" wurde erfolgreich deaktiviert`,
-          {
-            duration: 3000,
-            icon: newStatus ? '✅' : '⏸️',
-          }
-        )
-
-        // WICHTIG: Warte kurz für DB-Commit, dann lade vom Server neu für Konsistenz
-        await new Promise(resolve => setTimeout(resolve, 300))
-
-        // Wenn Filter auf 'inactive' steht und wir aktivieren, wechsle zu 'all' für bessere UX
-        if (filter === 'inactive' && !currentStatus) {
-          setFilter('all')
-        }
-
-        // Lade Watches neu - dies verwendet den aktuellen Filter (oder 'all' wenn geändert)
+        toast.success(`✓ "${watchTitle}" wurde genehmigt`, {
+          duration: 3000,
+          icon: '✅',
+        })
         await loadWatches()
       } else {
-        // Rollback bei Fehler
-        setWatches(prevWatches =>
-          prevWatches.map((w: any) =>
-            w.id === watchId
-              ? {
-                  ...w,
-                  isActive: currentStatus,
-                  moderationStatus: currentStatus ? 'approved' : 'rejected',
-                }
-              : w
-          )
-        )
-        console.error('Status update error:', data)
-        toast.error(
-          data.message || `Fehler beim ${newStatus ? 'Aktivieren' : 'Deaktivieren'} des Angebots`,
-          {
-            duration: 4000,
-            icon: '❌',
-          }
-        )
+        const data = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
+        toast.error(data.message || 'Fehler beim Genehmigen', { icon: '❌' })
       }
     } catch (error: any) {
-      // Rollback bei Fehler
-      setWatches(prevWatches =>
-        prevWatches.map((w: any) =>
-          w.id === watchId
-            ? {
-                ...w,
-                isActive: currentStatus,
-                moderationStatus: currentStatus ? 'approved' : 'rejected',
-              }
-            : w
-        )
-      )
-      console.error('Error toggling watch status:', error)
-      toast.error(
-        `Fehler beim ${newStatus ? 'Aktivieren' : 'Deaktivieren'} des Angebots: ${error.message || 'Netzwerkfehler'}`,
-        {
-          duration: 4000,
-          icon: '❌',
-        }
-      )
+      toast.error(`Fehler: ${error.message || 'Netzwerkfehler'}`, { icon: '❌' })
     }
   }
 
@@ -505,12 +452,20 @@ export default function AdminModerateWatchesPage() {
     return true
   })
 
+  // RICARDO-STYLE: Stats basierend auf displayStatus
   const stats = {
     total: watches.length,
-    active: watches.filter(w => w.isActive).length,
-    inactive: watches.filter(w => !w.isActive).length,
-    reported: watches.filter(w => (w.pendingReports || 0) > 0).length,
-    pending: watches.filter(w => !w.isActive && (w as any).moderationStatus === 'pending').length,
+    pending: watches.filter(
+      w => w.displayStatus === 'pending' || (!w.displayStatus && w.moderationStatus === 'pending')
+    ).length,
+    approved: watches.filter(
+      w => w.displayStatus === 'approved' || (w.isActive && w.moderationStatus === 'approved')
+    ).length,
+    blocked: watches.filter(w => w.displayStatus === 'blocked' || w.moderationStatus === 'blocked')
+      .length,
+    removed: watches.filter(w => w.displayStatus === 'removed' || w.moderationStatus === 'removed')
+      .length,
+    ended: watches.filter(w => w.displayStatus === 'ended' || w.displayStatus === 'sold').length,
   }
 
   if (status === 'loading' || loading) {
@@ -557,8 +512,8 @@ export default function AdminModerateWatchesPage() {
           </div>
         </div>
 
-        {/* Statistiken */}
-        <div className="mb-6 grid grid-cols-1 gap-4 md:grid-cols-5">
+        {/* RICARDO-STYLE Statistiken */}
+        <div className="mb-6 grid grid-cols-2 gap-4 md:grid-cols-6">
           <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -580,8 +535,8 @@ export default function AdminModerateWatchesPage() {
           <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Aktiv</p>
-                <p className="text-2xl font-bold text-green-600">{stats.active}</p>
+                <p className="text-sm text-gray-600">Genehmigt</p>
+                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
               </div>
               <CheckCircle className="h-8 w-8 text-green-400" />
             </div>
@@ -589,19 +544,28 @@ export default function AdminModerateWatchesPage() {
           <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Inaktiv</p>
-                <p className="text-2xl font-bold text-red-600">{stats.inactive}</p>
+                <p className="text-sm text-gray-600">Gesperrt</p>
+                <p className="text-2xl font-bold text-red-600">{stats.blocked}</p>
               </div>
-              <XCircle className="h-8 w-8 text-red-400" />
+              <Shield className="h-8 w-8 text-red-400" />
             </div>
           </div>
           <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Gemeldet</p>
-                <p className="text-2xl font-bold text-orange-600">{stats.reported}</p>
+                <p className="text-sm text-gray-600">Entfernt</p>
+                <p className="text-2xl font-bold text-amber-600">{stats.removed}</p>
               </div>
-              <Flag className="h-8 w-8 text-orange-400" />
+              <EyeOff className="h-8 w-8 text-amber-400" />
+            </div>
+          </div>
+          <div className="rounded-lg bg-white p-4 shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm text-gray-600">Beendet</p>
+                <p className="text-2xl font-bold text-gray-600">{stats.ended}</p>
+              </div>
+              <XCircle className="h-8 w-8 text-gray-400" />
             </div>
           </div>
         </div>
@@ -622,26 +586,26 @@ export default function AdminModerateWatchesPage() {
                   />
                 </div>
               </div>
+              {/* RICARDO-STYLE Filter */}
               <div className="flex flex-wrap gap-2">
-                {['all', 'pending', 'active', 'inactive', 'reported'].map(filterOption => (
+                {[
+                  { key: 'all', label: 'Alle' },
+                  { key: 'pending', label: 'Ausstehend' },
+                  { key: 'approved', label: 'Genehmigt' },
+                  { key: 'blocked', label: 'Gesperrt' },
+                  { key: 'removed', label: 'Entfernt' },
+                  { key: 'ended', label: 'Beendet' },
+                ].map(({ key, label }) => (
                   <button
-                    key={filterOption}
-                    onClick={() => setFilter(filterOption as any)}
+                    key={key}
+                    onClick={() => setFilter(key as any)}
                     className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-                      filter === filterOption
+                      filter === key
                         ? 'bg-primary-600 text-white'
                         : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                     }`}
                   >
-                    {filterOption === 'all'
-                      ? 'Alle'
-                      : filterOption === 'pending'
-                        ? 'Ausstehend'
-                        : filterOption === 'active'
-                          ? 'Aktiv'
-                          : filterOption === 'inactive'
-                            ? 'Inaktiv'
-                            : 'Gemeldet'}
+                    {label}
                   </button>
                 ))}
               </div>
@@ -828,18 +792,57 @@ export default function AdminModerateWatchesPage() {
                       <div className="flex-1">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
+                            {/* RICARDO-STYLE Status-Badge */}
                             <div className="mb-2 flex flex-wrap items-center gap-3">
-                              {watch.isActive ? (
-                                <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                  <CheckCircle className="mr-1 h-3 w-3" />
-                                  Aktiv
-                                </span>
-                              ) : (
-                                <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                                  <XCircle className="mr-1 h-3 w-3" />
-                                  Inaktiv
-                                </span>
-                              )}
+                              {(() => {
+                                const status =
+                                  watch.displayStatus || watch.moderationStatus || 'pending'
+                                switch (status) {
+                                  case 'approved':
+                                    return (
+                                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                        <CheckCircle className="mr-1 h-3 w-3" />
+                                        Genehmigt
+                                      </span>
+                                    )
+                                  case 'pending':
+                                    return (
+                                      <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
+                                        <AlertTriangle className="mr-1 h-3 w-3" />
+                                        Ausstehend
+                                      </span>
+                                    )
+                                  case 'blocked':
+                                    return (
+                                      <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                                        <Shield className="mr-1 h-3 w-3" />
+                                        Gesperrt
+                                      </span>
+                                    )
+                                  case 'removed':
+                                    return (
+                                      <span className="inline-flex items-center rounded-full bg-amber-100 px-2.5 py-0.5 text-xs font-medium text-amber-800">
+                                        <EyeOff className="mr-1 h-3 w-3" />
+                                        Entfernt
+                                      </span>
+                                    )
+                                  case 'ended':
+                                  case 'sold':
+                                    return (
+                                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                                        <XCircle className="mr-1 h-3 w-3" />
+                                        {status === 'sold' ? 'Verkauft' : 'Beendet'}
+                                      </span>
+                                    )
+                                  default:
+                                    return (
+                                      <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-800">
+                                        <XCircle className="mr-1 h-3 w-3" />
+                                        {status}
+                                      </span>
+                                    )
+                                }
+                              })()}
                               {watch.pendingReports && watch.pendingReports > 0 && (
                                 <span className="flex items-center gap-1 rounded bg-orange-100 px-2 py-1 text-xs font-medium text-orange-800">
                                   <Flag className="h-3 w-3" />
@@ -925,21 +928,18 @@ export default function AdminModerateWatchesPage() {
                             >
                               <History className="h-5 w-5" />
                             </button>
-                            <button
-                              onClick={() => toggleWatchStatus(watch.id, watch.isActive)}
-                              className={`rounded-lg p-2 transition-colors ${
-                                watch.isActive
-                                  ? 'bg-yellow-100 text-yellow-700 hover:bg-yellow-200'
-                                  : 'bg-green-100 text-green-700 hover:bg-green-200'
-                              }`}
-                              title={watch.isActive ? 'Deaktivieren' : 'Aktivieren'}
-                            >
-                              {watch.isActive ? (
-                                <EyeOff className="h-5 w-5" />
-                              ) : (
-                                <Eye className="h-5 w-5" />
-                              )}
-                            </button>
+                            {/* RICARDO-STYLE: Nur Genehmigen für ausstehende Artikel */}
+                            {(watch.displayStatus === 'pending' ||
+                              watch.moderationStatus === 'pending' ||
+                              !watch.moderationStatus) && (
+                              <button
+                                onClick={() => approveWatch(watch.id)}
+                                className="rounded-lg bg-green-100 p-2 text-green-700 transition-colors hover:bg-green-200"
+                                title="Genehmigen"
+                              >
+                                <CheckCircle className="h-5 w-5" />
+                              </button>
+                            )}
                             <Link
                               href={`/products/${watch.id}`}
                               target="_blank"
@@ -948,12 +948,21 @@ export default function AdminModerateWatchesPage() {
                             >
                               <Eye className="h-5 w-5" />
                             </Link>
+                            {/* RICARDO-STYLE: Entfernen */}
                             <button
                               onClick={() => initiateRemove(watch.id, 'remove')}
                               className="rounded-lg bg-amber-100 p-2 text-amber-700 transition-colors hover:bg-amber-200"
-                              title="Entfernen (Soft Delete)"
+                              title="Entfernen"
                             >
                               <EyeOff className="h-5 w-5" />
+                            </button>
+                            {/* RICARDO-STYLE: Sperren */}
+                            <button
+                              onClick={() => initiateRemove(watch.id, 'block')}
+                              className="rounded-lg bg-red-100 p-2 text-red-700 transition-colors hover:bg-red-200"
+                              title="Sperren"
+                            >
+                              <Shield className="h-5 w-5" />
                             </button>
                           </div>
                         </div>
