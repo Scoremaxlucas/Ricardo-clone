@@ -241,7 +241,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
     }
   }, [isLanguageMenuOpen, isProfileMenuOpen, isSellMenuOpen])
 
-
   // === OPTIMIERT: Prefetch bei Hover ===
   const handlePrefetch = useCallback(
     (href: string) => {
@@ -507,7 +506,9 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                       )}
                     </div>
                     <span className="hidden text-sm font-medium lg:inline">{displayName}</span>
-                    <ChevronDown className={`h-3 w-3 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`} />
+                    <ChevronDown
+                      className={`h-3 w-3 transition-transform ${isProfileMenuOpen ? 'rotate-180' : ''}`}
+                    />
                   </button>
 
                   {isProfileMenuOpen && (
@@ -657,9 +658,13 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   className="flex items-center gap-1 rounded-md px-2 py-2 text-gray-700 transition-colors hover:bg-gray-100"
                   title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
                 >
-                  <span className="text-base">{languages.find(l => l.code === language)?.flag}</span>
+                  <span className="text-base">
+                    {languages.find(l => l.code === language)?.flag}
+                  </span>
                   <span className="hidden text-sm lg:inline">{language.toUpperCase()}</span>
-                  <ChevronDown className={`h-3 w-3 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`} />
+                  <ChevronDown
+                    className={`h-3 w-3 transition-transform ${isLanguageMenuOpen ? 'rotate-180' : ''}`}
+                  />
                 </button>
 
                 {isLanguageMenuOpen && (
@@ -682,7 +687,9 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                       >
                         <span className="text-base">{lang.flag}</span>
                         <span className="flex-1">{lang.name}</span>
-                        {language === lang.code && <span className="text-xs text-primary-600">✓</span>}
+                        {language === lang.code && (
+                          <span className="text-xs text-primary-600">✓</span>
+                        )}
                       </button>
                     ))}
                   </div>
@@ -709,6 +716,20 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-11 items-center justify-center gap-1">
+            {/* "Alle Kategorien" Button - GANZ LINKS - Opens existing sidebar */}
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex items-center gap-1.5 rounded-md bg-primary-50 px-3 py-1.5 text-[13px] font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+            >
+              <Grid3x3 className="h-4 w-4 flex-shrink-0" />
+              <span className="whitespace-nowrap">Alle Kategorien</span>
+              <ChevronRight className="h-3 w-3" />
+            </button>
+
+            {/* Divider */}
+            <div className="mx-1 h-5 w-px bg-gray-300" />
+
             {/* Top 8 Categories */}
             {[
               { slug: 'auto-motorrad', name: 'Auto & Motorrad', icon: Car },
@@ -729,20 +750,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 <span className="whitespace-nowrap">{category.name}</span>
               </Link>
             ))}
-
-            {/* Divider */}
-            <div className="mx-1 h-5 w-px bg-gray-300" />
-
-            {/* "Alle Kategorien" Button - Opens existing sidebar */}
-            <button
-              type="button"
-              onClick={() => setIsSidebarOpen(true)}
-              className="flex items-center gap-1.5 rounded-md bg-primary-50 px-3 py-1.5 text-[13px] font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
-            >
-              <Grid3x3 className="h-4 w-4 flex-shrink-0" />
-              <span className="whitespace-nowrap">Alle Kategorien</span>
-              <ChevronRight className="h-3 w-3" />
-            </button>
           </div>
         </div>
       </nav>

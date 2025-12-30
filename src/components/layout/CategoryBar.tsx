@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useRef, useCallback, useMemo, useEffect } from 'react'
-import { createPortal } from 'react-dom'
-import Link from 'next/link'
-import { ChevronDown, Menu } from 'lucide-react'
-import { CategorySidebarNew } from './CategorySidebarNew'
-import { getCategoryConfig } from '@/data/categories'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { getCategoryConfig } from '@/data/categories'
+import { Menu } from 'lucide-react'
+import Link from 'next/link'
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { createPortal } from 'react-dom'
+import { CategorySidebarNew } from './CategorySidebarNew'
 
 // Main categories configuration - names will be translated in component
 const mainCategoriesConfig = [
@@ -147,7 +147,9 @@ export function CategoryBar() {
   const [hoveredCategory, setHoveredCategory] = useState<string | null>(null)
   const categoryRefs = useRef<{ [key: string]: HTMLDivElement | null }>({})
   const categoryMenuTimeoutRef = useRef<NodeJS.Timeout | null>(null)
-  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(null)
+  const [dropdownPosition, setDropdownPosition] = useState<{ top: number; left: number } | null>(
+    null
+  )
 
   // Cleanup timeout on unmount
   useEffect(() => {
@@ -171,10 +173,11 @@ export function CategoryBar() {
   const handleCategoryLeave = useCallback((e: React.MouseEvent) => {
     // Prüfe ob Maus zu Dropdown oder Brücke bewegt wird
     const relatedTarget = e.relatedTarget as HTMLElement
-    if (relatedTarget && (
-      relatedTarget.closest('[data-dropdown-bridge]') ||
-      relatedTarget.closest('[data-dropdown-menu]')
-    )) {
+    if (
+      relatedTarget &&
+      (relatedTarget.closest('[data-dropdown-bridge]') ||
+        relatedTarget.closest('[data-dropdown-menu]'))
+    ) {
       return // Nicht schließen wenn zu Dropdown/Brücke bewegt
     }
 
@@ -216,10 +219,11 @@ export function CategoryBar() {
   const handleDropdownLeave = useCallback((e: React.MouseEvent) => {
     // Prüfe ob Maus zu Brücke oder Button bewegt wird
     const relatedTarget = e.relatedTarget as HTMLElement
-    if (relatedTarget && (
-      relatedTarget.closest('[data-dropdown-bridge]') ||
-      relatedTarget.closest('[data-category-button]')
-    )) {
+    if (
+      relatedTarget &&
+      (relatedTarget.closest('[data-dropdown-bridge]') ||
+        relatedTarget.closest('[data-category-button]'))
+    ) {
       return // Nicht schließen wenn zu Button/Brücke bewegt
     }
 
@@ -247,7 +251,11 @@ export function CategoryBar() {
 
   // Calculate dropdown position with useMemo
   const calculatedPosition = useMemo(() => {
-    if (!hoveredCategory || !categoryRefs.current[hoveredCategory] || typeof window === 'undefined') {
+    if (
+      !hoveredCategory ||
+      !categoryRefs.current[hoveredCategory] ||
+      typeof window === 'undefined'
+    ) {
       return null
     }
 
@@ -258,16 +266,10 @@ export function CategoryBar() {
 
     return {
       top: rect.bottom + gap,
-      left: Math.max(
-        10,
-        Math.min(rect.left, window.innerWidth - dropdownWidth - margin)
-      ),
+      left: Math.max(10, Math.min(rect.left, window.innerWidth - dropdownWidth - margin)),
       bridgeTop: rect.bottom, // Brücke startet direkt am Button
       bridgeHeight: gap + 60, // Sehr große Brücke deckt alles ab - mit Overlap
-      bridgeLeft: Math.max(
-        10,
-        Math.min(rect.left, window.innerWidth - dropdownWidth - margin)
-      ),
+      bridgeLeft: Math.max(10, Math.min(rect.left, window.innerWidth - dropdownWidth - margin)),
       bridgeWidth: Math.max(rect.width, dropdownWidth), // Mindestens so breit wie Dropdown
     }
   }, [hoveredCategory])
@@ -283,15 +285,19 @@ export function CategoryBar() {
     <>
       <CategorySidebarNew isOpen={isSidebarOpen} onClose={() => setIsSidebarOpen(false)} />
 
-      <div className="relative border-b border-gray-200 bg-white shadow-sm z-40">
+      <div className="relative z-40 border-b border-gray-200 bg-white shadow-sm">
         <div className="mx-auto w-full px-2 sm:px-4 md:px-6 lg:px-8 xl:px-12">
           {/* Container mit Overflow-Handling - Horizontal Scroll auf kleinen Bildschirmen */}
-          <div className="overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+          <div
+            className="scrollbar-hide overflow-x-auto"
+            style={{ WebkitOverflowScrolling: 'touch' }}
+          >
             <div className="flex min-w-0 items-center gap-2 py-3 sm:gap-3 md:gap-4">
-              {/* Alle Kategorien Button - Flex-shrink-0 damit er nicht schrumpft */}
+              {/* Alle Kategorien Button - GANZ LINKS - Flex-shrink-0 damit er nicht schrumpft */}
               <button
                 onClick={() => setIsSidebarOpen(true)}
                 className="flex flex-shrink-0 items-center gap-2 whitespace-nowrap rounded-md border border-primary-200 bg-primary-50 px-3 py-2 text-sm font-medium text-gray-900 transition-colors hover:bg-primary-100 sm:px-4"
+                style={{ order: -1 }}
               >
                 <Menu className="h-4 w-4" />
                 <span className="hidden sm:inline">{t.categoryBar.allCategories}</span>
@@ -299,7 +305,7 @@ export function CategoryBar() {
               </button>
 
               {/* Hauptkategorien mit Hover-Flyouts - Flex-wrap verhindert Overflow */}
-              {mainCategoriesConfig.map(category => {
+              {mainCategoriesConfig.map((category, index) => {
                 const config = getCategoryConfig(category.slug)
                 const IconComponent = config.icon
                 // Verwende Übersetzung für Kategorienamen
@@ -308,9 +314,12 @@ export function CategoryBar() {
                 return (
                   <div
                     key={category.slug}
-                    ref={el => { categoryRefs.current[category.slug] = el }}
+                    ref={el => {
+                      categoryRefs.current[category.slug] = el
+                    }}
                     className="relative z-50"
                     data-category-button
+                    style={{ order: index }}
                     onMouseEnter={() => handleCategoryEnter(category.slug)}
                     onMouseLeave={handleCategoryLeave}
                   >
@@ -349,25 +358,33 @@ export function CategoryBar() {
                           />
                           {/* Unsichtbare Brücke zwischen Button und Dropdown - verhindert Flackern */}
                           {/* Brücke mit Overlap für nahtlosen Übergang */}
-                          {dropdownPosition && calculatedPosition && categoryRefs.current[category.slug] && (
-                            <div
-                              data-dropdown-bridge
-                              className="fixed z-[10000] bg-transparent"
-                              style={{
-                                top: calculatedPosition.bridgeTop || categoryRefs.current[category.slug]!.getBoundingClientRect().bottom,
-                                left: calculatedPosition.bridgeLeft || dropdownPosition.left,
-                                width: calculatedPosition.bridgeWidth || Math.max(
-                                  categoryRefs.current[category.slug]!.getBoundingClientRect().width,
-                                  450
-                                ),
-                                height: `${calculatedPosition.bridgeHeight || 64}px`, // Sehr große Brücke mit Overlap
-                                pointerEvents: 'auto',
-                              }}
-                              onMouseEnter={() => handleBridgeEnter(category.slug)}
-                              onMouseLeave={handleBridgeLeave}
-                              aria-hidden="true"
-                            />
-                          )}
+                          {dropdownPosition &&
+                            calculatedPosition &&
+                            categoryRefs.current[category.slug] && (
+                              <div
+                                data-dropdown-bridge
+                                className="fixed z-[10000] bg-transparent"
+                                style={{
+                                  top:
+                                    calculatedPosition.bridgeTop ||
+                                    categoryRefs.current[category.slug]!.getBoundingClientRect()
+                                      .bottom,
+                                  left: calculatedPosition.bridgeLeft || dropdownPosition.left,
+                                  width:
+                                    calculatedPosition.bridgeWidth ||
+                                    Math.max(
+                                      categoryRefs.current[category.slug]!.getBoundingClientRect()
+                                        .width,
+                                      450
+                                    ),
+                                  height: `${calculatedPosition.bridgeHeight || 64}px`, // Sehr große Brücke mit Overlap
+                                  pointerEvents: 'auto',
+                                }}
+                                onMouseEnter={() => handleBridgeEnter(category.slug)}
+                                onMouseLeave={handleBridgeLeave}
+                                aria-hidden="true"
+                              />
+                            )}
                           {/* Dropdown Menu */}
                           {dropdownPosition && (
                             <div
@@ -401,7 +418,9 @@ export function CategoryBar() {
                                     }}
                                     role="menuitem"
                                   >
-                                    <span className="relative z-10">{translateSubcategory(subcat)}</span>
+                                    <span className="relative z-10">
+                                      {translateSubcategory(subcat)}
+                                    </span>
                                     <span className="absolute inset-0 rounded-lg bg-primary-100 opacity-0 transition-opacity duration-200 group-hover:opacity-100" />
                                   </Link>
                                 ))}
