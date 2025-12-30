@@ -11,7 +11,6 @@ import {
   CheckCircle,
   Clock,
   CreditCard,
-  ExternalLink,
   Package,
   PackageCheck,
   Shield,
@@ -538,18 +537,18 @@ export default function SoldPage() {
       <Header />
       <div className="mx-auto max-w-7xl px-4 py-12">
         <Link
-          href="/my-watches/selling"
+          href="/my-watches"
           className="mb-6 inline-flex items-center text-primary-600 hover:text-primary-700"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
-          Zurück zu Meine Angebote
+          Zurück zu Mein Verkaufen
         </Link>
 
         <div className="mb-8 flex items-center">
           <CheckCircle className="mr-3 h-8 w-8 text-green-600" />
           <div>
-            <h1 className="text-3xl font-bold text-gray-900">Verkäufe verwalten</h1>
-            <p className="mt-1 text-gray-600">Zahlungen und Versand Ihrer Verkäufe</p>
+            <h1 className="text-3xl font-bold text-gray-900">Verkauft</h1>
+            <p className="mt-1 text-gray-600">Ihre erfolgreichen Verkäufe</p>
           </div>
         </div>
 
@@ -561,10 +560,12 @@ export default function SoldPage() {
               <div className="flex items-start gap-3">
                 <Wallet className="mt-0.5 h-6 w-6 flex-shrink-0 text-primary-600" />
                 <div className="flex-1">
-                  <h3 className="font-semibold text-primary-900">Auszahlung einrichten</h3>
+                  <h3 className="font-semibold text-primary-900">
+                    Auszahlung einrichten
+                  </h3>
                   <p className="mt-1 text-sm text-primary-700">
-                    Sie haben Zahlungen über Helvenda Zahlungsschutz erhalten. Richten Sie Ihre
-                    Auszahlungsdaten ein, um das Geld zu erhalten.
+                    Sie haben Zahlungen über Helvenda Zahlungsschutz erhalten. Richten Sie
+                    Ihre Auszahlungsdaten ein, um das Geld zu erhalten.
                   </p>
                   <Link
                     href="/my-watches/account?setup_payout=1"
@@ -901,28 +902,25 @@ export default function SoldPage() {
                     )}
 
                     {/* Helvenda Zahlungsschutz - Zahlung erhalten */}
-                    {sale.paymentProtectionEnabled &&
-                      sale.isPaidViaStripe &&
-                      !sale.itemReceived && (
-                        <div className="w-full rounded border border-primary-200 bg-primary-50 px-4 py-2 text-sm text-primary-700">
-                          <div className="flex items-center gap-2">
-                            <Shield className="h-4 w-4" />
-                            <span className="font-medium">Zahlung sicher erhalten</span>
-                          </div>
-                          <p className="mt-1 text-xs">
-                            Das Geld wird sicher verwahrt und nach Erhalt-Bestätigung des Käufers
-                            freigegeben.
-                            {!sellerStripeStatus?.isOnboardingComplete && (
-                              <Link
-                                href="/my-watches/account?setup_payout=1"
-                                className="ml-1 font-medium text-primary-800 underline"
-                              >
-                                Auszahlung einrichten →
-                              </Link>
-                            )}
-                          </p>
+                    {sale.paymentProtectionEnabled && sale.isPaidViaStripe && !sale.itemReceived && (
+                      <div className="w-full rounded border border-primary-200 bg-primary-50 px-4 py-2 text-sm text-primary-700">
+                        <div className="flex items-center gap-2">
+                          <Shield className="h-4 w-4" />
+                          <span className="font-medium">Zahlung sicher erhalten</span>
                         </div>
-                      )}
+                        <p className="mt-1 text-xs">
+                          Das Geld wird sicher verwahrt und nach Erhalt-Bestätigung des Käufers freigegeben.
+                          {!sellerStripeStatus?.isOnboardingComplete && (
+                            <Link
+                              href="/my-watches/account?setup_payout=1"
+                              className="ml-1 font-medium text-primary-800 underline"
+                            >
+                              Auszahlung einrichten →
+                            </Link>
+                          )}
+                        </p>
+                      </div>
+                    )}
 
                     {/* Hinweis wenn Käufer noch nicht bezahlt hat (nur für nicht-geschützte Verkäufe) */}
                     {!sale.paid && !sale.paymentConfirmed && (
@@ -964,18 +962,6 @@ export default function SoldPage() {
                       <User className="h-4 w-4" />
                       Käufer-Kontakt
                     </button>
-
-                    {/* Bestelldetails - nur bei Zahlungsschutz mit Order */}
-                    {sale.paymentProtectionEnabled && sale.orderId && (
-                      <Link
-                        href={`/orders/${sale.orderId}`}
-                        className="flex w-full items-center justify-center gap-2 rounded border-2 border-primary-600 bg-white px-4 py-2 text-center text-sm font-medium text-primary-600 hover:bg-primary-50"
-                      >
-                        <ExternalLink className="h-4 w-4" />
-                        Bestelldetails ansehen
-                      </Link>
-                    )}
-
                     <Link
                       href={`/products/${sale.watch.id}`}
                       className="block w-full rounded bg-primary-600 px-4 py-2 text-center text-sm text-white hover:bg-primary-700"
