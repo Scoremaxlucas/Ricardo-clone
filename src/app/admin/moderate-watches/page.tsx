@@ -7,7 +7,6 @@ import {
   AlertTriangle,
   CheckCircle,
   CheckSquare,
-  CreditCard,
   Download,
   Eye,
   EyeOff,
@@ -17,11 +16,9 @@ import {
   Loader2,
   MessageSquare,
   Package,
-  RefreshCw,
   Search,
   Shield,
   Tag,
-  Trash2,
   User,
   X,
   XCircle,
@@ -106,11 +103,12 @@ export default function AdminModerateWatchesPage() {
   const [showFilters, setShowFilters] = useState(false)
 
   // Ricardo-Style: Remove/Block modal state (Soft Delete)
+  // RICARDO: Kein 'delete' mehr - nur 'remove' (entfernen) und 'block' (sperren)
   const [removeModal, setRemoveModal] = useState<{
     open: boolean
     watchId: string | null
     watchTitle: string | null
-    action: 'remove' | 'block' | 'delete' // remove=entfernen, block=sperren, delete=nur für leere Artikel
+    action: 'remove' | 'block' // remove=entfernen, block=sperren
     reason: string
     hasTransactions: boolean // Artikel hat Gebote/Käufe = nur Soft Delete möglich
     stats?: {
@@ -163,13 +161,10 @@ export default function AdminModerateWatchesPage() {
         const allWatches = data.watches || []
         setWatches(allWatches)
       } else {
-        toast.error(
-          'Fehler beim Laden der Angebote. Bitte Seite neu laden.',
-          {
-            duration: 4000,
-            icon: '❌',
-          }
-        )
+        toast.error('Fehler beim Laden der Angebote. Bitte Seite neu laden.', {
+          duration: 4000,
+          icon: '❌',
+        })
       }
     } catch (error) {
       console.error('Error loading watches:', error)
@@ -207,7 +202,7 @@ export default function AdminModerateWatchesPage() {
     const newStatus = !currentStatus
     const watch = watches.find(w => w.id === watchId)
     const watchTitle = watch?.title || 'Angebot'
-    
+
     // Optimistisches Update - sofortiges UI-Feedback
     setWatches(prevWatches =>
       prevWatches.map((w: any) =>
@@ -220,7 +215,7 @@ export default function AdminModerateWatchesPage() {
           : w
       )
     )
-    
+
     try {
       const res = await fetch(`/api/watches/${watchId}/edit-status`, {
         method: 'PATCH',
@@ -233,23 +228,23 @@ export default function AdminModerateWatchesPage() {
       if (res.ok) {
         // Erfolgreiche Toast-Nachricht mit Details
         toast.success(
-          newStatus 
-            ? `✓ "${watchTitle}" wurde erfolgreich aktiviert` 
+          newStatus
+            ? `✓ "${watchTitle}" wurde erfolgreich aktiviert`
             : `✓ "${watchTitle}" wurde erfolgreich deaktiviert`,
           {
             duration: 3000,
             icon: newStatus ? '✅' : '⏸️',
           }
         )
-        
+
         // WICHTIG: Warte kurz für DB-Commit, dann lade vom Server neu für Konsistenz
         await new Promise(resolve => setTimeout(resolve, 300))
-        
+
         // Wenn Filter auf 'inactive' steht und wir aktivieren, wechsle zu 'all' für bessere UX
         if (filter === 'inactive' && !currentStatus) {
           setFilter('all')
         }
-        
+
         // Lade Watches neu - dies verwendet den aktuellen Filter (oder 'all' wenn geändert)
         await loadWatches()
       } else {
@@ -299,7 +294,11 @@ export default function AdminModerateWatchesPage() {
   }
 
   // RICARDO-STYLE: Entfernen oder Sperren (Soft Delete)
-  const removeOrBlockWatch = async (watchId: string, action: 'remove' | 'block', reason: string) => {
+  const removeOrBlockWatch = async (
+    watchId: string,
+    action: 'remove' | 'block',
+    reason: string
+  ) => {
     try {
       const url = `/api/watches/${watchId}?action=${action}&reason=${encodeURIComponent(reason)}`
       const res = await fetch(url, { method: 'DELETE' })
@@ -326,7 +325,7 @@ export default function AdminModerateWatchesPage() {
   // Öffne Modal zum Entfernen/Sperren
   const initiateRemove = (watchId: string, action: 'remove' | 'block' = 'remove') => {
     const watch = watches.find(w => w.id === watchId)
-    
+
     setRemoveModal({
       open: true,
       watchId,
@@ -341,14 +340,14 @@ export default function AdminModerateWatchesPage() {
   // Bestätige Entfernen/Sperren
   const confirmRemoveOrBlock = async () => {
     if (!removeModal.watchId) return
-    
+
     if (!removeModal.reason.trim()) {
       toast.error('Bitte geben Sie einen Grund an')
       return
     }
-    
+
     setRemoveModal(prev => ({ ...prev, isProcessing: true }))
-    
+
     try {
       await removeOrBlockWatch(removeModal.watchId, removeModal.action, removeModal.reason)
     } finally {
@@ -385,15 +384,22 @@ export default function AdminModerateWatchesPage() {
     }
   }
 
-  const handleBulkAction = async (action: 'activate' | 'deactivate' | 'delete') => {
+  // RICARDO-STYLE: Bulk-Aktionen (approve, block, remove - kein delete)
+  const handleBulkAction = async (action: 'approve' | 'block' | 'remove') => {
     if (selectedWatches.size === 0) {
       toast.error('Bitte wählen Sie mindestens ein Angebot aus')
       return
     }
 
+    const actionLabels: Record<string, string> = {
+      approve: 'genehmigen',
+      block: 'sperren',
+      remove: 'entfernen',
+    }
+
     if (
-      action === 'delete' &&
-      !confirm(`Möchten Sie wirklich ${selectedWatches.size} Angebote löschen?`)
+      (action === 'block' || action === 'remove') &&
+      !confirm(`Möchten Sie wirklich ${selectedWatches.size} Angebote ${actionLabels[action]}?`)
     ) {
       return
     }
@@ -405,13 +411,18 @@ export default function AdminModerateWatchesPage() {
         body: JSON.stringify({
           action,
           watchIds: Array.from(selectedWatches),
+          reason: `Bulk-${action} durch Admin`,
         }),
       })
 
       if (res.ok) {
-        const actionText = action === 'activate' ? 'aktiviert' : action === 'deactivate' ? 'deaktiviert' : 'gelöscht'
+        const pastTense: Record<string, string> = {
+          approve: 'genehmigt',
+          block: 'gesperrt',
+          remove: 'entfernt',
+        }
         toast.success(
-          `✓ ${selectedWatches.size} Angebot${selectedWatches.size !== 1 ? 'e' : ''} erfolgreich ${actionText}`,
+          `✓ ${selectedWatches.size} Angebot${selectedWatches.size !== 1 ? 'e' : ''} erfolgreich ${pastTense[action]}`,
           {
             duration: 3000,
             icon: '✅',
@@ -421,13 +432,10 @@ export default function AdminModerateWatchesPage() {
         loadWatches()
       } else {
         const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
-        toast.error(
-          errorData.message || `Fehler bei Bulk-Aktion: ${action}`,
-          {
-            duration: 4000,
-            icon: '❌',
-          }
-        )
+        toast.error(errorData.message || `Fehler bei Bulk-Aktion: ${action}`, {
+          duration: 4000,
+          icon: '❌',
+        })
       }
     } catch (error) {
       console.error('Error performing bulk action:', error)
@@ -449,21 +457,15 @@ export default function AdminModerateWatchesPage() {
         a.click()
         window.URL.revokeObjectURL(url)
         document.body.removeChild(a)
-        toast.success(
-          `✓ CSV-Export erfolgreich erstellt (${filter})`,
-          {
-            duration: 3000,
-            icon: '📥',
-          }
-        )
+        toast.success(`✓ CSV-Export erfolgreich erstellt (${filter})`, {
+          duration: 3000,
+          icon: '📥',
+        })
       } else {
-        toast.error(
-          'Fehler beim CSV-Export. Bitte versuchen Sie es erneut.',
-          {
-            duration: 4000,
-            icon: '❌',
-          }
-        )
+        toast.error('Fehler beim CSV-Export. Bitte versuchen Sie es erneut.', {
+          duration: 4000,
+          icon: '❌',
+        })
       }
     } catch (error) {
       console.error('Error exporting:', error)
@@ -711,7 +713,7 @@ export default function AdminModerateWatchesPage() {
           </div>
         </div>
 
-        {/* Bulk-Aktionen */}
+        {/* RICARDO-STYLE Bulk-Aktionen */}
         {selectedWatches.size > 0 && (
           <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
             <div className="flex items-center justify-between">
@@ -723,22 +725,28 @@ export default function AdminModerateWatchesPage() {
               </div>
               <div className="flex gap-2">
                 <button
-                  onClick={() => handleBulkAction('activate')}
-                  className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white transition-colors hover:bg-green-700"
+                  onClick={() => handleBulkAction('approve')}
+                  className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm text-white transition-colors hover:bg-green-700"
+                  title="Genehmigen (approved)"
                 >
-                  Aktivieren
+                  <CheckCircle className="h-4 w-4" />
+                  Genehmigen
                 </button>
                 <button
-                  onClick={() => handleBulkAction('deactivate')}
-                  className="rounded-lg bg-yellow-600 px-4 py-2 text-sm text-white transition-colors hover:bg-yellow-700"
+                  onClick={() => handleBulkAction('remove')}
+                  className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm text-white transition-colors hover:bg-amber-700"
+                  title="Entfernen (Soft Delete)"
                 >
-                  Deaktivieren
+                  <EyeOff className="h-4 w-4" />
+                  Entfernen
                 </button>
                 <button
-                  onClick={() => handleBulkAction('delete')}
-                  className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700"
+                  onClick={() => handleBulkAction('block')}
+                  className="flex items-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700"
+                  title="Sperren (Soft Delete)"
                 >
-                  Löschen
+                  <Shield className="h-4 w-4" />
+                  Sperren
                 </button>
                 <button
                   onClick={() => setSelectedWatches(new Set())}
@@ -1047,10 +1055,20 @@ export default function AdminModerateWatchesPage() {
 
                     const getActionLabel = () => {
                       switch (item.action) {
+                        // RICARDO-STYLE Aktionen
+                        case 'approved':
+                          return 'Genehmigt'
+                        case 'blocked':
+                          return 'Gesperrt'
+                        case 'removed':
+                          return 'Entfernt'
+                        case 'ended':
+                          return 'Beendet'
+                        // Legacy Aktionen
                         case 'activated':
-                          return 'Aktiviert'
+                          return 'Aktiviert (Legacy)'
                         case 'deactivated':
-                          return 'Deaktiviert'
+                          return 'Deaktiviert (Legacy)'
                         case 'deleted':
                           return 'Gelöscht'
                         case 'reported':
@@ -1273,15 +1291,19 @@ export default function AdminModerateWatchesPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => !removeModal.isProcessing && setRemoveModal(prev => ({ ...prev, open: false }))}
+            onClick={() =>
+              !removeModal.isProcessing && setRemoveModal(prev => ({ ...prev, open: false }))
+            }
           />
           <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
             {/* Header */}
-            <div className={`px-6 py-4 ${
-              removeModal.action === 'block' 
-                ? 'bg-gradient-to-r from-red-500 to-red-600' 
-                : 'bg-gradient-to-r from-amber-500 to-orange-500'
-            }`}>
+            <div
+              className={`px-6 py-4 ${
+                removeModal.action === 'block'
+                  ? 'bg-gradient-to-r from-red-500 to-red-600'
+                  : 'bg-gradient-to-r from-amber-500 to-orange-500'
+              }`}
+            >
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/20 p-2">
                   {removeModal.action === 'block' ? (
@@ -1294,9 +1316,7 @@ export default function AdminModerateWatchesPage() {
                   <h3 className="text-lg font-semibold text-white">
                     {removeModal.action === 'block' ? 'Angebot sperren' : 'Angebot entfernen'}
                   </h3>
-                  <p className="text-sm text-white/80">
-                    Ricardo-Prinzip: Daten bleiben erhalten
-                  </p>
+                  <p className="text-sm text-white/80">Ricardo-Prinzip: Daten bleiben erhalten</p>
                 </div>
                 {!removeModal.isProcessing && (
                   <button
@@ -1354,10 +1374,11 @@ export default function AdminModerateWatchesPage() {
                 </label>
                 <textarea
                   value={removeModal.reason}
-                  onChange={(e) => setRemoveModal(prev => ({ ...prev, reason: e.target.value }))}
-                  placeholder={removeModal.action === 'block' 
-                    ? 'z.B. Verstoss gegen AGB, Betrugsverdacht...' 
-                    : 'z.B. Auf Wunsch des Verkäufers, Doppeltes Inserat...'
+                  onChange={e => setRemoveModal(prev => ({ ...prev, reason: e.target.value }))}
+                  placeholder={
+                    removeModal.action === 'block'
+                      ? 'z.B. Verstoss gegen AGB, Betrugsverdacht...'
+                      : 'z.B. Auf Wunsch des Verkäufers, Doppeltes Inserat...'
                   }
                   className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                   rows={3}
@@ -1372,11 +1393,16 @@ export default function AdminModerateWatchesPage() {
                     <h4 className="font-semibold text-blue-900">Ricardo-Prinzip</h4>
                     <p className="mt-1 text-sm text-blue-800">
                       {removeModal.action === 'block' ? (
-                        <>Gesperrte Artikel werden aus der Suche entfernt und sind nicht mehr kaufbar. 
-                        Alle Daten (Gebote, Käufe, Zahlungen) bleiben für rechtliche Zwecke erhalten.</>
+                        <>
+                          Gesperrte Artikel werden aus der Suche entfernt und sind nicht mehr
+                          kaufbar. Alle Daten (Gebote, Käufe, Zahlungen) bleiben für rechtliche
+                          Zwecke erhalten.
+                        </>
                       ) : (
-                        <>Entfernte Artikel werden aus der öffentlichen Ansicht ausgeblendet. 
-                        Alle Transaktionsdaten bleiben für Buchhaltung und Rechtliches erhalten.</>
+                        <>
+                          Entfernte Artikel werden aus der öffentlichen Ansicht ausgeblendet. Alle
+                          Transaktionsdaten bleiben für Buchhaltung und Rechtliches erhalten.
+                        </>
                       )}
                     </p>
                   </div>

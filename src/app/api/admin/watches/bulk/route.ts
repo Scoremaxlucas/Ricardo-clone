@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Helper: Admin-Check
 async function checkAdmin(session: any): Promise<boolean> {
@@ -13,7 +13,13 @@ async function checkAdmin(session: any): Promise<boolean> {
   return user?.isAdmin === true
 }
 
-// POST: Bulk-Aktionen
+// RICARDO-STYLE Bulk Actions:
+// - 'approve': Genehmige Artikel (für Moderation)
+// - 'block': Sperre Artikel (Soft Delete - Daten bleiben erhalten)
+// - 'remove': Entferne Artikel (Soft Delete - Daten bleiben erhalten)
+// - KEIN 'delete': Hard Delete nur über einzelne API mit Prüfung
+// - KEIN 'activate'/'deactivate': Artikel haben Lebenszyklus, kein Toggle
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -22,7 +28,7 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json()
-    const { action, watchIds } = body
+    const { action, watchIds, reason } = body
 
     if (!action || !Array.isArray(watchIds) || watchIds.length === 0) {
       return NextResponse.json({ message: 'Ungültige Parameter' }, { status: 400 })
@@ -38,43 +44,92 @@ export async function POST(request: NextRequest) {
     for (const watchId of watchIds) {
       try {
         switch (action) {
-          case 'activate':
+          // Genehmigen (für Moderation)
+          case 'approve':
             await prisma.watch.update({
               where: { id: watchId },
-              data: { moderationStatus: 'approved' },
+              data: {
+                moderationStatus: 'approved',
+                moderatedBy: adminId,
+                moderatedAt: new Date(),
+              },
             })
             await prisma.moderationHistory.create({
               data: {
                 watchId,
                 adminId,
-                action: 'activated',
+                action: 'approved',
                 details: JSON.stringify({ bulk: true }),
               },
+            })
+            results.success++
+            break
+
+          // Sperren (RICARDO-STYLE: Soft Delete)
+          case 'block':
+            await prisma.watch.update({
+              where: { id: watchId },
+              data: { moderationStatus: 'blocked' },
+            })
+            await prisma.moderationHistory.create({
+              data: {
+                watchId,
+                adminId,
+                action: 'blocked',
+                details: JSON.stringify({
+                  bulk: true,
+                  reason: reason || 'Bulk-Sperrung durch Admin',
+                }),
+              },
+            })
+            results.success++
+            break
+
+          // Entfernen (RICARDO-STYLE: Soft Delete)
+          case 'remove':
+            await prisma.watch.update({
+              where: { id: watchId },
+              data: { moderationStatus: 'removed' },
+            })
+            await prisma.moderationHistory.create({
+              data: {
+                watchId,
+                adminId,
+                action: 'removed',
+                details: JSON.stringify({
+                  bulk: true,
+                  reason: reason || 'Bulk-Entfernung durch Admin',
+                }),
+              },
+            })
+            results.success++
+            break
+
+          // LEGACY: Für Rückwärtskompatibilität, aber mit Warnung
+          case 'activate':
+            console.warn('[DEPRECATED] Using activate action - should use approve instead')
+            await prisma.watch.update({
+              where: { id: watchId },
+              data: { moderationStatus: 'approved' },
             })
             results.success++
             break
 
           case 'deactivate':
+            console.warn('[DEPRECATED] Using deactivate action - should use remove instead')
             await prisma.watch.update({
               where: { id: watchId },
-              data: { moderationStatus: 'rejected' },
-            })
-            await prisma.moderationHistory.create({
-              data: {
-                watchId,
-                adminId,
-                action: 'deactivated',
-                details: JSON.stringify({ bulk: true }),
-              },
+              data: { moderationStatus: 'removed' },
             })
             results.success++
             break
 
           case 'delete':
-            await prisma.watch.delete({
-              where: { id: watchId },
-            })
-            results.success++
+            // RICARDO: Kein Bulk-Delete mehr - nur einzelne Artikel über /api/watches/[id]
+            results.failed++
+            results.errors.push(
+              `${watchId}: Bulk-Löschen nicht erlaubt. Bitte einzeln über Admin-Panel entfernen.`
+            )
             break
 
           default:

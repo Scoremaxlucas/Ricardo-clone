@@ -204,8 +204,11 @@ async function executeSearchQuery(params: {
   const parameters: any[] = []
   let paramIndex = 1
 
-  // Base conditions: not rejected, not sold
-  conditions.push(`(w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')`)
+  // RICARDO-STYLE: Nur genehmigte Artikel anzeigen
+  // Excluded: 'rejected', 'blocked', 'removed', 'ended'
+  conditions.push(
+    `(w."moderationStatus" IS NULL OR w."moderationStatus" NOT IN ('rejected', 'blocked', 'removed', 'ended'))`
+  )
 
   // Not sold condition (no purchases or all cancelled)
   conditions.push(`(
@@ -378,9 +381,10 @@ async function executeSearchQuery(params: {
       break
     case 'createdAt':
       // Gold first, then by date
-      orderByClause = sort.direction === 'asc' 
-        ? `${goldFirstClause} ASC, w."createdAt" ASC` 
-        : `${goldFirstClause} ASC, w."createdAt" DESC`
+      orderByClause =
+        sort.direction === 'asc'
+          ? `${goldFirstClause} ASC, w."createdAt" ASC`
+          : `${goldFirstClause} ASC, w."createdAt" DESC`
       break
     case 'auctionEnd':
       // Gold first, then by auction end
@@ -388,8 +392,7 @@ async function executeSearchQuery(params: {
       break
     case 'bids':
       // Gold first, then by bid count
-      orderByClause =
-        `${goldFirstClause} ASC, (SELECT COUNT(*) FROM bids b WHERE b."watchId" = w.id) DESC, w."createdAt" DESC`
+      orderByClause = `${goldFirstClause} ASC, (SELECT COUNT(*) FROM bids b WHERE b."watchId" = w.id) DESC, w."createdAt" DESC`
       break
     default:
       orderByClause = `${goldFirstClause} ASC, ${scoreExpression} DESC, w."createdAt" DESC`
@@ -591,11 +594,15 @@ async function searchWithoutQuery(
   now: Date
 ): Promise<SearchResponse> {
   // Build Prisma where clause
+  // RICARDO-STYLE: Nur sichtbare Artikel (nicht blocked/removed/ended/rejected)
   const where: Prisma.WatchWhereInput = {
     AND: [
-      // Not rejected
+      // Not rejected, blocked, removed, or ended
       {
-        OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
+        OR: [
+          { moderationStatus: null },
+          { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+        ],
       },
       // Not sold
       {
