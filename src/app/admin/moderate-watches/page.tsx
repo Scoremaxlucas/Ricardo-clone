@@ -7,14 +7,17 @@ import {
   AlertTriangle,
   CheckCircle,
   CheckSquare,
+  CreditCard,
   Download,
   Eye,
   EyeOff,
   Filter,
   Flag,
   History,
+  Loader2,
   MessageSquare,
   Package,
+  RefreshCw,
   Search,
   Shield,
   Tag,
@@ -101,6 +104,29 @@ export default function AdminModerateWatchesPage() {
   const [dateTo, setDateTo] = useState('')
   const [selectedWatches, setSelectedWatches] = useState<Set<string>>(new Set())
   const [showFilters, setShowFilters] = useState(false)
+
+  // Delete confirmation modal state
+  const [deleteModal, setDeleteModal] = useState<{
+    open: boolean
+    watchId: string | null
+    watchTitle: string | null
+    hasPayment: boolean
+    paymentInfo?: {
+      refundableAmount: number
+      canRefund: boolean
+      buyerEmail: string
+      buyerName: string
+      paidPayments: number
+      pendingPayments: number
+    }
+    isDeleting: boolean
+  }>({
+    open: false,
+    watchId: null,
+    watchTitle: null,
+    hasPayment: false,
+    isDeleting: false,
+  })
 
   useEffect(() => {
     if (status === 'loading') return
@@ -271,20 +297,15 @@ export default function AdminModerateWatchesPage() {
     }
   }
 
-  const deleteWatch = async (watchId: string) => {
-    if (
-      !confirm(
-        'Möchten Sie dieses Angebot wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.'
-      )
-    ) {
-      return
-    }
-
+  const deleteWatch = async (watchId: string, forceDelete = false) => {
+    const watch = watches.find(w => w.id === watchId)
+    
     try {
-      const res = await fetch(`/api/watches/${watchId}`, {
-        method: 'DELETE',
-      })
-
+      const url = forceDelete 
+        ? `/api/watches/${watchId}?forceDelete=true` 
+        : `/api/watches/${watchId}`
+      
+      const res = await fetch(url, { method: 'DELETE' })
       const data = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
 
       if (res.ok) {
@@ -293,6 +314,17 @@ export default function AdminModerateWatchesPage() {
         if (selectedWatch?.id === watchId) {
           setSelectedWatch(null)
         }
+        setDeleteModal({ open: false, watchId: null, watchTitle: null, hasPayment: false, isDeleting: false })
+      } else if (data.code === 'HAS_ACTIVE_PAYMENT') {
+        // Zeige Modal mit Zahlungsdetails
+        setDeleteModal({
+          open: true,
+          watchId,
+          watchTitle: watch?.title || 'Unbekannter Artikel',
+          hasPayment: true,
+          paymentInfo: data.paymentInfo,
+          isDeleting: false,
+        })
       } else {
         console.error('Delete error:', data)
         toast.error(data.message || t.admin.errorDeletingOffer)
@@ -300,6 +332,43 @@ export default function AdminModerateWatchesPage() {
     } catch (error: any) {
       console.error('Error deleting watch:', error)
       toast.error(error.message || 'Fehler beim Löschen des Angebots')
+    }
+  }
+
+  const confirmDeleteWithRefund = async () => {
+    if (!deleteModal.watchId) return
+    
+    setDeleteModal(prev => ({ ...prev, isDeleting: true }))
+    
+    try {
+      await deleteWatch(deleteModal.watchId, true)
+    } finally {
+      setDeleteModal(prev => ({ ...prev, isDeleting: false }))
+    }
+  }
+
+  const initiateDelete = (watchId: string) => {
+    const watch = watches.find(w => w.id === watchId)
+    
+    // Zeige einfaches Bestätigungs-Modal für normale Löschung
+    setDeleteModal({
+      open: true,
+      watchId,
+      watchTitle: watch?.title || 'Unbekannter Artikel',
+      hasPayment: false,
+      isDeleting: false,
+    })
+  }
+
+  const confirmSimpleDelete = async () => {
+    if (!deleteModal.watchId) return
+    
+    setDeleteModal(prev => ({ ...prev, isDeleting: true }))
+    
+    try {
+      await deleteWatch(deleteModal.watchId, false)
+    } catch (error) {
+      setDeleteModal(prev => ({ ...prev, isDeleting: false }))
     }
   }
 
@@ -885,7 +954,7 @@ export default function AdminModerateWatchesPage() {
                               <Eye className="h-5 w-5" />
                             </Link>
                             <button
-                              onClick={() => deleteWatch(watch.id)}
+                              onClick={() => initiateDelete(watch.id)}
                               className="rounded-lg bg-red-100 p-2 text-red-700 transition-colors hover:bg-red-200"
                               title="Löschen"
                             >
@@ -1207,6 +1276,164 @@ export default function AdminModerateWatchesPage() {
                   })
                 )}
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete Confirmation Modal */}
+      {deleteModal.open && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div
+            className="absolute inset-0 bg-black/60 backdrop-blur-sm"
+            onClick={() => !deleteModal.isDeleting && setDeleteModal({ open: false, watchId: null, watchTitle: null, hasPayment: false, isDeleting: false })}
+          />
+          <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
+            {/* Header */}
+            <div className={`px-6 py-4 ${deleteModal.hasPayment ? 'bg-gradient-to-r from-amber-500 to-orange-500' : 'bg-gradient-to-r from-red-500 to-red-600'}`}>
+              <div className="flex items-center gap-3">
+                <div className="rounded-full bg-white/20 p-2">
+                  {deleteModal.hasPayment ? (
+                    <CreditCard className="h-6 w-6 text-white" />
+                  ) : (
+                    <Trash2 className="h-6 w-6 text-white" />
+                  )}
+                </div>
+                <div className="flex-1">
+                  <h3 className="text-lg font-semibold text-white">
+                    {deleteModal.hasPayment ? 'Aktive Zahlung vorhanden' : 'Angebot löschen'}
+                  </h3>
+                  {deleteModal.hasPayment && (
+                    <p className="text-sm text-white/80">Rückerstattung erforderlich</p>
+                  )}
+                </div>
+                {!deleteModal.isDeleting && (
+                  <button
+                    onClick={() => setDeleteModal({ open: false, watchId: null, watchTitle: null, hasPayment: false, isDeleting: false })}
+                    className="rounded-full p-1 text-white/80 hover:bg-white/20 hover:text-white"
+                    aria-label="Schließen"
+                  >
+                    <X className="h-5 w-5" />
+                  </button>
+                )}
+              </div>
+            </div>
+
+            {/* Content */}
+            <div className="p-6">
+              <div className="mb-4 rounded-xl bg-gray-50 p-4">
+                <p className="text-sm text-gray-600">Artikel</p>
+                <p className="font-semibold text-gray-900">{deleteModal.watchTitle}</p>
+              </div>
+
+              {deleteModal.hasPayment && deleteModal.paymentInfo ? (
+                <>
+                  {/* Payment Warning */}
+                  <div className="mb-4 rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
+                    <div className="flex items-start gap-3">
+                      <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+                      <div className="flex-1">
+                        <h4 className="font-semibold text-amber-900">Zahlung vorhanden</h4>
+                        <p className="mt-1 text-sm text-amber-800">
+                          Dieser Artikel hat eine aktive Bestellung mit Zahlung. Bei Löschung wird der Käufer automatisch zurückerstattet.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Payment Details */}
+                  <div className="mb-4 space-y-3 rounded-xl bg-gray-50 p-4">
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">Käufer</span>
+                      <span className="font-medium text-gray-900">{deleteModal.paymentInfo.buyerName}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-sm text-gray-600">E-Mail</span>
+                      <span className="font-medium text-gray-900">{deleteModal.paymentInfo.buyerEmail}</span>
+                    </div>
+                    <div className="flex items-center justify-between border-t border-gray-200 pt-3">
+                      <span className="text-sm font-semibold text-gray-700">Rückerstattungsbetrag</span>
+                      <span className="text-lg font-bold text-green-600">
+                        CHF {deleteModal.paymentInfo.refundableAmount.toFixed(2)}
+                      </span>
+                    </div>
+                    {deleteModal.paymentInfo.canRefund ? (
+                      <div className="flex items-center gap-2 rounded-lg bg-green-100 px-3 py-2 text-sm text-green-700">
+                        <RefreshCw className="h-4 w-4" />
+                        Automatische Rückerstattung via Stripe möglich
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">
+                        <XCircle className="h-4 w-4" />
+                        Manuelle Rückerstattung erforderlich (Geld bereits ausgezahlt)
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="mb-4 text-sm text-gray-600">
+                    Bei Löschung wird:
+                  </p>
+                  <ul className="mb-4 space-y-1 text-sm text-gray-600">
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      CHF {deleteModal.paymentInfo.refundableAmount.toFixed(2)} an Käufer erstattet
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Käufer per E-Mail informiert
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Bestellung storniert
+                    </li>
+                    <li className="flex items-center gap-2">
+                      <CheckCircle className="h-4 w-4 text-green-500" />
+                      Artikel permanent gelöscht
+                    </li>
+                  </ul>
+                </>
+              ) : (
+                <p className="mb-4 text-gray-600">
+                  Möchten Sie dieses Angebot wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
+                </p>
+              )}
+            </div>
+
+            {/* Actions */}
+            <div className="flex gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
+              <button
+                onClick={() => setDeleteModal({ open: false, watchId: null, watchTitle: null, hasPayment: false, isDeleting: false })}
+                disabled={deleteModal.isDeleting}
+                className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
+              >
+                Abbrechen
+              </button>
+              <button
+                onClick={deleteModal.hasPayment ? confirmDeleteWithRefund : confirmSimpleDelete}
+                disabled={deleteModal.isDeleting}
+                className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-medium text-white transition-colors disabled:opacity-50 ${
+                  deleteModal.hasPayment
+                    ? 'bg-amber-600 hover:bg-amber-700'
+                    : 'bg-red-600 hover:bg-red-700'
+                }`}
+              >
+                {deleteModal.isDeleting ? (
+                  <>
+                    <Loader2 className="h-5 w-5 animate-spin" />
+                    {deleteModal.hasPayment ? 'Erstattet & löscht...' : 'Löscht...'}
+                  </>
+                ) : deleteModal.hasPayment ? (
+                  <>
+                    <RefreshCw className="h-5 w-5" />
+                    Erstatten & Löschen
+                  </>
+                ) : (
+                  <>
+                    <Trash2 className="h-5 w-5" />
+                    Löschen
+                  </>
+                )}
+              </button>
             </div>
           </div>
         </div>

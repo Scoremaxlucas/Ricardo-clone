@@ -281,6 +281,8 @@ export async function DELETE(
   try {
     const { id } = await params
     const session = await getServerSession(authOptions)
+    const { searchParams } = new URL(request.url)
+    const forceDelete = searchParams.get('forceDelete') === 'true'
 
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
@@ -293,13 +295,13 @@ export async function DELETE(
     })
 
     // Hole Watch mit Seller-Informationen und Geboten
-    // WICHTIG: Verwende select statt include, um nur existierende Felder zu laden
     const watch = await prisma.watch.findUnique({
       where: { id },
       select: {
         id: true,
         title: true,
         sellerId: true,
+        price: true,
         seller: {
           select: {
             id: true,
@@ -314,7 +316,7 @@ export async function DELETE(
           select: { id: true },
         },
         purchases: {
-          select: { id: true, status: true },
+          select: { id: true, status: true, buyerId: true },
         },
       },
     })
@@ -358,6 +360,147 @@ export async function DELETE(
       )
     }
 
+    // ============================================
+    // ADMIN: Prüfe auf aktive Zahlungen (Orders)
+    // ============================================
+    if (isAdmin) {
+      const activeOrders = await prisma.order.findMany({
+        where: {
+          watchId: id,
+          paymentStatus: { in: ['paid', 'held', 'pending'] },
+        },
+        include: {
+          buyer: {
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+      })
+
+      // Wenn aktive Zahlungen existieren und nicht forceDelete
+      if (activeOrders.length > 0 && !forceDelete) {
+        // Prüfe ob Rückerstattung möglich ist (Geld noch bei Stripe)
+        const refundableOrders = activeOrders.filter(
+          o => o.paymentStatus === 'paid' || o.paymentStatus === 'held'
+        )
+        const pendingOrders = activeOrders.filter(o => o.paymentStatus === 'pending')
+
+        // Berechne Gesamtbetrag
+        const totalAmount = refundableOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
+
+        // Hole Käufer-Info
+        const buyerInfo = refundableOrders[0]?.buyer || pendingOrders[0]?.buyer
+
+        return NextResponse.json(
+          {
+            message: 'Dieser Artikel hat aktive Bestellungen mit Zahlungen.',
+            code: 'HAS_ACTIVE_PAYMENT',
+            paymentInfo: {
+              refundableAmount: totalAmount,
+              canRefund: refundableOrders.length > 0,
+              pendingPayments: pendingOrders.length,
+              paidPayments: refundableOrders.length,
+              buyerEmail: buyerInfo?.email || 'Unbekannt',
+              buyerName:
+                buyerInfo?.firstName && buyerInfo?.lastName
+                  ? `${buyerInfo.firstName} ${buyerInfo.lastName}`
+                  : buyerInfo?.name || 'Unbekannt',
+              orderIds: activeOrders.map(o => o.id),
+              stripePaymentIntentIds: activeOrders
+                .map(o => o.stripePaymentIntentId)
+                .filter(Boolean),
+            },
+          },
+          { status: 409 } // Conflict
+        )
+      }
+
+      // Force delete mit Rückerstattung
+      if (forceDelete && activeOrders.length > 0) {
+        const { processDisputeRefund, isStripeConfigured } = await import(
+          '@/lib/stripe-disputes'
+        )
+
+        let refundResults: { orderId: string; success: boolean; error?: string }[] = []
+
+        // Verarbeite Rückerstattungen für bezahlte Orders
+        for (const order of activeOrders) {
+          if (
+            order.stripePaymentIntentId &&
+            (order.paymentStatus === 'paid' || order.paymentStatus === 'held')
+          ) {
+            console.log(
+              `[DELETE] Processing refund for order ${order.id}, PaymentIntent: ${order.stripePaymentIntentId}`
+            )
+
+            if (isStripeConfigured()) {
+              const refundResult = await processDisputeRefund(
+                order.stripePaymentIntentId,
+                undefined,
+                `Artikel vom Admin gelöscht: ${watch.title}`
+              )
+
+              refundResults.push({
+                orderId: order.id,
+                success: refundResult.success,
+                error: refundResult.error,
+              })
+
+              if (refundResult.success) {
+                // Update Order Status
+                await prisma.order.update({
+                  where: { id: order.id },
+                  data: {
+                    paymentStatus: 'refunded',
+                    refundedAt: new Date(),
+                  },
+                })
+
+                // Benachrichtige Käufer
+                try {
+                  const { sendEmail } = await import('@/lib/email')
+                  const buyerName =
+                    order.buyer?.firstName || order.buyer?.name || 'Käufer'
+
+                  await sendEmail({
+                    to: order.buyer?.email || '',
+                    subject: `Rückerstattung für "${watch.title}"`,
+                    html: `
+                      <h2>Rückerstattung erhalten</h2>
+                      <p>Hallo ${buyerName},</p>
+                      <p>Der Artikel <strong>"${watch.title}"</strong> wurde vom Verkäufer oder Administrator entfernt.</p>
+                      <p>Ihr Zahlungsbetrag von <strong>CHF ${(order.totalAmount || 0).toFixed(2)}</strong> wurde vollständig zurückerstattet.</p>
+                      <p>Die Gutschrift erscheint innerhalb von 5-10 Werktagen auf Ihrer Karte.</p>
+                      <p>Bei Fragen kontaktieren Sie uns unter support@helvenda.ch</p>
+                      <p>Mit freundlichen Grüssen,<br>Ihr Helvenda Team</p>
+                    `,
+                    text: `Hallo ${buyerName}, Der Artikel "${watch.title}" wurde entfernt. Ihr Betrag von CHF ${(order.totalAmount || 0).toFixed(2)} wurde zurückerstattet.`,
+                  })
+                } catch (emailError) {
+                  console.error('[DELETE] Error sending refund email:', emailError)
+                }
+              }
+            } else {
+              // Stripe nicht konfiguriert - simuliere Erfolg (Dev-Modus)
+              refundResults.push({
+                orderId: order.id,
+                success: true,
+                error: 'Stripe nicht konfiguriert - Simulation',
+              })
+            }
+          }
+        }
+
+        // Log refund results
+        console.log('[DELETE] Refund results:', refundResults)
+      }
+    }
+
     // Hole Admin-Informationen für Moderation History
     const admin = await prisma.user.findUnique({
       where: { id: session.user.id },
@@ -371,10 +514,11 @@ export async function DELETE(
       },
     })
 
-    // Lösche zuerst alle abhängigen Daten
+    // Lösche zuerst alle abhängigen Daten (in korrekter Reihenfolge)
     await prisma.bid.deleteMany({ where: { watchId: id } })
     await prisma.favorite.deleteMany({ where: { watchId: id } })
     await prisma.priceOffer.deleteMany({ where: { watchId: id } })
+    await prisma.order.deleteMany({ where: { watchId: id } })
     await prisma.purchase.deleteMany({ where: { watchId: id } })
     await prisma.sale.deleteMany({ where: { watchId: id } })
     await prisma.message.deleteMany({ where: { watchId: id } })
