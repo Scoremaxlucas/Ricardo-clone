@@ -1,8 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { sendEmail } from '@/lib/email'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * GET: Dispute-Kommentare abrufen
@@ -79,10 +78,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
   } catch (error: any) {
     console.error('Error fetching dispute comments:', error)
-    return NextResponse.json(
-      { message: 'Fehler beim Laden der Kommentare' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler beim Laden der Kommentare' }, { status: 500 })
   }
 }
 
@@ -129,17 +125,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     if (!purchase.disputeOpenedAt) {
-      return NextResponse.json(
-        { message: 'Kein aktiver Dispute vorhanden' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Kein aktiver Dispute vorhanden' }, { status: 400 })
     }
 
     if (purchase.disputeStatus === 'resolved' || purchase.disputeStatus === 'closed') {
-      return NextResponse.json(
-        { message: 'Dispute ist bereits abgeschlossen' },
-        { status: 400 }
-      )
+      return NextResponse.json({ message: 'Dispute ist bereits abgeschlossen' }, { status: 400 })
     }
 
     // Prüfe Berechtigung
@@ -197,7 +187,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         notifyUsers.push({
           id: purchase.buyerId,
           email: purchase.buyer.email,
-          name: purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Käufer',
+          name:
+            purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Käufer',
           link: '/my-watches/buying/purchased',
         })
       }
@@ -206,7 +197,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         notifyUsers.push({
           id: purchase.watch.seller.id,
           email: purchase.watch.seller.email,
-          name: purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Verkäufer',
+          name:
+            purchase.watch.seller.nickname ||
+            purchase.watch.seller.firstName ||
+            purchase.watch.seller.name ||
+            'Verkäufer',
           link: '/my-watches/selling/sold',
         })
       }
@@ -267,9 +262,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
   } catch (error: any) {
     console.error('Error creating dispute comment:', error)
-    return NextResponse.json(
-      { message: 'Fehler beim Erstellen des Kommentars' },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler beim Erstellen des Kommentars' }, { status: 500 })
   }
 }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useRef } from 'react'
-import { X, AlertTriangle, Loader2, Upload, Image as ImageIcon, FileText, Trash2, Clock, Shield } from 'lucide-react'
+import { AlertTriangle, Clock, FileText, Loader2, Shield, Trash2, Upload, X } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface DisputeModalProps {
@@ -15,21 +15,68 @@ interface DisputeModalProps {
 
 // Dispute-Gründe für Käufer (erweitert)
 const BUYER_DISPUTE_REASONS = [
-  { value: 'item_not_received', label: 'Artikel nicht erhalten', description: 'Sie haben den Artikel trotz Bezahlung nicht erhalten', urgent: true },
-  { value: 'item_damaged', label: 'Artikel beschädigt', description: 'Der Artikel kam beschädigt an', urgent: true },
-  { value: 'item_wrong', label: 'Falscher Artikel geliefert', description: 'Sie haben einen anderen Artikel erhalten als bestellt' },
-  { value: 'item_not_as_described', label: 'Nicht wie beschrieben', description: 'Der Artikel entspricht nicht der Beschreibung im Inserat' },
-  { value: 'seller_not_responding', label: 'Verkäufer antwortet nicht', description: 'Der Verkäufer reagiert nicht auf Ihre Nachrichten' },
-  { value: 'other', label: 'Sonstiges', description: 'Ein anderes Problem, das nicht in die obigen Kategorien passt' },
+  {
+    value: 'item_not_received',
+    label: 'Artikel nicht erhalten',
+    description: 'Sie haben den Artikel trotz Bezahlung nicht erhalten',
+    urgent: true,
+  },
+  {
+    value: 'item_damaged',
+    label: 'Artikel beschädigt',
+    description: 'Der Artikel kam beschädigt an',
+    urgent: true,
+  },
+  {
+    value: 'item_wrong',
+    label: 'Falscher Artikel geliefert',
+    description: 'Sie haben einen anderen Artikel erhalten als bestellt',
+  },
+  {
+    value: 'item_not_as_described',
+    label: 'Nicht wie beschrieben',
+    description: 'Der Artikel entspricht nicht der Beschreibung im Inserat',
+  },
+  {
+    value: 'seller_not_responding',
+    label: 'Verkäufer antwortet nicht',
+    description: 'Der Verkäufer reagiert nicht auf Ihre Nachrichten',
+  },
+  {
+    value: 'other',
+    label: 'Sonstiges',
+    description: 'Ein anderes Problem, das nicht in die obigen Kategorien passt',
+  },
 ]
 
 // Dispute-Gründe für Verkäufer (erweitert)
 const SELLER_DISPUTE_REASONS = [
-  { value: 'payment_not_received', label: 'Zahlung nicht erhalten', description: 'Sie haben die Zahlung für den Artikel nicht erhalten', urgent: true },
-  { value: 'payment_not_confirmed', label: 'Zahlung nicht bestätigt', description: 'Der Käufer behauptet bezahlt zu haben, aber Sie haben keine Zahlung erhalten' },
-  { value: 'buyer_not_responding', label: 'Käufer antwortet nicht', description: 'Der Käufer reagiert nicht auf Ihre Nachrichten' },
-  { value: 'buyer_not_paying', label: 'Käufer zahlt nicht', description: 'Der Käufer hat den Artikel gekauft aber zahlt nicht' },
-  { value: 'other', label: 'Sonstiges', description: 'Ein anderes Problem, das nicht in die obigen Kategorien passt' },
+  {
+    value: 'payment_not_received',
+    label: 'Zahlung nicht erhalten',
+    description: 'Sie haben die Zahlung für den Artikel nicht erhalten',
+    urgent: true,
+  },
+  {
+    value: 'payment_not_confirmed',
+    label: 'Zahlung nicht bestätigt',
+    description: 'Der Käufer behauptet bezahlt zu haben, aber Sie haben keine Zahlung erhalten',
+  },
+  {
+    value: 'buyer_not_responding',
+    label: 'Käufer antwortet nicht',
+    description: 'Der Käufer reagiert nicht auf Ihre Nachrichten',
+  },
+  {
+    value: 'buyer_not_paying',
+    label: 'Käufer zahlt nicht',
+    description: 'Der Käufer hat den Artikel gekauft aber zahlt nicht',
+  },
+  {
+    value: 'other',
+    label: 'Sonstiges',
+    description: 'Ein anderes Problem, das nicht in die obigen Kategorien passt',
+  },
 ]
 
 // Konfiguration
@@ -55,10 +102,10 @@ export function DisputeModal({
 
   // Berechne verbleibende Tage für Dispute-Eröffnung
   const purchaseDateObj = purchaseDate ? new Date(purchaseDate) : null
-  const deadlineDate = purchaseDateObj 
+  const deadlineDate = purchaseDateObj
     ? new Date(purchaseDateObj.getTime() + DISPUTE_OPEN_DEADLINE_DAYS * 24 * 60 * 60 * 1000)
     : null
-  const daysRemaining = deadlineDate 
+  const daysRemaining = deadlineDate
     ? Math.max(0, Math.ceil((deadlineDate.getTime() - Date.now()) / (1000 * 60 * 60 * 24)))
     : null
 
@@ -114,7 +161,7 @@ export function DisputeModal({
 
     setAttachments(prev => [...prev, ...newAttachments])
     setUploading(false)
-    
+
     // Reset file input
     if (fileInputRef.current) {
       fileInputRef.current.value = ''
@@ -155,9 +202,12 @@ export function DisputeModal({
       const data = await res.json()
 
       if (res.ok) {
-        toast.success('Dispute erfolgreich eröffnet. Ein Admin wird sich innerhalb von 14 Tagen darum kümmern.', {
-          duration: 5000,
-        })
+        toast.success(
+          'Dispute erfolgreich eröffnet. Ein Admin wird sich innerhalb von 14 Tagen darum kümmern.',
+          {
+            duration: 5000,
+          }
+        )
         setReason('')
         setDescription('')
         setAttachments([])
@@ -189,9 +239,7 @@ export function DisputeModal({
             </div>
             <div>
               <h2 className="text-lg font-semibold text-gray-900">Problem melden</h2>
-              <p className="text-sm text-gray-500">
-                {isSeller ? 'Als Verkäufer' : 'Als Käufer'}
-              </p>
+              <p className="text-sm text-gray-500">{isSeller ? 'Als Verkäufer' : 'Als Käufer'}</p>
             </div>
           </div>
           <button
@@ -206,27 +254,31 @@ export function DisputeModal({
         <form onSubmit={handleSubmit} className="space-y-5 p-6">
           {/* Frist-Hinweis */}
           {daysRemaining !== null && (
-            <div className={`flex items-start gap-3 rounded-lg border p-4 ${
-              daysRemaining <= 7 
-                ? 'border-orange-200 bg-orange-50' 
-                : 'border-blue-200 bg-blue-50'
-            }`}>
-              <Clock className={`mt-0.5 h-5 w-5 flex-shrink-0 ${
-                daysRemaining <= 7 ? 'text-orange-500' : 'text-blue-500'
-              }`} />
+            <div
+              className={`flex items-start gap-3 rounded-lg border p-4 ${
+                daysRemaining <= 7 ? 'border-orange-200 bg-orange-50' : 'border-blue-200 bg-blue-50'
+              }`}
+            >
+              <Clock
+                className={`mt-0.5 h-5 w-5 flex-shrink-0 ${
+                  daysRemaining <= 7 ? 'text-orange-500' : 'text-blue-500'
+                }`}
+              />
               <div>
-                <p className={`text-sm font-medium ${
-                  daysRemaining <= 7 ? 'text-orange-800' : 'text-blue-800'
-                }`}>
-                  {daysRemaining > 0 
+                <p
+                  className={`text-sm font-medium ${
+                    daysRemaining <= 7 ? 'text-orange-800' : 'text-blue-800'
+                  }`}
+                >
+                  {daysRemaining > 0
                     ? `Noch ${daysRemaining} Tag${daysRemaining !== 1 ? 'e' : ''} Zeit für einen Dispute`
-                    : 'Heute letzter Tag für einen Dispute'
-                  }
+                    : 'Heute letzter Tag für einen Dispute'}
                 </p>
-                <p className={`text-xs ${
-                  daysRemaining <= 7 ? 'text-orange-600' : 'text-blue-600'
-                }`}>
-                  Disputes können nur innerhalb von {DISPUTE_OPEN_DEADLINE_DAYS} Tagen nach dem Kauf eröffnet werden.
+                <p
+                  className={`text-xs ${daysRemaining <= 7 ? 'text-orange-600' : 'text-blue-600'}`}
+                >
+                  Disputes können nur innerhalb von {DISPUTE_OPEN_DEADLINE_DAYS} Tagen nach dem Kauf
+                  eröffnet werden.
                 </p>
               </div>
             </div>
@@ -236,10 +288,8 @@ export function DisputeModal({
           <div className="flex items-start gap-3 rounded-lg border border-gray-200 bg-gray-50 p-4">
             <Shield className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-500" />
             <div>
-              <p className="text-sm font-medium text-gray-800">
-                Was passiert bei einem Dispute?
-              </p>
-              <ul className="mt-1 list-inside list-disc text-xs text-gray-600 space-y-0.5">
+              <p className="text-sm font-medium text-gray-800">Was passiert bei einem Dispute?</p>
+              <ul className="mt-1 list-inside list-disc space-y-0.5 text-xs text-gray-600">
                 <li>Der Kaufprozess wird vorübergehend eingefroren</li>
                 <li>Ein Admin prüft den Fall innerhalb von 14 Tagen</li>
                 <li>Beide Parteien können Stellung nehmen</li>
@@ -301,8 +351,8 @@ export function DisputeModal({
                 selectedReason?.value === 'item_not_received'
                   ? 'Wann haben Sie zuletzt vom Verkäufer gehört? Wurde eine Sendungsverfolgung bereitgestellt?'
                   : selectedReason?.value === 'item_damaged'
-                  ? 'Beschreiben Sie den Schaden. Wann haben Sie ihn bemerkt? Haben Sie Fotos?'
-                  : 'Bitte beschreiben Sie das Problem so detailliert wie möglich...'
+                    ? 'Beschreiben Sie den Schaden. Wann haben Sie ihn bemerkt? Haben Sie Fotos?'
+                    : 'Bitte beschreiben Sie das Problem so detailliert wie möglich...'
               }
               required
               minLength={20}
@@ -311,7 +361,9 @@ export function DisputeModal({
               <p className="text-xs text-gray-500">
                 Je detaillierter, desto schneller kann geholfen werden.
               </p>
-              <span className={`text-xs ${description.length < 20 ? 'text-red-500' : 'text-gray-400'}`}>
+              <span
+                className={`text-xs ${description.length < 20 ? 'text-red-500' : 'text-gray-400'}`}
+              >
                 {description.length}/20 min.
               </span>
             </div>
@@ -345,12 +397,11 @@ export function DisputeModal({
                   <Upload className="h-8 w-8 text-gray-400" />
                 )}
                 <span className="text-sm text-gray-600">
-                  {uploading 
-                    ? 'Wird hochgeladen...' 
+                  {uploading
+                    ? 'Wird hochgeladen...'
                     : attachments.length >= 5
-                    ? 'Maximum erreicht (5 Dateien)'
-                    : 'Klicken zum Hochladen oder Dateien hierher ziehen'
-                  }
+                      ? 'Maximum erreicht (5 Dateien)'
+                      : 'Klicken zum Hochladen oder Dateien hierher ziehen'}
                 </span>
                 <span className="text-xs text-gray-400">
                   Bilder oder PDFs, max. 5MB pro Datei, max. 5 Dateien
@@ -367,7 +418,11 @@ export function DisputeModal({
                     className="flex items-center gap-3 rounded-lg border border-gray-200 bg-gray-50 p-2"
                   >
                     {url.match(/\.(jpg|jpeg|png|gif|webp)$/i) ? (
-                      <img src={url} alt={`Anhang ${index + 1}`} className="h-10 w-10 rounded object-cover" />
+                      <img
+                        src={url}
+                        alt={`Anhang ${index + 1}`}
+                        className="h-10 w-10 rounded object-cover"
+                      />
                     ) : (
                       <div className="flex h-10 w-10 items-center justify-center rounded bg-gray-200">
                         <FileText className="h-5 w-5 text-gray-500" />

@@ -1,10 +1,10 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { prisma } from '@/lib/prisma'
 import { addStatusHistory } from '@/lib/status-history'
-import { processDisputeRefund, isStripeConfigured } from '@/lib/stripe-disputes'
+import { isStripeConfigured, processDisputeRefund } from '@/lib/stripe-disputes'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * POST: Dispute durch Admin lösen

@@ -1,23 +1,23 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { prisma } from '@/lib/prisma'
 import { addStatusHistory } from '@/lib/status-history'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // === DISPUTE CONFIGURATION ===
 const DISPUTE_CONFIG = {
   // Fristen
   OPEN_DEADLINE_DAYS: 30, // Dispute kann bis 30 Tage nach Kaufabschluss eröffnet werden
   RESOLUTION_DEADLINE_DAYS: 14, // Admin hat 14 Tage zur Lösung
-  
+
   // Reminder
   REMINDER_AFTER_DAYS: [3, 7, 10], // Erinnerungen nach X Tagen
-  
+
   // Erlaubte Gründe
   BUYER_REASONS: [
     'item_not_received',
-    'item_damaged', 
+    'item_damaged',
     'item_wrong',
     'item_not_as_described',
     'seller_not_responding',
@@ -106,7 +106,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Validiere den Dispute-Grund
     if (!allowedReasons.includes(reason)) {
       return NextResponse.json(
-        { message: `Dieser Dispute-Grund ist für ${isBuyer ? 'Käufer' : 'Verkäufer'} nicht gültig` },
+        {
+          message: `Dieser Dispute-Grund ist für ${isBuyer ? 'Käufer' : 'Verkäufer'} nicht gültig`,
+        },
         { status: 400 }
       )
     }
@@ -131,10 +133,10 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     const purchaseDate = purchase.createdAt
     const deadlineDate = new Date(purchaseDate)
     deadlineDate.setDate(deadlineDate.getDate() + DISPUTE_CONFIG.OPEN_DEADLINE_DAYS)
-    
+
     if (new Date() > deadlineDate) {
       return NextResponse.json(
-        { 
+        {
           message: `Die Frist für die Eröffnung eines Disputes ist abgelaufen. Disputes können nur innerhalb von ${DISPUTE_CONFIG.OPEN_DEADLINE_DAYS} Tagen nach dem Kauf eröffnet werden.`,
           deadlineExpired: true,
         },
@@ -194,7 +196,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // Bestimme die andere Partei
     const otherParty = isBuyer ? purchase.watch.seller : purchase.buyer
     const opener = isBuyer ? purchase.buyer : purchase.watch.seller
-    const openerName = opener.nickname || opener.firstName || opener.name || (isBuyer ? 'Käufer' : 'Verkäufer')
+    const openerName =
+      opener.nickname || opener.firstName || opener.name || (isBuyer ? 'Käufer' : 'Verkäufer')
     const otherPartyLink = isBuyer ? `/my-watches/selling/sold` : `/my-watches/buying/purchased`
 
     // Benachrichtigung an die andere Partei
@@ -283,7 +286,8 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     console.log(`[dispute] Dispute eröffnet für Purchase ${id} von ${initiatorRole}`)
 
     return NextResponse.json({
-      message: 'Dispute erfolgreich eröffnet. Ein Admin wird sich innerhalb von 14 Tagen darum kümmern.',
+      message:
+        'Dispute erfolgreich eröffnet. Ein Admin wird sich innerhalb von 14 Tagen darum kümmern.',
       purchase: updatedPurchase,
       disputeDeadline: disputeDeadline.toISOString(),
     })

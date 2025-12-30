@@ -1,6 +1,6 @@
 /**
  * Stripe Dispute Integration
- * 
+ *
  * Handles payment holds and refunds for the dispute system.
  * Since we don't have true escrow, we use Stripe's refund capabilities
  * to process refunds when disputes are resolved in favor of buyers.
@@ -10,7 +10,9 @@ import Stripe from 'stripe'
 
 // Initialize Stripe (only if API key is available)
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY
-const stripe = stripeSecretKey ? new Stripe(stripeSecretKey, { apiVersion: '2024-11-20.acacia' }) : null
+const stripe = stripeSecretKey
+  ? new Stripe(stripeSecretKey, { apiVersion: '2024-11-20.acacia' })
+  : null
 
 export interface StripeRefundResult {
   success: boolean
@@ -29,7 +31,7 @@ export function isStripeConfigured(): boolean {
 
 /**
  * Process a refund for a dispute resolution
- * 
+ *
  * @param paymentIntentId - The Stripe PaymentIntent ID from the original purchase
  * @param amount - Optional amount to refund (in CHF). If not provided, full refund.
  * @param reason - Reason for the refund
@@ -78,7 +80,7 @@ export async function processDisputeRefund(
     }
   } catch (error: any) {
     console.error('[stripe-disputes] Error processing refund:', error)
-    
+
     // Handle specific Stripe errors
     if (error.type === 'StripeInvalidRequestError') {
       if (error.code === 'charge_already_refunded') {
@@ -220,7 +222,7 @@ export async function submitDisputeEvidence(
         product_description: evidence.productDescription,
         customer_name: evidence.customerName,
         customer_email_address: evidence.customerEmail,
-        shipping_date: evidence.shippingDate 
+        shipping_date: evidence.shippingDate
           ? Math.floor(evidence.shippingDate.getTime() / 1000).toString()
           : undefined,
         shipping_carrier: evidence.shippingCarrier,

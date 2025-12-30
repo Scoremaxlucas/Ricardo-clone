@@ -1,13 +1,13 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * POST /api/cron/dispute-reminders
- * 
+ *
  * Automated job to send reminders for open disputes.
  * Should be called daily via Vercel Cron or external scheduler.
- * 
+ *
  * Security: Requires CRON_SECRET header for production
  */
 export async function POST(request: NextRequest) {
@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
     // Verify cron secret in production
     const cronSecret = process.env.CRON_SECRET
     const authHeader = request.headers.get('authorization')
-    
+
     if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
@@ -60,14 +60,14 @@ export async function POST(request: NextRequest) {
         const daysSinceOpened = Math.floor(
           (now.getTime() - disputeOpenedAt.getTime()) / (1000 * 60 * 60 * 24)
         )
-        
+
         // Check if deadline is passed
         const deadline = purchase.disputeDeadline
         const isOverdue = deadline ? now > deadline : daysSinceOpened > 14
 
         if (isOverdue) {
           results.overdueDisputes++
-          
+
           // Notify admins about overdue dispute
           const admins = await prisma.user.findMany({
             where: { isAdmin: true },
@@ -138,15 +138,21 @@ export async function POST(request: NextRequest) {
         if (shouldSendReminder && reminderCount < reminderDays.length) {
           // Check if we sent a reminder in the last 24 hours
           if (lastReminderSent) {
-            const hoursSinceLastReminder = (now.getTime() - lastReminderSent.getTime()) / (1000 * 60 * 60)
+            const hoursSinceLastReminder =
+              (now.getTime() - lastReminderSent.getTime()) / (1000 * 60 * 60)
             if (hoursSinceLastReminder < 24) {
               continue // Skip, already reminded today
             }
           }
 
           // Send reminder to both parties
-          const buyerName = purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Käufer'
-          const sellerName = purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Verkäufer'
+          const buyerName =
+            purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Käufer'
+          const sellerName =
+            purchase.watch.seller.nickname ||
+            purchase.watch.seller.firstName ||
+            purchase.watch.seller.name ||
+            'Verkäufer'
 
           // Notify buyer
           await prisma.notification.create({
@@ -220,7 +226,9 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    console.log(`[dispute-reminders] Completed. Processed: ${results.processed}, Reminders: ${results.remindersCreated}, Overdue: ${results.overdueDisputes}`)
+    console.log(
+      `[dispute-reminders] Completed. Processed: ${results.processed}, Reminders: ${results.remindersCreated}, Overdue: ${results.overdueDisputes}`
+    )
 
     return NextResponse.json({
       success: true,
@@ -228,10 +236,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('[dispute-reminders] Error:', error)
-    return NextResponse.json(
-      { success: false, error: error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ success: false, error: error.message }, { status: 500 })
   }
 }
 
