@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
-// Get a single sale/purchase by ID
+// Get a single sale/purchase by ID (or watchId as fallback)
 export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
   try {
     const session = await getServerSession(authOptions)
@@ -13,50 +13,92 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    const purchaseId = params.id
-    console.log(`[sales/${purchaseId}] Fetching purchase for seller ${session.user.id}`)
+    const searchId = params.id
+    
+    if (!searchId || searchId === 'undefined' || searchId === 'null') {
+      console.log(`[sales] Invalid ID: ${searchId}`)
+      return NextResponse.json({ message: 'Ungültige Verkaufs-ID' }, { status: 400 })
+    }
+    
+    console.log(`[sales/${searchId}] Fetching purchase for seller ${session.user.id}`)
 
-    // Fetch the specific purchase
-    const purchase = await prisma.purchase.findFirst({
+    const includeOptions = {
+      watch: {
+        include: {
+          bids: {
+            orderBy: { amount: 'desc' as const },
+            take: 1,
+          },
+        },
+      },
+      buyer: {
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          firstName: true,
+          lastName: true,
+          street: true,
+          streetNumber: true,
+          postalCode: true,
+          city: true,
+          phone: true,
+          paymentMethods: true,
+        },
+      },
+    }
+
+    // Try to find by purchaseId first
+    let purchase = await prisma.purchase.findFirst({
       where: {
-        id: purchaseId,
+        id: searchId,
         watch: {
           sellerId: session.user.id,
         },
       },
-      include: {
-        watch: {
-          include: {
-            bids: {
-              orderBy: { amount: 'desc' },
-              take: 1,
-            },
-          },
-        },
-        buyer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            firstName: true,
-            lastName: true,
-            street: true,
-            streetNumber: true,
-            postalCode: true,
-            city: true,
-            phone: true,
-            paymentMethods: true,
-          },
-        },
-      },
+      include: includeOptions,
     })
 
+    // If not found, try by watchId
     if (!purchase) {
-      console.log(`[sales/${purchaseId}] Purchase not found or not owned by seller`)
-      return NextResponse.json({ message: 'Verkauf nicht gefunden' }, { status: 404 })
+      console.log(`[sales/${searchId}] Not found by purchaseId, trying watchId...`)
+      purchase = await prisma.purchase.findFirst({
+        where: {
+          watchId: searchId,
+          watch: {
+            sellerId: session.user.id,
+          },
+          status: { not: 'cancelled' },
+        },
+        include: includeOptions,
+      })
     }
 
-    console.log(`[sales/${purchaseId}] Found purchase for watch: ${purchase.watch.title}`)
+    // Still not found - return debug info
+    if (!purchase) {
+      const allPurchases = await prisma.purchase.findMany({
+        where: {
+          watch: { sellerId: session.user.id },
+          status: { not: 'cancelled' },
+        },
+        select: { id: true, watchId: true, status: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      })
+      
+      console.log(`[sales/${searchId}] Not found. Available purchases:`, JSON.stringify(allPurchases))
+      
+      return NextResponse.json({ 
+        message: 'Verkauf nicht gefunden',
+        debug: { 
+          searchedId: searchId, 
+          sellerId: session.user.id,
+          availablePurchases: allPurchases 
+        }
+      }, { status: 404 })
+    }
+
+    console.log(`[sales/${searchId}] Found purchase ${purchase.id} for watch: ${purchase.watch.title}`)
 
     // Load order if exists
     const order = await prisma.order.findFirst({

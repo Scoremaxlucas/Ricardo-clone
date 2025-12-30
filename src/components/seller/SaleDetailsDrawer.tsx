@@ -79,25 +79,30 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
   const [sale, setSale] = useState<Sale | null>(null)
   const [loading, setLoading] = useState(false)
   const [showBuyerModal, setShowBuyerModal] = useState(false)
+  const [debugInfo, setDebugInfo] = useState<any>(null)
 
   // Load sale details when purchaseId changes
   useEffect(() => {
     if (!purchaseId || !isOpen) {
       setSale(null)
+      setDebugInfo(null)
       return
     }
 
     const loadSale = async () => {
       setLoading(true)
+      setDebugInfo(null)
       try {
         // Use dedicated API endpoint for single sale
         const res = await fetch(`/api/sales/${purchaseId}?t=${Date.now()}`)
+        const data = await res.json()
+        
         if (res.ok) {
-          const data = await res.json()
           setSale(data.sale || null)
         } else {
-          console.error('Sale not found:', await res.text())
+          console.error('Sale not found:', data)
           setSale(null)
+          setDebugInfo(data.debug || null)
         }
       } catch (error) {
         console.error('Error loading sale:', error)
@@ -204,25 +209,51 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
               <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
             </div>
           ) : !sale ? (
-            <div className="flex h-64 flex-col items-center justify-center text-gray-500">
+            <div className="flex flex-col items-center justify-center py-12 text-gray-500">
               <Package className="mb-4 h-12 w-12" />
-              <p>Verkauf nicht gefunden</p>
+              <p className="font-medium">Verkauf nicht gefunden</p>
               {purchaseId && (
-                <p className="mt-2 text-xs text-gray-400">ID: {purchaseId}</p>
+                <p className="mt-2 text-xs text-gray-400">Gesuchte ID: {purchaseId}</p>
               )}
+              
+              {/* Debug info */}
+              {debugInfo && (
+                <div className="mt-4 w-full rounded-lg bg-gray-100 p-4 text-left text-xs">
+                  <p className="mb-2 font-semibold text-gray-700">Debug-Information:</p>
+                  {debugInfo.availablePurchases?.length > 0 ? (
+                    <div>
+                      <p className="text-gray-600">Verfügbare Verkäufe ({debugInfo.availablePurchases.length}):</p>
+                      <ul className="mt-1 space-y-1">
+                        {debugInfo.availablePurchases.map((p: any) => (
+                          <li key={p.id} className="rounded bg-white p-2">
+                            <span className="font-mono text-[10px]">ID: {p.id}</span>
+                            <br />
+                            <span className="font-mono text-[10px]">Watch: {p.watchId}</span>
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  ) : (
+                    <p className="text-gray-600">Keine Verkäufe für diesen Verkäufer gefunden.</p>
+                  )}
+                </div>
+              )}
+              
               <button
                 onClick={() => {
                   setLoading(true)
+                  setDebugInfo(null)
                   fetch(`/api/sales/${purchaseId}?t=${Date.now()}`)
                     .then(res => res.json())
                     .then(data => {
                       console.log('Debug sale response:', data)
                       setSale(data.sale || null)
+                      setDebugInfo(data.debug || null)
                     })
                     .catch(console.error)
                     .finally(() => setLoading(false))
                 }}
-                className="mt-4 rounded-lg bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200"
+                className="mt-4 rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
               >
                 Erneut versuchen
               </button>

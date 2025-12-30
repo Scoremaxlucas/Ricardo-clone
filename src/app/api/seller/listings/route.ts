@@ -161,6 +161,11 @@ export async function GET(request: NextRequest) {
       // Get purchaseId for sold items (first active purchase)
       const purchaseId = isSold ? activePurchases[0]?.id || null : null
 
+      // Debug logging for sold items
+      if (isSold) {
+        console.log(`[seller/listings] Sold item: ${listing.title}, purchaseId: ${purchaseId}, purchases: ${JSON.stringify(listing.purchases)}`)
+      }
+
       return {
         id: listing.id,
         articleNumber: listing.articleNumber,
