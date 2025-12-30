@@ -157,7 +157,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         disputeStatus: 'pending',
         disputeReason: reason,
         disputeDescription: description,
-        disputeInitiatedBy: initiatorRole,
+        // disputeInitiatedBy: Optional - Spalte existiert möglicherweise noch nicht in der DB
+        // Wird nur gesetzt, wenn die Migration bereits ausgeführt wurde
+        ...(initiatorRole && { disputeInitiatedBy: initiatorRole }),
         disputeDeadline: disputeDeadline,
         disputeFrozenAt: now, // Kaufprozess einfrieren
         disputeAttachments: attachments ? JSON.stringify(attachments) : null,

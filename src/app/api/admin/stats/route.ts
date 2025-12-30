@@ -105,9 +105,16 @@ export async function GET(request: NextRequest) {
       // Verifizierungs-Statistiken
       prisma.user.count({ where: { verified: true, verificationStatus: 'approved' } }),
       prisma.user.count({ where: { verificationStatus: 'pending' } }),
-      // Dispute-Statistiken
-      prisma.purchase.count({
-        where: { disputeStatus: 'pending', disputeOpenedAt: { not: null } },
+      // Dispute-Statistiken: Nutze die gleiche Logik wie /api/admin/disputes
+      // WICHTIG: Explizites select verwenden, um disputeInitiatedBy zu vermeiden
+      // (disputeInitiatedBy existiert möglicherweise noch nicht in der DB)
+      prisma.purchase.findMany({
+        where: { disputeOpenedAt: { not: null } },
+        select: {
+          id: true,
+          disputeStatus: true,
+          // Nur benötigte Felder selektieren (disputeInitiatedBy wird NICHT selektiert)
+        },
       }),
       // Payout Change Requests
       prisma.payoutChangeRequest.count({
@@ -131,6 +138,12 @@ export async function GET(request: NextRequest) {
     const totalRevenue = purchases.reduce((sum, purchase) => {
       return sum + (purchase.price || purchase.watch?.price || 0)
     }, 0)
+
+    // Berechne pending Disputes aus den Dispute-Daten
+    // Nutze die gleiche Logik wie /api/admin/disputes
+    const pendingDisputes = disputePurchases.filter(
+      d => d.disputeStatus === 'pending'
+    ).length
 
     // Platform-Marge - verwende Default, Pricing wird später aus Datenbank geladen
     // TODO: Pricing-Einstellungen aus Datenbank laden

@@ -71,11 +71,25 @@ export async function GET(request: NextRequest) {
     }
 
     // Lade Disputes
+    // WICHTIG: Explizites select verwenden, um nur existierende Felder zu laden
+    // (disputeInitiatedBy existiert möglicherweise noch nicht in der DB)
     const disputePurchases =
       type === 'all' || type === 'dispute'
         ? await prisma.purchase.findMany({
             where: disputeWhere,
-            include: {
+            select: {
+              id: true,
+              watchId: true,
+              price: true,
+              status: true,
+              createdAt: true,
+              disputeOpenedAt: true,
+              disputeReason: true,
+              disputeDescription: true,
+              disputeStatus: true,
+              disputeResolvedAt: true,
+              disputeResolvedBy: true,
+              // disputeInitiatedBy wird NICHT selektiert (existiert möglicherweise noch nicht)
               watch: {
                 select: {
                   id: true,
@@ -115,11 +129,23 @@ export async function GET(request: NextRequest) {
         : []
 
     // Lade Stornierungsanträge
+    // WICHTIG: Explizites select verwenden, um nur existierende Felder zu laden
     const cancellationPurchases =
       type === 'all' || type === 'cancellation'
         ? await prisma.purchase.findMany({
             where: cancellationWhere,
-            include: {
+            select: {
+              id: true,
+              watchId: true,
+              price: true,
+              status: true,
+              createdAt: true,
+              cancellationRequestedAt: true,
+              cancellationRequestReason: true,
+              cancellationRequestDescription: true,
+              cancellationRequestStatus: true,
+              cancellationRequestResolvedAt: true,
+              cancellationRequestResolvedBy: true,
               watch: {
                 select: {
                   id: true,

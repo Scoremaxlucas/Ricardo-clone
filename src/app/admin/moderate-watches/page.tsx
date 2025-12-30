@@ -4,7 +4,6 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { useLanguage } from '@/contexts/LanguageContext'
 import {
-  AlertTriangle,
   CheckCircle,
   CheckSquare,
   Download,
@@ -93,9 +92,7 @@ export default function AdminModerateWatchesPage() {
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
   // RICARDO-STYLE: Neue Filter-Optionen (approved entfernt)
-  const [filter, setFilter] = useState<
-    'all' | 'pending' | 'blocked' | 'removed' | 'ended'
-  >('all')
+  const [filter, setFilter] = useState<'all' | 'pending' | 'blocked' | 'removed' | 'ended'>('all')
   const [selectedWatch, setSelectedWatch] = useState<Watch | null>(null)
   const [selectedWatchNotes, setSelectedWatchNotes] = useState<AdminNote[]>([])
   const [selectedWatchHistory, setSelectedWatchHistory] = useState<ModerationHistoryItem[]>([])
