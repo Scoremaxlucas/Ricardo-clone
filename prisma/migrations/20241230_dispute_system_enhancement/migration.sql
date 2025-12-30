@@ -2,7 +2,8 @@
 -- Adds new fields to Purchase table and creates DisputeComment table
 
 -- Add new dispute fields to Purchase table
-ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeInitiatedBy" TEXT;
+-- WICHTIG: disputeInitiatedBy wurde temporär entfernt - Migration noch nicht ausgeführt
+-- ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeInitiatedBy" TEXT;
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeDeadline" TIMESTAMP(3);
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeFrozenAt" TIMESTAMP(3);
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeAttachments" TEXT;
