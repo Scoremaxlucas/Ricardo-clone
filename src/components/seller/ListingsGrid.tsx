@@ -6,11 +6,12 @@ import { ListingCard, ListingCardProps } from './ListingCard'
 import { TabType } from './ListingsTabs'
 
 interface ListingsGridProps {
-  listings: Omit<ListingCardProps, 'onDelete' | 'onDuplicate'>[]
+  listings: Omit<ListingCardProps, 'onDelete' | 'onDuplicate' | 'onSaleClick'>[]
   loading: boolean
   activeTab: TabType
   onDelete: (id: string) => void
   onDuplicate: (id: string) => void
+  onSaleClick?: (purchaseId: string) => void
 }
 
 // Loading Skeleton for cards - Compact
@@ -63,6 +64,7 @@ export function ListingsGrid({
   activeTab,
   onDelete,
   onDuplicate,
+  onSaleClick,
 }: ListingsGridProps) {
   // Loading state
   if (loading) {
@@ -100,7 +102,13 @@ export function ListingsGrid({
   return (
     <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6">
       {listings.map(listing => (
-        <ListingCard key={listing.id} {...listing} onDelete={onDelete} onDuplicate={onDuplicate} />
+        <ListingCard
+          key={listing.id}
+          {...listing}
+          onDelete={onDelete}
+          onDuplicate={onDuplicate}
+          onSaleClick={onSaleClick}
+        />
       ))}
     </div>
   )

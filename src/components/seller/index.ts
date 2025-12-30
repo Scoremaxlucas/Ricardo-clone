@@ -1,4 +1,5 @@
 export { ListingCard, type ListingCardProps } from './ListingCard'
 export { ListingsGrid } from './ListingsGrid'
 export { ListingsTabs, type TabType } from './ListingsTabs'
+export { SaleDetailsDrawer } from './SaleDetailsDrawer'
 export { SellerListingsClient } from './SellerListingsClient'

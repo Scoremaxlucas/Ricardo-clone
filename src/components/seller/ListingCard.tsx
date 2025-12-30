@@ -19,9 +19,10 @@ export interface ListingCardProps {
   status: ListingStatus
   bidCount: number
   highestBid: number | null
-  purchaseId?: string | null // For sold items - links to sale details
+  purchaseId?: string | null // For sold items - opens sale details drawer
   onDelete: (id: string) => void
   onDuplicate: (id: string) => void
+  onSaleClick?: (purchaseId: string) => void // Opens drawer for sold items
 }
 
 const statusConfig = {
@@ -60,15 +61,19 @@ export function ListingCard({
   purchaseId,
   onDelete,
   onDuplicate,
+  onSaleClick,
 }: ListingCardProps) {
   const mainImage = images[0] || null
-  // Für interne Navigation: Verwende CUID (zuverlässiger als Artikelnummer)
-  // Die Produktseite kann beides auflösen
   const articleUrl = `/products/${id}`
   const displayPrice = highestBid || price
 
-  // For sold items, link to sale details page
-  const saleUrl = purchaseId ? `/my-watches/selling/sold#${purchaseId}` : articleUrl
+  // Handle click for sold items - open drawer instead of navigating
+  const handleSoldClick = (e: React.MouseEvent) => {
+    if (status === 'sold' && purchaseId && onSaleClick) {
+      e.preventDefault()
+      onSaleClick(purchaseId)
+    }
+  }
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('de-CH', {
@@ -99,13 +104,23 @@ export function ListingCard({
       {/* Image Container - 4:3 aspect ratio for compact look */}
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
         {mainImage ? (
-          <Link href={status === 'sold' ? saleUrl : articleUrl}>
-            <img
-              src={mainImage}
-              alt={title}
-              className="h-full w-full object-cover transition-transform group-hover:scale-105"
-            />
-          </Link>
+          status === 'sold' && purchaseId && onSaleClick ? (
+            <button onClick={handleSoldClick} className="h-full w-full">
+              <img
+                src={mainImage}
+                alt={title}
+                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              />
+            </button>
+          ) : (
+            <Link href={articleUrl}>
+              <img
+                src={mainImage}
+                alt={title}
+                className="h-full w-full object-cover transition-transform group-hover:scale-105"
+              />
+            </Link>
+          )
         ) : (
           <div className="flex h-full w-full items-center justify-center">
             <Package className="h-8 w-8 text-gray-300" />
@@ -133,15 +148,15 @@ export function ListingCard({
 
         {/* Quick Actions - Visible on hover */}
         <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-          {status === 'sold' ? (
-            // Sold items: Show sale details
-            <Link
-              href={saleUrl}
+          {status === 'sold' && purchaseId && onSaleClick ? (
+            // Sold items: Open sale details drawer
+            <button
+              onClick={handleSoldClick}
               className="rounded-full bg-white p-2 text-gray-700 transition-colors hover:bg-gray-100"
               aria-label="Verkaufsdetails"
             >
               <ShoppingBag className="h-4 w-4" />
-            </Link>
+            </button>
           ) : status === 'draft' ? (
             // Draft items: Edit in sell wizard
             <Link
@@ -196,11 +211,19 @@ export function ListingCard({
       {/* Content - Compact */}
       <div className="p-2">
         {/* Title */}
-        <Link href={status === 'sold' ? saleUrl : articleUrl}>
-          <h3 className="line-clamp-1 text-xs font-semibold text-gray-900 transition-colors hover:text-primary-600">
-            {title}
-          </h3>
-        </Link>
+        {status === 'sold' && purchaseId && onSaleClick ? (
+          <button onClick={handleSoldClick} className="w-full text-left">
+            <h3 className="line-clamp-1 text-xs font-semibold text-gray-900 transition-colors hover:text-primary-600">
+              {title}
+            </h3>
+          </button>
+        ) : (
+          <Link href={articleUrl}>
+            <h3 className="line-clamp-1 text-xs font-semibold text-gray-900 transition-colors hover:text-primary-600">
+              {title}
+            </h3>
+          </Link>
+        )}
 
         {/* Brand/Model */}
         <p className="line-clamp-1 text-[10px] text-gray-500">

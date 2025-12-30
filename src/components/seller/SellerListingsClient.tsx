@@ -7,6 +7,7 @@ import { toast } from 'react-hot-toast'
 import { ListingCardProps } from './ListingCard'
 import { ListingsGrid } from './ListingsGrid'
 import { ListingsTabs, TabType } from './ListingsTabs'
+import { SaleDetailsDrawer } from './SaleDetailsDrawer'
 
 interface Draft {
   id: string
@@ -54,6 +55,10 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
   } | null>(null)
   const [deleteLoading, setDeleteLoading] = useState(false)
   const [deleteError, setDeleteError] = useState<string | null>(null)
+
+  // Sale details drawer state
+  const [selectedPurchaseId, setSelectedPurchaseId] = useState<string | null>(null)
+  const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Debounce search
   useEffect(() => {
@@ -236,6 +241,12 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
   // Get current listings based on tab
   const currentListings = activeTab === 'drafts' ? draftsAsListings : listings
 
+  // Handle sale click - open drawer
+  const handleSaleClick = (purchaseId: string) => {
+    setSelectedPurchaseId(purchaseId)
+    setDrawerOpen(true)
+  }
+
   return (
     <>
       {/* Tabs */}
@@ -271,6 +282,18 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
           }
         }}
         onDuplicate={handleDuplicate}
+        onSaleClick={handleSaleClick}
+      />
+
+      {/* Sale Details Drawer */}
+      <SaleDetailsDrawer
+        purchaseId={selectedPurchaseId}
+        isOpen={drawerOpen}
+        onClose={() => {
+          setDrawerOpen(false)
+          setSelectedPurchaseId(null)
+        }}
+        onUpdate={fetchData}
       />
 
       {/* Delete Modal */}
