@@ -628,15 +628,17 @@ export async function POST(request: NextRequest) {
         meta: error.meta,
       })
 
+      // TEMPORARY: Return full error for debugging
       return NextResponse.json(
         {
           message:
             'Ein Datenbankfehler ist aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.',
           errorCode: error.code,
-          ...(process.env.NODE_ENV === 'development' && {
-            errorMessage: error.message,
-            errorMeta: error.meta,
-          }),
+          // ALWAYS return error details for debugging P2022
+          errorMessage: error.message,
+          errorMeta: error.meta,
+          column: error.meta?.column,
+          table: error.meta?.table,
         },
         { status: 500 }
       )
