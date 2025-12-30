@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,22 +12,19 @@ export async function GET(request: NextRequest) {
 
     if (!userId) {
       // Wenn nicht eingeloggt, zeige beliebte Artikel
+      // RICARDO-STYLE: Exclude blocked, removed, ended (not just rejected)
       const watches = await prisma.watch.findMany({
         where: {
           AND: [
             {
-              // WICHTIG: Manuell deaktivierte Artikel ausschließen
               OR: [
                 { moderationStatus: null },
-                { moderationStatus: { not: 'rejected' } }
-              ]
+                { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+              ],
             },
             {
               // Stornierte Purchases machen den Artikel wieder verfügbar
-              OR: [
-                { purchases: { none: {} } },
-                { purchases: { every: { status: 'cancelled' } } }
-              ]
+              OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
             },
             {
               // Beendete Auktionen ohne Purchase ausschließen
@@ -41,16 +38,16 @@ export async function GET(request: NextRequest) {
                       purchases: {
                         some: {
                           status: {
-                            not: 'cancelled'
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
-            }
-          ]
+                            not: 'cancelled',
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              ],
+            },
+          ],
         },
         include: {
           seller: {
@@ -62,8 +59,8 @@ export async function GET(request: NextRequest) {
             },
           },
           bids: {
-            orderBy: { amount: 'desc' }
-          }
+            orderBy: { amount: 'desc' },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -109,7 +106,7 @@ export async function GET(request: NextRequest) {
           auctionEnd: watch.auctionEnd || null,
           createdAt: watch.createdAt,
           bids: watch.bids || [],
-          boosters: boosters
+          boosters: boosters,
         }
       })
 
@@ -141,9 +138,9 @@ export async function GET(request: NextRequest) {
 
     // Finde häufigste Kategorien in Favoriten
     const categoryCounts: Record<string, number> = {}
-    favorites.forEach((fav) => {
+    favorites.forEach(fav => {
       if (fav.watch?.categories && fav.watch.categories.length > 0) {
-        fav.watch.categories.forEach((wc) => {
+        fav.watch.categories.forEach(wc => {
           const categorySlug = wc.category?.slug || ''
           if (categorySlug) {
             categoryCounts[categorySlug] = (categoryCounts[categorySlug] || 0) + 1
@@ -160,18 +157,18 @@ export async function GET(request: NextRequest) {
     // Hole Artikel aus diesen Kategorien
     let watches: any[] = []
     if (topCategories.length > 0) {
+      // RICARDO-STYLE: Exclude blocked, removed, ended
       watches = await prisma.watch.findMany({
         where: {
           AND: [
             {
-              // WICHTIG: Manuell deaktivierte Artikel ausschließen
               OR: [
                 { moderationStatus: null },
-                { moderationStatus: { not: 'rejected' } }
-              ]
+                { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+              ],
             },
             {
-              purchases: { none: {} }
+              purchases: { none: {} },
             },
             {
               categories: {
@@ -196,18 +193,18 @@ export async function GET(request: NextRequest) {
                       purchases: {
                         some: {
                           status: {
-                            not: 'cancelled'
-                          }
-                        }
-                      }
-                    }
-                  ]
-                }
-              ]
+                            not: 'cancelled',
+                          },
+                        },
+                      },
+                    },
+                  ],
+                },
+              ],
             },
             {
               id: {
-                notIn: favorites.map((f) => f.watchId),
+                notIn: favorites.map(f => f.watchId),
               },
             },
           ],
@@ -222,8 +219,8 @@ export async function GET(request: NextRequest) {
             },
           },
           bids: {
-            orderBy: { amount: 'desc' }
-          }
+            orderBy: { amount: 'desc' },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -233,30 +230,27 @@ export async function GET(request: NextRequest) {
     }
 
     // Wenn nicht genug Artikel, fülle mit beliebten auf
+    // RICARDO-STYLE: Exclude blocked, removed, ended
     if (!watches || watches.length < 8) {
       const additionalWatches = await prisma.watch.findMany({
         where: {
           AND: [
             {
-              // WICHTIG: Manuell deaktivierte Artikel ausschließen
               OR: [
                 { moderationStatus: null },
-                { moderationStatus: { not: 'rejected' } }
-              ]
+                { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+              ],
             },
             {
               // Stornierte Purchases machen den Artikel wieder verfügbar
-              OR: [
-                { purchases: { none: {} } },
-                { purchases: { every: { status: 'cancelled' } } }
-              ]
+              OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
             },
             {
               id: {
-                notIn: [...(watches?.map((w) => w.id) || []), ...favorites.map((f) => f.watchId)],
-              }
-            }
-          ]
+                notIn: [...(watches?.map(w => w.id) || []), ...favorites.map(f => f.watchId)],
+              },
+            },
+          ],
         },
         include: {
           seller: {
@@ -268,8 +262,8 @@ export async function GET(request: NextRequest) {
             },
           },
           bids: {
-            orderBy: { amount: 'desc' }
-          }
+            orderBy: { amount: 'desc' },
+          },
         },
         orderBy: {
           createdAt: 'desc',
@@ -318,7 +312,7 @@ export async function GET(request: NextRequest) {
         auctionEnd: watch.auctionEnd || null,
         createdAt: watch.createdAt,
         bids: watch.bids || [],
-        boosters: boosters
+        boosters: boosters,
       }
     })
 

@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // FAST FAVORITES API: Optimierte Route für schnelles Laden von Favoriten
 export async function GET(request: NextRequest) {
@@ -23,23 +23,25 @@ export async function GET(request: NextRequest) {
 
     try {
       // Versuche Raw SQL Query (schneller)
-      watches = await prisma.$queryRaw<Array<{
-      id: string
-      title: string | null
-      brand: string | null
-      model: string | null
-      price: number
-      buyNowPrice: number | null
-      images: string | null
-      createdAt: Date
-      isAuction: boolean | null
-      auctionEnd: Date | null
-      articleNumber: number | null
-      boosters: string | null
-      city: string | null
-      postalCode: string | null
-      condition: string | null
-    }>>`
+      watches = await prisma.$queryRaw<
+        Array<{
+          id: string
+          title: string | null
+          brand: string | null
+          model: string | null
+          price: number
+          buyNowPrice: number | null
+          images: string | null
+          createdAt: Date
+          isAuction: boolean | null
+          auctionEnd: Date | null
+          articleNumber: number | null
+          boosters: string | null
+          city: string | null
+          postalCode: string | null
+          condition: string | null
+        }>
+      >`
       SELECT
         w.id,
         w.title,
@@ -61,7 +63,7 @@ export async function GET(request: NextRequest) {
       INNER JOIN users u ON w."sellerId" = u.id
       WHERE
         f."userId" = ${session.user.id}
-        AND (w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')
+        AND (w."moderationStatus" IS NULL OR w."moderationStatus" NOT IN ('rejected', 'blocked', 'removed', 'ended'))
         AND NOT EXISTS (
           SELECT 1 FROM purchases p
           WHERE p."watchId" = w.id
@@ -84,7 +86,7 @@ export async function GET(request: NextRequest) {
       // Fallback zu Prisma Query falls Raw SQL fehlschlägt
       console.warn('Raw SQL failed in favorites-fast, using Prisma fallback:', sqlError)
       const nowDate = new Date()
-      watches = await prisma.watch.findMany({
+      watches = (await prisma.watch.findMany({
         where: {
           AND: [
             {
@@ -95,16 +97,14 @@ export async function GET(request: NextRequest) {
               },
             },
             {
+              // RICARDO-STYLE: Exclude blocked, removed, ended
               OR: [
                 { moderationStatus: null },
-                { moderationStatus: { not: 'rejected' } },
+                { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
               ],
             },
             {
-              OR: [
-                { purchases: { none: {} } },
-                { purchases: { every: { status: 'cancelled' } } },
-              ],
+              OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
             },
             {
               OR: [
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
         },
         take: limit,
         skip: skip,
-      }) as any[]
+      })) as any[]
 
       // Transformiere Prisma-Format zu Raw SQL-Format
       watches = watches.map(w => ({
@@ -187,9 +187,16 @@ export async function GET(request: NextRequest) {
         price: w.price,
         buyNowPrice: w.buyNowPrice,
         images: firstImage ? [firstImage] : [],
-        createdAt: w.createdAt instanceof Date ? w.createdAt.toISOString() : new Date(w.createdAt).toISOString(),
+        createdAt:
+          w.createdAt instanceof Date
+            ? w.createdAt.toISOString()
+            : new Date(w.createdAt).toISOString(),
         isAuction: !!w.isAuction || !!w.auctionEnd,
-        auctionEnd: w.auctionEnd ? (w.auctionEnd instanceof Date ? w.auctionEnd.toISOString() : new Date(w.auctionEnd).toISOString()) : null,
+        auctionEnd: w.auctionEnd
+          ? w.auctionEnd instanceof Date
+            ? w.auctionEnd.toISOString()
+            : new Date(w.auctionEnd).toISOString()
+          : null,
         articleNumber: w.articleNumber,
         boosters,
         city: w.city,
@@ -213,4 +220,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ watches: [] }, { status: 200 })
   }
 }
-

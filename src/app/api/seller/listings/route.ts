@@ -73,9 +73,13 @@ export async function GET(request: NextRequest) {
     const now = new Date()
 
     // Base where clause for all queries
+    // RICARDO-STYLE: Exclude blocked, removed, ended (not just rejected)
     const baseWhere: Record<string, unknown> = {
       sellerId: userId,
-      OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
+      OR: [
+        { moderationStatus: null },
+        { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+      ],
     }
 
     // Add search filter if provided
@@ -163,7 +167,9 @@ export async function GET(request: NextRequest) {
 
       // Debug logging for sold items
       if (isSold) {
-        console.log(`[seller/listings] Sold item: ${listing.title}, purchaseId: ${purchaseId}, purchases: ${JSON.stringify(listing.purchases)}`)
+        console.log(
+          `[seller/listings] Sold item: ${listing.title}, purchaseId: ${purchaseId}, purchases: ${JSON.stringify(listing.purchases)}`
+        )
       }
 
       return {

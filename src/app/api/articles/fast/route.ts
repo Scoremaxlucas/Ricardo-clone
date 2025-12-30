@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
 // FAST API: Optimierte Route für schnelles Laden von Artikeln
 // Verwendet Raw SQL für maximale Performance
@@ -20,22 +20,17 @@ export async function GET(request: NextRequest) {
       where: {
         AND: [
           {
-            // WICHTIG: Zeige ALLE Artikel außer explizit 'rejected'
-            // Neue Artikel ohne moderationStatus (null) werden angezeigt
-            // Auch Artikel mit moderationStatus: 'approved' oder 'pending' werden angezeigt
+            // RICARDO-STYLE: Exclude blocked, removed, ended (not just rejected)
             OR: [
               { moderationStatus: null },
-              { moderationStatus: { not: 'rejected' } },
+              { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
             ],
           },
           {
             // WICHTIG: Zeige Artikel die NICHT verkauft sind
             // Neue Artikel ohne Purchase werden angezeigt
             // Artikel mit nur cancelled purchases werden angezeigt
-            OR: [
-              { purchases: { none: {} } },
-              { purchases: { every: { status: 'cancelled' } } },
-            ],
+            OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
           },
           {
             // WICHTIG: Zeige aktive Auktionen oder verkaufte Auktionen
@@ -127,9 +122,16 @@ export async function GET(request: NextRequest) {
         price: w.price,
         buyNowPrice: w.buyNowPrice,
         images: firstImage ? [firstImage] : [],
-        createdAt: w.createdAt instanceof Date ? w.createdAt.toISOString() : new Date(w.createdAt).toISOString(),
+        createdAt:
+          w.createdAt instanceof Date
+            ? w.createdAt.toISOString()
+            : new Date(w.createdAt).toISOString(),
         isAuction: !!w.isAuction || !!w.auctionEnd,
-        auctionEnd: w.auctionEnd ? (w.auctionEnd instanceof Date ? w.auctionEnd.toISOString() : new Date(w.auctionEnd).toISOString()) : null,
+        auctionEnd: w.auctionEnd
+          ? w.auctionEnd instanceof Date
+            ? w.auctionEnd.toISOString()
+            : new Date(w.auctionEnd).toISOString()
+          : null,
         articleNumber: w.articleNumber,
         boosters,
         city: w.city,
@@ -153,4 +155,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ watches: [] }, { status: 200 })
   }
 }
-

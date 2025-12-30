@@ -31,13 +31,16 @@ export async function getMySellingArticles(userId: string): Promise<MySellingIte
     const now = new Date()
 
     // Query mit Purchases für korrekten isSold Status
+    // RICARDO-STYLE: Exclude blocked, removed, ended (not just rejected)
     const watches = await prisma.watch.findMany({
       where: {
         sellerId: userId,
-        // Zeige ALLE Artikel außer explizit 'rejected'
         AND: [
           {
-            OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
+            OR: [
+              { moderationStatus: null },
+              { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+            ],
           },
         ],
       },

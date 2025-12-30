@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
 // GET: Statistiken für einen User abrufen (öffentlich)
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -16,8 +16,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           where: {
             AND: [
               {
-                // WICHTIG: Manuell deaktivierte Artikel ausschließen (moderationStatus === 'rejected')
-                OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
+                // RICARDO-STYLE: Exclude blocked, removed, ended (not just rejected)
+                OR: [
+                  { moderationStatus: null },
+                  { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+                ],
               },
               {
                 // Zeige Artikel die:

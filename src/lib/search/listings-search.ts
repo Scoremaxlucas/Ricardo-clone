@@ -765,9 +765,15 @@ export async function getBrandCounts(
 ): Promise<Array<{ brand: string; count: number }>> {
   const now = new Date()
 
+  // RICARDO-STYLE: Exclude blocked, removed, ended
   const where: Prisma.WatchWhereInput = {
     AND: [
-      { OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }] },
+      {
+        OR: [
+          { moderationStatus: null },
+          { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+        ],
+      },
       { OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }] },
       { OR: [{ auctionEnd: null }, { auctionEnd: { gt: now } }] },
     ],

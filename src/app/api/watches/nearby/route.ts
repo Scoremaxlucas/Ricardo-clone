@@ -41,13 +41,16 @@ export async function GET(request: NextRequest) {
     }
 
     // Hole alle Produkte mit Postleitzahl
+    // RICARDO-STYLE: Exclude blocked, removed, ended (not just rejected)
     const now = new Date()
     const watches = await prisma.watch.findMany({
       where: {
         AND: [
           {
-            // Nur verfügbare Produkte
-            OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
+            OR: [
+              { moderationStatus: null },
+              { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+            ],
           },
           {
             // Nicht verkauft
@@ -153,4 +156,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

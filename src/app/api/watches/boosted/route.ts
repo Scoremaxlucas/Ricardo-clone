@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * API-Endpoint für geboostete Produkte (Silber und Gold)
@@ -26,11 +26,14 @@ export async function GET(request: NextRequest) {
     const now = new Date()
 
     // Basis-Where-Klausel: Nur aktive, nicht verkaufte Angebote
+    // RICARDO-STYLE: Exclude blocked, removed, ended (not just rejected)
     const baseWhere = {
       AND: [
         {
-          // WICHTIG: Manuell deaktivierte Artikel ausschließen
-          OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+          ],
         },
         {
           // Artikel die nicht verkauft sind ODER nur stornierte Purchases haben
@@ -79,18 +82,12 @@ export async function GET(request: NextRequest) {
 
     if (boosterType === 'gold' || boosterType === 'super-boost') {
       // Gold (or legacy super-boost)
-      where.OR = [
-        { boosters: { contains: 'gold' } },
-        { boosters: { contains: 'super-boost' } },
-      ]
+      where.OR = [{ boosters: { contains: 'gold' } }, { boosters: { contains: 'super-boost' } }]
     } else if (boosterType === 'silber' || boosterType === 'turbo-boost') {
       // Silber (or legacy turbo-boost), but not Gold
       where.AND = [
         {
-          OR: [
-            { boosters: { contains: 'silber' } },
-            { boosters: { contains: 'turbo-boost' } },
-          ],
+          OR: [{ boosters: { contains: 'silber' } }, { boosters: { contains: 'turbo-boost' } }],
         },
         {
           AND: [
@@ -187,7 +184,7 @@ export async function GET(request: NextRequest) {
         isAuction: watch.isAuction || false,
         auctionEnd: watch.auctionEnd || null,
         createdAt: watch.createdAt,
-        bids: watch.bids || []
+        bids: watch.bids || [],
       }
     })
 

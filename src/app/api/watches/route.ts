@@ -118,12 +118,14 @@ export async function GET(request: NextRequest) {
 
     const now = new Date()
 
+    // RICARDO-STYLE: Exclude blocked, removed, ended (not just rejected)
     const where: any = {
       AND: [
         {
-          // GOLDEN RULE: Zeige ALLE Artikel außer explizit 'rejected'
-          // Explizit null UND alle anderen Werte außer 'rejected' einschließen
-          OR: [{ moderationStatus: null }, { moderationStatus: { not: 'rejected' } }],
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+          ],
         },
         {
           // Verkaufte Artikel ausschließen (nur nicht-stornierte Purchases zählen als "verkauft")

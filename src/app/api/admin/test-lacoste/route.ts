@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * Test endpoint to check if Lacoste article appears in search results
@@ -48,20 +48,18 @@ export async function GET(request: NextRequest) {
     }
 
     // Test search query (same as /api/articles/search)
+    // RICARDO-STYLE: Exclude blocked, removed, ended
     const searchResults = await prisma.watch.findMany({
       where: {
         AND: [
           {
             OR: [
               { moderationStatus: null },
-              { moderationStatus: { not: 'rejected' } },
+              { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
             ],
           },
           {
-            OR: [
-              { purchases: { none: {} } },
-              { purchases: { every: { status: 'cancelled' } } },
-            ],
+            OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
           },
           {
             OR: [
@@ -171,4 +169,3 @@ export async function GET(request: NextRequest) {
     )
   }
 }
-

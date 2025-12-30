@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
 // FAST SEARCH API: Optimierte Such-Route für schnelles Laden
 // Verwendet Raw SQL für maximale Performance
@@ -18,8 +18,9 @@ export async function GET(request: NextRequest) {
     const now = new Date()
 
     // OPTIMIERT: Baue WHERE-Klausel dynamisch mit serverseitiger Filterung
+    // RICARDO-STYLE: Exclude blocked, removed, ended (not just rejected)
     let whereConditions = [
-      `(w."moderationStatus" IS NULL OR w."moderationStatus" != 'rejected')`,
+      `(w."moderationStatus" IS NULL OR w."moderationStatus" NOT IN ('rejected', 'blocked', 'removed', 'ended'))`,
       `NOT EXISTS (SELECT 1 FROM purchases p WHERE p."watchId" = w.id AND p.status != 'cancelled')`,
       `(w."auctionEnd" IS NULL OR w."auctionEnd" > $1 OR EXISTS (SELECT 1 FROM purchases p2 WHERE p2."watchId" = w.id AND p2.status != 'cancelled'))`,
     ]
@@ -39,12 +40,16 @@ export async function GET(request: NextRequest) {
 
     if (query) {
       // OPTIMIERT: Suche auch in description für bessere Trefferquote
-      whereConditions.push(`(w.title ILIKE $${params.length + 1} OR w.brand ILIKE $${params.length + 1} OR w.model ILIKE $${params.length + 1} OR w.description ILIKE $${params.length + 1})`)
+      whereConditions.push(
+        `(w.title ILIKE $${params.length + 1} OR w.brand ILIKE $${params.length + 1} OR w.model ILIKE $${params.length + 1} OR w.description ILIKE $${params.length + 1})`
+      )
       params.push(`%${query}%`)
     }
 
     if (category) {
-      whereConditions.push(`EXISTS (SELECT 1 FROM watch_categories wc INNER JOIN categories c ON wc."categoryId" = c.id WHERE wc."watchId" = w.id AND (c.slug = $${params.length + 1} OR c.name = $${params.length + 1}))`)
+      whereConditions.push(
+        `EXISTS (SELECT 1 FROM watch_categories wc INNER JOIN categories c ON wc."categoryId" = c.id WHERE wc."watchId" = w.id AND (c.slug = $${params.length + 1} OR c.name = $${params.length + 1}))`
+      )
       params.push(category)
     }
 
@@ -71,23 +76,26 @@ export async function GET(request: NextRequest) {
 
     try {
       // Versuche Raw SQL Query (schneller)
-      watches = await prisma.$queryRawUnsafe<Array<{
-      id: string
-      title: string | null
-      brand: string | null
-      model: string | null
-      price: number
-      buyNowPrice: number | null
-      images: string | null
-      createdAt: Date
-      isAuction: boolean | null
-      auctionEnd: Date | null
-      articleNumber: number | null
-      boosters: string | null
-      city: string | null
-      postalCode: string | null
-      condition: string | null
-    }>>(`
+      watches = await prisma.$queryRawUnsafe<
+        Array<{
+          id: string
+          title: string | null
+          brand: string | null
+          model: string | null
+          price: number
+          buyNowPrice: number | null
+          images: string | null
+          createdAt: Date
+          isAuction: boolean | null
+          auctionEnd: Date | null
+          articleNumber: number | null
+          boosters: string | null
+          city: string | null
+          postalCode: string | null
+          condition: string | null
+        }>
+      >(
+        `
       SELECT
         w.id,
         w.title,
@@ -117,24 +125,24 @@ export async function GET(request: NextRequest) {
         w."createdAt" DESC
       LIMIT ${limit}
       OFFSET ${skip}
-    `, ...params)
+    `,
+        ...params
+      )
     } catch (sqlError) {
       // Fallback zu Prisma Query falls Raw SQL fehlschlägt
       console.warn('Raw SQL failed in search-fast, using Prisma fallback:', sqlError)
+      // RICARDO-STYLE fallback query
       const nowDate = new Date()
       const where: any = {
         AND: [
           {
             OR: [
               { moderationStatus: null },
-              { moderationStatus: { not: 'rejected' } },
+              { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
             ],
           },
           {
-            OR: [
-              { purchases: { none: {} } },
-              { purchases: { every: { status: 'cancelled' } } },
-            ],
+            OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
           },
           {
             OR: [
@@ -163,10 +171,7 @@ export async function GET(request: NextRequest) {
         where.categories = {
           some: {
             category: {
-              OR: [
-                { slug: category },
-                { name: category },
-              ],
+              OR: [{ slug: category }, { name: category }],
             },
           },
         }
@@ -186,7 +191,7 @@ export async function GET(request: NextRequest) {
         where.isAuction = false
       }
 
-      watches = await prisma.watch.findMany({
+      watches = (await prisma.watch.findMany({
         where,
         select: {
           id: true,
@@ -212,7 +217,7 @@ export async function GET(request: NextRequest) {
         orderBy: { createdAt: 'desc' },
         take: Math.min(limit, 200), // OPTIMIERT: Max 200 Ergebnisse
         skip: skip,
-      }) as any[]
+      })) as any[]
 
       // Transformiere Prisma-Format zu Raw SQL-Format
       watches = watches.map(w => ({
@@ -251,9 +256,16 @@ export async function GET(request: NextRequest) {
         price: w.price,
         buyNowPrice: w.buyNowPrice,
         images: firstImage ? [firstImage] : [],
-        createdAt: w.createdAt instanceof Date ? w.createdAt.toISOString() : new Date(w.createdAt).toISOString(),
+        createdAt:
+          w.createdAt instanceof Date
+            ? w.createdAt.toISOString()
+            : new Date(w.createdAt).toISOString(),
         isAuction: !!w.isAuction || !!w.auctionEnd,
-        auctionEnd: w.auctionEnd ? (w.auctionEnd instanceof Date ? w.auctionEnd.toISOString() : new Date(w.auctionEnd).toISOString()) : null,
+        auctionEnd: w.auctionEnd
+          ? w.auctionEnd instanceof Date
+            ? w.auctionEnd.toISOString()
+            : new Date(w.auctionEnd).toISOString()
+          : null,
         articleNumber: w.articleNumber,
         boosters,
         city: w.city,
@@ -277,4 +289,3 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ watches: [] }, { status: 200 })
   }
 }
-
