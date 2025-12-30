@@ -239,55 +239,97 @@ export function ProductCard({
           <div className="h-full w-full bg-gray-50" />
         )}
 
-        {/* Top-left: Boost + Auction + Condition Badges */}
+        {/* Top-left: Badges - MAX 2 BADGES, strict hierarchy */}
+        {/* Priority: 1) Auction/Sofortkauf 2) Condition (Wie neu) 3) Gold/Silber/Bronze (only if no auction) */}
         <div className="absolute left-2 top-2 flex flex-col gap-1">
-          {/* Boost badges - Ricardo-style: Gold > Silber > Bronze */}
-          {isBoosted && boostType === 'gold' && (
-            <span className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-2 py-0.5 text-[11px] font-semibold text-amber-900 shadow-sm">
-              <Award className="mr-1 h-3 w-3" />
-              Gold
-            </span>
-          )}
-          {isBoosted && boostType === 'silber' && (
-            <span className="inline-flex items-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 px-2 py-0.5 text-[11px] font-semibold text-slate-800 shadow-sm">
-              <Medal className="mr-1 h-3 w-3" />
-              Silber
-            </span>
-          )}
-          {isBoosted && boostType === 'bronze' && (
-            <span className="inline-flex items-center rounded-full bg-gradient-to-r from-orange-300 to-amber-400 px-2 py-0.5 text-[11px] font-semibold text-orange-900 shadow-sm">
-              <Star className="mr-1 h-3 w-3" />
-              Bronze
-            </span>
-          )}
+          {(() => {
+            const badges: React.ReactNode[] = []
+            const MAX_BADGES = 2
 
-          {/* Auction badge - always shown for auctions */}
-          {isAuction && (
-            <span className="inline-flex items-center rounded-full bg-orange-100/90 px-2 py-0.5 text-[11px] font-medium text-orange-800 shadow-sm backdrop-blur">
-              <Gavel className="mr-1 h-3 w-3" />
-              Auktion
-            </span>
-          )}
+            // Priority 1: Auction badge (highest priority for offer type)
+            if (isAuction && badges.length < MAX_BADGES) {
+              badges.push(
+                <span
+                  key="auction"
+                  className="inline-flex items-center rounded-full bg-orange-100/95 px-2 py-0.5 text-[11px] font-semibold text-orange-800 shadow-sm backdrop-blur"
+                >
+                  <Gavel className="mr-1 h-3 w-3" />
+                  Auktion
+                </span>
+              )
+            }
 
-          {/* Sponsored badge - ONLY if isSponsored === true */}
-          {product.isSponsored === true && (
-            <span className="inline-flex items-center rounded-full bg-gray-100/90 px-2 py-0.5 text-[11px] font-medium text-gray-700 shadow-sm backdrop-blur">
-              Gesponsert
-            </span>
-          )}
+            // Priority 2: Gold boost (only if NOT auction, to avoid clutter)
+            if (!isAuction && isBoosted && boostType === 'gold' && badges.length < MAX_BADGES) {
+              badges.push(
+                <span
+                  key="gold"
+                  className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-2 py-0.5 text-[11px] font-semibold text-amber-900 shadow-sm"
+                  title="Premium-Platzierung"
+                >
+                  <Award className="mr-1 h-3 w-3" />
+                  Gold
+                </span>
+              )
+            }
 
-          {/* Condition badges (Wie neu, Sehr gut, etc.) - only if not too many badges */}
-          {overlayBadges
-            .filter(badge => badge !== 'Gesponsert')
-            .slice(0, isBoosted || isAuction ? 1 : 2)
-            .map((badge, index) => (
-              <span
-                key={index}
-                className="inline-flex items-center rounded-full bg-white/90 px-2 py-0.5 text-[11px] font-medium text-gray-900 shadow-sm backdrop-blur"
-              >
-                {badge}
-              </span>
-            ))}
+            // Priority 3: Silber boost (only if NOT auction)
+            if (!isAuction && isBoosted && boostType === 'silber' && badges.length < MAX_BADGES) {
+              badges.push(
+                <span
+                  key="silber"
+                  className="inline-flex items-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 px-2 py-0.5 text-[11px] font-semibold text-slate-800 shadow-sm"
+                  title="Hervorgehobene Platzierung"
+                >
+                  <Medal className="mr-1 h-3 w-3" />
+                  Silber
+                </span>
+              )
+            }
+
+            // Priority 4: Condition badge (Wie neu, Neu, etc.) - always try to show if space
+            const conditionBadge = overlayBadges.find(
+              b => b === 'Neu' || b === 'Wie neu' || b === 'Sehr gut'
+            )
+            if (conditionBadge && badges.length < MAX_BADGES) {
+              badges.push(
+                <span
+                  key="condition"
+                  className="inline-flex items-center rounded-full bg-white/95 px-2 py-0.5 text-[11px] font-medium text-gray-800 shadow-sm backdrop-blur"
+                >
+                  {conditionBadge}
+                </span>
+              )
+            }
+
+            // Priority 5: Bronze boost (lowest priority, only if space and not auction)
+            if (!isAuction && isBoosted && boostType === 'bronze' && badges.length < MAX_BADGES) {
+              badges.push(
+                <span
+                  key="bronze"
+                  className="inline-flex items-center rounded-full bg-gradient-to-r from-orange-200 to-amber-300 px-2 py-0.5 text-[11px] font-medium text-orange-900 shadow-sm"
+                  title="Hervorgehobene Platzierung"
+                >
+                  <Star className="mr-1 h-3 w-3" />
+                  Bronze
+                </span>
+              )
+            }
+
+            // Priority 6: Sponsored badge (only if isSponsored === true)
+            if (product.isSponsored === true && badges.length < MAX_BADGES) {
+              badges.push(
+                <span
+                  key="sponsored"
+                  className="inline-flex items-center rounded-full bg-gray-100/90 px-2 py-0.5 text-[10px] font-medium text-gray-600 shadow-sm backdrop-blur"
+                >
+                  Gesponsert
+                </span>
+              )
+            }
+
+            return badges
+          })()}
         </div>
 
         {/* Bottom-left: Auction timer (subtle, not aggressive) */}
@@ -312,9 +354,13 @@ export function ProductCard({
 
       {/* Content Wrapper */}
       <div className="p-2.5">
-        {/* Title - 2 lines max with ellipsis */}
-        <h3 className="line-clamp-2 text-[13px] font-medium leading-4 text-gray-900">
-          {product.title}
+        {/* Title - 2 lines max with ellipsis, with fallback */}
+        <h3 className="line-clamp-2 min-h-[32px] text-[13px] font-medium leading-4 text-gray-900">
+          {product.title && product.title.trim().length > 2
+            ? product.title
+            : product.brand
+              ? `${product.brand} – Artikel`
+              : 'Artikel ohne Titel'}
         </h3>
 
         {/* Helvenda Schutz Badge + Brand (like Ricardo's ® | Brand) */}

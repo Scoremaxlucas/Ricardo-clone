@@ -4,9 +4,12 @@
  * Server Component für SEO
  * Zeigt 6-8 Top-Kategorien mit Icons und Namen
  * Clean, minimal design mit weißem Hintergrund
+ * 
+ * Desktop: Sehr kompakt, horizontal, wenig vertikaler Platzverbrauch
  */
 
 import Link from 'next/link'
+import { ChevronRight } from 'lucide-react'
 import { getCategoryConfig } from '@/data/categories'
 
 // Hauptkategorien für Popular Categories (6-8 wichtigste)
@@ -42,38 +45,53 @@ export function PopularCategories() {
   }>
 
   return (
-    <section className="bg-white py-8 md:py-10 lg:py-4">
-      <div className="mx-auto max-w-[1600px] px-4 sm:px-6 lg:px-8">
-        {/* Header - kompakter auf Desktop */}
-        <div className="mb-4 text-center lg:mb-3">
-          <h2 className="mb-1 text-xl font-bold text-gray-900 md:text-2xl lg:text-lg">
+    <section className="border-b border-gray-100 bg-white py-6 md:py-6 lg:py-3">
+      <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+        {/* Header - inline auf Desktop für Platzersparnis */}
+        <div className="mb-3 flex items-center justify-between lg:mb-2">
+          <h2 className="text-base font-semibold text-gray-900 md:text-lg lg:text-sm">
             Beliebte Kategorien
           </h2>
-          <p className="text-sm text-gray-600 lg:text-xs">
-            Entdecken Sie unsere meistbesuchten Kategorien
-          </p>
+          <Link
+            href="/search"
+            className="hidden items-center gap-1 text-xs font-medium text-primary-600 transition-colors hover:text-primary-700 lg:flex"
+          >
+            Alle Kategorien
+            <ChevronRight className="h-3 w-3" />
+          </Link>
         </div>
 
-        {/* Kategorien Grid - kompakter auf Desktop */}
-        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 lg:gap-2">
+        {/* Kategorien Grid - horizontal scrollbar auf Mobile, kompaktes Grid auf Desktop */}
+        <div className="grid grid-cols-4 gap-2 sm:grid-cols-4 md:grid-cols-8 lg:gap-1.5">
           {categories.map(category => {
             const IconComponent = category.icon
             return (
               <Link
                 key={category.slug}
                 href={category.href}
-                className="group flex cursor-pointer flex-col items-center gap-2 rounded-lg border border-transparent bg-white p-3 transition-all duration-200 ease-out hover:border-primary-200 hover:bg-primary-50/50 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 lg:gap-1.5 lg:p-2"
+                className="group flex cursor-pointer flex-col items-center gap-1 rounded-lg border border-transparent p-2 transition-all duration-150 hover:border-primary-100 hover:bg-primary-50/50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 lg:gap-1 lg:p-1.5"
                 aria-label={`Kategorie ${category.name} durchsuchen`}
               >
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-50 text-primary-600 transition-all duration-200 ease-out group-hover:bg-primary-100 md:h-14 md:w-14 lg:h-10 lg:w-10">
-                  <IconComponent className="h-6 w-6 transition-transform duration-200 group-hover:scale-110 md:h-7 md:w-7 lg:h-5 lg:w-5" />
+                <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-50 text-primary-600 transition-colors duration-150 group-hover:bg-primary-100 md:h-9 md:w-9 lg:h-8 lg:w-8">
+                  <IconComponent className="h-5 w-5 md:h-4 md:w-4 lg:h-4 lg:w-4" />
                 </div>
-                <span className="text-center text-xs font-medium text-gray-700 transition-colors duration-200 group-hover:text-primary-600 sm:text-sm lg:text-xs">
+                <span className="line-clamp-1 text-center text-[10px] font-medium text-gray-700 transition-colors duration-150 group-hover:text-primary-600 sm:text-xs lg:text-[10px]">
                   {category.name}
                 </span>
               </Link>
             )
           })}
+        </div>
+
+        {/* Mobile: "Alle Kategorien" Link */}
+        <div className="mt-2 flex justify-center lg:hidden">
+          <Link
+            href="/search"
+            className="flex items-center gap-1 text-xs font-medium text-primary-600 transition-colors hover:text-primary-700"
+          >
+            Alle Kategorien anzeigen
+            <ChevronRight className="h-3 w-3" />
+          </Link>
         </div>
       </div>
     </section>

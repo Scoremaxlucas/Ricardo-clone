@@ -17,10 +17,6 @@ import { toast } from 'react-hot-toast'
  */
 
 // Lazy imports
-const LazyTrendingNow = lazy(() =>
-  import('@/components/home/TrendingNow').then(m => ({ default: m.TrendingNow }))
-)
-
 const LazyDailyDeals = lazy(() =>
   import('@/components/home/DailyDeals').then(m => ({ default: m.DailyDeals }))
 )
@@ -113,11 +109,6 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
           {/* Daily Deals */}
           <Suspense fallback={<SectionSkeleton bg="bg-gradient-to-br from-orange-50 to-red-50" />}>
             <LazyDailyDeals />
-          </Suspense>
-
-          {/* Trending Now */}
-          <Suspense fallback={<SectionSkeleton />}>
-            <LazyTrendingNow />
           </Suspense>
         </>
       ) : (
