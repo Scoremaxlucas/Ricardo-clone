@@ -22,9 +22,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Prüfe ob die Uhr existiert
+    // WICHTIG: Explizites select für purchases um disputeInitiatedBy zu vermeiden
     const watch = await prisma.watch.findUnique({
       where: { id: watchId },
-      include: { purchases: true },
+      include: {
+        purchases: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
+      },
     })
 
     if (!watch) {

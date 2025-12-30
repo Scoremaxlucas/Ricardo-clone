@@ -44,11 +44,17 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Ungültiger Betrag' }, { status: 400 })
     }
 
+    // WICHTIG: Explizites select für purchases um disputeInitiatedBy zu vermeiden
     const watch = await prisma.watch.findUnique({
       where: { id: watchId },
       include: {
         seller: true,
-        purchases: true,
+        purchases: {
+          select: {
+            id: true,
+            status: true,
+          },
+        },
       },
     })
 

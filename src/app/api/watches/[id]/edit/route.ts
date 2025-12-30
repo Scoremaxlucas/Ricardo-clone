@@ -36,12 +36,23 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         bids: {
           orderBy: { createdAt: 'desc' },
         },
+        // WICHTIG: Explizites select um disputeInitiatedBy zu vermeiden
         purchases: {
           where: {
             status: { not: 'cancelled' },
           },
+          select: {
+            id: true,
+            status: true,
+          },
         },
-        sales: true,
+        sales: {
+          select: {
+            id: true,
+            price: true,
+            // Sale-Model hat kein status Feld
+          },
+        },
         categories: {
           include: {
             category: true,

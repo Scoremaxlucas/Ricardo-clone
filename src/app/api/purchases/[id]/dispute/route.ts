@@ -54,11 +54,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     // Lade Purchase mit allen relevanten Daten
+    // WICHTIG: Explizites select um disputeInitiatedBy zu vermeiden (P2022)
     const purchase = await prisma.purchase.findUnique({
       where: { id },
-      include: {
+      select: {
+        id: true,
+        watchId: true,
+        buyerId: true,
+        status: true,
+        createdAt: true,
+        disputeOpenedAt: true,
+        disputeStatus: true,
+        // disputeInitiatedBy wird NICHT selektiert (existiert möglicherweise noch nicht in DB)
         watch: {
-          include: {
+          select: {
+            id: true,
+            title: true,
+            sellerId: true,
             seller: {
               select: {
                 id: true,

@@ -7,11 +7,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params
 
     // Hole User mit allen relevanten Daten
+    // WICHTIG: Explizites select für purchases um disputeInitiatedBy zu vermeiden
     const user = await prisma.user.findUnique({
       where: { id },
       include: {
-        purchases: true,
-        sales: true,
+        purchases: {
+          select: {
+            id: true,
+            status: true,
+            price: true,
+            createdAt: true,
+            // disputeInitiatedBy wird NICHT selektiert
+          },
+        },
+        sales: {
+          select: {
+            id: true,
+            price: true,
+            createdAt: true,
+            // Sale-Model hat kein status Feld
+          },
+        },
         watches: {
           where: {
             AND: [

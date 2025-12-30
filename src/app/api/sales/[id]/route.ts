@@ -22,12 +22,53 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     
     console.log(`[sales/${searchId}] Fetching purchase for seller ${session.user.id}`)
 
-    const includeOptions = {
+    // WICHTIG: Explizites select um disputeInitiatedBy zu vermeiden (P2022)
+    const selectOptions = {
+      id: true,
+      watchId: true,
+      buyerId: true,
+      price: true,
+      status: true,
+      createdAt: true,
+      shippingMethod: true,
+      paid: true,
+      paidAt: true,
+      paymentConfirmed: true,
+      paymentConfirmedAt: true,
+      itemReceived: true,
+      itemReceivedAt: true,
+      contactDeadline: true,
+      sellerContactedAt: true,
+      buyerContactedAt: true,
+      contactWarningSentAt: true,
+      contactDeadlineMissed: true,
+      disputeOpenedAt: true,
+      disputeReason: true,
+      disputeStatus: true,
+      disputeResolvedAt: true,
+      trackingNumber: true,
+      trackingProvider: true,
+      shippedAt: true,
+      estimatedDeliveryDate: true,
+      // disputeInitiatedBy wird NICHT selektiert (existiert möglicherweise noch nicht in DB)
       watch: {
-        include: {
+        select: {
+          id: true,
+          title: true,
+          brand: true,
+          model: true,
+          images: true,
+          price: true,
+          buyNowPrice: true,
+          shippingMethod: true,
+          paymentProtectionEnabled: true,
           bids: {
             orderBy: { amount: 'desc' as const },
             take: 1,
+            select: {
+              id: true,
+              amount: true,
+            },
           },
         },
       },
@@ -56,7 +97,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           sellerId: session.user.id,
         },
       },
-      include: includeOptions,
+      select: selectOptions,
     })
 
     // If not found, try by watchId
@@ -70,7 +111,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           },
           status: { not: 'cancelled' },
         },
-        include: includeOptions,
+        select: selectOptions,
       })
     }
 
