@@ -18,11 +18,18 @@ import { Sheet, SheetContent } from '@/components/ui/Sheet'
 import { UserName } from '@/components/ui/UserName'
 import { useLanguage } from '@/contexts/LanguageContext'
 import {
+  Baby,
   Bell,
+  Car,
   ChevronDown,
+  ChevronRight,
+  Dumbbell,
+  Gamepad2,
   Gavel,
   Grid3x3,
   Heart,
+  Home,
+  Laptop,
   LogOut,
   Menu,
   Package,
@@ -30,9 +37,11 @@ import {
   Search,
   Settings,
   Shield,
+  Shirt,
   ShoppingBag,
   User,
   Wallet,
+  Watch,
   X,
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
@@ -691,6 +700,52 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
           </div>
         </div>
       </div>
+
+      {/* === ROW 3: Desktop Category Navigation Bar (Ricardo-Style) === */}
+      <nav
+        className="hidden border-t border-gray-100 bg-gray-50/80 lg:block"
+        role="navigation"
+        aria-label="Kategorien-Navigation"
+      >
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <div className="flex h-11 items-center justify-center gap-1">
+            {/* Top 8 Categories */}
+            {[
+              { slug: 'auto-motorrad', name: 'Auto & Motorrad', icon: Car },
+              { slug: 'computer-netzwerk', name: 'Computer & Netzwerk', icon: Laptop },
+              { slug: 'kleidung-accessoires', name: 'Kleidung', icon: Shirt },
+              { slug: 'haushalt-wohnen', name: 'Haushalt & Wohnen', icon: Home },
+              { slug: 'sport', name: 'Sport', icon: Dumbbell },
+              { slug: 'uhren-schmuck', name: 'Uhren & Schmuck', icon: Watch },
+              { slug: 'games-konsolen', name: 'Games & Konsolen', icon: Gamepad2 },
+              { slug: 'kind-baby', name: 'Kind & Baby', icon: Baby },
+            ].map(category => (
+              <Link
+                key={category.slug}
+                href={`/search?category=${category.slug}`}
+                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-gray-700 transition-colors hover:bg-white hover:text-primary-600 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+              >
+                <category.icon className="h-4 w-4 flex-shrink-0" />
+                <span className="whitespace-nowrap">{category.name}</span>
+              </Link>
+            ))}
+
+            {/* Divider */}
+            <div className="mx-1 h-5 w-px bg-gray-300" />
+
+            {/* "Alle Kategorien" Button - Opens existing sidebar */}
+            <button
+              type="button"
+              onClick={() => setIsSidebarOpen(true)}
+              className="flex items-center gap-1.5 rounded-md bg-primary-50 px-3 py-1.5 text-[13px] font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+            >
+              <Grid3x3 className="h-4 w-4 flex-shrink-0" />
+              <span className="whitespace-nowrap">Alle Kategorien</span>
+              <ChevronRight className="h-3 w-3" />
+            </button>
+          </div>
+        </div>
+      </nav>
 
       {/* Mobile Menu Sheet */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
