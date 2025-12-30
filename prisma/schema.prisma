@@ -151,6 +151,7 @@ model User {
   payoutProfile                 PayoutProfile?
   payoutChangeRequestsDecided   PayoutChangeRequest[] @relation("PayoutChangeDecider")
   payoutAuditLogs               PayoutAuditLog[]     @relation("PayoutAuditActor")
+  disputeComments               DisputeComment[]
 
   @@map("users")
 }
@@ -286,33 +287,46 @@ model MaxBid {
 }
 
 model Purchase {
-  id                             String       @id @default(cuid())
+  id                             String            @id @default(cuid())
   price                          Float?
   shippingMethod                 String?
-  status                         String       @default("pending")
-  itemReceived                   Boolean      @default(false)
+  status                         String            @default("pending")
+  itemReceived                   Boolean           @default(false)
   itemReceivedAt                 DateTime?
-  paymentConfirmed               Boolean      @default(false)
+  paymentConfirmed               Boolean           @default(false)
   paymentConfirmedAt             DateTime?
   contactDeadline                DateTime
   sellerContactedAt              DateTime?
   buyerContactedAt               DateTime?
   contactWarningSentAt           DateTime?
-  contactDeadlineMissed          Boolean      @default(false)
+  contactDeadlineMissed          Boolean           @default(false)
   paymentDeadline                DateTime?
   paymentReminderSentAt          DateTime?
-  paymentReminderCount           Int          @default(0)
-  paymentDeadlineMissed          Boolean      @default(false)
+  paymentReminderCount           Int               @default(0)
+  paymentDeadlineMissed          Boolean           @default(false)
   trackingNumber                 String?
   trackingProvider               String?
   shippedAt                      DateTime?
   estimatedDeliveryDate          DateTime?
+  // === DISPUTE SYSTEM (Enhanced) ===
   disputeOpenedAt                DateTime?
   disputeReason                  String?
   disputeDescription             String?
-  disputeStatus                  String?
+  disputeStatus                  String?           // pending, under_review, resolved, rejected, closed
   disputeResolvedAt              DateTime?
   disputeResolvedBy              String?
+  disputeInitiatedBy             String?           // 'buyer' or 'seller' - who opened the dispute
+  disputeDeadline                DateTime?         // Deadline for resolution (14 days after opening)
+  disputeFrozenAt                DateTime?         // When purchase was frozen due to dispute
+  disputeAttachments             String?           // JSON array of file URLs for evidence
+  disputeReminderSentAt          DateTime?         // Last reminder sent
+  disputeReminderCount           Int               @default(0)
+  // === STRIPE INTEGRATION ===
+  stripePaymentIntentId          String?           // Stripe PaymentIntent ID for refunds
+  stripeRefundId                 String?           // Stripe Refund ID if refunded
+  stripeRefundStatus             String?           // pending, succeeded, failed
+  stripeRefundedAt               DateTime?
+  // === CANCELLATION REQUEST ===
   cancellationRequestedAt        DateTime?
   cancellationRequestStatus      String?
   cancellationRequestReason      String?
@@ -320,20 +334,43 @@ model Purchase {
   cancellationRequestResolvedAt  DateTime?
   cancellationRequestResolvedBy  String?
   statusHistory                  String?
-  paid                           Boolean      @default(false)
+  paid                           Boolean           @default(false)
   paidAt                         DateTime?
-  createdAt                      DateTime     @default(now())
-  updatedAt                      DateTime     @updatedAt
+  createdAt                      DateTime          @default(now())
+  updatedAt                      DateTime          @updatedAt
   watchId                        String
   buyerId                        String
   priceOffers                    PriceOffer[]
-  buyer                          User         @relation(fields: [buyerId], references: [id])
-  watch                          Watch        @relation(fields: [watchId], references: [id])
+  buyer                          User              @relation(fields: [buyerId], references: [id])
+  watch                          Watch             @relation(fields: [watchId], references: [id])
   reviews                        Review[]
+  disputeComments                DisputeComment[]
 
   @@index([watchId]) // OPTIMIERT: Für schnelle Purchase-Abfragen
   @@index([watchId, status]) // OPTIMIERT: Für Filterung nach Status bei watchId-Filter
+  @@index([disputeStatus]) // OPTIMIERT: Für Dispute-Übersicht
   @@map("purchases")
+}
+
+// === DISPUTE COMMENT SYSTEM ===
+// Tracks all comments and actions in a dispute for full history
+model DisputeComment {
+  id          String   @id @default(cuid())
+  purchaseId  String
+  userId      String
+  userRole    String   // 'buyer', 'seller', 'admin'
+  type        String   // 'comment', 'status_change', 'evidence_uploaded', 'reminder_sent', 'resolution'
+  content     String   // Comment text or action description
+  attachments String?  // JSON array of file URLs
+  isInternal  Boolean  @default(false) // Admin-only notes
+  createdAt   DateTime @default(now())
+
+  purchase Purchase @relation(fields: [purchaseId], references: [id], onDelete: Cascade)
+  user     User     @relation(fields: [userId], references: [id])
+
+  @@index([purchaseId])
+  @@index([purchaseId, createdAt])
+  @@map("dispute_comments")
 }
 
 model Sale {

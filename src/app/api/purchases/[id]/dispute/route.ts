@@ -5,9 +5,36 @@ import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
 import { addStatusHistory } from '@/lib/status-history'
 
+// === DISPUTE CONFIGURATION ===
+const DISPUTE_CONFIG = {
+  // Fristen
+  OPEN_DEADLINE_DAYS: 30, // Dispute kann bis 30 Tage nach Kaufabschluss eröffnet werden
+  RESOLUTION_DEADLINE_DAYS: 14, // Admin hat 14 Tage zur Lösung
+  
+  // Reminder
+  REMINDER_AFTER_DAYS: [3, 7, 10], // Erinnerungen nach X Tagen
+  
+  // Erlaubte Gründe
+  BUYER_REASONS: [
+    'item_not_received',
+    'item_damaged', 
+    'item_wrong',
+    'item_not_as_described',
+    'seller_not_responding',
+    'other',
+  ],
+  SELLER_REASONS: [
+    'payment_not_confirmed',
+    'payment_not_received',
+    'buyer_not_responding',
+    'buyer_not_paying',
+    'other',
+  ],
+}
+
 /**
  * POST: Dispute eröffnen
- * Nur Verkäufer können Disputes eröffnen
+ * Sowohl Käufer als auch Verkäufer können Disputes eröffnen
  */
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
@@ -17,7 +44,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const { id } = await params
-    const { reason, description } = await request.json()
+    const { reason, description, attachments } = await request.json()
 
     if (!reason || !description) {
       return NextResponse.json(
@@ -26,7 +53,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Lade Purchase
+    // Lade Purchase mit allen relevanten Daten
     const purchase = await prisma.purchase.findUnique({
       where: { id },
       include: {
@@ -61,22 +88,25 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
 
-    // Prüfe Berechtigung (nur Verkäufer kann Dispute eröffnen)
+    // Prüfe Berechtigung (Käufer ODER Verkäufer kann Dispute eröffnen)
     const isSeller = purchase.watch.sellerId === session.user.id
+    const isBuyer = purchase.buyerId === session.user.id
 
-    if (!isSeller) {
+    if (!isSeller && !isBuyer) {
       return NextResponse.json(
-        { message: 'Nur der Verkäufer kann einen Dispute eröffnen' },
+        { message: 'Sie sind nicht berechtigt, für diesen Kauf einen Dispute zu eröffnen' },
         { status: 403 }
       )
     }
 
-    // Validiere, dass der Dispute-Grund für Verkäufer gültig ist
-    const sellerReasons = ['payment_not_confirmed', 'buyer_not_responding', 'other']
+    // Bestimme die Rolle und erlaubte Gründe
+    const initiatorRole = isBuyer ? 'buyer' : 'seller'
+    const allowedReasons = isBuyer ? DISPUTE_CONFIG.BUYER_REASONS : DISPUTE_CONFIG.SELLER_REASONS
 
-    if (!sellerReasons.includes(reason)) {
+    // Validiere den Dispute-Grund
+    if (!allowedReasons.includes(reason)) {
       return NextResponse.json(
-        { message: 'Dieser Dispute-Grund ist nicht gültig' },
+        { message: `Dieser Dispute-Grund ist für ${isBuyer ? 'Käufer' : 'Verkäufer'} nicht gültig` },
         { status: 400 }
       )
     }
@@ -89,24 +119,65 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Prüfe ob Kauf bereits abgeschlossen ist
-    if (purchase.status === 'completed') {
+    // Prüfe ob Kauf bereits storniert ist
+    if (purchase.status === 'cancelled') {
       return NextResponse.json(
-        { message: 'Für abgeschlossene Käufe kann kein Dispute eröffnet werden' },
+        { message: 'Für stornierte Käufe kann kein Dispute eröffnet werden' },
         { status: 400 }
       )
     }
 
-    // Erstelle Dispute
+    // Prüfe Frist: Dispute kann nur innerhalb von X Tagen eröffnet werden
+    const purchaseDate = purchase.createdAt
+    const deadlineDate = new Date(purchaseDate)
+    deadlineDate.setDate(deadlineDate.getDate() + DISPUTE_CONFIG.OPEN_DEADLINE_DAYS)
+    
+    if (new Date() > deadlineDate) {
+      return NextResponse.json(
+        { 
+          message: `Die Frist für die Eröffnung eines Disputes ist abgelaufen. Disputes können nur innerhalb von ${DISPUTE_CONFIG.OPEN_DEADLINE_DAYS} Tagen nach dem Kauf eröffnet werden.`,
+          deadlineExpired: true,
+        },
+        { status: 400 }
+      )
+    }
+
+    // Berechne Deadline für Dispute-Lösung
+    const disputeDeadline = new Date()
+    disputeDeadline.setDate(disputeDeadline.getDate() + DISPUTE_CONFIG.RESOLUTION_DEADLINE_DAYS)
+
+    // Erstelle Dispute mit allen neuen Feldern
+    const now = new Date()
     const updatedPurchase = await prisma.purchase.update({
       where: { id },
       data: {
-        disputeOpenedAt: new Date(),
+        disputeOpenedAt: now,
         disputeStatus: 'pending',
-        disputeReason: reason, // Nur der Grund (z.B. 'item_not_received')
-        disputeDescription: description, // Detaillierte Beschreibung getrennt
+        disputeReason: reason,
+        disputeDescription: description,
+        disputeInitiatedBy: initiatorRole,
+        disputeDeadline: disputeDeadline,
+        disputeFrozenAt: now, // Kaufprozess einfrieren
+        disputeAttachments: attachments ? JSON.stringify(attachments) : null,
+        disputeReminderCount: 0,
       },
     })
+
+    // Erstelle ersten DisputeComment für die Historie
+    try {
+      await prisma.disputeComment.create({
+        data: {
+          purchaseId: id,
+          userId: session.user.id,
+          userRole: initiatorRole,
+          type: 'comment',
+          content: description,
+          attachments: attachments ? JSON.stringify(attachments) : null,
+        },
+      })
+    } catch (commentError) {
+      console.error('[dispute] Fehler beim Erstellen des DisputeComment:', commentError)
+    }
 
     // Füge Status-Historie hinzu
     try {
@@ -114,28 +185,27 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         id,
         purchase.status || 'pending',
         session.user.id,
-        `Dispute eröffnet: ${reason}`
+        `Dispute eröffnet von ${initiatorRole === 'buyer' ? 'Käufer' : 'Verkäufer'}: ${reason}`
       )
     } catch (error) {
       console.error('[dispute] Fehler beim Hinzufügen der Status-Historie:', error)
     }
 
-    // Benachrichtigung an die andere Partei (Käufer)
-    const otherParty = purchase.buyer
-    const openerName =
-      purchase.watch.seller.nickname ||
-      purchase.watch.seller.firstName ||
-      purchase.watch.seller.name ||
-      'Verkäufer'
+    // Bestimme die andere Partei
+    const otherParty = isBuyer ? purchase.watch.seller : purchase.buyer
+    const opener = isBuyer ? purchase.buyer : purchase.watch.seller
+    const openerName = opener.nickname || opener.firstName || opener.name || (isBuyer ? 'Käufer' : 'Verkäufer')
+    const otherPartyLink = isBuyer ? `/my-watches/selling/sold` : `/my-watches/buying/purchased`
 
+    // Benachrichtigung an die andere Partei
     try {
       await prisma.notification.create({
         data: {
           userId: otherParty.id,
           type: 'PURCHASE',
           title: '⚠️ Dispute eröffnet',
-          message: `${openerName} hat einen Dispute für "${purchase.watch.title}" eröffnet. Grund: ${reason}`,
-          link: `/my-watches/buying/purchased`,
+          message: `${openerName} hat einen Dispute für "${purchase.watch.title}" eröffnet. Grund: ${getReasonLabel(reason)}. Bitte nehmen Sie Stellung.`,
+          link: otherPartyLink,
           watchId: purchase.watchId,
         },
       })
@@ -143,7 +213,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       console.error('[dispute] Fehler beim Erstellen der Benachrichtigung:', error)
     }
 
-    // E-Mail-Benachrichtigung
+    // E-Mail-Benachrichtigung an andere Partei
     try {
       const { getDisputeOpenedEmail } = await import('@/lib/email')
       const { subject, html, text } = getDisputeOpenedEmail(
@@ -152,7 +222,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         purchase.watch.title,
         reason,
         description,
-        'buyer'
+        isBuyer ? 'seller' : 'buyer'
       )
 
       await sendEmail({
@@ -165,11 +235,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       console.error('[dispute] Fehler beim Senden der Dispute-E-Mail:', emailError)
     }
 
-    // Benachrichtigung an Admins
+    // Benachrichtigung an Admins mit höherer Priorität
     try {
       const admins = await prisma.user.findMany({
         where: { isAdmin: true },
-        select: { id: true },
+        select: { id: true, email: true },
       })
 
       for (const admin of admins) {
@@ -177,22 +247,45 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           data: {
             userId: admin.id,
             type: 'PURCHASE',
-            title: '🔔 Neuer Dispute',
-            message: `Ein Dispute wurde für "${purchase.watch.title}" eröffnet. Grund: ${reason}`,
+            title: '🔔 Neuer Dispute - Aktion erforderlich',
+            message: `Ein Dispute wurde für "${purchase.watch.title}" eröffnet. Grund: ${getReasonLabel(reason)}. Frist: ${disputeDeadline.toLocaleDateString('de-CH')}`,
             link: `/admin/disputes/${id}`,
             watchId: purchase.watchId,
           },
         })
       }
+
+      // Optional: E-Mail an Admins für dringende Fälle
+      if (reason === 'item_not_received' || reason === 'item_damaged') {
+        for (const admin of admins) {
+          if (admin.email) {
+            try {
+              await sendEmail({
+                to: admin.email,
+                subject: `🚨 Dringender Dispute: ${purchase.watch.title}`,
+                html: `<p>Ein dringender Dispute wurde eröffnet.</p>
+                       <p><strong>Grund:</strong> ${getReasonLabel(reason)}</p>
+                       <p><strong>Artikel:</strong> ${purchase.watch.title}</p>
+                       <p><strong>Frist:</strong> ${disputeDeadline.toLocaleDateString('de-CH')}</p>
+                       <p><a href="${process.env.NEXTAUTH_URL}/admin/disputes/${id}">Zum Dispute</a></p>`,
+                text: `Dringender Dispute für ${purchase.watch.title}. Grund: ${getReasonLabel(reason)}`,
+              })
+            } catch (e) {
+              // Silent fail for admin emails
+            }
+          }
+        }
+      }
     } catch (error) {
       console.error('[dispute] Fehler beim Erstellen der Admin-Benachrichtigungen:', error)
     }
 
-    console.log(`[dispute] Dispute eröffnet für Purchase ${id} von Verkäufer`)
+    console.log(`[dispute] Dispute eröffnet für Purchase ${id} von ${initiatorRole}`)
 
     return NextResponse.json({
-      message: 'Dispute erfolgreich eröffnet. Ein Admin wird sich in Kürze darum kümmern.',
+      message: 'Dispute erfolgreich eröffnet. Ein Admin wird sich innerhalb von 14 Tagen darum kümmern.',
       purchase: updatedPurchase,
+      disputeDeadline: disputeDeadline.toISOString(),
     })
   } catch (error: any) {
     console.error('Error opening dispute:', error)
@@ -201,6 +294,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       { status: 500 }
     )
   }
+}
+
+// Helper: Dispute-Grund in lesbaren Text umwandeln
+function getReasonLabel(reason: string): string {
+  const labels: Record<string, string> = {
+    item_not_received: 'Artikel nicht erhalten',
+    item_damaged: 'Artikel beschädigt',
+    item_wrong: 'Falscher Artikel geliefert',
+    item_not_as_described: 'Artikel entspricht nicht der Beschreibung',
+    payment_not_confirmed: 'Zahlung nicht bestätigt',
+    payment_not_received: 'Zahlung nicht erhalten',
+    seller_not_responding: 'Verkäufer antwortet nicht',
+    buyer_not_responding: 'Käufer antwortet nicht',
+    buyer_not_paying: 'Käufer zahlt nicht',
+    other: 'Sonstiges',
+  }
+  return labels[reason] || reason
 }
 
 /**

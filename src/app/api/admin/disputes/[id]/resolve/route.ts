@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
 import { addStatusHistory } from '@/lib/status-history'
+import { processDisputeRefund, isStripeConfigured } from '@/lib/stripe-disputes'
 
 /**
  * POST: Dispute durch Admin lösen
@@ -433,6 +434,32 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         updateData.paidAt = null
         updateData.paymentConfirmed = false
         updateData.paymentConfirmedAt = null
+
+        // === STRIPE REFUND ===
+        // If we have a Stripe PaymentIntent, process the refund
+        if (purchase.stripePaymentIntentId) {
+          try {
+            const refundResult = await processDisputeRefund(
+              purchase.stripePaymentIntentId,
+              purchase.price || undefined,
+              disputeReason
+            )
+
+            if (refundResult.success) {
+              updateData.stripeRefundId = refundResult.refundId
+              updateData.stripeRefundStatus = refundResult.status
+              updateData.stripeRefundedAt = new Date()
+              console.log(`[dispute/resolve] ✅ Stripe refund processed: ${refundResult.refundId}`)
+            } else {
+              console.error(`[dispute/resolve] ❌ Stripe refund failed: ${refundResult.error}`)
+              // Don't fail the whole operation, just log the error
+            }
+          } catch (stripeError: any) {
+            console.error('[dispute/resolve] ❌ Stripe refund error:', stripeError)
+          }
+        } else if (isStripeConfigured()) {
+          console.log('[dispute/resolve] ℹ️  No Stripe PaymentIntent found, manual refund required')
+        }
       }
       if (refundSeller) {
         updateData.itemReceived = false
