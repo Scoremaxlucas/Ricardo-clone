@@ -90,14 +90,18 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
     const loadSale = async () => {
       setLoading(true)
       try {
-        const res = await fetch(`/api/sales/my-sales?t=${Date.now()}`)
+        // Use dedicated API endpoint for single sale
+        const res = await fetch(`/api/sales/${purchaseId}?t=${Date.now()}`)
         if (res.ok) {
           const data = await res.json()
-          const found = data.sales?.find((s: Sale) => s.id === purchaseId)
-          setSale(found || null)
+          setSale(data.sale || null)
+        } else {
+          console.error('Sale not found:', await res.text())
+          setSale(null)
         }
       } catch (error) {
         console.error('Error loading sale:', error)
+        setSale(null)
       } finally {
         setLoading(false)
       }
@@ -121,6 +125,19 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
     }
   }, [isOpen, onClose])
 
+  const reloadSale = async () => {
+    if (!purchaseId) return
+    try {
+      const res = await fetch(`/api/sales/${purchaseId}?t=${Date.now()}`)
+      if (res.ok) {
+        const data = await res.json()
+        setSale(data.sale || null)
+      }
+    } catch (error) {
+      console.error('Error reloading sale:', error)
+    }
+  }
+
   const handleConfirmPayment = async () => {
     if (!sale) return
     try {
@@ -128,13 +145,7 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
       if (res.ok) {
         toast.success('Zahlung bestätigt!')
         onUpdate?.()
-        // Reload sale data
-        const reloadRes = await fetch(`/api/sales/my-sales?t=${Date.now()}`)
-        if (reloadRes.ok) {
-          const data = await reloadRes.json()
-          const found = data.sales?.find((s: Sale) => s.id === sale.id)
-          setSale(found || null)
-        }
+        await reloadSale()
       } else {
         const data = await res.json()
         toast.error(data.message || 'Fehler')
@@ -155,13 +166,7 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
       if (res.ok) {
         toast.success('Kontaktaufnahme markiert!')
         onUpdate?.()
-        // Reload
-        const reloadRes = await fetch(`/api/sales/my-sales?t=${Date.now()}`)
-        if (reloadRes.ok) {
-          const data = await reloadRes.json()
-          const found = data.sales?.find((s: Sale) => s.id === sale.id)
-          setSale(found || null)
-        }
+        await reloadSale()
       }
     } catch {
       toast.error('Fehler')
@@ -202,6 +207,25 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
             <div className="flex h-64 flex-col items-center justify-center text-gray-500">
               <Package className="mb-4 h-12 w-12" />
               <p>Verkauf nicht gefunden</p>
+              {purchaseId && (
+                <p className="mt-2 text-xs text-gray-400">ID: {purchaseId}</p>
+              )}
+              <button
+                onClick={() => {
+                  setLoading(true)
+                  fetch(`/api/sales/${purchaseId}?t=${Date.now()}`)
+                    .then(res => res.json())
+                    .then(data => {
+                      console.log('Debug sale response:', data)
+                      setSale(data.sale || null)
+                    })
+                    .catch(console.error)
+                    .finally(() => setLoading(false))
+                }}
+                className="mt-4 rounded-lg bg-gray-100 px-4 py-2 text-sm hover:bg-gray-200"
+              >
+                Erneut versuchen
+              </button>
             </div>
           ) : (
             <div className="space-y-6">
