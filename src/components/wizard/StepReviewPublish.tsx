@@ -75,35 +75,35 @@ const BOOSTER_DETAILS: Record<
   { short: string; detailsTitle: string; bullets: string[]; fineprint?: string }
 > = {
   bronze: {
-    short: 'Grundlegende Hervorhebung',
+    short: 'Fette Hervorhebung in Suchergebnissen',
     detailsTitle: 'Bronze – Vorteile',
     bullets: [
-      '✓ Fette Hervorhebung in allen Suchergebnissen',
-      '✓ Höhere Sichtbarkeit gegenüber Standard-Angeboten',
-      '✓ Ideal für Artikel mit kleinem Budget',
+      'Fette Hervorhebung in allen Suchergebnissen',
+      'Höhere Sichtbarkeit gegenüber Standard-Angeboten',
+      'Ideal für Artikel mit kleinem Budget',
     ],
     fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
   },
   silber: {
-    short: 'Hervorhebung + Startseite',
+    short: 'Hervorhebung + Startseiten-Platzierung',
     detailsTitle: 'Silber – Vorteile',
     bullets: [
-      '✓ Alle Bronze-Vorteile inklusive',
-      '✓ Erscheint in der "Empfohlen"-Sektion auf der Startseite',
-      '✓ Bessere Platzierung in Suchergebnissen',
-      '✓ Erreicht deutlich mehr potenzielle Käufer',
+      'Alle Bronze-Vorteile inklusive',
+      'Erscheint in der "Empfohlen"-Sektion auf der Startseite',
+      'Bessere Platzierung in Suchergebnissen',
+      'Erreicht deutlich mehr potenzielle Käufer',
     ],
     fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
   },
   gold: {
-    short: 'Maximale Sichtbarkeit + Top-Position',
+    short: 'Top-Position + Premium-Startseite',
     detailsTitle: 'Gold – Vorteile',
     bullets: [
-      '✓ Alle Silber-Vorteile inklusive',
-      '✓ GARANTIERT ganz oben in allen Suchergebnissen',
-      '✓ Premium-Platzierung auf der Startseite',
-      '✓ Maximale Reichweite für schnellen Verkauf',
-      '✓ Perfekt für wertvolle Artikel',
+      'Alle Silber-Vorteile inklusive',
+      'GARANTIERT ganz oben in allen Suchergebnissen',
+      'Premium-Platzierung auf der Startseite',
+      'Maximale Reichweite für schnellen Verkauf',
+      'Perfekt für wertvolle Artikel',
     ],
     fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
   },
@@ -356,7 +356,7 @@ export function StepReviewPublish({
             type="button"
             onClick={() => !isBoostersLocked && onBoosterChange('none')}
             disabled={isBoostersLocked}
-            className={`relative flex flex-col rounded-xl border-2 p-4 text-left transition-all ${
+            className={`relative flex min-h-[160px] flex-col rounded-xl border-2 p-4 text-left transition-all ${
               isBoostersLocked
                 ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
                 : selectedBooster === 'none'
@@ -364,15 +364,15 @@ export function StepReviewPublish({
                   : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <div className="mb-2 inline-flex rounded-full bg-gray-100 px-2 py-0.5 text-xs font-medium text-gray-600">
+            <div className="mb-2 inline-flex self-start rounded-full bg-gray-100 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-gray-600">
               STANDARD
             </div>
-            <h4 className="font-semibold text-gray-900">Kein Booster</h4>
-            <p className="mt-1 text-sm text-gray-500">
+            <h4 className="text-base font-bold text-gray-900">Kein Booster</h4>
+            <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-gray-600">
               Das Angebot wird nicht besonders hervorgehoben
             </p>
-            <div className="mt-auto pt-3">
-              <span className="text-lg font-bold text-gray-900">CHF 0.00</span>
+            <div className="mt-3 border-t border-gray-100 pt-3">
+              <span className="text-lg font-bold text-gray-900">CHF 0.–</span>
             </div>
             {selectedBooster === 'none' && (
               <div className="absolute right-3 top-3">
@@ -396,7 +396,7 @@ export function StepReviewPublish({
                 }
               }}
               disabled={isBoostersLocked}
-              className={`relative flex flex-col rounded-xl border-2 p-4 text-left transition-all ${
+              className={`relative flex min-h-[160px] flex-col rounded-xl border-2 p-4 text-left transition-all ${
                 isBoostersLocked
                   ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
                   : selectedBooster === booster.id
@@ -405,19 +405,19 @@ export function StepReviewPublish({
               }`}
             >
               <div
-                className="mb-2 inline-flex rounded-full px-2 py-0.5 text-xs font-medium"
+                className="mb-2 inline-flex self-start rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide"
                 style={{
-                  backgroundColor: booster.badgeColor + '20',
+                  backgroundColor: booster.badgeColor + '15',
                   color: booster.badgeColor,
                 }}
               >
                 {booster.badge}
               </div>
-              <h4 className="font-semibold text-gray-900">{booster.name}</h4>
-              <p className="mt-1 line-clamp-2 text-sm text-gray-500 md:line-clamp-none">
+              <h4 className="text-base font-bold text-gray-900">{booster.name}</h4>
+              <p className="mt-1.5 flex-1 text-[13px] leading-relaxed text-gray-600">
                 {booster.short || booster.description}
               </p>
-              <div className="mt-auto pt-3">
+              <div className="mt-3 border-t border-gray-100 pt-3">
                 <span className="text-lg font-bold" style={{ color: booster.badgeColor }}>
                   {formatCHF(booster.price)}
                 </span>
