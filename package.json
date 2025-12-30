@@ -10,6 +10,7 @@
     "postinstall": "prisma generate",
     "prepare:schema": "node scripts/prepare-schema.js",
     "build": "prisma generate && next build",
+    "pre-deploy-check": "tsx scripts/pre-deployment-check.ts",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",

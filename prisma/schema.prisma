@@ -315,7 +315,9 @@ model Purchase {
   disputeStatus                  String?           // pending, under_review, resolved, rejected, closed
   disputeResolvedAt              DateTime?
   disputeResolvedBy              String?
-  disputeInitiatedBy             String?           // 'buyer' or 'seller' - who opened the dispute
+  // disputeInitiatedBy TEMPORÄR AUSKOMMENTIERT - Migration noch nicht ausgeführt
+  // WICHTIG: Wieder aktivieren nach Migration: npx prisma migrate deploy
+  // disputeInitiatedBy             String?           // 'buyer' or 'seller' - who opened the dispute
   disputeDeadline                DateTime?         // Deadline for resolution (14 days after opening)
   disputeFrozenAt                DateTime?         // When purchase was frozen due to dispute
   disputeAttachments             String?           // JSON array of file URLs for evidence

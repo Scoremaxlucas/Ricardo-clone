@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Helper: Admin-Check
 async function checkAdmin(session: any): Promise<boolean> {
@@ -228,12 +228,7 @@ export async function GET(request: NextRequest) {
     }
 
     // CSV-Header
-    const headers = [
-      'Kategorie',
-      'Metrik',
-      'Wert',
-      'Datum',
-    ]
+    const headers = ['Kategorie', 'Metrik', 'Wert', 'Datum']
 
     // CSV-Zeilen
     const rows: string[] = []
@@ -304,9 +299,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error exporting statistics:', error)
-    return NextResponse.json(
-      { message: 'Fehler beim Export: ' + error.message },
-      { status: 500 }
-    )
+    return NextResponse.json({ message: 'Fehler beim Export: ' + error.message }, { status: 500 })
   }
 }
