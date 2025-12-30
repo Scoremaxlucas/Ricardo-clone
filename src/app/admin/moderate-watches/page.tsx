@@ -210,7 +210,8 @@ export default function AdminModerateWatchesPage() {
   // Artikel werden nur genehmigt, entfernt oder gesperrt
   // ===========================================
 
-  // Genehmigen (für ausstehende Artikel)
+  // Genehmigen-Funktion entfernt: Hatte keinen praktischen Nutzen
+  // Artikel sind bereits sichtbar wenn pending, daher keine separate "Genehmigung" nötig
   const approveWatch = async (watchId: string) => {
     const watch = watches.find(w => w.id === watchId)
     const watchTitle = watch?.title || 'Angebot'
@@ -522,10 +523,10 @@ export default function AdminModerateWatchesPage() {
           <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Ausstehend</p>
-                <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
+                <p className="text-sm text-gray-600">Aktiv</p>
+                <p className="text-2xl font-bold text-green-600">{stats.pending}</p>
               </div>
-              <AlertTriangle className="h-8 w-8 text-yellow-400" />
+              <CheckCircle className="h-8 w-8 text-green-400" />
             </div>
           </div>
           <div className="rounded-lg bg-white p-4 shadow">
@@ -577,7 +578,7 @@ export default function AdminModerateWatchesPage() {
               <div className="flex flex-wrap gap-2">
                 {[
                   { key: 'all', label: 'Alle' },
-                  { key: 'pending', label: 'Ausstehend' },
+                  { key: 'pending', label: 'Aktiv' },
                   { key: 'blocked', label: 'Gesperrt' },
                   { key: 'removed', label: 'Entfernt' },
                   { key: 'ended', label: 'Beendet' },
@@ -778,9 +779,9 @@ export default function AdminModerateWatchesPage() {
                                 switch (status) {
                                   case 'pending':
                                     return (
-                                      <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
-                                        <AlertTriangle className="mr-1 h-3 w-3" />
-                                        Ausstehend
+                                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                                        <CheckCircle className="mr-1 h-3 w-3" />
+                                        Aktiv
                                       </span>
                                     )
                                   case 'blocked':
