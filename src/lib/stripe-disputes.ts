@@ -11,7 +11,7 @@ import Stripe from 'stripe'
 // Initialize Stripe (only if API key is available)
 const stripeSecretKey = process.env.STRIPE_SECRET_KEY
 const stripe = stripeSecretKey
-  ? new Stripe(stripeSecretKey, { apiVersion: '2024-11-20.acacia' })
+  ? new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' })
   : null
 
 export interface StripeRefundResult {
