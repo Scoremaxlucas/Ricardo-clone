@@ -73,7 +73,7 @@ export async function GET(request: NextRequest) {
       purchases,
       verifiedUsers,
       pendingVerifications,
-      pendingDisputes,
+      disputePurchases,
       pendingPayoutChangeRequests,
     ] = await Promise.all([
       // Benutzer-Statistiken
@@ -141,9 +141,7 @@ export async function GET(request: NextRequest) {
 
     // Berechne pending Disputes aus den Dispute-Daten
     // Nutze die gleiche Logik wie /api/admin/disputes
-    const pendingDisputes = disputePurchases.filter(
-      d => d.disputeStatus === 'pending'
-    ).length
+    const pendingDisputes = disputePurchases.filter(d => d.disputeStatus === 'pending').length
 
     // Platform-Marge - verwende Default, Pricing wird später aus Datenbank geladen
     // TODO: Pricing-Einstellungen aus Datenbank laden
