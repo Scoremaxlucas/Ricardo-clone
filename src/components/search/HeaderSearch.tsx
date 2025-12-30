@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, TrendingUp, X } from 'lucide-react'
+import { Search, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -28,15 +28,16 @@ export function HeaderSearch({
   const [isOpen, setIsOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [isLoading, setIsLoading] = useState(false)
-  const [showPopular, setShowPopular] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const containerRef = useRef<HTMLDivElement>(null)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Fetch Suggestions
+  // Fetch Suggestions - nur wenn User etwas eingibt
   const fetchSuggestions = useCallback(async (searchTerm: string) => {
-    if (searchTerm.trim().length === 1) {
+    // Mindestens 2 Zeichen für Suggestions
+    if (searchTerm.trim().length < 2) {
+      setSuggestions([])
       return
     }
 
@@ -48,10 +49,8 @@ export function HeaderSearch({
 
       if (data.suggestions && Array.isArray(data.suggestions)) {
         setSuggestions(data.suggestions)
-        setShowPopular(searchTerm.trim().length === 0 && data.suggestions.length > 0)
       } else {
         setSuggestions([])
-        setShowPopular(false)
       }
     } catch (error) {
       console.error('Error fetching suggestions:', error)
@@ -146,9 +145,8 @@ export function HeaderSearch({
 
   // Handle Focus
   const handleFocus = () => {
-    setIsOpen(true)
-    if (query.trim().length === 0 && suggestions.length === 0) {
-      fetchSuggestions('')
+    if (query.trim().length >= 2) {
+      setIsOpen(true)
     }
   }
 
@@ -221,35 +219,25 @@ export function HeaderSearch({
               <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary-600 border-t-transparent" />
             </div>
           ) : (
-            <>
-              {showPopular && suggestions.length > 0 && (
-                <div className="border-b border-gray-100 px-4 py-2">
-                  <div className="flex items-center gap-1.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
-                    <TrendingUp className="h-3 w-3" />
-                    Beliebte Suchbegriffe
-                  </div>
-                </div>
-              )}
-              <ul className="max-h-64 overflow-y-auto py-1">
-                {suggestions.map((suggestion, index) => (
-                  <li key={index}>
-                    <button
-                      type="button"
-                      onClick={() => handleSubmit(suggestion)}
-                      onMouseEnter={() => setSelectedIndex(index)}
-                      className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
-                        index === selectedIndex
-                          ? 'bg-primary-50 text-primary-700'
-                          : 'text-gray-700 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Search className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                      <span className="truncate">{suggestion}</span>
-                    </button>
-                  </li>
-                ))}
-              </ul>
-            </>
+            <ul className="max-h-64 overflow-y-auto py-1">
+              {suggestions.map((suggestion, index) => (
+                <li key={index}>
+                  <button
+                    type="button"
+                    onClick={() => handleSubmit(suggestion)}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                    className={`flex w-full items-center gap-3 px-4 py-2.5 text-left text-sm transition-colors ${
+                      index === selectedIndex
+                        ? 'bg-primary-50 text-primary-700'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Search className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                    <span className="truncate">{suggestion}</span>
+                  </button>
+                </li>
+              ))}
+            </ul>
           )}
         </div>
       )}
