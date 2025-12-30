@@ -65,27 +65,27 @@ export async function POST(request: NextRequest) {
       }),
     ])
 
-    // Also update any watches that have old booster codes
+    // Also update any watches that have old booster codes (boosters is a String field)
     const watchUpdates = await prisma.$transaction([
       prisma.watch.updateMany({
-        where: { boosters: { has: 'boost' } },
-        data: { boosters: ['bronze'] },
+        where: { boosters: { contains: 'boost' } },
+        data: { boosters: 'bronze' },
       }),
       prisma.watch.updateMany({
-        where: { boosters: { has: 'turbo-boost' } },
-        data: { boosters: ['silber'] },
+        where: { boosters: { contains: 'turbo-boost' } },
+        data: { boosters: 'silber' },
       }),
       prisma.watch.updateMany({
-        where: { boosters: { has: 'turbo' } },
-        data: { boosters: ['silber'] },
+        where: { boosters: { contains: 'turbo' } },
+        data: { boosters: 'silber' },
       }),
       prisma.watch.updateMany({
-        where: { boosters: { has: 'super-boost' } },
-        data: { boosters: ['gold'] },
+        where: { boosters: { contains: 'super-boost' } },
+        data: { boosters: 'gold' },
       }),
       prisma.watch.updateMany({
-        where: { boosters: { has: 'super' } },
-        data: { boosters: ['gold'] },
+        where: { boosters: { contains: 'super' } },
+        data: { boosters: 'gold' },
       }),
     ])
 
