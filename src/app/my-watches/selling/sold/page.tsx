@@ -1,27 +1,81 @@
 'use client'
 
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
-import { useSearchParams, useRouter } from 'next/navigation'
-import Link from 'next/link'
-import { useSession } from 'next-auth/react'
-import { toast } from 'react-hot-toast'
+import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
+import { getShippingCostForMethod, getShippingLabels } from '@/lib/shipping'
 import {
+  AlertCircle,
   ArrowLeft,
   CheckCircle,
-  Filter,
+  Clock,
+  CreditCard,
+  ExternalLink,
   Package,
-  RefreshCw,
-  Search,
+  PackageCheck,
+  Shield,
+  User,
   Wallet,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
+import { toast } from 'react-hot-toast'
 
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
-import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
-import { SaleRow, type Sale } from '@/components/sales/SaleRow'
-import { SaleDetailsDrawer } from '@/components/sales/SaleDetailsDrawer'
+interface Sale {
+  id: string
+  soldAt: string
+  shippingMethod: string | null
+  paid: boolean
+  paidAt: string | null
+  status: string
+  itemReceived: boolean
+  itemReceivedAt: string | null
+  paymentConfirmed: boolean
+  paymentConfirmedAt: string | null
+  // Helvenda Zahlungsschutz
+  paymentProtectionEnabled?: boolean
+  isPaidViaStripe?: boolean
+  stripePaymentStatus?: string | null
+  orderId?: string | null
+  // Kontaktfrist-Felder
+  contactDeadline: string | null
+  sellerContactedAt: string | null
+  buyerContactedAt: string | null
+  contactWarningSentAt: string | null
+  contactDeadlineMissed: boolean
+  // Dispute-Felder
+  disputeOpenedAt: string | null
+  disputeReason: string | null
+  disputeStatus: string | null
+  disputeResolvedAt: string | null
+  watch: {
+    id: string
+    title: string
+    brand: string
+    model: string
+    images: string[]
+    price: number
+    finalPrice: number
+    purchaseType: 'auction' | 'buy-now'
+  }
+  buyer: {
+    id: string
+    name: string | null
+    email: string | null
+    firstName: string | null
+    lastName: string | null
+    street: string | null
+    streetNumber: string | null
+    postalCode: string | null
+    city: string | null
+    phone: string | null
+    paymentMethods: string | null
+  }
+}
 
-// === TYPES ===
 interface SellerStripeStatus {
   hasStripeAccount: boolean
   isOnboardingComplete: boolean
@@ -29,42 +83,63 @@ interface SellerStripeStatus {
   payoutsEnabled: boolean
 }
 
-type FilterStatus = 'all' | 'pending' | 'payment_confirmed' | 'completed'
-
-// === COMPONENT ===
 export default function SoldPage() {
   const { data: session, status } = useSession()
   const router = useRouter()
-  const searchParams = useSearchParams()
-  
-  // State
   const [sales, setSales] = useState<Sale[]>([])
   const [loading, setLoading] = useState(true)
-  const [refreshing, setRefreshing] = useState(false)
   const [selectedSale, setSelectedSale] = useState<Sale | null>(null)
-  const [drawerOpen, setDrawerOpen] = useState(false)
   const [showBuyerInfo, setShowBuyerInfo] = useState(false)
   const [sellerStripeStatus, setSellerStripeStatus] = useState<SellerStripeStatus | null>(null)
-  const [filterStatus, setFilterStatus] = useState<FilterStatus>('all')
-  const [searchQuery, setSearchQuery] = useState('')
-  
-  // Refs
   const hasInitializedRef = useRef(false)
   const pollingIntervalRef = useRef<NodeJS.Timeout | null>(null)
-  const initialLoadDoneRef = useRef(false)
+  const initialLoadDoneRef = useRef(false) // Permanente Markierung für ersten Load
 
-  // === DATA LOADING ===
-  const loadSalesData = useCallback(async (isInitialLoad: boolean = false) => {
+  // #region agent log
+  useEffect(() => {
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'sold/page.tsx:75',
+        message: 'Component render',
+        data: {
+          status,
+          hasSession: !!session?.user,
+          loading,
+          salesCount: sales.length,
+          hasInitialized: hasInitializedRef.current,
+        },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'B',
+      }),
+    }).catch(() => {})
+  })
+  // #endregion
+
+  const loadSales = async () => {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'sold/page.tsx:85',
+        message: 'loadSales called (legacy function)',
+        data: { hasSession: !!session?.user },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'D',
+      }),
+    }).catch(() => {})
+    // #endregion
     if (!session?.user) return
-    
-    try {
-      if (isInitialLoad) {
-        setLoading(true)
-      } else {
-        setRefreshing(true)
-      }
 
-      // Check expired auctions
+    try {
+      // KEIN setLoading(true) mehr - Updates sollen im Hintergrund passieren
+      // Prüfe und verarbeite abgelaufene Auktionen automatisch
       try {
         await fetch('/api/auctions/check-expired', {
           method: 'POST',
@@ -72,61 +147,294 @@ export default function SoldPage() {
         })
       } catch (error) {
         console.error('Error checking expired auctions:', error)
+        // Fehler ignorieren, da dies nicht kritisch ist
       }
 
+      // Lade Verkäufe
       const res = await fetch(`/api/sales/my-sales?t=${Date.now()}`)
-      if (res.ok) {
-        const data = await res.json()
-        setSales(data.sales || [])
-        if (data.sellerStripeStatus) {
-          setSellerStripeStatus(data.sellerStripeStatus)
-        }
-      }
+      const data = await res.json()
+      setSales(data.sales || [])
     } catch (error) {
       console.error('Error loading sales:', error)
-      if (isInitialLoad) {
-        toast.error('Fehler beim Laden der Verkäufe')
-      }
-    } finally {
-      if (isInitialLoad) {
-        setLoading(false)
+      toast.error('Fehler beim Laden der Verkäufe')
+    }
+  }
+
+  const handleMarkPaid = () => {
+    // Refresh sales data
+    loadSales()
+  }
+
+  const handleConfirmPayment = async (purchaseId: string) => {
+    try {
+      const res = await fetch(`/api/purchases/${purchaseId}/confirm-payment`, {
+        method: 'POST',
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast.success('Zahlung erfolgreich bestätigt!')
+        // Refresh sales
+        handleMarkPaid()
       } else {
-        setRefreshing(false)
+        toast.error(data.message || 'Fehler beim Bestätigen der Zahlung')
       }
+    } catch (error) {
+      console.error('Error confirming payment:', error)
+      toast.error('Fehler beim Bestätigen der Zahlung')
     }
-  }, [session?.user])
+  }
 
-  // === DEEP LINK SUPPORT ===
   useEffect(() => {
-    const saleId = searchParams.get('saleId')
-    if (saleId && sales.length > 0) {
-      const sale = sales.find(s => s.id === saleId)
-      if (sale) {
-        setSelectedSale(sale)
-        setDrawerOpen(true)
-      }
-    }
-  }, [searchParams, sales])
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'sold/page.tsx:140',
+        message: 'useEffect triggered',
+        data: {
+          status,
+          hasSession: !!session?.user,
+          loading,
+          sessionId: (session?.user as { id?: string })?.id,
+          hasInitialized: hasInitializedRef.current,
+        },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'B',
+      }),
+    }).catch(() => {})
+    // #endregion
 
-  // === INITIAL LOAD & POLLING ===
-  useEffect(() => {
+    // Cleanup: Stoppe vorheriges Polling falls vorhanden
     if (pollingIntervalRef.current) {
       clearInterval(pollingIntervalRef.current)
       pollingIntervalRef.current = null
     }
 
-    if (status === 'loading') return
+    const loadSalesData = async (isInitialLoad: boolean = false) => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'sold/page.tsx:137',
+          message: 'loadSalesData called',
+          data: { isInitialLoad, currentLoading: loading },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'A',
+        }),
+      }).catch(() => {})
+      // #endregion
+      if (!session?.user) return
+      try {
+        // Nur beim initialen Load den Loading-Screen zeigen
+        if (isInitialLoad) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'sold/page.tsx:142',
+              message: 'Setting loading=true',
+              data: { isInitialLoad },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'A',
+            }),
+          }).catch(() => {})
+          // #endregion
+          setLoading(true)
+        }
 
+        // Prüfe und verarbeite abgelaufene Auktionen automatisch
+        try {
+          const expiredRes = await fetch('/api/auctions/check-expired', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+          })
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'sold/page.tsx:150',
+              message: 'check-expired response',
+              data: { ok: expiredRes.ok, status: expiredRes.status },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'C',
+            }),
+          }).catch(() => {})
+          // #endregion
+        } catch (error) {
+          console.error('Error checking expired auctions:', error)
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'sold/page.tsx:153',
+              message: 'check-expired error',
+              data: { error: String(error) },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'C',
+            }),
+          }).catch(() => {})
+          // #endregion
+          // Fehler ignorieren, da dies nicht kritisch ist
+        }
+
+        const res = await fetch(`/api/sales/my-sales?t=${Date.now()}`)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'sold/page.tsx:160',
+            message: 'my-sales response',
+            data: { ok: res.ok, status: res.status },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'C',
+          }),
+        }).catch(() => {})
+        // #endregion
+        if (res.ok) {
+          const data = await res.json()
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'sold/page.tsx:163',
+              message: 'Sales data set',
+              data: { salesCount: data.sales?.length || 0, isInitialLoad },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'A',
+            }),
+          }).catch(() => {})
+          // #endregion
+          setSales(data.sales || [])
+          if (data.sellerStripeStatus) {
+            setSellerStripeStatus(data.sellerStripeStatus)
+          }
+        }
+      } catch (error) {
+        console.error('Error loading sales:', error)
+        // #region agent log
+        fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            location: 'sold/page.tsx:168',
+            message: 'loadSalesData error',
+            data: { error: String(error) },
+            timestamp: Date.now(),
+            sessionId: 'debug-session',
+            runId: 'run1',
+            hypothesisId: 'C',
+          }),
+        }).catch(() => {})
+        // #endregion
+      } finally {
+        // Nur beim initialen Load den Loading-Screen ausblenden
+        if (isInitialLoad) {
+          // #region agent log
+          fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              location: 'sold/page.tsx:173',
+              message: 'Setting loading=false',
+              data: { isInitialLoad },
+              timestamp: Date.now(),
+              sessionId: 'debug-session',
+              runId: 'run1',
+              hypothesisId: 'A',
+            }),
+          }).catch(() => {})
+          // #endregion
+          setLoading(false)
+        }
+      }
+    }
+    // Warte bis Session geladen ist
+    if (status === 'loading') {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'sold/page.tsx:207',
+          message: 'Status is loading, returning early',
+          data: { status },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'B',
+        }),
+      }).catch(() => {})
+      // #endregion
+      return
+    }
+
+    // Wenn nicht authentifiziert, leite um (nur einmal)
     if (status === 'unauthenticated' || !session?.user) {
-      const currentPath = typeof window !== 'undefined' ? window.location.pathname : '/my-watches/selling/sold'
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'sold/page.tsx:213',
+          message: 'Unauthenticated, redirecting',
+          data: { status, hasSession: !!session?.user },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'B',
+        }),
+      }).catch(() => {})
+      // #endregion
+      const currentPath =
+        typeof window !== 'undefined' ? window.location.pathname : '/my-watches/selling/sold'
       router.push(`/login?callbackUrl=${encodeURIComponent(currentPath)}`)
       return
     }
 
+    // Verhindere mehrfache Initialisierung - PERMANENT (wird nie zurückgesetzt)
     if (initialLoadDoneRef.current) {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'sold/page.tsx:221',
+          message: 'Initial load already done, starting polling only',
+          data: { status, hasInitialized: hasInitializedRef.current },
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'B',
+        }),
+      }).catch(() => {})
+      // #endregion
+      // Starte nur Polling, kein Loading-Screen mehr
       if (!hasInitializedRef.current) {
         hasInitializedRef.current = true
-        pollingIntervalRef.current = setInterval(() => loadSalesData(false), 10000)
+        pollingIntervalRef.current = setInterval(() => loadSalesData(false), 5000)
       }
       return () => {
         if (pollingIntervalRef.current) {
@@ -137,160 +445,88 @@ export default function SoldPage() {
       }
     }
 
-    initialLoadDoneRef.current = true
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'sold/page.tsx:226',
+        message: 'Starting initial load and polling',
+        data: { status },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'A',
+      }),
+    }).catch(() => {})
+    // #endregion
+    initialLoadDoneRef.current = true // PERMANENT - wird nie zurückgesetzt
     hasInitializedRef.current = true
-    loadSalesData(true)
-    pollingIntervalRef.current = setInterval(() => loadSalesData(false), 10000)
+    loadSalesData(true) // Initial load mit Loading-Screen
+    // Polling alle 5 Sekunden für Updates (ohne Loading-Screen)
+    pollingIntervalRef.current = setInterval(() => loadSalesData(false), 5000)
 
     return () => {
+      // #region agent log
+      fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          location: 'sold/page.tsx:232',
+          message: 'Cleaning up interval',
+          data: {},
+          timestamp: Date.now(),
+          sessionId: 'debug-session',
+          runId: 'run1',
+          hypothesisId: 'B',
+        }),
+      }).catch(() => {})
+      // #endregion
       if (pollingIntervalRef.current) {
         clearInterval(pollingIntervalRef.current)
         pollingIntervalRef.current = null
       }
       hasInitializedRef.current = false
+      // WICHTIG: initialLoadDoneRef.current wird NICHT zurückgesetzt!
     }
-  }, [status, session?.user, loadSalesData, router])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [status, (session?.user as { id?: string })?.id])
 
-  // === ACTIONS ===
-  const handleMarkContacted = useCallback(async (saleId: string) => {
-    try {
-      const res = await fetch(`/api/purchases/${saleId}/mark-contacted`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ role: 'seller' }),
-      })
-      if (res.ok) {
-        toast.success('Kontaktaufnahme markiert!')
-        loadSalesData(false)
-      } else {
-        const data = await res.json()
-        toast.error(data.message || 'Fehler beim Markieren')
-      }
-    } catch (error) {
-      console.error('Error marking contact:', error)
-      toast.error('Fehler beim Markieren der Kontaktaufnahme')
-    }
-  }, [loadSalesData])
-
-  const handleConfirmPayment = useCallback(async (purchaseId: string) => {
-    try {
-      const res = await fetch(`/api/purchases/${purchaseId}/confirm-payment`, {
-        method: 'POST',
-      })
-      const data = await res.json()
-      if (res.ok) {
-        toast.success('Zahlung erfolgreich bestätigt!')
-        loadSalesData(false)
-      } else {
-        toast.error(data.message || 'Fehler beim Bestätigen der Zahlung')
-      }
-    } catch (error) {
-      console.error('Error confirming payment:', error)
-      toast.error('Fehler beim Bestätigen der Zahlung')
-    }
-  }, [loadSalesData])
-
-  const handleOpenDetails = useCallback((sale: Sale) => {
-    setSelectedSale(sale)
-    setDrawerOpen(true)
-    // Update URL with deep link
-    const url = new URL(window.location.href)
-    url.searchParams.set('saleId', sale.id)
-    window.history.replaceState({}, '', url.toString())
-  }, [])
-
-  const handleCloseDrawer = useCallback(() => {
-    setDrawerOpen(false)
-    setSelectedSale(null)
-    // Remove deep link from URL
-    const url = new URL(window.location.href)
-    url.searchParams.delete('saleId')
-    window.history.replaceState({}, '', url.toString())
-  }, [])
-
-  const handleOpenBuyerContact = useCallback((sale: Sale) => {
-    setSelectedSale(sale)
-    setShowBuyerInfo(true)
-  }, [])
-
-  const handleCloseBuyerModal = useCallback(() => {
-    setShowBuyerInfo(false)
-    if (!drawerOpen) {
-      setSelectedSale(null)
-    }
-  }, [drawerOpen])
-
-  const handleManualRefresh = useCallback(() => {
-    loadSalesData(false)
-  }, [loadSalesData])
-
-  // === FILTERED & SEARCHED SALES ===
-  const filteredSales = useMemo(() => {
-    let result = sales
-
-    // Apply status filter
-    if (filterStatus !== 'all') {
-      result = result.filter(sale => {
-        switch (filterStatus) {
-          case 'pending':
-            return sale.status === 'pending' && !sale.paymentConfirmed
-          case 'payment_confirmed':
-            return sale.paymentConfirmed && sale.status !== 'completed'
-          case 'completed':
-            return sale.status === 'completed'
-          default:
-            return true
-        }
-      })
-    }
-
-    // Apply search
-    if (searchQuery.trim()) {
-      const query = searchQuery.toLowerCase()
-      result = result.filter(sale =>
-        sale.watch.title.toLowerCase().includes(query) ||
-        sale.watch.brand.toLowerCase().includes(query) ||
-        sale.buyer.name?.toLowerCase().includes(query) ||
-        sale.buyer.email?.toLowerCase().includes(query)
-      )
-    }
-
-    return result
-  }, [sales, filterStatus, searchQuery])
-
-  // === STATISTICS ===
-  const stats = useMemo(() => {
-    const pending = sales.filter(s => s.status === 'pending' && !s.paymentConfirmed).length
-    const awaitingShipment = sales.filter(s => s.paymentConfirmed && s.status !== 'completed').length
-    const completed = sales.filter(s => s.status === 'completed').length
-    const contactRequired = sales.filter(s => 
-      s.status === 'pending' && s.contactDeadline && !s.sellerContactedAt
-    ).length
-    return { pending, awaitingShipment, completed, contactRequired, total: sales.length }
-  }, [sales])
-
-  // === LOADING STATES ===
+  // Zeige Loading-Screen nur beim ersten Load, nicht bei Session-Refresh
   if (status === 'loading' || (loading && !initialLoadDoneRef.current)) {
+    // #region agent log
+    fetch('http://127.0.0.1:7242/ingest/c628c1bf-3a6f-4be8-9f99-acdcbe2e7d79', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        location: 'sold/page.tsx:200',
+        message: 'Rendering loading screen',
+        data: { status, loading },
+        timestamp: Date.now(),
+        sessionId: 'debug-session',
+        runId: 'run1',
+        hypothesisId: 'A',
+      }),
+    }).catch(() => {})
+    // #endregion
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <div className="text-center">
-            <div className="mx-auto mb-4 h-8 w-8 animate-spin rounded-full border-4 border-primary-600 border-t-transparent" />
-            <p className="text-gray-500">Lädt Verkäufe...</p>
-          </div>
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-gray-500">Lädt...</div>
         </div>
         <Footer />
       </div>
     )
   }
 
+  // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
   if (status === 'unauthenticated' || !session) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="flex min-h-[60vh] items-center justify-center">
-          <p className="text-gray-500">Weiterleitung zur Anmeldung...</p>
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-gray-500">Weiterleitung zur Anmeldung...</div>
         </div>
         <Footer />
       </div>
@@ -300,47 +536,30 @@ export default function SoldPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      
-      <div className="mx-auto max-w-7xl px-4 py-6 lg:py-8">
-        {/* Back Link */}
+      <div className="mx-auto max-w-7xl px-4 py-12">
         <Link
           href="/my-watches/selling"
-          className="mb-4 inline-flex items-center text-sm text-primary-600 hover:text-primary-700"
+          className="mb-6 inline-flex items-center text-primary-600 hover:text-primary-700"
         >
-          <ArrowLeft className="mr-1.5 h-4 w-4" />
+          <ArrowLeft className="mr-2 h-4 w-4" />
           Zurück zu Meine Angebote
         </Link>
 
-        {/* Page Header */}
-        <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-              <CheckCircle className="h-5 w-5 text-green-600" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-gray-900 lg:text-2xl">Verkäufe verwalten</h1>
-              <p className="text-sm text-gray-500">{stats.total} Verkäufe</p>
-            </div>
+        <div className="mb-8 flex items-center">
+          <CheckCircle className="mr-3 h-8 w-8 text-green-600" />
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Verkäufe verwalten</h1>
+            <p className="mt-1 text-gray-600">Zahlungen und Versand Ihrer Verkäufe</p>
           </div>
-          
-          {/* Refresh Button */}
-          <button
-            onClick={handleManualRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
-          >
-            <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
-            Aktualisieren
-          </button>
         </div>
 
-        {/* Payout Setup Banner */}
+        {/* Auszahlungs-Setup Banner für Verkäufer ohne Stripe */}
         {sellerStripeStatus &&
           !sellerStripeStatus.isOnboardingComplete &&
           sales.some(s => s.paymentProtectionEnabled && s.isPaidViaStripe) && (
             <div className="mb-6 rounded-lg border-2 border-primary-200 bg-primary-50 p-4">
               <div className="flex items-start gap-3">
-                <Wallet className="mt-0.5 h-5 w-5 flex-shrink-0 text-primary-600" />
+                <Wallet className="mt-0.5 h-6 w-6 flex-shrink-0 text-primary-600" />
                 <div className="flex-1">
                   <h3 className="font-semibold text-primary-900">Auszahlung einrichten</h3>
                   <p className="mt-1 text-sm text-primary-700">
@@ -349,7 +568,7 @@ export default function SoldPage() {
                   </p>
                   <Link
                     href="/my-watches/account?setup_payout=1"
-                    className="mt-2 inline-flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
+                    className="mt-3 inline-flex items-center gap-2 rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white hover:bg-primary-700"
                   >
                     <Wallet className="h-4 w-4" />
                     Jetzt einrichten
@@ -359,126 +578,413 @@ export default function SoldPage() {
             </div>
           )}
 
-        {/* Quick Stats (Desktop) */}
-        {sales.length > 0 && (
-          <div className="mb-6 hidden grid-cols-4 gap-4 lg:grid">
-            <button
-              onClick={() => setFilterStatus('all')}
-              className={`rounded-lg border p-3 text-left transition-colors ${
-                filterStatus === 'all' ? 'border-primary-500 bg-primary-50' : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <p className="text-2xl font-bold text-gray-900">{stats.total}</p>
-              <p className="text-xs text-gray-500">Alle Verkäufe</p>
-            </button>
-            <button
-              onClick={() => setFilterStatus('pending')}
-              className={`rounded-lg border p-3 text-left transition-colors ${
-                filterStatus === 'pending' ? 'border-yellow-500 bg-yellow-50' : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <p className="text-2xl font-bold text-yellow-600">{stats.pending}</p>
-              <p className="text-xs text-gray-500">Warten auf Zahlung</p>
-              {stats.contactRequired > 0 && (
-                <p className="mt-1 text-xs font-medium text-red-600">
-                  {stats.contactRequired} Kontakt erforderlich
-                </p>
-              )}
-            </button>
-            <button
-              onClick={() => setFilterStatus('payment_confirmed')}
-              className={`rounded-lg border p-3 text-left transition-colors ${
-                filterStatus === 'payment_confirmed' ? 'border-blue-500 bg-blue-50' : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <p className="text-2xl font-bold text-blue-600">{stats.awaitingShipment}</p>
-              <p className="text-xs text-gray-500">Versand vorbereiten</p>
-            </button>
-            <button
-              onClick={() => setFilterStatus('completed')}
-              className={`rounded-lg border p-3 text-left transition-colors ${
-                filterStatus === 'completed' ? 'border-green-500 bg-green-50' : 'border-gray-200 bg-white hover:border-gray-300'
-              }`}
-            >
-              <p className="text-2xl font-bold text-green-600">{stats.completed}</p>
-              <p className="text-xs text-gray-500">Abgeschlossen</p>
-            </button>
-          </div>
-        )}
-
-        {/* Search & Filter Bar */}
-        {sales.length > 0 && (
-          <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center">
-            {/* Search */}
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-              <input
-                type="text"
-                placeholder="Suche nach Titel, Marke oder Käufer..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-10 pr-4 text-sm placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              />
-            </div>
-            
-            {/* Mobile Filter */}
-            <div className="flex items-center gap-2 lg:hidden">
-              <Filter className="h-4 w-4 text-gray-400" />
-              <select
-                value={filterStatus}
-                onChange={(e) => setFilterStatus(e.target.value as FilterStatus)}
-                aria-label="Status-Filter"
-                className="rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              >
-                <option value="all">Alle ({stats.total})</option>
-                <option value="pending">Warten auf Zahlung ({stats.pending})</option>
-                <option value="payment_confirmed">Versand vorbereiten ({stats.awaitingShipment})</option>
-                <option value="completed">Abgeschlossen ({stats.completed})</option>
-              </select>
-            </div>
-          </div>
-        )}
-
-        {/* Empty State */}
         {sales.length === 0 ? (
-          <div className="rounded-lg bg-white p-8 shadow-sm">
+          <div className="rounded-lg bg-white p-8 shadow-md">
             <div className="py-12 text-center">
-              <Package className="mx-auto mb-4 h-16 w-16 text-gray-300" />
+              <Package className="mx-auto mb-4 h-16 w-16 text-gray-400" />
               <h3 className="mb-2 text-lg font-semibold text-gray-900">Noch nichts verkauft</h3>
-              <p className="mb-6 text-gray-500">Sie haben noch keine Artikel verkauft.</p>
+              <p className="mb-6 text-gray-600">Sie haben noch keine Artikel verkauft.</p>
               <Link
                 href="/sell"
-                className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
+                className="inline-flex items-center rounded-md bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
               >
-                Erste Uhr verkaufen
+                Ersten Artikel verkaufen
               </Link>
             </div>
           </div>
-        ) : filteredSales.length === 0 ? (
-          <div className="rounded-lg bg-white p-8 text-center shadow-sm">
-            <p className="text-gray-500">Keine Verkäufe gefunden für die ausgewählten Filter.</p>
-            <button
-              onClick={() => {
-                setFilterStatus('all')
-                setSearchQuery('')
-              }}
-              className="mt-4 text-sm font-medium text-primary-600 hover:text-primary-700"
-            >
-              Filter zurücksetzen
-            </button>
-          </div>
         ) : (
-          /* Sales List */
-          <div className="space-y-2">
-            {filteredSales.map((sale) => (
-              <SaleRow
+          <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+            {sales.map(sale => (
+              <div
                 key={sale.id}
-                sale={sale}
-                onOpenDetails={handleOpenDetails}
-                onMarkContacted={handleMarkContacted}
-                onConfirmPayment={handleConfirmPayment}
-                onOpenBuyerContact={handleOpenBuyerContact}
-              />
+                className="overflow-hidden rounded-lg border-2 border-green-500 bg-white shadow-md"
+              >
+                {sale.watch.images && sale.watch.images.length > 0 ? (
+                  <img
+                    src={sale.watch.images[0]}
+                    alt={sale.watch.title}
+                    className="h-48 w-full object-cover"
+                  />
+                ) : (
+                  <div className="flex h-48 w-full items-center justify-center bg-gray-200 text-gray-500">
+                    Kein Bild
+                  </div>
+                )}
+                <div className="p-4">
+                  <div className="mb-2 flex flex-wrap items-center gap-2">
+                    <div className="rounded-full bg-green-100 px-2 py-1 text-xs font-semibold text-green-700">
+                      {sale.watch.purchaseType === 'auction' ? 'Auktion' : 'Sofortkauf'}
+                    </div>
+                    {/* Helvenda Zahlungsschutz Badge */}
+                    {sale.paymentProtectionEnabled && (
+                      <div className="flex items-center gap-1 rounded-full bg-primary-100 px-2 py-1 text-xs font-semibold text-primary-700">
+                        <Shield className="h-3 w-3" />
+                        Zahlungsschutz
+                      </div>
+                    )}
+                    <div className="ml-auto text-xs text-gray-500">
+                      {new Date(sale.soldAt).toLocaleDateString('de-CH')}
+                    </div>
+                  </div>
+                  <div className="text-sm text-primary-600">
+                    {sale.watch.brand} {sale.watch.model}
+                  </div>
+                  <div className="mb-3 line-clamp-2 font-semibold text-gray-900">
+                    {sale.watch.title}
+                  </div>
+
+                  {sale.shippingMethod &&
+                    (() => {
+                      let shippingMethods: string[] = []
+                      try {
+                        shippingMethods = JSON.parse(sale.shippingMethod)
+                      } catch {
+                        shippingMethods = []
+                      }
+                      // Verwende die erste Methode oder berechne den höchsten Betrag
+                      const shippingCost =
+                        shippingMethods.length > 0
+                          ? getShippingCostForMethod(shippingMethods[0] as any)
+                          : 0
+                      const total = sale.watch.finalPrice + shippingCost
+
+                      return (
+                        <>
+                          <div className="mb-3 rounded border border-green-200 bg-green-50 p-3">
+                            <div className="border-t border-green-300 pt-2">
+                              <div className="mb-2 flex items-center justify-between">
+                                <span className="text-xs text-green-700">Verkaufspreis</span>
+                                <span className="text-xs font-semibold text-green-700">
+                                  CHF {new Intl.NumberFormat('de-CH').format(sale.watch.finalPrice)}
+                                </span>
+                              </div>
+                              <div className="mb-2 flex items-center justify-between">
+                                <span className="text-xs text-green-700">Versand</span>
+                                <span className="text-xs font-semibold text-green-700">
+                                  CHF {shippingCost.toFixed(2)}
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between border-t border-green-300 pt-2">
+                                <span className="text-sm font-semibold text-green-700">Total</span>
+                                <span className="text-xl font-bold text-green-700">
+                                  CHF {new Intl.NumberFormat('de-CH').format(total)}
+                                </span>
+                              </div>
+                            </div>
+                          </div>
+                          <div className="mb-3 rounded border border-blue-200 bg-blue-50 p-2">
+                            <div className="mb-1 text-xs font-semibold text-blue-700">
+                              Lieferart
+                            </div>
+                            <div className="text-sm text-blue-900">
+                              {getShippingLabels(shippingMethods as any).join(', ')}
+                            </div>
+                          </div>
+                        </>
+                      )
+                    })()}
+
+                  {!sale.shippingMethod && (
+                    <div className="mb-3 rounded border border-green-200 bg-green-50 p-3">
+                      <div className="mb-1 text-xs text-green-700">Verkaufspreis</div>
+                      <div className="text-xl font-bold text-green-700">
+                        CHF {new Intl.NumberFormat('de-CH').format(sale.watch.finalPrice)}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* 7-Tage-Kontaktfrist Hinweis für Verkäufer */}
+                  {sale.status === 'pending' &&
+                    sale.contactDeadline &&
+                    (() => {
+                      const deadline = new Date(sale.contactDeadline)
+                      const now = new Date()
+                      const timeUntilDeadline = deadline.getTime() - now.getTime()
+                      const daysRemaining = Math.ceil(timeUntilDeadline / (1000 * 60 * 60 * 24))
+                      const isOverdue = timeUntilDeadline < 0
+                      const hasContacted = sale.sellerContactedAt !== null
+
+                      if (hasContacted) {
+                        return null // Keine Warnung wenn bereits kontaktiert
+                      }
+
+                      return (
+                        <div
+                          className={`mb-3 rounded-lg border-2 p-3 ${
+                            isOverdue || sale.contactDeadlineMissed
+                              ? 'border-red-400 bg-red-50'
+                              : daysRemaining <= 2
+                                ? 'border-orange-400 bg-orange-50'
+                                : 'border-yellow-300 bg-yellow-50'
+                          }`}
+                        >
+                          <div className="flex items-start gap-2">
+                            <AlertCircle
+                              className={`mt-0.5 h-5 w-5 flex-shrink-0 ${
+                                isOverdue || sale.contactDeadlineMissed
+                                  ? 'text-red-600'
+                                  : daysRemaining <= 2
+                                    ? 'text-orange-600'
+                                    : 'text-yellow-600'
+                              }`}
+                            />
+                            <div className="flex-1">
+                              <div
+                                className={`mb-1 text-sm font-semibold ${
+                                  isOverdue || sale.contactDeadlineMissed
+                                    ? 'text-red-900'
+                                    : daysRemaining <= 2
+                                      ? 'text-orange-900'
+                                      : 'text-yellow-900'
+                                }`}
+                              >
+                                {isOverdue || sale.contactDeadlineMissed
+                                  ? '❌ Kontaktfrist überschritten'
+                                  : '⚠️ Kontaktaufnahme erforderlich'}
+                              </div>
+                              <div
+                                className={`text-xs ${
+                                  isOverdue || sale.contactDeadlineMissed
+                                    ? 'text-red-800'
+                                    : daysRemaining <= 2
+                                      ? 'text-orange-800'
+                                      : 'text-yellow-800'
+                                }`}
+                              >
+                                {isOverdue || sale.contactDeadlineMissed ? (
+                                  <>
+                                    Die 7-Tage-Kontaktfrist wurde überschritten. Der Käufer kann den
+                                    Kauf jetzt stornieren. Bitte nehmen Sie umgehend Kontakt auf!
+                                  </>
+                                ) : daysRemaining > 0 ? (
+                                  <>
+                                    Sie müssen innerhalb von{' '}
+                                    <span className="font-bold">
+                                      {daysRemaining} Tag{daysRemaining !== 1 ? 'en' : ''}
+                                    </span>{' '}
+                                    mit dem Käufer Kontakt aufnehmen, um Zahlungs- und
+                                    Liefermodalitäten zu klären.
+                                  </>
+                                ) : (
+                                  <>
+                                    Die Kontaktfrist läuft heute ab. Bitte nehmen Sie umgehend
+                                    Kontakt mit dem Käufer auf.
+                                  </>
+                                )}
+                              </div>
+                              {sale.contactWarningSentAt && (
+                                <div className="mt-1 text-xs italic text-gray-600">
+                                  Erinnerung gesendet am{' '}
+                                  {new Date(sale.contactWarningSentAt).toLocaleDateString('de-CH')}
+                                </div>
+                              )}
+                              {/* Button zum Markieren, dass Kontakt aufgenommen wurde */}
+                              {!sale.sellerContactedAt && (
+                                <button
+                                  onClick={async () => {
+                                    try {
+                                      const res = await fetch(
+                                        `/api/purchases/${sale.id}/mark-contacted`,
+                                        {
+                                          method: 'POST',
+                                          headers: { 'Content-Type': 'application/json' },
+                                          body: JSON.stringify({ role: 'seller' }),
+                                        }
+                                      )
+                                      if (res.ok) {
+                                        toast.success('Kontaktaufnahme markiert!')
+                                        handleMarkPaid() // Refresh data
+                                      } else {
+                                        const data = await res.json()
+                                        toast.error(data.message || 'Fehler beim Markieren')
+                                      }
+                                    } catch (error) {
+                                      console.error('Error marking contact:', error)
+                                      toast.error('Fehler beim Markieren der Kontaktaufnahme')
+                                    }
+                                  }}
+                                  className="mt-2 rounded bg-primary-600 px-3 py-1.5 text-xs font-medium text-white transition-colors hover:bg-primary-700"
+                                >
+                                  ✓ Kontakt aufgenommen markieren
+                                </button>
+                              )}
+                              {sale.sellerContactedAt && (
+                                <div className="mt-2 text-xs font-medium text-green-700">
+                                  ✓ Kontakt aufgenommen am{' '}
+                                  {new Date(sale.sellerContactedAt).toLocaleDateString('de-CH')}
+                                </div>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })()}
+
+                  {/* Status-Anzeige */}
+                  <div className="mb-3 rounded-lg border p-2">
+                    {sale.status === 'completed' ? (
+                      <div className="flex items-center gap-2 border-green-200 bg-green-50 text-green-700">
+                        <CheckCircle className="h-4 w-4" />
+                        <span className="text-xs font-medium">Abgeschlossen</span>
+                      </div>
+                    ) : sale.isPaidViaStripe && !sale.itemReceived ? (
+                      <div className="flex items-center gap-2 border-primary-200 bg-primary-50 text-primary-700">
+                        <Shield className="h-4 w-4" />
+                        <span className="text-xs font-medium">
+                          Bezahlt - Warten auf Erhalt-Bestätigung
+                        </span>
+                      </div>
+                    ) : sale.status === 'payment_confirmed' || sale.paymentConfirmed ? (
+                      <div className="flex items-center gap-2 border-blue-200 bg-blue-50 text-blue-700">
+                        <CreditCard className="h-4 w-4" />
+                        <span className="text-xs font-medium">
+                          Zahlung bestätigt - Warten auf Erhalt-Bestätigung
+                        </span>
+                      </div>
+                    ) : sale.status === 'item_received' ? (
+                      <div className="flex items-center gap-2 border-orange-200 bg-orange-50 text-orange-700">
+                        <PackageCheck className="h-4 w-4" />
+                        <span className="text-xs font-medium">
+                          Erhalt bestätigt - Warten auf Zahlungsbestätigung
+                        </span>
+                      </div>
+                    ) : (
+                      <div className="flex items-center gap-2 border-gray-200 bg-gray-50 text-gray-700">
+                        <Clock className="h-4 w-4" />
+                        <span className="text-xs font-medium">Warten auf Zahlung</span>
+                      </div>
+                    )}
+                  </div>
+
+                  <div className="mb-3 text-xs text-gray-600">
+                    Käufer: {sale.buyer.name || sale.buyer.email || 'Unbekannt'}
+                  </div>
+
+                  {/* Käufer-Kontaktdaten anzeigen */}
+                  {sale.buyer.phone && (
+                    <div className="mb-3 rounded border border-blue-200 bg-blue-50 p-2 text-xs">
+                      <div className="mb-1 font-semibold text-blue-900">Käufer-Kontaktdaten:</div>
+                      <div className="text-blue-700">
+                        {sale.buyer.firstName && sale.buyer.lastName && (
+                          <div>
+                            {sale.buyer.firstName} {sale.buyer.lastName}
+                          </div>
+                        )}
+                        {sale.buyer.street && sale.buyer.streetNumber && (
+                          <div>
+                            {sale.buyer.street} {sale.buyer.streetNumber}
+                          </div>
+                        )}
+                        {sale.buyer.postalCode && sale.buyer.city && (
+                          <div>
+                            {sale.buyer.postalCode} {sale.buyer.city}
+                          </div>
+                        )}
+                        {sale.buyer.phone && (
+                          <div className="mt-1 font-medium">Tel: {sale.buyer.phone}</div>
+                        )}
+                        {sale.buyer.email && <div>E-Mail: {sale.buyer.email}</div>}
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="space-y-2">
+                    {/* Zahlung erhalten Button - nur wenn Käufer bereits als bezahlt markiert hat */}
+                    {!sale.paymentConfirmed && sale.paid && (
+                      <button
+                        onClick={() => handleConfirmPayment(sale.id)}
+                        className="flex w-full items-center justify-center gap-2 rounded bg-green-600 px-4 py-2 text-center text-sm font-medium text-white hover:bg-green-700"
+                      >
+                        <CreditCard className="h-4 w-4" />
+                        Zahlung erhalten bestätigen
+                      </button>
+                    )}
+
+                    {/* Helvenda Zahlungsschutz - Zahlung erhalten */}
+                    {sale.paymentProtectionEnabled &&
+                      sale.isPaidViaStripe &&
+                      !sale.itemReceived && (
+                        <div className="w-full rounded border border-primary-200 bg-primary-50 px-4 py-2 text-sm text-primary-700">
+                          <div className="flex items-center gap-2">
+                            <Shield className="h-4 w-4" />
+                            <span className="font-medium">Zahlung sicher erhalten</span>
+                          </div>
+                          <p className="mt-1 text-xs">
+                            Das Geld wird sicher verwahrt und nach Erhalt-Bestätigung des Käufers
+                            freigegeben.
+                            {!sellerStripeStatus?.isOnboardingComplete && (
+                              <Link
+                                href="/my-watches/account?setup_payout=1"
+                                className="ml-1 font-medium text-primary-800 underline"
+                              >
+                                Auszahlung einrichten →
+                              </Link>
+                            )}
+                          </p>
+                        </div>
+                      )}
+
+                    {/* Hinweis wenn Käufer noch nicht bezahlt hat (nur für nicht-geschützte Verkäufe) */}
+                    {!sale.paid && !sale.paymentConfirmed && (
+                      <div className="w-full rounded border border-yellow-200 bg-yellow-50 px-4 py-2 text-center text-sm text-yellow-700">
+                        <Clock className="mr-2 inline h-4 w-4" />
+                        {sale.paymentProtectionEnabled
+                          ? 'Warten auf sichere Zahlung durch Käufer'
+                          : 'Warten auf Käufer-Bestätigung der Zahlung'}
+                      </div>
+                    )}
+
+                    {sale.paymentConfirmed && (
+                      <div className="flex w-full items-center justify-center gap-2 rounded bg-green-100 px-4 py-2 text-center text-sm text-green-700">
+                        <CheckCircle className="h-4 w-4" />
+                        Zahlung bestätigt{' '}
+                        {sale.paymentConfirmedAt &&
+                          new Date(sale.paymentConfirmedAt).toLocaleDateString('de-CH')}
+                      </div>
+                    )}
+
+                    {/* Versand-Informationen hinzufügen (nur wenn Zahlung bestätigt) */}
+                    {sale.paymentConfirmed && (
+                      <div className="mb-3">
+                        <ShippingInfoCard
+                          purchaseId={sale.id}
+                          isSeller={true}
+                          onShippingAdded={handleMarkPaid}
+                        />
+                      </div>
+                    )}
+
+                    <button
+                      onClick={() => {
+                        setSelectedSale(sale)
+                        setShowBuyerInfo(true)
+                      }}
+                      className="flex w-full items-center justify-center gap-2 rounded bg-gray-100 px-4 py-2 text-center text-sm text-gray-700 hover:bg-gray-200"
+                    >
+                      <User className="h-4 w-4" />
+                      Käufer-Kontakt
+                    </button>
+
+                    {/* Bestelldetails - nur bei Zahlungsschutz mit Order */}
+                    {sale.paymentProtectionEnabled && sale.orderId && (
+                      <Link
+                        href={`/orders/${sale.orderId}`}
+                        className="flex w-full items-center justify-center gap-2 rounded border-2 border-primary-600 bg-white px-4 py-2 text-center text-sm font-medium text-primary-600 hover:bg-primary-50"
+                      >
+                        <ExternalLink className="h-4 w-4" />
+                        Bestelldetails ansehen
+                      </Link>
+                    )}
+
+                    <Link
+                      href={`/products/${sale.watch.id}`}
+                      className="block w-full rounded bg-primary-600 px-4 py-2 text-center text-sm text-white hover:bg-primary-700"
+                    >
+                      Angebot ansehen
+                    </Link>
+                  </div>
+                </div>
+              </div>
             ))}
           </div>
         )}
@@ -486,19 +992,7 @@ export default function SoldPage() {
 
       <Footer />
 
-      {/* Details Drawer */}
-      <SaleDetailsDrawer
-        sale={selectedSale}
-        isOpen={drawerOpen}
-        onClose={handleCloseDrawer}
-        onMarkContacted={handleMarkContacted}
-        onConfirmPayment={handleConfirmPayment}
-        onOpenBuyerContact={handleOpenBuyerContact}
-        onDataRefresh={() => loadSalesData(false)}
-        sellerStripeStatus={sellerStripeStatus}
-      />
-
-      {/* Buyer Info Modal */}
+      {/* Käuferinformationen Modal */}
       {selectedSale && (
         <BuyerInfoModal
           buyer={selectedSale.buyer}
@@ -506,8 +1000,11 @@ export default function SoldPage() {
           purchaseId={selectedSale.id}
           isPaid={selectedSale.paid}
           isOpen={showBuyerInfo}
-          onClose={handleCloseBuyerModal}
-          onMarkPaid={() => loadSalesData(false)}
+          onClose={() => {
+            setShowBuyerInfo(false)
+            setSelectedSale(null)
+          }}
+          onMarkPaid={handleMarkPaid}
         />
       )}
     </div>
