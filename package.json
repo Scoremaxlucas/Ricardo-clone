@@ -1,13 +1,13 @@
 {
   "name": "helvenda",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "private": true,
   "scripts": {
     "dev": "next dev -p 3002 -H 0.0.0.0",
     "dev:start": "./start-server.sh",
     "dev:check": "./check-and-start.sh",
     "dev:status": "./server-status.sh",
-    "postinstall": "prisma generate",
+    "postinstall": "rm -rf node_modules/.prisma && prisma generate",
     "prepare:schema": "node scripts/prepare-schema.js",
     "build": "rm -rf node_modules/.prisma && prisma generate && next build",
     "pre-deploy-check": "tsx scripts/pre-deployment-check.ts",

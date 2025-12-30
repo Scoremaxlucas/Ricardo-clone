@@ -3,7 +3,8 @@
   "buildCommand": "npm run build",
   "framework": "nextjs",
   "env": {
-    "VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR": "1"
+    "VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR": "1",
+    "VERCEL_FORCE_NO_BUILD_CACHE": "1"
   },
   "functions": {
     "src/app/api/**/*.ts": {
