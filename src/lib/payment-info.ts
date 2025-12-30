@@ -30,15 +30,57 @@ export interface PaymentInfo {
  * Generiert Zahlungsinformationen für einen Purchase
  */
 export async function generatePaymentInfo(purchaseId: string): Promise<PaymentInfo> {
+  // WICHTIG: Explizites select um disputeInitiatedBy zu vermeiden (P2022)
   const purchase = await prisma.purchase.findUnique({
     where: { id: purchaseId },
-    include: {
+    select: {
+      id: true,
+      price: true,
+      watchId: true,
+      buyerId: true,
+      shippingMethod: true,
+      // disputeInitiatedBy wird NICHT selektiert
       watch: {
-        include: {
-          seller: true,
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          sellerId: true,
+          shippingMethod: true,
+          paymentProtectionEnabled: true,
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              phone: true,
+              paymentMethods: true,
+              stripeConnectedAccountId: true,
+              street: true,
+              streetNumber: true,
+              postalCode: true,
+              city: true,
+              country: true,
+            },
+          },
         },
       },
-      buyer: true,
+      buyer: {
+        select: {
+          id: true,
+          name: true,
+          firstName: true,
+          lastName: true,
+          email: true,
+          street: true,
+          streetNumber: true,
+          postalCode: true,
+          city: true,
+          country: true,
+        },
+      },
     },
   })
 

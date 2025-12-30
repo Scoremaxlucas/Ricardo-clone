@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
     console.log(`[check-payment-deadline] Prüfe Zahlungsfristen zum Zeitpunkt ${now.toISOString()}`)
 
     // Finde Purchases mit Zahlungsfrist die noch nicht bezahlt sind
+    // WICHTIG: Explizites select um disputeInitiatedBy zu vermeiden (P2022)
     const purchasesWithPaymentDeadline = await prisma.purchase.findMany({
       where: {
         paymentDeadline: {
@@ -36,9 +37,26 @@ export async function POST(request: NextRequest) {
           not: 'cancelled', // Nicht storniert
         },
       },
-      include: {
+      select: {
+        id: true,
+        paymentDeadline: true,
+        paymentConfirmed: true,
+        paymentReminderSentAt: true,
+        paymentReminderCount: true,
+        paymentDeadlineMissed: true,
+        sellerContactedAt: true,
+        buyerContactedAt: true,
+        status: true,
+        watchId: true,
+        buyerId: true,
+        price: true,
+        // disputeInitiatedBy wird NICHT selektiert
         watch: {
-          include: {
+          select: {
+            id: true,
+            title: true,
+            price: true,
+            sellerId: true,
             seller: {
               select: {
                 id: true,

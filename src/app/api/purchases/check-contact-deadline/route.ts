@@ -1,6 +1,6 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
+import { prisma } from '@/lib/prisma'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * API-Route zur Überwachung der Kontaktfrist (7-Tage-Regel)
@@ -28,6 +28,7 @@ export async function POST(request: NextRequest) {
     console.log(`[check-contact-deadline] Prüfe Kontaktfristen zum Zeitpunkt ${now.toISOString()}`)
 
     // 1. Finde Purchases die in 5 Tagen ablaufen (Warnung senden)
+    // WICHTIG: Explizites select um disputeInitiatedBy zu vermeiden (P2022)
     const purchasesNeedingWarning = await prisma.purchase.findMany({
       where: {
         contactDeadline: {
@@ -41,9 +42,19 @@ export async function POST(request: NextRequest) {
           { buyerContactedAt: null }, // Käufer hat nicht kontaktiert
         ],
       },
-      include: {
+      select: {
+        id: true,
+        contactDeadline: true,
+        sellerContactedAt: true,
+        buyerContactedAt: true,
+        watchId: true,
+        buyerId: true,
+        // disputeInitiatedBy wird NICHT selektiert
         watch: {
-          include: {
+          select: {
+            id: true,
+            title: true,
+            sellerId: true,
             seller: {
               select: {
                 id: true,
@@ -209,6 +220,7 @@ export async function POST(request: NextRequest) {
     }
 
     // 2. Finde Purchases die die Frist überschritten haben (7 Tage)
+    // WICHTIG: Explizites select um disputeInitiatedBy zu vermeiden (P2022)
     const purchasesMissedDeadline = await prisma.purchase.findMany({
       where: {
         contactDeadline: {
@@ -220,9 +232,19 @@ export async function POST(request: NextRequest) {
           { buyerContactedAt: null }, // Käufer hat nicht kontaktiert
         ],
       },
-      include: {
+      select: {
+        id: true,
+        contactDeadline: true,
+        sellerContactedAt: true,
+        buyerContactedAt: true,
+        watchId: true,
+        buyerId: true,
+        // disputeInitiatedBy wird NICHT selektiert
         watch: {
-          include: {
+          select: {
+            id: true,
+            title: true,
+            sellerId: true,
             seller: {
               select: {
                 id: true,

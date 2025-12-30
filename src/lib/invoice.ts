@@ -1,6 +1,6 @@
 import { sendInvoiceNotificationEmail } from './email'
+import { calculatePlatformFee, getPricingConfig } from './pricing-config'
 import { prisma } from './prisma'
-import { getPricingConfig, calculatePlatformFee, DEFAULT_PRICING } from './pricing-config'
 
 // Verwende zentrale Pricing-Konfiguration
 const getInvoicePricing = async () => {
@@ -16,15 +16,40 @@ const getInvoicePricing = async () => {
 // Hilfsfunktion zur Berechnung von Rechnungen
 export async function calculateInvoiceForSale(purchaseId: string) {
   // Hole Purchase mit Watch, Boosters und Verkäufer
+  // WICHTIG: Explizites select um disputeInitiatedBy zu vermeiden (P2022)
   const purchase = await prisma.purchase.findUnique({
     where: { id: purchaseId },
-    include: {
+    select: {
+      id: true,
+      price: true,
+      watchId: true,
+      buyerId: true,
+      // disputeInitiatedBy wird NICHT selektiert
       watch: {
-        include: {
-          seller: true,
+        select: {
+          id: true,
+          title: true,
+          price: true,
+          sellerId: true,
+          boosters: true,
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              hasUnpaidInvoices: true,
+            },
+          },
           categories: {
-            include: {
-              category: true,
+            select: {
+              category: {
+                select: {
+                  id: true,
+                  name: true,
+                },
+              },
             },
           },
         },
