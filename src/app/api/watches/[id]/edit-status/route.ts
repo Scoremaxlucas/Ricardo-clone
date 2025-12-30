@@ -100,12 +100,12 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 // DEPRECATED: Der isActive-Toggle wurde entfernt.
 //
 // Stattdessen verwenden Sie:
-// - POST /api/admin/watches/bulk mit action: 'approve' → Genehmigen
 // - DELETE /api/watches/[id]?action=remove → Entfernen (Soft Delete)
 // - DELETE /api/watches/[id]?action=block → Sperren (Soft Delete)
 //
 // Artikel folgen dem Ricardo-Lebenszyklus:
-// Entwurf → Genehmigt → Beendet (verkauft/abgelaufen) → Archiviert
+// Entwurf → Pending (Live) → Beendet (verkauft/abgelaufen) → Archiviert
+// (Genehmigen entfernt - hatte keinen praktischen Nutzen)
 //
 // ===========================================
 
@@ -116,10 +116,9 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   return NextResponse.json(
     {
       message:
-        'Diese Funktion wurde deaktiviert (Ricardo-Konformität). Verwenden Sie stattdessen: approve, remove oder block.',
+        'Diese Funktion wurde deaktiviert (Ricardo-Konformität). Verwenden Sie stattdessen: remove oder block.',
       deprecated: true,
       alternatives: {
-        approve: 'POST /api/admin/watches/bulk mit action: "approve"',
         remove: 'DELETE /api/watches/[id]?action=remove',
         block: 'DELETE /api/watches/[id]?action=block',
       },

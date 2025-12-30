@@ -14,9 +14,9 @@ async function checkAdmin(session: any): Promise<boolean> {
 }
 
 // RICARDO-STYLE Bulk Actions:
-// - 'approve': Genehmige Artikel (für Moderation)
 // - 'block': Sperre Artikel (Soft Delete - Daten bleiben erhalten)
 // - 'remove': Entferne Artikel (Soft Delete - Daten bleiben erhalten)
+// - KEIN 'approve': Genehmigen entfernt - hatte keinen praktischen Nutzen (Artikel sind bereits sichtbar wenn pending)
 // - KEIN 'delete': Hard Delete nur über einzelne API mit Prüfung
 // - KEIN 'activate'/'deactivate': Artikel haben Lebenszyklus, kein Toggle
 
@@ -44,25 +44,13 @@ export async function POST(request: NextRequest) {
     for (const watchId of watchIds) {
       try {
         switch (action) {
-          // Genehmigen (für Moderation)
+          // Genehmigen entfernt: Hatte keinen praktischen Nutzen
+          // Artikel sind bereits sichtbar wenn pending, daher keine separate "Genehmigung" nötig
           case 'approve':
-            await prisma.watch.update({
-              where: { id: watchId },
-              data: {
-                moderationStatus: 'approved',
-                moderatedBy: adminId,
-                moderatedAt: new Date(),
-              },
-            })
-            await prisma.moderationHistory.create({
-              data: {
-                watchId,
-                adminId,
-                action: 'approved',
-                details: JSON.stringify({ bulk: true }),
-              },
-            })
-            results.success++
+            results.failed++
+            results.errors.push(
+              `${watchId}: Genehmigen-Funktion wurde entfernt (kein praktischer Nutzen).`
+            )
             break
 
           // Sperren (RICARDO-STYLE: Soft Delete)
@@ -105,14 +93,13 @@ export async function POST(request: NextRequest) {
             results.success++
             break
 
-          // LEGACY: Für Rückwärtskompatibilität, aber mit Warnung
+          // LEGACY: Entfernt - activate/approve hatten keinen praktischen Nutzen
           case 'activate':
-            console.warn('[DEPRECATED] Using activate action - should use approve instead')
-            await prisma.watch.update({
-              where: { id: watchId },
-              data: { moderationStatus: 'approved' },
-            })
-            results.success++
+            console.warn('[DEPRECATED] activate action removed - no practical use')
+            results.failed++
+            results.errors.push(
+              `${watchId}: activate-Funktion wurde entfernt (kein praktischer Nutzen).`
+            )
             break
 
           case 'deactivate':

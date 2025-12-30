@@ -26,9 +26,13 @@ export async function GET(request: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       // Für nicht-angemeldete User: Gib beliebte Produkte zurück
+      // RICARDO-STYLE: pending und approved sind beide sichtbar
       const popularWatches = await prisma.watch.findMany({
         where: {
-          moderationStatus: 'approved',
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+          ],
         },
         orderBy: {
           createdAt: 'desc',
@@ -72,10 +76,14 @@ export async function GET(request: NextRequest) {
     ])
 
     // Wenn keine Historie vorhanden, gib beliebte Produkte zurück
+    // RICARDO-STYLE: pending und approved sind beide sichtbar
     if (history.length === 0) {
       const popularWatches = await prisma.watch.findMany({
         where: {
-          moderationStatus: 'approved',
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+          ],
         },
         orderBy: {
           createdAt: 'desc',
@@ -105,7 +113,10 @@ export async function GET(request: NextRequest) {
     if (categories.length > 0) {
       const categoryWatches = await prisma.watch.findMany({
         where: {
-          moderationStatus: 'approved',
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+          ],
           id: { notIn: Array.from(viewedWatchIds) },
           categories: {
             some: {
@@ -136,7 +147,10 @@ export async function GET(request: NextRequest) {
     if (brands.length > 0 && recommendedWatches.length < limit) {
       const brandWatches = await prisma.watch.findMany({
         where: {
-          moderationStatus: 'approved',
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+          ],
           id: { notIn: [...Array.from(viewedWatchIds), ...recommendedWatches.map(w => w.id)] },
           brand: { in: brands },
         },
@@ -161,7 +175,10 @@ export async function GET(request: NextRequest) {
     if (priceRange && recommendedWatches.length < limit) {
       const priceWatches = await prisma.watch.findMany({
         where: {
-          moderationStatus: 'approved',
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+          ],
           id: { notIn: [...Array.from(viewedWatchIds), ...recommendedWatches.map(w => w.id)] },
           price: {
             gte: priceRange.min * 0.8, // 20% unter Minimum
@@ -213,7 +230,10 @@ export async function GET(request: NextRequest) {
               notIn: [...Array.from(viewedWatchIds), ...recommendedWatches.map(w => w.id)],
             },
             watch: {
-              moderationStatus: 'approved',
+              OR: [
+                { moderationStatus: null },
+                { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+              ],
             },
           },
           select: {
@@ -243,7 +263,10 @@ export async function GET(request: NextRequest) {
     if (recommendedWatches.length < limit) {
       const popularWatches = await prisma.watch.findMany({
         where: {
-          moderationStatus: 'approved',
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+          ],
           id: { notIn: [...Array.from(viewedWatchIds), ...recommendedWatches.map(w => w.id)] },
         },
         orderBy: {

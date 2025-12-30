@@ -85,8 +85,12 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Compute EditPolicy
-    const isPublished = watch.moderationStatus === 'approved'
-    const isDraft = !isPublished || watch.moderationStatus === 'pending' || !watch.moderationStatus
+    // RICARDO-STYLE: pending und approved sind beide sichtbar (approved entfernt)
+    const isPublished =
+      watch.moderationStatus === 'pending' ||
+      watch.moderationStatus === 'approved' ||
+      !watch.moderationStatus
+    const isDraft = !isPublished
     const listingState: ListingState = {
       isPublished,
       isDraft,

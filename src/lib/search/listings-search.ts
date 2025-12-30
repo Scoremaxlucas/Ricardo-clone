@@ -13,9 +13,9 @@
  *
  * A listing is visible in public search if ALL of these conditions are met:
  *
- * 1. moderationStatus IS NULL OR moderationStatus != 'rejected'
- *    - 'pending', 'approved', 'reviewing', or NULL are all visible
- *    - Only 'rejected' is hidden
+ * 1. moderationStatus IS NULL OR moderationStatus NOT IN ('rejected', 'blocked', 'removed', 'ended')
+ *    - 'pending' (or NULL) are visible (approved removed - no practical use)
+ *    - 'rejected', 'blocked', 'removed', 'ended' are hidden
  *
  * 2. NOT SOLD - No active (non-cancelled) purchase exists
  *    - purchases: { none: {} } OR purchases: { every: { status: 'cancelled' } }

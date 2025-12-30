@@ -25,10 +25,14 @@ export async function GET(request: NextRequest) {
     const filter = searchParams.get('filter') || 'all'
 
     const where: any = {}
+    // RICARDO-STYLE: pending und approved sind beide sichtbar (approved entfernt)
     if (filter === 'active') {
-      where.moderationStatus = 'approved'
+      where.OR = [
+        { moderationStatus: null },
+        { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+      ]
     } else if (filter === 'inactive') {
-      where.moderationStatus = { not: 'approved' }
+      where.moderationStatus = { in: ['rejected', 'blocked', 'removed', 'ended'] }
     }
 
     const watches = await prisma.watch.findMany({
@@ -97,7 +101,12 @@ export async function GET(request: NextRequest) {
         watch.brand,
         watch.model,
         watch.price.toFixed(2),
-        watch.moderationStatus === 'approved' ? 'Aktiv' : 'Inaktiv',
+        // RICARDO-STYLE: pending und approved sind beide aktiv
+        watch.moderationStatus === 'approved' ||
+        watch.moderationStatus === 'pending' ||
+        !watch.moderationStatus
+          ? 'Aktiv'
+          : 'Inaktiv',
         watch.seller.nickname || watch.seller.name || '',
         watch.seller.email,
         watch.seller.verified ? 'Ja' : 'Nein',

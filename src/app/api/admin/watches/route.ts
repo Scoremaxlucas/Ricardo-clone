@@ -67,19 +67,21 @@ export async function GET(request: NextRequest) {
       const isExpired = auctionEnd ? auctionEnd <= now : false
 
       // RICARDO-STYLE: Status-Logik
-      // moderationStatus: 'pending' | 'approved' | 'rejected' | 'blocked' | 'removed' | 'ended' | null
+      // moderationStatus: 'pending' | 'rejected' | 'blocked' | 'removed' | 'ended' | null
+      // 'approved' entfernt - hatte keinen praktischen Nutzen
       const status = watch.moderationStatus || 'pending'
       const isBlocked = status === 'blocked'
       const isRemoved = status === 'removed'
       const isEnded = status === 'ended' || isSold || isExpired
-      const isApproved = status === 'approved' && !isSold && !isExpired
-      const isPending = status === 'pending' || !watch.moderationStatus
+      // Legacy: approved wird als pending behandelt (beide sind sichtbar)
+      const isPending = status === 'pending' || status === 'approved' || !watch.moderationStatus
 
-      // Legacy isActive für Rückwärtskompatibilität (wird durch Ricardo-Status ersetzt)
-      const isActive = isApproved
+      // Legacy isActive für Rückwärtskompatibilität
+      // Artikel mit pending/approved sind beide sichtbar
+      const isActive = isPending && !isSold && !isExpired
 
-      // Ricardo-Style: Bestimme den angezeigten Status
-      let displayStatus: 'pending' | 'approved' | 'blocked' | 'removed' | 'ended' | 'sold'
+      // Ricardo-Style: Bestimme den angezeigten Status (approved entfernt)
+      let displayStatus: 'pending' | 'blocked' | 'removed' | 'ended' | 'sold'
       if (isSold) {
         displayStatus = 'sold'
       } else if (isBlocked) {
@@ -88,9 +90,8 @@ export async function GET(request: NextRequest) {
         displayStatus = 'removed'
       } else if (isExpired || status === 'ended') {
         displayStatus = 'ended'
-      } else if (isApproved) {
-        displayStatus = 'approved'
       } else {
+        // pending oder approved (beide werden als pending angezeigt)
         displayStatus = 'pending'
       }
 
@@ -114,10 +115,11 @@ export async function GET(request: NextRequest) {
 
     let filteredWatches = processedWatches
     switch (filter) {
-      case 'approved': // Genehmigt (Live)
-        filteredWatches = processedWatches.filter(w => w.displayStatus === 'approved')
+      case 'pending': // Ausstehend (Live - approved wird auch als pending behandelt)
+        filteredWatches = processedWatches.filter(
+          w => w.displayStatus === 'pending' || w.moderationStatus === 'approved'
+        )
         break
-      case 'pending': // Ausstehend (Moderation)
         filteredWatches = processedWatches.filter(w => w.displayStatus === 'pending')
         break
       case 'blocked': // Gesperrt

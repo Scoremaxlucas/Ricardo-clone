@@ -30,8 +30,8 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
-// RICARDO-STYLE: Status-Typen
-type DisplayStatus = 'pending' | 'approved' | 'blocked' | 'removed' | 'ended' | 'sold'
+// RICARDO-STYLE: Status-Typen (approved entfernt - keine praktische Funktion)
+type DisplayStatus = 'pending' | 'blocked' | 'removed' | 'ended' | 'sold'
 
 interface Watch {
   id: string
@@ -92,9 +92,9 @@ export default function AdminModerateWatchesPage() {
   const [watches, setWatches] = useState<Watch[]>([])
   const [loading, setLoading] = useState(true)
   const [searchQuery, setSearchQuery] = useState('')
-  // RICARDO-STYLE: Neue Filter-Optionen
+  // RICARDO-STYLE: Neue Filter-Optionen (approved entfernt)
   const [filter, setFilter] = useState<
-    'all' | 'pending' | 'approved' | 'blocked' | 'removed' | 'ended'
+    'all' | 'pending' | 'blocked' | 'removed' | 'ended'
   >('all')
   const [selectedWatch, setSelectedWatch] = useState<Watch | null>(null)
   const [selectedWatchNotes, setSelectedWatchNotes] = useState<AdminNote[]>([])
@@ -331,8 +331,8 @@ export default function AdminModerateWatchesPage() {
     }
   }
 
-  // RICARDO-STYLE: Bulk-Aktionen (approve, block, remove - kein delete)
-  const handleBulkAction = async (action: 'approve' | 'block' | 'remove') => {
+  // RICARDO-STYLE: Bulk-Aktionen (block, remove - kein approve, kein delete)
+  const handleBulkAction = async (action: 'block' | 'remove') => {
     if (selectedWatches.size === 0) {
       toast.error('Bitte wählen Sie mindestens ein Angebot aus')
       return
@@ -364,7 +364,6 @@ export default function AdminModerateWatchesPage() {
 
       if (res.ok) {
         const pastTense: Record<string, string> = {
-          approve: 'genehmigt',
           block: 'gesperrt',
           remove: 'entfernt',
         }
@@ -452,14 +451,11 @@ export default function AdminModerateWatchesPage() {
     return true
   })
 
-  // RICARDO-STYLE: Stats basierend auf displayStatus
+  // RICARDO-STYLE: Stats basierend auf displayStatus (approved entfernt)
   const stats = {
     total: watches.length,
     pending: watches.filter(
       w => w.displayStatus === 'pending' || (!w.displayStatus && w.moderationStatus === 'pending')
-    ).length,
-    approved: watches.filter(
-      w => w.displayStatus === 'approved' || (w.isActive && w.moderationStatus === 'approved')
     ).length,
     blocked: watches.filter(w => w.displayStatus === 'blocked' || w.moderationStatus === 'blocked')
       .length,
@@ -586,12 +582,11 @@ export default function AdminModerateWatchesPage() {
                   />
                 </div>
               </div>
-              {/* RICARDO-STYLE Filter */}
+              {/* RICARDO-STYLE Filter (Genehmigt entfernt) */}
               <div className="flex flex-wrap gap-2">
                 {[
                   { key: 'all', label: 'Alle' },
                   { key: 'pending', label: 'Ausstehend' },
-                  { key: 'approved', label: 'Genehmigt' },
                   { key: 'blocked', label: 'Gesperrt' },
                   { key: 'removed', label: 'Entfernt' },
                   { key: 'ended', label: 'Beendet' },
@@ -688,14 +683,6 @@ export default function AdminModerateWatchesPage() {
                 </span>
               </div>
               <div className="flex gap-2">
-                <button
-                  onClick={() => handleBulkAction('approve')}
-                  className="flex items-center gap-2 rounded-lg bg-green-600 px-4 py-2 text-sm text-white transition-colors hover:bg-green-700"
-                  title="Genehmigen (approved)"
-                >
-                  <CheckCircle className="h-4 w-4" />
-                  Genehmigen
-                </button>
                 <button
                   onClick={() => handleBulkAction('remove')}
                   className="flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm text-white transition-colors hover:bg-amber-700"
@@ -798,13 +785,6 @@ export default function AdminModerateWatchesPage() {
                                 const status =
                                   watch.displayStatus || watch.moderationStatus || 'pending'
                                 switch (status) {
-                                  case 'approved':
-                                    return (
-                                      <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                                        <CheckCircle className="mr-1 h-3 w-3" />
-                                        Genehmigt
-                                      </span>
-                                    )
                                   case 'pending':
                                     return (
                                       <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
@@ -928,18 +908,6 @@ export default function AdminModerateWatchesPage() {
                             >
                               <History className="h-5 w-5" />
                             </button>
-                            {/* RICARDO-STYLE: Nur Genehmigen für ausstehende Artikel */}
-                            {(watch.displayStatus === 'pending' ||
-                              watch.moderationStatus === 'pending' ||
-                              !watch.moderationStatus) && (
-                              <button
-                                onClick={() => approveWatch(watch.id)}
-                                className="rounded-lg bg-green-100 p-2 text-green-700 transition-colors hover:bg-green-200"
-                                title="Genehmigen"
-                              >
-                                <CheckCircle className="h-5 w-5" />
-                              </button>
-                            )}
                             <Link
                               href={`/products/${watch.id}`}
                               target="_blank"
