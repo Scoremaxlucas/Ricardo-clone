@@ -273,7 +273,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   }
 }
 
-// DELETE: Angebot löschen (Verkäufer oder Admin)
+// DELETE: Angebot entfernen (RICARDO-STYLE: Soft Delete für Artikel mit Transaktionen)
+// 
+// RICARDO-PHILOSOPHIE:
+// - Artikel mit Geboten/Käufen werden NIE wirklich gelöscht
+// - Stattdessen: moderationStatus = 'removed' (Soft Delete)
+// - Daten bleiben für rechtliche/steuerliche Zwecke erhalten
+// - Nur Test-Artikel ohne jegliche Aktivität können hart gelöscht werden
+//
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -282,7 +289,8 @@ export async function DELETE(
     const { id } = await params
     const session = await getServerSession(authOptions)
     const { searchParams } = new URL(request.url)
-    const forceDelete = searchParams.get('forceDelete') === 'true'
+    const reason = searchParams.get('reason') || 'Vom Administrator entfernt'
+    const action = searchParams.get('action') || 'remove' // 'remove' oder 'block'
 
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
@@ -291,10 +299,10 @@ export async function DELETE(
     // Prüfe Admin-Status
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { isAdmin: true },
+      select: { isAdmin: true, name: true, email: true, nickname: true },
     })
 
-    // Hole Watch mit Seller-Informationen und Geboten
+    // Hole Watch mit allen relevanten Daten
     const watch = await prisma.watch.findUnique({
       where: { id },
       select: {
@@ -302,6 +310,7 @@ export async function DELETE(
         title: true,
         sellerId: true,
         price: true,
+        moderationStatus: true,
         seller: {
           select: {
             id: true,
@@ -318,6 +327,14 @@ export async function DELETE(
         purchases: {
           select: { id: true, status: true, buyerId: true },
         },
+        _count: {
+          select: {
+            bids: true,
+            purchases: true,
+            favorites: true,
+            priceOffers: true,
+          },
+        },
       },
     })
 
@@ -331,205 +348,162 @@ export async function DELETE(
     // Prüfe Berechtigung: Admin oder Eigentümer
     if (!isAdmin && !isOwner) {
       return NextResponse.json(
-        { message: 'Nur der Verkäufer oder Administratoren können dieses Angebot löschen' },
+        { message: 'Keine Berechtigung für diese Aktion' },
         { status: 403 }
       )
     }
 
-    // RICARDO-REGEL: Verkäufer können nicht löschen wenn Gebote vorhanden
-    if (!isAdmin && watch.bids.length > 0) {
-      return NextResponse.json(
-        {
-          message: 'Dieser Artikel kann nicht gelöscht werden, da bereits Gebote vorhanden sind.',
-          code: 'HAS_BIDS',
-          bidCount: watch.bids.length,
-        },
-        { status: 400 }
-      )
-    }
-
-    // Verkäufer können nicht löschen wenn bereits verkauft
-    const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
-    if (!isAdmin && activePurchases.length > 0) {
-      return NextResponse.json(
-        {
-          message: 'Dieser Artikel kann nicht gelöscht werden, da er bereits verkauft wurde.',
-          code: 'ALREADY_SOLD',
-        },
-        { status: 400 }
-      )
-    }
-
     // ============================================
-    // ADMIN: Prüfe auf aktive Zahlungen (Orders)
+    // RICARDO-REGELN FÜR VERKÄUFER
     // ============================================
-    if (isAdmin) {
-      const activeOrders = await prisma.order.findMany({
-        where: {
-          watchId: id,
-          paymentStatus: { in: ['paid', 'held', 'pending'] },
-        },
-        include: {
-          buyer: {
-            select: {
-              id: true,
-              email: true,
-              name: true,
-              firstName: true,
-              lastName: true,
-            },
+    if (!isAdmin) {
+      // Verkäufer können NUR Artikel ohne Aktivität beenden/entfernen
+      if (watch.bids.length > 0) {
+        return NextResponse.json(
+          {
+            message: 'Artikel mit Geboten können nicht entfernt werden. Warten Sie bis die Auktion endet.',
+            code: 'HAS_BIDS',
+            bidCount: watch.bids.length,
           },
+          { status: 400 }
+        )
+      }
+
+      const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
+      if (activePurchases.length > 0) {
+        return NextResponse.json(
+          {
+            message: 'Verkaufte Artikel können nicht entfernt werden.',
+            code: 'ALREADY_SOLD',
+          },
+          { status: 400 }
+        )
+      }
+
+      // Verkäufer ohne Admin: Kann nur eigene leere Artikel "beenden" (nicht löschen)
+      await prisma.watch.update({
+        where: { id },
+        data: {
+          moderationStatus: 'ended',
+          updatedAt: new Date(),
         },
       })
 
-      // Wenn aktive Zahlungen existieren und nicht forceDelete
-      if (activeOrders.length > 0 && !forceDelete) {
-        // Prüfe ob Rückerstattung möglich ist (Geld noch bei Stripe)
-        const refundableOrders = activeOrders.filter(
-          o => o.paymentStatus === 'paid' || o.paymentStatus === 'held'
-        )
-        const pendingOrders = activeOrders.filter(o => o.paymentStatus === 'pending')
-
-        // Berechne Gesamtbetrag
-        const totalAmount = refundableOrders.reduce((sum, o) => sum + (o.totalAmount || 0), 0)
-
-        // Hole Käufer-Info
-        const buyerInfo = refundableOrders[0]?.buyer || pendingOrders[0]?.buyer
-
-        return NextResponse.json(
-          {
-            message: 'Dieser Artikel hat aktive Bestellungen mit Zahlungen.',
-            code: 'HAS_ACTIVE_PAYMENT',
-            paymentInfo: {
-              refundableAmount: totalAmount,
-              canRefund: refundableOrders.length > 0,
-              pendingPayments: pendingOrders.length,
-              paidPayments: refundableOrders.length,
-              buyerEmail: buyerInfo?.email || 'Unbekannt',
-              buyerName:
-                buyerInfo?.firstName && buyerInfo?.lastName
-                  ? `${buyerInfo.firstName} ${buyerInfo.lastName}`
-                  : buyerInfo?.name || 'Unbekannt',
-              orderIds: activeOrders.map(o => o.id),
-              stripePaymentIntentIds: activeOrders
-                .map(o => o.stripePaymentIntentId)
-                .filter(Boolean),
-            },
-          },
-          { status: 409 } // Conflict
-        )
-      }
-
-      // Force delete mit Rückerstattung
-      if (forceDelete && activeOrders.length > 0) {
-        const { processDisputeRefund, isStripeConfigured } = await import(
-          '@/lib/stripe-disputes'
-        )
-
-        let refundResults: { orderId: string; success: boolean; error?: string }[] = []
-
-        // Verarbeite Rückerstattungen für bezahlte Orders
-        for (const order of activeOrders) {
-          if (
-            order.stripePaymentIntentId &&
-            (order.paymentStatus === 'paid' || order.paymentStatus === 'held')
-          ) {
-            console.log(
-              `[DELETE] Processing refund for order ${order.id}, PaymentIntent: ${order.stripePaymentIntentId}`
-            )
-
-            if (isStripeConfigured()) {
-              const refundResult = await processDisputeRefund(
-                order.stripePaymentIntentId,
-                undefined,
-                `Artikel vom Admin gelöscht: ${watch.title}`
-              )
-
-              refundResults.push({
-                orderId: order.id,
-                success: refundResult.success,
-                error: refundResult.error,
-              })
-
-              if (refundResult.success) {
-                // Update Order Status
-                await prisma.order.update({
-                  where: { id: order.id },
-                  data: {
-                    paymentStatus: 'refunded',
-                    refundedAt: new Date(),
-                  },
-                })
-
-                // Benachrichtige Käufer
-                try {
-                  const { sendEmail } = await import('@/lib/email')
-                  const buyerName =
-                    order.buyer?.firstName || order.buyer?.name || 'Käufer'
-
-                  await sendEmail({
-                    to: order.buyer?.email || '',
-                    subject: `Rückerstattung für "${watch.title}"`,
-                    html: `
-                      <h2>Rückerstattung erhalten</h2>
-                      <p>Hallo ${buyerName},</p>
-                      <p>Der Artikel <strong>"${watch.title}"</strong> wurde vom Verkäufer oder Administrator entfernt.</p>
-                      <p>Ihr Zahlungsbetrag von <strong>CHF ${(order.totalAmount || 0).toFixed(2)}</strong> wurde vollständig zurückerstattet.</p>
-                      <p>Die Gutschrift erscheint innerhalb von 5-10 Werktagen auf Ihrer Karte.</p>
-                      <p>Bei Fragen kontaktieren Sie uns unter support@helvenda.ch</p>
-                      <p>Mit freundlichen Grüssen,<br>Ihr Helvenda Team</p>
-                    `,
-                    text: `Hallo ${buyerName}, Der Artikel "${watch.title}" wurde entfernt. Ihr Betrag von CHF ${(order.totalAmount || 0).toFixed(2)} wurde zurückerstattet.`,
-                  })
-                } catch (emailError) {
-                  console.error('[DELETE] Error sending refund email:', emailError)
-                }
-              }
-            } else {
-              // Stripe nicht konfiguriert - simuliere Erfolg (Dev-Modus)
-              refundResults.push({
-                orderId: order.id,
-                success: true,
-                error: 'Stripe nicht konfiguriert - Simulation',
-              })
-            }
-          }
-        }
-
-        // Log refund results
-        console.log('[DELETE] Refund results:', refundResults)
-      }
+      return NextResponse.json({
+        message: 'Angebot beendet',
+        action: 'ended',
+      })
     }
 
-    // Hole Admin-Informationen für Moderation History
-    const admin = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        firstName: true,
-        lastName: true,
-        nickname: true,
+    // ============================================
+    // ADMIN-AKTIONEN (RICARDO-STYLE)
+    // ============================================
+    
+    // Prüfe ob Artikel Transaktionen hat
+    const hasTransactions = 
+      watch._count.bids > 0 || 
+      watch._count.purchases > 0 || 
+      watch._count.priceOffers > 0
+
+    // Prüfe auf aktive Zahlungen
+    const activeOrders = await prisma.order.findMany({
+      where: {
+        watchId: id,
+        paymentStatus: { in: ['paid', 'held', 'pending'] },
+      },
+      include: {
+        buyer: {
+          select: { id: true, email: true, name: true, firstName: true },
+        },
       },
     })
 
-    // Lösche zuerst alle abhängigen Daten (in korrekter Reihenfolge)
-    await prisma.bid.deleteMany({ where: { watchId: id } })
+    // ============================================
+    // SOFT DELETE: Artikel mit Transaktionen
+    // ============================================
+    if (hasTransactions || activeOrders.length > 0) {
+      // Setze moderationStatus auf 'removed' oder 'blocked'
+      const newStatus = action === 'block' ? 'blocked' : 'removed'
+      
+      await prisma.watch.update({
+        where: { id },
+        data: {
+          moderationStatus: newStatus,
+          updatedAt: new Date(),
+        },
+      })
+
+      // Erstelle Moderation History Eintrag
+      await prisma.moderationHistory.create({
+        data: {
+          watchId: id,
+          adminId: session.user.id,
+          action: newStatus,
+          details: JSON.stringify({
+            reason,
+            previousStatus: watch.moderationStatus,
+            hadBids: watch._count.bids,
+            hadPurchases: watch._count.purchases,
+            hadActiveOrders: activeOrders.length,
+          }),
+        },
+      })
+
+      // Benachrichtige Verkäufer
+      try {
+        const { sendEmail } = await import('@/lib/email')
+        const sellerName = watch.seller.nickname || watch.seller.firstName || watch.seller.name || 'Verkäufer'
+        const adminName = user?.nickname || user?.name || user?.email || 'Administrator'
+
+        await sendEmail({
+          to: watch.seller.email,
+          subject: `Ihr Angebot "${watch.title}" wurde ${newStatus === 'blocked' ? 'gesperrt' : 'entfernt'}`,
+          html: `
+            <h2>Angebot ${newStatus === 'blocked' ? 'gesperrt' : 'entfernt'}</h2>
+            <p>Hallo ${sellerName},</p>
+            <p>Ihr Angebot <strong>"${watch.title}"</strong> wurde von einem Administrator ${newStatus === 'blocked' ? 'gesperrt' : 'entfernt'}.</p>
+            <p><strong>Grund:</strong> ${reason}</p>
+            <p>Bei Fragen kontaktieren Sie uns unter support@helvenda.ch</p>
+            <p>Mit freundlichen Grüssen,<br>Ihr Helvenda Team</p>
+          `,
+          text: `Ihr Angebot "${watch.title}" wurde ${newStatus === 'blocked' ? 'gesperrt' : 'entfernt'}. Grund: ${reason}`,
+        })
+      } catch (emailError) {
+        console.error('[REMOVE] Error sending notification email:', emailError)
+      }
+
+      // Cache invalidieren
+      try {
+        revalidatePath('/', 'page')
+        revalidatePath('/search', 'page')
+      } catch (e) {
+        console.error('[REMOVE] Cache revalidation error:', e)
+      }
+
+      return NextResponse.json({
+        message: `Angebot ${newStatus === 'blocked' ? 'gesperrt' : 'entfernt'} (Daten bleiben für rechtliche Zwecke erhalten)`,
+        action: newStatus,
+        preserved: true,
+        stats: {
+          bids: watch._count.bids,
+          purchases: watch._count.purchases,
+          activeOrders: activeOrders.length,
+        },
+      })
+    }
+
+    // ============================================
+    // HARD DELETE: Nur für Test-Artikel OHNE jegliche Aktivität
+    // ============================================
+    console.log(`[DELETE] Hard delete for empty test article: ${watch.title}`)
+
+    // Lösche nur Basis-Daten (keine Transaktionen vorhanden)
     await prisma.favorite.deleteMany({ where: { watchId: id } })
-    await prisma.priceOffer.deleteMany({ where: { watchId: id } })
-    await prisma.order.deleteMany({ where: { watchId: id } })
-    await prisma.purchase.deleteMany({ where: { watchId: id } })
-    await prisma.sale.deleteMany({ where: { watchId: id } })
-    await prisma.message.deleteMany({ where: { watchId: id } })
     await prisma.watchCategory.deleteMany({ where: { watchId: id } })
     await prisma.watchView.deleteMany({ where: { watchId: id } })
-    await prisma.report.deleteMany({ where: { watchId: id } })
+    await prisma.notification.deleteMany({ where: { watchId: id } })
     await prisma.adminNote.deleteMany({ where: { watchId: id } })
     await prisma.moderationHistory.deleteMany({ where: { watchId: id } })
-    await prisma.invoiceItem.deleteMany({ where: { watchId: id } })
-    await prisma.notification.deleteMany({ where: { watchId: id } })
-    await prisma.conversation.deleteMany({ where: { context: { contains: id } } })
 
     // Lösche dann das Angebot (WICHTIG: Komplett löschen, nicht nur als rejected markieren)
     await prisma.watch.delete({
@@ -549,55 +523,41 @@ export async function DELETE(
       console.error('[DELETE] Error revalidating cache:', revalidateError)
     }
 
-    // Sende Benachrichtigung an den Verkäufer
-    try {
-      const { sendEmail, getProductDeletedEmail } = await import('@/lib/email')
-      const sellerName =
-        watch.seller.nickname ||
-        watch.seller.firstName ||
-        watch.seller.name ||
-        watch.seller.email ||
-        'Verkäufer'
+    // Sende Benachrichtigung nur wenn Admin gelöscht hat (nicht Verkäufer selbst)
+    if (isAdmin && watch.sellerId !== session.user.id) {
+      try {
+        const { sendEmail } = await import('@/lib/email')
+        const sellerName =
+          watch.seller.nickname ||
+          watch.seller.firstName ||
+          watch.seller.name ||
+          'Verkäufer'
+        const adminName = user?.nickname || user?.name || user?.email || 'Administrator'
 
-      const emailContent = getProductDeletedEmail(
-        sellerName,
-        watch.title,
-        watch.id,
-        admin?.name || admin?.email || 'Ein Administrator'
-      )
-
-      await sendEmail({
-        to: watch.seller.email,
-        subject: emailContent.subject,
-        html: emailContent.html,
-        text: emailContent.text,
-      })
-
-      console.log(`[DELETE] Product deletion notification sent to ${watch.seller.email}`)
-    } catch (emailError: any) {
-      // E-Mail-Fehler soll nicht die Löschung verhindern
-      console.error('[DELETE] Error sending deletion notification:', emailError)
+        await sendEmail({
+          to: watch.seller.email,
+          subject: `Ihr Test-Angebot "${watch.title}" wurde entfernt`,
+          html: `
+            <h2>Test-Angebot entfernt</h2>
+            <p>Hallo ${sellerName},</p>
+            <p>Ihr Test-Angebot <strong>"${watch.title}"</strong> wurde von ${adminName} entfernt.</p>
+            <p>Da der Artikel keine Gebote oder Käufe hatte, wurde er vollständig gelöscht.</p>
+            <p>Bei Fragen kontaktieren Sie uns unter support@helvenda.ch</p>
+          `,
+          text: `Ihr Test-Angebot "${watch.title}" wurde entfernt.`,
+        })
+      } catch (emailError: any) {
+        console.error('[DELETE] Error sending deletion notification:', emailError)
+      }
     }
 
-    // Erstelle in-app Benachrichtigung für den Verkäufer
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: watch.sellerId,
-          type: 'product_deleted',
-          title: 'Ihr Artikel wurde gelöscht',
-          message: `Ihr Artikel "${watch.title}" wurde von einem Administrator gelöscht.`,
-          link: `/my-watches/selling`,
-        },
-      })
-      console.log(`[DELETE] In-app notification created for seller ${watch.sellerId}`)
-    } catch (notificationError: any) {
-      // Benachrichtigungs-Fehler soll nicht die Löschung verhindern
-      console.error('[DELETE] Error creating in-app notification:', notificationError)
-    }
+    // Keine in-app Notification für gelöschte Artikel (Artikel existiert nicht mehr)
+    console.log(`[DELETE] Test article permanently deleted: ${watch.title}`)
 
     return NextResponse.json({
-      message: 'Angebot erfolgreich gelöscht',
+      message: 'Test-Angebot erfolgreich gelöscht',
+      action: 'deleted',
+      preserved: false,
     })
   } catch (error: any) {
     console.error('Error deleting watch:', error)

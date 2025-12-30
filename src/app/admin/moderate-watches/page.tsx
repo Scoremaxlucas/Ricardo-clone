@@ -105,27 +105,28 @@ export default function AdminModerateWatchesPage() {
   const [selectedWatches, setSelectedWatches] = useState<Set<string>>(new Set())
   const [showFilters, setShowFilters] = useState(false)
 
-  // Delete confirmation modal state
-  const [deleteModal, setDeleteModal] = useState<{
+  // Ricardo-Style: Remove/Block modal state (Soft Delete)
+  const [removeModal, setRemoveModal] = useState<{
     open: boolean
     watchId: string | null
     watchTitle: string | null
-    hasPayment: boolean
-    paymentInfo?: {
-      refundableAmount: number
-      canRefund: boolean
-      buyerEmail: string
-      buyerName: string
-      paidPayments: number
-      pendingPayments: number
+    action: 'remove' | 'block' | 'delete' // remove=entfernen, block=sperren, delete=nur für leere Artikel
+    reason: string
+    hasTransactions: boolean // Artikel hat Gebote/Käufe = nur Soft Delete möglich
+    stats?: {
+      bids: number
+      purchases: number
+      activeOrders: number
     }
-    isDeleting: boolean
+    isProcessing: boolean
   }>({
     open: false,
     watchId: null,
     watchTitle: null,
-    hasPayment: false,
-    isDeleting: false,
+    action: 'remove',
+    reason: '',
+    hasTransactions: false,
+    isProcessing: false,
   })
 
   useEffect(() => {
@@ -297,80 +298,66 @@ export default function AdminModerateWatchesPage() {
     }
   }
 
-  const deleteWatch = async (watchId: string, forceDelete = false) => {
-    const watch = watches.find(w => w.id === watchId)
-    
+  // RICARDO-STYLE: Entfernen oder Sperren (Soft Delete)
+  const removeOrBlockWatch = async (watchId: string, action: 'remove' | 'block', reason: string) => {
     try {
-      const url = forceDelete 
-        ? `/api/watches/${watchId}?forceDelete=true` 
-        : `/api/watches/${watchId}`
-      
+      const url = `/api/watches/${watchId}?action=${action}&reason=${encodeURIComponent(reason)}`
       const res = await fetch(url, { method: 'DELETE' })
       const data = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
 
       if (res.ok) {
-        toast.success(data.message || t.admin.offerDeleted)
+        const actionText = action === 'block' ? 'gesperrt' : 'entfernt'
+        toast.success(data.message || `Angebot ${actionText}`)
         loadWatches()
         if (selectedWatch?.id === watchId) {
           setSelectedWatch(null)
         }
-        setDeleteModal({ open: false, watchId: null, watchTitle: null, hasPayment: false, isDeleting: false })
-      } else if (data.code === 'HAS_ACTIVE_PAYMENT') {
-        // Zeige Modal mit Zahlungsdetails
-        setDeleteModal({
-          open: true,
-          watchId,
-          watchTitle: watch?.title || 'Unbekannter Artikel',
-          hasPayment: true,
-          paymentInfo: data.paymentInfo,
-          isDeleting: false,
-        })
+        setRemoveModal(prev => ({ ...prev, open: false, isProcessing: false }))
       } else {
-        console.error('Delete error:', data)
-        toast.error(data.message || t.admin.errorDeletingOffer)
+        console.error('Remove/block error:', data)
+        toast.error(data.message || 'Fehler bei der Aktion')
       }
     } catch (error: any) {
-      console.error('Error deleting watch:', error)
-      toast.error(error.message || 'Fehler beim Löschen des Angebots')
+      console.error('Error removing/blocking watch:', error)
+      toast.error(error.message || 'Fehler bei der Aktion')
     }
   }
 
-  const confirmDeleteWithRefund = async () => {
-    if (!deleteModal.watchId) return
-    
-    setDeleteModal(prev => ({ ...prev, isDeleting: true }))
-    
-    try {
-      await deleteWatch(deleteModal.watchId, true)
-    } finally {
-      setDeleteModal(prev => ({ ...prev, isDeleting: false }))
-    }
-  }
-
-  const initiateDelete = (watchId: string) => {
+  // Öffne Modal zum Entfernen/Sperren
+  const initiateRemove = (watchId: string, action: 'remove' | 'block' = 'remove') => {
     const watch = watches.find(w => w.id === watchId)
     
-    // Zeige einfaches Bestätigungs-Modal für normale Löschung
-    setDeleteModal({
+    setRemoveModal({
       open: true,
       watchId,
       watchTitle: watch?.title || 'Unbekannter Artikel',
-      hasPayment: false,
-      isDeleting: false,
+      action,
+      reason: '',
+      hasTransactions: false, // Wird vom Backend bestimmt
+      isProcessing: false,
     })
   }
 
-  const confirmSimpleDelete = async () => {
-    if (!deleteModal.watchId) return
+  // Bestätige Entfernen/Sperren
+  const confirmRemoveOrBlock = async () => {
+    if (!removeModal.watchId) return
     
-    setDeleteModal(prev => ({ ...prev, isDeleting: true }))
+    if (!removeModal.reason.trim()) {
+      toast.error('Bitte geben Sie einen Grund an')
+      return
+    }
+    
+    setRemoveModal(prev => ({ ...prev, isProcessing: true }))
     
     try {
-      await deleteWatch(deleteModal.watchId, false)
-    } catch (error) {
-      setDeleteModal(prev => ({ ...prev, isDeleting: false }))
+      await removeOrBlockWatch(removeModal.watchId, removeModal.action, removeModal.reason)
+    } finally {
+      setRemoveModal(prev => ({ ...prev, isProcessing: false }))
     }
   }
+
+  // Legacy alias für bestehenden Code
+  const initiateDelete = initiateRemove
 
   const addNote = async (watchId: string) => {
     if (!newNote.trim()) {
@@ -954,11 +941,11 @@ export default function AdminModerateWatchesPage() {
                               <Eye className="h-5 w-5" />
                             </Link>
                             <button
-                              onClick={() => initiateDelete(watch.id)}
-                              className="rounded-lg bg-red-100 p-2 text-red-700 transition-colors hover:bg-red-200"
-                              title="Löschen"
+                              onClick={() => initiateRemove(watch.id, 'remove')}
+                              className="rounded-lg bg-amber-100 p-2 text-amber-700 transition-colors hover:bg-amber-200"
+                              title="Entfernen (Soft Delete)"
                             >
-                              <Trash2 className="h-5 w-5" />
+                              <EyeOff className="h-5 w-5" />
                             </button>
                           </div>
                         </div>
@@ -1281,35 +1268,39 @@ export default function AdminModerateWatchesPage() {
         </div>
       )}
 
-      {/* Delete Confirmation Modal */}
-      {deleteModal.open && (
+      {/* RICARDO-STYLE: Remove/Block Modal (Soft Delete) */}
+      {removeModal.open && (
         <div className="fixed inset-0 z-50 flex items-center justify-center">
           <div
             className="absolute inset-0 bg-black/60 backdrop-blur-sm"
-            onClick={() => !deleteModal.isDeleting && setDeleteModal({ open: false, watchId: null, watchTitle: null, hasPayment: false, isDeleting: false })}
+            onClick={() => !removeModal.isProcessing && setRemoveModal(prev => ({ ...prev, open: false }))}
           />
           <div className="relative mx-4 w-full max-w-lg overflow-hidden rounded-2xl bg-white shadow-2xl">
             {/* Header */}
-            <div className={`px-6 py-4 ${deleteModal.hasPayment ? 'bg-gradient-to-r from-amber-500 to-orange-500' : 'bg-gradient-to-r from-red-500 to-red-600'}`}>
+            <div className={`px-6 py-4 ${
+              removeModal.action === 'block' 
+                ? 'bg-gradient-to-r from-red-500 to-red-600' 
+                : 'bg-gradient-to-r from-amber-500 to-orange-500'
+            }`}>
               <div className="flex items-center gap-3">
                 <div className="rounded-full bg-white/20 p-2">
-                  {deleteModal.hasPayment ? (
-                    <CreditCard className="h-6 w-6 text-white" />
+                  {removeModal.action === 'block' ? (
+                    <Shield className="h-6 w-6 text-white" />
                   ) : (
-                    <Trash2 className="h-6 w-6 text-white" />
+                    <EyeOff className="h-6 w-6 text-white" />
                   )}
                 </div>
                 <div className="flex-1">
                   <h3 className="text-lg font-semibold text-white">
-                    {deleteModal.hasPayment ? 'Aktive Zahlung vorhanden' : 'Angebot löschen'}
+                    {removeModal.action === 'block' ? 'Angebot sperren' : 'Angebot entfernen'}
                   </h3>
-                  {deleteModal.hasPayment && (
-                    <p className="text-sm text-white/80">Rückerstattung erforderlich</p>
-                  )}
+                  <p className="text-sm text-white/80">
+                    Ricardo-Prinzip: Daten bleiben erhalten
+                  </p>
                 </div>
-                {!deleteModal.isDeleting && (
+                {!removeModal.isProcessing && (
                   <button
-                    onClick={() => setDeleteModal({ open: false, watchId: null, watchTitle: null, hasPayment: false, isDeleting: false })}
+                    onClick={() => setRemoveModal(prev => ({ ...prev, open: false }))}
                     className="rounded-full p-1 text-white/80 hover:bg-white/20 hover:text-white"
                     aria-label="Schließen"
                   >
@@ -1321,116 +1312,133 @@ export default function AdminModerateWatchesPage() {
 
             {/* Content */}
             <div className="p-6">
+              {/* Article info */}
               <div className="mb-4 rounded-xl bg-gray-50 p-4">
                 <p className="text-sm text-gray-600">Artikel</p>
-                <p className="font-semibold text-gray-900">{deleteModal.watchTitle}</p>
+                <p className="font-semibold text-gray-900">{removeModal.watchTitle}</p>
               </div>
 
-              {deleteModal.hasPayment && deleteModal.paymentInfo ? (
-                <>
-                  {/* Payment Warning */}
-                  <div className="mb-4 rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
-                    <div className="flex items-start gap-3">
-                      <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
-                      <div className="flex-1">
-                        <h4 className="font-semibold text-amber-900">Zahlung vorhanden</h4>
-                        <p className="mt-1 text-sm text-amber-800">
-                          Dieser Artikel hat eine aktive Bestellung mit Zahlung. Bei Löschung wird der Käufer automatisch zurückerstattet.
-                        </p>
-                      </div>
-                    </div>
-                  </div>
+              {/* Action Selection */}
+              <div className="mb-4">
+                <p className="mb-2 text-sm font-medium text-gray-700">Aktion wählen:</p>
+                <div className="flex gap-2">
+                  <button
+                    onClick={() => setRemoveModal(prev => ({ ...prev, action: 'remove' }))}
+                    className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors ${
+                      removeModal.action === 'remove'
+                        ? 'border-amber-500 bg-amber-50 text-amber-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    <EyeOff className="mx-auto mb-1 h-5 w-5" />
+                    Entfernen
+                  </button>
+                  <button
+                    onClick={() => setRemoveModal(prev => ({ ...prev, action: 'block' }))}
+                    className={`flex-1 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-colors ${
+                      removeModal.action === 'block'
+                        ? 'border-red-500 bg-red-50 text-red-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                    }`}
+                  >
+                    <Shield className="mx-auto mb-1 h-5 w-5" />
+                    Sperren
+                  </button>
+                </div>
+              </div>
 
-                  {/* Payment Details */}
-                  <div className="mb-4 space-y-3 rounded-xl bg-gray-50 p-4">
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Käufer</span>
-                      <span className="font-medium text-gray-900">{deleteModal.paymentInfo.buyerName}</span>
-                    </div>
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">E-Mail</span>
-                      <span className="font-medium text-gray-900">{deleteModal.paymentInfo.buyerEmail}</span>
-                    </div>
-                    <div className="flex items-center justify-between border-t border-gray-200 pt-3">
-                      <span className="text-sm font-semibold text-gray-700">Rückerstattungsbetrag</span>
-                      <span className="text-lg font-bold text-green-600">
-                        CHF {deleteModal.paymentInfo.refundableAmount.toFixed(2)}
-                      </span>
-                    </div>
-                    {deleteModal.paymentInfo.canRefund ? (
-                      <div className="flex items-center gap-2 rounded-lg bg-green-100 px-3 py-2 text-sm text-green-700">
-                        <RefreshCw className="h-4 w-4" />
-                        Automatische Rückerstattung via Stripe möglich
-                      </div>
-                    ) : (
-                      <div className="flex items-center gap-2 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">
-                        <XCircle className="h-4 w-4" />
-                        Manuelle Rückerstattung erforderlich (Geld bereits ausgezahlt)
-                      </div>
-                    )}
-                  </div>
+              {/* Reason Input */}
+              <div className="mb-4">
+                <label className="mb-2 block text-sm font-medium text-gray-700">
+                  Grund (erforderlich) *
+                </label>
+                <textarea
+                  value={removeModal.reason}
+                  onChange={(e) => setRemoveModal(prev => ({ ...prev, reason: e.target.value }))}
+                  placeholder={removeModal.action === 'block' 
+                    ? 'z.B. Verstoss gegen AGB, Betrugsverdacht...' 
+                    : 'z.B. Auf Wunsch des Verkäufers, Doppeltes Inserat...'
+                  }
+                  className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"
+                  rows={3}
+                />
+              </div>
 
-                  <p className="mb-4 text-sm text-gray-600">
-                    Bei Löschung wird:
-                  </p>
-                  <ul className="mb-4 space-y-1 text-sm text-gray-600">
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      CHF {deleteModal.paymentInfo.refundableAmount.toFixed(2)} an Käufer erstattet
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Käufer per E-Mail informiert
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Bestellung storniert
-                    </li>
-                    <li className="flex items-center gap-2">
-                      <CheckCircle className="h-4 w-4 text-green-500" />
-                      Artikel permanent gelöscht
-                    </li>
-                  </ul>
-                </>
-              ) : (
-                <p className="mb-4 text-gray-600">
-                  Möchten Sie dieses Angebot wirklich löschen? Diese Aktion kann nicht rückgängig gemacht werden.
-                </p>
-              )}
+              {/* Info Box */}
+              <div className="mb-4 rounded-xl border-2 border-blue-200 bg-blue-50 p-4">
+                <div className="flex items-start gap-3">
+                  <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
+                  <div className="flex-1">
+                    <h4 className="font-semibold text-blue-900">Ricardo-Prinzip</h4>
+                    <p className="mt-1 text-sm text-blue-800">
+                      {removeModal.action === 'block' ? (
+                        <>Gesperrte Artikel werden aus der Suche entfernt und sind nicht mehr kaufbar. 
+                        Alle Daten (Gebote, Käufe, Zahlungen) bleiben für rechtliche Zwecke erhalten.</>
+                      ) : (
+                        <>Entfernte Artikel werden aus der öffentlichen Ansicht ausgeblendet. 
+                        Alle Transaktionsdaten bleiben für Buchhaltung und Rechtliches erhalten.</>
+                      )}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* What will happen */}
+              <div className="text-sm text-gray-600">
+                <p className="mb-2 font-medium">Bei dieser Aktion wird:</p>
+                <ul className="space-y-1">
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Artikel aus öffentlicher Suche entfernt
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Verkäufer per E-Mail informiert
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-green-500" />
+                    Aktion in Historie dokumentiert
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <CheckCircle className="h-4 w-4 text-blue-500" />
+                    Alle Daten bleiben erhalten
+                  </li>
+                </ul>
+              </div>
             </div>
 
             {/* Actions */}
             <div className="flex gap-3 border-t border-gray-100 bg-gray-50 px-6 py-4">
               <button
-                onClick={() => setDeleteModal({ open: false, watchId: null, watchTitle: null, hasPayment: false, isDeleting: false })}
-                disabled={deleteModal.isDeleting}
+                onClick={() => setRemoveModal(prev => ({ ...prev, open: false }))}
+                disabled={removeModal.isProcessing}
                 className="flex-1 rounded-xl border border-gray-300 bg-white px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50 disabled:opacity-50"
               >
                 Abbrechen
               </button>
               <button
-                onClick={deleteModal.hasPayment ? confirmDeleteWithRefund : confirmSimpleDelete}
-                disabled={deleteModal.isDeleting}
+                onClick={confirmRemoveOrBlock}
+                disabled={removeModal.isProcessing || !removeModal.reason.trim()}
                 className={`flex flex-1 items-center justify-center gap-2 rounded-xl px-4 py-3 font-medium text-white transition-colors disabled:opacity-50 ${
-                  deleteModal.hasPayment
-                    ? 'bg-amber-600 hover:bg-amber-700'
-                    : 'bg-red-600 hover:bg-red-700'
+                  removeModal.action === 'block'
+                    ? 'bg-red-600 hover:bg-red-700'
+                    : 'bg-amber-600 hover:bg-amber-700'
                 }`}
               >
-                {deleteModal.isDeleting ? (
+                {removeModal.isProcessing ? (
                   <>
                     <Loader2 className="h-5 w-5 animate-spin" />
-                    {deleteModal.hasPayment ? 'Erstattet & löscht...' : 'Löscht...'}
+                    Wird verarbeitet...
                   </>
-                ) : deleteModal.hasPayment ? (
+                ) : removeModal.action === 'block' ? (
                   <>
-                    <RefreshCw className="h-5 w-5" />
-                    Erstatten & Löschen
+                    <Shield className="h-5 w-5" />
+                    Sperren
                   </>
                 ) : (
                   <>
-                    <Trash2 className="h-5 w-5" />
-                    Löschen
+                    <EyeOff className="h-5 w-5" />
+                    Entfernen
                   </>
                 )}
               </button>
