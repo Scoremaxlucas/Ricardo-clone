@@ -531,15 +531,6 @@ export default function AdminModerateWatchesPage() {
           <div className="rounded-lg bg-white p-4 shadow">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-gray-600">Genehmigt</p>
-                <p className="text-2xl font-bold text-green-600">{stats.approved}</p>
-              </div>
-              <CheckCircle className="h-8 w-8 text-green-400" />
-            </div>
-          </div>
-          <div className="rounded-lg bg-white p-4 shadow">
-            <div className="flex items-center justify-between">
-              <div>
                 <p className="text-sm text-gray-600">Gesperrt</p>
                 <p className="text-2xl font-bold text-red-600">{stats.blocked}</p>
               </div>
