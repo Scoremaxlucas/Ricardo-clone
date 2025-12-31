@@ -298,7 +298,15 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
                   title="Helvenda Zahlungsschutz"
                 >
                   <Shield className="h-5 w-5 fill-green-100 stroke-green-600 stroke-[2]" />
-                  <span className="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold leading-none text-green-700">
+                  <span 
+                    className="absolute text-[10px] font-extrabold leading-none text-green-700"
+                    style={{ 
+                      top: '50%', 
+                      left: '50%', 
+                      transform: 'translate(-50%, -50%)',
+                      lineHeight: '1'
+                    }}
+                  >
                     H
                   </span>
                 </span>
