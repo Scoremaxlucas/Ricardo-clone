@@ -34,6 +34,9 @@ interface Dispute {
   disputeDescription: string
   disputeStatus: string
   disputeOpenedAt: string | null
+  disputeDeadline: string | null
+  disputeAttachments: string[]
+  disputeReminderCount: number
   disputeResolvedAt: string | null
   disputeResolvedBy: string | null
   purchaseStatus: string
@@ -46,6 +49,7 @@ interface Stats {
   total: number
   pending: number
   resolved: number
+  rejected: number
   closed: number
 }
 
@@ -54,7 +58,7 @@ export default function AdminDisputesPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [disputes, setDisputes] = useState<Dispute[]>([])
-  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, resolved: 0, closed: 0 })
+  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, resolved: 0, rejected: 0, closed: 0 })
   const [filter, setFilter] = useState<'all' | 'pending' | 'resolved' | 'closed'>('all')
   const [typeFilter, setTypeFilter] = useState<'all' | 'dispute' | 'cancellation'>('all')
   const [sortBy, setSortBy] = useState<'openedAt' | 'resolvedAt'>('openedAt')
@@ -92,18 +96,18 @@ export default function AdminDisputesPage() {
       if (res.ok) {
         const data = await res.json()
         setDisputes(data.disputes || [])
-        setStats(data.stats || { total: 0, pending: 0, resolved: 0, closed: 0 })
+        setStats(data.stats || { total: 0, pending: 0, resolved: 0, rejected: 0, closed: 0 })
       } else {
         // Nur Fehler loggen, keine Toast-Benachrichtigung
         const errorData = await res.json().catch(() => ({ message: 'Unknown error' }))
         console.error('Error loading disputes:', errorData)
         setDisputes([])
-        setStats({ total: 0, pending: 0, resolved: 0, closed: 0 })
+        setStats({ total: 0, pending: 0, resolved: 0, rejected: 0, closed: 0 })
       }
     } catch (error) {
       console.error('Error loading disputes:', error)
       setDisputes([])
-      setStats({ total: 0, pending: 0, resolved: 0, closed: 0 })
+      setStats({ total: 0, pending: 0, resolved: 0, rejected: 0, closed: 0 })
     } finally {
       setLoading(false)
     }
@@ -123,6 +127,13 @@ export default function AdminDisputesPage() {
           <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
             <CheckCircle className="mr-1 h-3 w-3" />
             Gelöst
+          </span>
+        )
+      case 'rejected':
+        return (
+          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+            <AlertTriangle className="mr-1 h-3 w-3" />
+            Abgelehnt
           </span>
         )
       case 'closed':
@@ -377,6 +388,9 @@ export default function AdminDisputesPage() {
                       Eröffnet
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                      Frist
+                    </th>
+                    <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                       Aktionen
                     </th>
                   </tr>
@@ -444,6 +458,31 @@ export default function AdminDisputesPage() {
                               minute: '2-digit',
                             })
                           : '-'}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm">
+                        {dispute.disputeStatus === 'pending' && dispute.disputeDeadline ? (
+                          (() => {
+                            const deadline = new Date(dispute.disputeDeadline)
+                            const now = new Date()
+                            const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                            const isUrgent = daysLeft <= 3
+                            const isOverdue = daysLeft < 0
+                            return (
+                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                                isOverdue ? 'bg-red-100 text-red-800' :
+                                isUrgent ? 'bg-orange-100 text-orange-800' :
+                                'bg-blue-100 text-blue-800'
+                              }`}>
+                                <Clock className="h-3 w-3" />
+                                {isOverdue ? 'Überfällig' : `${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''}`}
+                              </span>
+                            )
+                          })()
+                        ) : dispute.disputeStatus === 'pending' ? (
+                          <span className="text-gray-400">-</span>
+                        ) : (
+                          <span className="text-gray-400">Erledigt</span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm font-medium">
                         <Link

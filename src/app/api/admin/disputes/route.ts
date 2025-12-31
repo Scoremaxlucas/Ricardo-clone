@@ -89,6 +89,9 @@ export async function GET(request: NextRequest) {
               disputeStatus: true,
               disputeResolvedAt: true,
               disputeResolvedBy: true,
+              disputeDeadline: true,
+              disputeAttachments: true,
+              disputeReminderCount: true,
               // disputeInitiatedBy wird NICHT selektiert (existiert möglicherweise noch nicht)
               watch: {
                 select: {
@@ -222,6 +225,9 @@ export async function GET(request: NextRequest) {
         disputeDescription: description,
         disputeStatus: purchase.disputeStatus || 'pending',
         disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
+        disputeDeadline: purchase.disputeDeadline?.toISOString() || null,
+        disputeAttachments: purchase.disputeAttachments ? JSON.parse(purchase.disputeAttachments) : [],
+        disputeReminderCount: purchase.disputeReminderCount || 0,
         disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
         disputeResolvedBy: purchase.disputeResolvedBy || null,
         purchaseStatus: purchase.status,
@@ -294,7 +300,8 @@ export async function GET(request: NextRequest) {
       total: allItems.length,
       pending: allItems.filter(d => d.disputeStatus === 'pending').length,
       resolved: allItems.filter(d => d.disputeStatus === 'resolved').length,
-      closed: allItems.filter(d => d.disputeStatus === 'closed').length,
+      rejected: allItems.filter(d => d.disputeStatus === 'rejected').length,
+      closed: allItems.filter(d => d.disputeStatus === 'closed' || d.disputeStatus === 'rejected').length,
     }
 
     return NextResponse.json({

@@ -55,8 +55,14 @@ interface Dispute {
   disputeDescription: string
   disputeStatus: string
   disputeOpenedAt: string | null
+  disputeDeadline: string | null
+  disputeFrozenAt: string | null
+  disputeAttachments: string[]
+  disputeReminderCount: number
+  disputeReminderSentAt: string | null
   disputeResolvedAt: string | null
   disputeResolvedBy: string | null
+  type: 'dispute' | 'cancellation'
   purchaseStatus: string
   purchasePrice: number | null
   shippingMethod: string | null
@@ -351,10 +357,45 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Dispute-Details</h1>
-              <p className="mt-2 text-gray-600">ID: {dispute.id}</p>
+              <p className="mt-2 text-gray-600">
+                ID: {dispute.id}
+                {dispute.type === 'cancellation' && (
+                  <span className="ml-2 rounded bg-orange-100 px-2 py-0.5 text-xs font-medium text-orange-800">
+                    Stornierungsantrag
+                  </span>
+                )}
+              </p>
             </div>
             {getStatusBadge(dispute.disputeStatus)}
           </div>
+
+          {/* Urgency Banner */}
+          {dispute.disputeStatus === 'pending' && dispute.disputeDeadline && (
+            (() => {
+              const deadline = new Date(dispute.disputeDeadline)
+              const now = new Date()
+              const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+              const isUrgent = daysLeft <= 3
+              const isOverdue = daysLeft < 0
+              
+              if (isOverdue || isUrgent) {
+                return (
+                  <div className={`mt-4 rounded-lg p-4 ${isOverdue ? 'bg-red-50 border border-red-200' : 'bg-orange-50 border border-orange-200'}`}>
+                    <div className="flex items-center gap-2">
+                      <Clock className={`h-5 w-5 ${isOverdue ? 'text-red-600' : 'text-orange-600'}`} />
+                      <span className={`font-medium ${isOverdue ? 'text-red-800' : 'text-orange-800'}`}>
+                        {isOverdue 
+                          ? `⚠️ Überfällig! Frist war am ${deadline.toLocaleDateString('de-CH')}`
+                          : `⚡ Dringend: Noch ${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''} bis zur Frist (${deadline.toLocaleDateString('de-CH')})`
+                        }
+                      </span>
+                    </div>
+                  </div>
+                )
+              }
+              return null
+            })()
+          )}
         </div>
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
@@ -399,6 +440,28 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                     {dispute.disputeDescription}
                   </p>
                 </div>
+
+                {/* Beweismaterial/Anhänge */}
+                {dispute.disputeAttachments && dispute.disputeAttachments.length > 0 && (
+                  <div>
+                    <label className="text-sm font-medium text-gray-500">Beweismaterial ({dispute.disputeAttachments.length})</label>
+                    <div className="mt-2 flex flex-wrap gap-2">
+                      {dispute.disputeAttachments.map((url, idx) => (
+                        <a
+                          key={idx}
+                          href={url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="inline-flex items-center gap-1 rounded-lg border border-gray-300 bg-gray-50 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100"
+                        >
+                          <FileText className="h-4 w-4" />
+                          Anhang {idx + 1}
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+
                 <div className="grid grid-cols-2 gap-4">
                   <div>
                     <label className="text-sm font-medium text-gray-500">Eröffnet am</label>
@@ -408,11 +471,32 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                         : '-'}
                     </p>
                   </div>
+                  {dispute.disputeDeadline && dispute.disputeStatus === 'pending' && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Frist</label>
+                      <p className="mt-1 text-gray-900">
+                        {new Date(dispute.disputeDeadline).toLocaleString('de-CH')}
+                      </p>
+                    </div>
+                  )}
                   {dispute.disputeResolvedAt && (
                     <div>
                       <label className="text-sm font-medium text-gray-500">Gelöst am</label>
                       <p className="mt-1 text-gray-900">
                         {new Date(dispute.disputeResolvedAt).toLocaleString('de-CH')}
+                      </p>
+                    </div>
+                  )}
+                  {dispute.disputeReminderCount > 0 && (
+                    <div>
+                      <label className="text-sm font-medium text-gray-500">Erinnerungen gesendet</label>
+                      <p className="mt-1 text-gray-900">
+                        {dispute.disputeReminderCount}x
+                        {dispute.disputeReminderSentAt && (
+                          <span className="ml-1 text-xs text-gray-500">
+                            (zuletzt: {new Date(dispute.disputeReminderSentAt).toLocaleDateString('de-CH')})
+                          </span>
+                        )}
                       </p>
                     </div>
                   )}

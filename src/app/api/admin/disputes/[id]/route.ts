@@ -123,6 +123,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       ? purchase.cancellationRequestResolvedBy
       : purchase.disputeResolvedBy
 
+    // Parse Dispute-Attachments (nur bei echten Disputes, nicht Stornierungen)
+    let disputeAttachments: string[] = []
+    if (!isCancellation && purchase.disputeAttachments) {
+      try {
+        disputeAttachments = JSON.parse(purchase.disputeAttachments)
+      } catch (e) {
+        console.error('Error parsing dispute attachments:', e)
+      }
+    }
+
     // Parse Status-Historie
     let statusHistory: any[] = []
     if (purchase.statusHistory) {
@@ -192,6 +202,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         disputeDescription: description,
         disputeStatus: status,
         disputeOpenedAt: openedAt?.toISOString() || null,
+        disputeDeadline: purchase.disputeDeadline?.toISOString() || null,
+        disputeFrozenAt: purchase.disputeFrozenAt?.toISOString() || null,
+        disputeAttachments,
+        disputeReminderCount: purchase.disputeReminderCount || 0,
+        disputeReminderSentAt: purchase.disputeReminderSentAt?.toISOString() || null,
         disputeResolvedAt: resolvedAt?.toISOString() || null,
         disputeResolvedBy: resolvedBy || null,
         type: isCancellation ? 'cancellation' : 'dispute',
