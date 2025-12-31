@@ -172,7 +172,7 @@ export function PayoutOnboardingModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="relative mx-auto flex w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
         {/* Minimal Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">Auszahlung einrichten</h2>
