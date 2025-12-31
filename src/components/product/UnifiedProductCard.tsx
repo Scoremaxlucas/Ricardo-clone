@@ -1,6 +1,17 @@
 'use client'
 
-import { Award, Clock, Gavel, Heart, MapPin, Medal, Shield, Sparkles, Star, TrendingUp } from 'lucide-react'
+import {
+  Award,
+  Clock,
+  Gavel,
+  Heart,
+  MapPin,
+  Medal,
+  Shield,
+  Sparkles,
+  Star,
+  TrendingUp,
+} from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -81,7 +92,8 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
   const boosters = product.boosters || []
   const hasGold = boosters.includes('gold') || boosters.includes('super-boost')
   const hasSilber = (boosters.includes('silber') || boosters.includes('turbo-boost')) && !hasGold
-  const hasBronze = (boosters.includes('bronze') || boosters.includes('boost')) && !hasGold && !hasSilber
+  const hasBronze =
+    (boosters.includes('bronze') || boosters.includes('boost')) && !hasGold && !hasSilber
 
   // Check if product is new (less than 7 days old)
   const isNew = product.createdAt
@@ -285,8 +297,8 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
                   className="relative inline-flex h-4 w-4 items-center justify-center"
                   title="Helvenda Zahlungsschutz"
                 >
-                  <Shield className="absolute h-4 w-4 fill-green-50 stroke-green-600" />
-                  <span className="relative z-10 text-[9px] font-bold leading-none text-green-700">
+                  <Shield className="h-4 w-4 fill-green-100 stroke-green-600 stroke-[1.5]" />
+                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-extrabold leading-none text-green-700">
                     H
                   </span>
                 </span>

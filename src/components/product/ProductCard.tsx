@@ -373,8 +373,8 @@ export function ProductCard({
                 className="relative inline-flex h-4 w-4 items-center justify-center"
                 title="Helvenda Zahlungsschutz"
               >
-                <Shield className="absolute h-4 w-4 fill-green-50 stroke-green-600" />
-                <span className="relative z-10 text-[9px] font-bold leading-none text-green-700">
+                <Shield className="h-4 w-4 fill-green-100 stroke-green-600 stroke-[1.5]" />
+                <span className="absolute inset-0 flex items-center justify-center text-[8px] font-extrabold leading-none text-green-700">
                   H
                 </span>
               </span>
