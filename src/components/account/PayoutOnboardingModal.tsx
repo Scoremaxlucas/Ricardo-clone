@@ -173,8 +173,13 @@ export function PayoutOnboardingModal({
       onClick={handleBackdropClick}
     >
       <div
-        className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-t-xl shadow-2xl"
-        style={{ maxHeight: '90vh' }}
+        className="relative flex w-full flex-col overflow-hidden rounded-t-xl shadow-2xl"
+        style={{
+          width: '560px',
+          maxWidth: '90vw',
+          maxHeight: '90vh',
+          height: 'auto',
+        }}
       >
         {/* Minimal Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
@@ -191,7 +196,10 @@ export function PayoutOnboardingModal({
         </div>
 
         {/* Content - Flex grow to fill space, Stripe footer will be at bottom - NO white background */}
-        <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        <div
+          className="flex min-h-0 flex-1 flex-col overflow-hidden"
+          style={{ minHeight: '400px' }}
+        >
           {/* Loading State */}
           {loading && (
             <div className="flex flex-col items-center justify-center py-20">
@@ -280,7 +288,10 @@ export function PayoutOnboardingModal({
               `,
                 }}
               />
-              <div className="flex min-h-0 flex-1 flex-col overflow-hidden" style={{ margin: 0, padding: 0 }}>
+              <div
+                className="flex min-h-0 flex-1 flex-col overflow-hidden"
+                style={{ margin: 0, padding: 0 }}
+              >
                 <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
                   <ConnectAccountOnboarding onExit={handleOnboardingExit} />
                 </ConnectComponentsProvider>

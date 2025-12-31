@@ -3,11 +3,11 @@
 import { PayoutSection } from '@/components/account/PayoutSection'
 import { StripePayoutSection } from '@/components/account/StripePayoutSection'
 import { zodResolver } from '@hookform/resolvers/zod'
-import { ArrowLeft, Info, Loader2, Mail, MapPin, Phone, User } from 'lucide-react'
+import { ArrowLeft, Check, Info, Loader2, Mail, MapPin, Phone, User } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useRef, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useForm } from 'react-hook-form'
 import { toast } from 'react-hot-toast'
 import * as z from 'zod'
@@ -24,12 +24,17 @@ const accountSchema = z.object({
       'Ungültige Hausnummer (z.B. 6a, 12B, 4-6)'
     )
     .optional()
-    .refine(val => !val || val.trim().length > 0, 'Hausnummer darf nicht leer sein'),
+    .or(z.literal(''))
+    .refine(val => !val || val.trim().length > 0 || val === '', 'Hausnummer darf nicht leer sein'),
   postalCode: z
     .string()
     .regex(/^[0-9]{4}$/, 'Postleitzahl muss 4 Ziffern haben (z.B. 8000)')
     .optional()
-    .refine(val => !val || val.trim().length > 0, 'Postleitzahl darf nicht leer sein'),
+    .or(z.literal(''))
+    .refine(
+      val => !val || val.trim().length > 0 || val === '',
+      'Postleitzahl darf nicht leer sein'
+    ),
   city: z.string().trim().optional(),
   country: z.string().optional(),
   addresszusatz: z.string().optional(),
@@ -38,13 +43,18 @@ const accountSchema = z.object({
 
 type AccountFormData = z.infer<typeof accountSchema>
 
+// Auto-save debounce delay in ms
+const AUTO_SAVE_DELAY = 2000
+
 export default function AccountPage() {
   const { data: session, status, update } = useSession()
   const router = useRouter()
   const [isLoading, setIsLoading] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
-  const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false)
-  const formRef = useRef<HTMLFormElement>(null)
+  const [lastSaved, setLastSaved] = useState<Date | null>(null)
+  const [saveStatus, setSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle')
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const lastSavedDataRef = useRef<string>('')
 
   const {
     register,
@@ -52,6 +62,7 @@ export default function AccountPage() {
     formState: { errors, isDirty, isValid },
     reset,
     watch,
+    getValues,
   } = useForm<AccountFormData>({
     resolver: zodResolver(accountSchema),
     mode: 'onChange',
@@ -68,38 +79,96 @@ export default function AccountPage() {
     },
   })
 
-  // Track form changes
+  // Watch all form values for auto-save
   const watchedValues = watch()
-  useEffect(() => {
-    setHasUnsavedChanges(isDirty)
-  }, [isDirty])
 
-  // Warn about unsaved changes
-  useEffect(() => {
-    const handleBeforeUnload = (e: BeforeUnloadEvent) => {
-      if (hasUnsavedChanges) {
-        e.preventDefault()
-        e.returnValue = ''
+  // Auto-save function
+  const saveData = useCallback(
+    async (data: AccountFormData) => {
+      // Prevent saving if data hasn't changed
+      const currentDataStr = JSON.stringify(data)
+      if (currentDataStr === lastSavedDataRef.current) {
+        return
       }
-    }
 
-    const handleRouteChange = () => {
-      if (hasUnsavedChanges) {
-        const confirmed = window.confirm(
-          'Sie haben ungespeicherte Änderungen. Möchten Sie wirklich fortfahren?'
-        )
-        if (!confirmed) {
-          router.push(window.location.pathname)
-          return false
+      setSaveStatus('saving')
+      setIsSaving(true)
+
+      try {
+        const res = await fetch('/api/profile/update', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            name: data.name,
+            phone: data.phone || null,
+            street: data.street || null,
+            streetNumber: data.streetNumber || null,
+            postalCode: data.postalCode || null,
+            city: data.city || null,
+            country: 'Schweiz',
+            addresszusatz: data.addresszusatz || null,
+            kanton: null,
+          }),
+        })
+
+        if (res.ok) {
+          lastSavedDataRef.current = currentDataStr
+          setLastSaved(new Date())
+          setSaveStatus('saved')
+          reset(data, { keepValues: true })
+          if (update) {
+            await update()
+          }
+          // Reset status after 2 seconds
+          setTimeout(() => setSaveStatus('idle'), 2000)
+        } else {
+          const responseData = await res.json()
+          setSaveStatus('error')
+          toast.error(responseData.message || 'Fehler beim Speichern')
         }
+      } catch (error) {
+        console.error('Error saving profile:', error)
+        setSaveStatus('error')
+        toast.error('Fehler beim Speichern')
+      } finally {
+        setIsSaving(false)
       }
+    },
+    [reset, update]
+  )
+
+  // Auto-save effect - triggers after AUTO_SAVE_DELAY ms of inactivity
+  useEffect(() => {
+    // Skip if loading or no changes
+    if (isLoading || !isDirty) {
+      return
     }
 
-    window.addEventListener('beforeunload', handleBeforeUnload)
-    return () => {
-      window.removeEventListener('beforeunload', handleBeforeUnload)
+    // Skip if there are validation errors
+    if (Object.keys(errors).length > 0) {
+      return
     }
-  }, [hasUnsavedChanges, router])
+
+    // Clear previous timeout
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current)
+    }
+
+    // Set new timeout for auto-save
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      const currentData = getValues()
+      saveData(currentData)
+    }, AUTO_SAVE_DELAY)
+
+    // Cleanup on unmount
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current)
+      }
+    }
+  }, [watchedValues, isDirty, isLoading, errors, getValues, saveData])
 
   useEffect(() => {
     if (status === 'loading') {
@@ -125,65 +194,26 @@ export default function AccountPage() {
       const res = await fetch(`/api/user/${userId}`)
       if (res.ok) {
         const data = await res.json()
-        reset({
+        const formData = {
           name: data.name || session?.user?.name || '',
           phone: data.phone || '',
           street: data.street || '',
           streetNumber: data.streetNumber || '',
           postalCode: data.postalCode || '',
           city: data.city || '',
-          country: 'Schweiz', // Always Switzerland
+          country: 'Schweiz',
           addresszusatz: data.addresszusatz || '',
-          kanton: '', // Hidden field, not displayed
-        })
+          kanton: '',
+        }
+        reset(formData)
+        // Store initial data to prevent unnecessary saves
+        lastSavedDataRef.current = JSON.stringify(formData)
       }
     } catch (error) {
       console.error('Error loading user data:', error)
       toast.error('Fehler beim Laden der Benutzerdaten')
     } finally {
       setIsLoading(false)
-    }
-  }
-
-  const onSubmit = async (data: AccountFormData) => {
-    setIsSaving(true)
-
-    try {
-      const res = await fetch('/api/profile/update', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          name: data.name,
-          phone: data.phone || null,
-          street: data.street || null,
-          streetNumber: data.streetNumber || null,
-          postalCode: data.postalCode || null,
-          city: data.city || null,
-          country: 'Schweiz', // Always Switzerland
-          addresszusatz: data.addresszusatz || null,
-          kanton: null, // Removed - no longer used
-        }),
-      })
-
-      const responseData = await res.json()
-
-      if (res.ok) {
-        toast.success('Gespeichert')
-        setHasUnsavedChanges(false)
-        reset(data, { keepValues: true })
-        if (update) {
-          await update()
-        }
-      } else {
-        toast.error(responseData.message || 'Fehler beim Speichern')
-      }
-    } catch (error) {
-      console.error('Error saving profile:', error)
-      toast.error('Fehler beim Speichern des Profils')
-    } finally {
-      setIsSaving(false)
     }
   }
 
@@ -216,7 +246,7 @@ export default function AccountPage() {
 
         <h1 className="mb-8 text-2xl font-bold text-gray-900 md:text-3xl">Benutzerkonto</h1>
 
-        <form ref={formRef} onSubmit={handleSubmit(onSubmit)} className="space-y-6">
+        <div className="space-y-6">
           <div className="rounded-lg bg-white p-6 shadow-sm md:p-8">
             {/* Name */}
             <div className="mb-6">
@@ -504,26 +534,31 @@ export default function AccountPage() {
 
             {/* Auszahlungen (Zahlungsschutz) - Stripe Connect */}
             <StripePayoutSection />
+          </div>
+        </div>
 
-            {/* Save Button */}
-            <div className="mt-8 border-t border-gray-200 pt-6">
-              <button
-                type="submit"
-                disabled={!isDirty || !isValid || isSaving}
-                className="w-full rounded-md bg-primary-600 px-4 py-3 text-white transition-colors hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto sm:min-w-[200px]"
-              >
-                {isSaving ? (
-                  <span className="flex items-center justify-center gap-2">
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Wird gespeichert...
-                  </span>
-                ) : (
-                  'Änderungen speichern'
-                )}
-              </button>
+        {/* Auto-save Status Indicator - Fixed at bottom */}
+        {(saveStatus === 'saving' || saveStatus === 'saved') && (
+          <div className="fixed bottom-4 right-4 z-50">
+            <div
+              className={`flex items-center gap-2 rounded-lg px-4 py-2 text-sm font-medium shadow-lg transition-all ${
+                saveStatus === 'saving' ? 'bg-gray-800 text-white' : 'bg-green-600 text-white'
+              }`}
+            >
+              {saveStatus === 'saving' ? (
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" />
+                  Wird gespeichert...
+                </>
+              ) : (
+                <>
+                  <Check className="h-4 w-4" />
+                  Gespeichert
+                </>
+              )}
             </div>
           </div>
-        </form>
+        )}
       </div>
     </div>
   )
