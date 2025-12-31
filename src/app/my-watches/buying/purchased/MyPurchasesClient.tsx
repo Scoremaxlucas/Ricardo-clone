@@ -914,40 +914,32 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                         </div>
                       )}
 
-                      {/* Bestelldetails - nur bei Zahlungsschutz */}
+                      {/* Bestelldetails Link - nur wenn Order existiert */}
+                      {purchase.paymentProtectionEnabled && purchase.orderId && (
+                        <Link
+                          href={`/orders/${purchase.orderId}`}
+                          className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-primary-600 bg-white px-4 py-3 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50"
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Bestelldetails & Zahlungsschutz-Status
+                        </Link>
+                      )}
+
+                      {/* Zahlungsschutz Bestätigung - nur wenn bezahlt */}
                       {purchase.paymentProtectionEnabled &&
-                        (purchase.orderId ? (
-                          <Link
-                            href={`/orders/${purchase.orderId}`}
-                            className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-primary-600 bg-white px-4 py-3 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50"
-                          >
-                            <ExternalLink className="h-4 w-4" />
-                            Bestelldetails & Zahlungsschutz-Status
-                          </Link>
-                        ) : purchase.paymentConfirmed ? (
+                        purchase.paymentConfirmed &&
+                        !purchase.orderId && (
                           <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-center text-sm text-green-700">
                             <Shield className="mx-auto mb-1 h-4 w-4" />
                             Zahlungsschutz aktiv - Zahlung wurde erfolgreich abgewickelt
                           </div>
-                        ) : (
-                          <button
-                            onClick={() => handlePayment(purchase)}
-                            disabled={processingStripePayment === purchase.id}
-                            className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-primary-600 bg-white px-4 py-3 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 disabled:opacity-50"
-                          >
-                            {processingStripePayment === purchase.id ? (
-                              <>
-                                <Loader2 className="h-4 w-4 animate-spin" />
-                                Wird vorbereitet...
-                              </>
-                            ) : (
-                              <>
-                                <Shield className="h-4 w-4" />
-                                Jetzt mit Zahlungsschutz bezahlen
-                              </>
-                            )}
-                          </button>
-                        ))}
+                        )}
+
+                      {/* 
+                        Der "Jetzt mit Zahlungsschutz bezahlen" Button wurde entfernt,
+                        da er bereits als Primary Action oben rechts angezeigt wird ("Sicher bezahlen").
+                        Doppelte Buttons vermeiden.
+                      */}
 
                       {/* Secondary Actions */}
                       {uiState.secondaryActions.length > 0 && (
