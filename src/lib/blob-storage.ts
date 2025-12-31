@@ -14,33 +14,34 @@
 import { put, del, head } from '@vercel/blob'
 
 /**
- * Upload ein einzelnes Bild zu Vercel Blob Storage
- * @param imageData Base64-String oder File-Objekt
+ * Upload ein Bild oder Dokument zu Vercel Blob Storage
+ * @param fileData Base64-String oder File-Objekt (Bilder + PDFs unterstützt)
  * @param path Pfad im Blob Storage (z.B. 'watches/{watchId}/{timestamp}.jpg')
  * @returns Blob URL
  */
 export async function uploadImageToBlob(
-  imageData: string | File,
+  fileData: string | File,
   path: string
 ): Promise<string> {
   try {
     let file: File
 
     // Wenn Base64-String, konvertiere zu File
-    if (typeof imageData === 'string') {
-      if (imageData.startsWith('http://') || imageData.startsWith('https://')) {
+    if (typeof fileData === 'string') {
+      if (fileData.startsWith('http://') || fileData.startsWith('https://')) {
         // Bereits eine URL, keine Upload nötig
-        return imageData
+        return fileData
       }
 
-      if (!imageData.startsWith('data:image/')) {
-        throw new Error('Invalid image data format')
+      // Unterstütze sowohl Bilder als auch PDFs
+      if (!fileData.startsWith('data:image/') && !fileData.startsWith('data:application/pdf')) {
+        throw new Error('Invalid file data format - only images and PDFs supported')
       }
 
       // Extrahiere MIME-Type und Base64-Daten
-      const matches = imageData.match(/^data:image\/(\w+);base64,(.+)$/)
+      const matches = fileData.match(/^data:([\w/]+);base64,(.+)$/)
       if (!matches) {
-        throw new Error('Invalid base64 image format')
+        throw new Error('Invalid base64 format')
       }
 
       const mimeType = matches[1]
@@ -48,11 +49,11 @@ export async function uploadImageToBlob(
       const buffer = Buffer.from(base64Data, 'base64')
 
       // Erstelle File-Objekt
-      file = new File([buffer], path.split('/').pop() || 'image.jpg', {
-        type: `image/${mimeType}`,
+      file = new File([buffer], path.split('/').pop() || 'file', {
+        type: mimeType,
       })
     } else {
-      file = imageData
+      file = fileData
     }
 
     // Upload zu Vercel Blob Storage
@@ -63,7 +64,7 @@ export async function uploadImageToBlob(
 
     return blob.url
   } catch (error) {
-    console.error(`[Blob Storage] Error uploading image to ${path}:`, error)
+    console.error(`[Blob Storage] Error uploading file to ${path}:`, error)
     throw error
   }
 }
