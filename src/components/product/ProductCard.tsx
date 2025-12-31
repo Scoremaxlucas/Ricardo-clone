@@ -379,7 +379,7 @@ export function ProductCard({
                 style={{
                   top: '50%',
                   left: '50%',
-                  transform: 'translate(-50%, calc(-50% + 0.5px))',
+                  transform: 'translate(-50%, calc(-50% - 1px))',
                   lineHeight: '1',
                   letterSpacing: '0',
                 }}
