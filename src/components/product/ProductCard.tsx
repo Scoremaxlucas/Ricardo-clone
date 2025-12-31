@@ -366,39 +366,40 @@ export function ProductCard({
         </h3>
 
         {/* Helvenda Schutz Badge + Brand (like Ricardo's ® | Brand) */}
-        {(product.paymentProtectionEnabled || product.brand) && (
-          <div className="mt-1 flex items-center gap-1 text-[11px]">
-            {product.paymentProtectionEnabled && (
+        {/* Fixed height container to ensure price alignment consistency */}
+        <div className="mt-1 flex min-h-[16px] items-center gap-1 text-[11px]">
+          {product.paymentProtectionEnabled && (
+            <span
+              className="relative inline-flex h-4 w-4 flex-shrink-0 items-center justify-center"
+              title="Helvenda Zahlungsschutz"
+            >
+              <Shield className="h-4 w-4 fill-green-100 stroke-green-600 stroke-[1.5]" />
               <span
-                className="relative inline-flex h-5 w-5 items-center justify-center"
-                title="Helvenda Zahlungsschutz"
+                className="absolute text-[9px] font-extrabold leading-none text-green-700"
+                style={{
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, calc(-50% + 0.5px))',
+                  lineHeight: '1',
+                  letterSpacing: '0',
+                }}
               >
-                <Shield className="h-5 w-5 fill-green-100 stroke-green-600 stroke-[2]" />
-                <span 
-                  className="absolute text-[10px] font-extrabold leading-none text-green-700"
-                  style={{ 
-                    top: '50%', 
-                    left: '50%', 
-                    transform: 'translate(-50%, -50%)',
-                    lineHeight: '1'
-                  }}
-                >
-                  H
-                </span>
+                H
               </span>
-            )}
-            {product.brand && (
-              <>
-                {product.paymentProtectionEnabled && <span className="text-gray-400">|</span>}
-                <span className="font-medium text-primary-600">{product.brand}</span>
-              </>
-            )}
-          </div>
-        )}
+            </span>
+          )}
+          {product.brand && (
+            <>
+              {product.paymentProtectionEnabled && <span className="text-gray-400">|</span>}
+              <span className="font-medium text-primary-600">{product.brand}</span>
+            </>
+          )}
+        </div>
 
         {/* Price Block - Different for Auction vs Fixed */}
+        {/* Consistent top margin to ensure same height regardless of badge */}
         {isAuction ? (
-          <div className="mt-1.5">
+          <div className="mt-1">
             {/* Current Bid Label */}
             <div className="text-[11px] font-medium text-orange-600">Aktuelles Gebot</div>
             {/* Price */}
@@ -424,7 +425,7 @@ export function ProductCard({
             </div>
           </div>
         ) : (
-          <div className="mt-1.5 flex items-baseline gap-2">
+          <div className="mt-1 flex items-baseline gap-2">
             <span className="text-[12px] font-medium text-gray-600">CHF</span>
             <span className="text-[20px] font-semibold leading-6 text-gray-900">
               {formatCHFCompact(mainPrice)}

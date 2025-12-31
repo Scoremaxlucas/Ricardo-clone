@@ -142,7 +142,9 @@ export function StepPrice({
               >
                 Auktion
               </h3>
-              <p className="mt-0.5 hidden text-sm text-gray-500 sm:mt-1 sm:block">Bieter konkurrieren um Ihren Artikel</p>
+              <p className="mt-0.5 hidden text-sm text-gray-500 sm:mt-1 sm:block">
+                Bieter konkurrieren um Ihren Artikel
+              </p>
             </div>
           </button>
         </div>
@@ -326,7 +328,6 @@ export function StepPrice({
           </div>
         )}
       </div>
-
     </div>
   )
 }

@@ -290,35 +290,34 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
           </div>
 
           {/* Helvenda Schutz Badge + Brand (like Ricardo's ® | Brand) */}
-          {(product.paymentProtectionEnabled || product.brand) && (
-            <div className="mb-1 flex items-center gap-1 text-[11px]">
-              {product.paymentProtectionEnabled && (
+          <div className="mb-1 flex min-h-[16px] items-center gap-1 text-[11px]">
+            {product.paymentProtectionEnabled && (
+              <span
+                className="relative inline-flex h-4 w-4 flex-shrink-0 items-center justify-center"
+                title="Helvenda Zahlungsschutz"
+              >
+                <Shield className="h-4 w-4 fill-green-100 stroke-green-600 stroke-[1.5]" />
                 <span
-                  className="relative inline-flex h-5 w-5 items-center justify-center"
-                  title="Helvenda Zahlungsschutz"
+                  className="absolute text-[9px] font-extrabold leading-none text-green-700"
+                  style={{
+                    top: '50%',
+                    left: '50%',
+                    transform: 'translate(-50%, calc(-50% + 0.5px))',
+                    lineHeight: '1',
+                    letterSpacing: '0',
+                  }}
                 >
-                  <Shield className="h-5 w-5 fill-green-100 stroke-green-600 stroke-[2]" />
-                  <span 
-                    className="absolute text-[10px] font-extrabold leading-none text-green-700"
-                    style={{ 
-                      top: '50%', 
-                      left: '50%', 
-                      transform: 'translate(-50%, -50%)',
-                      lineHeight: '1'
-                    }}
-                  >
-                    H
-                  </span>
+                  H
                 </span>
-              )}
-              {product.brand && (
-                <>
-                  {product.paymentProtectionEnabled && <span className="text-gray-400">|</span>}
-                  <span className="font-medium text-primary-600">{product.brand}</span>
-                </>
-              )}
-            </div>
-          )}
+              </span>
+            )}
+            {product.brand && (
+              <>
+                {product.paymentProtectionEnabled && <span className="text-gray-400">|</span>}
+                <span className="font-medium text-primary-600">{product.brand}</span>
+              </>
+            )}
+          </div>
 
           {/* Price - Immer sichtbar */}
           <div className="mb-1 flex items-center justify-between">
