@@ -201,6 +201,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                   city: w.city || null,
                   postalCode: w.postalCode || null,
                   articleNumber: w.articleNumber || null,
+                  paymentProtectionEnabled: w.paymentProtectionEnabled || false,
                   // WICHTIG: Setze href explizit, damit der richtige Link verwendet wird
                   href: `/products/${productId}`,
                 }

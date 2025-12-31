@@ -90,6 +90,7 @@ export async function GET(request: NextRequest) {
       articleNumber: w.articleNumber,
       boosters: w.boosters,
       condition: w.condition,
+      paymentProtectionEnabled: w.paymentProtectionEnabled,
       city: w.seller?.city || null,
       postalCode: w.seller?.postalCode || null,
     }))
@@ -138,6 +139,7 @@ export async function GET(request: NextRequest) {
         city: w.city,
         postalCode: w.postalCode,
         condition: w.condition || '',
+        paymentProtectionEnabled: w.paymentProtectionEnabled || false,
       }
     })
 
