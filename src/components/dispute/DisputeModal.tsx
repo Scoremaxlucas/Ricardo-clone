@@ -1,7 +1,7 @@
 'use client'
 
-import { AlertTriangle, Loader2, X } from 'lucide-react'
-import { useState } from 'react'
+import { AlertTriangle, ImagePlus, Loader2, Paperclip, X } from 'lucide-react'
+import { useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface DisputeModalProps {
@@ -31,6 +31,63 @@ export function DisputeModal({
   const [reason, setReason] = useState('')
   const [description, setDescription] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [attachments, setAttachments] = useState<string[]>([])
+  const [uploading, setUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = e.target.files
+    if (!files || files.length === 0) return
+
+    setUploading(true)
+    try {
+      for (const file of Array.from(files)) {
+        // Validate file size (max 5MB)
+        if (file.size > 5 * 1024 * 1024) {
+          toast.error(`${file.name} ist zu gross (max. 5MB)`)
+          continue
+        }
+
+        // Validate file type
+        const validTypes = ['image/jpeg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
+        if (!validTypes.includes(file.type)) {
+          toast.error(`${file.name}: Nur Bilder und PDFs erlaubt`)
+          continue
+        }
+
+        // Upload to blob storage
+        const formData = new FormData()
+        formData.append('file', file)
+        formData.append('folder', 'disputes')
+
+        const res = await fetch('/api/upload', {
+          method: 'POST',
+          body: formData,
+        })
+
+        if (res.ok) {
+          const data = await res.json()
+          setAttachments(prev => [...prev, data.url])
+          toast.success(`${file.name} hochgeladen`)
+        } else {
+          toast.error(`Fehler beim Hochladen von ${file.name}`)
+        }
+      }
+    } catch (error) {
+      console.error('Error uploading file:', error)
+      toast.error('Fehler beim Hochladen')
+    } finally {
+      setUploading(false)
+      // Reset file input
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const removeAttachment = (index: number) => {
+    setAttachments(prev => prev.filter((_, i) => i !== index))
+  }
 
   const handleSubmit = async () => {
     if (!reason) {
@@ -47,7 +104,11 @@ export function DisputeModal({
       const response = await fetch(`/api/purchases/${purchaseId}/dispute`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ reason, description }),
+        body: JSON.stringify({
+          reason,
+          description,
+          attachments: attachments.length > 0 ? attachments : undefined,
+        }),
       })
 
       const data = await response.json()
@@ -59,6 +120,7 @@ export function DisputeModal({
         // Reset form
         setReason('')
         setDescription('')
+        setAttachments([])
       } else {
         toast.error(data.message || 'Fehler beim Melden des Problems')
       }
@@ -126,7 +188,7 @@ export function DisputeModal({
           </div>
 
           {/* Description */}
-          <div className="mb-6">
+          <div className="mb-4">
             <label className="mb-2 block text-sm font-medium text-gray-700">
               Beschreibung <span className="text-red-500">*</span>
             </label>
@@ -140,6 +202,72 @@ export function DisputeModal({
             <p className="mt-1 text-xs text-gray-500">
               {description.length}/20 Zeichen (Minimum)
             </p>
+          </div>
+
+          {/* File Upload */}
+          <div className="mb-6">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Beweismaterial (optional)
+            </label>
+            <input
+              ref={fileInputRef}
+              type="file"
+              multiple
+              accept="image/*,.pdf"
+              onChange={handleFileSelect}
+              className="hidden"
+            />
+            <button
+              type="button"
+              onClick={() => fileInputRef.current?.click()}
+              disabled={uploading}
+              className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-dashed border-gray-300 bg-gray-50 px-4 py-4 text-sm text-gray-600 transition-colors hover:border-gray-400 hover:bg-gray-100 disabled:opacity-50"
+            >
+              {uploading ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  Wird hochgeladen...
+                </>
+              ) : (
+                <>
+                  <ImagePlus className="h-5 w-5" />
+                  Fotos oder PDF hochladen
+                </>
+              )}
+            </button>
+            <p className="mt-1 text-xs text-gray-500">
+              Laden Sie Fotos oder Dokumente als Beweis hoch (max. 5MB pro Datei)
+            </p>
+
+            {/* Attachment Preview */}
+            {attachments.length > 0 && (
+              <div className="mt-3 space-y-2">
+                {attachments.map((url, idx) => (
+                  <div
+                    key={idx}
+                    className="flex items-center justify-between rounded-lg bg-gray-100 px-3 py-2"
+                  >
+                    <div className="flex items-center gap-2">
+                      <Paperclip className="h-4 w-4 text-gray-500" />
+                      <a
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="max-w-[200px] truncate text-sm text-primary-600 hover:underline"
+                      >
+                        Anhang {idx + 1}
+                      </a>
+                    </div>
+                    <button
+                      onClick={() => removeAttachment(idx)}
+                      className="rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* Actions */}

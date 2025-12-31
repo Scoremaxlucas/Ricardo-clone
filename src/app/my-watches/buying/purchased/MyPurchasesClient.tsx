@@ -949,6 +949,36 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                         Doppelte Buttons vermeiden.
                       */}
 
+                      {/* Dispute Link - wenn ein Dispute offen ist */}
+                      {purchase.disputeOpenedAt && (
+                        <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-2">
+                              <AlertTriangle className="h-4 w-4 text-orange-600" />
+                              <span className="text-sm font-medium text-orange-800">
+                                Dispute aktiv
+                              </span>
+                              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700">
+                                {purchase.disputeStatus === 'pending'
+                                  ? 'In Bearbeitung'
+                                  : purchase.disputeStatus === 'resolved'
+                                    ? 'Gelöst'
+                                    : purchase.disputeStatus === 'rejected'
+                                      ? 'Abgelehnt'
+                                      : purchase.disputeStatus}
+                              </span>
+                            </div>
+                            <Link
+                              href={`/disputes/${purchase.id}`}
+                              className="flex items-center gap-1 text-sm font-medium text-orange-700 hover:text-orange-800 hover:underline"
+                            >
+                              Details ansehen
+                              <ExternalLink className="h-3 w-3" />
+                            </Link>
+                          </div>
+                        </div>
+                      )}
+
                       {/* Secondary Actions */}
                       {uiState.secondaryActions.length > 0 && (
                         <div className="flex flex-wrap gap-2 border-t border-gray-200 pt-3">

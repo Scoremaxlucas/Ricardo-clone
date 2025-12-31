@@ -1,5 +1,6 @@
 'use client'
 
+import { AdminDisputeChat } from '@/components/dispute/AdminDisputeChat'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import {
@@ -10,8 +11,10 @@ import {
   Loader2,
   Mail,
   MapPin,
+  MessageCircle,
   Phone,
-  User
+  User,
+  XCircle,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -81,6 +84,8 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
   const [refundBuyer, setRefundBuyer] = useState(false)
   const [refundSeller, setRefundSeller] = useState(false)
   const [cancelPurchase, setCancelPurchase] = useState(false)
+  const [showRejectForm, setShowRejectForm] = useState(false)
+  const [rejectionReason, setRejectionReason] = useState('')
 
   useEffect(() => {
     if (status === 'loading' || !params.id) return
@@ -194,6 +199,50 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
     }
   }
 
+  const handleReject = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (!rejectionReason.trim()) {
+      toast.error('Bitte geben Sie einen Ablehnungsgrund ein')
+      return
+    }
+
+    if (!params.id) return
+    setResolving(true)
+    try {
+      const res = await fetch(`/api/admin/disputes/${params.id}/resolve`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          rejected: true,
+          rejectionReason: rejectionReason.trim(),
+        }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast.success('✓ Dispute abgelehnt!', { duration: 3000, icon: '✅' })
+        router.push('/admin/disputes')
+      } else {
+        toast.error(data.message || 'Fehler beim Ablehnen des Disputes', {
+          duration: 4000,
+          icon: '❌',
+        })
+      }
+    } catch (error: any) {
+      console.error('Error rejecting dispute:', error)
+      toast.error(`Fehler beim Ablehnen des Disputes: ${error.message || 'Netzwerkfehler'}`, {
+        duration: 4000,
+        icon: '❌',
+      })
+    } finally {
+      setResolving(false)
+    }
+  }
+
   const getReasonLabel = (reason: string) => {
     const labels: Record<string, string> = {
       item_not_received: 'Artikel nicht erhalten',
@@ -221,6 +270,13 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
           <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
             <CheckCircle className="mr-1 h-4 w-4" />
             Gelöst
+          </span>
+        )
+      case 'rejected':
+        return (
+          <span className="inline-flex items-center rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-800">
+            <XCircle className="mr-1 h-4 w-4" />
+            Abgelehnt
           </span>
         )
       case 'closed':
@@ -409,73 +465,151 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
               </div>
             </div>
 
+            {/* Kommunikation/Chat */}
+            <div className="rounded-lg bg-white p-6 shadow">
+              <h2 className="mb-4 flex items-center gap-2 text-xl font-semibold text-gray-900">
+                <MessageCircle className="h-5 w-5" />
+                Kommunikation
+              </h2>
+              <AdminDisputeChat
+                purchaseId={dispute.id}
+                disputeStatus={dispute.disputeStatus}
+              />
+            </div>
+
             {/* Lösung-Formular (nur wenn noch nicht gelöst) */}
             {dispute.disputeStatus === 'pending' && (
               <div className="rounded-lg bg-white p-6 shadow">
-                <h2 className="mb-4 text-xl font-semibold text-gray-900">Dispute lösen</h2>
-                <form onSubmit={handleResolve} className="space-y-4">
-                  <div>
-                    <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Lösung <span className="text-red-500">*</span>
-                    </label>
-                    <textarea
-                      value={resolution}
-                      onChange={e => setResolution(e.target.value)}
-                      rows={6}
-                      className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
-                      placeholder="Beschreiben Sie die Lösung des Disputes..."
-                      required
-                    />
+                <div className="mb-4 flex items-center justify-between">
+                  <h2 className="text-xl font-semibold text-gray-900">Dispute bearbeiten</h2>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => setShowRejectForm(false)}
+                      className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                        !showRejectForm
+                          ? 'bg-primary-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Lösen
+                    </button>
+                    <button
+                      onClick={() => setShowRejectForm(true)}
+                      className={`rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
+                        showRejectForm
+                          ? 'bg-red-600 text-white'
+                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                      }`}
+                    >
+                      Ablehnen
+                    </button>
                   </div>
+                </div>
 
-                  <div className="space-y-2">
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={cancelPurchase}
-                        onChange={e => setCancelPurchase(e.target.checked)}
-                        className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                {showRejectForm ? (
+                  <form onSubmit={handleReject} className="space-y-4">
+                    <div className="rounded-lg bg-red-50 p-4">
+                      <p className="text-sm text-red-800">
+                        <strong>Achtung:</strong> Bei Ablehnung wird der Dispute geschlossen und der
+                        Initiator benachrichtigt. Der Kaufprozess wird wieder freigegeben.
+                      </p>
+                    </div>
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Ablehnungsgrund <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        value={rejectionReason}
+                        onChange={e => setRejectionReason(e.target.value)}
+                        rows={4}
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-red-500 focus:ring-2 focus:ring-red-500"
+                        placeholder="Begründen Sie die Ablehnung..."
+                        required
                       />
-                      <span className="text-sm text-gray-700">Kauf stornieren</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={refundBuyer}
-                        onChange={e => setRefundBuyer(e.target.checked)}
-                        className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={resolving}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-red-600 px-4 py-2 text-white transition-colors hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {resolving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Wird verarbeitet...
+                        </>
+                      ) : (
+                        <>
+                          <XCircle className="h-4 w-4" />
+                          Dispute ablehnen
+                        </>
+                      )}
+                    </button>
+                  </form>
+                ) : (
+                  <form onSubmit={handleResolve} className="space-y-4">
+                    <div>
+                      <label className="mb-2 block text-sm font-medium text-gray-700">
+                        Lösung <span className="text-red-500">*</span>
+                      </label>
+                      <textarea
+                        value={resolution}
+                        onChange={e => setResolution(e.target.value)}
+                        rows={6}
+                        className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
+                        placeholder="Beschreiben Sie die Lösung des Disputes..."
+                        required
                       />
-                      <span className="text-sm text-gray-700">Rückerstattung an Käufer</span>
-                    </label>
-                    <label className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={refundSeller}
-                        onChange={e => setRefundSeller(e.target.checked)}
-                        className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                      <span className="text-sm text-gray-700">Rückerstattung an Verkäufer</span>
-                    </label>
-                  </div>
+                    </div>
 
-                  <button
-                    type="submit"
-                    disabled={resolving}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
-                  >
-                    {resolving ? (
-                      <>
-                        <Loader2 className="h-4 w-4 animate-spin" />
-                        Wird verarbeitet...
-                      </>
-                    ) : (
-                      <>
-                        <CheckCircle className="h-4 w-4" />
-                        Dispute lösen
-                      </>
-                    )}
-                  </button>
-                </form>
+                    <div className="space-y-2">
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={cancelPurchase}
+                          onChange={e => setCancelPurchase(e.target.checked)}
+                          className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="text-sm text-gray-700">Kauf stornieren</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={refundBuyer}
+                          onChange={e => setRefundBuyer(e.target.checked)}
+                          className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="text-sm text-gray-700">Rückerstattung an Käufer</span>
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={refundSeller}
+                          onChange={e => setRefundSeller(e.target.checked)}
+                          className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                        <span className="text-sm text-gray-700">Rückerstattung an Verkäufer</span>
+                      </label>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={resolving}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    >
+                      {resolving ? (
+                        <>
+                          <Loader2 className="h-4 w-4 animate-spin" />
+                          Wird verarbeitet...
+                        </>
+                      ) : (
+                        <>
+                          <CheckCircle className="h-4 w-4" />
+                          Dispute lösen
+                        </>
+                      )}
+                    </button>
+                  </form>
+                )}
               </div>
             )}
           </div>
