@@ -171,7 +171,7 @@ export function StepPrice({
                     ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
                     : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
                 }`}
-                placeholder="5'000"
+                placeholder=""
               />
               {isPriceLocked && (
                 <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
@@ -210,7 +210,7 @@ export function StepPrice({
                       ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
                       : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
                   }`}
-                  placeholder="1'000"
+                  placeholder=""
                 />
                 {isPriceLocked && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
@@ -285,7 +285,7 @@ export function StepPrice({
                         ? 'border-red-300 bg-red-50 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
                         : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
                   }`}
-                  placeholder="8'000"
+                  placeholder=""
                 />
                 {isBuyNowPriceLocked && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
