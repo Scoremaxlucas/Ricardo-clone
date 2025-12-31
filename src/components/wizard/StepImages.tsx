@@ -484,12 +484,6 @@ export function StepImages({
         </div>
       )}
 
-      {/* Hint */}
-      {formData.images.length === 0 && (
-        <div className="rounded-lg bg-yellow-50 p-4 text-center text-sm text-yellow-800">
-          <strong>Tipp:</strong> Mindestens ein Bild ist erforderlich, um fortzufahren.
-        </div>
-      )}
     </div>
   )
 }

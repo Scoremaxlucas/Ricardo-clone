@@ -1,7 +1,7 @@
 'use client'
 
 import { EditPolicy } from '@/lib/edit-policy'
-import { CheckCircle, Clock, Info, Lock, Tag } from 'lucide-react'
+import { CheckCircle, Clock, Lock, Tag } from 'lucide-react'
 
 interface StepPriceProps {
   formData: {
@@ -327,14 +327,6 @@ export function StepPrice({
         )}
       </div>
 
-      {/* Price hint */}
-      <div className="flex items-start gap-3 rounded-lg bg-blue-50 p-4">
-        <Info className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
-        <div className="text-sm text-blue-800">
-          <strong>Tipp:</strong> Recherchieren Sie vergleichbare Artikel auf Helvenda, um einen
-          fairen Preis festzulegen. Ein realistischer Preis erhöht Ihre Verkaufschancen deutlich.
-        </div>
-      </div>
     </div>
   )
 }
