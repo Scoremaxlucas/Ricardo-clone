@@ -4,6 +4,8 @@
  * Bietet konsistente Fehlerbehandlung und Logging für Stripe-Operationen
  */
 
+import { shouldLogStackTraces, shouldShowDetailedErrors } from './env'
+
 export interface StripeError extends Error {
   type?: string
   code?: string
@@ -61,7 +63,9 @@ export function isAlreadyExistsError(error: any): boolean {
  * Loggt einen Fehler konsistent
  */
 export function logError(context: string, error: any, details?: Record<string, any>): void {
-  const errorMessage = isStripeError(error) ? formatStripeError(error) : error?.message || 'Unknown error'
+  const errorMessage = isStripeError(error)
+    ? formatStripeError(error)
+    : error?.message || 'Unknown error'
 
   console.error(`[${context}] Fehler:`, errorMessage)
 
@@ -69,7 +73,7 @@ export function logError(context: string, error: any, details?: Record<string, a
     console.error(`[${context}] Details:`, details)
   }
 
-  if (error?.stack && process.env.NODE_ENV === 'development') {
+  if (error?.stack && shouldLogStackTraces()) {
     console.error(`[${context}] Stack:`, error.stack)
   }
 }
@@ -87,8 +91,8 @@ export function createErrorResponse(
     message,
   }
 
-  // Nur in Development: Zeige detaillierte Fehlerinfos
-  if (process.env.NODE_ENV === 'development' && error) {
+  // Nur im Debug-Modus: Zeige detaillierte Fehlerinfos
+  if (shouldShowDetailedErrors() && error) {
     response.error = isStripeError(error) ? formatStripeError(error) : error.message
   }
 

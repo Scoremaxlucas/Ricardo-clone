@@ -90,7 +90,8 @@ export async function POST(
     }
 
     // Erstelle Stripe Checkout Session
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.VERCEL_URL || 'http://localhost:3000'
+    const { getAppDomain } = await import('@/lib/env')
+    const baseUrl = getAppDomain(request)
 
     const checkoutSession = await stripe.checkout.sessions.create({
       mode: 'payment',

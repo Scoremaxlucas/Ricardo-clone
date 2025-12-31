@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth'
+import { getAppDomain } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
 import { validateSwissPostalCode } from '@/lib/profilePolicy'
 import { stripe } from '@/lib/stripe-server'
@@ -150,27 +151,12 @@ export async function POST(request: NextRequest) {
       console.log(`[connect/account-link] ✅ Account ${accountId} erstellt`)
     }
 
-    // Bestimme URLs
-    let baseUrl = process.env.NEXTAUTH_URL || ''
-
-    // Fallback: Verwende VERCEL_URL mit Protokoll
-    if (!baseUrl && process.env.VERCEL_URL) {
-      // VERCEL_URL enthält kein Protokoll
-      baseUrl = `https://${process.env.VERCEL_URL}`
-    }
-
-    // Fallback: Konstruiere aus Request URL
-    if (!baseUrl) {
-      const url = new URL(request.url)
-      baseUrl = `${url.protocol}//${url.host}`
-    }
-
-    // Letzter Fallback: localhost
-    if (!baseUrl || baseUrl === 'http://undefined' || baseUrl === 'https://undefined') {
-      baseUrl = 'http://localhost:3000'
-    }
+    // Bestimme URLs mit zentraler Utility-Funktion
+    const baseUrl = getAppDomain(request)
 
     console.log(`[connect/account-link] Environment check:`, {
+      APP_DOMAIN: process.env.APP_DOMAIN || 'not set',
+      NEXT_PUBLIC_APP_URL: process.env.NEXT_PUBLIC_APP_URL || 'not set',
       NEXTAUTH_URL: process.env.NEXTAUTH_URL || 'not set',
       VERCEL_URL: process.env.VERCEL_URL || 'not set',
       computedBaseUrl: baseUrl,

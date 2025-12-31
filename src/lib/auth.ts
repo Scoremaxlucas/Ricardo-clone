@@ -1,12 +1,12 @@
-import NextAuth from 'next-auth'
-import CredentialsProvider from 'next-auth/providers/credentials'
+import { isDebug } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import CredentialsProvider from 'next-auth/providers/credentials'
 
 export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET || 'development-secret-key',
   adapter: undefined, // Disable adapter for now
-  debug: process.env.NODE_ENV === 'development', // Enable debug in development
+  debug: isDebug(), // Enable debug when DEBUG=true or NODE_ENV=development
   // WICHTIG: Trust host für Vercel/Production
   trustHost: true,
   providers: [
@@ -78,7 +78,10 @@ export const authOptions = {
                 select: { email: true },
                 take: 10,
               })
-              console.log(`${logPrefix} Sample users in database:`, allUsers.map(u => u.email))
+              console.log(
+                `${logPrefix} Sample users in database:`,
+                allUsers.map(u => u.email)
+              )
               console.log(`${logPrefix} Total users found:`, allUsers.length)
             } catch (error: any) {
               console.error(`${logPrefix} Error fetching sample users:`, error.message)
@@ -107,11 +110,23 @@ export const authOptions = {
           const isBlocked = user.isBlocked === true
 
           if (isBlocked) {
-            console.log('[AUTH] User is blocked:', normalizedEmail, 'isBlocked value:', user.isBlocked)
+            console.log(
+              '[AUTH] User is blocked:',
+              normalizedEmail,
+              'isBlocked value:',
+              user.isBlocked
+            )
             return null
           }
 
-          console.log('[AUTH] User is NOT blocked:', normalizedEmail, 'isBlocked value:', user.isBlocked, 'type:', typeof user.isBlocked)
+          console.log(
+            '[AUTH] User is NOT blocked:',
+            normalizedEmail,
+            'isBlocked value:',
+            user.isBlocked,
+            'type:',
+            typeof user.isBlocked
+          )
 
           if (!user.password) {
             console.log('[AUTH] User has no password set:', normalizedEmail)
@@ -183,7 +198,12 @@ export const authOptions = {
             return null
           }
 
-          console.log(`${logPrefix} ✅ Login successful for:`, normalizedEmail, 'isAdmin:', user.isAdmin)
+          console.log(
+            `${logPrefix} ✅ Login successful for:`,
+            normalizedEmail,
+            'isAdmin:',
+            user.isAdmin
+          )
 
           // WICHTIG: Stelle sicher, dass alle erforderlichen Felder vorhanden sind
           const userObject = {

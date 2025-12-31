@@ -1,3 +1,4 @@
+import { shouldShowDetailedErrors } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { NextRequest, NextResponse } from 'next/server'
@@ -675,7 +676,7 @@ export async function POST(request: NextRequest) {
         {
           message:
             'Ein Fehler ist aufgetreten beim Erstellen des Kontos. Bitte kontaktieren Sie den Support.',
-          ...(process.env.NODE_ENV === 'development' && {
+          ...(shouldShowDetailedErrors() && {
             errorCode: error.code,
             errorMeta: error.meta,
           }),
@@ -691,7 +692,7 @@ export async function POST(request: NextRequest) {
         {
           message:
             'Ein Fehler ist aufgetreten beim Erstellen des Kontos. Bitte kontaktieren Sie den Support.',
-          ...(process.env.NODE_ENV === 'development' && {
+          ...(shouldShowDetailedErrors() && {
             errorCode: error.code,
             errorMeta: error.meta,
           }),
@@ -714,7 +715,7 @@ export async function POST(request: NextRequest) {
           message:
             'Ein Datenbankfehler ist aufgetreten. Bitte versuchen Sie es erneut oder kontaktieren Sie den Support.',
           errorCode: error.code, // Safe to expose - helps with debugging
-          ...(process.env.NODE_ENV === 'development' && {
+          ...(shouldShowDetailedErrors() && {
             errorMessage: error.message,
             errorMeta: error.meta,
           }),
