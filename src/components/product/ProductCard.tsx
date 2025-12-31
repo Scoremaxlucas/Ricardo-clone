@@ -21,6 +21,7 @@ import {
   MapPin,
   Medal,
   Package,
+  Shield,
   Star,
   Truck,
 } from 'lucide-react'
@@ -369,10 +370,13 @@ export function ProductCard({
           <div className="mt-1 flex items-center gap-1 text-[11px]">
             {product.paymentProtectionEnabled && (
               <span
-                className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-green-600 bg-green-50 text-[9px] font-bold text-green-700"
+                className="relative inline-flex h-4 w-4 items-center justify-center"
                 title="Helvenda Zahlungsschutz"
               >
-                H
+                <Shield className="absolute h-4 w-4 fill-green-50 stroke-green-600" />
+                <span className="relative z-10 text-[9px] font-bold leading-none text-green-700">
+                  H
+                </span>
               </span>
             )}
             {product.brand && (
