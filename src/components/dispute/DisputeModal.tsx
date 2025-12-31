@@ -10,6 +10,7 @@ interface DisputeModalProps {
   isOpen: boolean
   onClose: () => void
   onSuccess?: () => void
+  userRole?: 'buyer' | 'seller'
 }
 
 const BUYER_REASONS = [
@@ -21,12 +22,21 @@ const BUYER_REASONS = [
   { value: 'other', label: 'Sonstiges' },
 ]
 
+const SELLER_REASONS = [
+  { value: 'payment_not_received', label: 'Zahlung nicht erhalten' },
+  { value: 'payment_not_confirmed', label: 'Zahlung nicht bestätigt' },
+  { value: 'buyer_not_paying', label: 'Käufer zahlt nicht' },
+  { value: 'buyer_not_responding', label: 'Käufer antwortet nicht' },
+  { value: 'other', label: 'Sonstiges' },
+]
+
 export function DisputeModal({
   purchaseId,
   watchTitle,
   isOpen,
   onClose,
   onSuccess,
+  userRole = 'buyer',
 }: DisputeModalProps) {
   const [reason, setReason] = useState('')
   const [description, setDescription] = useState('')
@@ -162,7 +172,7 @@ export function DisputeModal({
           <div className="mb-6 rounded-lg bg-orange-50 p-4 text-sm text-orange-800">
             <p className="font-medium">Bitte beachten Sie:</p>
             <ul className="mt-2 list-inside list-disc space-y-1">
-              <li>Versuchen Sie zuerst, das Problem mit dem Verkäufer zu klären</li>
+              <li>Versuchen Sie zuerst, das Problem mit dem {userRole === 'buyer' ? 'Verkäufer' : 'Käufer'} zu klären</li>
               <li>Ein Dispute wird von unserem Team innerhalb von 14 Tagen bearbeitet</li>
               <li>Der Kaufprozess wird während der Bearbeitung eingefroren</li>
             </ul>
@@ -179,7 +189,7 @@ export function DisputeModal({
               className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
             >
               <option value="">Bitte wählen...</option>
-              {BUYER_REASONS.map(r => (
+              {(userRole === 'seller' ? SELLER_REASONS : BUYER_REASONS).map(r => (
                 <option key={r.value} value={r.value}>
                   {r.label}
                 </option>

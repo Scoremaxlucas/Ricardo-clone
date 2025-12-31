@@ -1,10 +1,12 @@
 'use client'
 
 import { BuyerInfoModal } from '@/components/buyer/BuyerInfoModal'
+import { DisputeModal } from '@/components/dispute/DisputeModal'
 import { ShippingInfoCard } from '@/components/shipping/ShippingInfoCard'
 import { getShippingCostForMethod, getShippingLabels } from '@/lib/shipping'
 import {
   AlertCircle,
+  AlertTriangle,
   CheckCircle,
   Clock,
   CreditCard,
@@ -79,6 +81,7 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
   const [sale, setSale] = useState<Sale | null>(null)
   const [loading, setLoading] = useState(false)
   const [showBuyerModal, setShowBuyerModal] = useState(false)
+  const [showDisputeModal, setShowDisputeModal] = useState(false)
   const [debugInfo, setDebugInfo] = useState<any>(null)
 
   // Load sale details when purchaseId changes
@@ -439,6 +442,80 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
                 </div>
               </div>
 
+              {/* Dispute Banner - für Verkäufer wenn Dispute aktiv */}
+              {sale.disputeOpenedAt && (
+                <div className={`rounded-lg border-2 p-4 ${
+                  sale.disputeStatus === 'resolved' || sale.disputeStatus === 'rejected'
+                    ? 'border-gray-300 bg-gray-50'
+                    : 'border-red-300 bg-red-50'
+                }`}>
+                  <div className="flex items-start gap-3">
+                    <AlertTriangle className={`mt-0.5 h-6 w-6 flex-shrink-0 ${
+                      sale.disputeStatus === 'resolved' || sale.disputeStatus === 'rejected'
+                        ? 'text-gray-500'
+                        : 'text-red-600'
+                    }`} />
+                    <div className="flex-1">
+                      <div className="flex items-center justify-between">
+                        <h4 className={`font-semibold ${
+                          sale.disputeStatus === 'resolved' || sale.disputeStatus === 'rejected'
+                            ? 'text-gray-700'
+                            : 'text-red-900'
+                        }`}>
+                          {sale.disputeStatus === 'resolved'
+                            ? '✓ Dispute gelöst'
+                            : sale.disputeStatus === 'rejected'
+                              ? '✗ Dispute abgelehnt'
+                              : '⚠️ Dispute aktiv'}
+                        </h4>
+                        <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${
+                          sale.disputeStatus === 'resolved'
+                            ? 'bg-green-100 text-green-700'
+                            : sale.disputeStatus === 'rejected'
+                              ? 'bg-gray-100 text-gray-700'
+                              : 'bg-red-100 text-red-700'
+                        }`}>
+                          {sale.disputeStatus === 'pending'
+                            ? 'In Bearbeitung'
+                            : sale.disputeStatus === 'resolved'
+                              ? 'Gelöst'
+                              : sale.disputeStatus === 'rejected'
+                                ? 'Abgelehnt'
+                                : sale.disputeStatus}
+                        </span>
+                      </div>
+                      <p className={`mt-1 text-sm ${
+                        sale.disputeStatus === 'resolved' || sale.disputeStatus === 'rejected'
+                          ? 'text-gray-600'
+                          : 'text-red-800'
+                      }`}>
+                        {sale.disputeReason && (
+                          <span className="font-medium">Grund: {sale.disputeReason}</span>
+                        )}
+                        {sale.disputeStatus === 'pending' && (
+                          <span className="block mt-1">
+                            Der Käufer hat ein Problem gemeldet. Bitte reagieren Sie zeitnah.
+                          </span>
+                        )}
+                      </p>
+                      <div className="mt-3 flex gap-2">
+                        <Link
+                          href={`/disputes/${sale.id}`}
+                          className={`inline-flex items-center gap-1 rounded-lg px-3 py-2 text-sm font-medium ${
+                            sale.disputeStatus === 'resolved' || sale.disputeStatus === 'rejected'
+                              ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+                              : 'bg-red-600 text-white hover:bg-red-700'
+                          }`}
+                        >
+                          <ExternalLink className="h-4 w-4" />
+                          Dispute-Details ansehen
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
               {/* Buyer Info */}
               <div className="rounded-lg border border-gray-200 p-4">
                 <h4 className="mb-3 font-medium text-gray-900">Käufer</h4>
@@ -534,6 +611,17 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
               >
                 Angebot ansehen
               </Link>
+
+              {/* Problem melden Button - nur wenn noch kein Dispute existiert */}
+              {!sale.disputeOpenedAt && sale.status !== 'completed' && sale.status !== 'cancelled' && (
+                <button
+                  onClick={() => setShowDisputeModal(true)}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg border border-orange-300 bg-orange-50 px-4 py-3 font-medium text-orange-700 transition-colors hover:bg-orange-100"
+                >
+                  <AlertTriangle className="h-5 w-5" />
+                  Problem melden
+                </button>
+              )}
             </div>
           </div>
         )}
@@ -551,6 +639,21 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
           onMarkPaid={() => {
             onUpdate?.()
           }}
+        />
+      )}
+
+      {/* Dispute Modal */}
+      {sale && (
+        <DisputeModal
+          purchaseId={sale.id}
+          watchTitle={sale.watch.title}
+          isOpen={showDisputeModal}
+          onClose={() => setShowDisputeModal(false)}
+          onSuccess={() => {
+            onUpdate?.()
+            reloadSale()
+          }}
+          userRole="seller"
         />
       )}
     </>

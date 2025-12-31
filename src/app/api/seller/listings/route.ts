@@ -46,6 +46,9 @@ export interface SellerListing {
   bidCount: number
   highestBid: number | null
   purchaseId: string | null
+  // Dispute fields für Verkäufer-Übersicht
+  disputeOpenedAt: string | null
+  disputeStatus: string | null
 }
 
 export interface ListingCounts {
@@ -117,7 +120,12 @@ export async function GET(request: NextRequest) {
         isAuction: true,
         auctionEnd: true,
         purchases: {
-          select: { id: true, status: true },
+          select: {
+            id: true,
+            status: true,
+            disputeOpenedAt: true,
+            disputeStatus: true,
+          },
         },
         bids: {
           select: { amount: true },
@@ -163,7 +171,8 @@ export async function GET(request: NextRequest) {
       }
 
       // Get purchaseId for sold items (first active purchase)
-      const purchaseId = isSold ? activePurchases[0]?.id || null : null
+      const activePurchase = isSold ? activePurchases[0] : null
+      const purchaseId = activePurchase?.id || null
 
       // Debug logging for sold items
       if (isSold) {
@@ -187,6 +196,9 @@ export async function GET(request: NextRequest) {
         bidCount: listing._count.bids,
         highestBid: listing.bids[0]?.amount || null,
         purchaseId,
+        // Dispute-Daten für Verkäufer-Übersicht
+        disputeOpenedAt: activePurchase?.disputeOpenedAt?.toISOString() || null,
+        disputeStatus: activePurchase?.disputeStatus || null,
       }
     })
 

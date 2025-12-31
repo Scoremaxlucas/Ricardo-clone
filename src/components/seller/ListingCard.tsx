@@ -1,6 +1,6 @@
 'use client'
 
-import { Clock, Copy, Edit, Eye, Gavel, Package, ShoppingBag, Trash2 } from 'lucide-react'
+import { AlertTriangle, Clock, Copy, Edit, Eye, Gavel, Package, ShoppingBag, Trash2 } from 'lucide-react'
 import Link from 'next/link'
 
 export type ListingStatus = 'active' | 'ended' | 'sold' | 'draft'
@@ -20,6 +20,9 @@ export interface ListingCardProps {
   bidCount: number
   highestBid: number | null
   purchaseId?: string | null // For sold items - opens sale details drawer
+  // Dispute fields für Verkäufer-Übersicht
+  disputeOpenedAt?: string | null
+  disputeStatus?: string | null
   onDelete: (id: string) => void
   onDuplicate: (id: string) => void
   onSaleClick?: (purchaseId: string) => void // Opens drawer for sold items
@@ -59,6 +62,8 @@ export function ListingCard({
   bidCount,
   highestBid,
   purchaseId,
+  disputeOpenedAt,
+  disputeStatus,
   onDelete,
   onDuplicate,
   onSaleClick,
@@ -128,12 +133,19 @@ export function ListingCard({
         )}
 
         {/* Status Badge */}
-        <div className="absolute left-1.5 top-1.5">
+        <div className="absolute left-1.5 top-1.5 flex flex-col gap-1">
           <span
             className={`inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-semibold ${statusConfig[status].className}`}
           >
             {statusConfig[status].label}
           </span>
+          {/* Dispute Badge - nur für verkaufte Artikel mit aktivem Dispute */}
+          {disputeOpenedAt && disputeStatus && disputeStatus !== 'resolved' && disputeStatus !== 'rejected' && (
+            <span className="inline-flex items-center gap-0.5 rounded-full bg-red-600 px-2 py-0.5 text-[10px] font-semibold text-white">
+              <AlertTriangle className="h-2.5 w-2.5" />
+              Dispute
+            </span>
+          )}
         </div>
 
         {/* Auction Badge */}
