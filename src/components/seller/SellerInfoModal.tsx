@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Shield, Loader2, CreditCard } from 'lucide-react'
+import { X, Shield, Loader2 } from 'lucide-react'
 
 interface SellerInfo {
   id: string
@@ -299,23 +299,12 @@ export function SellerInfoModal({
                   </div>
                 )}
 
-              {/* Info wenn Zahlungsschutz aktiviert aber Verkäufer nicht onboarded */}
-              {paymentProtectionEnabled &&
-                (!sellerInfo?.stripeConnectedAccountId ||
-                  !sellerInfo?.stripeOnboardingComplete) && (
-                  <div className="mt-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
-                    <div className="mb-2 flex items-center gap-2">
-                      <CreditCard className="h-5 w-5 text-yellow-600" />
-                      <h3 className="font-semibold text-yellow-800">Zahlungsschutz ausstehend</h3>
-                    </div>
-                    <p className="text-sm text-yellow-700">
-                      Der Verkäufer hat den Helvenda Zahlungsschutz für diesen Artikel aktiviert,
-                      aber die Auszahlungseinrichtung noch nicht abgeschlossen. Bitte nutzen Sie
-                      vorerst die oben angezeigten Zahlungsmethoden oder kontaktieren Sie den
-                      Verkäufer.
-                    </p>
-                  </div>
-                )}
+{/* 
+                Hinweis: Die Warnung "Zahlungsschutz ausstehend" wurde entfernt.
+                Der Käufer soll nicht durch den Onboarding-Status des Verkäufers verwirrt werden.
+                Der Verkäufer richtet die Auszahlung ein, wenn er das Geld erhalten möchte.
+                Der Käufer kann ganz normal über die angezeigten Zahlungsmethoden bezahlen.
+              */}
             </div>
           ) : (
             <div className="py-12 text-center text-gray-500">
