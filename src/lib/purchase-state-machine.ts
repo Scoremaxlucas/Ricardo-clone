@@ -55,8 +55,14 @@ export function computePurchaseState(purchase: {
     return 'CANCELLED'
   }
 
-  // Dispute takes precedence over other states
-  if (purchase.disputeOpenedAt && purchase.disputeStatus !== 'resolved') {
+  // Dispute takes precedence over other states (nur wenn noch nicht abgeschlossen)
+  if (
+    purchase.disputeOpenedAt &&
+    purchase.disputeStatus &&
+    purchase.disputeStatus !== 'resolved' &&
+    purchase.disputeStatus !== 'closed' &&
+    purchase.disputeStatus !== 'rejected'
+  ) {
     return 'DISPUTE_OPEN'
   }
 

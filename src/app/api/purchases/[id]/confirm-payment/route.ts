@@ -57,6 +57,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
+    // WICHTIG: Prüfe ob ein Dispute offen ist - blockiere Bestätigung bei aktivem Dispute
+    if (
+      purchase.disputeOpenedAt &&
+      purchase.disputeStatus &&
+      purchase.disputeStatus !== 'resolved' &&
+      purchase.disputeStatus !== 'closed' &&
+      purchase.disputeStatus !== 'rejected'
+    ) {
+      return NextResponse.json(
+        {
+          message:
+            'Der Kaufprozess ist aufgrund eines offenen Disputes eingefroren. Bitte warten Sie auf die Entscheidung von Helvenda.',
+        },
+        { status: 400 }
+      )
+    }
+
     // Bestimme neuen Status
     const newStatus = purchase.itemReceived ? 'completed' : 'payment_confirmed'
 

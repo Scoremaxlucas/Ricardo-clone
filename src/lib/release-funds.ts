@@ -22,7 +22,7 @@ export async function releaseFunds(orderId: string): Promise<ReleaseFundsResult>
   try {
     console.log(`[release-funds] Starte Freigabe für Order ${orderId}`)
 
-    // Lade Order mit allen benötigten Daten
+    // Lade Order mit allen benötigten Daten (inkl. Dispute-Feldern)
     const order = await prisma.order.findUnique({
       where: { id: orderId },
       include: {
@@ -69,6 +69,19 @@ export async function releaseFunds(orderId: string): Promise<ReleaseFundsResult>
       order.paymentStatus !== 'release_pending_onboarding'
     ) {
       throw new Error(`Order ${orderId} ist nicht bezahlt (Status: ${order.paymentStatus})`)
+    }
+
+    // WICHTIG: Prüfe ob ein Dispute offen ist - blockiere Transfer bei aktivem Dispute
+    if (
+      order.disputeOpenedAt &&
+      order.disputeStatus &&
+      order.disputeStatus !== 'none' &&
+      order.disputeStatus !== 'resolved' &&
+      order.disputeStatus !== 'closed'
+    ) {
+      throw new Error(
+        `Order ${orderId} hat einen offenen Dispute - Transfer kann nicht durchgeführt werden`
+      )
     }
 
     // JUST-IN-TIME ONBOARDING: Prüfe ob Verkäufer Stripe Connect Account hat

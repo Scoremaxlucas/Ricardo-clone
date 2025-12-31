@@ -21,10 +21,16 @@ export async function POST(
 
     const orderId = params.orderId
 
-    // Lade Order
+    // Lade Order mit Dispute-Feldern
     const order = await prisma.order.findUnique({
       where: { id: orderId },
-      include: {
+      select: {
+        id: true,
+        buyerId: true,
+        paymentStatus: true,
+        buyerConfirmedReceipt: true,
+        disputeOpenedAt: true,
+        disputeStatus: true,
         buyer: {
           select: {
             id: true,
@@ -57,6 +63,23 @@ export async function POST(
     if (order.paymentStatus !== 'paid' && order.paymentStatus !== 'release_pending') {
       return NextResponse.json(
         { message: 'Diese Bestellung wurde noch nicht bezahlt' },
+        { status: 400 }
+      )
+    }
+
+    // WICHTIG: Prüfe ob ein Dispute offen ist - blockiere Bestätigung bei aktivem Dispute
+    if (
+      order.disputeOpenedAt &&
+      order.disputeStatus &&
+      order.disputeStatus !== 'none' &&
+      order.disputeStatus !== 'resolved' &&
+      order.disputeStatus !== 'closed'
+    ) {
+      return NextResponse.json(
+        {
+          message:
+            'Der Kaufprozess ist aufgrund eines offenen Disputes eingefroren. Bitte warten Sie auf die Entscheidung von Helvenda.',
+        },
         { status: 400 }
       )
     }
