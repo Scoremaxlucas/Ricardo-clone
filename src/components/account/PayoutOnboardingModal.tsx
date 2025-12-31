@@ -172,15 +172,7 @@ export function PayoutOnboardingModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={handleBackdropClick}
     >
-      <div
-        className="relative flex w-full flex-col overflow-hidden rounded-t-xl shadow-2xl"
-        style={{
-          width: '560px',
-          maxWidth: '90vw',
-          maxHeight: '90vh',
-          height: 'auto',
-        }}
-      >
+      <div className="relative flex w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
         {/* Minimal Header */}
         <div className="flex shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">Auszahlung einrichten</h2>
@@ -195,11 +187,8 @@ export function PayoutOnboardingModal({
           </button>
         </div>
 
-        {/* Content - Flex grow to fill space, Stripe footer will be at bottom - NO white background */}
-        <div
-          className="flex min-h-0 flex-1 flex-col overflow-hidden"
-          style={{ minHeight: '400px' }}
-        >
+        {/* Content - Allow scrolling to see full Stripe footer */}
+        <div className="flex max-h-[80vh] min-h-0 flex-1 flex-col overflow-y-auto bg-white">
           {/* Loading State */}
           {loading && (
             <div className="flex flex-col items-center justify-center py-20">
@@ -251,47 +240,34 @@ export function PayoutOnboardingModal({
               <style
                 dangerouslySetInnerHTML={{
                   __html: `
-                /* Remove ALL white space at bottom of Stripe Connect */
-                [class*="ConnectAccountOnboarding"],
-                [class*="ConnectAccountOnboarding"] > *,
-                [class*="ConnectAccountOnboarding"] iframe,
-                [class*="ConnectAccountOnboarding"] > div,
-                [class*="ConnectAccountOnboarding"] > div > *,
-                [class*="ConnectAccountOnboarding"] > div > div {
-                  margin-bottom: 0 !important;
-                  padding-bottom: 0 !important;
-                }
-                /* Ensure Stripe content fills container completely - NO white space below */
+                /* Ensure Stripe Connect content is fully visible - no clipping */
                 [class*="ConnectAccountOnboarding"] {
-                  display: flex !important;
-                  flex-direction: column !important;
-                  min-height: 100% !important;
-                  height: 100% !important;
+                  display: block !important;
+                  min-height: auto !important;
+                  height: auto !important;
                   margin: 0 !important;
                   padding: 0 !important;
                 }
-                /* Remove any white background below Stripe footer */
+                /* Ensure iframe allows full content to be visible */
                 [class*="ConnectAccountOnboarding"] iframe {
                   display: block !important;
                   border: none !important;
                   margin: 0 !important;
                   padding: 0 !important;
+                  min-height: 500px !important;
                 }
-                /* Ensure the wrapper div also has no bottom spacing */
+                /* Ensure wrapper allows scrolling */
                 [class*="ConnectComponentsProvider"] {
-                  display: flex !important;
-                  flex-direction: column !important;
-                  height: 100% !important;
+                  display: block !important;
+                  height: auto !important;
+                  min-height: auto !important;
                   margin: 0 !important;
                   padding: 0 !important;
                 }
               `,
                 }}
               />
-              <div
-                className="flex min-h-0 flex-1 flex-col overflow-hidden"
-                style={{ margin: 0, padding: 0 }}
-              >
+              <div className="flex min-h-[500px] flex-col">
                 <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
                   <ConnectAccountOnboarding onExit={handleOnboardingExit} />
                 </ConnectComponentsProvider>
