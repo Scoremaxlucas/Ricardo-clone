@@ -36,6 +36,7 @@ export function getOrderUIState(
     onPay: () => void
     onConfirmReceipt: () => void
     onViewDispute: () => void
+    onOpenDispute: () => void // NEU: Dispute eröffnen
     onCancel?: () => void
     onShowDetails: () => void
   },
@@ -203,6 +204,24 @@ export function getOrderUIState(
       label: 'Kauf stornieren',
       onClick: handlers.onCancel,
       icon: 'AlertCircle',
+    })
+  }
+
+  // "Problem melden" Option - verfügbar in bestimmten States (wenn kein Dispute offen)
+  // Erlaubt Käufern, Probleme zu melden (nicht erhaltene Ware, beschädigt, etc.)
+  const canOpenDispute =
+    !purchase.disputeOpenedAt &&
+    purchase.status !== 'cancelled' &&
+    purchase.status !== 'completed' &&
+    stateInfo.state !== 'DISPUTE_OPEN' &&
+    stateInfo.state !== 'COMPLETED' &&
+    stateInfo.state !== 'CANCELLED'
+
+  if (canOpenDispute && isExpanded) {
+    secondaryActions.push({
+      label: 'Problem melden',
+      onClick: handlers.onOpenDispute,
+      icon: 'AlertTriangle',
     })
   }
 

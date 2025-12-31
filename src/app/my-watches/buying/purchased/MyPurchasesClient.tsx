@@ -1,5 +1,6 @@
 'use client'
 
+import { DisputeModal } from '@/components/dispute/DisputeModal'
 import { PaymentInfoCard } from '@/components/payment/PaymentInfoCard'
 import { PaymentModal } from '@/components/payment/PaymentModal'
 import { SellerInfoModal } from '@/components/seller/SellerInfoModal'
@@ -10,6 +11,7 @@ import { getPurchaseStateInfo } from '@/lib/purchase-state-machine'
 import { getShippingCost } from '@/lib/shipping'
 import {
   AlertCircle,
+  AlertTriangle,
   ArrowUpDown,
   CheckCircle,
   ChevronDown,
@@ -43,6 +45,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
   const [selectedPurchase, setSelectedPurchase] = useState<MyPurchaseItem | null>(null)
   const [showSellerInfo, setShowSellerInfo] = useState(false)
   const [showPaymentModal, setShowPaymentModal] = useState(false)
+  const [showDisputeModal, setShowDisputeModal] = useState(false)
   const [expandedPurchaseId, setExpandedPurchaseId] = useState<string | null>(null)
   const [statusFilter, setStatusFilter] = useState<string>('all')
   const [searchQuery, setSearchQuery] = useState<string>('')
@@ -613,6 +616,10 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                       }
                     : undefined,
                 onShowDetails: () => setExpandedPurchaseId(isExpanded ? null : purchase.id),
+                onOpenDispute: () => {
+                  setSelectedPurchase(purchase)
+                  setShowDisputeModal(true)
+                },
               },
               isExpanded,
               processingStripePayment === purchase.id
@@ -625,6 +632,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
               Shield,
               PackageCheck,
               AlertCircle,
+              AlertTriangle,
               Loader2,
             }
 
@@ -935,7 +943,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                           </div>
                         )}
 
-                      {/* 
+                      {/*
                         Der "Jetzt mit Zahlungsschutz bezahlen" Button wurde entfernt,
                         da er bereits als Primary Action oben rechts angezeigt wird ("Sicher bezahlen").
                         Doppelte Buttons vermeiden.
@@ -1018,6 +1026,19 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
             }}
             onMarkPaid={handleMarkPaid}
             protectionUnavailable={protectionUnavailable}
+          />
+          <DisputeModal
+            purchaseId={selectedPurchase.id}
+            watchTitle={selectedPurchase.watch.title}
+            isOpen={showDisputeModal}
+            onClose={() => {
+              setShowDisputeModal(false)
+              setSelectedPurchase(null)
+            }}
+            onSuccess={() => {
+              // Refresh data after dispute opened
+              handleMarkPaid()
+            }}
           />
         </>
       )}
