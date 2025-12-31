@@ -127,7 +127,8 @@ export function EmmaChat({ productId, className = '' }: EmmaChatProps) {
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 flex h-[600px] w-96 flex-col rounded-lg bg-white shadow-2xl ${className}`}
+      className={`fixed bottom-6 right-6 z-50 flex w-96 flex-col rounded-lg bg-white shadow-2xl ${className}`}
+      style={{ maxHeight: '70vh', height: '600px' }}
     >
       {/* Header */}
       <div className="flex items-center justify-between rounded-t-lg bg-primary-600 p-4 text-white">

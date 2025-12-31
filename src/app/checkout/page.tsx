@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useSession } from 'next-auth/react'
 import { Card } from '@/components/ui/Card'
-import { ArrowLeft, CreditCard, Shield, Loader2 } from 'lucide-react'
 import { getShippingCostForMethod } from '@/lib/shipping'
+import { ArrowLeft, CreditCard, Loader2, Shield } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface Watch {
@@ -32,6 +32,15 @@ function CheckoutPageContent() {
   const [isProcessing, setIsProcessing] = useState(false)
   const [error, setError] = useState('')
   const [pricingConfig, setPricingConfig] = useState<any>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     if (!session) {
@@ -144,10 +153,7 @@ function CheckoutPageContent() {
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="rounded-lg bg-white p-8 shadow-md">
           <div className="text-red-600">{error || 'Uhr nicht gefunden'}</div>
-          <button
-            onClick={() => router.back()}
-            className="mt-4 text-primary-600 hover:underline"
-          >
+          <button onClick={() => router.back()} className="mt-4 text-primary-600 hover:underline">
             Zurück
           </button>
         </div>
@@ -171,12 +177,19 @@ function CheckoutPageContent() {
   // Verwende Pricing-Config für synchrone Berechnung
   const calculateFeesSync = () => {
     if (!pricingConfig) {
-      return { itemPrice, shippingCost, platformFee: 0, protectionFee: 0, totalAmount: itemPrice + shippingCost }
+      return {
+        itemPrice,
+        shippingCost,
+        platformFee: 0,
+        protectionFee: 0,
+        totalAmount: itemPrice + shippingCost,
+      }
     }
 
     const platformFee = Math.round(itemPrice * pricingConfig.platformFeeRate * 100) / 100
     const protectionFee = Math.round(itemPrice * pricingConfig.protectionFeeRate * 100) / 100
-    const totalAmount = Math.round((itemPrice + shippingCost + platformFee + protectionFee) * 100) / 100
+    const totalAmount =
+      Math.round((itemPrice + shippingCost + platformFee + protectionFee) * 100) / 100
 
     return { itemPrice, shippingCost, platformFee, protectionFee, totalAmount }
   }
@@ -225,9 +238,7 @@ function CheckoutPageContent() {
                     {watch.year && <p className="text-sm text-gray-500">{watch.year}</p>}
                   </div>
                   <div className="text-right">
-                    <p className="font-semibold text-gray-900">
-                      CHF {itemPrice.toLocaleString()}
-                    </p>
+                    <p className="font-semibold text-gray-900">CHF {itemPrice.toLocaleString()}</p>
                   </div>
                 </div>
 
@@ -240,6 +251,7 @@ function CheckoutPageContent() {
                         <label
                           key={method}
                           className="flex cursor-pointer items-center rounded-lg border border-gray-300 p-3 hover:bg-gray-50"
+                          style={{ minHeight: '44px' }}
                         >
                           <input
                             type="radio"
@@ -248,6 +260,7 @@ function CheckoutPageContent() {
                             checked={selectedShipping === method}
                             onChange={e => setSelectedShipping(e.target.value)}
                             className="mr-3"
+                            style={{ minWidth: '20px', minHeight: '20px' }}
                           />
                           <div className="flex-1">
                             {method === 'pickup' && (
@@ -265,7 +278,11 @@ function CheckoutPageContent() {
                             )}
                           </div>
                           <div className="text-sm font-medium text-gray-900">
-                            {method === 'pickup' ? 'CHF 0.00' : method === 'b-post' ? 'CHF 8.50' : 'CHF 12.50'}
+                            {method === 'pickup'
+                              ? 'CHF 0.00'
+                              : method === 'b-post'
+                                ? 'CHF 8.50'
+                                : 'CHF 12.50'}
                           </div>
                         </label>
                       ))}
@@ -361,7 +378,9 @@ function CheckoutPageContent() {
 
 export default function CheckoutPage() {
   return (
-    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Lädt...</div>}>
+    <Suspense
+      fallback={<div className="flex min-h-screen items-center justify-center">Lädt...</div>}
+    >
       <CheckoutPageContent />
     </Suspense>
   )

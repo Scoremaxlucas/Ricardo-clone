@@ -287,11 +287,12 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
           {/* Actions Row */}
           <div className="flex items-center gap-2">
-            {/* Search Icon - Opens Mobile Overlay */}
+            {/* Search Icon - Opens Mobile Overlay - Min 44x44px touch target */}
             <button
               type="button"
               onClick={() => setIsMobileSearchOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+              className="flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+              style={{ minWidth: '44px', minHeight: '44px' }}
               aria-label="Suche öffnen"
             >
               <Search className="h-5 w-5" />
@@ -307,11 +308,12 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               <span className="xs:inline hidden">Verkaufen</span>
             </Link>
 
-            {/* Notifications */}
+            {/* Notifications - Min 44x44px touch target */}
             {session && (
               <Link
                 href="/notifications"
-                className="relative flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                className="relative flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                style={{ minWidth: '44px', minHeight: '44px' }}
                 title={t.header.notifications}
               >
                 <Bell className="h-5 w-5" />
@@ -323,12 +325,13 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               </Link>
             )}
 
-            {/* Profile Avatar */}
+            {/* Profile Avatar - Min 44x44px touch target */}
             {session ? (
               <button
                 type="button"
                 onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="relative flex h-10 w-10 items-center justify-center rounded-full bg-primary-600 text-white transition-all hover:bg-primary-700"
+                className="relative flex items-center justify-center rounded-full bg-primary-600 text-white transition-all hover:bg-primary-700"
+                style={{ minWidth: '44px', minHeight: '44px' }}
                 title={t.header.profileMenu}
               >
                 {getProfileImage() ? (
@@ -351,11 +354,12 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               </Link>
             )}
 
-            {/* Hamburger Menu */}
+            {/* Hamburger Menu - Min 44x44px touch target */}
             <button
               type="button"
               onClick={() => setIsMobileMenuOpen(true)}
-              className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+              className="flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+              style={{ minWidth: '44px', minHeight: '44px' }}
               title="Menü"
             >
               <Menu className="h-5 w-5" />

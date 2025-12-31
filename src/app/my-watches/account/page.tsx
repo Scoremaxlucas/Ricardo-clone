@@ -269,6 +269,7 @@ export default function AccountPage() {
                     ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                 }`}
+                style={{ minHeight: '44px' }}
                 {...(errors.name && { 'aria-invalid': true, 'aria-describedby': 'name-error' })}
               />
               {errors.name && (
@@ -317,12 +318,14 @@ export default function AccountPage() {
                 {...register('phone')}
                 type="tel"
                 id="phone"
+                inputMode="tel"
                 className={`w-full rounded-md border px-3 py-2 text-gray-900 focus:outline-none focus:ring-2 ${
                   errors.phone
                     ? 'border-red-300 focus:border-red-500 focus:ring-red-500'
                     : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                 }`}
                 placeholder="+41 79 123 45 67"
+                style={{ minHeight: '44px' }}
                 {...(errors.phone && {
                   'aria-invalid': true,
                   'aria-describedby': 'phone-error',
@@ -371,6 +374,7 @@ export default function AccountPage() {
                           : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                       }`}
                       placeholder="Musterstrasse"
+                      style={{ minHeight: '44px' }}
                       {...(errors.street && {
                         'aria-invalid': true,
                         'aria-describedby': 'street-error',
@@ -402,6 +406,7 @@ export default function AccountPage() {
                           : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                       }`}
                       placeholder="12a"
+                      style={{ minHeight: '44px' }}
                       {...(errors.streetNumber && {
                         'aria-invalid': true,
                         'aria-describedby': 'streetNumber-error',
@@ -429,6 +434,7 @@ export default function AccountPage() {
                     id="addresszusatz"
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     placeholder="c/o, Appartment, etc."
+                    style={{ minHeight: '44px' }}
                   />
                 </div>
 
@@ -484,6 +490,7 @@ export default function AccountPage() {
                           : 'border-gray-300 focus:border-primary-500 focus:ring-primary-500'
                       }`}
                       placeholder="Zürich"
+                      style={{ minHeight: '44px' }}
                       {...(errors.city && {
                         'aria-invalid': true,
                         'aria-describedby': 'city-error',

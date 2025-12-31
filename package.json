@@ -76,6 +76,7 @@
     "react-hook-form": "^7.47.0",
     "react-hot-toast": "^2.4.0",
     "react-leaflet": "^5.0.0",
+    "react-swipeable": "^7.0.2",
     "react-window": "^2.2.3",
     "react-window-infinite-loader": "^2.0.0",
     "resend": "^6.5.2",

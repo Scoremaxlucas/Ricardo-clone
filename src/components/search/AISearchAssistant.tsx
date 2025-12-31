@@ -183,7 +183,10 @@ export function AISearchAssistant({ className = '' }: AISearchAssistantProps) {
 
       {/* Chat Window */}
       {isOpen && (
-        <div className="fixed bottom-6 right-6 z-50 flex h-[600px] w-[400px] flex-col rounded-xl border border-gray-200 bg-white shadow-2xl md:w-[500px]">
+        <div
+          className="fixed bottom-6 right-6 z-50 flex w-[400px] flex-col rounded-xl border border-gray-200 bg-white shadow-2xl md:w-[500px]"
+          style={{ maxHeight: '70vh', height: '600px' }}
+        >
           {/* Header */}
           <div className="flex items-center justify-between border-b border-gray-200 bg-gradient-to-r from-primary-600 to-primary-700 px-4 py-3">
             <div className="flex items-center gap-2">

@@ -16,6 +16,7 @@ import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import { useSwipeable } from 'react-swipeable'
 
 interface ProductPageClientProps {
   watch: any
@@ -41,8 +42,21 @@ export function ProductPageClient({
   const [imageAspectRatio, setImageAspectRatio] = useState<number | null>(null)
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
   const [modalImageIndex, setModalImageIndex] = useState(0)
+  const [isMobile, setIsMobile] = useState(false)
+  const [pinchZoom, setPinchZoom] = useState(1)
+  const [pinchStartDistance, setPinchStartDistance] = useState<number | null>(null)
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const zoomImageRef = useRef<HTMLImageElement>(null)
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => {
+      setIsMobile(window.innerWidth < 768 || 'ontouchstart' in window)
+    }
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   // Track view (Feature 2: Social Proof)
   useEffect(() => {
@@ -109,6 +123,67 @@ export function ProductPageClient({
     } else {
       setModalImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1))
     }
+    // Reset pinch zoom when navigating
+    setPinchZoom(1)
+  }
+
+  // Swipe handlers for main image gallery
+  const mainImageSwipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (images.length > 1) {
+        setSelectedImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1))
+      }
+    },
+    onSwipedRight: () => {
+      if (images.length > 1) {
+        setSelectedImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1))
+      }
+    },
+    trackMouse: false, // Only track touch
+    preventScrollOnSwipe: true,
+  })
+
+  // Swipe handlers for modal image gallery
+  const modalImageSwipeHandlers = useSwipeable({
+    onSwipedLeft: () => {
+      if (images.length > 1 && pinchZoom === 1) {
+        navigateModalImage('next')
+      }
+    },
+    onSwipedRight: () => {
+      if (images.length > 1 && pinchZoom === 1) {
+        navigateModalImage('prev')
+      }
+    },
+    trackMouse: false,
+    preventScrollOnSwipe: true,
+  })
+
+  // Touch handlers for zoom on mobile
+  const handleTouchStart = (e: React.TouchEvent) => {
+    if (e.touches.length === 2) {
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      const distance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY)
+      setPinchStartDistance(distance)
+    }
+  }
+
+  const handleTouchMove = (e: React.TouchEvent) => {
+    if (e.touches.length === 2 && pinchStartDistance !== null) {
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      const distance = Math.hypot(touch2.clientX - touch1.clientX, touch2.clientY - touch1.clientY)
+      const scale = distance / pinchStartDistance
+      setPinchZoom(Math.max(1, Math.min(scale * pinchZoom, 3)))
+    }
+  }
+
+  const handleTouchEnd = () => {
+    setPinchStartDistance(null)
+    if (pinchZoom < 1.1) {
+      setPinchZoom(1)
+    }
   }
 
   if (!watch) {
@@ -132,17 +207,19 @@ export function ProductPageClient({
           className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-sm"
           onClick={closeImageModal}
         >
-          {/* Schließen-Button */}
+          {/* Schließen-Button - Größer auf Mobile */}
           <button
             onClick={closeImageModal}
-            className="absolute right-4 top-4 z-10 rounded-full bg-white/10 p-2 text-white transition-all hover:bg-white/20"
+            className="absolute right-2 top-2 z-10 rounded-full bg-white/10 p-2 text-white transition-all hover:bg-white/20 md:right-4 md:top-4"
+            style={{ minWidth: '44px', minHeight: '44px' }}
             aria-label="Schließen"
           >
-            <X className="h-6 w-6" />
+            <X className="h-5 w-5 md:h-6 md:w-6" />
           </button>
 
           {/* Hauptbild im Modal */}
           <div
+            {...modalImageSwipeHandlers}
             className="relative flex h-full w-full items-center justify-center p-8"
             onClick={e => e.stopPropagation()}
           >
@@ -153,31 +230,50 @@ export function ProductPageClient({
                   e.stopPropagation()
                   navigateModalImage('prev')
                 }}
-                className="absolute left-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-all hover:bg-white/20"
+                className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-all hover:bg-white/20 md:left-4"
+                style={{ minWidth: '48px', minHeight: '48px' }}
                 aria-label="Vorheriges Bild"
               >
-                <ChevronLeft className="h-8 w-8" />
+                <ChevronLeft className="h-6 w-6 md:h-8 md:w-8" />
               </button>
             )}
 
             {/* Bild */}
-            <div className="relative h-full max-h-[90vh] w-full max-w-[90vw]">
+            <div
+              className="relative h-full max-h-[90vh] w-full max-w-[90vw] overflow-hidden"
+              onTouchStart={handleTouchStart}
+              onTouchMove={handleTouchMove}
+              onTouchEnd={handleTouchEnd}
+            >
               {images[modalImageIndex]?.startsWith('data:image/') ||
               images[modalImageIndex]?.length > 1000 ||
               images[modalImageIndex]?.includes('blob.vercel-storage.com') ? (
                 <img
                   src={images[modalImageIndex]}
                   alt={`${watch.title} - Bild ${modalImageIndex + 1}`}
-                  className="h-full w-full object-contain"
+                  className="h-full w-full object-contain transition-transform duration-200"
+                  style={{
+                    transform: `scale(${pinchZoom})`,
+                    transformOrigin: 'center center',
+                  }}
                 />
               ) : (
-                <Image
-                  src={images[modalImageIndex]}
-                  alt={`${watch.title} - Bild ${modalImageIndex + 1}`}
-                  fill
-                  className="object-contain"
-                  sizes="90vw"
-                />
+                <div
+                  className="relative h-full w-full"
+                  style={{
+                    transform: `scale(${pinchZoom})`,
+                    transformOrigin: 'center center',
+                    transition: pinchStartDistance === null ? 'transform 0.2s' : 'none',
+                  }}
+                >
+                  <Image
+                    src={images[modalImageIndex]}
+                    alt={`${watch.title} - Bild ${modalImageIndex + 1}`}
+                    fill
+                    className="object-contain"
+                    sizes="90vw"
+                  />
+                </div>
               )}
             </div>
 
@@ -188,10 +284,11 @@ export function ProductPageClient({
                   e.stopPropagation()
                   navigateModalImage('next')
                 }}
-                className="absolute right-4 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-all hover:bg-white/20"
+                className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/10 p-3 text-white transition-all hover:bg-white/20 md:right-4"
+                style={{ minWidth: '48px', minHeight: '48px' }}
                 aria-label="Nächstes Bild"
               >
-                <ChevronRight className="h-8 w-8" />
+                <ChevronRight className="h-6 w-6 md:h-8 md:w-8" />
               </button>
             )}
 
@@ -281,6 +378,7 @@ export function ProductPageClient({
                 <>
                   {/* Hauptbild mit Zoom-Effekt - Container passt sich an Bildformat an */}
                   <div
+                    {...mainImageSwipeHandlers}
                     ref={imageContainerRef}
                     className="relative flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-white"
                     style={{
@@ -290,14 +388,21 @@ export function ProductPageClient({
                     }}
                     onClick={() => openImageModal(selectedImageIndex)}
                     onMouseMove={e => {
-                      if (!imageContainerRef.current || !zoomImageRef.current) return
-                      const rect = imageContainerRef.current.getBoundingClientRect()
-                      const x = ((e.clientX - rect.left) / rect.width) * 100
-                      const y = ((e.clientY - rect.top) / rect.height) * 100
-                      setZoomPosition({ x, y })
-                      setIsZoomed(true)
+                      // Desktop-only hover zoom
+                      if (!isMobile && imageContainerRef.current && zoomImageRef.current) {
+                        const rect = imageContainerRef.current.getBoundingClientRect()
+                        const x = ((e.clientX - rect.left) / rect.width) * 100
+                        const y = ((e.clientY - rect.top) / rect.height) * 100
+                        setZoomPosition({ x, y })
+                        setIsZoomed(true)
+                      }
                     }}
-                    onMouseLeave={() => setIsZoomed(false)}
+                    onMouseLeave={() => {
+                      if (!isMobile) setIsZoomed(false)
+                    }}
+                    onTouchStart={handleTouchStart}
+                    onTouchMove={handleTouchMove}
+                    onTouchEnd={handleTouchEnd}
                   >
                     {/* Hauptbild */}
                     {images[selectedImageIndex]?.startsWith('data:image/') ||
@@ -308,10 +413,13 @@ export function ProductPageClient({
                         src={images[selectedImageIndex]}
                         alt={watch.title}
                         className={`h-auto max-h-full w-auto max-w-full object-contain transition-transform duration-200 ease-out ${
-                          isZoomed ? 'scale-[2.5]' : 'scale-100'
+                          !isMobile && isZoomed ? 'scale-[2.5]' : 'scale-100'
                         }`}
                         style={{
-                          transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                          transformOrigin: isMobile
+                            ? 'center center'
+                            : `${zoomPosition.x}% ${zoomPosition.y}%`,
+                          transform: isMobile ? `scale(${pinchZoom})` : undefined,
                         }}
                       />
                     ) : (
@@ -321,10 +429,13 @@ export function ProductPageClient({
                         alt={watch.title}
                         fill
                         className={`object-contain transition-transform duration-200 ease-out ${
-                          isZoomed ? 'scale-[2.5]' : 'scale-100'
+                          !isMobile && isZoomed ? 'scale-[2.5]' : 'scale-100'
                         }`}
                         style={{
-                          transformOrigin: `${zoomPosition.x}% ${zoomPosition.y}%`,
+                          transformOrigin: isMobile
+                            ? 'center center'
+                            : `${zoomPosition.x}% ${zoomPosition.y}%`,
+                          transform: isMobile ? `scale(${pinchZoom})` : undefined,
                         }}
                         sizes="(max-width: 768px) 100vw, 66vw"
                       />
@@ -332,7 +443,7 @@ export function ProductPageClient({
 
                     {/* Zoom-Indikator - Entfernt, da keine Verfärbung gewünscht */}
 
-                    {/* Navigation Pfeile (wenn mehrere Bilder) */}
+                    {/* Navigation Pfeile (wenn mehrere Bilder) - Größer auf Mobile für bessere Touch-Targets */}
                     {images.length > 1 && (
                       <>
                         <button
@@ -341,11 +452,13 @@ export function ProductPageClient({
                             setSelectedImageIndex(prev =>
                               prev === 0 ? images.length - 1 : prev - 1
                             )
+                            setPinchZoom(1)
                           }}
-                          className="absolute left-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-lg transition-all hover:bg-white"
+                          className="absolute left-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-lg transition-all hover:bg-white md:left-4 md:p-2"
+                          style={{ minWidth: '44px', minHeight: '44px' }}
                           aria-label="Vorheriges Bild"
                         >
-                          <ChevronLeft className="h-6 w-6 text-gray-700" />
+                          <ChevronLeft className="h-6 w-6 text-gray-700 md:h-6 md:w-6" />
                         </button>
                         <button
                           onClick={e => {
@@ -353,11 +466,13 @@ export function ProductPageClient({
                             setSelectedImageIndex(prev =>
                               prev === images.length - 1 ? 0 : prev + 1
                             )
+                            setPinchZoom(1)
                           }}
-                          className="absolute right-4 top-1/2 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-lg transition-all hover:bg-white"
+                          className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full bg-white/90 p-2 shadow-lg transition-all hover:bg-white md:right-4 md:p-2"
+                          style={{ minWidth: '44px', minHeight: '44px' }}
                           aria-label="Nächstes Bild"
                         >
-                          <ChevronRight className="h-6 w-6 text-gray-700" />
+                          <ChevronRight className="h-6 w-6 text-gray-700 md:h-6 md:w-6" />
                         </button>
                       </>
                     )}

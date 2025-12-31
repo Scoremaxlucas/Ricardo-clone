@@ -7,6 +7,7 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { getShippingCost, ShippingMethod, ShippingMethodArray } from '@/lib/shipping'
 import { AlertCircle, CheckCircle, Clock, Gavel, Zap } from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -422,10 +423,13 @@ export function BidComponent({
                   {/* Profilbild */}
                   <div className="flex h-6 w-6 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-100">
                     {bid.user.image ? (
-                      <img
+                      <Image
                         src={bid.user.image}
                         alt={bid.user.nickname || bid.user.name || ''}
+                        width={24}
+                        height={24}
                         className="h-full w-full object-cover"
+                        unoptimized
                       />
                     ) : (
                       <span className="text-xs font-semibold text-primary-600">
@@ -491,6 +495,15 @@ export function BidComponent({
       </div>
     )
   }
+
+  // Determine if we should show sticky CTA on mobile
+  const [isMobile, setIsMobile] = useState(false)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   return (
     <div className="mt-8 rounded-lg bg-white p-6 shadow">
@@ -583,13 +596,14 @@ export function BidComponent({
       {!isSeller && (
         <div className="space-y-4">
           {/* Mitbieten */}
-          <div>
+          <div className="hidden md:block">
             <label className="mb-2 block text-sm font-medium text-gray-700">
               {t.product.yourBid} ({t.product.minimum} CHF {minBid.toFixed(2)})
             </label>
             <div className="flex items-stretch gap-2">
               <input
                 type="text"
+                inputMode="decimal"
                 value={bidAmount}
                 onChange={e => setBidAmount(e.target.value)}
                 placeholder={`CHF ${minBid.toFixed(2)}`}
@@ -600,6 +614,7 @@ export function BidComponent({
                 onClick={handleBid}
                 disabled={loading || !isAuctionActive || isSeller}
                 className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-primary-600 px-4 py-2 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ minWidth: '44px', minHeight: '44px' }}
               >
                 <Gavel className="h-4 w-4" />
                 <span className="text-sm font-medium">{t.product.bid}</span>
@@ -607,9 +622,9 @@ export function BidComponent({
             </div>
           </div>
 
-          {/* Sofortkauf */}
+          {/* Sofortkauf - Desktop */}
           {buyNowPrice && (
-            <div className="border-t pt-4">
+            <div className="hidden border-t pt-4 md:block">
               {/* Payment Protection Badge */}
               {paymentProtectionEnabled && (
                 <div className="mb-3">
@@ -620,6 +635,7 @@ export function BidComponent({
                 onClick={handleBuyNowClick}
                 disabled={loading || !isAuctionActive || isSeller}
                 className="flex w-full flex-col items-center gap-1 rounded-md bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ minHeight: '44px' }}
               >
                 <div className="flex items-center gap-2">
                   <Zap className="h-5 w-5" />
@@ -655,6 +671,70 @@ export function BidComponent({
         </div>
       )}
 
+      {/* Mobile Sticky CTA Bar */}
+      {!isSeller && isMobile && isAuctionActive && !itemStatus?.isSold && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white p-4 shadow-lg md:hidden">
+          {buyNowPrice ? (
+            <div className="space-y-2">
+              <button
+                onClick={handleBuyNowClick}
+                disabled={loading || !isAuctionActive || isSeller}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ minHeight: '48px' }}
+              >
+                <Zap className="h-5 w-5" />
+                <span>
+                  {t.product.buyNowFor} CHF {new Intl.NumberFormat('de-CH').format(buyNowPrice)}
+                </span>
+              </button>
+              <div className="flex items-stretch gap-2">
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={bidAmount}
+                  onChange={e => setBidAmount(e.target.value)}
+                  placeholder={`CHF ${minBid.toFixed(2)}`}
+                  className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2.5 text-base text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                  disabled={isSeller}
+                  style={{ minHeight: '44px' }}
+                />
+                <button
+                  onClick={handleBid}
+                  disabled={loading || !isAuctionActive || isSeller}
+                  className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-primary-600 px-4 py-2.5 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                  style={{ minWidth: '60px', minHeight: '44px' }}
+                >
+                  <Gavel className="h-5 w-5" />
+                  <span className="text-sm font-medium md:hidden">{t.product.bid}</span>
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="flex items-stretch gap-2">
+              <input
+                type="text"
+                inputMode="decimal"
+                value={bidAmount}
+                onChange={e => setBidAmount(e.target.value)}
+                placeholder={`CHF ${minBid.toFixed(2)}`}
+                className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2.5 text-base text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                disabled={isSeller}
+                style={{ minHeight: '44px' }}
+              />
+              <button
+                onClick={handleBid}
+                disabled={loading || !isAuctionActive || isSeller}
+                className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-primary-600 px-4 py-2.5 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ minWidth: '80px', minHeight: '44px' }}
+              >
+                <Gavel className="h-5 w-5" />
+                <span className="text-sm font-medium">{t.product.bid}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
       {isSeller && (
         <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm text-blue-800">{t.product.cannotBidOwnItem}</p>
@@ -676,10 +756,13 @@ export function BidComponent({
                   {/* Profilbild */}
                   <div className="flex h-5 w-5 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-100">
                     {bid.user.image ? (
-                      <img
+                      <Image
                         src={bid.user.image}
                         alt={bid.user.nickname || bid.user.name || ''}
+                        width={20}
+                        height={20}
                         className="h-full w-full object-cover"
+                        unoptimized
                       />
                     ) : (
                       <span className="text-xs font-semibold text-primary-600">

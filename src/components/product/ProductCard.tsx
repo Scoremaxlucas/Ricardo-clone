@@ -340,14 +340,15 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Top-right Heart Button */}
+        {/* Top-right Heart Button - Min 44x44px for touch */}
         <button
           onClick={handleFavoriteClick}
-          className="absolute right-2 top-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:bg-white"
+          className="absolute right-2 top-2 inline-flex items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:bg-white"
+          style={{ minWidth: '44px', minHeight: '44px' }}
           aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
         >
           <Heart
-            className={`h-4 w-4 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+            className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
           />
         </button>
       </div>

@@ -62,6 +62,7 @@ export function PriceOfferComponent({
   const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
   const [availableShippingMethods, setAvailableShippingMethods] = useState<ShippingMethod[]>([])
   const [showPriceOfferForm, setShowPriceOfferForm] = useState(false)
+  const [isMobile, setIsMobile] = useState(false)
 
   // New shipping selection (Ricardo-style)
   const [shippingSelection, setShippingSelection] = useState<{
@@ -69,6 +70,14 @@ export function PriceOfferComponent({
     shippingCode?: string
     addons?: string[]
   } | null>(null)
+
+  // Detect mobile device
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
 
   useEffect(() => {
     if ((session?.user as { id?: string })?.id === sellerId) {
@@ -466,7 +475,8 @@ export function PriceOfferComponent({
         <button
           onClick={handleBuyNow}
           disabled={buyNowLoading || isSeller || !(session?.user as { id?: string })?.id}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+          className="hidden w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
+          style={{ minHeight: '44px' }}
         >
           {buyNowLoading ? (
             <>
@@ -481,6 +491,30 @@ export function PriceOfferComponent({
           )}
         </button>
       </div>
+
+      {/* Mobile Sticky CTA */}
+      {isMobile && (session?.user as { id?: string })?.id && !isSeller && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white p-4 shadow-lg md:hidden">
+          <button
+            onClick={handleBuyNow}
+            disabled={buyNowLoading || isSeller || !(session?.user as { id?: string })?.id}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+            style={{ minHeight: '48px' }}
+          >
+            {buyNowLoading ? (
+              <>
+                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                Wird verarbeitet...
+              </>
+            ) : (
+              <>
+                <ShoppingCart className="h-5 w-5" />
+                Jetzt kaufen - CHF {new Intl.NumberFormat('de-CH').format(price)}
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* SECONDARY: Preisvorschlag machen - COLLAPSIBLE */}
       <div className="border-t-2 border-gray-200 pt-6">
@@ -522,12 +556,14 @@ export function PriceOfferComponent({
                   </div>
                   <input
                     type="text"
+                    inputMode="decimal"
                     value={offerAmount}
                     onChange={e => setOfferAmount(e.target.value)}
                     placeholder={`z.B. ${minimumPrice.toFixed(2)}`}
                     className="w-full rounded-lg border-2 border-gray-300 bg-white py-3 pl-16 pr-4 text-lg font-medium text-gray-900 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                     disabled={loading}
                     required
+                    style={{ minHeight: '44px' }}
                   />
                 </div>
                 <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
@@ -560,6 +596,7 @@ export function PriceOfferComponent({
                 type="submit"
                 disabled={loading || !offerAmount}
                 className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                style={{ minHeight: '44px' }}
               >
                 {loading ? (
                   <>

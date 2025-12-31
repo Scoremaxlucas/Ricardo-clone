@@ -142,13 +142,20 @@ function MobileSearchOverlayContent({ isOpen, onClose }: MobileSearchOverlayProp
         <button
           type="button"
           onClick={onClose}
-          className="flex h-10 w-10 items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100"
+          className="flex items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100"
+          style={{ minWidth: '44px', minHeight: '44px' }}
           aria-label="Zurück"
         >
           <ArrowLeft className="h-5 w-5" />
         </button>
 
-        <form onSubmit={e => { e.preventDefault(); handleSubmit() }} className="flex-1">
+        <form
+          onSubmit={e => {
+            e.preventDefault()
+            handleSubmit()
+          }}
+          className="flex-1"
+        >
           <div className="relative flex items-center">
             <Search className="absolute left-3 h-5 w-5 text-gray-400" />
             <input
@@ -169,7 +176,8 @@ function MobileSearchOverlayContent({ isOpen, onClose }: MobileSearchOverlayProp
               <button
                 type="button"
                 onClick={handleClear}
-                className="absolute right-3 flex h-7 w-7 items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+                className="absolute right-3 flex items-center justify-center rounded-full text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+                style={{ minWidth: '44px', minHeight: '44px' }}
                 aria-label="Suche löschen"
               >
                 <X className="h-5 w-5" />
@@ -217,11 +225,12 @@ function MobileSearchOverlayContent({ isOpen, onClose }: MobileSearchOverlayProp
 
       {/* Quick action - search button at bottom */}
       {inputValue.trim() && (
-        <div className="border-t border-gray-200 p-4 safe-area-inset-bottom">
+        <div className="safe-area-inset-bottom border-t border-gray-200 p-4">
           <button
             type="button"
             onClick={() => handleSubmit()}
             className="flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 py-3 font-semibold text-white transition-colors hover:bg-primary-700 active:bg-primary-800"
+            style={{ minHeight: '48px' }}
           >
             <Search className="h-5 w-5" />
             Suchen
