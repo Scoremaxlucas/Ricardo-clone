@@ -162,22 +162,22 @@ export function StepCategorySelection({
       ) : selectedCategory ? (
         <div className="space-y-4">
           {/* Selected category display */}
-          <div className="rounded-xl border-2 border-primary-200 bg-primary-50 p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <span className="text-sm font-medium text-gray-600">Gewählte Kategorie:</span>
+          <div className="rounded-lg border-2 border-primary-200 bg-primary-50 p-3 sm:rounded-xl sm:p-4 md:p-6">
+            <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
+              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                <span className="text-xs font-medium text-gray-600 sm:text-sm">Gewählte Kategorie:</span>
                 {(() => {
                   const config = getCategoryConfig(selectedCategory)
                   const IconComponent = config.icon
                   return (
-                    <div className="flex items-center gap-2">
+                    <div className="flex items-center gap-1.5 sm:gap-2">
                       <div
-                        className="flex h-8 w-8 items-center justify-center rounded-lg"
+                        className="flex h-6 w-6 items-center justify-center rounded-md sm:h-8 sm:w-8 sm:rounded-lg"
                         style={{ backgroundColor: '#0f766e' }}
                       >
-                        <IconComponent className="h-5 w-5 text-white" />
+                        <IconComponent className="h-3.5 w-3.5 text-white sm:h-5 sm:w-5" />
                       </div>
-                      <span className="text-lg font-bold text-primary-700">
+                      <span className="text-sm font-bold text-primary-700 sm:text-base md:text-lg">
                         {getCategoryDisplayName(selectedCategory)}
                       </span>
                     </div>
@@ -188,23 +188,23 @@ export function StepCategorySelection({
                 <button
                   type="button"
                   onClick={onResetCategory}
-                  className="rounded-lg border border-primary-300 px-4 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-100"
+                  className="w-full rounded-md border border-primary-300 px-3 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-100 sm:w-auto sm:rounded-lg sm:px-4 sm:py-2 sm:text-sm"
                 >
                   Kategorie ändern
                 </button>
               )}
               {isLocked && (
-                <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-2 text-sm text-gray-500">
-                  <Lock className="h-4 w-4" />
+                <div className="flex w-full items-center justify-center gap-1.5 rounded-md border border-gray-200 bg-gray-50 px-3 py-1.5 text-xs text-gray-500 sm:w-auto sm:gap-2 sm:rounded-lg sm:px-4 sm:py-2 sm:text-sm">
+                  <Lock className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
                   <span>Gesperrt</span>
                 </div>
               )}
             </div>
 
             {selectedSubcategory && (
-              <div className="mt-3 flex items-center gap-2">
-                <span className="text-sm text-gray-600">Unterkategorie:</span>
-                <span className="rounded-full bg-primary-100 px-3 py-1 text-sm font-medium text-primary-700">
+              <div className="mt-2 flex flex-wrap items-center gap-1.5 sm:mt-3 sm:gap-2">
+                <span className="text-xs text-gray-600 sm:text-sm">Unterkategorie:</span>
+                <span className="rounded-full bg-primary-100 px-2 py-0.5 text-xs font-medium text-primary-700 sm:px-3 sm:py-1 sm:text-sm">
                   {getSubcategoryDisplayName(selectedSubcategory)}
                 </span>
               </div>

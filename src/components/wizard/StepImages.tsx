@@ -340,27 +340,27 @@ export function StepImages({
       {/* Upload area */}
       {!isImagesLocked && (
         <div
-          className={`rounded-xl border-2 border-dashed p-8 transition-colors ${
+          className={`rounded-xl border-2 border-dashed p-4 transition-colors sm:p-6 md:p-8 ${
             isImagesAppendOnly
               ? 'border-gray-200 bg-gray-50'
               : 'border-gray-300 bg-gray-50 hover:border-primary-400 hover:bg-primary-50'
           }`}
         >
           <label
-            className={`flex flex-col items-center gap-4 ${isImagesAppendOnly ? 'cursor-pointer' : 'cursor-pointer'}`}
+            className={`flex flex-col items-center gap-3 sm:gap-4 ${isImagesAppendOnly ? 'cursor-pointer' : 'cursor-pointer'}`}
           >
             <div
-              className={`flex h-16 w-16 items-center justify-center rounded-full ${
+              className={`flex h-12 w-12 items-center justify-center rounded-full sm:h-14 sm:w-14 md:h-16 md:w-16 ${
                 isImagesAppendOnly ? 'bg-gray-100' : 'bg-primary-100'
               }`}
             >
               <Upload
-                className={`h-8 w-8 ${isImagesAppendOnly ? 'text-gray-500' : 'text-primary-600'}`}
+                className={`h-6 w-6 sm:h-7 sm:w-7 md:h-8 md:w-8 ${isImagesAppendOnly ? 'text-gray-500' : 'text-primary-600'}`}
               />
             </div>
             <div className="text-center">
               <span
-                className={`text-lg font-semibold ${
+                className={`text-base font-semibold sm:text-lg ${
                   isImagesAppendOnly ? 'text-gray-600' : 'text-gray-700'
                 }`}
               >
@@ -370,7 +370,7 @@ export function StepImages({
                     ? 'Weitere Bilder hinzufügen'
                     : 'Bilder hochladen'}
               </span>
-              <p className="mt-1 text-sm text-gray-500">JPG, PNG, max. 10MB pro Bild</p>
+              <p className="mt-1 text-xs text-gray-500 sm:text-sm">JPG, PNG, max. 10MB pro Bild</p>
             </div>
             <input
               type="file"
@@ -381,7 +381,7 @@ export function StepImages({
               className="hidden"
             />
             <span
-              className={`rounded-full px-6 py-2 font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`rounded-full px-4 py-1.5 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-2 sm:text-base ${
                 isImagesAppendOnly
                   ? 'bg-gray-400 text-white'
                   : 'bg-primary-600 text-white hover:bg-primary-700'

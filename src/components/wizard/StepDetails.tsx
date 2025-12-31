@@ -214,7 +214,7 @@ export function StepDetails({
 
       {/* Category-specific fields */}
       {selectedCategory && (
-        <div className="rounded-xl border border-gray-200 bg-gray-50 p-6">
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3 sm:rounded-xl sm:p-4 md:p-6">
           <CategoryFields
             category={selectedCategory}
             subcategory={selectedSubcategory}

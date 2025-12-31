@@ -1100,9 +1100,9 @@ function SellPageContent() {
         </div>
 
         {/* Page title */}
-        <div className="mb-8 text-center">
-          <h1 className="text-3xl font-bold text-gray-900">Artikel zum Verkauf anbieten</h1>
-          <p className="mt-2 text-gray-600">
+        <div className="mb-4 text-center sm:mb-6 md:mb-8">
+          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">Artikel zum Verkauf anbieten</h1>
+          <p className="mt-1 text-sm text-gray-600 sm:mt-2 sm:text-base">
             Wählen Sie zunächst die Kategorie und füllen Sie dann alle relevanten Felder aus.
           </p>
         </div>

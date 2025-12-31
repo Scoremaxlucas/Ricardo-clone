@@ -66,7 +66,7 @@ export function StepPrice({
             </div>
           )}
         </div>
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4">
           {/* Fixed price option */}
           <button
             type="button"
@@ -75,7 +75,7 @@ export function StepPrice({
               onFormDataChange({ isAuction: false, auctionDuration: '', buyNowPrice: '' })
             }
             disabled={isSaleTypeLocked}
-            className={`relative flex flex-col items-center gap-3 rounded-xl border-2 p-6 transition-all ${
+            className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition-all sm:gap-3 sm:p-4 md:p-6 ${
               isSaleTypeLocked
                 ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
                 : !formData.isAuction
@@ -84,27 +84,27 @@ export function StepPrice({
             }`}
           >
             {!formData.isAuction && (
-              <div className="absolute right-3 top-3">
-                <CheckCircle className="h-6 w-6 text-primary-600" />
+              <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
+                <CheckCircle className="h-5 w-5 text-primary-600 sm:h-6 sm:w-6" />
               </div>
             )}
             <div
-              className={`flex h-14 w-14 items-center justify-center rounded-full ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full sm:h-12 sm:w-12 md:h-14 md:w-14 ${
                 !formData.isAuction ? 'bg-primary-100' : 'bg-gray-100'
               }`}
             >
               <Tag
-                className={`h-7 w-7 ${!formData.isAuction ? 'text-primary-600' : 'text-gray-500'}`}
+                className={`h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 ${!formData.isAuction ? 'text-primary-600' : 'text-gray-500'}`}
               />
             </div>
             <div className="text-center">
               <h3
-                className={`font-semibold ${!formData.isAuction ? 'text-primary-700' : 'text-gray-700'}`}
+                className={`text-sm font-semibold sm:text-base ${!formData.isAuction ? 'text-primary-700' : 'text-gray-700'}`}
               >
                 Festpreis
               </h3>
-              <p className="mt-1 text-sm text-gray-500">
-                Verkauf zu einem festen Preis (Sofortkauf)
+              <p className="mt-0.5 hidden text-sm text-gray-500 sm:mt-1 sm:block">
+                Verkauf zu einem festen Preis
               </p>
             </div>
           </button>
@@ -114,7 +114,7 @@ export function StepPrice({
             type="button"
             onClick={() => !isSaleTypeLocked && onFormDataChange({ isAuction: true })}
             disabled={isSaleTypeLocked}
-            className={`relative flex flex-col items-center gap-3 rounded-xl border-2 p-6 transition-all ${
+            className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition-all sm:gap-3 sm:p-4 md:p-6 ${
               isSaleTypeLocked
                 ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
                 : formData.isAuction
@@ -123,26 +123,26 @@ export function StepPrice({
             }`}
           >
             {formData.isAuction && (
-              <div className="absolute right-3 top-3">
-                <CheckCircle className="h-6 w-6 text-primary-600" />
+              <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
+                <CheckCircle className="h-5 w-5 text-primary-600 sm:h-6 sm:w-6" />
               </div>
             )}
             <div
-              className={`flex h-14 w-14 items-center justify-center rounded-full ${
+              className={`flex h-10 w-10 items-center justify-center rounded-full sm:h-12 sm:w-12 md:h-14 md:w-14 ${
                 formData.isAuction ? 'bg-primary-100' : 'bg-gray-100'
               }`}
             >
               <Clock
-                className={`h-7 w-7 ${formData.isAuction ? 'text-primary-600' : 'text-gray-500'}`}
+                className={`h-5 w-5 sm:h-6 sm:w-6 md:h-7 md:w-7 ${formData.isAuction ? 'text-primary-600' : 'text-gray-500'}`}
               />
             </div>
             <div className="text-center">
               <h3
-                className={`font-semibold ${formData.isAuction ? 'text-primary-700' : 'text-gray-700'}`}
+                className={`text-sm font-semibold sm:text-base ${formData.isAuction ? 'text-primary-700' : 'text-gray-700'}`}
               >
                 Auktion
               </h3>
-              <p className="mt-1 text-sm text-gray-500">Bieter konkurrieren um Ihren Artikel</p>
+              <p className="mt-0.5 hidden text-sm text-gray-500 sm:mt-1 sm:block">Bieter konkurrieren um Ihren Artikel</p>
             </div>
           </button>
         </div>
