@@ -3,7 +3,7 @@
 import { EditPolicy } from '@/lib/edit-policy'
 import { compressImage } from '@/lib/image-compression'
 import { Bot, Loader2, Lock, Star, Upload, X } from 'lucide-react'
-import { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import toast from 'react-hot-toast'
 
 interface DraftImage {
@@ -38,6 +38,8 @@ export function StepImages({
   mode = 'create',
 }: StepImagesProps) {
   const [uploadingIndexes, setUploadingIndexes] = useState<Set<number>>(new Set())
+  const [isCreatingDraft, setIsCreatingDraft] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
   const isImagesLocked = policy?.uiLocks.images || false
   const isImagesAppendOnly = policy?.uiLocks.imagesAppendOnly || false
 
@@ -45,8 +47,9 @@ export function StepImages({
     const files = Array.from(e.target.files || [])
     if (files.length === 0) return
 
-    // In edit mode without draftId, use base64 images (uploaded on submit)
-    if (mode === 'edit' && !draftId) {
+    // If no draftId exists yet (edit mode or create mode before autosave), use base64 images
+    // These will be uploaded when the draft is created/saved
+    if (!draftId) {
       const currentImageCount = formData.images.length
       const newImageUrls: string[] = []
       let processedCount = 0
@@ -78,23 +81,6 @@ export function StepImages({
           })
           newImageUrls.push(compressedImage)
           processedCount++
-
-          if (processedCount === files.length) {
-            if (isImagesAppendOnly) {
-              // Append-only: add to newImages
-              onImagesChange([...formData.images, ...newImageUrls])
-            } else {
-              // Normal edit: add to images
-              onImagesChange([...formData.images, ...newImageUrls])
-            }
-            toast.success(
-              `${newImageUrls.length} Bild${newImageUrls.length > 1 ? 'er' : ''} hinzugefügt.`,
-              {
-                position: 'top-right',
-                duration: 3000,
-              }
-            )
-          }
         } catch (error) {
           console.error('Error compressing image:', error)
           toast.error(`Fehler beim Verarbeiten von ${file.name}`, {
@@ -109,15 +95,26 @@ export function StepImages({
           })
         }
       }
-      return
-    }
 
-    // Ensure we have a draft ID for create mode
-    if (!draftId) {
-      toast.error('Bitte warten Sie, bis der Entwurf geladen ist', {
-        position: 'top-right',
-        duration: 3000,
-      })
+      // Update images after all are processed
+      if (newImageUrls.length > 0) {
+        onImagesChange([...formData.images, ...newImageUrls])
+        toast.success(
+          `${newImageUrls.length} Bild${newImageUrls.length > 1 ? 'er' : ''} hinzugefügt.`,
+          {
+            position: 'top-right',
+            duration: 3000,
+          }
+        )
+        
+        // Set first image as title image if none set
+        if (currentImageCount === 0) {
+          await onTitleImageChange(0)
+        }
+      }
+      
+      // Reset input
+      e.target.value = ''
       return
     }
 
@@ -376,8 +373,9 @@ export function StepImages({
               type="file"
               accept="image/*"
               multiple
+              ref={fileInputRef}
               onChange={handleImageUpload}
-              disabled={!draftId || uploadingIndexes.size > 0 || isImagesLocked}
+              disabled={uploadingIndexes.size > 0 || isImagesLocked}
               className="hidden"
             />
             <span
