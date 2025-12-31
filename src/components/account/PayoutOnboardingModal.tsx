@@ -73,7 +73,7 @@ export function PayoutOnboardingModal({
             overlays: 'dialog',
             variables: {
               colorPrimary: '#008080',
-              colorBackground: '#ffffff',
+              colorBackground: '#f8f9fa', // Subtiler Grauton statt reinem Weiß
               fontFamily: 'system-ui, -apple-system, sans-serif',
               borderRadius: '8px',
             },
