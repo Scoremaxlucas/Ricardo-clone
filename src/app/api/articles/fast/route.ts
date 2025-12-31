@@ -62,6 +62,7 @@ export async function GET(request: NextRequest) {
         articleNumber: true,
         boosters: true,
         condition: true,
+        paymentProtectionEnabled: true,
         seller: {
           select: {
             city: true,

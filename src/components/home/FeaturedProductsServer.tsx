@@ -359,6 +359,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
                   boosters: product.boosters,
                   href: product.href,
                   createdAt: product.createdAt,
+                  paymentProtectionEnabled: product.paymentProtectionEnabled ?? false,
                 }}
                 showCondition={true}
                 className="w-full"

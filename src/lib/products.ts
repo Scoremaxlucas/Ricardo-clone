@@ -17,6 +17,7 @@ export interface ProductItem {
   postalCode?: string | null
   articleNumber?: number | null
   href?: string // WICHTIG: Expliziter href für Produktlinks
+  paymentProtectionEnabled?: boolean // Helvenda Zahlungsschutz
 }
 
 /**
@@ -75,6 +76,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         articleNumber: true,
         boosters: true,
         condition: true,
+        paymentProtectionEnabled: true,
         seller: {
           select: {
             city: true,
@@ -187,6 +189,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         city: w.seller?.city || null,
         postalCode: w.seller?.postalCode || null,
         articleNumber: w.articleNumber,
+        paymentProtectionEnabled: w.paymentProtectionEnabled || false,
         // WICHTIG: Setze href explizit, damit der richtige Link verwendet wird
         href: `/products/${productId}`,
       }
