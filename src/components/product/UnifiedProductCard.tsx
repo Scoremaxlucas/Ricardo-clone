@@ -294,11 +294,11 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             <div className="mb-1 flex items-center gap-1 text-[11px]">
               {product.paymentProtectionEnabled && (
                 <span
-                  className="relative inline-flex h-4 w-4 items-center justify-center"
+                  className="relative inline-flex h-5 w-5 items-center justify-center"
                   title="Helvenda Zahlungsschutz"
                 >
-                  <Shield className="h-4 w-4 fill-green-100 stroke-green-600 stroke-[1.5]" />
-                  <span className="absolute inset-0 flex items-center justify-center text-[8px] font-extrabold leading-none text-green-700">
+                  <Shield className="h-5 w-5 fill-green-100 stroke-green-600 stroke-[2]" />
+                  <span className="absolute inset-0 flex items-center justify-center text-[10px] font-extrabold leading-none text-green-700">
                     H
                   </span>
                 </span>
