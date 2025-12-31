@@ -1,10 +1,7 @@
 'use client'
 
-import {
-  ConnectAccountOnboarding,
-  ConnectComponentsProvider,
-} from '@stripe/react-connect-js'
 import { loadConnectAndInitialize } from '@stripe/connect-js'
+import { ConnectAccountOnboarding, ConnectComponentsProvider } from '@stripe/react-connect-js'
 import { ExternalLink, Loader2, Lock, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -73,7 +70,7 @@ export function PayoutOnboardingModal({
             overlays: 'dialog',
             variables: {
               colorPrimary: '#008080',
-              colorBackground: '#f8f9fa', // Subtiler Grauton statt reinem Weiß
+              colorBackground: '#ffffff',
               fontFamily: 'system-ui, -apple-system, sans-serif',
               borderRadius: '8px',
             },
@@ -175,9 +172,9 @@ export function PayoutOnboardingModal({
       className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative max-h-[90vh] w-full max-w-2xl overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="relative flex max-h-[90vh] w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
         {/* Minimal Header */}
-        <div className="flex items-center justify-between border-b border-gray-100 px-6 py-4">
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-100 px-6 py-4">
           <h2 className="text-lg font-semibold text-gray-900">Auszahlung einrichten</h2>
           <button
             type="button"
@@ -190,8 +187,8 @@ export function PayoutOnboardingModal({
           </button>
         </div>
 
-        {/* Content */}
-        <div className="max-h-[calc(90vh-120px)] overflow-y-auto">
+        {/* Content - Flex grow to fill space, Stripe footer will be at bottom */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto">
           {/* Loading State */}
           {loading && (
             <div className="flex flex-col items-center justify-center py-20">
@@ -207,9 +204,7 @@ export function PayoutOnboardingModal({
                 <Lock className="h-8 w-8 text-primary-600" />
               </div>
 
-              <h3 className="mb-2 text-lg font-medium text-gray-900">
-                Bankkonto verbinden
-              </h3>
+              <h3 className="mb-2 text-lg font-medium text-gray-900">Bankkonto verbinden</h3>
               <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">
                 Verbinden Sie Ihr Bankkonto sicher über Stripe, um Auszahlungen zu erhalten.
               </p>
@@ -239,22 +234,31 @@ export function PayoutOnboardingModal({
             </div>
           )}
 
-          {/* Embedded Onboarding - Direct, no info boxes */}
+          {/* Embedded Onboarding - Direct, no info boxes, fills remaining space */}
           {stripeConnectInstance && !loading && !fallbackMode && (
-            <div className="p-4">
-              <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
-                <ConnectAccountOnboarding onExit={handleOnboardingExit} />
-              </ConnectComponentsProvider>
-            </div>
+            <>
+              <style dangerouslySetInnerHTML={{ __html: `
+                /* Remove white space at bottom of Stripe Connect */
+                [class*="ConnectAccountOnboarding"],
+                [class*="ConnectAccountOnboarding"] > *,
+                [class*="ConnectAccountOnboarding"] iframe {
+                  margin-bottom: 0 !important;
+                  padding-bottom: 0 !important;
+                }
+                /* Ensure Stripe content fills container */
+                [class*="ConnectAccountOnboarding"] {
+                  display: flex !important;
+                  flex-direction: column !important;
+                  min-height: 100% !important;
+                }
+              `}} />
+              <div className="flex min-h-0 flex-1 flex-col">
+                <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
+                  <ConnectAccountOnboarding onExit={handleOnboardingExit} />
+                </ConnectComponentsProvider>
+              </div>
+            </>
           )}
-        </div>
-
-        {/* Minimal Footer */}
-        <div className="border-t border-gray-100 bg-gray-50/50 px-6 py-3">
-          <p className="flex items-center justify-center gap-1.5 text-xs text-gray-400">
-            <Lock className="h-3 w-3" />
-            Sichere Verbindung via Stripe
-          </p>
         </div>
       </div>
     </div>
