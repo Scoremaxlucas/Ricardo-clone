@@ -395,7 +395,7 @@ export default function PublicProfilePage() {
                     <>
                       <Link
                         href="/profile"
-                        className="inline-flex items-center justify-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-50"
+                        className="inline-flex items-center justify-center rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-50"
                       >
                         <Edit className="h-4 w-4" />
                         <span>Profil bearbeiten</span>
@@ -405,15 +405,14 @@ export default function PublicProfilePage() {
                     <>
                       <Link
                         href={`/search?userId=${userId}`}
-                        className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow"
+                        className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow"
                       >
-                        <MessageCircle className="h-4 w-4" />
-                        <span>Nachricht senden</span>
+                        Nachricht senden
                       </Link>
                       <button
                         onClick={handleFollow}
                         disabled={followLoading}
-                        className={`inline-flex items-center justify-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
+                        className={`inline-flex items-center justify-center rounded-lg border px-4 py-2 text-sm font-medium transition-all ${
                           isFollowing
                             ? 'border-gray-200 bg-gray-100 text-gray-700 hover:bg-gray-200'
                             : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
@@ -531,7 +530,7 @@ export default function PublicProfilePage() {
                         {isOwnProfile ? (
                           <Link
                             href="/sell"
-                            className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow"
+                            className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow"
                           >
                             <Package className="h-4 w-4" />
                             Jetzt Angebot erstellen
@@ -539,7 +538,7 @@ export default function PublicProfilePage() {
                         ) : (
                           <Link
                             href="/search"
-                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50"
+                            className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-6 py-2.5 text-sm font-medium text-gray-700 transition-all hover:bg-gray-50"
                           >
                             <Search className="h-4 w-4" />
                             Zur Suche
