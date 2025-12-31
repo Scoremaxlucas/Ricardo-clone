@@ -583,7 +583,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                 },
                 onPay: () => handlePayment(purchase),
                 onConfirmReceipt: () => handleConfirmReceived(purchase.id),
-                onViewDispute: () => setExpandedPurchaseId(purchase.id),
+                onViewDispute: () => router.push(`/disputes/${purchase.id}`),
                 onCancel:
                   purchase.status === 'pending' &&
                   purchase.contactDeadlineMissed &&
