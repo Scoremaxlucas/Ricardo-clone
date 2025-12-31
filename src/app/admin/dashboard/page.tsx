@@ -15,6 +15,7 @@ import {
   ShoppingBag,
   TrendingUp,
   Users,
+  Zap,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -338,6 +339,13 @@ export default function AdminDashboard() {
             href="/admin/payout-change-requests"
             color="teal"
             badge={stats?.pendingPayoutChangeRequests || 0}
+          />
+          <ActionCard
+            title="Systemausfälle"
+            description="Ausfälle melden und Auktionsverlängerungen verwalten"
+            icon={Zap}
+            href="/admin/system-outages"
+            color="red"
           />
         </div>
       </div>

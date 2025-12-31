@@ -152,6 +152,9 @@ model User {
   payoutChangeRequestsDecided   PayoutChangeRequest[] @relation("PayoutChangeDecider")
   payoutAuditLogs               PayoutAuditLog[]     @relation("PayoutAuditActor")
   disputeComments               DisputeComment[]
+  outagesCreated                SystemOutage[]       @relation("OutageCreator")
+  outagesResolved               SystemOutage[]       @relation("OutageResolver")
+  outagesExtended               SystemOutage[]       @relation("OutageExtender")
 
   @@map("users")
 }
@@ -1290,6 +1293,42 @@ model WebhookEvent {
   @@index([eventType])
   @@index([processedAt])
   @@map("webhook_events")
+}
+
+// System Outage Tracking - Für automatische Auktionsverlängerungen bei Systemausfällen
+model SystemOutage {
+  id              String    @id @default(cuid())
+  title           String    // z.B. "Geplante Wartung" oder "Unerwarteter Ausfall"
+  description     String?   // Optionale Beschreibung
+  startedAt       DateTime  // Beginn des Ausfalls
+  endedAt         DateTime? // Ende des Ausfalls (null = noch aktiv)
+  durationMinutes Int?      // Berechnete Dauer in Minuten (nach Ende)
+  severity        String    @default("major") // 'minor' | 'major' | 'critical'
+  affectedServices String[] // z.B. ["bidding", "payments", "search"]
+  isPlanned       Boolean   @default(false) // Geplante Wartung vs. ungeplanter Ausfall
+
+  // Auktionsverlängerung
+  extensionApplied    Boolean   @default(false) // Wurde Verlängerung bereits durchgeführt?
+  extensionMinutes    Int?      // Verlängerung in Minuten (60 oder 1440)
+  auctionsExtended    Int?      // Anzahl verlängerter Auktionen
+  extensionAppliedAt  DateTime? // Zeitpunkt der Verlängerung
+  extensionAppliedBy  String?   // Admin User ID
+
+  // Metadata
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+  createdBy       String    // Admin User ID der den Ausfall gemeldet hat
+  resolvedBy      String?   // Admin User ID der den Ausfall beendet hat
+
+  creator         User      @relation("OutageCreator", fields: [createdBy], references: [id])
+  resolver        User?     @relation("OutageResolver", fields: [resolvedBy], references: [id])
+  extender        User?     @relation("OutageExtender", fields: [extensionAppliedBy], references: [id])
+
+  @@index([startedAt])
+  @@index([endedAt])
+  @@index([severity])
+  @@index([extensionApplied])
+  @@map("system_outages")
 }
 
 // Shipping Rate Catalog - Zentrale Preisliste für Versandoptionen (Ricardo-style)
