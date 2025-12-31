@@ -200,6 +200,14 @@ export function Footer() {
                   {t.footer.safety}
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/help/system-outages"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline"
+                >
+                  {t.helpArticles?.['system-outages']?.title || 'Grundsätze bei Systemausfällen'}
+                </Link>
+              </li>
             </ul>
           </div>
         </div>
