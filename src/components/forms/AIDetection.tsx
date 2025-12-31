@@ -4523,16 +4523,22 @@ export function AIDetection({
     const textDetectionResults = [
       // Elektronik & Computer
       {
-        keywords: ['macbook', 'laptop', 'notebook', 'computer', 'pc', 'desktop', 'imac'],
+        keywords: ['macbook', 'mac book', 'macbook pro', 'macbook air', 'mac pro', 'laptop', 'notebook', 'computer', 'pc', 'desktop', 'imac', 'i mac', 'thinkpad', 'lenovo', 'dell', 'hp', 'asus', 'acer', 'surface', 'chromebook'],
         category: 'computer-netzwerk',
         subcategory: 'Notebooks & Laptops',
         productName: 'Computer',
       },
       {
-        keywords: ['iphone', 'smartphone', 'handy', 'telefon', 'samsung', 'galaxy'],
+        keywords: ['iphone', 'i phone', 'smartphone', 'handy', 'telefon', 'samsung', 'galaxy', 'pixel', 'oneplus', 'xiaomi', 'huawei', 'oppo', 'motorola', 'nokia'],
         category: 'handy-telefon',
         subcategory: 'Smartphones',
         productName: 'Smartphone',
+      },
+      {
+        keywords: ['ipad', 'i pad', 'tablet', 'tab', 'galaxy tab', 'surface pro', 'kindle', 'e-reader', 'ebook'],
+        category: 'computer-netzwerk',
+        subcategory: 'Tablets',
+        productName: 'Tablet',
       },
       {
         keywords: [
@@ -4782,20 +4788,55 @@ export function AIDetection({
       },
     ]
 
-    const lowerText = text.toLowerCase()
+    // Normalisiere Text: Kleinbuchstaben, mehrfache Leerzeichen entfernen, Bindestriche zu Leerzeichen
+    const normalizedText = text.toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()
+    // Zusätzlich: Version ohne Leerzeichen für zusammengeschriebene Wörter
+    const textNoSpaces = normalizedText.replace(/\s/g, '')
+    
+    console.log('🔍 Text-Analyse:', { original: text, normalized: normalizedText, noSpaces: textNoSpaces })
+    
     let result = textDetectionResults.find(r =>
-      r.keywords.some(keyword => lowerText.includes(keyword))
+      r.keywords.some(keyword => {
+        const normalizedKeyword = keyword.toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()
+        const keywordNoSpaces = normalizedKeyword.replace(/\s/g, '')
+        
+        // Match wenn:
+        // 1. Normalisierter Text enthält normalisiertes Keyword
+        // 2. Text ohne Leerzeichen enthält Keyword ohne Leerzeichen
+        // 3. Keyword ohne Leerzeichen ist im Text ohne Leerzeichen enthalten
+        return normalizedText.includes(normalizedKeyword) || 
+               textNoSpaces.includes(keywordNoSpaces) ||
+               normalizedKeyword.includes(normalizedText) ||
+               keywordNoSpaces.includes(textNoSpaces)
+      })
     )
 
     if (!result) {
-      // Fallback mit dem eingegebenen Text als Produktname
+      // Intelligenterer Fallback: Versuche Wörter einzeln zu matchen
+      const words = normalizedText.split(' ')
+      for (const word of words) {
+        if (word.length < 3) continue // Ignoriere kurze Wörter
+        result = textDetectionResults.find(r =>
+          r.keywords.some(keyword => keyword.toLowerCase().includes(word) || word.includes(keyword.toLowerCase()))
+        )
+        if (result) {
+          console.log('✅ Match gefunden durch Einzelwort:', word)
+          break
+        }
+      }
+    }
+
+    if (!result) {
+      // Letzter Fallback - aber mit "Sonstiges" Kategorie statt Haushalt
       result = {
         keywords: [],
-        category: 'haushalt-wohnen',
+        category: 'sonstiges',
         subcategory: 'Sonstiges',
         productName: text.charAt(0).toUpperCase() + text.slice(1),
       }
-      console.log('⚠️ Keine exakte Übereinstimmung - Fallback zu Haushalt & Wohnen')
+      console.log('⚠️ Keine Übereinstimmung gefunden - Fallback zu Sonstiges')
+    } else {
+      console.log('✅ Kategorie erkannt:', result.category, result.subcategory)
     }
 
     const confidence = 85 + Math.floor(Math.random() * 10)
