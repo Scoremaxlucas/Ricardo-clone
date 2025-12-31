@@ -160,30 +160,31 @@ export function WizardFooter({
 
   return (
     <div
-      className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-4 py-4 pb-4 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8"
-      style={{ paddingBottom: 'max(1rem, env(safe-area-inset-bottom))' }}
+      className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-2 py-3 pb-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8 sm:py-4 sm:pb-4"
+      style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
     >
-      <div className="mx-auto flex max-w-4xl items-center justify-between">
-        <div className="flex items-center gap-2 sm:gap-3">
+      <div className="mx-auto flex max-w-4xl flex-wrap items-center justify-between gap-2 sm:flex-nowrap sm:gap-3">
+        <div className="flex flex-shrink-0 items-center gap-1.5 sm:gap-2 md:gap-3">
           {currentStep > 0 ? (
             <button
               type="button"
               onClick={onPrevious}
-              className="whitespace-nowrap rounded-lg border-2 border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50 sm:px-4 sm:py-2.5 sm:text-base"
+              className="whitespace-nowrap rounded-lg border-2 border-gray-300 px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50 sm:px-3 sm:py-2 sm:text-sm md:px-4 md:py-2.5 md:text-base"
             >
               ← Zurück
             </button>
           ) : null}
           {onSaveDraft ? (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-1.5 sm:gap-2">
               {/* Manual save button */}
               <button
                 type="button"
                 onClick={onSaveDraft}
                 disabled={isSavingDraft}
-                className="whitespace-nowrap rounded-lg border-2 border-primary-300 px-3 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-4 sm:py-2.5 sm:text-base"
+                className="whitespace-nowrap rounded-lg border-2 border-primary-300 px-2 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm md:px-4 md:py-2.5 md:text-base"
               >
-                Entwurf speichern
+                <span className="hidden sm:inline">Entwurf speichern</span>
+                <span className="sm:hidden">Speichern</span>
               </button>
 
               {/* Autosave status */}
@@ -202,8 +203,8 @@ export function WizardFooter({
           ) : null}
         </div>
 
-        <div className="flex items-center gap-3">
-          <span className="hidden text-sm text-gray-500 sm:block">
+        <div className="flex flex-shrink-0 items-center gap-2 sm:gap-3">
+          <span className="hidden text-xs text-gray-500 sm:block md:text-sm">
             {currentStep + 1} / {totalSteps}
           </span>
 
@@ -215,26 +216,36 @@ export function WizardFooter({
               disabled={!canProceed || isSubmitting}
               onMouseEnter={() => !canProceed && disabledReason && setShowTooltip(true)}
               onMouseLeave={() => setShowTooltip(false)}
-              className={`rounded-full px-6 py-2.5 font-bold text-white transition-all duration-300 ${
+              className={`rounded-full px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 sm:px-4 sm:py-2 sm:text-sm md:px-6 md:py-2.5 md:text-base ${
                 canProceed && !isSubmitting
                   ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg hover:-translate-y-0.5 hover:shadow-xl'
                   : 'cursor-not-allowed bg-gray-300'
               } `}
             >
               {isSubmitting ? (
-                <span className="flex items-center gap-2">
-                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                  {mode === 'edit' ? 'Wird gespeichert...' : 'Wird erstellt...'}
+                <span className="flex items-center gap-1 sm:gap-2">
+                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-white border-t-transparent sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">{mode === 'edit' ? 'Wird gespeichert...' : 'Wird erstellt...'}</span>
+                  <span className="sm:hidden">...</span>
                 </span>
               ) : isLastStep ? (
                 mode === 'edit' ? (
                   policyLevel === 'LIMITED_APPEND_ONLY' ? (
-                    'Ergänzung speichern'
+                    <>
+                      <span className="hidden sm:inline">Ergänzung speichern</span>
+                      <span className="sm:hidden">Speichern</span>
+                    </>
                   ) : (
-                    'Änderungen speichern'
+                    <>
+                      <span className="hidden sm:inline">Änderungen speichern</span>
+                      <span className="sm:hidden">Speichern</span>
+                    </>
                   )
                 ) : (
-                  'Artikel veröffentlichen'
+                  <>
+                    <span className="hidden sm:inline">Artikel veröffentlichen</span>
+                    <span className="sm:hidden">Veröffentlichen</span>
+                  </>
                 )
               ) : (
                 <>Weiter →</>

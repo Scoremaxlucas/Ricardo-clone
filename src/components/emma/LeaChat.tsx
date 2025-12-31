@@ -117,17 +117,18 @@ export function EmmaChat({ productId, className = '' }: EmmaChatProps) {
     return (
       <button
         onClick={() => setIsOpen(true)}
-        className={`fixed bottom-6 right-6 z-50 rounded-full bg-primary-600 p-4 text-white shadow-lg transition-all duration-200 hover:scale-110 hover:bg-primary-700 ${className}`}
+        className={`fixed bottom-4 right-4 z-50 rounded-full bg-primary-600 p-3 text-white shadow-lg transition-all duration-200 hover:scale-110 hover:bg-primary-700 md:bottom-6 md:right-6 md:p-4 ${className}`}
         aria-label="Emma Chat öffnen"
+        style={{ maxWidth: 'calc(100vw - 2rem)' }}
       >
-        <MessageCircle className="h-6 w-6" />
+        <MessageCircle className="h-5 w-5 md:h-6 md:w-6" />
       </button>
     )
   }
 
   return (
     <div
-      className={`fixed bottom-6 right-6 z-50 flex w-96 flex-col rounded-lg bg-white shadow-2xl ${className}`}
+      className={`fixed bottom-4 right-4 z-50 flex w-[calc(100vw-2rem)] max-w-sm flex-col rounded-lg bg-white shadow-2xl md:bottom-6 md:right-6 md:w-96 ${className}`}
       style={{ maxHeight: '70vh', height: '600px' }}
     >
       {/* Header */}

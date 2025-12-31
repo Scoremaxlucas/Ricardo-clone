@@ -30,10 +30,10 @@ export function FloatingCow({ position = 'bottom-right', showChat = true }: Floa
   }, [])
 
   const positionClasses = {
-    'bottom-right': 'bottom-6 right-6',
-    'bottom-left': 'bottom-6 left-6',
-    'top-right': 'top-6 right-6',
-    'top-left': 'top-6 left-6',
+    'bottom-right': 'bottom-4 right-4 md:bottom-6 md:right-6',
+    'bottom-left': 'bottom-4 left-4 md:bottom-6 md:left-6',
+    'top-right': 'top-4 right-4 md:top-6 md:right-6',
+    'top-left': 'top-4 left-4 md:top-6 md:left-6',
   }
 
   const handleCowClick = () => {

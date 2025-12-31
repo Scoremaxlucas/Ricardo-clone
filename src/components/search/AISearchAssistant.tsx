@@ -173,18 +173,19 @@ export function AISearchAssistant({ className = '' }: AISearchAssistantProps) {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className={`fixed bottom-6 right-6 z-50 flex h-14 w-14 animate-pulse items-center justify-center rounded-full bg-gradient-to-br from-primary-600 to-primary-700 text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl ${className}`}
+          className={`fixed bottom-4 right-4 z-50 flex h-12 w-12 animate-pulse items-center justify-center rounded-full bg-gradient-to-br from-primary-600 to-primary-700 text-white shadow-lg transition-all hover:scale-110 hover:shadow-xl md:bottom-6 md:right-6 md:h-14 md:w-14 ${className}`}
           aria-label="KI-Suchassistent öffnen"
           title="KI-Suchassistent öffnen"
+          style={{ maxWidth: 'calc(100vw - 2rem)' }}
         >
-          <Sparkles className="h-6 w-6" />
+          <Sparkles className="h-5 w-5 md:h-6 md:w-6" />
         </button>
       )}
 
       {/* Chat Window */}
       {isOpen && (
         <div
-          className="fixed bottom-6 right-6 z-50 flex w-[400px] flex-col rounded-xl border border-gray-200 bg-white shadow-2xl md:w-[500px]"
+          className="fixed bottom-4 right-4 z-50 flex w-[calc(100vw-2rem)] max-w-md flex-col rounded-xl border border-gray-200 bg-white shadow-2xl md:bottom-6 md:right-6 md:w-[400px] lg:w-[500px]"
           style={{ maxHeight: '70vh', height: '600px' }}
         >
           {/* Header */}

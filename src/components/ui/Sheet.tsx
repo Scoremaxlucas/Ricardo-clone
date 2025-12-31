@@ -28,12 +28,12 @@ export function Sheet({ open, onOpenChange, children, side = 'right' }: SheetPro
     <>
       {/* Backdrop */}
       <div
-        className="fixed inset-0 z-50 bg-black/50 transition-opacity"
+        className="fixed inset-0 z-40 bg-black/50 transition-opacity"
         onClick={() => onOpenChange(false)}
       />
       {/* Sheet */}
       <div
-        className={`fixed top-0 z-50 h-full w-full max-w-sm bg-white shadow-xl transition-transform ${
+        className={`fixed top-0 z-40 h-full w-full max-w-sm bg-white shadow-xl transition-transform ${
           side === 'right' ? 'right-0' : 'left-0'
         }`}
       >
