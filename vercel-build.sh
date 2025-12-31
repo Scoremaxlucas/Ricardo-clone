@@ -16,7 +16,24 @@ npx prisma generate
 
 # CRITICAL: Push database schema to ensure all columns exist
 echo "🗄️ Pushing database schema..."
-npx prisma db push --accept-data-loss || echo "⚠️ Database push failed, continuing with build..."
+if npx prisma db push --accept-data-loss; then
+  echo "✅ Database schema pushed successfully"
+else
+  echo "⚠️ Database push failed - attempting manual column fixes..."
+  # Try to add critical missing columns manually
+  npx prisma db execute --stdin <<'SQLEOF'
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeReminderCount" INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeDeadline" TIMESTAMP(3);
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeFrozenAt" TIMESTAMP(3);
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeAttachments" TEXT;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeReminderSentAt" TIMESTAMP(3);
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "stripePaymentIntentId" TEXT;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "stripeRefundId" TEXT;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "stripeRefundStatus" TEXT;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "stripeRefundedAt" TIMESTAMP(3);
+SQLEOF
+  echo "✅ Manual column fixes applied"
+fi
 
 # Build Next.js app
 echo "🏗️ Building Next.js app..."

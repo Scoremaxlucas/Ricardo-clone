@@ -33,7 +33,9 @@
     "migrate:article-numbers": "tsx scripts/migrate-article-numbers.ts",
     "migrate:images-to-blob": "tsx scripts/migrate-images-to-blob.ts",
     "test:visibility": "tsx scripts/test-visibility-pipeline.ts",
-    "test:product-utils": "tsx scripts/test-product-utils.ts"
+    "test:product-utils": "tsx scripts/test-product-utils.ts",
+    "fix:purchase-columns": "tsx scripts/fix-missing-purchase-columns.ts",
+    "db:migrate:deploy": "prisma migrate deploy"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.3.0",
