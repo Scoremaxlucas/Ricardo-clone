@@ -1,3 +1,4 @@
+import { shouldShowDetailedErrors } from "@/lib/env"
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe-server'
@@ -85,7 +86,7 @@ export async function GET(request: NextRequest) {
       {
         success: false,
         error: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        stack: shouldShowDetailedErrors() ? error.stack : undefined,
       },
       { status: 500 }
     )

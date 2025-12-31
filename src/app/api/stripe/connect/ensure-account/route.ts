@@ -1,3 +1,4 @@
+import { shouldShowDetailedErrors } from "@/lib/env"
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { validateSwissPostalCode } from '@/lib/profilePolicy'
@@ -206,7 +207,7 @@ export async function POST(request: NextRequest) {
       {
         message: 'Fehler beim Erstellen des Auszahlungskontos',
         error: error.message,
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        details: shouldShowDetailedErrors() ? error.stack : undefined,
       },
       { status: 500 }
     )

@@ -1,3 +1,4 @@
+import { shouldShowDetailedErrors } from "@/lib/env"
 import { searchListings, type SearchFilters, type SearchSort } from '@/lib/search'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -168,7 +169,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: 'Ein Fehler ist aufgetreten bei der Suche',
-        message: process.env.NODE_ENV === 'development' ? errorMessage : undefined,
+        message: shouldShowDetailedErrors() ? errorMessage : undefined,
         watches: [],
         total: 0,
       },

@@ -1,3 +1,4 @@
+import { shouldShowDetailedErrors } from "@/lib/env"
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -189,7 +190,7 @@ export async function GET(request: NextRequest) {
         error: error?.message || 'Unbekannter Fehler',
         errorName: error?.name,
         errorCode: error?.code,
-        stack: process.env.NODE_ENV === 'development' ? error?.stack : undefined,
+        stack: shouldShowDetailedErrors() ? error?.stack : undefined,
       },
       { status: 500 }
     )

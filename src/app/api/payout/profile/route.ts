@@ -1,3 +1,4 @@
+import { shouldShowDetailedErrors } from "@/lib/env"
 import { authOptions } from '@/lib/auth'
 import { encrypt, maskIban } from '@/lib/crypto'
 import { getIbanLast4, validateIban } from '@/lib/iban-validator'
@@ -211,7 +212,7 @@ export async function POST(request: NextRequest) {
       {
         message: 'Fehler beim Speichern der Bankverbindung',
         errorCode: error.code || 'UNKNOWN_ERROR',
-        errorMessage: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        errorMessage: shouldShowDetailedErrors() ? error.message : undefined,
       },
       { status: 500 }
     )

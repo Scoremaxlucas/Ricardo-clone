@@ -1,3 +1,4 @@
+import { shouldShowDetailedErrors } from "@/lib/env"
 import { NextRequest, NextResponse } from 'next/server'
 
 /**
@@ -187,7 +188,7 @@ Antworte NUR im JSON-Format wie oben spezifiziert.`
     return NextResponse.json(
       {
         error: 'Fehler bei der Bilderkennung: ' + (error.message || String(error)),
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined
+        details: shouldShowDetailedErrors() ? error.stack : undefined
       },
       { status: 500 }
     )

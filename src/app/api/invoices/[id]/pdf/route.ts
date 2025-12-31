@@ -1,3 +1,4 @@
+import { shouldShowDetailedErrors } from "@/lib/env"
 import { authOptions } from '@/lib/auth'
 import { PAYMENT_CONFIG } from '@/lib/payment-config'
 import { prisma } from '@/lib/prisma'
@@ -603,7 +604,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         }
 
         // Debug: Log QR-String für Fehleranalyse
-        if (process.env.NODE_ENV === 'development' || !validation.isValid) {
+        if (shouldShowDetailedErrors() || !validation.isValid) {
           console.log('[QR-Bill] Vollständiger QR-String:')
           qrString.split('\n').forEach((line, i) => {
             console.log(`  ${String(i + 1).padStart(2, '0')}: ${line}`)
@@ -723,7 +724,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     return NextResponse.json(
       {
         message: 'Fehler beim Erstellen des PDFs: ' + (error.message || 'Unbekannter Fehler'),
-        error: process.env.NODE_ENV === 'development' ? error.message : undefined,
+        error: shouldShowDetailedErrors() ? error.message : undefined,
       },
       { status: 500 }
     )

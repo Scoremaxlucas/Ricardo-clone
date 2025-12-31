@@ -1,3 +1,4 @@
+import { shouldShowDetailedErrors } from "@/lib/env"
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -163,7 +164,7 @@ export async function GET(request: NextRequest) {
       {
         error: 'Error checking article',
         message: error.message,
-        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        stack: shouldShowDetailedErrors() ? error.stack : undefined,
       },
       { status: 500 }
     )

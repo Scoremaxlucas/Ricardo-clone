@@ -1,3 +1,4 @@
+import { shouldShowDetailedErrors } from "@/lib/env"
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
@@ -114,7 +115,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({
       error: 'Error fixing articles',
       message: error.message,
-      stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+      stack: shouldShowDetailedErrors() ? error.stack : undefined,
     }, {
       status: 500,
     })
