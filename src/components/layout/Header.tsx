@@ -11,6 +11,7 @@
  */
 
 import { HeaderSearch } from '@/components/search/HeaderSearch'
+import { MobileHeaderSearch } from '@/components/search/MobileHeaderSearch'
 import { MobileSearchOverlay } from '@/components/search/MobileSearchOverlay'
 import { LoginPromptModal } from '@/components/ui/LoginPromptModal'
 import { Logo } from '@/components/ui/Logo'
@@ -278,92 +279,117 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   return (
     <header id="navigation" className="sticky top-0 z-50 border-b bg-white shadow-md" tabIndex={-1}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-        {/* MOBILE HEADER */}
-        <div className="flex h-14 items-center justify-between md:hidden">
-          {/* Logo */}
-          <Link href="/" prefetch={true} className="flex-shrink-0">
-            <Logo size="sm" />
-          </Link>
-
-          {/* Actions Row */}
-          <div className="flex items-center gap-2">
-            {/* Search Icon - Opens Mobile Overlay - Min 44x44px touch target */}
-            <button
-              type="button"
-              onClick={() => setIsMobileSearchOpen(true)}
-              className="flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
-              style={{ minWidth: '44px', minHeight: '44px' }}
-              aria-label="Suche öffnen"
-            >
-              <Search className="h-5 w-5" />
-            </button>
-
-            {/* Sell Button - Always visible */}
-            <Link
-              href="/sell"
-              className="flex items-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700"
-              title={t.header.sell}
-            >
-              <Plus className="h-4 w-4" />
-              <span className="xs:inline hidden">Verkaufen</span>
+        {/* MOBILE HEADER - Ricardo-Style */}
+        <div className="md:hidden">
+          {/* Row 1: Logo + Actions (like Ricardo) */}
+          <div className="flex h-14 items-center justify-between border-b border-gray-100">
+            {/* Logo */}
+            <Link href="/" prefetch={true} className="flex-shrink-0">
+              <Logo size="sm" />
             </Link>
 
-            {/* Notifications - Min 44x44px touch target */}
-            {session && (
-              <Link
-                href="/notifications"
-                className="relative flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
-                style={{ minWidth: '44px', minHeight: '44px' }}
-                title={t.header.notifications}
-              >
-                <Bell className="h-5 w-5" />
-                {deferredData.unreadNotifications > 0 && (
-                  <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
-                    {deferredData.unreadNotifications > 9 ? '9+' : deferredData.unreadNotifications}
-                  </span>
-                )}
-              </Link>
-            )}
+            {/* Actions Row - Favoriten, Profile, Menu (like Ricardo) */}
+            <div className="flex items-center gap-1">
+              {/* Favoriten */}
+              {session && (
+                <Link
+                  href="/favorites"
+                  className="relative flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  title={t.header.favorites}
+                >
+                  <Heart className="h-5 w-5" />
+                  {deferredData.favoritesCount > 0 && (
+                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
+                      {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
+                    </span>
+                  )}
+                </Link>
+              )}
 
-            {/* Profile Avatar - Min 44x44px touch target */}
-            {session ? (
+              {/* Profile Avatar */}
+              {session ? (
+                <button
+                  type="button"
+                  onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
+                  className="relative flex items-center justify-center rounded-full bg-primary-600 text-white transition-all hover:bg-primary-700"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  title={t.header.profileMenu}
+                >
+                  {getProfileImage() ? (
+                    <img
+                      src={getProfileImage() || undefined}
+                      alt={session.user?.name || t.header.myProfile}
+                      className="h-full w-full rounded-full object-cover"
+                    />
+                  ) : (
+                    <span className="text-xs font-semibold">{getInitials(session.user?.name)}</span>
+                  )}
+                </button>
+              ) : (
+                <Link
+                  href="/login"
+                  className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                  title={t.header.login}
+                >
+                  <User className="h-5 w-5" />
+                </Link>
+              )}
+
+              {/* Menu Dropdown */}
               <button
                 type="button"
-                onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                className="relative flex items-center justify-center rounded-full bg-primary-600 text-white transition-all hover:bg-primary-700"
+                onClick={() => setIsMobileMenuOpen(true)}
+                className="flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                 style={{ minWidth: '44px', minHeight: '44px' }}
-                title={t.header.profileMenu}
+                title="Menü"
               >
-                {getProfileImage() ? (
-                  <img
-                    src={getProfileImage() || undefined}
-                    alt={session.user?.name || t.header.myProfile}
-                    className="h-full w-full rounded-full object-cover"
-                  />
-                ) : (
-                  <span className="text-xs font-semibold">{getInitials(session.user?.name)}</span>
-                )}
+                <ChevronDown className="h-5 w-5" />
               </button>
-            ) : (
-              <Link
-                href="/login"
-                className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
-                title={t.header.login}
-              >
-                <User className="h-5 w-5" />
-              </Link>
-            )}
+            </div>
+          </div>
 
-            {/* Hamburger Menu - Min 44x44px touch target */}
-            <button
-              type="button"
-              onClick={() => setIsMobileMenuOpen(true)}
-              className="flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
-              style={{ minWidth: '44px', minHeight: '44px' }}
-              title="Menü"
-            >
-              <Menu className="h-5 w-5" />
-            </button>
+          {/* Row 2: Search Bar (always visible, like Ricardo) */}
+          <div className="border-b border-gray-100 py-3">
+            <MobileHeaderSearch placeholder="Suche nach Artikel, Verkäufer oder Artikelnummer" />
+          </div>
+
+          {/* Row 3: Mobile Category Navigation (like Ricardo) */}
+          <div className="border-b border-gray-100 bg-gray-50/50">
+            <div className="overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+              <div className="flex min-w-0 items-center gap-1.5 py-2">
+                {/* "Alle Kategorien" Button */}
+                <button
+                  type="button"
+                  onClick={() => setIsSidebarOpen(true)}
+                  className="flex flex-shrink-0 items-center gap-1.5 rounded-md border border-primary-200 bg-primary-50 px-2.5 py-1.5 text-xs font-medium text-gray-900 transition-colors hover:bg-primary-100"
+                >
+                  <Menu className="h-3.5 w-3.5" />
+                  <span className="whitespace-nowrap">Alle</span>
+                </button>
+
+                {/* Top Categories - Horizontal Scroll */}
+                {[
+                  { slug: 'kleidung-accessoires', name: 'Kleidung', icon: Shirt },
+                  { slug: 'auto-motorrad', name: 'Fahrzeuge', icon: Car },
+                  { slug: 'computer-netzwerk', name: 'Computer', icon: Laptop },
+                  { slug: 'sport', name: 'Sport', icon: Dumbbell },
+                  { slug: 'uhren-schmuck', name: 'Uhren', icon: Watch },
+                  { slug: 'games-konsolen', name: 'Games', icon: Gamepad2 },
+                  { slug: 'haushalt-wohnen', name: 'Haushalt', icon: Home },
+                  { slug: 'kind-baby', name: 'Baby', icon: Baby },
+                ].map(category => (
+                  <Link
+                    key={category.slug}
+                    href={`/search?category=${category.slug}`}
+                    className="flex flex-shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-white hover:text-primary-600"
+                  >
+                    <category.icon className="h-3.5 w-3.5 flex-shrink-0" />
+                    <span className="whitespace-nowrap">{category.name}</span>
+                  </Link>
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
