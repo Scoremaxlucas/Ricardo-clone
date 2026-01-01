@@ -165,7 +165,9 @@ export function StepCategorySelection({
           <div className="rounded-lg border-2 border-primary-200 bg-primary-50 p-3 sm:rounded-xl sm:p-4 md:p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
               <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
-                <span className="flex-shrink-0 text-xs font-medium text-gray-600 sm:text-sm">Gewählte Kategorie:</span>
+                <span className="flex-shrink-0 text-xs font-medium text-gray-600 sm:text-sm">
+                  Gewählte Kategorie:
+                </span>
                 {(() => {
                   const config = getCategoryConfig(selectedCategory)
                   const IconComponent = config.icon

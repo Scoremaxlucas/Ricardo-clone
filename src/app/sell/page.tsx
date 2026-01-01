@@ -1083,7 +1083,10 @@ function SellPageContent() {
 
   // Main wizard UI
   return (
-    <div className="min-h-screen bg-gray-50" style={{ overflowX: 'hidden', width: '100%', maxWidth: '100vw' }}>
+    <div
+      className="min-h-screen bg-gray-50"
+      style={{ overflowX: 'hidden', width: '100%', maxWidth: '100vw' }}
+    >
       <Header />
 
       {/* Draft restored banner */}

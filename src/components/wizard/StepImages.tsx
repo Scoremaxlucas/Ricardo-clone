@@ -2,7 +2,7 @@
 
 import { EditPolicy } from '@/lib/edit-policy'
 import { compressImage } from '@/lib/image-compression'
-import { Bot, Loader2, Lock, Star, Upload, X } from 'lucide-react'
+import { Loader2, Lock, Star, Upload, X } from 'lucide-react'
 import React, { useState, useRef } from 'react'
 import toast from 'react-hot-toast'
 
@@ -289,9 +289,6 @@ export function StepImages({
     })
   }
 
-  // Check if the first image likely came from AI detection
-  const hasAIDetectedImage = formData.images.length > 0
-
   return (
     <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <div className="text-center">
@@ -313,21 +310,6 @@ export function StepImages({
             <p className="text-sm text-amber-800">
               Bei vorhandenen Geboten können nur neue Bilder hinzugefügt werden. Bestehende Bilder
               können nicht gelöscht oder neu angeordnet werden.
-            </p>
-          </div>
-        </div>
-      )}
-
-      {/* AI-detected image notice - Compact mobile version */}
-      {hasAIDetectedImage && formData.images.length === 1 && (
-        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-2.5 sm:gap-3 sm:p-4">
-          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:h-10 sm:w-10">
-            <Bot className="h-4 w-4 text-green-600 sm:h-5 sm:w-5" />
-          </div>
-          <div className="flex-1 min-w-0">
-            <p className="text-sm font-medium text-green-800 sm:text-base">Bild von KI übernommen</p>
-            <p className="hidden text-xs text-green-700 sm:block sm:text-sm">
-              Das Bild aus der Kategorie-Erkennung wurde automatisch als erstes Listing-Bild gesetzt.
             </p>
           </div>
         </div>
@@ -447,14 +429,6 @@ export function StepImages({
                         <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-primary-600 px-2 py-1 text-xs font-medium text-white">
                           <Star className="h-3 w-3" />
                           Titelbild
-                        </div>
-                      )}
-
-                      {/* AI badge if first image (from AI detection) */}
-                      {index === 0 && (
-                        <div className="absolute bottom-2 left-2 flex items-center gap-1 rounded-full bg-green-600/90 px-2 py-1 text-xs font-medium text-white">
-                          <Bot className="h-3 w-3" />
-                          Von KI
                         </div>
                       )}
 

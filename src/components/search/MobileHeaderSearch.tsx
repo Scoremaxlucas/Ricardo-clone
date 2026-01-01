@@ -10,7 +10,7 @@ interface MobileHeaderSearchProps {
 
 /**
  * MobileHeaderSearch - Ricardo-Style Searchbar für Mobile Header
- * 
+ *
  * Features:
  * - Kompakt für Mobile optimiert
  * - Input + Button in einer Zeile
