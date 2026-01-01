@@ -164,8 +164,8 @@ export function StepCategorySelection({
           {/* Selected category display */}
           <div className="rounded-lg border-2 border-primary-200 bg-primary-50 p-3 sm:rounded-xl sm:p-4 md:p-6">
             <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between sm:gap-3">
-              <div className="flex flex-wrap items-center gap-2 sm:gap-3">
-                <span className="text-xs font-medium text-gray-600 sm:text-sm">Gewählte Kategorie:</span>
+              <div className="flex min-w-0 flex-wrap items-center gap-2 sm:gap-3">
+                <span className="flex-shrink-0 text-xs font-medium text-gray-600 sm:text-sm">Gewählte Kategorie:</span>
                 {(() => {
                   const config = getCategoryConfig(selectedCategory)
                   const IconComponent = config.icon
@@ -214,11 +214,11 @@ export function StepCategorySelection({
           {/* AI Detection info - Compact with accordion */}
           {detectedConfidence > 0 && !hasManualOverride && (
             <div
-              className={`rounded-xl border ${confidenceStyle.borderColor} ${confidenceStyle.bgColor} p-4`}
+              className={`overflow-hidden rounded-xl border ${confidenceStyle.borderColor} ${confidenceStyle.bgColor} p-4`}
             >
               {/* Summary line */}
-              <div className="flex items-center justify-between">
-                <div className="flex min-w-0 flex-1 items-center gap-3">
+              <div className="flex min-w-0 items-center justify-between gap-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
                   {/* Thumbnail */}
                   {aiImage && (
                     <div className="relative h-12 w-12 flex-shrink-0 overflow-hidden rounded-lg border border-gray-200 bg-gray-100">
@@ -231,17 +231,19 @@ export function StepCategorySelection({
                   )}
 
                   {/* Summary text */}
-                  <div className="min-w-0 flex-1">
+                  <div className="min-w-0 flex-1 overflow-hidden">
                     <div className="flex items-center gap-2">
                       <Sparkles className={`h-4 w-4 flex-shrink-0 ${confidenceStyle.iconColor}`} />
-                      <p className="truncate text-sm font-semibold text-gray-900">
+                      <p className="break-words text-sm font-semibold text-gray-900">
                         {confidenceStyle.title}
                       </p>
                     </div>
-                    <p className="mt-0.5 truncate text-xs text-gray-600">
-                      {getCategoryDisplayName(selectedCategory)}
-                      {selectedSubcategory &&
-                        ` → ${getSubcategoryDisplayName(selectedSubcategory)}`}
+                    <p className="mt-0.5 break-words text-xs text-gray-600">
+                      <span className="break-words">
+                        {getCategoryDisplayName(selectedCategory)}
+                        {selectedSubcategory &&
+                          ` → ${getSubcategoryDisplayName(selectedSubcategory)}`}
+                      </span>
                       {' · Konfidenz: '}
                       <span className="font-medium">{formatConfidence(detectedConfidence)}</span>
                     </p>

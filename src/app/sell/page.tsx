@@ -80,7 +80,6 @@ function SellPageContent() {
   const [showAIDetection, setShowAIDetection] = useState<boolean>(true)
   const [paymentProtectionEnabled, setPaymentProtectionEnabled] = useState(false)
 
-
   const [formData, setFormData] = useState({
     brand: '',
     model: '',
@@ -889,7 +888,7 @@ function SellPageContent() {
     setIsLoading(true)
     setError('')
     setSuccess('')
-    
+
     // Scroll to top to show loading overlay
     window.scrollTo({ top: 0, behavior: 'smooth' })
 
@@ -1084,7 +1083,7 @@ function SellPageContent() {
 
   // Main wizard UI
   return (
-    <div className="min-h-screen bg-gray-50">
+    <div className="min-h-screen bg-gray-50" style={{ overflowX: 'hidden', width: '100%', maxWidth: '100vw' }}>
       <Header />
 
       {/* Draft restored banner */}
@@ -1128,8 +1127,10 @@ function SellPageContent() {
 
         {/* Page title */}
         <div className="mb-4 text-center sm:mb-6 md:mb-8">
-          <h1 className="text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">Artikel zum Verkauf anbieten</h1>
-          <p className="mt-1 text-sm text-gray-600 sm:mt-2 sm:text-base">
+          <h1 className="break-words text-xl font-bold text-gray-900 sm:text-2xl md:text-3xl">
+            Artikel zum Verkauf anbieten
+          </h1>
+          <p className="mt-1 break-words text-sm text-gray-600 sm:mt-2 sm:text-base">
             Wählen Sie zunächst die Kategorie und füllen Sie dann alle relevanten Felder aus.
           </p>
         </div>
@@ -1147,7 +1148,8 @@ function SellPageContent() {
         <form
           ref={formRef}
           onSubmit={e => e.preventDefault()}
-          className="rounded-2xl bg-white p-4 pb-28 shadow-lg sm:p-6 sm:pb-28 md:p-8"
+          className="overflow-hidden rounded-2xl bg-white p-4 pb-28 shadow-lg sm:p-6 sm:pb-28 md:p-8"
+          style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
         >
           {/* Step 0: Category */}
           {currentStep === 0 && (
@@ -1301,7 +1303,10 @@ function SellPageContent() {
               </div>
               <div className="mt-2 w-full max-w-xs">
                 <div className="h-2 overflow-hidden rounded-full bg-gray-200">
-                  <div className="h-full animate-pulse bg-gradient-to-r from-primary-500 to-primary-600" style={{ width: '60%' }} />
+                  <div
+                    className="h-full animate-pulse bg-gradient-to-r from-primary-500 to-primary-600"
+                    style={{ width: '60%' }}
+                  />
                 </div>
               </div>
             </div>

@@ -349,7 +349,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
           </div>
 
           {/* Row 2: Search Bar (always visible, like Ricardo) */}
-          <div className="border-b border-gray-100 py-3">
+          <div className="border-b border-gray-100 px-4 py-3">
             <MobileHeaderSearch placeholder="Suche nach Artikel, Verkäufer oder Artikelnummer" />
           </div>
 

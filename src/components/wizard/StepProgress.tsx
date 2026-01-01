@@ -25,13 +25,13 @@ export function StepProgress({
   lockedSteps = [],
 }: StepProgressProps) {
   return (
-    <div className="mb-8">
+    <div className="mb-8 w-full min-w-0">
       {/* Mobile: Compact progress */}
-      <div className="flex items-center justify-between sm:hidden">
-        <span className="text-sm font-medium text-gray-700">
+      <div className="flex min-w-0 items-center justify-between gap-2 sm:hidden">
+        <span className="flex-shrink-0 text-sm font-medium text-gray-700">
           Schritt {currentStep + 1} von {steps.length}
         </span>
-        <span className="text-sm font-semibold text-primary-600">{steps[currentStep]?.title}</span>
+        <span className="min-w-0 truncate text-sm font-semibold text-primary-600">{steps[currentStep]?.title}</span>
       </div>
 
       {/* Mobile: Progress bar */}
@@ -161,9 +161,9 @@ export function WizardFooter({
   return (
     <div
       className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-2 py-3 pb-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8 sm:py-4 sm:pb-4"
-      style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+      style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))', width: '100%', maxWidth: '100%', overflowX: 'hidden' }}
     >
-      <div className="mx-auto flex max-w-4xl items-center justify-between gap-2 sm:gap-3">
+      <div className="mx-auto flex min-w-0 max-w-4xl items-center justify-between gap-2 sm:gap-3">
         <div className="flex items-center gap-1.5 sm:gap-2 md:gap-3">
           {currentStep > 0 && (
             <button

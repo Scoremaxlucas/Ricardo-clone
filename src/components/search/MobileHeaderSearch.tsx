@@ -156,17 +156,17 @@ export function MobileHeaderSearch({
   }
 
   return (
-    <div ref={containerRef} className="relative w-full">
+    <div ref={containerRef} className="relative w-full min-w-0">
       {/* Mobile Search Form: Input + Button */}
       <form
         onSubmit={e => {
           e.preventDefault()
           handleSubmit()
         }}
-        className="flex gap-2"
+        className="flex min-w-0 gap-2"
       >
         {/* Input Container */}
-        <div className="relative flex-1">
+        <div className="relative min-w-0 flex-1">
           <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
           <input
             ref={inputRef}
@@ -184,7 +184,7 @@ export function MobileHeaderSearch({
             autoCorrect="off"
             autoCapitalize="off"
             spellCheck="false"
-            className="h-10 w-full rounded-lg border border-gray-300 bg-white pl-10 pr-8 text-sm text-gray-900 transition-colors placeholder:text-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
+            className="h-10 w-full min-w-0 rounded-lg border border-gray-300 bg-white pl-10 pr-8 text-sm text-gray-900 transition-colors placeholder:text-gray-500 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-100"
           />
           {query && (
             <button
