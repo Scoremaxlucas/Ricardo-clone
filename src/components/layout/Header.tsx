@@ -35,7 +35,6 @@ import {
   Menu,
   Package,
   Plus,
-  Search,
   Settings,
   Shield,
   Shirt,
@@ -356,7 +355,10 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
           {/* Row 3: Mobile Category Navigation (like Ricardo) */}
           <div className="border-b border-gray-100 bg-gray-50/50">
-            <div className="overflow-x-auto scrollbar-hide" style={{ WebkitOverflowScrolling: 'touch' }}>
+            <div
+              className="scrollbar-hide overflow-x-auto"
+              style={{ WebkitOverflowScrolling: 'touch' }}
+            >
               <div className="flex min-w-0 items-center gap-1.5 py-2">
                 {/* "Alle Kategorien" Button */}
                 <button

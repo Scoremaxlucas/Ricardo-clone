@@ -4,8 +4,8 @@ import { HomeClient } from '@/components/home/HomeClient'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { getFeaturedProducts } from '@/lib/products'
-import { Suspense } from 'react'
 import type { Metadata } from 'next'
+import { Suspense } from 'react'
 
 /**
  * Homepage - TTI & LCP Optimiert
@@ -31,7 +31,8 @@ export const revalidate = 60
 // SEO Metadata
 export const metadata: Metadata = {
   title: 'Helvenda - Der Schweizer Online-Marktplatz',
-  description: 'Kaufen und verkaufen Sie einfach und sicher auf dem Schweizer Online-Marktplatz. Tausende Produkte von privaten Verkäufern und Händlern.',
+  description:
+    'Kaufen und verkaufen Sie einfach und sicher auf dem Schweizer Online-Marktplatz. Tausende Produkte von privaten Verkäufern und Händlern.',
   openGraph: {
     title: 'Helvenda - Der Schweizer Online-Marktplatz',
     description: 'Kaufen und verkaufen Sie einfach und sicher auf dem Schweizer Online-Marktplatz.',
