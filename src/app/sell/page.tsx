@@ -1151,7 +1151,7 @@ function SellPageContent() {
         <form
           ref={formRef}
           onSubmit={e => e.preventDefault()}
-          className="overflow-hidden rounded-2xl bg-white p-4 pb-28 shadow-lg sm:p-6 sm:pb-28 md:p-8"
+          className="overflow-hidden rounded-2xl bg-white p-4 pb-32 shadow-lg sm:p-6 sm:pb-28 md:p-8"
           style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
         >
           {/* Step 0: Category */}

@@ -162,9 +162,9 @@ export function WizardFooter({
 
   return (
     <div
-      className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-2 py-3 pb-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8 sm:py-4 sm:pb-4"
+      className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-3 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8 sm:py-4"
       style={{
-        paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
+        paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem))',
         width: '100%',
         maxWidth: '100%',
         overflowX: 'hidden',
