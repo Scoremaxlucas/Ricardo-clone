@@ -1,15 +1,17 @@
 'use client'
 
+import { DisputeChat } from '@/components/dispute/DisputeChat'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
-import { DisputeChat } from '@/components/dispute/DisputeChat'
 import {
   AlertTriangle,
   ArrowLeft,
   CheckCircle,
   Clock,
   FileText,
+  Flame,
   Package,
+  Search,
   Shield,
   User,
   XCircle,
@@ -55,6 +57,15 @@ interface DisputeDetail {
   createdAt: string
   paymentProtectionEnabled: boolean
   userRole: 'buyer' | 'seller'
+  // Ricardo-Style Fields
+  sellerResponseDeadline?: string | null
+  sellerRespondedAt?: string | null
+  disputeEscalationLevel?: number
+  disputeEscalationReason?: string | null
+  disputeRefundRequired?: boolean
+  disputeRefundAmount?: number | null
+  disputeRefundDeadline?: string | null
+  disputeRefundCompletedAt?: string | null
 }
 
 const REASON_LABELS: Record<string, string> = {
@@ -120,6 +131,20 @@ export default function DisputeDetailPage() {
             In Bearbeitung
           </span>
         )
+      case 'escalated':
+        return (
+          <span className="inline-flex items-center rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-800">
+            <Flame className="mr-1.5 h-4 w-4" />
+            Eskaliert
+          </span>
+        )
+      case 'under_review':
+        return (
+          <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+            <Search className="mr-1.5 h-4 w-4" />
+            In Prüfung
+          </span>
+        )
       case 'resolved':
         return (
           <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-800">
@@ -169,7 +194,9 @@ export default function DisputeDetailPage() {
           <div className="rounded-lg bg-white p-8 text-center shadow">
             <AlertTriangle className="mx-auto mb-4 h-12 w-12 text-red-500" />
             <h1 className="mb-2 text-xl font-bold text-gray-900">Dispute nicht gefunden</h1>
-            <p className="mb-6 text-gray-600">{error || 'Der angeforderte Dispute existiert nicht.'}</p>
+            <p className="mb-6 text-gray-600">
+              {error || 'Der angeforderte Dispute existiert nicht.'}
+            </p>
             <Link
               href="/my-watches/buying/purchased"
               className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
@@ -199,7 +226,11 @@ export default function DisputeDetailPage() {
       <div className="mx-auto max-w-6xl px-4 py-8">
         {/* Back Link */}
         <Link
-          href={dispute.userRole === 'buyer' ? '/my-watches/buying/purchased' : '/my-watches/selling/sold'}
+          href={
+            dispute.userRole === 'buyer'
+              ? '/my-watches/buying/purchased'
+              : '/my-watches/selling/sold'
+          }
           className="mb-6 inline-flex items-center text-gray-600 hover:text-gray-900"
         >
           <ArrowLeft className="mr-2 h-4 w-4" />
@@ -214,7 +245,9 @@ export default function DisputeDetailPage() {
                 <AlertTriangle className="h-6 w-6 text-orange-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Dispute #{dispute.id.slice(-8)}</h1>
+                <h1 className="text-2xl font-bold text-gray-900">
+                  Dispute #{dispute.id.slice(-8)}
+                </h1>
                 <p className="mt-1 text-gray-600">
                   {REASON_LABELS[dispute.disputeReason] || dispute.disputeReason}
                 </p>
@@ -232,6 +265,110 @@ export default function DisputeDetailPage() {
             </div>
           </div>
         </div>
+
+        {/* Ricardo-Style: Escalation Banner */}
+        {dispute.disputeStatus === 'escalated' && (
+          <div className="mb-6 rounded-lg border border-orange-200 bg-orange-50 p-4">
+            <div className="flex items-center gap-3">
+              <Flame className="h-6 w-6 text-orange-600" />
+              <div>
+                <p className="font-medium text-orange-800">Dieser Dispute wurde eskaliert</p>
+                <p className="text-sm text-orange-700">
+                  {dispute.userRole === 'seller'
+                    ? 'Da keine rechtzeitige Stellungnahme erfolgte, wird der Fall nun mit höherer Priorität bearbeitet.'
+                    : 'Ihr Fall wird nun mit höherer Priorität bearbeitet. Ein Helvenda-Mitarbeiter wird sich umgehend um Ihren Fall kümmern.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Ricardo-Style: Seller Response Deadline Banner (for sellers) */}
+        {dispute.userRole === 'seller' &&
+          dispute.sellerResponseDeadline &&
+          !dispute.sellerRespondedAt &&
+          dispute.disputeStatus !== 'resolved' &&
+          dispute.disputeStatus !== 'rejected' && (
+            <div className="mb-6 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+              <div className="flex items-center gap-3">
+                <Clock className="h-6 w-6 text-yellow-600" />
+                <div>
+                  <p className="font-medium text-yellow-800">Ihre Stellungnahme ist erforderlich</p>
+                  <p className="text-sm text-yellow-700">
+                    Bitte antworten Sie bis zum{' '}
+                    <strong>
+                      {new Date(dispute.sellerResponseDeadline).toLocaleDateString('de-CH')}
+                    </strong>
+                    . Ohne Ihre Antwort wird der Fall automatisch eskaliert.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* Ricardo-Style: Refund Required Banner (for sellers) */}
+        {dispute.userRole === 'seller' &&
+          dispute.disputeRefundRequired &&
+          !dispute.disputeRefundCompletedAt && (
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+              <div className="flex items-center gap-3">
+                <AlertTriangle className="h-6 w-6 text-red-600" />
+                <div>
+                  <p className="font-medium text-red-800">
+                    Rückerstattung erforderlich: CHF {(dispute.disputeRefundAmount || 0).toFixed(2)}
+                  </p>
+                  <p className="text-sm text-red-700">
+                    Bitte erstatten Sie den Betrag dem Käufer bis zum{' '}
+                    <strong>
+                      {dispute.disputeRefundDeadline
+                        ? new Date(dispute.disputeRefundDeadline).toLocaleDateString('de-CH')
+                        : 'baldmöglichst'}
+                    </strong>
+                    . Bei Nichterfüllung können Konsequenzen für Ihr Konto folgen.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* Ricardo-Style: Refund Pending Banner (for buyers) */}
+        {dispute.userRole === 'buyer' &&
+          dispute.disputeRefundRequired &&
+          !dispute.disputeRefundCompletedAt && (
+            <div className="mb-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
+              <div className="flex items-center gap-3">
+                <Clock className="h-6 w-6 text-blue-600" />
+                <div>
+                  <p className="font-medium text-blue-800">
+                    Rückerstattung ausstehend: CHF {(dispute.disputeRefundAmount || 0).toFixed(2)}
+                  </p>
+                  <p className="text-sm text-blue-700">
+                    Der Verkäufer wurde aufgefordert, Ihnen den Betrag zu erstatten. Wir werden Sie
+                    benachrichtigen, sobald dies erfolgt ist.
+                  </p>
+                </div>
+              </div>
+            </div>
+          )}
+
+        {/* Ricardo-Style: Refund Completed Banner */}
+        {dispute.disputeRefundRequired && dispute.disputeRefundCompletedAt && (
+          <div className="mb-6 rounded-lg border border-green-200 bg-green-50 p-4">
+            <div className="flex items-center gap-3">
+              <CheckCircle className="h-6 w-6 text-green-600" />
+              <div>
+                <p className="font-medium text-green-800">
+                  Rückerstattung bestätigt: CHF {(dispute.disputeRefundAmount || 0).toFixed(2)}
+                </p>
+                <p className="text-sm text-green-700">
+                  Die Rückerstattung wurde am{' '}
+                  {new Date(dispute.disputeRefundCompletedAt).toLocaleDateString('de-CH')}{' '}
+                  bestätigt.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
           {/* Left Column - Details */}

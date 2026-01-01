@@ -22,6 +22,7 @@ else
   echo "⚠️ Database push failed - attempting manual column fixes..."
   # Try to add critical missing columns manually
   npx prisma db execute --stdin <<'SQLEOF'
+-- Existing dispute columns
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeReminderCount" INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeDeadline" TIMESTAMP(3);
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeFrozenAt" TIMESTAMP(3);
@@ -31,8 +32,38 @@ ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "stripePaymentIntentId" TEXT;
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "stripeRefundId" TEXT;
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "stripeRefundStatus" TEXT;
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "stripeRefundedAt" TIMESTAMP(3);
+
+-- Ricardo-Style: Seller Response Fields
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeInitiatedBy" TEXT;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "sellerResponseDeadline" TIMESTAMP(3);
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "sellerRespondedAt" TIMESTAMP(3);
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "sellerResponseText" TEXT;
+
+-- Ricardo-Style: Escalation Fields
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeEscalatedAt" TIMESTAMP(3);
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeEscalationLevel" INTEGER DEFAULT 0;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeEscalationReason" TEXT;
+
+-- Ricardo-Style: Refund Management Fields
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeRefundRequired" BOOLEAN DEFAULT false;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeRefundAmount" DOUBLE PRECISION;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeRefundDeadline" TIMESTAMP(3);
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeRefundCompletedAt" TIMESTAMP(3);
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeRefundMethod" TEXT;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeRefundNote" TEXT;
+
+-- Ricardo-Style: Seller Consequences Fields
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "sellerWarningIssued" BOOLEAN DEFAULT false;
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "sellerWarningIssuedAt" TIMESTAMP(3);
+ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "sellerWarningReason" TEXT;
+
+-- Ricardo-Style: User Warning Fields
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "disputeWarningCount" INTEGER DEFAULT 0;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "lastDisputeWarningAt" TIMESTAMP(3);
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "disputesLostCount" INTEGER DEFAULT 0;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "disputeRestrictionLevel" TEXT;
 SQLEOF
-  echo "✅ Manual column fixes applied"
+  echo "✅ Manual column fixes applied (including Ricardo-Style dispute columns)"
 fi
 
 # Build Next.js app

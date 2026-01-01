@@ -48,8 +48,20 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const { id } = await params
-    const { resolution, refundBuyer, refundSeller, cancelPurchase, rejected, rejectionReason } =
-      await request.json()
+    const {
+      resolution,
+      refundBuyer,
+      refundSeller,
+      cancelPurchase,
+      rejected,
+      rejectionReason,
+      // === RICARDO-STYLE: Manual Refund Management ===
+      requireManualRefund, // Boolean: Seller must manually refund
+      refundAmount, // Float: Amount to refund (can be partial)
+      refundNote, // String: Admin note about refund
+      issueWarning, // Boolean: Issue warning to seller
+      warningReason, // String: Reason for warning
+    } = await request.json()
 
     // Prüfe ob Dispute abgelehnt wird
     if (rejected === true) {
@@ -467,6 +479,23 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
     }
 
+    // === RICARDO-STYLE: Manual Refund Management ===
+    if (requireManualRefund && !purchase.stripePaymentIntentId) {
+      // Set refund deadline (14 days from now)
+      const refundDeadline = new Date()
+      refundDeadline.setDate(refundDeadline.getDate() + 14)
+
+      updateData.disputeRefundRequired = true
+      updateData.disputeRefundAmount = refundAmount || purchase.price || 0
+      updateData.disputeRefundDeadline = refundDeadline
+      updateData.disputeRefundMethod = 'seller_manual'
+      updateData.disputeRefundNote = refundNote || null
+
+      console.log(
+        `[dispute/resolve] Manual refund required: CHF ${refundAmount || purchase.price} by ${refundDeadline.toISOString()}`
+      )
+    }
+
     // Führe Update durch
     const updatedPurchase = await prisma.purchase.update({
       where: { id },
@@ -505,6 +534,133 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       refundBuyer === true ||
       (cancelPurchase && isInitiatedByBuyer) ||
       (cancelPurchase && !isInitiatedByBuyer && !isInitiatedBySeller)
+
+    // === RICARDO-STYLE: Issue Warning to Seller ===
+    if (issueWarning === true && isLoserSeller) {
+      try {
+        const seller = await prisma.user.findUnique({
+          where: { id: purchase.watch.sellerId },
+          select: { disputeWarningCount: true, disputesLostCount: true },
+        })
+
+        const newWarningCount = (seller?.disputeWarningCount || 0) + 1
+        const newDisputesLostCount = (seller?.disputesLostCount || 0) + 1
+        const maxWarnings = 3
+
+        await prisma.user.update({
+          where: { id: purchase.watch.sellerId },
+          data: {
+            disputeWarningCount: newWarningCount,
+            disputesLostCount: newDisputesLostCount,
+            lastDisputeWarningAt: new Date(),
+            // Restrict seller if they have too many warnings
+            ...(newWarningCount >= maxWarnings && {
+              disputeRestrictionLevel: 'limited',
+            }),
+          },
+        })
+
+        // Update purchase with warning info
+        await prisma.purchase.update({
+          where: { id },
+          data: {
+            sellerWarningIssued: true,
+            sellerWarningIssuedAt: new Date(),
+            sellerWarningReason: warningReason || 'Dispute zugunsten des Käufers entschieden',
+          },
+        })
+
+        // Send warning email to seller
+        try {
+          const { getSellerWarningEmail } = await import('@/lib/email')
+          const { subject, html, text } = getSellerWarningEmail(
+            sellerName,
+            newWarningCount,
+            warningReason || 'Dispute zugunsten des Käufers entschieden',
+            purchase.watch.title,
+            purchase.id
+          )
+          await sendEmail({
+            to: purchase.watch.seller.email,
+            subject,
+            html,
+            text,
+          })
+        } catch (e) {
+          console.error('[dispute/resolve] Error sending warning email:', e)
+        }
+
+        console.log(
+          `[dispute/resolve] Warning #${newWarningCount} issued to seller ${purchase.watch.sellerId}`
+        )
+
+        // Create audit trail
+        await prisma.disputeComment.create({
+          data: {
+            purchaseId: id,
+            userId: session.user.id,
+            userRole: 'admin',
+            type: 'status_change',
+            content: `Verwarnung #${newWarningCount} ausgestellt: ${warningReason || 'Dispute zugunsten des Käufers'}`,
+            isInternal: true,
+          },
+        })
+      } catch (warningError: any) {
+        console.error('[dispute/resolve] Error issuing warning:', warningError)
+      }
+    } else if (isLoserSeller) {
+      // Still increment disputes lost count even without warning
+      try {
+        await prisma.user.update({
+          where: { id: purchase.watch.sellerId },
+          data: {
+            disputesLostCount: { increment: 1 },
+          },
+        })
+      } catch (e) {
+        console.error('[dispute/resolve] Error incrementing disputes lost count:', e)
+      }
+    }
+
+    // === RICARDO-STYLE: Send Manual Refund Email to Seller ===
+    if (requireManualRefund && !purchase.stripePaymentIntentId) {
+      try {
+        const { getRefundRequiredEmail } = await import('@/lib/email')
+        const refundDeadline = new Date()
+        refundDeadline.setDate(refundDeadline.getDate() + 14)
+
+        const { subject, html, text } = getRefundRequiredEmail(
+          sellerName,
+          buyerName,
+          purchase.watch.title,
+          refundAmount || purchase.price || 0,
+          refundDeadline,
+          purchase.id,
+          refundNote
+        )
+
+        await sendEmail({
+          to: purchase.watch.seller.email,
+          subject,
+          html,
+          text,
+        })
+
+        // Notify seller via notification
+        await prisma.notification.create({
+          data: {
+            userId: purchase.watch.sellerId,
+            type: 'PURCHASE',
+            title: '💰 Rückerstattung erforderlich',
+            message: `Sie müssen CHF ${(refundAmount || purchase.price || 0).toFixed(2)} an ${buyerName} zurückerstatten. Frist: ${refundDeadline.toLocaleDateString('de-CH')}`,
+            link: `/disputes/${id}`,
+            watchId: purchase.watchId,
+          },
+        })
+      } catch (emailError: any) {
+        console.error('[dispute/resolve] Error sending refund required email:', emailError)
+      }
+    }
 
     // Generiere generische Nachricht für Verlierer
     const generateLoserMessage = (

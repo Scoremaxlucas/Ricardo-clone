@@ -97,6 +97,12 @@ model User {
   warningCount                  Int                  @default(0)
   lastWarnedAt                  DateTime?
   hasUnpaidInvoices             Boolean              @default(false)
+
+  // === DISPUTE WARNING SYSTEM (Ricardo-Style) ===
+  disputeWarningCount           Int                  @default(0)
+  lastDisputeWarningAt          DateTime?
+  disputesLostCount             Int                  @default(0) // How many disputes seller lost
+  disputeRestrictionLevel       String?              // 'none', 'warning', 'limited', 'suspended'
   lastInvoiceReminderAt         DateTime?
   stripeConnectedAccountId      String?
   stripeOnboardingComplete      Boolean              @default(false)
@@ -311,21 +317,42 @@ model Purchase {
   trackingProvider               String?
   shippedAt                      DateTime?
   estimatedDeliveryDate          DateTime?
-  // === DISPUTE SYSTEM (Enhanced) ===
+  // === DISPUTE SYSTEM (Enhanced - Ricardo-Style) ===
   disputeOpenedAt                DateTime?
   disputeReason                  String?
   disputeDescription             String?
-  disputeStatus                  String?           // pending, under_review, resolved, rejected, closed
+  disputeStatus                  String?           // pending, under_review, escalated, resolved, rejected, closed
   disputeResolvedAt              DateTime?
   disputeResolvedBy              String?
-  // disputeInitiatedBy TEMPORÄR AUSKOMMENTIERT - Migration noch nicht ausgeführt
-  // WICHTIG: Wieder aktivieren nach Migration: npx prisma migrate deploy
-  // disputeInitiatedBy             String?           // 'buyer' or 'seller' - who opened the dispute
+  disputeInitiatedBy             String?           // 'buyer' or 'seller' - who opened the dispute
   disputeDeadline                DateTime?         // Deadline for resolution (14 days after opening)
   disputeFrozenAt                DateTime?         // When purchase was frozen due to dispute
   disputeAttachments             String?           // JSON array of file URLs for evidence
   disputeReminderSentAt          DateTime?         // Last reminder sent
   disputeReminderCount           Int               @default(0)
+
+  // === SELLER RESPONSE (Ricardo-Style) ===
+  sellerResponseDeadline         DateTime?         // 7 days after dispute opened
+  sellerRespondedAt              DateTime?         // When seller responded
+  sellerResponseText             String?           // Seller's response/statement
+
+  // === ESCALATION SYSTEM (Ricardo-Style) ===
+  disputeEscalatedAt             DateTime?         // When dispute was escalated
+  disputeEscalationLevel         Int               @default(0) // 0=none, 1=first_escalation, 2=urgent, 3=critical
+  disputeEscalationReason        String?           // Why escalated (no_response, deadline_missed, etc.)
+
+  // === REFUND MANAGEMENT (Ricardo-Style) ===
+  disputeRefundRequired          Boolean           @default(false)
+  disputeRefundAmount            Float?            // Amount to refund (can be partial)
+  disputeRefundDeadline          DateTime?         // Seller has X days to refund
+  disputeRefundCompletedAt       DateTime?         // When refund was completed
+  disputeRefundMethod            String?           // 'stripe_auto', 'seller_manual', 'platform_credit'
+  disputeRefundNote              String?           // Admin notes about refund
+
+  // === SELLER CONSEQUENCES ===
+  sellerWarningIssued            Boolean           @default(false)
+  sellerWarningIssuedAt          DateTime?
+  sellerWarningReason            String?
   // === STRIPE INTEGRATION ===
   stripePaymentIntentId          String?           // Stripe PaymentIntent ID for refunds
   stripeRefundId                 String?           // Stripe Refund ID if refunded

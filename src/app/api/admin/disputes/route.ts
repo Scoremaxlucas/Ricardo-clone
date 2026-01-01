@@ -92,7 +92,12 @@ export async function GET(request: NextRequest) {
               disputeDeadline: true,
               disputeAttachments: true,
               disputeReminderCount: true,
-              // disputeInitiatedBy wird NICHT selektiert (existiert möglicherweise noch nicht)
+              // Ricardo-Style Fields
+              disputeEscalationLevel: true,
+              sellerResponseDeadline: true,
+              sellerRespondedAt: true,
+              disputeRefundRequired: true,
+              disputeRefundAmount: true,
               watch: {
                 select: {
                   id: true,
@@ -226,10 +231,18 @@ export async function GET(request: NextRequest) {
         disputeStatus: purchase.disputeStatus || 'pending',
         disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
         disputeDeadline: purchase.disputeDeadline?.toISOString() || null,
-        disputeAttachments: purchase.disputeAttachments ? JSON.parse(purchase.disputeAttachments) : [],
+        disputeAttachments: purchase.disputeAttachments
+          ? JSON.parse(purchase.disputeAttachments)
+          : [],
         disputeReminderCount: purchase.disputeReminderCount || 0,
         disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
         disputeResolvedBy: purchase.disputeResolvedBy || null,
+        // Ricardo-Style Fields
+        disputeEscalationLevel: purchase.disputeEscalationLevel || 0,
+        sellerResponseDeadline: purchase.sellerResponseDeadline?.toISOString() || null,
+        sellerRespondedAt: purchase.sellerRespondedAt?.toISOString() || null,
+        disputeRefundRequired: purchase.disputeRefundRequired || false,
+        disputeRefundAmount: purchase.disputeRefundAmount || null,
         purchaseStatus: purchase.status,
         purchasePrice: purchase.price,
         createdAt: purchase.createdAt.toISOString(),
@@ -299,9 +312,12 @@ export async function GET(request: NextRequest) {
     const stats = {
       total: allItems.length,
       pending: allItems.filter(d => d.disputeStatus === 'pending').length,
+      escalated: allItems.filter(d => d.disputeStatus === 'escalated').length,
+      underReview: allItems.filter(d => d.disputeStatus === 'under_review').length,
       resolved: allItems.filter(d => d.disputeStatus === 'resolved').length,
       rejected: allItems.filter(d => d.disputeStatus === 'rejected').length,
-      closed: allItems.filter(d => d.disputeStatus === 'closed' || d.disputeStatus === 'rejected').length,
+      closed: allItems.filter(d => d.disputeStatus === 'closed' || d.disputeStatus === 'rejected')
+        .length,
     }
 
     return NextResponse.json({

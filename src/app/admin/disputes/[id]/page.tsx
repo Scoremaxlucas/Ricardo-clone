@@ -50,6 +50,9 @@ interface Dispute {
     phone: string | null
     address: string | null
     paymentMethods: any[]
+    disputeWarningCount?: number
+    disputesLostCount?: number
+    disputeRestrictionLevel?: string | null
   }
   disputeReason: string
   disputeDescription: string
@@ -62,6 +65,20 @@ interface Dispute {
   disputeReminderSentAt: string | null
   disputeResolvedAt: string | null
   disputeResolvedBy: string | null
+  // Ricardo-Style Fields
+  disputeInitiatedBy: string | null
+  sellerResponseDeadline: string | null
+  sellerRespondedAt: string | null
+  sellerResponseText: string | null
+  disputeEscalatedAt: string | null
+  disputeEscalationLevel: number
+  disputeEscalationReason: string | null
+  disputeRefundRequired: boolean
+  disputeRefundAmount: number | null
+  disputeRefundDeadline: string | null
+  disputeRefundCompletedAt: string | null
+  sellerWarningIssued: boolean
+  sellerWarningReason: string | null
   type: 'dispute' | 'cancellation'
   purchaseStatus: string
   purchasePrice: number | null
@@ -78,6 +95,7 @@ interface Dispute {
   shippedAt: string | null
   createdAt: string
   statusHistory: any[]
+  stripePaymentIntentId?: string | null
 }
 
 export default function AdminDisputeDetailPage({ params }: { params: { id: string } }) {
@@ -92,6 +110,12 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
   const [cancelPurchase, setCancelPurchase] = useState(false)
   const [showRejectForm, setShowRejectForm] = useState(false)
   const [rejectionReason, setRejectionReason] = useState('')
+  // Ricardo-Style Options
+  const [requireManualRefund, setRequireManualRefund] = useState(false)
+  const [refundAmount, setRefundAmount] = useState<number | undefined>(undefined)
+  const [refundNote, setRefundNote] = useState('')
+  const [issueWarning, setIssueWarning] = useState(false)
+  const [warningReason, setWarningReason] = useState('')
 
   useEffect(() => {
     if (status === 'loading' || !params.id) return
@@ -134,13 +158,10 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
       }
     } catch (error) {
       console.error('Error loading dispute:', error)
-      toast.error(
-        'Fehler beim Laden des Disputes. Bitte Seite neu laden.',
-        {
-          duration: 4000,
-          icon: '❌',
-        }
-      )
+      toast.error('Fehler beim Laden des Disputes. Bitte Seite neu laden.', {
+        duration: 4000,
+        icon: '❌',
+      })
       router.push('/admin/disputes')
     } finally {
       setLoading(false)
@@ -168,38 +189,35 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
           refundBuyer,
           refundSeller,
           cancelPurchase,
+          // Ricardo-Style Options
+          requireManualRefund,
+          refundAmount: requireManualRefund ? refundAmount : undefined,
+          refundNote: requireManualRefund ? refundNote : undefined,
+          issueWarning,
+          warningReason: issueWarning ? warningReason : undefined,
         }),
       })
 
       const data = await res.json()
 
       if (res.ok) {
-        toast.success(
-          '✓ Dispute erfolgreich gelöst!',
-          {
-            duration: 3000,
-            icon: '✅',
-          }
-        )
+        toast.success('✓ Dispute erfolgreich gelöst!', {
+          duration: 3000,
+          icon: '✅',
+        })
         router.push('/admin/disputes')
       } else {
-        toast.error(
-          data.message || 'Fehler beim Lösen des Disputes',
-          {
-            duration: 4000,
-            icon: '❌',
-          }
-        )
+        toast.error(data.message || 'Fehler beim Lösen des Disputes', {
+          duration: 4000,
+          icon: '❌',
+        })
       }
     } catch (error: any) {
       console.error('Error resolving dispute:', error)
-      toast.error(
-        `Fehler beim Lösen des Disputes: ${error.message || 'Netzwerkfehler'}`,
-        {
-          duration: 4000,
-          icon: '❌',
-        }
-      )
+      toast.error(`Fehler beim Lösen des Disputes: ${error.message || 'Netzwerkfehler'}`, {
+        duration: 4000,
+        icon: '❌',
+      })
     } finally {
       setResolving(false)
     }
@@ -292,6 +310,20 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
             Geschlossen
           </span>
         )
+      case 'escalated':
+        return (
+          <span className="inline-flex items-center rounded-full bg-orange-100 px-3 py-1 text-sm font-medium text-orange-800">
+            <Clock className="mr-1 h-4 w-4" />
+            Eskaliert
+          </span>
+        )
+      case 'under_review':
+        return (
+          <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-800">
+            <Clock className="mr-1 h-4 w-4" />
+            In Prüfung
+          </span>
+        )
       default:
         return (
           <span className="inline-flex items-center rounded-full bg-gray-100 px-3 py-1 text-sm font-medium text-gray-800">
@@ -370,31 +402,118 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
           </div>
 
           {/* Urgency Banner */}
-          {dispute.disputeStatus === 'pending' && dispute.disputeDeadline && (
+          {dispute.disputeStatus === 'pending' &&
+            dispute.disputeDeadline &&
             (() => {
               const deadline = new Date(dispute.disputeDeadline)
               const now = new Date()
-              const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+              const daysLeft = Math.ceil(
+                (deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+              )
               const isUrgent = daysLeft <= 3
               const isOverdue = daysLeft < 0
-              
+
               if (isOverdue || isUrgent) {
                 return (
-                  <div className={`mt-4 rounded-lg p-4 ${isOverdue ? 'bg-red-50 border border-red-200' : 'bg-orange-50 border border-orange-200'}`}>
+                  <div
+                    className={`mt-4 rounded-lg p-4 ${isOverdue ? 'border border-red-200 bg-red-50' : 'border border-orange-200 bg-orange-50'}`}
+                  >
                     <div className="flex items-center gap-2">
-                      <Clock className={`h-5 w-5 ${isOverdue ? 'text-red-600' : 'text-orange-600'}`} />
-                      <span className={`font-medium ${isOverdue ? 'text-red-800' : 'text-orange-800'}`}>
-                        {isOverdue 
+                      <Clock
+                        className={`h-5 w-5 ${isOverdue ? 'text-red-600' : 'text-orange-600'}`}
+                      />
+                      <span
+                        className={`font-medium ${isOverdue ? 'text-red-800' : 'text-orange-800'}`}
+                      >
+                        {isOverdue
                           ? `⚠️ Überfällig! Frist war am ${deadline.toLocaleDateString('de-CH')}`
-                          : `⚡ Dringend: Noch ${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''} bis zur Frist (${deadline.toLocaleDateString('de-CH')})`
-                        }
+                          : `⚡ Dringend: Noch ${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''} bis zur Frist (${deadline.toLocaleDateString('de-CH')})`}
                       </span>
                     </div>
                   </div>
                 )
               }
               return null
-            })()
+            })()}
+
+          {/* Ricardo-Style: Escalation Banner */}
+          {dispute.disputeEscalationLevel > 0 && (
+            <div className="mt-4 rounded-lg border border-orange-200 bg-orange-50 p-4">
+              <div className="flex items-center gap-2">
+                <span className="text-orange-600">🚨</span>
+                <span className="font-medium text-orange-800">
+                  Eskaliert (Stufe {dispute.disputeEscalationLevel})
+                  {dispute.disputeEscalationReason &&
+                    ` - ${dispute.disputeEscalationReason === 'no_seller_response' ? 'Keine Verkäufer-Antwort' : dispute.disputeEscalationReason}`}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Ricardo-Style: Seller Response Status */}
+          {dispute.disputeInitiatedBy === 'buyer' && (
+            <div
+              className={`mt-4 rounded-lg p-4 ${dispute.sellerRespondedAt ? 'border border-green-200 bg-green-50' : 'border border-yellow-200 bg-yellow-50'}`}
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  {dispute.sellerRespondedAt ? (
+                    <>
+                      <CheckCircle className="h-5 w-5 text-green-600" />
+                      <span className="font-medium text-green-800">
+                        Verkäufer hat am{' '}
+                        {new Date(dispute.sellerRespondedAt).toLocaleDateString('de-CH')}{' '}
+                        geantwortet
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <Clock className="h-5 w-5 text-yellow-600" />
+                      <span className="font-medium text-yellow-800">
+                        Verkäufer hat noch nicht geantwortet
+                        {dispute.sellerResponseDeadline &&
+                          ` (Frist: ${new Date(dispute.sellerResponseDeadline).toLocaleDateString('de-CH')})`}
+                      </span>
+                    </>
+                  )}
+                </div>
+              </div>
+              {dispute.sellerResponseText && (
+                <div className="mt-3 rounded bg-white p-3 text-sm text-gray-700">
+                  <strong>Verkäufer-Stellungnahme:</strong>
+                  <p className="mt-1 whitespace-pre-wrap">{dispute.sellerResponseText}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Ricardo-Style: Refund Status */}
+          {dispute.disputeRefundRequired && (
+            <div
+              className={`mt-4 rounded-lg p-4 ${dispute.disputeRefundCompletedAt ? 'border border-green-200 bg-green-50' : 'border border-red-200 bg-red-50'}`}
+            >
+              <div className="flex items-center gap-2">
+                {dispute.disputeRefundCompletedAt ? (
+                  <>
+                    <CheckCircle className="h-5 w-5 text-green-600" />
+                    <span className="font-medium text-green-800">
+                      Rückerstattung bestätigt am{' '}
+                      {new Date(dispute.disputeRefundCompletedAt).toLocaleDateString('de-CH')}
+                    </span>
+                  </>
+                ) : (
+                  <>
+                    <Clock className="h-5 w-5 text-red-600" />
+                    <span className="font-medium text-red-800">
+                      💰 Rückerstattung ausstehend: CHF{' '}
+                      {(dispute.disputeRefundAmount || 0).toFixed(2)}
+                      {dispute.disputeRefundDeadline &&
+                        ` (Frist: ${new Date(dispute.disputeRefundDeadline).toLocaleDateString('de-CH')})`}
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
           )}
         </div>
 
@@ -444,7 +563,9 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                 {/* Beweismaterial/Anhänge */}
                 {dispute.disputeAttachments && dispute.disputeAttachments.length > 0 && (
                   <div>
-                    <label className="text-sm font-medium text-gray-500">Beweismaterial ({dispute.disputeAttachments.length})</label>
+                    <label className="text-sm font-medium text-gray-500">
+                      Beweismaterial ({dispute.disputeAttachments.length})
+                    </label>
                     <div className="mt-2 flex flex-wrap gap-2">
                       {dispute.disputeAttachments.map((url, idx) => (
                         <a
@@ -489,12 +610,15 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                   )}
                   {dispute.disputeReminderCount > 0 && (
                     <div>
-                      <label className="text-sm font-medium text-gray-500">Erinnerungen gesendet</label>
+                      <label className="text-sm font-medium text-gray-500">
+                        Erinnerungen gesendet
+                      </label>
                       <p className="mt-1 text-gray-900">
                         {dispute.disputeReminderCount}x
                         {dispute.disputeReminderSentAt && (
                           <span className="ml-1 text-xs text-gray-500">
-                            (zuletzt: {new Date(dispute.disputeReminderSentAt).toLocaleDateString('de-CH')})
+                            (zuletzt:{' '}
+                            {new Date(dispute.disputeReminderSentAt).toLocaleDateString('de-CH')})
                           </span>
                         )}
                       </p>
@@ -555,10 +679,7 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                 <MessageCircle className="h-5 w-5" />
                 Kommunikation
               </h2>
-              <AdminDisputeChat
-                purchaseId={dispute.id}
-                disputeStatus={dispute.disputeStatus}
-              />
+              <AdminDisputeChat purchaseId={dispute.id} disputeStatus={dispute.disputeStatus} />
             </div>
 
             {/* Lösung-Formular (nur wenn noch nicht gelöst) */}
@@ -662,7 +783,10 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                           onChange={e => setRefundBuyer(e.target.checked)}
                           className="mr-2 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                         />
-                        <span className="text-sm text-gray-700">Rückerstattung an Käufer</span>
+                        <span className="text-sm text-gray-700">
+                          Rückerstattung an Käufer{' '}
+                          {dispute.stripePaymentIntentId ? '(Stripe)' : '(Manuell)'}
+                        </span>
                       </label>
                       <label className="flex items-center">
                         <input
@@ -673,6 +797,95 @@ export default function AdminDisputeDetailPage({ params }: { params: { id: strin
                         />
                         <span className="text-sm text-gray-700">Rückerstattung an Verkäufer</span>
                       </label>
+                    </div>
+
+                    {/* Ricardo-Style: Manual Refund Options */}
+                    {refundBuyer && !dispute.stripePaymentIntentId && (
+                      <div className="space-y-3 rounded-lg border border-yellow-200 bg-yellow-50 p-4">
+                        <p className="text-sm font-medium text-yellow-800">
+                          💰 Manuelle Rückerstattung (kein Stripe-Zahlungsschutz)
+                        </p>
+                        <label className="flex items-center">
+                          <input
+                            type="checkbox"
+                            checked={requireManualRefund}
+                            onChange={e => setRequireManualRefund(e.target.checked)}
+                            className="mr-2 h-4 w-4 rounded border-gray-300 text-yellow-600 focus:ring-yellow-500"
+                          />
+                          <span className="text-sm text-gray-700">
+                            Verkäufer zur Rückerstattung auffordern (14 Tage Frist)
+                          </span>
+                        </label>
+                        {requireManualRefund && (
+                          <>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">
+                                Rückerstattungsbetrag (CHF)
+                              </label>
+                              <input
+                                type="number"
+                                step="0.01"
+                                value={refundAmount ?? dispute.purchasePrice ?? ''}
+                                onChange={e =>
+                                  setRefundAmount(parseFloat(e.target.value) || undefined)
+                                }
+                                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                placeholder={`z.B. ${dispute.purchasePrice?.toFixed(2) || '0.00'}`}
+                              />
+                            </div>
+                            <div>
+                              <label className="block text-sm font-medium text-gray-700">
+                                Hinweis an Verkäufer
+                              </label>
+                              <textarea
+                                value={refundNote}
+                                onChange={e => setRefundNote(e.target.value)}
+                                rows={2}
+                                className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                                placeholder="z.B. Grund für Rückerstattung..."
+                              />
+                            </div>
+                          </>
+                        )}
+                      </div>
+                    )}
+
+                    {/* Ricardo-Style: Warning Options */}
+                    <div className="space-y-3 rounded-lg border border-red-200 bg-red-50 p-4">
+                      <p className="text-sm font-medium text-red-800">⚠️ Verkäufer-Konsequenzen</p>
+                      {dispute.seller.disputeWarningCount !== undefined && (
+                        <p className="text-xs text-red-600">
+                          Aktuelle Warnungen: {dispute.seller.disputeWarningCount} / 3 | Verlorene
+                          Disputes: {dispute.seller.disputesLostCount || 0}
+                          {dispute.seller.disputeRestrictionLevel &&
+                            ` | Status: ${dispute.seller.disputeRestrictionLevel}`}
+                        </p>
+                      )}
+                      <label className="flex items-center">
+                        <input
+                          type="checkbox"
+                          checked={issueWarning}
+                          onChange={e => setIssueWarning(e.target.checked)}
+                          className="mr-2 h-4 w-4 rounded border-gray-300 text-red-600 focus:ring-red-500"
+                        />
+                        <span className="text-sm text-gray-700">
+                          Verwarnung an Verkäufer aussprechen
+                        </span>
+                      </label>
+                      {issueWarning && (
+                        <div>
+                          <label className="block text-sm font-medium text-gray-700">
+                            Verwarnungsgrund
+                          </label>
+                          <input
+                            type="text"
+                            value={warningReason}
+                            onChange={e => setWarningReason(e.target.value)}
+                            className="mt-1 w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                            placeholder="z.B. Artikel nicht wie beschrieben..."
+                          />
+                        </div>
+                      )}
                     </div>
 
                     <button

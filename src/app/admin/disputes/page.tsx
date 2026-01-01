@@ -2,7 +2,16 @@
 
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
-import { AlertTriangle, CheckCircle, Clock, Eye, Filter, RefreshCw } from 'lucide-react'
+import {
+  AlertTriangle,
+  CheckCircle,
+  Clock,
+  Eye,
+  Filter,
+  Flame,
+  RefreshCw,
+  Search,
+} from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -48,6 +57,8 @@ interface Dispute {
 interface Stats {
   total: number
   pending: number
+  escalated: number
+  underReview: number
   resolved: number
   rejected: number
   closed: number
@@ -58,8 +69,18 @@ export default function AdminDisputesPage() {
   const router = useRouter()
   const [loading, setLoading] = useState(true)
   const [disputes, setDisputes] = useState<Dispute[]>([])
-  const [stats, setStats] = useState<Stats>({ total: 0, pending: 0, resolved: 0, rejected: 0, closed: 0 })
-  const [filter, setFilter] = useState<'all' | 'pending' | 'resolved' | 'closed'>('all')
+  const [stats, setStats] = useState<Stats>({
+    total: 0,
+    pending: 0,
+    escalated: 0,
+    underReview: 0,
+    resolved: 0,
+    rejected: 0,
+    closed: 0,
+  })
+  const [filter, setFilter] = useState<
+    'all' | 'pending' | 'escalated' | 'under_review' | 'resolved' | 'closed'
+  >('all')
   const [typeFilter, setTypeFilter] = useState<'all' | 'dispute' | 'cancellation'>('all')
   const [sortBy, setSortBy] = useState<'openedAt' | 'resolvedAt'>('openedAt')
   const [sortOrder, setSortOrder] = useState<'asc' | 'desc'>('desc')
@@ -96,18 +117,44 @@ export default function AdminDisputesPage() {
       if (res.ok) {
         const data = await res.json()
         setDisputes(data.disputes || [])
-        setStats(data.stats || { total: 0, pending: 0, resolved: 0, rejected: 0, closed: 0 })
+        setStats(
+          data.stats || {
+            total: 0,
+            pending: 0,
+            escalated: 0,
+            underReview: 0,
+            resolved: 0,
+            rejected: 0,
+            closed: 0,
+          }
+        )
       } else {
         // Nur Fehler loggen, keine Toast-Benachrichtigung
         const errorData = await res.json().catch(() => ({ message: 'Unknown error' }))
         console.error('Error loading disputes:', errorData)
         setDisputes([])
-        setStats({ total: 0, pending: 0, resolved: 0, rejected: 0, closed: 0 })
+        setStats({
+          total: 0,
+          pending: 0,
+          escalated: 0,
+          underReview: 0,
+          resolved: 0,
+          rejected: 0,
+          closed: 0,
+        })
       }
     } catch (error) {
       console.error('Error loading disputes:', error)
       setDisputes([])
-      setStats({ total: 0, pending: 0, resolved: 0, rejected: 0, closed: 0 })
+      setStats({
+        total: 0,
+        pending: 0,
+        escalated: 0,
+        underReview: 0,
+        resolved: 0,
+        rejected: 0,
+        closed: 0,
+      })
     } finally {
       setLoading(false)
     }
@@ -120,6 +167,20 @@ export default function AdminDisputesPage() {
           <span className="inline-flex items-center rounded-full bg-yellow-100 px-2.5 py-0.5 text-xs font-medium text-yellow-800">
             <Clock className="mr-1 h-3 w-3" />
             Offen
+          </span>
+        )
+      case 'escalated':
+        return (
+          <span className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800">
+            <Flame className="mr-1 h-3 w-3" />
+            Eskaliert
+          </span>
+        )
+      case 'under_review':
+        return (
+          <span className="inline-flex items-center rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-800">
+            <Search className="mr-1 h-3 w-3" />
+            In Prüfung
           </span>
         )
       case 'resolved':
@@ -221,7 +282,7 @@ export default function AdminDisputesPage() {
         </div>
 
         {/* Statistiken */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-4">
+        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-5">
           <div className="rounded-lg bg-white p-6 shadow">
             <div className="flex items-center justify-between">
               <div>
@@ -238,6 +299,15 @@ export default function AdminDisputesPage() {
                 <p className="mt-1 text-2xl font-bold text-yellow-600">{stats.pending}</p>
               </div>
               <Clock className="h-8 w-8 text-yellow-400" />
+            </div>
+          </div>
+          <div className="rounded-lg bg-white p-6 shadow">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-sm font-medium text-gray-600">Eskaliert</p>
+                <p className="mt-1 text-2xl font-bold text-orange-600">{stats.escalated}</p>
+              </div>
+              <Flame className="h-8 w-8 text-orange-400" />
             </div>
           </div>
           <div className="rounded-lg bg-white p-6 shadow">
@@ -319,6 +389,16 @@ export default function AdminDisputesPage() {
               }`}
             >
               Offen ({stats.pending})
+            </button>
+            <button
+              onClick={() => setFilter('escalated')}
+              className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                filter === 'escalated'
+                  ? 'bg-orange-600 text-white'
+                  : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+              }`}
+            >
+              🔥 Eskaliert ({stats.escalated})
             </button>
             <button
               onClick={() => setFilter('resolved')}
@@ -464,17 +544,25 @@ export default function AdminDisputesPage() {
                           (() => {
                             const deadline = new Date(dispute.disputeDeadline)
                             const now = new Date()
-                            const daysLeft = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+                            const daysLeft = Math.ceil(
+                              (deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)
+                            )
                             const isUrgent = daysLeft <= 3
                             const isOverdue = daysLeft < 0
                             return (
-                              <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
-                                isOverdue ? 'bg-red-100 text-red-800' :
-                                isUrgent ? 'bg-orange-100 text-orange-800' :
-                                'bg-blue-100 text-blue-800'
-                              }`}>
+                              <span
+                                className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+                                  isOverdue
+                                    ? 'bg-red-100 text-red-800'
+                                    : isUrgent
+                                      ? 'bg-orange-100 text-orange-800'
+                                      : 'bg-blue-100 text-blue-800'
+                                }`}
+                              >
                                 <Clock className="h-3 w-3" />
-                                {isOverdue ? 'Überfällig' : `${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''}`}
+                                {isOverdue
+                                  ? 'Überfällig'
+                                  : `${daysLeft} Tag${daysLeft !== 1 ? 'e' : ''}`}
                               </span>
                             )
                           })()

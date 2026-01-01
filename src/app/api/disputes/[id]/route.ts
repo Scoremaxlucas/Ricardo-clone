@@ -33,6 +33,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         disputeResolvedAt: true,
         disputeResolvedBy: true,
         disputeAttachments: true,
+        // Ricardo-Style Fields
+        sellerResponseDeadline: true,
+        sellerRespondedAt: true,
+        disputeEscalationLevel: true,
+        disputeEscalationReason: true,
+        disputeRefundRequired: true,
+        disputeRefundAmount: true,
+        disputeRefundDeadline: true,
+        disputeRefundCompletedAt: true,
         watch: {
           select: {
             id: true,
@@ -117,10 +126,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Format response
     const buyerName =
-      purchase.buyer.nickname ||
-      purchase.buyer.firstName ||
-      purchase.buyer.name ||
-      'Käufer'
+      purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Käufer'
 
     const sellerName =
       purchase.watch.seller.nickname ||
@@ -165,6 +171,15 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         createdAt: purchase.createdAt.toISOString(),
         paymentProtectionEnabled: purchase.watch.paymentProtectionEnabled,
         userRole: isBuyer ? 'buyer' : 'seller',
+        // Ricardo-Style Fields
+        sellerResponseDeadline: purchase.sellerResponseDeadline?.toISOString() || null,
+        sellerRespondedAt: purchase.sellerRespondedAt?.toISOString() || null,
+        disputeEscalationLevel: purchase.disputeEscalationLevel || 0,
+        disputeEscalationReason: purchase.disputeEscalationReason || null,
+        disputeRefundRequired: purchase.disputeRefundRequired || false,
+        disputeRefundAmount: purchase.disputeRefundAmount || null,
+        disputeRefundDeadline: purchase.disputeRefundDeadline?.toISOString() || null,
+        disputeRefundCompletedAt: purchase.disputeRefundCompletedAt?.toISOString() || null,
       },
     })
   } catch (error: any) {

@@ -5,11 +5,21 @@ import { addStatusHistory } from '@/lib/status-history'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
-// === DISPUTE CONFIGURATION ===
+// === DISPUTE CONFIGURATION (Ricardo-Style) ===
 const DISPUTE_CONFIG = {
   // Fristen
   OPEN_DEADLINE_DAYS: 30, // Dispute kann bis 30 Tage nach Kaufabschluss eröffnet werden
   RESOLUTION_DEADLINE_DAYS: 14, // Admin hat 14 Tage zur Lösung
+  SELLER_RESPONSE_DEADLINE_DAYS: 7, // Verkäufer hat 7 Tage zur Stellungnahme
+  REFUND_DEADLINE_DAYS: 14, // Verkäufer hat 14 Tage für Rückerstattung
+
+  // Eskalations-Stufen
+  ESCALATION_LEVELS: {
+    NONE: 0,
+    FIRST_WARNING: 1, // Nach Ablauf der Verkäufer-Antwortfrist
+    URGENT: 2, // Kritischer Fall oder wiederholtes Versäumnis
+    CRITICAL: 3, // Betrugsverdacht oder systematisches Fehlverhalten
+  },
 
   // Reminder
   REMINDER_AFTER_DAYS: [3, 7, 10], // Erinnerungen nach X Tagen
@@ -30,6 +40,10 @@ const DISPUTE_CONFIG = {
     'buyer_not_paying',
     'other',
   ],
+
+  // Warnungen & Konsequenzen
+  MAX_WARNINGS_BEFORE_RESTRICTION: 3,
+  MAX_DISPUTES_LOST_BEFORE_REVIEW: 5,
 }
 
 /**
@@ -156,12 +170,22 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
-    // Berechne Deadline für Dispute-Lösung
-    const disputeDeadline = new Date()
+    // Berechne Deadlines (Ricardo-Style)
+    const now = new Date()
+
+    // Admin-Deadline: 14 Tage zur Lösung
+    const disputeDeadline = new Date(now)
     disputeDeadline.setDate(disputeDeadline.getDate() + DISPUTE_CONFIG.RESOLUTION_DEADLINE_DAYS)
 
-    // Erstelle Dispute mit allen neuen Feldern
-    const now = new Date()
+    // Verkäufer-Antwortfrist: 7 Tage zur Stellungnahme (nur für Käufer-initiierte Disputes)
+    const sellerResponseDeadline = isBuyer ? new Date(now) : null
+    if (sellerResponseDeadline) {
+      sellerResponseDeadline.setDate(
+        sellerResponseDeadline.getDate() + DISPUTE_CONFIG.SELLER_RESPONSE_DEADLINE_DAYS
+      )
+    }
+
+    // Erstelle Dispute mit allen Ricardo-Style Feldern
     const updatedPurchase = await prisma.purchase.update({
       where: { id },
       data: {
@@ -169,13 +193,15 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         disputeStatus: 'pending',
         disputeReason: reason,
         disputeDescription: description,
-        // disputeInitiatedBy TEMPORÄR DEAKTIVIERT - Migration noch nicht ausgeführt
-        // WICHTIG: Wieder aktivieren nach Migration: npx prisma migrate deploy
-        // ...(initiatorRole && { disputeInitiatedBy: initiatorRole }),
+        disputeInitiatedBy: initiatorRole,
         disputeDeadline: disputeDeadline,
         disputeFrozenAt: now, // Kaufprozess einfrieren
         disputeAttachments: attachments ? JSON.stringify(attachments) : null,
         disputeReminderCount: 0,
+        // Ricardo-Style: Verkäufer-Antwortfrist
+        ...(sellerResponseDeadline && { sellerResponseDeadline }),
+        // Eskalation auf 0 setzen
+        disputeEscalationLevel: 0,
       },
     })
 
@@ -214,14 +240,21 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       opener.nickname || opener.firstName || opener.name || (isBuyer ? 'Käufer' : 'Verkäufer')
     const otherPartyLink = isBuyer ? `/my-watches/selling/sold` : `/my-watches/buying/purchased`
 
-    // Benachrichtigung an die andere Partei
+    // === RICARDO-STYLE: Verbesserte Benachrichtigung mit Antwortfrist ===
+    const responseDeadlineText = sellerResponseDeadline
+      ? `\n\n⏰ WICHTIG: Sie haben bis zum ${sellerResponseDeadline.toLocaleDateString('de-CH')} Zeit, Stellung zu nehmen. Ohne Ihre Stellungnahme wird der Fall automatisch eskaliert.`
+      : ''
+
+    // Benachrichtigung an die andere Partei (mit Antwortfrist)
     try {
       await prisma.notification.create({
         data: {
           userId: otherParty.id,
           type: 'PURCHASE',
-          title: '⚠️ Dispute eröffnet',
-          message: `${openerName} hat einen Dispute für "${purchase.watch.title}" eröffnet. Grund: ${getReasonLabel(reason)}. Bitte nehmen Sie Stellung.`,
+          title: isBuyer
+            ? '🚨 Dispute eröffnet - Stellungnahme erforderlich'
+            : '⚠️ Dispute eröffnet',
+          message: `${openerName} hat einen Dispute für "${purchase.watch.title}" eröffnet. Grund: ${getReasonLabel(reason)}.${isBuyer ? ` Antwortfrist: ${sellerResponseDeadline?.toLocaleDateString('de-CH') || 'Keine'}` : ' Bitte warten Sie auf die Bearbeitung.'}`,
           link: otherPartyLink,
           watchId: purchase.watchId,
         },
@@ -230,16 +263,18 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       console.error('[dispute] Fehler beim Erstellen der Benachrichtigung:', error)
     }
 
-    // E-Mail-Benachrichtigung an andere Partei
+    // E-Mail-Benachrichtigung an andere Partei (Ricardo-Style mit Deadline)
     try {
-      const { getDisputeOpenedEmail } = await import('@/lib/email')
-      const { subject, html, text } = getDisputeOpenedEmail(
+      const { getDisputeOpenedEmailRicardoStyle } = await import('@/lib/email')
+      const { subject, html, text } = getDisputeOpenedEmailRicardoStyle(
         otherParty.nickname || otherParty.firstName || otherParty.name || 'Nutzer',
         openerName,
         purchase.watch.title,
         reason,
         description,
-        isBuyer ? 'seller' : 'buyer'
+        isBuyer ? 'seller' : 'buyer',
+        sellerResponseDeadline,
+        purchase.id
       )
 
       await sendEmail({
@@ -249,7 +284,30 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         text,
       })
     } catch (emailError) {
-      console.error('[dispute] Fehler beim Senden der Dispute-E-Mail:', emailError)
+      // Fallback auf alte Email-Funktion wenn neue nicht existiert
+      console.error(
+        '[dispute] Fehler beim Senden der Dispute-E-Mail (Ricardo-Style), versuche Fallback:',
+        emailError
+      )
+      try {
+        const { getDisputeOpenedEmail } = await import('@/lib/email')
+        const { subject, html, text } = getDisputeOpenedEmail(
+          otherParty.nickname || otherParty.firstName || otherParty.name || 'Nutzer',
+          openerName,
+          purchase.watch.title,
+          reason,
+          description,
+          isBuyer ? 'seller' : 'buyer'
+        )
+        await sendEmail({
+          to: otherParty.email,
+          subject,
+          html,
+          text,
+        })
+      } catch (fallbackError) {
+        console.error('[dispute] Auch Fallback-Email fehlgeschlagen:', fallbackError)
+      }
     }
 
     // Benachrichtigung an Admins mit höherer Priorität

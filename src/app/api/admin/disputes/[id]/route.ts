@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * GET: Dispute-Details abrufen (nur für Admins)
@@ -67,6 +67,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 postalCode: true,
                 city: true,
                 paymentMethods: true,
+                // Ricardo-Style: Seller warning info
+                disputeWarningCount: true,
+                disputesLostCount: true,
+                disputeRestrictionLevel: true,
               },
             },
           },
@@ -197,6 +201,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               ? `${purchase.watch.seller.street} ${purchase.watch.seller.streetNumber}, ${purchase.watch.seller.postalCode} ${purchase.watch.seller.city}`
               : null,
           paymentMethods: sellerPaymentMethods,
+          // Ricardo-Style: Seller warning info
+          disputeWarningCount: purchase.watch.seller.disputeWarningCount || 0,
+          disputesLostCount: purchase.watch.seller.disputesLostCount || 0,
+          disputeRestrictionLevel: purchase.watch.seller.disputeRestrictionLevel || null,
         },
         disputeReason: reason,
         disputeDescription: description,
@@ -209,6 +217,21 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         disputeReminderSentAt: purchase.disputeReminderSentAt?.toISOString() || null,
         disputeResolvedAt: resolvedAt?.toISOString() || null,
         disputeResolvedBy: resolvedBy || null,
+        // Ricardo-Style Fields
+        disputeInitiatedBy: purchase.disputeInitiatedBy || null,
+        sellerResponseDeadline: purchase.sellerResponseDeadline?.toISOString() || null,
+        sellerRespondedAt: purchase.sellerRespondedAt?.toISOString() || null,
+        sellerResponseText: purchase.sellerResponseText || null,
+        disputeEscalatedAt: purchase.disputeEscalatedAt?.toISOString() || null,
+        disputeEscalationLevel: purchase.disputeEscalationLevel || 0,
+        disputeEscalationReason: purchase.disputeEscalationReason || null,
+        disputeRefundRequired: purchase.disputeRefundRequired || false,
+        disputeRefundAmount: purchase.disputeRefundAmount || null,
+        disputeRefundDeadline: purchase.disputeRefundDeadline?.toISOString() || null,
+        disputeRefundCompletedAt: purchase.disputeRefundCompletedAt?.toISOString() || null,
+        sellerWarningIssued: purchase.sellerWarningIssued || false,
+        sellerWarningReason: purchase.sellerWarningReason || null,
+        stripePaymentIntentId: purchase.stripePaymentIntentId || null,
         type: isCancellation ? 'cancellation' : 'dispute',
         purchaseStatus: purchase.status,
         purchasePrice: purchase.price,

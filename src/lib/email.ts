@@ -1950,6 +1950,511 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   return { subject, html, text }
 }
 
+// === RICARDO-STYLE: Verbesserte Dispute-Email mit Antwortfrist ===
+export function getDisputeOpenedEmailRicardoStyle(
+  userName: string,
+  openerName: string,
+  productTitle: string,
+  reason: string,
+  description: string,
+  role: 'buyer' | 'seller',
+  responseDeadline: Date | null,
+  purchaseId: string
+) {
+  const isSeller = role === 'seller'
+  const subject = isSeller
+    ? `🚨 DRINGEND: Dispute eröffnet - Stellungnahme erforderlich`
+    : `⚠️ Dispute eröffnet - ${productTitle}`
+
+  const roleText = isSeller
+    ? 'Der Käufer hat einen Dispute eröffnet'
+    : 'Der Verkäufer hat einen Dispute eröffnet'
+
+  const reasonLabels: Record<string, string> = {
+    item_not_received: 'Artikel nicht erhalten',
+    item_damaged: 'Artikel beschädigt',
+    item_wrong: 'Falscher Artikel geliefert',
+    item_not_as_described: 'Artikel entspricht nicht der Beschreibung',
+    payment_not_confirmed: 'Zahlung nicht bestätigt',
+    payment_not_received: 'Zahlung nicht erhalten',
+    seller_not_responding: 'Verkäufer antwortet nicht',
+    buyer_not_responding: 'Käufer antwortet nicht',
+    buyer_not_paying: 'Käufer zahlt nicht',
+    other: 'Sonstiges',
+  }
+  const reasonLabel = reasonLabels[reason] || reason
+
+  const deadlineDate = responseDeadline
+    ? responseDeadline.toLocaleDateString('de-CH', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+      })
+    : null
+
+  const urgentBox =
+    isSeller && deadlineDate
+      ? `
+      <div style="background: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px;">
+        <h3 style="color: #b45309; margin: 0 0 10px 0;">⏰ Ihre Stellungnahme ist erforderlich</h3>
+        <p style="margin: 0; color: #92400e;">
+          <strong>Frist:</strong> ${deadlineDate}<br/>
+          Bitte nehmen Sie bis zu diesem Datum Stellung. Ohne Ihre Antwort wird der Fall automatisch eskaliert
+          und möglicherweise zugunsten des Käufers entschieden.
+        </p>
+      </div>
+    `
+      : ''
+
+  const actionLink = isSeller
+    ? `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${purchaseId}`
+    : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/buying/purchased`
+
+  const actionText = isSeller ? 'Jetzt Stellung nehmen' : 'Details ansehen'
+
+  const consequencesBox = isSeller
+    ? `
+      <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <strong>⚠️ Mögliche Konsequenzen bei Nichtreaktion:</strong>
+        <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #991b1b;">
+          <li>Automatische Eskalation des Falls</li>
+          <li>Entscheidung möglicherweise zugunsten des Käufers</li>
+          <li>Verwarnung auf Ihrem Konto</li>
+          <li>Bei wiederholtem Verhalten: Einschränkungen oder Sperrung</li>
+        </ul>
+      </div>
+    `
+    : ''
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: ${isSeller ? '#dc2626' : '#f59e0b'}; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .warning { background: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px; }
+    .info-box { background: #f3f4f6; padding: 15px; margin: 15px 0; border-radius: 8px; }
+    .button { display: inline-block; background: #0f766e; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: 600; font-size: 16px; }
+    .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>${isSeller ? '🚨 Dringend: Stellungnahme erforderlich' : '⚠️ Dispute eröffnet'}</h1>
+    </div>
+    <div class="content">
+      <p>Hallo ${userName},</p>
+
+      <div class="warning">
+        <strong>Wichtig:</strong> ${roleText} für den Artikel "<strong>${productTitle}</strong>".
+      </div>
+
+      ${urgentBox}
+
+      <div class="info-box">
+        <p style="margin: 0;"><strong>Grund des Disputes:</strong> ${reasonLabel}</p>
+        <p style="margin: 10px 0 0 0;"><strong>Beschreibung:</strong></p>
+        <p style="margin: 5px 0 0 0; padding: 10px; background: white; border-radius: 4px;">${description}</p>
+      </div>
+
+      ${consequencesBox}
+
+      <p style="margin-top: 20px;">
+        ${
+          isSeller
+            ? 'Bitte klicken Sie auf den Button unten, um zur Dispute-Seite zu gelangen und Ihre Stellungnahme abzugeben.'
+            : 'Ein Helvenda-Mitarbeiter wird sich um Ihren Fall kümmern und Sie über das Ergebnis informieren.'
+        }
+      </p>
+
+      <p style="text-align: center; margin-top: 30px;">
+        <a href="${actionLink}" class="button">
+          ${actionText} →
+        </a>
+      </p>
+
+      <p style="color: #6b7280; font-size: 14px; margin-top: 30px;">
+        Bei Fragen können Sie uns jederzeit über das Kontaktformular erreichen.
+      </p>
+    </div>
+    <div class="footer">
+      <p>Diese E-Mail wurde automatisch von Helvenda.ch gesendet.</p>
+      <p style="color: #9ca3af;">Dispute-ID: ${purchaseId}</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+${isSeller ? '🚨 DRINGEND: Dispute eröffnet - Stellungnahme erforderlich' : '⚠️ Dispute eröffnet'} - ${productTitle}
+
+Hallo ${userName},
+
+WICHTIG: ${roleText} für "${productTitle}".
+
+${
+  isSeller && deadlineDate
+    ? `⏰ IHRE STELLUNGNAHME IST ERFORDERLICH
+Frist: ${deadlineDate}
+Bitte nehmen Sie bis zu diesem Datum Stellung. Ohne Ihre Antwort wird der Fall automatisch eskaliert.
+
+`
+    : ''
+}Grund des Disputes: ${reasonLabel}
+Beschreibung: ${description}
+
+${
+  isSeller
+    ? `⚠️ Mögliche Konsequenzen bei Nichtreaktion:
+- Automatische Eskalation des Falls
+- Entscheidung möglicherweise zugunsten des Käufers
+- Verwarnung auf Ihrem Konto
+- Bei wiederholtem Verhalten: Einschränkungen oder Sperrung
+
+`
+    : ''
+}${actionText}: ${actionLink}
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+Dispute-ID: ${purchaseId}
+  `.trim()
+
+  return { subject, html, text }
+}
+
+// === RICARDO-STYLE: Email für Rückerstattungs-Anforderung ===
+export function getRefundRequiredEmail(
+  sellerName: string,
+  buyerName: string,
+  productTitle: string,
+  refundAmount: number,
+  refundDeadline: Date,
+  purchaseId: string,
+  adminNote?: string
+) {
+  const deadlineDate = refundDeadline.toLocaleDateString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
+
+  const subject = `🔔 Rückerstattung erforderlich - CHF ${refundAmount.toFixed(2)}`
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .amount-box { background: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center; }
+    .amount { font-size: 28px; font-weight: bold; color: #b45309; }
+    .deadline-box { background: #fee2e2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px; }
+    .button { display: inline-block; background: #0f766e; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: 600; }
+    .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>💰 Rückerstattung erforderlich</h1>
+    </div>
+    <div class="content">
+      <p>Hallo ${sellerName},</p>
+
+      <p>Nach Prüfung des Disputes für "<strong>${productTitle}</strong>" wurde entschieden, dass eine Rückerstattung an ${buyerName} erforderlich ist.</p>
+
+      <div class="amount-box">
+        <p style="margin: 0; color: #92400e;">Zu erstattender Betrag:</p>
+        <p class="amount">CHF ${refundAmount.toFixed(2)}</p>
+      </div>
+
+      <div class="deadline-box">
+        <strong>⏰ Frist für Rückerstattung: ${deadlineDate}</strong>
+        <p style="margin: 10px 0 0 0;">
+          Bitte erstatten Sie den Betrag bis zu diesem Datum. Bei Nichteinhaltung der Frist
+          können Maßnahmen gegen Ihr Konto ergriffen werden.
+        </p>
+      </div>
+
+      ${
+        adminNote
+          ? `
+      <div style="background: #f3f4f6; padding: 15px; margin: 15px 0; border-radius: 8px;">
+        <strong>Hinweis vom Admin:</strong>
+        <p style="margin: 5px 0 0 0;">${adminNote}</p>
+      </div>
+      `
+          : ''
+      }
+
+      <h3>So können Sie die Rückerstattung vornehmen:</h3>
+      <ol>
+        <li>Überweisen Sie den Betrag an den Käufer</li>
+        <li>Bestätigen Sie die Rückerstattung in Ihrem Helvenda-Konto</li>
+        <li>Laden Sie ggf. einen Beleg hoch</li>
+      </ol>
+
+      <p style="text-align: center; margin-top: 30px;">
+        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${purchaseId}" class="button">
+          Rückerstattung verwalten →
+        </a>
+      </p>
+
+      <div style="background: #fef2f2; border-left: 4px solid #dc2626; padding: 15px; margin: 20px 0; border-radius: 4px;">
+        <strong>⚠️ Bei Nichteinhaltung:</strong>
+        <ul style="margin: 10px 0 0 0; padding-left: 20px;">
+          <li>Verwarnung auf Ihrem Verkäuferkonto</li>
+          <li>Mögliche Einschränkung Ihrer Verkaufsaktivitäten</li>
+          <li>Bei wiederholtem Verstoß: Kontosperrung</li>
+        </ul>
+      </div>
+    </div>
+    <div class="footer">
+      <p>Diese E-Mail wurde automatisch von Helvenda.ch gesendet.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+💰 Rückerstattung erforderlich - CHF ${refundAmount.toFixed(2)}
+
+Hallo ${sellerName},
+
+Nach Prüfung des Disputes für "${productTitle}" wurde entschieden, dass eine Rückerstattung an ${buyerName} erforderlich ist.
+
+Zu erstattender Betrag: CHF ${refundAmount.toFixed(2)}
+
+⏰ FRIST: ${deadlineDate}
+Bitte erstatten Sie den Betrag bis zu diesem Datum.
+
+${adminNote ? `Hinweis vom Admin: ${adminNote}\n` : ''}
+So können Sie die Rückerstattung vornehmen:
+1. Überweisen Sie den Betrag an den Käufer
+2. Bestätigen Sie die Rückerstattung in Ihrem Helvenda-Konto
+3. Laden Sie ggf. einen Beleg hoch
+
+Rückerstattung verwalten: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${purchaseId}
+
+⚠️ Bei Nichteinhaltung:
+- Verwarnung auf Ihrem Verkäuferkonto
+- Mögliche Einschränkung Ihrer Verkaufsaktivitäten
+- Bei wiederholtem Verstoß: Kontosperrung
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
+// === RICARDO-STYLE: Email für Eskalation ===
+export function getDisputeEscalatedEmail(
+  userName: string,
+  productTitle: string,
+  escalationReason: string,
+  purchaseId: string,
+  role: 'buyer' | 'seller'
+) {
+  const isSeller = role === 'seller'
+  const subject = isSeller
+    ? `🚨 Dispute eskaliert - Dringende Aktion erforderlich`
+    : `ℹ️ Dispute eskaliert - ${productTitle}`
+
+  const escalationReasonLabels: Record<string, string> = {
+    no_seller_response: 'Keine Stellungnahme des Verkäufers',
+    deadline_missed: 'Frist überschritten',
+    repeated_issues: 'Wiederholte Probleme',
+    fraud_suspicion: 'Betrugsverdacht',
+  }
+  const reasonLabel = escalationReasonLabels[escalationReason] || escalationReason
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #7c2d12; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .warning { background: #fef2f2; border: 2px solid #dc2626; padding: 20px; margin: 20px 0; border-radius: 8px; }
+    .button { display: inline-block; background: #0f766e; color: #ffffff !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; margin: 20px 0; font-weight: 600; }
+    .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🚨 Dispute Eskaliert</h1>
+    </div>
+    <div class="content">
+      <p>Hallo ${userName},</p>
+
+      <div class="warning">
+        <strong>Der Dispute für "${productTitle}" wurde eskaliert.</strong>
+        <p style="margin: 10px 0 0 0;"><strong>Grund:</strong> ${reasonLabel}</p>
+      </div>
+
+      ${
+        isSeller
+          ? `
+      <p>
+        Da keine rechtzeitige Stellungnahme erfolgte, wird der Fall nun mit höherer Priorität bearbeitet.
+        <strong>Eine Entscheidung zugunsten des Käufers ist wahrscheinlich.</strong>
+      </p>
+
+      <p>Sie können immer noch eine Stellungnahme abgeben, aber die Zeit ist begrenzt.</p>
+      `
+          : `
+      <p>
+        Ihr Fall wird nun mit höherer Priorität bearbeitet. Ein Helvenda-Mitarbeiter wird sich
+        umgehend um Ihren Fall kümmern und eine Entscheidung treffen.
+      </p>
+      `
+      }
+
+      <p style="text-align: center; margin-top: 30px;">
+        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${purchaseId}" class="button">
+          Dispute ansehen →
+        </a>
+      </p>
+    </div>
+    <div class="footer">
+      <p>Diese E-Mail wurde automatisch von Helvenda.ch gesendet.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+🚨 Dispute Eskaliert - ${productTitle}
+
+Hallo ${userName},
+
+Der Dispute für "${productTitle}" wurde eskaliert.
+Grund: ${reasonLabel}
+
+${
+  isSeller
+    ? 'Da keine rechtzeitige Stellungnahme erfolgte, wird der Fall nun mit höherer Priorität bearbeitet. Eine Entscheidung zugunsten des Käufers ist wahrscheinlich.'
+    : 'Ihr Fall wird nun mit höherer Priorität bearbeitet. Ein Helvenda-Mitarbeiter wird sich umgehend um Ihren Fall kümmern.'
+}
+
+Dispute ansehen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${purchaseId}
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
+// === RICARDO-STYLE: Email für Verkäufer-Warnung ===
+export function getSellerWarningEmail(
+  sellerName: string,
+  warningCount: number,
+  reason: string,
+  productTitle: string,
+  purchaseId: string
+) {
+  const subject = `⚠️ Warnung #${warningCount} auf Ihrem Verkäuferkonto`
+  const maxWarnings = 3
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <style>
+    body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+    .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: #dc2626; color: white; padding: 20px; text-align: center; border-radius: 8px 8px 0 0; }
+    .content { background: #f9fafb; padding: 30px; border-radius: 0 0 8px 8px; }
+    .warning-count { background: #fef2f2; border: 2px solid #dc2626; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center; }
+    .count { font-size: 48px; font-weight: bold; color: #dc2626; }
+    .footer { text-align: center; color: #6b7280; font-size: 12px; margin-top: 30px; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>⚠️ Verwarnung</h1>
+    </div>
+    <div class="content">
+      <p>Hallo ${sellerName},</p>
+
+      <p>Aufgrund des folgenden Vorfalls wurde eine Warnung auf Ihrem Verkäuferkonto vermerkt:</p>
+
+      <div style="background: #f3f4f6; padding: 15px; margin: 15px 0; border-radius: 8px;">
+        <p style="margin: 0;"><strong>Artikel:</strong> ${productTitle}</p>
+        <p style="margin: 10px 0 0 0;"><strong>Grund:</strong> ${reason}</p>
+      </div>
+
+      <div class="warning-count">
+        <p style="margin: 0; color: #991b1b;">Warnungen auf Ihrem Konto:</p>
+        <p class="count">${warningCount} / ${maxWarnings}</p>
+        <p style="margin: 10px 0 0 0; font-size: 14px; color: #991b1b;">
+          Bei ${maxWarnings} Warnungen wird Ihr Konto eingeschränkt oder gesperrt.
+        </p>
+      </div>
+
+      <h3>Was das für Sie bedeutet:</h3>
+      <ul>
+        <li>Diese Warnung bleibt 12 Monate auf Ihrem Konto</li>
+        <li>Weitere Verstöße führen zu zusätzlichen Warnungen</li>
+        <li>Bei ${maxWarnings} Warnungen: Verkaufseinschränkungen oder Kontosperrung</li>
+      </ul>
+
+      <p>Wir empfehlen Ihnen, unsere Verkäuferrichtlinien erneut zu lesen und bei zukünftigen Transaktionen sorgfältiger vorzugehen.</p>
+    </div>
+    <div class="footer">
+      <p>Diese E-Mail wurde automatisch von Helvenda.ch gesendet.</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+⚠️ Verwarnung #${warningCount} auf Ihrem Verkäuferkonto
+
+Hallo ${sellerName},
+
+Aufgrund des folgenden Vorfalls wurde eine Warnung auf Ihrem Verkäuferkonto vermerkt:
+
+Artikel: ${productTitle}
+Grund: ${reason}
+
+Warnungen auf Ihrem Konto: ${warningCount} / ${maxWarnings}
+Bei ${maxWarnings} Warnungen wird Ihr Konto eingeschränkt oder gesperrt.
+
+Was das für Sie bedeutet:
+- Diese Warnung bleibt 12 Monate auf Ihrem Konto
+- Weitere Verstöße führen zu zusätzlichen Warnungen
+- Bei ${maxWarnings} Warnungen: Verkaufseinschränkungen oder Kontosperrung
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
 // Template für erste Zahlungsaufforderung (Tag 14)
 
 // Template für erste Erinnerung (Tag 30)
