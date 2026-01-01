@@ -788,18 +788,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
         <SheetContent onClose={() => setIsMobileMenuOpen(false)}>
           <div className="space-y-1 p-4">
-            {/* Kategorien */}
-            <button
-              onClick={() => {
-                setIsSidebarOpen(true)
-                setIsMobileMenuOpen(false)
-              }}
-              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-            >
-              <Grid3x3 className="h-5 w-5" />
-              <span className="font-medium">Kategorien</span>
-            </button>
-
             {/* Favoriten */}
             {session ? (
               <Link

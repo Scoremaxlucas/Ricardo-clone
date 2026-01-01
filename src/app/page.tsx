@@ -1,6 +1,5 @@
 import { FeaturedProductsServer } from '@/components/home/FeaturedProductsServer'
 import { HeroServer } from '@/components/home/HeroServer'
-import { PopularCategories } from '@/components/home/PopularCategories'
 import { HomeClient } from '@/components/home/HomeClient'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
@@ -12,11 +11,10 @@ import type { Metadata } from 'next'
  * Homepage - TTI & LCP Optimiert
  *
  * Homepage Struktur (nach UX Refactoring):
- * 1. Header (simplified, Categories dropdown)
+ * 1. Header (simplified, Categories in header like Ricardo)
  * 2. HeroServer (search-focused, sell secondary)
- * 3. PopularCategories (6-8 top categories)
- * 4. FeaturedProductsServer ("Neu eingestellt")
- * 5. HomeClient (below-the-fold lazy-loaded)
+ * 3. FeaturedProductsServer ("Neu eingestellt")
+ * 4. HomeClient (below-the-fold lazy-loaded)
  *
  * JavaScript Loading Priorität:
  * 1. Kritisch (0ms): Header, HeroServer (Text), FeaturedProducts
@@ -65,9 +63,6 @@ export default async function Home() {
           Search ist jetzt im Header (Ricardo-Style)
         */}
         <HeroServer title="Finden Sie lokale Deals in der Schweiz" />
-
-        {/* Beliebte Kategorien */}
-        <PopularCategories />
 
         {/* Featured Products - Server-Side gerendert */}
         <FeaturedProductsServer initialProducts={featuredProducts} />
