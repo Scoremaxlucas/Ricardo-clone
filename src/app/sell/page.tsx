@@ -1029,8 +1029,8 @@ function SellPageContent() {
     return null
   }
 
-  // Checking verification
-  if (isCheckingVerification) {
+  // Checking verification - show loading only if we're still checking
+  if (isCheckingVerification || isVerified === null) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -1046,9 +1046,10 @@ function SellPageContent() {
   }
 
   // Not verified - block access to selling
+  // Only show verification screen if explicitly not verified (false, not null)
   // Use single source of truth: canSell logic
   const userCanSell = isVerified === true
-  if (!userCanSell && isCheckingVerification === false) {
+  if (isVerified === false) {
     const returnUrl = encodeURIComponent('/sell')
     return (
       <div className="min-h-screen bg-gray-50">
