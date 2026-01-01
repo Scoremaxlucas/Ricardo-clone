@@ -238,6 +238,24 @@ function SellPageContent() {
     return completed
   }
 
+  // Scroll to top helper
+  const scrollToTop = useCallback(() => {
+    // Use setTimeout to ensure DOM has updated after step change
+    setTimeout(() => {
+      // Try scrolling wizard container first
+      if (wizardContainerRef.current) {
+        wizardContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
+      }
+      // Always scroll window to top as well
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      // Also try scrolling the main container if it exists
+      const mainContainer = document.querySelector('main') || document.body
+      if (mainContainer) {
+        mainContainer.scrollTo?.({ top: 0, behavior: 'smooth' })
+      }
+    }, 100)
+  }, [])
+
   // Navigation
   const goToStep = useCallback(
     (step: number, skipValidation: boolean = false) => {
@@ -247,6 +265,7 @@ function SellPageContent() {
       if (clampedStep < currentStep) {
         setCurrentStep(clampedStep)
         router.push(`/sell?step=${clampedStep}`, { scroll: false })
+        scrollToTop()
         return
       }
 
@@ -266,13 +285,15 @@ function SellPageContent() {
       if (clampedStep > maxAllowed) {
         setCurrentStep(maxAllowed)
         router.push(`/sell?step=${maxAllowed}`, { scroll: false })
+        scrollToTop()
         return
       }
 
       setCurrentStep(clampedStep)
       router.push(`/sell?step=${clampedStep}`, { scroll: false })
+      scrollToTop()
     },
-    [currentStep, router, selectedCategory, formData]
+    [currentStep, router, selectedCategory, formData, scrollToTop]
   )
 
   const nextStep = () => {
@@ -348,30 +369,32 @@ function SellPageContent() {
     currentDraftId,
   ])
 
-  // Scroll to top and focus heading when step changes
+  // Scroll to top and focus heading when step changes (backup for direct URL navigation)
   useEffect(() => {
-    const scrollToStepTop = () => {
+    // Use a longer timeout to ensure DOM has fully rendered
+    const timeoutId = setTimeout(() => {
       // Try scrolling wizard container first
       if (wizardContainerRef.current) {
         wizardContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
-      } else {
-        // Fallback to window scroll
-        window.scrollTo({ top: 0, behavior: 'smooth' })
       }
-    }
+      // Always scroll window to top
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+      // Also try scrolling the main container if it exists
+      const mainContainer = document.querySelector('main') || document.body
+      if (mainContainer) {
+        mainContainer.scrollTo?.({ top: 0, behavior: 'smooth' })
+      }
 
-    // Focus heading after scroll (check global ref set by StepReviewPublish)
-    const focusHeading = () => {
+      // Focus heading after scroll (check global ref set by StepReviewPublish)
       requestAnimationFrame(() => {
         const headingRef = (window as any).stepHeadingRef
         if (headingRef) {
           headingRef.focus()
         }
       })
-    }
+    }, 150)
 
-    scrollToStepTop()
-    focusHeading()
+    return () => clearTimeout(timeoutId)
   }, [currentStep])
 
   // Restore draft on mount - Try server first, fallback to localStorage
