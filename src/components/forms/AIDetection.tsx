@@ -5165,8 +5165,8 @@ export function AIDetection({
             </button>
           </div>
 
-          {/* Beispiele */}
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
+          {/* Beispiele - Hidden on mobile for simplicity */}
+          <div className="hidden rounded-lg border border-blue-200 bg-blue-50 p-4 sm:block">
             <p className="mb-2 text-sm font-medium text-blue-900">Beispiel-Eingaben:</p>
             <div className="grid grid-cols-2 gap-2 text-sm text-blue-800">
               <div>
