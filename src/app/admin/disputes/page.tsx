@@ -430,6 +430,8 @@ export default function AdminDisputesPage() {
                   setSortOrder(order as 'asc' | 'desc')
                 }}
                 className="rounded-md border border-gray-300 px-3 py-2 text-sm"
+                aria-label="Sortierung auswählen"
+                title="Sortierung auswählen"
               >
                 <option value="openedAt-desc">Neueste zuerst</option>
                 <option value="openedAt-asc">Älteste zuerst</option>
