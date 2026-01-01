@@ -889,6 +889,9 @@ function SellPageContent() {
     setIsLoading(true)
     setError('')
     setSuccess('')
+    
+    // Scroll to top to show loading overlay
+    window.scrollTo({ top: 0, behavior: 'smooth' })
 
     // Final validation
     for (let i = 0; i < WIZARD_STEPS.length - 1; i++) {
@@ -1281,6 +1284,30 @@ function SellPageContent() {
           />
         </form>
       </div>
+
+      {/* Full-screen loading overlay when publishing */}
+      {isLoading && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+          <div className="mx-4 max-w-md rounded-2xl bg-white p-8 shadow-2xl">
+            <div className="flex flex-col items-center gap-4 text-center">
+              <Loader2 className="h-12 w-12 animate-spin text-primary-600" />
+              <div>
+                <h3 className="mb-2 text-xl font-bold text-gray-900">
+                  Artikel wird veröffentlicht...
+                </h3>
+                <p className="text-sm text-gray-600">
+                  Bitte warten Sie, während wir Ihre Bilder hochladen und den Artikel erstellen.
+                </p>
+              </div>
+              <div className="mt-2 w-full max-w-xs">
+                <div className="h-2 overflow-hidden rounded-full bg-gray-200">
+                  <div className="h-full animate-pulse bg-gradient-to-r from-primary-500 to-primary-600" style={{ width: '60%' }} />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Profile Completion Gate */}
       <ProfileCompletionGate
