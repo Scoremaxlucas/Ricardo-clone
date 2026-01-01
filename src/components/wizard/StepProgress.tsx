@@ -265,14 +265,6 @@ export function WizardFooter({
           </div>
         </div>
       </div>
-
-      {/* Mobile disabled reason */}
-      {!canProceed && disabledReason && (
-        <div className="mt-3 flex items-center justify-center gap-2 text-center text-sm text-red-600 sm:hidden">
-          <AlertCircle className="h-4 w-4" />
-          <span>{disabledReason}</span>
-        </div>
-      )}
     </div>
   )
 }
