@@ -54,16 +54,16 @@ export function PaymentModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl">
-        <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
-          <h2 className="text-xl font-bold text-gray-900">Zahlungsinformationen</h2>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 overflow-y-auto">
+      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl my-4">
+        <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white px-4 sm:px-6 py-4">
+          <h2 className="text-lg sm:text-xl font-bold text-gray-900 truncate pr-2">Zahlungsinformationen</h2>
           <button onClick={onClose} className="text-gray-400 transition-colors hover:text-gray-600">
             <X className="h-6 w-6" />
           </button>
         </div>
 
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="mb-4 text-sm text-gray-600">
             Für: <span className="font-semibold text-gray-900">{watchTitle}</span>
           </div>

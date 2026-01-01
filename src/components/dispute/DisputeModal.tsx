@@ -145,13 +145,13 @@ export function DisputeModal({
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="w-full max-w-lg rounded-lg bg-white shadow-xl">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4 overflow-y-auto">
+      <div className="w-full max-w-lg rounded-lg bg-white shadow-xl my-4 overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <div className="flex items-center gap-2">
-            <AlertTriangle className="h-5 w-5 text-orange-500" />
-            <h2 className="text-lg font-bold text-gray-900">Problem melden</h2>
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 sm:px-6 py-4">
+          <div className="flex items-center gap-2 min-w-0">
+            <AlertTriangle className="h-5 w-5 text-orange-500 flex-shrink-0" />
+            <h2 className="text-base sm:text-lg font-bold text-gray-900 truncate">Problem melden</h2>
           </div>
           <button
             onClick={onClose}
@@ -163,7 +163,7 @@ export function DisputeModal({
         </div>
 
         {/* Content */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6 overflow-y-auto max-h-[calc(100vh-200px)]">
           <div className="mb-4 text-sm text-gray-600">
             Artikel: <span className="font-semibold text-gray-900">{watchTitle}</span>
           </div>

@@ -268,32 +268,33 @@ export default function NotificationsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <div className="mx-auto max-w-4xl px-4 py-8">
-        <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+      <div className="mx-auto max-w-4xl px-4 py-4 sm:px-6 sm:py-8">
+        <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
           {/* Header */}
-          <div className="border-b border-gray-200 p-6">
-            <div className="mb-4 flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <Bell className="h-6 w-6 text-primary-600" />
-                <h1 className="text-2xl font-bold text-gray-900">{t.notifications.title}</h1>
+          <div className="border-b border-gray-200 p-4 sm:p-6">
+            <div className="mb-4 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+              <div className="flex items-center gap-3 min-w-0">
+                <Bell className="h-6 w-6 text-primary-600 flex-shrink-0" />
+                <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{t.notifications.title}</h1>
               </div>
 
               {notifications.some(n => !n.isRead) && (
                 <button
                   onClick={markAllAsRead}
-                  className="flex items-center gap-2 rounded-md px-4 py-2 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50"
+                  className="flex items-center justify-center gap-2 rounded-md px-3 py-2 text-xs sm:text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 whitespace-nowrap flex-shrink-0 self-start sm:self-auto"
                 >
-                  <CheckCheck className="h-4 w-4" />
-                  {t.notifications.markAllAsRead}
+                  <CheckCheck className="h-4 w-4 flex-shrink-0" />
+                  <span className="hidden sm:inline">{t.notifications.markAllAsRead}</span>
+                  <span className="sm:hidden">Alle gelesen</span>
                 </button>
               )}
             </div>
 
             {/* Filter Tabs */}
-            <div className="flex gap-2">
+            <div className="flex gap-2 overflow-x-auto -mx-4 sm:mx-0 px-4 sm:px-0 pb-1">
               <button
                 onClick={() => setFilter('all')}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-md px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                   filter === 'all'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -303,7 +304,7 @@ export default function NotificationsPage() {
               </button>
               <button
                 onClick={() => setFilter('unread')}
-                className={`rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                className={`rounded-md px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
                   filter === 'unread'
                     ? 'bg-primary-600 text-white'
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
@@ -330,20 +331,20 @@ export default function NotificationsPage() {
               filteredNotifications.map(notification => (
                 <div
                   key={notification.id}
-                  className={`p-4 transition-colors hover:bg-gray-50 ${
+                  className={`p-3 sm:p-4 transition-colors hover:bg-gray-50 ${
                     !notification.isRead ? 'bg-blue-50 hover:bg-blue-100' : ''
                   }`}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-3 sm:gap-4">
                     <div className="mt-1 flex-shrink-0">{getIcon(notification.type)}</div>
 
-                    <div className="min-w-0 flex-1">
+                    <div className="min-w-0 flex-1 overflow-hidden">
                       <div className="flex items-start justify-between gap-2">
-                        <div className="flex-1">
-                          <h3 className="mb-1 text-sm font-semibold text-gray-900">
+                        <div className="min-w-0 flex-1">
+                          <h3 className="mb-1 text-sm font-semibold text-gray-900 break-words">
                             {notification.title}
                           </h3>
-                          <p className="mb-2 text-sm text-gray-600">{notification.message}</p>
+                          <p className="mb-2 text-sm text-gray-600 break-words">{notification.message}</p>
                           <div className="flex items-center gap-4 text-xs text-gray-500">
                             <div className="flex items-center gap-1">
                               <Clock className="h-3 w-3" />

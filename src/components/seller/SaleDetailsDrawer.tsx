@@ -192,10 +192,10 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
       />
 
       {/* Drawer */}
-      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col bg-white shadow-2xl">
+      <div className="fixed inset-y-0 right-0 z-50 flex w-full max-w-lg flex-col bg-white shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Verkaufsdetails</h2>
+        <div className="flex items-center justify-between border-b border-gray-200 px-4 sm:px-6 py-4">
+          <h2 className="text-base sm:text-lg font-semibold text-gray-900 truncate pr-2">Verkaufsdetails</h2>
           <button
             onClick={onClose}
             className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
@@ -580,7 +580,7 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
 
         {/* Footer Actions */}
         {sale && (
-          <div className="border-t border-gray-200 p-4">
+          <div className="border-t border-gray-200 p-3 sm:p-4">
             <div className="flex flex-col gap-3">
               {/* Confirm payment button */}
               {!sale.paymentConfirmed && sale.paid && (

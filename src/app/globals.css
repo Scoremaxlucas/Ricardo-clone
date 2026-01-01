@@ -76,6 +76,16 @@ html {
   /* Footer-Farbe für den Bereich unter dem Viewport - verhindert weißen Rand */
   background-color: #134e4a;
   height: 100%;
+  /* Prevent horizontal overflow on mobile */
+  overflow-x: hidden;
+  width: 100%;
+}
+
+body {
+  /* Prevent horizontal overflow on mobile */
+  overflow-x: hidden;
+  width: 100%;
+  max-width: 100vw;
 }
 
 /* Animationen */

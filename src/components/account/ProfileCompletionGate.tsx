@@ -122,20 +122,20 @@ export function ProfileCompletionGate({
         )}
 
         {/* Header */}
-        <div className="border-b border-gray-200 p-6">
+        <div className="border-b border-gray-200 p-4 sm:p-6">
           <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
               <AlertCircle className="h-5 w-5 text-amber-600" />
             </div>
-            <div className="flex-1">
-              <h2 className="text-lg font-semibold text-gray-900">{contextInfo.title}</h2>
-              <p className="mt-1 text-sm text-gray-600">{contextInfo.description}</p>
+            <div className="flex-1 min-w-0">
+              <h2 className="text-base sm:text-lg font-semibold text-gray-900 break-words">{contextInfo.title}</h2>
+              <p className="mt-1 text-sm text-gray-600 break-words">{contextInfo.description}</p>
             </div>
           </div>
         </div>
 
         {/* Missing fields list */}
-        <div className="p-6">
+        <div className="p-4 sm:p-6">
           <div className="mb-4">
             <p className="mb-3 text-sm font-medium text-gray-700">Fehlende Angaben:</p>
             <ul className="space-y-2">
