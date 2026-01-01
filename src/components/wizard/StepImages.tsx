@@ -293,12 +293,12 @@ export function StepImages({
   const hasAIDetectedImage = formData.images.length > 0
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <div className="text-center">
         <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
           Bilder hochladen
         </h2>
-        <p className="text-sm text-gray-600 md:text-base">
+        <p className="text-xs text-gray-600 sm:text-sm md:text-base">
           {isImagesAppendOnly
             ? 'Sie können nur zusätzliche Bilder hinzufügen. Bestehende Bilder können nicht gelöscht oder geändert werden.'
             : 'Fügen Sie bis zu 10 Bilder hinzu. Das erste Bild wird als Titelbild verwendet.'}
@@ -318,17 +318,16 @@ export function StepImages({
         </div>
       )}
 
-      {/* AI-detected image notice */}
+      {/* AI-detected image notice - Compact mobile version */}
       {hasAIDetectedImage && formData.images.length === 1 && (
-        <div className="flex items-center gap-3 rounded-lg border border-green-200 bg-green-50 p-4">
-          <div className="flex h-10 w-10 items-center justify-center rounded-full bg-green-100">
-            <Bot className="h-5 w-5 text-green-600" />
+        <div className="flex items-center gap-2 rounded-lg border border-green-200 bg-green-50 p-2.5 sm:gap-3 sm:p-4">
+          <div className="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-green-100 sm:h-10 sm:w-10">
+            <Bot className="h-4 w-4 text-green-600 sm:h-5 sm:w-5" />
           </div>
-          <div className="flex-1">
-            <p className="font-medium text-green-800">Bild von KI-Erkennung übernommen</p>
-            <p className="text-sm text-green-700">
-              Das Bild aus der Kategorie-Erkennung wurde automatisch als erstes Listing-Bild
-              gesetzt.
+          <div className="flex-1 min-w-0">
+            <p className="text-sm font-medium text-green-800 sm:text-base">Bild von KI übernommen</p>
+            <p className="hidden text-xs text-green-700 sm:block sm:text-sm">
+              Das Bild aus der Kategorie-Erkennung wurde automatisch als erstes Listing-Bild gesetzt.
             </p>
           </div>
         </div>

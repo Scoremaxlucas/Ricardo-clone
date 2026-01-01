@@ -4912,18 +4912,15 @@ export function AIDetection({
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="mb-8 text-center">
-        <div className="mb-4 inline-flex h-16 w-16 items-center justify-center rounded-full bg-primary-100">
-          <Sparkles className="h-8 w-8 text-primary-600" />
+      <div className="mb-6 text-center sm:mb-8">
+        <div className="mb-3 inline-flex h-12 w-12 items-center justify-center rounded-full bg-primary-100 sm:mb-4 sm:h-16 sm:w-16">
+          <Sparkles className="h-6 w-6 text-primary-600 sm:h-8 sm:w-8" />
         </div>
-        <h2 className="mb-2 text-2xl font-bold text-gray-900">Was möchten Sie verkaufen?</h2>
-        <p className="text-gray-600">
-          Unsere KI hilft Ihnen automatisch die richtige Kategorie zu finden
-        </p>
+        <h2 className="mb-2 text-xl font-bold text-gray-900 sm:text-2xl">Was möchten Sie verkaufen?</h2>
         {modelLoading && (
-          <div className="mt-4 inline-flex items-center gap-2 rounded-lg bg-blue-50 px-4 py-2 text-blue-700">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <span className="text-sm">KI-Modell wird geladen...</span>
+          <div className="mt-3 inline-flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-1.5 text-blue-700 sm:mt-4 sm:px-4 sm:py-2">
+            <Loader2 className="h-3.5 w-3.5 animate-spin sm:h-4 sm:w-4" />
+            <span className="text-xs sm:text-sm">KI-Modell wird geladen...</span>
           </div>
         )}
       </div>
@@ -4965,7 +4962,7 @@ export function AIDetection({
               onDragLeave={handleDrag}
               onDragOver={handleDrag}
               onDrop={handleDrop}
-              className={`relative rounded-lg border-2 border-dashed p-12 transition-all ${
+              className={`relative rounded-lg border-2 border-dashed p-6 transition-all sm:p-8 md:p-12 ${
                 dragActive
                   ? 'border-primary-500 bg-primary-50'
                   : 'border-gray-300 bg-gray-50 hover:border-primary-400'
@@ -4973,12 +4970,12 @@ export function AIDetection({
             >
               <div className="text-center">
                 <Upload
-                  className={`mx-auto mb-4 h-12 w-12 ${dragActive ? 'text-primary-600' : 'text-gray-400'}`}
+                  className={`mx-auto mb-2 h-8 w-8 sm:mb-3 sm:h-10 sm:w-10 md:mb-4 md:h-12 md:w-12 ${dragActive ? 'text-primary-600' : 'text-gray-400'}`}
                 />
-                <p className="mb-2 text-lg font-medium text-gray-900">
+                <p className="mb-1 text-base font-medium text-gray-900 sm:mb-2 sm:text-lg">
                   Bild hierher ziehen oder klicken
                 </p>
-                <p className="mb-4 text-sm text-gray-500">PNG, JPG, WEBP bis 10MB</p>
+                <p className="mb-3 text-xs text-gray-500 sm:mb-4 sm:text-sm">PNG, JPG, WEBP bis 10MB</p>
                 <label className="cursor-pointer">
                   <input
                     type="file"
@@ -4986,7 +4983,7 @@ export function AIDetection({
                     onChange={handleFileInput}
                     className="hidden"
                   />
-                  <span className="inline-block rounded-lg bg-primary-600 px-6 py-3 font-medium text-white transition-colors hover:bg-primary-700">
+                  <span className="inline-block rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 sm:px-6 sm:py-3 sm:text-base">
                     Bild auswählen
                   </span>
                 </label>
@@ -5189,20 +5186,6 @@ export function AIDetection({
         </div>
       )}
 
-      {/* Info Box */}
-      <div className="mt-8 rounded-lg border border-primary-200 bg-primary-50 p-4">
-        <div className="flex gap-3">
-          <Sparkles className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
-          <div className="text-sm text-gray-800">
-            <p className="mb-1 font-medium">KI-gestützte Erkennung</p>
-            <p className="text-gray-700">
-              {activeMode === 'image'
-                ? 'Laden Sie ein Bild Ihres Artikels hoch und unsere KI erkennt automatisch was es ist.'
-                : 'Beschreiben Sie Ihren Artikel und unsere KI findet automatisch die passende Kategorie.'}
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   )
 }

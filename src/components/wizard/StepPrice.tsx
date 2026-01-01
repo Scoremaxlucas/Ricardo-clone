@@ -45,12 +45,12 @@ export function StepPrice({
   const isAuctionDurationLocked = policy?.uiLocks.auctionDuration || false
 
   return (
-    <div className="space-y-4 md:space-y-8">
+    <div className="space-y-3 sm:space-y-4 md:space-y-8">
       <div className="text-center">
         <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
           Preis festlegen
         </h2>
-        <p className="text-gray-600">Wählen Sie zwischen Festpreis oder Auktion</p>
+        <p className="hidden text-sm text-gray-600 sm:block">Wählen Sie zwischen Festpreis oder Auktion</p>
       </div>
 
       {/* Sale type selection */}

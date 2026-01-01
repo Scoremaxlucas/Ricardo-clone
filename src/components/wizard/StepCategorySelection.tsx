@@ -130,16 +130,16 @@ export function StepCategorySelection({
       : true
 
   return (
-    <div className="space-y-4 md:space-y-6">
+    <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <div className="text-center">
         <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
           Kategorie wählen
         </h2>
-        <p className="text-sm text-gray-600 md:text-base">
-          {mode === 'edit' && isLocked
-            ? 'Die Kategorie kann nach Veröffentlichung nicht mehr geändert werden.'
-            : 'Laden Sie ein Bild hoch und unsere KI erkennt automatisch die passende Kategorie'}
-        </p>
+        {mode === 'edit' && isLocked && (
+          <p className="text-sm text-gray-600 md:text-base">
+            Die Kategorie kann nach Veröffentlichung nicht mehr geändert werden.
+          </p>
+        )}
       </div>
 
       {/* Locked state banner */}

@@ -65,12 +65,12 @@ export function StepDetails({
   const isDescriptionLocked = policy?.uiLocks.description || false
   const isDescriptionAppendOnly = policy?.uiLocks.descriptionAppendOnly || false
   return (
-    <div className="space-y-4 md:space-y-8">
+    <div className="space-y-3 sm:space-y-4 md:space-y-8">
       <div className="text-center">
         <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
           Artikel-Details
         </h2>
-        <p className="text-sm text-gray-600 md:text-base">
+        <p className="hidden text-sm text-gray-600 sm:block md:text-base">
           Beschreiben Sie Ihren Artikel so genau wie möglich
         </p>
       </div>
