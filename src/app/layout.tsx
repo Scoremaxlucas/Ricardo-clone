@@ -1,20 +1,20 @@
-import type { Metadata, Viewport } from 'next'
-import { Inter } from 'next/font/google'
-import './globals.css'
-import { Providers } from '@/components/providers'
-import { Toaster } from 'react-hot-toast'
 import { DeferredComponents } from '@/components/DeferredComponents'
 import { SkipLinks } from '@/components/accessibility/SkipLinks'
+import { Providers } from '@/components/providers'
+import type { Metadata, Viewport } from 'next'
+import { Inter } from 'next/font/google'
+import { Toaster } from 'react-hot-toast'
+import './globals.css'
 
 /**
  * Root Layout - TTI Optimiert
- * 
+ *
  * JavaScript Loading Strategie:
  * 1. Kritisch (0ms): Layout, Providers, Children
  * 2. Nach Paint (16ms): PrefetchOnHover
  * 3. Nach TTI (150ms): ServiceWorker
  * 4. Idle (500-3000ms): EmmaChat
- * 
+ *
  * Nicht-kritisches JS wurde in DeferredComponents verschoben
  * um TTI zu verbessern.
  */
@@ -61,7 +61,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
           <SkipLinks />
           {/* Kritischer Content - sofort gerendert */}
           <div className="flex flex-1 flex-col">{children}</div>
-          
+
           {/* Toaster - minimal, sofort verfügbar */}
           <Toaster
             position="top-right"
@@ -88,7 +88,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               },
             }}
           />
-          
+
           {/* Nicht-kritische Komponenten - verzögert geladen */}
           <DeferredComponents />
         </Providers>
