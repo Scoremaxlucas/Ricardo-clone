@@ -12,13 +12,38 @@ export async function GET(request: NextRequest) {
     }
 
     // Hole alle Rechnungen für den eingeloggten Verkäufer
+    // Use explicit select to avoid errors with new columns during migration
     const invoices = await prisma.invoice.findMany({
       where: {
         sellerId: session.user.id,
       },
-      include: {
+      select: {
+        id: true,
+        invoiceNumber: true,
+        sellerId: true,
+        saleId: true,
+        subtotal: true,
+        vatRate: true,
+        vatAmount: true,
+        total: true,
+        status: true,
+        paidAt: true,
+        dueDate: true,
+        paymentMethod: true,
+        paymentReference: true,
+        createdAt: true,
+        updatedAt: true,
+        reminderCount: true,
+        lateFeeAdded: true,
+        lateFeeAmount: true,
         items: {
-          include: {
+          select: {
+            id: true,
+            description: true,
+            quantity: true,
+            price: true,
+            total: true,
+            watchId: true,
             watch: {
               select: {
                 id: true,
