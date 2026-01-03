@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth'
-import { sendEmail, getInvoiceReminderEmail } from '@/lib/email'
+import { getInvoiceReminderEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -128,7 +128,8 @@ export async function POST(
       data: {
         [updateField]: new Date(),
         reminderCount: { increment: 1 },
-        adminNotes: (invoice.adminNotes || '') + 
+        adminNotes:
+          (invoice.adminNotes || '') +
           `\n[${new Date().toISOString()}] ${reminderType} manuell gesendet durch Admin`,
       },
     })

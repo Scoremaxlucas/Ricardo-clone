@@ -81,9 +81,7 @@ export async function GET(
       openAmount: invoices
         .filter(i => i.status === 'pending' || i.status === 'overdue')
         .reduce((sum, i) => sum + i.total, 0),
-      paidAmount: invoices
-        .filter(i => i.status === 'paid')
-        .reduce((sum, i) => sum + i.total, 0),
+      paidAmount: invoices.filter(i => i.status === 'paid').reduce((sum, i) => sum + i.total, 0),
       lateFees: invoices.reduce((sum, i) => sum + (i.lateFeeAmount || 0), 0),
       withMahnstopp: invoices.filter(i => i.collectionStopped).length,
       withPaymentArrangement: invoices.filter(i => i.paymentArrangement).length,

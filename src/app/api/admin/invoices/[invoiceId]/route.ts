@@ -201,7 +201,9 @@ export async function PATCH(
       case 'cancel':
         updateData = {
           status: 'cancelled',
-          adminNotes: (invoice.adminNotes || '') + `\n[${new Date().toISOString()}] Storniert: ${data.reason || 'Keine Angabe'}`,
+          adminNotes:
+            (invoice.adminNotes || '') +
+            `\n[${new Date().toISOString()}] Storniert: ${data.reason || 'Keine Angabe'}`,
         }
         message = 'Rechnung storniert'
         break

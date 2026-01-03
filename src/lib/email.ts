@@ -4649,4 +4649,3 @@ export function getInvoiceReminderEmail(options: InvoiceReminderOptions) {
 
   return html
 }
-

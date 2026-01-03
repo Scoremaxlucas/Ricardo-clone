@@ -1,5 +1,14 @@
 import { unblockUserAccountAfterPayment } from '@/lib/invoice-reminders'
 import { prisma } from '@/lib/prisma'
+import { checkStripeWebhookRateLimit } from '@/lib/rate-limit'
+import { recordWebhookMetric } from '@/lib/stripe-monitoring'
+import {
+  createErrorResponse,
+  getClientIP,
+  isStripeIP,
+  logWebhookEvent,
+  validateWebhookRequest,
+} from '@/lib/stripe-webhook-security'
 import { stripe, STRIPE_WEBHOOK_SECRET } from '@/lib/stripe-server'
 import { isEventProcessed, markEventProcessed } from '@/lib/webhook-idempotency'
 import { NextRequest, NextResponse } from 'next/server'
@@ -7,109 +16,275 @@ import Stripe from 'stripe'
 
 const webhookSecret = STRIPE_WEBHOOK_SECRET
 
+// Maximum processing time (30 seconds)
+const MAX_PROCESSING_TIME = 30000
+
 /**
  * Stripe Webhook Handler
  * Verarbeitet Zahlungsbestätigungen und aktualisiert Rechnungen
+ * 
+ * Security Features:
+ * - Rate limiting (100 requests per 10 seconds per IP)
+ * - IP validation (basic check, signature is primary security)
+ * - Signature verification (required)
+ * - Idempotency (prevents duplicate processing)
+ * - Structured logging
+ * - Error handling with retry support
  */
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.text()
-    const signature = request.headers.get('stripe-signature')
+  const startTime = Date.now()
+  let eventId: string | undefined
+  let eventType: string | undefined
 
-    if (!signature) {
-      return NextResponse.json({ message: 'Keine Signatur gefunden' }, { status: 400 })
+  try {
+    // 1. Validate request structure
+    const validation = validateWebhookRequest(request)
+    if (!validation.valid) {
+      logWebhookEvent(
+        { type: 'unknown', id: 'unknown', livemode: false },
+        'validation_failed',
+        { error: validation.error }
+      )
+      return NextResponse.json(createErrorResponse(validation.error || 'Invalid request'), {
+        status: 400,
+      })
     }
 
-    let event: Stripe.Event
+    // 2. Rate limiting
+    const clientIP = getClientIP(request)
+    const rateLimit = await checkStripeWebhookRateLimit(clientIP)
+    if (!rateLimit.allowed) {
+      logWebhookEvent(
+        { type: 'unknown', id: 'unknown', livemode: false },
+        'rate_limit_exceeded',
+        { ip: clientIP, remaining: rateLimit.remaining }
+      )
+      return NextResponse.json(
+        createErrorResponse('Rate limit exceeded', 429, {
+          retryAfter: Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000),
+        }),
+        {
+          status: 429,
+          headers: {
+            'Retry-After': Math.ceil((rateLimit.resetAt.getTime() - Date.now()) / 1000).toString(),
+            'X-RateLimit-Limit': '100',
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+            'X-RateLimit-Reset': Math.ceil(rateLimit.resetAt.getTime() / 1000).toString(),
+          },
+        }
+      )
+    }
 
+    // 3. IP validation (basic check - signature verification is primary security)
+    if (!isStripeIP(clientIP)) {
+      logWebhookEvent(
+        { type: 'unknown', id: 'unknown', livemode: false },
+        'ip_validation_warning',
+        { ip: clientIP }
+      )
+      // Don't reject - signature verification will catch invalid requests
+    }
+
+    // 4. Get request body
+    const body = await request.text()
+    const signature = request.headers.get('stripe-signature')!
+
+    // 5. Verify signature (CRITICAL SECURITY STEP)
+    let event: Stripe.Event
     try {
       event = stripe.webhooks.constructEvent(body, signature, webhookSecret)
+      eventId = event.id
+      eventType = event.type
     } catch (err: any) {
-      console.error('Webhook signature verification failed:', err.message)
-      return NextResponse.json({ message: 'Ungültige Signatur' }, { status: 400 })
+      logWebhookEvent(
+        { type: 'unknown', id: 'unknown', livemode: false },
+        'signature_verification_failed',
+        { error: err.message, ip: clientIP }
+      )
+      return NextResponse.json(
+        createErrorResponse('Invalid webhook signature', 400, {
+          error: 'Signature verification failed',
+        }),
+        { status: 400 }
+      )
     }
 
-    console.log(`[stripe/webhook] Event empfangen: ${event.type} (${event.id})`)
-
-    // Global Idempotency Check: Prüfe ob Event bereits verarbeitet wurde
+    // 6. Check idempotency (prevent duplicate processing)
     if (await isEventProcessed(event.id, event.type)) {
-      console.log(`[stripe/webhook] Event ${event.id} bereits verarbeitet, überspringe`)
-      return NextResponse.json({ received: true, skipped: true })
+      logWebhookEvent(event, 'duplicate_skipped', { ip: clientIP })
+      return NextResponse.json(
+        { received: true, skipped: true, eventId: event.id },
+        {
+          status: 200,
+          headers: {
+            'X-Event-Id': event.id,
+            'X-Event-Type': event.type,
+          },
+        }
+      )
     }
 
+    logWebhookEvent(event, 'processing_started', {
+      ip: clientIP,
+      livemode: event.livemode,
+    })
+
+    // 7. Process event with timeout protection
     let orderId: string | undefined
     let processingError: string | undefined
+    const processingStartTime = Date.now()
 
     try {
-      // Verarbeite verschiedene Event-Typen
-      switch (event.type) {
-        case 'payment_intent.succeeded':
-          // Prüfe ob es eine Order-Zahlung ist
-          const paymentIntent = event.data.object as Stripe.PaymentIntent
-          orderId = paymentIntent.metadata?.orderId
-          if (orderId) {
-            await handlePaymentIntentSucceeded(paymentIntent)
-          } else {
-            // Alte Invoice-Logik
-            await handlePaymentSuccess(paymentIntent)
-          }
-          break
+      // Set processing timeout
+      const timeoutPromise = new Promise((_, reject) => {
+        setTimeout(() => {
+          reject(new Error('Processing timeout exceeded'))
+        }, MAX_PROCESSING_TIME)
+      })
 
-        case 'payment_intent.payment_failed':
-          await handlePaymentFailed(event.data.object as Stripe.PaymentIntent)
-          break
+      // Process event
+      const processPromise = (async () => {
+        switch (event.type) {
+          case 'payment_intent.succeeded':
+            const paymentIntent = event.data.object as Stripe.PaymentIntent
+            orderId = paymentIntent.metadata?.orderId
+            if (orderId) {
+              await handlePaymentIntentSucceeded(paymentIntent)
+            } else {
+              await handlePaymentSuccess(paymentIntent)
+            }
+            break
 
-        case 'payment_intent.amount_capturable_updated':
-          // TWINT-Zahlungen können hier behandelt werden
-          const twintPaymentIntent = event.data.object as Stripe.PaymentIntent
-          if (
-            twintPaymentIntent.metadata?.type === 'invoice_payment_twint' &&
-            twintPaymentIntent.status === 'succeeded'
-          ) {
-            await handlePaymentSuccess(twintPaymentIntent)
-          }
-          break
+          case 'payment_intent.payment_failed':
+            await handlePaymentFailed(event.data.object as Stripe.PaymentIntent)
+            break
 
-        case 'checkout.session.completed':
-          const session = event.data.object as Stripe.Checkout.Session
-          orderId = session.metadata?.orderId
-          await handleCheckoutSessionCompleted(session)
-          break
+          case 'payment_intent.amount_capturable_updated':
+            const twintPaymentIntent = event.data.object as Stripe.PaymentIntent
+            if (
+              twintPaymentIntent.metadata?.type === 'invoice_payment_twint' &&
+              twintPaymentIntent.status === 'succeeded'
+            ) {
+              await handlePaymentSuccess(twintPaymentIntent)
+            }
+            break
 
-        case 'transfer.created':
-          const transfer = event.data.object as Stripe.Transfer
-          orderId = transfer.metadata?.orderId
-          await handleTransferCreated(transfer)
-          break
+          case 'checkout.session.completed':
+            const session = event.data.object as Stripe.Checkout.Session
+            orderId = session.metadata?.orderId
+            await handleCheckoutSessionCompleted(session)
+            break
 
-        case 'charge.refunded':
-          const charge = event.data.object as Stripe.Charge
-          orderId = charge.metadata?.orderId
-          await handleChargeRefunded(charge)
-          break
+          case 'transfer.created':
+            const transfer = event.data.object as Stripe.Transfer
+            orderId = transfer.metadata?.orderId
+            await handleTransferCreated(transfer)
+            break
 
-        case 'account.updated':
-          await handleAccountUpdated(event.data.object as Stripe.Account)
-          break
+          case 'charge.refunded':
+            const charge = event.data.object as Stripe.Charge
+            orderId = charge.metadata?.orderId
+            await handleChargeRefunded(charge)
+            break
 
-        default:
-          console.log(`[stripe/webhook] Unbehandeltes Event: ${event.type}`)
-      }
+          case 'account.updated':
+            await handleAccountUpdated(event.data.object as Stripe.Account)
+            break
+
+          default:
+            logWebhookEvent(event, 'unhandled_event_type', { ip: clientIP })
+        }
+      })()
+
+      // Race between processing and timeout
+      await Promise.race([processPromise, timeoutPromise])
 
       // Mark event as successfully processed
       await markEventProcessed(event.id, event.type, orderId, true)
+
+      const processingTime = Date.now() - processingStartTime
+      logWebhookEvent(event, 'processing_completed', {
+        orderId,
+        processingTimeMs: processingTime,
+        totalTimeMs: Date.now() - startTime,
+      })
+
+      return NextResponse.json(
+        {
+          received: true,
+          eventId: event.id,
+          eventType: event.type,
+          processingTimeMs: processingTime,
+        },
+        {
+          status: 200,
+          headers: {
+            'X-Event-Id': event.id,
+            'X-Event-Type': event.type,
+            'X-Processing-Time': processingTime.toString(),
+            'X-RateLimit-Remaining': rateLimit.remaining.toString(),
+          },
+        }
+      )
     } catch (processingErr: any) {
       processingError = processingErr.message
-      // Mark event as failed (so we can retry or investigate)
-      await markEventProcessed(event.id, event.type, orderId, false, processingError)
-      throw processingErr // Re-throw to return 500 to Stripe
-    }
+      const processingTime = Date.now() - processingStartTime
 
-    return NextResponse.json({ received: true })
+      // Mark event as failed (so Stripe can retry)
+      await markEventProcessed(event.id, event.type, orderId, false, processingError).catch(
+        () => {
+          // Ignore errors in marking as failed
+        }
+      )
+
+      // Record metrics (async, don't wait)
+      recordWebhookMetric(event.id, event.type, false, processingTime, processingError).catch(
+        () => {
+          // Ignore metric recording errors
+        }
+      )
+
+      logWebhookEvent(event, 'processing_failed', {
+        error: processingError,
+        orderId,
+        processingTimeMs: processingTime,
+        totalTimeMs: Date.now() - startTime,
+        ip: clientIP,
+      })
+
+      // Return 500 so Stripe will retry
+      return NextResponse.json(
+        createErrorResponse('Webhook processing failed', 500, {
+          eventId: event.id,
+          error: processingError,
+          retryable: true,
+        }),
+        {
+          status: 500,
+          headers: {
+            'X-Event-Id': event.id,
+            'X-Event-Type': event.type,
+          },
+        }
+      )
+    }
   } catch (error: any) {
-    console.error('Error processing webhook:', error)
+    const totalTime = Date.now() - startTime
+    logWebhookEvent(
+      { type: eventType || 'unknown', id: eventId || 'unknown', livemode: false },
+      'webhook_error',
+      {
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        totalTimeMs: totalTime,
+      }
+    )
+
     return NextResponse.json(
-      { message: 'Fehler bei Webhook-Verarbeitung: ' + error.message },
+      createErrorResponse('Webhook error', 500, {
+        error: error.message,
+        eventId,
+      }),
       { status: 500 }
     )
   }

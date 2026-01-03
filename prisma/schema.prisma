@@ -1403,3 +1403,28 @@ model ShippingRateCatalog {
   @@index([isAddon])
   @@map("shipping_rate_catalog")
 }
+
+model RateLimit {
+  id         String   @id @default(cuid())
+  identifier String   // e.g., "stripe-webhook:1.2.3.4"
+  createdAt  DateTime @default(now())
+
+  @@index([identifier, createdAt])
+  @@index([createdAt])
+  @@map("rate_limits")
+}
+
+model WebhookMetric {
+  id               String   @id @default(cuid())
+  eventId          String
+  eventType        String
+  success          Boolean
+  processingTimeMs Int      // Processing time in milliseconds
+  error            String?
+  timestamp        DateTime @default(now())
+
+  @@index([timestamp])
+  @@index([eventType, timestamp])
+  @@index([success, timestamp])
+  @@map("webhook_metrics")
+}

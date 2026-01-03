@@ -2,11 +2,11 @@
 export const PAYMENT_CONFIG = {
   // Firmeninformationen
   creditorName: process.env.PAYMENT_CREDITOR_NAME || 'Score-Max GmbH',
-  
+
   // Legal/Registration Information
   vatNumber: process.env.PAYMENT_VAT_NUMBER || 'CHE-123.456.789 MWST', // UID/MWST-Nr.
   uid: process.env.PAYMENT_UID || 'CHE-123.456.789', // Unternehmens-Identifikationsnummer
-  
+
   // Contact Information
   email: process.env.PAYMENT_EMAIL || 'support@helvenda.ch',
   phone: process.env.PAYMENT_PHONE || '+41 44 123 45 67',
@@ -25,12 +25,14 @@ export const PAYMENT_CONFIG = {
   iban: process.env.PAYMENT_IBAN || 'CH07 8080 8005 4832 7893 1',
   bic: process.env.PAYMENT_BIC || 'RAIFCH22',
   bankName: process.env.PAYMENT_BANK_NAME || 'Raiffeisen Schweiz',
-  
+
   // Payment Terms
   paymentTermsDays: parseInt(process.env.PAYMENT_TERMS_DAYS || '30', 10),
-  
+
   // Legal Information
-  legalNotice: process.env.PAYMENT_LEGAL_NOTICE || 'Diese Rechnung ist ohne Unterschrift gültig. Gerichtsstand ist Zürich.',
+  legalNotice:
+    process.env.PAYMENT_LEGAL_NOTICE ||
+    'Diese Rechnung ist ohne Unterschrift gültig. Gerichtsstand ist Zürich.',
 
   // Formatierte Adresse für QR-Code
   getFullAddress(): string {

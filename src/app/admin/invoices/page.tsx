@@ -1,36 +1,32 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import { useEffect, useState, useCallback } from 'react'
-import Link from 'next/link'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
 import {
   AlertCircle,
-  CheckCircle,
-  Clock,
-  RefreshCw,
-  Search,
-  Download,
-  FileText,
+  AlertTriangle,
   Ban,
-  Play,
-  Send,
-  Eye,
-  Edit,
+  CheckCircle,
   ChevronDown,
   ChevronUp,
-  User,
-  Calendar,
-  DollarSign,
-  Filter,
-  X,
+  Clock,
   CreditCard,
-  AlertTriangle,
+  DollarSign,
+  Download,
+  Edit,
+  FileText,
   Loader2,
-  MoreHorizontal,
+  Play,
+  RefreshCw,
+  Search,
+  Send,
+  User,
+  X,
 } from 'lucide-react'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useCallback, useEffect, useState } from 'react'
 
 interface InvoiceItem {
   id: string
@@ -464,9 +460,7 @@ export default function AdminInvoicesPage() {
                   <div className="flex items-center gap-4">
                     <div>
                       <div className="flex items-center gap-2">
-                        <span className="font-semibold text-gray-900">
-                          {invoice.invoiceNumber}
-                        </span>
+                        <span className="font-semibold text-gray-900">{invoice.invoiceNumber}</span>
                         {getStatusBadge(invoice)}
                         {invoice.reminderCount > 0 && (
                           <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700">
@@ -489,9 +483,7 @@ export default function AdminInvoicesPage() {
                           {getSellerName(invoice.seller)}
                         </Link>
                         <span className="mx-2">•</span>
-                        <span>
-                          Fällig: {new Date(invoice.dueDate).toLocaleDateString('de-CH')}
-                        </span>
+                        <span>Fällig: {new Date(invoice.dueDate).toLocaleDateString('de-CH')}</span>
                         {invoice.status === 'overdue' && (
                           <span className="ml-2 text-red-600">
                             (
@@ -763,7 +755,9 @@ export default function AdminInvoicesPage() {
                 Abbrechen
               </button>
               <button
-                onClick={() => handleAction(showNotesModal.id, 'update_notes', { notes: adminNotes })}
+                onClick={() =>
+                  handleAction(showNotesModal.id, 'update_notes', { notes: adminNotes })
+                }
                 className="rounded-lg bg-primary-600 px-4 py-2 text-white hover:bg-primary-700"
               >
                 Speichern

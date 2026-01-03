@@ -2,12 +2,12 @@
 
 /**
  * Automatisiertes Setup für support@helvenda.ch
- * 
+ *
  * Dieses Script versucht, so viel wie möglich automatisch zu konfigurieren.
  */
 
-import { Resend } from 'resend'
 import * as readline from 'readline'
+import { Resend } from 'resend'
 
 const rl = readline.createInterface({
   input: process.stdin,
@@ -52,7 +52,7 @@ async function main() {
     if (helvendaDomain) {
       console.log('✅ Domain helvenda.ch bereits in Resend vorhanden')
       console.log(`   Status: ${helvendaDomain.status}`)
-      
+
       if (helvendaDomain.status === 'verified') {
         console.log('✅ Domain ist bereits verifiziert!')
       } else {
@@ -60,7 +60,7 @@ async function main() {
         console.log('')
         console.log('Bitte fügen Sie folgende DNS-Records hinzu:')
         console.log('')
-        
+
         // Versuche DNS-Records zu holen
         try {
           const domainDetails = await resend.domains.get('helvenda.ch')
@@ -83,7 +83,7 @@ async function main() {
       console.log('3. Geben Sie ein: helvenda.ch')
       console.log('4. Klicken Sie auf "Add"')
       console.log('')
-      
+
       const addManually = await question('Haben Sie die Domain hinzugefügt? (j/n): ')
       if (addManually.toLowerCase() !== 'j') {
         console.log('\n⚠️  Bitte fügen Sie die Domain hinzu und starten Sie das Script erneut.')
@@ -111,7 +111,7 @@ async function main() {
   console.log('4. Wählen Sie alle Environments')
   console.log('5. Save')
   console.log('')
-  
+
   const vercelSet = await question('Haben Sie RESEND_FROM_EMAIL in Vercel gesetzt? (j/n): ')
   if (vercelSet.toLowerCase() !== 'j') {
     console.log('\n⚠️  Bitte setzen Sie die Environment Variable.')
@@ -131,7 +131,7 @@ async function main() {
   console.log('5. Erstellen Sie Destination Address (Ihre persönliche E-Mail)')
   console.log('6. Erstellen Sie Routing Rule: support@helvenda.ch → Ihre E-Mail')
   console.log('')
-  
+
   const emailRouting = await question('Haben Sie Cloudflare Email Routing eingerichtet? (j/n): ')
   if (emailRouting.toLowerCase() !== 'j') {
     console.log('\n⚠️  Bitte richten Sie Cloudflare Email Routing ein.')
@@ -147,7 +147,7 @@ async function main() {
   console.log('1. Senden Sie eine E-Mail an support@helvenda.ch')
   console.log('2. Prüfen Sie, ob sie ankommt')
   console.log('')
-  
+
   const testDone = await question('Funktioniert alles? (j/n): ')
   if (testDone.toLowerCase() !== 'j') {
     console.log('\n⚠️  Bitte prüfen Sie die Konfiguration.')

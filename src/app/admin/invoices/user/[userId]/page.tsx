@@ -1,28 +1,25 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
-import { useRouter, useParams } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
 import {
-  ArrowLeft,
-  User,
-  Mail,
-  Phone,
-  Building,
-  MapPin,
   AlertCircle,
+  ArrowLeft,
+  Ban,
+  Building,
+  Calendar,
   CheckCircle,
   Clock,
-  Ban,
-  FileText,
   Download,
-  CreditCard,
+  FileText,
   Loader2,
-  Calendar,
+  Mail,
+  User,
 } from 'lucide-react'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useParams, useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface UserInfo {
   id: string
@@ -262,11 +259,15 @@ export default function UserInvoicesPage() {
             </div>
             <div className="rounded-lg bg-white p-4 shadow-sm">
               <p className="text-xs text-gray-500">Bezahlter Betrag</p>
-              <p className="text-2xl font-bold text-green-600">{formatCurrency(stats.paidAmount)}</p>
+              <p className="text-2xl font-bold text-green-600">
+                {formatCurrency(stats.paidAmount)}
+              </p>
             </div>
             <div className="rounded-lg bg-white p-4 shadow-sm">
               <p className="text-xs text-gray-500">Gesamtbetrag</p>
-              <p className="text-2xl font-bold text-gray-900">{formatCurrency(stats.totalAmount)}</p>
+              <p className="text-2xl font-bold text-gray-900">
+                {formatCurrency(stats.totalAmount)}
+              </p>
             </div>
           </div>
         )}

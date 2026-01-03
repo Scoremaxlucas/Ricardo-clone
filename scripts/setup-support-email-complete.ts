@@ -2,12 +2,11 @@
 
 /**
  * Komplettes Setup-Script für support@helvenda.ch
- * 
+ *
  * Dieses Script führt Sie durch den gesamten Setup-Prozess
  * und prüft jeden Schritt automatisch.
  */
 
-import { Resend } from 'resend'
 import * as readline from 'readline'
 
 const rl = readline.createInterface({
@@ -32,7 +31,7 @@ async function main() {
     console.log('   Vercel Dashboard → Project → Settings → Environment Variables')
     console.log('   Name: RESEND_API_KEY')
     console.log('   Value: [Ihr Resend API Key]\n')
-    
+
     const continueAnyway = await question('Möchten Sie trotzdem fortfahren? (j/n): ')
     if (continueAnyway.toLowerCase() !== 'j') {
       console.log('Setup abgebrochen.')
@@ -50,7 +49,7 @@ async function main() {
   console.log('2. Klicken Sie auf "Add Domain"')
   console.log('3. Geben Sie ein: helvenda.ch')
   console.log('4. Klicken Sie auf "Add"\n')
-  
+
   console.log('Resend zeigt Ihnen jetzt 3 DNS-Records, die Sie hinzufügen müssen:\n')
   console.log('┌─────────────────────────────────────────────────────────┐')
   console.log('│ DNS-Record 1: SPF (TXT)                                │')
@@ -105,7 +104,9 @@ async function main() {
 
   const vercelSet = await question('Haben Sie die Environment Variable in Vercel gesetzt? (j/n): ')
   if (vercelSet.toLowerCase() !== 'j') {
-    console.log('\n⚠️  Bitte setzen Sie die Environment Variable und starten Sie das Script erneut.')
+    console.log(
+      '\n⚠️  Bitte setzen Sie die Environment Variable und starten Sie das Script erneut.'
+    )
     rl.close()
     return
   }
@@ -145,7 +146,7 @@ async function main() {
 
   console.log('\n7. Erstellen Sie eine Destination Address:')
   const destinationEmail = await question('   Ihre persönliche E-Mail-Adresse: ')
-  
+
   console.log('\n8. Erstellen Sie eine Routing Rule:')
   console.log('   Custom Address: support@helvenda.ch')
   console.log(`   Destination: ${destinationEmail}\n`)
