@@ -36,10 +36,32 @@ export interface InvoicePaymentInfo {
 export async function generateInvoicePaymentInfo(invoiceId: string): Promise<InvoicePaymentInfo> {
   const invoice = await prisma.invoice.findUnique({
     where: { id: invoiceId },
-    include: {
-      seller: true,
+    select: {
+      id: true,
+      invoiceNumber: true,
+      total: true,
+      status: true,
+      dueDate: true,
+      refundedAt: true,
+      seller: {
+        select: {
+          id: true,
+          name: true,
+          firstName: true,
+          lastName: true,
+          companyName: true,
+          street: true,
+          streetNumber: true,
+          postalCode: true,
+          city: true,
+          country: true,
+          paymentMethods: true,
+        },
+      },
       items: {
-        include: {
+        select: {
+          id: true,
+          description: true,
           watch: {
             select: {
               title: true,

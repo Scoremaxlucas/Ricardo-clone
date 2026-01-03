@@ -25,9 +25,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     try {
       invoice = await prisma.invoice.findUnique({
         where: { id },
-        include: {
+        select: {
+          id: true,
+          invoiceNumber: true,
+          sellerId: true,
+          subtotal: true,
+          vatRate: true,
+          vatAmount: true,
+          total: true,
+          status: true,
+          dueDate: true,
+          createdAt: true,
+          refundedAt: true,
+          originalInvoiceId: true,
           items: {
-            include: {
+            select: {
+              id: true,
+              description: true,
+              quantity: true,
+              price: true,
+              total: true,
               watch: {
                 select: {
                   id: true,
@@ -38,7 +55,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               },
             },
           },
-          seller: true,
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              firstName: true,
+              lastName: true,
+              companyName: true,
+              street: true,
+              streetNumber: true,
+              postalCode: true,
+              city: true,
+              country: true,
+            },
+          },
           originalInvoice: {
             select: {
               id: true,
@@ -53,9 +83,26 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       // Falls originalInvoice Relation fehlschlägt, versuche ohne originalInvoice
       invoice = await prisma.invoice.findUnique({
         where: { id },
-        include: {
+        select: {
+          id: true,
+          invoiceNumber: true,
+          sellerId: true,
+          subtotal: true,
+          vatRate: true,
+          vatAmount: true,
+          total: true,
+          status: true,
+          dueDate: true,
+          createdAt: true,
+          refundedAt: true,
+          originalInvoiceId: true,
           items: {
-            include: {
+            select: {
+              id: true,
+              description: true,
+              quantity: true,
+              price: true,
+              total: true,
               watch: {
                 select: {
                   id: true,
@@ -66,7 +113,20 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               },
             },
           },
-          seller: true,
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              firstName: true,
+              lastName: true,
+              companyName: true,
+              street: true,
+              streetNumber: true,
+              postalCode: true,
+              city: true,
+              country: true,
+            },
+          },
         },
       })
       // Setze originalInvoice auf null falls nicht geladen werden konnte

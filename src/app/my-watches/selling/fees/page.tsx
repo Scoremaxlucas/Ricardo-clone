@@ -179,8 +179,11 @@ function SellingFeesContent() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"></div>
+      <div className="flex min-h-screen items-center justify-center bg-gray-50">
+        <div className="text-center">
+          <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600"></div>
+          <p className="mt-3 text-sm text-gray-500">Lädt...</p>
+        </div>
       </div>
     )
   }
@@ -205,7 +208,7 @@ function SellingFeesContent() {
             <h1 className="text-2xl font-bold text-gray-900 lg:text-3xl">Gebühren & Rechnungen</h1>
             <p className="mt-1 text-gray-500">Übersicht Ihrer Verkaufsgebühren</p>
           </div>
-          
+
           {/* Summary Card - Desktop */}
           {pendingCount > 0 && (
             <div className="flex items-center gap-4 rounded-xl border border-amber-200 bg-amber-50 px-5 py-4 lg:min-w-[320px]">
@@ -216,7 +219,9 @@ function SellingFeesContent() {
                 <p className="text-sm text-amber-800">
                   {pendingCount} offene {pendingCount === 1 ? 'Rechnung' : 'Rechnungen'}
                 </p>
-                <p className="text-lg font-bold text-amber-900">CHF {formatCurrency(totalPending)}</p>
+                <p className="text-lg font-bold text-amber-900">
+                  CHF {formatCurrency(totalPending)}
+                </p>
               </div>
             </div>
           )}
@@ -267,7 +272,9 @@ function SellingFeesContent() {
                       {/* Invoice Info */}
                       <div>
                         <div className="flex items-center gap-3">
-                          <span className="text-base font-semibold text-gray-900 lg:text-lg">{invoice.invoiceNumber}</span>
+                          <span className="text-base font-semibold text-gray-900 lg:text-lg">
+                            {invoice.invoiceNumber}
+                          </span>
                           {isOverdue && (
                             <span className="rounded-full bg-red-100 px-2.5 py-1 text-xs font-semibold text-red-700">
                               Überfällig
@@ -333,7 +340,10 @@ function SellingFeesContent() {
                         {/* Items */}
                         <div className="space-y-4">
                           {invoice.items.map(item => (
-                            <div key={item.id} className="flex items-center justify-between rounded-lg bg-white p-4 shadow-sm">
+                            <div
+                              key={item.id}
+                              className="flex items-center justify-between rounded-lg bg-white p-4 shadow-sm"
+                            >
                               <div className="flex items-center gap-4">
                                 {item.watch?.images?.[0] && (
                                   <img
@@ -388,7 +398,11 @@ function SellingFeesContent() {
                         <div className="mt-5 flex flex-wrap gap-x-8 gap-y-2 text-sm text-gray-500">
                           <span>Erstellt: {formatDate(invoice.createdAt)}</span>
                           <span>Fällig: {formatDate(invoice.dueDate)}</span>
-                          {invoice.paidAt && <span className="text-green-600">Bezahlt: {formatDate(invoice.paidAt)}</span>}
+                          {invoice.paidAt && (
+                            <span className="text-green-600">
+                              Bezahlt: {formatDate(invoice.paidAt)}
+                            </span>
+                          )}
                         </div>
                       </div>
                     </div>
@@ -399,18 +413,6 @@ function SellingFeesContent() {
           </div>
         )}
 
-        {/* Help Section */}
-        <div className="mt-10 rounded-xl border border-gray-200 bg-white p-6 text-center shadow-sm lg:p-8">
-          <p className="text-gray-600">
-            Fragen zu Ihren Rechnungen oder Gebühren?
-          </p>
-          <a 
-            href="mailto:support@helvenda.ch" 
-            className="mt-3 inline-flex items-center text-primary-600 font-medium hover:text-primary-700 transition-colors"
-          >
-            support@helvenda.ch
-          </a>
-        </div>
       </main>
 
       <Footer />
@@ -449,8 +451,11 @@ export default function SellingFeesPage() {
   return (
     <Suspense
       fallback={
-        <div className="flex min-h-screen items-center justify-center">
-          <div className="h-8 w-8 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"></div>
+        <div className="flex min-h-screen items-center justify-center bg-gray-50">
+          <div className="text-center">
+            <div className="inline-block h-8 w-8 animate-spin rounded-full border-4 border-gray-200 border-t-primary-600"></div>
+            <p className="mt-3 text-sm text-gray-500">Lädt...</p>
+          </div>
         </div>
       }
     >
