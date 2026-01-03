@@ -154,14 +154,24 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     pdf.setFontSize(9)
     pdf.setTextColor(60, 60, 60)
     pdf.text(`Nr. ${invoice.invoiceNumber}`, rightX, yPos, { align: 'right' })
-    pdf.text(`Datum: ${new Date(invoice.createdAt).toLocaleDateString('de-CH')}`, rightX, yPos + 5, {
-      align: 'right',
-    })
+    pdf.text(
+      `Datum: ${new Date(invoice.createdAt).toLocaleDateString('de-CH')}`,
+      rightX,
+      yPos + 5,
+      {
+        align: 'right',
+      }
+    )
     if (!isCreditNote) {
       pdf.setFont('helvetica', 'bold')
-      pdf.text(`Fällig: ${new Date(invoice.dueDate).toLocaleDateString('de-CH')}`, rightX, yPos + 10, {
-        align: 'right',
-      })
+      pdf.text(
+        `Fällig: ${new Date(invoice.dueDate).toLocaleDateString('de-CH')}`,
+        rightX,
+        yPos + 10,
+        {
+          align: 'right',
+        }
+      )
     } else if (invoice.originalInvoiceId && (invoice as any).originalInvoice) {
       pdf.text(`Korrigiert: ${(invoice as any).originalInvoice.invoiceNumber}`, rightX, yPos + 10, {
         align: 'right',
@@ -318,69 +328,108 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     yPos += 15
 
     // ============================================
-    // PAYMENT INFORMATION & QR-BILL - Clean layout
+    // SWISS QR-BILL PAYMENT SLIP (Zahlteil)
+    // Official dimensions: 210mm x 105mm at bottom of A4
     // ============================================
     if (!isCreditNote) {
-      // Position for payment section
-      const paymentStartY = yPos + 5
+      // Swiss QR-Bill starts at 105mm from bottom of page
+      const qrBillY = pageHeight - 105
+      const receiptWidth = 62 // Empfangsschein width
+      const paymentPartX = receiptWidth + 5 // Start of Zahlteil (with separator)
 
-      // Section title
-      pdf.setFontSize(10)
-      pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(30, 30, 30)
-      pdf.text('Zahlungsinformationen', margin, paymentStartY)
-
-      // Separator line
-      pdf.setDrawColor(200, 200, 200)
+      // Perforation line (horizontal) - dashed line at top of payment slip
+      pdf.setDrawColor(0, 0, 0)
       pdf.setLineWidth(0.3)
-      pdf.line(margin, paymentStartY + 4, pageWidth - margin, paymentStartY + 4)
+      pdf.setLineDashPattern([2, 2], 0)
+      pdf.line(0, qrBillY, pageWidth, qrBillY)
+      pdf.setLineDashPattern([], 0) // Reset to solid
 
-      // Left column: Payment details - simple two column layout
-      let paymentY = paymentStartY + 14
-      const labelX = margin
-      const valueX = margin + 35
+      // Scissors symbol
+      pdf.setFontSize(8)
+      pdf.setTextColor(0, 0, 0)
+      pdf.text('✂', 5, qrBillY - 1)
 
+      // Vertical perforation line between receipt and payment part
+      pdf.setLineDashPattern([2, 2], 0)
+      pdf.line(receiptWidth, qrBillY, receiptWidth, pageHeight)
+      pdf.setLineDashPattern([], 0)
+
+      // ========== EMPFANGSSCHEIN (Receipt) - Left section ==========
+      let receiptY = qrBillY + 8
+      const receiptMargin = 5
+
+      // Title
+      pdf.setFontSize(11)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(0, 0, 0)
+      pdf.text('Empfangsschein', receiptMargin, receiptY)
+      receiptY += 8
+
+      // Konto / Zahlbar an
+      pdf.setFontSize(6)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Konto / Zahlbar an', receiptMargin, receiptY)
+      receiptY += 3
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(100, 100, 100)
-      pdf.text('Empfänger', labelX, paymentY)
-      pdf.setTextColor(30, 30, 30)
-      pdf.text(PAYMENT_CONFIG.creditorName, valueX, paymentY)
-      paymentY += 5
+      pdf.text(PAYMENT_CONFIG.iban, receiptMargin, receiptY)
+      receiptY += 3
+      pdf.text(PAYMENT_CONFIG.creditorName, receiptMargin, receiptY)
+      receiptY += 3
+      pdf.text(`${PAYMENT_CONFIG.address.street} ${PAYMENT_CONFIG.address.streetNumber}`, receiptMargin, receiptY)
+      receiptY += 3
+      pdf.text(`${PAYMENT_CONFIG.address.postalCode} ${PAYMENT_CONFIG.address.city}`, receiptMargin, receiptY)
+      receiptY += 6
 
-      pdf.setTextColor(100, 100, 100)
-      pdf.text('Bank', labelX, paymentY)
-      pdf.setTextColor(30, 30, 30)
-      pdf.text(PAYMENT_CONFIG.bankName, valueX, paymentY)
-      paymentY += 5
-
-      pdf.setTextColor(100, 100, 100)
-      pdf.text('IBAN', labelX, paymentY)
+      // Referenz
+      pdf.setFontSize(6)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(30, 30, 30)
-      pdf.text(PAYMENT_CONFIG.iban, valueX, paymentY)
-      paymentY += 5
-
+      pdf.text('Referenz', receiptMargin, receiptY)
+      receiptY += 3
+      pdf.setFontSize(8)
       pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(100, 100, 100)
-      pdf.text('BIC', labelX, paymentY)
-      pdf.setTextColor(30, 30, 30)
-      pdf.text(PAYMENT_CONFIG.bic, valueX, paymentY)
-      paymentY += 5
+      const formattedRef = invoice.invoiceNumber.replace(/(.{5})/g, '$1 ').trim()
+      pdf.text(formattedRef, receiptMargin, receiptY)
+      receiptY += 6
 
-      pdf.setTextColor(100, 100, 100)
-      pdf.text('Referenz', labelX, paymentY)
+      // Zahlbar durch
+      pdf.setFontSize(6)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(30, 30, 30)
-      pdf.text(invoice.invoiceNumber, valueX, paymentY)
-      paymentY += 5
-
+      pdf.text('Zahlbar durch', receiptMargin, receiptY)
+      receiptY += 3
+      pdf.setFontSize(8)
       pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(100, 100, 100)
-      pdf.text('Betrag', labelX, paymentY)
+      if (invoice.seller.firstName && invoice.seller.lastName) {
+        pdf.text(`${invoice.seller.firstName} ${invoice.seller.lastName}`, receiptMargin, receiptY)
+        receiptY += 3
+      }
+      if (invoice.seller.street) {
+        pdf.text(`${invoice.seller.street} ${invoice.seller.streetNumber || ''}`.trim(), receiptMargin, receiptY)
+        receiptY += 3
+      }
+      if (invoice.seller.postalCode && invoice.seller.city) {
+        pdf.text(`${invoice.seller.postalCode} ${invoice.seller.city}`, receiptMargin, receiptY)
+      }
+
+      // Currency and Amount at bottom of receipt
+      const receiptBottomY = pageHeight - 15
+      pdf.setFontSize(6)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(30, 30, 30)
-      pdf.text(`CHF ${invoice.total.toFixed(2)}`, valueX, paymentY)
+      pdf.text('Währung', receiptMargin, receiptBottomY - 8)
+      pdf.text('Betrag', receiptMargin + 20, receiptBottomY - 8)
+      pdf.setFontSize(10)
+      pdf.setFont('helvetica', 'normal')
+      pdf.text('CHF', receiptMargin, receiptBottomY - 3)
+      pdf.text(invoice.total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' '), receiptMargin + 20, receiptBottomY - 3)
+
+      // Annahmestelle
+      pdf.setFontSize(6)
+      pdf.setFont('helvetica', 'bold')
+      pdf.text('Annahmestelle', receiptWidth - 25, receiptBottomY - 3)
+
+      // ========== ZAHLTEIL (Payment Part) - Right section ==========
+      let paymentY = qrBillY + 8
+      const paymentMargin = paymentPartX + 5
 
       // Rechte Spalte: QR-Code (Swiss QR-Bill Format)
       try {
@@ -606,19 +655,97 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           },
         })
 
-        // QR Code section - positioned on the right side, cleaner
-        const qrSize = 40
-        const qrX = pageWidth - margin - qrSize
-        const qrY = paymentStartY + 10
+        // ========== ZAHLTEIL - Title ==========
+        pdf.setFontSize(11)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(0, 0, 0)
+        pdf.text('Zahlteil', paymentMargin, paymentY)
 
-        // Add QR code image (no border box for cleaner look)
+        // QR Code - positioned in the payment part (46x46mm is official size)
+        const qrSize = 46
+        const qrX = paymentMargin
+        const qrY = paymentY + 5
+
+        // Add QR code image
         pdf.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
 
-        // Simple label under QR code
-        pdf.setFontSize(6)
+        // Swiss cross in center of QR code (7x7mm)
+        const crossSize = 7
+        const crossX = qrX + (qrSize - crossSize) / 2
+        const crossY = qrY + (qrSize - crossSize) / 2
+        pdf.setFillColor(255, 255, 255)
+        pdf.rect(crossX, crossY, crossSize, crossSize, 'F')
+        pdf.setFillColor(0, 0, 0)
+        pdf.rect(crossX + 0.5, crossY + 0.5, crossSize - 1, crossSize - 1, 'F')
+        pdf.setFillColor(255, 255, 255)
+        // Horizontal bar of cross
+        pdf.rect(crossX + 1.5, crossY + 2.5, crossSize - 3, 2, 'F')
+        // Vertical bar of cross
+        pdf.rect(crossX + 2.5, crossY + 1.5, 2, crossSize - 3, 'F')
+
+        // ========== ZAHLTEIL - Right side info ==========
+        const infoX = paymentMargin + qrSize + 10
+        let infoY = paymentY + 8
+
+        // Währung / Betrag
+        pdf.setFontSize(8)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Währung', infoX, infoY)
+        pdf.text('Betrag', infoX + 25, infoY)
+        infoY += 4
+        pdf.setFontSize(10)
         pdf.setFont('helvetica', 'normal')
-        pdf.setTextColor(100, 100, 100)
-        pdf.text('QR-Rechnung', qrX + qrSize / 2, qrY + qrSize + 4, { align: 'center' })
+        pdf.text('CHF', infoX, infoY)
+        pdf.text(invoice.total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' '), infoX + 25, infoY)
+        infoY += 10
+
+        // Konto / Zahlbar an (right column of Zahlteil)
+        const rightInfoX = pageWidth - 70
+        let rightInfoY = paymentY + 8
+
+        pdf.setFontSize(6)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Konto / Zahlbar an', rightInfoX, rightInfoY)
+        rightInfoY += 3
+        pdf.setFontSize(8)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(PAYMENT_CONFIG.iban, rightInfoX, rightInfoY)
+        rightInfoY += 3
+        pdf.text(PAYMENT_CONFIG.creditorName, rightInfoX, rightInfoY)
+        rightInfoY += 3
+        pdf.text(`${PAYMENT_CONFIG.address.street} ${PAYMENT_CONFIG.address.streetNumber}`, rightInfoX, rightInfoY)
+        rightInfoY += 3
+        pdf.text(`${PAYMENT_CONFIG.address.postalCode} ${PAYMENT_CONFIG.address.city}`, rightInfoX, rightInfoY)
+        rightInfoY += 6
+
+        // Referenz
+        pdf.setFontSize(6)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Referenz', rightInfoX, rightInfoY)
+        rightInfoY += 3
+        pdf.setFontSize(8)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(formattedRef, rightInfoX, rightInfoY)
+        rightInfoY += 6
+
+        // Zahlbar durch
+        pdf.setFontSize(6)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Zahlbar durch', rightInfoX, rightInfoY)
+        rightInfoY += 3
+        pdf.setFontSize(8)
+        pdf.setFont('helvetica', 'normal')
+        if (invoice.seller.firstName && invoice.seller.lastName) {
+          pdf.text(`${invoice.seller.firstName} ${invoice.seller.lastName}`, rightInfoX, rightInfoY)
+          rightInfoY += 3
+        }
+        if (invoice.seller.street) {
+          pdf.text(`${invoice.seller.street} ${invoice.seller.streetNumber || ''}`.trim(), rightInfoX, rightInfoY)
+          rightInfoY += 3
+        }
+        if (invoice.seller.postalCode && invoice.seller.city) {
+          pdf.text(`${invoice.seller.postalCode} ${invoice.seller.city}`, rightInfoX, rightInfoY)
+        }
       } catch (error) {
         console.error('Error generating QR code:', error)
         // QR-Code Fehler wird geloggt, aber PDF wird trotzdem erstellt
@@ -646,31 +773,33 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // ============================================
-    // FOOTER - Clean minimal footer
+    // FOOTER - Only for credit notes (QR-Bill takes footer space for regular invoices)
     // ============================================
-    const footerY = pageHeight - 20
+    if (isCreditNote) {
+      const footerY = pageHeight - 20
 
-    // Footer line
-    pdf.setDrawColor(200, 200, 200)
-    pdf.setLineWidth(0.3)
-    pdf.line(margin, footerY, pageWidth - margin, footerY)
+      // Footer line
+      pdf.setDrawColor(200, 200, 200)
+      pdf.setLineWidth(0.3)
+      pdf.line(margin, footerY, pageWidth - margin, footerY)
 
-    // Footer text - single line, centered
-    pdf.setFontSize(7)
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(120, 120, 120)
-    pdf.text(
-      `${PAYMENT_CONFIG.creditorName} | ${PAYMENT_CONFIG.email} | ${PAYMENT_CONFIG.website}`,
-      pageWidth / 2,
-      footerY + 6,
-      { align: 'center' }
-    )
-    pdf.text(
-      `UID: ${PAYMENT_CONFIG.uid} | ${PAYMENT_CONFIG.vatNumber}`,
-      pageWidth / 2,
-      footerY + 11,
-      { align: 'center' }
-    )
+      // Footer text - single line, centered
+      pdf.setFontSize(7)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(120, 120, 120)
+      pdf.text(
+        `${PAYMENT_CONFIG.creditorName} | ${PAYMENT_CONFIG.email} | ${PAYMENT_CONFIG.website}`,
+        pageWidth / 2,
+        footerY + 6,
+        { align: 'center' }
+      )
+      pdf.text(
+        `UID: ${PAYMENT_CONFIG.uid} | ${PAYMENT_CONFIG.vatNumber}`,
+        pageWidth / 2,
+        footerY + 11,
+        { align: 'center' }
+      )
+    }
 
     // PDF als Buffer zurückgeben
     const pdfBuffer = Buffer.from(pdf.output('arraybuffer'))
