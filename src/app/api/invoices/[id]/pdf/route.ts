@@ -104,307 +104,427 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const contentWidth = pageWidth - 2 * margin
 
     // ============================================
-    // HEADER - Professioneller Header
+    // HEADER - Professional Header with Gradient Effect
     // ============================================
+    // Main header background
     pdf.setFillColor(15, 118, 110) // Primary color (teal)
-    pdf.rect(0, 0, pageWidth, 40, 'F')
+    pdf.rect(0, 0, pageWidth, 45, 'F')
+    
+    // Subtle accent line at bottom of header
+    pdf.setFillColor(13, 100, 94) // Slightly darker teal
+    pdf.rect(0, 42, pageWidth, 3, 'F')
 
-    // Logo/Name Bereich
+    // Logo/Name Section - Left aligned
     pdf.setTextColor(255, 255, 255)
-    pdf.setFontSize(24)
+    pdf.setFontSize(28)
     pdf.setFont('helvetica', 'bold')
-    pdf.text('Helvenda', margin, 25)
+    pdf.text('HELVENDA', margin, 22)
 
-    // Untertitel
-    pdf.setFontSize(10)
-    pdf.setFont('helvetica', 'normal')
-    pdf.text('Online-Marktplatz', margin, 32)
-
-    // Rechnungstyp rechts oben
-    pdf.setFontSize(16)
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(255, 255, 255)
-    pdf.text(isCreditNote ? 'Korrektur-Rechnung' : 'Rechnung', pageWidth - margin, 25, {
-      align: 'right',
-    })
-
-    // ============================================
-    // FIRMENADRESSE (links oben unter Header)
-    // ============================================
-    let yPos = 50
-    pdf.setTextColor(0, 0, 0)
+    // Tagline
     pdf.setFontSize(9)
     pdf.setFont('helvetica', 'normal')
+    pdf.setTextColor(200, 230, 227) // Light teal for subtitle
+    pdf.text('Schweizer Online-Marktplatz für Uhren', margin, 30)
+    
+    // Website in header
+    pdf.setFontSize(8)
+    pdf.text(PAYMENT_CONFIG.website, margin, 37)
 
-    pdf.text(PAYMENT_CONFIG.creditorName, margin, yPos)
+    // Invoice Type Badge - Right aligned
+    pdf.setFontSize(11)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(255, 255, 255)
+    
+    // Invoice type with badge background
+    const invoiceTypeText = isCreditNote ? 'GUTSCHRIFT' : 'RECHNUNG'
+    const badgeWidth = pdf.getTextWidth(invoiceTypeText) + 10
+    const badgeX = pageWidth - margin - badgeWidth
+    
+    // Badge background
+    if (isCreditNote) {
+      pdf.setFillColor(220, 38, 38) // Red for credit note
+    } else {
+      pdf.setFillColor(255, 255, 255) // White for regular invoice
+    }
+    pdf.roundedRect(badgeX, 14, badgeWidth, 10, 2, 2, 'F')
+    
+    // Badge text
+    if (isCreditNote) {
+      pdf.setTextColor(255, 255, 255)
+    } else {
+      pdf.setTextColor(15, 118, 110)
+    }
+    pdf.text(invoiceTypeText, badgeX + 5, 21)
+
+    // ============================================
+    // COMPANY INFO (left side under header)
+    // ============================================
+    let yPos = 55
+    
+    // Company details in a subtle box
+    pdf.setFillColor(248, 250, 252) // Very light gray
+    pdf.setDrawColor(226, 232, 240) // Light border
+    pdf.setLineWidth(0.3)
+    pdf.roundedRect(margin, yPos - 5, 80, 32, 2, 2, 'FD')
+    
+    pdf.setTextColor(100, 100, 100)
+    pdf.setFontSize(7)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text('Absender', margin + 3, yPos)
     yPos += 5
+    
+    pdf.setTextColor(0, 0, 0)
+    pdf.setFontSize(9)
+    pdf.setFont('helvetica', 'bold')
+    pdf.text(PAYMENT_CONFIG.creditorName, margin + 3, yPos)
+    yPos += 5
+    
+    pdf.setFont('helvetica', 'normal')
+    pdf.setFontSize(8)
     pdf.text(
       `${PAYMENT_CONFIG.address.street} ${PAYMENT_CONFIG.address.streetNumber}`,
-      margin,
+      margin + 3,
       yPos
     )
+    yPos += 4
+    pdf.text(`${PAYMENT_CONFIG.address.postalCode} ${PAYMENT_CONFIG.address.city}`, margin + 3, yPos)
+    yPos += 4
+    pdf.text('Schweiz', margin + 3, yPos)
     yPos += 5
-    pdf.text(`${PAYMENT_CONFIG.address.postalCode} ${PAYMENT_CONFIG.address.city}`, margin, yPos)
-    yPos += 5
-    pdf.text('Schweiz', margin, yPos)
+    pdf.setFontSize(7)
+    pdf.setTextColor(100, 100, 100)
+    pdf.text(`UID: ${PAYMENT_CONFIG.uid}`, margin + 3, yPos)
 
     // ============================================
-    // RECHNUNGSDATEN (rechts oben)
+    // INVOICE DETAILS (right side) - More prominent
     // ============================================
-    yPos = 50
-    pdf.setFontSize(9)
+    const detailsBoxX = pageWidth - margin - 65
+    const detailsBoxY = 50
+    
+    // Invoice details box
+    pdf.setFillColor(248, 250, 252)
+    pdf.setDrawColor(226, 232, 240)
+    pdf.setLineWidth(0.3)
+    pdf.roundedRect(detailsBoxX, detailsBoxY, 65, 37, 2, 2, 'FD')
+    
+    let detailY = detailsBoxY + 6
+    
+    // Invoice number - prominent
+    pdf.setFontSize(7)
     pdf.setTextColor(100, 100, 100)
-    pdf.text('Rechnungsnummer:', pageWidth - margin, yPos, { align: 'right' })
-    yPos += 5
-    pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(0, 0, 0)
-    pdf.text(invoice.invoiceNumber, pageWidth - margin, yPos, { align: 'right' })
-    yPos += 6
-    pdf.setFont('helvetica', 'normal')
-    pdf.setTextColor(100, 100, 100)
-    pdf.text(
-      `Datum: ${new Date(invoice.createdAt).toLocaleDateString('de-CH')}`,
-      pageWidth - margin,
-      yPos,
-      { align: 'right' }
-    )
-    yPos += 5
-    if (!isCreditNote) {
-      pdf.text(
-        `Fälligkeitsdatum: ${new Date(invoice.dueDate).toLocaleDateString('de-CH')}`,
-        pageWidth - margin,
-        yPos,
-        { align: 'right' }
-      )
-    } else if (invoice.originalInvoiceId && (invoice as any).originalInvoice) {
-      // Zeige Verweis auf ursprüngliche Rechnung bei Korrektur-Rechnungen
-      pdf.setFont('helvetica', 'normal')
-      pdf.setTextColor(100, 100, 100)
-      pdf.text(
-        `Storniert Rechnung: ${(invoice as any).originalInvoice.invoiceNumber}`,
-        pageWidth - margin,
-        yPos,
-        { align: 'right' }
-      )
-      yPos += 5
-      pdf.text(
-        `vom ${new Date((invoice as any).originalInvoice.createdAt).toLocaleDateString('de-CH')}`,
-        pageWidth - margin,
-        yPos,
-        { align: 'right' }
-      )
-    }
-
-    // ============================================
-    // EMPFÄNGERADRESSE
-    // ============================================
-    yPos = 85
+    pdf.text('Rechnungsnummer', detailsBoxX + 3, detailY)
+    detailY += 4
     pdf.setFontSize(10)
     pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(0, 0, 0)
-    pdf.text('Rechnungsempfänger:', margin, yPos)
-    yPos += 7
-
+    pdf.setTextColor(15, 118, 110)
+    pdf.text(invoice.invoiceNumber, detailsBoxX + 3, detailY)
+    detailY += 7
+    
+    // Invoice date
+    pdf.setFontSize(7)
     pdf.setFont('helvetica', 'normal')
-    if (invoice.seller.firstName && invoice.seller.lastName) {
-      pdf.text(`${invoice.seller.firstName} ${invoice.seller.lastName}`, margin, yPos)
-      yPos += 6
+    pdf.setTextColor(100, 100, 100)
+    pdf.text('Rechnungsdatum', detailsBoxX + 3, detailY)
+    detailY += 4
+    pdf.setFontSize(9)
+    pdf.setTextColor(0, 0, 0)
+    pdf.text(new Date(invoice.createdAt).toLocaleDateString('de-CH'), detailsBoxX + 3, detailY)
+    detailY += 7
+    
+    if (!isCreditNote) {
+      // Due date - highlighted for visibility
+      pdf.setFontSize(7)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('Zahlbar bis', detailsBoxX + 3, detailY)
+      detailY += 4
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'bold')
+      pdf.setTextColor(220, 38, 38) // Red for urgency
+      pdf.text(new Date(invoice.dueDate).toLocaleDateString('de-CH'), detailsBoxX + 3, detailY)
+    } else if (invoice.originalInvoiceId && (invoice as any).originalInvoice) {
+      // Reference to original invoice for credit notes
+      pdf.setFontSize(7)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('Korrigiert Rechnung', detailsBoxX + 3, detailY)
+      detailY += 4
+      pdf.setFontSize(9)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(0, 0, 0)
+      pdf.text((invoice as any).originalInvoice.invoiceNumber, detailsBoxX + 3, detailY)
     }
+
+    // ============================================
+    // RECIPIENT ADDRESS - Clear and prominent
+    // ============================================
+    yPos = 95
+    
+    // Label
+    pdf.setFontSize(7)
+    pdf.setTextColor(100, 100, 100)
+    pdf.setFont('helvetica', 'normal')
+    pdf.text('Rechnungsempfänger', margin, yPos)
+    yPos += 6
+
+    // Recipient details
+    pdf.setFontSize(10)
+    pdf.setTextColor(0, 0, 0)
+    
+    if (invoice.seller.firstName && invoice.seller.lastName) {
+      pdf.setFont('helvetica', 'bold')
+      pdf.text(`${invoice.seller.firstName} ${invoice.seller.lastName}`, margin, yPos)
+      yPos += 5
+    }
+    pdf.setFont('helvetica', 'normal')
     if (invoice.seller.companyName) {
       pdf.text(invoice.seller.companyName, margin, yPos)
-      yPos += 6
+      yPos += 5
     }
     if (invoice.seller.street && invoice.seller.streetNumber) {
       pdf.text(`${invoice.seller.street} ${invoice.seller.streetNumber}`, margin, yPos)
-      yPos += 6
+      yPos += 5
     }
     if (invoice.seller.postalCode && invoice.seller.city) {
       pdf.text(`${invoice.seller.postalCode} ${invoice.seller.city}`, margin, yPos)
-      yPos += 6
+      yPos += 5
     }
     if (invoice.seller.country) {
       pdf.text(invoice.seller.country, margin, yPos)
-      yPos += 6
+      yPos += 5
     }
 
     // ============================================
-    // RECHNUNGSPOSTEN TABELLE
+    // LINE ITEMS TABLE - Professional styling
     // ============================================
-    yPos += 10
+    yPos += 15
+
+    // Section title
+    pdf.setFontSize(11)
+    pdf.setFont('helvetica', 'bold')
+    pdf.setTextColor(15, 118, 110)
+    pdf.text('Rechnungspositionen', margin, yPos)
+    yPos += 8
 
     // Check if we have line items
     const hasLineItems = invoice.items && invoice.items.length > 0
 
     if (hasLineItems) {
-      // Tabellenkopf
-      pdf.setFillColor(245, 245, 245)
-      pdf.rect(margin, yPos - 5, contentWidth, 8, 'F')
+      // Table header with teal background
+      pdf.setFillColor(15, 118, 110)
+      pdf.roundedRect(margin, yPos - 5, contentWidth, 10, 1, 1, 'F')
 
-      pdf.setFontSize(9)
+      pdf.setFontSize(8)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(0, 0, 0)
-      pdf.text('Beschreibung', margin + 2, yPos)
-      pdf.text('Betrag', pageWidth - margin - 2, yPos, { align: 'right' })
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('Pos.', margin + 3, yPos + 1)
+      pdf.text('Beschreibung', margin + 15, yPos + 1)
+      pdf.text('Betrag (CHF)', pageWidth - margin - 3, yPos + 1, { align: 'right' })
 
-      yPos += 8
-      pdf.setDrawColor(200, 200, 200)
-      pdf.line(margin, yPos, pageWidth - margin, yPos)
-      yPos += 5
+      yPos += 10
 
-      // Rechnungsposten
+      // Line items with alternating row colors
       pdf.setFontSize(9)
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(0, 0, 0)
 
+      let itemIndex = 1
       for (const item of invoice.items) {
+        // Alternating row background
+        if (itemIndex % 2 === 0) {
+          pdf.setFillColor(248, 250, 252)
+          pdf.rect(margin, yPos - 4, contentWidth, 8, 'F')
+        }
+        
         const description = item.watch
           ? `${item.description}${item.watch.brand || item.watch.model ? ` (${[item.watch.brand, item.watch.model].filter(Boolean).join(' ')})` : ''}`
           : item.description
 
-        // Zeilenumbruch für lange Beschreibungen
-        const lines = pdf.splitTextToSize(description, contentWidth - 50)
+        // Position number
+        pdf.setTextColor(100, 100, 100)
+        pdf.text(String(itemIndex).padStart(2, '0'), margin + 3, yPos)
+        
+        // Description with word wrap
+        pdf.setTextColor(0, 0, 0)
+        const lines = pdf.splitTextToSize(description, contentWidth - 55)
 
         for (let i = 0; i < lines.length; i++) {
-          pdf.text(lines[i], margin + 2, yPos)
+          pdf.text(lines[i], margin + 15, yPos)
           if (i === 0) {
-            pdf.text(`CHF ${item.total.toFixed(2)}`, pageWidth - margin - 2, yPos, { align: 'right' })
+            pdf.setFont('helvetica', 'bold')
+            pdf.text(item.total.toFixed(2), pageWidth - margin - 3, yPos, { align: 'right' })
+            pdf.setFont('helvetica', 'normal')
           }
           yPos += 5
         }
-        yPos += 2
+        yPos += 3
+        itemIndex++
       }
+      
+      // Bottom border of table
+      pdf.setDrawColor(15, 118, 110)
+      pdf.setLineWidth(0.5)
+      pdf.line(margin, yPos, pageWidth - margin, yPos)
     } else {
       // Fallback: Show message if no line items
+      pdf.setFillColor(248, 250, 252)
+      pdf.roundedRect(margin, yPos - 2, contentWidth, 12, 2, 2, 'F')
       pdf.setFontSize(9)
-      pdf.setFont('helvetica', 'normal')
+      pdf.setFont('helvetica', 'italic')
       pdf.setTextColor(100, 100, 100)
-      pdf.text('Rechnungsdetails: Siehe Plattformübersicht', margin + 2, yPos)
-      yPos += 8
+      pdf.text('Rechnungsdetails: Siehe Plattformübersicht', margin + 5, yPos + 5)
+      yPos += 15
     }
 
     // ============================================
-    // ZUSAMMENFASSUNG
+    // TOTALS SECTION - Professional summary box
     // ============================================
-    yPos += 5
-    pdf.setDrawColor(200, 200, 200)
-    pdf.line(margin, yPos, pageWidth - margin, yPos)
-    yPos += 8
-
+    yPos += 10
+    
+    // Summary box on the right side
+    const summaryBoxWidth = 75
+    const summaryBoxX = pageWidth - margin - summaryBoxWidth
+    const summaryBoxY = yPos
+    
+    // Background for summary
+    pdf.setFillColor(248, 250, 252)
+    pdf.setDrawColor(226, 232, 240)
+    pdf.setLineWidth(0.3)
+    pdf.roundedRect(summaryBoxX, summaryBoxY, summaryBoxWidth, isCreditNote ? 48 : 40, 2, 2, 'FD')
+    
+    let sumY = summaryBoxY + 8
+    
+    // Subtotal
     pdf.setFontSize(9)
     pdf.setFont('helvetica', 'normal')
     pdf.setTextColor(100, 100, 100)
-    pdf.text('Zwischensumme:', pageWidth - margin - 50, yPos, { align: 'right' })
+    pdf.text('Zwischensumme', summaryBoxX + 5, sumY)
     pdf.setTextColor(0, 0, 0)
-    pdf.text(`CHF ${invoice.subtotal.toFixed(2)}`, pageWidth - margin - 2, yPos, { align: 'right' })
-    yPos += 6
+    pdf.text(`CHF ${invoice.subtotal.toFixed(2)}`, summaryBoxX + summaryBoxWidth - 5, sumY, { align: 'right' })
+    sumY += 7
 
+    // VAT
     pdf.setTextColor(100, 100, 100)
-    pdf.text(`MwSt (${(invoice.vatRate * 100).toFixed(1)}%):`, pageWidth - margin - 50, yPos, {
-      align: 'right',
-    })
+    pdf.text(`MwSt (${(invoice.vatRate * 100).toFixed(1)}%)`, summaryBoxX + 5, sumY)
     pdf.setTextColor(0, 0, 0)
-    pdf.text(`CHF ${invoice.vatAmount.toFixed(2)}`, pageWidth - margin - 2, yPos, {
-      align: 'right',
-    })
-    yPos += 8
+    pdf.text(`CHF ${invoice.vatAmount.toFixed(2)}`, summaryBoxX + summaryBoxWidth - 5, sumY, { align: 'right' })
+    sumY += 8
 
-    pdf.setDrawColor(0, 0, 0)
-    pdf.setLineWidth(0.5)
-    pdf.line(pageWidth - margin - 50, yPos, pageWidth - margin, yPos)
-    yPos += 6
+    // Divider line
+    pdf.setDrawColor(15, 118, 110)
+    pdf.setLineWidth(0.8)
+    pdf.line(summaryBoxX + 5, sumY, summaryBoxX + summaryBoxWidth - 5, sumY)
+    sumY += 8
 
-    pdf.setFontSize(12)
+    // Total - prominent
+    pdf.setFontSize(11)
     pdf.setFont('helvetica', 'bold')
-    pdf.setTextColor(0, 0, 0)
-    pdf.text('Total:', pageWidth - margin - 50, yPos, { align: 'right' })
-    pdf.text(`CHF ${Math.abs(invoice.total).toFixed(2)}`, pageWidth - margin - 2, yPos, {
-      align: 'right',
-    })
+    pdf.setTextColor(15, 118, 110)
+    pdf.text('TOTAL', summaryBoxX + 5, sumY)
+    pdf.setFontSize(12)
+    pdf.text(`CHF ${Math.abs(invoice.total).toFixed(2)}`, summaryBoxX + summaryBoxWidth - 5, sumY, { align: 'right' })
 
     if (isCreditNote) {
-      yPos += 6
+      sumY += 8
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'italic')
-      pdf.setTextColor(200, 0, 0)
-      pdf.text('(Gutschrift - wird automatisch verrechnet)', pageWidth - margin - 2, yPos, {
-        align: 'right',
-      })
+      pdf.setTextColor(220, 38, 38)
+      pdf.text('Gutschrift - wird verrechnet', summaryBoxX + 5, sumY)
     }
+    
+    // Update yPos for next section
+    yPos = summaryBoxY + (isCreditNote ? 55 : 48)
 
     // ============================================
-    // ZAHLUNGSINFORMATIONEN & QR-EINZAHLUNGSSCHEIN
+    // PAYMENT INFORMATION & QR-BILL
     // ============================================
     if (!isCreditNote) {
-      // Startposition für Zahlungsbereich
-      const paymentStartY = yPos + 20
+      // Position for payment section
+      const paymentStartY = yPos + 10
 
-      // Höhe des Zahlungsbereichs (erhöht wegen zusätzlicher Referenznummer-Zeile)
-      const paymentHeight = 86
+      // Height of payment section
+      const paymentHeight = 95
 
-      // Hintergrund für Zahlungsbereich
-      pdf.setFillColor(250, 250, 250)
-      pdf.rect(margin, paymentStartY, contentWidth, paymentHeight, 'F')
+      // Payment section with teal accent
+      pdf.setFillColor(240, 253, 250) // Very light teal background
+      pdf.setDrawColor(15, 118, 110)
+      pdf.setLineWidth(0.5)
+      pdf.roundedRect(margin, paymentStartY, contentWidth, paymentHeight, 3, 3, 'FD')
+      
+      // Left accent bar
+      pdf.setFillColor(15, 118, 110)
+      pdf.rect(margin, paymentStartY, 4, paymentHeight, 'F')
 
-      // Rahmen
-      pdf.setDrawColor(200, 200, 200)
-      pdf.setLineWidth(0.3)
-      pdf.rect(margin, paymentStartY, contentWidth, paymentHeight, 'S')
-
-      // Überschrift
-      pdf.setFontSize(11)
+      // Section title with icon-like element
+      pdf.setFontSize(12)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(0, 0, 0)
-      pdf.text('Zahlungsinformationen', margin + 5, paymentStartY + 8)
+      pdf.setTextColor(15, 118, 110)
+      pdf.text('Zahlungsinformationen', margin + 12, paymentStartY + 10)
 
-      // Linke Spalte: Zahlungsdetails
-      let paymentY = paymentStartY + 15
+      // Left column: Payment details
+      let paymentY = paymentStartY + 18
+      const labelX = margin + 12
+      const valueX = margin + 55
+      
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('Empfänger', labelX, paymentY)
+      pdf.setFont('helvetica', 'bold')
       pdf.setTextColor(0, 0, 0)
-
-      pdf.text(`Zugunsten von:`, margin + 5, paymentY)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text(PAYMENT_CONFIG.creditorName, margin + 45, paymentY)
+      pdf.text(PAYMENT_CONFIG.creditorName, valueX, paymentY)
       paymentY += 6
 
       pdf.setFont('helvetica', 'normal')
-      pdf.text(`IBAN:`, margin + 5, paymentY)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('Bank', labelX, paymentY)
+      pdf.setFont('helvetica', 'normal')
+      pdf.setTextColor(0, 0, 0)
+      pdf.text(PAYMENT_CONFIG.bankName, valueX, paymentY)
+      paymentY += 6
+
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('IBAN', labelX, paymentY)
       pdf.setFont('helvetica', 'bold')
-      pdf.text(PAYMENT_CONFIG.iban, margin + 45, paymentY)
+      pdf.setTextColor(15, 118, 110)
+      pdf.text(PAYMENT_CONFIG.iban, valueX, paymentY)
       paymentY += 6
 
       pdf.setFont('helvetica', 'normal')
-      pdf.text(`BIC/SWIFT:`, margin + 5, paymentY)
-      pdf.setFont('helvetica', 'bold')
-      pdf.text(PAYMENT_CONFIG.bic, margin + 45, paymentY)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('BIC/SWIFT', labelX, paymentY)
+      pdf.setTextColor(0, 0, 0)
+      pdf.text(PAYMENT_CONFIG.bic, valueX, paymentY)
       paymentY += 6
 
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(`Verwendungszweck:`, margin + 5, paymentY)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('Verwendungszweck', labelX, paymentY)
       pdf.setFont('helvetica', 'bold')
-      pdf.text(invoice.invoiceNumber, margin + 45, paymentY)
+      pdf.setTextColor(0, 0, 0)
+      pdf.text(invoice.invoiceNumber, valueX, paymentY)
       paymentY += 6
 
-      // Referenznummer für Überweisung (wichtig für automatische Zuordnung)
-      // Berechne Referenznummer (wie im QR-Code verwendet)
+      // Reference number for bank transfer
       let cleanReference = invoice.invoiceNumber.replace(/[^0-9A-Za-z]/g, '')
       if (cleanReference.length === 0) {
         cleanReference = invoice.invoiceNumber.replace(/[^0-9A-Za-z]/g, '')
       }
-      // Für Anzeige: Referenznummer ohne Leerzeichen (Leerzeichen nur für QR-Code)
       const displayReference = cleanReference.substring(0, 25)
 
       pdf.setFont('helvetica', 'normal')
-      pdf.text(`Referenznummer:`, margin + 5, paymentY)
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('Referenz', labelX, paymentY)
       pdf.setFont('helvetica', 'bold')
-      pdf.text(displayReference || invoice.invoiceNumber, margin + 45, paymentY)
-      paymentY += 6
+      pdf.setTextColor(0, 0, 0)
+      pdf.text(displayReference || invoice.invoiceNumber, valueX, paymentY)
+      paymentY += 8
 
-      pdf.setFont('helvetica', 'normal')
-      pdf.text(`Betrag:`, margin + 5, paymentY)
+      // Amount - prominent
+      pdf.setFillColor(15, 118, 110)
+      pdf.roundedRect(labelX - 2, paymentY - 4, 90, 12, 2, 2, 'F')
       pdf.setFont('helvetica', 'bold')
       pdf.setFontSize(10)
-      pdf.text(`CHF ${invoice.total.toFixed(2)}`, margin + 45, paymentY)
+      pdf.setTextColor(255, 255, 255)
+      pdf.text('Zahlbetrag:', labelX + 2, paymentY + 3)
+      pdf.text(`CHF ${invoice.total.toFixed(2)}`, labelX + 85, paymentY + 3, { align: 'right' })
 
       // Rechte Spalte: QR-Code (Swiss QR-Bill Format)
       try {
@@ -630,83 +750,119 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           },
         })
 
-        // Füge QR-Code rechts oben im Zahlungsbereich hinzu
-        const qrSize = 50 // Größe in mm
-        const qrX = pageWidth - margin - qrSize - 5
-        const qrY = paymentStartY + 10
+        // QR Code section - positioned on the right side
+        const qrSize = 48
+        const qrX = pageWidth - margin - qrSize - 10
+        const qrY = paymentStartY + 15
+        
+        // QR Code container with white background
+        pdf.setFillColor(255, 255, 255)
+        pdf.setDrawColor(226, 232, 240)
+        pdf.setLineWidth(0.3)
+        pdf.roundedRect(qrX - 4, qrY - 4, qrSize + 8, qrSize + 20, 2, 2, 'FD')
 
+        // Add QR code image
         pdf.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
 
-        // Hinweis unter QR-Code
+        // QR code label and instructions
         pdf.setFontSize(7)
+        pdf.setFont('helvetica', 'bold')
+        pdf.setTextColor(15, 118, 110)
+        pdf.text('Swiss QR-Code', qrX + qrSize / 2, qrY + qrSize + 5, { align: 'center' })
+        
         pdf.setFont('helvetica', 'normal')
+        pdf.setFontSize(6)
         pdf.setTextColor(100, 100, 100)
-        pdf.text('Scannen Sie den QR-Code', qrX + qrSize / 2, qrY + qrSize + 4, { align: 'center' })
-        pdf.text('mit Ihrer Banking-App', qrX + qrSize / 2, qrY + qrSize + 7, { align: 'center' })
+        pdf.text('Mit Banking-App scannen', qrX + qrSize / 2, qrY + qrSize + 10, { align: 'center' })
+        pdf.text('oder manuell überweisen', qrX + qrSize / 2, qrY + qrSize + 14, { align: 'center' })
       } catch (error) {
         console.error('Error generating QR code:', error)
         // QR-Code Fehler wird geloggt, aber PDF wird trotzdem erstellt
       }
 
-      // Hinweis am Ende
-      pdf.setFontSize(8)
+      // Payment instructions at bottom of payment box
+      pdf.setFontSize(7)
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(100, 100, 100)
       pdf.text(
-        'Bitte überweisen Sie den Betrag bis zum Fälligkeitsdatum.',
-        margin + 5,
-        paymentStartY + 75
-      )
-      pdf.text(
-        'Verwenden Sie die Referenz bei der Überweisung, damit die Zahlung zugeordnet werden kann.',
-        margin + 5,
-        paymentStartY + 80
+        `Zahlungsfrist: ${PAYMENT_CONFIG.paymentTermsDays} Tage. Bitte verwenden Sie die Referenznummer bei der Überweisung.`,
+        margin + 12,
+        paymentStartY + 88
       )
     } else {
-      // Bei Credit Notes: Einfacher Hinweis statt Zahlungsinformationen
-      yPos += 20
+      // Credit Note: Info section instead of payment
+      yPos += 10
 
-      // Einfacher Rahmen mit grauem Akzent
-      pdf.setDrawColor(200, 200, 200)
+      // Credit note info box with red accent
+      pdf.setFillColor(254, 242, 242) // Light red background
+      pdf.setDrawColor(220, 38, 38)
       pdf.setLineWidth(0.5)
-      pdf.setFillColor(250, 250, 250)
-      pdf.rect(margin, yPos, contentWidth, 40, 'FD')
+      pdf.roundedRect(margin, yPos, contentWidth, 45, 3, 3, 'FD')
+      
+      // Left accent bar
+      pdf.setFillColor(220, 38, 38)
+      pdf.rect(margin, yPos, 4, 45, 'F')
 
-      // Überschrift
-      pdf.setFontSize(10)
+      // Title
+      pdf.setFontSize(12)
       pdf.setFont('helvetica', 'bold')
-      pdf.setTextColor(0, 0, 0)
-      pdf.text('Korrektur-Rechnung / Gutschrift', margin + 5, yPos + 8)
+      pdf.setTextColor(220, 38, 38)
+      pdf.text('Gutschrift / Korrektur-Rechnung', margin + 12, yPos + 10)
 
-      let creditNoteYPos = yPos + 12
+      let creditNoteYPos = yPos + 18
       pdf.setFontSize(9)
       pdf.setFont('helvetica', 'normal')
       pdf.setTextColor(0, 0, 0)
 
-      // Verweis auf ursprüngliche Rechnung
+      // Reference to original invoice
       if (invoice.originalInvoiceId && (invoice as any).originalInvoice) {
         pdf.text(
-          `Storniert Rechnung: ${(invoice as any).originalInvoice.invoiceNumber} vom ${new Date((invoice as any).originalInvoice.createdAt).toLocaleDateString('de-CH')}`,
-          margin + 5,
+          `Bezug auf: Rechnung ${(invoice as any).originalInvoice.invoiceNumber} vom ${new Date((invoice as any).originalInvoice.createdAt).toLocaleDateString('de-CH')}`,
+          margin + 12,
           creditNoteYPos
         )
-        creditNoteYPos += 6
+        creditNoteYPos += 7
       }
 
-      // Hinweis zur Gutschrift
-      pdf.text('Diese Korrektur-Rechnung stellt eine Gutschrift dar.', margin + 5, creditNoteYPos)
+      // Credit note explanation
+      pdf.setTextColor(100, 100, 100)
+      pdf.text('Diese Gutschrift storniert die ursprüngliche Rechnung.', margin + 12, creditNoteYPos)
       creditNoteYPos += 5
-      pdf.text('Es ist keine Zahlung erforderlich. Der Betrag wird automatisch gutgeschrieben.', margin + 5, creditNoteYPos)
+      pdf.text('Es ist keine Zahlung erforderlich. Der Betrag wird Ihrem Konto gutgeschrieben.', margin + 12, creditNoteYPos)
     }
 
     // ============================================
-    // FUSSNOTE
+    // FOOTER - Professional footer with legal info
     // ============================================
-    pdf.setFontSize(7)
+    const footerY = pageHeight - 30
+    
+    // Footer separator line
+    pdf.setDrawColor(226, 232, 240)
+    pdf.setLineWidth(0.5)
+    pdf.line(margin, footerY, pageWidth - margin, footerY)
+    
+    // Thank you message
+    pdf.setFontSize(9)
     pdf.setFont('helvetica', 'normal')
+    pdf.setTextColor(15, 118, 110)
+    pdf.text('Vielen Dank für Ihr Vertrauen in Helvenda.', margin, footerY + 7)
+    
+    // Contact information
+    pdf.setFontSize(7)
+    pdf.setTextColor(100, 100, 100)
+    pdf.text(`Bei Fragen: ${PAYMENT_CONFIG.email} | ${PAYMENT_CONFIG.phone} | ${PAYMENT_CONFIG.website}`, margin, footerY + 13)
+    
+    // Legal notice
+    pdf.setFontSize(6)
     pdf.setTextColor(150, 150, 150)
-    pdf.text('Vielen Dank für Ihr Vertrauen in Helvenda.', margin, pageHeight - 15)
-    pdf.text('Bei Fragen kontaktieren Sie uns unter support@helvenda.ch', margin, pageHeight - 10)
+    pdf.text(PAYMENT_CONFIG.legalNotice, margin, footerY + 18)
+    
+    // VAT/UID info and page number
+    pdf.text(`${PAYMENT_CONFIG.creditorName} | ${PAYMENT_CONFIG.vatNumber}`, margin, footerY + 23)
+    
+    // Page number on the right
+    pdf.setTextColor(100, 100, 100)
+    pdf.text('Seite 1 von 1', pageWidth - margin, footerY + 23, { align: 'right' })
 
     // PDF als Buffer zurückgeben
     const pdfBuffer = Buffer.from(pdf.output('arraybuffer'))
