@@ -13,6 +13,7 @@ import {
   RefreshCw,
   ArrowLeft,
   Loader2,
+  Bell,
 } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
@@ -33,6 +34,7 @@ export default function StripeMonitoringPage() {
   const [loading, setLoading] = useState(true)
   const [metrics, setMetrics] = useState<WebhookMetrics | null>(null)
   const [healthStatus, setHealthStatus] = useState<any>(null)
+  const [checkingAlerts, setCheckingAlerts] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -100,13 +102,23 @@ export default function StripeMonitoringPage() {
             <h1 className="text-2xl font-bold text-gray-900">Stripe Integration Monitoring</h1>
             <p className="text-sm text-gray-600">Überwachung der Stripe-Webhook-Performance</p>
           </div>
-          <button
-            onClick={loadData}
-            className="inline-flex items-center rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
-          >
-            <RefreshCw className="mr-2 h-4 w-4" />
-            Aktualisieren
-          </button>
+          <div className="flex gap-2">
+            <button
+              onClick={checkAlerts}
+              disabled={checkingAlerts}
+              className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
+            >
+              <Bell className={`mr-2 h-4 w-4 ${checkingAlerts ? 'animate-pulse' : ''}`} />
+              {checkingAlerts ? 'Prüfe...' : 'Alerts prüfen'}
+            </button>
+            <button
+              onClick={loadData}
+              className="inline-flex items-center rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white hover:bg-primary-700"
+            >
+              <RefreshCw className="mr-2 h-4 w-4" />
+              Aktualisieren
+            </button>
+          </div>
         </div>
 
         {/* Health Status */}

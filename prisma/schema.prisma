@@ -1428,3 +1428,14 @@ model WebhookMetric {
   @@index([success, timestamp])
   @@map("webhook_metrics")
 }
+
+model AlertLog {
+  id         String   @id @default(cuid())
+  alertType  String   // e.g., "high_error_rate", "consecutive_failures"
+  details    String?  // Additional details about the alert
+  sentAt     DateTime @default(now())
+
+  @@index([alertType, sentAt])
+  @@index([sentAt])
+  @@map("alert_logs")
+}

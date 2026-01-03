@@ -49,3 +49,4 @@ Senden Sie eine E-Mail an `support@helvenda.ch` und prüfen Sie, ob sie ankommt.
 ## Fertig! 🎉
 
 Jetzt können Sie auf die Stripe-E-Mail antworten!
+
