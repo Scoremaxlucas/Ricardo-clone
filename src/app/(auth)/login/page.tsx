@@ -2,6 +2,7 @@
 
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
+import { validateCallbackUrl } from '@/lib/url-validation'
 import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { getSession, signIn } from 'next-auth/react'
 import Link from 'next/link'
@@ -16,7 +17,8 @@ function LoginPageContent() {
   const [error, setError] = useState('')
   const router = useRouter()
   const searchParams = useSearchParams()
-  const callbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/'
+  const rawCallbackUrl = searchParams.get('callbackUrl') || searchParams.get('redirect') || '/'
+  const callbackUrl = validateCallbackUrl(rawCallbackUrl)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

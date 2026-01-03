@@ -1,5 +1,6 @@
 'use client'
 
+import { validateCallbackUrl } from '@/lib/url-validation'
 import { useEffect, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter, usePathname } from 'next/navigation'
@@ -27,7 +28,7 @@ export function useRequireAuth(redirectTo?: string) {
     if (status === 'unauthenticated' || !session?.user) {
       setIsLoading(false)
       setIsAuthorized(false)
-      const callbackUrl = redirectTo || pathname
+      const callbackUrl = validateCallbackUrl(redirectTo || pathname)
       router.push(`/login?callbackUrl=${encodeURIComponent(callbackUrl)}`)
       return
     }
