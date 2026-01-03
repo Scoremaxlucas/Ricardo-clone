@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
 /**
  * Cron job endpoint for checking Stripe webhook alerts
  * Should be called periodically (e.g., every hour)
- * 
+ *
  * Configure in vercel.json:
  * {
  *   "crons": [{

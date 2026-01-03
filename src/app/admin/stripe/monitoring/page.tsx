@@ -1,22 +1,21 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
 import {
   Activity,
   AlertCircle,
-  CheckCircle,
-  Clock,
-  TrendingUp,
-  RefreshCw,
   ArrowLeft,
-  Loader2,
   Bell,
+  CheckCircle,
+  Loader2,
+  RefreshCw,
+  TrendingUp,
 } from 'lucide-react'
-import { Header } from '@/components/layout/Header'
-import { Footer } from '@/components/layout/Footer'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 
 interface WebhookMetrics {
   totalEvents: number
@@ -74,6 +73,30 @@ export default function StripeMonitoringPage() {
       console.error('Error loading monitoring data:', error)
     } finally {
       setLoading(false)
+    }
+  }
+
+  const checkAlerts = async () => {
+    setCheckingAlerts(true)
+    try {
+      const res = await fetch('/api/admin/stripe/alerts/check', {
+        method: 'POST',
+      })
+      if (res.ok) {
+        const data = await res.json()
+        if (data.alertsSent > 0) {
+          alert(`Alerts gesendet: ${data.alerts?.join(', ')}`)
+        } else {
+          alert('Keine Alerts nötig - alles in Ordnung!')
+        }
+      } else {
+        alert('Fehler beim Prüfen der Alerts')
+      }
+    } catch (error) {
+      console.error('Error checking alerts:', error)
+      alert('Fehler beim Prüfen der Alerts')
+    } finally {
+      setCheckingAlerts(false)
     }
   }
 

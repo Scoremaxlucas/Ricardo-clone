@@ -1,5 +1,5 @@
+import { getEmailBaseUrl, sendEmail } from './email'
 import { prisma } from './prisma'
-import { sendEmail, getEmailBaseUrl } from './email'
 
 /**
  * Stripe Integration Alerts
@@ -66,9 +66,7 @@ export async function checkAndSendAlerts(thresholds: AlertThresholds = DEFAULT_T
       }
     }
     if (consecutiveFailures >= thresholds.consecutiveFailures) {
-      alerts.push(
-        `${consecutiveFailures} aufeinanderfolgende Fehler in den letzten Events`
-      )
+      alerts.push(`${consecutiveFailures} aufeinanderfolgende Fehler in den letzten Events`)
     }
 
     // Check processing time
@@ -147,7 +145,7 @@ async function sendAlertToAdmins(
 <body>
   <div class="container">
     <h2>⚠️ Stripe Webhook Alert</h2>
-    
+
     <div class="alert-box">
       <h3>Probleme erkannt:</h3>
       <ul>
