@@ -26,7 +26,7 @@ import {
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { useCallback, useEffect, useState } from 'react'
+import { Suspense, useCallback, useEffect, useState } from 'react'
 
 interface InvoiceItem {
   id: string
@@ -93,7 +93,7 @@ interface Stats {
   withPaymentArrangement: number
 }
 
-export default function AdminInvoicesPage() {
+function AdminInvoicesPageContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
@@ -867,5 +867,17 @@ export default function AdminInvoicesPage() {
 
       <Footer />
     </div>
+  )
+}
+
+export default function AdminInvoicesPage() {
+  return (
+    <Suspense fallback={
+      <div className="flex min-h-screen items-center justify-center">
+        <Loader2 className="h-12 w-12 animate-spin text-primary-600" />
+      </div>
+    }>
+      <AdminInvoicesPageContent />
+    </Suspense>
   )
 }
