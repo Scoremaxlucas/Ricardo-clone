@@ -1,4 +1,4 @@
-import { getSearchMatchFoundEmail, sendEmail } from './email'
+import { getSearchMatchFoundEmail, sendEmail, getEmailBaseUrl } from './email'
 import { prisma } from './prisma'
 
 interface WatchData {
@@ -58,7 +58,7 @@ export async function checkSearchSubscriptions(watch: WatchData) {
       if (!subscription) continue
 
       const user = subscription.user
-      const watchUrl = `${process.env.NEXTAUTH_URL || 'http://localhost:3002'}/products/${watch.id}`
+      const watchUrl = `${getEmailBaseUrl()}/products/${watch.id}`
 
       // E-Mail senden
       try {

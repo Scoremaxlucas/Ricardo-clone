@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, getEmailBaseUrl } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -182,7 +182,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       <p>Falls Sie die Rückerstattung nicht erhalten haben, kontaktieren Sie uns bitte.</p>
 
       <p style="text-align: center;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${id}" class="button">
+        <a href="${getEmailBaseUrl()}/disputes/${id}" class="button">
           Details ansehen →
         </a>
       </p>
@@ -209,7 +209,7 @@ Bitte überprüfen Sie Ihr Konto/Zahlungsmittel, ob die Rückerstattung eingegan
 
 Falls Sie die Rückerstattung nicht erhalten haben, kontaktieren Sie uns bitte.
 
-Details ansehen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${id}
+Details ansehen: ${getEmailBaseUrl()}/disputes/${id}
 
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.

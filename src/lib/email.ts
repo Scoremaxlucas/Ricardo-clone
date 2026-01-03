@@ -4,6 +4,24 @@ import { Resend } from 'resend'
 // Resend Client initialisieren (falls API Key vorhanden)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
+/**
+ * Gibt die Basis-URL für E-Mail-Links zurück
+ * 
+ * In Produktion wird immer https://helvenda.ch verwendet.
+ * In Development wird localhost verwendet.
+ * 
+ * @returns Die Basis-URL für E-Mail-Links
+ */
+export function getEmailBaseUrl(): string {
+  // In Production: Immer helvenda.ch verwenden
+  if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
+    return 'https://helvenda.ch'
+  }
+  
+  // In Development: localhost verwenden
+  return process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'
+}
+
 // E-Mail-Transporter konfigurieren (für SMTP Fallback)
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
@@ -132,7 +150,7 @@ export function getAnswerNotificationEmail(
   watchId: string,
   isPublic: boolean
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const watchUrl = `${baseUrl}/products/${watchId}`
 
   const subject = `Antwort auf Ihre Frage zu ${watchTitle}`
@@ -209,7 +227,7 @@ export function getSearchMatchFoundEmail(
     maxPrice?: number | null
   }
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const subscriptionsUrl = `${baseUrl}/my-watches/buying/search-subscriptions`
 
   // Erstelle Beschreibung der Suchkriterien
@@ -322,7 +340,7 @@ export function getPaymentRequestEmail(
       <p>Bitte begleichen Sie diese Rechnung innerhalb der nächsten Tage.</p>
 
       <p style="margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
+        <a href="${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
           Rechnung ansehen und bezahlen →
         </a>
       </p>
@@ -355,7 +373,7 @@ Betrag: CHF ${formattedTotal}
 
 Bitte begleichen Sie diese Rechnung innerhalb der nächsten Tage.
 
-Rechnung ansehen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}
+Rechnung ansehen: ${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}
 
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
@@ -411,7 +429,7 @@ export function getFirstReminderEmail(
       <p>Bitte begleichen Sie diese Rechnung umgehend.</p>
 
       <p style="margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
+        <a href="${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
           Jetzt bezahlen →
         </a>
       </p>
@@ -437,7 +455,7 @@ Betrag: CHF ${formattedTotal}
 
 Bitte begleichen Sie diese Rechnung umgehend.
 
-Jetzt bezahlen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}
+Jetzt bezahlen: ${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}
 
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
@@ -591,7 +609,7 @@ export function getSecondReminderEmail(
       <p><strong>Hinweis:</strong> Bei weiterer Nichtzahlung wird Ihr Konto nach 58 Tagen gesperrt.</p>
 
       <p style="margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
+        <a href="${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
           Jetzt bezahlen →
         </a>
       </p>
@@ -619,7 +637,7 @@ Gesamtbetrag: CHF ${formattedTotal}
 
 Hinweis: Bei weiterer Nichtzahlung wird Ihr Konto nach 58 Tagen gesperrt.
 
-Jetzt bezahlen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}
+Jetzt bezahlen: ${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}
 
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
@@ -691,7 +709,7 @@ export function getFinalReminderEmail(
       </ul>
 
       <p style="margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
+        <a href="${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
           JETZT BEZAHLEN →
         </a>
       </p>
@@ -729,7 +747,7 @@ Nach der Sperre können Sie nicht mehr:
 - Gebote abgeben
 - Preisvorschläge machen
 
-JETZT BEZAHLEN: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling/fees?invoice=${invoiceId}
+JETZT BEZAHLEN: ${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}
 
 Nach Zahlung wird Ihr Konto automatisch entsperrt.
 
@@ -1015,7 +1033,7 @@ Helvenda - Ihr vertrauensvoller Marktplatz für den Kauf und Verkauf von Artikel
 }
 
 export function getVerificationApprovalEmail(userName: string, userEmail: string) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const profileUrl = `${baseUrl}/profile`
 
   const subject = `Ihr Konto wurde erfolgreich verifiziert`
@@ -1106,7 +1124,7 @@ export function getSaleNotificationEmail(
   buyerRating?: number, // Käufer-Bewertung (optional)
   buyerReviewCount?: number // Anzahl Bewertungen (optional)
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const salesUrl = `${baseUrl}/my-watches/selling/sold`
 
   const subject = `Ihre Uhr wurde verkauft: ${watchTitle}`
@@ -1215,7 +1233,7 @@ export function getReviewNotificationEmail(
   rating: 'positive' | 'neutral' | 'negative',
   reviewerName: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const profileUrl = `${baseUrl}/my-watches/public-profile`
 
   const ratingLabels: Record<string, { label: string; color: string; emoji: string }> = {
@@ -1320,7 +1338,7 @@ export function getPurchaseConfirmationEmail(
   sellerRating?: number, // Verkäufer-Bewertung (optional)
   sellerReviewCount?: number // Anzahl Bewertungen (optional)
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const totalPrice = finalPrice + shippingCost
 
@@ -1514,7 +1532,7 @@ export function getInvoiceNotificationEmail(
   dueDate: Date,
   invoiceId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const invoicesUrl = `${baseUrl}/my-watches/selling/fees`
 
   const subject = `Neue Rechnung: ${invoiceNumber}`
@@ -1754,7 +1772,7 @@ export function getContactDeadlineWarningEmail(
       <p><strong>Artikel:</strong> ${productTitle}</p>
 
       <p style="margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}${role === 'seller' ? '/my-watches/selling/sold' : '/my-watches/buying/purchased'}" class="button">
+        <a href="${getEmailBaseUrl()}${role === 'seller' ? '/my-watches/selling/sold' : '/my-watches/buying/purchased'}" class="button">
           Jetzt kontaktieren →
         </a>
       </p>
@@ -1786,7 +1804,7 @@ ${actionText}
 Andere Partei: ${otherPartyName}
 Artikel: ${productTitle}
 
-Jetzt kontaktieren: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}${role === 'seller' ? '/my-watches/selling/sold' : '/my-watches/buying/purchased'}
+Jetzt kontaktieren: ${getEmailBaseUrl()}${role === 'seller' ? '/my-watches/selling/sold' : '/my-watches/buying/purchased'}
 
 [!] Wenn Sie die Frist nicht einhalten, kann die andere Partei den Kauf stornieren.
 
@@ -1849,7 +1867,7 @@ export function getPaymentReminderEmail(
       <p><strong>Artikel:</strong> ${productTitle}</p>
 
       <p style="margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/buying/purchased" class="button">
+        <a href="${getEmailBaseUrl()}/my-watches/buying/purchased" class="button">
           Zahlungsinformationen ansehen →
         </a>
       </p>
@@ -1879,7 +1897,7 @@ Bitte überweisen Sie den Betrag innerhalb der nächsten ${daysRemaining} Tag${d
 Verkäufer: ${sellerName}
 Artikel: ${productTitle}
 
-Zahlungsinformationen ansehen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/buying/purchased
+Zahlungsinformationen ansehen: ${getEmailBaseUrl()}/my-watches/buying/purchased
 
 [!] Wenn Sie nicht innerhalb von 14 Tagen zahlen, kann der Verkäufer den Kauf stornieren.
 
@@ -1948,7 +1966,7 @@ export function getDisputeOpenedEmail(
       <p>Ein Admin wird sich in Kürze um diesen Dispute kümmern und eine Lösung finden.</p>
 
       <p style="margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}" class="button">
+        <a href="${getEmailBaseUrl()}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}" class="button">
           Details ansehen →
         </a>
       </p>
@@ -1973,7 +1991,7 @@ Beschreibung: ${description}
 
 Ein Admin wird sich in Kürze um diesen Dispute kümmern und eine Lösung finden.
 
-Details ansehen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}
+Details ansehen: ${getEmailBaseUrl()}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}
 
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
@@ -2039,8 +2057,8 @@ export function getDisputeOpenedEmailRicardoStyle(
       : ''
 
   const actionLink = isSeller
-    ? `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${purchaseId}`
-    : `${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/buying/purchased`
+    ? `${getEmailBaseUrl()}/disputes/${purchaseId}`
+    : `${getEmailBaseUrl()}/my-watches/buying/purchased`
 
   const actionText = isSeller ? 'Jetzt Stellung nehmen' : 'Details ansehen'
 
@@ -2238,7 +2256,7 @@ export function getRefundRequiredEmail(
       </ol>
 
       <p style="text-align: center; margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${purchaseId}" class="button">
+        <a href="${getEmailBaseUrl()}/disputes/${purchaseId}" class="button">
           Rückerstattung verwalten →
         </a>
       </p>
@@ -2278,7 +2296,7 @@ So können Sie die Rückerstattung vornehmen:
 2. Bestätigen Sie die Rückerstattung in Ihrem Helvenda-Konto
 3. Laden Sie ggf. einen Beleg hoch
 
-Rückerstattung verwalten: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${purchaseId}
+Rückerstattung verwalten: ${getEmailBaseUrl()}/disputes/${purchaseId}
 
 ⚠️ Bei Nichteinhaltung:
 - Verwarnung auf Ihrem Verkäuferkonto
@@ -2360,7 +2378,7 @@ export function getDisputeEscalatedEmail(
       }
 
       <p style="text-align: center; margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${purchaseId}" class="button">
+        <a href="${getEmailBaseUrl()}/disputes/${purchaseId}" class="button">
           Dispute ansehen →
         </a>
       </p>
@@ -2387,7 +2405,7 @@ ${
     : 'Ihr Fall wird nun mit höherer Priorität bearbeitet. Ein Helvenda-Mitarbeiter wird sich umgehend um Ihren Fall kümmern.'
 }
 
-Dispute ansehen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${purchaseId}
+Dispute ansehen: ${getEmailBaseUrl()}/disputes/${purchaseId}
 
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
@@ -2561,7 +2579,7 @@ Wichtige Information: Der Artikel "${productTitle}" steht automatisch wieder als
       ${relistInfo}
 
       <p style="margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}" class="button">
+        <a href="${getEmailBaseUrl()}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}" class="button">
           Details ansehen →
         </a>
       </p>
@@ -2584,7 +2602,7 @@ Der Dispute für "${productTitle}" wurde gelöst.
 ${isSuccess ? 'Lösung:' : 'Entscheidung:'} ${resolution}
 
 ${relistInfoText}
-Details ansehen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}
+Details ansehen: ${getEmailBaseUrl()}/my-watches/${role === 'seller' ? 'selling/sold' : 'buying/purchased'}
 
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
@@ -2635,7 +2653,7 @@ export function getDisputeRejectedEmail(
       <p>Falls Sie Fragen haben, können Sie sich gerne an unseren Support wenden.</p>
 
       <p style="margin-top: 30px;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches" class="button">
+        <a href="${getEmailBaseUrl()}/my-watches" class="button">
           Zu meinen Angeboten →
         </a>
       </p>
@@ -2686,7 +2704,7 @@ export function getHelvendaEmailTemplate(
   buttonText?: string,
   buttonUrl?: string
 ): string {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
 
   return `
 <!DOCTYPE html>
@@ -2928,7 +2946,7 @@ export function getBidConfirmationEmail(
   bidAmount: number,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Gebotsbestätigung - ${articleTitle}`
 
@@ -2981,7 +2999,7 @@ export function getOutbidNotificationEmail(
   currentHighestBid: number,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Sie wurden überboten - ${articleTitle}`
 
@@ -3033,7 +3051,7 @@ export function getBidNotificationEmail(
   bidderName: string,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Neues Gebot auf ${articleTitle}`
 
@@ -3087,7 +3105,7 @@ export function getAuctionEndWonEmail(
   watchId: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `✓ Glückwunsch! Sie haben gewonnen - ${articleTitle}`
 
@@ -3138,7 +3156,7 @@ export function getAuctionEndLostEmail(
   winningBid: number,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const subject = `Auktion beendet - ${articleTitle}`
 
   const html = getHelvendaEmailTemplate(
@@ -3190,7 +3208,7 @@ export function getAuctionEndSellerEmail(
   watchId: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Auktion beendet - ${articleTitle} wurde verkauft`
 
@@ -3244,7 +3262,7 @@ export function getPaymentReceivedEmail(
   buyerName: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Zahlung erhalten - ${articleTitle}`
 
@@ -3298,7 +3316,7 @@ export function getShippingNotificationEmail(
   trackingProvider: string | null,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Versandbenachrichtigung - ${articleTitle}`
 
@@ -3353,7 +3371,7 @@ export function getShippingReminderEmail(
   buyerName: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Versanderinnerung - ${articleTitle}`
 
@@ -3405,7 +3423,7 @@ export function getPriceOfferReceivedEmail(
   buyerName: string,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const offersUrl = `${baseUrl}/my-watches/selling/offers`
   const subject = `Preisvorschlag erhalten - ${articleTitle}`
 
@@ -3459,7 +3477,7 @@ export function getPriceOfferAcceptedEmail(
   watchId: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Preisvorschlag akzeptiert - ${articleTitle}`
 
@@ -3510,7 +3528,7 @@ export function getListingConfirmationEmail(
   articleNumber: string,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Angebot erfolgreich erstellt - ${articleTitle}`
 
@@ -3561,7 +3579,7 @@ export function getReviewRequestBuyerEmail(
   sellerName: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const reviewUrl = `${baseUrl}/my-watches/buying/purchased?review=${purchaseId}`
   const subject = `Bewerten Sie Ihren Kauf - ${articleTitle}`
 
@@ -3659,7 +3677,7 @@ export function getProductDeletedEmail(
 
       <p>Falls Sie Fragen zu dieser Entscheidung haben oder weitere Informationen benötigen, können Sie sich gerne an unseren Support wenden.</p>
 
-      <a href="${process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/my-watches/selling" class="button">
+      <a href="${getEmailBaseUrl()}/my-watches/selling" class="button">
         Zu meinen Artikeln
       </a>
     </div>
@@ -3868,7 +3886,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 // === PASSWORT GEÄNDERT BESTÄTIGUNG ===
 export function getPasswordChangedEmail(userName: string, ipAddress?: string, device?: string) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const subject = '✅ Passwort erfolgreich geändert - Helvenda'
 
   const changeInfo = `
@@ -3930,7 +3948,7 @@ export function getNewDeviceLoginEmail(
   location?: string,
   loginTime?: Date
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const time = loginTime || new Date()
   const subject = '🔔 Neue Anmeldung erkannt - Helvenda'
 
@@ -4004,7 +4022,7 @@ export function getAuctionEndingSoonEmail(
   imageUrl?: string,
   hoursRemaining?: number
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const articleUrl = `${baseUrl}/products/${watchId}`
   const timeLeft = hoursRemaining || 24
   const urgencyLevel = timeLeft <= 1 ? 'critical' : 'warning'
@@ -4082,7 +4100,7 @@ export function getItemReceivedConfirmationEmail(
   saleAmount: number,
   imageUrl?: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `✅ Artikel erhalten - ${articleTitle}`
 
@@ -4148,7 +4166,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 // === WILLKOMMENS-E-MAIL (nach Verifizierung) ===
 export function getWelcomeEmail(userName: string) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const subject = '🎉 Willkommen bei Helvenda!'
 
   const html = `
@@ -4413,7 +4431,7 @@ export function getTransactionSummaryHtml(
 
 // === ADMIN: E-MAIL MANUELL VERIFIZIERT ===
 export function getManualEmailVerificationEmail(userName: string, adminName: string) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const subject = '✅ Ihr Konto wurde verifiziert - Helvenda'
 
   const html = getHelvendaEmailTemplate(
@@ -4474,7 +4492,7 @@ export function getReviewRequestSellerEmail(
   buyerName: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const reviewUrl = `${baseUrl}/my-watches/selling/sold?review=${purchaseId}`
   const subject = `Bewerten Sie Ihren Verkauf - ${articleTitle}`
 

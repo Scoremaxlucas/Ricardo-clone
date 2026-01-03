@@ -498,7 +498,8 @@ export async function POST(request: NextRequest) {
     console.log(`[register] Email verification ENABLED - sending verification email`)
 
     // Send verification email
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+    const { getEmailBaseUrl } = await import('@/lib/email')
+    const baseUrl = getEmailBaseUrl()
     const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`
     const userName = trimmedFirstName || trimmedNickname || 'Benutzer'
 

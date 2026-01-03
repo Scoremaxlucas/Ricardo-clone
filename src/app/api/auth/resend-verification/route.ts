@@ -75,8 +75,8 @@ export async function POST(request: NextRequest) {
     })
 
     // Generiere Bestätigungslink
-    const baseUrl =
-      process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'
+    const { getEmailBaseUrl } = await import('@/lib/email')
+    const baseUrl = getEmailBaseUrl()
     const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`
 
     // Versende E-Mail

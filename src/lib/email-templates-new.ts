@@ -1,5 +1,5 @@
 // Neue E-Mail-Templates - werden in email.ts integriert
-import { getHelvendaEmailTemplate } from './email'
+import { getHelvendaEmailTemplate, getEmailBaseUrl } from './email'
 
 // Template für Überboten-Benachrichtigung (für Käufer)
 export function getOutbidNotificationEmail(
@@ -8,7 +8,7 @@ export function getOutbidNotificationEmail(
   currentHighestBid: number,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Sie wurden überboten - ${articleTitle}`
 
@@ -60,7 +60,7 @@ export function getBidNotificationEmail(
   bidderName: string,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Neues Gebot auf ${articleTitle}`
 
@@ -114,7 +114,7 @@ export function getAuctionEndWonEmail(
   watchId: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `🎉 Glückwunsch! Sie haben gewonnen - ${articleTitle}`
 
@@ -165,7 +165,7 @@ export function getAuctionEndLostEmail(
   winningBid: number,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const subject = `Auktion beendet - ${articleTitle}`
 
   const html = getHelvendaEmailTemplate(
@@ -217,7 +217,7 @@ export function getAuctionEndSellerEmail(
   watchId: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Auktion beendet - ${articleTitle} wurde verkauft`
 
@@ -271,7 +271,7 @@ export function getPaymentReceivedEmail(
   buyerName: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Zahlung erhalten - ${articleTitle}`
 
@@ -325,7 +325,7 @@ export function getShippingNotificationEmail(
   trackingProvider: string | null,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Versandbenachrichtigung - ${articleTitle}`
 
@@ -380,7 +380,7 @@ export function getShippingReminderEmail(
   buyerName: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Versanderinnerung - ${articleTitle}`
 
@@ -432,7 +432,7 @@ export function getPriceOfferReceivedEmail(
   buyerName: string,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const offersUrl = `${baseUrl}/my-watches/selling/offers`
   const subject = `Preisvorschlag erhalten - ${articleTitle}`
 
@@ -486,7 +486,7 @@ export function getPriceOfferAcceptedEmail(
   watchId: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Preisvorschlag akzeptiert - ${articleTitle}`
 
@@ -537,7 +537,7 @@ export function getListingConfirmationEmail(
   articleNumber: string,
   watchId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Angebot erfolgreich erstellt - ${articleTitle}`
 
@@ -588,7 +588,7 @@ export function getReviewRequestBuyerEmail(
   sellerName: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const reviewUrl = `${baseUrl}/my-watches/buying/purchased?review=${purchaseId}`
   const subject = `Bewerten Sie Ihren Kauf - ${articleTitle}`
 
@@ -639,7 +639,7 @@ export function getReviewRequestSellerEmail(
   buyerName: string,
   purchaseId: string
 ) {
-  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const baseUrl = getEmailBaseUrl()
   const reviewUrl = `${baseUrl}/my-watches/selling/sold?review=${purchaseId}`
   const subject = `Bewerten Sie Ihren Verkauf - ${articleTitle}`
 

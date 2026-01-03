@@ -1,4 +1,4 @@
-import { sendEmail } from '@/lib/email'
+import { sendEmail, getEmailBaseUrl } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -401,7 +401,7 @@ export async function POST(request: NextRequest) {
                       <p><strong>Artikel:</strong> ${purchase.watch.title}</p>
                       <p><strong>Eröffnet am:</strong> ${disputeOpenedAt.toLocaleDateString('de-CH')}</p>
                       <p><strong>Überfällig seit:</strong> ${daysSinceOpened - 14} Tag(en)</p>
-                      <p><a href="${process.env.NEXTAUTH_URL}/admin/disputes/${purchase.id}" style="color: #dc2626; font-weight: bold;">Jetzt bearbeiten</a></p>
+                      <p><a href="${getEmailBaseUrl()}/admin/disputes/${purchase.id}" style="color: #dc2626; font-weight: bold;">Jetzt bearbeiten</a></p>
                     `,
                     text: `Überfälliger Dispute für ${purchase.watch.title}. Bitte umgehend bearbeiten.`,
                   })

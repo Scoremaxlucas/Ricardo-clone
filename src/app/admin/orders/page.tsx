@@ -1,25 +1,25 @@
 'use client'
 
-import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
-import Link from 'next/link'
 import {
+  AlertTriangle,
   ArrowLeft,
-  RefreshCw,
-  Search,
-  Filter,
-  DollarSign,
+  Ban,
   CheckCircle,
   Clock,
-  AlertTriangle,
-  XCircle,
+  DollarSign,
   ExternalLink,
-  Shield,
+  Filter,
   Loader2,
+  RefreshCw,
+  Search,
+  Shield,
   Wallet,
-  Ban,
+  XCircle,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface Order {
@@ -281,9 +281,7 @@ export default function AdminOrdersPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-bold text-gray-900">Bestellungen & Zahlungen</h1>
-              <p className="mt-1 text-gray-600">
-                Verwalten Sie Zahlungen, Freigaben und Dispute
-              </p>
+              <p className="mt-1 text-gray-600">Verwalten Sie Zahlungen, Freigaben und Dispute</p>
             </div>
             <button
               onClick={loadOrders}

@@ -50,7 +50,8 @@ export async function POST(request: NextRequest) {
     })
 
     // Generate reset URL
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+    const { getEmailBaseUrl } = await import('@/lib/email')
+    const baseUrl = getEmailBaseUrl()
     const resetUrl = `${baseUrl}/reset-password?token=${resetToken}`
 
     // Send email

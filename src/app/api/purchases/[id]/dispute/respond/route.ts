@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, getEmailBaseUrl } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -222,7 +222,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       <p>Ein Helvenda-Mitarbeiter wird beide Stellungnahmen prüfen und eine Entscheidung treffen.</p>
 
       <p style="text-align: center;">
-        <a href="${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${id}" class="button">
+        <a href="${getEmailBaseUrl()}/disputes/${id}" class="button">
           Dispute ansehen →
         </a>
       </p>
@@ -245,7 +245,7 @@ ${sellerName} hat auf Ihren Dispute für "${purchase.watch.title}" geantwortet:
 
 Ein Helvenda-Mitarbeiter wird beide Stellungnahmen prüfen und eine Entscheidung treffen.
 
-Dispute ansehen: ${process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'}/disputes/${id}
+Dispute ansehen: ${getEmailBaseUrl()}/disputes/${id}
 
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.

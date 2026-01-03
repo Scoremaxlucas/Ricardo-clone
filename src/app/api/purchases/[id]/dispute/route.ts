@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth'
-import { sendEmail } from '@/lib/email'
+import { sendEmail, getEmailBaseUrl } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { addStatusHistory } from '@/lib/status-history'
 import { getServerSession } from 'next-auth/next'
@@ -342,7 +342,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                        <p><strong>Grund:</strong> ${getReasonLabel(reason)}</p>
                        <p><strong>Artikel:</strong> ${purchase.watch.title}</p>
                        <p><strong>Frist:</strong> ${disputeDeadline.toLocaleDateString('de-CH')}</p>
-                       <p><a href="${process.env.NEXTAUTH_URL}/admin/disputes/${id}">Zum Dispute</a></p>`,
+                       <p><a href="${getEmailBaseUrl()}/admin/disputes/${id}">Zum Dispute</a></p>`,
                 text: `Dringender Dispute für ${purchase.watch.title}. Grund: ${getReasonLabel(reason)}`,
               })
             } catch (e) {
