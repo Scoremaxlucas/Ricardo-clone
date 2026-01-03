@@ -6,10 +6,10 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 
 /**
  * Gibt die Basis-URL für E-Mail-Links zurück
- * 
+ *
  * In Produktion wird immer https://helvenda.ch verwendet.
  * In Development wird localhost verwendet.
- * 
+ *
  * @returns Die Basis-URL für E-Mail-Links
  */
 export function getEmailBaseUrl(): string {
@@ -17,7 +17,7 @@ export function getEmailBaseUrl(): string {
   if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
     return 'https://helvenda.ch'
   }
-  
+
   // In Development: localhost verwenden
   return process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'
 }
@@ -68,6 +68,11 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
         subject,
         html,
         text: text || html.replace(/<[^>]*>/g, ''),
+        // Explizit keine Verschlüsselung verwenden
+        headers: {
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+        },
       })
 
       console.log(`[sendEmail] Resend Response erhalten:`)
@@ -116,6 +121,14 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
         subject,
         text: text || html.replace(/<[^>]*>/g, ''), // Fallback zu Text ohne HTML
         html,
+        // Explizit keine Verschlüsselung verwenden
+        headers: {
+          'X-Priority': '3',
+          'X-MSMail-Priority': 'Normal',
+        },
+        // Deaktiviere automatische Signierung/Verschlüsselung
+        disableFileAccess: false,
+        disableUrlAccess: false,
       })
 
       console.log('✅ E-Mail via SMTP versendet:', info.messageId)
