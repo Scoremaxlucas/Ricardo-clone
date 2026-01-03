@@ -512,38 +512,50 @@ model Message {
 }
 
 model Invoice {
-  id                   String        @id @default(cuid())
-  invoiceNumber        String        @unique
-  sellerId             String
-  saleId               String?
-  subtotal             Float
-  vatRate              Float         @default(0.081)
-  vatAmount            Float
-  total                Float
-  status               String        @default("pending")
-  paidAt               DateTime?
-  dueDate              DateTime
-  paymentMethod        String?
-  paymentReference     String?
-  paymentConfirmedAt   DateTime?
-  qrCode               String?
-  paymentRequestSentAt DateTime?
-  firstReminderSentAt  DateTime?
-  secondReminderSentAt DateTime?
-  finalReminderSentAt  DateTime?
-  reminderCount        Int           @default(0)
-  lateFeeAdded         Boolean       @default(false)
-  lateFeeAmount        Float         @default(0)
-  accountBlockedAt     DateTime?
-  accountBlockedReason String?
-  createdAt            DateTime      @default(now())
-  updatedAt            DateTime      @updatedAt
-  refundedAt           DateTime?
-  originalInvoiceId    String? // Verknüpfung zur ursprünglichen Rechnung bei Korrektur-Rechnungen
-  originalInvoice      Invoice?      @relation("InvoiceCorrection", fields: [originalInvoiceId], references: [id])
-  correctionInvoices   Invoice[]     @relation("InvoiceCorrection")
-  items                InvoiceItem[]
-  seller               User          @relation(fields: [sellerId], references: [id])
+  id                      String        @id @default(cuid())
+  invoiceNumber           String        @unique
+  sellerId                String
+  saleId                  String?
+  subtotal                Float
+  vatRate                 Float         @default(0.081)
+  vatAmount               Float
+  total                   Float
+  status                  String        @default("pending") // pending, paid, overdue, cancelled, collection_stopped
+  paidAt                  DateTime?
+  dueDate                 DateTime
+  paymentMethod           String?
+  paymentReference        String?
+  paymentConfirmedAt      DateTime?
+  qrCode                  String?
+  paymentRequestSentAt    DateTime?
+  firstReminderSentAt     DateTime?
+  secondReminderSentAt    DateTime?
+  finalReminderSentAt     DateTime?
+  reminderCount           Int           @default(0)
+  lateFeeAdded            Boolean       @default(false)
+  lateFeeAmount           Float         @default(0)
+  accountBlockedAt        DateTime?
+  accountBlockedReason    String?
+  // Mahnstopp (Collection Stop) fields
+  collectionStopped       Boolean       @default(false)
+  collectionStoppedAt     DateTime?
+  collectionStoppedBy     String?       // Admin user ID who stopped collection
+  collectionStoppedReason String?       // Reason for stopping collection
+  collectionResumedAt     DateTime?
+  // Admin notes
+  adminNotes              String?       // Internal notes for admins
+  // Payment arrangement
+  paymentArrangement      Boolean       @default(false)
+  paymentArrangementDate  DateTime?     // When payment arrangement was made
+  paymentArrangementNotes String?       // Details of the arrangement
+  createdAt               DateTime      @default(now())
+  updatedAt               DateTime      @updatedAt
+  refundedAt              DateTime?
+  originalInvoiceId       String?       // Verknüpfung zur ursprünglichen Rechnung bei Korrektur-Rechnungen
+  originalInvoice         Invoice?      @relation("InvoiceCorrection", fields: [originalInvoiceId], references: [id])
+  correctionInvoices      Invoice[]     @relation("InvoiceCorrection")
+  items                   InvoiceItem[]
+  seller                  User          @relation(fields: [sellerId], references: [id])
 
   @@map("invoices")
 }

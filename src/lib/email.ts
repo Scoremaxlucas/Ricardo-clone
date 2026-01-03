@@ -4548,3 +4548,105 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
   return { subject, html, text }
 }
+
+interface InvoiceReminderOptions {
+  userName: string
+  invoiceNumber: string
+  amount: number
+  dueDate: Date
+  itemDescription: string
+  reminderLevel: number // 0 = payment request, 1 = first reminder, 2 = second reminder, 3 = final reminder
+}
+
+export function getInvoiceReminderEmail(options: InvoiceReminderOptions) {
+  const { userName, invoiceNumber, amount, dueDate, itemDescription, reminderLevel } = options
+  const baseUrl = getEmailBaseUrl()
+  const paymentUrl = `${baseUrl}/my-watches/selling/fees`
+
+  const formattedAmount = new Intl.NumberFormat('de-CH', {
+    style: 'currency',
+    currency: 'CHF',
+  }).format(amount)
+
+  const formattedDueDate = new Date(dueDate).toLocaleDateString('de-CH')
+
+  // Different content based on reminder level
+  let title: string
+  let urgency: string
+  let consequences: string
+  let bgColor: string
+  let borderColor: string
+  let textColor: string
+
+  switch (reminderLevel) {
+    case 0: // Payment request
+      title = 'Zahlungsaufforderung'
+      urgency = 'Ihre Rechnung ist fällig'
+      consequences =
+        'Bitte begleichen Sie den offenen Betrag bis zum Fälligkeitsdatum, um Mahngebühren zu vermeiden.'
+      bgColor = '#f0fdfa'
+      borderColor = '#0d9488'
+      textColor = '#134e4a'
+      break
+    case 1: // First reminder
+      title = '1. Mahnung'
+      urgency = 'Ihre Zahlung ist überfällig'
+      consequences =
+        'Wir bitten Sie, den offenen Betrag umgehend zu begleichen. Bei weiterer Verzögerung werden Mahngebühren erhoben.'
+      bgColor = '#fef3c7'
+      borderColor = '#f59e0b'
+      textColor = '#92400e'
+      break
+    case 2: // Second reminder
+      title = '2. Mahnung'
+      urgency = 'Dringende Zahlungsaufforderung'
+      consequences =
+        'Ihr Konto wird gesperrt, wenn die Zahlung nicht innerhalb von 14 Tagen eingeht. Mahngebühren von CHF 10.00 wurden hinzugefügt.'
+      bgColor = '#fed7aa'
+      borderColor = '#ea580c'
+      textColor = '#9a3412'
+      break
+    case 3: // Final reminder
+      title = 'Letzte Mahnung'
+      urgency = 'Letzte Zahlungserinnerung vor Kontosperrung'
+      consequences =
+        'Dies ist unsere letzte Mahnung. Ohne Zahlung innerhalb von 7 Tagen wird Ihr Konto dauerhaft gesperrt und der Fall an ein Inkassobüro übergeben.'
+      bgColor = '#fee2e2'
+      borderColor = '#dc2626'
+      textColor = '#991b1b'
+      break
+    default:
+      title = 'Zahlungserinnerung'
+      urgency = 'Offene Rechnung'
+      consequences = 'Bitte begleichen Sie den offenen Betrag.'
+      bgColor = '#f3f4f6'
+      borderColor = '#6b7280'
+      textColor = '#374151'
+  }
+
+  const html = getHelvendaEmailTemplate(
+    title,
+    `Hallo ${userName},`,
+    `
+      <p>${urgency}</p>
+
+      <div style="background-color: ${bgColor}; border-left: 4px solid ${borderColor}; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; color: ${textColor}; font-weight: 500;">
+          <strong>Rechnungsnummer:</strong> ${invoiceNumber}<br>
+          <strong>Artikel:</strong> ${itemDescription}<br>
+          <strong>Betrag:</strong> ${formattedAmount}<br>
+          <strong>Fälligkeitsdatum:</strong> ${formattedDueDate}
+        </p>
+      </div>
+
+      <p>${consequences}</p>
+
+      <p>Bei Fragen oder Zahlungsschwierigkeiten kontaktieren Sie uns bitte unter <a href="mailto:support@helvenda.ch">support@helvenda.ch</a>.</p>
+    `,
+    'Jetzt bezahlen',
+    paymentUrl
+  )
+
+  return html
+}
+
