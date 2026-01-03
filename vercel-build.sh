@@ -57,11 +57,26 @@ ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "sellerWarningIssued" BOOLEAN D
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "sellerWarningIssuedAt" TIMESTAMP(3);
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "sellerWarningReason" TEXT;
 
+-- Basic User Warning Fields
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "warningCount" INTEGER DEFAULT 0;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "lastWarnedAt" TIMESTAMP(3);
+
 -- Ricardo-Style: User Warning Fields
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "disputeWarningCount" INTEGER DEFAULT 0;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "lastDisputeWarningAt" TIMESTAMP(3);
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "disputesLostCount" INTEGER DEFAULT 0;
 ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "disputeRestrictionLevel" TEXT;
+
+-- Password Reset Fields
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "passwordResetToken" TEXT;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "passwordResetTokenExpires" TIMESTAMP(3);
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "passwordChangedAt" TIMESTAMP(3);
+
+-- Login Security Fields
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "lastLoginAt" TIMESTAMP(3);
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "lastLoginIp" TEXT;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "lastLoginDevice" TEXT;
+ALTER TABLE "users" ADD COLUMN IF NOT EXISTS "loginNotificationsEnabled" BOOLEAN DEFAULT true;
 SQLEOF
   echo "✅ Manual column fixes applied (including Ricardo-Style dispute columns)"
 fi

@@ -92,8 +92,8 @@ export default function RegisterPage() {
       if (response.ok) {
         const data = await response.json()
 
-        // Email verification disabled - redirect to login page
-        router.push(`/login?registered=true&email=${encodeURIComponent(formData.email.trim())}`)
+        // Email verification enabled - redirect to verification notice page
+        router.push(`/verify-email-notice?email=${encodeURIComponent(formData.email.trim())}`)
       } else {
         const data = await response.json()
         // Show detailed error including errorCode if available

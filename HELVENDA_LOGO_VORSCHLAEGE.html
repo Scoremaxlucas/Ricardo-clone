@@ -1,0 +1,479 @@
+<!doctype html>
+<html lang="de">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Helvenda Logo - Memorable Wordmark Variationen</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Poppins:wght@600;700;800&family=Nunito:wght@700;800&display=swap"
+      rel="stylesheet"
+    />
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        font-family: 'Inter', sans-serif;
+        background: #fafafa;
+        color: #3a3a3a;
+        padding: 40px 20px;
+        line-height: 1.6;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+      }
+      h1 {
+        font-size: 2.5rem;
+        font-weight: 700;
+        color: #0d9488;
+        margin-bottom: 10px;
+      }
+      .subtitle {
+        font-size: 1.1rem;
+        color: #6c757d;
+        margin-bottom: 40px;
+      }
+      .logo-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+        gap: 40px;
+        margin-bottom: 60px;
+      }
+      .logo-card {
+        background: white;
+        border-radius: 20px;
+        padding: 40px;
+        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+      }
+      .logo-card h2 {
+        font-size: 1.4rem;
+        font-weight: 600;
+        color: #0d9488;
+        margin-bottom: 8px;
+      }
+      .logo-card .subtitle {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 25px;
+      }
+      .logo-mockup {
+        display: flex;
+        align-items: center;
+        margin-bottom: 25px;
+        padding: 50px 40px;
+        background: #f8f9fa;
+        border-radius: 16px;
+        justify-content: center;
+      }
+      .logo-mockup-dark {
+        background: #1a1a2e;
+      }
+
+      /* Variation 1: Swoosh Underline (wie Ricardo) */
+      .wordmark-swoosh {
+        position: relative;
+        display: inline-block;
+      }
+      .wordmark-swoosh .text {
+        font-family: 'Poppins', sans-serif;
+        font-size: 3.2rem;
+        font-weight: 700;
+        color: #0d9488;
+        letter-spacing: -0.5px;
+      }
+      .wordmark-swoosh .domain {
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: #14b8a6;
+        margin-left: 2px;
+      }
+      .wordmark-swoosh::after {
+        content: '';
+        position: absolute;
+        bottom: -4px;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, #0d9488 0%, #14b8a6 60%, transparent 100%);
+        border-radius: 2px;
+      }
+
+      /* Variation 2: Dot Accent auf "e" */
+      .wordmark-dot {
+        font-family: 'Poppins', sans-serif;
+        font-size: 3.2rem;
+        font-weight: 700;
+        color: #0d9488;
+        letter-spacing: -0.5px;
+        position: relative;
+      }
+      .wordmark-dot .h {
+        color: #0d9488;
+      }
+      .wordmark-dot .e-accent {
+        position: relative;
+      }
+      .wordmark-dot .e-accent::after {
+        content: '';
+        position: absolute;
+        top: 2px;
+        right: -2px;
+        width: 10px;
+        height: 10px;
+        background: #fbbf24;
+        border-radius: 50%;
+      }
+      .wordmark-dot .domain {
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: #14b8a6;
+        margin-left: 2px;
+      }
+
+      /* Variation 3: Split Color (H hervorgehoben) */
+      .wordmark-split {
+        font-family: 'Poppins', sans-serif;
+        font-size: 3.2rem;
+        font-weight: 700;
+        letter-spacing: -0.5px;
+      }
+      .wordmark-split .h-special {
+        display: inline-block;
+        color: white;
+        background: #0d9488;
+        padding: 0 12px;
+        border-radius: 8px;
+        margin-right: 2px;
+      }
+      .wordmark-split .rest {
+        color: #0d9488;
+      }
+      .wordmark-split .domain {
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: #14b8a6;
+        margin-left: 2px;
+      }
+
+      /* Variation 4: Rounded Modern */
+      .wordmark-rounded {
+        font-family: 'Nunito', sans-serif;
+        font-size: 3.2rem;
+        font-weight: 800;
+        color: #0d9488;
+        letter-spacing: 0.5px;
+      }
+      .wordmark-rounded .domain {
+        font-size: 1.6rem;
+        font-weight: 600;
+        color: #14b8a6;
+        margin-left: 2px;
+      }
+      .wordmark-rounded-container {
+        position: relative;
+      }
+      .wordmark-rounded-container::before {
+        content: '●';
+        position: absolute;
+        top: -8px;
+        right: -16px;
+        font-size: 12px;
+        color: #fbbf24;
+      }
+
+      /* Variation 5: Connected Flow */
+      .wordmark-flow {
+        font-family: 'Poppins', sans-serif;
+        font-size: 3.2rem;
+        font-weight: 700;
+        color: #0d9488;
+        letter-spacing: -1px;
+        position: relative;
+      }
+      .wordmark-flow .domain {
+        font-size: 1.6rem;
+        font-weight: 500;
+        color: #14b8a6;
+        margin-left: 2px;
+      }
+      .wordmark-flow-underline {
+        display: block;
+        width: 60px;
+        height: 4px;
+        background: #fbbf24;
+        border-radius: 2px;
+        margin-top: 6px;
+      }
+
+      /* Variation 6: Badge Style */
+      .wordmark-badge {
+        font-family: 'Poppins', sans-serif;
+        font-size: 2.8rem;
+        font-weight: 700;
+        color: white;
+        background: linear-gradient(135deg, #0d9488 0%, #0f766e 100%);
+        padding: 12px 28px;
+        border-radius: 12px;
+        box-shadow: 0 4px 15px rgba(13, 148, 136, 0.3);
+      }
+      .wordmark-badge .domain {
+        font-size: 1.4rem;
+        font-weight: 500;
+        opacity: 0.85;
+        margin-left: 2px;
+      }
+
+      .description {
+        margin-top: 15px;
+        padding: 15px;
+        background: #f0fdfa;
+        border-radius: 10px;
+        border-left: 3px solid #0d9488;
+      }
+      .description p {
+        font-size: 0.9rem;
+        color: #3a3a3a;
+      }
+      .tag {
+        display: inline-block;
+        background: #0d9488;
+        color: white;
+        padding: 3px 10px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+        margin-top: 10px;
+      }
+      .tag-yellow {
+        background: #fbbf24;
+        color: #1a1a2e;
+      }
+
+      .comparison {
+        margin-top: 60px;
+        padding: 40px;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0px 4px 20px rgba(0, 0, 0, 0.1);
+      }
+      .comparison h2 {
+        font-size: 1.5rem;
+        color: #0d9488;
+        margin-bottom: 20px;
+      }
+      .comparison-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 30px;
+      }
+      .comparison-item {
+        text-align: center;
+        padding: 30px;
+        background: #f8f9fa;
+        border-radius: 12px;
+      }
+      .comparison-item h4 {
+        font-size: 0.9rem;
+        color: #6c757d;
+        margin-bottom: 15px;
+      }
+      .ricardo-style {
+        font-family: 'Arial Black', sans-serif;
+        font-size: 2rem;
+        color: #e31c25;
+        font-weight: 900;
+      }
+      .tutti-style {
+        font-family: 'Helvetica', sans-serif;
+        font-size: 2rem;
+        color: #ff6600;
+        font-weight: 700;
+      }
+
+      .footer {
+        margin-top: 60px;
+        padding: 30px;
+        background: #0d9488;
+        color: white;
+        border-radius: 20px;
+        text-align: center;
+      }
+      .footer h3 {
+        font-size: 1.2rem;
+        margin-bottom: 10px;
+      }
+      .footer p {
+        font-size: 0.9rem;
+        opacity: 0.9;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h1>Helvenda Logo - Memorable Variationen</h1>
+      <p class="subtitle">Wie machen wir das Wordmark einzigartiger und wiedererkennbarer?</p>
+
+      <div class="logo-grid">
+        <!-- Variation 1: Swoosh -->
+        <div class="logo-card">
+          <h2>1. Swoosh Underline ⭐ TOP EMPFEHLUNG</h2>
+          <p class="subtitle">Fliessende Linie wie bei Ricardo</p>
+          <div class="logo-mockup">
+            <div class="wordmark-swoosh">
+              <span class="text">Helvenda<span class="domain">.ch</span></span>
+            </div>
+          </div>
+          <div class="description">
+            <p>
+              <strong>Was macht es memorable:</strong> Die fliessende Unterlinie gibt dem Logo
+              Bewegung und Dynamik - ähnlich wie Ricardo's charakteristischer Look. Der Gradient
+              verstärkt den modernen Eindruck.
+            </p>
+            <span class="tag">Ricardo-inspiriert</span>
+          </div>
+        </div>
+
+        <!-- Variation 2: Dot Accent -->
+        <div class="logo-card">
+          <h2>2. Gelber Dot-Akzent</h2>
+          <p class="subtitle">Kleiner aber markanter Akzent</p>
+          <div class="logo-mockup">
+            <div class="wordmark-dot">
+              <span class="h">H</span><span class="e-accent">e</span>lvenda<span class="domain"
+                >.ch</span
+              >
+            </div>
+          </div>
+          <div class="description">
+            <p>
+              <strong>Was macht es memorable:</strong> Der gelbe Punkt über dem "e" ist ein subtiler
+              aber einzigartiger Marker. Erinnert an das "Schweizer Qualität" Element und macht das
+              Logo sofort wiedererkennbar.
+            </p>
+            <span class="tag tag-yellow">Swiss Touch</span>
+          </div>
+        </div>
+
+        <!-- Variation 3: Split Color -->
+        <div class="logo-card">
+          <h2>3. Hervorgehobenes H</h2>
+          <p class="subtitle">Das "H" als eigenständiges Element</p>
+          <div class="logo-mockup">
+            <div class="wordmark-split">
+              <span class="h-special">H</span
+              ><span class="rest">elvenda<span class="domain">.ch</span></span>
+            </div>
+          </div>
+          <div class="description">
+            <p>
+              <strong>Was macht es memorable:</strong> Das "H" in der Box funktioniert wie ein
+              Mini-Icon, aber bleibt Teil des Namens. Gut für App-Icons und Favicon, während das
+              volle Wordmark konsistent bleibt.
+            </p>
+            <span class="tag">Icon-ready</span>
+          </div>
+        </div>
+
+        <!-- Variation 4: Rounded -->
+        <div class="logo-card">
+          <h2>4. Rounded Modern mit Akzent</h2>
+          <p class="subtitle">Weiche Schrift mit Marken-Punkt</p>
+          <div class="logo-mockup">
+            <div class="wordmark-rounded-container">
+              <div class="wordmark-rounded">Helvenda<span class="domain">.ch</span></div>
+            </div>
+          </div>
+          <div class="description">
+            <p>
+              <strong>Was macht es memorable:</strong> Die rundere Schriftart (Nunito) wirkt
+              freundlicher und approachable. Der kleine gelbe Punkt oben rechts ist ein subtiler
+              Marken-Identifier.
+            </p>
+            <span class="tag">Freundlich</span>
+          </div>
+        </div>
+
+        <!-- Variation 5: Flow -->
+        <div class="logo-card">
+          <h2>5. Gelbe Akzent-Linie</h2>
+          <p class="subtitle">Kurze markante Unterlinie in Gelb</p>
+          <div class="logo-mockup">
+            <div style="text-align: left">
+              <div class="wordmark-flow">Helvenda<span class="domain">.ch</span></div>
+              <span class="wordmark-flow-underline"></span>
+            </div>
+          </div>
+          <div class="description">
+            <p>
+              <strong>Was macht es memorable:</strong> Die kurze gelbe Linie unter dem "H" gibt dem
+              Logo einen markanten Anker. Kombiniert die Farben der Schweizer Flagge mit Helvenda's
+              Teal.
+            </p>
+            <span class="tag tag-yellow">Swiss Colors</span>
+          </div>
+        </div>
+
+        <!-- Variation 6: Badge -->
+        <div class="logo-card">
+          <h2>6. Premium Badge</h2>
+          <p class="subtitle">Vollflächig mit Gradient</p>
+          <div class="logo-mockup logo-mockup-dark">
+            <div class="wordmark-badge">Helvenda<span class="domain">.ch</span></div>
+          </div>
+          <div class="description">
+            <p>
+              <strong>Was macht es memorable:</strong> Badge-Style vermittelt Premium und Vertrauen.
+              Gut für spezielle Anwendungen, Hero-Sections oder als alternativer Logo-Lock-up.
+            </p>
+            <span class="tag">Premium Look</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Comparison Section -->
+      <div class="comparison">
+        <h2>📊 Vergleich mit Konkurrenz</h2>
+        <div class="comparison-grid">
+          <div class="comparison-item">
+            <h4>Ricardo.ch</h4>
+            <div class="ricardo-style">ricardo</div>
+            <p style="font-size: 0.8rem; color: #6c757d; margin-top: 10px">
+              Fette Schrift, Rot, Clean
+            </p>
+          </div>
+          <div class="comparison-item">
+            <h4>Tutti.ch</h4>
+            <div class="tutti-style">tutti</div>
+            <p style="font-size: 0.8rem; color: #6c757d; margin-top: 10px">
+              Orange, Modern, Freundlich
+            </p>
+          </div>
+          <div class="comparison-item">
+            <h4>Helvenda.ch (Empfehlung)</h4>
+            <div class="wordmark-swoosh" style="font-size: 0.7em">
+              <span class="text">Helvenda</span>
+            </div>
+            <p style="font-size: 0.8rem; color: #6c757d; margin-top: 10px">
+              Teal, Swoosh, Schweizer Touch
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">
+        <h3>💡 Empfehlung: Variation 1 (Swoosh) oder 2 (Dot-Akzent)</h3>
+        <p>
+          Diese beiden haben den besten Balance zwischen "clean wie Ricardo" und "einzigartig
+          memorable"
+        </p>
+      </div>
+    </div>
+  </body>
+</html>
+
+

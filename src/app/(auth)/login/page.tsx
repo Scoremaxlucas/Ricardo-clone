@@ -1,12 +1,12 @@
 'use client'
 
-import { useState, useEffect, Suspense } from 'react'
-import { signIn, getSession } from 'next-auth/react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
-import { Logo } from '@/components/ui/Logo'
 import { Button } from '@/components/ui/Button'
+import { Logo } from '@/components/ui/Logo'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { getSession, signIn } from 'next-auth/react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useState } from 'react'
 
 function LoginPageContent() {
   const [email, setEmail] = useState('')
@@ -42,7 +42,18 @@ function LoginPageContent() {
 
       if (result?.error) {
         console.error('Login error:', result.error)
-        setError(`Fehler: ${result.error}. Bitte überprüfen Sie E-Mail und Passwort.`)
+        // Check for email not verified error
+        if (
+          result.error.includes('EMAIL_NOT_VERIFIED') ||
+          result.error.includes('CredentialsSignin')
+        ) {
+          // Could be email not verified - show helpful message
+          setError(
+            'Anmeldung fehlgeschlagen. Bitte überprüfen Sie Ihre E-Mail und Passwort. Falls Sie Ihre E-Mail noch nicht bestätigt haben, klicken Sie auf den Bestätigungslink in Ihrer E-Mail.'
+          )
+        } else {
+          setError(`Fehler: ${result.error}. Bitte überprüfen Sie E-Mail und Passwort.`)
+        }
         setIsLoading(false)
         return
       }
@@ -186,14 +197,16 @@ function LoginPageContent() {
 
 export default function LoginPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
-          <p className="text-gray-600">Laden...</p>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
+            <p className="text-gray-600">Laden...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <LoginPageContent />
     </Suspense>
   )

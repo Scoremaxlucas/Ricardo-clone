@@ -1,5 +1,5 @@
-import { shouldShowDetailedErrors } from "@/lib/env"
 import { authOptions } from '@/lib/auth'
+import { shouldShowDetailedErrors } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -71,6 +71,7 @@ export async function GET(request: NextRequest) {
         blockedAt: true,
         verified: true,
         verificationStatus: true,
+        emailVerified: true,
         warningCount: true,
         lastWarnedAt: true,
         createdAt: true,

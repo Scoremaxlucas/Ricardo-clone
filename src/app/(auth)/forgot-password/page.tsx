@@ -1,10 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
-import Link from 'next/link'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
+import { useState } from 'react'
 
 export default function ForgotPasswordPage() {
   const [email, setEmail] = useState('')
@@ -26,9 +26,19 @@ export default function ForgotPasswordPage() {
     }
 
     try {
-      // TODO: Implement forgot password API endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setSuccess(true)
+      const response = await fetch('/api/auth/forgot-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(true)
+      } else {
+        setError(data.message || 'Ein Fehler ist aufgetreten.')
+      }
     } catch (error) {
       setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
     } finally {
@@ -47,7 +57,8 @@ export default function ForgotPasswordPage() {
             Passwort zurücksetzen
           </h2>
           <p className="mt-3 text-center text-sm text-gray-600">
-            Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen des Passworts.
+            Geben Sie Ihre E-Mail-Adresse ein und wir senden Ihnen einen Link zum Zurücksetzen des
+            Passworts.
           </p>
         </div>
 
@@ -96,7 +107,10 @@ export default function ForgotPasswordPage() {
               >
                 {isLoading ? 'Wird gesendet...' : 'Link senden'}
               </Button>
-              <Link href="/login" className="text-center text-sm text-gray-600 hover:text-primary-600">
+              <Link
+                href="/login"
+                className="text-center text-sm text-gray-600 hover:text-primary-600"
+              >
                 Zurück zur Anmeldung
               </Link>
             </div>

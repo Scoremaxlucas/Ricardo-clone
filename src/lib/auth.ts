@@ -100,7 +100,14 @@ export const authOptions = {
             emailVerified: user.emailVerified,
           })
 
-          // Email verification check disabled - users can login immediately after registration
+          // Check if email is verified
+          const isEmailVerified = user.emailVerified === true
+          if (!isEmailVerified) {
+            console.log('[AUTH] Email not verified:', normalizedEmail)
+            // Throw a specific error that the frontend can handle
+            throw new Error('EMAIL_NOT_VERIFIED')
+          }
+
           const isAdmin = user.isAdmin === true
 
           // WICHTIG: Prüfe ob Benutzer blockiert ist

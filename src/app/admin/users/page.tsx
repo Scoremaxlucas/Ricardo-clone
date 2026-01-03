@@ -14,6 +14,7 @@ import {
   FileText,
   Flag,
   History,
+  MailCheck,
   Search,
   Shield,
   UserCheck,
@@ -38,6 +39,7 @@ interface User {
   blockedAt: string | null
   verified: boolean
   verificationStatus: string | null
+  emailVerified: boolean
   warningCount: number
   lastWarnedAt: string | null
   createdAt: string
@@ -110,13 +112,10 @@ export default function AdminUsersPage() {
       if (!res.ok) {
         const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
         console.error('Users API error:', errorData)
-        toast.error(
-          'Fehler beim Laden der Benutzer. Bitte Seite neu laden.',
-          {
-            duration: 4000,
-            icon: '❌',
-          }
-        )
+        toast.error('Fehler beim Laden der Benutzer. Bitte Seite neu laden.', {
+          duration: 4000,
+          icon: '❌',
+        })
         setUsers([])
         setLoading(false)
         return
@@ -134,13 +133,10 @@ export default function AdminUsersPage() {
       setUsers(data)
     } catch (error: any) {
       console.error('Error loading users:', error)
-      toast.error(
-        'Fehler beim Laden der Benutzer. Bitte Seite neu laden.',
-        {
-          duration: 4000,
-          icon: '❌',
-        }
-      )
+      toast.error('Fehler beim Laden der Benutzer. Bitte Seite neu laden.', {
+        duration: 4000,
+        icon: '❌',
+      })
       setUsers([])
     } finally {
       setLoading(false)
@@ -151,23 +147,19 @@ export default function AdminUsersPage() {
     const user = users.find(u => u.id === userId)
     const userName = user?.name || user?.email || 'Benutzer'
     const currentBlockedStatus = user?.isBlocked || false
-    
+
     // Optimistisches Update
-    setUsers(prevUsers =>
-      prevUsers.map(u =>
-        u.id === userId
-          ? { ...u, isBlocked: block }
-          : u
-      )
-    )
-    
+    setUsers(prevUsers => prevUsers.map(u => (u.id === userId ? { ...u, isBlocked: block } : u)))
+
     try {
       const res = await fetch(`/api/admin/users/${userId}/${block ? 'block' : 'unblock'}`, {
         method: 'POST',
       })
       if (res.ok) {
         toast.success(
-          block ? `✓ "${userName}" wurde erfolgreich blockiert` : `✓ "${userName}" wurde erfolgreich entblockt`,
+          block
+            ? `✓ "${userName}" wurde erfolgreich blockiert`
+            : `✓ "${userName}" wurde erfolgreich entblockt`,
           {
             duration: 3000,
             icon: block ? '🚫' : '✅',
@@ -177,11 +169,7 @@ export default function AdminUsersPage() {
       } else {
         // Rollback bei Fehler
         setUsers(prevUsers =>
-          prevUsers.map(u =>
-            u.id === userId
-              ? { ...u, isBlocked: currentBlockedStatus }
-              : u
-          )
+          prevUsers.map(u => (u.id === userId ? { ...u, isBlocked: currentBlockedStatus } : u))
         )
         const data = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
         toast.error(
@@ -195,11 +183,7 @@ export default function AdminUsersPage() {
     } catch (error: any) {
       // Rollback bei Fehler
       setUsers(prevUsers =>
-        prevUsers.map(u =>
-          u.id === userId
-            ? { ...u, isBlocked: currentBlockedStatus }
-            : u
-        )
+        prevUsers.map(u => (u.id === userId ? { ...u, isBlocked: currentBlockedStatus } : u))
       )
       console.error('Error blocking user:', error)
       toast.error(
@@ -212,7 +196,9 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleBulkAction = async (action: 'block' | 'unblock' | 'warn' | 'grantAdmin' | 'revokeAdmin') => {
+  const handleBulkAction = async (
+    action: 'block' | 'unblock' | 'warn' | 'grantAdmin' | 'revokeAdmin'
+  ) => {
     if (selectedUsers.size === 0) {
       toast.error('Bitte wählen Sie mindestens einen Benutzer aus')
       return
@@ -220,7 +206,9 @@ export default function AdminUsersPage() {
 
     if (
       (action === 'block' || action === 'revokeAdmin') &&
-      !confirm(`Möchten Sie wirklich ${selectedUsers.size} Benutzer ${action === 'block' ? 'blockieren' : 'die Admin-Rechte entziehen'}?`)
+      !confirm(
+        `Möchten Sie wirklich ${selectedUsers.size} Benutzer ${action === 'block' ? 'blockieren' : 'die Admin-Rechte entziehen'}?`
+      )
     ) {
       return
     }
@@ -264,13 +252,10 @@ export default function AdminUsersPage() {
         loadUsers()
       } else {
         const errorData = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
-        toast.error(
-          errorData.message || `Fehler bei Bulk-Aktion: ${action}`,
-          {
-            duration: 4000,
-            icon: '❌',
-          }
-        )
+        toast.error(errorData.message || `Fehler bei Bulk-Aktion: ${action}`, {
+          duration: 4000,
+          icon: '❌',
+        })
       }
     } catch (error) {
       console.error('Error performing bulk action:', error)
@@ -286,6 +271,41 @@ export default function AdminUsersPage() {
       newSelection.add(userId)
     }
     setSelectedUsers(newSelection)
+  }
+
+  const handleVerifyEmail = async (userId: string) => {
+    const user = users.find(u => u.id === userId)
+    const userName = user?.name || user?.nickname || user?.email || 'Benutzer'
+
+    if (!confirm(`Möchten Sie die E-Mail-Adresse von "${userName}" manuell verifizieren?`)) {
+      return
+    }
+
+    try {
+      const res = await fetch(`/api/admin/users/${userId}/verify-email`, {
+        method: 'POST',
+      })
+
+      if (res.ok) {
+        toast.success(`✅ E-Mail-Adresse von "${userName}" wurde verifiziert`, {
+          duration: 3000,
+          icon: '📧',
+        })
+        loadUsers()
+      } else {
+        const data = await res.json().catch(() => ({ message: 'Unbekannter Fehler' }))
+        toast.error(data.message || 'Fehler beim Verifizieren', {
+          duration: 4000,
+          icon: '❌',
+        })
+      }
+    } catch (error: any) {
+      console.error('Error verifying email:', error)
+      toast.error(`Fehler: ${error.message || 'Netzwerkfehler'}`, {
+        duration: 4000,
+        icon: '❌',
+      })
+    }
   }
 
   const handleWarn = (userId: string) => {
@@ -522,7 +542,9 @@ export default function AdminUsersPage() {
                     <label className="flex cursor-pointer items-center">
                       <input
                         type="checkbox"
-                        checked={selectedUsers.size === filteredUsers.length && filteredUsers.length > 0}
+                        checked={
+                          selectedUsers.size === filteredUsers.length && filteredUsers.length > 0
+                        }
                         onChange={toggleSelectAll}
                         className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
                       />
@@ -555,204 +577,216 @@ export default function AdminUsersPage() {
                 {filteredUsers.map(user => {
                   const isSelected = selectedUsers.has(user.id)
                   return (
-                  <tr key={user.id} className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <input
-                        type="checkbox"
-                        checked={isSelected}
-                        onChange={() => toggleUserSelection(user.id)}
-                        className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
-                      />
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      <div>
-                        <div className="text-sm font-medium text-gray-900">
-                          {user.name ||
-                            `${user.firstName} ${user.lastName}` ||
-                            user.nickname ||
-                            'Unbekannt'}
-                          {user.isAdmin && (
-                            <span className="ml-2 inline-flex items-center rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
-                              Admin
-                            </span>
+                    <tr
+                      key={user.id}
+                      className={`hover:bg-gray-50 ${isSelected ? 'bg-blue-50' : ''}`}
+                    >
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleUserSelection(user.id)}
+                          className="rounded border-gray-300 text-primary-600 focus:ring-primary-500"
+                        />
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        <div>
+                          <div className="text-sm font-medium text-gray-900">
+                            {user.name ||
+                              `${user.firstName} ${user.lastName}` ||
+                              user.nickname ||
+                              'Unbekannt'}
+                            {user.isAdmin && (
+                              <span className="ml-2 inline-flex items-center rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
+                                Admin
+                              </span>
+                            )}
+                          </div>
+                          <div className="text-sm text-gray-500">{user.email}</div>
+                          {user.nickname && (
+                            <div className="text-sm text-gray-400">@{user.nickname}</div>
                           )}
                         </div>
-                        <div className="text-sm text-gray-500">{user.email}</div>
-                        {user.nickname && (
-                          <div className="text-sm text-gray-400">@{user.nickname}</div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        {user.isBlocked ? (
+                          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                            <Ban className="mr-1 h-3 w-3" />
+                            Blockiert
+                          </span>
+                        ) : (
+                          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                            <CheckCircle className="mr-1 h-3 w-3" />
+                            Aktiv
+                          </span>
                         )}
-                      </div>
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      {user.isBlocked ? (
-                        <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                          <Ban className="mr-1 h-3 w-3" />
-                          Blockiert
-                        </span>
-                      ) : (
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                          <CheckCircle className="mr-1 h-3 w-3" />
-                          Aktiv
-                        </span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4">
-                      {user.verificationStatus === 'pending' && (
-                        <Link
-                          href={`/admin/verifications?userId=${user.id}`}
-                          className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800 hover:bg-orange-200"
-                        >
-                          <AlertTriangle className="mr-1 h-3 w-3" />
-                          Zu prüfen
-                        </Link>
-                      )}
-                      {user.verificationStatus === 'approved' && user.verified && (
-                        <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
-                          <CheckCircle className="mr-1 h-3 w-3" />
-                          Verifiziert
-                        </span>
-                      )}
-                      {user.verificationStatus === 'rejected' && (
-                        <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
-                          <XCircle className="mr-1 h-3 w-3" />
-                          Abgelehnt
-                        </span>
-                      )}
-                      {!user.verificationStatus && (
-                        <span className="text-sm text-gray-500">Nicht gestartet</span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                      {user.warningCount > 0 ? (
-                        <span className="inline-flex items-center text-orange-600">
-                          <AlertTriangle className="mr-1 h-4 w-4" />
-                          {user.warningCount}
-                        </span>
-                      ) : (
-                        <span className="text-gray-400">0</span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                      {(user.pendingReports || 0) > 0 ? (
-                        <button
-                          onClick={() => {
-                            setSelectedUserId(user.id)
-                            setSelectedUserName(
-                              user.name ||
-                                `${user.firstName} ${user.lastName}` ||
-                                user.nickname ||
-                                user.email
-                            )
-                            setShowReportsModal(true)
-                          }}
-                          className="inline-flex cursor-pointer items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 hover:bg-red-200"
-                          title="Meldungen anzeigen"
-                        >
-                          <Flag className="mr-1 h-3 w-3" />
-                          {user.pendingReports}
-                        </button>
-                      ) : (
-                        <span className="text-gray-400">0</span>
-                      )}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
-                      {new Date(user.createdAt).toLocaleDateString('de-CH')}
-                    </td>
-                    <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
-                      <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => {
-                            setSelectedUserId(user.id)
-                            setSelectedUserName(
-                              user.name ||
-                                `${user.firstName} ${user.lastName}` ||
-                                user.nickname ||
-                                user.email
-                            )
-                            setShowReportsModal(true)
-                          }}
-                          className="text-red-600 hover:text-red-900"
-                          title="Meldungen anzeigen"
-                        >
-                          <Flag className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedUserId(user.id)
-                            setSelectedUserName(
-                              user.name ||
-                                `${user.firstName} ${user.lastName}` ||
-                                user.nickname ||
-                                user.email
-                            )
-                            setShowNotesModal(true)
-                          }}
-                          className="text-blue-600 hover:text-blue-900"
-                          title="Notizen"
-                        >
-                          <FileText className="h-5 w-5" />
-                        </button>
-                        <button
-                          onClick={() => {
-                            setSelectedUserId(user.id)
-                            setSelectedUserName(
-                              user.name ||
-                                `${user.firstName} ${user.lastName}` ||
-                                user.nickname ||
-                                user.email
-                            )
-                            setShowActivityModal(true)
-                          }}
-                          className="text-purple-600 hover:text-purple-900"
-                          title="Aktivitäts-Historie"
-                        >
-                          <History className="h-5 w-5" />
-                        </button>
-                        {!user.isAdmin && (
-                          <button
-                            onClick={() => handleToggleAdmin(user.id, true)}
-                            className="text-purple-600 hover:text-purple-900"
-                            title="Als Admin setzen"
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        {user.verificationStatus === 'pending' && (
+                          <Link
+                            href={`/admin/verifications?userId=${user.id}`}
+                            className="inline-flex items-center rounded-full bg-orange-100 px-2.5 py-0.5 text-xs font-medium text-orange-800 hover:bg-orange-200"
                           >
-                            <Shield className="h-5 w-5" />
-                          </button>
+                            <AlertTriangle className="mr-1 h-3 w-3" />
+                            Zu prüfen
+                          </Link>
                         )}
-                        {user.isAdmin && user.id !== (session?.user as { id?: string })?.id && (
-                          <button
-                            onClick={() => handleToggleAdmin(user.id, false)}
-                            className="text-gray-400 hover:text-gray-600"
-                            title="Admin-Rechte entfernen"
-                          >
-                            <Shield className="h-5 w-5" />
-                          </button>
+                        {user.verificationStatus === 'approved' && user.verified && (
+                          <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
+                            <CheckCircle className="mr-1 h-3 w-3" />
+                            Verifiziert
+                          </span>
                         )}
-                        {!user.isBlocked ? (
+                        {user.verificationStatus === 'rejected' && (
+                          <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
+                            <XCircle className="mr-1 h-3 w-3" />
+                            Abgelehnt
+                          </span>
+                        )}
+                        {!user.verificationStatus && (
+                          <span className="text-sm text-gray-500">Nicht gestartet</span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        {user.warningCount > 0 ? (
+                          <span className="inline-flex items-center text-orange-600">
+                            <AlertTriangle className="mr-1 h-4 w-4" />
+                            {user.warningCount}
+                          </span>
+                        ) : (
+                          <span className="text-gray-400">0</span>
+                        )}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        {(user.pendingReports || 0) > 0 ? (
                           <button
-                            onClick={() => handleBlock(user.id, true)}
-                            className="text-red-600 hover:text-red-900"
-                            title="Benutzer blockieren"
+                            onClick={() => {
+                              setSelectedUserId(user.id)
+                              setSelectedUserName(
+                                user.name ||
+                                  `${user.firstName} ${user.lastName}` ||
+                                  user.nickname ||
+                                  user.email
+                              )
+                              setShowReportsModal(true)
+                            }}
+                            className="inline-flex cursor-pointer items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800 hover:bg-red-200"
+                            title="Meldungen anzeigen"
                           >
-                            <Ban className="h-5 w-5" />
+                            <Flag className="mr-1 h-3 w-3" />
+                            {user.pendingReports}
                           </button>
                         ) : (
-                          <button
-                            onClick={() => handleBlock(user.id, false)}
-                            className="text-green-600 hover:text-green-900"
-                            title="Benutzer entblocken"
-                          >
-                            <UserCheck className="h-5 w-5" />
-                          </button>
+                          <span className="text-gray-400">0</span>
                         )}
-                        <button
-                          onClick={() => handleWarn(user.id)}
-                          className="text-orange-600 hover:text-orange-900"
-                          title="Warnung senden"
-                        >
-                          <AlertTriangle className="h-5 w-5" />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
+                        {new Date(user.createdAt).toLocaleDateString('de-CH')}
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4 text-right text-sm font-medium">
+                        <div className="flex items-center justify-end gap-2">
+                          <button
+                            onClick={() => {
+                              setSelectedUserId(user.id)
+                              setSelectedUserName(
+                                user.name ||
+                                  `${user.firstName} ${user.lastName}` ||
+                                  user.nickname ||
+                                  user.email
+                              )
+                              setShowReportsModal(true)
+                            }}
+                            className="text-red-600 hover:text-red-900"
+                            title="Meldungen anzeigen"
+                          >
+                            <Flag className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedUserId(user.id)
+                              setSelectedUserName(
+                                user.name ||
+                                  `${user.firstName} ${user.lastName}` ||
+                                  user.nickname ||
+                                  user.email
+                              )
+                              setShowNotesModal(true)
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="Notizen"
+                          >
+                            <FileText className="h-5 w-5" />
+                          </button>
+                          <button
+                            onClick={() => {
+                              setSelectedUserId(user.id)
+                              setSelectedUserName(
+                                user.name ||
+                                  `${user.firstName} ${user.lastName}` ||
+                                  user.nickname ||
+                                  user.email
+                              )
+                              setShowActivityModal(true)
+                            }}
+                            className="text-purple-600 hover:text-purple-900"
+                            title="Aktivitäts-Historie"
+                          >
+                            <History className="h-5 w-5" />
+                          </button>
+                          {!user.isAdmin && (
+                            <button
+                              onClick={() => handleToggleAdmin(user.id, true)}
+                              className="text-purple-600 hover:text-purple-900"
+                              title="Als Admin setzen"
+                            >
+                              <Shield className="h-5 w-5" />
+                            </button>
+                          )}
+                          {user.isAdmin && user.id !== (session?.user as { id?: string })?.id && (
+                            <button
+                              onClick={() => handleToggleAdmin(user.id, false)}
+                              className="text-gray-400 hover:text-gray-600"
+                              title="Admin-Rechte entfernen"
+                            >
+                              <Shield className="h-5 w-5" />
+                            </button>
+                          )}
+                          {!user.isBlocked ? (
+                            <button
+                              onClick={() => handleBlock(user.id, true)}
+                              className="text-red-600 hover:text-red-900"
+                              title="Benutzer blockieren"
+                            >
+                              <Ban className="h-5 w-5" />
+                            </button>
+                          ) : (
+                            <button
+                              onClick={() => handleBlock(user.id, false)}
+                              className="text-green-600 hover:text-green-900"
+                              title="Benutzer entblocken"
+                            >
+                              <UserCheck className="h-5 w-5" />
+                            </button>
+                          )}
+                          <button
+                            onClick={() => handleWarn(user.id)}
+                            className="text-orange-600 hover:text-orange-900"
+                            title="Warnung senden"
+                          >
+                            <AlertTriangle className="h-5 w-5" />
+                          </button>
+                          {!user.emailVerified && (
+                            <button
+                              onClick={() => handleVerifyEmail(user.id)}
+                              className="text-teal-600 hover:text-teal-900"
+                              title="E-Mail manuell verifizieren"
+                            >
+                              <MailCheck className="h-5 w-5" />
+                            </button>
+                          )}
+                        </div>
+                      </td>
+                    </tr>
                   )
                 })}
               </tbody>

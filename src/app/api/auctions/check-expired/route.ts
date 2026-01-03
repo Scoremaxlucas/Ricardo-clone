@@ -1,4 +1,4 @@
-import { shouldShowDetailedErrors } from "@/lib/env"
+import { shouldShowDetailedErrors } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -147,13 +147,38 @@ export async function POST(request: NextRequest) {
               const buyerName =
                 buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
 
+              // Get product image and buyer rating for email
+              let imageUrl: string | undefined
+              try {
+                const images = watch.images ? JSON.parse(watch.images) : []
+                imageUrl = Array.isArray(images) && images.length > 0 ? images[0] : undefined
+              } catch {
+                imageUrl = undefined
+              }
+
+              const buyerReviews = await prisma.review.findMany({
+                where: { reviewedUserId: buyer.id },
+                select: { rating: true },
+              })
+              const buyerRating =
+                buyerReviews.length > 0
+                  ? buyerReviews.reduce(
+                      (sum: number, r: { rating: string }) =>
+                        sum + (r.rating === 'positive' ? 5 : r.rating === 'neutral' ? 3 : 1),
+                      0
+                    ) / buyerReviews.length
+                  : undefined
+
               const { subject, html, text } = getSaleNotificationEmail(
                 sellerName,
                 buyerName,
                 watch.title,
                 highestBid.amount,
                 'auction',
-                watch.id
+                watch.id,
+                imageUrl,
+                buyerRating,
+                buyerReviews.length
               )
 
               await sendEmail({
@@ -216,6 +241,31 @@ export async function POST(request: NextRequest) {
               }
               const shippingCost = getShippingCost(shippingMethods)
 
+              // Get product image and seller rating for email
+              let imageUrlForBuyer: string | undefined
+              try {
+                const imagesForBuyer = watch.images ? JSON.parse(watch.images) : []
+                imageUrlForBuyer =
+                  Array.isArray(imagesForBuyer) && imagesForBuyer.length > 0
+                    ? imagesForBuyer[0]
+                    : undefined
+              } catch {
+                imageUrlForBuyer = undefined
+              }
+
+              const sellerReviews = await prisma.review.findMany({
+                where: { reviewedUserId: seller.id },
+                select: { rating: true },
+              })
+              const sellerRating =
+                sellerReviews.length > 0
+                  ? sellerReviews.reduce(
+                      (sum: number, r: { rating: string }) =>
+                        sum + (r.rating === 'positive' ? 5 : r.rating === 'neutral' ? 3 : 1),
+                      0
+                    ) / sellerReviews.length
+                  : undefined
+
               const { subject, html, text } = getPurchaseConfirmationEmail(
                 buyerName,
                 sellerName,
@@ -224,7 +274,11 @@ export async function POST(request: NextRequest) {
                 shippingCost,
                 'auction',
                 purchase.id,
-                watch.id
+                watch.id,
+                undefined, // paymentInfo - not available for auctions
+                imageUrlForBuyer,
+                sellerRating,
+                sellerReviews.length
               )
 
               await sendEmail({

@@ -1,7 +1,7 @@
 // Server Component - kein 'use client' nötig für statische Seiten
 
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
 
 export default function ImprintPage() {
   return (
@@ -28,7 +28,9 @@ export default function ImprintPage() {
                         <strong>Score-Max-GmbH</strong>
                         <br />
                         in der Hauswiese 2<br />
-                        CH-Zollikerberg
+                        8125 Zollikerberg
+                        <br />
+                        Schweiz
                       </p>
                     </div>
                   </div>
@@ -37,8 +39,13 @@ export default function ImprintPage() {
                 <div className="mt-6 border-t border-gray-200 pt-6">
                   <h2 className="mb-4 text-xl font-semibold text-gray-900">Kontakt</h2>
                   <p className="text-gray-700">
-                    Für Fragen oder Anregungen können Sie uns über die Kontaktmöglichkeiten auf
-                    unserer Website erreichen.
+                    E-Mail:{' '}
+                    <a href="mailto:support@helvenda.ch" className="text-teal-600 hover:underline">
+                      support@helvenda.ch
+                    </a>
+                  </p>
+                  <p className="mt-2 text-gray-700">
+                    Für Fragen oder Anregungen können Sie uns jederzeit per E-Mail erreichen.
                   </p>
                 </div>
 

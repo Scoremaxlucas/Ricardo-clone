@@ -1,6 +1,8 @@
+import { getEmailVerificationEmail, sendEmail } from '@/lib/email'
 import { shouldShowDetailedErrors } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
+import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Force dynamic - no caching
@@ -347,10 +349,14 @@ export async function POST(request: NextRequest) {
       hasPassword: !!hashedPassword,
     })
 
+    // Generate email verification token
+    const verificationToken = crypto.randomBytes(32).toString('hex')
+    const tokenExpires = new Date(Date.now() + 24 * 60 * 60 * 1000) // 24 hours
+
     // DEFENSIVE: Start with minimal required fields that are guaranteed to exist
     // Then progressively try adding more fields
     const createUserWithFallback = async () => {
-      // Attempt 1: Try with all fields including emailVerified and emailVerifiedAt
+      // Attempt 1: Try with all fields including emailVerified: false (verification required)
       const fullUserData = {
         email: normalizedEmail,
         password: hashedPassword,
@@ -358,8 +364,9 @@ export async function POST(request: NextRequest) {
         firstName: trimmedFirstName,
         lastName: trimmedLastName,
         name: fullName || null,
-        emailVerified: true,
-        emailVerifiedAt: new Date(),
+        emailVerified: false,
+        emailVerificationToken: verificationToken,
+        emailVerificationTokenExpires: tokenExpires,
       }
 
       console.log('[register] Attempt 1: Creating user with all fields')
@@ -488,7 +495,32 @@ export async function POST(request: NextRequest) {
     console.log(
       `[register] ✅ User created: ${trimmedFirstName} ${trimmedLastName} (${normalizedEmail})`
     )
-    console.log(`[register] Email verification disabled - user can login immediately`)
+    console.log(`[register] Email verification ENABLED - sending verification email`)
+
+    // Send verification email
+    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+    const verificationUrl = `${baseUrl}/verify-email?token=${verificationToken}`
+    const userName = trimmedFirstName || trimmedNickname || 'Benutzer'
+
+    try {
+      const { subject, html, text } = getEmailVerificationEmail(userName, verificationUrl)
+      const emailResult = await sendEmail({
+        to: normalizedEmail,
+        subject,
+        html,
+        text,
+      })
+
+      if (emailResult.success) {
+        console.log(`[register] ✅ Verification email sent to ${normalizedEmail}`)
+      } else {
+        console.error(`[register] ❌ Failed to send verification email:`, emailResult.error)
+        // Don't fail registration if email fails - user can request resend
+      }
+    } catch (emailError: any) {
+      console.error(`[register] ❌ Error sending verification email:`, emailError)
+      // Don't fail registration if email fails
+    }
 
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user
@@ -497,8 +529,10 @@ export async function POST(request: NextRequest) {
     // If we reach here, user creation succeeded, so it's safe to return success
     return NextResponse.json(
       {
-        message: 'Benutzer erfolgreich erstellt. Sie können sich jetzt anmelden.',
+        message:
+          'Benutzer erfolgreich erstellt. Bitte überprüfen Sie Ihre E-Mails und bestätigen Sie Ihre E-Mail-Adresse.',
         user: userWithoutPassword,
+        requiresEmailVerification: true,
       },
       { status: 201 }
     )

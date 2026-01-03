@@ -1,11 +1,11 @@
 'use client'
 
-import { useState, Suspense } from 'react'
-import { useRouter, useSearchParams } from 'next/navigation'
-import Link from 'next/link'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
+import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import Link from 'next/link'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { Suspense, useState } from 'react'
 
 function ResetPasswordContent() {
   const [password, setPassword] = useState('')
@@ -42,19 +42,29 @@ function ResetPasswordContent() {
       return
     }
 
-    if (password.length < 6) {
-      setError('Passwort muss mindestens 6 Zeichen lang sein.')
+    if (password.length < 8) {
+      setError('Passwort muss mindestens 8 Zeichen lang sein.')
       setIsLoading(false)
       return
     }
 
     try {
-      // TODO: Implement reset password API endpoint
-      await new Promise(resolve => setTimeout(resolve, 1000))
-      setSuccess(true)
-      setTimeout(() => {
-        router.push('/login')
-      }, 2000)
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token, password }),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setSuccess(true)
+        setTimeout(() => {
+          router.push('/login')
+        }, 3000)
+      } else {
+        setError(data.message || 'Ein Fehler ist aufgetreten.')
+      }
     } catch (error) {
       setError('Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut.')
     } finally {
@@ -76,7 +86,10 @@ function ResetPasswordContent() {
             <p className="mt-3 text-center text-sm text-gray-600">
               Der Link zum Zurücksetzen des Passworts ist ungültig oder abgelaufen.
             </p>
-            <Link href="/forgot-password" className="mt-4 inline-block text-sm font-semibold text-primary-600 hover:text-primary-700">
+            <Link
+              href="/forgot-password"
+              className="mt-4 inline-block text-sm font-semibold text-primary-600 hover:text-primary-700"
+            >
               Neuen Link anfordern
             </Link>
           </div>
@@ -138,11 +151,11 @@ function ResetPasswordContent() {
                   name="password"
                   type={showPassword ? 'text' : 'password'}
                   required
-                  minLength={6}
+                  minLength={8}
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
-                  placeholder="Mindestens 6 Zeichen"
+                  placeholder="Mindestens 8 Zeichen"
                 />
                 <button
                   type="button"
@@ -168,7 +181,7 @@ function ResetPasswordContent() {
                   name="confirmPassword"
                   type={showConfirmPassword ? 'text' : 'password'}
                   required
-                  minLength={6}
+                  minLength={8}
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
                   className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
@@ -199,7 +212,10 @@ function ResetPasswordContent() {
             >
               {isLoading ? 'Wird gespeichert...' : 'Passwort zurücksetzen'}
             </Button>
-            <Link href="/login" className="text-center text-sm text-gray-600 hover:text-primary-600">
+            <Link
+              href="/login"
+              className="text-center text-sm text-gray-600 hover:text-primary-600"
+            >
               Zurück zur Anmeldung
             </Link>
           </div>
@@ -211,14 +227,16 @@ function ResetPasswordContent() {
 
 export default function ResetPasswordPage() {
   return (
-    <Suspense fallback={
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-center">
-          <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
-          <p className="text-gray-600">Laden...</p>
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="text-center">
+            <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
+            <p className="text-gray-600">Laden...</p>
+          </div>
         </div>
-      </div>
-    }>
+      }
+    >
       <ResetPasswordContent />
     </Suspense>
   )

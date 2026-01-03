@@ -1101,7 +1101,10 @@ export function getSaleNotificationEmail(
   watchTitle: string,
   finalPrice: number,
   purchaseType: 'auction' | 'buy-now',
-  watchId: string
+  watchId: string,
+  imageUrl?: string, // Produktbild (optional)
+  buyerRating?: number, // Käufer-Bewertung (optional)
+  buyerReviewCount?: number // Anzahl Bewertungen (optional)
 ) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const salesUrl = `${baseUrl}/my-watches/selling/sold`
@@ -1148,9 +1151,22 @@ export function getSaleNotificationEmail(
                    </div>
                  </div>
 
-                 <div style="margin: 20px 0;">
-                   <p><strong>Verkaufte Uhr:</strong> ${watchTitle}</p>
-                   <p><strong>Käufer:</strong> ${buyerName}</p>
+                 <div style="background-color: #f9fafb; border-radius: 8px; padding: 15px; margin: 20px 0;">
+                   <table style="width: 100%; border-collapse: collapse;">
+                     <tr>
+                       ${
+                         imageUrl
+                           ? `<td style="width: 100px; padding-right: 15px; vertical-align: top;">
+                         <img src="${imageUrl}" alt="${watchTitle}" style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb;" />
+                       </td>`
+                           : ''
+                       }
+                       <td style="vertical-align: top;">
+                         <p style="margin: 0 0 8px 0; font-weight: 600; color: #1f2937;">${watchTitle}</p>
+                         <p style="margin: 0; font-size: 14px; color: #6b7280;">Käufer: <strong>${buyerName}</strong>${buyerRating ? ` <span style="color: #f59e0b;">⭐ ${buyerRating.toFixed(1)}</span> <span style="color: #9ca3af; font-size: 12px;">(${buyerReviewCount || 0})</span>` : ''}</p>
+                       </td>
+                     </tr>
+                   </table>
                  </div>
 
                  <div class="buyer-info">
@@ -1299,7 +1315,10 @@ export function getPurchaseConfirmationEmail(
   purchaseType: 'auction' | 'buy-now',
   purchaseId: string,
   watchId: string,
-  paymentInfo?: any | null // Zahlungsinformationen (optional)
+  paymentInfo?: any | null, // Zahlungsinformationen (optional)
+  imageUrl?: string, // Produktbild (optional)
+  sellerRating?: number, // Verkäufer-Bewertung (optional)
+  sellerReviewCount?: number // Anzahl Bewertungen (optional)
 ) {
   const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
@@ -1340,18 +1359,31 @@ export function getPurchaseConfirmationEmail(
             <p>Ihr Kauf wurde erfolgreich abgeschlossen. Sie finden alle Details und Kontaktdaten des Verkäufers unten.</p>
           </div>
 
-          <div class="price-box">
-            <div style="font-size: 12px; color: #0f766e; margin-bottom: 5px;">Gekauftes Produkt</div>
-            <div style="font-size: 20px; font-weight: bold; color: #047857; margin: 10px 0;">
-              ${watchTitle}
-            </div>
-            <div style="font-size: 12px; color: #059669; margin-top: 5px;">
-              ${purchaseType === 'buy-now' ? 'Sofortkauf' : 'Auktion'}
-            </div>
+          <div style="background-color: #f9fafb; border-radius: 8px; padding: 15px; margin: 20px 0;">
+            <table style="width: 100%; border-collapse: collapse;">
+              <tr>
+                ${
+                  imageUrl
+                    ? `<td style="width: 120px; padding-right: 15px; vertical-align: top;">
+                  <img src="${imageUrl}" alt="${watchTitle}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb;" />
+                </td>`
+                    : ''
+                }
+                <td style="vertical-align: top;">
+                  <div style="font-size: 12px; color: #0f766e; margin-bottom: 5px;">${purchaseType === 'buy-now' ? 'Sofortkauf' : 'Auktion'}</div>
+                  <div style="font-size: 18px; font-weight: bold; color: #1f2937; margin-bottom: 8px;">
+                    ${watchTitle}
+                  </div>
+                  <div style="font-size: 20px; font-weight: bold; color: #0f766e;">
+                    CHF ${new Intl.NumberFormat('de-CH').format(finalPrice)}
+                  </div>
+                </td>
+              </tr>
+            </table>
           </div>
 
           <div style="background-color: white; padding: 15px; border-radius: 5px; margin: 15px 0;">
-            <p><strong>Verkäufer:</strong> ${sellerName}</p>
+            <p><strong>Verkäufer:</strong> ${sellerName}${sellerRating ? ` <span style="color: #f59e0b;">⭐ ${sellerRating.toFixed(1)}</span> <span style="color: #9ca3af; font-size: 12px;">(${sellerReviewCount || 0} Bewertungen)</span>` : ''}</p>
             <p><strong>Kaufpreis:</strong> CHF ${new Intl.NumberFormat('de-CH').format(finalPrice)}</p>
             ${shippingCost > 0 ? `<p><strong>Versandkosten:</strong> CHF ${new Intl.NumberFormat('de-CH').format(shippingCost)}</p>` : ''}
             <p style="font-size: 18px; font-weight: bold; margin-top: 10px; color: #0f766e;">
@@ -3660,6 +3692,774 @@ Was bedeutet das?
 Ihr Artikel wurde aufgrund von Verstößen gegen unsere Richtlinien oder aus anderen Gründen von einem Administrator entfernt. Der Artikel ist nicht mehr auf der Plattform sichtbar und kann nicht wiederhergestellt werden.
 
 Falls Sie Fragen zu dieser Entscheidung haben oder weitere Informationen benötigen, können Sie sich gerne an unseren Support wenden.
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
+// =====================================================
+// === NEUE E-MAIL TEMPLATES (Ricardo-Parität) ===
+// =====================================================
+
+// === PASSWORT ZURÜCKSETZEN ===
+export function getPasswordResetEmail(userName: string, resetUrl: string) {
+  const subject = '🔐 Passwort zurücksetzen - Helvenda'
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1f2937;
+      background-color: #f3f4f6;
+    }
+    .email-wrapper { background-color: #f3f4f6; padding: 40px 20px; }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .header {
+      background-color: #ffffff;
+      padding: 40px 30px 30px 30px;
+      text-align: center;
+      border-bottom: 1px solid #e5e7eb;
+    }
+    .logo-section { margin-bottom: 16px; display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .logo-icon { width: 40px; height: 40px; }
+    .content { padding: 40px 30px; text-align: center; }
+    .greeting { font-size: 18px; color: #1f2937; margin-bottom: 20px; font-weight: 500; }
+    .title { font-size: 24px; font-weight: 700; color: #1f2937; margin-bottom: 16px; }
+    .description { font-size: 16px; color: #6b7280; margin-bottom: 30px; line-height: 1.6; }
+    .button-container { margin: 40px 0; }
+    .button {
+      display: inline-block;
+      background-color: #0f766e;
+      color: #ffffff !important;
+      padding: 14px 32px;
+      text-decoration: none;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
+    }
+    .warning-box {
+      background-color: #fef3c7;
+      border-left: 4px solid #f59e0b;
+      padding: 16px 20px;
+      margin: 30px 0;
+      text-align: left;
+      border-radius: 4px;
+    }
+    .warning-text { font-size: 14px; color: #92400e; line-height: 1.6; }
+    .security-box {
+      background-color: #f0fdfa;
+      border-left: 4px solid #0d9488;
+      padding: 16px 20px;
+      margin: 20px 0;
+      text-align: left;
+      border-radius: 4px;
+    }
+    .footer {
+      background-color: #f9fafb;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer-text { font-size: 14px; color: #6b7280; margin-bottom: 12px; }
+    .footer-link { color: #0f766e; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="container">
+      <div class="header">
+        <div class="logo-section">
+          <div class="logo-icon">
+            <svg viewBox="0 0 40 40" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <rect width="40" height="40" rx="8" fill="#0f766e"/>
+              <path d="M12 12 L12 28 M12 20 L28 20 M28 12 L28 28" stroke="white" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+          </div>
+          <div>
+            <span style="color: #111827; font-size: 24px; font-weight: 700;">Helvenda</span>
+            <span style="color: #6b7280; font-size: 14px;">.ch</span>
+          </div>
+        </div>
+        <p style="font-size: 14px; color: #6b7280; margin-top: 8px;">Schweizer Online-Marktplatz</p>
+      </div>
+
+      <div class="content">
+        <p class="greeting">Hallo ${userName},</p>
+
+        <h2 class="title">🔐 Passwort zurücksetzen</h2>
+
+        <p class="description">
+          Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt. Klicken Sie auf den Button unten, um ein neues Passwort zu erstellen.
+        </p>
+
+        <div class="button-container">
+          <a href="${resetUrl}" class="button" style="color: #ffffff !important; background-color: #0f766e; text-decoration: none; padding: 14px 32px; border-radius: 16px; font-weight: 600;">Passwort zurücksetzen</a>
+        </div>
+
+        <div class="warning-box">
+          <p class="warning-text">
+            <strong>⏰ Wichtig:</strong> Dieser Link ist nur <strong>1 Stunde</strong> gültig. Danach müssen Sie einen neuen Link anfordern.
+          </p>
+        </div>
+
+        <div class="security-box">
+          <p style="font-size: 14px; color: #134e4a;">
+            <strong>🔒 Sicherheitshinweis:</strong><br>
+            Falls Sie diese Anfrage nicht gestellt haben, ignorieren Sie diese E-Mail. Ihr Passwort bleibt unverändert.<br><br>
+            Wenn Sie vermuten, dass jemand unbefugt auf Ihr Konto zugreifen möchte, kontaktieren Sie uns bitte umgehend.
+          </p>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p class="footer-text">
+          Diese E-Mail wurde automatisch von <a href="https://helvenda.ch" class="footer-link">Helvenda.ch</a> gesendet.
+        </p>
+        <p style="font-size: 12px; color: #9ca3af;">
+          Helvenda - Ihr vertrauensvoller Marktplatz für den Kauf und Verkauf von Artikeln in der Schweiz.
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Passwort zurücksetzen - Helvenda
+
+Hallo ${userName},
+
+Sie haben eine Anfrage zum Zurücksetzen Ihres Passworts gestellt.
+
+Klicken Sie auf den folgenden Link, um ein neues Passwort zu erstellen:
+${resetUrl}
+
+WICHTIG: Dieser Link ist nur 1 Stunde gültig.
+
+SICHERHEITSHINWEIS:
+Falls Sie diese Anfrage nicht gestellt haben, ignorieren Sie diese E-Mail.
+Ihr Passwort bleibt unverändert.
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
+// === PASSWORT GEÄNDERT BESTÄTIGUNG ===
+export function getPasswordChangedEmail(userName: string, ipAddress?: string, device?: string) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const subject = '✅ Passwort erfolgreich geändert - Helvenda'
+
+  const changeInfo = `
+    <div style="background-color: #f3f4f6; padding: 16px 20px; margin: 20px 0; border-radius: 8px;">
+      <p style="margin: 0; font-size: 14px; color: #374151;">
+        <strong>📅 Zeitpunkt:</strong> ${new Date().toLocaleString('de-CH', { dateStyle: 'full', timeStyle: 'short' })}<br>
+        ${ipAddress ? `<strong>🌐 IP-Adresse:</strong> ${ipAddress}<br>` : ''}
+        ${device ? `<strong>📱 Gerät:</strong> ${device}` : ''}
+      </p>
+    </div>
+  `
+
+  const html = getHelvendaEmailTemplate(
+    '✅ Passwort erfolgreich geändert',
+    `Hallo ${userName},`,
+    `
+      <p>Ihr Passwort wurde erfolgreich geändert.</p>
+
+      ${changeInfo}
+
+      <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; color: #991b1b;">
+          <strong>⚠️ Das waren nicht Sie?</strong><br>
+          Falls Sie diese Änderung nicht vorgenommen haben, kontaktieren Sie uns bitte <strong>sofort</strong> unter
+          <a href="mailto:support@helvenda.ch" style="color: #dc2626;">support@helvenda.ch</a>
+        </p>
+      </div>
+    `,
+    'Zum Konto',
+    `${baseUrl}/profile`
+  )
+
+  const text = `
+Passwort erfolgreich geändert - Helvenda
+
+Hallo ${userName},
+
+Ihr Passwort wurde erfolgreich geändert.
+
+Zeitpunkt: ${new Date().toLocaleString('de-CH', { dateStyle: 'full', timeStyle: 'short' })}
+${ipAddress ? `IP-Adresse: ${ipAddress}` : ''}
+${device ? `Gerät: ${device}` : ''}
+
+⚠️ Das waren nicht Sie?
+Falls Sie diese Änderung nicht vorgenommen haben, kontaktieren Sie uns bitte SOFORT unter support@helvenda.ch
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
+// === LOGIN VON NEUEM GERÄT ===
+export function getNewDeviceLoginEmail(
+  userName: string,
+  ipAddress: string,
+  device: string,
+  location?: string,
+  loginTime?: Date
+) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const time = loginTime || new Date()
+  const subject = '🔔 Neue Anmeldung erkannt - Helvenda'
+
+  const html = getHelvendaEmailTemplate(
+    '🔔 Neue Anmeldung von einem neuen Gerät',
+    `Hallo ${userName},`,
+    `
+      <p>Wir haben eine Anmeldung bei Ihrem Helvenda-Konto von einem neuen Gerät erkannt.</p>
+
+      <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 8px;">
+        <p style="margin: 0; font-size: 14px; color: #134e4a;">
+          <strong>📅 Zeitpunkt:</strong> ${time.toLocaleString('de-CH', { dateStyle: 'full', timeStyle: 'short' })}<br>
+          <strong>🌐 IP-Adresse:</strong> ${ipAddress}<br>
+          <strong>📱 Gerät:</strong> ${device}
+          ${location ? `<br><strong>📍 Ungefährer Standort:</strong> ${location}` : ''}
+        </p>
+      </div>
+
+      <p style="color: #059669; font-weight: 500;">✅ Wenn Sie diese Anmeldung durchgeführt haben, können Sie diese E-Mail ignorieren.</p>
+
+      <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; color: #991b1b;">
+          <strong>⚠️ Nicht erkannt?</strong><br>
+          Falls Sie diese Anmeldung nicht durchgeführt haben:
+          <ol style="margin: 10px 0 0 0; padding-left: 20px;">
+            <li>Ändern Sie sofort Ihr Passwort</li>
+            <li>Überprüfen Sie Ihre letzten Kontobewegungen</li>
+            <li>Kontaktieren Sie uns unter support@helvenda.ch</li>
+          </ol>
+        </p>
+      </div>
+    `,
+    'Passwort ändern',
+    `${baseUrl}/profile/security`
+  )
+
+  const text = `
+Neue Anmeldung erkannt - Helvenda
+
+Hallo ${userName},
+
+Wir haben eine Anmeldung bei Ihrem Helvenda-Konto von einem neuen Gerät erkannt.
+
+Zeitpunkt: ${time.toLocaleString('de-CH', { dateStyle: 'full', timeStyle: 'short' })}
+IP-Adresse: ${ipAddress}
+Gerät: ${device}
+${location ? `Ungefährer Standort: ${location}` : ''}
+
+✅ Wenn Sie diese Anmeldung durchgeführt haben, können Sie diese E-Mail ignorieren.
+
+⚠️ Nicht erkannt?
+Falls Sie diese Anmeldung nicht durchgeführt haben:
+1. Ändern Sie sofort Ihr Passwort
+2. Überprüfen Sie Ihre letzten Kontobewegungen
+3. Kontaktieren Sie uns unter support@helvenda.ch
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
+// === AUKTION ENDET BALD (24h / 1h) ===
+export function getAuctionEndingSoonEmail(
+  userName: string,
+  articleTitle: string,
+  currentBid: number,
+  endTime: Date,
+  watchId: string,
+  imageUrl?: string,
+  hoursRemaining?: number
+) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const articleUrl = `${baseUrl}/products/${watchId}`
+  const timeLeft = hoursRemaining || 24
+  const urgencyLevel = timeLeft <= 1 ? 'critical' : 'warning'
+
+  const subject =
+    timeLeft <= 1
+      ? `⏰ LETZTE STUNDE! Auktion endet bald - ${articleTitle}`
+      : `⏰ Auktion endet in ${timeLeft} Stunden - ${articleTitle}`
+
+  const urgencyColor = urgencyLevel === 'critical' ? '#dc2626' : '#f59e0b'
+  const urgencyBg = urgencyLevel === 'critical' ? '#fef2f2' : '#fef3c7'
+
+  const imageHtml = imageUrl
+    ? `
+    <div style="text-align: center; margin: 20px 0;">
+      <img src="${imageUrl}" alt="${articleTitle}" style="max-width: 200px; max-height: 200px; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);" />
+    </div>
+  `
+    : ''
+
+  const html = getHelvendaEmailTemplate(
+    timeLeft <= 1 ? '⏰ Letzte Chance!' : '⏰ Auktion endet bald',
+    `Hallo ${userName},`,
+    `
+      <div style="background-color: ${urgencyBg}; border: 2px solid ${urgencyColor}; padding: 20px; margin: 20px 0; border-radius: 8px; text-align: center;">
+        <p style="margin: 0; font-size: 24px; font-weight: 700; color: ${urgencyColor};">
+          ${timeLeft <= 1 ? '⏰ NOCH WENIGER ALS 1 STUNDE!' : `⏰ Noch ${timeLeft} Stunden`}
+        </p>
+      </div>
+
+      ${imageHtml}
+
+      <div style="background-color: #f0fdfa; border-left: 4px solid #0d9488; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; color: #134e4a; font-weight: 500;">
+          <strong>Artikel:</strong> ${articleTitle}<br>
+          <strong>Aktuelles Gebot:</strong> CHF ${currentBid.toFixed(2)}<br>
+          <strong>Endet:</strong> ${endTime.toLocaleString('de-CH', { dateStyle: 'medium', timeStyle: 'short' })}
+        </p>
+      </div>
+
+      <p>Verpassen Sie nicht Ihre Chance! Bieten Sie jetzt, um den Artikel zu gewinnen.</p>
+    `,
+    'Jetzt bieten',
+    articleUrl
+  )
+
+  const text = `
+${timeLeft <= 1 ? '⏰ LETZTE STUNDE!' : '⏰ Auktion endet bald'} - ${articleTitle}
+
+Hallo ${userName},
+
+${timeLeft <= 1 ? 'NOCH WENIGER ALS 1 STUNDE!' : `Noch ${timeLeft} Stunden`}
+
+Artikel: ${articleTitle}
+Aktuelles Gebot: CHF ${currentBid.toFixed(2)}
+Endet: ${endTime.toLocaleString('de-CH', { dateStyle: 'medium', timeStyle: 'short' })}
+
+Verpassen Sie nicht Ihre Chance! Bieten Sie jetzt, um den Artikel zu gewinnen.
+
+Jetzt bieten: ${articleUrl}
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
+// === KÄUFER HAT ARTIKEL ERHALTEN ===
+export function getItemReceivedConfirmationEmail(
+  sellerName: string,
+  buyerName: string,
+  articleTitle: string,
+  purchaseId: string,
+  saleAmount: number,
+  imageUrl?: string
+) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const saleUrl = `${baseUrl}/my-watches/selling/sold`
+  const subject = `✅ Artikel erhalten - ${articleTitle}`
+
+  const imageHtml = imageUrl
+    ? `
+    <div style="text-align: center; margin: 20px 0;">
+      <img src="${imageUrl}" alt="${articleTitle}" style="max-width: 150px; max-height: 150px; border-radius: 8px;" />
+    </div>
+  `
+    : ''
+
+  const html = getHelvendaEmailTemplate(
+    '✅ Käufer hat den Artikel erhalten',
+    `Hallo ${sellerName},`,
+    `
+      <p>Gute Nachrichten! <strong>${buyerName}</strong> hat bestätigt, dass der Artikel angekommen ist.</p>
+
+      ${imageHtml}
+
+      <div style="background-color: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; color: #065f46; font-weight: 500;">
+          <strong>Artikel:</strong> ${articleTitle}<br>
+          <strong>Käufer:</strong> ${buyerName}<br>
+          <strong>Verkaufsbetrag:</strong> CHF ${saleAmount.toFixed(2)}
+        </p>
+      </div>
+
+      <div style="background-color: #ecfdf5; border: 1px solid #059669; padding: 16px; margin: 20px 0; border-radius: 8px; text-align: center;">
+        <p style="margin: 0; font-size: 16px; color: #059669; font-weight: 600;">
+          🎉 Transaktion erfolgreich abgeschlossen!
+        </p>
+      </div>
+
+      <p>Falls noch nicht geschehen, bitten wir Sie, den Käufer zu bewerten. Bewertungen helfen der Community!</p>
+    `,
+    'Käufer bewerten',
+    `${saleUrl}?review=${purchaseId}`
+  )
+
+  const text = `
+✅ Käufer hat den Artikel erhalten - ${articleTitle}
+
+Hallo ${sellerName},
+
+Gute Nachrichten! ${buyerName} hat bestätigt, dass der Artikel angekommen ist.
+
+Artikel: ${articleTitle}
+Käufer: ${buyerName}
+Verkaufsbetrag: CHF ${saleAmount.toFixed(2)}
+
+🎉 Transaktion erfolgreich abgeschlossen!
+
+Falls noch nicht geschehen, bitten wir Sie, den Käufer zu bewerten.
+
+Käufer bewerten: ${saleUrl}?review=${purchaseId}
+
+---
+Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
+  `.trim()
+
+  return { subject, html, text }
+}
+
+// === WILLKOMMENS-E-MAIL (nach Verifizierung) ===
+export function getWelcomeEmail(userName: string) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const subject = '🎉 Willkommen bei Helvenda!'
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+      line-height: 1.6;
+      color: #1f2937;
+      background-color: #f3f4f6;
+    }
+    .email-wrapper { background-color: #f3f4f6; padding: 40px 20px; }
+    .container {
+      max-width: 600px;
+      margin: 0 auto;
+      background-color: #ffffff;
+      border-radius: 12px;
+      box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      overflow: hidden;
+    }
+    .header {
+      background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%);
+      padding: 50px 30px;
+      text-align: center;
+      color: white;
+    }
+    .header h1 { font-size: 32px; font-weight: 700; margin-bottom: 10px; }
+    .header p { font-size: 18px; opacity: 0.9; }
+    .content { padding: 40px 30px; }
+    .greeting { font-size: 20px; color: #1f2937; margin-bottom: 20px; font-weight: 600; }
+    .welcome-text { font-size: 16px; color: #6b7280; margin-bottom: 30px; line-height: 1.8; }
+    .features { margin: 30px 0; }
+    .feature {
+      display: flex;
+      align-items: flex-start;
+      margin-bottom: 20px;
+      padding: 16px;
+      background-color: #f9fafb;
+      border-radius: 8px;
+    }
+    .feature-icon {
+      width: 40px;
+      height: 40px;
+      background-color: #0f766e;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 18px;
+      margin-right: 16px;
+      flex-shrink: 0;
+    }
+    .feature-text h3 { font-size: 16px; color: #1f2937; margin-bottom: 4px; }
+    .feature-text p { font-size: 14px; color: #6b7280; }
+    .button-container { text-align: center; margin: 40px 0; }
+    .button {
+      display: inline-block;
+      background-color: #0f766e;
+      color: #ffffff !important;
+      padding: 16px 40px;
+      text-decoration: none;
+      border-radius: 16px;
+      font-weight: 600;
+      font-size: 16px;
+      box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);
+    }
+    .footer {
+      background-color: #f9fafb;
+      padding: 30px;
+      text-align: center;
+      border-top: 1px solid #e5e7eb;
+    }
+    .footer-text { font-size: 14px; color: #6b7280; }
+    .footer-link { color: #0f766e; text-decoration: none; }
+  </style>
+</head>
+<body>
+  <div class="email-wrapper">
+    <div class="container">
+      <div class="header">
+        <h1>🎉 Willkommen!</h1>
+        <p>Ihr Konto ist jetzt aktiviert</p>
+      </div>
+
+      <div class="content">
+        <p class="greeting">Hallo ${userName},</p>
+
+        <p class="welcome-text">
+          Herzlich willkommen bei <strong>Helvenda</strong> - Ihrem Schweizer Online-Marktplatz!
+          Ihr Konto wurde erfolgreich verifiziert und Sie können nun alle Funktionen nutzen.
+        </p>
+
+        <div class="features">
+          <div class="feature">
+            <div class="feature-icon">🛒</div>
+            <div class="feature-text">
+              <h3>Kaufen</h3>
+              <p>Entdecken Sie tausende Artikel von verifizierten Verkäufern in der Schweiz.</p>
+            </div>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">💰</div>
+            <div class="feature-text">
+              <h3>Verkaufen</h3>
+              <p>Inserieren Sie Ihre Artikel kostenlos und erreichen Sie Käufer in der ganzen Schweiz.</p>
+            </div>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">⚡</div>
+            <div class="feature-text">
+              <h3>Auktionen</h3>
+              <p>Nehmen Sie an spannenden Auktionen teil oder erstellen Sie Ihre eigenen.</p>
+            </div>
+          </div>
+
+          <div class="feature">
+            <div class="feature-icon">🔒</div>
+            <div class="feature-text">
+              <h3>Sicher handeln</h3>
+              <p>Profitieren Sie von unserem Bewertungssystem und sicherem Zahlungsverkehr.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="button-container">
+          <a href="${baseUrl}/search" class="button" style="color: #ffffff !important;">Jetzt entdecken</a>
+        </div>
+      </div>
+
+      <div class="footer">
+        <p class="footer-text">
+          Fragen? Kontaktieren Sie uns unter <a href="mailto:support@helvenda.ch" class="footer-link">support@helvenda.ch</a>
+        </p>
+        <p style="font-size: 12px; color: #9ca3af; margin-top: 12px;">
+          © ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz
+        </p>
+      </div>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+🎉 Willkommen bei Helvenda!
+
+Hallo ${userName},
+
+Herzlich willkommen bei Helvenda - Ihrem Schweizer Online-Marktplatz!
+Ihr Konto wurde erfolgreich verifiziert und Sie können nun alle Funktionen nutzen.
+
+Was Sie bei Helvenda tun können:
+
+🛒 KAUFEN
+Entdecken Sie tausende Artikel von verifizierten Verkäufern in der Schweiz.
+
+💰 VERKAUFEN
+Inserieren Sie Ihre Artikel kostenlos und erreichen Sie Käufer in der ganzen Schweiz.
+
+⚡ AUKTIONEN
+Nehmen Sie an spannenden Auktionen teil oder erstellen Sie Ihre eigenen.
+
+🔒 SICHER HANDELN
+Profitieren Sie von unserem Bewertungssystem und sicherem Zahlungsverkehr.
+
+Jetzt entdecken: ${baseUrl}/search
+
+---
+Fragen? Kontaktieren Sie uns unter support@helvenda.ch
+© ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz
+  `.trim()
+
+  return { subject, html, text }
+}
+
+// === ARTIKEL MIT BILD UND VERKÄUFER-BEWERTUNG (Wiederverwendbare Komponente) ===
+export function getProductCardHtml(
+  articleTitle: string,
+  price: number,
+  imageUrl?: string,
+  sellerName?: string,
+  sellerRating?: number,
+  sellerReviewCount?: number
+) {
+  const stars = sellerRating
+    ? '⭐'.repeat(Math.round(sellerRating)) + '☆'.repeat(5 - Math.round(sellerRating))
+    : ''
+
+  const imageHtml = imageUrl
+    ? `
+    <td style="width: 120px; padding-right: 16px; vertical-align: top;">
+      <img src="${imageUrl}" alt="${articleTitle}" style="width: 120px; height: 120px; object-fit: cover; border-radius: 8px; border: 1px solid #e5e7eb;" />
+    </td>
+  `
+    : ''
+
+  const sellerHtml = sellerName
+    ? `
+    <p style="margin: 8px 0 0 0; font-size: 13px; color: #6b7280;">
+      Verkäufer: <strong>${sellerName}</strong>
+      ${sellerRating ? `<br><span style="color: #f59e0b;">${stars}</span> <span style="color: #9ca3af;">(${sellerReviewCount || 0} Bewertungen)</span>` : ''}
+    </p>
+  `
+    : ''
+
+  return `
+    <table style="width: 100%; border-collapse: collapse; background-color: #f9fafb; border-radius: 8px; overflow: hidden; margin: 20px 0;">
+      <tr>
+        ${imageHtml}
+        <td style="padding: 16px; vertical-align: top;">
+          <p style="margin: 0; font-size: 16px; font-weight: 600; color: #1f2937;">${articleTitle}</p>
+          <p style="margin: 8px 0 0 0; font-size: 20px; font-weight: 700; color: #0f766e;">CHF ${price.toFixed(2)}</p>
+          ${sellerHtml}
+        </td>
+      </tr>
+    </table>
+  `
+}
+
+// === TRANSAKTIONS-ZUSAMMENFASSUNG (Wiederverwendbare Komponente) ===
+export function getTransactionSummaryHtml(
+  items: Array<{ label: string; value: string; bold?: boolean }>,
+  total?: { label: string; value: string }
+) {
+  const itemsHtml = items
+    .map(
+      item => `
+    <tr>
+      <td style="padding: 8px 0; color: #6b7280; font-size: 14px;">${item.label}</td>
+      <td style="padding: 8px 0; text-align: right; color: ${item.bold ? '#1f2937' : '#6b7280'}; font-size: 14px; ${item.bold ? 'font-weight: 600;' : ''}">${item.value}</td>
+    </tr>
+  `
+    )
+    .join('')
+
+  const totalHtml = total
+    ? `
+    <tr style="border-top: 2px solid #0f766e;">
+      <td style="padding: 12px 0 0 0; font-weight: 700; color: #1f2937; font-size: 16px;">${total.label}</td>
+      <td style="padding: 12px 0 0 0; text-align: right; font-weight: 700; color: #0f766e; font-size: 18px;">${total.value}</td>
+    </tr>
+  `
+    : ''
+
+  return `
+    <table style="width: 100%; border-collapse: collapse; background-color: #f9fafb; padding: 16px; border-radius: 8px; margin: 20px 0;">
+      <tbody style="display: block; padding: 16px;">
+        ${itemsHtml}
+        ${totalHtml}
+      </tbody>
+    </table>
+  `
+}
+
+// === ADMIN: E-MAIL MANUELL VERIFIZIERT ===
+export function getManualEmailVerificationEmail(userName: string, adminName: string) {
+  const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3002'
+  const subject = '✅ Ihr Konto wurde verifiziert - Helvenda'
+
+  const html = getHelvendaEmailTemplate(
+    '✅ Konto manuell verifiziert',
+    `Hallo ${userName},`,
+    `
+      <p>Gute Nachrichten! Ihr Helvenda-Konto wurde von unserem Team manuell verifiziert.</p>
+
+      <div style="background-color: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 20px 0; border-radius: 4px;">
+        <p style="margin: 0; font-size: 14px; color: #065f46; font-weight: 500;">
+          <strong>Status:</strong> ✅ Verifiziert<br>
+          <strong>Verifiziert durch:</strong> ${adminName}<br>
+          <strong>Datum:</strong> ${new Date().toLocaleDateString('de-CH', { dateStyle: 'full' })}
+        </p>
+      </div>
+
+      <p>Sie können nun alle Funktionen von Helvenda nutzen:</p>
+      <ul style="color: #6b7280; margin: 16px 0; padding-left: 20px;">
+        <li>Artikel kaufen und verkaufen</li>
+        <li>An Auktionen teilnehmen</li>
+        <li>Nachrichten senden und empfangen</li>
+        <li>Bewertungen abgeben</li>
+      </ul>
+    `,
+    'Jetzt loslegen',
+    `${baseUrl}/search`
+  )
+
+  const text = `
+✅ Ihr Konto wurde verifiziert - Helvenda
+
+Hallo ${userName},
+
+Gute Nachrichten! Ihr Helvenda-Konto wurde von unserem Team manuell verifiziert.
+
+Status: ✅ Verifiziert
+Verifiziert durch: ${adminName}
+Datum: ${new Date().toLocaleDateString('de-CH', { dateStyle: 'full' })}
+
+Sie können nun alle Funktionen von Helvenda nutzen:
+- Artikel kaufen und verkaufen
+- An Auktionen teilnehmen
+- Nachrichten senden und empfangen
+- Bewertungen abgeben
+
+Jetzt loslegen: ${baseUrl}/search
 
 ---
 Diese E-Mail wurde automatisch von Helvenda.ch gesendet.

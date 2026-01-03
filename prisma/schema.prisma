@@ -51,6 +51,18 @@ model User {
   emailVerifiedAt               DateTime?
   emailVerificationToken        String?
   emailVerificationTokenExpires DateTime?
+
+  // === PASSWORD RESET ===
+  passwordResetToken            String?
+  passwordResetTokenExpires     DateTime?
+  passwordChangedAt             DateTime?
+
+  // === LOGIN SECURITY ===
+  lastLoginAt                   DateTime?
+  lastLoginIp                   String?
+  lastLoginDevice               String?
+  loginNotificationsEnabled     Boolean              @default(true)
+
   nickname                      String?
   bio                           String?
   specialization                String?
