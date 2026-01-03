@@ -1,6 +1,6 @@
 /**
  * URL Validation Utilities
- * 
+ *
  * Prevents open redirect vulnerabilities by validating
  * that redirect URLs are safe and point to the same domain
  */
@@ -8,7 +8,7 @@
 /**
  * Validates if a URL is safe for redirects
  * Only allows relative paths or URLs from the same domain
- * 
+ *
  * @param url - URL to validate
  * @param allowedDomains - Optional list of allowed domains (defaults to helvenda.ch)
  * @returns Safe URL or fallback to '/'
@@ -69,7 +69,7 @@ export function validateRedirectUrl(
 
 /**
  * Validates callback URL from query parameters
- * 
+ *
  * @param callbackUrl - URL from query parameter
  * @returns Safe URL for redirect
  */

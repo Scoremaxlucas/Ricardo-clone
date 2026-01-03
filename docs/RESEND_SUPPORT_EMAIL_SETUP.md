@@ -24,7 +24,7 @@ Type: TXT
 Name: @
 Value: v=spf1 include:resend.com ~all
 
-Type: TXT  
+Type: TXT
 Name: resend._domainkey
 Value: [DKIM Record - von Resend kopieren]
 
@@ -82,6 +82,7 @@ Value: [route1.mx.cloudflare.net oder ähnlich]
 ```
 
 **Hinzufügen:**
+
 - Cloudflare Dashboard → DNS → Add Record
 - Fügen Sie beide MX Records hinzu
 - **WICHTIG**: Entfernen Sie alle anderen MX Records (falls vorhanden)
@@ -115,6 +116,7 @@ Falls Sie einen professionellen E-Mail-Service nutzen möchten:
 ### Option C: Einfacher E-Mail-Forwarding Service
 
 Alternativen:
+
 - **ImprovMX** (https://improvmx.com) - Kostenlos für 1 Domain
 - **ForwardMX** (https://forwardmx.net) - Kostenlos
 
@@ -196,6 +198,7 @@ Vielen Dank!
 ## Nächste Schritte
 
 Nach erfolgreichem Setup:
+
 1. Antworten Sie auf die Stripe-E-Mail
 2. Warten Sie auf Bestätigung von Stripe
 3. TWINT sollte dann aktiviert werden

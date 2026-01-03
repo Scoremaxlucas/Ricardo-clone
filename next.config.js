@@ -10,7 +10,7 @@ const nextConfig = {
   productionBrowserSourceMaps: false,
   // Power optimization
   poweredByHeader: false,
-  
+
   // ESLint: Ignore during builds
   eslint: {
     ignoreDuringBuilds: true,
@@ -107,7 +107,7 @@ const nextConfig = {
               "base-uri 'self'",
               "form-action 'self'",
               "frame-ancestors 'self'",
-              "upgrade-insecure-requests",
+              'upgrade-insecure-requests',
             ].join('; '),
           },
         ],
