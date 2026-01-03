@@ -272,7 +272,7 @@ export default function AdminOrdersPage() {
         {/* Header */}
         <div className="mb-8">
           <Link
-            href="/admin"
+            href="/admin/dashboard"
             className="mb-4 inline-flex items-center text-sm text-gray-600 hover:text-gray-900"
           >
             <ArrowLeft className="mr-2 h-4 w-4" />
