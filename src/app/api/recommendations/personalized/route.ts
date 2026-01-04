@@ -75,17 +75,19 @@ export async function GET(request: NextRequest) {
 
         // Get similar items to recently viewed
         if (recentlyViewed.length > 0) {
-          const viewedBrands = [...new Set(recentlyViewed.map(v => v.watch?.brand).filter(Boolean))]
+          const viewedBrands = Array.from(
+            new Set(recentlyViewed.map(v => v.watch?.brand).filter(Boolean))
+          )
           const priceRange = {
             min: Math.min(...recentlyViewed.map(v => v.watch?.price || 0)) * 0.7,
             max: Math.max(...recentlyViewed.map(v => v.watch?.price || 0)) * 1.3,
           }
           const viewedIds = recentlyViewed.map(v => v.watch?.id).filter(Boolean) as string[]
-          const viewedCategories = [
-            ...new Set(
+          const viewedCategories = Array.from(
+            new Set(
               recentlyViewed.flatMap(v => v.watch?.categories?.map(c => c.category?.slug) || [])
-            ),
-          ]
+            )
+          )
 
           const similarToViewed = await prisma.watch.findMany({
             where: {
@@ -161,7 +163,9 @@ export async function GET(request: NextRequest) {
         })
 
         if (favorites.length > 0) {
-          const favBrands = [...new Set(favorites.map(f => f.watch?.brand).filter(Boolean))]
+          const favBrands = Array.from(
+            new Set(favorites.map(f => f.watch?.brand).filter(Boolean))
+          )
           const favIds = favorites.map(f => f.watch?.id).filter(Boolean) as string[]
           const priceRange = {
             min: Math.min(...favorites.map(f => f.watch?.price || 0)) * 0.7,
@@ -242,7 +246,9 @@ export async function GET(request: NextRequest) {
         })
 
         if (purchases.length > 0) {
-          const purchasedBrands = [...new Set(purchases.map(p => p.watch?.brand).filter(Boolean))]
+          const purchasedBrands = Array.from(
+            new Set(purchases.map(p => p.watch?.brand).filter(Boolean))
+          )
           const purchasedIds = purchases.map(p => p.watch?.id).filter(Boolean) as string[]
 
           const similarToPurchases = await prisma.watch.findMany({

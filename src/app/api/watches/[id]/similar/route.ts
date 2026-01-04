@@ -67,7 +67,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     // Get category slugs
-    const categorySlugs = sourceWatch.categories.map(c => c.category?.slug).filter(Boolean) as string[]
+    const categorySlugs = sourceWatch.categories
+      .map(c => c.category?.slug)
+      .filter(Boolean) as string[]
     const subcategorySlugs: string[] = [] // WatchCategory doesn't have subcategory, removed
 
     // Calculate price range (±30%)
@@ -174,7 +176,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     `
 
     // Get seller info
-    const sellerIds = [...new Set(similarWatches.map(w => w.sellerId))]
+    const sellerIds = Array.from(new Set(similarWatches.map(w => w.sellerId)))
     const sellers = await prisma.user.findMany({
       where: { id: { in: sellerIds } },
       select: {
