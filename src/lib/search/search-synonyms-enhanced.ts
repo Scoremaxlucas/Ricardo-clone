@@ -501,7 +501,7 @@ export const enhancedSynonyms: Record<string, string[]> = {
 
   klavier: ['piano', 'pianos', 'klaviere', 'flügel', 'fluegel', 'concert grand'],
   piano: ['klavier', 'pianos', 'keyboard'],
-  keyboard: ['klavier', 'synthesizer', 'synth', 'midi', 'stage piano'],
+  'musik-keyboard': ['klavier', 'synthesizer', 'synth', 'midi', 'stage piano'],
   synthesizer: ['synth', 'keyboard', 'korg', 'roland', 'moog'],
   'e-piano': ['digital piano', 'stage piano', 'yamaha', 'roland', 'kawai'],
 
@@ -632,7 +632,6 @@ export const enhancedSynonyms: Record<string, string[]> = {
   guitare: ['gitarre', 'guitar'],
   klaver: ['klavier', 'piano'],
   claiver: ['klavier', 'piano'],
-  uhr: ['watch', 'uhren'],
   roelx: ['rolex'],
   rollex: ['rolex'],
   ohmega: ['omega'],
@@ -659,7 +658,6 @@ export const enhancedSynonyms: Record<string, string[]> = {
   natel: ['handy', 'smartphone', 'mobile', 'telefon'],
   töff: ['motorrad', 'motorcycle', 'moped', 'bike'],
   toeff: ['motorrad', 'motorcycle', 'moped'],
-  velo: ['fahrrad', 'bike', 'bicycle', 'rad'],
   büsi: ['katze', 'cat', 'kätzchen'],
   buesi: ['katze', 'cat'],
   gümmeler: ['fahrrad', 'velo', 'rennrad', 'velofahrer'],
