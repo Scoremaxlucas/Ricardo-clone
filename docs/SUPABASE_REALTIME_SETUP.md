@@ -2,190 +2,214 @@
 
 Diese Anleitung erklärt, wie Supabase Realtime für Helvenda eingerichtet wird.
 
-## Überblick
+## Übersicht
 
-Supabase Realtime ersetzt das bisherige Polling-System für:
-- **Gebote**: Sofortige Updates bei neuen Geboten
-- **Benachrichtigungen**: Sofortige Updates bei neuen Notifications
-- **Auktions-Updates**: Sofortige Updates bei Zeitverlängerungen
+Supabase Realtime ersetzt das bisherige Polling-System und bietet:
 
-### Vorteile
+- **Sofortige Updates** (0ms Verzögerung statt 5-30 Sekunden)
+- **95% weniger Server-Last** (nur Events bei Änderungen)
+- **Kostenlos** (2M Nachrichten/Monat im Free Tier)
 
-| Feature | Vorher (Polling) | Nachher (Realtime) |
-|---------|-----------------|-------------------|
-| Verzögerung | 5-30 Sekunden | ~0ms (sofort) |
-| API-Calls | ~95/Sekunde (1000 User) | ~1-5/Sekunde |
-| Server-Last | Hoch | Niedrig |
-| UX | ⭐⭐ | ⭐⭐⭐⭐⭐ |
+## Schnellstart
 
-## Setup-Schritte
-
-### 1. Supabase-Projekt erstellen (Kostenlos)
+### 1. Supabase-Projekt erstellen (kostenlos)
 
 1. Gehe zu [supabase.com](https://supabase.com)
 2. Erstelle ein neues Projekt
-3. Wähle eine Region (z.B. Frankfurt für Europa)
-4. Warte bis das Projekt erstellt ist (~2 Minuten)
+3. Wähle eine Region nahe deinen Nutzern (z.B. Frankfurt)
 
 ### 2. API-Keys kopieren
 
+Nach der Projekterstellung:
+
 1. Gehe zu **Settings → API**
 2. Kopiere:
-   - **Project URL** (z.B. `https://abcdefgh.supabase.co`)
-   - **anon public** Key
-   - **service_role** Key (für Server-Broadcasting)
+   - **Project URL** (z.B. `https://xxxxx.supabase.co`)
+   - **anon/public key** (beginnt mit `eyJ...`)
+   - **service_role key** (für Server-seitige Broadcasts)
 
 ### 3. Environment Variables setzen
 
-#### Lokal (.env.local)
+Füge zu deiner `.env.local` oder Vercel hinzu:
 
 ```bash
-# Supabase Realtime (optional - System funktioniert auch ohne)
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
+# Supabase Realtime (für Echtzeit-Updates)
+NEXT_PUBLIC_SUPABASE_URL=https://xxxxx.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 SUPABASE_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ```
 
-#### Vercel
+### 4. Vercel Environment Variables
 
-1. Gehe zu **Vercel Dashboard → Settings → Environment Variables**
-2. Füge hinzu:
-   - `NEXT_PUBLIC_SUPABASE_URL`
-   - `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `SUPABASE_SERVICE_ROLE_KEY`
+Im Vercel Dashboard:
 
-### 4. Testen
+1. **Settings → Environment Variables**
+2. Füge alle drei Variablen hinzu
+3. Wähle: ✅ Production, ✅ Preview, ✅ Development
 
-Nach dem Setup sollten Gebote und Benachrichtigungen sofort erscheinen ohne Seitenaktualisierung.
+### 5. Deployment
 
-## Architektur
+Nach dem Setzen der Environment Variables:
 
-```
-┌─────────────────┐     ┌─────────────────┐     ┌─────────────────┐
-│   Browser A     │     │   Helvenda API  │     │   Browser B     │
-│  (Bieter)       │     │   (Next.js)     │     │  (Zuschauer)    │
-└────────┬────────┘     └────────┬────────┘     └────────┬────────┘
-         │                       │                       │
-         │ 1. POST /api/bids     │                       │
-         │──────────────────────>│                       │
-         │                       │                       │
-         │                       │ 2. DB Insert          │
-         │                       │    (Prisma)           │
-         │                       │                       │
-         │                       │ 3. Broadcast Event    │
-         │                       │    (Supabase)         │
-         │                       │───────────────────────┼───────────>
-         │                       │                       │
-         │                       │                       │ 4. WebSocket
-         │                       │                       │    Event
-         │                       │                       │
-         │ 5. Response           │                       │ 5. UI Update
-         │<──────────────────────│                       │    (sofort!)
+```bash
+git add -A
+git commit -m "feat: Enable Supabase Realtime"
+git push
 ```
 
-## Dateien
+---
+
+## Wie es funktioniert
+
+### Architektur
+
+```
+┌─────────────────┐     ┌──────────────────┐     ┌─────────────────┐
+│   Browser A     │     │   Helvenda API   │     │   Browser B     │
+│   (Bieter)      │     │   (Next.js)      │     │   (Zuschauer)   │
+└────────┬────────┘     └────────┬─────────┘     └────────┬────────┘
+         │                       │                        │
+         │  POST /api/bids       │                        │
+         │──────────────────────>│                        │
+         │                       │                        │
+         │                       │ 1. Speichere in DB     │
+         │                       │ 2. Broadcast Event     │
+         │                       │──────────┐             │
+         │                       │          │             │
+         │                       │          ▼             │
+         │                       │   ┌─────────────┐      │
+         │                       │   │  Supabase   │      │
+         │                       │   │  Realtime   │      │
+         │                       │   └──────┬──────┘      │
+         │                       │          │             │
+         │                       │          │ WebSocket   │
+         │<──────────────────────┼──────────┴────────────>│
+         │   "Neues Gebot!"      │                        │
+         │                       │      "Neues Gebot!"    │
+```
+
+### Komponenten
 
 | Datei | Beschreibung |
 |-------|--------------|
-| `src/lib/supabase.ts` | Supabase Client & Helpers |
-| `src/lib/realtime-broadcast.ts` | Server-seitige Broadcast-Funktionen |
-| `src/hooks/useRealtimeBids.ts` | Hook für Gebots-Updates |
-| `src/hooks/useRealtimeNotifications.ts` | Hook für Notification-Updates |
-| `src/app/api/realtime/broadcast/route.ts` | API-Route für Broadcasting |
+| `src/lib/supabase.ts` | Supabase Client-Konfiguration |
+| `src/lib/realtime-broadcast.ts` | Server-seitige Broadcast-Helfer |
+| `src/hooks/useRealtimeBids.ts` | React Hook für Auktions-Updates |
+| `src/hooks/useRealtimeNotifications.ts` | React Hook für Benachrichtigungen |
+| `src/app/api/realtime/broadcast/route.ts` | API-Route für Broadcasts |
 
-## Verwendung
+---
 
-### Gebote (automatisch)
+## Fallback-Verhalten
 
-Die `BidComponent` verwendet automatisch Realtime wenn konfiguriert:
+Wenn Supabase **nicht konfiguriert** ist:
 
-```tsx
-// src/components/bids/BidComponent.tsx
-const { bids, highestBid, isConnected, isUsingRealtime } = useRealtimeBids({
-  watchId: itemId,
-  onNewBid: (bid) => console.log('Neues Gebot!', bid),
-  onAuctionUpdate: (update) => console.log('Auktion aktualisiert!', update),
-})
-```
-
-### Benachrichtigungen (automatisch)
-
-Der `Header` verwendet automatisch Realtime wenn konfiguriert:
-
-```tsx
-// src/components/layout/Header.tsx
-const { unreadCount, isConnected } = useRealtimeNotifications({
-  userId,
-  onNewNotification: (n) => console.log('Neue Benachrichtigung!', n),
-})
-```
-
-### Manuelles Broadcasting (Server-seitig)
+- ✅ Die App funktioniert weiterhin normal
+- ✅ Polling wird automatisch als Fallback verwendet
+- ✅ Keine Fehlermeldungen für Benutzer
 
 ```typescript
-import { broadcastBidEvent, broadcastNotification } from '@/lib/realtime-broadcast'
-
-// Nach DB-Insert:
-await broadcastBidEvent(watchId, {
-  id: bid.id,
-  amount: bid.amount,
-  userId: user.id,
-  userName: user.name,
-  createdAt: new Date(),
-})
+// Automatischer Fallback in den Hooks:
+if (isRealtimeAvailable()) {
+  // Verwende WebSocket
+} else {
+  // Fallback zu Polling
+}
 ```
 
-## Fallback
+---
 
-Wenn Supabase nicht konfiguriert ist, fällt das System automatisch auf Polling zurück:
+## Debugging
 
-- **Gebote**: Polling alle 5 Sekunden
-- **Benachrichtigungen**: Polling alle 30 Sekunden
+### Realtime-Status prüfen
 
-Dies stellt sicher, dass die Plattform auch ohne Supabase funktioniert.
+In der Browser-Konsole siehst du:
+
+```
+[Supabase] Subscribed to auction-123
+[useRealtimeBids] New bid received: { id: '...', amount: 500 }
+```
+
+### Probleme beheben
+
+**Problem: "Supabase not configured"**
+- Prüfe ob `NEXT_PUBLIC_SUPABASE_URL` und `NEXT_PUBLIC_SUPABASE_ANON_KEY` gesetzt sind
+- Starte den Dev-Server neu nach Änderungen an `.env.local`
+
+**Problem: Events werden nicht empfangen**
+- Prüfe ob `SUPABASE_SERVICE_ROLE_KEY` gesetzt ist (für Server-Broadcasts)
+- Prüfe die Supabase-Konsole unter **Realtime → Channels**
+
+**Problem: Hohe Latenz**
+- Wähle eine Supabase-Region näher an deinen Nutzern
+
+---
 
 ## Kosten
 
-| Plan | Kosten | Limits |
-|------|--------|--------|
-| Free | $0/Monat | 2M Nachrichten/Monat, 200 Connections |
-| Pro | $25/Monat | 5M Nachrichten, 500 Connections |
+| Tier | Nachrichten/Monat | Connections | Kosten |
+|------|-------------------|-------------|--------|
+| Free | 2 Millionen | 200 | $0 |
+| Pro | 5 Millionen | 500 | $25/Monat |
 
-Für die meisten Anwendungsfälle reicht der kostenlose Plan.
+Für Helvenda reicht der **Free Tier** für den Start völlig aus.
 
-## Troubleshooting
+---
 
-### Realtime funktioniert nicht
+## Verwendete Events
 
-1. Prüfe Environment Variables:
-   ```bash
-   echo $NEXT_PUBLIC_SUPABASE_URL
-   echo $NEXT_PUBLIC_SUPABASE_ANON_KEY
-   ```
+### Auktionen (`auction-{watchId}`)
 
-2. Prüfe Browser Console:
-   ```
-   [Supabase] Subscribed to auction-123
-   ```
+| Event | Beschreibung |
+|-------|--------------|
+| `new-bid` | Neues Gebot abgegeben |
+| `auction-update` | Auktionszeit verlängert oder beendet |
 
-3. Prüfe Server Logs:
-   ```
-   [Realtime] Broadcast new-bid to auction-123
-   ```
+### Benachrichtigungen (`notifications-{userId}`)
 
-### Fallback auf Polling
+| Event | Beschreibung |
+|-------|--------------|
+| `new-notification` | Neue Benachrichtigung |
+| `notifications-read` | Benachrichtigungen als gelesen markiert |
 
-Wenn in der Console steht:
+---
+
+## Erweiterungsmöglichkeiten
+
+### Live-Viewer-Zähler
+
+```typescript
+// Zeige: "23 Personen sehen diese Auktion"
+const channel = supabase.channel(`auction-${watchId}`)
+channel.on('presence', { event: 'sync' }, () => {
+  const viewers = Object.keys(channel.presenceState()).length
+  setViewerCount(viewers)
+})
 ```
-[useRealtimeBids] Using polling fallback
+
+### Typing-Indicator
+
+```typescript
+// "Verkäufer schreibt..."
+channel.on('broadcast', { event: 'typing' }, (payload) => {
+  setIsTyping(payload.userId)
+})
 ```
 
-Dann ist Supabase nicht konfiguriert. Das System funktioniert trotzdem, aber mit Polling.
+### Live-Preis-Updates
 
-## Nächste Schritte
+```typescript
+// Preisänderungen in Echtzeit
+channel.on('broadcast', { event: 'price-update' }, (payload) => {
+  setPrice(payload.newPrice)
+})
+```
 
-1. **Supabase-Projekt erstellen** (kostenlos)
-2. **Environment Variables setzen**
-3. **Testen**: Gebote sollten sofort erscheinen
+---
 
-Bei Fragen: support@helvenda.ch
+## Zusammenfassung
+
+- ✅ **Kostenlos** für bis zu 2M Nachrichten/Monat
+- ✅ **Sofortige Updates** ohne Verzögerung
+- ✅ **Fallback** zu Polling wenn nicht konfiguriert
+- ✅ **Einfache Integration** in bestehende Komponenten
