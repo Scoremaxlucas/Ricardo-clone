@@ -78,7 +78,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
 
     if (!watch) {
-      return NextResponse.json({ message: 'Uhr nicht gefunden' }, { status: 404 })
+      return NextResponse.json({ message: 'Artikel nicht gefunden' }, { status: 404 })
     }
 
     const images = watch.images ? JSON.parse(watch.images) : []
@@ -163,7 +163,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     })
 
     if (!watch) {
-      return NextResponse.json({ message: 'Uhr nicht gefunden' }, { status: 404 })
+      return NextResponse.json({ message: 'Artikel nicht gefunden' }, { status: 404 })
     }
 
     if (watch.sellerId !== session.user.id) {

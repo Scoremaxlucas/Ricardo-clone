@@ -69,7 +69,7 @@ export async function POST(request: NextRequest) {
     })
 
     if (!watch) {
-      return NextResponse.json({ message: 'Uhr nicht gefunden' }, { status: 404 })
+      return NextResponse.json({ message: 'Artikel nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob bereits eine aktive Order für DIESEN Käufer existiert
@@ -95,7 +95,7 @@ export async function POST(request: NextRequest) {
     // Prüfe ob Käufer nicht Verkäufer ist
     if (watch.sellerId === buyerId) {
       return NextResponse.json(
-        { message: 'Sie können nicht Ihre eigene Uhr kaufen' },
+        { message: 'Sie können nicht Ihren eigenen Artikel kaufen' },
         { status: 400 }
       )
     }

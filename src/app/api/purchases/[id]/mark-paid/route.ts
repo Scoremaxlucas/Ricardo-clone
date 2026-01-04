@@ -58,13 +58,13 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         subject: `Bezahlung erhalten für ${purchase.watch.title}`,
         html: `
           <h2>Bezahlung erhalten</h2>
-          <p>Die Bezahlung für Ihre verkaufte Uhr wurde als erhalten markiert:</p>
+          <p>Die Bezahlung für Ihren verkauften Artikel wurde als erhalten markiert:</p>
           <ul>
             <li><strong>Artikel:</strong> ${purchase.watch.title}</li>
             <li><strong>Käufer:</strong> ${purchase.buyer.name || purchase.buyer.email}</li>
             <li><strong>Betrag:</strong> CHF ${purchase.price}</li>
           </ul>
-          <p>Sie können nun die Uhr versenden.</p>
+          <p>Sie können nun den Artikel versenden.</p>
         `,
       })
       console.log('[mark-paid] Email result:', emailResult)

@@ -32,7 +32,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     if (!watch) {
-      return NextResponse.json({ message: 'Uhr nicht gefunden' }, { status: 404 })
+      return NextResponse.json({ message: 'Artikel nicht gefunden' }, { status: 404 })
     }
 
     // Prüfe ob User der Verkäufer ist

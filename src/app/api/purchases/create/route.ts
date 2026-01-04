@@ -21,7 +21,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'WatchId ist erforderlich' }, { status: 400 })
     }
 
-    // Prüfe ob die Uhr existiert
+    // Prüfe ob der Artikel existiert
     // WICHTIG: Explizites select für purchases um disputeInitiatedBy zu vermeiden
     const watch = await prisma.watch.findUnique({
       where: { id: watchId },
@@ -36,10 +36,10 @@ export async function POST(request: NextRequest) {
     })
 
     if (!watch) {
-      return NextResponse.json({ message: 'Uhr nicht gefunden' }, { status: 404 })
+      return NextResponse.json({ message: 'Artikel nicht gefunden' }, { status: 404 })
     }
 
-    // Prüfe ob bereits ein aktiver Purchase für diese Uhr existiert (nur ein Kauf pro Uhr möglich)
+    // Prüfe ob bereits ein aktiver Purchase für diesen Artikel existiert (nur ein Kauf pro Artikel möglich)
     // Stornierte Purchases zählen nicht - Artikel kann wieder gekauft werden
     const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
     if (activePurchases.length > 0) {
@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
     // Prüfe ob der Käufer nicht der Verkäufer ist
     if (watch.sellerId === session.user.id) {
       return NextResponse.json(
-        { message: 'Sie können nicht Ihre eigene Uhr kaufen' },
+        { message: 'Sie können nicht Ihren eigenen Artikel kaufen' },
         { status: 400 }
       )
     }

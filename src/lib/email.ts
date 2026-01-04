@@ -1087,7 +1087,7 @@ export function getVerificationApprovalEmail(userName: string, userEmail: string
             Sie können nun alle Funktionen unserer Plattform nutzen:
           </p>
           <ul style="margin-left: 20px; margin-top: 10px;">
-            <li>Uhren zum Verkauf anbieten</li>
+            <li>Artikel zum Verkauf anbieten</li>
             <li>Bei Auktionen mitbieten</li>
             <li>Sofortkäufe tätigen</li>
           </ul>
@@ -1111,7 +1111,7 @@ Ihre Verifizierung wurde erfolgreich bestätigt!
 
 Ihr Konto wurde von unserem Team geprüft und freigegeben. Sie können nun alle Funktionen unserer Plattform nutzen:
 
-• Uhren zum Verkauf anbieten
+• Artikel zum Verkauf anbieten
 • Bei Auktionen mitbieten
 • Sofortkäufe tätigen
 
@@ -1168,7 +1168,7 @@ export function getSaleNotificationEmail(
                  <p>Hallo ${sellerName},</p>
                  <div class="success-box">
                    <h2 style="color: #0f766e; margin-top: 0;">
-                     ✓ Glückwunsch! Ihre Uhr wurde erfolgreich verkauft!
+                     ✓ Glückwunsch! Ihr Artikel wurde erfolgreich verkauft!
                    </h2>
                  </div>
 
@@ -1211,7 +1211,7 @@ export function getSaleNotificationEmail(
                </div>
                <div class="footer">
                  <p>Diese E-Mail wurde automatisch von Helvenda.ch gesendet.</p>
-                 <p>Sie erhalten diese E-Mail, weil eine Ihrer Uhren erfolgreich verkauft wurde.</p>
+                 <p>Sie erhalten diese E-Mail, weil einer Ihrer Artikel erfolgreich verkauft wurde.</p>
                </div>
              </div>
            </body>
@@ -1221,7 +1221,7 @@ export function getSaleNotificationEmail(
   const text = `
        Hallo ${sellerName},
 
-       ✓ Glückwunsch! Ihre Uhr wurde erfolgreich verkauft!
+       ✓ Glückwunsch! Ihr Artikel wurde erfolgreich verkauft!
 
        Verkaufte Uhr: ${watchTitle}
        Käufer: ${buyerName}
@@ -1234,7 +1234,7 @@ export function getSaleNotificationEmail(
 
        ---
        Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
-       Sie erhalten diese E-Mail, weil eine Ihrer Uhren erfolgreich verkauft wurde.
+       Sie erhalten diese E-Mail, weil einer Ihrer Artikel erfolgreich verkauft wurde.
          `.trim()
 
   return { subject, html, text }

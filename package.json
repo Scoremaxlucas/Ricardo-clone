@@ -3,6 +3,9 @@
   "version": "0.2.0",
   "private": true,
   "scripts": {
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "dev": "next dev -p 3002 -H 0.0.0.0",
     "dev:start": "./start-server.sh",
     "dev:check": "./check-and-start.sh",
@@ -93,12 +96,17 @@
     "zustand": "^4.4.0"
   },
   "devDependencies": {
+    "@testing-library/jest-dom": "^6.9.1",
+    "@testing-library/react": "^16.3.1",
     "@types/bcryptjs": "^2.4.0",
     "@types/jsonwebtoken": "^9.0.0",
+    "@vitejs/plugin-react": "^5.1.2",
     "dotenv": "^17.2.3",
+    "jsdom": "^27.4.0",
     "prettier": "^3.7.3",
     "prettier-plugin-tailwindcss": "^0.7.1",
     "prisma": "^6.0.1",
-    "tsx": "^4.20.6"
+    "tsx": "^4.20.6",
+    "vitest": "^4.0.16"
   }
 }

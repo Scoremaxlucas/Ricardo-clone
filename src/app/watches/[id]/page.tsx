@@ -147,7 +147,7 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
   }
 
   if (!watch) {
-    return <div className="flex min-h-screen items-center justify-center">Uhr nicht gefunden</div>
+    return <div className="flex min-h-screen items-center justify-center">Artikel nicht gefunden</div>
   }
 
   const isSeller = (session?.user as { id?: string })?.id === watch.seller.id

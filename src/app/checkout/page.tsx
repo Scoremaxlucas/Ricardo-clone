@@ -49,7 +49,7 @@ function CheckoutPageContent() {
     }
 
     if (!watchId) {
-      setError('Keine Uhr ausgewählt')
+      setError('Kein Artikel ausgewählt')
       setLoading(false)
       return
     }
@@ -152,7 +152,7 @@ function CheckoutPageContent() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="rounded-lg bg-white p-8 shadow-md">
-          <div className="text-red-600">{error || 'Uhr nicht gefunden'}</div>
+          <div className="text-red-600">{error || 'Artikel nicht gefunden'}</div>
           <button onClick={() => router.back()} className="mt-4 text-primary-600 hover:underline">
             Zurück
           </button>
