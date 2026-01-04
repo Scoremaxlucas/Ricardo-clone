@@ -282,8 +282,8 @@ export function HeaderSearch({
         </button>
       </form>
 
-      {/* RICARDO-LEVEL: Enhanced Suggestions Dropdown */}
-      {isOpen && (suggestions.length > 0 || isLoading) && (
+      {/* RICARDO-LEVEL: Enhanced Suggestions Dropdown - TEMPORARILY DISABLED */}
+      {false && isOpen && (suggestions.length > 0 || isLoading) && (
         <div className="absolute left-0 right-0 top-full z-50 mt-1 overflow-hidden rounded-lg border border-gray-200 bg-white shadow-xl">
           {isLoading ? (
             <div className="flex items-center justify-center px-4 py-4">
