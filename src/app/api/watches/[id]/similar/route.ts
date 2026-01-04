@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -177,19 +178,18 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     // Get seller info
     const sellerIds = Array.from(new Set(similarWatches.map(w => w.sellerId)))
-    const sellers = await prisma.user.findMany({
-      where: { id: { in: sellerIds } },
-      select: {
-        id: true,
-        city: true,
-        postalCode: true,
-      },
-    })
-    const sellerMap = new Map(sellers.map(s => [s.id, s]))
+    // Fetch seller addresses from UserAddress table
+    const sellerAddresses = await Promise.all(
+      sellerIds.map(async (id: string) => ({
+        id,
+        address: await getMainAddress(id),
+      }))
+    )
+    const sellerMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
 
     // Format response
     const formattedSimilar = similarWatches.map(w => {
-      const seller = sellerMap.get(w.sellerId)
+      const sellerAddress = sellerMap.get(w.sellerId)
       let images: string[] = []
       try {
         images = typeof w.images === 'string' ? JSON.parse(w.images) : w.images || []
@@ -210,10 +210,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         auctionEnd: w.auctionEnd,
         createdAt: w.createdAt,
         sellerId: w.sellerId,
-        seller: seller
+        seller: sellerAddress
           ? {
-              city: seller.city,
-              postalCode: seller.postalCode,
+              city: sellerAddress.city,
+              postalCode: sellerAddress.postalCode,
             }
           : null,
         similarityScore: Number(w.similarityScore),

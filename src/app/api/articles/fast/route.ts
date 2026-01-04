@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -65,8 +66,7 @@ export async function GET(request: NextRequest) {
         paymentProtectionEnabled: true,
         seller: {
           select: {
-            city: true,
-            postalCode: true,
+            id: true,
           },
         },
       },
@@ -75,25 +75,38 @@ export async function GET(request: NextRequest) {
       skip: skip,
     })
 
+    // Fetch seller addresses from UserAddress table
+    const sellerIds = Array.from(new Set(watches.map(w => w.seller?.id).filter(Boolean))) as string[]
+    const sellerAddresses = await Promise.all(
+      sellerIds.map(async id => ({
+        id,
+        address: await getMainAddress(id),
+      }))
+    )
+    const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
+
     // Transformiere Prisma-Format zu erwartetem Format
-    const watchesFormatted = watches.map(w => ({
-      id: w.id,
-      title: w.title,
-      brand: w.brand,
-      model: w.model,
-      price: w.price,
-      buyNowPrice: w.buyNowPrice,
-      images: w.images,
-      createdAt: w.createdAt,
-      isAuction: w.isAuction,
-      auctionEnd: w.auctionEnd,
-      articleNumber: w.articleNumber,
-      boosters: w.boosters,
-      condition: w.condition,
-      paymentProtectionEnabled: w.paymentProtectionEnabled,
-      city: w.seller?.city || null,
-      postalCode: w.seller?.postalCode || null,
-    }))
+    const watchesFormatted = watches.map(w => {
+      const sellerAddress = w.seller?.id ? addressMap.get(w.seller.id) : null
+      return {
+        id: w.id,
+        title: w.title,
+        brand: w.brand,
+        model: w.model,
+        price: w.price,
+        buyNowPrice: w.buyNowPrice,
+        images: w.images,
+        createdAt: w.createdAt,
+        isAuction: w.isAuction,
+        auctionEnd: w.auctionEnd,
+        articleNumber: w.articleNumber,
+        boosters: w.boosters,
+        condition: w.condition,
+        paymentProtectionEnabled: w.paymentProtectionEnabled,
+        city: sellerAddress?.city || null,
+        postalCode: sellerAddress?.postalCode || null,
+      }
+    })
 
     // OPTIMIERT: Minimale Verarbeitung
     const watchesWithImages = watchesFormatted.map(w => {

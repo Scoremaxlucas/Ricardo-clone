@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -112,8 +113,7 @@ export async function GET(request: NextRequest) {
           condition: true,
           seller: {
             select: {
-              city: true,
-              postalCode: true,
+              id: true,
             },
           },
           bids: {
@@ -129,14 +129,27 @@ export async function GET(request: NextRequest) {
         skip: skip,
       })) as any[]
 
+      // Fetch seller addresses from UserAddress table
+      const sellerIds = Array.from(new Set(watches.map(w => w.seller?.id).filter(Boolean))) as string[]
+      const sellerAddresses = await Promise.all(
+        sellerIds.map(async id => ({
+          id,
+          address: await getMainAddress(id),
+        }))
+      )
+      const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
+
       // Transformiere Prisma-Format zu Raw SQL-Format
-      watches = watches.map(w => ({
-        ...w,
-        city: (w as any).seller?.city || null,
-        postalCode: (w as any).seller?.postalCode || null,
-        bidCount: BigInt((w as any).bids?.length || 0),
-        highestBid: (w as any).bids?.[0]?.amount || null,
-      }))
+      watches = watches.map(w => {
+        const sellerAddress = w.seller?.id ? addressMap.get(w.seller.id) : null
+        return {
+          ...w,
+          city: sellerAddress?.city || null,
+          postalCode: sellerAddress?.postalCode || null,
+          bidCount: BigInt((w as any).bids?.length || 0),
+          highestBid: (w as any).bids?.[0]?.amount || null,
+        }
+      })
     }
 
     // OPTIMIERT: Minimale Verarbeitung
