@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { getUserAddresses } from '@/lib/address'
+import { getUserAddresses, type AddressType } from '@/lib/address'
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Fetch user data with legacy address fields
+    // Fetch user data (address from UserAddress table)
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -21,17 +21,6 @@ export async function GET(request: NextRequest) {
         title: true,
         firstName: true,
         lastName: true,
-        // Legacy address fields (still primary source during migration)
-        street: true,
-        streetNumber: true,
-        postalCode: true,
-        city: true,
-        country: true,
-        deliveryStreet: true,
-        deliveryStreetNumber: true,
-        deliveryPostalCode: true,
-        deliveryCity: true,
-        deliveryCountry: true,
         dateOfBirth: true,
         idDocument: true,
         idDocumentPage1: true,
@@ -41,15 +30,17 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Also fetch from new UserAddress table (for future use)
+    // Fetch addresses from UserAddress table (primary source)
     const addresses = await getUserAddresses(session.user.id)
+    const mainAddress = addresses.find(a => a.type === 'MAIN')
+    const deliveryAddress = addresses.find(a => a.type === 'DELIVERY')
 
     if (!user) {
       return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
-    // Build response with legacy fields (for backward compatibility)
-    // New 'addresses' field contains data from UserAddress table
+    // Build response with addresses from UserAddress table
+    // Flat structure maintained for frontend compatibility
     return NextResponse.json({
       verified: user.verified === true && user.verificationStatus === 'approved',
       verifiedAt: user.verifiedAt,
@@ -58,17 +49,18 @@ export async function GET(request: NextRequest) {
         title: user.title,
         firstName: user.firstName,
         lastName: user.lastName,
-        // Legacy address fields (still used by frontend)
-        street: user.street,
-        streetNumber: user.streetNumber,
-        postalCode: user.postalCode,
-        city: user.city,
-        country: user.country,
-        deliveryStreet: user.deliveryStreet,
-        deliveryStreetNumber: user.deliveryStreetNumber,
-        deliveryPostalCode: user.deliveryPostalCode,
-        deliveryCity: user.deliveryCity,
-        deliveryCountry: user.deliveryCountry,
+        // Main address from UserAddress table
+        street: mainAddress?.street || null,
+        streetNumber: mainAddress?.streetNumber || null,
+        postalCode: mainAddress?.postalCode || null,
+        city: mainAddress?.city || null,
+        country: mainAddress?.country || 'Schweiz',
+        // Delivery address from UserAddress table
+        deliveryStreet: deliveryAddress?.street || null,
+        deliveryStreetNumber: deliveryAddress?.streetNumber || null,
+        deliveryPostalCode: deliveryAddress?.postalCode || null,
+        deliveryCity: deliveryAddress?.city || null,
+        deliveryCountry: deliveryAddress?.country || null,
         dateOfBirth: user.dateOfBirth,
         idDocument: user.idDocument,
         idDocumentPage1: user.idDocumentPage1,
@@ -76,7 +68,7 @@ export async function GET(request: NextRequest) {
         idDocumentType: user.idDocumentType,
         paymentMethods: user.paymentMethods,
       },
-      // New: Structured addresses from UserAddress table
+      // Structured addresses from UserAddress table
       addresses: addresses.map(addr => ({
         type: addr.type,
         street: addr.street,

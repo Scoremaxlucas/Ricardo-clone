@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -114,8 +115,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            city: true,
-            postalCode: true,
             verified: true,
           },
         },
@@ -137,8 +136,19 @@ export async function GET(request: NextRequest) {
       take: limit * 2, // Hole mehr, um nach Sortierung zu filtern
     })
 
+    // Fetch seller addresses from UserAddress table
+    const sellerIds = Array.from(new Set(watches.map(w => w.sellerId)))
+    const sellerAddresses = await Promise.all(
+      sellerIds.map(async id => ({
+        sellerId: id,
+        address: await getMainAddress(id),
+      }))
+    )
+    const addressMap = new Map(sellerAddresses.map(sa => [sa.sellerId, sa.address]))
+
     // Parse boosters und berechne aktuellen Preis
     let watchesWithBoosters = watches.map(watch => {
+      const sellerAddress = addressMap.get(watch.sellerId)
       const highestBid = watch.bids[0]
       const currentPrice = highestBid ? highestBid.amount : watch.price
 
@@ -178,8 +188,8 @@ export async function GET(request: NextRequest) {
         price: currentPrice,
         images: images,
         boosters: boosters,
-        city: watch.seller?.city || null,
-        postalCode: watch.seller?.postalCode || null,
+        city: sellerAddress?.city || null,
+        postalCode: sellerAddress?.postalCode || null,
         buyNowPrice: watch.buyNowPrice || null,
         isAuction: watch.isAuction || false,
         auctionEnd: watch.auctionEnd || null,

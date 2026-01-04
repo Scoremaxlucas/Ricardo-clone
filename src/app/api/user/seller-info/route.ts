@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // Verkäuferinformationen für einen Purchase abrufen
 export async function GET(request: NextRequest) {
@@ -35,7 +36,7 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Hole Verkäuferinformationen
+    // Hole Verkäuferinformationen (address from UserAddress)
     const seller = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -44,10 +45,6 @@ export async function GET(request: NextRequest) {
         email: true,
         firstName: true,
         lastName: true,
-        street: true,
-        streetNumber: true,
-        postalCode: true,
-        city: true,
         phone: true,
         paymentMethods: true,
         // Stripe Connect Status für Zahlungsschutz
@@ -63,9 +60,18 @@ export async function GET(request: NextRequest) {
       )
     }
 
+    // Fetch seller address from UserAddress table
+    const address = await getMainAddress(userId)
+
     return NextResponse.json({
       success: true,
-      seller,
+      seller: {
+        ...seller,
+        street: address?.street || null,
+        streetNumber: address?.streetNumber || null,
+        postalCode: address?.postalCode || null,
+        city: address?.city || null,
+      },
     })
   } catch (error: any) {
     console.error('Error fetching seller info:', error)

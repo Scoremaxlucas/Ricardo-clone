@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -25,13 +26,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         name: true,
         email: true,
         phone: true,
-        street: true,
-        streetNumber: true,
-        postalCode: true,
-        city: true,
-        country: true,
-        addresszusatz: true,
-        kanton: true,
         nickname: true,
         firstName: true,
         lastName: true,
@@ -45,7 +39,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
-    return NextResponse.json(user)
+    // Fetch address from UserAddress table
+    const address = await getMainAddress(id)
+
+    return NextResponse.json({
+      ...user,
+      street: address?.street || null,
+      streetNumber: address?.streetNumber || null,
+      postalCode: address?.postalCode || null,
+      city: address?.city || null,
+      country: address?.country || 'Schweiz',
+      addresszusatz: address?.addresszusatz || null,
+      kanton: address?.kanton || null,
+    })
   } catch (error: any) {
     console.error('Error fetching user:', error)
     return NextResponse.json(

@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { shouldShowDetailedErrors } from '@/lib/env'
 import { PAYMENT_CONFIG } from '@/lib/payment-config'
@@ -62,11 +63,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               firstName: true,
               lastName: true,
               companyName: true,
-              street: true,
-              streetNumber: true,
-              postalCode: true,
-              city: true,
-              country: true,
             },
           },
           originalInvoice: {
@@ -120,11 +116,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
               firstName: true,
               lastName: true,
               companyName: true,
-              street: true,
-              streetNumber: true,
-              postalCode: true,
-              city: true,
-              country: true,
             },
           },
         },
@@ -142,6 +133,19 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     // Prüfe ob der User berechtigt ist (nur der Verkäufer darf seine Rechnung sehen)
     if (invoice.sellerId !== session.user.id) {
       return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
+    }
+
+    // Fetch seller's address from UserAddress table
+    const sellerAddress = await getMainAddress(invoice.sellerId)
+
+    // Extend invoice.seller with address data
+    const sellerWithAddress = {
+      ...invoice.seller,
+      street: sellerAddress?.street || null,
+      streetNumber: sellerAddress?.streetNumber || null,
+      postalCode: sellerAddress?.postalCode || null,
+      city: sellerAddress?.city || null,
+      country: sellerAddress?.country || 'Schweiz',
     }
 
     // Prüfe ob es eine Credit Note (Korrektur-Rechnung) ist
@@ -254,29 +258,29 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     pdf.setFontSize(10)
     pdf.setTextColor(30, 30, 30)
 
-    if (invoice.seller.firstName && invoice.seller.lastName) {
+    if (sellerWithAddress.firstName && sellerWithAddress.lastName) {
       pdf.setFont('helvetica', 'bold')
-      pdf.text(`${invoice.seller.firstName} ${invoice.seller.lastName}`, margin, yPos)
+      pdf.text(`${sellerWithAddress.firstName} ${sellerWithAddress.lastName}`, margin, yPos)
       yPos += 5
       pdf.setFont('helvetica', 'normal')
     }
-    if (invoice.seller.companyName) {
-      pdf.text(invoice.seller.companyName, margin, yPos)
+    if (sellerWithAddress.companyName) {
+      pdf.text(sellerWithAddress.companyName, margin, yPos)
       yPos += 5
     }
-    if (invoice.seller.street) {
-      const streetText = invoice.seller.streetNumber
-        ? `${invoice.seller.street} ${invoice.seller.streetNumber}`
-        : invoice.seller.street
+    if (sellerWithAddress.street) {
+      const streetText = sellerWithAddress.streetNumber
+        ? `${sellerWithAddress.street} ${sellerWithAddress.streetNumber}`
+        : sellerWithAddress.street
       pdf.text(streetText, margin, yPos)
       yPos += 5
     }
-    if (invoice.seller.postalCode && invoice.seller.city) {
-      pdf.text(`${invoice.seller.postalCode} ${invoice.seller.city}`, margin, yPos)
+    if (sellerWithAddress.postalCode && sellerWithAddress.city) {
+      pdf.text(`${sellerWithAddress.postalCode} ${sellerWithAddress.city}`, margin, yPos)
       yPos += 5
     }
-    if (invoice.seller.country) {
-      pdf.text(invoice.seller.country, margin, yPos)
+    if (sellerWithAddress.country) {
+      pdf.text(sellerWithAddress.country, margin, yPos)
       yPos += 5
     }
 
@@ -436,9 +440,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       receiptY += 3
       pdf.text(PAYMENT_CONFIG.creditorName, receiptMargin, receiptY)
       receiptY += 3
-      pdf.text(`${PAYMENT_CONFIG.address.street} ${PAYMENT_CONFIG.address.streetNumber}`, receiptMargin, receiptY)
+      pdf.text(
+        `${PAYMENT_CONFIG.address.street} ${PAYMENT_CONFIG.address.streetNumber}`,
+        receiptMargin,
+        receiptY
+      )
       receiptY += 3
-      pdf.text(`${PAYMENT_CONFIG.address.postalCode} ${PAYMENT_CONFIG.address.city}`, receiptMargin, receiptY)
+      pdf.text(
+        `${PAYMENT_CONFIG.address.postalCode} ${PAYMENT_CONFIG.address.city}`,
+        receiptMargin,
+        receiptY
+      )
       receiptY += 6
 
       // Referenz
@@ -459,16 +471,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       receiptY += 3
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'normal')
-      if (invoice.seller.firstName && invoice.seller.lastName) {
-        pdf.text(`${invoice.seller.firstName} ${invoice.seller.lastName}`, receiptMargin, receiptY)
+      if (sellerWithAddress.firstName && sellerWithAddress.lastName) {
+        pdf.text(
+          `${sellerWithAddress.firstName} ${sellerWithAddress.lastName}`,
+          receiptMargin,
+          receiptY
+        )
         receiptY += 3
       }
-      if (invoice.seller.street) {
-        pdf.text(`${invoice.seller.street} ${invoice.seller.streetNumber || ''}`.trim(), receiptMargin, receiptY)
+      if (sellerWithAddress.street) {
+        pdf.text(
+          `${sellerWithAddress.street} ${sellerWithAddress.streetNumber || ''}`.trim(),
+          receiptMargin,
+          receiptY
+        )
         receiptY += 3
       }
-      if (invoice.seller.postalCode && invoice.seller.city) {
-        pdf.text(`${invoice.seller.postalCode} ${invoice.seller.city}`, receiptMargin, receiptY)
+      if (sellerWithAddress.postalCode && sellerWithAddress.city) {
+        pdf.text(
+          `${sellerWithAddress.postalCode} ${sellerWithAddress.city}`,
+          receiptMargin,
+          receiptY
+        )
       }
 
       // Currency and Amount at bottom of receipt
@@ -480,7 +504,11 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       pdf.setFontSize(10)
       pdf.setFont('helvetica', 'normal')
       pdf.text('CHF', receiptMargin, receiptBottomY - 3)
-      pdf.text(invoice.total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' '), receiptMargin + 20, receiptBottomY - 3)
+      pdf.text(
+        invoice.total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' '),
+        receiptMargin + 20,
+        receiptBottomY - 3
+      )
 
       // Annahmestelle
       pdf.setFontSize(6)
@@ -501,33 +529,35 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         // Debtor Information - WICHTIG: Adressen müssen strukturiert sein
         // Wenn kein Name vorhanden, müssen alle Debtor-Felder leer sein
         const hasDebtorInfo = !!(
-          invoice.seller.firstName ||
-          invoice.seller.lastName ||
-          invoice.seller.companyName ||
-          invoice.seller.name
+          sellerWithAddress.firstName ||
+          sellerWithAddress.lastName ||
+          sellerWithAddress.companyName ||
+          sellerWithAddress.name
         )
 
         const debtorName =
-          invoice.seller.firstName && invoice.seller.lastName
-            ? `${invoice.seller.firstName} ${invoice.seller.lastName}`.trim()
-            : invoice.seller.companyName?.trim() || invoice.seller.name?.trim() || ''
+          sellerWithAddress.firstName && sellerWithAddress.lastName
+            ? `${sellerWithAddress.firstName} ${sellerWithAddress.lastName}`.trim()
+            : sellerWithAddress.companyName?.trim() || sellerWithAddress.name?.trim() || ''
 
         // Strukturierte Adresse für Debtor (PLZ und Ort kombiniert!)
         const debtorStreet =
-          hasDebtorInfo && invoice.seller.street?.trim()
-            ? `${invoice.seller.street.trim()} ${invoice.seller.streetNumber?.trim() || ''}`.trim()
+          hasDebtorInfo && sellerWithAddress.street?.trim()
+            ? `${sellerWithAddress.street.trim()} ${sellerWithAddress.streetNumber?.trim() || ''}`.trim()
             : ''
         const debtorPostalCode =
-          hasDebtorInfo && invoice.seller.postalCode?.trim() ? invoice.seller.postalCode.trim() : ''
+          hasDebtorInfo && sellerWithAddress.postalCode?.trim()
+            ? sellerWithAddress.postalCode.trim()
+            : ''
         const debtorCity =
-          hasDebtorInfo && invoice.seller.city?.trim() ? invoice.seller.city.trim() : ''
+          hasDebtorInfo && sellerWithAddress.city?.trim() ? sellerWithAddress.city.trim() : ''
         const debtorCityLine =
           debtorPostalCode && debtorCity ? `${debtorPostalCode} ${debtorCity}`.trim() : ''
         // WICHTIG: Für Swiss QR-Bill sollte das Land immer "CH" sein (Schweiz)
         // Validiere und korrigiere Länderkürzel automatisch
         let debtorCountry = ''
         if (hasDebtorInfo) {
-          const debtorCountryRaw = invoice.seller.country?.trim() || 'CH'
+          const debtorCountryRaw = sellerWithAddress.country?.trim() || 'CH'
           const debtorCountryClean = debtorCountryRaw.toUpperCase().substring(0, 2)
           // Stelle sicher, dass es ein gültiges 2-stelliges Länderkürzel ist, sonst verwende CH
           if (/^[A-Z]{2}$/.test(debtorCountryClean)) {
@@ -773,9 +803,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         rightInfoY += 3
         pdf.text(PAYMENT_CONFIG.creditorName, rightInfoX, rightInfoY)
         rightInfoY += 3
-        pdf.text(`${PAYMENT_CONFIG.address.street} ${PAYMENT_CONFIG.address.streetNumber}`, rightInfoX, rightInfoY)
+        pdf.text(
+          `${PAYMENT_CONFIG.address.street} ${PAYMENT_CONFIG.address.streetNumber}`,
+          rightInfoX,
+          rightInfoY
+        )
         rightInfoY += 3
-        pdf.text(`${PAYMENT_CONFIG.address.postalCode} ${PAYMENT_CONFIG.address.city}`, rightInfoX, rightInfoY)
+        pdf.text(
+          `${PAYMENT_CONFIG.address.postalCode} ${PAYMENT_CONFIG.address.city}`,
+          rightInfoX,
+          rightInfoY
+        )
         rightInfoY += 6
 
         // Referenz
@@ -795,16 +833,28 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         rightInfoY += 3
         pdf.setFontSize(8)
         pdf.setFont('helvetica', 'normal')
-        if (invoice.seller.firstName && invoice.seller.lastName) {
-          pdf.text(`${invoice.seller.firstName} ${invoice.seller.lastName}`, rightInfoX, rightInfoY)
+        if (sellerWithAddress.firstName && sellerWithAddress.lastName) {
+          pdf.text(
+            `${sellerWithAddress.firstName} ${sellerWithAddress.lastName}`,
+            rightInfoX,
+            rightInfoY
+          )
           rightInfoY += 3
         }
-        if (invoice.seller.street) {
-          pdf.text(`${invoice.seller.street} ${invoice.seller.streetNumber || ''}`.trim(), rightInfoX, rightInfoY)
+        if (sellerWithAddress.street) {
+          pdf.text(
+            `${sellerWithAddress.street} ${sellerWithAddress.streetNumber || ''}`.trim(),
+            rightInfoX,
+            rightInfoY
+          )
           rightInfoY += 3
         }
-        if (invoice.seller.postalCode && invoice.seller.city) {
-          pdf.text(`${invoice.seller.postalCode} ${invoice.seller.city}`, rightInfoX, rightInfoY)
+        if (sellerWithAddress.postalCode && sellerWithAddress.city) {
+          pdf.text(
+            `${sellerWithAddress.postalCode} ${sellerWithAddress.city}`,
+            rightInfoX,
+            rightInfoY
+          )
         }
       } catch (error) {
         console.error('Error generating QR code:', error)

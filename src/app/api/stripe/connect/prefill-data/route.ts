@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth'
+import { getUserMainAddressData, formatAddressLine } from '@/lib/address'
 import { maskIban } from '@/lib/crypto'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -16,7 +17,7 @@ export async function GET() {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Get user data
+    // Get user data (address from UserAddress table)
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -25,10 +26,6 @@ export async function GET() {
         email: true,
         phone: true,
         dateOfBirth: true,
-        street: true,
-        streetNumber: true,
-        postalCode: true,
-        city: true,
         paymentMethods: true,
         payoutProfile: {
           select: {
@@ -91,10 +88,19 @@ export async function GET() {
       }
     }
 
+    // Get address from UserAddress table (with legacy fallback)
+    const userAddress = await getUserMainAddressData(session.user.id)
+    
     // Build address string
-    const address = [user.street, user.streetNumber, user.postalCode, user.city]
-      .filter(Boolean)
-      .join(', ')
+    const address = userAddress.street
+      ? formatAddressLine({
+          street: userAddress.street,
+          streetNumber: userAddress.streetNumber || '',
+          postalCode: userAddress.postalCode || '',
+          city: userAddress.city || '',
+          country: userAddress.country || 'Schweiz',
+        })
+      : null
 
     return NextResponse.json({
       personalData: {

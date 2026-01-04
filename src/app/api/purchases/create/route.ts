@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { checkAndAwardBadges } from '@/lib/badge-system'
 import { calculateInvoiceForSale } from '@/lib/invoice'
@@ -106,11 +107,6 @@ export async function POST(request: NextRequest) {
                   nickname: true,
                   firstName: true,
                   lastName: true,
-                  street: true,
-                  streetNumber: true,
-                  postalCode: true,
-                  city: true,
-                  country: true,
                 },
               },
             },
@@ -118,6 +114,16 @@ export async function POST(request: NextRequest) {
           buyer: true,
         },
       })
+
+      // Fetch seller address from UserAddress table
+      const sellerAddress = await getMainAddress(watch.sellerId)
+      if (purchase.watch.seller) {
+        ;(purchase.watch.seller as any).street = sellerAddress?.street || null
+        ;(purchase.watch.seller as any).streetNumber = sellerAddress?.streetNumber || null
+        ;(purchase.watch.seller as any).postalCode = sellerAddress?.postalCode || null
+        ;(purchase.watch.seller as any).city = sellerAddress?.city || null
+        ;(purchase.watch.seller as any).country = sellerAddress?.country || 'Schweiz'
+      }
     } catch (createError: any) {
       console.error('[purchases/create] Fehler beim Erstellen des Purchases:', createError)
       console.error('[purchases/create] Fehler-Details:', {

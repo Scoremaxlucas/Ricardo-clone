@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -190,6 +191,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const recentNeutral = recentReviews.filter(r => r.rating === 'neutral').length
     const recentNegative = recentReviews.filter(r => r.rating === 'negative').length
 
+    // Fetch user address from UserAddress table
+    const userAddress = await getMainAddress(id)
+
     return NextResponse.json({
       name: user.name,
       verified: user.verified || false,
@@ -206,8 +210,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         name: user.name,
         nickname: user.nickname,
         image: user.image,
-        city: user.city,
-        postalCode: user.postalCode,
+        city: userAddress?.city || null,
+        postalCode: userAddress?.postalCode || null,
         createdAt: user.createdAt,
         bio: user.bio,
         specialization: user.specialization,

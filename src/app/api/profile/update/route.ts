@@ -67,70 +67,56 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Use transaction for atomic update
-    const result = await prisma.$transaction(async (tx) => {
-      // 1. Update User (including legacy address fields for backward compatibility)
-      const updatedUser = await tx.user.update({
-        where: { id: session.user.id },
-        data: {
-          name: name.trim(),
-          nickname: nickname?.trim() || null,
-          phone: phone?.trim() || null,
-          // Update firstName and lastName from name
-          firstName: name.trim().split(' ')[0] || null,
-          lastName: name.trim().split(' ').slice(1).join(' ') || null,
-          // Legacy address fields (keep for backward compatibility)
-          ...(street && street.trim() && { street: street.trim() }),
-          ...(streetNumber && streetNumber.trim() && { streetNumber: streetNumber.trim() }),
-          ...(postalCode && postalCode.trim() && { postalCode: postalCode.trim() }),
-          ...(city && city.trim() && { city: city.trim() }),
-          ...(country && country.trim() && { country: country.trim() }),
-          addresszusatz: addresszusatz?.trim() || null,
-          kanton: kanton?.trim() || null,
-        },
-        select: {
-          id: true,
-          name: true,
-          email: true,
-          image: true,
-          nickname: true,
-          firstName: true,
-          lastName: true,
-          phone: true,
-          street: true,
-          streetNumber: true,
-          postalCode: true,
-          city: true,
-          country: true,
-          addresszusatz: true,
-          kanton: true,
-        },
-      })
-
-      return updatedUser
+    // Update User (personal data only - addresses go to UserAddress table)
+    const updatedUser = await prisma.user.update({
+      where: { id: session.user.id },
+      data: {
+        name: name.trim(),
+        nickname: nickname?.trim() || null,
+        phone: phone?.trim() || null,
+        // Update firstName and lastName from name
+        firstName: name.trim().split(' ')[0] || null,
+        lastName: name.trim().split(' ').slice(1).join(' ') || null,
+      },
+      select: {
+        id: true,
+        name: true,
+        email: true,
+        image: true,
+        nickname: true,
+        firstName: true,
+        lastName: true,
+        phone: true,
+      },
     })
 
-    // 2. Update UserAddress (new model) - outside transaction for non-blocking
+    // Update address in UserAddress table (primary storage)
+    let addressData = null
     if (hasPartialAddress && street && city) {
-      try {
-        await upsertUserAddress(session.user.id, 'MAIN', {
-          street: street.trim(),
-          streetNumber: streetNumber?.trim() || '',
-          postalCode: postalCode?.trim() || '',
-          city: city.trim(),
-          country: country?.trim() || 'Schweiz',
-          addresszusatz: addresszusatz?.trim() || null,
-          kanton: kanton?.trim() || null,
-        })
-      } catch (addressError) {
-        // Log but don't fail the request - legacy fields are already saved
-        console.error('[profile/update] Error updating UserAddress:', addressError)
-      }
+      addressData = await upsertUserAddress(session.user.id, 'MAIN', {
+        street: street.trim(),
+        streetNumber: streetNumber?.trim() || '',
+        postalCode: postalCode?.trim() || '',
+        city: city.trim(),
+        country: country?.trim() || 'Schweiz',
+        addresszusatz: addresszusatz?.trim() || null,
+        kanton: kanton?.trim() || null,
+      })
     }
 
     return NextResponse.json({
       message: 'Profil erfolgreich aktualisiert',
-      user: result,
+      user: {
+        ...updatedUser,
+        // Include address from UserAddress
+        street: addressData?.street || null,
+        streetNumber: addressData?.streetNumber || null,
+        postalCode: addressData?.postalCode || null,
+        city: addressData?.city || null,
+        country: addressData?.country || 'Schweiz',
+        addresszusatz: addressData?.addresszusatz || null,
+        kanton: addressData?.kanton || null,
+      },
     })
   } catch (error) {
     console.error('Error updating profile:', error)

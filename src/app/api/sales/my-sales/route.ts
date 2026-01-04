@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -92,16 +93,36 @@ export async function GET(request: NextRequest) {
             email: true,
             firstName: true,
             lastName: true,
-            street: true,
-            streetNumber: true,
-            postalCode: true,
-            city: true,
             phone: true,
             paymentMethods: true,
           },
         },
       },
       orderBy: { createdAt: 'desc' },
+    })
+
+    // Fetch buyer addresses from UserAddress table
+    const buyerAddresses = await Promise.all(
+      purchases.map(async p => ({
+        buyerId: p.buyerId,
+        address: await getMainAddress(p.buyerId),
+      }))
+    )
+    const buyerAddressMap = new Map(buyerAddresses.map(ba => [ba.buyerId, ba.address]))
+
+    // Enhance purchases with buyer addresses
+    const purchasesWithAddresses = purchases.map(p => {
+      const address = buyerAddressMap.get(p.buyerId)
+      return {
+        ...p,
+        buyer: {
+          ...p.buyer,
+          street: address?.street || null,
+          streetNumber: address?.streetNumber || null,
+          postalCode: address?.postalCode || null,
+          city: address?.city || null,
+        },
+      }
     })
 
     // Lade Orders separat - verknüpft über watchId UND buyerId für korrektes Matching
@@ -135,10 +156,12 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    console.log(`[my-sales] Gefunden: ${purchases.length} Purchases, ${orders.length} Orders`)
+    console.log(
+      `[my-sales] Gefunden: ${purchasesWithAddresses.length} Purchases, ${orders.length} Orders`
+    )
 
     // Formatiere Daten
-    const salesWithDetails = purchases.map(purchase => {
+    const salesWithDetails = purchasesWithAddresses.map(purchase => {
       const watch = purchase.watch as any
       let images: string[] = []
 

@@ -228,7 +228,7 @@ export async function POST(request: NextRequest) {
     // Speichere Zahlungsmittel als JSON
     const paymentMethodsJson = JSON.stringify(paymentMethods)
 
-    // Update User (including legacy address fields for backward compatibility)
+    // Update User (personal data only - addresses go to UserAddress table)
     await prisma.user.update({
       where: { id: session.user.id },
       data: {
@@ -236,18 +236,6 @@ export async function POST(request: NextRequest) {
         title,
         firstName,
         lastName,
-        // Wohnadresse (legacy fields)
-        street,
-        streetNumber,
-        postalCode,
-        city,
-        country,
-        // Lieferadresse (legacy fields)
-        deliveryStreet: hasDeliveryAddress ? deliveryStreet : null,
-        deliveryStreetNumber: hasDeliveryAddress ? deliveryStreetNumber : null,
-        deliveryPostalCode: hasDeliveryAddress ? deliveryPostalCode : null,
-        deliveryCity: hasDeliveryAddress ? deliveryCity : null,
-        deliveryCountry: hasDeliveryAddress ? deliveryCountry : null,
         // Geburtsdatum
         dateOfBirth: new Date(dateOfBirth),
         // Ausweiskopie
@@ -264,33 +252,28 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // === NEW: Update UserAddress table ===
-    try {
-      // Save main address to new UserAddress model
-      await upsertUserAddress(session.user.id, 'MAIN', {
-        street,
-        streetNumber,
-        postalCode,
-        city,
-        country,
-      })
+    // Save addresses to UserAddress table (primary storage)
+    // Save main address
+    await upsertUserAddress(session.user.id, 'MAIN', {
+      street,
+      streetNumber,
+      postalCode,
+      city,
+      country,
+    })
 
-      // Save or delete delivery address
-      if (hasDeliveryAddress && deliveryStreet && deliveryCity) {
-        await upsertUserAddress(session.user.id, 'DELIVERY', {
-          street: deliveryStreet,
-          streetNumber: deliveryStreetNumber,
-          postalCode: deliveryPostalCode,
-          city: deliveryCity,
-          country: deliveryCountry,
-        })
-      } else {
-        // Remove delivery address if checkbox is unchecked
-        await deleteUserAddress(session.user.id, 'DELIVERY')
-      }
-    } catch (addressError) {
-      // Log but don't fail - legacy fields are already saved
-      console.error('[verification/submit] Error updating UserAddress:', addressError)
+    // Save or delete delivery address
+    if (hasDeliveryAddress && deliveryStreet && deliveryCity) {
+      await upsertUserAddress(session.user.id, 'DELIVERY', {
+        street: deliveryStreet,
+        streetNumber: deliveryStreetNumber,
+        postalCode: deliveryPostalCode,
+        city: deliveryCity,
+        country: deliveryCountry,
+      })
+    } else {
+      // Remove delivery address if checkbox is unchecked
+      await deleteUserAddress(session.user.id, 'DELIVERY')
     }
 
     // Wenn Bankdaten vorhanden, automatisch PayoutProfile erstellen

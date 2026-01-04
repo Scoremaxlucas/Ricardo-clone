@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -109,8 +110,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            city: true,
-            postalCode: true,
           },
         },
         purchases: {
@@ -119,6 +118,7 @@ export async function GET(request: NextRequest) {
             id: true,
             status: true,
             price: true,
+            buyerId: true,
             // Buyer-Daten nur laden wenn nicht storniert (für bessere Performance)
             buyer: {
               select: {
@@ -127,10 +127,6 @@ export async function GET(request: NextRequest) {
                 email: true,
                 firstName: true,
                 lastName: true,
-                street: true,
-                streetNumber: true,
-                postalCode: true,
-                city: true,
                 phone: true,
                 paymentMethods: true,
               },
@@ -156,13 +152,43 @@ export async function GET(request: NextRequest) {
       orderBy: { createdAt: 'desc' },
     })
 
+    // Fetch seller address (user's own address)
+    const sellerAddress = await getMainAddress(session.user.id)
+
+    // Fetch buyer addresses from UserAddress table
+    const buyerIds = Array.from(
+      new Set(
+        watches
+          .flatMap(w => w.purchases.filter(p => p.status !== 'cancelled'))
+          .map(p => p.buyerId)
+          .filter(Boolean)
+      )
+    )
+    const buyerAddresses = await Promise.all(
+      buyerIds.map(async id => ({
+        id,
+        address: await getMainAddress(id),
+      }))
+    )
+    const buyerAddressMap = new Map(buyerAddresses.map(ba => [ba.id, ba.address]))
+
     const watchesWithImages = watches.map(w => {
       const images = w.images ? JSON.parse(w.images) : []
       // OPTIMIERT: Filtere nicht-stornierte Purchases
       const activePurchases = w.purchases.filter(p => p.status !== 'cancelled')
       const isSold = activePurchases.length > 0
-      // OPTIMIERT: Lade Buyer-Daten nur wenn wirklich verkauft
-      const buyer = isSold && activePurchases[0] ? activePurchases[0].buyer : null
+      // OPTIMIERT: Lade Buyer-Daten nur wenn wirklich verkauft, add address from UserAddress
+      const baseBuyer = isSold && activePurchases[0] ? activePurchases[0].buyer : null
+      const buyerAddress = baseBuyer ? buyerAddressMap.get(baseBuyer.id) : null
+      const buyer = baseBuyer
+        ? {
+            ...baseBuyer,
+            street: buyerAddress?.street || null,
+            streetNumber: buyerAddress?.streetNumber || null,
+            postalCode: buyerAddress?.postalCode || null,
+            city: buyerAddress?.city || null,
+          }
+        : null
 
       // Parse boosters
       let boosters: string[] = []
@@ -237,8 +263,8 @@ export async function GET(request: NextRequest) {
         isActive, // WICHTIG: Gib isActive zurück, damit Frontend es verwenden kann
         isAuction: w.isAuction || !!w.auctionEnd, // Stelle sicher dass isAuction zurückgegeben wird
         auctionEnd: w.auctionEnd ? w.auctionEnd.toISOString() : null, // Konvertiere zu ISO String für Frontend
-        city: w.seller?.city || null, // Füge city vom Seller hinzu
-        postalCode: w.seller?.postalCode || null, // Füge postalCode vom Seller hinzu
+        city: sellerAddress?.city || null, // Füge city vom Seller hinzu
+        postalCode: sellerAddress?.postalCode || null, // Füge postalCode vom Seller hinzu
       }
     })
 
