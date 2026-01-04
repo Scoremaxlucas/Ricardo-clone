@@ -67,21 +67,26 @@ function SearchPageContent() {
   const minPrice = urlParams?.get('minPrice') || ''
   const maxPrice = urlParams?.get('maxPrice') || ''
   const condition = urlParams?.get('condition') || ''
-  const brand = urlParams?.get('brand') || ''
+  const brand = urlParams?.get('brand') || '' // Legacy single brand
+  const brandsParam = urlParams?.get('brands') || '' // New: comma-separated brands
   const isAuction = urlParams?.get('isAuction') || ''
   const postalCode = urlParams?.get('postalCode') || ''
   const sortBy = urlParams?.get('sortBy') || 'relevance'
 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
 
-  // Update selectedBrands when brand changes
+  // Update selectedBrands when brands parameter changes
   useEffect(() => {
-    if (brand) {
+    if (brandsParam) {
+      // New: comma-separated brands
+      setSelectedBrands(brandsParam.split(',').map(b => b.trim()).filter(Boolean))
+    } else if (brand) {
+      // Legacy: single brand
       setSelectedBrands([brand])
     } else {
       setSelectedBrands([])
     }
-  }, [brand])
+  }, [brandsParam, brand])
 
   // Initialize local price values
   useEffect(() => {
@@ -145,7 +150,8 @@ function SearchPageContent() {
       const min = params.get('minPrice') || ''
       const max = params.get('maxPrice') || ''
       const cond = params.get('condition') || ''
-      const br = params.get('brand') || ''
+      const br = params.get('brand') || '' // Legacy single brand
+      const brs = params.get('brands') || '' // New: comma-separated brands
       const auction = params.get('isAuction') || ''
       const plz = params.get('postalCode') || ''
       const sort = params.get('sortBy') || 'relevance'
@@ -156,7 +162,12 @@ function SearchPageContent() {
       if (min) searchParams.append('minPrice', min)
       if (max) searchParams.append('maxPrice', max)
       if (cond) searchParams.append('condition', cond)
-      if (br) searchParams.append('brand', br)
+      // Support multiple brands (comma-separated)
+      if (brs) {
+        searchParams.append('brands', brs)
+      } else if (br) {
+        searchParams.append('brand', br)
+      }
       if (auction) searchParams.append('isAuction', auction)
       if (plz) searchParams.append('postalCode', plz)
       if (sort) searchParams.append('sortBy', sort)
@@ -284,8 +295,11 @@ function SearchPageContent() {
   const applyBrandFilter = useCallback(() => {
     const params = new URLSearchParams(searchParams.toString())
     if (selectedBrands.length > 0) {
-      params.set('brand', selectedBrands[0])
+      // Use 'brands' parameter with comma-separated values for multiple brands
+      params.set('brands', selectedBrands.join(','))
+      params.delete('brand') // Remove legacy single brand param
     } else {
+      params.delete('brands')
       params.delete('brand')
     }
 
@@ -628,9 +642,20 @@ function SearchPageContent() {
                     e.stopPropagation()
                     setOpenFilter(openFilter === 'brand' ? null : 'brand')
                   }}
-                  className="filter-button flex w-full items-center justify-between rounded-lg border border-gray-200 px-4 py-2 transition-colors hover:border-primary-500"
+                  className={`filter-button flex w-full items-center justify-between rounded-lg border px-4 py-2 transition-colors ${
+                    selectedBrands.length > 0
+                      ? 'border-primary-500 bg-primary-50'
+                      : 'border-gray-200 hover:border-primary-500'
+                  }`}
                 >
-                  <span className="text-sm font-medium text-gray-700">{t.search.brand}</span>
+                  <span className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-gray-700">{t.search.brand}</span>
+                    {selectedBrands.length > 0 && (
+                      <span className="rounded-full bg-primary-600 px-2 py-0.5 text-xs font-semibold text-white">
+                        {selectedBrands.length}
+                      </span>
+                    )}
+                  </span>
                   <ChevronDown
                     className={`h-4 w-4 text-gray-500 transition-transform ${openFilter === 'brand' ? 'rotate-180' : ''}`}
                   />
@@ -697,21 +722,33 @@ function SearchPageContent() {
                           )
                         })}
                     </div>
-                    <button
-                      onClick={() => {
-                        applyBrandFilter()
-                        setOpenFilter(null)
-                      }}
-                      className={`mt-3 w-full rounded-md px-4 py-2 text-sm font-medium transition-colors ${
-                        selectedBrands.length > 0
-                          ? 'bg-primary-600 text-white hover:bg-primary-700'
-                          : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      }`}
-                    >
-                      {selectedBrands.length > 0
-                        ? `${watches.length} ERGEBNISSE ANZEIGEN`
-                        : 'Schließen'}
-                    </button>
+                    <div className="mt-3 flex gap-2">
+                      {selectedBrands.length > 0 && (
+                        <button
+                          onClick={() => {
+                            setSelectedBrands([])
+                          }}
+                          className="flex-1 rounded-md bg-gray-100 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-200"
+                        >
+                          Alle entfernen
+                        </button>
+                      )}
+                      <button
+                        onClick={() => {
+                          applyBrandFilter()
+                          setOpenFilter(null)
+                        }}
+                        className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                          selectedBrands.length > 0
+                            ? 'bg-primary-600 text-white hover:bg-primary-700'
+                            : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                        }`}
+                      >
+                        {selectedBrands.length > 0
+                          ? `${selectedBrands.length} ${selectedBrands.length === 1 ? 'Marke' : 'Marken'} anwenden`
+                          : 'Schließen'}
+                      </button>
+                    </div>
                   </div>
                 )}
               </div>

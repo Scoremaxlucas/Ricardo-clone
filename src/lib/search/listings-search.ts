@@ -81,7 +81,8 @@ export interface SearchFilters {
   minPrice?: number
   maxPrice?: number
   condition?: string
-  brand?: string
+  brand?: string // Single brand (legacy support)
+  brands?: string[] // Multiple brands (new - takes priority over brand)
   isAuction?: boolean | null
   postalCode?: string
   sellerId?: string
@@ -282,8 +283,17 @@ async function executeSearchQuery(params: {
     paramIndex++
   }
 
-  // Filter: Brand
-  if (filters.brand) {
+  // Filter: Brand(s) - supports multiple brands
+  if (filters.brands && filters.brands.length > 0) {
+    // Multiple brands: use ANY() with lowercase comparison
+    const brandPlaceholders = filters.brands.map((_, i) => `lower($${paramIndex + i})`).join(', ')
+    conditions.push(`lower(w.brand) IN (${brandPlaceholders})`)
+    filters.brands.forEach(b => {
+      parameters.push(b.toLowerCase())
+      paramIndex++
+    })
+  } else if (filters.brand) {
+    // Single brand (legacy support)
     conditions.push(`lower(w.brand) = lower($${paramIndex})`)
     parameters.push(filters.brand)
     paramIndex++
@@ -856,7 +866,12 @@ async function searchWithoutQuery(
     ;(where.AND as any[]).push({ condition: filters.condition })
   }
 
-  if (filters.brand) {
+  // Brand(s) filter - supports multiple brands
+  if (filters.brands && filters.brands.length > 0) {
+    ;(where.AND as any[]).push({
+      OR: filters.brands.map(b => ({ brand: { equals: b, mode: 'insensitive' } }))
+    })
+  } else if (filters.brand) {
     ;(where.AND as any[]).push({ brand: { equals: filters.brand, mode: 'insensitive' } })
   }
 

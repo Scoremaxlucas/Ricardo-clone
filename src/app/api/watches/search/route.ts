@@ -49,6 +49,7 @@ export async function GET(request: NextRequest) {
     const maxPriceStr = searchParams.get('maxPrice')
     const condition = searchParams.get('condition') || undefined
     const brand = searchParams.get('brand') || undefined
+    const brandsStr = searchParams.get('brands') || undefined // Comma-separated brands
     const isAuctionStr = searchParams.get('isAuction')
     const postalCode = searchParams.get('postalCode') || undefined
     const sortBy = searchParams.get('sortBy') || 'relevance'
@@ -82,7 +83,12 @@ export async function GET(request: NextRequest) {
     if (minPrice !== undefined && !isNaN(minPrice)) filters.minPrice = minPrice
     if (maxPrice !== undefined && !isNaN(maxPrice)) filters.maxPrice = maxPrice
     if (condition) filters.condition = condition
-    if (brand) filters.brand = brand
+    // Support both single brand and multiple brands (comma-separated)
+    if (brandsStr) {
+      filters.brands = brandsStr.split(',').map(b => b.trim()).filter(Boolean)
+    } else if (brand) {
+      filters.brand = brand
+    }
     if (isAuction !== null) filters.isAuction = isAuction
     if (postalCode) filters.postalCode = postalCode
     // RICARDO-LEVEL: Extended filters
