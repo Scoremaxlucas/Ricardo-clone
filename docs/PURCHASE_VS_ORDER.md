@@ -6,10 +6,10 @@ Diese Dokumentation erklärt die beiden Kauf-Systeme auf Helvenda und wann welch
 
 Helvenda hat historisch bedingt **zwei Systeme** für Käufe:
 
-| System | Model | Zweck | Stripe-Integration |
-|--------|-------|-------|-------------------|
+| System       | Model      | Zweck                                  | Stripe-Integration      |
+| ------------ | ---------- | -------------------------------------- | ----------------------- |
 | **Purchase** | `Purchase` | Klassischer Kauf (ohne Zahlungsschutz) | Optional (nachträglich) |
-| **Order** | `Order` | Kauf mit Zahlungsschutz | Vollständig integriert |
+| **Order**    | `Order`    | Kauf mit Zahlungsschutz                | Vollständig integriert  |
 
 ---
 
@@ -18,11 +18,13 @@ Helvenda hat historisch bedingt **zwei Systeme** für Käufe:
 ### 1. Purchase-System (Alt)
 
 **Verwendet bei:**
+
 - Käufe **ohne** Zahlungsschutz
 - Direktzahlung zwischen Käufer und Verkäufer
 - Banküberweisung, Barzahlung bei Abholung
 
 **Flow:**
+
 ```
 Käufer klickt "Kaufen" (ohne Zahlungsschutz)
     ↓
@@ -40,6 +42,7 @@ Käufer bestätigt Erhalt
 ```
 
 **API-Endpoints:**
+
 - `POST /api/purchases/create` - Erstellt Purchase
 - `GET /api/purchases/my-purchases` - Meine Käufe
 - `POST /api/purchases/[id]/mark-paid` - Zahlung bestätigen
@@ -48,11 +51,13 @@ Käufer bestätigt Erhalt
 ### 2. Order-System (Neu)
 
 **Verwendet bei:**
+
 - Käufe **mit** Zahlungsschutz
 - Zahlung über Stripe (Kreditkarte, TWINT)
 - Plattform hält Geld bis Käufer bestätigt
 
 **Flow:**
+
 ```
 Käufer klickt "Mit Zahlungsschutz kaufen"
     ↓
@@ -74,6 +79,7 @@ Geld wird an Verkäufer ausgezahlt (Stripe Connect)
 ```
 
 **API-Endpoints:**
+
 - `POST /api/orders/create` - Erstellt Order
 - `POST /api/orders/[id]/checkout` - Startet Stripe Checkout
 - `GET /api/orders/my-orders` - Meine Bestellungen
@@ -94,15 +100,15 @@ model Purchase {
   itemReceived      Boolean   @default(false)
   paymentConfirmed  Boolean   @default(false)
   contactDeadline   DateTime
-  
+
   // Dispute-System (40+ Felder)
   disputeStatus     String?
   disputeReason     String?
   // ...
-  
+
   // Optionale Stripe-Integration
   stripePaymentIntentId String?
-  
+
   watchId           String
   buyerId           String
 }
@@ -114,26 +120,26 @@ model Purchase {
 model Order {
   id              String  @id
   orderNumber     String  @unique
-  
+
   // Preise
   itemPrice       Float
   shippingCost    Float
   platformFee     Float
   protectionFee   Float?
   totalAmount     Float
-  
+
   // Stripe-IDs
   stripePaymentIntentId   String?
   stripeChargeId          String?
   stripeTransferId        String?
-  
+
   // Status
   orderStatus     String  @default("awaiting_payment")
   paymentStatus   String  @default("created")
-  
+
   // Auto-Release
   autoReleaseAt   DateTime?
-  
+
   watchId         String
   buyerId         String
   sellerId        String
@@ -186,15 +192,15 @@ Alle Käufe sollten durch das **Order-System** laufen:
 
 ## Aktueller Status
 
-| Feature | Purchase | Order |
-|---------|----------|-------|
-| Basis-Kauf | ✅ | ✅ |
-| Stripe-Zahlung | ⚠️ Optional | ✅ Native |
-| Zahlungsschutz | ❌ | ✅ |
-| Dispute-System | ✅ Vollständig | ✅ Basis |
-| Auto-Release | ❌ | ✅ |
-| Gebühren-Berechnung | ❌ | ✅ |
-| Webhook-Integration | ❌ | ✅ |
+| Feature             | Purchase       | Order     |
+| ------------------- | -------------- | --------- |
+| Basis-Kauf          | ✅             | ✅        |
+| Stripe-Zahlung      | ⚠️ Optional    | ✅ Native |
+| Zahlungsschutz      | ❌             | ✅        |
+| Dispute-System      | ✅ Vollständig | ✅ Basis  |
+| Auto-Release        | ❌             | ✅        |
+| Gebühren-Berechnung | ❌             | ✅        |
+| Webhook-Integration | ❌             | ✅        |
 
 ---
 
@@ -211,12 +217,12 @@ const confirmReceipt = async (purchase: Purchase) => {
   if (purchase.orderId) {
     // Order-System
     return fetch(`/api/orders/${purchase.orderId}/confirm-receipt`, {
-      method: 'POST'
+      method: 'POST',
     })
   } else {
     // Purchase-System
     return fetch(`/api/purchases/${purchase.id}/confirm-received`, {
-      method: 'POST'
+      method: 'POST',
     })
   }
 }
@@ -229,7 +235,7 @@ const confirmReceipt = async (purchase: Purchase) => {
 const createProtectedPurchase = async (watchId: string) => {
   const res = await fetch('/api/orders/create', {
     method: 'POST',
-    body: JSON.stringify({ watchId })
+    body: JSON.stringify({ watchId }),
   })
   const { order } = await res.json()
   // Weiter zu Stripe Checkout
@@ -240,7 +246,7 @@ const createProtectedPurchase = async (watchId: string) => {
 const createDirectPurchase = async (watchId: string) => {
   const res = await fetch('/api/purchases/create', {
     method: 'POST',
-    body: JSON.stringify({ watchId })
+    body: JSON.stringify({ watchId }),
   })
   const { purchase } = await res.json()
   // Weiter zu Kontaktseite
