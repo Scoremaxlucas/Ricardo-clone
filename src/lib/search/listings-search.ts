@@ -85,6 +85,14 @@ export interface SearchFilters {
   isAuction?: boolean | null
   postalCode?: string
   sellerId?: string
+  // RICARDO-LEVEL: Extended filters
+  freeShipping?: boolean  // Only items with free shipping
+  withShipping?: boolean  // Only items that can be shipped (not pickup only)
+  paymentProtection?: boolean  // Only items with buyer protection
+  verifiedSeller?: boolean  // Only verified sellers
+  canton?: string  // Swiss canton (ZH, BE, VD, etc.)
+  hasImages?: boolean  // Only items with images
+  endingSoon?: boolean  // Auctions ending within 24h
 }
 
 export interface SearchSort {
@@ -141,6 +149,10 @@ export interface SearchResponse {
   total: number
   limit: number
   offset: number
+  // "Did you mean?" suggestion for typos
+  didYouMean?: string | null
+  // Suggested corrections for individual words
+  suggestions?: string[]
 }
 
 /**
@@ -162,8 +174,8 @@ export async function searchListings(options: SearchOptions): Promise<SearchResp
     return searchWithoutQuery(filters, sort, limit, offset, now)
   }
 
-  // Expand query with synonyms
-  const { ftsQuery, plainQuery, tokens } = expandQuery(query.trim())
+  // Expand query with synonyms and get "did you mean" suggestions
+  const { ftsQuery, plainQuery, tokens, didYouMean, suggestions } = expandQuery(query.trim())
   const normalizedQuery = normalizeQuery(query.trim())
 
   // Build the raw SQL query for FTS + Trigram
@@ -179,7 +191,12 @@ export async function searchListings(options: SearchOptions): Promise<SearchResp
     now,
   })
 
-  return searchResults
+  // Add "did you mean" to results
+  return {
+    ...searchResults,
+    didYouMean,
+    suggestions,
+  }
 }
 
 /**
@@ -294,6 +311,117 @@ async function executeSearchQuery(params: {
     paramIndex++
   }
 
+  // RICARDO-LEVEL: Extended Filters
+  
+  // Filter: Free Shipping
+  if (filters.freeShipping === true) {
+    conditions.push(`(
+      w."shippingMethod" LIKE '%free%'
+      OR w."shippingMethod" LIKE '%gratis%'
+      OR w."shippingMethod" LIKE '%kostenlos%'
+    )`)
+  }
+  
+  // Filter: With Shipping (not pickup only)
+  if (filters.withShipping === true) {
+    conditions.push(`(
+      w."shippingMethod" IS NOT NULL
+      AND w."shippingMethod" != '[]'
+      AND w."shippingMethod" != ''
+      AND w."shippingMethod" != '["pickup"]'
+      AND (
+        w."shippingMethod" LIKE '%post%'
+        OR w."shippingMethod" LIKE '%versand%'
+        OR w."shippingMethod" LIKE '%shipping%'
+        OR w."shippingMethod" LIKE '%economy%'
+        OR w."shippingMethod" LIKE '%priority%'
+      )
+    )`)
+  }
+  
+  // Filter: Payment Protection
+  if (filters.paymentProtection === true) {
+    conditions.push(`w."paymentProtectionEnabled" = true`)
+  }
+  
+  // Filter: Verified Seller
+  if (filters.verifiedSeller === true) {
+    conditions.push(`(
+      EXISTS (
+        SELECT 1 FROM users u
+        WHERE u.id = w."sellerId"
+        AND u.verified = true
+      )
+    )`)
+  }
+  
+  // Filter: Canton (Swiss cantons by postal code ranges)
+  if (filters.canton) {
+    const cantonPostalRanges: Record<string, string[]> = {
+      'ZH': ['80', '81', '82', '83', '84'],
+      'BE': ['30', '31', '32', '33', '34', '35', '36', '37', '38'],
+      'LU': ['60', '61', '62'],
+      'UR': ['64'],
+      'SZ': ['64', '65'],
+      'OW': ['60', '63'],
+      'NW': ['63'],
+      'GL': ['87'],
+      'ZG': ['63'],
+      'FR': ['17', '31'],
+      'SO': ['45', '46', '47', '48', '25', '26'],
+      'BS': ['40'],
+      'BL': ['41', '42', '43', '44'],
+      'SH': ['82'],
+      'AR': ['90', '91'],
+      'AI': ['90', '91'],
+      'SG': ['90', '91', '94', '95', '96'],
+      'GR': ['70', '71', '72', '73', '74', '75', '76'],
+      'AG': ['50', '51', '52', '53', '54', '55', '56', '80'],
+      'TG': ['83', '85', '86'],
+      'TI': ['65', '66', '67', '68', '69'],
+      'VD': ['10', '11', '12', '13', '14', '15', '16', '18', '19'],
+      'VS': ['19', '39'],
+      'NE': ['20', '21', '22', '23', '24'],
+      'GE': ['12'],
+      'JU': ['28', '29'],
+    }
+    const ranges = cantonPostalRanges[filters.canton.toUpperCase()]
+    if (ranges && ranges.length > 0) {
+      const cantonConditions = ranges.map((prefix) => {
+        parameters.push(prefix)
+        return `u."postalCode" LIKE $${paramIndex++} || '%'`
+      })
+      conditions.push(`(
+        EXISTS (
+          SELECT 1 FROM users u
+          WHERE u.id = w."sellerId"
+          AND (${cantonConditions.join(' OR ')})
+        )
+      )`)
+    }
+  }
+  
+  // Filter: Has Images
+  if (filters.hasImages === true) {
+    conditions.push(`(
+      w.images IS NOT NULL
+      AND w.images != '[]'
+      AND w.images != ''
+    )`)
+  }
+  
+  // Filter: Ending Soon (auctions ending within 24h)
+  if (filters.endingSoon === true) {
+    const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000)
+    conditions.push(`(
+      w."isAuction" = true
+      AND w."auctionEnd" > $${paramIndex}
+      AND w."auctionEnd" < $${paramIndex + 1}
+    )`)
+    parameters.push(now, in24h)
+    paramIndex += 2
+  }
+
   // Store the FTS and trigram query parameters
   const ftsQueryParamIndex = paramIndex
   parameters.push(ftsQuery)
@@ -334,8 +462,9 @@ async function executeSearchQuery(params: {
   // Build ORDER BY clause
   let orderByClause: string
 
-  // Calculate relevance score
+  // RICARDO-LEVEL: Enhanced relevance scoring with multiple signals
   const scoreExpression = `(
+    -- ============ TEXT RELEVANCE (50% of base score) ============
     -- FTS rank (weighted heavily)
     COALESCE(ts_rank_cd(
       to_tsvector('german', unaccent(${searchableText})),
@@ -348,13 +477,98 @@ async function executeSearchQuery(params: {
       unaccent(lower($${plainQueryParamIndex}))
     ), 0) * 2.0
     +
-    -- Title match bonus
+    -- Title match bonus (exact title match is highly relevant)
     CASE WHEN lower(w.title) LIKE '%' || lower($${normalizedQueryParamIndex}) || '%' THEN 5.0 ELSE 0 END
     +
     -- Brand match bonus
     CASE WHEN lower(w.brand) LIKE '%' || lower($${normalizedQueryParamIndex}) || '%' THEN 3.0 ELSE 0 END
     +
-    -- Booster bonus (Gold = guaranteed top, Silber = higher, Bronze = boosted)
+    -- ============ RECENCY BOOST (20% of base score) ============
+    -- Items created in last 24h get massive boost
+    CASE WHEN w."createdAt" > NOW() - INTERVAL '1 day' THEN 8.0
+         WHEN w."createdAt" > NOW() - INTERVAL '3 days' THEN 5.0
+         WHEN w."createdAt" > NOW() - INTERVAL '7 days' THEN 3.0
+         WHEN w."createdAt" > NOW() - INTERVAL '14 days' THEN 1.5
+         WHEN w."createdAt" > NOW() - INTERVAL '30 days' THEN 0.5
+         ELSE 0 END
+    +
+    -- ============ QUALITY SIGNALS (15% of base score) ============
+    -- Image count bonus (more images = better quality listing)
+    CASE 
+      WHEN array_length(string_to_array(COALESCE(w.images, '[]'), ','), 1) >= 5 THEN 4.0
+      WHEN array_length(string_to_array(COALESCE(w.images, '[]'), ','), 1) >= 3 THEN 2.5
+      WHEN array_length(string_to_array(COALESCE(w.images, '[]'), ','), 1) >= 1 THEN 1.0
+      ELSE 0 END
+    +
+    -- Description quality bonus
+    CASE 
+      WHEN length(COALESCE(w.description, '')) > 500 THEN 3.0
+      WHEN length(COALESCE(w.description, '')) > 200 THEN 2.0
+      WHEN length(COALESCE(w.description, '')) > 50 THEN 1.0
+      ELSE 0 END
+    +
+    -- Complete listing bonus (papers, box, fullset)
+    CASE WHEN w.papers = true THEN 1.0 ELSE 0 END +
+    CASE WHEN w.box = true THEN 1.0 ELSE 0 END +
+    CASE WHEN w.fullset = true THEN 2.0 ELSE 0 END
+    +
+    -- ============ ENGAGEMENT SIGNALS (10% of base score) ============
+    -- Favorites boost (from product_stats if available)
+    COALESCE((
+      SELECT LEAST(ps."favoriteCount" * 0.2, 5.0)
+      FROM product_stats ps WHERE ps."watchId" = w.id
+    ), 0)
+    +
+    -- View count boost (capped to prevent gaming)
+    COALESCE((
+      SELECT LEAST(ps."viewCount" * 0.01, 3.0)
+      FROM product_stats ps WHERE ps."watchId" = w.id
+    ), 0)
+    +
+    -- Active viewers boost (urgency signal)
+    COALESCE((
+      SELECT CASE WHEN ps."viewersNow" > 5 THEN 2.0
+                  WHEN ps."viewersNow" > 2 THEN 1.0
+                  WHEN ps."viewersNow" > 0 THEN 0.5
+                  ELSE 0 END
+      FROM product_stats ps WHERE ps."watchId" = w.id
+    ), 0)
+    +
+    -- ============ SELLER QUALITY (5% of base score) ============
+    -- Verified seller bonus
+    COALESCE((
+      SELECT CASE WHEN u.verified = true THEN 3.0 ELSE 0 END
+      FROM users u WHERE u.id = w."sellerId"
+    ), 0)
+    +
+    -- Seller with good rating bonus
+    COALESCE((
+      SELECT CASE 
+        WHEN u."positiveRatings" > 50 AND u."positiveRatings" > u."negativeRatings" * 20 THEN 2.0
+        WHEN u."positiveRatings" > 10 AND u."positiveRatings" > u."negativeRatings" * 10 THEN 1.0
+        WHEN u."positiveRatings" > 0 THEN 0.5
+        ELSE 0 END
+      FROM users u WHERE u.id = w."sellerId"
+    ), 0)
+    +
+    -- Payment protection bonus (buyer trust)
+    CASE WHEN w."paymentProtectionEnabled" = true THEN 2.0 ELSE 0 END
+    +
+    -- ============ AUCTION URGENCY (auction-specific) ============
+    -- Auctions ending soon get a boost
+    CASE 
+      WHEN w."isAuction" = true AND w."auctionEnd" < NOW() + INTERVAL '1 hour' THEN 5.0
+      WHEN w."isAuction" = true AND w."auctionEnd" < NOW() + INTERVAL '6 hours' THEN 3.0
+      WHEN w."isAuction" = true AND w."auctionEnd" < NOW() + INTERVAL '24 hours' THEN 1.5
+      ELSE 0 END
+    +
+    -- Bid activity bonus (auction engagement)
+    COALESCE((
+      SELECT LEAST(COUNT(*) * 0.5, 5.0)
+      FROM bids b WHERE b."watchId" = w.id
+    ), 0)
+    +
+    -- ============ BOOSTER BONUS (paid promotion) ============
     -- Support both old (super-boost/turbo-boost/boost) and new (gold/silber/bronze) naming
     CASE
       WHEN w.boosters LIKE '%gold%' OR w.boosters LIKE '%super-boost%' THEN 10000.0

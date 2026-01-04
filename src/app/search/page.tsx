@@ -49,6 +49,8 @@ function SearchPageContent() {
   const [brandCounts, setBrandCounts] = useState<Record<string, number>>({})
   const [localMinPrice, setLocalMinPrice] = useState<string>('')
   const [localMaxPrice, setLocalMaxPrice] = useState<string>('')
+  const [didYouMean, setDidYouMean] = useState<string | null>(null)
+  const [totalResults, setTotalResults] = useState<number>(0)
   const sliderContainerRef = useRef<HTMLDivElement>(null)
   const abortControllerRef = useRef<AbortController | null>(null)
 
@@ -178,6 +180,14 @@ function SearchPageContent() {
       if (signal?.aborted) return
 
       setWatches(watchesData)
+      setTotalResults(data.total || watchesData.length)
+      
+      // Set "Did you mean?" suggestion if provided
+      if (data.didYouMean && data.didYouMean !== q.toLowerCase()) {
+        setDidYouMean(data.didYouMean)
+      } else {
+        setDidYouMean(null)
+      }
 
       // Load brand counts in background
       const brandCountsParams = new URLSearchParams()
@@ -815,6 +825,29 @@ function SearchPageContent() {
             </div>
           </div>
 
+          {/* "Did you mean?" Suggestion - Ricardo Style */}
+          {didYouMean && !loading && query && (
+            <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
+              <p className="flex items-center gap-2 text-amber-800">
+                <Search className="h-5 w-5" />
+                <span>
+                  Meinten Sie:{' '}
+                  <button
+                    onClick={() => {
+                      const params = new URLSearchParams(searchParams.toString())
+                      params.set('q', didYouMean)
+                      router.push(`/search?${params.toString()}`)
+                    }}
+                    className="font-semibold text-primary-600 underline hover:text-primary-700"
+                  >
+                    &quot;{didYouMean}&quot;
+                  </button>
+                  ?
+                </span>
+              </p>
+            </div>
+          )}
+
           {/* Desktop Results Header - Hidden on mobile */}
           <div className="mb-6 hidden items-center justify-between md:flex">
             <div className="flex items-center gap-4">
@@ -823,7 +856,7 @@ function SearchPageContent() {
                   t.search.loading
                 ) : query ? (
                   <>
-                    {watches.length} {watches.length === 1 ? 'Ergebnis' : 'Ergebnisse'} für{' '}
+                    {totalResults} {totalResults === 1 ? 'Ergebnis' : 'Ergebnisse'} für{' '}
                     <span className="flex items-center gap-2 text-primary-600">
                       &quot;{query}&quot;
                       <button
@@ -844,7 +877,7 @@ function SearchPageContent() {
                     </span>
                   </>
                 ) : (
-                  `${watches.length} ${t.search.results}`
+                  `${totalResults} ${t.search.results}`
                 )}
               </h1>
             </div>

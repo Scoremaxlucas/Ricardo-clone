@@ -54,6 +54,15 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'relevance'
     const limitStr = searchParams.get('limit')
     const offsetStr = searchParams.get('offset')
+    
+    // RICARDO-LEVEL: Extended filter parameters
+    const freeShipping = searchParams.get('freeShipping') === 'true'
+    const withShipping = searchParams.get('withShipping') === 'true'
+    const paymentProtection = searchParams.get('paymentProtection') === 'true'
+    const verifiedSeller = searchParams.get('verifiedSeller') === 'true'
+    const canton = searchParams.get('canton') || undefined
+    const hasImages = searchParams.get('hasImages') === 'true'
+    const endingSoon = searchParams.get('endingSoon') === 'true'
 
     // Parse numeric values
     const minPrice = minPriceStr ? parseFloat(minPriceStr) : undefined
@@ -76,6 +85,14 @@ export async function GET(request: NextRequest) {
     if (brand) filters.brand = brand
     if (isAuction !== null) filters.isAuction = isAuction
     if (postalCode) filters.postalCode = postalCode
+    // RICARDO-LEVEL: Extended filters
+    if (freeShipping) filters.freeShipping = true
+    if (withShipping) filters.withShipping = true
+    if (paymentProtection) filters.paymentProtection = true
+    if (verifiedSeller) filters.verifiedSeller = true
+    if (canton) filters.canton = canton
+    if (hasImages) filters.hasImages = true
+    if (endingSoon) filters.endingSoon = true
 
     // Build sort
     let sort: SearchSort = { field: 'relevance', direction: 'desc' }
@@ -148,6 +165,9 @@ export async function GET(request: NextRequest) {
         total: searchResult.total,
         limit: searchResult.limit,
         offset: searchResult.offset,
+        // "Did you mean?" suggestion for typos
+        didYouMean: searchResult.didYouMean || null,
+        suggestions: searchResult.suggestions || [],
       },
       {
         headers: {
