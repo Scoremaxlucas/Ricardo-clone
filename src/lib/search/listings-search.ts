@@ -37,6 +37,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
+import { getMainAddress } from '@/lib/address'
 import { expandQuery, normalizeQuery } from './search-synonyms-enhanced'
 
 /**
@@ -696,7 +697,7 @@ async function executeSearchQuery(params: {
   const [sellers, categories, bids] = await Promise.all([
     prisma.user.findMany({
       where: { id: { in: rawResults.map(r => r.sellerId) } },
-      select: { id: true, city: true, postalCode: true, verified: true },
+      select: { id: true, verified: true },
     }),
     prisma.watchCategory.findMany({
       where: { watchId: { in: watchIds } },
@@ -708,6 +709,15 @@ async function executeSearchQuery(params: {
       orderBy: { amount: 'desc' },
     }),
   ])
+
+  // Fetch seller addresses from UserAddress table
+  const sellerAddresses = await Promise.all(
+    sellers.map(async s => ({
+      id: s.id,
+      address: await getMainAddress(s.id),
+    }))
+  )
+  const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
 
   // Build lookup maps
   const sellerMap = new Map(sellers.map(s => [s.id, s]))
@@ -763,6 +773,7 @@ async function executeSearchQuery(params: {
     const shippingMinCost = calculateMinShippingCost(shippingMethods)
 
     const seller = sellerMap.get(r.sellerId)
+    const sellerAddress = addressMap.get(r.sellerId)
     const watchBids = bidMap.get(r.id) || []
 
     // Calculate current price (highest bid or base price)
@@ -787,7 +798,7 @@ async function executeSearchQuery(params: {
       createdAt: r.createdAt,
       sellerId: r.sellerId,
       seller: seller
-        ? { city: seller.city, postalCode: seller.postalCode, verified: seller.verified }
+        ? { city: sellerAddress?.city || null, postalCode: sellerAddress?.postalCode || null, verified: seller.verified }
         : null,
       bids: watchBids,
       categorySlugs: categoryMap.get(r.id) || [],
@@ -912,13 +923,23 @@ async function searchWithoutQuery(
       take: limit,
       skip: offset,
       include: {
-        seller: { select: { id: true, city: true, postalCode: true, verified: true } },
+        seller: { select: { id: true, verified: true } },
         categories: { include: { category: { select: { slug: true, name: true } } } },
         bids: { select: { id: true, amount: true }, orderBy: { amount: 'desc' } },
       },
     }),
     prisma.watch.count({ where }),
   ])
+
+  // Fetch seller addresses from UserAddress table
+  const sellerIds = Array.from(new Set(watches.map(w => w.seller?.id).filter(Boolean))) as string[]
+  const sellerAddresses = await Promise.all(
+    sellerIds.map(async id => ({
+      id,
+      address: await getMainAddress(id),
+    }))
+  )
+  const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
 
   // Transform results
   const results: SearchResult[] = watches.map(w => {
@@ -950,6 +971,7 @@ async function searchWithoutQuery(
     const shippingMinCost = calculateMinShippingCost(shippingMethods)
     const highestBid = w.bids[0]
     const currentPrice = highestBid ? highestBid.amount : w.price
+    const sellerAddress = w.seller?.id ? addressMap.get(w.seller.id) : null
 
     return {
       id: w.id,
@@ -969,7 +991,7 @@ async function searchWithoutQuery(
       createdAt: w.createdAt,
       sellerId: w.sellerId,
       seller: w.seller
-        ? { city: w.seller.city, postalCode: w.seller.postalCode, verified: w.seller.verified }
+        ? { city: sellerAddress?.city || null, postalCode: sellerAddress?.postalCode || null, verified: w.seller.verified }
         : null,
       bids: w.bids.map(b => ({ id: b.id, amount: b.amount })),
       categorySlugs: w.categories.map(c => c.category.slug),
