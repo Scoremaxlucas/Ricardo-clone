@@ -364,9 +364,8 @@ export function VisualSearch({ onClose, className = '' }: VisualSearchProps) {
                   {results.slice(0, 8).map(result => (
                     <ProductCard
                       key={result.id}
-                      watch={result}
-                      size="sm"
-                      showFavoriteButton={false}
+                      product={result}
+                      variant="compact"
                     />
                   ))}
                 </div>

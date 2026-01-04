@@ -149,7 +149,7 @@ export function SimilarProducts({
               className="w-[200px] flex-shrink-0 sm:w-[220px] md:w-[250px]"
             >
               <ProductCard
-                watch={{
+                product={{
                   id: product.id,
                   title: product.title,
                   brand: product.brand,
@@ -164,8 +164,6 @@ export function SimilarProducts({
                   city: product.seller?.city || null,
                   postalCode: product.seller?.postalCode || null,
                 }}
-                showFavoriteButton={true}
-                onToggleFavorite={() => {}}
               />
               {/* Similarity reason badge */}
               <div className="mt-2 flex items-center gap-1.5">

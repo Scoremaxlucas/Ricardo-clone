@@ -190,7 +190,7 @@ export function PersonalizedRecommendations({
             return (
               <div key={product.id} className="w-[200px] flex-shrink-0 sm:w-[220px] md:w-[250px]">
                 <ProductCard
-                  watch={{
+                  product={{
                     id: product.id,
                     title: product.title,
                     brand: product.brand,
@@ -205,8 +205,6 @@ export function PersonalizedRecommendations({
                     city: null,
                     postalCode: null,
                   }}
-                  showFavoriteButton={true}
-                  onToggleFavorite={() => {}}
                 />
                 {/* Recommendation reason badge */}
                 {showTypeIcon && (
