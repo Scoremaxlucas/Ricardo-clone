@@ -44,11 +44,11 @@ model UserAddress {
 
 ### Adresstypen
 
-| Typ | Beschreibung | Verwendung |
-|-----|--------------|------------|
-| `MAIN` | Wohnadresse | Profil, Stripe Connect, Rechnungen |
-| `DELIVERY` | Lieferadresse | Bestellungen mit separater Lieferung |
-| `BILLING` | Rechnungsadresse | (Derzeit nicht verwendet) |
+| Typ        | Beschreibung     | Verwendung                           |
+| ---------- | ---------------- | ------------------------------------ |
+| `MAIN`     | Wohnadresse      | Profil, Stripe Connect, Rechnungen   |
+| `DELIVERY` | Lieferadresse    | Bestellungen mit separater Lieferung |
+| `BILLING`  | Rechnungsadresse | (Derzeit nicht verwendet)            |
 
 ## Migration
 
@@ -137,11 +137,11 @@ await upsertUserAddress(userId, 'MAIN', { street, city, ... })
 
 ## Betroffene API Routes
 
-| Route | Änderung |
-|-------|----------|
-| `/api/profile/update` | Dual-Write (User + UserAddress) |
-| `/api/verification/submit` | Dual-Write für MAIN + DELIVERY |
-| `/api/verification/get` | Gibt beide Strukturen zurück |
+| Route                         | Änderung                          |
+| ----------------------------- | --------------------------------- |
+| `/api/profile/update`         | Dual-Write (User + UserAddress)   |
+| `/api/verification/submit`    | Dual-Write für MAIN + DELIVERY    |
+| `/api/verification/get`       | Gibt beide Strukturen zurück      |
 | `/api/profile/check-complete` | Fallback zu UserAddress wenn leer |
 
 ## Tests
@@ -155,6 +155,7 @@ npm test -- src/__tests__/lib/address.test.ts
 ```
 
 Abgedeckte Testfälle:
+
 - ✅ Validierung (isAddressComplete, validateSwissPostalCode)
 - ✅ Fehlende Felder erkennen
 - ✅ Legacy-Felder Migration
@@ -165,11 +166,13 @@ Abgedeckte Testfälle:
 Die Migration zum Entfernen der Legacy-Felder ist vorbereitet:
 
 **Erstellt:**
+
 - ✅ `prisma/migrations/20250704_remove_legacy_address_fields/migration.sql`
 - ✅ Helper-Funktionen mit Fallback (`getUserMainAddressData`, `getUserDeliveryAddressData`)
 - ✅ Legacy-Felder im Schema als `@deprecated` markiert
 
 **Bereits aktualisiert (Phase 2 - 25+ Dateien):**
+
 ```
 ✅ src/app/api/stripe/connect/account-session/route.ts
 ✅ src/app/api/stripe/connect/prefill-data/route.ts
@@ -198,6 +201,7 @@ Die Migration zum Entfernen der Legacy-Felder ist vorbereitet:
 ```
 
 **Verbleibende Dateien (8 - meist Admin/Legacy):**
+
 ```
 ⏳ src/app/api/stripe/connect/account-link/route.ts (Backwards-compat)
 ⏳ src/app/api/stripe/connect/ensure-account/route.ts (Backwards-compat)
@@ -233,9 +237,9 @@ npx prisma migrate deploy
 
 ## Zusammenfassung
 
-| Vorher | Nachher |
-|--------|---------|
-| 17 Adressfelder auf User | 1 Relation zu UserAddress |
-| Keine Typensicherheit | `type: 'MAIN' | 'DELIVERY' | 'BILLING'` |
-| Code-Duplikation | Zentralisierte Helper-Library |
-| Schwer erweiterbar | Einfach neue Typen hinzufügen |
+| Vorher                   | Nachher                       |
+| ------------------------ | ----------------------------- | ---------- | ---------- |
+| 17 Adressfelder auf User | 1 Relation zu UserAddress     |
+| Keine Typensicherheit    | `type: 'MAIN'                 | 'DELIVERY' | 'BILLING'` |
+| Code-Duplikation         | Zentralisierte Helper-Library |
+| Schwer erweiterbar       | Einfach neue Typen hinzufügen |
