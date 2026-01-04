@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -52,10 +53,9 @@ export async function GET(request: NextRequest) {
         include: {
           seller: {
             select: {
+              id: true,
               name: true,
               nickname: true,
-              city: true,
-              postalCode: true,
             },
           },
           bids: {
@@ -67,6 +67,16 @@ export async function GET(request: NextRequest) {
         },
         take: 12,
       })
+
+      // Fetch seller addresses from UserAddress table
+      const sellerIds = Array.from(new Set(watches.map(w => w.seller?.id).filter(Boolean))) as string[]
+      const sellerAddresses = await Promise.all(
+        sellerIds.map(async id => ({
+          id,
+          address: await getMainAddress(id),
+        }))
+      )
+      const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
 
       // Transformiere Daten für Frontend
       const watchesWithData = watches.map(watch => {
@@ -95,12 +105,13 @@ export async function GET(request: NextRequest) {
           boosters = []
         }
 
+        const sellerAddress = watch.seller?.id ? addressMap.get(watch.seller.id) : null
         return {
           ...watch,
           price: currentPrice,
           images: images,
-          city: watch.seller?.city || null,
-          postalCode: watch.seller?.postalCode || null,
+          city: sellerAddress?.city || null,
+          postalCode: sellerAddress?.postalCode || null,
           buyNowPrice: watch.buyNowPrice || null,
           isAuction: watch.isAuction || false,
           auctionEnd: watch.auctionEnd || null,
@@ -212,10 +223,9 @@ export async function GET(request: NextRequest) {
         include: {
           seller: {
             select: {
+              id: true,
               name: true,
               nickname: true,
-              city: true,
-              postalCode: true,
             },
           },
           bids: {
@@ -255,10 +265,9 @@ export async function GET(request: NextRequest) {
         include: {
           seller: {
             select: {
+              id: true,
               name: true,
               nickname: true,
-              city: true,
-              postalCode: true,
             },
           },
           bids: {
@@ -273,6 +282,16 @@ export async function GET(request: NextRequest) {
 
       watches = [...(watches || []), ...additionalWatches].slice(0, 12)
     }
+
+    // Fetch seller addresses from UserAddress table
+    const allSellerIds = Array.from(new Set((watches || []).map(w => w.seller?.id).filter(Boolean))) as string[]
+    const allSellerAddresses = await Promise.all(
+      allSellerIds.map(async id => ({
+        id,
+        address: await getMainAddress(id),
+      }))
+    )
+    const allAddressMap = new Map(allSellerAddresses.map(sa => [sa.id, sa.address]))
 
     // Transformiere Daten für Frontend
     const watchesWithData = (watches || []).map(watch => {
@@ -301,12 +320,13 @@ export async function GET(request: NextRequest) {
         boosters = []
       }
 
+      const sellerAddr = watch.seller?.id ? allAddressMap.get(watch.seller.id) : null
       return {
         ...watch,
         price: currentPrice,
         images: images,
-        city: watch.seller?.city || null,
-        postalCode: watch.seller?.postalCode || null,
+        city: sellerAddr?.city || null,
+        postalCode: sellerAddr?.postalCode || null,
         buyNowPrice: watch.buyNowPrice || null,
         isAuction: watch.isAuction || false,
         auctionEnd: watch.auctionEnd || null,

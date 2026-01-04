@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -79,10 +80,6 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           email: true,
           firstName: true,
           lastName: true,
-          street: true,
-          streetNumber: true,
-          postalCode: true,
-          city: true,
           phone: true,
           paymentMethods: true,
         },
@@ -183,6 +180,18 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     const paymentProtectionEnabled = watch.paymentProtectionEnabled || false
     const isPaidViaStripe = order?.paymentStatus === 'paid' || order?.paymentStatus === 'released'
 
+    // Fetch buyer address from UserAddress table
+    const buyerAddress = purchase.buyer ? await getMainAddress(purchase.buyer.id) : null
+    const buyerWithAddress = purchase.buyer
+      ? {
+          ...purchase.buyer,
+          street: buyerAddress?.street || null,
+          streetNumber: buyerAddress?.streetNumber || null,
+          postalCode: buyerAddress?.postalCode || null,
+          city: buyerAddress?.city || null,
+        }
+      : null
+
     const sale = {
       id: purchase.id,
       soldAt: purchase.createdAt,
@@ -221,7 +230,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         finalPrice: finalPrice,
         purchaseType: purchaseType,
       },
-      buyer: purchase.buyer,
+      buyer: buyerWithAddress,
     }
 
     return NextResponse.json({ sale })

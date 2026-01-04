@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -109,11 +110,12 @@ export async function GET(request: NextRequest) {
         w."auctionEnd",
         w."articleNumber",
         w.boosters,
-        u.city,
-        u."postalCode",
-        w.condition
+        ua.city,
+        ua."postalCode",
+        w.condition,
+        w."sellerId"
       FROM watches w
-      INNER JOIN users u ON w."sellerId" = u.id
+      LEFT JOIN user_addresses ua ON w."sellerId" = ua."userId" AND ua.type = 'MAIN'
       WHERE ${whereClause}
       ORDER BY
         CASE
@@ -207,23 +209,28 @@ export async function GET(request: NextRequest) {
           articleNumber: true,
           boosters: true,
           condition: true,
-          seller: {
-            select: {
-              city: true,
-              postalCode: true,
-            },
-          },
+          sellerId: true,
         },
         orderBy: { createdAt: 'desc' },
         take: Math.min(limit, 200), // OPTIMIERT: Max 200 Ergebnisse
         skip: skip,
       })) as any[]
 
+      // Fetch seller addresses from UserAddress table
+      const sellerIds = Array.from(new Set(watches.map(w => w.sellerId).filter(Boolean))) as string[]
+      const sellerAddresses = await Promise.all(
+        sellerIds.map(async id => ({
+          id,
+          address: await getMainAddress(id),
+        }))
+      )
+      const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
+
       // Transformiere Prisma-Format zu Raw SQL-Format
       watches = watches.map(w => ({
         ...w,
-        city: (w as any).seller?.city || null,
-        postalCode: (w as any).seller?.postalCode || null,
+        city: addressMap.get(w.sellerId)?.city || null,
+        postalCode: addressMap.get(w.sellerId)?.postalCode || null,
       }))
     }
 

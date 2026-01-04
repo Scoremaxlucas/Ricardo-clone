@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import {
   batchPostalCodeToCoordinates,
   calculateDistance,
@@ -60,12 +61,7 @@ export async function GET(request: NextRequest) {
             // Auktionen noch nicht abgelaufen
             OR: [{ auctionEnd: null }, { auctionEnd: { gt: now } }],
           },
-          {
-            // Seller hat Postleitzahl
-            seller: {
-              postalCode: { not: null },
-            },
-          },
+          // Note: seller postalCode check removed - now handled by UserAddress filtering in map
         ],
       },
       select: {
@@ -82,24 +78,37 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             name: true,
-            city: true,
-            postalCode: true,
           },
         },
       },
       take: 100, // Hole mehr für Filterung, dann limitieren wir nach Distanz
     })
 
-    // OPTIMIERT: Batch-Konvertierung aller eindeutigen Postleitzahlen
+    // Fetch seller addresses from UserAddress table
+    const sellerIds = Array.from(new Set(watches.map(w => w.seller?.id).filter(Boolean))) as string[]
+    const sellerAddresses = await Promise.all(
+      sellerIds.map(async id => ({
+        id,
+        address: await getMainAddress(id),
+      }))
+    )
+    const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
+
+    // OPTIMIERT: Batch-Konvertierung aller eindeutigen Postleitzahlen (from UserAddress)
     const uniquePostalCodes = Array.from(
-      new Set(watches.map(w => w.seller?.postalCode).filter(Boolean) as string[])
+      new Set(
+        watches
+          .map(w => (w.seller?.id ? addressMap.get(w.seller.id)?.postalCode : null))
+          .filter(Boolean) as string[]
+      )
     )
     const coordinatesMap = await batchPostalCodeToCoordinates(uniquePostalCodes)
 
     // Berechne Distanz für jedes Produkt und filtere nach Radius
     const watchesWithDistance = watches
       .map(watch => {
-        const sellerPostalCode = watch.seller?.postalCode
+        const sellerAddress = watch.seller?.id ? addressMap.get(watch.seller.id) : null
+        const sellerPostalCode = sellerAddress?.postalCode
         if (!sellerPostalCode) {
           return null
         }
@@ -123,7 +132,7 @@ export async function GET(request: NextRequest) {
         return {
           ...watch,
           postalCode: sellerPostalCode,
-          city: watch.seller?.city || null,
+          city: sellerAddress?.city || null,
           distance,
           coordinates: watchCoords,
         }
