@@ -169,30 +169,42 @@ Die Migration zum Entfernen der Legacy-Felder ist vorbereitet:
 - ✅ Helper-Funktionen mit Fallback (`getUserMainAddressData`, `getUserDeliveryAddressData`)
 - ✅ Legacy-Felder im Schema als `@deprecated` markiert
 
-**Noch zu tun vor Aktivierung:**
-Die folgenden Dateien müssen noch aktualisiert werden, um NUR UserAddress zu verwenden:
+**Bereits aktualisiert (Phase 2 - 17 Dateien):**
+```
+✅ src/app/api/stripe/connect/account-session/route.ts
+✅ src/app/api/stripe/connect/prefill-data/route.ts
+✅ src/app/api/profile/check-complete/route.ts
+✅ src/app/api/profile/update/route.ts
+✅ src/app/api/verification/get/route.ts
+✅ src/app/api/verification/submit/route.ts
+✅ src/app/api/user/[id]/route.ts
+✅ src/app/api/user/seller-info/route.ts
+✅ src/app/api/users/[id]/stats/route.ts
+✅ src/app/api/invoices/[id]/pdf/route.ts
+✅ src/app/api/purchases/create/route.ts
+✅ src/app/api/sales/my-sales/route.ts
+✅ src/app/api/watches/boosted/route.ts
+✅ src/app/api/watches/mine/route.ts
+✅ src/app/api/articles/fast/route.ts
+✅ src/app/api/articles/auctions-fast/route.ts
+✅ src/app/api/watches/[id]/similar/route.ts
+```
 
+**Noch zu tun vor Aktivierung (~15 Dateien):**
 ```
 src/app/api/admin/disputes/[id]/route.ts
 src/app/api/admin/invoices/[invoiceId]/route.ts
 src/app/api/admin/verifications/pending/route.ts
 src/app/api/admin/verifications/user/[userId]/route.ts
-src/app/api/articles/auctions-fast/route.ts
-src/app/api/articles/fast/route.ts
+src/app/api/admin/test-lacoste/route.ts
 src/app/api/articles/favorites-fast/route.ts
 src/app/api/articles/search-fast/route.ts
-src/app/api/invoices/[id]/pdf/route.ts
-src/app/api/purchases/create/route.ts
-src/app/api/sales/my-sales/route.ts
-src/app/api/stripe/connect/account-session/route.ts
-src/app/api/stripe/connect/prefill-data/route.ts
-src/app/api/user/[id]/route.ts
-src/app/api/user/seller-info/route.ts
-src/app/api/users/[id]/stats/route.ts
-src/app/api/watches/[id]/similar/route.ts
-src/app/api/watches/boosted/route.ts
+src/app/api/sales/[id]/route.ts
+src/app/api/watches/recommended/route.ts
+src/app/api/watches/nearby/route.ts
+src/app/api/watches/route.ts
 src/app/api/watches/brand-counts/route.ts
-src/app/api/watches/mine/route.ts
+src/app/api/products/[id]/route.ts
 ```
 
 **Migration ausführen (wenn alle Dateien aktualisiert sind):**
