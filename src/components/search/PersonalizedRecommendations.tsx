@@ -196,14 +196,14 @@ export function PersonalizedRecommendations({
                     brand: product.brand,
                     model: product.model,
                     price: product.price,
-                    buyNowPrice: product.buyNowPrice,
+                    buyNowPrice: product.buyNowPrice ?? undefined,
                     images: product.images,
                     condition: product.condition,
                     isAuction: product.isAuction,
-                    auctionEnd: product.auctionEnd,
+                    auctionEnd: product.auctionEnd ?? undefined,
                     createdAt: product.createdAt,
-                    city: null,
-                    postalCode: null,
+                    city: undefined,
+                    postalCode: undefined,
                   }}
                 />
                 {/* Recommendation reason badge */}

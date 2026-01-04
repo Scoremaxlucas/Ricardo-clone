@@ -362,11 +362,7 @@ export function VisualSearch({ onClose, className = '' }: VisualSearchProps) {
                 </h4>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                   {results.slice(0, 8).map(result => (
-                    <ProductCard
-                      key={result.id}
-                      product={result}
-                      variant="compact"
-                    />
+                    <ProductCard key={result.id} product={result} variant="compact" />
                   ))}
                 </div>
                 {results.length > 8 && (

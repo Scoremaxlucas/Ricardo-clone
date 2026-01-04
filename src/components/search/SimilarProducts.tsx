@@ -141,13 +141,10 @@ export function SimilarProducts({
       <div className="relative">
         <div
           ref={scrollContainerRef}
-          className="scrollbar-hide -mx-4 flex gap-4 overflow-x-auto px-4 pb-4 scroll-smooth"
+          className="scrollbar-hide -mx-4 flex gap-4 overflow-x-auto scroll-smooth px-4 pb-4"
         >
           {products.map(product => (
-            <div
-              key={product.id}
-              className="w-[200px] flex-shrink-0 sm:w-[220px] md:w-[250px]"
-            >
+            <div key={product.id} className="w-[200px] flex-shrink-0 sm:w-[220px] md:w-[250px]">
               <ProductCard
                 product={{
                   id: product.id,
@@ -155,14 +152,14 @@ export function SimilarProducts({
                   brand: product.brand,
                   model: product.model,
                   price: product.price,
-                  buyNowPrice: product.buyNowPrice,
+                  buyNowPrice: product.buyNowPrice ?? undefined,
                   images: product.images,
                   condition: product.condition,
                   isAuction: product.isAuction,
-                  auctionEnd: product.auctionEnd,
+                  auctionEnd: product.auctionEnd ?? undefined,
                   createdAt: product.createdAt,
-                  city: product.seller?.city || null,
-                  postalCode: product.seller?.postalCode || null,
+                  city: product.seller?.city ?? undefined,
+                  postalCode: product.seller?.postalCode ?? undefined,
                 }}
               />
               {/* Similarity reason badge */}
@@ -179,10 +176,7 @@ export function SimilarProducts({
         {/* Mobile scroll indicators */}
         <div className="mt-2 flex justify-center gap-1 sm:hidden">
           {products.slice(0, Math.min(products.length, 8)).map((_, i) => (
-            <div
-              key={i}
-              className="h-1.5 w-1.5 rounded-full bg-gray-300"
-            />
+            <div key={i} className="h-1.5 w-1.5 rounded-full bg-gray-300" />
           ))}
         </div>
       </div>
