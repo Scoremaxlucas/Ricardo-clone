@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { apiCache, generateCacheKey } from '@/lib/api-cache'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
@@ -234,8 +235,6 @@ export async function GET(request: NextRequest) {
             id: true,
             name: true,
             email: true,
-            city: true,
-            postalCode: true,
           },
         },
         categories: {
@@ -268,8 +267,19 @@ export async function GET(request: NextRequest) {
       take: limit,
     })
 
+    // Fetch seller addresses from UserAddress table
+    const sellerIds = Array.from(new Set(watches.map(w => w.seller?.id).filter(Boolean))) as string[]
+    const sellerAddresses = await Promise.all(
+      sellerIds.map(async id => ({
+        id,
+        address: await getMainAddress(id),
+      }))
+    )
+    const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
+
     // Berechne aktuellen Preis für jede Uhr und füge Boosters hinzu
     let watchesWithCurrentPrice = watches.map(watch => {
+      const sellerAddress = watch.seller?.id ? addressMap.get(watch.seller.id) : null
       const highestBid = watch.bids[0]
       const currentPrice = highestBid ? highestBid.amount : watch.price
 
@@ -298,8 +308,8 @@ export async function GET(request: NextRequest) {
         price: currentPrice, // Überschreibe price mit aktuellem Preis
         images: images, // Geparste Bilder
         boosters: boosters,
-        city: watch.seller?.city || null,
-        postalCode: watch.seller?.postalCode || null,
+        city: sellerAddress?.city || null,
+        postalCode: sellerAddress?.postalCode || null,
         buyNowPrice: watch.buyNowPrice || null,
         isAuction: watch.isAuction || false,
         auctionEnd: watch.auctionEnd || null,

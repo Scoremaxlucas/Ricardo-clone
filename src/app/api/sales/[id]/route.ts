@@ -15,12 +15,12 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     }
 
     const searchId = params.id
-    
+
     if (!searchId || searchId === 'undefined' || searchId === 'null') {
       console.log(`[sales] Invalid ID: ${searchId}`)
       return NextResponse.json({ message: 'Ungültige Verkaufs-ID' }, { status: 400 })
     }
-    
+
     console.log(`[sales/${searchId}] Fetching purchase for seller ${session.user.id}`)
 
     // WICHTIG: Explizites select um disputeInitiatedBy zu vermeiden (P2022)
@@ -123,20 +123,28 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         orderBy: { createdAt: 'desc' },
         take: 10,
       })
-      
-      console.log(`[sales/${searchId}] Not found. Available purchases:`, JSON.stringify(allPurchases))
-      
-      return NextResponse.json({ 
-        message: 'Verkauf nicht gefunden',
-        debug: { 
-          searchedId: searchId, 
-          sellerId: session.user.id,
-          availablePurchases: allPurchases 
-        }
-      }, { status: 404 })
+
+      console.log(
+        `[sales/${searchId}] Not found. Available purchases:`,
+        JSON.stringify(allPurchases)
+      )
+
+      return NextResponse.json(
+        {
+          message: 'Verkauf nicht gefunden',
+          debug: {
+            searchedId: searchId,
+            sellerId: session.user.id,
+            availablePurchases: allPurchases,
+          },
+        },
+        { status: 404 }
+      )
     }
 
-    console.log(`[sales/${searchId}] Found purchase ${purchase.id} for watch: ${purchase.watch.title}`)
+    console.log(
+      `[sales/${searchId}] Found purchase ${purchase.id} for watch: ${purchase.watch.title}`
+    )
 
     // Load order if exists
     const order = await prisma.order.findFirst({

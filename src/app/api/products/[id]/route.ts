@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -54,8 +55,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           id: true,
           name: true,
           email: true,
-          city: true,
-          postalCode: true,
           verified: true,
         },
       },
@@ -98,6 +97,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       conditionMap = { overall: watch.condition || 'Nicht angegeben' }
     }
 
+    // Fetch seller address from UserAddress table
+    const sellerAddress = watch.seller?.id ? await getMainAddress(watch.seller.id) : null
+    const sellerWithAddress = watch.seller
+      ? {
+          ...watch.seller,
+          city: sellerAddress?.city || null,
+          postalCode: sellerAddress?.postalCode || null,
+        }
+      : null
+
     return NextResponse.json({
       watch: {
         id: watch.id,
@@ -135,7 +144,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
       images,
       conditionMap,
-      seller: watch.seller,
+      seller: sellerWithAddress,
     })
   } catch (error: unknown) {
     const err = error as Error
