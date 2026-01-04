@@ -1,6 +1,6 @@
 'use client'
 
-import { Folder, Package, Search, Tag, X } from 'lucide-react'
+import { Folder, Package, Search, X } from 'lucide-react'
 import Image from 'next/image'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
@@ -180,43 +180,23 @@ export function HeaderSearch({
     }
   }
 
-  // Get icon for suggestion type
-  const getSuggestionIcon = (suggestion: EnhancedSuggestion) => {
-    if (suggestion.icon) {
-      return <span className="text-base">{suggestion.icon}</span>
+  // Get badge/count for suggestion (Ricardo style: count on the right)
+  const getSuggestionCount = (suggestion: EnhancedSuggestion) => {
+    if (suggestion.count !== undefined && suggestion.count > 0) {
+      return (
+        <span className="text-sm text-gray-400">
+          {suggestion.count.toLocaleString('de-CH')}
+        </span>
+      )
     }
-    switch (suggestion.type) {
-      case 'category':
-        return <Folder className="h-4 w-4 text-primary-500" />
-      case 'brand':
-        return <Tag className="h-4 w-4 text-amber-500" />
-      case 'product':
-        return <Package className="h-4 w-4 text-blue-500" />
-      default:
-        return <Search className="h-4 w-4 text-gray-400" />
+    if (suggestion.type === 'product' && suggestion.price) {
+      return (
+        <span className="text-sm font-medium text-gray-600">
+          CHF {suggestion.price.toLocaleString('de-CH')}
+        </span>
+      )
     }
-  }
-
-  // Get badge text for suggestion type
-  const getSuggestionBadge = (suggestion: EnhancedSuggestion) => {
-    switch (suggestion.type) {
-      case 'category':
-        return <span className="text-xs text-primary-600">Kategorie</span>
-      case 'brand':
-        return suggestion.count ? (
-          <span className="text-xs text-gray-500">{suggestion.count} Artikel</span>
-        ) : (
-          <span className="text-xs text-amber-600">Marke</span>
-        )
-      case 'product':
-        return suggestion.price ? (
-          <span className="text-xs font-medium text-primary-600">
-            CHF {suggestion.price.toLocaleString('de-CH')}
-          </span>
-        ) : null
-      default:
-        return null
-    }
+    return null
   }
 
   // Click outside to close
@@ -323,10 +303,36 @@ export function HeaderSearch({
 
                 return (
                   <>
-                    {/* Categories Section */}
+                    {/* Text Suggestions Section (Ricardo style: simple list with counts) */}
+                    {texts.length > 0 && (
+                      <div className="py-1">
+                        {texts.map(suggestion => {
+                          globalIndex++
+                          const idx = globalIndex
+                          return (
+                            <button
+                              key={`text-${suggestion.value}`}
+                              type="button"
+                              onClick={() => handleSubmit(suggestion)}
+                              onMouseEnter={() => setSelectedIndex(idx)}
+                              className={`flex w-full items-center justify-between px-4 py-2 text-left transition-colors ${
+                                idx === selectedIndex
+                                  ? 'bg-gray-100'
+                                  : 'hover:bg-gray-50'
+                              }`}
+                            >
+                              <span className="truncate text-gray-900">{suggestion.label}</span>
+                              {getSuggestionCount(suggestion)}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {/* Categories Section (Ricardo style) */}
                     {categories.length > 0 && (
-                      <div className="border-b border-gray-100 py-2">
-                        <div className="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
+                      <div className="border-t border-gray-100 py-1">
+                        <div className="px-4 py-2 text-xs font-medium text-gray-500">
                           Kategorien
                         </div>
                         {categories.map(suggestion => {
@@ -338,67 +344,24 @@ export function HeaderSearch({
                               type="button"
                               onClick={() => handleSubmit(suggestion)}
                               onMouseEnter={() => setSelectedIndex(idx)}
-                              className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                                idx === selectedIndex ? 'bg-primary-50' : 'hover:bg-gray-50'
+                              className={`flex w-full items-center justify-between px-4 py-2 text-left transition-colors ${
+                                idx === selectedIndex ? 'bg-gray-100' : 'hover:bg-gray-50'
                               }`}
                             >
-                              <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 text-lg">
-                                {suggestion.icon || '📁'}
-                              </span>
-                              <div className="min-w-0 flex-1">
-                                <span
-                                  className={`block truncate font-medium ${idx === selectedIndex ? 'text-primary-700' : 'text-gray-900'}`}
-                                >
-                                  {suggestion.label}
-                                </span>
+                              <div className="flex items-center gap-2">
+                                <Folder className="h-4 w-4 text-gray-400" />
+                                <span className="text-gray-900">{suggestion.label}</span>
                               </div>
-                              {getSuggestionBadge(suggestion)}
+                              {getSuggestionCount(suggestion)}
                             </button>
                           )
                         })}
                       </div>
                     )}
 
-                    {/* Brands Section */}
-                    {brands.length > 0 && (
-                      <div className="border-b border-gray-100 py-2">
-                        <div className="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
-                          Marken
-                        </div>
-                        {brands.map(suggestion => {
-                          globalIndex++
-                          const idx = globalIndex
-                          return (
-                            <button
-                              key={`brand-${suggestion.value}`}
-                              type="button"
-                              onClick={() => handleSubmit(suggestion)}
-                              onMouseEnter={() => setSelectedIndex(idx)}
-                              className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                                idx === selectedIndex ? 'bg-primary-50' : 'hover:bg-gray-50'
-                              }`}
-                            >
-                              <Tag className="h-5 w-5 flex-shrink-0 text-amber-500" />
-                              <div className="min-w-0 flex-1">
-                                <span
-                                  className={`block truncate font-medium ${idx === selectedIndex ? 'text-primary-700' : 'text-gray-900'}`}
-                                >
-                                  {suggestion.label}
-                                </span>
-                              </div>
-                              {getSuggestionBadge(suggestion)}
-                            </button>
-                          )
-                        })}
-                      </div>
-                    )}
-
-                    {/* Products Section */}
+                    {/* Products Section (with images) */}
                     {products.length > 0 && (
-                      <div className="border-b border-gray-100 py-2">
-                        <div className="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
-                          Artikel
-                        </div>
+                      <div className="border-t border-gray-100 py-1">
                         {products.map(suggestion => {
                           globalIndex++
                           const idx = globalIndex
@@ -408,12 +371,12 @@ export function HeaderSearch({
                               type="button"
                               onClick={() => handleSubmit(suggestion)}
                               onMouseEnter={() => setSelectedIndex(idx)}
-                              className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                                idx === selectedIndex ? 'bg-primary-50' : 'hover:bg-gray-50'
+                              className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors ${
+                                idx === selectedIndex ? 'bg-gray-100' : 'hover:bg-gray-50'
                               }`}
                             >
                               {suggestion.image ? (
-                                <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                                <div className="relative h-10 w-10 flex-shrink-0 overflow-hidden rounded bg-gray-100">
                                   <Image
                                     src={suggestion.image}
                                     alt={suggestion.label}
@@ -423,53 +386,40 @@ export function HeaderSearch({
                                   />
                                 </div>
                               ) : (
-                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-gray-100">
+                                <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded bg-gray-100">
                                   <Package className="h-5 w-5 text-gray-400" />
                                 </div>
                               )}
                               <div className="min-w-0 flex-1">
-                                <span
-                                  className={`block truncate text-sm font-medium ${idx === selectedIndex ? 'text-primary-700' : 'text-gray-900'}`}
-                                >
+                                <span className="block truncate text-sm text-gray-900">
                                   {suggestion.label}
                                 </span>
                               </div>
-                              {getSuggestionBadge(suggestion)}
+                              {getSuggestionCount(suggestion)}
                             </button>
                           )
                         })}
                       </div>
                     )}
 
-                    {/* Text Suggestions Section */}
-                    {texts.length > 0 && (
-                      <div className="py-2">
-                        {(categories.length > 0 || brands.length > 0 || products.length > 0) && (
-                          <div className="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
-                            Suchvorschläge
-                          </div>
-                        )}
-                        {texts.map(suggestion => {
+                    {/* Brands Section */}
+                    {brands.length > 0 && (
+                      <div className="border-t border-gray-100 py-1">
+                        {brands.map(suggestion => {
                           globalIndex++
                           const idx = globalIndex
                           return (
                             <button
-                              key={`text-${suggestion.value}`}
+                              key={`brand-${suggestion.value}`}
                               type="button"
                               onClick={() => handleSubmit(suggestion)}
                               onMouseEnter={() => setSelectedIndex(idx)}
-                              className={`flex w-full items-center gap-3 px-4 py-2 text-left transition-colors ${
-                                idx === selectedIndex
-                                  ? 'bg-primary-50 text-primary-700'
-                                  : 'text-gray-700 hover:bg-gray-50'
+                              className={`flex w-full items-center justify-between px-4 py-2 text-left transition-colors ${
+                                idx === selectedIndex ? 'bg-gray-100' : 'hover:bg-gray-50'
                               }`}
                             >
-                              {suggestion.icon ? (
-                                <span className="text-base">{suggestion.icon}</span>
-                              ) : (
-                                <Search className="h-4 w-4 flex-shrink-0 text-gray-400" />
-                              )}
-                              <span className="truncate">{suggestion.label}</span>
+                              <span className="text-gray-900">{suggestion.label}</span>
+                              {getSuggestionCount(suggestion)}
                             </button>
                           )
                         })}

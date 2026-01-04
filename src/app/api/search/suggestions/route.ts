@@ -17,61 +17,67 @@ import { NextRequest, NextResponse } from 'next/server'
  * - Product suggestions (matching products with images)
  */
 
-// Category data for suggestions
+// Category data for suggestions (General marketplace like Ricardo)
 const categories = [
-  { slug: 'luxusuhren', name: 'Luxusuhren', icon: '⌚' },
-  { slug: 'vintage', name: 'Vintage & Antik', icon: '🏺' },
-  { slug: 'sportuhren', name: 'Sportuhren', icon: '🏃' },
-  { slug: 'taucheruhren', name: 'Taucheruhren', icon: '🤿' },
-  { slug: 'smartwatches', name: 'Smartwatches', icon: '📱' },
-  { slug: 'damenuhren', name: 'Damenuhren', icon: '👩' },
-  { slug: 'herrenuhren', name: 'Herrenuhren', icon: '👨' },
-  { slug: 'accessoires', name: 'Accessoires', icon: '🎀' },
-  { slug: 'schmuck', name: 'Schmuck', icon: '💎' },
-  { slug: 'elektronik', name: 'Elektronik', icon: '📟' },
-  { slug: 'mode', name: 'Mode & Kleidung', icon: '👔' },
-  { slug: 'auto', name: 'Auto & Motorrad', icon: '🚗' },
-  { slug: 'sport', name: 'Sport & Freizeit', icon: '⚽' },
-  { slug: 'haus', name: 'Haus & Garten', icon: '🏠' },
-  { slug: 'sammeln', name: 'Sammeln & Kunst', icon: '🎨' },
+  { slug: 'sammeln-seltenes', name: 'Sammeln & Seltenes' },
+  { slug: 'damenmode', name: 'Damenmode' },
+  { slug: 'herrenmode', name: 'Herrenmode' },
+  { slug: 'elektronik', name: 'Computer & Elektronik' },
+  { slug: 'haus-garten', name: 'Haus & Garten' },
+  { slug: 'sport-freizeit', name: 'Sport & Freizeit' },
+  { slug: 'auto-motorrad', name: 'Auto & Motorrad' },
+  { slug: 'baby-kind', name: 'Baby & Kind' },
+  { slug: 'musik-filme', name: 'Musik & Filme' },
+  { slug: 'bucher-comics', name: 'Bücher & Comics' },
+  { slug: 'spielzeug', name: 'Spielzeug & Basteln' },
+  { slug: 'antiquitaten', name: 'Antiquitäten & Kunst' },
+  { slug: 'schmuck-uhren', name: 'Schmuck & Uhren' },
+  { slug: 'handys', name: 'Handys & Telefone' },
+  { slug: 'foto-video', name: 'Foto & Video' },
 ]
 
-// Popular luxury watch brands
+// Popular brands across all categories
 const popularBrands = [
-  'Rolex',
-  'Omega',
-  'Patek Philippe',
-  'Audemars Piguet',
-  'Tag Heuer',
-  'Breitling',
-  'IWC',
-  'Cartier',
-  'Tudor',
-  'Longines',
-  'Tissot',
-  'Jaeger-LeCoultre',
-  'Zenith',
-  'Hublot',
-  'Panerai',
-  'Vacheron Constantin',
-  'A. Lange & Söhne',
-  'Blancpain',
-  'Chopard',
-  'Girard-Perregaux',
-  // Tech brands
+  // Tech
   'Apple',
   'Samsung',
   'Sony',
+  'Microsoft',
+  'Lenovo',
+  'HP',
+  'Dell',
   'Canon',
   'Nikon',
   'DJI',
-  // Fashion brands
+  'Nintendo',
+  'PlayStation',
+  // Fashion
   'Nike',
   'Adidas',
-  'Louis Vuitton',
+  'Zara',
+  'H&M',
   'Gucci',
+  'Louis Vuitton',
   'Prada',
   'Hermès',
+  'Burberry',
+  // Home & Garden
+  'IKEA',
+  'Dyson',
+  'Miele',
+  'Bosch',
+  'Siemens',
+  // Auto
+  'BMW',
+  'Mercedes',
+  'Audi',
+  'VW',
+  'Porsche',
+  // Watches (but not dominant)
+  'Rolex',
+  'Omega',
+  'Swatch',
+  'Tag Heuer',
 ]
 
 interface SuggestionItem {
@@ -147,14 +153,29 @@ export async function GET(request: NextRequest) {
         )
         .slice(0, 3)
 
+      // Get article counts for matching categories
       for (const cat of matchingCategories) {
-        enhancedSuggestions.push({
-          type: 'category',
-          value: cat.slug,
-          label: cat.name,
-          icon: cat.icon,
-          categorySlug: cat.slug,
-        })
+        try {
+          const count = await prisma.watch.count({
+            where: {
+              moderationStatus: { notIn: ['rejected', 'blocked', 'removed'] },
+            },
+          })
+          enhancedSuggestions.push({
+            type: 'category',
+            value: cat.slug,
+            label: cat.name,
+            categorySlug: cat.slug,
+            count,
+          })
+        } catch {
+          enhancedSuggestions.push({
+            type: 'category',
+            value: cat.slug,
+            label: cat.name,
+            categorySlug: cat.slug,
+          })
+        }
       }
 
       // 2. Brand suggestions (match brand names)
@@ -244,26 +265,59 @@ export async function GET(request: NextRequest) {
         }
       }
     } else if (queryLower.length === 0) {
-      // No query: show popular searches and trending categories
-      const popularSearches = await getPopularSearches(5)
+      // No query: show popular searches and trending categories (like Ricardo)
+      const popularSearches = await getPopularSearches(6)
       for (const text of popularSearches) {
-        enhancedSuggestions.push({
-          type: 'text',
-          value: text,
-          label: text,
-          icon: '🔥',
-        })
+        // Get count for this search term
+        try {
+          const count = await prisma.watch.count({
+            where: {
+              OR: [
+                { title: { contains: text, mode: 'insensitive' } },
+                { brand: { contains: text, mode: 'insensitive' } },
+                { description: { contains: text, mode: 'insensitive' } },
+              ],
+              moderationStatus: { notIn: ['rejected', 'blocked', 'removed'] },
+            },
+          })
+          enhancedSuggestions.push({
+            type: 'text',
+            value: text,
+            label: text,
+            count,
+          })
+        } catch {
+          enhancedSuggestions.push({
+            type: 'text',
+            value: text,
+            label: text,
+          })
+        }
       }
 
-      // Add some popular categories
+      // Add some popular categories with counts
       for (const cat of categories.slice(0, 4)) {
-        enhancedSuggestions.push({
-          type: 'category',
-          value: cat.slug,
-          label: cat.name,
-          icon: cat.icon,
-          categorySlug: cat.slug,
-        })
+        try {
+          const count = await prisma.watch.count({
+            where: {
+              moderationStatus: { notIn: ['rejected', 'blocked', 'removed'] },
+            },
+          })
+          enhancedSuggestions.push({
+            type: 'category',
+            value: cat.slug,
+            label: cat.name,
+            categorySlug: cat.slug,
+            count,
+          })
+        } catch {
+          enhancedSuggestions.push({
+            type: 'category',
+            value: cat.slug,
+            label: cat.name,
+            categorySlug: cat.slug,
+          })
+        }
       }
     }
 
