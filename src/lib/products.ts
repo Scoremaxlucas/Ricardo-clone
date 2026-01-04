@@ -95,6 +95,16 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
       take: limit,
     })
 
+    // Fetch seller addresses from UserAddress table
+    const sellerIds = Array.from(new Set(watches.map(w => w.seller?.id).filter(Boolean))) as string[]
+    const sellerAddresses = await Promise.all(
+      sellerIds.map(async id => ({
+        id,
+        address: await getMainAddress(id),
+      }))
+    )
+    const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
+
     return watches.map(w => {
       let images: string[] = []
       if (w.images) {
@@ -186,8 +196,8 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         auctionEnd: w.auctionEnd ? w.auctionEnd.toISOString() : null,
         condition: w.condition || '',
         boosters,
-        city: w.seller?.city || null,
-        postalCode: w.seller?.postalCode || null,
+        city: w.seller?.id ? (addressMap.get(w.seller.id)?.city || null) : null,
+        postalCode: w.seller?.id ? (addressMap.get(w.seller.id)?.postalCode || null) : null,
         articleNumber: w.articleNumber,
         paymentProtectionEnabled: w.paymentProtectionEnabled || false,
         // WICHTIG: Setze href explizit, damit der richtige Link verwendet wird
