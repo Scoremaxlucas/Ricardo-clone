@@ -169,7 +169,7 @@ Die Migration zum Entfernen der Legacy-Felder ist vorbereitet:
 - ✅ Helper-Funktionen mit Fallback (`getUserMainAddressData`, `getUserDeliveryAddressData`)
 - ✅ Legacy-Felder im Schema als `@deprecated` markiert
 
-**Bereits aktualisiert (Phase 2 - 17 Dateien):**
+**Bereits aktualisiert (Phase 2 - 25+ Dateien):**
 ```
 ✅ src/app/api/stripe/connect/account-session/route.ts
 ✅ src/app/api/stripe/connect/prefill-data/route.ts
@@ -183,29 +183,33 @@ Die Migration zum Entfernen der Legacy-Felder ist vorbereitet:
 ✅ src/app/api/invoices/[id]/pdf/route.ts
 ✅ src/app/api/purchases/create/route.ts
 ✅ src/app/api/sales/my-sales/route.ts
+✅ src/app/api/sales/[id]/route.ts
 ✅ src/app/api/watches/boosted/route.ts
 ✅ src/app/api/watches/mine/route.ts
+✅ src/app/api/watches/route.ts
+✅ src/app/api/watches/recommended/route.ts
+✅ src/app/api/watches/nearby/route.ts
+✅ src/app/api/watches/[id]/similar/route.ts
 ✅ src/app/api/articles/fast/route.ts
 ✅ src/app/api/articles/auctions-fast/route.ts
-✅ src/app/api/watches/[id]/similar/route.ts
+✅ src/app/api/articles/search-fast/route.ts
+✅ src/app/api/articles/favorites-fast/route.ts
+✅ src/app/api/products/[id]/route.ts
 ```
 
-**Noch zu tun vor Aktivierung (~15 Dateien):**
+**Verbleibende Dateien (8 - meist Admin/Legacy):**
 ```
-src/app/api/admin/disputes/[id]/route.ts
-src/app/api/admin/invoices/[invoiceId]/route.ts
-src/app/api/admin/verifications/pending/route.ts
-src/app/api/admin/verifications/user/[userId]/route.ts
-src/app/api/admin/test-lacoste/route.ts
-src/app/api/articles/favorites-fast/route.ts
-src/app/api/articles/search-fast/route.ts
-src/app/api/sales/[id]/route.ts
-src/app/api/watches/recommended/route.ts
-src/app/api/watches/nearby/route.ts
-src/app/api/watches/route.ts
-src/app/api/watches/brand-counts/route.ts
-src/app/api/products/[id]/route.ts
+⏳ src/app/api/stripe/connect/account-link/route.ts (Backwards-compat)
+⏳ src/app/api/stripe/connect/ensure-account/route.ts (Backwards-compat)
+⏳ src/app/api/watches/brand-counts/route.ts (postalCode filter - special case)
+⏳ src/app/api/admin/disputes/[id]/route.ts (Admin only)
+⏳ src/app/api/admin/invoices/[invoiceId]/route.ts (Admin only)
+⏳ src/app/api/admin/verifications/pending/route.ts (Admin only)
+⏳ src/app/api/admin/verifications/user/[userId]/route.ts (Admin only)
+⏳ src/app/api/admin/test-lacoste/route.ts (Test route)
 ```
+
+**Hinweis:** Die verbleibenden Admin-Routes und Stripe-Routes können nach der finalen Migration aktualisiert werden. Sie verwenden derzeit noch die Legacy-Felder für Abwärtskompatibilität.
 
 **Migration ausführen (wenn alle Dateien aktualisiert sind):**
 
