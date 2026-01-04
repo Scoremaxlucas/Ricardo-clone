@@ -43,11 +43,6 @@ export async function POST(request: NextRequest) {
         firstName: true,
         lastName: true,
         phone: true,
-        // Legacy address fields (fallback)
-        street: true,
-        streetNumber: true,
-        postalCode: true,
-        city: true,
         stripeConnectedAccountId: true,
         stripeOnboardingComplete: true,
         connectOnboardingStatus: true,
