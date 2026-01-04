@@ -18,6 +18,7 @@ import { Logo } from '@/components/ui/Logo'
 import { Sheet, SheetContent } from '@/components/ui/Sheet'
 import { UserName } from '@/components/ui/UserName'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications'
 import {
   Baby,
   Bell,
@@ -154,56 +155,20 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
     if (storedImage) setProfileImage(storedImage)
   }, [session?.user])
 
-  // === OPTIMIERT: Notification Polling nur wenn sichtbar ===
+  // === REALTIME: Notification updates via Supabase ===
+  const userId = (session?.user as { id?: string })?.id
+  const { unreadCount, isUsingRealtime } = useRealtimeNotifications({
+    userId,
+    onNewNotification: (notification) => {
+      console.log('[Header] New notification received:', notification.title)
+    },
+    fallbackPollingInterval: 30000, // Fallback to 30s polling if realtime not available
+  })
+
+  // Sync realtime unread count to deferred data
   useEffect(() => {
-    if (!session?.user) return
-
-    let pollInterval: NodeJS.Timeout | null = null
-
-    const fetchNotifications = async () => {
-      try {
-        const res = await fetch('/api/notifications/unread-count')
-        if (res.ok) {
-          const data = await res.json()
-          setDeferredData(prev => ({ ...prev, unreadNotifications: data.count || 0 }))
-        }
-      } catch {
-        // Silent fail
-      }
-    }
-
-    // Nur pollen wenn Tab sichtbar
-    const startPolling = () => {
-      if (pollInterval) clearInterval(pollInterval)
-      pollInterval = setInterval(fetchNotifications, 30000) // Alle 30s statt 5s
-    }
-
-    const stopPolling = () => {
-      if (pollInterval) {
-        clearInterval(pollInterval)
-        pollInterval = null
-      }
-    }
-
-    const handleVisibility = () => {
-      if (document.visibilityState === 'visible') {
-        fetchNotifications() // Sofort aktualisieren
-        startPolling()
-      } else {
-        stopPolling()
-      }
-    }
-
-    document.addEventListener('visibilitychange', handleVisibility)
-    if (document.visibilityState === 'visible') {
-      startPolling()
-    }
-
-    return () => {
-      stopPolling()
-      document.removeEventListener('visibilitychange', handleVisibility)
-    }
-  }, [session?.user])
+    setDeferredData(prev => ({ ...prev, unreadNotifications: unreadCount }))
+  }, [unreadCount])
 
   // === OPTIMIERT: Menu Handlers mit Cleanup ===
   const handleMenuEnter = useCallback((setter: (v: boolean) => void) => {

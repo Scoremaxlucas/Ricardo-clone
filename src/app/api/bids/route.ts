@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { broadcastBidEvent, broadcastAuctionUpdate } from '@/lib/realtime-broadcast'
 
 // Neues Gebot erstellen
 export async function POST(request: NextRequest) {
@@ -686,6 +687,30 @@ export async function POST(request: NextRequest) {
           emailError
         )
       }
+    }
+
+    // === REALTIME: Broadcast bid event to connected clients ===
+    try {
+      const bidderName = bid.user.nickname || bid.user.name || 'Bieter'
+      await broadcastBidEvent(watchId, {
+        id: bid.id,
+        amount: finalAmount,
+        userId: session.user.id,
+        userName: bidderName,
+        createdAt: bid.createdAt,
+      })
+
+      // If auction was extended, broadcast that too
+      if (newAuctionEnd && newAuctionEnd !== auctionEndDate) {
+        await broadcastAuctionUpdate(watchId, {
+          newEndTime: newAuctionEnd.toISOString(),
+          highestBid: finalAmount,
+        })
+      }
+      console.log(`[bids] ✅ Realtime broadcast sent for bid ${bid.id}`)
+    } catch (realtimeError) {
+      // Don't fail the bid if realtime broadcast fails
+      console.error('[bids] Realtime broadcast failed:', realtimeError)
     }
 
     return NextResponse.json({

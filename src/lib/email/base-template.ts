@@ -175,7 +175,7 @@ export function getHelvendaEmailTemplate({
             : ''
         }
         <p class="support-text">
-          Falls Sie Fragen haben, kontaktieren Sie uns bitte unter 
+          Falls Sie Fragen haben, kontaktieren Sie uns bitte unter
           <a href="mailto:support@helvenda.ch" class="support-link">support@helvenda.ch</a>.
         </p>
       </div>

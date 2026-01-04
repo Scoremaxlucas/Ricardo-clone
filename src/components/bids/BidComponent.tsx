@@ -4,13 +4,15 @@ import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBa
 import { UserName } from '@/components/ui/UserName'
 import { VerificationModal } from '@/components/verification/VerificationModal'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useRealtimeBids } from '@/hooks/useRealtimeBids'
 import { getShippingCost, ShippingMethod, ShippingMethodArray } from '@/lib/shipping'
-import { AlertCircle, CheckCircle, Clock, Gavel, Zap } from 'lucide-react'
+import { isRealtimeAvailable } from '@/lib/supabase'
+import { AlertCircle, CheckCircle, Clock, Gavel, Wifi, WifiOff, Zap } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useState } from 'react'
 import { BuyNowConfirmationModal } from './BuyNowConfirmationModal'
 
 interface Bid {
@@ -207,15 +209,55 @@ export function BidComponent({
     }
   }
 
+  // === REALTIME: Handle auction updates ===
+  const handleAuctionUpdate = useCallback(
+    (update: { newEndTime?: string; isSold?: boolean }) => {
+      if (update.newEndTime) {
+        setCurrentAuctionEnd(new Date(update.newEndTime))
+      }
+      if (update.isSold) {
+        loadItemStatus()
+      }
+    },
+    []
+  )
+
+  // === REALTIME: Use realtime hook for bids ===
+  const {
+    bids: realtimeBids,
+    highestBid: realtimeHighestBid,
+    isConnected: isRealtimeConnected,
+    isUsingRealtime,
+    refreshBids,
+  } = useRealtimeBids({
+    watchId: itemId,
+    onNewBid: (bid) => {
+      console.log('[BidComponent] New bid received via realtime:', bid)
+      // The hook already updates the bids state
+    },
+    onAuctionUpdate: handleAuctionUpdate,
+    fallbackPollingInterval: 5000, // Fallback to 5s polling if realtime not available
+  })
+
+  // Sync realtime bids to local state
   useEffect(() => {
-    loadBids()
+    if (realtimeBids.length > 0) {
+      setBids(realtimeBids as Bid[])
+      if (realtimeHighestBid !== null) {
+        setHighestBid(realtimeHighestBid)
+      }
+    }
+  }, [realtimeBids, realtimeHighestBid])
+
+  useEffect(() => {
     loadItemStatus()
     loadVerificationStatus()
-    // Polling alle 5 Sekunden für neue Gebote und Status
-    const interval = setInterval(() => {
-      loadBids()
+
+    // Reduced polling for status (realtime handles bids)
+    // Only poll status every 15s instead of 5s since realtime handles bids
+    const statusInterval = setInterval(() => {
       loadItemStatus()
-    }, 5000)
+    }, isUsingRealtime ? 15000 : 5000)
 
     // Prüfe regelmäßig auf abgelaufene Auktionen
     const checkExpiredInterval = setInterval(async () => {
@@ -231,10 +273,10 @@ export function BidComponent({
     }, 10000) // Alle 10 Sekunden prüfen
 
     return () => {
-      clearInterval(interval)
+      clearInterval(statusInterval)
       clearInterval(checkExpiredInterval)
     }
-  }, [itemId, currentAuctionEnd])
+  }, [itemId, currentAuctionEnd, isUsingRealtime])
 
   const minBid = highestBid ? highestBid + 1.0 : startPrice
 
