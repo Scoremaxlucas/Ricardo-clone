@@ -82,59 +82,73 @@ export function useRealtimeBids({
   useEffect(() => {
     if (!watchId) return
 
-    const client = getSupabaseClient()
+    let client: ReturnType<typeof getSupabaseClient> = null
+    
+    try {
+      client = getSupabaseClient()
+    } catch (error) {
+      console.warn('[useRealtimeBids] Failed to get Supabase client:', error)
+    }
 
     // If Supabase is available, use realtime
     if (client && isRealtimeAvailable()) {
-      const channelName = getAuctionChannel(watchId)
-      const channel = client.channel(channelName)
+      try {
+        const channelName = getAuctionChannel(watchId)
+        const channel = client.channel(channelName)
 
-      channel
-        .on('broadcast', { event: 'new-bid' }, (payload) => {
-          const bidData = payload.payload as BidEvent
-          console.log('[useRealtimeBids] New bid received:', bidData)
+        channel
+          .on('broadcast', { event: 'new-bid' }, (payload) => {
+            const bidData = payload.payload as BidEvent
+            console.log('[useRealtimeBids] New bid received:', bidData)
 
-          const newBid: Bid = {
-            id: bidData.id,
-            amount: bidData.amount,
-            createdAt: bidData.createdAt,
-            userId: bidData.userId,
-            user: {
-              id: bidData.userId,
-              name: bidData.userName,
-              email: null,
-              nickname: null,
-              image: null,
-            },
-          }
+            const newBid: Bid = {
+              id: bidData.id,
+              amount: bidData.amount,
+              createdAt: bidData.createdAt,
+              userId: bidData.userId,
+              user: {
+                id: bidData.userId,
+                name: bidData.userName,
+                email: null,
+                nickname: null,
+                image: null,
+              },
+            }
 
-          setBids((prev) => {
-            // Avoid duplicates
-            if (prev.some((b) => b.id === newBid.id)) return prev
-            return [...prev, newBid].sort((a, b) => b.amount - a.amount)
+            setBids((prev) => {
+              // Avoid duplicates
+              if (prev.some((b) => b.id === newBid.id)) return prev
+              return [...prev, newBid].sort((a, b) => b.amount - a.amount)
+            })
+
+            onNewBid?.(newBid)
+          })
+          .on('broadcast', { event: 'auction-update' }, (payload) => {
+            console.log('[useRealtimeBids] Auction update:', payload.payload)
+            onAuctionUpdate?.(payload.payload as { newEndTime?: string; isSold?: boolean })
+          })
+          .subscribe((status) => {
+            console.log(`[useRealtimeBids] Channel ${channelName} status:`, status)
+            setIsConnected(status === 'SUBSCRIBED')
+            setIsUsingRealtime(status === 'SUBSCRIBED')
           })
 
-          onNewBid?.(newBid)
-        })
-        .on('broadcast', { event: 'auction-update' }, (payload) => {
-          console.log('[useRealtimeBids] Auction update:', payload.payload)
-          onAuctionUpdate?.(payload.payload as { newEndTime?: string; isSold?: boolean })
-        })
-        .subscribe((status) => {
-          console.log(`[useRealtimeBids] Channel ${channelName} status:`, status)
-          setIsConnected(status === 'SUBSCRIBED')
-          setIsUsingRealtime(status === 'SUBSCRIBED')
-        })
+        channelRef.current = channel as any
 
-      channelRef.current = channel as any
+        // Initial fetch
+        refreshBids()
 
-      // Initial fetch
-      refreshBids()
-
-      return () => {
-        console.log(`[useRealtimeBids] Unsubscribing from ${channelName}`)
-        channel.unsubscribe()
-        setIsConnected(false)
+        return () => {
+          console.log(`[useRealtimeBids] Unsubscribing from ${channelName}`)
+          try {
+            channel.unsubscribe()
+          } catch (e) {
+            console.warn('[useRealtimeBids] Error unsubscribing:', e)
+          }
+          setIsConnected(false)
+        }
+      } catch (error) {
+        console.warn('[useRealtimeBids] Failed to setup realtime, falling back to polling:', error)
       }
     }
 

@@ -59,43 +59,57 @@ export function useRealtimeNotifications({
   useEffect(() => {
     if (!userId) return
 
-    const client = getSupabaseClient()
+    let client: ReturnType<typeof getSupabaseClient> = null
+    
+    try {
+      client = getSupabaseClient()
+    } catch (error) {
+      console.warn('[useRealtimeNotifications] Failed to get Supabase client:', error)
+    }
 
     // If Supabase is available, use realtime
     if (client && isRealtimeAvailable()) {
-      const channelName = getUserNotificationChannel(userId)
-      const channel = client.channel(channelName)
+      try {
+        const channelName = getUserNotificationChannel(userId)
+        const channel = client.channel(channelName)
 
-      channel
-        .on('broadcast', { event: 'new-notification' }, (payload) => {
-          const notification = payload.payload as NotificationEvent
-          console.log('[useRealtimeNotifications] New notification:', notification)
+        channel
+          .on('broadcast', { event: 'new-notification' }, (payload) => {
+            const notification = payload.payload as NotificationEvent
+            console.log('[useRealtimeNotifications] New notification:', notification)
 
-          // Increment unread count
-          setUnreadCount((prev) => prev + 1)
+            // Increment unread count
+            setUnreadCount((prev) => prev + 1)
 
-          // Trigger callback
-          onNewNotification?.(notification)
-        })
-        .on('broadcast', { event: 'notifications-read' }, () => {
-          console.log('[useRealtimeNotifications] Notifications marked as read')
-          refreshCount()
-        })
-        .subscribe((status) => {
-          console.log(`[useRealtimeNotifications] Channel ${channelName} status:`, status)
-          setIsConnected(status === 'SUBSCRIBED')
-          setIsUsingRealtime(status === 'SUBSCRIBED')
-        })
+            // Trigger callback
+            onNewNotification?.(notification)
+          })
+          .on('broadcast', { event: 'notifications-read' }, () => {
+            console.log('[useRealtimeNotifications] Notifications marked as read')
+            refreshCount()
+          })
+          .subscribe((status) => {
+            console.log(`[useRealtimeNotifications] Channel ${channelName} status:`, status)
+            setIsConnected(status === 'SUBSCRIBED')
+            setIsUsingRealtime(status === 'SUBSCRIBED')
+          })
 
-      channelRef.current = channel
+        channelRef.current = channel
 
-      // Initial fetch
-      refreshCount()
+        // Initial fetch
+        refreshCount()
 
-      return () => {
-        console.log(`[useRealtimeNotifications] Unsubscribing from ${channelName}`)
-        channel.unsubscribe()
-        setIsConnected(false)
+        return () => {
+          console.log(`[useRealtimeNotifications] Unsubscribing from ${channelName}`)
+          try {
+            channel.unsubscribe()
+          } catch (e) {
+            console.warn('[useRealtimeNotifications] Error unsubscribing:', e)
+          }
+          setIsConnected(false)
+        }
+      } catch (error) {
+        console.warn('[useRealtimeNotifications] Failed to setup realtime, falling back to polling:', error)
       }
     }
 

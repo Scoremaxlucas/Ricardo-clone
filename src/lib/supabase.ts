@@ -22,7 +22,7 @@ let supabaseInstance: SupabaseClient | null = null
 
 /**
  * Get or create Supabase client
- * Returns null if environment variables are not configured
+ * Returns null if environment variables are not configured or if WebSocket is not available
  */
 export function getSupabaseClient(): SupabaseClient | null {
   if (typeof window === 'undefined') {
@@ -44,15 +44,31 @@ export function getSupabaseClient(): SupabaseClient | null {
     return null
   }
 
-  supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
-    realtime: {
-      params: {
-        eventsPerSecond: 10,
-      },
-    },
-  })
+  // Check if WebSocket is available and secure
+  if (typeof WebSocket === 'undefined') {
+    console.warn('[Supabase] WebSocket not available in this environment')
+    return null
+  }
 
-  return supabaseInstance
+  // Check for mixed content issues (HTTP page trying to use WSS)
+  if (window.location.protocol === 'http:' && supabaseUrl.startsWith('https://')) {
+    console.warn('[Supabase] Mixed content: Cannot use secure WebSocket from insecure page')
+    return null
+  }
+
+  try {
+    supabaseInstance = createClient(supabaseUrl, supabaseAnonKey, {
+      realtime: {
+        params: {
+          eventsPerSecond: 10,
+        },
+      },
+    })
+    return supabaseInstance
+  } catch (error) {
+    console.error('[Supabase] Failed to create client:', error)
+    return null
+  }
 }
 
 // Export singleton for convenience
@@ -83,21 +99,30 @@ export function subscribeToChannel(
     return () => {}
   }
 
-  const channel = client.channel(channelName)
+  try {
+    const channel = client.channel(channelName)
 
-  channel
-    .on('broadcast', { event: '*' }, (payload) => {
-      onMessage({ event: payload.event, payload: payload.payload })
-    })
-    .subscribe((status) => {
-      if (status === 'SUBSCRIBED') {
-        console.log(`[Supabase] Subscribed to ${channelName}`)
+    channel
+      .on('broadcast', { event: '*' }, (payload) => {
+        onMessage({ event: payload.event, payload: payload.payload })
+      })
+      .subscribe((status) => {
+        if (status === 'SUBSCRIBED') {
+          console.log(`[Supabase] Subscribed to ${channelName}`)
+        }
+      })
+
+    return () => {
+      console.log(`[Supabase] Unsubscribing from ${channelName}`)
+      try {
+        channel.unsubscribe()
+      } catch (e) {
+        console.warn('[Supabase] Error unsubscribing:', e)
       }
-    })
-
-  return () => {
-    console.log(`[Supabase] Unsubscribing from ${channelName}`)
-    channel.unsubscribe()
+    }
+  } catch (error) {
+    console.error('[Supabase] Error subscribing to channel:', error)
+    return () => {}
   }
 }
 
