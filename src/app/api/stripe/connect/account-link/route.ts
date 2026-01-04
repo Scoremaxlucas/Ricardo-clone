@@ -60,12 +60,12 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
-    // Get address from UserAddress table (with fallback to legacy fields)
+    // Get address from UserAddress table
     const mainAddress = await getMainAddress(userId)
-    const addressStreet = mainAddress?.street || user.street
-    const addressStreetNumber = mainAddress?.streetNumber || user.streetNumber
-    const addressPostalCode = mainAddress?.postalCode || user.postalCode
-    const addressCity = mainAddress?.city || user.city
+    const addressStreet = mainAddress?.street || null
+    const addressStreetNumber = mainAddress?.streetNumber || null
+    const addressPostalCode = mainAddress?.postalCode || null
+    const addressCity = mainAddress?.city || null
 
     // Extrahiere Felder (können undefined sein wenn Migration noch nicht ausgeführt wurde)
     const connectOnboardingStatus = (user as any).connectOnboardingStatus as string | undefined

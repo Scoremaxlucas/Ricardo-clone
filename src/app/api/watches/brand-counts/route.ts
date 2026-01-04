@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { prisma } from '@/lib/prisma'
 import { apiCache, generateCacheKey } from '@/lib/api-cache'
+import { getMainAddress } from '@/lib/address'
 
 /**
  * API-Route für präzise Marken-Anzahlen
@@ -54,18 +55,7 @@ export async function GET(request: NextRequest) {
       whereClause.condition = condition
     }
 
-    // Standort-Filter
-    // NOTE: This still uses legacy User.postalCode field for filtering.
-    // After final migration, this should be updated to filter via UserAddress table.
-    // For now, the legacy field still exists (marked @deprecated) so this works.
-    if (postalCode) {
-      whereClause.seller = {
-        postalCode: {
-          contains: postalCode,
-          mode: 'insensitive',
-        },
-      }
-    }
+    // Standort-Filter wird nach dem Laden der Watches via UserAddress angewendet
 
     // Kategorie-Filter (wenn vorhanden)
     if (category) {
@@ -221,12 +211,34 @@ export async function GET(request: NextRequest) {
         },
         seller: {
           select: {
-            city: true,
-            postalCode: true,
+            id: true,
           },
         },
       },
     })
+
+    // Filter nach postalCode via UserAddress (wenn gesetzt)
+    if (postalCode && watches.length > 0) {
+      // Sammle alle Seller-IDs
+      const sellerIds = Array.from(new Set(watches.map(w => w.seller?.id).filter(Boolean))) as string[]
+      
+      // Hole alle Seller-Addresses aus UserAddress
+      const sellerAddresses = await Promise.all(
+        sellerIds.map(async id => ({
+          id,
+          address: await getMainAddress(id),
+        }))
+      )
+      const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
+
+      // Filtere Watches nach postalCode
+      watches = watches.filter(watch => {
+        if (!watch.seller?.id) return false
+        const address = addressMap.get(watch.seller.id)
+        if (!address?.postalCode) return false
+        return address.postalCode.toLowerCase().includes(postalCode.toLowerCase())
+      })
+    }
 
     // Wenn Suchbegriff vorhanden, filtere intelligent
     if (query) {
