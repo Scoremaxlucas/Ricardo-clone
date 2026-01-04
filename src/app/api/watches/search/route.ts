@@ -1,4 +1,4 @@
-import { shouldShowDetailedErrors } from "@/lib/env"
+import { shouldShowDetailedErrors } from '@/lib/env'
 import { searchListings, type SearchFilters, type SearchSort } from '@/lib/search'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -54,7 +54,7 @@ export async function GET(request: NextRequest) {
     const sortBy = searchParams.get('sortBy') || 'relevance'
     const limitStr = searchParams.get('limit')
     const offsetStr = searchParams.get('offset')
-    
+
     // RICARDO-LEVEL: Extended filter parameters
     const freeShipping = searchParams.get('freeShipping') === 'true'
     const withShipping = searchParams.get('withShipping') === 'true'

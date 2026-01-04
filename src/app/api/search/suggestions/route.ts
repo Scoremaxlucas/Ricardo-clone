@@ -38,14 +38,40 @@ const categories = [
 
 // Popular luxury watch brands
 const popularBrands = [
-  'Rolex', 'Omega', 'Patek Philippe', 'Audemars Piguet', 'Tag Heuer',
-  'Breitling', 'IWC', 'Cartier', 'Tudor', 'Longines', 'Tissot',
-  'Jaeger-LeCoultre', 'Zenith', 'Hublot', 'Panerai', 'Vacheron Constantin',
-  'A. Lange & Söhne', 'Blancpain', 'Chopard', 'Girard-Perregaux',
+  'Rolex',
+  'Omega',
+  'Patek Philippe',
+  'Audemars Piguet',
+  'Tag Heuer',
+  'Breitling',
+  'IWC',
+  'Cartier',
+  'Tudor',
+  'Longines',
+  'Tissot',
+  'Jaeger-LeCoultre',
+  'Zenith',
+  'Hublot',
+  'Panerai',
+  'Vacheron Constantin',
+  'A. Lange & Söhne',
+  'Blancpain',
+  'Chopard',
+  'Girard-Perregaux',
   // Tech brands
-  'Apple', 'Samsung', 'Sony', 'Canon', 'Nikon', 'DJI',
+  'Apple',
+  'Samsung',
+  'Sony',
+  'Canon',
+  'Nikon',
+  'DJI',
   // Fashion brands
-  'Nike', 'Adidas', 'Louis Vuitton', 'Gucci', 'Prada', 'Hermès',
+  'Nike',
+  'Adidas',
+  'Louis Vuitton',
+  'Gucci',
+  'Prada',
+  'Hermès',
 ]
 
 interface SuggestionItem {
@@ -85,7 +111,7 @@ export async function GET(request: NextRequest) {
     }
 
     const queryLower = query.trim().toLowerCase()
-    
+
     // If not enhanced mode, return simple suggestions (backward compatible)
     if (!enhanced) {
       let suggestions: string[] = []
@@ -94,7 +120,7 @@ export async function GET(request: NextRequest) {
       } else if (queryLower.length === 0) {
         suggestions = await getPopularSearches(limit)
       }
-      
+
       const response = {
         suggestions,
         query: query.trim(),
@@ -102,7 +128,10 @@ export async function GET(request: NextRequest) {
       }
       apiCache.set(cacheKey, response, 60000)
       return NextResponse.json(response, {
-        headers: { 'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120', 'X-Cache': 'MISS' },
+        headers: {
+          'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=120',
+          'X-Cache': 'MISS',
+        },
       })
     }
 
@@ -111,10 +140,13 @@ export async function GET(request: NextRequest) {
 
     if (queryLower.length >= 2) {
       // 1. Category suggestions (match category names)
-      const matchingCategories = categories.filter(
-        c => c.name.toLowerCase().includes(queryLower) || c.slug.toLowerCase().includes(queryLower)
-      ).slice(0, 3)
-      
+      const matchingCategories = categories
+        .filter(
+          c =>
+            c.name.toLowerCase().includes(queryLower) || c.slug.toLowerCase().includes(queryLower)
+        )
+        .slice(0, 3)
+
       for (const cat of matchingCategories) {
         enhancedSuggestions.push({
           type: 'category',
@@ -126,10 +158,10 @@ export async function GET(request: NextRequest) {
       }
 
       // 2. Brand suggestions (match brand names)
-      const matchingBrands = popularBrands.filter(
-        b => b.toLowerCase().includes(queryLower)
-      ).slice(0, 3)
-      
+      const matchingBrands = popularBrands
+        .filter(b => b.toLowerCase().includes(queryLower))
+        .slice(0, 3)
+
       for (const brand of matchingBrands) {
         // Get count of items from this brand
         try {
@@ -179,9 +211,10 @@ export async function GET(request: NextRequest) {
         for (const product of products) {
           let images: string[] = []
           try {
-            images = typeof product.images === 'string' ? JSON.parse(product.images) : product.images || []
+            images =
+              typeof product.images === 'string' ? JSON.parse(product.images) : product.images || []
           } catch {}
-          
+
           enhancedSuggestions.push({
             type: 'product',
             value: product.id,
@@ -196,7 +229,10 @@ export async function GET(request: NextRequest) {
       }
 
       // 4. Text suggestions (from search history)
-      const textSuggestions = await getSearchSuggestions(query.trim(), limit - enhancedSuggestions.length)
+      const textSuggestions = await getSearchSuggestions(
+        query.trim(),
+        limit - enhancedSuggestions.length
+      )
       for (const text of textSuggestions) {
         // Avoid duplicates
         if (!enhancedSuggestions.some(s => s.label.toLowerCase() === text.toLowerCase())) {
@@ -218,7 +254,7 @@ export async function GET(request: NextRequest) {
           icon: '🔥',
         })
       }
-      
+
       // Add some popular categories
       for (const cat of categories.slice(0, 4)) {
         enhancedSuggestions.push({

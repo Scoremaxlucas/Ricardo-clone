@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * RICARDO-LEVEL: Personalized Recommendations API
- * 
+ *
  * Analyzes user behavior to provide personalized product recommendations:
  * - Browsing history (recently viewed)
  * - Favorites
@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
 
     const userId = session.user.id
     const recommendations: RecommendedWatch[] = []
-    
+
     // 1. Recently viewed items (Browsing History)
     if (type === 'all' || type === 'browsing') {
       try {
@@ -62,7 +62,11 @@ export async function GET(request: NextRequest) {
                 brand: true,
                 price: true,
                 categories: {
-                  select: { categorySlug: true, subcategorySlug: true },
+                  select: {
+                    category: {
+                      select: { slug: true },
+                    },
+                  },
                 },
               },
             },
@@ -77,9 +81,11 @@ export async function GET(request: NextRequest) {
             max: Math.max(...recentlyViewed.map(v => v.watch?.price || 0)) * 1.3,
           }
           const viewedIds = recentlyViewed.map(v => v.watch?.id).filter(Boolean) as string[]
-          const viewedCategories = [...new Set(
-            recentlyViewed.flatMap(v => v.watch?.categories?.map(c => c.categorySlug) || [])
-          )]
+          const viewedCategories = [
+            ...new Set(
+              recentlyViewed.flatMap(v => v.watch?.categories?.map(c => c.category?.slug) || [])
+            ),
+          ]
 
           const similarToViewed = await prisma.watch.findMany({
             where: {
@@ -94,10 +100,7 @@ export async function GET(request: NextRequest) {
                   ],
                 },
                 {
-                  OR: [
-                    { auctionEnd: null },
-                    { auctionEnd: { gt: new Date() } },
-                  ],
+                  OR: [{ auctionEnd: null }, { auctionEnd: { gt: new Date() } }],
                 },
               ],
             },
@@ -146,7 +149,11 @@ export async function GET(request: NextRequest) {
                 brand: true,
                 price: true,
                 categories: {
-                  select: { categorySlug: true, subcategorySlug: true },
+                  select: {
+                    category: {
+                      select: { slug: true },
+                    },
+                  },
                 },
               },
             },
@@ -174,10 +181,7 @@ export async function GET(request: NextRequest) {
                   ],
                 },
                 {
-                  OR: [
-                    { auctionEnd: null },
-                    { auctionEnd: { gt: new Date() } },
-                  ],
+                  OR: [{ auctionEnd: null }, { auctionEnd: { gt: new Date() } }],
                 },
               ],
             },
@@ -226,7 +230,11 @@ export async function GET(request: NextRequest) {
                 brand: true,
                 price: true,
                 categories: {
-                  select: { categorySlug: true, subcategorySlug: true },
+                  select: {
+                    category: {
+                      select: { slug: true },
+                    },
+                  },
                 },
               },
             },
@@ -245,10 +253,7 @@ export async function GET(request: NextRequest) {
                 { moderationStatus: { notIn: ['rejected', 'blocked', 'removed'] } },
                 { brand: { in: purchasedBrands as string[] } },
                 {
-                  OR: [
-                    { auctionEnd: null },
-                    { auctionEnd: { gt: new Date() } },
-                  ],
+                  OR: [{ auctionEnd: null }, { auctionEnd: { gt: new Date() } }],
                 },
               ],
             },
@@ -294,10 +299,7 @@ export async function GET(request: NextRequest) {
               { sellerId: { not: userId } },
               { moderationStatus: { notIn: ['rejected', 'blocked', 'removed'] } },
               {
-                OR: [
-                  { auctionEnd: null },
-                  { auctionEnd: { gt: new Date() } },
-                ],
+                OR: [{ auctionEnd: null }, { auctionEnd: { gt: new Date() } }],
               },
             ],
           },
@@ -350,7 +352,7 @@ export async function GET(request: NextRequest) {
       try {
         images = typeof w.images === 'string' ? JSON.parse(w.images) : w.images || []
       } catch {}
-      
+
       return {
         id: w.id,
         title: w.title,
@@ -389,10 +391,7 @@ async function getTrendingRecommendations(limit: number) {
     const trending = await prisma.watch.findMany({
       where: {
         moderationStatus: { notIn: ['rejected', 'blocked', 'removed'] },
-        OR: [
-          { auctionEnd: null },
-          { auctionEnd: { gt: new Date() } },
-        ],
+        OR: [{ auctionEnd: null }, { auctionEnd: { gt: new Date() } }],
       },
       select: {
         id: true,
@@ -429,7 +428,7 @@ async function getTrendingRecommendations(limit: number) {
       try {
         images = typeof w.images === 'string' ? JSON.parse(w.images) : w.images || []
       } catch {}
-      
+
       return {
         id: w.id,
         title: w.title,

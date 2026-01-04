@@ -3,7 +3,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * RICARDO-LEVEL: Similar Articles API
- * 
+ *
  * Returns similar listings based on:
  * 1. Same category/subcategory
  * 2. Same or similar brand
@@ -35,10 +35,7 @@ interface SimilarWatch {
   similarityReason: string
 }
 
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
     const { searchParams } = new URL(request.url)
@@ -57,23 +54,21 @@ export async function GET(
         sellerId: true,
         categories: {
           select: {
-            categorySlug: true,
-            subcategorySlug: true,
+            category: {
+              select: { slug: true },
+            },
           },
         },
       },
     })
 
     if (!sourceWatch) {
-      return NextResponse.json(
-        { error: 'Watch not found', similar: [] },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: 'Watch not found', similar: [] }, { status: 404 })
     }
 
     // Get category slugs
-    const categorySlugs = sourceWatch.categories.map(c => c.categorySlug)
-    const subcategorySlugs = sourceWatch.categories.map(c => c.subcategorySlug).filter(Boolean)
+    const categorySlugs = sourceWatch.categories.map(c => c.category?.slug).filter(Boolean) as string[]
+    const subcategorySlugs: string[] = [] // WatchCategory doesn't have subcategory, removed
 
     // Calculate price range (±30%)
     const minPrice = sourceWatch.price * 0.7
@@ -82,14 +77,14 @@ export async function GET(
     // Build similarity query using PostgreSQL
     const similarWatches = await prisma.$queryRaw<SimilarWatch[]>`
       WITH source AS (
-        SELECT 
+        SELECT
           ${sourceWatch.id} as id,
           ${sourceWatch.title || ''} as title,
           ${sourceWatch.brand || ''} as brand,
           ${sourceWatch.price} as price
       ),
       candidates AS (
-        SELECT 
+        SELECT
           w.id,
           w.title,
           w.brand,
@@ -108,10 +103,10 @@ export async function GET(
             CASE WHEN lower(w.brand) = lower(${sourceWatch.brand || ''}) THEN 40 ELSE 0 END
             +
             -- Similar price (within 20%): +30 points
-            CASE 
+            CASE
               WHEN w.price BETWEEN ${sourceWatch.price * 0.8} AND ${sourceWatch.price * 1.2} THEN 30
               WHEN w.price BETWEEN ${minPrice} AND ${maxPrice} THEN 15
-              ELSE 0 
+              ELSE 0
             END
             +
             -- Same condition: +15 points
@@ -121,14 +116,14 @@ export async function GET(
             COALESCE(similarity(lower(w.title), lower(${sourceWatch.title || ''})) * 15, 0)
           ) as similarity_score,
           -- Determine primary similarity reason
-          CASE 
+          CASE
             WHEN lower(w.brand) = lower(${sourceWatch.brand || ''}) THEN 'Gleiche Marke'
             WHEN w.price BETWEEN ${sourceWatch.price * 0.8} AND ${sourceWatch.price * 1.2} THEN 'Ähnlicher Preis'
             WHEN w.condition = ${sourceWatch.condition || ''} THEN 'Gleicher Zustand'
             ELSE 'Ähnliches Produkt'
           END as similarity_reason
         FROM watches w
-        WHERE 
+        WHERE
           -- Exclude the source watch
           w.id != ${sourceWatch.id}
           -- Exclude same seller
@@ -137,12 +132,12 @@ export async function GET(
           AND (w."moderationStatus" IS NULL OR w."moderationStatus" NOT IN ('rejected', 'blocked', 'removed', 'ended'))
           -- Not sold
           AND NOT EXISTS (
-            SELECT 1 FROM purchases p 
+            SELECT 1 FROM purchases p
             WHERE p."watchId" = w.id AND p.status != 'cancelled'
           )
           -- Auction not expired (if applicable)
           AND (
-            w."auctionEnd" IS NULL 
+            w."auctionEnd" IS NULL
             OR w."auctionEnd" > NOW()
           )
           -- At least some relevance: same brand OR similar price OR in same category
@@ -150,16 +145,14 @@ export async function GET(
             lower(w.brand) = lower(${sourceWatch.brand || ''})
             OR w.price BETWEEN ${minPrice} AND ${maxPrice}
             OR EXISTS (
-              SELECT 1 FROM "WatchCategory" wc 
-              WHERE wc."watchId" = w.id 
-              AND (
-                wc."categorySlug" = ANY(${categorySlugs}::text[])
-                ${subcategorySlugs.length > 0 ? `OR wc."subcategorySlug" = ANY(${subcategorySlugs}::text[])` : ''}
-              )
+              SELECT 1 FROM watch_categories wc
+              JOIN categories c ON c.id = wc."categoryId"
+              WHERE wc."watchId" = w.id
+              AND c.slug = ANY(${categorySlugs}::text[])
             )
           )
       )
-      SELECT 
+      SELECT
         c.id,
         c.title,
         c.brand,
@@ -201,7 +194,7 @@ export async function GET(
       } catch {
         images = []
       }
-      
+
       return {
         id: w.id,
         title: w.title,
@@ -215,10 +208,12 @@ export async function GET(
         auctionEnd: w.auctionEnd,
         createdAt: w.createdAt,
         sellerId: w.sellerId,
-        seller: seller ? {
-          city: seller.city,
-          postalCode: seller.postalCode,
-        } : null,
+        seller: seller
+          ? {
+              city: seller.city,
+              postalCode: seller.postalCode,
+            }
+          : null,
         similarityScore: Number(w.similarityScore),
         similarityReason: w.similarityReason,
       }

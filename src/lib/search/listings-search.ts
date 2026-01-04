@@ -86,13 +86,13 @@ export interface SearchFilters {
   postalCode?: string
   sellerId?: string
   // RICARDO-LEVEL: Extended filters
-  freeShipping?: boolean  // Only items with free shipping
-  withShipping?: boolean  // Only items that can be shipped (not pickup only)
-  paymentProtection?: boolean  // Only items with buyer protection
-  verifiedSeller?: boolean  // Only verified sellers
-  canton?: string  // Swiss canton (ZH, BE, VD, etc.)
-  hasImages?: boolean  // Only items with images
-  endingSoon?: boolean  // Auctions ending within 24h
+  freeShipping?: boolean // Only items with free shipping
+  withShipping?: boolean // Only items that can be shipped (not pickup only)
+  paymentProtection?: boolean // Only items with buyer protection
+  verifiedSeller?: boolean // Only verified sellers
+  canton?: string // Swiss canton (ZH, BE, VD, etc.)
+  hasImages?: boolean // Only items with images
+  endingSoon?: boolean // Auctions ending within 24h
 }
 
 export interface SearchSort {
@@ -312,7 +312,7 @@ async function executeSearchQuery(params: {
   }
 
   // RICARDO-LEVEL: Extended Filters
-  
+
   // Filter: Free Shipping
   if (filters.freeShipping === true) {
     conditions.push(`(
@@ -321,7 +321,7 @@ async function executeSearchQuery(params: {
       OR w."shippingMethod" LIKE '%kostenlos%'
     )`)
   }
-  
+
   // Filter: With Shipping (not pickup only)
   if (filters.withShipping === true) {
     conditions.push(`(
@@ -338,12 +338,12 @@ async function executeSearchQuery(params: {
       )
     )`)
   }
-  
+
   // Filter: Payment Protection
   if (filters.paymentProtection === true) {
     conditions.push(`w."paymentProtectionEnabled" = true`)
   }
-  
+
   // Filter: Verified Seller
   if (filters.verifiedSeller === true) {
     conditions.push(`(
@@ -354,40 +354,40 @@ async function executeSearchQuery(params: {
       )
     )`)
   }
-  
+
   // Filter: Canton (Swiss cantons by postal code ranges)
   if (filters.canton) {
     const cantonPostalRanges: Record<string, string[]> = {
-      'ZH': ['80', '81', '82', '83', '84'],
-      'BE': ['30', '31', '32', '33', '34', '35', '36', '37', '38'],
-      'LU': ['60', '61', '62'],
-      'UR': ['64'],
-      'SZ': ['64', '65'],
-      'OW': ['60', '63'],
-      'NW': ['63'],
-      'GL': ['87'],
-      'ZG': ['63'],
-      'FR': ['17', '31'],
-      'SO': ['45', '46', '47', '48', '25', '26'],
-      'BS': ['40'],
-      'BL': ['41', '42', '43', '44'],
-      'SH': ['82'],
-      'AR': ['90', '91'],
-      'AI': ['90', '91'],
-      'SG': ['90', '91', '94', '95', '96'],
-      'GR': ['70', '71', '72', '73', '74', '75', '76'],
-      'AG': ['50', '51', '52', '53', '54', '55', '56', '80'],
-      'TG': ['83', '85', '86'],
-      'TI': ['65', '66', '67', '68', '69'],
-      'VD': ['10', '11', '12', '13', '14', '15', '16', '18', '19'],
-      'VS': ['19', '39'],
-      'NE': ['20', '21', '22', '23', '24'],
-      'GE': ['12'],
-      'JU': ['28', '29'],
+      ZH: ['80', '81', '82', '83', '84'],
+      BE: ['30', '31', '32', '33', '34', '35', '36', '37', '38'],
+      LU: ['60', '61', '62'],
+      UR: ['64'],
+      SZ: ['64', '65'],
+      OW: ['60', '63'],
+      NW: ['63'],
+      GL: ['87'],
+      ZG: ['63'],
+      FR: ['17', '31'],
+      SO: ['45', '46', '47', '48', '25', '26'],
+      BS: ['40'],
+      BL: ['41', '42', '43', '44'],
+      SH: ['82'],
+      AR: ['90', '91'],
+      AI: ['90', '91'],
+      SG: ['90', '91', '94', '95', '96'],
+      GR: ['70', '71', '72', '73', '74', '75', '76'],
+      AG: ['50', '51', '52', '53', '54', '55', '56', '80'],
+      TG: ['83', '85', '86'],
+      TI: ['65', '66', '67', '68', '69'],
+      VD: ['10', '11', '12', '13', '14', '15', '16', '18', '19'],
+      VS: ['19', '39'],
+      NE: ['20', '21', '22', '23', '24'],
+      GE: ['12'],
+      JU: ['28', '29'],
     }
     const ranges = cantonPostalRanges[filters.canton.toUpperCase()]
     if (ranges && ranges.length > 0) {
-      const cantonConditions = ranges.map((prefix) => {
+      const cantonConditions = ranges.map(prefix => {
         parameters.push(prefix)
         return `u."postalCode" LIKE $${paramIndex++} || '%'`
       })
@@ -400,7 +400,7 @@ async function executeSearchQuery(params: {
       )`)
     }
   }
-  
+
   // Filter: Has Images
   if (filters.hasImages === true) {
     conditions.push(`(
@@ -409,7 +409,7 @@ async function executeSearchQuery(params: {
       AND w.images != ''
     )`)
   }
-  
+
   // Filter: Ending Soon (auctions ending within 24h)
   if (filters.endingSoon === true) {
     const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000)
@@ -494,14 +494,14 @@ async function executeSearchQuery(params: {
     +
     -- ============ QUALITY SIGNALS (15% of base score) ============
     -- Image count bonus (more images = better quality listing)
-    CASE 
+    CASE
       WHEN array_length(string_to_array(COALESCE(w.images, '[]'), ','), 1) >= 5 THEN 4.0
       WHEN array_length(string_to_array(COALESCE(w.images, '[]'), ','), 1) >= 3 THEN 2.5
       WHEN array_length(string_to_array(COALESCE(w.images, '[]'), ','), 1) >= 1 THEN 1.0
       ELSE 0 END
     +
     -- Description quality bonus
-    CASE 
+    CASE
       WHEN length(COALESCE(w.description, '')) > 500 THEN 3.0
       WHEN length(COALESCE(w.description, '')) > 200 THEN 2.0
       WHEN length(COALESCE(w.description, '')) > 50 THEN 1.0
@@ -543,7 +543,7 @@ async function executeSearchQuery(params: {
     +
     -- Seller with good rating bonus
     COALESCE((
-      SELECT CASE 
+      SELECT CASE
         WHEN u."positiveRatings" > 50 AND u."positiveRatings" > u."negativeRatings" * 20 THEN 2.0
         WHEN u."positiveRatings" > 10 AND u."positiveRatings" > u."negativeRatings" * 10 THEN 1.0
         WHEN u."positiveRatings" > 0 THEN 0.5
@@ -556,7 +556,7 @@ async function executeSearchQuery(params: {
     +
     -- ============ AUCTION URGENCY (auction-specific) ============
     -- Auctions ending soon get a boost
-    CASE 
+    CASE
       WHEN w."isAuction" = true AND w."auctionEnd" < NOW() + INTERVAL '1 hour' THEN 5.0
       WHEN w."isAuction" = true AND w."auctionEnd" < NOW() + INTERVAL '6 hours' THEN 3.0
       WHEN w."isAuction" = true AND w."auctionEnd" < NOW() + INTERVAL '24 hours' THEN 1.5

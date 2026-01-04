@@ -181,7 +181,7 @@ function SearchPageContent() {
 
       setWatches(watchesData)
       setTotalResults(data.total || watchesData.length)
-      
+
       // Set "Did you mean?" suggestion if provided
       if (data.didYouMean && data.didYouMean !== q.toLowerCase()) {
         setDidYouMean(data.didYouMean)

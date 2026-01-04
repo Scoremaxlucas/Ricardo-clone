@@ -64,11 +64,13 @@ export function HeaderSearch({
         setSuggestions(data.enhancedSuggestions)
       } else if (data.suggestions && Array.isArray(data.suggestions)) {
         // Fallback to simple suggestions
-        setSuggestions(data.suggestions.map((s: string) => ({
-          type: 'text' as const,
-          value: s,
-          label: s,
-        })))
+        setSuggestions(
+          data.suggestions.map((s: string) => ({
+            type: 'text' as const,
+            value: s,
+            label: s,
+          }))
+        )
       } else {
         setSuggestions([])
       }
@@ -109,29 +111,33 @@ export function HeaderSearch({
       // If it's an enhanced suggestion object
       if (selectedSuggestion && typeof selectedSuggestion === 'object') {
         const suggestion = selectedSuggestion as EnhancedSuggestion
-        
+
         if (suggestion.type === 'category' && suggestion.categorySlug) {
           router.push(`/categories/${suggestion.categorySlug}`)
           return
         }
-        
+
         if (suggestion.type === 'product' && suggestion.productId) {
           router.push(`/watches/${suggestion.productId}`)
           return
         }
-        
+
         if (suggestion.type === 'brand') {
-          router.push(`/search?q=${encodeURIComponent(suggestion.value)}&brand=${encodeURIComponent(suggestion.value)}`)
+          router.push(
+            `/search?q=${encodeURIComponent(suggestion.value)}&brand=${encodeURIComponent(suggestion.value)}`
+          )
           return
         }
-        
+
         // Text suggestion - use the value
         router.push(`/search?q=${encodeURIComponent(suggestion.value)}`)
         return
       }
-      
+
       // Simple string query
-      const searchTerm = (typeof selectedSuggestion === 'string' ? selectedSuggestion : query).trim()
+      const searchTerm = (
+        typeof selectedSuggestion === 'string' ? selectedSuggestion : query
+      ).trim()
       if (!searchTerm) return
       router.push(`/search?q=${encodeURIComponent(searchTerm)}`)
     },
@@ -312,9 +318,9 @@ export function HeaderSearch({
                 const brands = suggestions.filter(s => s.type === 'brand')
                 const products = suggestions.filter(s => s.type === 'product')
                 const texts = suggestions.filter(s => s.type === 'text')
-                
+
                 let globalIndex = -1
-                
+
                 return (
                   <>
                     {/* Categories Section */}
@@ -323,7 +329,7 @@ export function HeaderSearch({
                         <div className="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
                           Kategorien
                         </div>
-                        {categories.map((suggestion) => {
+                        {categories.map(suggestion => {
                           globalIndex++
                           const idx = globalIndex
                           return (
@@ -333,16 +339,16 @@ export function HeaderSearch({
                               onClick={() => handleSubmit(suggestion)}
                               onMouseEnter={() => setSelectedIndex(idx)}
                               className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                                idx === selectedIndex
-                                  ? 'bg-primary-50'
-                                  : 'hover:bg-gray-50'
+                                idx === selectedIndex ? 'bg-primary-50' : 'hover:bg-gray-50'
                               }`}
                             >
                               <span className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary-100 text-lg">
                                 {suggestion.icon || '📁'}
                               </span>
-                              <div className="flex-1 min-w-0">
-                                <span className={`block truncate font-medium ${idx === selectedIndex ? 'text-primary-700' : 'text-gray-900'}`}>
+                              <div className="min-w-0 flex-1">
+                                <span
+                                  className={`block truncate font-medium ${idx === selectedIndex ? 'text-primary-700' : 'text-gray-900'}`}
+                                >
                                   {suggestion.label}
                                 </span>
                               </div>
@@ -352,14 +358,14 @@ export function HeaderSearch({
                         })}
                       </div>
                     )}
-                    
+
                     {/* Brands Section */}
                     {brands.length > 0 && (
                       <div className="border-b border-gray-100 py-2">
                         <div className="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
                           Marken
                         </div>
-                        {brands.map((suggestion) => {
+                        {brands.map(suggestion => {
                           globalIndex++
                           const idx = globalIndex
                           return (
@@ -369,14 +375,14 @@ export function HeaderSearch({
                               onClick={() => handleSubmit(suggestion)}
                               onMouseEnter={() => setSelectedIndex(idx)}
                               className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                                idx === selectedIndex
-                                  ? 'bg-primary-50'
-                                  : 'hover:bg-gray-50'
+                                idx === selectedIndex ? 'bg-primary-50' : 'hover:bg-gray-50'
                               }`}
                             >
                               <Tag className="h-5 w-5 flex-shrink-0 text-amber-500" />
-                              <div className="flex-1 min-w-0">
-                                <span className={`block truncate font-medium ${idx === selectedIndex ? 'text-primary-700' : 'text-gray-900'}`}>
+                              <div className="min-w-0 flex-1">
+                                <span
+                                  className={`block truncate font-medium ${idx === selectedIndex ? 'text-primary-700' : 'text-gray-900'}`}
+                                >
                                   {suggestion.label}
                                 </span>
                               </div>
@@ -386,14 +392,14 @@ export function HeaderSearch({
                         })}
                       </div>
                     )}
-                    
+
                     {/* Products Section */}
                     {products.length > 0 && (
                       <div className="border-b border-gray-100 py-2">
                         <div className="px-3 pb-1 text-xs font-medium uppercase tracking-wider text-gray-400">
                           Artikel
                         </div>
-                        {products.map((suggestion) => {
+                        {products.map(suggestion => {
                           globalIndex++
                           const idx = globalIndex
                           return (
@@ -403,9 +409,7 @@ export function HeaderSearch({
                               onClick={() => handleSubmit(suggestion)}
                               onMouseEnter={() => setSelectedIndex(idx)}
                               className={`flex w-full items-center gap-3 px-4 py-2.5 text-left transition-colors ${
-                                idx === selectedIndex
-                                  ? 'bg-primary-50'
-                                  : 'hover:bg-gray-50'
+                                idx === selectedIndex ? 'bg-primary-50' : 'hover:bg-gray-50'
                               }`}
                             >
                               {suggestion.image ? (
@@ -423,8 +427,10 @@ export function HeaderSearch({
                                   <Package className="h-5 w-5 text-gray-400" />
                                 </div>
                               )}
-                              <div className="flex-1 min-w-0">
-                                <span className={`block truncate text-sm font-medium ${idx === selectedIndex ? 'text-primary-700' : 'text-gray-900'}`}>
+                              <div className="min-w-0 flex-1">
+                                <span
+                                  className={`block truncate text-sm font-medium ${idx === selectedIndex ? 'text-primary-700' : 'text-gray-900'}`}
+                                >
                                   {suggestion.label}
                                 </span>
                               </div>
@@ -434,7 +440,7 @@ export function HeaderSearch({
                         })}
                       </div>
                     )}
-                    
+
                     {/* Text Suggestions Section */}
                     {texts.length > 0 && (
                       <div className="py-2">
@@ -443,7 +449,7 @@ export function HeaderSearch({
                             Suchvorschläge
                           </div>
                         )}
-                        {texts.map((suggestion) => {
+                        {texts.map(suggestion => {
                           globalIndex++
                           const idx = globalIndex
                           return (

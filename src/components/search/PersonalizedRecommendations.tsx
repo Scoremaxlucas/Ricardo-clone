@@ -1,7 +1,16 @@
 'use client'
 
 import { ProductCard } from '@/components/ui/ProductCard'
-import { ChevronLeft, ChevronRight, Eye, Heart, Loader2, ShoppingBag, Sparkles, TrendingUp } from 'lucide-react'
+import {
+  ChevronLeft,
+  ChevronRight,
+  Eye,
+  Heart,
+  Loader2,
+  ShoppingBag,
+  Sparkles,
+  TrendingUp,
+} from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
 interface RecommendedProduct {
@@ -172,17 +181,14 @@ export function PersonalizedRecommendations({
       <div className="relative">
         <div
           ref={scrollContainerRef}
-          className="scrollbar-hide -mx-4 flex gap-4 overflow-x-auto px-4 pb-4 scroll-smooth"
+          className="scrollbar-hide -mx-4 flex gap-4 overflow-x-auto scroll-smooth px-4 pb-4"
         >
           {products.map(product => {
             const TypeIcon = typeIcons[product.recommendationType]
             const colorClass = typeColors[product.recommendationType]
-            
+
             return (
-              <div
-                key={product.id}
-                className="w-[200px] flex-shrink-0 sm:w-[220px] md:w-[250px]"
-              >
+              <div key={product.id} className="w-[200px] flex-shrink-0 sm:w-[220px] md:w-[250px]">
                 <ProductCard
                   watch={{
                     id: product.id,
@@ -205,7 +211,9 @@ export function PersonalizedRecommendations({
                 {/* Recommendation reason badge */}
                 {showTypeIcon && (
                   <div className="mt-2 flex items-center gap-1.5">
-                    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${colorClass}`}>
+                    <span
+                      className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs ${colorClass}`}
+                    >
                       <TypeIcon className="mr-1 h-3 w-3" />
                       {product.recommendationReason}
                     </span>
@@ -219,10 +227,7 @@ export function PersonalizedRecommendations({
         {/* Mobile scroll indicators */}
         <div className="mt-2 flex justify-center gap-1 sm:hidden">
           {products.slice(0, Math.min(products.length, 8)).map((_, i) => (
-            <div
-              key={i}
-              className="h-1.5 w-1.5 rounded-full bg-gray-300"
-            />
+            <div key={i} className="h-1.5 w-1.5 rounded-full bg-gray-300" />
           ))}
         </div>
       </div>

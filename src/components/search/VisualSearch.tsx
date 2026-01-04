@@ -168,8 +168,8 @@ export function VisualSearch({ onClose, className = '' }: VisualSearchProps) {
             <h3 className="font-semibold text-gray-900">Bildersuche</h3>
           </div>
           {onClose && (
-            <button 
-              onClick={onClose} 
+            <button
+              onClick={onClose}
               className="text-gray-400 hover:text-gray-600"
               aria-label="Schliessen"
             >
@@ -187,7 +187,9 @@ export function VisualSearch({ onClose, className = '' }: VisualSearchProps) {
   // Loading state for checking enabled
   if (isEnabled === null) {
     return (
-      <div className={`flex items-center justify-center rounded-xl border border-gray-200 bg-white p-8 ${className}`}>
+      <div
+        className={`flex items-center justify-center rounded-xl border border-gray-200 bg-white p-8 ${className}`}
+      >
         <Loader2 className="h-6 w-6 animate-spin text-primary-600" aria-label="Lädt" />
       </div>
     )
@@ -205,8 +207,8 @@ export function VisualSearch({ onClose, className = '' }: VisualSearchProps) {
           </span>
         </div>
         {onClose && (
-          <button 
-            onClick={onClose} 
+          <button
+            onClick={onClose}
             className="text-gray-400 hover:text-gray-600"
             aria-label="Schliessen"
           >
@@ -232,9 +234,7 @@ export function VisualSearch({ onClose, className = '' }: VisualSearchProps) {
             <p className="mb-2 text-center text-gray-600">
               <span className="font-medium">Bild hierher ziehen</span> oder klicken zum Auswählen
             </p>
-            <p className="text-center text-sm text-gray-400">
-              JPG, PNG bis 10MB
-            </p>
+            <p className="text-center text-sm text-gray-400">JPG, PNG bis 10MB</p>
             <input
               ref={fileInputRef}
               type="file"
@@ -269,10 +269,8 @@ export function VisualSearch({ onClose, className = '' }: VisualSearchProps) {
                 <X className="h-4 w-4" />
               </button>
             </div>
-            
-            {error && (
-              <p className="text-center text-sm text-red-600">{error}</p>
-            )}
+
+            {error && <p className="text-center text-sm text-red-600">{error}</p>}
 
             <div className="flex justify-center gap-3">
               <button
@@ -313,7 +311,7 @@ export function VisualSearch({ onClose, className = '' }: VisualSearchProps) {
                   {Math.round(analysis.confidence * 100)}% sicher
                 </span>
               </div>
-              
+
               <div className="grid gap-2 text-sm">
                 <div className="flex items-center justify-between">
                   <span className="text-gray-500">Produkttyp:</span>
@@ -386,9 +384,7 @@ export function VisualSearch({ onClose, className = '' }: VisualSearchProps) {
             {results.length === 0 && (
               <div className="py-8 text-center">
                 <ImageIcon className="mx-auto mb-3 h-10 w-10 text-gray-300" />
-                <p className="text-gray-500">
-                  Keine ähnlichen Artikel gefunden.
-                </p>
+                <p className="text-gray-500">Keine ähnlichen Artikel gefunden.</p>
                 <button
                   onClick={handleSearchWithQuery}
                   className="mt-3 text-sm font-medium text-primary-600 hover:text-primary-700"

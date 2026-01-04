@@ -5,12 +5,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * RICARDO-LEVEL: Visual Search API
- * 
+ *
  * Analyzes an uploaded image using AI vision to:
  * 1. Identify the product type, brand, model
  * 2. Extract visual features (color, style)
  * 3. Search for similar products
- * 
+ *
  * Requires: OPENAI_API_KEY environment variable
  */
 
@@ -30,12 +30,12 @@ interface AnalysisResult {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     // Check for OpenAI API key
     const openaiKey = process.env.OPENAI_API_KEY
     if (!openaiKey) {
       return NextResponse.json(
-        { 
+        {
           error: 'Visual search not configured',
           message: 'OpenAI API key is required for visual search',
           enabled: false,
@@ -50,10 +50,7 @@ export async function POST(request: NextRequest) {
     const imageUrl = formData.get('imageUrl') as string | null
 
     if (!imageFile && !imageUrl) {
-      return NextResponse.json(
-        { error: 'No image provided' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: 'No image provided' }, { status: 400 })
     }
 
     // Convert image to base64 if it's a file
@@ -69,12 +66,9 @@ export async function POST(request: NextRequest) {
 
     // Call OpenAI Vision API
     const analysis = await analyzeImageWithOpenAI(imageData, openaiKey)
-    
+
     if (!analysis) {
-      return NextResponse.json(
-        { error: 'Could not analyze image' },
-        { status: 500 }
-      )
+      return NextResponse.json({ error: 'Could not analyze image' }, { status: 500 })
     }
 
     // Search for similar products based on analysis
@@ -87,10 +81,7 @@ export async function POST(request: NextRequest) {
     })
   } catch (error) {
     console.error('[VISUAL_SEARCH] Error:', error)
-    return NextResponse.json(
-      { error: 'Failed to process visual search' },
-      { status: 500 }
-    )
+    return NextResponse.json({ error: 'Failed to process visual search' }, { status: 500 })
   }
 }
 
@@ -99,8 +90,8 @@ export async function GET() {
   const openaiKey = process.env.OPENAI_API_KEY
   return NextResponse.json({
     enabled: !!openaiKey,
-    message: openaiKey 
-      ? 'Visual search is enabled' 
+    message: openaiKey
+      ? 'Visual search is enabled'
       : 'Visual search requires OPENAI_API_KEY to be configured',
   })
 }
@@ -113,7 +104,7 @@ async function analyzeImageWithOpenAI(
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${apiKey}`,
+        Authorization: `Bearer ${apiKey}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify({
@@ -134,13 +125,13 @@ Respond ONLY in JSON format:
 {
   "productType": "string",
   "brand": "string or null",
-  "model": "string or null", 
+  "model": "string or null",
   "category": "string or null",
   "style": "string or null",
   "color": "string or null",
   "searchQuery": "best search query in German",
   "confidence": 0.0-1.0
-}`
+}`,
           },
           {
             role: 'user',
@@ -201,10 +192,7 @@ async function searchSimilarProducts(analysis: AnalysisResult) {
   const whereConditions: any[] = [
     { moderationStatus: { notIn: ['rejected', 'blocked', 'removed'] } },
     {
-      OR: [
-        { auctionEnd: null },
-        { auctionEnd: { gt: new Date() } },
-      ],
+      OR: [{ auctionEnd: null }, { auctionEnd: { gt: new Date() } }],
     },
   ]
 
