@@ -362,7 +362,25 @@ export function VisualSearch({ onClose, className = '' }: VisualSearchProps) {
                 </h4>
                 <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 md:grid-cols-4">
                   {results.slice(0, 8).map(result => (
-                    <ProductCard key={result.id} product={result} variant="compact" />
+                    <ProductCard
+                      key={result.id}
+                      product={{
+                        id: result.id,
+                        title: result.title,
+                        brand: result.brand,
+                        model: result.model,
+                        price: result.price,
+                        buyNowPrice: result.buyNowPrice ?? undefined,
+                        images: result.images,
+                        condition: result.condition,
+                        isAuction: result.isAuction,
+                        auctionEnd: result.auctionEnd ?? undefined,
+                        createdAt: result.createdAt,
+                        city: result.city ?? undefined,
+                        postalCode: result.postalCode ?? undefined,
+                      }}
+                      variant="compact"
+                    />
                   ))}
                 </div>
                 {results.length > 8 && (
