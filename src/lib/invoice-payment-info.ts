@@ -3,6 +3,7 @@ import { PAYMENT_CONFIG } from './payment-config'
 import QRCode from 'qrcode'
 import { validateQRBill, formatValidationResult } from './qr-bill-validator'
 import { formatQRReference } from './qr-reference'
+import { getMainAddress } from './address'
 
 /**
  * Generiert Zahlungsinformationen für eine Rechnung
@@ -50,11 +51,6 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
           firstName: true,
           lastName: true,
           companyName: true,
-          street: true,
-          streetNumber: true,
-          postalCode: true,
-          city: true,
-          country: true,
           paymentMethods: true,
         },
       },
@@ -75,6 +71,9 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
   if (!invoice) {
     throw new Error('Rechnung nicht gefunden')
   }
+
+  // Fetch seller address from UserAddress table
+  const sellerAddress = invoice.seller?.id ? await getMainAddress(invoice.seller.id) : null
 
   // Prüfe ob es eine Credit Note (Korrektur-Abrechnung) ist
   const isCreditNote =
@@ -127,17 +126,17 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
 
   // Debtor-Adresse nur ausfüllen wenn Name vorhanden ist
   // WICHTIG: Für Swiss QR-Bill sollte das Land immer "CH" sein (Schweiz)
-  const debtorCountryRaw = invoice.seller.country || 'CH'
+  const debtorCountryRaw = sellerAddress?.country || 'CH'
   const debtorCountry = debtorCountryRaw.trim().toUpperCase().substring(0, 2)
   // Stelle sicher, dass es ein gültiges 2-stelliges Länderkürzel ist, sonst verwende CH
   const finalDebtorCountry = /^[A-Z]{2}$/.test(debtorCountry) ? debtorCountry : 'CH'
 
-  const finalDebtorAddress = hasDebtorInfo
+  const finalDebtorAddress = hasDebtorInfo && sellerAddress
     ? {
-        street: (invoice.seller.street || '').trim(),
-        streetNumber: (invoice.seller.streetNumber || '').trim(),
-        postalCode: (invoice.seller.postalCode || '').trim(),
-        city: (invoice.seller.city || '').trim(),
+        street: (sellerAddress.street || '').trim(),
+        streetNumber: (sellerAddress.streetNumber || '').trim(),
+        postalCode: (sellerAddress.postalCode || '').trim(),
+        city: (sellerAddress.city || '').trim(),
         country: finalDebtorCountry,
       }
     : {
@@ -197,7 +196,7 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
   let twintQRCodeDataUrl: string | null = null
   let twintDeepLink: string | null = null
 
-  if (invoice.seller.paymentMethods) {
+  if (invoice.seller?.paymentMethods) {
     try {
       const paymentMethods = JSON.parse(invoice.seller.paymentMethods)
       const twintMethod = paymentMethods.find((pm: any) => pm.type === 'twint')

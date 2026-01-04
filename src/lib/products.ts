@@ -1,4 +1,5 @@
 import { prisma } from '@/lib/prisma'
+import { getMainAddress } from './address'
 
 export interface ProductItem {
   id: string
@@ -79,8 +80,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         paymentProtectionEnabled: true,
         seller: {
           select: {
-            city: true,
-            postalCode: true,
+            id: true,
           },
         },
         bids: {

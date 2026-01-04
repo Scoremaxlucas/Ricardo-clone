@@ -2,6 +2,7 @@ import QRCode from 'qrcode'
 import { PAYMENT_CONFIG } from './payment-config'
 import { prisma } from './prisma'
 import { generateSCORReference, getReferenceType } from './qr-reference-scor'
+import { getMainAddress } from './address'
 
 /**
  * Generiert Zahlungsinformationen für einen Kauf
@@ -58,11 +59,6 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
               phone: true,
               paymentMethods: true,
               stripeConnectedAccountId: true,
-              street: true,
-              streetNumber: true,
-              postalCode: true,
-              city: true,
-              country: true,
             },
           },
         },
@@ -74,11 +70,6 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
           firstName: true,
           lastName: true,
           email: true,
-          street: true,
-          streetNumber: true,
-          postalCode: true,
-          city: true,
-          country: true,
         },
       },
     },
@@ -87,6 +78,12 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
   if (!purchase) {
     throw new Error('Purchase nicht gefunden')
   }
+
+  // Fetch addresses from UserAddress table
+  const sellerAddress = purchase.watch?.seller?.id
+    ? await getMainAddress(purchase.watch.seller.id)
+    : null
+  const buyerAddress = purchase.buyer?.id ? await getMainAddress(purchase.buyer.id) : null
 
   // Check if there's a Stripe payment (protected) or bank transfer (unprotected)
   // Query Order separately to check for Stripe payment
@@ -202,22 +199,22 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     referenceType: referenceType,
     creditorName: accountHolder || PAYMENT_CONFIG.creditorName,
     creditorAddress: {
-      street: seller.street || PAYMENT_CONFIG.address.street,
-      streetNumber: seller.streetNumber || PAYMENT_CONFIG.address.streetNumber,
-      postalCode: seller.postalCode || PAYMENT_CONFIG.address.postalCode,
-      city: seller.city || PAYMENT_CONFIG.address.city,
-      country: seller.country || PAYMENT_CONFIG.address.country,
+      street: sellerAddress?.street || PAYMENT_CONFIG.address.street,
+      streetNumber: sellerAddress?.streetNumber || PAYMENT_CONFIG.address.streetNumber,
+      postalCode: sellerAddress?.postalCode || PAYMENT_CONFIG.address.postalCode,
+      city: sellerAddress?.city || PAYMENT_CONFIG.address.city,
+      country: sellerAddress?.country || PAYMENT_CONFIG.address.country,
     },
     debtorName:
       `${purchase.buyer.firstName || ''} ${purchase.buyer.lastName || ''}`.trim() ||
       purchase.buyer.name ||
       'Käufer',
     debtorAddress: {
-      street: purchase.buyer.street || '',
-      streetNumber: purchase.buyer.streetNumber || '',
-      postalCode: purchase.buyer.postalCode || '',
-      city: purchase.buyer.city || '',
-      country: purchase.buyer.country || 'CH',
+      street: buyerAddress?.street || '',
+      streetNumber: buyerAddress?.streetNumber || '',
+      postalCode: buyerAddress?.postalCode || '',
+      city: buyerAddress?.city || '',
+      country: buyerAddress?.country || 'CH',
     },
   })
 

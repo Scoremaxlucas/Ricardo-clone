@@ -1,7 +1,7 @@
-import { shouldShowDetailedErrors } from "@/lib/env"
-import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
 import { getMainAddress, validateSwissPostalCode } from '@/lib/address'
+import { authOptions } from '@/lib/auth'
+import { shouldShowDetailedErrors } from '@/lib/env'
+import { prisma } from '@/lib/prisma'
 import { stripe } from '@/lib/stripe-server'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -30,11 +30,6 @@ export async function POST(request: NextRequest) {
         firstName: true,
         lastName: true,
         phone: true,
-        // Legacy address fields (fallback)
-        street: true,
-        streetNumber: true,
-        postalCode: true,
-        city: true,
         stripeConnectedAccountId: true,
         stripeOnboardingComplete: true,
         connectOnboardingStatus: true,
@@ -122,7 +117,8 @@ export async function POST(request: NextRequest) {
     // Baue Adresse auf wenn vorhanden (from UserAddress or legacy fields)
     const addressData: any = {}
     if (addressStreet || addressStreetNumber) {
-      addressData.line1 = [addressStreet, addressStreetNumber].filter(Boolean).join(' ') || undefined
+      addressData.line1 =
+        [addressStreet, addressStreetNumber].filter(Boolean).join(' ') || undefined
     }
     if (addressCity) {
       addressData.city = addressCity

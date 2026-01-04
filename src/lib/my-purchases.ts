@@ -48,10 +48,6 @@ export interface MyPurchaseItem {
       phone: string | null
       firstName: string | null
       lastName: string | null
-      street: string | null
-      streetNumber: string | null
-      postalCode: string | null
-      city: string | null
       paymentMethods: string | null
       stripeConnectedAccountId: string | null
       stripeOnboardingComplete: boolean
@@ -141,10 +137,6 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
                 phone: true,
                 firstName: true,
                 lastName: true,
-                street: true,
-                streetNumber: true,
-                postalCode: true,
-                city: true,
                 paymentMethods: true,
                 stripeConnectedAccountId: true,
                 stripeOnboardingComplete: true,
