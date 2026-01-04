@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest, { params }: { params: { userId: string } }) {
   try {
@@ -37,11 +38,6 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
         lastName: true,
         nickname: true,
         title: true,
-        street: true,
-        streetNumber: true,
-        postalCode: true,
-        city: true,
-        country: true,
         dateOfBirth: true,
         phone: true,
         verified: true,
@@ -60,7 +56,20 @@ export async function GET(request: NextRequest, { params }: { params: { userId: 
       return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
-    return NextResponse.json(user)
+    // Fetch address from UserAddress table
+    const address = await getMainAddress(userId)
+
+    // Extend user with address
+    const userWithAddress = {
+      ...user,
+      street: address?.street || null,
+      streetNumber: address?.streetNumber || null,
+      postalCode: address?.postalCode || null,
+      city: address?.city || null,
+      country: address?.country || 'Schweiz',
+    }
+
+    return NextResponse.json(userWithAddress)
   } catch (error: any) {
     console.error('Error fetching user:', error)
     return NextResponse.json({ message: 'Fehler beim Laden des Benutzers' }, { status: 500 })

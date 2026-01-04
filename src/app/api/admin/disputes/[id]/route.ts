@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -62,10 +63,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
                 lastName: true,
                 nickname: true,
                 phone: true,
-                street: true,
-                streetNumber: true,
-                postalCode: true,
-                city: true,
                 paymentMethods: true,
                 // Ricardo-Style: Seller warning info
                 disputeWarningCount: true,
@@ -84,10 +81,6 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
             lastName: true,
             nickname: true,
             phone: true,
-            street: true,
-            streetNumber: true,
-            postalCode: true,
-            city: true,
             paymentMethods: true,
           },
         },
@@ -97,6 +90,33 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     if (!purchase) {
       return NextResponse.json({ message: 'Kauf nicht gefunden' }, { status: 404 })
     }
+
+    // Fetch addresses from UserAddress table
+    const sellerAddress = purchase.watch?.seller?.id
+      ? await getMainAddress(purchase.watch.seller.id)
+      : null
+    const buyerAddress = purchase.buyer?.id ? await getMainAddress(purchase.buyer.id) : null
+
+    // Extend seller and buyer with address data
+    const sellerWithAddress = purchase.watch?.seller
+      ? {
+          ...purchase.watch.seller,
+          street: sellerAddress?.street || null,
+          streetNumber: sellerAddress?.streetNumber || null,
+          postalCode: sellerAddress?.postalCode || null,
+          city: sellerAddress?.city || null,
+        }
+      : null
+
+    const buyerWithAddress = purchase.buyer
+      ? {
+          ...purchase.buyer,
+          street: buyerAddress?.street || null,
+          streetNumber: buyerAddress?.streetNumber || null,
+          postalCode: buyerAddress?.postalCode || null,
+          city: buyerAddress?.city || null,
+        }
+      : null
 
     // Prüfe ob es ein Dispute oder Stornierungsantrag ist
     const isDispute = purchase.disputeOpenedAt !== null
@@ -151,10 +171,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const images = purchase.watch.images ? JSON.parse(purchase.watch.images) : []
 
     // Parse Payment Methods
-    const buyerPaymentMethods = purchase.buyer.paymentMethods
+    const buyerPaymentMethods = purchase.buyer?.paymentMethods
       ? JSON.parse(purchase.buyer.paymentMethods)
       : []
-    const sellerPaymentMethods = purchase.watch.seller.paymentMethods
+    const sellerPaymentMethods = purchase.watch?.seller?.paymentMethods
       ? JSON.parse(purchase.watch.seller.paymentMethods)
       : []
 
@@ -173,38 +193,38 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           buyNowPrice: purchase.watch.buyNowPrice,
         },
         buyer: {
-          id: purchase.buyer.id,
+          id: buyerWithAddress?.id,
           name:
-            purchase.buyer.nickname ||
-            purchase.buyer.firstName ||
-            purchase.buyer.name ||
+            buyerWithAddress?.nickname ||
+            buyerWithAddress?.firstName ||
+            buyerWithAddress?.name ||
             'Unbekannt',
-          email: purchase.buyer.email,
-          phone: purchase.buyer.phone,
+          email: buyerWithAddress?.email,
+          phone: buyerWithAddress?.phone,
           address:
-            purchase.buyer.street && purchase.buyer.streetNumber
-              ? `${purchase.buyer.street} ${purchase.buyer.streetNumber}, ${purchase.buyer.postalCode} ${purchase.buyer.city}`
+            buyerWithAddress?.street && buyerWithAddress?.streetNumber
+              ? `${buyerWithAddress.street} ${buyerWithAddress.streetNumber}, ${buyerWithAddress.postalCode} ${buyerWithAddress.city}`
               : null,
           paymentMethods: buyerPaymentMethods,
         },
         seller: {
-          id: purchase.watch.seller.id,
+          id: sellerWithAddress?.id,
           name:
-            purchase.watch.seller.nickname ||
-            purchase.watch.seller.firstName ||
-            purchase.watch.seller.name ||
+            sellerWithAddress?.nickname ||
+            sellerWithAddress?.firstName ||
+            sellerWithAddress?.name ||
             'Unbekannt',
-          email: purchase.watch.seller.email,
-          phone: purchase.watch.seller.phone,
+          email: sellerWithAddress?.email,
+          phone: sellerWithAddress?.phone,
           address:
-            purchase.watch.seller.street && purchase.watch.seller.streetNumber
-              ? `${purchase.watch.seller.street} ${purchase.watch.seller.streetNumber}, ${purchase.watch.seller.postalCode} ${purchase.watch.seller.city}`
+            sellerWithAddress?.street && sellerWithAddress?.streetNumber
+              ? `${sellerWithAddress.street} ${sellerWithAddress.streetNumber}, ${sellerWithAddress.postalCode} ${sellerWithAddress.city}`
               : null,
           paymentMethods: sellerPaymentMethods,
           // Ricardo-Style: Seller warning info
-          disputeWarningCount: purchase.watch.seller.disputeWarningCount || 0,
-          disputesLostCount: purchase.watch.seller.disputesLostCount || 0,
-          disputeRestrictionLevel: purchase.watch.seller.disputeRestrictionLevel || null,
+          disputeWarningCount: purchase.watch?.seller?.disputeWarningCount || 0,
+          disputesLostCount: purchase.watch?.seller?.disputesLostCount || 0,
+          disputeRestrictionLevel: purchase.watch?.seller?.disputeRestrictionLevel || null,
         },
         disputeReason: reason,
         disputeDescription: description,

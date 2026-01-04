@@ -1,3 +1,4 @@
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
@@ -53,11 +54,6 @@ export async function GET(
             firstName: true,
             lastName: true,
             companyName: true,
-            street: true,
-            streetNumber: true,
-            postalCode: true,
-            city: true,
-            country: true,
             phone: true,
             isBlocked: true,
             hasUnpaidInvoices: true,
@@ -84,7 +80,25 @@ export async function GET(
       return NextResponse.json({ message: 'Rechnung nicht gefunden' }, { status: 404 })
     }
 
-    return NextResponse.json({ invoice })
+    // Fetch seller address from UserAddress table
+    const sellerAddress = invoice.seller?.id ? await getMainAddress(invoice.seller.id) : null
+
+    // Extend invoice with seller address
+    const invoiceWithAddress = {
+      ...invoice,
+      seller: invoice.seller
+        ? {
+            ...invoice.seller,
+            street: sellerAddress?.street || null,
+            streetNumber: sellerAddress?.streetNumber || null,
+            postalCode: sellerAddress?.postalCode || null,
+            city: sellerAddress?.city || null,
+            country: sellerAddress?.country || 'Schweiz',
+          }
+        : null,
+    }
+
+    return NextResponse.json({ invoice: invoiceWithAddress })
   } catch (error: any) {
     console.error('Error fetching invoice:', error)
     return NextResponse.json({ message: 'Fehler beim Laden der Rechnung' }, { status: 500 })

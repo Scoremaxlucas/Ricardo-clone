@@ -55,6 +55,9 @@ export async function GET(request: NextRequest) {
     }
 
     // Standort-Filter
+    // NOTE: This still uses legacy User.postalCode field for filtering.
+    // After final migration, this should be updated to filter via UserAddress table.
+    // For now, the legacy field still exists (marked @deprecated) so this works.
     if (postalCode) {
       whereClause.seller = {
         postalCode: {

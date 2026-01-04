@@ -1,4 +1,5 @@
-import { shouldShowDetailedErrors } from "@/lib/env"
+import { getMainAddress } from '@/lib/address'
+import { shouldShowDetailedErrors } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -35,8 +36,6 @@ export async function GET(request: NextRequest) {
           select: {
             id: true,
             email: true,
-            city: true,
-            postalCode: true,
           },
         },
         images: true,
@@ -46,6 +45,21 @@ export async function GET(request: NextRequest) {
 
     if (!article) {
       return NextResponse.json({ error: 'Article not found' }, { status: 404 })
+    }
+
+    // Fetch seller address from UserAddress table
+    const sellerAddress = article.seller?.id ? await getMainAddress(article.seller.id) : null
+
+    // Extend article with seller address
+    const articleWithAddress = {
+      ...article,
+      seller: article.seller
+        ? {
+            ...article.seller,
+            city: sellerAddress?.city || null,
+            postalCode: sellerAddress?.postalCode || null,
+          }
+        : null,
     }
 
     // Test search query (same as /api/articles/search)
@@ -128,12 +142,7 @@ export async function GET(request: NextRequest) {
         price: currentPrice,
         images: images,
         categorySlugs: categorySlugs,
-        seller: article.seller
-          ? {
-              city: article.seller.city,
-              postalCode: article.seller.postalCode,
-            }
-          : null,
+        seller: articleWithAddress.seller,
       }
     } catch (e) {
       console.error('Error mapping article:', e)

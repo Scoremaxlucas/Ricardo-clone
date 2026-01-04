@@ -1,7 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
+import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
@@ -43,11 +44,6 @@ export async function GET(request: NextRequest) {
         lastName: true,
         nickname: true,
         title: true,
-        street: true,
-        streetNumber: true,
-        postalCode: true,
-        city: true,
-        country: true,
         dateOfBirth: true,
         phone: true,
         verified: true,
@@ -65,7 +61,26 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    return NextResponse.json(users)
+    // Fetch addresses from UserAddress table
+    const userAddresses = await Promise.all(
+      users.map(async u => ({
+        userId: u.id,
+        address: await getMainAddress(u.id),
+      }))
+    )
+    const addressMap = new Map(userAddresses.map(ua => [ua.userId, ua.address]))
+
+    // Extend users with addresses
+    const usersWithAddresses = users.map(u => ({
+      ...u,
+      street: addressMap.get(u.id)?.street || null,
+      streetNumber: addressMap.get(u.id)?.streetNumber || null,
+      postalCode: addressMap.get(u.id)?.postalCode || null,
+      city: addressMap.get(u.id)?.city || null,
+      country: addressMap.get(u.id)?.country || 'Schweiz',
+    }))
+
+    return NextResponse.json(usersWithAddresses)
   } catch (error: any) {
     console.error('Error fetching pending verifications:', error)
     return NextResponse.json({ message: 'Fehler beim Laden der Verifizierungen' }, { status: 500 })

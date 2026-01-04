@@ -22,7 +22,7 @@ model UserAddress {
   id            String   @id @default(cuid())
   userId        String
   type          String   // 'MAIN', 'DELIVERY', 'BILLING'
-  
+
   street        String
   streetNumber  String
   postalCode    String
@@ -30,11 +30,11 @@ model UserAddress {
   country       String   @default("Schweiz")
   addresszusatz String?
   kanton        String?
-  
+
   isDefault     Boolean  @default(false)
   createdAt     DateTime @default(now())
   updatedAt     DateTime @updatedAt
-  
+
   user          User     @relation(...)
 
   @@unique([userId, type])
@@ -81,7 +81,7 @@ npx tsx scripts/migrate-user-addresses.ts --verify
 ### `src/lib/address.ts`
 
 ```typescript
-import { 
+import {
   getUserAddresses,
   getUserAddress,
   getMainAddress,
