@@ -161,10 +161,53 @@ src/
 
 ### Testing
 
+Die Plattform nutzt **Vitest** für Unit- und Integrationstests.
+
+#### Tests ausführen
+
 ```bash
-npm run test
+# Alle Tests ausführen
+npm test
+
+# Tests im Watch-Mode (automatisch bei Änderungen)
 npm run test:watch
+
+# Tests mit Coverage-Report
+npm run test:coverage
 ```
+
+#### Aktuelle Test-Abdeckung
+
+- ✅ **Validation** - Email, Passwort, Nickname, IBAN Validierung
+- ✅ **Shipping** - Versandkosten-Berechnung
+- ✅ **Invoice** - Rechnungs-/Gebühren-Berechnung
+- ✅ **Auction** - Auktions-Logik (Gebote, Timing, Buy Now)
+
+#### Continuous Integration (CI/CD)
+
+Tests laufen automatisch:
+
+- ✅ **Bei jedem Pull Request** - GitHub Actions führt Tests aus
+- ✅ **Vor jedem Deployment** - Vercel führt Tests vor Build aus
+- ✅ **Deployment nur bei grünen Tests** - Code wird nur deployed wenn alle Tests bestehen
+
+#### Test-Struktur
+
+```
+src/__tests__/
+├── setup.ts               # Test-Setup mit Mocks
+└── lib/
+    ├── validation.test.ts # Validierungs-Tests
+    ├── shipping.test.ts   # Versand-Tests
+    ├── invoice.test.ts    # Rechnungs-Tests
+    └── auction.test.ts    # Auktions-Tests
+```
+
+#### Best Practices
+
+- **Vor jedem Commit**: `npm test` ausführen
+- **Bei neuen Features**: Tests zuerst schreiben (TDD)
+- **Bei Bugfixes**: Test für den Bug hinzufügen
 
 ### Build
 
