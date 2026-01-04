@@ -71,23 +71,27 @@ model User {
   nationality            String?
   phone                  String?
   phoneVerified          Boolean   @default(false)
-  street                 String?
-  streetNumber           String?
-  postalCode             String?
-  city                   String?
-  country                String?
-  addresszusatz          String? // Optional: c/o, apartment, etc.
-  kanton                 String? // Optional: Swiss canton
-  billingStreet          String?
-  billingStreetNumber    String?
-  billingPostalCode      String?
-  billingCity            String?
-  billingCountry         String?
-  deliveryStreet         String?
-  deliveryStreetNumber   String?
-  deliveryPostalCode     String?
-  deliveryCity           String?
-  deliveryCountry        String?
+  // === LEGACY ADDRESS FIELDS (Phase 2: To be removed) ===
+  // @deprecated - Use UserAddress relation instead
+  // See: docs/USER_ADDRESS_REFACTORING.md
+  street                 String? // @deprecated
+  streetNumber           String? // @deprecated
+  postalCode             String? // @deprecated
+  city                   String? // @deprecated
+  country                String? // @deprecated
+  addresszusatz          String? // @deprecated - c/o, apartment
+  kanton                 String? // @deprecated - Swiss canton
+  billingStreet          String? // @deprecated - unused
+  billingStreetNumber    String? // @deprecated - unused
+  billingPostalCode      String? // @deprecated - unused
+  billingCity            String? // @deprecated - unused
+  billingCountry         String? // @deprecated - unused
+  deliveryStreet         String? // @deprecated
+  deliveryStreetNumber   String? // @deprecated
+  deliveryPostalCode     String? // @deprecated
+  deliveryCity           String? // @deprecated
+  deliveryCountry        String? // @deprecated
+  // === END LEGACY ADDRESS FIELDS ===
   paymentMethods         String?
   idDocument             String?
   idDocumentPage1        String?

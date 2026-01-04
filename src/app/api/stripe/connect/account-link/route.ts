@@ -1,7 +1,7 @@
 import { authOptions } from '@/lib/auth'
 import { getAppDomain } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
-import { validateSwissPostalCode } from '@/lib/profilePolicy'
+import { getMainAddress, validateSwissPostalCode } from '@/lib/address'
 import { stripe } from '@/lib/stripe-server'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -34,7 +34,7 @@ export async function POST(request: NextRequest) {
     const userId = session.user.id
     console.log(`[connect/account-link] Request von User ${userId}`)
 
-    // Lade User mit allen Profildaten für Pre-fill
+    // Lade User mit Profildaten für Pre-fill
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -43,6 +43,7 @@ export async function POST(request: NextRequest) {
         firstName: true,
         lastName: true,
         phone: true,
+        // Legacy address fields (fallback)
         street: true,
         streetNumber: true,
         postalCode: true,
@@ -59,6 +60,13 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
+    // Get address from UserAddress table (with fallback to legacy fields)
+    const mainAddress = await getMainAddress(userId)
+    const addressStreet = mainAddress?.street || user.street
+    const addressStreetNumber = mainAddress?.streetNumber || user.streetNumber
+    const addressPostalCode = mainAddress?.postalCode || user.postalCode
+    const addressCity = mainAddress?.city || user.city
+
     // Extrahiere Felder (können undefined sein wenn Migration noch nicht ausgeführt wurde)
     const connectOnboardingStatus = (user as any).connectOnboardingStatus as string | undefined
     const payoutsEnabled = (user as any).payoutsEnabled as boolean | undefined
@@ -74,23 +82,24 @@ export async function POST(request: NextRequest) {
         hasFirstName: !!user.firstName,
         hasLastName: !!user.lastName,
         hasPhone: !!user.phone,
-        hasAddress: !!(user.street && user.city && user.postalCode),
+        hasAddress: !!(addressStreet && addressCity && addressPostalCode),
+        addressSource: mainAddress ? 'UserAddress' : 'legacy',
       })
 
-      // Baue Adresse auf wenn vorhanden
+      // Baue Adresse auf wenn vorhanden (from UserAddress or legacy fields)
       const addressData: any = {}
-      if (user.street || user.streetNumber) {
-        addressData.line1 = [user.street, user.streetNumber].filter(Boolean).join(' ') || undefined
+      if (addressStreet || addressStreetNumber) {
+        addressData.line1 = [addressStreet, addressStreetNumber].filter(Boolean).join(' ') || undefined
       }
-      if (user.city) {
-        addressData.city = user.city
+      if (addressCity) {
+        addressData.city = addressCity
       }
       // Validiere Postleitzahl bevor sie an Stripe gesendet wird
-      if (user.postalCode && validateSwissPostalCode(user.postalCode)) {
-        addressData.postal_code = user.postalCode.trim()
-      } else if (user.postalCode) {
+      if (addressPostalCode && validateSwissPostalCode(addressPostalCode)) {
+        addressData.postal_code = addressPostalCode.trim()
+      } else if (addressPostalCode) {
         console.warn(
-          `[connect/account-link] Ungültige Postleitzahl für User ${userId}: "${user.postalCode}". Überspringe Adresse.`
+          `[connect/account-link] Ungültige Postleitzahl für User ${userId}: "${addressPostalCode}". Überspringe Adresse.`
         )
         // Wenn Postleitzahl ungültig ist, keine Adresse senden (Stripe würde sonst Fehler werfen)
       }

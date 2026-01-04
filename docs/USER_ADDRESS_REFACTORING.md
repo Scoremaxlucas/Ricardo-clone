@@ -160,30 +160,51 @@ Abgedeckte Testfälle:
 - ✅ Legacy-Felder Migration
 - ✅ Formatierung (single-line, multi-line)
 
-## Phase 2 (Zukünftig)
+## Phase 2 Status
 
-Nach vollständiger Migration können die Legacy-Felder entfernt werden:
+Die Migration zum Entfernen der Legacy-Felder ist vorbereitet:
 
-```sql
--- ERST NACH VOLLSTÄNDIGER MIGRATION!
-ALTER TABLE users 
-DROP COLUMN street,
-DROP COLUMN streetNumber,
-DROP COLUMN postalCode,
-DROP COLUMN city,
-DROP COLUMN country,
-DROP COLUMN addresszusatz,
-DROP COLUMN kanton,
-DROP COLUMN deliveryStreet,
-DROP COLUMN deliveryStreetNumber,
-DROP COLUMN deliveryPostalCode,
-DROP COLUMN deliveryCity,
-DROP COLUMN deliveryCountry,
-DROP COLUMN billingStreet,
-DROP COLUMN billingStreetNumber,
-DROP COLUMN billingPostalCode,
-DROP COLUMN billingCity,
-DROP COLUMN billingCountry;
+**Erstellt:**
+- ✅ `prisma/migrations/20250704_remove_legacy_address_fields/migration.sql`
+- ✅ Helper-Funktionen mit Fallback (`getUserMainAddressData`, `getUserDeliveryAddressData`)
+- ✅ Legacy-Felder im Schema als `@deprecated` markiert
+
+**Noch zu tun vor Aktivierung:**
+Die folgenden Dateien müssen noch aktualisiert werden, um NUR UserAddress zu verwenden:
+
+```
+src/app/api/admin/disputes/[id]/route.ts
+src/app/api/admin/invoices/[invoiceId]/route.ts
+src/app/api/admin/verifications/pending/route.ts
+src/app/api/admin/verifications/user/[userId]/route.ts
+src/app/api/articles/auctions-fast/route.ts
+src/app/api/articles/fast/route.ts
+src/app/api/articles/favorites-fast/route.ts
+src/app/api/articles/search-fast/route.ts
+src/app/api/invoices/[id]/pdf/route.ts
+src/app/api/purchases/create/route.ts
+src/app/api/sales/my-sales/route.ts
+src/app/api/stripe/connect/account-session/route.ts
+src/app/api/stripe/connect/prefill-data/route.ts
+src/app/api/user/[id]/route.ts
+src/app/api/user/seller-info/route.ts
+src/app/api/users/[id]/stats/route.ts
+src/app/api/watches/[id]/similar/route.ts
+src/app/api/watches/boosted/route.ts
+src/app/api/watches/brand-counts/route.ts
+src/app/api/watches/mine/route.ts
+```
+
+**Migration ausführen (wenn alle Dateien aktualisiert sind):**
+
+```bash
+# 1. Prüfe dass alle Adressen migriert sind
+npx tsx scripts/migrate-user-addresses.ts --verify
+
+# 2. Entferne Legacy-Felder aus Schema (manuell)
+
+# 3. Führe Migration aus
+npx prisma migrate deploy
 ```
 
 ## Checkliste vor Phase 2

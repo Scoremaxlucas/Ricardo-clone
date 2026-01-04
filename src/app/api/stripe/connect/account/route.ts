@@ -1,6 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { validateSwissPostalCode } from '@/lib/profilePolicy'
+import { getUserMainAddressData, validateSwissPostalCode } from '@/lib/address'
 import { stripe } from '@/lib/stripe-server'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -46,18 +46,16 @@ function determineConnectStatus(account: {
 
 /**
  * Helper function to prefill Stripe account with Helvenda user data
+ * Uses UserAddress table with fallback to legacy User fields
  */
 async function prefillStripeAccount(
   accountId: string,
+  userId: string,
   user: {
     email: string | null
     firstName: string | null
     lastName: string | null
     phone: string | null
-    street: string | null
-    streetNumber: string | null
-    postalCode: string | null
-    city: string | null
     dateOfBirth: Date | null
   }
 ) {
@@ -87,17 +85,20 @@ async function prefillStripeAccount(
       }
     }
 
+    // Get address from UserAddress table (with legacy fallback)
+    const address = await getUserMainAddressData(userId)
+    
     // Build address if we have valid postal code
-    if (user.postalCode && validateSwissPostalCode(user.postalCode)) {
+    if (address.postalCode && validateSwissPostalCode(address.postalCode)) {
       individual.address = {
         country: 'CH',
-        postal_code: user.postalCode.trim(),
+        postal_code: address.postalCode.trim(),
       }
-      if (user.street || user.streetNumber) {
-        individual.address.line1 = [user.street, user.streetNumber].filter(Boolean).join(' ')
+      if (address.street || address.streetNumber) {
+        individual.address.line1 = [address.street, address.streetNumber].filter(Boolean).join(' ')
       }
-      if (user.city) {
-        individual.address.city = user.city
+      if (address.city) {
+        individual.address.city = address.city
       }
     }
 
@@ -108,7 +109,7 @@ async function prefillStripeAccount(
     // Only update if we have something to update
     if (Object.keys(updateParams).length > 0) {
       await stripe.accounts.update(accountId, updateParams)
-      console.log(`[connect/account] Prefilled account ${accountId} with user data`)
+      console.log(`[connect/account] Prefilled account ${accountId} with user data (address source: ${address.source || 'none'})`)
     }
   } catch (error: any) {
     // Don't fail if prefill fails - account may already have data
@@ -131,7 +132,7 @@ export async function POST(request: NextRequest) {
 
     const userId = session.user.id
 
-    // Load user with profile data including date of birth
+    // Load user with profile data including date of birth (address from UserAddress)
     const user = await prisma.user.findUnique({
       where: { id: userId },
       select: {
@@ -140,10 +141,6 @@ export async function POST(request: NextRequest) {
         firstName: true,
         lastName: true,
         phone: true,
-        street: true,
-        streetNumber: true,
-        postalCode: true,
-        city: true,
         dateOfBirth: true,
         stripeConnectedAccountId: true,
         connectOnboardingStatus: true,
@@ -163,8 +160,8 @@ export async function POST(request: NextRequest) {
       try {
         const account = await stripe.accounts.retrieve(accountId)
 
-        // Prefill with latest data
-        await prefillStripeAccount(accountId, user)
+        // Prefill with latest data (uses UserAddress table)
+        await prefillStripeAccount(accountId, userId, user)
 
         // Determine and update status
         const status = determineConnectStatus(account)
@@ -211,15 +208,18 @@ export async function POST(request: NextRequest) {
     // Create new Express account
     console.log(`[connect/account] Creating new account for user ${userId}`)
 
+    // Get address from UserAddress table (with legacy fallback)
+    const userAddress = await getUserMainAddressData(userId)
+
     // Build address data for account creation
     const addressData: any = { country: 'CH' }
-    if (user.postalCode && validateSwissPostalCode(user.postalCode)) {
-      addressData.postal_code = user.postalCode.trim()
-      if (user.street || user.streetNumber) {
-        addressData.line1 = [user.street, user.streetNumber].filter(Boolean).join(' ')
+    if (userAddress.postalCode && validateSwissPostalCode(userAddress.postalCode)) {
+      addressData.postal_code = userAddress.postalCode.trim()
+      if (userAddress.street || userAddress.streetNumber) {
+        addressData.line1 = [userAddress.street, userAddress.streetNumber].filter(Boolean).join(' ')
       }
-      if (user.city) {
-        addressData.city = user.city
+      if (userAddress.city) {
+        addressData.city = userAddress.city
       }
     }
 

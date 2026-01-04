@@ -303,6 +303,137 @@ export async function getAddressWithFallback(
 }
 
 // ============================================
+// Unified Address Access (for API Routes)
+// ============================================
+
+/**
+ * Get user's main address with all fallbacks
+ * Use this in API routes for consistent address access
+ */
+export async function getUserMainAddressData(userId: string): Promise<{
+  street: string | null
+  streetNumber: string | null
+  postalCode: string | null
+  city: string | null
+  country: string | null
+  addresszusatz: string | null
+  kanton: string | null
+  source: 'userAddress' | 'legacy' | null
+}> {
+  // First try UserAddress table
+  const mainAddress = await getMainAddress(userId)
+  
+  if (mainAddress && mainAddress.street && mainAddress.city) {
+    return {
+      street: mainAddress.street,
+      streetNumber: mainAddress.streetNumber,
+      postalCode: mainAddress.postalCode,
+      city: mainAddress.city,
+      country: mainAddress.country,
+      addresszusatz: mainAddress.addresszusatz || null,
+      kanton: mainAddress.kanton || null,
+      source: 'userAddress',
+    }
+  }
+
+  // Fallback to legacy fields on User
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      street: true,
+      streetNumber: true,
+      postalCode: true,
+      city: true,
+      country: true,
+      addresszusatz: true,
+      kanton: true,
+    },
+  })
+
+  if (user && user.street && user.city) {
+    return {
+      street: user.street,
+      streetNumber: user.streetNumber,
+      postalCode: user.postalCode,
+      city: user.city,
+      country: user.country,
+      addresszusatz: user.addresszusatz,
+      kanton: user.kanton,
+      source: 'legacy',
+    }
+  }
+
+  return {
+    street: null,
+    streetNumber: null,
+    postalCode: null,
+    city: null,
+    country: null,
+    addresszusatz: null,
+    kanton: null,
+    source: null,
+  }
+}
+
+/**
+ * Get user's delivery address with all fallbacks
+ */
+export async function getUserDeliveryAddressData(userId: string): Promise<{
+  street: string | null
+  streetNumber: string | null
+  postalCode: string | null
+  city: string | null
+  country: string | null
+  source: 'userAddress' | 'legacy' | null
+}> {
+  // First try UserAddress table
+  const deliveryAddress = await getDeliveryAddress(userId)
+  
+  if (deliveryAddress && deliveryAddress.street && deliveryAddress.city) {
+    return {
+      street: deliveryAddress.street,
+      streetNumber: deliveryAddress.streetNumber,
+      postalCode: deliveryAddress.postalCode,
+      city: deliveryAddress.city,
+      country: deliveryAddress.country,
+      source: 'userAddress',
+    }
+  }
+
+  // Fallback to legacy fields on User
+  const user = await prisma.user.findUnique({
+    where: { id: userId },
+    select: {
+      deliveryStreet: true,
+      deliveryStreetNumber: true,
+      deliveryPostalCode: true,
+      deliveryCity: true,
+      deliveryCountry: true,
+    },
+  })
+
+  if (user && user.deliveryStreet && user.deliveryCity) {
+    return {
+      street: user.deliveryStreet,
+      streetNumber: user.deliveryStreetNumber,
+      postalCode: user.deliveryPostalCode,
+      city: user.deliveryCity,
+      country: user.deliveryCountry,
+      source: 'legacy',
+    }
+  }
+
+  return {
+    street: null,
+    streetNumber: null,
+    postalCode: null,
+    city: null,
+    country: null,
+    source: null,
+  }
+}
+
+// ============================================
 // Formatting
 // ============================================
 
