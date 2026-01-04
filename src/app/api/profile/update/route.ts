@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { upsertUserAddress, validateSwissPostalCode } from '@/lib/address'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -48,7 +49,7 @@ export async function POST(request: NextRequest) {
       if (!postalCode || !postalCode.trim()) {
         return NextResponse.json({ message: 'Postleitzahl ist erforderlich' }, { status: 400 })
       }
-      if (!/^[0-9]{4}$/.test(postalCode.trim())) {
+      if (!validateSwissPostalCode(postalCode)) {
         return NextResponse.json(
           { message: 'Postleitzahl muss 4 Ziffern haben (z.B. 8000)' },
           { status: 400 }
@@ -66,48 +67,70 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Aktualisiere den Benutzer in der Datenbank
-    const updatedUser = await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        name: name.trim(),
-        nickname: nickname?.trim() || null,
-        phone: phone?.trim() || null,
-        // Aktualisiere auch firstName und lastName falls möglich
-        firstName: name.trim().split(' ')[0] || null,
-        lastName: name.trim().split(' ').slice(1).join(' ') || null,
-        // Adressdaten (optional - only save if provided)
-        ...(street && street.trim() && { street: street.trim() }),
-        ...(streetNumber && streetNumber.trim() && { streetNumber: streetNumber.trim() }),
-        ...(postalCode && postalCode.trim() && { postalCode: postalCode.trim() }),
-        ...(city && city.trim() && { city: city.trim() }),
-        ...(country && country.trim() && { country: country.trim() }),
-        // Optional fields
-        addresszusatz: addresszusatz?.trim() || null,
-        kanton: kanton?.trim() || null,
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        image: true,
-        nickname: true,
-        firstName: true,
-        lastName: true,
-        phone: true,
-        street: true,
-        streetNumber: true,
-        postalCode: true,
-        city: true,
-        country: true,
-        addresszusatz: true,
-        kanton: true,
-      },
+    // Use transaction for atomic update
+    const result = await prisma.$transaction(async (tx) => {
+      // 1. Update User (including legacy address fields for backward compatibility)
+      const updatedUser = await tx.user.update({
+        where: { id: session.user.id },
+        data: {
+          name: name.trim(),
+          nickname: nickname?.trim() || null,
+          phone: phone?.trim() || null,
+          // Update firstName and lastName from name
+          firstName: name.trim().split(' ')[0] || null,
+          lastName: name.trim().split(' ').slice(1).join(' ') || null,
+          // Legacy address fields (keep for backward compatibility)
+          ...(street && street.trim() && { street: street.trim() }),
+          ...(streetNumber && streetNumber.trim() && { streetNumber: streetNumber.trim() }),
+          ...(postalCode && postalCode.trim() && { postalCode: postalCode.trim() }),
+          ...(city && city.trim() && { city: city.trim() }),
+          ...(country && country.trim() && { country: country.trim() }),
+          addresszusatz: addresszusatz?.trim() || null,
+          kanton: kanton?.trim() || null,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          image: true,
+          nickname: true,
+          firstName: true,
+          lastName: true,
+          phone: true,
+          street: true,
+          streetNumber: true,
+          postalCode: true,
+          city: true,
+          country: true,
+          addresszusatz: true,
+          kanton: true,
+        },
+      })
+
+      return updatedUser
     })
+
+    // 2. Update UserAddress (new model) - outside transaction for non-blocking
+    if (hasPartialAddress && street && city) {
+      try {
+        await upsertUserAddress(session.user.id, 'MAIN', {
+          street: street.trim(),
+          streetNumber: streetNumber?.trim() || '',
+          postalCode: postalCode?.trim() || '',
+          city: city.trim(),
+          country: country?.trim() || 'Schweiz',
+          addresszusatz: addresszusatz?.trim() || null,
+          kanton: kanton?.trim() || null,
+        })
+      } catch (addressError) {
+        // Log but don't fail the request - legacy fields are already saved
+        console.error('[profile/update] Error updating UserAddress:', addressError)
+      }
+    }
 
     return NextResponse.json({
       message: 'Profil erfolgreich aktualisiert',
-      user: updatedUser,
+      user: result,
     })
   } catch (error) {
     console.error('Error updating profile:', error)

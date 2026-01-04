@@ -37,119 +37,120 @@ model Session {
 }
 
 model User {
-  id                            String               @id @default(cuid())
-  email                         String               @unique
+  id                            String    @id @default(cuid())
+  email                         String    @unique
   name                          String?
   title                         String?
   firstName                     String?
   lastName                      String?
   password                      String?
   image                         String?
-  createdAt                     DateTime             @default(now())
-  updatedAt                     DateTime             @updatedAt
-  emailVerified                 Boolean              @default(false)
+  createdAt                     DateTime  @default(now())
+  updatedAt                     DateTime  @updatedAt
+  emailVerified                 Boolean   @default(false)
   emailVerifiedAt               DateTime?
   emailVerificationToken        String?
   emailVerificationTokenExpires DateTime?
 
   // === PASSWORD RESET ===
-  passwordResetToken            String?
-  passwordResetTokenExpires     DateTime?
-  passwordChangedAt             DateTime?
+  passwordResetToken        String?
+  passwordResetTokenExpires DateTime?
+  passwordChangedAt         DateTime?
 
   // === LOGIN SECURITY ===
-  lastLoginAt                   DateTime?
-  lastLoginIp                   String?
-  lastLoginDevice               String?
-  loginNotificationsEnabled     Boolean              @default(true)
+  lastLoginAt               DateTime?
+  lastLoginIp               String?
+  lastLoginDevice           String?
+  loginNotificationsEnabled Boolean   @default(true)
 
-  nickname                      String?
-  bio                           String?
-  specialization                String?
-  profileComplete               Boolean              @default(false)
-  dateOfBirth                   DateTime?
-  nationality                   String?
-  phone                         String?
-  phoneVerified                 Boolean              @default(false)
-  street                        String?
-  streetNumber                  String?
-  postalCode                    String?
-  city                          String?
-  country                       String?
-  addresszusatz                 String? // Optional: c/o, apartment, etc.
-  kanton                        String? // Optional: Swiss canton
-  billingStreet                 String?
-  billingStreetNumber           String?
-  billingPostalCode             String?
-  billingCity                   String?
-  billingCountry                String?
-  deliveryStreet                String?
-  deliveryStreetNumber          String?
-  deliveryPostalCode            String?
-  deliveryCity                  String?
-  deliveryCountry               String?
-  paymentMethods                String?
-  idDocument                    String?
-  idDocumentPage1               String?
-  idDocumentPage2               String?
-  idDocumentType                String?
-  companyName                   String?
-  accountType                   String?
-  verified                      Boolean              @default(false)
-  verificationLevel             String?
-  verifiedAt                    DateTime?
-  verificationStatus            String?              @default("pending")
-  verificationReviewedAt        DateTime?
-  verificationReviewedBy        String?
-  isAdmin                       Boolean              @default(false)
-  isBlocked                     Boolean              @default(false)
-  blockedAt                     DateTime?
-  blockedBy                     String?
-  blockedReason                 String?
-  warningCount                  Int                  @default(0)
-  lastWarnedAt                  DateTime?
-  hasUnpaidInvoices             Boolean              @default(false)
+  nickname               String?
+  bio                    String?
+  specialization         String?
+  profileComplete        Boolean   @default(false)
+  dateOfBirth            DateTime?
+  nationality            String?
+  phone                  String?
+  phoneVerified          Boolean   @default(false)
+  street                 String?
+  streetNumber           String?
+  postalCode             String?
+  city                   String?
+  country                String?
+  addresszusatz          String? // Optional: c/o, apartment, etc.
+  kanton                 String? // Optional: Swiss canton
+  billingStreet          String?
+  billingStreetNumber    String?
+  billingPostalCode      String?
+  billingCity            String?
+  billingCountry         String?
+  deliveryStreet         String?
+  deliveryStreetNumber   String?
+  deliveryPostalCode     String?
+  deliveryCity           String?
+  deliveryCountry        String?
+  paymentMethods         String?
+  idDocument             String?
+  idDocumentPage1        String?
+  idDocumentPage2        String?
+  idDocumentType         String?
+  companyName            String?
+  accountType            String?
+  verified               Boolean   @default(false)
+  verificationLevel      String?
+  verifiedAt             DateTime?
+  verificationStatus     String?   @default("pending")
+  verificationReviewedAt DateTime?
+  verificationReviewedBy String?
+  isAdmin                Boolean   @default(false)
+  isBlocked              Boolean   @default(false)
+  blockedAt              DateTime?
+  blockedBy              String?
+  blockedReason          String?
+  warningCount           Int       @default(0)
+  lastWarnedAt           DateTime?
+  hasUnpaidInvoices      Boolean   @default(false)
 
   // === DISPUTE WARNING SYSTEM (Ricardo-Style) ===
-  disputeWarningCount           Int                  @default(0)
+  disputeWarningCount           Int                   @default(0)
   lastDisputeWarningAt          DateTime?
-  disputesLostCount             Int                  @default(0) // How many disputes seller lost
-  disputeRestrictionLevel       String?              // 'none', 'warning', 'limited', 'suspended'
+  disputesLostCount             Int                   @default(0) // How many disputes seller lost
+  disputeRestrictionLevel       String? // 'none', 'warning', 'limited', 'suspended'
   lastInvoiceReminderAt         DateTime?
   stripeConnectedAccountId      String?
-  stripeOnboardingComplete      Boolean              @default(false)
+  stripeOnboardingComplete      Boolean               @default(false)
   stripeOnboardingLinkExpiresAt DateTime?
-  connectOnboardingStatus       String               @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, ACTION_REQUIRED, VERIFIED
-  payoutsEnabled                Boolean              @default(false)
-  chargesEnabled                Boolean              @default(false)
-  stripeRequirements            Json?                // Snapshot of Stripe requirements for UI
+  connectOnboardingStatus       String                @default("NOT_STARTED") // NOT_STARTED, IN_PROGRESS, ACTION_REQUIRED, VERIFIED
+  payoutsEnabled                Boolean               @default(false)
+  chargesEnabled                Boolean               @default(false)
+  stripeRequirements            Json? // Snapshot of Stripe requirements for UI
   accounts                      Account[]
+  addresses                     UserAddress[] // Extracted addresses (Phase 1 refactoring)
   bids                          Bid[]
   favorites                     Favorite[]
   invoices                      Invoice[]
-  receivedMessages              Message[]            @relation("MessageReceiver")
-  messages                      Message[]            @relation("MessageSender")
+  receivedMessages              Message[]             @relation("MessageReceiver")
+  messages                      Message[]             @relation("MessageSender")
   notifications                 Notification[]
   priceOffers                   PriceOffer[]
   purchases                     Purchase[]
-  receivedReviews               Review[]             @relation("ReviewedUser")
+  receivedReviews               Review[]              @relation("ReviewedUser")
   reviews                       Review[]
-  salePurchases                 Sale[]               @relation("SaleBuyer")
+  salePurchases                 Sale[]                @relation("SaleBuyer")
   sales                         Sale[]
   searchSubscriptions           SearchSubscription[]
   sessions                      Session[]
   watches                       Watch[]
   conversations                 Conversation[]
-  reportsMade                   Report[]             @relation("ReportedBy")
-  reportsReviewed               Report[]             @relation("ReviewedBy")
-  userReportsMade               UserReport[]         @relation("UserReportedBy")
-  userReportsReviewed           UserReport[]         @relation("UserReportReviewedBy")
-  userReportsReceived           UserReport[]         @relation("ReportedUser")
+  reportsMade                   Report[]              @relation("ReportedBy")
+  reportsReviewed               Report[]              @relation("ReviewedBy")
+  userReportsMade               UserReport[]          @relation("UserReportedBy")
+  userReportsReviewed           UserReport[]          @relation("UserReportReviewedBy")
+  userReportsReceived           UserReport[]          @relation("ReportedUser")
   adminNotes                    AdminNote[]
   moderationHistory             ModerationHistory[]
   maxBids                       MaxBid[]
-  userAdminNotes                UserAdminNote[]      @relation("UserAdminNoteAdmin")
-  userAdminNotesForUser         UserAdminNote[]      @relation("UserAdminNoteUser")
+  userAdminNotes                UserAdminNote[]       @relation("UserAdminNoteAdmin")
+  userAdminNotesForUser         UserAdminNote[]       @relation("UserAdminNoteUser")
   userActivities                UserActivity[]
   searchQueries                 SearchQuery[]
   userPreferences               UserPreferences?
@@ -162,17 +163,17 @@ model User {
   rewards                       Reward[]
   aiConversations               AIConversation[]
   aiSearchResults               AISearchResult[]
-  ordersAsBuyer                 Order[]              @relation("OrderBuyer")
-  ordersAsSeller                Order[]              @relation("OrderSeller")
+  ordersAsBuyer                 Order[]               @relation("OrderBuyer")
+  ordersAsSeller                Order[]               @relation("OrderSeller")
   pricingHistory                PricingHistory[]
   drafts                        Draft[]
   payoutProfile                 PayoutProfile?
   payoutChangeRequestsDecided   PayoutChangeRequest[] @relation("PayoutChangeDecider")
-  payoutAuditLogs               PayoutAuditLog[]     @relation("PayoutAuditActor")
+  payoutAuditLogs               PayoutAuditLog[]      @relation("PayoutAuditActor")
   disputeComments               DisputeComment[]
-  outagesCreated                SystemOutage[]       @relation("OutageCreator")
-  outagesResolved               SystemOutage[]       @relation("OutageResolver")
-  outagesExtended               SystemOutage[]       @relation("OutageExtender")
+  outagesCreated                SystemOutage[]        @relation("OutageCreator")
+  outagesResolved               SystemOutage[]        @relation("OutageResolver")
+  outagesExtended               SystemOutage[]        @relation("OutageExtender")
 
   @@map("users")
 }
@@ -186,9 +187,42 @@ model VerificationToken {
   @@map("verification_tokens")
 }
 
+// ============================================
+// USER ADDRESS - Extracted from User model
+// Phase 1 of User model refactoring
+// ============================================
+model UserAddress {
+  id     String @id @default(cuid())
+  userId String
+  type   String // 'MAIN', 'DELIVERY', 'BILLING'
+
+  // Core address fields
+  street       String
+  streetNumber String
+  postalCode   String
+  city         String
+  country      String @default("Schweiz")
+
+  // Swiss-specific optional fields
+  addresszusatz String? // c/o, apartment, etc.
+  kanton        String? // Swiss canton
+
+  // Metadata
+  isDefault Boolean  @default(false)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, type]) // Only one address per type per user
+  @@index([userId])
+  @@index([type])
+  @@map("user_addresses")
+}
+
 model Watch {
-  id                       String              @id @default(cuid())
-  articleNumber            Int?                @unique
+  id                       String    @id @default(cuid())
+  articleNumber            Int?      @unique
   title                    String
   description              String?
   brand                    String
@@ -204,22 +238,22 @@ model Watch {
   caseDiameter             Float?
   price                    Float
   buyNowPrice              Float?
-  isAuction                Boolean             @default(false)
+  isAuction                Boolean   @default(false)
   auctionStart             DateTime?
   auctionEnd               DateTime?
   auctionDuration          Int?
-  autoRenew                Boolean             @default(false)
+  autoRenew                Boolean   @default(false)
   lastBidAt                DateTime?
   images                   String
   video                    String?
-  createdAt                DateTime            @default(now())
-  updatedAt                DateTime            @updatedAt
+  createdAt                DateTime  @default(now())
+  updatedAt                DateTime  @updatedAt
   lastRevision             DateTime?
   accuracy                 String?
-  fullset                  Boolean             @default(false)
-  allLinks                 Boolean             @default(false)
-  box                      Boolean             @default(false)
-  papers                   Boolean             @default(false)
+  fullset                  Boolean   @default(false)
+  allLinks                 Boolean   @default(false)
+  box                      Boolean   @default(false)
+  papers                   Boolean   @default(false)
   warranty                 String?
   warrantyMonths           Int?
   warrantyYears            Int?
@@ -228,38 +262,38 @@ model Watch {
   referenceNumber          String?
   shippingMethod           String?
   boosters                 String?
-  paymentProtectionEnabled Boolean             @default(false)
+  paymentProtectionEnabled Boolean   @default(false)
 
   // Note: deliveryMode, freeShippingThresholdChf, pickupLocationZip, pickupLocationCity,
   // pickupLocationAddress, shippingProfile columns are NOT in the database yet.
   // These features are handled via shippingMethod JSON or will be added in a future migration.
 
-  sellerId                 String
-  moderationStatus         String?             @default("pending") // 'pending', 'approved', 'rejected', 'reviewing'
-  moderatedBy              String?
-  moderatedAt              DateTime?
-  moderationNotes          String?
-  bids                     Bid[]
-  favorites                Favorite[]
-  invoiceItems             InvoiceItem[]
-  messages                 Message[]
-  priceOffers              PriceOffer[]
-  purchases                Purchase[]
-  sales                    Sale[]
-  orders                   Order[]
-  categories               WatchCategory[]
-  seller                   User                @relation(fields: [sellerId], references: [id])
-  reports                  Report[]
-  adminNotes               AdminNote[]
-  moderationHistory        ModerationHistory[]
-  views                    WatchView[]
-  maxBids                  MaxBid[]
-  productStats             ProductStats?
-  collectionItems          CollectionItem[]
-  auctionViewers           AuctionViewer[]
-  stories                  Story[]
-  browsingHistory          BrowsingHistory[]
-  aiSearchResults          AISearchResult[]
+  sellerId          String
+  moderationStatus  String?             @default("pending") // 'pending', 'approved', 'rejected', 'reviewing'
+  moderatedBy       String?
+  moderatedAt       DateTime?
+  moderationNotes   String?
+  bids              Bid[]
+  favorites         Favorite[]
+  invoiceItems      InvoiceItem[]
+  messages          Message[]
+  priceOffers       PriceOffer[]
+  purchases         Purchase[]
+  sales             Sale[]
+  orders            Order[]
+  categories        WatchCategory[]
+  seller            User                @relation(fields: [sellerId], references: [id])
+  reports           Report[]
+  adminNotes        AdminNote[]
+  moderationHistory ModerationHistory[]
+  views             WatchView[]
+  maxBids           MaxBid[]
+  productStats      ProductStats?
+  collectionItems   CollectionItem[]
+  auctionViewers    AuctionViewer[]
+  stories           Story[]
+  browsingHistory   BrowsingHistory[]
+  aiSearchResults   AISearchResult[]
 
   @@index([moderationStatus])
   @@index([createdAt])
@@ -308,67 +342,67 @@ model MaxBid {
 }
 
 model Purchase {
-  id                             String            @id @default(cuid())
-  price                          Float?
-  shippingMethod                 String?
-  status                         String            @default("pending")
-  itemReceived                   Boolean           @default(false)
-  itemReceivedAt                 DateTime?
-  paymentConfirmed               Boolean           @default(false)
-  paymentConfirmedAt             DateTime?
-  contactDeadline                DateTime
-  sellerContactedAt              DateTime?
-  buyerContactedAt               DateTime?
-  contactWarningSentAt           DateTime?
-  contactDeadlineMissed          Boolean           @default(false)
-  paymentDeadline                DateTime?
-  paymentReminderSentAt          DateTime?
-  paymentReminderCount           Int               @default(0)
-  paymentDeadlineMissed          Boolean           @default(false)
-  trackingNumber                 String?
-  trackingProvider               String?
-  shippedAt                      DateTime?
-  estimatedDeliveryDate          DateTime?
+  id                    String    @id @default(cuid())
+  price                 Float?
+  shippingMethod        String?
+  status                String    @default("pending")
+  itemReceived          Boolean   @default(false)
+  itemReceivedAt        DateTime?
+  paymentConfirmed      Boolean   @default(false)
+  paymentConfirmedAt    DateTime?
+  contactDeadline       DateTime
+  sellerContactedAt     DateTime?
+  buyerContactedAt      DateTime?
+  contactWarningSentAt  DateTime?
+  contactDeadlineMissed Boolean   @default(false)
+  paymentDeadline       DateTime?
+  paymentReminderSentAt DateTime?
+  paymentReminderCount  Int       @default(0)
+  paymentDeadlineMissed Boolean   @default(false)
+  trackingNumber        String?
+  trackingProvider      String?
+  shippedAt             DateTime?
+  estimatedDeliveryDate DateTime?
   // === DISPUTE SYSTEM (Enhanced - Ricardo-Style) ===
-  disputeOpenedAt                DateTime?
-  disputeReason                  String?
-  disputeDescription             String?
-  disputeStatus                  String?           // pending, under_review, escalated, resolved, rejected, closed
-  disputeResolvedAt              DateTime?
-  disputeResolvedBy              String?
-  disputeInitiatedBy             String?           // 'buyer' or 'seller' - who opened the dispute
-  disputeDeadline                DateTime?         // Deadline for resolution (14 days after opening)
-  disputeFrozenAt                DateTime?         // When purchase was frozen due to dispute
-  disputeAttachments             String?           // JSON array of file URLs for evidence
-  disputeReminderSentAt          DateTime?         // Last reminder sent
-  disputeReminderCount           Int               @default(0)
+  disputeOpenedAt       DateTime?
+  disputeReason         String?
+  disputeDescription    String?
+  disputeStatus         String? // pending, under_review, escalated, resolved, rejected, closed
+  disputeResolvedAt     DateTime?
+  disputeResolvedBy     String?
+  disputeInitiatedBy    String? // 'buyer' or 'seller' - who opened the dispute
+  disputeDeadline       DateTime? // Deadline for resolution (14 days after opening)
+  disputeFrozenAt       DateTime? // When purchase was frozen due to dispute
+  disputeAttachments    String? // JSON array of file URLs for evidence
+  disputeReminderSentAt DateTime? // Last reminder sent
+  disputeReminderCount  Int       @default(0)
 
   // === SELLER RESPONSE (Ricardo-Style) ===
-  sellerResponseDeadline         DateTime?         // 7 days after dispute opened
-  sellerRespondedAt              DateTime?         // When seller responded
-  sellerResponseText             String?           // Seller's response/statement
+  sellerResponseDeadline DateTime? // 7 days after dispute opened
+  sellerRespondedAt      DateTime? // When seller responded
+  sellerResponseText     String? // Seller's response/statement
 
   // === ESCALATION SYSTEM (Ricardo-Style) ===
-  disputeEscalatedAt             DateTime?         // When dispute was escalated
-  disputeEscalationLevel         Int               @default(0) // 0=none, 1=first_escalation, 2=urgent, 3=critical
-  disputeEscalationReason        String?           // Why escalated (no_response, deadline_missed, etc.)
+  disputeEscalatedAt      DateTime? // When dispute was escalated
+  disputeEscalationLevel  Int       @default(0) // 0=none, 1=first_escalation, 2=urgent, 3=critical
+  disputeEscalationReason String? // Why escalated (no_response, deadline_missed, etc.)
 
   // === REFUND MANAGEMENT (Ricardo-Style) ===
-  disputeRefundRequired          Boolean           @default(false)
-  disputeRefundAmount            Float?            // Amount to refund (can be partial)
-  disputeRefundDeadline          DateTime?         // Seller has X days to refund
-  disputeRefundCompletedAt       DateTime?         // When refund was completed
-  disputeRefundMethod            String?           // 'stripe_auto', 'seller_manual', 'platform_credit'
-  disputeRefundNote              String?           // Admin notes about refund
+  disputeRefundRequired    Boolean   @default(false)
+  disputeRefundAmount      Float? // Amount to refund (can be partial)
+  disputeRefundDeadline    DateTime? // Seller has X days to refund
+  disputeRefundCompletedAt DateTime? // When refund was completed
+  disputeRefundMethod      String? // 'stripe_auto', 'seller_manual', 'platform_credit'
+  disputeRefundNote        String? // Admin notes about refund
 
   // === SELLER CONSEQUENCES ===
-  sellerWarningIssued            Boolean           @default(false)
+  sellerWarningIssued            Boolean          @default(false)
   sellerWarningIssuedAt          DateTime?
   sellerWarningReason            String?
   // === STRIPE INTEGRATION ===
-  stripePaymentIntentId          String?           // Stripe PaymentIntent ID for refunds
-  stripeRefundId                 String?           // Stripe Refund ID if refunded
-  stripeRefundStatus             String?           // pending, succeeded, failed
+  stripePaymentIntentId          String? // Stripe PaymentIntent ID for refunds
+  stripeRefundId                 String? // Stripe Refund ID if refunded
+  stripeRefundStatus             String? // pending, succeeded, failed
   stripeRefundedAt               DateTime?
   // === CANCELLATION REQUEST ===
   cancellationRequestedAt        DateTime?
@@ -378,15 +412,15 @@ model Purchase {
   cancellationRequestResolvedAt  DateTime?
   cancellationRequestResolvedBy  String?
   statusHistory                  String?
-  paid                           Boolean           @default(false)
+  paid                           Boolean          @default(false)
   paidAt                         DateTime?
-  createdAt                      DateTime          @default(now())
-  updatedAt                      DateTime          @updatedAt
+  createdAt                      DateTime         @default(now())
+  updatedAt                      DateTime         @updatedAt
   watchId                        String
   buyerId                        String
   priceOffers                    PriceOffer[]
-  buyer                          User              @relation(fields: [buyerId], references: [id])
-  watch                          Watch             @relation(fields: [watchId], references: [id])
+  buyer                          User             @relation(fields: [buyerId], references: [id])
+  watch                          Watch            @relation(fields: [watchId], references: [id])
   reviews                        Review[]
   disputeComments                DisputeComment[]
 
@@ -402,10 +436,10 @@ model DisputeComment {
   id          String   @id @default(cuid())
   purchaseId  String
   userId      String
-  userRole    String   // 'buyer', 'seller', 'admin'
-  type        String   // 'comment', 'status_change', 'evidence_uploaded', 'reminder_sent', 'resolution'
-  content     String   // Comment text or action description
-  attachments String?  // JSON array of file URLs
+  userRole    String // 'buyer', 'seller', 'admin'
+  type        String // 'comment', 'status_change', 'evidence_uploaded', 'reminder_sent', 'resolution'
+  content     String // Comment text or action description
+  attachments String? // JSON array of file URLs
   isInternal  Boolean  @default(false) // Admin-only notes
   createdAt   DateTime @default(now())
 
@@ -539,19 +573,19 @@ model Invoice {
   // Mahnstopp (Collection Stop) fields
   collectionStopped       Boolean       @default(false)
   collectionStoppedAt     DateTime?
-  collectionStoppedBy     String?       // Admin user ID who stopped collection
-  collectionStoppedReason String?       // Reason for stopping collection
+  collectionStoppedBy     String? // Admin user ID who stopped collection
+  collectionStoppedReason String? // Reason for stopping collection
   collectionResumedAt     DateTime?
   // Admin notes
-  adminNotes              String?       // Internal notes for admins
+  adminNotes              String? // Internal notes for admins
   // Payment arrangement
   paymentArrangement      Boolean       @default(false)
-  paymentArrangementDate  DateTime?     // When payment arrangement was made
-  paymentArrangementNotes String?       // Details of the arrangement
+  paymentArrangementDate  DateTime? // When payment arrangement was made
+  paymentArrangementNotes String? // Details of the arrangement
   createdAt               DateTime      @default(now())
   updatedAt               DateTime      @updatedAt
   refundedAt              DateTime?
-  originalInvoiceId       String?       // Verknüpfung zur ursprünglichen Rechnung bei Korrektur-Rechnungen
+  originalInvoiceId       String? // Verknüpfung zur ursprünglichen Rechnung bei Korrektur-Rechnungen
   originalInvoice         Invoice?      @relation("InvoiceCorrection", fields: [originalInvoiceId], references: [id])
   correctionInvoices      Invoice[]     @relation("InvoiceCorrection")
   items                   InvoiceItem[]
@@ -1093,12 +1127,12 @@ model Order {
   totalAmount   Float
 
   // Shipping Details (Ricardo-style)
-  selectedDeliveryMode      String?            // 'shipping' | 'pickup'
-  selectedShippingCode      String?            // z.B. 'post_economy_2kg'
-  selectedAddons            String?            // JSON Array: ['sperrgut', 'pickhome']
-  shippingCostChfFinal      Float              @default(0) // Finaler Versandpreis (inkl. Add-ons, free shipping)
-  shippingCostBreakdown      String?            // JSON: {base: number, sperrgut: number, pickhome: number, free_shipping_applied: bool}
-  shippingRateSetId         String?           @default("default_ch_post") // Rate-Set Identifier
+  selectedDeliveryMode  String? // 'shipping' | 'pickup'
+  selectedShippingCode  String? // z.B. 'post_economy_2kg'
+  selectedAddons        String? // JSON Array: ['sperrgut', 'pickhome']
+  shippingCostChfFinal  Float   @default(0) // Finaler Versandpreis (inkl. Add-ons, free shipping)
+  shippingCostBreakdown String? // JSON: {base: number, sperrgut: number, pickhome: number, free_shipping_applied: bool}
+  shippingRateSetId     String? @default("default_ch_post") // Rate-Set Identifier
 
   // Stripe IDs
   stripePaymentIntentId   String?
@@ -1268,21 +1302,21 @@ model DraftImage {
 
 // Payout Profile - Stores encrypted IBAN and bank details for sellers
 model PayoutProfile {
-  id                String   @id @default(cuid())
-  userId            String   @unique
-  status            String   @default("UNSET") // 'UNSET' | 'ACTIVE' | 'CHANGE_REQUESTED' | 'SUSPENDED'
+  id                String    @id @default(cuid())
+  userId            String    @unique
+  status            String    @default("UNSET") // 'UNSET' | 'ACTIVE' | 'CHANGE_REQUESTED' | 'SUSPENDED'
   accountHolderName String
-  ibanEncrypted     String   // Encrypted IBAN (AES-256-GCM)
-  ibanLast4         String   // Last 4 digits for display
-  country           String   @default("CH")
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  ibanEncrypted     String // Encrypted IBAN (AES-256-GCM)
+  ibanLast4         String // Last 4 digits for display
+  country           String    @default("CH")
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
   verifiedAt        DateTime?
-  lockedReason      String?  // e.g. "Change requires approval"
+  lockedReason      String? // e.g. "Change requires approval"
 
-  user              User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-  changeRequests    PayoutChangeRequest[]
-  auditLogs         PayoutAuditLog[]
+  user           User                  @relation(fields: [userId], references: [id], onDelete: Cascade)
+  changeRequests PayoutChangeRequest[]
+  auditLogs      PayoutAuditLog[]
 
   @@index([userId])
   @@index([status])
@@ -1291,19 +1325,19 @@ model PayoutProfile {
 
 // Payout Change Requests - Tracks requests to change bank details
 model PayoutChangeRequest {
-  id                        String   @id @default(cuid())
-  userId                    String
+  id                         String    @id @default(cuid())
+  userId                     String
   requestedAccountHolderName String
-  requestedIbanEncrypted     String   // Encrypted requested IBAN
-  requestedIbanLast4         String   // Last 4 digits for display
-  reason                    String?  // Optional reason for change
-  status                    String   @default("PENDING") // 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
-  createdAt                 DateTime @default(now())
-  decidedAt                 DateTime?
-  decidedBy                 String?  // Admin user ID
+  requestedIbanEncrypted     String // Encrypted requested IBAN
+  requestedIbanLast4         String // Last 4 digits for display
+  reason                     String? // Optional reason for change
+  status                     String    @default("PENDING") // 'PENDING' | 'APPROVED' | 'REJECTED' | 'CANCELLED'
+  createdAt                  DateTime  @default(now())
+  decidedAt                  DateTime?
+  decidedBy                  String? // Admin user ID
 
-  profile                   PayoutProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  decider                   User?          @relation("PayoutChangeDecider", fields: [decidedBy], references: [id])
+  profile PayoutProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  decider User?         @relation("PayoutChangeDecider", fields: [decidedBy], references: [id])
 
   @@index([userId])
   @@index([status])
@@ -1315,13 +1349,13 @@ model PayoutChangeRequest {
 model PayoutAuditLog {
   id          String   @id @default(cuid())
   userId      String
-  action      String   // 'PROFILE_CREATED' | 'CHANGE_REQUESTED' | 'CHANGE_APPROVED' | 'CHANGE_REJECTED'
-  metadata    String?  // JSON string with masked values, request id, etc.
+  action      String // 'PROFILE_CREATED' | 'CHANGE_REQUESTED' | 'CHANGE_APPROVED' | 'CHANGE_REJECTED'
+  metadata    String? // JSON string with masked values, request id, etc.
   createdAt   DateTime @default(now())
-  actorUserId String   // Who performed the action (user for own actions, admin for approvals)
+  actorUserId String // Who performed the action (user for own actions, admin for approvals)
 
-  profile     PayoutProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
-  actor       User          @relation("PayoutAuditActor", fields: [actorUserId], references: [id])
+  profile PayoutProfile @relation(fields: [userId], references: [userId], onDelete: Cascade)
+  actor   User          @relation("PayoutAuditActor", fields: [actorUserId], references: [id])
 
   @@index([userId])
   @@index([createdAt])
@@ -1331,13 +1365,13 @@ model PayoutAuditLog {
 
 // Stripe Webhook Events - Tracks processed webhook events for idempotency
 model WebhookEvent {
-  id           String   @id @default(cuid())
-  stripeEventId String  @unique // Stripe Event ID (evt_xxx)
-  eventType    String   // Event type (e.g., 'checkout.session.completed')
-  orderId      String?  // Related order if applicable
-  processedAt  DateTime @default(now())
-  success      Boolean  @default(true)
-  errorMessage String?  // Error message if processing failed
+  id            String   @id @default(cuid())
+  stripeEventId String   @unique // Stripe Event ID (evt_xxx)
+  eventType     String // Event type (e.g., 'checkout.session.completed')
+  orderId       String? // Related order if applicable
+  processedAt   DateTime @default(now())
+  success       Boolean  @default(true)
+  errorMessage  String? // Error message if processing failed
 
   @@index([stripeEventId])
   @@index([orderId])
@@ -1348,32 +1382,32 @@ model WebhookEvent {
 
 // System Outage Tracking - Für automatische Auktionsverlängerungen bei Systemausfällen
 model SystemOutage {
-  id              String    @id @default(cuid())
-  title           String    // z.B. "Geplante Wartung" oder "Unerwarteter Ausfall"
-  description     String?   // Optionale Beschreibung
-  startedAt       DateTime  // Beginn des Ausfalls
-  endedAt         DateTime? // Ende des Ausfalls (null = noch aktiv)
-  durationMinutes Int?      // Berechnete Dauer in Minuten (nach Ende)
-  severity        String    @default("major") // 'minor' | 'major' | 'critical'
+  id               String    @id @default(cuid())
+  title            String // z.B. "Geplante Wartung" oder "Unerwarteter Ausfall"
+  description      String? // Optionale Beschreibung
+  startedAt        DateTime // Beginn des Ausfalls
+  endedAt          DateTime? // Ende des Ausfalls (null = noch aktiv)
+  durationMinutes  Int? // Berechnete Dauer in Minuten (nach Ende)
+  severity         String    @default("major") // 'minor' | 'major' | 'critical'
   affectedServices String[] // z.B. ["bidding", "payments", "search"]
-  isPlanned       Boolean   @default(false) // Geplante Wartung vs. ungeplanter Ausfall
+  isPlanned        Boolean   @default(false) // Geplante Wartung vs. ungeplanter Ausfall
 
   // Auktionsverlängerung
-  extensionApplied    Boolean   @default(false) // Wurde Verlängerung bereits durchgeführt?
-  extensionMinutes    Int?      // Verlängerung in Minuten (60 oder 1440)
-  auctionsExtended    Int?      // Anzahl verlängerter Auktionen
-  extensionAppliedAt  DateTime? // Zeitpunkt der Verlängerung
-  extensionAppliedBy  String?   // Admin User ID
+  extensionApplied   Boolean   @default(false) // Wurde Verlängerung bereits durchgeführt?
+  extensionMinutes   Int? // Verlängerung in Minuten (60 oder 1440)
+  auctionsExtended   Int? // Anzahl verlängerter Auktionen
+  extensionAppliedAt DateTime? // Zeitpunkt der Verlängerung
+  extensionAppliedBy String? // Admin User ID
 
   // Metadata
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
-  createdBy       String    // Admin User ID der den Ausfall gemeldet hat
-  resolvedBy      String?   // Admin User ID der den Ausfall beendet hat
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+  createdBy  String // Admin User ID der den Ausfall gemeldet hat
+  resolvedBy String? // Admin User ID der den Ausfall beendet hat
 
-  creator         User      @relation("OutageCreator", fields: [createdBy], references: [id])
-  resolver        User?     @relation("OutageResolver", fields: [resolvedBy], references: [id])
-  extender        User?     @relation("OutageExtender", fields: [extensionAppliedBy], references: [id])
+  creator  User  @relation("OutageCreator", fields: [createdBy], references: [id])
+  resolver User? @relation("OutageResolver", fields: [resolvedBy], references: [id])
+  extender User? @relation("OutageExtender", fields: [extensionAppliedBy], references: [id])
 
   @@index([startedAt])
   @@index([endedAt])
@@ -1384,18 +1418,18 @@ model SystemOutage {
 
 // Shipping Rate Catalog - Zentrale Preisliste für Versandoptionen (Ricardo-style)
 model ShippingRateCatalog {
-  id          String   @id @default(cuid())
-  code        String   @unique // z.B. 'post_economy_2kg', 'addon_sperrgut'
-  labelDe     String   // Deutsche Bezeichnung für UI
-  basePriceChf Float   // Preis in CHF
-  rateSetId   String   @default("default_ch_post") // Rate-Set Identifier (für zukünftige Erweiterungen)
-  isAddon     Boolean  @default(false) // true für Add-ons (sperrgut, pickhome)
-  addonType   String?  // 'sperrgut' | 'pickhome' | null
-  service     String?  // 'economy' | 'priority' | null (nur für Base-Rates)
-  weightTier  Int?     // 2 | 10 | 30 | null (nur für Base-Rates)
-  isActive    Boolean  @default(true)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id           String   @id @default(cuid())
+  code         String   @unique // z.B. 'post_economy_2kg', 'addon_sperrgut'
+  labelDe      String // Deutsche Bezeichnung für UI
+  basePriceChf Float // Preis in CHF
+  rateSetId    String   @default("default_ch_post") // Rate-Set Identifier (für zukünftige Erweiterungen)
+  isAddon      Boolean  @default(false) // true für Add-ons (sperrgut, pickhome)
+  addonType    String? // 'sperrgut' | 'pickhome' | null
+  service      String? // 'economy' | 'priority' | null (nur für Base-Rates)
+  weightTier   Int? // 2 | 10 | 30 | null (nur für Base-Rates)
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@index([rateSetId])
   @@index([code])
@@ -1406,7 +1440,7 @@ model ShippingRateCatalog {
 
 model RateLimit {
   id         String   @id @default(cuid())
-  identifier String   // e.g., "stripe-webhook:1.2.3.4"
+  identifier String // e.g., "stripe-webhook:1.2.3.4"
   createdAt  DateTime @default(now())
 
   @@index([identifier, createdAt])
@@ -1419,7 +1453,7 @@ model WebhookMetric {
   eventId          String
   eventType        String
   success          Boolean
-  processingTimeMs Int      // Processing time in milliseconds
+  processingTimeMs Int // Processing time in milliseconds
   error            String?
   timestamp        DateTime @default(now())
 
@@ -1430,10 +1464,10 @@ model WebhookMetric {
 }
 
 model AlertLog {
-  id         String   @id @default(cuid())
-  alertType  String   // e.g., "high_error_rate", "consecutive_failures"
-  details    String?  // Additional details about the alert
-  sentAt     DateTime @default(now())
+  id        String   @id @default(cuid())
+  alertType String // e.g., "high_error_rate", "consecutive_failures"
+  details   String? // Additional details about the alert
+  sentAt    DateTime @default(now())
 
   @@index([alertType, sentAt])
   @@index([sentAt])
