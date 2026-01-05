@@ -135,16 +135,23 @@ export async function releaseFunds(orderId: string): Promise<ReleaseFundsResult>
       throw new Error(`Charge für Order ${orderId} nicht gefunden`)
     }
 
-    // Berechne Seller Amount (Item-Preis - Plattform-Gebühr - Zahlungsgebühr)
-    // HINWEIS: protectionFee enthält jetzt die Zahlungsgebühr (Stripe Fee / "Helvenda Schutz Gebühr")
-    const paymentProcessingFee = order.protectionFee || 0
-    const sellerAmount = calculateSellerAmount(order.itemPrice, order.platformFee, paymentProcessingFee)
+    // Berechne Transfer-Betrag (Item-Preis - Plattform-Gebühr - Processing Fee)
+    // HINWEIS: protectionFee enthält nur die Processing Fee (nicht die Payout Fee)
+    // Die Payout Fee wird von Stripe automatisch abgezogen wenn das Geld auf dem Bankkonto ankommt
+    const processingFee = order.protectionFee || 0
+    const transferAmount = Math.round((order.itemPrice - order.platformFee - processingFee) * 100) / 100
+    
+    // Der Verkäufer erhält nach Stripe Payout Fee (wird automatisch abgezogen):
+    // transferAmount - (transferAmount * 0.0025 + 0.55)
+    const sellerAmount = calculateSellerAmount(order.itemPrice, order.platformFee, processingFee)
+    console.log(`[release-funds] Transfer: CHF ${transferAmount.toFixed(2)}, Verkäufer erhält netto: CHF ${sellerAmount.toFixed(2)}`)
 
     // Erstelle Transfer zu Stripe Connected Account
     // WICHTIG: Separate Charges and Transfers Pattern
+    // Wir transferieren den Betrag VOR Payout Fee - Stripe zieht die Payout Fee automatisch ab
     // Note: stripeConnectedAccountId is guaranteed non-null here due to sellerOnboardingComplete check above
     const transfer = await stripe.transfers.create({
-      amount: Math.round(sellerAmount * 100), // In Rappen
+      amount: Math.round(transferAmount * 100), // In Rappen (vor Payout Fee)
       currency: 'chf',
       destination: order.seller.stripeConnectedAccountId!,
       source_transaction: order.paymentRecord.stripeChargeId, // Verknüpft Transfer mit Charge

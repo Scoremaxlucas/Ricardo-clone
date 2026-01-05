@@ -160,17 +160,68 @@ export const DEFAULT_PRICING = {
 }
 
 /**
- * Stripe Processing Fee (wird vom Verkäufer getragen)
- * Kommuniziert als "Helvenda Schutz Gebühr" oder "Zahlungsgebühr"
+ * Stripe Gebühren (Schweiz)
+ *
+ * VEREINFACHT: Beide Stripe-Gebühren werden zu einer "Zahlungsgebühr" kombiniert
+ * - Payment Processing: 2.9% + CHF 0.30 (beim Zahlen)
+ * - Payout: 0.25% + CHF 0.55 (bei Auszahlung an Verkäufer)
+ *
+ * Statt zwei separate Gebühren zeigen wir dem Verkäufer EINE kombinierte Gebühr.
  */
 export const STRIPE_FEE = {
-  percentageRate: 0.029, // 2.9%
-  fixedFee: 0.30, // CHF 0.30
+  // Payment Processing Fee (beim Zahlen durch Käufer)
+  processingPercentage: 0.029, // 2.9%
+  processingFixed: 0.3, // CHF 0.30
+
+  // Payout Fee (bei Auszahlung an Verkäufer)
+  payoutPercentage: 0.0025, // 0.25%
+  payoutFixed: 0.55, // CHF 0.55
 }
 
 /**
- * Berechnet die Stripe Processing Fee
+ * Berechnet nur die Stripe Processing Fee (ohne Payout)
+ * @deprecated Verwende calculateCombinedStripeFee() für die vollständige Gebühr
  */
 export function calculateStripeFee(amount: number): number {
-  return Math.round((amount * STRIPE_FEE.percentageRate + STRIPE_FEE.fixedFee) * 100) / 100
+  return (
+    Math.round((amount * STRIPE_FEE.processingPercentage + STRIPE_FEE.processingFixed) * 100) / 100
+  )
+}
+
+/**
+ * Berechnet die kombinierte Stripe-Gebühr (Processing + Payout)
+ *
+ * Diese Funktion berechnet beide Stripe-Gebühren und kombiniert sie zu einer
+ * einzigen "Zahlungsgebühr", die dem Verkäufer angezeigt wird.
+ *
+ * Berechnung:
+ * 1. Processing Fee: 2.9% + CHF 0.30 (auf den Gesamtbetrag, den der Käufer zahlt)
+ * 2. Payout Fee: 0.25% + CHF 0.55 (auf den Betrag, der an den Verkäufer geht)
+ *
+ * @param buyerPaymentAmount - Der Gesamtbetrag, den der Käufer zahlt (inkl. Versand)
+ * @param sellerItemPrice - Der Artikelpreis (ohne Versand), auf dem die Kommission basiert
+ * @param platformFee - Die Plattform-Kommission (5%, max CHF 150)
+ * @returns Die kombinierte Zahlungsgebühr
+ */
+export function calculateCombinedStripeFee(
+  buyerPaymentAmount: number,
+  sellerItemPrice: number,
+  platformFee: number
+): number {
+  // 1. Processing Fee (auf den Gesamtbetrag, den der Käufer zahlt)
+  const processingFee =
+    buyerPaymentAmount * STRIPE_FEE.processingPercentage + STRIPE_FEE.processingFixed
+
+  // 2. Berechne den Betrag, der an den Verkäufer geht (vor Payout Fee)
+  // Verkäufer erhält: Artikelpreis - Kommission - Processing Fee
+  const sellerAmountBeforePayoutFee = sellerItemPrice - platformFee - processingFee
+
+  // 3. Payout Fee (auf den Betrag, der an den Verkäufer überwiesen wird)
+  const payoutFee =
+    sellerAmountBeforePayoutFee * STRIPE_FEE.payoutPercentage + STRIPE_FEE.payoutFixed
+
+  // 4. Kombinierte Gebühr
+  const combinedFee = processingFee + payoutFee
+
+  return Math.round(combinedFee * 100) / 100
 }

@@ -582,26 +582,35 @@ export default function OrderDetailPage() {
                     </div>
                   </>
                 )}
-                {isSeller && (
-                  <>
-                    <div className="flex justify-between text-red-600">
-                      <span>Kommission (5%):</span>
-                      <span className="font-medium">- CHF {order.platformFee.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between text-red-600">
-                      <span>Zahlungsgebühr:</span>
-                      <span className="font-medium">- CHF {(order.protectionFee || 0).toFixed(2)}</span>
-                    </div>
-                    <div className="border-t border-gray-200 pt-2">
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-gray-900">Sie erhalten:</span>
-                        <span className="text-lg font-bold text-green-600">
-                          CHF {(order.itemPrice - order.platformFee - (order.protectionFee || 0)).toFixed(2)}
-                        </span>
+                {isSeller && (() => {
+                  // Berechne kombinierte Zahlungsgebühr (Processing + Payout)
+                  const processingFee = order.protectionFee || 0
+                  const sellerAmountBeforePayout = order.itemPrice - order.platformFee - processingFee
+                  const payoutFee = sellerAmountBeforePayout * 0.0025 + 0.55
+                  const combinedFee = Math.round((processingFee + payoutFee) * 100) / 100
+                  const sellerReceives = Math.round((order.itemPrice - order.platformFee - combinedFee) * 100) / 100
+                  
+                  return (
+                    <>
+                      <div className="flex justify-between text-red-600">
+                        <span>Kommission (5%):</span>
+                        <span className="font-medium">- CHF {order.platformFee.toFixed(2)}</span>
                       </div>
-                    </div>
-                  </>
-                )}
+                      <div className="flex justify-between text-red-600">
+                        <span>Zahlungsgebühr:</span>
+                        <span className="font-medium">- CHF {combinedFee.toFixed(2)}</span>
+                      </div>
+                      <div className="border-t border-gray-200 pt-2">
+                        <div className="flex justify-between">
+                          <span className="font-semibold text-gray-900">Sie erhalten:</span>
+                          <span className="text-lg font-bold text-green-600">
+                            CHF {sellerReceives.toFixed(2)}
+                          </span>
+                        </div>
+                      </div>
+                    </>
+                  )
+                })()}
               </div>
             </div>
 

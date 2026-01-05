@@ -213,7 +213,7 @@ export async function POST(request: NextRequest) {
         selectedAddons: selectedAddons ? JSON.stringify(selectedAddons) : null,
         shippingRateSetId: 'default_ch_post',
         platformFee: fees.platformFee,
-        protectionFee: fees.paymentProcessingFee, // Zahlungsgebühr (Stripe Fee) - vom Verkäufer bezahlt
+        protectionFee: fees._processingFeeOnly, // Stripe Processing Fee (für Transfer-Berechnung)
         totalAmount: fees.totalAmount,
         orderStatus: 'awaiting_payment',
         paymentStatus: 'created',
