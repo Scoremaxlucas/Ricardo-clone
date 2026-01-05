@@ -1,7 +1,7 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { getEmailVerificationEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
-import { sendEmail, getEmailVerificationEmail } from '@/lib/email'
 import crypto from 'crypto'
+import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * API Route zum erneuten Versenden einer Verifizierungs-E-Mail

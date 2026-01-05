@@ -58,16 +58,14 @@ export async function sendEmail({ to, subject, html, text, useNoReply = false }:
       const defaultFromEmail = useNoReply ? 'noreply@helvenda.ch' : 'support@helvenda.ch'
       const rawFromEmail =
         process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM || defaultFromEmail
-      
+
       // Füge Display-Name hinzu falls nicht vorhanden (verbessert Deliverability)
-      const fromEmail = rawFromEmail.includes('<') 
-        ? rawFromEmail 
-        : `Helvenda <${rawFromEmail}>`
-      
+      const fromEmail = rawFromEmail.includes('<') ? rawFromEmail : `Helvenda <${rawFromEmail}>`
+
       // Reply-To: Bei noreply E-Mails auf support@ zeigen, sonst support@helvenda.ch
-      const replyTo = useNoReply 
+      const replyTo = useNoReply
         ? 'support@helvenda.ch' // Auch bei noreply E-Mails können User antworten (geht an support)
-        : (process.env.RESEND_REPLY_TO || 'support@helvenda.ch')
+        : process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
 
       console.log(`[sendEmail] Versende E-Mail via Resend:`)
       console.log(`  From: ${fromEmail}`)
@@ -133,14 +131,12 @@ export async function sendEmail({ to, subject, html, text, useNoReply = false }:
       // From-Adresse: support@helvenda.ch (Standard) oder noreply@helvenda.ch (für automatische E-Mails)
       const defaultFromEmail = useNoReply ? 'noreply@helvenda.ch' : 'support@helvenda.ch'
       const rawFromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || defaultFromEmail
-      const fromEmail = rawFromEmail.includes('<') 
-        ? rawFromEmail 
-        : `Helvenda <${rawFromEmail}>`
+      const fromEmail = rawFromEmail.includes('<') ? rawFromEmail : `Helvenda <${rawFromEmail}>`
       // Reply-To: Bei noreply E-Mails auf support@ zeigen, sonst support@helvenda.ch
-      const replyTo = useNoReply 
+      const replyTo = useNoReply
         ? 'support@helvenda.ch' // Auch bei noreply E-Mails können User antworten (geht an support)
-        : (process.env.RESEND_REPLY_TO || 'support@helvenda.ch')
-      
+        : process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
+
       const info = await transporter.sendMail({
         from: fromEmail,
         replyTo: replyTo, // WICHTIG: Echte Reply-Adresse
@@ -202,12 +198,12 @@ export function getAnswerNotificationEmail(
     `Hallo ${buyerName},`,
     `
       <p style="margin: 0 0 16px 0;">Der Verkäufer hat auf Ihre Frage geantwortet.</p>
-      
+
       <div style="background-color: #f3f4f6; padding: 20px; margin: 24px 0; border-radius: 8px;">
         <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280;"><strong>Von:</strong> ${sellerName}</p>
         <p style="margin: 0; font-size: 15px; color: #111827; line-height: 1.6;">${answerContent.replace(/\n/g, '<br>')}</p>
       </div>
-      
+
       <p style="margin: 0; font-size: 13px; color: #6b7280; font-style: italic;">
         ${isPublic ? 'Diese Antwort wurde öffentlich gemacht.' : 'Diese Antwort ist privat.'}
       </p>
@@ -794,7 +790,7 @@ export function getEmailVerificationEmail(userName: string, verificationUrl: str
     `Hallo ${userName},`,
     `
       <p style="margin: 0 0 16px 0;">Herzlich willkommen bei Helvenda.ch! Vielen Dank für Ihre Registrierung auf dem sicheren Schweizer Marktplatz für Käufer und Verkäufer.</p>
-      
+
       <div style="background-color: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 24px 0; border-radius: 0 8px 8px 0;">
         <p style="margin: 0; font-size: 14px; color: #134e4a;">
           Um Ihr Konto zu aktivieren und alle Funktionen nutzen zu können – wie das Kaufen, Verkaufen und Bieten auf Artikel – bestätigen Sie bitte Ihre E-Mail-Adresse.
@@ -805,7 +801,8 @@ export function getEmailVerificationEmail(userName: string, verificationUrl: str
     verificationUrl,
     {
       titleIcon: '📧',
-      noteText: '<strong>Hinweis:</strong> Dieser Bestätigungslink ist <strong>48 Stunden</strong> gültig. Danach müssen Sie sich erneut registrieren.'
+      noteText:
+        '<strong>Hinweis:</strong> Dieser Bestätigungslink ist <strong>48 Stunden</strong> gültig. Danach müssen Sie sich erneut registrieren.',
     }
   )
 
@@ -845,11 +842,11 @@ export function getVerificationApprovalEmail(userName: string, userEmail: string
       <div style="text-align: center; margin: 24px 0;">
         <div style="display: inline-block; width: 64px; height: 64px; background-color: #d1fae5; border-radius: 50%; line-height: 64px; font-size: 32px;">✓</div>
       </div>
-      
+
       <p style="margin: 0 0 20px 0; text-align: center;">Ihr Konto wurde von unserem Team geprüft und freigegeben.</p>
-      
+
       <p style="margin: 0 0 12px 0;">Sie können nun alle Funktionen unserer Plattform nutzen:</p>
-      
+
       <ul style="margin: 0 0 24px 20px; padding: 0; color: #4b5563;">
         <li style="margin-bottom: 8px;">Artikel zum Verkauf anbieten</li>
         <li style="margin-bottom: 8px;">Bei Auktionen mitbieten</li>
@@ -908,16 +905,16 @@ export function getSaleNotificationEmail(
     `Hallo ${sellerName},`,
     `
       <p style="margin: 0 0 24px 0;"><strong>Verkaufte Uhr:</strong> ${watchTitle}</p>
-      
+
       <p style="margin: 0 0 8px 0;"><strong>Käufer:</strong> ${buyerName}</p>
-      
+
       <!-- Price Box -->
       <div style="background-color: #f3f4f6; padding: 20px; margin: 24px 0; border-radius: 8px; text-align: center;">
         <p style="margin: 0 0 4px 0; font-size: 13px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">Verkaufspreis</p>
         <p style="margin: 0; font-size: 28px; font-weight: 700; color: #111827;">CHF ${new Intl.NumberFormat('de-CH').format(finalPrice)}</p>
         <p style="margin: 8px 0 0 0; font-size: 13px; color: #6b7280;">${purchaseType === 'buy-now' ? 'Sofortkauf' : 'Auktion'}</p>
       </div>
-      
+
       <p style="margin: 0;"><strong>Nächste Schritte:</strong> Die Käuferinformationen (Name, Adresse, Kontaktdaten, Zahlungsmethoden) finden Sie in Ihrem Verkäufer-Bereich unter "Verkauft".</p>
     `,
     'Zu Ihren Verkäufen',
@@ -959,7 +956,10 @@ export function getReviewNotificationEmail(
   const baseUrl = getEmailBaseUrl()
   const profileUrl = `${baseUrl}/my-watches/public-profile`
 
-  const ratingLabels: Record<string, { label: string; emoji: string; bgColor: string; textColor: string }> = {
+  const ratingLabels: Record<
+    string,
+    { label: string; emoji: string; bgColor: string; textColor: string }
+  > = {
     positive: { label: 'positive', emoji: '👍', bgColor: '#d1fae5', textColor: '#065f46' },
     neutral: { label: 'neutrale', emoji: '😐', bgColor: '#f3f4f6', textColor: '#4b5563' },
     negative: { label: 'negative', emoji: '👎', bgColor: '#fee2e2', textColor: '#991b1b' },
@@ -974,17 +974,17 @@ export function getReviewNotificationEmail(
     `Hallo ${userName},`,
     `
       <p style="margin: 0 0 16px 0;">Sie haben eine neue Bewertung erhalten!</p>
-      
+
       <div style="text-align: center; margin: 24px 0;">
         <div style="display: inline-block; width: 64px; height: 64px; background-color: ${ratingInfo.bgColor}; border-radius: 50%; line-height: 64px; font-size: 32px;">${ratingInfo.emoji}</div>
       </div>
-      
+
       <div style="background-color: ${ratingInfo.bgColor}; padding: 20px; margin: 24px 0; border-radius: 8px; text-align: center;">
         <p style="margin: 0; font-size: 15px; color: ${ratingInfo.textColor};">
           <strong>${reviewerName}</strong> hat Ihnen eine <strong>${ratingInfo.label}</strong> Bewertung gegeben.
         </p>
       </div>
-      
+
       <p style="margin: 0; font-size: 14px; color: #6b7280;">
         Bewertungen helfen anderen Nutzern, sich ein Bild von Ihrer Zuverlässigkeit zu machen. Sie können alle Ihre Bewertungen in Ihrem Profil einsehen.
       </p>
@@ -1069,31 +1069,35 @@ export function getPurchaseConfirmationEmail(
     `Hallo ${buyerName},`,
     `
       <p style="margin: 0 0 16px 0;">Ihr Kauf wurde erfolgreich abgeschlossen.</p>
-      
+
       <!-- Product Info Box -->
       <div style="background-color: #f3f4f6; padding: 20px; margin: 24px 0; border-radius: 8px;">
         <p style="margin: 0 0 8px 0; font-size: 13px; color: #6b7280; text-transform: uppercase;">${purchaseType === 'buy-now' ? 'Sofortkauf' : 'Auktion'}</p>
         <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: 700; color: #111827;">${watchTitle}</p>
         <p style="margin: 0 0 12px 0; font-size: 14px; color: #6b7280;">Verkäufer: ${sellerName}</p>
-        
+
         <table style="width: 100%; border-top: 1px solid #e5e7eb; padding-top: 12px; margin-top: 12px;">
           <tr>
             <td style="padding: 4px 0; color: #6b7280;">Artikelpreis</td>
             <td style="padding: 4px 0; text-align: right; color: #111827;">CHF ${new Intl.NumberFormat('de-CH').format(finalPrice)}</td>
           </tr>
-          ${shippingCost > 0 ? `
+          ${
+            shippingCost > 0
+              ? `
           <tr>
             <td style="padding: 4px 0; color: #6b7280;">Versandkosten</td>
             <td style="padding: 4px 0; text-align: right; color: #111827;">CHF ${new Intl.NumberFormat('de-CH').format(shippingCost)}</td>
           </tr>
-          ` : ''}
+          `
+              : ''
+          }
           <tr>
             <td style="padding: 8px 0 0 0; font-weight: 700; color: #111827; border-top: 1px solid #e5e7eb;">Gesamt</td>
             <td style="padding: 8px 0 0 0; text-align: right; font-weight: 700; font-size: 18px; color: #0f766e; border-top: 1px solid #e5e7eb;">CHF ${new Intl.NumberFormat('de-CH').format(totalPrice)}</td>
           </tr>
         </table>
       </div>
-      
+
       ${paymentSection}
     `,
     'Zu meinen Käufen',
@@ -1113,13 +1117,17 @@ Verkäufer: ${sellerName}
 Kaufpreis: CHF ${new Intl.NumberFormat('de-CH').format(finalPrice)}
 ${shippingCost > 0 ? `Versandkosten: CHF ${new Intl.NumberFormat('de-CH').format(shippingCost)}\n` : ''}Gesamt: CHF ${new Intl.NumberFormat('de-CH').format(totalPrice)}
 
-${paymentInfo ? `
+${
+  paymentInfo
+    ? `
 Zahlungsinformationen:
 Empfänger: ${paymentInfo.accountHolder}
 IBAN: ${paymentInfo.iban}
 Betrag: CHF ${new Intl.NumberFormat('de-CH').format(paymentInfo.amount)}
 Referenz: ${paymentInfo.reference}
-` : 'Kontaktieren Sie den Verkäufer innerhalb von 7 Tagen zur Zahlungsvereinbarung.'}
+`
+    : 'Kontaktieren Sie den Verkäufer innerhalb von 7 Tagen zur Zahlungsvereinbarung.'
+}
 
 Zu meinen Käufen: ${purchaseUrl}
 
@@ -1151,23 +1159,31 @@ export function getInvoiceNotificationEmail(
 ) {
   const baseUrl = getEmailBaseUrl()
   const invoicesUrl = `${baseUrl}/my-watches/selling/fees`
-  const dueDateFormatted = new Date(dueDate).toLocaleDateString('de-CH', { day: '2-digit', month: '2-digit', year: 'numeric' })
+  const dueDateFormatted = new Date(dueDate).toLocaleDateString('de-CH', {
+    day: '2-digit',
+    month: '2-digit',
+    year: 'numeric',
+  })
 
   const subject = `Neue Rechnung: ${invoiceNumber}`
 
-  const itemsHtml = invoiceItems.map(item => `
+  const itemsHtml = invoiceItems
+    .map(
+      item => `
     <tr>
       <td style="padding: 8px 0; border-bottom: 1px solid #e5e7eb;">${item.description}</td>
       <td style="padding: 8px 0; text-align: right; border-bottom: 1px solid #e5e7eb;">CHF ${new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(item.total)}</td>
     </tr>
-  `).join('')
+  `
+    )
+    .join('')
 
   const html = getHelvendaEmailTemplate(
     'Neue Rechnung erstellt',
     `Hallo ${userName},`,
     `
       <p style="margin: 0 0 16px 0;">Eine neue Rechnung wurde für Sie erstellt.</p>
-      
+
       <!-- Invoice Summary Box -->
       <div style="background-color: #f3f4f6; padding: 20px; margin: 24px 0; border-radius: 8px; text-align: center;">
         <p style="margin: 0 0 4px 0; font-size: 13px; color: #6b7280;">Rechnungsnummer</p>
@@ -1175,7 +1191,7 @@ export function getInvoiceNotificationEmail(
         <p style="margin: 0 0 4px 0; font-size: 13px; color: #6b7280;">Gesamtbetrag</p>
         <p style="margin: 0; font-size: 28px; font-weight: 700; color: #0f766e;">CHF ${new Intl.NumberFormat('de-CH').format(invoiceTotal)}</p>
       </div>
-      
+
       <!-- Items Table -->
       <table style="width: 100%; border-collapse: collapse; margin: 24px 0;">
         <thead>
@@ -1192,7 +1208,7 @@ export function getInvoiceNotificationEmail(
           </tr>
         </tbody>
       </table>
-      
+
       <!-- Due Date Warning -->
       <div style="background-color: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 24px 0; border-radius: 0 8px 8px 0;">
         <p style="margin: 0; font-size: 14px; color: #92400e;">
@@ -2265,7 +2281,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 
 /**
  * Helvenda E-Mail Base Template (Watch-Out Style)
- * 
+ *
  * Clean, professional email design inspired by Watch-Out.ch
  * Features:
  * - Prominent H logo with brand name
@@ -2323,7 +2339,7 @@ export function getHelvendaEmailTemplate(
       outline: none;
       text-decoration: none;
     }
-    
+
     /* Base styles */
     body {
       margin: 0 !important;
@@ -2331,13 +2347,13 @@ export function getHelvendaEmailTemplate(
       background-color: #f5f5f5;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
     }
-    
+
     /* Container */
     .email-container {
       max-width: 600px;
       margin: 0 auto;
     }
-    
+
     /* Header */
     .email-header {
       background-color: #ffffff;
@@ -2345,7 +2361,7 @@ export function getHelvendaEmailTemplate(
       text-align: center;
       border-bottom: 3px solid #0f766e;
     }
-    
+
     /* Logo */
     .logo-wrapper {
       display: inline-block;
@@ -2392,7 +2408,7 @@ export function getHelvendaEmailTemplate(
       margin-top: 4px;
       font-weight: 400;
     }
-    
+
     /* Content */
     .email-content {
       background-color: #ffffff;
@@ -2430,7 +2446,7 @@ export function getHelvendaEmailTemplate(
     .content-text p:last-child {
       margin-bottom: 0;
     }
-    
+
     /* Highlight Box */
     .highlight-box {
       background-color: #f0fdfa;
@@ -2444,7 +2460,7 @@ export function getHelvendaEmailTemplate(
       font-size: 14px;
       color: #134e4a;
     }
-    
+
     /* Info Box */
     .info-box {
       background-color: #f3f4f6;
@@ -2466,7 +2482,7 @@ export function getHelvendaEmailTemplate(
       color: #111827;
       margin: 0;
     }
-    
+
     /* Warning Box */
     .warning-box {
       background-color: #fef3c7;
@@ -2480,7 +2496,7 @@ export function getHelvendaEmailTemplate(
       font-size: 14px;
       color: #92400e;
     }
-    
+
     /* Button */
     .button-wrapper {
       text-align: center;
@@ -2500,7 +2516,7 @@ export function getHelvendaEmailTemplate(
     .email-button:hover {
       background-color: #0d9488;
     }
-    
+
     /* Note */
     .note-section {
       background-color: #f9fafb;
@@ -2511,7 +2527,7 @@ export function getHelvendaEmailTemplate(
       color: #6b7280;
       line-height: 1.5;
     }
-    
+
     /* Footer */
     .email-footer {
       background-color: #111827;
@@ -2541,7 +2557,7 @@ export function getHelvendaEmailTemplate(
       color: #6b7280;
       margin: 0;
     }
-    
+
     /* Responsive */
     @media only screen and (max-width: 600px) {
       .email-header {
@@ -2578,7 +2594,7 @@ export function getHelvendaEmailTemplate(
     <tr>
       <td style="padding: 40px 20px;">
         <table role="presentation" cellspacing="0" cellpadding="0" border="0" width="600" class="email-container" style="margin: 0 auto; max-width: 600px; background-color: #ffffff; border-radius: 12px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);">
-          
+
           <!-- Header -->
           <tr>
             <td class="email-header" style="background-color: #ffffff; padding: 32px 40px; text-align: center; border-bottom: 3px solid #0f766e;">
@@ -2605,24 +2621,24 @@ export function getHelvendaEmailTemplate(
               </table>
             </td>
           </tr>
-          
+
           <!-- Content -->
           <tr>
             <td class="email-content" style="background-color: #ffffff; padding: 40px;">
               <!-- Greeting -->
               <p style="font-size: 16px; color: #374151; margin: 0 0 24px 0; line-height: 1.5;">${greeting}</p>
-              
+
               <!-- Title -->
               <div style="margin-bottom: 24px;">
                 ${options?.titleIcon ? `<p style="font-size: 24px; margin: 0 0 8px 0;">${options.titleIcon}</p>` : ''}
                 <h1 style="font-size: 22px; font-weight: 700; color: #111827; margin: 0; line-height: 1.3;">${title}</h1>
               </div>
-              
+
               <!-- Main Content -->
               <div style="font-size: 15px; color: #4b5563; line-height: 1.6;">
                 ${content}
               </div>
-              
+
               <!-- Button -->
               ${
                 buttonText && buttonUrl
@@ -2633,7 +2649,7 @@ export function getHelvendaEmailTemplate(
               `
                   : ''
               }
-              
+
               <!-- Note -->
               ${
                 options?.showNote !== false
@@ -2646,7 +2662,7 @@ export function getHelvendaEmailTemplate(
               }
             </td>
           </tr>
-          
+
           <!-- Footer -->
           <tr>
             <td class="email-footer" style="background-color: #111827; padding: 32px 40px; text-align: center;">
@@ -2660,7 +2676,7 @@ export function getHelvendaEmailTemplate(
               <p style="font-size: 12px; color: #6b7280; margin: 0;">© ${currentYear} Helvenda.ch – Alle Rechte vorbehalten</p>
             </td>
           </tr>
-          
+
         </table>
       </td>
     </tr>
@@ -3371,13 +3387,13 @@ export function getProductDeletedEmail(
     `Hallo ${sellerName},`,
     `
       <p style="margin: 0 0 8px 0;"><strong>Angebot:</strong> ${productTitle}</p>
-      
+
       <div style="background-color: #fef2f2; border-left: 4px solid #dc2626; padding: 16px 20px; margin: 24px 0; border-radius: 0 8px 8px 0;">
         <p style="margin: 0; font-size: 14px; color: #991b1b;">
           Ihr Angebot wurde von unserem Admin-Team gelöscht, weil es gegen die Regeln von Helvenda verstösst.
         </p>
       </div>
-      
+
       <p style="margin: 0; font-size: 14px; color: #6b7280;">
         Bitte stellen Sie sicher, dass alle zukünftigen Angebote unseren Nutzungsbedingungen entsprechen.
       </p>

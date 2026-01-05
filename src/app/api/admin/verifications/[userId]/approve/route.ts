@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { getVerificationApprovalEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
-import { sendEmail, getVerificationApprovalEmail } from '@/lib/email'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
   try {
