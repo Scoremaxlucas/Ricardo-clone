@@ -174,24 +174,20 @@ function CheckoutPageContent() {
   const shippingCost = getShippingCostForMethod(selectedShipping as any)
   const itemPrice = watch.buyNowPrice || watch.price
 
-  // Verwende Pricing-Config für synchrone Berechnung
+  // RICARDO-MODELL: Käufer zahlt NUR Artikelpreis + Versand
+  // Zahlungsschutz ist INKLUSIVE (keine zusätzliche Gebühr)
+  // Plattform-Gebühr wird vom Verkäufer bezahlt (bei Auszahlung abgezogen)
   const calculateFeesSync = () => {
-    if (!pricingConfig) {
-      return {
-        itemPrice,
-        shippingCost,
-        platformFee: 0,
-        protectionFee: 0,
-        totalAmount: itemPrice + shippingCost,
-      }
+    // Käufer zahlt nur: Artikelpreis + Versandkosten
+    const totalAmount = Math.round((itemPrice + shippingCost) * 100) / 100
+
+    return {
+      itemPrice,
+      shippingCost,
+      platformFee: 0,      // Wird vom Verkäufer bezahlt, nicht relevant für Käufer
+      protectionFee: 0,    // Zahlungsschutz ist inklusive
+      totalAmount,
     }
-
-    const platformFee = Math.round(itemPrice * pricingConfig.platformFeeRate * 100) / 100
-    const protectionFee = Math.round(itemPrice * pricingConfig.protectionFeeRate * 100) / 100
-    const totalAmount =
-      Math.round((itemPrice + shippingCost + platformFee + protectionFee) * 100) / 100
-
-    return { itemPrice, shippingCost, platformFee, protectionFee, totalAmount }
   }
 
   const fees = calculateFeesSync()
@@ -302,12 +298,8 @@ function CheckoutPageContent() {
                       <span className="font-medium">CHF {shippingCost.toFixed(2)}</span>
                     </div>
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Plattform-Gebühr:</span>
-                      <span className="font-medium">CHF {fees.platformFee.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
                       <span className="text-gray-600">Zahlungsschutz:</span>
-                      <span className="font-medium">CHF {fees.protectionFee.toFixed(2)}</span>
+                      <span className="font-medium text-green-600">Inklusive</span>
                     </div>
                     <div className="border-t border-gray-200 pt-2">
                       <div className="flex justify-between">
@@ -326,12 +318,13 @@ function CheckoutPageContent() {
             <Card>
               <div className="p-6">
                 <div className="flex items-start">
-                  <Shield className="mr-3 h-6 w-6 text-blue-600" />
+                  <Shield className="mr-3 h-6 w-6 text-green-600" />
                   <div>
-                    <h3 className="mb-2 font-semibold text-gray-900">Zahlungsschutz</h3>
+                    <h3 className="mb-2 font-semibold text-gray-900">Zahlungsschutz inklusive</h3>
                     <p className="text-sm text-gray-600">
-                      Ihr Geld wird geschützt gehalten, bis Sie die Ware erhalten haben. Sie können
-                      die Zahlung freigeben, sobald alles in Ordnung ist.
+                      Ihr Geld wird automatisch geschützt gehalten, bis Sie die Ware erhalten haben.
+                      Sie zahlen nur den Artikelpreis – ohne zusätzliche Gebühren. Bei Problemen
+                      können Sie die Transaktion reklamieren.
                     </p>
                   </div>
                 </div>

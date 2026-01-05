@@ -565,15 +565,9 @@ export default function OrderDetailPage() {
                   <span className="font-medium">CHF {order.shippingCost.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span className="text-gray-600">Plattform-Gebühr:</span>
-                  <span className="font-medium">CHF {order.platformFee.toFixed(2)}</span>
+                  <span className="text-gray-600">Zahlungsschutz:</span>
+                  <span className="font-medium text-green-600">Inklusive</span>
                 </div>
-                {order.protectionFee && (
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Zahlungsschutz:</span>
-                    <span className="font-medium">CHF {order.protectionFee.toFixed(2)}</span>
-                  </div>
-                )}
                 <div className="border-t border-gray-200 pt-2">
                   <div className="flex justify-between">
                     <span className="font-semibold text-gray-900">Gesamt:</span>

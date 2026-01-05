@@ -1,10 +1,16 @@
 /**
  * Zentrale Pricing-Konfiguration für Helvenda
  *
+ * WICHTIG: RICARDO-MODELL
+ * ======================
+ * Der Käufer zahlt NUR den Artikelpreis + Versandkosten.
+ * Der Zahlungsschutz ist INKLUSIVE (keine zusätzliche Gebühr für den Käufer).
+ * Die Plattform-Gebühr wird vom Verkäufer bezahlt (bei der Auszahlung abgezogen).
+ *
  * Diese Datei definiert die Standard-Gebühren für:
- * - Orders (Zahlungsschutz)
- * - Invoices (Kommission)
- * - Platform Fees
+ * - Orders (Zahlungsschutz) - Käufer zahlt KEINE zusätzliche Gebühr
+ * - Invoices (Kommission) - Verkäufer zahlt 10% Kommission
+ * - Platform Fees - Wird bei Auszahlung vom Verkäufer-Betrag abgezogen
  *
  * Gebühren werden aus der Datenbank geladen (Admin-Pricing-Settings).
  * Falls keine Datenbank-Einstellungen vorhanden sind, werden Environment Variables verwendet.
@@ -13,9 +19,11 @@
 
 export interface PricingConfig {
   // Platform Fee (Kommission) - Standard 10%
+  // HINWEIS: Wird vom VERKÄUFER bezahlt, nicht vom Käufer!
   platformFeeRate: number
 
-  // Zahlungsschutz-Gebühr - Standard 3%
+  // Zahlungsschutz-Gebühr - IMMER 0 (Zahlungsschutz ist inklusive!)
+  // DEPRECATED: Diese Gebühr wird nicht mehr vom Käufer erhoben
   protectionFeeRate: number
 
   // MwSt Rate (für Invoices) - Standard 8.1%
@@ -116,23 +124,30 @@ export async function calculatePlatformFee(
 
 /**
  * Berechnet die Zahlungsschutz-Gebühr
+ *
+ * DEPRECATED: Diese Funktion gibt immer 0 zurück.
+ * Im Ricardo-Modell ist der Zahlungsschutz INKLUSIVE (keine zusätzliche Gebühr für den Käufer).
+ *
+ * @deprecated Zahlungsschutz ist jetzt inklusive - diese Funktion gibt immer 0 zurück
  */
 export async function calculateProtectionFee(
-  itemPrice: number,
-  config?: Partial<PricingConfig>
+  _itemPrice: number,
+  _config?: Partial<PricingConfig>
 ): Promise<number> {
-  const pricingConfig = config
-    ? { ...(await getPricingConfig()), ...config }
-    : await getPricingConfig()
-  return Math.round(itemPrice * pricingConfig.protectionFeeRate * 100) / 100
+  // RICARDO-MODELL: Zahlungsschutz ist INKLUSIVE - keine Gebühr für Käufer
+  return 0
 }
 
 /**
- * Standard Pricing Config (für Backwards Compatibility)
+ * Standard Pricing Config
+ *
+ * RICARDO-MODELL: Käufer zahlt NUR Artikelpreis + Versand
+ * - protectionFeeRate ist 0 (Zahlungsschutz ist inklusive)
+ * - platformFeeRate wird vom VERKÄUFER bezahlt (bei Auszahlung abgezogen)
  */
 export const DEFAULT_PRICING = {
-  platformFeeRate: 0.1, // 10%
-  protectionFeeRate: 0.03, // 3%
+  platformFeeRate: 0.1, // 10% - wird vom VERKÄUFER bezahlt
+  protectionFeeRate: 0, // 0% - Zahlungsschutz ist INKLUSIVE (keine Gebühr für Käufer!)
   vatRate: 0.081, // 8.1%
   minimumCommission: 0,
   maximumCommission: 220, // CHF 220.- Maximum (wie im Admin Pricing)

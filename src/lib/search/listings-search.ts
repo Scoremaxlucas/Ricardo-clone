@@ -35,9 +35,9 @@
  * ============================================================================
  */
 
+import { getMainAddress } from '@/lib/address'
 import { prisma } from '@/lib/prisma'
 import { Prisma } from '@prisma/client'
-import { getMainAddress } from '@/lib/address'
 import { expandQuery, normalizeQuery } from './search-synonyms-enhanced'
 
 /**
@@ -798,7 +798,11 @@ async function executeSearchQuery(params: {
       createdAt: r.createdAt,
       sellerId: r.sellerId,
       seller: seller
-        ? { city: sellerAddress?.city || null, postalCode: sellerAddress?.postalCode || null, verified: seller.verified }
+        ? {
+            city: sellerAddress?.city || null,
+            postalCode: sellerAddress?.postalCode || null,
+            verified: seller.verified,
+          }
         : null,
       bids: watchBids,
       categorySlugs: categoryMap.get(r.id) || [],
@@ -880,7 +884,7 @@ async function searchWithoutQuery(
   // Brand(s) filter - supports multiple brands
   if (filters.brands && filters.brands.length > 0) {
     ;(where.AND as any[]).push({
-      OR: filters.brands.map(b => ({ brand: { equals: b, mode: 'insensitive' } }))
+      OR: filters.brands.map(b => ({ brand: { equals: b, mode: 'insensitive' } })),
     })
   } else if (filters.brand) {
     ;(where.AND as any[]).push({ brand: { equals: filters.brand, mode: 'insensitive' } })
@@ -991,7 +995,11 @@ async function searchWithoutQuery(
       createdAt: w.createdAt,
       sellerId: w.sellerId,
       seller: w.seller
-        ? { city: sellerAddress?.city || null, postalCode: sellerAddress?.postalCode || null, verified: w.seller.verified }
+        ? {
+            city: sellerAddress?.city || null,
+            postalCode: sellerAddress?.postalCode || null,
+            verified: w.seller.verified,
+          }
         : null,
       bids: w.bids.map(b => ({ id: b.id, amount: b.amount })),
       categorySlugs: w.categories.map(c => c.category.slug),
