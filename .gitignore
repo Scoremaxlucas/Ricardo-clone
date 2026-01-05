@@ -46,6 +46,9 @@ Thumbs.db
 # Then allow plist template files (negation must come after general rule to override it)
 !*.plist.template
 
+# Email previews (generated)
+email-previews/
+
 # Expo
 .expo/
 .expo-shared/

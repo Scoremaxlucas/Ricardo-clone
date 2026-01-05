@@ -53,11 +53,21 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   // Resend kann Millionen von E-Mails pro Tag versenden
   if (resend) {
     try {
-      const fromEmail =
+      // From-Adresse mit Display-Name für bessere Deliverability
+      const rawFromEmail =
         process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM || 'onboarding@resend.dev'
+      
+      // Füge Display-Name hinzu falls nicht vorhanden (verbessert Deliverability)
+      const fromEmail = rawFromEmail.includes('<') 
+        ? rawFromEmail 
+        : `Helvenda <${rawFromEmail}>`
+      
+      // Reply-To Adresse für echte Kommunikation
+      const replyTo = process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
 
       console.log(`[sendEmail] Versende E-Mail via Resend:`)
       console.log(`  From: ${fromEmail}`)
+      console.log(`  Reply-To: ${replyTo}`)
       console.log(`  To: ${to}`)
       console.log(`  Subject: ${subject}`)
       console.log(`  HTML Length: ${html.length} Zeichen`)
@@ -68,10 +78,11 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
         subject,
         html,
         text: text || html.replace(/<[^>]*>/g, ''),
-        // Explizit keine Verschlüsselung verwenden
+        replyTo: replyTo, // WICHTIG: Echte Reply-Adresse für bessere Deliverability
         headers: {
           'X-Priority': '3',
           'X-MSMail-Priority': 'Normal',
+          'X-Mailer': 'Helvenda Mailer',
         },
       })
 
@@ -115,16 +126,23 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   // Priorität 2: SMTP (wenn Resend nicht verfügbar oder fehlgeschlagen)
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
+      const rawFromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@helvenda.ch'
+      const fromEmail = rawFromEmail.includes('<') 
+        ? rawFromEmail 
+        : `Helvenda <${rawFromEmail}>`
+      const replyTo = process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
+      
       const info = await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@helvenda.ch',
+        from: fromEmail,
+        replyTo: replyTo, // WICHTIG: Echte Reply-Adresse
         to,
         subject,
         text: text || html.replace(/<[^>]*>/g, ''), // Fallback zu Text ohne HTML
         html,
-        // Explizit keine Verschlüsselung verwenden
         headers: {
           'X-Priority': '3',
           'X-MSMail-Priority': 'Normal',
+          'X-Mailer': 'Helvenda Mailer',
         },
         // Deaktiviere automatische Signierung/Verschlüsselung
         disableFileAccess: false,
