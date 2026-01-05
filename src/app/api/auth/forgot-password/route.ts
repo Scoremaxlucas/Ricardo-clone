@@ -63,6 +63,7 @@ export async function POST(request: NextRequest) {
       subject,
       html,
       text,
+      useNoReply: true, // Passwort-Reset: automatische System-E-Mail
     })
 
     if (!emailResult.success) {

@@ -228,6 +228,7 @@ export async function POST(request: NextRequest) {
         subject,
         html,
         text,
+        useNoReply: true, // E-Mail-Verifizierung: automatische System-E-Mail
       })
     } catch {
       // Don't fail registration if email fails - user can request resend

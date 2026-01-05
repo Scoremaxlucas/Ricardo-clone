@@ -38,9 +38,10 @@ interface SendEmailOptions {
   subject: string
   html: string
   text?: string
+  useNoReply?: boolean // Wenn true, verwendet noreply@helvenda.ch statt support@helvenda.ch
 }
 
-export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
+export async function sendEmail({ to, subject, html, text, useNoReply = false }: SendEmailOptions) {
   console.log('\n📧 ===== E-MAIL-VERSAND START =====')
   console.log(`[sendEmail] Empfänger: ${to}`)
   console.log(`[sendEmail] Betreff: ${subject}`)
@@ -53,17 +54,20 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   // Resend kann Millionen von E-Mails pro Tag versenden
   if (resend) {
     try {
-      // From-Adresse mit Display-Name für bessere Deliverability
+      // From-Adresse: support@helvenda.ch (Standard) oder noreply@helvenda.ch (für automatische E-Mails)
+      const defaultFromEmail = useNoReply ? 'noreply@helvenda.ch' : 'support@helvenda.ch'
       const rawFromEmail =
-        process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM || 'onboarding@resend.dev'
+        process.env.RESEND_FROM_EMAIL || process.env.SMTP_FROM || defaultFromEmail
       
       // Füge Display-Name hinzu falls nicht vorhanden (verbessert Deliverability)
       const fromEmail = rawFromEmail.includes('<') 
         ? rawFromEmail 
         : `Helvenda <${rawFromEmail}>`
       
-      // Reply-To Adresse für echte Kommunikation
-      const replyTo = process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
+      // Reply-To: Bei noreply E-Mails auf support@ zeigen, sonst support@helvenda.ch
+      const replyTo = useNoReply 
+        ? 'support@helvenda.ch' // Auch bei noreply E-Mails können User antworten (geht an support)
+        : (process.env.RESEND_REPLY_TO || 'support@helvenda.ch')
 
       console.log(`[sendEmail] Versende E-Mail via Resend:`)
       console.log(`  From: ${fromEmail}`)
@@ -126,11 +130,16 @@ export async function sendEmail({ to, subject, html, text }: SendEmailOptions) {
   // Priorität 2: SMTP (wenn Resend nicht verfügbar oder fehlgeschlagen)
   if (process.env.SMTP_USER && process.env.SMTP_PASS) {
     try {
-      const rawFromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || 'noreply@helvenda.ch'
+      // From-Adresse: support@helvenda.ch (Standard) oder noreply@helvenda.ch (für automatische E-Mails)
+      const defaultFromEmail = useNoReply ? 'noreply@helvenda.ch' : 'support@helvenda.ch'
+      const rawFromEmail = process.env.SMTP_FROM || process.env.SMTP_USER || defaultFromEmail
       const fromEmail = rawFromEmail.includes('<') 
         ? rawFromEmail 
         : `Helvenda <${rawFromEmail}>`
-      const replyTo = process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
+      // Reply-To: Bei noreply E-Mails auf support@ zeigen, sonst support@helvenda.ch
+      const replyTo = useNoReply 
+        ? 'support@helvenda.ch' // Auch bei noreply E-Mails können User antworten (geht an support)
+        : (process.env.RESEND_REPLY_TO || 'support@helvenda.ch')
       
       const info = await transporter.sendMail({
         from: fromEmail,

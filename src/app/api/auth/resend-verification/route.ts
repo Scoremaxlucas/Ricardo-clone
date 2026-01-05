@@ -88,6 +88,7 @@ export async function POST(request: NextRequest) {
       subject,
       html,
       text,
+      useNoReply: true, // E-Mail-Verifizierung: automatische System-E-Mail
     })
 
     if (emailResult.success) {
