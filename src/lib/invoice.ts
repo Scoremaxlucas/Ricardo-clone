@@ -64,18 +64,29 @@ export async function calculateInvoiceForSale(purchaseId: string) {
   const pricing = await getInvoicePricing()
   const salePrice = purchase.price || purchase.watch.price
 
-  // Verwende zentrale calculatePlatformFee Funktion für Konsistenz
-  const commission = await calculatePlatformFee(salePrice, {
+  // WICHTIG: Die 5% Kommission ist der GESAMTBETRAG inkl. MwSt (8.1%)
+  // Berechne zuerst den Gesamtbetrag (5% des Verkaufspreises)
+  const totalCommission = await calculatePlatformFee(salePrice, {
     platformFeeRate: pricing.commissionRate,
     minimumCommission: pricing.minimumCommission,
     maximumCommission: pricing.maximumCommission,
   })
-  const subtotal = commission
-  const vatAmount = subtotal * pricing.vatRate
+
+  // Netto-Kommission (was Helvenda behält) = Gesamtbetrag / (1 + MwSt-Satz)
+  const netCommission = totalCommission / (1 + pricing.vatRate)
+
+  // MwSt-Betrag = Gesamtbetrag - Netto-Kommission
+  const vatAmount = totalCommission - netCommission
+
   // Schweizer Rappenrundung auf 0.05 (5 Rappen)
-  const roundedSubtotal = Math.floor(subtotal * 20) / 20
+  const roundedSubtotal = Math.floor(netCommission * 20) / 20
   const roundedVatAmount = Math.ceil(vatAmount * 20) / 20
   const roundedTotal = roundedSubtotal + roundedVatAmount
+
+  // Sicherstellen, dass der Gesamtbetrag exakt der Kommission entspricht (5% des Verkaufspreises)
+  // Bei Rundungsdifferenzen: Gesamtbetrag hat Priorität
+  const finalTotal = totalCommission
+  const finalSubtotal = finalTotal - roundedVatAmount
 
   // Generiere Rechnungsnummer
   const year = new Date().getFullYear()
@@ -104,10 +115,10 @@ export async function calculateInvoiceForSale(purchaseId: string) {
       invoiceNumber,
       sellerId: purchase.watch.sellerId,
       saleId: purchaseId,
-      subtotal: roundedSubtotal,
+      subtotal: finalSubtotal,
       vatRate: pricing.vatRate,
       vatAmount: roundedVatAmount,
-      total: roundedTotal,
+      total: finalTotal,
       status: 'pending',
       dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist
       items: {
@@ -116,8 +127,8 @@ export async function calculateInvoiceForSale(purchaseId: string) {
             watchId: purchase.watchId,
             description: `Kommission: ${purchase.watch.title}`,
             quantity: 1,
-            price: roundedSubtotal,
-            total: roundedSubtotal,
+            price: finalSubtotal,
+            total: finalSubtotal,
           },
         ],
       },
@@ -136,7 +147,7 @@ export async function calculateInvoiceForSale(purchaseId: string) {
         userId: purchase.watch.sellerId,
         type: 'NEW_INVOICE',
         title: 'Neue Rechnung erstellt',
-        message: `Eine neue Rechnung wurde für Sie erstellt: ${invoiceNumber} (CHF ${roundedTotal.toFixed(2)}). Die Zahlungsaufforderung erhalten Sie in 14 Tagen.`,
+        message: `Eine neue Rechnung wurde für Sie erstellt: ${invoiceNumber} (CHF ${finalTotal.toFixed(2)}). Die Zahlungsaufforderung erhalten Sie in 14 Tagen.`,
         link: `/my-watches/selling/fees?invoice=${invoice.id}`,
       },
     })
