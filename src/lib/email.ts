@@ -429,7 +429,7 @@ export function getFirstReminderEmail(
 <body>
   <div class="container">
     <div class="header">
-      <h1>[!] Zahlungserinnerung</h1>
+      <h1>Zahlungserinnerung</h1>
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
@@ -827,7 +827,7 @@ export function getVerificationApprovalEmail(userName: string, userEmail: string
   const baseUrl = getEmailBaseUrl()
   const profileUrl = `${baseUrl}/profile`
 
-  const subject = `✅ Ihr Konto wurde verifiziert - Helvenda`
+  const subject = `Ihr Konto wurde verifiziert - Helvenda`
 
   const html = getHelvendaEmailTemplate(
     'Ihre Verifizierung wurde erfolgreich bestätigt!',
@@ -892,7 +892,7 @@ export function getSaleNotificationEmail(
   const baseUrl = getEmailBaseUrl()
   const salesUrl = `${baseUrl}/my-watches/selling/sold`
 
-  const subject = `🎉 Glückwunsch! Ihre Uhr wurde verkauft – ${watchTitle}`
+  const subject = `Ihre Uhr wurde verkauft – ${watchTitle}`
 
   const html = getHelvendaEmailTemplate(
     'Glückwunsch! Ihre Uhr wurde verkauft!',
@@ -917,7 +917,7 @@ export function getSaleNotificationEmail(
   )
 
   const text = `
-🎉 Glückwunsch! Ihre Uhr wurde verkauft – ${watchTitle}
+Ihre Uhr wurde verkauft – ${watchTitle}
 
 Hallo ${sellerName},
 
@@ -1034,7 +1034,7 @@ export function getPurchaseConfirmationEmail(
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
   const totalPrice = finalPrice + shippingCost
 
-  const subject = `✓ Kaufbestätigung – ${watchTitle}`
+  const subject = `Kaufbestätigung – ${watchTitle}`
 
   const paymentSection = paymentInfo
     ? `
@@ -1093,7 +1093,7 @@ export function getPurchaseConfirmationEmail(
   )
 
   const text = `
-✓ Kaufbestätigung – ${watchTitle}
+Kaufbestätigung – ${watchTitle}
 
 Hallo ${buyerName},
 
@@ -1278,7 +1278,7 @@ export function getContactDeadlineWarningEmail(
   daysRemaining: number,
   role: 'seller' | 'buyer'
 ) {
-  const subject = `[!] Kontaktfrist läuft ab - ${productTitle}`
+  const subject = `Kontaktfrist läuft ab - ${productTitle}`
 
   const roleText =
     role === 'seller'
@@ -1308,7 +1308,7 @@ export function getContactDeadlineWarningEmail(
 <body>
   <div class="container">
     <div class="header">
-      <h1>[!] Kontaktfrist läuft ab</h1>
+      <h1>Kontaktfrist läuft ab</h1>
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
@@ -1345,7 +1345,7 @@ export function getContactDeadlineWarningEmail(
   `.trim()
 
   const text = `
-[!] Kontaktfrist läuft ab - ${productTitle}
+Kontaktfrist läuft ab - ${productTitle}
 
 Hallo ${userName},
 
@@ -1386,7 +1386,7 @@ export function getPaymentReminderEmail(
   daysRemaining: number,
   purchaseId: string
 ) {
-  const subject = `[!] Zahlungserinnerung - ${productTitle}`
+  const subject = `Zahlungserinnerung - ${productTitle}`
 
   const html = `
 <!DOCTYPE html>
@@ -1406,7 +1406,7 @@ export function getPaymentReminderEmail(
 <body>
   <div class="container">
     <div class="header">
-      <h1>[!] Zahlungserinnerung</h1>
+      <h1>Zahlungserinnerung</h1>
     </div>
     <div class="content">
       <p>Hallo ${buyerName},</p>
@@ -1440,7 +1440,7 @@ export function getPaymentReminderEmail(
   `.trim()
 
   const text = `
-[!] Zahlungserinnerung - ${productTitle}
+Zahlungserinnerung - ${productTitle}
 
 Hallo ${buyerName},
 
@@ -1480,7 +1480,7 @@ export function getDisputeOpenedEmail(
   description: string,
   role: 'buyer' | 'seller'
 ) {
-  const subject = `[!] Dispute eröffnet - ${productTitle}`
+  const subject = `Dispute eröffnet - ${productTitle}`
 
   const roleText =
     role === 'seller'
@@ -1505,7 +1505,7 @@ export function getDisputeOpenedEmail(
 <body>
   <div class="container">
     <div class="header">
-      <h1>[!] Dispute eröffnet</h1>
+      <h1>Dispute eröffnet</h1>
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
@@ -1534,7 +1534,7 @@ export function getDisputeOpenedEmail(
   `.trim()
 
   const text = `
-[!] Dispute eröffnet - ${productTitle}
+Dispute eröffnet - ${productTitle}
 
 Hallo ${userName},
 
@@ -1749,7 +1749,7 @@ export function getRefundRequiredEmail(
     year: 'numeric',
   })
 
-  const subject = `🔔 Rückerstattung erforderlich - CHF ${refundAmount.toFixed(2)}`
+  const subject = `Rückerstattung erforderlich - CHF ${refundAmount.toFixed(2)}`
 
   const html = `
 <!DOCTYPE html>
@@ -2173,7 +2173,7 @@ export function getDisputeRejectedEmail(
   productTitle: string,
   rejectionReason: string
 ) {
-  const subject = `❌ Dispute abgelehnt - ${productTitle}`
+  const subject = `Dispute abgelehnt - ${productTitle}`
 
   const html = `
 <!DOCTYPE html>
@@ -2193,7 +2193,7 @@ export function getDisputeRejectedEmail(
 <body>
   <div class="container">
     <div class="header">
-      <h1>❌ Dispute abgelehnt</h1>
+      <h1>Dispute abgelehnt</h1>
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
@@ -2221,7 +2221,7 @@ export function getDisputeRejectedEmail(
   `.trim()
 
   const text = `
-❌ Dispute abgelehnt - ${productTitle}
+Dispute abgelehnt - ${productTitle}
 
 Hallo ${userName},
 
@@ -2829,7 +2829,7 @@ export function getAuctionEndWonEmail(
 ) {
   const baseUrl = getEmailBaseUrl()
   const purchaseUrl = `${baseUrl}/my-watches/buying/purchased`
-  const subject = `✓ Glückwunsch! Sie haben gewonnen - ${articleTitle}`
+  const subject = `Sie haben gewonnen - ${articleTitle}`
 
   const html = getHelvendaEmailTemplate(
     `Glückwunsch! Sie haben gewonnen`,
@@ -2851,7 +2851,7 @@ export function getAuctionEndWonEmail(
   )
 
   const text = `
-✓ Glückwunsch! Sie haben gewonnen - ${articleTitle}
+Sie haben gewonnen - ${articleTitle}
 
 Hallo ${buyerName},
 
@@ -3567,7 +3567,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 // === PASSWORT GEÄNDERT BESTÄTIGUNG ===
 export function getPasswordChangedEmail(userName: string, ipAddress?: string, device?: string) {
   const baseUrl = getEmailBaseUrl()
-  const subject = '✅ Passwort erfolgreich geändert - Helvenda'
+  const subject = 'Passwort erfolgreich geändert - Helvenda'
 
   const changeInfo = `
     <div style="background-color: #f3f4f6; padding: 16px 20px; margin: 20px 0; border-radius: 8px;">
@@ -3630,7 +3630,7 @@ export function getNewDeviceLoginEmail(
 ) {
   const baseUrl = getEmailBaseUrl()
   const time = loginTime || new Date()
-  const subject = '🔔 Neue Anmeldung erkannt - Helvenda'
+  const subject = 'Neue Anmeldung erkannt - Helvenda'
 
   const html = getHelvendaEmailTemplate(
     '🔔 Neue Anmeldung von einem neuen Gerät',
@@ -3782,7 +3782,7 @@ export function getItemReceivedConfirmationEmail(
 ) {
   const baseUrl = getEmailBaseUrl()
   const saleUrl = `${baseUrl}/my-watches/selling/sold`
-  const subject = `✅ Artikel erhalten - ${articleTitle}`
+  const subject = `Artikel erhalten - ${articleTitle}`
 
   const imageHtml = imageUrl
     ? `
@@ -3847,7 +3847,7 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 // === WILLKOMMENS-E-MAIL (nach Verifizierung) ===
 export function getWelcomeEmail(userName: string) {
   const baseUrl = getEmailBaseUrl()
-  const subject = '🎉 Willkommen bei Helvenda!'
+  const subject = 'Willkommen bei Helvenda'
 
   const html = `
 <!DOCTYPE html>
@@ -4112,7 +4112,7 @@ export function getTransactionSummaryHtml(
 // === ADMIN: E-MAIL MANUELL VERIFIZIERT ===
 export function getManualEmailVerificationEmail(userName: string, adminName: string) {
   const baseUrl = getEmailBaseUrl()
-  const subject = '✅ Ihr Konto wurde verifiziert - Helvenda'
+  const subject = 'Ihr Konto wurde verifiziert - Helvenda'
 
   const html = getHelvendaEmailTemplate(
     '✅ Konto manuell verifiziert',
