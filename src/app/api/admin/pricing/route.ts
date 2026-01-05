@@ -4,12 +4,14 @@ import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Default Pricing Settings
+// HELVENDA-MODELL: 5% Kommission + CHF 150 Deckelung (günstiger als Ricardo!)
 const DEFAULT_PRICING = {
-  platformMarginRate: 0.1, // 10%
-  protectionFeeRate: 0.03, // 3% Zahlungsschutz-Gebühr
+  platformMarginRate: 0.05, // 5% (Ricardo: 8-12%)
+  protectionFeeRate: 0, // 0% - Zahlungsschutz ist INKLUSIVE für Käufer
+  // Hinweis: Stripe Fee (2.9% + 0.30) wird separat als "Helvenda Schutz Gebühr" vom Verkäufer bezahlt
   vatRate: 0.081, // 8.1% MwSt
-  minimumCommission: 0,
-  maximumCommission: 220, // Maximum CHF 220.- für Plattform-Gebühr
+  minimumCommission: 0.1, // CHF 0.10 Minimum
+  maximumCommission: 150, // Maximum CHF 150.- (Ricardo: CHF 290 - wir sind 48% günstiger!)
   listingFee: 0,
   transactionFee: 0,
 }

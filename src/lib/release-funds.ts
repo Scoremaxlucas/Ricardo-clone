@@ -135,8 +135,10 @@ export async function releaseFunds(orderId: string): Promise<ReleaseFundsResult>
       throw new Error(`Charge für Order ${orderId} nicht gefunden`)
     }
 
-    // Berechne Seller Amount (Item-Preis - Plattform-Gebühr)
-    const sellerAmount = calculateSellerAmount(order.itemPrice, order.platformFee)
+    // Berechne Seller Amount (Item-Preis - Plattform-Gebühr - Zahlungsgebühr)
+    // HINWEIS: protectionFee enthält jetzt die Zahlungsgebühr (Stripe Fee / "Helvenda Schutz Gebühr")
+    const paymentProcessingFee = order.protectionFee || 0
+    const sellerAmount = calculateSellerAmount(order.itemPrice, order.platformFee, paymentProcessingFee)
 
     // Erstelle Transfer zu Stripe Connected Account
     // WICHTIG: Separate Charges and Transfers Pattern

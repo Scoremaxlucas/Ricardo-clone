@@ -196,6 +196,8 @@ export async function POST(request: NextRequest) {
     }
 
     // Erstelle Order
+    // HINWEIS: protectionFee speichert jetzt die Zahlungsgebühr (Stripe Fee / "Helvenda Schutz Gebühr")
+    // Diese wird vom Verkäufer bezahlt, nicht vom Käufer
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -211,7 +213,7 @@ export async function POST(request: NextRequest) {
         selectedAddons: selectedAddons ? JSON.stringify(selectedAddons) : null,
         shippingRateSetId: 'default_ch_post',
         platformFee: fees.platformFee,
-        protectionFee: fees.protectionFee,
+        protectionFee: fees.paymentProcessingFee, // Zahlungsgebühr (Stripe Fee) - vom Verkäufer bezahlt
         totalAmount: fees.totalAmount,
         orderStatus: 'awaiting_payment',
         paymentStatus: 'created',

@@ -141,14 +141,36 @@ export async function calculateProtectionFee(
 /**
  * Standard Pricing Config
  *
- * RICARDO-MODELL: Käufer zahlt NUR Artikelpreis + Versand
- * - protectionFeeRate ist 0 (Zahlungsschutz ist inklusive)
- * - platformFeeRate wird vom VERKÄUFER bezahlt (bei Auszahlung abgezogen)
+ * HELVENDA-MODELL (günstiger als Ricardo):
+ * - Käufer zahlt NUR Artikelpreis + Versand
+ * - Zahlungsschutz ist INKLUSIVE (keine zusätzliche Gebühr für Käufer)
+ * - Verkäufer zahlt 5% Kommission + Zahlungsgebühr (Stripe Fee)
+ * - Deckelung bei CHF 150 (Ricardo: CHF 290)
+ *
+ * Vergleich mit Ricardo:
+ * - Ricardo: 8-12%, max CHF 290
+ * - Helvenda: 5%, max CHF 150 (ca. 50% günstiger!)
  */
 export const DEFAULT_PRICING = {
-  platformFeeRate: 0.1, // 10% - wird vom VERKÄUFER bezahlt
+  platformFeeRate: 0.05, // 5% - wird vom VERKÄUFER bezahlt (Ricardo: 8-12%)
   protectionFeeRate: 0, // 0% - Zahlungsschutz ist INKLUSIVE (keine Gebühr für Käufer!)
   vatRate: 0.081, // 8.1%
-  minimumCommission: 0,
-  maximumCommission: 220, // CHF 220.- Maximum (wie im Admin Pricing)
+  minimumCommission: 0.1, // CHF 0.10 Minimum (wie Ricardo)
+  maximumCommission: 150, // CHF 150.- Maximum (Ricardo: CHF 290 - wir sind 48% günstiger!)
+}
+
+/**
+ * Stripe Processing Fee (wird vom Verkäufer getragen)
+ * Kommuniziert als "Helvenda Schutz Gebühr" oder "Zahlungsgebühr"
+ */
+export const STRIPE_FEE = {
+  percentageRate: 0.029, // 2.9%
+  fixedFee: 0.30, // CHF 0.30
+}
+
+/**
+ * Berechnet die Stripe Processing Fee
+ */
+export function calculateStripeFee(amount: number): number {
+  return Math.round((amount * STRIPE_FEE.percentageRate + STRIPE_FEE.fixedFee) * 100) / 100
 }

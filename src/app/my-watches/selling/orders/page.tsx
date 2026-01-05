@@ -16,6 +16,7 @@ interface Order {
   totalAmount: number
   itemPrice: number
   platformFee: number
+  protectionFee: number | null // Zahlungsgebühr (Stripe Fee / "Helvenda Schutz Gebühr")
   orderStatus: string
   paymentStatus: string
   paidAt: string | null
@@ -129,7 +130,7 @@ export default function SellerOrdersPage() {
         ) : (
           <div className="space-y-4">
             {orders.map(order => {
-              const sellerAmount = calculateSellerAmount(order.itemPrice, order.platformFee)
+              const sellerAmount = calculateSellerAmount(order.itemPrice, order.platformFee, order.protectionFee || 0)
               return (
                 <Link
                   key={order.id}

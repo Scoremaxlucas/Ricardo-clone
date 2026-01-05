@@ -554,28 +554,54 @@ export default function OrderDetailPage() {
           <div className="space-y-6">
             {/* Preis-Übersicht */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h3 className="mb-4 font-semibold text-gray-900">Preis-Übersicht</h3>
+              <h3 className="mb-4 font-semibold text-gray-900">
+                {isSeller ? 'Auszahlung' : 'Preis-Übersicht'}
+              </h3>
               <div className="space-y-2 text-sm">
                 <div className="flex justify-between">
                   <span className="text-gray-600">Artikelpreis:</span>
                   <span className="font-medium">CHF {order.itemPrice.toFixed(2)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Versandkosten:</span>
-                  <span className="font-medium">CHF {order.shippingCost.toFixed(2)}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Zahlungsschutz:</span>
-                  <span className="font-medium text-green-600">Inklusive</span>
-                </div>
-                <div className="border-t border-gray-200 pt-2">
-                  <div className="flex justify-between">
-                    <span className="font-semibold text-gray-900">Gesamt:</span>
-                    <span className="text-lg font-bold text-primary-600">
-                      CHF {order.totalAmount.toFixed(2)}
-                    </span>
-                  </div>
-                </div>
+                {isBuyer && (
+                  <>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Versandkosten:</span>
+                      <span className="font-medium">CHF {order.shippingCost.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Zahlungsschutz:</span>
+                      <span className="font-medium text-green-600">Inklusive</span>
+                    </div>
+                    <div className="border-t border-gray-200 pt-2">
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-900">Gesamt:</span>
+                        <span className="text-lg font-bold text-primary-600">
+                          CHF {order.totalAmount.toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
+                {isSeller && (
+                  <>
+                    <div className="flex justify-between text-red-600">
+                      <span>Kommission (5%):</span>
+                      <span className="font-medium">- CHF {order.platformFee.toFixed(2)}</span>
+                    </div>
+                    <div className="flex justify-between text-red-600">
+                      <span>Zahlungsgebühr:</span>
+                      <span className="font-medium">- CHF {(order.protectionFee || 0).toFixed(2)}</span>
+                    </div>
+                    <div className="border-t border-gray-200 pt-2">
+                      <div className="flex justify-between">
+                        <span className="font-semibold text-gray-900">Sie erhalten:</span>
+                        <span className="text-lg font-bold text-green-600">
+                          CHF {(order.itemPrice - order.platformFee - (order.protectionFee || 0)).toFixed(2)}
+                        </span>
+                      </div>
+                    </div>
+                  </>
+                )}
               </div>
             </div>
 
