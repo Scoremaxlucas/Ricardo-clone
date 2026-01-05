@@ -158,6 +158,10 @@ model User {
   outagesResolved               SystemOutage[]        @relation("OutageResolver")
   outagesExtended               SystemOutage[]        @relation("OutageExtender")
 
+  // === BEXIO INTEGRATION ===
+  bexioContactId Int? // Bexio Contact ID for syncing
+
+  @@index([bexioContactId])
   @@map("users")
 }
 
@@ -574,6 +578,14 @@ model Invoice {
   items                   InvoiceItem[]
   seller                  User          @relation(fields: [sellerId], references: [id])
 
+  // === BEXIO INTEGRATION ===
+  qrReference          String?   @unique // Unique QR reference for payment matching (SCOR format)
+  bexioInvoiceId       Int? // Bexio Invoice ID for sync
+  paymentMatchedAt     DateTime? // When payment was automatically matched
+  paymentMatchedAmount Decimal?  @db.Decimal(10, 2) // Amount that was matched
+
+  @@index([bexioInvoiceId])
+  @@index([qrReference])
   @@map("invoices")
 }
 
@@ -584,6 +596,7 @@ model InvoiceItem {
   description String
   quantity    Int      @default(1)
   price       Float
+  amount      Float    @default(0) // Alias for total, used by Bexio sync
   total       Float
   createdAt   DateTime @default(now())
   watch       Watch?   @relation(fields: [watchId], references: [id])

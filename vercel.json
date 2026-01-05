@@ -30,6 +30,10 @@
     {
       "path": "/api/cron/stripe-alerts",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/bexio-sync",
+      "schedule": "*/15 * * * *"
     }
   ]
 }
