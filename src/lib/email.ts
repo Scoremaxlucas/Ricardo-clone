@@ -487,7 +487,7 @@ export function getCancelRequestEmail(
   reason: string,
   description: string
 ) {
-  const subject = `⚠️ Stornierungsantrag für "${articleTitle}"`
+  const subject = `Stornierungsantrag für "${articleTitle}"`
 
   const reasonLabels: Record<string, string> = {
     buyer_not_responding: 'Käufer antwortet nicht',
@@ -516,7 +516,7 @@ export function getCancelRequestEmail(
 <body>
   <div class="container">
     <div class="header">
-      <h1>⚠️ Stornierungsantrag gestellt</h1>
+      <h1>Stornierungsantrag gestellt</h1>
     </div>
     <div class="content">
       <p>Hallo ${buyerName},</p>
@@ -579,7 +579,7 @@ export function getSecondReminderEmail(
   dueDate: Date,
   invoiceId: string
 ) {
-  const subject = `WICHTIG: Zweite Zahlungserinnerung + Mahnspesen - Rechnung ${invoiceNumber}`
+  const subject = `Zweite Zahlungserinnerung - Rechnung ${invoiceNumber}`
   const formattedDate = new Date(dueDate).toLocaleDateString('de-CH')
   const formattedTotal = total.toFixed(2)
   const formattedLateFee = lateFeeAmount.toFixed(2)
@@ -610,7 +610,7 @@ export function getSecondReminderEmail(
       <p>Hallo ${userName},</p>
 
       <div class="warning">
-        <strong>WICHTIG:</strong> Ihre Rechnung ${invoiceNumber} ist überfällig.
+        <strong>Hinweis:</strong> Ihre Rechnung ${invoiceNumber} ist überfällig.
       </div>
 
       <p><strong>Rechnungsnummer:</strong> ${invoiceNumber}</p>
@@ -639,11 +639,11 @@ export function getSecondReminderEmail(
   `.trim()
 
   const text = `
-WICHTIG: Zweite Zahlungserinnerung + Mahnspesen - Rechnung ${invoiceNumber}
+Zweite Zahlungserinnerung - Rechnung ${invoiceNumber}
 
 Hallo ${userName},
 
-WICHTIG: Ihre Rechnung ${invoiceNumber} ist überfällig.
+Ihre Rechnung ${invoiceNumber} ist überfällig.
 
 Rechnungsnummer: ${invoiceNumber}
 Fälligkeitsdatum: ${formattedDate}
@@ -671,7 +671,7 @@ export function getFinalReminderEmail(
   dueDate: Date,
   invoiceId: string
 ) {
-  const subject = `KRITISCH: Letzte Erinnerung - Konto wird gesperrt - Rechnung ${invoiceNumber}`
+  const subject = `Letzte Erinnerung - Rechnung ${invoiceNumber}`
   const formattedDate = new Date(dueDate).toLocaleDateString('de-CH')
   const formattedTotal = total.toFixed(2)
   const formattedLateFee = lateFeeAmount.toFixed(2)
@@ -696,13 +696,13 @@ export function getFinalReminderEmail(
 <body>
   <div class="container">
     <div class="header">
-      <h1>🚫 Letzte Erinnerung</h1>
+      <h1>Letzte Erinnerung</h1>
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
 
       <div class="critical">
-        <strong>KRITISCH:</strong> Ihr Konto wird aufgrund nicht bezahlter Gebühren gesperrt.
+        <strong>Wichtige Information:</strong> Ihr Konto wird aufgrund nicht bezahlter Gebühren gesperrt.
       </div>
 
       <p><strong>Rechnungsnummer:</strong> ${invoiceNumber}</p>
@@ -714,7 +714,7 @@ export function getFinalReminderEmail(
 
       <p class="amount">Gesamtbetrag: CHF ${formattedTotal}</p>
 
-      <p><strong>[!] WICHTIG:</strong> Dies ist Ihre letzte Möglichkeit zur Zahlung. Nach dieser Erinnerung wird Ihr Konto automatisch gesperrt.</p>
+      <p><strong>Wichtige Information:</strong> Dies ist Ihre letzte Möglichkeit zur Zahlung. Nach dieser Erinnerung wird Ihr Konto automatisch gesperrt.</p>
 
       <p>Nach der Sperre können Sie nicht mehr:</p>
       <ul>
@@ -726,7 +726,7 @@ export function getFinalReminderEmail(
 
       <p style="margin-top: 30px;">
         <a href="${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}" class="button">
-          JETZT BEZAHLEN →
+          Jetzt bezahlen →
         </a>
       </p>
 
@@ -743,11 +743,11 @@ export function getFinalReminderEmail(
   `.trim()
 
   const text = `
-KRITISCH: Letzte Erinnerung - Konto wird gesperrt - Rechnung ${invoiceNumber}
+Letzte Erinnerung - Rechnung ${invoiceNumber}
 
 Hallo ${userName},
 
-KRITISCH: Ihr Konto wird aufgrund nicht bezahlter Gebühren gesperrt.
+Ihr Konto wird aufgrund nicht bezahlter Gebühren gesperrt.
 
 Rechnungsnummer: ${invoiceNumber}
 Fälligkeitsdatum: ${formattedDate}
@@ -755,7 +755,7 @@ Fälligkeitsdatum: ${formattedDate}
 Mahnspesen: CHF ${formattedLateFee}
 Gesamtbetrag: CHF ${formattedTotal}
 
-WICHTIG: Dies ist Ihre letzte Möglichkeit zur Zahlung. Nach dieser Erinnerung wird Ihr Konto automatisch gesperrt.
+Wichtige Information: Dies ist Ihre letzte Möglichkeit zur Zahlung. Nach dieser Erinnerung wird Ihr Konto automatisch gesperrt.
 
 Nach der Sperre können Sie nicht mehr:
 - Artikel verkaufen
@@ -763,7 +763,7 @@ Nach der Sperre können Sie nicht mehr:
 - Gebote abgeben
 - Preisvorschläge machen
 
-JETZT BEZAHLEN: ${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}
+Jetzt bezahlen: ${getEmailBaseUrl()}/my-watches/selling/fees?invoice=${invoiceId}
 
 Nach Zahlung wird Ihr Konto automatisch entsperrt.
 
@@ -1349,7 +1349,7 @@ export function getContactDeadlineWarningEmail(
 
 Hallo ${userName},
 
-WICHTIG: Die Kontaktfrist für den Kauf von "${productTitle}" läuft in ${daysRemaining} Tag(en) ab.
+Die Kontaktfrist für den Kauf von "${productTitle}" läuft in ${daysRemaining} Tag(en) ab.
 
 ${roleText}.
 
@@ -1567,8 +1567,8 @@ export function getDisputeOpenedEmailRicardoStyle(
 ) {
   const isSeller = role === 'seller'
   const subject = isSeller
-    ? `🚨 DRINGEND: Dispute eröffnet - Stellungnahme erforderlich`
-    : `⚠️ Dispute eröffnet - ${productTitle}`
+    ? `Dispute eröffnet - Stellungnahme erforderlich`
+    : `Dispute eröffnet - ${productTitle}`
 
   const roleText = isSeller
     ? 'Der Käufer hat einen Dispute eröffnet'
@@ -1600,7 +1600,7 @@ export function getDisputeOpenedEmailRicardoStyle(
     isSeller && deadlineDate
       ? `
       <div style="background: #fef3c7; border: 2px solid #f59e0b; padding: 20px; margin: 20px 0; border-radius: 8px;">
-        <h3 style="color: #b45309; margin: 0 0 10px 0;">⏰ Ihre Stellungnahme ist erforderlich</h3>
+        <h3 style="color: #b45309; margin: 0 0 10px 0;">Ihre Stellungnahme ist erforderlich</h3>
         <p style="margin: 0; color: #92400e;">
           <strong>Frist:</strong> ${deadlineDate}<br/>
           Bitte nehmen Sie bis zu diesem Datum Stellung. Ohne Ihre Antwort wird der Fall automatisch eskaliert
@@ -1649,7 +1649,7 @@ export function getDisputeOpenedEmailRicardoStyle(
 <body>
   <div class="container">
     <div class="header">
-      <h1>${isSeller ? '🚨 Dringend: Stellungnahme erforderlich' : '⚠️ Dispute eröffnet'}</h1>
+      <h1>${isSeller ? 'Stellungnahme erforderlich' : 'Dispute eröffnet'}</h1>
     </div>
     <div class="content">
       <p>Hallo ${userName},</p>
@@ -1696,11 +1696,11 @@ export function getDisputeOpenedEmailRicardoStyle(
   `.trim()
 
   const text = `
-${isSeller ? '🚨 DRINGEND: Dispute eröffnet - Stellungnahme erforderlich' : '⚠️ Dispute eröffnet'} - ${productTitle}
+${isSeller ? 'Dispute eröffnet - Stellungnahme erforderlich' : 'Dispute eröffnet'} - ${productTitle}
 
 Hallo ${userName},
 
-WICHTIG: ${roleText} für "${productTitle}".
+${roleText} für "${productTitle}".
 
 ${
   isSeller && deadlineDate
@@ -1715,7 +1715,7 @@ Beschreibung: ${description}
 
 ${
   isSeller
-    ? `⚠️ Mögliche Konsequenzen bei Nichtreaktion:
+    ? `Mögliche Konsequenzen bei Nichtreaktion:
 - Automatische Eskalation des Falls
 - Entscheidung möglicherweise zugunsten des Käufers
 - Verwarnung auf Ihrem Konto
@@ -1874,8 +1874,8 @@ export function getDisputeEscalatedEmail(
 ) {
   const isSeller = role === 'seller'
   const subject = isSeller
-    ? `🚨 Dispute eskaliert - Dringende Aktion erforderlich`
-    : `ℹ️ Dispute eskaliert - ${productTitle}`
+    ? `Dispute eskaliert - Aktion erforderlich`
+    : `Dispute eskaliert - ${productTitle}`
 
   const escalationReasonLabels: Record<string, string> = {
     no_seller_response: 'Keine Stellungnahme des Verkäufers',
@@ -1976,7 +1976,7 @@ export function getSellerWarningEmail(
   productTitle: string,
   purchaseId: string
 ) {
-  const subject = `⚠️ Warnung #${warningCount} auf Ihrem Verkäuferkonto`
+  const subject = `Warnung #${warningCount} auf Ihrem Verkäuferkonto`
   const maxWarnings = 3
 
   const html = `
@@ -3355,7 +3355,7 @@ export function getProductDeletedEmail(
   adminName: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const subject = `⚠️ Ihr Angebot wurde gelöscht`
+  const subject = `Ihr Angebot wurde gelöscht`
 
   const html = getHelvendaEmailTemplate(
     'Ihr Angebot wurde gelöscht',
