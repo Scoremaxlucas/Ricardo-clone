@@ -7,21 +7,25 @@ Diese Integration verbindet Helvenda mit Bexio.ch für automatisches Rechnungswe
 ## Features
 
 ### 1. Automatische QR-Referenz Generierung
+
 - **Format**: SCOR (Structured Creditor Reference) gemäss ISO 11649
 - **Länge**: 25 Zeichen (RF + 2 Prüfziffern + 21 Nutzzeichen)
 - **Inhalt**: Kodiert User ID + Invoice ID + Timestamp + Random
 
 ### 2. User → Bexio Kontakt Sync
+
 - Erstellt automatisch Kontakte in Bexio für Verkäufer
 - Speichert Bexio Contact ID in der User-Tabelle
 - Aktualisiert bestehende Kontakte bei Änderungen
 
 ### 3. Invoice → Bexio Rechnung Sync
+
 - Erstellt Rechnungen in Bexio mit eindeutiger QR-Referenz
 - Speichert Bexio Invoice ID für Rückverfolgung
 - Generiert automatisch QR-Code für Swiss QR-Bill
 
 ### 4. Automatisches Payment Matching
+
 - Cron-Job alle 15 Minuten
 - Liest eingehende Zahlungen aus Bexio
 - Matched via QR-Referenz zu unseren Rechnungen
@@ -53,13 +57,13 @@ Passe die Konstanten in `src/lib/bexio-sync.ts` an:
 
 ```typescript
 const BEXIO_CONFIG = {
-  DEFAULT_USER_ID: 1,        // Dein Bexio User ID
-  BANK_ACCOUNT_ID: 1,        // Dein QR-Bankkonto ID
-  LANGUAGE_ID: 1,            // 1 = Deutsch
-  CURRENCY_ID: 1,            // 1 = CHF
-  PAYMENT_TYPE_ID: 4,        // QR-Rechnung
-  TAX_RATE_ID: 25,           // 8.1% MWST ID (prüfen!)
-  PAYMENT_TERMS_DAYS: 30,    // Zahlungsfrist
+  DEFAULT_USER_ID: 1, // Dein Bexio User ID
+  BANK_ACCOUNT_ID: 1, // Dein QR-Bankkonto ID
+  LANGUAGE_ID: 1, // 1 = Deutsch
+  CURRENCY_ID: 1, // 1 = CHF
+  PAYMENT_TYPE_ID: 4, // QR-Rechnung
+  TAX_RATE_ID: 25, // 8.1% MWST ID (prüfen!)
+  PAYMENT_TERMS_DAYS: 30, // Zahlungsfrist
 }
 ```
 
@@ -99,6 +103,7 @@ CRON_SECRET=your_secure_random_string
 Synchronisiert User oder Invoice zu Bexio.
 
 **Request:**
+
 ```json
 // User sync
 { "type": "user", "userId": 123 }
@@ -108,11 +113,12 @@ Synchronisiert User oder Invoice zu Bexio.
 ```
 
 **Response:**
+
 ```json
 {
   "success": true,
-  "bexioContactId": 789,     // Bei User sync
-  "bexioInvoiceId": 1234,    // Bei Invoice sync
+  "bexioContactId": 789, // Bei User sync
+  "bexioInvoiceId": 1234, // Bei Invoice sync
   "qrReference": "RF18A1B2C3D4E5F6G7H8I9J0"
 }
 ```
@@ -122,10 +128,11 @@ Synchronisiert User oder Invoice zu Bexio.
 Prüft Zahlungsstatus einer Rechnung.
 
 **Response:**
+
 ```json
 {
   "isPaid": true,
-  "paidAmount": 150.00,
+  "paidAmount": 150.0,
   "paidAt": "2025-01-18T10:30:00Z"
 }
 ```
@@ -135,6 +142,7 @@ Prüft Zahlungsstatus einer Rechnung.
 Führt Payment Matching manuell aus.
 
 **Response:**
+
 ```json
 {
   "success": true,
@@ -181,11 +189,11 @@ RF185N82A20B1YKQ3ZP4AB
 ### Funktionen
 
 ```typescript
-import { 
-  generateUniqueQRReference, 
+import {
+  generateUniqueQRReference,
   parseQRReference,
   validateQRReference,
-  formatQRReferenceForDisplay 
+  formatQRReferenceForDisplay,
 } from '@/lib/unique-qr-reference'
 
 // Generieren
@@ -212,6 +220,7 @@ const display = formatQRReferenceForDisplay(ref)
 Zugriff: `/admin/bexio`
 
 Features:
+
 - API Status Übersicht
 - Manueller User Sync
 - Manueller Invoice Sync
@@ -254,11 +263,13 @@ Features:
 ## Fehlerbehandlung
 
 ### API Fehler
+
 - Werden geloggt in Console
 - Retry bei temporären Fehlern
 - Admin wird bei kritischen Fehlern benachrichtigt
 
 ### Payment Matching Fehler
+
 - Unmatched Zahlungen werden im Result aufgelistet
 - Manuelle Zuordnung via Bexio möglich
 - Errors Array enthält Details
@@ -278,13 +289,13 @@ Features:
 
 Falls du eine Alternative zu Bexio evaluierst:
 
-| Service | Pro | Contra |
-|---------|-----|--------|
-| **Bexio** | Schweizer Standard, gute API, QR-Bill native | CHF 39+/Monat |
-| **Abacus** | Enterprise-grade, sehr mächtig | Teuer, komplex |
-| **Klara** | Gratis Basisversion, einfach | Limitierte API |
-| **Run My Accounts** | Vollautomatisch, gut für kleine | Weniger flexibel |
-| **Zoho Books** | Günstig, gute API | Nicht CH-optimiert |
+| Service             | Pro                                          | Contra             |
+| ------------------- | -------------------------------------------- | ------------------ |
+| **Bexio**           | Schweizer Standard, gute API, QR-Bill native | CHF 39+/Monat      |
+| **Abacus**          | Enterprise-grade, sehr mächtig               | Teuer, komplex     |
+| **Klara**           | Gratis Basisversion, einfach                 | Limitierte API     |
+| **Run My Accounts** | Vollautomatisch, gut für kleine              | Weniger flexibel   |
+| **Zoho Books**      | Günstig, gute API                            | Nicht CH-optimiert |
 
 Empfehlung: **Bexio** für Schweizer KMU mit QR-Rechnungen.
 
@@ -293,6 +304,7 @@ Empfehlung: **Bexio** für Schweizer KMU mit QR-Rechnungen.
 ## Support
 
 Bei Problemen:
+
 1. Prüfe Bexio API Status
 2. Checke Logs in Vercel
 3. Teste mit `/admin/bexio`

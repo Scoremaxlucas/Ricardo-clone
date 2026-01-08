@@ -1,11 +1,11 @@
 /**
  * Unique QR Reference Generator
- * 
+ *
  * Generates unique QR-Bill references (SCOR format) that encode:
  * - User ID (for automatic payment matching)
  * - Invoice ID (for exact invoice matching)
  * - Check digit (for validation)
- * 
+ *
  * Format: RF[check][userPart][invoicePart][random]
  * Total length: 25 characters (QR-Bill SCOR standard)
  */
@@ -17,7 +17,7 @@
 function calculateMod97CheckDigits(reference: string): string {
   // Move RF00 to end and convert letters to numbers
   const rearranged = reference + 'RF00'
-  
+
   let numericString = ''
   for (const char of rearranged.toUpperCase()) {
     if (char >= '0' && char <= '9') {
@@ -56,7 +56,7 @@ function decodeBase36(str: string): number {
 
 /**
  * Generates a unique QR reference for an invoice
- * 
+ *
  * Structure (25 chars total for SCOR):
  * - RF (2 chars): SCOR prefix
  * - Check digits (2 chars): MOD-97 check
@@ -64,7 +64,7 @@ function decodeBase36(str: string): number {
  * - Invoice ID encoded (6 chars): Base36 encoded invoice ID
  * - Timestamp part (5 chars): Base36 encoded timestamp mod
  * - Random part (4 chars): Random alphanumeric
- * 
+ *
  * @param userId - The user ID (seller)
  * @param invoiceId - The invoice ID in our system
  * @returns A 25-character SCOR reference starting with RF
@@ -72,14 +72,14 @@ function decodeBase36(str: string): number {
 export function generateUniqueQRReference(userId: number, invoiceId: number): string {
   // Encode user ID (6 chars, supports up to 2,176,782,335)
   const userPart = encodeBase36(userId, 6)
-  
+
   // Encode invoice ID (6 chars)
   const invoicePart = encodeBase36(invoiceId, 6)
-  
+
   // Timestamp part for additional uniqueness (5 chars)
   const timestamp = Date.now() % Math.pow(36, 5)
   const timePart = encodeBase36(timestamp, 5)
-  
+
   // Random part (4 chars)
   const chars = '0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZ'
   let randomPart = ''
@@ -99,7 +99,7 @@ export function generateUniqueQRReference(userId: number, invoiceId: number): st
 
 /**
  * Parses a QR reference to extract user ID and invoice ID
- * 
+ *
  * @param qrReference - The full QR reference string
  * @returns Object with userId, invoiceId, and isValid flag
  */
@@ -117,7 +117,7 @@ export function parseQRReference(qrReference: string): {
     // Extract parts
     const checkDigits = qrReference.slice(2, 4)
     const referenceBody = qrReference.slice(4)
-    
+
     // Validate check digits
     const calculatedCheck = calculateMod97CheckDigits(referenceBody)
     if (checkDigits !== calculatedCheck) {
@@ -135,7 +135,7 @@ export function parseQRReference(qrReference: string): {
     return {
       userId,
       invoiceId,
-      isValid: true
+      isValid: true,
     }
   } catch {
     return { userId: null, invoiceId: null, isValid: false }
@@ -158,7 +158,7 @@ export function formatQRReferenceForDisplay(qrReference: string): string {
   if (!qrReference || qrReference.length !== 25) {
     return qrReference
   }
-  
+
   // Format: RF## #### #### #### #### ###
   return [
     qrReference.slice(0, 4),
@@ -166,6 +166,6 @@ export function formatQRReferenceForDisplay(qrReference: string): string {
     qrReference.slice(8, 12),
     qrReference.slice(12, 16),
     qrReference.slice(16, 20),
-    qrReference.slice(20, 25)
+    qrReference.slice(20, 25),
   ].join(' ')
 }

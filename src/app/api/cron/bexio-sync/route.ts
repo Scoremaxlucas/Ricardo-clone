@@ -1,5 +1,5 @@
-import { NextRequest, NextResponse } from 'next/server'
 import { processIncomingPayments } from '@/lib/bexio-sync'
+import { NextRequest, NextResponse } from 'next/server'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -8,7 +8,7 @@ export const maxDuration = 60
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
-    
+
     if (process.env.CRON_SECRET && authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
       const vercelCron = request.headers.get('x-vercel-cron')
       if (!vercelCron) {
@@ -27,15 +27,14 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({
       success: true,
       duration: `${duration}ms`,
-      ...result
+      ...result,
     })
-
   } catch (error: any) {
     console.error('[Cron] Bexio sync failed:', error)
     return NextResponse.json(
-      { 
+      {
         success: false,
-        error: error.message || 'Sync failed' 
+        error: error.message || 'Sync failed',
       },
       { status: 500 }
     )
