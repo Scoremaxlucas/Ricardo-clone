@@ -26,9 +26,9 @@ export const PAYMENT_CONFIG = {
   bic: process.env.PAYMENT_BIC || 'RAIFCH22',
   bankName: process.env.PAYMENT_BANK_NAME || 'Raiffeisen Schweiz',
 
-  // TWINT für direkte Zahlungen an Helvenda/Scoremax (z.B. Gebühren-Rechnungen)
-  // WICHTIG: Hier die TWINT-Telefonnummer von Scoremax eintragen!
-  twintPhone: process.env.PAYMENT_TWINT_PHONE || '', // z.B. '+41 79 123 45 67'
+  // TWINT Business für direkte Zahlungen an Helvenda/Scoremax (z.B. Gebühren-Rechnungen)
+  // Bei TWINT Business geht die Zahlung direkt auf die IBAN (keine Telefonnummer nötig)
+  // Der Swiss QR-Bill Code kann von der TWINT-App gescannt werden
   twintEnabled: process.env.PAYMENT_TWINT_ENABLED === 'true',
 
   // Payment Terms

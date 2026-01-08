@@ -191,39 +191,24 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
     console.error('[invoice-payment-info] Fehler beim Generieren des QR-Codes:', error)
   }
 
-  // TWINT für Gebühren-Rechnungen an Helvenda/Scoremax
-  // Diese Rechnungen gehen AN Helvenda, daher verwenden wir die TWINT-Nummer von Helvenda
+  // TWINT Business für Gebühren-Rechnungen an Helvenda/Scoremax
+  // Bei TWINT Business geht die Zahlung direkt auf die IBAN (keine Telefonnummer nötig)
+  // Der Swiss QR-Bill Code kann von der TWINT-App direkt gescannt werden
   let twintPhone: string | null = null
   let twintQRCodeDataUrl: string | null = null
   let twintDeepLink: string | null = null
 
-  // Prüfe ob Helvenda TWINT aktiviert hat
-  if (PAYMENT_CONFIG.twintEnabled && PAYMENT_CONFIG.twintPhone) {
-    twintPhone = PAYMENT_CONFIG.twintPhone
-
-    // Generiere TWINT Deep Link (für mobile Nutzer)
-    const twintAmount = invoice.total.toFixed(2)
-    const twintMessage = `Rechnung ${invoice.invoiceNumber}`
-    twintDeepLink = `twint://pay?phone=${encodeURIComponent(twintPhone)}&amount=${twintAmount}&message=${encodeURIComponent(twintMessage)}`
-
-    // Generiere TWINT QR-Code (für Desktop-Nutzer)
-    const twintQRString = generateTWINTQRCodeString({
-      phone: twintPhone,
-      amount: invoice.total,
-      message: twintMessage,
-      reference: reference,
-    })
-
-    try {
-      twintQRCodeDataUrl = await QRCode.toDataURL(twintQRString, {
-        errorCorrectionLevel: 'H',
-        type: 'image/png',
-        width: 400,
-        margin: 2,
-      })
-    } catch (error) {
-      console.error('[invoice-payment-info] Fehler beim Generieren des TWINT QR-Codes:', error)
-    }
+  // Prüfe ob Helvenda TWINT Business aktiviert hat
+  if (PAYMENT_CONFIG.twintEnabled) {
+    // TWINT Business: Der Swiss QR-Bill Code (qrCodeDataUrl) kann direkt von TWINT gescannt werden
+    // Keine separate Telefonnummer nötig - Zahlung geht direkt auf die IBAN
+    
+    // Der bereits generierte Swiss QR-Bill Code funktioniert auch für TWINT
+    // TWINT-App kann diesen Code scannen und die Zahlung ausführen
+    twintQRCodeDataUrl = qrCodeDataUrl || null
+    
+    // Hinweis: twintPhone bleibt null, da TWINT Business keine Telefonnummer braucht
+    // twintDeepLink bleibt null, da der QR-Code der primäre Weg ist
   }
 
   // Generiere Zahlungsanweisung
