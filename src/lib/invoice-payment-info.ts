@@ -191,47 +191,38 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
     console.error('[invoice-payment-info] Fehler beim Generieren des QR-Codes:', error)
   }
 
-  // Prüfe ob Verkäufer TWINT hat
+  // TWINT für Gebühren-Rechnungen an Helvenda/Scoremax
+  // Diese Rechnungen gehen AN Helvenda, daher verwenden wir die TWINT-Nummer von Helvenda
   let twintPhone: string | null = null
   let twintQRCodeDataUrl: string | null = null
   let twintDeepLink: string | null = null
 
-  if (invoice.seller?.paymentMethods) {
+  // Prüfe ob Helvenda TWINT aktiviert hat
+  if (PAYMENT_CONFIG.twintEnabled && PAYMENT_CONFIG.twintPhone) {
+    twintPhone = PAYMENT_CONFIG.twintPhone
+
+    // Generiere TWINT Deep Link (für mobile Nutzer)
+    const twintAmount = invoice.total.toFixed(2)
+    const twintMessage = `Rechnung ${invoice.invoiceNumber}`
+    twintDeepLink = `twint://pay?phone=${encodeURIComponent(twintPhone)}&amount=${twintAmount}&message=${encodeURIComponent(twintMessage)}`
+
+    // Generiere TWINT QR-Code (für Desktop-Nutzer)
+    const twintQRString = generateTWINTQRCodeString({
+      phone: twintPhone,
+      amount: invoice.total,
+      message: twintMessage,
+      reference: reference,
+    })
+
     try {
-      const paymentMethods = JSON.parse(invoice.seller.paymentMethods)
-      const twintMethod = paymentMethods.find((pm: any) => pm.type === 'twint')
-      if (twintMethod?.phone) {
-        twintPhone = twintMethod.phone
-
-        // Generiere TWINT Deep Link (für mobile Nutzer)
-        // Format: twint://pay?phone=...&amount=...&message=...
-        const twintAmount = invoice.total.toFixed(2)
-        const twintMessage = `Rechnung ${invoice.invoiceNumber}`
-        twintDeepLink = `twint://pay?phone=${encodeURIComponent(twintPhone || '')}&amount=${twintAmount}&message=${encodeURIComponent(twintMessage)}`
-
-        // Generiere TWINT QR-Code (für Desktop-Nutzer)
-        // TWINT QR-Code Format: Enthält Telefonnummer, Betrag und Referenz
-        const twintQRString = generateTWINTQRCodeString({
-          phone: twintPhone || '',
-          amount: invoice.total,
-          message: twintMessage,
-          reference: reference,
-        })
-
-        try {
-          // TWINT QR-Codes benötigen höhere Fehlerkorrektur und größere Größe
-          twintQRCodeDataUrl = await QRCode.toDataURL(twintQRString, {
-            errorCorrectionLevel: 'H', // Höhere Fehlerkorrektur für TWINT
-            type: 'image/png',
-            width: 400, // Größere Größe für bessere Erkennbarkeit
-            margin: 2, // Größerer Rand für bessere Erkennbarkeit
-          })
-        } catch (error) {
-          console.error('[invoice-payment-info] Fehler beim Generieren des TWINT QR-Codes:', error)
-        }
-      }
+      twintQRCodeDataUrl = await QRCode.toDataURL(twintQRString, {
+        errorCorrectionLevel: 'H',
+        type: 'image/png',
+        width: 400,
+        margin: 2,
+      })
     } catch (error) {
-      console.error('[invoice-payment-info] Fehler beim Parsen der paymentMethods:', error)
+      console.error('[invoice-payment-info] Fehler beim Generieren des TWINT QR-Codes:', error)
     }
   }
 

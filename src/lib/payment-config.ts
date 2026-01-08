@@ -26,6 +26,11 @@ export const PAYMENT_CONFIG = {
   bic: process.env.PAYMENT_BIC || 'RAIFCH22',
   bankName: process.env.PAYMENT_BANK_NAME || 'Raiffeisen Schweiz',
 
+  // TWINT für direkte Zahlungen an Helvenda/Scoremax (z.B. Gebühren-Rechnungen)
+  // WICHTIG: Hier die TWINT-Telefonnummer von Scoremax eintragen!
+  twintPhone: process.env.PAYMENT_TWINT_PHONE || '', // z.B. '+41 79 123 45 67'
+  twintEnabled: process.env.PAYMENT_TWINT_ENABLED === 'true',
+
   // Payment Terms
   paymentTermsDays: parseInt(process.env.PAYMENT_TERMS_DAYS || '30', 10),
 
