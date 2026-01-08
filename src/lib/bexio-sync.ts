@@ -1,6 +1,6 @@
 /**
  * Bexio Synchronization Service
- * 
+ *
  * Handles synchronization between Helvenda and Bexio:
  * - User → Bexio Contact sync
  * - Invoice → Bexio Invoice sync
@@ -8,8 +8,12 @@
  */
 
 import { prisma } from '@/lib/prisma'
-import { getBexioClient, BexioContact, BexioInvoice, BexioInvoicePosition } from './bexio-client'
-import { generateUniqueQRReference, parseQRReference, formatQRReferenceForDisplay } from './unique-qr-reference'
+import { BexioInvoicePosition, getBexioClient } from './bexio-client'
+import {
+  formatQRReferenceForDisplay,
+  generateUniqueQRReference,
+  parseQRReference,
+} from './unique-qr-reference'
 
 /**
  * Konvertiert einen String (cuid) in eine numerische ID für QR-Referenz
@@ -19,7 +23,7 @@ function hashStringToNumber(str: string): number {
   let hash = 0
   for (let i = 0; i < str.length; i++) {
     const char = str.charCodeAt(i)
-    hash = ((hash << 5) - hash) + char
+    hash = (hash << 5) - hash + char
     hash = hash & hash // Convert to 32bit integer
   }
   return Math.abs(hash)
@@ -41,16 +45,16 @@ const BEXIO_CONFIG = {
  */
 export async function syncUserToBexio(userId: string): Promise<number> {
   const bexio = getBexioClient()
-  
+
   // User mit Adresse laden
   const user = await prisma.user.findUnique({
     where: { id: userId },
     include: {
       addresses: {
         where: { type: 'MAIN' },
-        take: 1
-      }
-    }
+        take: 1,
+      },
+    },
   })
 
   if (!user) {
@@ -80,7 +84,7 @@ export async function syncUserToBexio(userId: string): Promise<number> {
     // Link to existing contact
     await prisma.user.update({
       where: { id: userId },
-      data: { bexioContactId: existingContact.id }
+      data: { bexioContactId: existingContact.id },
     })
     return existingContact.id
   }
@@ -100,7 +104,7 @@ export async function syncUserToBexio(userId: string): Promise<number> {
   // Bexio ID speichern
   await prisma.user.update({
     where: { id: userId },
-    data: { bexioContactId: newContact.id }
+    data: { bexioContactId: newContact.id },
   })
 
   return newContact.id!
@@ -120,27 +124,27 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
     where: { id: invoiceId },
     include: {
       items: true,
-      user: true
-    }
+      seller: true,
+    },
   })
 
   if (!invoice) {
     throw new Error(`Invoice ${invoiceId} not found`)
   }
 
-  // Sicherstellen dass User in Bexio existiert
-  let bexioContactId = invoice.user.bexioContactId
+  // Sicherstellen dass Seller in Bexio existiert
+  let bexioContactId = invoice.seller.bexioContactId
   if (!bexioContactId) {
-    bexioContactId = await syncUserToBexio(invoice.userId)
+    bexioContactId = await syncUserToBexio(invoice.sellerId)
   }
 
   // Eindeutige QR-Referenz generieren (verwende numerischen Hash für base36 Encoding)
-  const userIdHash = hashStringToNumber(invoice.userId)
+  const userIdHash = hashStringToNumber(invoice.sellerId)
   const invoiceIdHash = hashStringToNumber(invoice.id)
   const qrReference = generateUniqueQRReference(userIdHash, invoiceIdHash)
 
   // Datum formatieren
-  const issuedDate = new Date(invoice.issuedAt)
+  const issuedDate = new Date(invoice.createdAt)
   const dueDate = new Date(issuedDate)
   dueDate.setDate(dueDate.getDate() + BEXIO_CONFIG.PAYMENT_TERMS_DAYS)
 
@@ -186,12 +190,12 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
     data: {
       qrReference,
       bexioInvoiceId: bexioInvoice.id,
-    }
+    },
   })
 
   return {
     bexioInvoiceId: bexioInvoice.id!,
-    qrReference
+    qrReference,
   }
 }
 
@@ -233,7 +237,7 @@ export async function processIncomingPayments(): Promise<{
 
       // Versuchen die Referenz zu parsen
       const parsed = parseQRReference(reference.replace(/\s/g, '').toUpperCase())
-      
+
       if (!parsed.isValid || !parsed.invoiceId) {
         unmatched++
         continue
@@ -242,8 +246,8 @@ export async function processIncomingPayments(): Promise<{
       // Rechnung in unserer DB suchen
       const invoice = await prisma.invoice.findFirst({
         where: {
-          qrReference: reference.replace(/\s/g, '').toUpperCase()
-        }
+          qrReference: reference.replace(/\s/g, '').toUpperCase(),
+        },
       })
 
       if (!invoice) {
@@ -271,8 +275,8 @@ export async function processIncomingPayments(): Promise<{
             status: 'paid',
             paidAt: new Date(),
             paymentMatchedAt: new Date(),
-            paymentMatchedAmount: parseFloat(payment.amount)
-          }
+            paymentMatchedAmount: parseFloat(payment.amount),
+          },
         })
 
         matched++
@@ -296,7 +300,7 @@ export async function getInvoicePaymentStatus(invoiceId: string): Promise<{
   paidAt: Date | null
 }> {
   const invoice = await prisma.invoice.findUnique({
-    where: { id: invoiceId }
+    where: { id: invoiceId },
   })
 
   if (!invoice) {
@@ -308,7 +312,7 @@ export async function getInvoicePaymentStatus(invoiceId: string): Promise<{
     return {
       isPaid: true,
       paidAmount: invoice.paymentMatchedAmount ? Number(invoice.paymentMatchedAmount) : null,
-      paidAt: invoice.paidAt
+      paidAt: invoice.paidAt,
     }
   }
 
@@ -316,7 +320,7 @@ export async function getInvoicePaymentStatus(invoiceId: string): Promise<{
   if (invoice.bexioInvoiceId) {
     const bexio = getBexioClient()
     const bexioInvoice = await bexio.getInvoice(invoice.bexioInvoiceId)
-    
+
     // Status 9 = Bezahlt in Bexio
     // @ts-ignore - Bexio API gibt kb_item_status_id zurück
     if ((bexioInvoice as any).kb_item_status_id === 9) {
@@ -324,14 +328,14 @@ export async function getInvoicePaymentStatus(invoiceId: string): Promise<{
         where: { id: invoiceId },
         data: {
           status: 'paid',
-          paidAt: new Date()
-        }
+          paidAt: new Date(),
+        },
       })
-      
+
       return {
         isPaid: true,
         paidAmount: parseFloat(bexioInvoice.total || '0'),
-        paidAt: new Date()
+        paidAt: new Date(),
       }
     }
   }
@@ -339,6 +343,6 @@ export async function getInvoicePaymentStatus(invoiceId: string): Promise<{
   return {
     isPaid: false,
     paidAmount: null,
-    paidAt: null
+    paidAt: null,
   }
 }

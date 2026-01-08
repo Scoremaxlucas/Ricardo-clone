@@ -7,7 +7,7 @@
 
 import { authOptions } from '@/lib/auth'
 import { createBexioInvoice, getInvoicePaymentStatus, syncUserToBexio } from '@/lib/bexio-sync'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function POST(request: NextRequest) {

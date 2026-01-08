@@ -1,6 +1,6 @@
 /**
  * Bexio API Client
- * 
+ *
  * Handles all communication with the Bexio.ch accounting system.
  * Documentation: https://docs.bexio.com/
  */
@@ -82,10 +82,10 @@ class BexioClient {
     body?: any
   ): Promise<T> {
     const url = `${BEXIO_API_URL}${endpoint}`
-    
+
     const headers: Record<string, string> = {
-      'Authorization': `Bearer ${this.apiToken}`,
-      'Accept': 'application/json',
+      Authorization: `Bearer ${this.apiToken}`,
+      Accept: 'application/json',
     }
 
     if (body) {
@@ -127,7 +127,7 @@ class BexioClient {
    */
   async findContactByEmail(email: string): Promise<BexioContact | null> {
     const contacts = await this.request<BexioContact[]>('POST', '/contact/search', [
-      { field: 'mail', value: email, criteria: '=' }
+      { field: 'mail', value: email, criteria: '=' },
     ])
     return contacts.length > 0 ? contacts[0] : null
   }
@@ -168,7 +168,7 @@ class BexioClient {
   async findInvoiceByQrReference(qrReference: string): Promise<BexioInvoice | null> {
     // Bexio speichert QR-Referenz im Header oder als Custom Field
     const invoices = await this.request<BexioInvoice[]>('POST', '/kb_invoice/search', [
-      { field: 'title', value: qrReference, criteria: 'like' }
+      { field: 'title', value: qrReference, criteria: 'like' },
     ])
     return invoices.length > 0 ? invoices[0] : null
   }
@@ -178,7 +178,7 @@ class BexioClient {
    */
   async getOpenInvoices(): Promise<BexioInvoice[]> {
     return this.request<BexioInvoice[]>('POST', '/kb_invoice/search', [
-      { field: 'kb_item_status_id', value: '7', criteria: '=' } // 7 = Offen/Ausstehend
+      { field: 'kb_item_status_id', value: '7', criteria: '=' }, // 7 = Offen/Ausstehend
     ])
   }
 
@@ -200,7 +200,7 @@ class BexioClient {
    */
   async matchPaymentToInvoice(paymentId: number, invoiceId: number): Promise<void> {
     await this.request('POST', `/banking/payment/${paymentId}/assign`, {
-      kb_invoice_id: invoiceId
+      kb_invoice_id: invoiceId,
     })
   }
 
@@ -237,4 +237,5 @@ export function getBexioClient(): BexioClient {
   return bexioClient
 }
 
-export { BexioClient, BexioContact, BexioInvoice, BexioInvoicePosition, BexioPayment }
+export { BexioClient }
+export type { BexioContact, BexioInvoice, BexioInvoicePosition, BexioPayment }
