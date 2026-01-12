@@ -225,48 +225,41 @@ export function PaymentInfoCard({ purchaseId, showQRCode = true }: PaymentInfoCa
         </div>
       </div>
 
-      {/* TWINT-Zahlung */}
+      {/* TWINT-Hinweis - zeige wenn Verkäufer TWINT akzeptiert */}
       {paymentInfo.twintPhone && (
         <div className="mb-4 rounded-lg border-2 border-green-300 bg-green-50 p-4">
           <div className="mb-3 flex items-center gap-2">
             <Smartphone className="h-5 w-5 text-green-700" />
-            <span className="text-lg font-bold text-green-700">TWINT-Zahlung</span>
+            <span className="text-lg font-bold text-green-700">TWINT verfügbar</span>
           </div>
-
-          {/* TWINT Deep Link Button (für mobile Nutzer) */}
-          {paymentInfo.twintDeepLink && (
-            <div className="mb-4">
-              <a
-                href={paymentInfo.twintDeepLink}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white transition-colors hover:bg-green-700"
+          <div className="space-y-2 text-sm text-green-800">
+            <p>
+              <strong>Option 1:</strong> Scannen Sie den QR-Code unten mit der TWINT-App.
+              Der Swiss QR-Bill wird automatisch von TWINT erkannt.
+            </p>
+            <p>
+              <strong>Option 2:</strong> Zahlen Sie direkt in der TWINT-App an die
+              Telefonnummer des Verkäufers:
+            </p>
+            <div className="mt-2 flex items-center gap-2 rounded-lg border border-green-200 bg-white p-3">
+              <Smartphone className="h-5 w-5 text-green-600" />
+              <span className="font-mono font-semibold text-green-900">{paymentInfo.twintPhone}</span>
+              <button
+                onClick={() => copyToClipboard(paymentInfo.twintPhone || '', 'TWINT-Nummer')}
+                className="ml-auto rounded p-1 hover:bg-green-100"
               >
-                <Smartphone className="h-5 w-5" />
-                Mit TWINT bezahlen
-              </a>
-              <p className="mt-2 text-center text-xs text-gray-600">
-                Öffnet die TWINT-App direkt mit dem korrekten Betrag
-              </p>
+                {copied === 'TWINT-Nummer' ? (
+                  <CheckCircle className="h-4 w-4 text-green-600" />
+                ) : (
+                  <Copy className="h-4 w-4 text-green-600" />
+                )}
+              </button>
             </div>
-          )}
-
-          {/* TWINT QR-Code (für Desktop-Nutzer) */}
-          {paymentInfo.twintQRCodeDataUrl && (
-            <div className="mb-4">
-              <div className="mb-2 text-center text-sm font-medium text-gray-700">
-                Oder scannen Sie den QR-Code:
-              </div>
-              <div className="flex justify-center rounded-lg border border-green-200 bg-white p-3">
-                <img
-                  src={paymentInfo.twintQRCodeDataUrl}
-                  alt="TWINT QR-Code für Zahlung"
-                  className="h-48 w-48"
-                />
-              </div>
-              <p className="mt-2 text-center text-xs text-gray-600">
-                Scannen Sie diesen QR-Code mit der TWINT-App auf Ihrem Smartphone
-              </p>
-            </div>
-          )}
+            <p className="text-xs text-green-700">
+              Geben Sie als Betrag <strong>CHF {paymentInfo.amount.toFixed(2)}</strong> und
+              als Nachricht die Referenz <strong>{paymentInfo.reference}</strong> ein.
+            </p>
+          </div>
         </div>
       )}
 

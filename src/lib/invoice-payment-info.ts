@@ -191,25 +191,16 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
     console.error('[invoice-payment-info] Fehler beim Generieren des QR-Codes:', error)
   }
 
-  // TWINT Business für Gebühren-Rechnungen an Helvenda/Scoremax
-  // Bei TWINT Business geht die Zahlung direkt auf die IBAN (keine Telefonnummer nötig)
-  // Der Swiss QR-Bill Code kann von der TWINT-App direkt gescannt werden
-  let twintPhone: string | null = null
-  let twintQRCodeDataUrl: string | null = null
-  let twintDeepLink: string | null = null
-
-  // Prüfe ob Helvenda TWINT Business aktiviert hat
-  if (PAYMENT_CONFIG.twintEnabled) {
-    // TWINT Business: Der Swiss QR-Bill Code (qrCodeDataUrl) kann direkt von TWINT gescannt werden
-    // Keine separate Telefonnummer nötig - Zahlung geht direkt auf die IBAN
-    
-    // Der bereits generierte Swiss QR-Bill Code funktioniert auch für TWINT
-    // TWINT-App kann diesen Code scannen und die Zahlung ausführen
-    twintQRCodeDataUrl = qrCodeDataUrl || null
-    
-    // Hinweis: twintPhone bleibt null, da TWINT Business keine Telefonnummer braucht
-    // twintDeepLink bleibt null, da der QR-Code der primäre Weg ist
-  }
+  // TWINT-Unterstützung für Gebühren-Rechnungen:
+  // Der Swiss QR-Bill Code (qrCodeDataUrl) kann von JEDER TWINT-App gescannt werden.
+  // Es ist KEIN separater TWINT-Account oder TWINT Business nötig!
+  // Die TWINT-App erkennt automatisch den Swiss QR-Bill Standard und führt die Zahlung aus.
+  //
+  // WICHTIG: Das Format "twint://pay?phone=..." existiert NICHT als offizielles TWINT-Schema.
+  // Daher setzen wir twintDeepLink auf null.
+  const twintPhone: string | null = null // Nicht nötig - Swiss QR-Bill wird verwendet
+  const twintQRCodeDataUrl: string | null = qrCodeDataUrl || null // Swiss QR-Bill funktioniert mit TWINT
+  const twintDeepLink: string | null = null // Kein Deep Link - existiert nicht im TWINT-Standard
 
   // Generiere Zahlungsanweisung
   const paymentInstructions = generatePaymentInstructions({
@@ -240,43 +231,16 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
   }
 }
 
-/**
- * Generiert TWINT QR-Code String
- * Format basierend auf TWINT-Spezifikation
- *
- * TWINT unterstützt zwei QR-Code-Formate:
- * 1. Deep Link Format (für App-zu-App Zahlungen)
- * 2. TWINT Payment Request Format (für QR-Code-Scannen)
- */
-function generateTWINTQRCodeString(params: {
-  phone: string
-  amount: number
-  message: string
-  reference: string
-}): string {
-  const { phone, amount, message, reference } = params
-
-  // Bereinige Telefonnummer (entferne Leerzeichen, Bindestriche, etc.)
-  const cleanPhone = phone.replace(/[\s\-\(\)]/g, '')
-
-  // TWINT QR-Code Format
-  // TWINT verwendet ein spezifisches Format für QR-Codes
-  // Format: twint://pay?phone=...&amount=...&message=...&reference=...
-  // WICHTIG: Alle Parameter müssen URL-encoded sein
-
-  // Erstelle Deep Link für TWINT
-  // Dieses Format wird von der TWINT-App erkannt, wenn der QR-Code gescannt wird
-  const twintParams = new URLSearchParams({
-    phone: cleanPhone,
-    amount: amount.toFixed(2),
-    message: message.substring(0, 140), // TWINT limitiert Nachrichten auf 140 Zeichen
-    reference: reference.substring(0, 35), // TWINT limitiert Referenzen
-  })
-
-  const deepLink = `twint://pay?${twintParams.toString()}`
-
-  return deepLink
-}
+// HINWEIS: Die Funktion generateTWINTQRCodeString wurde entfernt.
+// Das Format "twint://pay?phone=..." ist KEIN offizielles TWINT-Schema und funktioniert nicht!
+//
+// TWINT unterstützt stattdessen:
+// 1. Swiss QR-Bill Code - wird automatisch von der TWINT-App erkannt
+// 2. TWINT Händler-Portal - für Händler mit TWINT Business Account (QR-Code-Sticker)
+// 3. Stripe mit TWINT - für automatische Online-Zahlungen
+//
+// Für Zahlungen an Helvenda wird der Swiss QR-Bill Code verwendet,
+// der von allen Banking-Apps UND der TWINT-App gescannt werden kann.
 
 /**
  * Generiert QR-Code String im Swiss QR-Bill Format

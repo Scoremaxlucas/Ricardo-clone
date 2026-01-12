@@ -168,9 +168,9 @@ export default function InvoicePaymentPage() {
 
         <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm text-blue-800">
-            <strong>Hinweis:</strong> Ihre Zahlung wird sicher über Stripe verarbeitet. Nach
-            erfolgreicher Zahlung wird die Rechnung automatisch als bezahlt markiert und Ihr Konto
-            wird entsperrt (falls gesperrt).
+            <strong>Hinweis:</strong> Bitte überweisen Sie den Betrag per Banküberweisung oder
+            scannen Sie den QR-Code mit Ihrer Banking-App oder TWINT. Nach Zahlungseingang wird
+            die Rechnung als bezahlt markiert und Ihr Konto wird entsperrt (falls gesperrt).
           </p>
         </div>
       </div>

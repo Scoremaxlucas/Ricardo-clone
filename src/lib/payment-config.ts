@@ -26,10 +26,12 @@ export const PAYMENT_CONFIG = {
   bic: process.env.PAYMENT_BIC || 'RAIFCH22',
   bankName: process.env.PAYMENT_BANK_NAME || 'Raiffeisen Schweiz',
 
-  // TWINT Business für direkte Zahlungen an Helvenda/Scoremax (z.B. Gebühren-Rechnungen)
-  // Bei TWINT Business geht die Zahlung direkt auf die IBAN (keine Telefonnummer nötig)
-  // Der Swiss QR-Bill Code kann von der TWINT-App gescannt werden
-  twintEnabled: process.env.PAYMENT_TWINT_ENABLED === 'true',
+  // TWINT-Hinweis für Rechnungszahlungen:
+  // Der Swiss QR-Bill Code kann von JEDER TWINT-App gescannt werden -
+  // es ist KEIN separater TWINT Business Account nötig!
+  // Die TWINT-App erkennt automatisch den Swiss QR-Bill Standard.
+  // Diese Einstellung ist daher nur noch für Legacy-Kompatibilität.
+  twintEnabled: true, // Swiss QR-Bill funktioniert immer mit TWINT
 
   // Payment Terms
   paymentTermsDays: parseInt(process.env.PAYMENT_TERMS_DAYS || '30', 10),

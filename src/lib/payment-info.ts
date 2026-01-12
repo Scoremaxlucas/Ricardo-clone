@@ -242,28 +242,17 @@ export async function generatePaymentInfo(purchaseId: string): Promise<PaymentIn
     productTitle: purchase.watch.title,
   })
 
-  // Generiere TWINT QR-Code und Deep Link (falls TWINT vorhanden)
-  let twintQRCodeDataUrl: string | null = null
-  let twintDeepLink: string | null = null
-
-  if (twintPhone) {
-    // Generiere TWINT Deep Link
-    const twintAmount = totalAmount.toFixed(2)
-    const twintMessage = `Kauf: ${purchase.watch.title}`
-    twintDeepLink = `twint://pay?phone=${encodeURIComponent(twintPhone || '')}&amount=${twintAmount}&message=${encodeURIComponent(twintMessage)}&reference=${encodeURIComponent(reference)}`
-
-    // Generiere TWINT QR-Code
-    try {
-      twintQRCodeDataUrl = await QRCode.toDataURL(twintDeepLink, {
-        errorCorrectionLevel: 'M',
-        type: 'image/png',
-        width: 300,
-        margin: 1,
-      })
-    } catch (error) {
-      console.error('[payment-info] Fehler beim Generieren des TWINT QR-Codes:', error)
-    }
-  }
+  // TWINT-Hinweis: Der Swiss QR-Bill Code (qrCodeDataUrl) kann direkt von der TWINT-App gescannt werden.
+  // Es wird KEIN separater TWINT QR-Code benötigt - die TWINT-App erkennt den Swiss QR-Bill Standard.
+  //
+  // WICHTIG: Das Format "twint://pay?phone=..." existiert NICHT als offizielles TWINT-Schema.
+  // TWINT P2P-Zahlungen funktionieren nur über:
+  // 1. Swiss QR-Bill Code scannen (funktioniert automatisch)
+  // 2. Manuell in der TWINT-App den Kontakt auswählen
+  //
+  // Die Telefonnummer wird nur als Info für den Käufer angezeigt (falls er manuell zahlen möchte).
+  const twintQRCodeDataUrl: string | null = qrCodeDataUrl || null // Swiss QR-Bill funktioniert mit TWINT
+  const twintDeepLink: string | null = null // Kein Deep Link - existiert nicht im TWINT-Standard
 
   return {
     iban: sellerIban,
