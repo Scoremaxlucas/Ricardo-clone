@@ -52,6 +52,11 @@ model User {
   emailVerificationToken        String?
   emailVerificationTokenExpires DateTime?
 
+  // === EMAIL CHANGE (mit Verifizierung) ===
+  pendingEmail                  String?   // Neue E-Mail-Adresse (noch nicht bestätigt)
+  pendingEmailToken             String?   // Token für Bestätigung
+  pendingEmailTokenExpires      DateTime? // Ablaufzeit des Tokens
+
   // === PASSWORD RESET ===
   passwordResetToken        String?
   passwordResetTokenExpires DateTime?

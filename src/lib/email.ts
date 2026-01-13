@@ -4780,3 +4780,189 @@ Ihr Helvenda-Team
 
   return { subject, html, text }
 }
+
+// ============================================================================
+// === E-MAIL-ADRESSE ÄNDERN ===
+// ============================================================================
+
+/**
+ * E-Mail zur Bestätigung einer neuen E-Mail-Adresse
+ * Wird an die NEUE E-Mail-Adresse gesendet
+ */
+export function getEmailChangeVerificationEmail(
+  userName: string,
+  newEmail: string,
+  confirmationUrl: string
+) {
+  const subject = 'Bestätigen Sie Ihre neue E-Mail-Adresse - Helvenda'
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
+    .button { display: inline-block; background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%); color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+    .info-box { background: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 20px 0; border-radius: 4px; }
+    .warning-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 20px 0; border-radius: 4px; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin: 0; font-size: 24px;">E-Mail-Adresse bestätigen</h1>
+  </div>
+  <div class="content">
+    <p>Hallo ${userName},</p>
+
+    <p>Sie haben angefordert, Ihre E-Mail-Adresse bei Helvenda zu ändern.</p>
+
+    <div class="info-box">
+      <p style="margin: 0; color: #0f766e;"><strong>Neue E-Mail-Adresse:</strong></p>
+      <p style="margin: 8px 0 0 0; font-size: 18px; color: #134e4a;">${newEmail}</p>
+    </div>
+
+    <p>Bitte bestätigen Sie diese Änderung, indem Sie auf den folgenden Button klicken:</p>
+
+    <div style="text-align: center;">
+      <a href="${confirmationUrl}" class="button" style="color: white;">E-Mail-Adresse bestätigen</a>
+    </div>
+
+    <div class="warning-box">
+      <p style="margin: 0; color: #92400e;"><strong>⚠️ Wichtig:</strong></p>
+      <ul style="margin: 8px 0 0 0; padding-left: 20px; color: #92400e;">
+        <li>Der Link ist <strong>24 Stunden</strong> gültig</li>
+        <li>Nach der Bestätigung wird diese E-Mail für Ihr Helvenda-Konto verwendet</li>
+        <li>Ihre alte E-Mail-Adresse wird nicht mehr funktionieren</li>
+      </ul>
+    </div>
+
+    <p style="font-size: 14px; color: #6b7280;">
+      Falls Sie diese Änderung nicht angefordert haben, ignorieren Sie diese E-Mail einfach.
+      Ihre E-Mail-Adresse wird nicht geändert.
+    </p>
+
+    <p style="font-size: 12px; color: #9ca3af; margin-top: 20px;">
+      Falls der Button nicht funktioniert, kopieren Sie diesen Link in Ihren Browser:<br>
+      <a href="${confirmationUrl}" style="color: #0f766e; word-break: break-all;">${confirmationUrl}</a>
+    </p>
+
+    <div class="footer">
+      <p>Mit freundlichen Grüssen<br>Ihr Helvenda-Team</p>
+      <p>© ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Hallo ${userName},
+
+Sie haben angefordert, Ihre E-Mail-Adresse bei Helvenda zu ändern.
+
+NEUE E-MAIL-ADRESSE: ${newEmail}
+
+Bitte bestätigen Sie diese Änderung, indem Sie den folgenden Link öffnen:
+${confirmationUrl}
+
+WICHTIG:
+- Der Link ist 24 Stunden gültig
+- Nach der Bestätigung wird diese E-Mail für Ihr Helvenda-Konto verwendet
+- Ihre alte E-Mail-Adresse wird nicht mehr funktionieren
+
+Falls Sie diese Änderung nicht angefordert haben, ignorieren Sie diese E-Mail einfach.
+Ihre E-Mail-Adresse wird nicht geändert.
+
+Mit freundlichen Grüssen
+Ihr Helvenda-Team
+  `.trim()
+
+  return { subject, html, text }
+}
+
+/**
+ * Bestätigung der E-Mail-Änderung (an die ALTE E-Mail-Adresse)
+ */
+export function getEmailChangedNotificationEmail(
+  userName: string,
+  oldEmail: string,
+  newEmail: string
+) {
+  const subject = 'Ihre E-Mail-Adresse wurde geändert - Helvenda'
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
+    .info-box { background: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 20px 0; border-radius: 4px; }
+    .warning-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 20px 0; border-radius: 4px; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin: 0; font-size: 24px;">E-Mail-Adresse geändert</h1>
+  </div>
+  <div class="content">
+    <p>Hallo ${userName},</p>
+
+    <p>Die E-Mail-Adresse für Ihr Helvenda-Konto wurde soeben geändert.</p>
+
+    <div class="info-box">
+      <p style="margin: 0; color: #0f766e;"><strong>Änderungsdetails:</strong></p>
+      <p style="margin: 8px 0 0 0; color: #374151;">
+        <strong>Alte E-Mail:</strong> ${oldEmail}<br>
+        <strong>Neue E-Mail:</strong> ${newEmail}
+      </p>
+    </div>
+
+    <div class="warning-box">
+      <p style="margin: 0; color: #92400e;"><strong>⚠️ Nicht Sie?</strong></p>
+      <p style="margin: 8px 0 0 0; color: #92400e;">
+        Falls Sie diese Änderung nicht vorgenommen haben, kontaktieren Sie uns sofort unter
+        <a href="mailto:support@helvenda.ch" style="color: #0f766e;">support@helvenda.ch</a>.
+      </p>
+    </div>
+
+    <p>Ab sofort müssen Sie sich mit Ihrer neuen E-Mail-Adresse anmelden.</p>
+
+    <div class="footer">
+      <p>Mit freundlichen Grüssen<br>Ihr Helvenda-Team</p>
+      <p>© ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Hallo ${userName},
+
+Die E-Mail-Adresse für Ihr Helvenda-Konto wurde soeben geändert.
+
+ÄNDERUNGSDETAILS:
+- Alte E-Mail: ${oldEmail}
+- Neue E-Mail: ${newEmail}
+
+NICHT SIE?
+Falls Sie diese Änderung nicht vorgenommen haben, kontaktieren Sie uns sofort unter support@helvenda.ch.
+
+Ab sofort müssen Sie sich mit Ihrer neuen E-Mail-Adresse anmelden.
+
+Mit freundlichen Grüssen
+Ihr Helvenda-Team
+  `.trim()
+
+  return { subject, html, text }
+}

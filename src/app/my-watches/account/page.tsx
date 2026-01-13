@@ -1,5 +1,6 @@
 'use client'
 
+import { EmailChangeSection } from '@/components/account/EmailChangeSection'
 import { PayoutSection } from '@/components/account/PayoutSection'
 import { StripePayoutSection } from '@/components/account/StripePayoutSection'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -279,31 +280,8 @@ export default function AccountPage() {
               )}
             </div>
 
-            {/* Email - Non-editable */}
-            <div className="mb-6">
-              <label
-                htmlFor="email"
-                className="mb-2 flex items-center text-sm font-medium text-gray-700"
-              >
-                <Mail className="mr-2 h-4 w-4" />
-                E-Mail (nicht änderbar)
-              </label>
-              <input
-                type="email"
-                id="email"
-                value={session.user?.email || ''}
-                disabled
-                className="w-full cursor-not-allowed rounded-md border border-gray-300 bg-gray-100 px-3 py-2 text-gray-600"
-                aria-label="E-Mail-Adresse (nicht änderbar)"
-              />
-              <p className="mt-1 text-xs text-gray-500">
-                Kontaktieren Sie den{' '}
-                <Link href="/hilfe" className="text-primary-600 underline hover:text-primary-700">
-                  Support
-                </Link>
-                , falls Sie die E-Mail ändern möchten.
-              </p>
-            </div>
+            {/* Email Change Section */}
+            <EmailChangeSection currentEmail={session.user?.email || ''} />
 
             {/* Phone */}
             <div className="mb-6">
