@@ -5,8 +5,11 @@ import { ProductCard } from '@/components/ui/ProductCard'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
-import { Loader2 } from 'lucide-react'
+import { ChevronDown, Loader2 } from 'lucide-react'
 import { preloadProductImages } from '@/lib/image-preloader'
+
+// Anzahl Produkte pro "Mehr laden"
+const PRODUCTS_PER_PAGE = 12
 
 interface FeaturedProductsServerProps {
   initialProducts: ProductItem[]
@@ -23,6 +26,11 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   // KRITISCH: Setze State SYNCHRON beim Initialisieren, keine Verzögerung!
   const [products, setProducts] = useState<ProductItem[]>(initialProducts)
   const [loading, setLoading] = useState(false) // Kein Loading mehr - alles sofort verfügbar!
+  
+  // "Mehr laden" State
+  const [loadingMore, setLoadingMore] = useState(false)
+  const [hasMore, setHasMore] = useState(true) // Gibt es noch mehr Produkte?
+  const [currentPage, setCurrentPage] = useState(2) // Seite 1 wurde bereits initial geladen
   // KRITISCH: KEIN imagesLoaded State mehr - verwende direkt product.images!
   // Dies eliminiert Verzögerung und stellt sicher, dass Bilder sofort angezeigt werden
 
@@ -293,6 +301,73 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
     }
   }, [session?.user])
 
+  // "Mehr laden" Funktion
+  const loadMoreProducts = async () => {
+    if (loadingMore || !hasMore) return
+
+    setLoadingMore(true)
+
+    try {
+      const response = await fetch(
+        `/api/articles/fast?limit=${PRODUCTS_PER_PAGE}&page=${currentPage}`
+      )
+
+      if (response.ok) {
+        const data = await response.json()
+        const newWatches = data.watches || []
+
+        if (newWatches.length === 0) {
+          setHasMore(false)
+        } else {
+          // Transformiere API-Format zu ProductItem-Format
+          const transformedProducts: ProductItem[] = newWatches.map((w: any) => {
+            const productId = w.articleNumber ? w.articleNumber.toString() : w.id
+            return {
+              id: w.id,
+              title: w.title || '',
+              brand: w.brand || '',
+              model: w.model || '',
+              price: w.price || 0,
+              buyNowPrice: w.buyNowPrice,
+              isAuction: w.isAuction || false,
+              auctionEnd: w.auctionEnd || null,
+              images: Array.isArray(w.images) ? w.images : [],
+              condition: w.condition || '',
+              createdAt: w.createdAt || new Date().toISOString(),
+              boosters: w.boosters || [],
+              city: w.city || null,
+              postalCode: w.postalCode || null,
+              articleNumber: w.articleNumber || null,
+              paymentProtectionEnabled: w.paymentProtectionEnabled || false,
+              href: `/products/${productId}`,
+            }
+          })
+
+          // Filtere Duplikate basierend auf ID
+          const existingIds = new Set(products.map(p => p.id))
+          const uniqueNewProducts = transformedProducts.filter(p => !existingIds.has(p.id))
+
+          if (uniqueNewProducts.length === 0) {
+            setHasMore(false)
+          } else {
+            setProducts(prev => [...prev, ...uniqueNewProducts])
+            setCurrentPage(prev => prev + 1)
+            preloadProductImages(uniqueNewProducts)
+
+            // Wenn weniger als erwartet zurückkommen, gibt es keine mehr
+            if (newWatches.length < PRODUCTS_PER_PAGE) {
+              setHasMore(false)
+            }
+          }
+        }
+      }
+    } catch (error) {
+      console.error('Error loading more products:', error)
+    } finally {
+      setLoadingMore(false)
+    }
+  }
+
   if (loading) {
     return (
       <section className="bg-[#FAFAFA] py-8 md:py-10 lg:py-6">
@@ -341,7 +416,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
             <div
               key={product.id}
               className="flex h-full min-w-0 animate-in fade-in slide-in-from-bottom-2 duration-200"
-              style={{ animationDelay: `${index * 30}ms` }}
+              style={{ animationDelay: `${Math.min(index, 11) * 30}ms` }}
             >
               <ProductCard
                 product={{
@@ -379,6 +454,38 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
             </div>
           ))}
         </div>
+
+        {/* "Mehr laden" Button - wie Ricardo */}
+        {hasMore && (
+          <div className="mt-8 flex justify-center">
+            <button
+              onClick={loadMoreProducts}
+              disabled={loadingMore}
+              className="group flex items-center gap-2 rounded-full border-2 border-primary-600 bg-white px-8 py-3 font-semibold text-primary-600 transition-all hover:bg-primary-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loadingMore ? (
+                <>
+                  <Loader2 className="h-5 w-5 animate-spin" />
+                  <span>Wird geladen...</span>
+                </>
+              ) : (
+                <>
+                  <span>Mehr Artikel laden</span>
+                  <ChevronDown className="h-5 w-5 transition-transform group-hover:translate-y-0.5" />
+                </>
+              )}
+            </button>
+          </div>
+        )}
+
+        {/* Alle Artikel anzeigen Link */}
+        {!hasMore && products.length > 0 && (
+          <div className="mt-6 text-center">
+            <p className="text-sm text-gray-500">
+              Sie haben alle {products.length} Artikel gesehen
+            </p>
+          </div>
+        )}
       </div>
     </section>
   )

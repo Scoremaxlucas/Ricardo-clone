@@ -52,7 +52,8 @@ export const metadata: Metadata = {
 
 export default async function Home() {
   // Server-side fetch für instant rendering
-  const featuredProducts = await getFeaturedProducts(4)
+  // OPTIMIERT: Mehr Produkte initial laden (12 statt 4) für vollere Homepage
+  const featuredProducts = await getFeaturedProducts(12)
 
   return (
     <div className="flex min-h-screen flex-col bg-[#FAFAFA]">
