@@ -114,28 +114,8 @@ export async function POST(
       },
     })
 
-    // Admin-Log erstellen (optional, falls AdminLog-Model existiert)
-    try {
-      // @ts-ignore - AdminLog might not exist
-      if (prisma.adminLog) {
-        await prisma.adminLog.create({
-          data: {
-            adminId: session.user.id,
-            action: 'CHANGE_USER_EMAIL',
-            targetUserId: userId,
-            details: JSON.stringify({
-              oldEmail,
-              newEmail: normalizedEmail,
-              reason: reason || 'Keine Begründung angegeben',
-            }),
-          },
-        })
-      }
-    } catch {
-      // AdminLog existiert nicht, ignorieren
-    }
-
-    console.log(`[admin-change-email] Admin ${session.user.id} hat E-Mail von Benutzer ${userId} geändert: ${oldEmail} -> ${normalizedEmail}`)
+    // Protokollierung in Konsole
+    console.log(`[admin-change-email] Admin ${session.user.id} hat E-Mail von Benutzer ${userId} geändert: ${oldEmail} -> ${normalizedEmail}${reason ? ` (Grund: ${reason})` : ''}`)
 
     return NextResponse.json({
       message: 'E-Mail-Adresse erfolgreich geändert',
