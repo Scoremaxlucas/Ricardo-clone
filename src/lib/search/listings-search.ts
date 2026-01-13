@@ -180,24 +180,32 @@ export async function searchListings(options: SearchOptions): Promise<SearchResp
   const { ftsQuery, plainQuery, tokens, didYouMean, suggestions } = expandQuery(query.trim())
   const normalizedQuery = normalizeQuery(query.trim())
 
-  // Build the raw SQL query for FTS + Trigram
-  const searchResults = await executeSearchQuery({
-    ftsQuery,
-    plainQuery,
-    normalizedQuery,
-    tokens,
-    filters,
-    sort,
-    limit,
-    offset,
-    now,
-  })
+  try {
+    // Try FTS + Trigram search first (fast and accurate)
+    const searchResults = await executeSearchQuery({
+      ftsQuery,
+      plainQuery,
+      normalizedQuery,
+      tokens,
+      filters,
+      sort,
+      limit,
+      offset,
+      now,
+    })
 
-  // Add "did you mean" to results
-  return {
-    ...searchResults,
-    didYouMean,
-    suggestions,
+    // Add "did you mean" to results
+    return {
+      ...searchResults,
+      didYouMean,
+      suggestions,
+    }
+  } catch (error: any) {
+    // Log the error for debugging
+    console.error('[SEARCH] FTS search failed, using fallback:', error?.message)
+    
+    // Fallback to simple ILIKE search if FTS/Trigram extensions are not available
+    return searchWithSimpleLike(query.trim(), filters, sort, limit, offset, now)
   }
 }
 
@@ -774,6 +782,7 @@ async function executeSearchQuery(params: {
 
     const seller = sellerMap.get(r.sellerId)
     const sellerAddress = addressMap.get(r.sellerId)
+    const addr = sellerAddress as { city?: string | null; postalCode?: string | null } | null
     const watchBids = bidMap.get(r.id) || []
 
     // Calculate current price (highest bid or base price)
@@ -799,8 +808,8 @@ async function executeSearchQuery(params: {
       sellerId: r.sellerId,
       seller: seller
         ? {
-            city: sellerAddress?.city || null,
-            postalCode: sellerAddress?.postalCode || null,
+            city: addr?.city || null,
+            postalCode: addr?.postalCode || null,
             verified: seller.verified,
           }
         : null,
@@ -976,6 +985,7 @@ async function searchWithoutQuery(
     const highestBid = w.bids[0]
     const currentPrice = highestBid ? highestBid.amount : w.price
     const sellerAddress = w.seller?.id ? addressMap.get(w.seller.id) : null
+    const addr = sellerAddress as { city?: string | null; postalCode?: string | null } | null
 
     return {
       id: w.id,
@@ -996,14 +1006,214 @@ async function searchWithoutQuery(
       sellerId: w.sellerId,
       seller: w.seller
         ? {
-            city: sellerAddress?.city || null,
-            postalCode: sellerAddress?.postalCode || null,
+            city: addr?.city || null,
+            postalCode: addr?.postalCode || null,
             verified: w.seller.verified,
           }
         : null,
       bids: w.bids.map(b => ({ id: b.id, amount: b.amount })),
       categorySlugs: w.categories.map(c => c.category.slug),
       // Enhanced fields
+      paymentProtectionEnabled: w.paymentProtectionEnabled,
+      shippingMethod: w.shippingMethod,
+      shippingMethods,
+      shippingMinCost,
+      sellerVerified: w.seller?.verified || false,
+    }
+  })
+
+  return { results, total, limit, offset }
+}
+
+/**
+ * Fallback search using simple ILIKE (works without pg_trgm/unaccent extensions)
+ * Used when FTS search fails due to missing PostgreSQL extensions
+ */
+async function searchWithSimpleLike(
+  query: string,
+  filters: SearchFilters,
+  sort: SearchSort,
+  limit: number,
+  offset: number,
+  now: Date
+): Promise<SearchResponse> {
+  // Split query into tokens for OR matching
+  const tokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 1)
+  
+  // Build Prisma where clause
+  const where: Prisma.WatchWhereInput = {
+    AND: [
+      // Visibility: not rejected, blocked, removed, or ended
+      {
+        OR: [
+          { moderationStatus: null },
+          { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+        ],
+      },
+      // Not sold
+      {
+        OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
+      },
+      // Exclude ended auctions
+      {
+        OR: [{ auctionEnd: null }, { auctionEnd: { gt: now } }],
+      },
+      // Search condition: match any token in title, brand, model, or description
+      {
+        OR: tokens.flatMap(token => [
+          { title: { contains: token, mode: 'insensitive' as const } },
+          { brand: { contains: token, mode: 'insensitive' as const } },
+          { model: { contains: token, mode: 'insensitive' as const } },
+          { description: { contains: token, mode: 'insensitive' as const } },
+        ]),
+      },
+    ],
+  }
+
+  // Add filters
+  if (filters.category) {
+    ;(where.AND as any[]).push({
+      categories: {
+        some: {
+          category: {
+            OR: [
+              { slug: filters.category.toLowerCase() },
+              { name: { contains: filters.category, mode: 'insensitive' } },
+            ],
+          },
+        },
+      },
+    })
+  }
+
+  if (filters.minPrice !== undefined) {
+    ;(where.AND as any[]).push({ price: { gte: filters.minPrice } })
+  }
+  if (filters.maxPrice !== undefined) {
+    ;(where.AND as any[]).push({ price: { lte: filters.maxPrice } })
+  }
+
+  if (filters.condition) {
+    ;(where.AND as any[]).push({ condition: filters.condition })
+  }
+
+  if (filters.brands && filters.brands.length > 0) {
+    ;(where.AND as any[]).push({
+      OR: filters.brands.map(b => ({ brand: { equals: b, mode: 'insensitive' } })),
+    })
+  } else if (filters.brand) {
+    ;(where.AND as any[]).push({ brand: { equals: filters.brand, mode: 'insensitive' } })
+  }
+
+  if (filters.isAuction === true) {
+    ;(where.AND as any[]).push({ isAuction: true, auctionEnd: { gt: now } })
+  } else if (filters.isAuction === false) {
+    ;(where.AND as any[]).push({ isAuction: false })
+  }
+
+  // Build orderBy
+  let orderBy: Prisma.WatchOrderByWithRelationInput | Prisma.WatchOrderByWithRelationInput[]
+
+  switch (sort.field) {
+    case 'price':
+      orderBy = [{ price: sort.direction }, { createdAt: 'desc' }]
+      break
+    case 'createdAt':
+      orderBy = { createdAt: sort.direction }
+      break
+    case 'auctionEnd':
+      orderBy = [{ auctionEnd: 'asc' }, { createdAt: 'desc' }]
+      break
+    default:
+      // For relevance, prioritize boosted items and then newest
+      orderBy = { createdAt: 'desc' }
+  }
+
+  // Execute query
+  const [watches, total] = await Promise.all([
+    prisma.watch.findMany({
+      where,
+      orderBy,
+      take: limit,
+      skip: offset,
+      include: {
+        seller: { select: { id: true, verified: true } },
+        categories: { include: { category: { select: { slug: true, name: true } } } },
+        bids: { select: { id: true, amount: true }, orderBy: { amount: 'desc' } },
+      },
+    }),
+    prisma.watch.count({ where }),
+  ])
+
+  // Fetch seller addresses
+  const sellerIds = Array.from(new Set(watches.map(w => w.seller?.id).filter(Boolean))) as string[]
+  const sellerAddresses = await Promise.all(
+    sellerIds.map(async id => ({
+      id,
+      address: await getMainAddress(id),
+    }))
+  )
+  const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
+
+  // Transform results (same as searchWithoutQuery)
+  const results: SearchResult[] = watches.map(w => {
+    let images: string[] = []
+    let boosters: string[] = []
+    let shippingMethods: string[] = []
+
+    try {
+      if (w.images) images = JSON.parse(w.images)
+    } catch {
+      images = []
+    }
+
+    try {
+      if (w.boosters) boosters = JSON.parse(w.boosters)
+    } catch {
+      boosters = []
+    }
+
+    try {
+      if (w.shippingMethod) {
+        const parsed = JSON.parse(w.shippingMethod)
+        shippingMethods = Array.isArray(parsed) ? parsed : []
+      }
+    } catch {
+      shippingMethods = []
+    }
+
+    const shippingMinCost = calculateMinShippingCost(shippingMethods)
+    const highestBid = w.bids[0]
+    const currentPrice = highestBid ? highestBid.amount : w.price
+    const sellerAddress = w.seller?.id ? addressMap.get(w.seller.id) : null
+    const addr = sellerAddress as { city?: string | null; postalCode?: string | null } | null
+
+    return {
+      id: w.id,
+      title: w.title,
+      description: w.description,
+      brand: w.brand,
+      model: w.model,
+      price: currentPrice,
+      buyNowPrice: w.buyNowPrice,
+      condition: w.condition,
+      year: w.year,
+      images,
+      boosters,
+      isAuction: w.isAuction,
+      auctionEnd: w.auctionEnd,
+      auctionStart: w.auctionStart,
+      createdAt: w.createdAt,
+      sellerId: w.sellerId,
+      seller: w.seller
+        ? {
+            city: addr?.city || null,
+            postalCode: addr?.postalCode || null,
+            verified: w.seller.verified,
+          }
+        : null,
+      bids: w.bids.map(b => ({ id: b.id, amount: b.amount })),
+      categorySlugs: w.categories.map(c => c.category.slug),
       paymentProtectionEnabled: w.paymentProtectionEnabled,
       shippingMethod: w.shippingMethod,
       shippingMethods,
