@@ -258,11 +258,14 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               {session && (
                 <Link
                   href="/favorites"
-                  className="relative flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
-                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  className="relative flex items-center gap-1.5 rounded-md px-2 py-1.5 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                  style={{ minHeight: '44px' }}
                   title={t.header.favorites}
                 >
-                  <Heart className="h-5 w-5" />
+                  <Heart className="h-5 w-5 flex-shrink-0" />
+                  <span className="text-sm font-medium md:hidden">
+                    {t.header.favorites}
+                  </span>
                   {deferredData.favoritesCount > 0 && (
                     <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
                       {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
