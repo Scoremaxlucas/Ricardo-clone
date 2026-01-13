@@ -154,9 +154,19 @@ export function getEditPolicy(state: ListingState): EditPolicy {
         'description',
         'images',
         'price',
+        'buyNowPrice',
         'shippingMethods',
         'shippingMethod', // Alternative field name
         'boosters',
+        // Detail fields (always allowed like Ricardo)
+        'brand',
+        'model',
+        'referenceNumber',
+        'year',
+        'condition',
+        'material',
+        'movement',
+        'caseDiameter',
         // Category and sale type are locked (post-publish locks)
       ],
       lockedSteps: [0], // Category step locked
@@ -197,9 +207,19 @@ export function getEditPolicy(state: ListingState): EditPolicy {
         'auctionStart', // Auction start editable before bids
         'auctionEnd', // Auction end editable before bids
         'auctionDuration', // Duration editable before bids
+        'auctionDays', // Alternative field name
         'shippingMethods',
         'shippingMethod', // Alternative field name
         'boosters',
+        // Detail fields (always allowed like Ricardo)
+        'brand',
+        'model',
+        'referenceNumber',
+        'year',
+        'condition',
+        'material',
+        'movement',
+        'caseDiameter',
         // Category and sale type are locked (post-publish locks)
       ],
       lockedSteps: [0], // Only category step locked (post-publish lock)

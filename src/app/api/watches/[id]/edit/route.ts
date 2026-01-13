@@ -130,11 +130,25 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const data = await request.json()
 
     // Enforce policy: Check attempted changes against allowedFields
-    // For LIMITED_APPEND_ONLY, only allow descriptionAddendum and newImages
-    // For other modes, check against allowedFields
-    const attemptedChanges = Object.keys(data).filter(
-      key => data[key] !== undefined && data[key] !== null && key !== 'booster'
-    )
+    // WICHTIG: Nur Felder prüfen die sich TATSÄCHLICH geändert haben
+    // Ignoriere Felder die gleich geblieben sind (ermöglicht "Speichern ohne Änderung")
+    const attemptedChanges = Object.keys(data).filter(key => {
+      if (data[key] === undefined || data[key] === null) return false
+      if (key === 'booster') return false // Booster wird separat behandelt
+      
+      // Felder die keine echten Datenfelder sind
+      if (['category', 'subcategory'].includes(key)) {
+        // Diese werden nur geprüft wenn sie sich vom aktuellen Wert unterscheiden
+        // Kategorie: Prüfe gegen existierende Kategorie
+        if (key === 'category') {
+          const currentCategory = watch.categories?.[0]?.slug || ''
+          return data[key] !== currentCategory
+        }
+        return false
+      }
+      
+      return true
+    })
 
     const blockedFields: string[] = []
     for (const field of attemptedChanges) {
@@ -149,7 +163,13 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
         // Map 'descriptionAddendum' -> 'descriptionAddendum', 'newImages' -> 'newImages'
         fieldToCheck = field
       } else {
-        // For other modes, use field name as-is
+        // For PUBLISHED_LIMITED: Prüfe ob Feld erlaubt ist
+        // Aber erlaube immer grundlegende Felder die Ricardo auch erlaubt
+        const alwaysAllowedFields = ['brand', 'model', 'referenceNumber', 'year', 'condition', 
+          'material', 'movement', 'caseDiameter', 'auctionDays', 'auctionEnd']
+        if (alwaysAllowedFields.includes(field)) {
+          continue // Diese Felder sind immer erlaubt
+        }
         fieldToCheck = field
       }
 
@@ -158,7 +178,9 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       }
     }
 
+    // Nur blockieren wenn tatsächlich gesperrte Felder geändert werden
     if (blockedFields.length > 0) {
+      console.log('[Watch Edit] Blocked fields:', blockedFields, 'Policy:', policy.level)
       return NextResponse.json(
         {
           message: policy.reason || 'Diese Felder können nicht mehr geändert werden.',

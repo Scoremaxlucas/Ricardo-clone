@@ -391,6 +391,7 @@ export default function EditWatchPage() {
 
     try {
       // Prepare payload based on policy level
+      // WICHTIG: Nur erlaubte Felder senden (Ricardo-Regel)
       let payload: any = {}
 
       if (policy.level === 'LIMITED_APPEND_ONLY') {
@@ -401,12 +402,51 @@ export default function EditWatchPage() {
           booster: selectedBooster !== 'none' ? selectedBooster : undefined,
         }
       } else {
-        // Normal edit mode
-        payload = {
-          ...formData,
-          booster: selectedBooster !== 'none' ? selectedBooster : undefined,
-          category: selectedCategory,
-          subcategory: selectedSubcategory,
+        // Normal edit mode - nur erlaubte Felder senden
+        // NICHT category/subcategory senden wenn gesperrt (vermeidet API-Fehler)
+        const allowedFields = policy.allowedFields
+
+        // Basisdaten (immer erlaubt wenn nicht READ_ONLY)
+        if (allowedFields.includes('*') || allowedFields.includes('title')) {
+          payload.title = formData.title
+        }
+        if (allowedFields.includes('*') || allowedFields.includes('description')) {
+          payload.description = formData.description
+        }
+        if (allowedFields.includes('*') || allowedFields.includes('images')) {
+          payload.images = formData.images
+        }
+        if (allowedFields.includes('*') || allowedFields.includes('price')) {
+          payload.price = formData.price
+        }
+        if (allowedFields.includes('*') || allowedFields.includes('buyNowPrice')) {
+          payload.buyNowPrice = formData.buyNowPrice
+        }
+        if (allowedFields.includes('*') || allowedFields.includes('shippingMethod') || allowedFields.includes('shippingMethods')) {
+          payload.shippingMethods = formData.shippingMethods
+        }
+
+        // Zusätzliche Details
+        payload.brand = formData.brand
+        payload.model = formData.model
+        payload.referenceNumber = formData.referenceNumber
+        payload.year = formData.year
+        payload.condition = formData.condition
+        payload.material = formData.material
+        payload.movement = formData.movement
+        payload.caseDiameter = formData.caseDiameter
+        payload.auctionDays = formData.auctionDays
+        payload.auctionEnd = formData.auctionEnd
+
+        // Booster (immer erlaubt)
+        if (selectedBooster !== 'none') {
+          payload.booster = selectedBooster
+        }
+
+        // Kategorie nur wenn NICHT gesperrt
+        if (!policy.uiLocks.category) {
+          payload.category = selectedCategory
+          payload.subcategory = selectedSubcategory
         }
       }
 
