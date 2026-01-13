@@ -60,7 +60,7 @@ export async function POST() {
         bids: {
           where: {
             watch: {
-              status: 'active',
+              moderationStatus: 'approved',
               isAuction: true,
               auctionEnd: { gt: new Date() },
             },
