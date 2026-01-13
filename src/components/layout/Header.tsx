@@ -762,45 +762,45 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             <div className="flex-1 overflow-y-auto py-2">
               {session ? (
                 <>
-                  {/* Logged in user menu - Ricardo style order */}
+                  {/* Logged in user menu - Ricardo style order with smooth transitions */}
                   <Link
                     href="/my-watches/buying"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                    className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
                   >
-                    <ShoppingBag className="h-5 w-5 text-gray-500" />
+                    <ShoppingBag className="h-5 w-5 text-gray-400" />
                     <span className="text-[15px]">{t.header.myBuying}</span>
                   </Link>
                   <Link
                     href="/my-watches"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                    className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
                   >
-                    <Package className="h-5 w-5 text-gray-500" />
+                    <Package className="h-5 w-5 text-gray-400" />
                     <span className="text-[15px]">{t.header.mySelling}</span>
                   </Link>
                   <Link
                     href="/my-watches/selling/fees"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                    className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
                   >
-                    <Wallet className="h-5 w-5 text-gray-500" />
+                    <Wallet className="h-5 w-5 text-gray-400" />
                     <span className="text-[15px]">{t.header.feesAndInvoices}</span>
                   </Link>
                   <Link
                     href="/my-watches/account"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                    className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
                   >
-                    <Settings className="h-5 w-5 text-gray-500" />
+                    <Settings className="h-5 w-5 text-gray-400" />
                     <span className="text-[15px]">{t.header.settings}</span>
                   </Link>
                   <Link
                     href="/profile"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                    className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
                   >
-                    <User className="h-5 w-5 text-gray-500" />
+                    <User className="h-5 w-5 text-gray-400" />
                     <span className="text-[15px]">{t.header.myProfile}</span>
                   </Link>
 
@@ -809,36 +809,36 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                     <Link
                       href="/admin/dashboard"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                      className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-all duration-200 hover:bg-gray-50"
                     >
                       <Shield className="h-5 w-5 text-gray-500" />
                       <span className="text-[15px]">{t.header.adminDashboard}</span>
                     </Link>
                   )}
 
-                  {/* CTA Button - Ricardo style */}
-                  <div className="mx-4 mt-4">
+                  {/* CTA Button - Ricardo style with + icon */}
+                  <div className="px-4 py-4">
                     <Link
                       href="/sell"
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-primary-700"
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-5 py-3.5 text-sm font-semibold uppercase tracking-wide text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow-md active:scale-[0.98]"
                     >
-                      <Plus className="h-5 w-5" />
-                      <span>ANGEBOT ERSTELLEN</span>
+                      <Plus className="h-4 w-4 stroke-[2.5]" />
+                      <span>Angebot erstellen</span>
                     </Link>
                   </div>
 
-                  {/* Logout at bottom */}
-                  <div className="mt-4 border-t border-gray-100 pt-2">
+                  {/* Logout - red accent */}
+                  <div className="border-t border-gray-100">
                     <button
                       onClick={async () => {
                         setIsMobileMenuOpen(false)
                         await signOut({ callbackUrl: '/' })
                       }}
-                      className="flex w-full items-center gap-3 px-5 py-3 text-gray-500 transition-colors hover:bg-gray-50"
+                      className="flex w-full items-center gap-3 px-5 py-3 text-red-600 transition-all duration-200 hover:bg-red-50"
                     >
                       <LogOut className="h-5 w-5" />
-                      <span className="text-[15px]">{t.header.logout}</span>
+                      <span className="text-[15px] font-medium">{t.header.logout}</span>
                     </button>
                   </div>
                 </>

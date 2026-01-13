@@ -72,6 +72,33 @@ body {
   flex-direction: column;
 }
 
+/* ===== GLOBAL SMOOTH TRANSITIONS (Ricardo-Style) ===== */
+/* Smoother feel across the entire website */
+
+/* Links and buttons get smooth hover transitions */
+a,
+button {
+  transition: all 0.2s ease-out;
+}
+
+/* Cards and interactive elements */
+.transition-smooth {
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Scale effect for clickable items */
+button:active:not(:disabled),
+a:active {
+  transform: scale(0.98);
+}
+
+/* Smooth focus transitions */
+*:focus-visible {
+  outline: 2px solid var(--color-primary);
+  outline-offset: 2px;
+  transition: outline-offset 0.2s ease;
+}
+
 html {
   /* Footer-Farbe für den Bereich unter dem Viewport - verhindert weißen Rand */
   background-color: #134e4a;
