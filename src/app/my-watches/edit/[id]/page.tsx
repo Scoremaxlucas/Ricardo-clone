@@ -138,6 +138,13 @@ export default function EditWatchPage() {
           return
         }
 
+        // Set initial step to first non-locked step (skip locked steps like category)
+        const lockedSteps = policyData.policy.lockedSteps || []
+        const firstEditableStep = WIZARD_STEPS.findIndex((_, index) => !lockedSteps.includes(index))
+        if (firstEditableStep > 0) {
+          setCurrentStep(firstEditableStep)
+        }
+
         // Parse images
         const images = Array.isArray(watch.images)
           ? watch.images
@@ -508,12 +515,13 @@ export default function EditWatchPage() {
           </p>
         </div>
 
-        {/* Progress indicator */}
+        {/* Progress indicator - hide locked steps in edit mode */}
         <StepProgress
           steps={WIZARD_STEPS}
           currentStep={currentStep}
           completedSteps={getCompletedSteps()}
           lockedSteps={policy.lockedSteps}
+          hideLockedSteps={true}
           onStepClick={step => goToStep(step, false)}
         />
 

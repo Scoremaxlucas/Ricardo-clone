@@ -15,6 +15,7 @@ interface StepProgressProps {
   completedSteps: number[]
   onStepClick?: (stepIndex: number) => void
   lockedSteps?: number[] // Step indices that are locked/readonly
+  hideLockedSteps?: boolean // If true, locked steps are hidden instead of shown with lock icon
 }
 
 export function StepProgress({
@@ -23,16 +24,44 @@ export function StepProgress({
   completedSteps,
   onStepClick,
   lockedSteps = [],
+  hideLockedSteps = false,
 }: StepProgressProps) {
+  // Filter out locked steps if hideLockedSteps is true
+  const visibleSteps = hideLockedSteps
+    ? steps.filter((_, index) => !lockedSteps.includes(index))
+    : steps
+
+  // Map currentStep to visible step index
+  const visibleCurrentStep = hideLockedSteps
+    ? visibleSteps.findIndex(
+        (_, visibleIndex) =>
+          steps.findIndex(
+            (s, originalIndex) =>
+              !lockedSteps.includes(originalIndex) &&
+              steps.filter((_, i) => i < originalIndex && !lockedSteps.includes(i)).length ===
+                visibleIndex
+          ) === currentStep ||
+          steps.indexOf(visibleSteps[visibleIndex]) === currentStep
+      )
+    : currentStep
+
+  // Simplified: just count non-locked steps before currentStep
+  const adjustedCurrentStep = hideLockedSteps
+    ? steps.slice(0, currentStep + 1).filter((_, i) => !lockedSteps.includes(i)).length - 1
+    : currentStep
+
+  const displaySteps = visibleSteps
+  const displayCurrentStep = Math.max(0, adjustedCurrentStep)
+
   return (
     <div className="mb-8 w-full min-w-0">
       {/* Mobile: Compact progress */}
       <div className="flex min-w-0 items-center justify-between gap-2 sm:hidden">
         <span className="flex-shrink-0 text-sm font-medium text-gray-700">
-          Schritt {currentStep + 1} von {steps.length}
+          Schritt {displayCurrentStep + 1} von {displaySteps.length}
         </span>
         <span className="min-w-0 truncate text-sm font-semibold text-primary-600">
-          {steps[currentStep]?.title}
+          {displaySteps[displayCurrentStep]?.title}
         </span>
       </div>
 
@@ -40,28 +69,35 @@ export function StepProgress({
       <div className="mt-2 h-2 w-full overflow-hidden rounded-full bg-gray-200 sm:hidden">
         <div
           className="h-full rounded-full bg-gradient-to-r from-primary-500 to-primary-600 transition-all duration-500"
-          style={{ width: `${((currentStep + 1) / steps.length) * 100}%` }}
+          style={{ width: `${((displayCurrentStep + 1) / displaySteps.length) * 100}%` }}
         />
       </div>
 
       {/* Desktop: Full step indicator */}
       <div className="hidden sm:block">
         <div className="flex items-center justify-between">
-          {steps.map((step, index) => {
+          {displaySteps.map((step, visibleIndex) => {
+            // Find original index for this step
+            const originalIndex = steps.indexOf(step)
+
             // Step is completed only if:
             // 1. It's in completedSteps array AND
-            // 2. We've moved past this step (index < currentStep)
-            const isCompleted = completedSteps.includes(index) && index < currentStep
-            const isCurrent = index === currentStep
-            const isLocked = lockedSteps.includes(index)
+            // 2. We've moved past this step (originalIndex < currentStep)
+            const isCompleted = completedSteps.includes(originalIndex) && originalIndex < currentStep
+            const isCurrent = originalIndex === currentStep
+            const isLocked = lockedSteps.includes(originalIndex)
             const isClickable =
-              !isLocked && (index < currentStep || (isCompleted && index <= currentStep))
+              !isLocked &&
+              (originalIndex < currentStep || (isCompleted && originalIndex <= currentStep))
+
+            // Don't render locked steps if hideLockedSteps is true
+            if (hideLockedSteps && isLocked) return null
 
             return (
               <div key={step.id} className="flex flex-1 items-center">
                 {/* Step circle */}
                 <button
-                  onClick={() => isClickable && onStepClick?.(index)}
+                  onClick={() => isClickable && onStepClick?.(originalIndex)}
                   disabled={!isClickable}
                   title={isLocked ? 'Dieser Schritt ist gesperrt' : undefined}
                   className={`relative flex h-10 w-10 items-center justify-center rounded-full border-2 font-semibold transition-all duration-300 ${
@@ -79,7 +115,7 @@ export function StepProgress({
                   ) : isCompleted ? (
                     <Check className="h-5 w-5" />
                   ) : (
-                    <span>{index + 1}</span>
+                    <span>{visibleIndex + 1}</span>
                   )}
                 </button>
 
@@ -93,7 +129,7 @@ export function StepProgress({
                 </div>
 
                 {/* Connector line */}
-                {index < steps.length - 1 && (
+                {visibleIndex < displaySteps.length - 1 && (
                   <div className="mx-2 h-0.5 flex-1 bg-gray-200 lg:mx-4">
                     <div
                       className={`h-full bg-primary-500 transition-all duration-500 ${
@@ -162,12 +198,10 @@ export function WizardFooter({
 
   return (
     <div
-      className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-3 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-8 sm:px-8 sm:py-4"
+      className="sticky bottom-0 z-20 -mx-4 mt-8 border-t bg-white px-3 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.1)] sm:-mx-6 sm:px-6 sm:py-4 md:-mx-8 md:px-8"
       style={{
         paddingBottom: 'max(1rem, calc(env(safe-area-inset-bottom) + 0.5rem))',
-        width: '100%',
-        maxWidth: '100%',
-        overflowX: 'hidden',
+        boxSizing: 'border-box',
       }}
     >
       <div className="mx-auto flex min-w-0 max-w-4xl items-center justify-between gap-2 sm:gap-3">
