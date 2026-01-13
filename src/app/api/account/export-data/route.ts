@@ -193,9 +193,12 @@ export async function GET() {
       prisma.searchSubscription.findMany({
         where: { userId },
         select: {
-          name: true,
-          query: true,
-          filters: true,
+          searchTerm: true,
+          brand: true,
+          model: true,
+          minPrice: true,
+          maxPrice: true,
+          condition: true,
           isActive: true,
           createdAt: true,
         },
@@ -244,7 +247,7 @@ export async function GET() {
       prisma.priceOffer.findMany({
         where: { buyerId: userId },
         select: {
-          price: true,
+          amount: true,
           status: true,
           message: true,
           createdAt: true,
@@ -338,9 +341,12 @@ export async function GET() {
       })),
 
       searchSubscriptions: searchSubscriptions.map((s) => ({
-        name: s.name,
-        query: s.query,
-        filters: s.filters,
+        searchTerm: s.searchTerm,
+        brand: s.brand,
+        model: s.model,
+        minPrice: s.minPrice,
+        maxPrice: s.maxPrice,
+        condition: s.condition,
         isActive: s.isActive,
         createdAt: s.createdAt,
       })),
@@ -361,7 +367,7 @@ export async function GET() {
       })),
 
       priceOffers: priceOffers.map((o) => ({
-        price: o.price,
+        amount: o.amount,
         status: o.status,
         message: o.message,
         item: o.watch?.title,
