@@ -1,5 +1,6 @@
 'use client'
 
+import { ChangeUserEmailModal } from '@/components/admin/ChangeUserEmailModal'
 import { UserActivityModal } from '@/components/admin/UserActivityModal'
 import { UserNotesModal } from '@/components/admin/UserNotesModal'
 import { UserReportsModal } from '@/components/admin/UserReportsModal'
@@ -14,6 +15,7 @@ import {
   FileText,
   Flag,
   History,
+  Mail,
   MailCheck,
   Search,
   Shield,
@@ -62,6 +64,10 @@ export default function AdminUsersPage() {
   const [warnUserId, setWarnUserId] = useState<string | null>(null)
   const [warnUserName, setWarnUserName] = useState<string | null>(null)
   const [selectedUsers, setSelectedUsers] = useState<Set<string>>(new Set())
+  const [showEmailModal, setShowEmailModal] = useState(false)
+  const [emailChangeUserId, setEmailChangeUserId] = useState<string | null>(null)
+  const [emailChangeUserName, setEmailChangeUserName] = useState<string | null>(null)
+  const [emailChangeCurrentEmail, setEmailChangeCurrentEmail] = useState<string>('')
 
   useEffect(() => {
     if (status === 'loading') return
@@ -784,6 +790,23 @@ export default function AdminUsersPage() {
                               <MailCheck className="h-5 w-5" />
                             </button>
                           )}
+                          <button
+                            onClick={() => {
+                              setEmailChangeUserId(user.id)
+                              setEmailChangeUserName(
+                                user.name ||
+                                  `${user.firstName} ${user.lastName}` ||
+                                  user.nickname ||
+                                  user.email
+                              )
+                              setEmailChangeCurrentEmail(user.email)
+                              setShowEmailModal(true)
+                            }}
+                            className="text-blue-600 hover:text-blue-900"
+                            title="E-Mail-Adresse ändern"
+                          >
+                            <Mail className="h-5 w-5" />
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -858,6 +881,25 @@ export default function AdminUsersPage() {
           userId={warnUserId}
           userName={warnUserName}
           onWarned={handleWarned}
+        />
+      )}
+
+      {/* Change Email Modal */}
+      {emailChangeUserId && (
+        <ChangeUserEmailModal
+          isOpen={showEmailModal}
+          onClose={() => {
+            setShowEmailModal(false)
+            setEmailChangeUserId(null)
+            setEmailChangeUserName(null)
+            setEmailChangeCurrentEmail('')
+          }}
+          userId={emailChangeUserId}
+          userName={emailChangeUserName}
+          currentEmail={emailChangeCurrentEmail}
+          onEmailChanged={() => {
+            loadUsers()
+          }}
         />
       )}
     </div>
