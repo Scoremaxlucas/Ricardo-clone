@@ -1,6 +1,6 @@
 /**
  * LoginPromptModal - Helvenda-styled modal for login prompts
- * 
+ *
  * Consistent design matching Helvenda brand:
  * - Clean, modern modal with rounded corners
  * - Primary teal button for login action

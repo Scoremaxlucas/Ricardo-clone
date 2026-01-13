@@ -11,14 +11,14 @@ interface SheetProps {
 }
 
 export function Sheet({ open, onOpenChange, children, side = 'right' }: SheetProps) {
-  const [isVisible, setIsVisible] = useState(false)
+  const [shouldRender, setShouldRender] = useState(false)
   const [isAnimating, setIsAnimating] = useState(false)
 
   useEffect(() => {
     if (open) {
-      setIsVisible(true)
+      setShouldRender(true)
       document.body.style.overflow = 'hidden'
-      // Trigger animation after mount
+      // Double RAF for smooth animation start
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setIsAnimating(true)
@@ -27,9 +27,9 @@ export function Sheet({ open, onOpenChange, children, side = 'right' }: SheetPro
     } else {
       setIsAnimating(false)
       document.body.style.overflow = ''
-      // Wait for animation to complete before unmounting
+      // Wait for exit animation to complete
       const timer = setTimeout(() => {
-        setIsVisible(false)
+        setShouldRender(false)
       }, 300)
       return () => clearTimeout(timer)
     }
@@ -38,29 +38,36 @@ export function Sheet({ open, onOpenChange, children, side = 'right' }: SheetPro
     }
   }, [open])
 
-  if (!isVisible) return null
+  if (!shouldRender) return null
 
   return (
     <>
-      {/* Backdrop - smooth fade like Ricardo */}
+      {/* Backdrop - smooth fade with blur */}
       <div
-        className={`fixed inset-0 z-40 bg-black/25 transition-opacity duration-300 ease-out ${
-          isAnimating ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="fixed inset-0 z-40"
+        style={{
+          backgroundColor: isAnimating ? 'rgba(0, 0, 0, 0.3)' : 'rgba(0, 0, 0, 0)',
+          backdropFilter: isAnimating ? 'blur(2px)' : 'blur(0px)',
+          WebkitBackdropFilter: isAnimating ? 'blur(2px)' : 'blur(0px)',
+          transition: 'background-color 0.3s cubic-bezier(0.4, 0, 0.2, 1), backdrop-filter 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+        }}
         onClick={() => onOpenChange(false)}
       />
-      {/* Sheet - smooth slide animation like Ricardo */}
+      {/* Sheet - smooth slide with spring-like easing */}
       <div
-        className={`fixed top-0 z-50 h-full bg-white shadow-xl transition-transform duration-300 ease-out ${
+        className={`fixed top-0 z-50 h-full bg-white shadow-2xl ${
           side === 'right' ? 'right-0' : 'left-0'
-        } ${
-          isAnimating
-            ? 'translate-x-0'
-            : side === 'right'
-              ? 'translate-x-full'
-              : '-translate-x-full'
         }`}
-        style={{ width: '300px', maxWidth: '85vw' }}
+        style={{
+          width: '300px',
+          maxWidth: '85vw',
+          transform: isAnimating
+            ? 'translateX(0)'
+            : side === 'right'
+              ? 'translateX(100%)'
+              : 'translateX(-100%)',
+          transition: 'transform 0.3s cubic-bezier(0.32, 0.72, 0, 1)',
+        }}
       >
         {children}
       </div>
@@ -82,7 +89,7 @@ export function SheetContent({ children, onClose, className = '' }: SheetContent
         <div className="flex items-center justify-end px-4 py-3">
           <button
             onClick={onClose}
-            className="rounded-full p-2 text-gray-400 transition-colors duration-200 hover:bg-gray-100 hover:text-gray-600"
+            className="rounded-full p-2 text-gray-400 transition-all duration-200 hover:bg-gray-100 hover:text-gray-600 active:scale-90"
             aria-label="Schließen"
           >
             <X className="h-5 w-5" />

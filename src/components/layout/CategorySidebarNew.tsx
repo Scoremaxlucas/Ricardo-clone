@@ -655,8 +655,6 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
     }
   }, [isOpen])
 
-  if (!isOpen && !isAnimating) return null
-
   const handleCategoryEnter = (index: number, event: React.MouseEvent) => {
     // Cancel any pending timeout
     if (flyoutTimeoutRef.current) {
@@ -722,39 +720,56 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
     setFlyoutPosition({ top: 0, visible: false })
   }
 
+  // Track animation state separately from open state
+  const [shouldRender, setShouldRender] = useState(isOpen)
+  const [animationState, setAnimationState] = useState<'entering' | 'entered' | 'exiting' | 'exited'>('exited')
+
+  useEffect(() => {
+    if (isOpen) {
+      setShouldRender(true)
+      // Small delay to ensure DOM is ready before animating
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setAnimationState('entering')
+          setTimeout(() => setAnimationState('entered'), 20)
+        })
+      })
+    } else if (animationState === 'entered' || animationState === 'entering') {
+      setAnimationState('exiting')
+      setTimeout(() => {
+        setAnimationState('exited')
+        setShouldRender(false)
+      }, 300) // Match animation duration
+    }
+  }, [isOpen])
+
   const handleClose = () => {
-    setIsAnimating(false)
-    setTimeout(() => {
-      onClose()
-    }, 300) // Wait for animation to complete
+    onClose()
   }
+
+  if (!shouldRender) return null
+
+  const isVisible = animationState === 'entering' || animationState === 'entered'
 
   return (
     <>
-      {/* Backdrop with smooth fade-in */}
+      {/* Backdrop with smooth fade */}
       <div
         onClick={handleClose}
-        className={`fixed inset-0 bg-black/40 backdrop-blur-sm z-[998] transition-opacity duration-300 ${
-          isOpen ? 'opacity-100' : 'opacity-0'
-        }`}
+        className="fixed inset-0 z-[998] transition-all duration-300 ease-out"
         style={{
-          transition: 'opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          backgroundColor: isVisible ? 'rgba(0, 0, 0, 0.4)' : 'rgba(0, 0, 0, 0)',
+          backdropFilter: isVisible ? 'blur(4px)' : 'blur(0px)',
+          WebkitBackdropFilter: isVisible ? 'blur(4px)' : 'blur(0px)',
         }}
       />
 
-      {/* Sidebar with smooth slide-in animation */}
+      {/* Sidebar with smooth slide animation */}
       <div
         ref={sidebarRef}
-        className={`fixed top-0 left-0 bottom-0 w-[320px] bg-white z-[999] overflow-y-auto shadow-2xl transition-transform duration-300 ease-out ${
-          isOpen ? 'translate-x-0' : '-translate-x-full'
-        }`}
+        className="fixed top-0 left-0 bottom-0 w-[320px] bg-white z-[999] overflow-y-auto shadow-2xl transition-transform duration-300 ease-out"
         style={{
-          transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        }}
-        onTransitionEnd={() => {
-          if (!isOpen) {
-            setIsAnimating(false)
-          }
+          transform: isVisible ? 'translateX(0)' : 'translateX(-100%)',
         }}
       >
         {/* Header */}
