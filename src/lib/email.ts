@@ -4496,3 +4496,287 @@ Ihr Helvenda-Team
 
   return { subject, html, text }
 }
+
+/**
+ * E-Mail nach Bestätigung der Löschung - Konto gesperrt, Wartefrist läuft
+ */
+export function getAccountDeletionScheduledEmail(
+  userName: string,
+  deletionDate: Date,
+  waitingPeriodDays: number = 14
+) {
+  const formattedDate = deletionDate.toLocaleDateString('de-CH', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  })
+
+  const subject = `Ihr Helvenda-Konto wird am ${deletionDate.toLocaleDateString('de-CH')} gelöscht`
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
+    .warning-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 20px 0; border-radius: 4px; }
+    .info-box { background: #dbeafe; border-left: 4px solid #3b82f6; padding: 16px 20px; margin: 20px 0; border-radius: 4px; }
+    .button { display: inline-block; background: #0f766e; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+    .date-highlight { background: #fee2e2; color: #991b1b; padding: 8px 16px; border-radius: 8px; font-weight: 700; display: inline-block; margin: 10px 0; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin: 0; font-size: 24px;">Kontolöschung geplant</h1>
+  </div>
+  <div class="content">
+    <p>Hallo ${userName},</p>
+
+    <p>Sie haben die Löschung Ihres Helvenda-Kontos bestätigt. Ihr Konto wurde <strong>gesperrt</strong> und ist nicht mehr zugänglich.</p>
+
+    <div class="warning-box">
+      <p style="margin: 0; font-weight: 600; color: #92400e;">📅 Endgültige Löschung am:</p>
+      <p class="date-highlight">${formattedDate}</p>
+      <p style="margin: 10px 0 0 0; color: #92400e;">
+        In ${waitingPeriodDays} Tagen werden alle Ihre Daten unwiderruflich gelöscht.
+      </p>
+    </div>
+
+    <div class="info-box">
+      <p style="margin: 0; font-weight: 600; color: #1e40af;">💡 Sie haben es sich anders überlegt?</p>
+      <p style="margin: 10px 0 0 0; color: #1e40af;">
+        Innerhalb der nächsten ${waitingPeriodDays} Tage können Sie Ihr Konto noch reaktivieren. Melden Sie sich einfach mit Ihren bisherigen Zugangsdaten an und Ihr Konto wird automatisch wiederhergestellt.
+      </p>
+    </div>
+
+    <p><strong>Was passiert während der Wartefrist?</strong></p>
+    <ul>
+      <li>Ihr Konto ist gesperrt und nicht zugänglich</li>
+      <li>Ihre Angebote sind nicht mehr sichtbar</li>
+      <li>Sie können keine Käufe oder Verkäufe tätigen</li>
+      <li>Ihre Daten bleiben für die Reaktivierung erhalten</li>
+    </ul>
+
+    <p><strong>Was passiert nach der Wartefrist?</strong></p>
+    <ul>
+      <li>Alle persönlichen Daten werden gelöscht</li>
+      <li>Bewertungen werden anonymisiert</li>
+      <li>Transaktionsdaten werden gemäss gesetzlicher Pflicht aufbewahrt</li>
+      <li>Eine Reaktivierung ist nicht mehr möglich</li>
+    </ul>
+
+    <div class="footer">
+      <p>Falls Sie Fragen haben, kontaktieren Sie uns: <a href="mailto:support@helvenda.ch">support@helvenda.ch</a></p>
+      <p>Mit freundlichen Grüssen<br>Ihr Helvenda-Team</p>
+      <p>© ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Hallo ${userName},
+
+Sie haben die Löschung Ihres Helvenda-Kontos bestätigt. Ihr Konto wurde gesperrt und ist nicht mehr zugänglich.
+
+📅 ENDGÜLTIGE LÖSCHUNG AM: ${formattedDate}
+In ${waitingPeriodDays} Tagen werden alle Ihre Daten unwiderruflich gelöscht.
+
+💡 SIE HABEN ES SICH ANDERS ÜBERLEGT?
+Innerhalb der nächsten ${waitingPeriodDays} Tage können Sie Ihr Konto noch reaktivieren. Melden Sie sich einfach mit Ihren bisherigen Zugangsdaten an und Ihr Konto wird automatisch wiederhergestellt.
+
+WAS PASSIERT WÄHREND DER WARTEFRIST?
+- Ihr Konto ist gesperrt und nicht zugänglich
+- Ihre Angebote sind nicht mehr sichtbar
+- Sie können keine Käufe oder Verkäufe tätigen
+- Ihre Daten bleiben für die Reaktivierung erhalten
+
+WAS PASSIERT NACH DER WARTEFRIST?
+- Alle persönlichen Daten werden gelöscht
+- Bewertungen werden anonymisiert
+- Transaktionsdaten werden gemäss gesetzlicher Pflicht aufbewahrt
+- Eine Reaktivierung ist nicht mehr möglich
+
+Falls Sie Fragen haben, kontaktieren Sie uns: support@helvenda.ch
+
+Mit freundlichen Grüssen
+Ihr Helvenda-Team
+  `.trim()
+
+  return { subject, html, text }
+}
+
+/**
+ * E-Mail nach Reaktivierung des Kontos
+ */
+export function getAccountReactivatedEmail(userName: string) {
+  const subject = 'Ihr Helvenda-Konto wurde reaktiviert'
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
+    .success-box { background: #d1fae5; border-left: 4px solid #10b981; padding: 16px 20px; margin: 20px 0; border-radius: 4px; }
+    .button { display: inline-block; background: #0f766e; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin: 0; font-size: 24px;">Willkommen zurück! 🎉</h1>
+  </div>
+  <div class="content">
+    <p>Hallo ${userName},</p>
+
+    <div class="success-box">
+      <p style="margin: 0; color: #065f46;">✓ Ihr Helvenda-Konto wurde erfolgreich reaktiviert!</p>
+    </div>
+
+    <p>Die geplante Kontolöschung wurde abgebrochen. Ihr Konto ist wieder vollständig aktiv und alle Ihre Daten sind erhalten.</p>
+
+    <p><strong>Was wurde wiederhergestellt?</strong></p>
+    <ul>
+      <li>Ihr Benutzerprofil und alle persönlichen Daten</li>
+      <li>Ihre Favoriten und Suchaufträge</li>
+      <li>Ihre Bewertungen und Transaktionshistorie</li>
+      <li>Ihre Nachrichten</li>
+    </ul>
+
+    <p><strong>Hinweis:</strong> Ihre zuvor aktiven Angebote müssen möglicherweise erneut aktiviert werden.</p>
+
+    <div style="text-align: center;">
+      <a href="https://helvenda.ch" class="button">Zu Helvenda</a>
+    </div>
+
+    <div class="footer">
+      <p>Falls Sie Fragen haben, kontaktieren Sie uns: <a href="mailto:support@helvenda.ch">support@helvenda.ch</a></p>
+      <p>Mit freundlichen Grüssen<br>Ihr Helvenda-Team</p>
+      <p>© ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Hallo ${userName},
+
+WILLKOMMEN ZURÜCK! 🎉
+
+Ihr Helvenda-Konto wurde erfolgreich reaktiviert!
+
+Die geplante Kontolöschung wurde abgebrochen. Ihr Konto ist wieder vollständig aktiv und alle Ihre Daten sind erhalten.
+
+WAS WURDE WIEDERHERGESTELLT?
+- Ihr Benutzerprofil und alle persönlichen Daten
+- Ihre Favoriten und Suchaufträge
+- Ihre Bewertungen und Transaktionshistorie
+- Ihre Nachrichten
+
+Hinweis: Ihre zuvor aktiven Angebote müssen möglicherweise erneut aktiviert werden.
+
+Besuchen Sie uns: https://helvenda.ch
+
+Falls Sie Fragen haben, kontaktieren Sie uns: support@helvenda.ch
+
+Mit freundlichen Grüssen
+Ihr Helvenda-Team
+  `.trim()
+
+  return { subject, html, text }
+}
+
+/**
+ * E-Mail nach endgültiger Kontolöschung (nach Wartefrist)
+ */
+export function getAccountFinallyDeletedEmail(userName: string) {
+  const subject = 'Ihr Helvenda-Konto wurde endgültig gelöscht'
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
+    .info-box { background: #f3f4f6; border-left: 4px solid #9ca3af; padding: 16px 20px; margin: 20px 0; border-radius: 4px; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin: 0; font-size: 24px;">Konto gelöscht</h1>
+  </div>
+  <div class="content">
+    <p>Hallo ${userName},</p>
+
+    <p>Die Wartefrist für die Kontolöschung ist abgelaufen. Ihr Helvenda-Konto und alle damit verbundenen persönlichen Daten wurden nun endgültig gelöscht.</p>
+
+    <div class="info-box">
+      <p style="margin: 0; color: #374151;"><strong>Was wurde gelöscht:</strong></p>
+      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #4b5563;">
+        <li>Ihr Benutzerprofil und alle persönlichen Daten</li>
+        <li>Ihre Favoriten und Suchaufträge</li>
+        <li>Ihre Nachrichten</li>
+      </ul>
+    </div>
+
+    <p><strong>Aufbewahrte Daten (gesetzliche Pflicht):</strong></p>
+    <ul>
+      <li>Transaktionsdaten (anonymisiert, 10 Jahre)</li>
+      <li>Rechnungen für Buchhaltung</li>
+    </ul>
+
+    <p>Falls Sie in Zukunft wieder bei uns kaufen oder verkaufen möchten, können Sie jederzeit ein neues Konto erstellen unter <a href="https://helvenda.ch/register">helvenda.ch/register</a>.</p>
+
+    <p>Wir bedanken uns für die Zeit, die Sie Helvenda genutzt haben, und wünschen Ihnen alles Gute.</p>
+
+    <div class="footer">
+      <p>Mit freundlichen Grüssen<br>Ihr Helvenda-Team</p>
+      <p>© ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Hallo ${userName},
+
+Die Wartefrist für die Kontolöschung ist abgelaufen. Ihr Helvenda-Konto und alle damit verbundenen persönlichen Daten wurden nun endgültig gelöscht.
+
+WAS WURDE GELÖSCHT:
+- Ihr Benutzerprofil und alle persönlichen Daten
+- Ihre Favoriten und Suchaufträge
+- Ihre Nachrichten
+
+AUFBEWAHRTE DATEN (gesetzliche Pflicht):
+- Transaktionsdaten (anonymisiert, 10 Jahre)
+- Rechnungen für Buchhaltung
+
+Falls Sie in Zukunft wieder bei uns kaufen oder verkaufen möchten, können Sie jederzeit ein neues Konto erstellen unter helvenda.ch/register.
+
+Wir bedanken uns für die Zeit, die Sie Helvenda genutzt haben, und wünschen Ihnen alles Gute.
+
+Mit freundlichen Grüssen
+Ihr Helvenda-Team
+  `.trim()
+
+  return { subject, html, text }
+}

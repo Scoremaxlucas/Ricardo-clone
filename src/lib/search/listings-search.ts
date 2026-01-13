@@ -203,7 +203,7 @@ export async function searchListings(options: SearchOptions): Promise<SearchResp
   } catch (error: any) {
     // Log the error for debugging
     console.error('[SEARCH] FTS search failed, using fallback:', error?.message)
-    
+
     // Fallback to simple ILIKE search if FTS/Trigram extensions are not available
     return searchWithSimpleLike(query.trim(), filters, sort, limit, offset, now)
   }
@@ -1039,7 +1039,7 @@ async function searchWithSimpleLike(
 ): Promise<SearchResponse> {
   // Split query into tokens for OR matching
   const tokens = query.toLowerCase().split(/\s+/).filter(t => t.length > 1)
-  
+
   // Build Prisma where clause
   const where: Prisma.WatchWhereInput = {
     AND: [

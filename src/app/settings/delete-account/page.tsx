@@ -13,10 +13,17 @@ import { toast } from 'react-hot-toast'
 const translations = {
   de: {
     title: 'Konto löschen',
-    subtitle: 'Unwiderrufliche Löschung Ihres Helvenda-Kontos',
-    warning: 'Warnung: Diese Aktion kann nicht rückgängig gemacht werden!',
-    whatHappens: 'Was passiert bei der Kontolöschung?',
-    deleted: 'Folgende Daten werden gelöscht:',
+    subtitle: 'Löschung Ihres Helvenda-Kontos mit 14-Tage-Wartefrist',
+    warning: 'Hinweis: Nach der Bestätigung haben Sie 14 Tage Zeit, Ihre Meinung zu ändern.',
+    whatHappens: 'Wie funktioniert die Kontolöschung?',
+    process: 'Der Löschprozess:',
+    processItems: [
+      '1. Sie erhalten eine Bestätigungs-E-Mail',
+      '2. Nach Bestätigung wird Ihr Konto gesperrt',
+      '3. 14-Tage-Wartefrist für Reaktivierung',
+      '4. Nach 14 Tagen: Endgültige Löschung',
+    ],
+    deleted: 'Folgende Daten werden nach der Wartefrist gelöscht:',
     deletedItems: [
       'Ihr Benutzerprofil und alle persönlichen Daten',
       'Ihre Favoriten und Suchaufträge',
@@ -35,20 +42,27 @@ const translations = {
       'Keine laufenden Käufe',
       'Keine aktiven Gebote',
     ],
-    confirmText: 'Ich verstehe, dass mein Konto und alle damit verbundenen Daten unwiderruflich gelöscht werden.',
+    confirmText: 'Ich verstehe, dass mein Konto gesperrt und nach 14 Tagen endgültig gelöscht wird, wenn ich nicht reaktiviere.',
     requestDeletion: 'Kontolöschung beantragen',
     processing: 'Wird verarbeitet...',
     back: 'Zurück zu Einstellungen',
     loginRequired: 'Bitte melden Sie sich an, um Ihr Konto zu löschen.',
     successTitle: 'Bestätigungs-E-Mail gesendet',
-    successMessage: 'Wir haben Ihnen eine E-Mail mit einem Bestätigungslink gesendet. Bitte klicken Sie auf den Link, um die Löschung zu bestätigen.',
+    successMessage: 'Wir haben Ihnen eine E-Mail mit einem Bestätigungslink gesendet. Nach der Bestätigung haben Sie 14 Tage Zeit, Ihre Meinung zu ändern.',
   },
   en: {
     title: 'Delete Account',
-    subtitle: 'Permanent deletion of your Helvenda account',
-    warning: 'Warning: This action cannot be undone!',
-    whatHappens: 'What happens when you delete your account?',
-    deleted: 'The following data will be deleted:',
+    subtitle: 'Deletion of your Helvenda account with 14-day waiting period',
+    warning: 'Note: After confirmation, you have 14 days to change your mind.',
+    whatHappens: 'How does account deletion work?',
+    process: 'The deletion process:',
+    processItems: [
+      '1. You receive a confirmation email',
+      '2. After confirmation, your account is suspended',
+      '3. 14-day waiting period for reactivation',
+      '4. After 14 days: Permanent deletion',
+    ],
+    deleted: 'The following data will be deleted after the waiting period:',
     deletedItems: [
       'Your user profile and all personal data',
       'Your favorites and search subscriptions',
@@ -67,20 +81,27 @@ const translations = {
       'No ongoing purchases',
       'No active bids',
     ],
-    confirmText: 'I understand that my account and all associated data will be permanently deleted.',
+    confirmText: 'I understand that my account will be suspended and permanently deleted after 14 days if I do not reactivate.',
     requestDeletion: 'Request Account Deletion',
     processing: 'Processing...',
     back: 'Back to Settings',
     loginRequired: 'Please log in to delete your account.',
     successTitle: 'Confirmation Email Sent',
-    successMessage: 'We have sent you an email with a confirmation link. Please click the link to confirm the deletion.',
+    successMessage: 'We have sent you an email with a confirmation link. After confirmation, you have 14 days to change your mind.',
   },
   fr: {
     title: 'Supprimer le compte',
-    subtitle: 'Suppression définitive de votre compte Helvenda',
-    warning: 'Attention: Cette action est irréversible!',
-    whatHappens: 'Que se passe-t-il lors de la suppression?',
-    deleted: 'Les données suivantes seront supprimées:',
+    subtitle: "Suppression de votre compte Helvenda avec période d'attente de 14 jours",
+    warning: "Note: Après confirmation, vous avez 14 jours pour changer d'avis.",
+    whatHappens: 'Comment fonctionne la suppression du compte?',
+    process: 'Le processus de suppression:',
+    processItems: [
+      '1. Vous recevez un e-mail de confirmation',
+      '2. Après confirmation, votre compte est suspendu',
+      '3. Période d\'attente de 14 jours pour réactivation',
+      '4. Après 14 jours: Suppression définitive',
+    ],
+    deleted: "Les données suivantes seront supprimées après la période d'attente:",
     deletedItems: [
       'Votre profil et toutes vos données personnelles',
       'Vos favoris et alertes de recherche',
@@ -99,20 +120,27 @@ const translations = {
       'Aucun achat en cours',
       'Aucune enchère active',
     ],
-    confirmText: 'Je comprends que mon compte et toutes les données associées seront définitivement supprimés.',
+    confirmText: "Je comprends que mon compte sera suspendu et définitivement supprimé après 14 jours si je ne le réactive pas.",
     requestDeletion: 'Demander la suppression',
     processing: 'Traitement en cours...',
     back: 'Retour aux paramètres',
     loginRequired: 'Veuillez vous connecter pour supprimer votre compte.',
     successTitle: 'E-mail de confirmation envoyé',
-    successMessage: 'Nous vous avons envoyé un e-mail avec un lien de confirmation. Veuillez cliquer sur le lien pour confirmer la suppression.',
+    successMessage: "Nous vous avons envoyé un e-mail avec un lien de confirmation. Après confirmation, vous avez 14 jours pour changer d'avis.",
   },
   it: {
     title: 'Elimina account',
-    subtitle: 'Eliminazione definitiva del tuo account Helvenda',
-    warning: 'Attenzione: Questa azione non può essere annullata!',
-    whatHappens: 'Cosa succede quando elimini il tuo account?',
-    deleted: 'I seguenti dati verranno eliminati:',
+    subtitle: "Eliminazione del tuo account Helvenda con periodo di attesa di 14 giorni",
+    warning: 'Nota: Dopo la conferma, hai 14 giorni per cambiare idea.',
+    whatHappens: "Come funziona l'eliminazione dell'account?",
+    process: 'Il processo di eliminazione:',
+    processItems: [
+      '1. Ricevi un\'e-mail di conferma',
+      '2. Dopo la conferma, il tuo account viene sospeso',
+      '3. Periodo di attesa di 14 giorni per la riattivazione',
+      '4. Dopo 14 giorni: Eliminazione definitiva',
+    ],
+    deleted: 'I seguenti dati verranno eliminati dopo il periodo di attesa:',
     deletedItems: [
       'Il tuo profilo e tutti i dati personali',
       'I tuoi preferiti e avvisi di ricerca',
@@ -131,13 +159,13 @@ const translations = {
       'Nessun acquisto in corso',
       "Nessun'offerta attiva",
     ],
-    confirmText: 'Capisco che il mio account e tutti i dati associati verranno eliminati definitivamente.',
+    confirmText: "Capisco che il mio account verrà sospeso e eliminato definitivamente dopo 14 giorni se non lo riattivo.",
     requestDeletion: "Richiedi l'eliminazione",
     processing: 'Elaborazione in corso...',
     back: 'Torna alle impostazioni',
     loginRequired: 'Accedi per eliminare il tuo account.',
     successTitle: 'E-mail di conferma inviata',
-    successMessage: "Ti abbiamo inviato un'e-mail con un link di conferma. Clicca sul link per confermare l'eliminazione.",
+    successMessage: "Ti abbiamo inviato un'e-mail con un link di conferma. Dopo la conferma, hai 14 giorni per cambiare idea.",
   },
 }
 
@@ -259,16 +287,28 @@ export default function DeleteAccountPage() {
             </div>
           </div>
 
-          <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4">
+          <div className="mb-6 rounded-lg border border-amber-200 bg-amber-50 p-4">
             <div className="flex items-start gap-3">
-              <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-red-600" />
-              <p className="font-medium text-red-800">{t.warning}</p>
+              <AlertTriangle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
+              <p className="font-medium text-amber-800">{t.warning}</p>
             </div>
           </div>
 
           <div className="mb-6 space-y-6">
             <div>
               <h2 className="mb-3 font-semibold text-gray-900">{t.whatHappens}</h2>
+
+              {/* Prozess-Schritte */}
+              <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                <h3 className="mb-2 text-sm font-medium text-blue-700">{t.process}</h3>
+                <ul className="space-y-1 text-sm text-blue-800">
+                  {t.processItems?.map((item: string, i: number) => (
+                    <li key={i} className="flex items-start gap-2">
+                      {item}
+                    </li>
+                  ))}
+                </ul>
+              </div>
 
               <div className="mb-4">
                 <h3 className="mb-2 text-sm font-medium text-red-700">{t.deleted}</h3>

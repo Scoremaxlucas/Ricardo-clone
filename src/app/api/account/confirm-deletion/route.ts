@@ -1,17 +1,22 @@
-import { getAccountDeletionConfirmationEmail, sendEmail } from '@/lib/email'
+import { getAccountDeletionScheduledEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
 
+// Wartefrist in Tagen (wie Ricardo)
+const DELETION_WAITING_PERIOD_DAYS = 14
+
 /**
  * GET /api/account/confirm-deletion?token=xxx
  *
- * Bestätigt die Kontolöschung:
+ * Bestätigt die Kontolöschung (NEUE VERSION mit Wartefrist):
  * 1. Validiert Token
- * 2. Anonymisiert Transaktionsdaten (10-Jahre-Aufbewahrung)
- * 3. Löscht persönliche Daten
- * 4. Sendet Bestätigungs-E-Mail
+ * 2. Sperrt das Konto (statt sofort löschen)
+ * 3. Plant die Löschung in 14 Tagen
+ * 4. Sendet Info-E-Mail mit Reaktivierungsmöglichkeit
+ *
+ * Die tatsächliche Löschung erfolgt durch einen Cronjob nach 14 Tagen.
  */
 export async function GET(request: NextRequest) {
   try {
@@ -35,6 +40,9 @@ export async function GET(request: NextRequest) {
         nickname: true,
         name: true,
         deletionTokenExpires: true,
+        deletionScheduledAt: true,
+        isBlocked: true,
+        blockedReason: true,
       },
     })
 
@@ -42,6 +50,18 @@ export async function GET(request: NextRequest) {
       return NextResponse.json(
         { message: 'Ungültiger oder bereits verwendeter Token' },
         { status: 400 }
+      )
+    }
+
+    // Prüfe ob Löschung bereits geplant ist
+    if (user.deletionScheduledAt && user.blockedReason === 'DELETION_SCHEDULED') {
+      return NextResponse.json(
+        {
+          message: `Ihr Konto ist bereits zur Löschung vorgemerkt. Die endgültige Löschung erfolgt am ${user.deletionScheduledAt.toLocaleDateString('de-CH')}.`,
+          alreadyScheduled: true,
+          scheduledDate: user.deletionScheduledAt,
+        },
+        { status: 200 }
       )
     }
 
@@ -59,141 +79,38 @@ export async function GET(request: NextRequest) {
     const userEmail = user.email
     const userName = user.firstName || user.nickname || user.name || 'Benutzer'
 
-    console.log(`[confirm-deletion] Starte Kontolöschung für User: ${userEmail}`)
+    // Berechne Löschdatum (14 Tage ab jetzt)
+    const deletionScheduledAt = new Date()
+    deletionScheduledAt.setDate(deletionScheduledAt.getDate() + DELETION_WAITING_PERIOD_DAYS)
 
-    // === LÖSCHUNG IN TRANSAKTION ===
-    await prisma.$transaction(async (tx) => {
-      // 1. Anonymisiere Transaktionsdaten (gesetzliche Aufbewahrungspflicht)
-      // Sales: Behalte Transaktionsdaten, anonymisiere persönliche Referenzen
-      await tx.sale.updateMany({
-        where: { OR: [{ sellerId: userId }, { buyerId: userId }] },
-        data: {
-          // Behalte Transaktionsdaten, aber markiere als anonymisiert
-          // Die Relation bleibt bestehen für Buchhaltungszwecke
-        },
-      })
+    console.log(`[confirm-deletion] Plane Kontolöschung für User: ${userEmail}`)
+    console.log(`[confirm-deletion] Löschdatum: ${deletionScheduledAt.toISOString()}`)
 
-      // Invoices: Behalte für Buchhaltung (10 Jahre)
-      await tx.invoice.updateMany({
-        where: { sellerId: userId },
-        data: {
-          // Invoices müssen für Buchhaltung erhalten bleiben
-        },
-      })
-
-      // 2. Lösche persönliche Daten (keine gesetzliche Aufbewahrungspflicht)
-
-      // Favoriten löschen
-      await tx.favorite.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] Favoriten gelöscht`)
-
-      // Suchaufträge löschen
-      await tx.searchSubscription.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] Suchaufträge gelöscht`)
-
-      // Benachrichtigungen löschen
-      await tx.notification.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] Benachrichtigungen gelöscht`)
-
-      // MaxBids löschen
-      await tx.maxBid.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] MaxBids gelöscht`)
-
-      // Browsing History löschen
-      await tx.browsingHistory.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] Browsing History gelöscht`)
-
-      // AI Conversations löschen
-      await tx.aIConversation.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] AI Conversations gelöscht`)
-
-      // AI Search Results löschen
-      await tx.aISearchResult.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] AI Search Results gelöscht`)
-
-      // Collections löschen
-      await tx.collection.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] Collections gelöscht`)
-
-      // User Badges löschen
-      await tx.userBadge.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] User Badges gelöscht`)
-
-      // User Streak löschen
-      await tx.userStreak.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] User Streak gelöscht`)
-
-      // Rewards löschen
-      await tx.reward.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] Rewards gelöscht`)
-
-      // Drafts löschen
-      await tx.draft.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] Drafts gelöscht`)
-
-      // User Preferences löschen
-      await tx.userPreferences.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] User Preferences gelöscht`)
-
-      // User Activities löschen
-      await tx.userActivity.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] User Activities gelöscht`)
-
-      // Search Queries löschen
-      await tx.searchQuery.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] Search Queries gelöscht`)
-
-      // User Addresses löschen
-      await tx.userAddress.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] User Addresses gelöscht`)
-
-      // Sessions löschen
-      await tx.session.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] Sessions gelöscht`)
-
-      // Accounts löschen (OAuth)
-      await tx.account.deleteMany({ where: { userId } })
-      console.log(`[confirm-deletion] Accounts gelöscht`)
-
-      // 3. Anonymisiere User-Daten (User-Record bleibt für Referenzen)
-      await tx.user.update({
-        where: { id: userId },
-        data: {
-          email: `deleted-${userId}@helvenda.ch`,
-          password: null,
-          name: 'Gelöschter Benutzer',
-          firstName: null,
-          lastName: null,
-          nickname: `deleted-${userId.slice(0, 8)}`,
-          bio: null,
-          phone: null,
-          image: null,
-          dateOfBirth: null,
-          nationality: null,
-          paymentMethods: null,
-          idDocument: null,
-          idDocumentPage1: null,
-          idDocumentPage2: null,
-          idDocumentType: null,
-          companyName: null,
-          // Markiere als gelöscht
-          isBlocked: true,
-          blockedReason: 'ACCOUNT_DELETED_BY_USER',
-          blockedAt: new Date(),
-          deletionToken: null,
-          deletionTokenExpires: null,
-          // Lösche Stripe-Daten
-          stripeConnectedAccountId: null,
-          stripeOnboardingComplete: false,
-        },
-      })
-      console.log(`[confirm-deletion] User anonymisiert`)
+    // === KONTO SPERREN (nicht löschen) ===
+    await prisma.user.update({
+      where: { id: userId },
+      data: {
+        // Konto sperren
+        isBlocked: true,
+        blockedReason: 'DELETION_SCHEDULED',
+        blockedAt: new Date(),
+        // Löschung planen
+        deletionConfirmedAt: new Date(),
+        deletionScheduledAt,
+        // Token behalten für Reaktivierung
+        // deletionToken bleibt erhalten
+      },
     })
 
-    console.log(`[confirm-deletion] Kontolöschung abgeschlossen für: ${userEmail}`)
+    console.log(`[confirm-deletion] Konto gesperrt, Löschung geplant für: ${userEmail}`)
 
-    // Sende Bestätigungs-E-Mail an ursprüngliche Adresse
-    const { subject, html, text } = getAccountDeletionConfirmationEmail(userName)
+    // Sende Info-E-Mail mit Reaktivierungsmöglichkeit
+    const { subject, html, text } = getAccountDeletionScheduledEmail(
+      userName,
+      deletionScheduledAt,
+      DELETION_WAITING_PERIOD_DAYS
+    )
+
     await sendEmail({
       to: userEmail,
       subject,
@@ -203,8 +120,10 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({
-      message: 'Ihr Konto wurde erfolgreich gelöscht.',
+      message: `Ihr Konto wurde gesperrt und wird am ${deletionScheduledAt.toLocaleDateString('de-CH')} endgültig gelöscht. Sie können Ihr Konto innerhalb der nächsten ${DELETION_WAITING_PERIOD_DAYS} Tage reaktivieren.`,
       success: true,
+      scheduledDate: deletionScheduledAt,
+      canReactivateUntil: deletionScheduledAt,
     })
   } catch (error) {
     console.error('[confirm-deletion] Fehler:', error)
