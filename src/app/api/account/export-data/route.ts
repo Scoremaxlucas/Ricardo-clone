@@ -110,7 +110,6 @@ export async function GET() {
         select: {
           id: true,
           price: true,
-          status: true,
           createdAt: true,
           watch: {
             select: {
@@ -301,7 +300,6 @@ export async function GET() {
         item: s.watch?.title || 'Unbekannt',
         brand: s.watch?.brand,
         price: s.price,
-        status: s.status,
         createdAt: s.createdAt,
       })),
 
