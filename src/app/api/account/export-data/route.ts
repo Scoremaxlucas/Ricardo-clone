@@ -91,10 +91,9 @@ export async function GET() {
         select: {
           id: true,
           status: true,
-          totalPrice: true,
-          shippingCost: true,
+          price: true,
+          shippingMethod: true,
           createdAt: true,
-          updatedAt: true,
           watch: {
             select: {
               title: true,
@@ -291,8 +290,8 @@ export async function GET() {
         id: p.id,
         item: p.watch?.title || 'Unbekannt',
         brand: p.watch?.brand,
-        totalPrice: p.totalPrice,
-        shippingCost: p.shippingCost,
+        price: p.price,
+        shippingMethod: p.shippingMethod,
         status: p.status,
         createdAt: p.createdAt,
       })),
