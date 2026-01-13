@@ -754,126 +754,116 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
         </div>
       </nav>
 
-      {/* Mobile Menu Sheet */}
+      {/* Mobile Menu Sheet - Ricardo-Style Clean Design */}
       <Sheet open={isMobileMenuOpen} onOpenChange={setIsMobileMenuOpen}>
-        <SheetContent onClose={() => setIsMobileMenuOpen(false)}>
-          <div className="space-y-1 p-4">
-            {/* Favoriten */}
-            {session ? (
-              <Link
-                href="/favorites"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="relative flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-              >
-                <Heart className="h-5 w-5" />
-                <span className="font-medium">{t.header.favorites}</span>
-                {deferredData.favoritesCount > 0 && (
-                  <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
-                    {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
-                  </span>
-                )}
-              </Link>
-            ) : (
-              <button
-                onClick={() => {
-                  setIsLoginModalOpen(true)
-                  setIsMobileMenuOpen(false)
-                }}
-                className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-              >
-                <Heart className="h-5 w-5" />
-                <span className="font-medium">{t.header.favorites}</span>
-              </button>
-            )}
+        <SheetContent onClose={() => setIsMobileMenuOpen(false)} className="w-[280px] p-0">
+          <div className="flex h-full flex-col">
+            {/* Menu Items */}
+            <div className="flex-1 overflow-y-auto py-2">
+              {session ? (
+                <>
+                  {/* Logged in user menu - Ricardo style order */}
+                  <Link
+                    href="/my-watches/buying"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    <ShoppingBag className="h-5 w-5 text-gray-500" />
+                    <span className="text-[15px]">{t.header.myBuying}</span>
+                  </Link>
+                  <Link
+                    href="/my-watches"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    <Package className="h-5 w-5 text-gray-500" />
+                    <span className="text-[15px]">{t.header.mySelling}</span>
+                  </Link>
+                  <Link
+                    href="/my-watches/selling/fees"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    <Wallet className="h-5 w-5 text-gray-500" />
+                    <span className="text-[15px]">{t.header.feesAndInvoices}</span>
+                  </Link>
+                  <Link
+                    href="/my-watches/account"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    <Settings className="h-5 w-5 text-gray-500" />
+                    <span className="text-[15px]">{t.header.settings}</span>
+                  </Link>
+                  <Link
+                    href="/profile"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                  >
+                    <User className="h-5 w-5 text-gray-500" />
+                    <span className="text-[15px]">{t.header.myProfile}</span>
+                  </Link>
 
-            {/* Admin Dashboard - nur für Admins */}
-            {(deferredData.isAdmin || (session?.user as any)?.isAdmin) && (
-              <Link
-                href="/admin/dashboard"
-                onClick={() => setIsMobileMenuOpen(false)}
-                className="flex w-full items-center gap-3 rounded-lg bg-amber-50 px-4 py-3 text-left text-amber-700 transition-colors hover:bg-amber-100"
-              >
-                <Shield className="h-5 w-5" />
-                <span className="font-medium">{t.header.adminDashboard}</span>
-              </Link>
-            )}
+                  {/* Admin Dashboard - subtle, only for admins */}
+                  {(deferredData.isAdmin || (session?.user as any)?.isAdmin) && (
+                    <Link
+                      href="/admin/dashboard"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-colors hover:bg-gray-50"
+                    >
+                      <Shield className="h-5 w-5 text-gray-500" />
+                      <span className="text-[15px]">{t.header.adminDashboard}</span>
+                    </Link>
+                  )}
 
-            {/* Verkaufen */}
-            <Link
-              href="/sell"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex w-full items-center gap-3 rounded-lg bg-primary-50 px-4 py-3 text-left font-semibold text-primary-700 transition-colors hover:bg-primary-100"
-            >
-              <Plus className="h-5 w-5" />
-              <span>{t.header.sell}</span>
-            </Link>
+                  {/* CTA Button - Ricardo style */}
+                  <div className="mx-4 mt-4">
+                    <Link
+                      href="/sell"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex w-full items-center justify-center gap-2 rounded-full bg-primary-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-primary-700"
+                    >
+                      <Plus className="h-5 w-5" />
+                      <span>ANGEBOT ERSTELLEN</span>
+                    </Link>
+                  </div>
 
-            {/* Divider */}
-            {session && (
-              <>
-                <div className="my-2 border-t border-gray-200" />
-                <Link
-                  href="/profile"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-                >
-                  <User className="h-5 w-5" />
-                  <span className="font-medium">{t.header.myProfile}</span>
-                </Link>
-                <Link
-                  href="/my-watches"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-                >
-                  <Package className="h-5 w-5" />
-                  <span className="font-medium">{t.header.mySelling}</span>
-                </Link>
-                <Link
-                  href="/my-watches/buying"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-                >
-                  <ShoppingBag className="h-5 w-5" />
-                  <span className="font-medium">{t.header.myBuying}</span>
-                </Link>
-                <Link
-                  href="/my-watches/account"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-                >
-                  <Settings className="h-5 w-5" />
-                  <span className="font-medium">{t.header.settings}</span>
-                </Link>
-                <div className="my-2 border-t border-gray-200" />
-                <Link
-                  href="/my-watches/selling/fees"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-                >
-                  <Wallet className="h-5 w-5" />
-                  <span className="font-medium">{t.header.feesAndInvoices}</span>
-                </Link>
-                <Link
-                  href="/my-watches/selling/cancel-request"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-                >
-                  <X className="h-5 w-5" />
-                  <span className="font-medium">{t.header.cancel}</span>
-                </Link>
-                <div className="my-2 border-t border-gray-200" />
-                <button
-                  onClick={async () => {
-                    setIsMobileMenuOpen(false)
-                    await signOut({ callbackUrl: '/' })
-                  }}
-                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-red-600 transition-colors hover:bg-red-50"
-                >
-                  <LogOut className="h-5 w-5" />
-                  <span className="font-medium">{t.header.logout}</span>
-                </button>
-              </>
-            )}
+                  {/* Logout at bottom */}
+                  <div className="mt-4 border-t border-gray-100 pt-2">
+                    <button
+                      onClick={async () => {
+                        setIsMobileMenuOpen(false)
+                        await signOut({ callbackUrl: '/' })
+                      }}
+                      className="flex w-full items-center gap-3 px-5 py-3 text-gray-500 transition-colors hover:bg-gray-50"
+                    >
+                      <LogOut className="h-5 w-5" />
+                      <span className="text-[15px]">{t.header.logout}</span>
+                    </button>
+                  </div>
+                </>
+              ) : (
+                <>
+                  {/* Not logged in - show login/register buttons */}
+                  <div className="space-y-3 p-4">
+                    <Link
+                      href="/login"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex w-full items-center justify-center rounded-full border-2 border-primary-600 px-6 py-3 font-semibold text-primary-600 transition-colors hover:bg-primary-50"
+                    >
+                      ANMELDEN
+                    </Link>
+                    <Link
+                      href="/register"
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex w-full items-center justify-center rounded-full bg-primary-600 px-6 py-3 font-semibold text-white transition-colors hover:bg-primary-700"
+                    >
+                      REGISTRIEREN
+                    </Link>
+                  </div>
+                </>
+              )}
+            </div>
           </div>
         </SheetContent>
       </Sheet>

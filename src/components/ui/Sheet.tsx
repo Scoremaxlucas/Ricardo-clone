@@ -26,16 +26,17 @@ export function Sheet({ open, onOpenChange, children, side = 'right' }: SheetPro
 
   return (
     <>
-      {/* Backdrop */}
+      {/* Backdrop - subtler like Ricardo */}
       <div
-        className="fixed inset-0 z-40 bg-black/50 transition-opacity"
+        className="fixed inset-0 z-40 bg-black/30 transition-opacity"
         onClick={() => onOpenChange(false)}
       />
-      {/* Sheet */}
+      {/* Sheet - narrower and cleaner like Ricardo */}
       <div
-        className={`fixed top-0 z-40 h-full w-full max-w-sm bg-white shadow-xl transition-transform ${
+        className={`fixed top-0 z-50 h-full bg-white shadow-lg transition-transform ${
           side === 'right' ? 'right-0' : 'left-0'
         }`}
+        style={{ width: '280px', maxWidth: '85vw' }}
       >
         {children}
       </div>
@@ -46,17 +47,18 @@ export function Sheet({ open, onOpenChange, children, side = 'right' }: SheetPro
 interface SheetContentProps {
   children: React.ReactNode
   onClose?: () => void
+  className?: string
 }
 
-export function SheetContent({ children, onClose }: SheetContentProps) {
+export function SheetContent({ children, onClose, className = '' }: SheetContentProps) {
   return (
-    <div className="flex h-full flex-col">
+    <div className={`flex h-full flex-col ${className}`}>
+      {/* Header with close button - cleaner like Ricardo */}
       {onClose && (
-        <div className="flex items-center justify-between border-b p-4">
-          <h2 className="text-lg font-semibold">Menü</h2>
+        <div className="flex items-center justify-end p-3">
           <button
             onClick={onClose}
-            className="rounded-md p-1 hover:bg-gray-100"
+            className="rounded-full p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
             aria-label="Schließen"
           >
             <X className="h-5 w-5" />
