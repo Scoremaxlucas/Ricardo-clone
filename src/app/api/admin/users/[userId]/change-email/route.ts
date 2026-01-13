@@ -3,27 +3,15 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
-export const dynamic = 'force-dynamic'
-
-/**
- * POST /api/admin/users/[userId]/change-email
- *
- * Ermöglicht einem Admin, die E-Mail-Adresse eines Benutzers direkt zu ändern.
- * KEINE Verifizierung erforderlich - die E-Mail wird sofort geändert.
- */
-export async function POST(
-  request: NextRequest,
-  context: { params: { userId: string } }
-) {
+export async function POST(request: NextRequest, { params }: { params: { userId: string } }) {
   try {
     const session = await getServerSession(authOptions)
 
-    // Authentifizierung prüfen
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Admin-Status prüfen
+    // Prüfe ob User Admin ist
     const admin = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: { isAdmin: true },
@@ -31,21 +19,24 @@ export async function POST(
 
     if (!admin?.isAdmin) {
       return NextResponse.json(
-        { message: 'Keine Admin-Berechtigung' },
+        { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
         { status: 403 }
       )
     }
 
-    const userId = context.params.userId
+    const userId = params.userId
+
+    // Request Body parsen
+    let newEmail: string
+    let reason: string | undefined
     
-    let body
     try {
-      body = await request.json()
-    } catch (e) {
+      const body = await request.json()
+      newEmail = body.newEmail
+      reason = body.reason
+    } catch {
       return NextResponse.json({ message: 'Ungültiger Request Body' }, { status: 400 })
     }
-    
-    const { newEmail, reason } = body
 
     // Validierung
     if (!newEmail || typeof newEmail !== 'string') {
@@ -79,10 +70,7 @@ export async function POST(
     })
 
     if (!targetUser) {
-      return NextResponse.json(
-        { message: 'Benutzer nicht gefunden' },
-        { status: 404 }
-      )
+      return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
     // Prüfen ob die neue E-Mail gleich der alten ist
@@ -112,18 +100,17 @@ export async function POST(
       where: { id: userId },
       data: {
         email: normalizedEmail,
-        // Da der Admin dies ändert, setzen wir E-Mail als verifiziert
         emailVerified: true,
         emailVerifiedAt: new Date(),
-        // Ausstehende E-Mail-Änderungen zurücksetzen
         pendingEmail: null,
         pendingEmailToken: null,
         pendingEmailTokenExpires: null,
       },
     })
 
-    // Protokollierung in Konsole
-    console.log(`[admin-change-email] Admin ${session.user.id} hat E-Mail von Benutzer ${userId} geändert: ${oldEmail} -> ${normalizedEmail}${reason ? ` (Grund: ${reason})` : ''}`)
+    console.log(
+      `[admin-change-email] Admin ${session.user.id} changed email for user ${userId}: ${oldEmail} -> ${normalizedEmail}${reason ? ` (Reason: ${reason})` : ''}`
+    )
 
     return NextResponse.json({
       message: 'E-Mail-Adresse erfolgreich geändert',
@@ -131,11 +118,8 @@ export async function POST(
       oldEmail,
       newEmail: normalizedEmail,
     })
-  } catch (error) {
-    console.error('[admin-change-email] Fehler:', error)
-    return NextResponse.json(
-      { message: 'Ein Fehler ist aufgetreten' },
-      { status: 500 }
-    )
+  } catch (error: any) {
+    console.error('[admin-change-email] Error:', error)
+    return NextResponse.json({ message: 'Fehler beim Ändern der E-Mail-Adresse' }, { status: 500 })
   }
 }
