@@ -132,7 +132,12 @@ export async function GET(request: NextRequest) {
       try {
         const userName = user.firstName || user.name || user.nickname || 'Benutzer'
         const notificationEmail = getEmailChangedNotificationEmail(userName, oldEmail, newEmail)
-        await sendEmail(oldEmail, notificationEmail.subject, notificationEmail.html, notificationEmail.text)
+        await sendEmail({
+          to: oldEmail,
+          subject: notificationEmail.subject,
+          html: notificationEmail.html,
+          text: notificationEmail.text,
+        })
       } catch (emailError) {
         // Nicht kritisch - E-Mail wurde trotzdem geändert
         console.error('[confirm-email-change] Benachrichtigung an alte E-Mail fehlgeschlagen:', emailError)

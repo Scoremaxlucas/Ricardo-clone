@@ -149,7 +149,12 @@ export async function POST(request: NextRequest) {
     )
 
     try {
-      await sendEmail(normalizedNewEmail, emailContent.subject, emailContent.html, emailContent.text)
+      await sendEmail({
+        to: normalizedNewEmail,
+        subject: emailContent.subject,
+        html: emailContent.html,
+        text: emailContent.text,
+      })
     } catch (emailError) {
       console.error('[change-email] E-Mail-Versand fehlgeschlagen:', emailError)
       // Token zurücksetzen wenn E-Mail nicht gesendet werden konnte
