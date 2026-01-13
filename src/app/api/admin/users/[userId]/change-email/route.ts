@@ -13,7 +13,7 @@ export const dynamic = 'force-dynamic'
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: Promise<{ userId: string }> }
+  context: { params: { userId: string } }
 ) {
   try {
     const session = await getServerSession(authOptions)
@@ -36,8 +36,16 @@ export async function POST(
       )
     }
 
-    const { userId } = await params
-    const { newEmail, reason } = await request.json()
+    const userId = context.params.userId
+    
+    let body
+    try {
+      body = await request.json()
+    } catch (e) {
+      return NextResponse.json({ message: 'Ungültiger Request Body' }, { status: 400 })
+    }
+    
+    const { newEmail, reason } = body
 
     // Validierung
     if (!newEmail || typeof newEmail !== 'string') {
