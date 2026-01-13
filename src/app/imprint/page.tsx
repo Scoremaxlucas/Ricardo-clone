@@ -25,12 +25,35 @@ export default function ImprintPage() {
                       <p className="text-gray-700">
                         Die Seite helvenda.ch gehört und wird betrieben durch die
                         <br />
-                        <strong>Score-Max-GmbH</strong>
+                        <strong>Score-Max GmbH</strong>
                         <br />
-                        in der Hauswiese 2<br />
+                        In der Hauswiese 2<br />
                         8125 Zollikerberg
                         <br />
                         Schweiz
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="mb-2 font-semibold text-gray-900">Handelsregister:</p>
+                      <p className="text-gray-700">
+                        Eingetragen im Handelsregister des Kantons Zürich
+                        <br />
+                        Handelsregister-Nr.: CH-020.4.087.913-9
+                      </p>
+                    </div>
+
+                    <div>
+                      <p className="mb-2 font-semibold text-gray-900">
+                        Unternehmens-Identifikationsnummer (UID):
+                      </p>
+                      <p className="text-gray-700">CHE-241.917.894</p>
+                    </div>
+
+                    <div>
+                      <p className="mb-2 font-semibold text-gray-900">Rechtsform:</p>
+                      <p className="text-gray-700">
+                        Gesellschaft mit beschränkter Haftung (GmbH)
                       </p>
                     </div>
                   </div>

@@ -15,7 +15,7 @@ export async function POST(request: NextRequest) {
   let userCreated = false
 
   try {
-    const { firstName, lastName, nickname, email, password } = await request.json()
+    const { firstName, lastName, nickname, email, password, marketingConsent } = await request.json()
 
     // Normalize and trim all input fields first
     const trimmedFirstName = firstName?.trim() || ''
@@ -139,6 +139,9 @@ export async function POST(request: NextRequest) {
         emailVerified: false,
         emailVerificationToken: verificationToken,
         emailVerificationTokenExpires: tokenExpires,
+        // Marketing consent (DSGVO compliant)
+        marketingConsent: marketingConsent === true,
+        marketingConsentAt: marketingConsent === true ? new Date() : null,
       }
 
       try {

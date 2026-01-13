@@ -1,3 +1,4 @@
+import { CookieConsent } from '@/components/CookieConsent'
 import { DeferredComponents } from '@/components/DeferredComponents'
 import { SkipLinks } from '@/components/accessibility/SkipLinks'
 import { Providers } from '@/components/providers'
@@ -91,6 +92,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
 
           {/* Nicht-kritische Komponenten - verzögert geladen */}
           <DeferredComponents />
+
+          {/* Cookie-Consent-Banner - DSGVO/DSG konform */}
+          <CookieConsent />
         </Providers>
       </body>
     </html>

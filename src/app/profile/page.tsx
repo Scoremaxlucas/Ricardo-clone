@@ -618,6 +618,25 @@ export default function ProfilePage() {
               </div>
             )}
           </Card>
+
+          {/* Datenschutz-Link */}
+          <Card className="mt-6 p-4">
+            <Link
+              href="/settings/privacy"
+              className="flex items-center justify-between text-gray-700 hover:text-primary-600"
+            >
+              <div className="flex items-center gap-3">
+                <Lock className="h-5 w-5" />
+                <div>
+                  <p className="font-medium">Datenschutz & Daten</p>
+                  <p className="text-sm text-gray-500">
+                    Daten exportieren, Cookie-Einstellungen, Konto löschen
+                  </p>
+                </div>
+              </div>
+              <span className="text-gray-400">→</span>
+            </Link>
+          </Card>
         </div>
       </div>
     </div>

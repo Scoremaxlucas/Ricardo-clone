@@ -16,6 +16,7 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
   })
+  const [marketingConsent, setMarketingConsent] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -86,6 +87,7 @@ export default function RegisterPage() {
           nickname: formData.nickname.trim(),
           email: formData.email.trim(),
           password: formData.password,
+          marketingConsent,
         }),
       })
 
@@ -346,25 +348,57 @@ export default function RegisterPage() {
             </div>
           </div>
 
-          <div className="flex items-center">
-            <input
-              id="terms"
-              name="terms"
-              type="checkbox"
-              required
-              disabled={isLoading}
-              className="h-4 w-4 rounded border-gray-300 text-primary-600 transition-colors focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-            />
-            <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
-              Ich akzeptiere die{' '}
-              <Link href="/terms" className="text-primary-600 hover:text-primary-500">
-                Allgemeinen Geschäftsbedingungen
-              </Link>{' '}
-              und die{' '}
-              <Link href="/privacy" className="text-primary-600 hover:text-primary-500">
-                Datenschutzerklärung
-              </Link>
-            </label>
+          <div className="space-y-3">
+            <div className="flex items-start">
+              <input
+                id="age"
+                name="age"
+                type="checkbox"
+                required
+                disabled={isLoading}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 transition-colors focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <label htmlFor="age" className="ml-2 block text-sm text-gray-900">
+                Ich bestätige, dass ich mindestens <strong>18 Jahre alt</strong> bin.
+              </label>
+            </div>
+
+            <div className="flex items-start">
+              <input
+                id="terms"
+                name="terms"
+                type="checkbox"
+                required
+                disabled={isLoading}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 transition-colors focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
+                Ich akzeptiere die{' '}
+                <Link href="/terms" className="text-primary-600 hover:text-primary-500">
+                  Allgemeinen Geschäftsbedingungen
+                </Link>{' '}
+                und die{' '}
+                <Link href="/privacy" className="text-primary-600 hover:text-primary-500">
+                  Datenschutzerklärung
+                </Link>
+              </label>
+            </div>
+
+            <div className="flex items-start">
+              <input
+                id="marketing"
+                name="marketing"
+                type="checkbox"
+                checked={marketingConsent}
+                onChange={(e) => setMarketingConsent(e.target.checked)}
+                disabled={isLoading}
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 transition-colors focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+              />
+              <label htmlFor="marketing" className="ml-2 block text-sm text-gray-600">
+                Ich möchte den Newsletter erhalten und über Angebote, Aktionen und Neuigkeiten
+                informiert werden. <span className="text-gray-400">(optional)</span>
+              </label>
+            </div>
           </div>
 
           <div>

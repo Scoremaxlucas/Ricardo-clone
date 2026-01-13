@@ -13,6 +13,7 @@
  * - Improved space efficiency while maintaining accessibility
  */
 
+import { CookieSettingsButton } from '@/components/CookieConsent'
 import { Logo } from '@/components/ui/Logo'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { ChevronDown } from 'lucide-react'
@@ -151,6 +152,14 @@ export function Footer() {
                   {t.header.feesAndInvoices}
                 </Link>
               </li>
+              <li>
+                <Link
+                  href="/fees"
+                  className="text-sm text-white/80 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0f766e]"
+                >
+                  Gebührenreglement
+                </Link>
+              </li>
             </ul>
           </div>
 
@@ -260,6 +269,7 @@ export function Footer() {
               >
                 {t.footer.imprint}
               </Link>
+              <CookieSettingsButton />
             </nav>
           </div>
         </div>

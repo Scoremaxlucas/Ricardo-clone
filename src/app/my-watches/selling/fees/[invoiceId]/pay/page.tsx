@@ -168,8 +168,8 @@ export default function InvoicePaymentPage() {
 
         <div className="mt-6 rounded-lg border border-blue-200 bg-blue-50 p-4">
           <p className="text-sm text-blue-800">
-            <strong>Hinweis:</strong> Bei Zahlung per TWINT oder Kreditkarte wird die Rechnung 
-            sofort als bezahlt markiert. Bei Banküberweisung kann es 1-2 Werktage dauern. 
+            <strong>Hinweis:</strong> Bei Zahlung per TWINT oder Kreditkarte wird die Rechnung
+            sofort als bezahlt markiert. Bei Banküberweisung kann es 1-2 Werktage dauern.
             Ihr Konto wird nach Zahlungseingang automatisch entsperrt (falls gesperrt).
           </p>
         </div>

@@ -4341,3 +4341,158 @@ export function getInvoiceReminderEmail(options: InvoiceReminderOptions) {
 
   return html
 }
+
+// ============================================
+// ACCOUNT DELETION EMAIL (DSGVO/DSG)
+// ============================================
+
+/**
+ * E-Mail zur Bestätigung der Kontolöschung
+ */
+export function getAccountDeletionRequestEmail(
+  userName: string,
+  confirmationUrl: string,
+  expirationHours: number = 24
+) {
+  const subject = 'Bestätigung Ihrer Kontolöschung bei Helvenda'
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
+    .warning-box { background: #fef3c7; border-left: 4px solid #f59e0b; padding: 16px 20px; margin: 20px 0; border-radius: 4px; }
+    .button { display: inline-block; background: #dc2626; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: 600; margin: 20px 0; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin: 0; font-size: 24px;">Kontolöschung bestätigen</h1>
+  </div>
+  <div class="content">
+    <p>Hallo ${userName},</p>
+
+    <p>Sie haben die Löschung Ihres Helvenda-Kontos angefordert. Diese Aktion ist <strong>unwiderruflich</strong>.</p>
+
+    <div class="warning-box">
+      <p style="margin: 0; font-weight: 600; color: #92400e;">⚠️ Wichtig: Folgende Daten werden gelöscht:</p>
+      <ul style="margin: 10px 0 0 0; padding-left: 20px; color: #92400e;">
+        <li>Ihr Benutzerprofil und alle persönlichen Daten</li>
+        <li>Ihre Favoriten und Suchaufträge</li>
+        <li>Ihre Nachrichten</li>
+      </ul>
+      <p style="margin: 10px 0 0 0; color: #92400e;">
+        <strong>Hinweis:</strong> Transaktionsdaten werden gemäss gesetzlicher Aufbewahrungspflicht (10 Jahre) anonymisiert aufbewahrt.
+      </p>
+    </div>
+
+    <p>Wenn Sie Ihr Konto wirklich löschen möchten, klicken Sie auf den folgenden Button:</p>
+
+    <div style="text-align: center;">
+      <a href="${confirmationUrl}" class="button">Kontolöschung bestätigen</a>
+    </div>
+
+    <p style="font-size: 14px; color: #6b7280;">
+      Dieser Link ist ${expirationHours} Stunden gültig. Wenn Sie die Löschung nicht angefordert haben, ignorieren Sie diese E-Mail.
+    </p>
+
+    <div class="footer">
+      <p>Mit freundlichen Grüssen<br>Ihr Helvenda-Team</p>
+      <p>© ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Hallo ${userName},
+
+Sie haben die Löschung Ihres Helvenda-Kontos angefordert.
+
+WICHTIG: Diese Aktion ist unwiderruflich. Folgende Daten werden gelöscht:
+- Ihr Benutzerprofil und alle persönlichen Daten
+- Ihre Favoriten und Suchaufträge
+- Ihre Nachrichten
+
+Hinweis: Transaktionsdaten werden gemäss gesetzlicher Aufbewahrungspflicht (10 Jahre) anonymisiert aufbewahrt.
+
+Um die Löschung zu bestätigen, öffnen Sie folgenden Link:
+${confirmationUrl}
+
+Dieser Link ist ${expirationHours} Stunden gültig.
+
+Wenn Sie die Löschung nicht angefordert haben, ignorieren Sie diese E-Mail.
+
+Mit freundlichen Grüssen
+Ihr Helvenda-Team
+  `.trim()
+
+  return { subject, html, text }
+}
+
+/**
+ * Bestätigungs-E-Mail nach erfolgreicher Kontolöschung
+ */
+export function getAccountDeletionConfirmationEmail(userName: string) {
+  const subject = 'Ihr Helvenda-Konto wurde gelöscht'
+
+  const html = `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; line-height: 1.6; color: #333; max-width: 600px; margin: 0 auto; padding: 20px; }
+    .header { background: linear-gradient(135deg, #0f766e 0%, #134e4a 100%); color: white; padding: 30px; border-radius: 8px 8px 0 0; text-align: center; }
+    .content { background: #ffffff; padding: 30px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 8px 8px; }
+    .success-box { background: #d1fae5; border-left: 4px solid #10b981; padding: 16px 20px; margin: 20px 0; border-radius: 4px; }
+    .footer { margin-top: 30px; padding-top: 20px; border-top: 1px solid #e5e7eb; text-align: center; color: #6b7280; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <div class="header">
+    <h1 style="margin: 0; font-size: 24px;">Konto erfolgreich gelöscht</h1>
+  </div>
+  <div class="content">
+    <p>Hallo ${userName},</p>
+
+    <div class="success-box">
+      <p style="margin: 0; color: #065f46;">✓ Ihr Helvenda-Konto wurde erfolgreich gelöscht.</p>
+    </div>
+
+    <p>Alle Ihre persönlichen Daten wurden aus unseren Systemen entfernt. Transaktionsdaten werden gemäss gesetzlicher Aufbewahrungspflicht anonymisiert aufbewahrt.</p>
+
+    <p>Wir bedauern, Sie als Mitglied zu verlieren. Falls Sie in Zukunft wieder bei uns kaufen oder verkaufen möchten, können Sie jederzeit ein neues Konto erstellen.</p>
+
+    <div class="footer">
+      <p>Mit freundlichen Grüssen<br>Ihr Helvenda-Team</p>
+      <p>© ${new Date().getFullYear()} Helvenda.ch - Schweizer Online-Marktplatz</p>
+    </div>
+  </div>
+</body>
+</html>
+  `.trim()
+
+  const text = `
+Hallo ${userName},
+
+Ihr Helvenda-Konto wurde erfolgreich gelöscht.
+
+Alle Ihre persönlichen Daten wurden aus unseren Systemen entfernt. Transaktionsdaten werden gemäss gesetzlicher Aufbewahrungspflicht anonymisiert aufbewahrt.
+
+Falls Sie in Zukunft wieder bei uns kaufen oder verkaufen möchten, können Sie jederzeit ein neues Konto erstellen.
+
+Mit freundlichen Grüssen
+Ihr Helvenda-Team
+  `.trim()
+
+  return { subject, html, text }
+}

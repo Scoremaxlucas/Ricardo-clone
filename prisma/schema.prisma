@@ -161,7 +161,17 @@ model User {
   // === BEXIO INTEGRATION ===
   bexioContactId Int? // Bexio Contact ID for syncing
 
+  // === ACCOUNT DELETION (DSGVO/DSG) ===
+  deletionRequestedAt   DateTime?
+  deletionToken         String?
+  deletionTokenExpires  DateTime?
+
+  // === MARKETING CONSENT (DSGVO/DSG) ===
+  marketingConsent      Boolean   @default(false)
+  marketingConsentAt    DateTime?
+
   @@index([bexioContactId])
+  @@index([deletionToken])
   @@map("users")
 }
 

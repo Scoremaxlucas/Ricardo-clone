@@ -38,7 +38,7 @@ interface InvoicePaymentMethodsProps {
 
 /**
  * InvoicePaymentMethods - Zahlungskomponente für Gebühren-Rechnungen an Helvenda
- * 
+ *
  * Zahlungsoptionen:
  * 1. TWINT / Kreditkarte über Stripe (automatische Bestätigung, kein Onboarding für Zahler)
  * 2. Banküberweisung (Swiss QR-Bill)
@@ -247,7 +247,7 @@ Betrag: ${paymentInfo.currency} ${paymentInfo.amount.toFixed(2)}`
               <div className="flex items-start gap-2">
                 <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-green-600" />
                 <div className="text-sm text-green-800">
-                  <strong>Vorteile:</strong> Sofortige Bestätigung, automatische Zuordnung zur 
+                  <strong>Vorteile:</strong> Sofortige Bestätigung, automatische Zuordnung zur
                   Rechnung. Kein Konto oder Registrierung nötig.
                 </div>
               </div>
@@ -419,7 +419,7 @@ Betrag: ${paymentInfo.currency} ${paymentInfo.amount.toFixed(2)}`
               <div className="flex items-start gap-2">
                 <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
                 <div className="text-sm text-yellow-800">
-                  <strong>Hinweis:</strong> Banküberweisungen können 1-2 Werktage dauern. 
+                  <strong>Hinweis:</strong> Banküberweisungen können 1-2 Werktage dauern.
                   Die Rechnung wird nach Zahlungseingang automatisch als bezahlt markiert.
                 </div>
               </div>
