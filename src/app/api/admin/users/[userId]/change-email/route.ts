@@ -102,15 +102,11 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
         email: normalizedEmail,
         emailVerified: true,
         emailVerifiedAt: new Date(),
+        pendingEmail: null,
+        pendingEmailToken: null,
+        pendingEmailTokenExpires: null,
       },
     })
-    
-    // Versuche auch pending-Felder zu löschen (falls sie existieren)
-    try {
-      await prisma.$executeRaw`UPDATE users SET "pendingEmail" = NULL, "pendingEmailToken" = NULL, "pendingEmailTokenExpires" = NULL WHERE id = ${userId}`
-    } catch {
-      // Felder existieren möglicherweise nicht - ignorieren
-    }
 
     console.log(
       `[admin-change-email] Admin ${session.user.id} changed email for user ${userId}: ${oldEmail} -> ${normalizedEmail}${reason ? ` (Reason: ${reason})` : ''}`
