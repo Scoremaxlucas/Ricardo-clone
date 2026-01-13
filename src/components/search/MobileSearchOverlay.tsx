@@ -133,16 +133,28 @@ function MobileSearchOverlayContent({ isOpen, onClose }: MobileSearchOverlayProp
     inputRef.current?.focus()
   }, [])
 
+  const [isAnimating, setIsAnimating] = useState(false)
+
+  useEffect(() => {
+    if (isOpen) {
+      requestAnimationFrame(() => setIsAnimating(true))
+    }
+  }, [isOpen])
+
   if (!isOpen) return null
 
   return (
-    <div className="fixed inset-0 z-[100] bg-white md:hidden">
+    <div
+      className={`fixed inset-0 z-[100] bg-white md:hidden transition-all duration-200 ${
+        isAnimating ? 'opacity-100' : 'opacity-0'
+      }`}
+    >
       {/* Header */}
       <div className="flex items-center gap-2 border-b border-gray-200 px-4 py-3">
         <button
           type="button"
           onClick={onClose}
-          className="flex items-center justify-center rounded-full text-gray-600 transition-colors hover:bg-gray-100"
+          className="flex items-center justify-center rounded-full text-gray-600 transition-all duration-200 hover:bg-gray-100 active:scale-95"
           style={{ minWidth: '44px', minHeight: '44px' }}
           aria-label="Zurück"
         >
@@ -207,7 +219,7 @@ function MobileSearchOverlayContent({ isOpen, onClose }: MobileSearchOverlayProp
                   <button
                     type="button"
                     onClick={() => handleSubmit(suggestion)}
-                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-50 active:bg-gray-100"
+                    className="flex w-full items-center gap-3 px-4 py-3 text-left text-gray-700 transition-all duration-150 hover:bg-gray-50 hover:pl-5 active:bg-gray-100"
                   >
                     <Search className="h-5 w-5 flex-shrink-0 text-gray-400" />
                     <span className="text-base">{suggestion}</span>

@@ -455,13 +455,13 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
           ))}
         </div>
 
-        {/* "Mehr laden" Button - wie Ricardo */}
+        {/* "Mehr laden" Button - Ricardo-style with smooth animation */}
         {hasMore && (
           <div className="mt-8 flex justify-center">
             <button
               onClick={loadMoreProducts}
               disabled={loadingMore}
-              className="group flex items-center gap-2 rounded-full border-2 border-primary-600 bg-white px-8 py-3 font-semibold text-primary-600 transition-all hover:bg-primary-600 hover:text-white disabled:cursor-not-allowed disabled:opacity-50"
+              className="group flex items-center gap-2 rounded-full border-2 border-primary-600 bg-white px-8 py-3 font-semibold text-primary-600 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-600 hover:text-white hover:shadow-lg active:translate-y-0 active:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
             >
               {loadingMore ? (
                 <>
@@ -471,7 +471,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
               ) : (
                 <>
                   <span>Mehr Artikel laden</span>
-                  <ChevronDown className="h-5 w-5 transition-transform group-hover:translate-y-0.5" />
+                  <ChevronDown className="h-5 w-5 transition-transform duration-200 group-hover:translate-y-1" />
                 </>
               )}
             </button>

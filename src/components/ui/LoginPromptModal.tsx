@@ -6,6 +6,7 @@
  * - Primary teal button for login action
  * - Subtle shadow and backdrop
  * - Mobile responsive
+ * - Smooth animations (Ricardo-style)
  */
 
 'use client'
@@ -13,6 +14,7 @@
 import { X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
+import { useEffect, useState } from 'react'
 import { Button } from './Button'
 import { Logo } from './Logo'
 
@@ -34,8 +36,25 @@ export function LoginPromptModal({
   loginHref,
 }: LoginPromptModalProps) {
   const router = useRouter()
+  const [isVisible, setIsVisible] = useState(false)
+  const [isAnimating, setIsAnimating] = useState(false)
 
-  if (!isOpen) return null
+  useEffect(() => {
+    if (isOpen) {
+      setIsVisible(true)
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          setIsAnimating(true)
+        })
+      })
+    } else {
+      setIsAnimating(false)
+      const timer = setTimeout(() => setIsVisible(false), 200)
+      return () => clearTimeout(timer)
+    }
+  }, [isOpen])
+
+  if (!isVisible) return null
 
   const handleLogin = () => {
     const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
@@ -45,17 +64,21 @@ export function LoginPromptModal({
 
   return (
     <div
-      className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/50 p-4"
+      className={`fixed inset-0 z-[9999] flex items-center justify-center p-4 transition-all duration-200 ${
+        isAnimating ? 'bg-black/40' : 'bg-black/0'
+      }`}
       onClick={onClose}
     >
       <div
-        className="relative w-full max-w-md rounded-xl bg-white shadow-2xl ring-1 ring-gray-100"
+        className={`relative w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100 transition-all duration-300 ${
+          isAnimating ? 'scale-100 opacity-100' : 'scale-95 opacity-0'
+        }`}
         onClick={e => e.stopPropagation()}
       >
         {/* Close Button */}
         <button
           onClick={onClose}
-          className="absolute right-4 top-4 rounded-lg p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+          className="absolute right-4 top-4 rounded-full p-2 text-gray-400 transition-all duration-200 hover:bg-gray-100 hover:text-gray-600 active:scale-95"
           aria-label="Schließen"
         >
           <X className="h-5 w-5" />

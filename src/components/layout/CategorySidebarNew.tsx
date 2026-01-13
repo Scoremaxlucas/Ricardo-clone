@@ -762,10 +762,10 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
           <h2 className="text-lg font-bold text-gray-900">{t.selling.allCategories}</h2>
           <button
             onClick={handleClose}
-            className="flex h-8 w-8 items-center justify-center rounded-lg transition-colors hover:bg-gray-100"
+            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-all duration-200 hover:bg-gray-100 hover:text-gray-600 active:scale-95"
             aria-label="Close"
           >
-            <X size={20} className="text-gray-600" />
+            <X size={20} />
           </button>
         </div>
 

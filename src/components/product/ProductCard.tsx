@@ -206,12 +206,12 @@ export function ProductCard({
   const bidCount = product.bids?.length || 0
   const timeLeft = product.auctionEnd ? formatTimeLeft(product.auctionEnd) : ''
 
-  // Default variant - Ricardo-level implementation
+  // Default variant - Ricardo-level implementation with smooth animations
   return (
     <Link
       href={productHref}
       prefetch={true}
-      className={`group w-full overflow-hidden rounded-2xl border bg-white shadow-sm transition hover:shadow-md ${className}`}
+      className={`group w-full overflow-hidden rounded-2xl border border-gray-100 bg-white shadow-sm transition-all duration-300 ease-out hover:-translate-y-1 hover:shadow-lg hover:border-gray-200 ${className}`}
     >
       {/* Media Container - Fixed 4:3 ratio */}
       <div className="relative aspect-[4/3] w-full overflow-hidden bg-gray-100">
@@ -341,15 +341,21 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Top-right Heart Button - Min 44x44px for touch */}
+        {/* Top-right Heart Button - Min 44x44px for touch with smooth animation */}
         <button
           onClick={handleFavoriteClick}
-          className="absolute right-2 top-2 inline-flex items-center justify-center rounded-full bg-white/90 shadow-sm backdrop-blur transition hover:bg-white"
+          className={`absolute right-2 top-2 inline-flex items-center justify-center rounded-full shadow-sm backdrop-blur transition-all duration-200 active:scale-90 ${
+            isFavorite
+              ? 'bg-red-50 hover:bg-red-100'
+              : 'bg-white/90 hover:bg-white hover:shadow-md'
+          }`}
           style={{ minWidth: '44px', minHeight: '44px' }}
           aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
         >
           <Heart
-            className={`h-5 w-5 ${isFavorite ? 'fill-red-500 text-red-500' : 'text-gray-600'}`}
+            className={`h-5 w-5 transition-all duration-200 ${
+              isFavorite ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-500 hover:text-red-400'
+            }`}
           />
         </button>
       </div>

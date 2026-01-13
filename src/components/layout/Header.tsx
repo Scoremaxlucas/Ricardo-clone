@@ -328,17 +328,17 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               style={{ WebkitOverflowScrolling: 'touch' }}
             >
               <div className="flex min-w-0 items-center gap-1.5 py-2">
-                {/* "Alle Kategorien" Button */}
+                {/* "Alle Kategorien" Button - with smooth animation */}
                 <button
                   type="button"
                   onClick={() => setIsSidebarOpen(true)}
-                  className="flex flex-shrink-0 items-center gap-1.5 rounded-md border border-primary-200 bg-primary-50 px-2.5 py-1.5 text-xs font-medium text-gray-900 transition-colors hover:bg-primary-100"
+                  className="flex flex-shrink-0 items-center gap-1.5 rounded-md border border-primary-200 bg-primary-50 px-2.5 py-1.5 text-xs font-medium text-gray-900 transition-all duration-200 hover:bg-primary-100 hover:border-primary-300 hover:shadow-sm active:scale-95"
                 >
                   <Menu className="h-3.5 w-3.5" />
                   <span className="whitespace-nowrap">Alle</span>
                 </button>
 
-                {/* Top Categories - Horizontal Scroll */}
+                {/* Top Categories - Horizontal Scroll with smooth animations */}
                 {[
                   { slug: 'kleidung-accessoires', name: 'Kleidung', icon: Shirt },
                   { slug: 'auto-motorrad', name: 'Fahrzeuge', icon: Car },
@@ -352,7 +352,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   <Link
                     key={category.slug}
                     href={`/search?category=${category.slug}`}
-                    className="flex flex-shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:bg-white hover:text-primary-600"
+                    className="flex flex-shrink-0 items-center gap-1.5 rounded-md px-2.5 py-1.5 text-xs font-medium text-gray-700 transition-all duration-200 hover:bg-white hover:text-primary-600 hover:shadow-sm active:scale-95"
                   >
                     <category.icon className="h-3.5 w-3.5 flex-shrink-0" />
                     <span className="whitespace-nowrap">{category.name}</span>
@@ -716,21 +716,21 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
       >
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="flex h-11 items-center justify-center gap-1">
-            {/* "Alle Kategorien" Button - GANZ LINKS - Opens existing sidebar */}
+            {/* "Alle Kategorien" Button - GANZ LINKS - Opens existing sidebar with smooth animation */}
             <button
               type="button"
               onClick={() => setIsSidebarOpen(true)}
-              className="flex items-center gap-1.5 rounded-md bg-primary-50 px-3 py-1.5 text-[13px] font-semibold text-primary-700 transition-colors hover:bg-primary-100 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+              className="group flex items-center gap-1.5 rounded-md bg-primary-50 px-3 py-1.5 text-[13px] font-semibold text-primary-700 transition-all duration-200 hover:bg-primary-100 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 active:scale-[0.98]"
             >
               <Grid3x3 className="h-4 w-4 flex-shrink-0" />
               <span className="whitespace-nowrap">Alle Kategorien</span>
-              <ChevronRight className="h-3 w-3" />
+              <ChevronRight className="h-3 w-3 transition-transform duration-200 group-hover:translate-x-0.5" />
             </button>
 
             {/* Divider */}
             <div className="mx-1 h-5 w-px bg-gray-300" />
 
-            {/* Top 8 Categories */}
+            {/* Top 8 Categories with smooth hover animations */}
             {[
               { slug: 'auto-motorrad', name: 'Auto & Motorrad', icon: Car },
               { slug: 'computer-netzwerk', name: 'Computer & Netzwerk', icon: Laptop },
@@ -744,9 +744,9 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               <Link
                 key={category.slug}
                 href={`/search?category=${category.slug}`}
-                className="flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-gray-700 transition-colors hover:bg-white hover:text-primary-600 hover:shadow-sm focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1"
+                className="group flex items-center gap-1.5 rounded-md px-3 py-1.5 text-[13px] font-medium text-gray-700 transition-all duration-200 hover:-translate-y-px hover:bg-white hover:text-primary-600 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 active:translate-y-0"
               >
-                <category.icon className="h-4 w-4 flex-shrink-0" />
+                <category.icon className="h-4 w-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
                 <span className="whitespace-nowrap">{category.name}</span>
               </Link>
             ))}
