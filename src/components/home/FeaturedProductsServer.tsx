@@ -26,7 +26,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   // KRITISCH: Setze State SYNCHRON beim Initialisieren, keine Verzögerung!
   const [products, setProducts] = useState<ProductItem[]>(initialProducts)
   const [loading, setLoading] = useState(false) // Kein Loading mehr - alles sofort verfügbar!
-  
+
   // "Mehr laden" State
   const [loadingMore, setLoadingMore] = useState(false)
   const [hasMore, setHasMore] = useState(true) // Gibt es noch mehr Produkte?

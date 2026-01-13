@@ -783,15 +783,17 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               </button>
             )}
 
-            {/* Auktionen */}
-            <Link
-              href="/auctions"
-              onClick={() => setIsMobileMenuOpen(false)}
-              className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-            >
-              <Gavel className="h-5 w-5" />
-              <span className="font-medium">{t.header.auctions}</span>
-            </Link>
+            {/* Admin Dashboard - nur für Admins */}
+            {(deferredData.isAdmin || (session?.user as any)?.isAdmin) && (
+              <Link
+                href="/admin/dashboard"
+                onClick={() => setIsMobileMenuOpen(false)}
+                className="flex w-full items-center gap-3 rounded-lg bg-amber-50 px-4 py-3 text-left text-amber-700 transition-colors hover:bg-amber-100"
+              >
+                <Shield className="h-5 w-5" />
+                <span className="font-medium">{t.header.adminDashboard}</span>
+              </Link>
+            )}
 
             {/* Verkaufen */}
             <Link
