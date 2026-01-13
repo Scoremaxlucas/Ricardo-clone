@@ -810,14 +810,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               <>
                 <div className="my-2 border-t border-gray-200" />
                 <Link
-                  href="/my-watches"
-                  onClick={() => setIsMobileMenuOpen(false)}
-                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
-                >
-                  <Package className="h-5 w-5" />
-                  <span className="font-medium">{t.header.mySelling}</span>
-                </Link>
-                <Link
                   href="/profile"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
@@ -826,12 +818,45 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   <span className="font-medium">{t.header.myProfile}</span>
                 </Link>
                 <Link
+                  href="/my-watches"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+                >
+                  <Package className="h-5 w-5" />
+                  <span className="font-medium">{t.header.mySelling}</span>
+                </Link>
+                <Link
+                  href="/my-watches/buying"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+                >
+                  <ShoppingBag className="h-5 w-5" />
+                  <span className="font-medium">{t.header.myBuying}</span>
+                </Link>
+                <Link
                   href="/my-watches/account"
                   onClick={() => setIsMobileMenuOpen(false)}
                   className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
                 >
                   <Settings className="h-5 w-5" />
                   <span className="font-medium">{t.header.settings}</span>
+                </Link>
+                <div className="my-2 border-t border-gray-200" />
+                <Link
+                  href="/my-watches/selling/fees"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+                >
+                  <Wallet className="h-5 w-5" />
+                  <span className="font-medium">{t.header.feesAndInvoices}</span>
+                </Link>
+                <Link
+                  href="/my-watches/selling/cancel-request"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-left text-gray-700 transition-colors hover:bg-gray-100"
+                >
+                  <X className="h-5 w-5" />
+                  <span className="font-medium">{t.header.cancel}</span>
                 </Link>
                 <div className="my-2 border-t border-gray-200" />
                 <button
