@@ -83,6 +83,7 @@ export default function EditWatchPage() {
     auctionStart: '',
     auctionEnd: '',
     auctionDuration: '',
+    auctionDays: '', // Auction duration in days
     autoRenew: false,
     lastRevision: '',
     accuracy: '',
@@ -207,6 +208,7 @@ export default function EditWatchPage() {
             : '',
           auctionEnd: watch.auctionEnd ? new Date(watch.auctionEnd).toISOString().slice(0, 16) : '',
           auctionDuration: auctionDuration,
+          auctionDays: auctionDuration, // Same as auctionDuration
           autoRenew: watch.autoRenew || false,
           lastRevision: watch.lastRevision
             ? new Date(watch.lastRevision).toISOString().slice(0, 10)

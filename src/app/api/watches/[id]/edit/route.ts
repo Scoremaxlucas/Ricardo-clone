@@ -135,18 +135,18 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
     const attemptedChanges = Object.keys(data).filter(key => {
       if (data[key] === undefined || data[key] === null) return false
       if (key === 'booster') return false // Booster wird separat behandelt
-      
+
       // Felder die keine echten Datenfelder sind
       if (['category', 'subcategory'].includes(key)) {
         // Diese werden nur geprüft wenn sie sich vom aktuellen Wert unterscheiden
         // Kategorie: Prüfe gegen existierende Kategorie
         if (key === 'category') {
-          const currentCategory = watch.categories?.[0]?.slug || ''
+          const currentCategory = watch.categories?.[0]?.category?.slug || ''
           return data[key] !== currentCategory
         }
         return false
       }
-      
+
       return true
     })
 
@@ -165,7 +165,7 @@ export async function PUT(request: NextRequest, { params }: { params: Promise<{ 
       } else {
         // For PUBLISHED_LIMITED: Prüfe ob Feld erlaubt ist
         // Aber erlaube immer grundlegende Felder die Ricardo auch erlaubt
-        const alwaysAllowedFields = ['brand', 'model', 'referenceNumber', 'year', 'condition', 
+        const alwaysAllowedFields = ['brand', 'model', 'referenceNumber', 'year', 'condition',
           'material', 'movement', 'caseDiameter', 'auctionDays', 'auctionEnd']
         if (alwaysAllowedFields.includes(field)) {
           continue // Diese Felder sind immer erlaubt
