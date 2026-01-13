@@ -2,7 +2,7 @@ import { authOptions } from '@/lib/auth'
 import { getAccountDeletionRequestEmail, getEmailBaseUrl, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import crypto from 'crypto'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
