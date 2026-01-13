@@ -41,7 +41,7 @@ export async function POST() {
         // Prüfe offene Verpflichtungen
         watches: {
           where: {
-            status: { in: ['active', 'pending'] },
+            moderationStatus: { in: ['approved', 'pending'] },
           },
           select: { id: true },
         },
