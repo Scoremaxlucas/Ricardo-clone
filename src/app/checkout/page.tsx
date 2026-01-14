@@ -2,7 +2,7 @@
 
 import { Card } from '@/components/ui/Card'
 import { getShippingCostForMethod } from '@/lib/shipping'
-import { ArrowLeft, CreditCard, Loader2, Shield, ShoppingCart, MapPin } from 'lucide-react'
+import { ArrowLeft, CreditCard, Loader2, Shield, ShoppingCart, MapPin, Package, Check, Truck } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
@@ -20,6 +20,19 @@ interface Watch {
   year?: number
   shippingMethod: string | null
   paymentProtectionEnabled?: boolean
+}
+
+// Zustand formatieren (z.B. "sehr-gut" → "Sehr gut")
+const formatCondition = (condition: string): string => {
+  const conditionMap: Record<string, string> = {
+    'neu': 'Neu',
+    'neuwertig': 'Neuwertig',
+    'sehr-gut': 'Sehr gut',
+    'gut': 'Gut',
+    'akzeptabel': 'Akzeptabel',
+    'defekt': 'Defekt',
+  }
+  return conditionMap[condition?.toLowerCase()] || condition
 }
 
 function CheckoutPageContent() {
@@ -225,10 +238,12 @@ function CheckoutPageContent() {
 
   if (loading || status === 'loading') {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="flex items-center gap-2 text-gray-500">
-          <Loader2 className="h-5 w-5 animate-spin" />
-          <span>Lädt...</span>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
+        <div className="text-center">
+          <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg">
+            <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+          </div>
+          <p className="text-sm font-medium text-gray-600">Kasse wird geladen...</p>
         </div>
       </div>
     )
@@ -236,13 +251,27 @@ function CheckoutPageContent() {
 
   if (error || !watch) {
     return (
-      <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="rounded-lg bg-white p-8 shadow-md">
-          <div className="text-red-600">{error || 'Artikel nicht gefunden'}</div>
-          <button onClick={() => router.back()} className="mt-4 text-primary-600 hover:underline">
-            Zurück
-          </button>
-        </div>
+      <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100 px-4">
+        <Card className="max-w-md overflow-hidden shadow-lg">
+          <div className="p-8 text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
+              <Package className="h-8 w-8 text-red-500" />
+            </div>
+            <h2 className="mb-2 text-xl font-semibold text-gray-900">
+              {error ? 'Ein Fehler ist aufgetreten' : 'Artikel nicht gefunden'}
+            </h2>
+            <p className="mb-6 text-sm text-gray-600">
+              {error || 'Der gesuchte Artikel konnte leider nicht gefunden werden.'}
+            </p>
+            <button 
+              onClick={() => router.back()} 
+              className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-3 font-medium text-white transition-colors hover:bg-primary-700"
+            >
+              <ArrowLeft className="mr-2 h-4 w-4" />
+              Zurück
+            </button>
+          </div>
+        </Card>
       </div>
     )
   }
@@ -284,262 +313,310 @@ function CheckoutPageContent() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-4xl px-4 py-8">
+    <div className="min-h-screen bg-gradient-to-b from-gray-50 to-gray-100">
+      <div className="mx-auto max-w-4xl px-4 py-6 md:py-8">
         {/* Header */}
-        <div className="mb-8 flex items-center">
-          <button onClick={() => router.back()} className="mr-4 rounded-lg p-2 hover:bg-gray-100">
+        <div className="mb-6 flex items-center">
+          <button 
+            onClick={() => router.back()} 
+            className="mr-3 rounded-full p-2 text-gray-600 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
+          >
             <ArrowLeft className="h-5 w-5" />
           </button>
-          <h1 className="text-2xl font-bold text-gray-900">Kasse</h1>
+          <div>
+            <h1 className="text-xl font-bold text-gray-900 md:text-2xl">Kasse</h1>
+            <p className="text-sm text-gray-500">Bestellung abschließen</p>
+          </div>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
+        <div className="grid grid-cols-1 gap-6 lg:grid-cols-2 lg:gap-8">
           {/* Order Summary */}
-          <div className="space-y-6">
-            <Card>
-              <div className="p-6">
-                <h2 className="mb-4 text-lg font-semibold">Bestellübersicht</h2>
+          <div className="space-y-4 md:space-y-6">
+            {/* Artikel-Card */}
+            <Card className="overflow-hidden shadow-sm">
+              <div className="bg-white p-4 md:p-6">
+                <h2 className="mb-4 flex items-center text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  <Package className="mr-2 h-4 w-4" />
+                  Artikel
+                </h2>
 
-                <div className="mb-4 flex items-center space-x-4">
-                  {watch.images && watch.images.length > 0 ? (
-                    <img
-                      src={watch.images[0]}
-                      alt={watch.title}
-                      className="h-16 w-16 rounded-lg object-cover"
-                    />
-                  ) : (
-                    <div className="h-16 w-16 rounded-lg bg-gray-200" />
-                  )}
-                  <div className="flex-1">
-                    <h3 className="font-medium text-gray-900">{watch.title}</h3>
-                    <p className="text-sm text-gray-500">
-                      {watch.brand} {watch.model}
-                    </p>
-                    <p className="text-sm text-gray-500">{watch.condition}</p>
-                    {watch.year && <p className="text-sm text-gray-500">{watch.year}</p>}
-                  </div>
-                  <div className="text-right">
-                    <p className="font-semibold text-gray-900">CHF {itemPrice.toLocaleString()}</p>
-                  </div>
-                </div>
-
-                {/* Versandauswahl */}
-                {shippingMethods.length > 0 && (
-                  <div className="mb-4 border-t pt-4">
-                    <h3 className="mb-3 text-sm font-medium text-gray-900">Lieferart</h3>
-                    <div className="space-y-2">
-                      {shippingMethods.map(method => (
-                        <label
-                          key={method}
-                          className="flex cursor-pointer items-center rounded-lg border border-gray-300 p-3 hover:bg-gray-50"
-                          style={{ minHeight: '44px' }}
-                        >
-                          <input
-                            type="radio"
-                            name="shipping"
-                            value={method}
-                            checked={selectedShipping === method}
-                            onChange={e => setSelectedShipping(e.target.value)}
-                            className="mr-3"
-                            style={{ minWidth: '20px', minHeight: '20px' }}
-                          />
-                          <div className="flex-1">
-                            {method === 'pickup' && (
-                              <span className="text-sm text-gray-700">Abholung (kostenlos)</span>
-                            )}
-                            {method === 'b-post' && (
-                              <span className="text-sm text-gray-700">
-                                Versand als Paket B-Post, bis 2 KG (CHF 8.50)
-                              </span>
-                            )}
-                            {method === 'a-post' && (
-                              <span className="text-sm text-gray-700">
-                                Versand als Paket A-Post, bis 2 KG (CHF 12.50)
-                              </span>
-                            )}
-                          </div>
-                          <div className="text-sm font-medium text-gray-900">
-                            {method === 'pickup'
-                              ? 'CHF 0.00'
-                              : method === 'b-post'
-                                ? 'CHF 8.50'
-                                : 'CHF 12.50'}
-                          </div>
-                        </label>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Preis-Zusammenfassung */}
-                <div className="border-t pt-4">
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Artikelpreis:</span>
-                      <span className="font-medium">CHF {itemPrice.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Versandkosten:</span>
-                      <span className="font-medium">CHF {shippingCost.toFixed(2)}</span>
-                    </div>
-                    {watch.paymentProtectionEnabled && (
-                      <div className="flex justify-between">
-                        <span className="text-gray-600">Zahlungsschutz:</span>
-                        <span className="font-medium text-green-600">Inklusive</span>
+                <div className="flex gap-4">
+                  {/* Bild */}
+                  <div className="flex-shrink-0">
+                    {watch.images && watch.images.length > 0 ? (
+                      <img
+                        src={watch.images[0]}
+                        alt={watch.title}
+                        className="h-24 w-24 rounded-lg border border-gray-100 object-cover shadow-sm md:h-28 md:w-28"
+                      />
+                    ) : (
+                      <div className="flex h-24 w-24 items-center justify-center rounded-lg bg-gray-100 md:h-28 md:w-28">
+                        <Package className="h-8 w-8 text-gray-300" />
                       </div>
                     )}
-                    <div className="border-t border-gray-200 pt-2">
-                      <div className="flex justify-between">
-                        <span className="font-semibold text-gray-900">Gesamt:</span>
-                        <span className="text-lg font-bold text-primary-600">
-                          CHF {totalPrice.toFixed(2)}
+                  </div>
+                  
+                  {/* Details */}
+                  <div className="flex flex-1 flex-col justify-between">
+                    <div>
+                      <h3 className="text-base font-semibold leading-tight text-gray-900 md:text-lg">
+                        {watch.title}
+                      </h3>
+                      <p className="mt-1 text-sm text-gray-600">
+                        {watch.brand} {watch.model}
+                      </p>
+                      <div className="mt-2 flex flex-wrap gap-2">
+                        <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                          {formatCondition(watch.condition)}
                         </span>
+                        {watch.year && (
+                          <span className="inline-flex items-center rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-700">
+                            {watch.year}
+                          </span>
+                        )}
                       </div>
+                    </div>
+                    <div className="mt-3">
+                      <p className="text-lg font-bold text-primary-600">
+                        CHF {itemPrice.toLocaleString('de-CH', { minimumFractionDigits: 2 })}
+                      </p>
                     </div>
                   </div>
                 </div>
               </div>
             </Card>
 
-            {/* Info-Karte je nach Modus */}
-            {selectedShipping === 'pickup' ? (
-              <Card>
-                <div className="p-6">
-                  <div className="flex items-start">
-                    <MapPin className="mr-3 h-6 w-6 text-primary-600" />
-                    <div>
-                      <h3 className="mb-2 font-semibold text-gray-900">Abholung beim Verkäufer</h3>
-                      <p className="text-sm text-gray-600">
-                        Nach der Kaufbestätigung erhalten Sie die Kontaktdaten des Verkäufers.
-                        Vereinbaren Sie einen Termin zur Abholung. Die Bezahlung erfolgt bar bei Übergabe.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ) : watch.paymentProtectionEnabled ? (
-              <Card>
-                <div className="p-6">
-                  <div className="flex items-start">
-                    <Shield className="mr-3 h-6 w-6 text-green-600" />
-                    <div>
-                      <h3 className="mb-2 font-semibold text-gray-900">Zahlungsschutz inklusive</h3>
-                      <p className="text-sm text-gray-600">
-                        Ihr Geld wird automatisch geschützt gehalten, bis Sie die Ware erhalten haben.
-                        Sie zahlen nur den Artikelpreis – ohne zusätzliche Gebühren. Bei Problemen
-                        können Sie die Transaktion reklamieren.
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </Card>
-            ) : (
-              <Card>
-                <div className="p-6">
-                  <div className="flex items-start">
-                    <Shield className="mr-3 h-6 w-6 text-gray-400" />
-                    <div>
-                      <h3 className="mb-2 font-semibold text-gray-900">Direktzahlung an Verkäufer</h3>
-                      <p className="text-sm text-gray-600">
-                        Nach der Kaufbestätigung erhalten Sie die Zahlungsdaten des Verkäufers.
-                        Der Verkäufer versendet nach Zahlungseingang. Der Helvenda Zahlungsschutz ist nicht aktiv.
-                      </p>
-                    </div>
+            {/* Versandauswahl */}
+            {shippingMethods.length > 0 && (
+              <Card className="overflow-hidden shadow-sm">
+                <div className="bg-white p-4 md:p-6">
+                  <h2 className="mb-4 flex items-center text-sm font-semibold uppercase tracking-wide text-gray-500">
+                    <Truck className="mr-2 h-4 w-4" />
+                    Lieferart wählen
+                  </h2>
+                  <div className="space-y-2">
+                    {shippingMethods.map(method => {
+                      const isSelected = selectedShipping === method
+                      const isPickup = method === 'pickup'
+                      const price = isPickup ? 0 : method === 'b-post' ? 8.50 : 12.50
+                      
+                      return (
+                        <label
+                          key={method}
+                          className={`flex cursor-pointer items-center rounded-xl border-2 p-4 transition-all ${
+                            isSelected 
+                              ? 'border-primary-500 bg-primary-50 shadow-sm' 
+                              : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <input
+                            type="radio"
+                            name="shipping"
+                            value={method}
+                            checked={isSelected}
+                            onChange={e => setSelectedShipping(e.target.value)}
+                            className="sr-only"
+                          />
+                          <div className={`mr-4 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${
+                            isSelected 
+                              ? 'border-primary-500 bg-primary-500' 
+                              : 'border-gray-300 bg-white'
+                          }`}>
+                            {isSelected && <Check className="h-3 w-3 text-white" />}
+                          </div>
+                          <div className="flex-1">
+                            <div className="flex items-center">
+                              {isPickup ? (
+                                <MapPin className="mr-2 h-4 w-4 text-gray-500" />
+                              ) : (
+                                <Package className="mr-2 h-4 w-4 text-gray-500" />
+                              )}
+                              <span className={`font-medium ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}>
+                                {isPickup ? 'Abholung' : method === 'b-post' ? 'Paket B-Post' : 'Paket A-Post'}
+                              </span>
+                            </div>
+                            <p className="ml-6 mt-0.5 text-xs text-gray-500">
+                              {isPickup 
+                                ? 'Direkt beim Verkäufer abholen' 
+                                : method === 'b-post' 
+                                  ? 'Lieferung in 3-4 Werktagen, bis 2 kg' 
+                                  : 'Lieferung in 1-2 Werktagen, bis 2 kg'}
+                            </p>
+                          </div>
+                          <div className={`text-sm font-bold ${isSelected ? 'text-primary-600' : 'text-gray-900'}`}>
+                            {isPickup ? 'Gratis' : `+ CHF ${price.toFixed(2)}`}
+                          </div>
+                        </label>
+                      )
+                    })}
                   </div>
                 </div>
               </Card>
             )}
+
+            {/* Preis-Zusammenfassung */}
+            <Card className="overflow-hidden shadow-sm">
+              <div className="bg-white p-4 md:p-6">
+                <h2 className="mb-4 flex items-center text-sm font-semibold uppercase tracking-wide text-gray-500">
+                  <CreditCard className="mr-2 h-4 w-4" />
+                  Zusammenfassung
+                </h2>
+                <div className="space-y-3">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Artikelpreis</span>
+                    <span className="font-medium text-gray-900">CHF {itemPrice.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-600">Lieferung</span>
+                    <span className={`font-medium ${shippingCost === 0 ? 'text-green-600' : 'text-gray-900'}`}>
+                      {shippingCost === 0 ? 'Gratis' : `CHF ${shippingCost.toFixed(2)}`}
+                    </span>
+                  </div>
+                  {watch.paymentProtectionEnabled && (
+                    <div className="flex justify-between text-sm">
+                      <span className="flex items-center text-gray-600">
+                        <Shield className="mr-1.5 h-3.5 w-3.5 text-green-500" />
+                        Käuferschutz
+                      </span>
+                      <span className="font-medium text-green-600">Inklusive</span>
+                    </div>
+                  )}
+                  <div className="border-t border-gray-200 pt-3">
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-semibold text-gray-900">Total</span>
+                      <span className="text-xl font-bold text-gray-900">
+                        CHF {totalPrice.toFixed(2)}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </Card>
+
           </div>
 
-          {/* Action Section */}
-          <div>
-            <Card>
-              <div className="p-6">
-                {/* Unterschiedliche Darstellung je nach Modus */}
-                {selectedShipping === 'pickup' ? (
-                  <>
-                    <h2 className="mb-4 flex items-center text-lg font-semibold">
-                      <MapPin className="mr-2 h-5 w-5" />
-                      Abholung
-                    </h2>
-                    <button
-                      onClick={handleCheckout}
-                      disabled={isProcessing || !selectedShipping}
-                      className="w-full rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700 disabled:opacity-50"
-                    >
-                      {isProcessing ? (
-                        <span className="flex items-center justify-center">
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Wird verarbeitet...
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-center">
-                          <ShoppingCart className="mr-2 h-5 w-5" />
-                          Jetzt kaufen
-                        </span>
-                      )}
-                    </button>
-                    <p className="mt-4 text-xs text-gray-500">
-                      Mit Klick auf "Jetzt kaufen" wird der Kauf verbindlich. Die Bezahlung erfolgt 
-                      bei Abholung direkt an den Verkäufer. Sie erhalten die Kontaktdaten des Verkäufers
-                      nach Kaufbestätigung.
+          {/* Right Column - Action Section */}
+          <div className="space-y-4 md:space-y-6">
+            {/* Info-Karte je nach Modus */}
+            {selectedShipping === 'pickup' ? (
+              <div className="rounded-xl border-2 border-primary-200 bg-primary-50 p-4">
+                <div className="flex items-start">
+                  <div className="mr-3 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-100">
+                    <MapPin className="h-5 w-5 text-primary-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-primary-800">Abholung beim Verkäufer</h3>
+                    <p className="mt-1 text-sm text-primary-700">
+                      Nach der Kaufbestätigung erhalten Sie die Kontaktdaten. 
+                      Bezahlung erfolgt bar bei Übergabe.
                     </p>
-                  </>
-                ) : watch.paymentProtectionEnabled ? (
-                  <>
-                    <h2 className="mb-4 flex items-center text-lg font-semibold">
-                      <CreditCard className="mr-2 h-5 w-5" />
-                      Zahlung
-                    </h2>
-                    <button
-                      onClick={handleCheckout}
-                      disabled={isProcessing || !selectedShipping}
-                      className="w-full rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700 disabled:opacity-50"
-                    >
-                      {isProcessing ? (
-                        <span className="flex items-center justify-center">
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Wird verarbeitet...
-                        </span>
-                      ) : (
-                        `Jetzt bezahlen - CHF ${totalPrice.toFixed(2)}`
-                      )}
-                    </button>
-                    <p className="mt-4 text-xs text-gray-500">
-                      Durch Klicken auf "Jetzt bezahlen" werden Sie zu Stripe weitergeleitet, um Ihre
-                      Zahlung sicher abzuschließen. Der Verkäufer versendet erst nach Zahlungseingang.
+                  </div>
+                </div>
+              </div>
+            ) : watch.paymentProtectionEnabled ? (
+              <div className="rounded-xl border-2 border-green-200 bg-green-50 p-4">
+                <div className="flex items-start">
+                  <div className="mr-3 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-green-100">
+                    <Shield className="h-5 w-5 text-green-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-green-800">Käuferschutz aktiv</h3>
+                    <p className="mt-1 text-sm text-green-700">
+                      Ihr Geld wird geschützt, bis Sie die Ware erhalten haben.
+                      Bei Problemen können Sie reklamieren.
                     </p>
-                  </>
-                ) : (
-                  <>
-                    <h2 className="mb-4 flex items-center text-lg font-semibold">
-                      <ShoppingCart className="mr-2 h-5 w-5" />
-                      Kauf bestätigen
-                    </h2>
-                    <button
-                      onClick={handleCheckout}
-                      disabled={isProcessing || !selectedShipping}
-                      className="w-full rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700 disabled:opacity-50"
-                    >
-                      {isProcessing ? (
-                        <span className="flex items-center justify-center">
-                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                          Wird verarbeitet...
-                        </span>
-                      ) : (
-                        <span className="flex items-center justify-center">
-                          <ShoppingCart className="mr-2 h-5 w-5" />
-                          Jetzt kaufen - CHF {totalPrice.toFixed(2)}
-                        </span>
-                      )}
-                    </button>
-                    <p className="mt-4 text-xs text-gray-500">
-                      Mit Klick auf "Jetzt kaufen" wird der Kauf verbindlich. Sie erhalten die 
-                      Kontakt- und Zahlungsdaten des Verkäufers nach Kaufbestätigung.
+                  </div>
+                </div>
+              </div>
+            ) : (
+              <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
+                <div className="flex items-start">
+                  <div className="mr-3 flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
+                    <CreditCard className="h-5 w-5 text-amber-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-amber-800">Direktzahlung</h3>
+                    <p className="mt-1 text-sm text-amber-700">
+                      Zahlung erfolgt direkt an den Verkäufer per Banküberweisung.
+                      Der Käuferschutz ist nicht aktiv.
                     </p>
-                  </>
-                )}
+                  </div>
+                </div>
+              </div>
+            )}
+
+            {/* Action Card */}
+            <Card className="overflow-hidden shadow-lg">
+              <div className="bg-white p-4 md:p-6">
+                {/* Total prominenter anzeigen */}
+                <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
+                  <span className="text-gray-600">Total zu zahlen</span>
+                  <span className="text-2xl font-bold text-gray-900">
+                    CHF {totalPrice.toFixed(2)}
+                  </span>
+                </div>
+
+                {/* Button je nach Modus */}
+                <button
+                  onClick={handleCheckout}
+                  disabled={isProcessing || !selectedShipping}
+                  className={`w-full rounded-xl px-6 py-4 font-semibold text-white shadow-md transition-all disabled:opacity-50 ${
+                    selectedShipping === 'pickup' 
+                      ? 'bg-primary-600 hover:bg-primary-700 hover:shadow-lg' 
+                      : watch.paymentProtectionEnabled 
+                        ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 hover:shadow-lg'
+                        : 'bg-primary-600 hover:bg-primary-700 hover:shadow-lg'
+                  }`}
+                >
+                  {isProcessing ? (
+                    <span className="flex items-center justify-center">
+                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                      Wird verarbeitet...
+                    </span>
+                  ) : selectedShipping === 'pickup' ? (
+                    <span className="flex items-center justify-center text-lg">
+                      <Check className="mr-2 h-5 w-5" />
+                      Jetzt kaufen
+                    </span>
+                  ) : watch.paymentProtectionEnabled ? (
+                    <span className="flex items-center justify-center text-lg">
+                      <Shield className="mr-2 h-5 w-5" />
+                      Sicher bezahlen
+                    </span>
+                  ) : (
+                    <span className="flex items-center justify-center text-lg">
+                      <Check className="mr-2 h-5 w-5" />
+                      Jetzt kaufen
+                    </span>
+                  )}
+                </button>
+
+                {/* Erklärungstext */}
+                <p className="mt-4 text-center text-xs leading-relaxed text-gray-500">
+                  {selectedShipping === 'pickup' ? (
+                    <>Mit Klick auf &quot;Jetzt kaufen&quot; wird der Kauf verbindlich. Die Bezahlung erfolgt bar bei Abholung.</>
+                  ) : watch.paymentProtectionEnabled ? (
+                    <>Sichere Zahlung über Stripe. Ihr Geld ist geschützt bis zur Lieferung.</>
+                  ) : (
+                    <>Mit Klick auf &quot;Jetzt kaufen&quot; wird der Kauf verbindlich. Sie erhalten die Zahlungsdaten des Verkäufers.</>
+                  )}
+                </p>
+
+                {/* Trust Badges */}
+                <div className="mt-4 flex items-center justify-center gap-4 border-t border-gray-100 pt-4">
+                  <div className="flex items-center text-xs text-gray-400">
+                    <Shield className="mr-1 h-3.5 w-3.5" />
+                    Sicher
+                  </div>
+                  <div className="flex items-center text-xs text-gray-400">
+                    <Check className="mr-1 h-3.5 w-3.5" />
+                    Einfach
+                  </div>
+                  <div className="flex items-center text-xs text-gray-400">
+                    <Truck className="mr-1 h-3.5 w-3.5" />
+                    Schnell
+                  </div>
+                </div>
               </div>
             </Card>
           </div>
@@ -552,7 +629,16 @@ function CheckoutPageContent() {
 export default function CheckoutPage() {
   return (
     <Suspense
-      fallback={<div className="flex min-h-screen items-center justify-center">Lädt...</div>}
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-gray-50 to-gray-100">
+          <div className="text-center">
+            <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg">
+              <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+            </div>
+            <p className="text-sm font-medium text-gray-600">Kasse wird geladen...</p>
+          </div>
+        </div>
+      }
     >
       <CheckoutPageContent />
     </Suspense>
