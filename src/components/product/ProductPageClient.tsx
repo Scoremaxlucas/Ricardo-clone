@@ -240,7 +240,7 @@ export function ProductPageClient({
   // Helper: Format shipping method from JSON or string
   const formatShippingMethod = (method: any): string => {
     if (!method) return ''
-    
+
     // If it's a string that looks like JSON array
     if (typeof method === 'string') {
       try {
@@ -257,13 +257,13 @@ export function ProductPageClient({
       } catch {
         // Not JSON, handle as plain string
       }
-      
+
       if (method === 'shipping') return 'Versand möglich'
       if (method === 'pickup') return 'Nur Abholung'
       if (method === 'both') return 'Versand oder Abholung'
       return method
     }
-    
+
     if (Array.isArray(method)) {
       return method.map((m: string) => {
         if (m === 'pickup') return 'Abholung'
@@ -273,7 +273,7 @@ export function ProductPageClient({
         return m
       }).join(' / ')
     }
-    
+
     return String(method)
   }
 
@@ -635,7 +635,7 @@ export function ProductPageClient({
               <h1 className="mb-1 text-xl font-bold text-gray-900">
                 {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
               </h1>
-              
+
               {/* Einstelldatum */}
               {watch.createdAt && (
                 <div className="mb-2 text-xs text-gray-500">
@@ -718,7 +718,7 @@ export function ProductPageClient({
                   sellerName={seller?.name || t.common.unknown}
                   sellerEmail={seller?.email || ''}
                 />
-                
+
                 {/* Report-Button Mobile */}
                 {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
                   <div className="mt-3 border-t border-gray-200 pt-3">
@@ -802,13 +802,13 @@ export function ProductPageClient({
                   </span>
                 </div>
               )}
-              
+
               {/* Zahlungsmethode - Wie Ricardo */}
               <div className="flex text-sm md:text-base">
                 <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Zahlungsmethode:</span>
                 <span className="w-2/3 text-gray-900">
-                  {(watch as any).paymentProtectionEnabled 
-                    ? 'Sichere Zahlung via Helvenda' 
+                  {(watch as any).paymentProtectionEnabled
+                    ? 'Sichere Zahlung via Helvenda'
                     : 'Barzahlung bei Übergabe'}
                 </span>
               </div>
@@ -845,7 +845,7 @@ export function ProductPageClient({
             <h1 className="mb-2 text-xl font-bold text-gray-900 lg:text-2xl">
               {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
             </h1>
-            
+
             {/* Datum mit Clock-Icon wie Ricardo */}
             {watch.createdAt && (
               <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-500">

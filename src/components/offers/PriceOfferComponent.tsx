@@ -1,7 +1,6 @@
 'use client'
 
 import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
-import { VerificationModal } from '@/components/verification/VerificationModal'
 import {
   AlertCircle,
   ChevronDown,
@@ -46,9 +45,6 @@ export function PriceOfferComponent({
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
   const [isSeller, setIsSeller] = useState(false)
-  const [isVerified, setIsVerified] = useState<boolean | null>(null)
-  const [showVerificationModal, setShowVerificationModal] = useState(false)
-  const [verificationAction, setVerificationAction] = useState<'buy' | 'offer' | 'bid'>('offer')
   const [showPriceOfferForm, setShowPriceOfferForm] = useState(false)
 
   useEffect(() => {
@@ -56,30 +52,6 @@ export function PriceOfferComponent({
       setIsSeller(true)
     }
   }, [session, sellerId])
-
-  // Lade Verifizierungsstatus
-  useEffect(() => {
-    const loadVerificationStatus = async () => {
-      if ((session?.user as { id?: string })?.id) {
-        try {
-          const res = await fetch('/api/verification/get')
-          if (res.ok) {
-            const data = await res.json()
-            const isApproved = data.verified === true && data.verificationStatus === 'approved'
-            setIsVerified(isApproved)
-          } else {
-            setIsVerified(false)
-          }
-        } catch (error) {
-          console.error('Error loading verification status:', error)
-          setIsVerified(false)
-        }
-      } else {
-        setIsVerified(null)
-      }
-    }
-    loadVerificationStatus()
-  }, [session])
 
   // Regel: Mindestens 60% des Verkaufspreises
   const minimumPrice = price * 0.6
@@ -98,14 +70,7 @@ export function PriceOfferComponent({
       return
     }
 
-    // Prüfe Verifizierung vor dem Sofortkauf
-    if (isVerified === false) {
-      setVerificationAction('buy')
-      setShowVerificationModal(true)
-      return
-    }
-
-    // Weiterleitung zur Checkout-Seite (wie Ricardo)
+    // Weiterleitung zur Checkout-Seite (wie Ricardo - keine Käufer-Verifizierung nötig)
     router.push(`/checkout?watchId=${watchId}`)
   }
 
@@ -122,13 +87,7 @@ export function PriceOfferComponent({
       return
     }
 
-    // Prüfe Verifizierung vor dem Preisvorschlag
-    if (isVerified === false) {
-      setVerificationAction('offer')
-      setShowVerificationModal(true)
-      return
-    }
-
+    // Keine Käufer-Verifizierung nötig (wie Ricardo)
     const amountFloat = parseFloat(offerAmount.replace(/[^\d.,]/g, '').replace(',', '.'))
 
     if (isNaN(amountFloat) || amountFloat <= 0) {
@@ -420,16 +379,6 @@ export function PriceOfferComponent({
           </div>
         )}
       </div>
-
-      <VerificationModal
-        isOpen={showVerificationModal}
-        onClose={() => setShowVerificationModal(false)}
-        onVerify={() => {
-          setShowVerificationModal(false)
-          // Nach Verifizierung wird die Seite neu geladen und isVerified wird aktualisiert
-        }}
-        action={verificationAction}
-      />
     </div>
   )
 }

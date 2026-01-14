@@ -2,7 +2,6 @@
 
 import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
 import { UserName } from '@/components/ui/UserName'
-import { VerificationModal } from '@/components/verification/VerificationModal'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useRealtimeBids } from '@/hooks/useRealtimeBids'
 import { getShippingCost, ShippingMethod, ShippingMethodArray } from '@/lib/shipping'
@@ -78,8 +77,6 @@ export function BidComponent({
     isActive: boolean
     purchase: any
   } | null>(null)
-  const [isVerified, setIsVerified] = useState<boolean | null>(null)
-  const [verificationInProgress, setVerificationInProgress] = useState(false)
   // Konvertiere auctionEnd zu Date falls es ein String ist
   const normalizedAuctionEnd = auctionEnd
     ? auctionEnd instanceof Date
@@ -95,8 +92,6 @@ export function BidComponent({
     seconds: number
     total: number
   } | null>(null)
-  const [showVerificationModal, setShowVerificationModal] = useState(false)
-  const [verificationAction, setVerificationAction] = useState<'buy' | 'offer' | 'bid'>('buy')
 
   const isSeller = (session?.user as { id?: string })?.id === sellerId
   const isAuctionActive = currentAuctionEnd ? new Date(currentAuctionEnd) > new Date() : true
@@ -186,27 +181,6 @@ export function BidComponent({
     }
   }
 
-  // Lade Verifizierungsstatus
-  const loadVerificationStatus = async () => {
-    if ((session?.user as { id?: string })?.id) {
-      try {
-        const res = await fetch('/api/verification/get')
-        if (res.ok) {
-          const data = await res.json()
-          const isApproved = data.verified === true && data.verificationStatus === 'approved'
-          setIsVerified(isApproved)
-        } else {
-          setIsVerified(false)
-        }
-      } catch (error) {
-        console.error('Error loading verification status:', error)
-        setIsVerified(false)
-      }
-    } else {
-      setIsVerified(null)
-    }
-  }
-
   // === REALTIME: Handle auction updates ===
   const handleAuctionUpdate = useCallback(
     (update: { newEndTime?: string; isSold?: boolean }) => {
@@ -249,7 +223,6 @@ export function BidComponent({
 
   useEffect(() => {
     loadItemStatus()
-    loadVerificationStatus()
 
     // Reduced polling for status (realtime handles bids)
     // Only poll status every 15s instead of 5s since realtime handles bids
@@ -286,13 +259,7 @@ export function BidComponent({
       return
     }
 
-    // Prüfe Verifizierung vor dem Bieten
-    if (isVerified === false) {
-      setVerificationAction('bid')
-      setShowVerificationModal(true)
-      return
-    }
-
+    // Keine Käufer-Verifizierung nötig (wie Ricardo)
     if (!bidAmount.trim()) {
       setError(t.product.enterAmount)
       return
@@ -367,13 +334,7 @@ export function BidComponent({
       return
     }
 
-    // Prüfe Verifizierung vor dem Sofortkauf
-    if (isVerified === false) {
-      setVerificationAction('buy')
-      setShowVerificationModal(true)
-      return
-    }
-
+    // Keine Käufer-Verifizierung nötig (wie Ricardo)
     if (!buyNowPrice) return
 
     // Weiterleitung zur Checkout-Seite (wie Ricardo)
@@ -786,16 +747,6 @@ export function BidComponent({
           </div>
         </div>
       )}
-
-      <VerificationModal
-        isOpen={showVerificationModal}
-        onClose={() => setShowVerificationModal(false)}
-        onVerify={() => {
-          setShowVerificationModal(false)
-          // Nach Verifizierung wird die Seite neu geladen und isVerified wird aktualisiert
-        }}
-        action={verificationAction}
-      />
     </div>
   )
 }
