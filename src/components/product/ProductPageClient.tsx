@@ -694,9 +694,38 @@ export function ProductPageClient({
               </div>
             )}
 
-            {/* Karte für Abholort - IMMER anzeigen wenn Seller vorhanden */}
+            {/* Versand & Zahlung - Wie Ricardo */}
+            <div className="mt-3 space-y-2 border-t border-gray-200 pt-3 md:mt-6 md:space-y-3 md:pt-6">
+              {/* Versandmethode */}
+              {(watch as any).shippingMethod && (
+                <div className="flex text-sm md:text-base">
+                  <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Versand:</span>
+                  <span className="w-2/3 text-gray-900">
+                    {(() => {
+                      const method = (watch as any).shippingMethod
+                      if (method === 'shipping') return 'Versand möglich'
+                      if (method === 'pickup') return 'Nur Abholung'
+                      if (method === 'both') return 'Versand oder Abholung'
+                      return method
+                    })()}
+                  </span>
+                </div>
+              )}
+              
+              {/* Zahlungsmethode - Wie Ricardo */}
+              <div className="flex text-sm md:text-base">
+                <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Zahlungsmethode:</span>
+                <span className="w-2/3 text-gray-900">
+                  {(watch as any).paymentProtectionEnabled 
+                    ? 'Sichere Zahlung via Helvenda' 
+                    : 'Barzahlung bei Übergabe'}
+                </span>
+              </div>
+            </div>
+
+            {/* Karte für Abholort - Vereinfacht wie Ricardo */}
             {seller && (
-              <div className="mt-3 border-t border-gray-200 pt-3 md:mt-6 md:pt-6">
+              <div className="mt-3 md:mt-6">
                 <PickupMap city={seller.city || 'Schweiz'} postalCode={seller.postalCode || ''} />
               </div>
             )}
