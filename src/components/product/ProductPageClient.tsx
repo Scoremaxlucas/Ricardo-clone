@@ -474,8 +474,8 @@ export function ProductPageClient({
                     className="relative flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-white"
                     style={{
                       aspectRatio: imageAspectRatio ? `${imageAspectRatio}` : 'auto',
-                      minHeight: isMobile ? '250px' : '400px',
-                      maxHeight: isMobile ? '350px' : '800px',
+                      minHeight: isMobile ? '250px' : '300px',
+                      maxHeight: isMobile ? '350px' : '450px',
                     }}
                     onClick={() => openImageModal(selectedImageIndex)}
                     onMouseMove={e => {
