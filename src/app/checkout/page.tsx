@@ -24,7 +24,7 @@ interface Watch {
 function CheckoutPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
-  const { data: session } = useSession()
+  const { data: session, status } = useSession()
   const watchId = searchParams.get('watchId')
   const [watch, setWatch] = useState<Watch | null>(null)
   const [loading, setLoading] = useState(true)
@@ -43,7 +43,13 @@ function CheckoutPageContent() {
   }, [])
 
   useEffect(() => {
-    if (!session) {
+    // Warte bis Session-Status bekannt ist
+    if (status === 'loading') {
+      return
+    }
+
+    // Redirect zu Login wenn nicht authentifiziert
+    if (status === 'unauthenticated') {
       router.push('/login?callbackUrl=/checkout?watchId=' + watchId)
       return
     }
@@ -55,34 +61,62 @@ function CheckoutPageContent() {
     }
 
     // Lade Pricing-Config und Watch-Details parallel
-    Promise.all([
-      fetch('/api/pricing/config').then(res => res.json()),
-      fetch(`/api/watches/${watchId}`).then(res => res.json()),
-    ])
-      .then(([pricingData, watchData]) => {
+    const loadData = async () => {
+      try {
+        const [pricingRes, watchRes] = await Promise.all([
+          fetch('/api/pricing/config'),
+          fetch(`/api/watches/${watchId}`),
+        ])
+
+        // Prüfe ob Responses ok sind
+        if (!pricingRes.ok) {
+          console.error('Pricing config error:', pricingRes.status)
+        }
+        if (!watchRes.ok) {
+          console.error('Watch fetch error:', watchRes.status)
+          setError('Artikel nicht gefunden')
+          setLoading(false)
+          return
+        }
+
+        const pricingData = await pricingRes.json()
+        const watchData = await watchRes.json()
+
         setPricingConfig(pricingData)
 
         if (watchData.watch) {
-          const images = watchData.watch.images ? JSON.parse(watchData.watch.images) : []
+          let images: string[] = []
+          try {
+            images = watchData.watch.images ? JSON.parse(watchData.watch.images) : []
+          } catch (e) {
+            console.error('Error parsing images:', e)
+          }
           setWatch({ ...watchData.watch, images })
 
           // Parse shipping methods und setze ersten als Standard
           if (watchData.watch.shippingMethod) {
-            const shippingMethods = JSON.parse(watchData.watch.shippingMethod)
-            if (shippingMethods && shippingMethods.length > 0) {
-              setSelectedShipping(shippingMethods[0])
+            try {
+              const shippingMethods = JSON.parse(watchData.watch.shippingMethod)
+              if (shippingMethods && shippingMethods.length > 0) {
+                setSelectedShipping(shippingMethods[0])
+              }
+            } catch (e) {
+              console.error('Error parsing shippingMethod:', e)
             }
           }
         } else {
-          setError('Uhr nicht gefunden')
+          setError('Artikel nicht gefunden')
         }
-      })
-      .catch(err => {
+      } catch (err) {
         console.error('Error loading data:', err)
         setError('Fehler beim Laden der Daten')
-      })
-      .finally(() => setLoading(false))
-  }, [watchId, session, router])
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    loadData()
+  }, [watchId, status, router])
 
   const handleCheckout = async () => {
     if (!watch || !selectedShipping) {
@@ -140,10 +174,13 @@ function CheckoutPageContent() {
     }
   }
 
-  if (loading) {
+  if (loading || status === 'loading') {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
-        <div className="text-gray-500">Lädt...</div>
+        <div className="flex items-center gap-2 text-gray-500">
+          <Loader2 className="h-5 w-5 animate-spin" />
+          <span>Lädt...</span>
+        </div>
       </div>
     )
   }
