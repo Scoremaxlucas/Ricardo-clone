@@ -15,21 +15,8 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Prüfe ob User verifiziert ist
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { verified: true },
-    })
-
-    if (!user?.verified) {
-      return NextResponse.json(
-        {
-          message:
-            'Sie müssen sich zuerst verifizieren, um zu bieten oder zu kaufen. Bitte besuchen Sie die Verifizierungsseite.',
-        },
-        { status: 403 }
-      )
-    }
+    // Keine Käufer-Verifizierung nötig (wie Ricardo)
+    // Verifizierung nur für Verkäufer beim Erstellen von Angeboten
 
     const data = await request.json()
     const { watchId, amount, isBuyNow = false, isMaxBid = false, maxAmount } = data

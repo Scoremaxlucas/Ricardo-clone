@@ -19,18 +19,8 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    // Prüfe ob User verifiziert ist
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { verified: true },
-    })
-
-    if (!user?.verified) {
-      return NextResponse.json(
-        { message: 'Sie müssen sich zuerst verifizieren, um Preisvorschläge zu machen.' },
-        { status: 403 }
-      )
-    }
+    // Keine Käufer-Verifizierung nötig (wie Ricardo)
+    // Verifizierung nur für Verkäufer beim Erstellen von Angeboten
 
     const body = await request.json()
     const { watchId, amount, message } = body
