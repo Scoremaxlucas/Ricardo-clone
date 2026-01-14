@@ -2,7 +2,7 @@
 
 import { Card } from '@/components/ui/Card'
 import { getShippingCostForMethod } from '@/lib/shipping'
-import { ArrowLeft, CreditCard, Loader2, Shield } from 'lucide-react'
+import { ArrowLeft, CreditCard, Loader2, Shield, ShoppingCart, MapPin } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useEffect, useState } from 'react'
@@ -101,8 +101,8 @@ function CheckoutPageContent() {
               images = [watchData.watch.images]
             }
           }
-          setWatch({ 
-            ...watchData.watch, 
+          setWatch({
+            ...watchData.watch,
             images,
             paymentProtectionEnabled: watchData.watch.paymentProtectionEnabled ?? false
           })
@@ -141,56 +141,79 @@ function CheckoutPageContent() {
     setIsProcessing(true)
     setError('')
 
+    const isPickup = selectedShipping === 'pickup'
+    const needsStripePayment = !isPickup && watch.paymentProtectionEnabled
+
     try {
-      // Konvertiere altes Shipping-Format zu neuem Format
-      const isPickup = selectedShipping === 'pickup'
-      const deliveryMode = isPickup ? 'pickup' : 'shipping'
-      
-      // Mapping von altem zu neuem Shipping-Code
-      const shippingCodeMap: Record<string, string> = {
-        'b-post': 'post_economy_2kg',
-        'a-post': 'post_priority_2kg',
-      }
-      
-      // Schritt 1: Erstelle Order
-      const createOrderRes = await fetch('/api/orders/create', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          watchId: watch.id,
-          selectedDeliveryMode: deliveryMode,
-          selectedShippingCode: isPickup ? undefined : shippingCodeMap[selectedShipping] || selectedShipping,
-          selectedAddons: [],
-        }),
-      })
+      if (needsStripePayment) {
+        // VERSAND MIT ZAHLUNGSSCHUTZ: Order erstellen + Stripe Checkout
+        const deliveryMode = 'shipping'
+        const shippingCodeMap: Record<string, string> = {
+          'b-post': 'post_economy_2kg',
+          'a-post': 'post_priority_2kg',
+        }
 
-      if (!createOrderRes.ok) {
-        const errorData = await createOrderRes.json()
-        throw new Error(errorData.message || 'Fehler beim Erstellen der Bestellung')
-      }
+        // Schritt 1: Erstelle Order
+        const createOrderRes = await fetch('/api/orders/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            watchId: watch.id,
+            selectedDeliveryMode: deliveryMode,
+            selectedShippingCode: shippingCodeMap[selectedShipping] || selectedShipping,
+            selectedAddons: [],
+          }),
+        })
 
-      const orderData = await createOrderRes.json()
-      const orderId = orderData.order.id
+        if (!createOrderRes.ok) {
+          const errorData = await createOrderRes.json()
+          throw new Error(errorData.message || 'Fehler beim Erstellen der Bestellung')
+        }
 
-      // Schritt 2: Erstelle Checkout Session
-      const checkoutRes = await fetch(`/api/orders/${orderId}/checkout`, {
-        method: 'POST',
-      })
+        const orderData = await createOrderRes.json()
+        const orderId = orderData.order.id
 
-      if (!checkoutRes.ok) {
-        const errorData = await checkoutRes.json()
-        throw new Error(errorData.message || 'Fehler beim Erstellen der Checkout Session')
-      }
+        // Schritt 2: Erstelle Checkout Session
+        const checkoutRes = await fetch(`/api/orders/${orderId}/checkout`, {
+          method: 'POST',
+        })
 
-      const checkoutData = await checkoutRes.json()
+        if (!checkoutRes.ok) {
+          const errorData = await checkoutRes.json()
+          throw new Error(errorData.message || 'Fehler beim Erstellen der Checkout Session')
+        }
 
-      // Schritt 3: Redirect zu Stripe Checkout
-      if (checkoutData.checkoutUrl) {
-        window.location.href = checkoutData.checkoutUrl
+        const checkoutData = await checkoutRes.json()
+
+        // Schritt 3: Redirect zu Stripe Checkout
+        if (checkoutData.checkoutUrl) {
+          window.location.href = checkoutData.checkoutUrl
+        } else {
+          throw new Error('Keine Checkout URL erhalten')
+        }
       } else {
-        throw new Error('Keine Checkout URL erhalten')
+        // ABHOLUNG ODER VERSAND OHNE ZAHLUNGSSCHUTZ: Direkte Kaufbestätigung
+        // Ricardo-Logik: Kauf ist sofort verbindlich, keine Vorab-Zahlung nötig
+        const createPurchaseRes = await fetch('/api/purchases/create', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            watchId: watch.id,
+            shippingMethod: selectedShipping,
+            price: watch.buyNowPrice || watch.price,
+          }),
+        })
+
+        if (!createPurchaseRes.ok) {
+          const errorData = await createPurchaseRes.json()
+          throw new Error(errorData.message || 'Fehler beim Erstellen des Kaufs')
+        }
+
+        const purchaseData = await createPurchaseRes.json()
+        
+        // Erfolg! Redirect zur Kaufbestätigung
+        toast.success('Kauf erfolgreich! Bitte kontaktieren Sie den Verkäufer.')
+        router.push(`/my-watches/buying/purchased?highlight=${purchaseData.purchase.id}`)
       }
     } catch (err: any) {
       console.error('Error during checkout:', err)
@@ -379,8 +402,23 @@ function CheckoutPageContent() {
               </div>
             </Card>
 
-            {/* Zahlungsschutz Info - Nur wenn aktiviert */}
-            {watch.paymentProtectionEnabled ? (
+            {/* Info-Karte je nach Modus */}
+            {selectedShipping === 'pickup' ? (
+              <Card>
+                <div className="p-6">
+                  <div className="flex items-start">
+                    <MapPin className="mr-3 h-6 w-6 text-primary-600" />
+                    <div>
+                      <h3 className="mb-2 font-semibold text-gray-900">Abholung beim Verkäufer</h3>
+                      <p className="text-sm text-gray-600">
+                        Nach der Kaufbestätigung erhalten Sie die Kontaktdaten des Verkäufers.
+                        Vereinbaren Sie einen Termin zur Abholung. Die Bezahlung erfolgt bar bei Übergabe.
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </Card>
+            ) : watch.paymentProtectionEnabled ? (
               <Card>
                 <div className="p-6">
                   <div className="flex items-start">
@@ -402,10 +440,10 @@ function CheckoutPageContent() {
                   <div className="flex items-start">
                     <Shield className="mr-3 h-6 w-6 text-gray-400" />
                     <div>
-                      <h3 className="mb-2 font-semibold text-gray-900">Barzahlung bei Übergabe</h3>
+                      <h3 className="mb-2 font-semibold text-gray-900">Direktzahlung an Verkäufer</h3>
                       <p className="text-sm text-gray-600">
-                        Bei diesem Artikel erfolgt die Bezahlung direkt bei Abholung oder Übergabe.
-                        Der Helvenda Zahlungsschutz ist nicht aktiv.
+                        Nach der Kaufbestätigung erhalten Sie die Zahlungsdaten des Verkäufers.
+                        Der Verkäufer versendet nach Zahlungseingang. Der Helvenda Zahlungsschutz ist nicht aktiv.
                       </p>
                     </div>
                   </div>
@@ -414,34 +452,94 @@ function CheckoutPageContent() {
             )}
           </div>
 
-          {/* Payment Section */}
+          {/* Action Section */}
           <div>
             <Card>
               <div className="p-6">
-                <h2 className="mb-4 flex items-center text-lg font-semibold">
-                  <CreditCard className="mr-2 h-5 w-5" />
-                  Zahlung
-                </h2>
-
-                <button
-                  onClick={handleCheckout}
-                  disabled={isProcessing || !selectedShipping}
-                  className="w-full rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700 disabled:opacity-50"
-                >
-                  {isProcessing ? (
-                    <span className="flex items-center justify-center">
-                      <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Wird verarbeitet...
-                    </span>
-                  ) : (
-                    `Jetzt bezahlen - CHF ${totalPrice.toFixed(2)}`
-                  )}
-                </button>
-
-                <p className="mt-4 text-xs text-gray-500">
-                  Durch Klicken auf "Jetzt bezahlen" werden Sie zu Stripe weitergeleitet, um Ihre
-                  Zahlung sicher abzuschließen.
-                </p>
+                {/* Unterschiedliche Darstellung je nach Modus */}
+                {selectedShipping === 'pickup' ? (
+                  <>
+                    <h2 className="mb-4 flex items-center text-lg font-semibold">
+                      <MapPin className="mr-2 h-5 w-5" />
+                      Abholung
+                    </h2>
+                    <button
+                      onClick={handleCheckout}
+                      disabled={isProcessing || !selectedShipping}
+                      className="w-full rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700 disabled:opacity-50"
+                    >
+                      {isProcessing ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Wird verarbeitet...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center">
+                          <ShoppingCart className="mr-2 h-5 w-5" />
+                          Jetzt kaufen
+                        </span>
+                      )}
+                    </button>
+                    <p className="mt-4 text-xs text-gray-500">
+                      Mit Klick auf "Jetzt kaufen" wird der Kauf verbindlich. Die Bezahlung erfolgt 
+                      bei Abholung direkt an den Verkäufer. Sie erhalten die Kontaktdaten des Verkäufers
+                      nach Kaufbestätigung.
+                    </p>
+                  </>
+                ) : watch.paymentProtectionEnabled ? (
+                  <>
+                    <h2 className="mb-4 flex items-center text-lg font-semibold">
+                      <CreditCard className="mr-2 h-5 w-5" />
+                      Zahlung
+                    </h2>
+                    <button
+                      onClick={handleCheckout}
+                      disabled={isProcessing || !selectedShipping}
+                      className="w-full rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700 disabled:opacity-50"
+                    >
+                      {isProcessing ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Wird verarbeitet...
+                        </span>
+                      ) : (
+                        `Jetzt bezahlen - CHF ${totalPrice.toFixed(2)}`
+                      )}
+                    </button>
+                    <p className="mt-4 text-xs text-gray-500">
+                      Durch Klicken auf "Jetzt bezahlen" werden Sie zu Stripe weitergeleitet, um Ihre
+                      Zahlung sicher abzuschließen. Der Verkäufer versendet erst nach Zahlungseingang.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <h2 className="mb-4 flex items-center text-lg font-semibold">
+                      <ShoppingCart className="mr-2 h-5 w-5" />
+                      Kauf bestätigen
+                    </h2>
+                    <button
+                      onClick={handleCheckout}
+                      disabled={isProcessing || !selectedShipping}
+                      className="w-full rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700 disabled:opacity-50"
+                    >
+                      {isProcessing ? (
+                        <span className="flex items-center justify-center">
+                          <Loader2 className="mr-2 h-5 w-5 animate-spin" />
+                          Wird verarbeitet...
+                        </span>
+                      ) : (
+                        <span className="flex items-center justify-center">
+                          <ShoppingCart className="mr-2 h-5 w-5" />
+                          Jetzt kaufen - CHF {totalPrice.toFixed(2)}
+                        </span>
+                      )}
+                    </button>
+                    <p className="mt-4 text-xs text-gray-500">
+                      Mit Klick auf "Jetzt kaufen" wird der Kauf verbindlich. Sie erhalten die 
+                      Kontakt- und Zahlungsdaten des Verkäufers nach Kaufbestätigung.
+                    </p>
+                  </>
+                )}
               </div>
             </Card>
           </div>
