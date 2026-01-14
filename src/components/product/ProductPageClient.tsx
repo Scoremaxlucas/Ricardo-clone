@@ -591,6 +591,52 @@ export function ProductPageClient({
               )}
             </div>
 
+            {/* MOBILE ONLY: Buy/Offer Section - Appears right after price like Ricardo */}
+            <div className="mb-3 lg:hidden">
+              {watch.isAuction ? (
+                <BidComponent
+                  itemId={watch.id}
+                  startPrice={watch.price}
+                  buyNowPrice={watch.buyNowPrice}
+                  auctionEnd={watch.auctionEnd}
+                  sellerId={watch.sellerId}
+                  shippingMethod={(watch as any).shippingMethod}
+                  paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
+                />
+              ) : (
+                <PriceOfferComponent
+                  watchId={watch.id}
+                  price={watch.price}
+                  sellerId={watch.sellerId}
+                  buyNowPrice={watch.buyNowPrice}
+                  shippingMethod={(watch as any).shippingMethod}
+                  paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
+                />
+              )}
+            </div>
+
+            {/* MOBILE ONLY: Seller Profile - After buy buttons */}
+            <div className="mb-3 lg:hidden">
+              <SellerProfile
+                sellerId={watch.sellerId}
+                sellerName={seller?.name || t.common.unknown}
+                sellerEmail={seller?.email || ''}
+              />
+              
+              {/* Report-Button Mobile */}
+              {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
+                <div className="mt-3 border-t border-gray-200 pt-3">
+                  <button
+                    onClick={() => setShowReportModal(true)}
+                    className="flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-red-600"
+                  >
+                    <Flag className="h-4 w-4" />
+                    Angebot melden
+                  </button>
+                </div>
+              )}
+            </div>
+
             {/* Product Stats - Feature 2: Social Proof */}
             <div className="mb-3 md:mb-6">
               <ProductStats watchId={watch.id} showViewersNow={true} showSoldLast24h={true} />
@@ -662,8 +708,8 @@ export function ProductPageClient({
           </div>
         </div>
 
-        {/* Rechte Spalte: Gebote & Verkäufer */}
-        <div className="space-y-4 md:space-y-6">
+        {/* Rechte Spalte: Gebote & Verkäufer - DESKTOP ONLY (hidden on mobile, shown inline above) */}
+        <div className="hidden space-y-4 md:space-y-6 lg:block">
           {watch.isAuction ? (
             <BidComponent
               itemId={watch.id}
