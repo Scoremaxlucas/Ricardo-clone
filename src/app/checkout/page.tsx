@@ -142,6 +142,16 @@ function CheckoutPageContent() {
     setError('')
 
     try {
+      // Konvertiere altes Shipping-Format zu neuem Format
+      const isPickup = selectedShipping === 'pickup'
+      const deliveryMode = isPickup ? 'pickup' : 'shipping'
+      
+      // Mapping von altem zu neuem Shipping-Code
+      const shippingCodeMap: Record<string, string> = {
+        'b-post': 'post_economy_2kg',
+        'a-post': 'post_priority_2kg',
+      }
+      
       // Schritt 1: Erstelle Order
       const createOrderRes = await fetch('/api/orders/create', {
         method: 'POST',
@@ -150,7 +160,9 @@ function CheckoutPageContent() {
         },
         body: JSON.stringify({
           watchId: watch.id,
-          shippingMethod: selectedShipping,
+          selectedDeliveryMode: deliveryMode,
+          selectedShippingCode: isPickup ? undefined : shippingCodeMap[selectedShipping] || selectedShipping,
+          selectedAddons: [],
         }),
       })
 
