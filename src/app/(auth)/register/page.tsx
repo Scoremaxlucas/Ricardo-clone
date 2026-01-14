@@ -16,7 +16,6 @@ export default function RegisterPage() {
     password: '',
     confirmPassword: '',
   })
-  const [marketingConsent, setMarketingConsent] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
@@ -87,7 +86,6 @@ export default function RegisterPage() {
           nickname: formData.nickname.trim(),
           email: formData.email.trim(),
           password: formData.password,
-          marketingConsent,
         }),
       })
 
@@ -384,21 +382,6 @@ export default function RegisterPage() {
               </label>
             </div>
 
-            <div className="flex items-start">
-              <input
-                id="marketing"
-                name="marketing"
-                type="checkbox"
-                checked={marketingConsent}
-                onChange={(e) => setMarketingConsent(e.target.checked)}
-                disabled={isLoading}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 transition-colors focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
-              />
-              <label htmlFor="marketing" className="ml-2 block text-sm text-gray-600">
-                Ich möchte den Newsletter erhalten und über Angebote, Aktionen und Neuigkeiten
-                informiert werden. <span className="text-gray-400">(optional)</span>
-              </label>
-            </div>
           </div>
 
           <div>
