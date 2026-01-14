@@ -375,7 +375,7 @@ export function BidComponent({
     }
 
     if (!buyNowPrice) return
-    
+
     // Weiterleitung zur Checkout-Seite (wie Ricardo)
     router.push(`/checkout?watchId=${itemId}`)
   }

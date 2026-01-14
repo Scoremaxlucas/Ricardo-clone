@@ -203,19 +203,21 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
             {sellerData?.activeListings || 0} offene Angebote
           </div>
 
-          {/* Bewertungen */}
-          <div className="mb-2 flex items-center gap-3">
+          {/* Bewertungen - Wie Ricardo mit farbigem Badge */}
+          <div className="mb-2 flex items-center gap-2">
             {stats.total > 0 ? (
               <>
-                <div className="flex items-center gap-1">
-                  <span className="text-lg font-bold text-gray-900">
-                    {stats.positivePercentage}%
-                  </span>
-                  <Star className="h-4 w-4 fill-current text-yellow-500" />
-                </div>
                 <div className="text-sm text-gray-600">
                   {stats.total} Bewertung{stats.total !== 1 ? 'en' : ''}
                 </div>
+                {/* Rating Badge wie Ricardo - Grün für gut, Orange für mittel */}
+                <span className={`rounded-full px-2 py-0.5 text-sm font-bold text-white ${
+                  stats.positivePercentage >= 95 ? 'bg-green-500' :
+                  stats.positivePercentage >= 80 ? 'bg-yellow-500' :
+                  'bg-orange-500'
+                }`}>
+                  {stats.positivePercentage}%
+                </span>
               </>
             ) : (
               <div className="text-sm text-gray-500">Noch keine Bewertungen</div>

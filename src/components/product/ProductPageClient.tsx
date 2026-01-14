@@ -11,10 +11,11 @@ import { ProductStats } from '@/components/product/ProductStats'
 import { SimilarProducts } from '@/components/product/SimilarProducts'
 import { SellerProfile } from '@/components/seller/SellerProfile'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { ChevronLeft, ChevronRight, Flag, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock, Flag, Heart, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useSwipeable } from 'react-swipeable'
 
@@ -35,9 +36,12 @@ export function ProductPageClient({
 }: ProductPageClientProps) {
   const { t } = useLanguage()
   const { data: session } = useSession()
+  const router = useRouter()
   const [showReportModal, setShowReportModal] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
+  const [isFavorite, setIsFavorite] = useState(false)
+  const [favoriteLoading, setFavoriteLoading] = useState(false)
   const [zoomPosition, setZoomPosition] = useState({ x: 0, y: 0 })
   const [imageAspectRatio, setImageAspectRatio] = useState<number | null>(null)
   const [isImageModalOpen, setIsImageModalOpen] = useState(false)
@@ -68,6 +72,53 @@ export function ProductPageClient({
       })
     }
   }, [watch?.id])
+
+  // Check if watch is in favorites
+  useEffect(() => {
+    const checkFavorite = async () => {
+      if (!session?.user || !watch?.id) return
+      try {
+        const res = await fetch('/api/favorites')
+        if (res.ok) {
+          const data = await res.json()
+          const favoriteIds = (data.favorites || []).map((f: any) => f.watchId)
+          setIsFavorite(favoriteIds.includes(watch.id))
+        }
+      } catch (error) {
+        console.error('Error checking favorite:', error)
+      }
+    }
+    checkFavorite()
+  }, [watch?.id, session?.user])
+
+  // Toggle favorite
+  const toggleFavorite = async () => {
+    if (!session?.user) {
+      const currentUrl = typeof window !== 'undefined' ? window.location.pathname : '/'
+      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`)
+      return
+    }
+    if (favoriteLoading || !watch?.id) return
+
+    setFavoriteLoading(true)
+    try {
+      if (isFavorite) {
+        const res = await fetch(`/api/favorites/${watch.id}`, { method: 'DELETE' })
+        if (res.ok) setIsFavorite(false)
+      } else {
+        const res = await fetch('/api/favorites', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ watchId: watch.id }),
+        })
+        if (res.ok) setIsFavorite(true)
+      }
+    } catch (error) {
+      console.error('Error toggling favorite:', error)
+    } finally {
+      setFavoriteLoading(false)
+    }
+  }
 
   // Berechne Aspect Ratio des aktuellen Bildes
   useEffect(() => {
@@ -184,6 +235,46 @@ export function ProductPageClient({
     if (pinchZoom < 1.1) {
       setPinchZoom(1)
     }
+  }
+
+  // Helper: Format shipping method from JSON or string
+  const formatShippingMethod = (method: any): string => {
+    if (!method) return ''
+    
+    // If it's a string that looks like JSON array
+    if (typeof method === 'string') {
+      try {
+        const parsed = JSON.parse(method)
+        if (Array.isArray(parsed)) {
+          return parsed.map((m: string) => {
+            if (m === 'pickup') return 'Abholung'
+            if (m === 'b-post') return 'Paket B-Post, CHF 8.50'
+            if (m === 'a-post') return 'Paket A-Post, CHF 12.50'
+            if (m === 'shipping') return 'Versand'
+            return m
+          }).join(' / ')
+        }
+      } catch {
+        // Not JSON, handle as plain string
+      }
+      
+      if (method === 'shipping') return 'Versand möglich'
+      if (method === 'pickup') return 'Nur Abholung'
+      if (method === 'both') return 'Versand oder Abholung'
+      return method
+    }
+    
+    if (Array.isArray(method)) {
+      return method.map((m: string) => {
+        if (m === 'pickup') return 'Abholung'
+        if (m === 'b-post') return 'Paket B-Post, CHF 8.50'
+        if (m === 'a-post') return 'Paket A-Post, CHF 12.50'
+        if (m === 'shipping') return 'Versand'
+        return m
+      }).join(' / ')
+    }
+    
+    return String(method)
   }
 
   if (!watch) {
@@ -538,109 +629,109 @@ export function ProductPageClient({
               )}
             </div>
 
-            {/* Titel */}
-            <h1 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl lg:text-3xl">
-              {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
-            </h1>
-            
-            {/* Einstelldatum mit Uhrzeit - wie Ricardo unter dem Titel */}
-            {watch.createdAt && (
-              <div className="mb-2 text-xs text-gray-500 md:mb-4 md:text-sm">
-                Eingestellt am {new Date(watch.createdAt).toLocaleDateString('de-CH', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric'
-                })} um {new Date(watch.createdAt).toLocaleTimeString('de-CH', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })} Uhr
-              </div>
-            )}
+            {/* MOBILE ONLY: Titel, Datum, Preis, Buy/Offer, Seller */}
+            <div className="lg:hidden">
+              {/* Titel */}
+              <h1 className="mb-1 text-xl font-bold text-gray-900">
+                {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
+              </h1>
+              
+              {/* Einstelldatum */}
+              {watch.createdAt && (
+                <div className="mb-2 text-xs text-gray-500">
+                  Eingestellt am {new Date(watch.createdAt).toLocaleDateString('de-CH', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric'
+                  })} um {new Date(watch.createdAt).toLocaleTimeString('de-CH', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })} Uhr
+                </div>
+              )}
 
-            <div className="mb-3 rounded-lg bg-gray-50 p-3 md:mb-6 md:p-4">
-              {watch.buyNowPrice ? (
-                <>
-                  <div className="mb-2 md:mb-3">
-                    <div className="text-xs text-gray-600 md:text-sm">{t.product.startingPrice}</div>
-                    <div className="text-lg font-bold text-primary-600 md:text-2xl">
+              {/* Preis */}
+              <div className="mb-3 rounded-lg bg-gray-50 p-3">
+                {watch.buyNowPrice ? (
+                  <>
+                    <div className="mb-2">
+                      <div className="text-xs text-gray-600">{t.product.startingPrice}</div>
+                      <div className="text-lg font-bold text-primary-600">
+                        {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.price)}
+                      </div>
+                    </div>
+                    <div className="border-t border-gray-200 pt-2">
+                      <div className="mb-1 flex items-center justify-between">
+                        <div className="text-xs text-gray-600">{t.product.buyNowPrice}</div>
+                        {(watch as any).paymentProtectionEnabled && (
+                          <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={false} />
+                        )}
+                      </div>
+                      <div className="text-xl font-bold text-green-600">
+                        {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice)}
+                      </div>
+                    </div>
+                  </>
+                ) : (
+                  <div>
+                    <div className="mb-1 flex items-center justify-between">
+                      <div className="text-xs text-gray-600">{t.product.price}</div>
+                      {(watch as any).paymentProtectionEnabled && (
+                        <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={false} />
+                      )}
+                    </div>
+                    <div className="text-xl font-bold text-primary-600">
                       {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.price)}
                     </div>
                   </div>
-                  <div className="border-t border-gray-200 pt-2 md:pt-3">
-                    <div className="mb-1 flex items-center justify-between md:mb-2">
-                      <div className="text-xs text-gray-600 md:text-sm">{t.product.buyNowPrice}</div>
-                      {(watch as any).paymentProtectionEnabled && (
-                        <PaymentProtectionBadge
-                          enabled={true}
-                          compact={true}
-                          showInfoLink={false}
-                        />
-                      )}
-                    </div>
-                    <div className="text-xl font-bold text-green-600 md:text-3xl">
-                      {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice)}
-                    </div>
-                  </div>
-                </>
-              ) : (
-                <div>
-                  <div className="mb-1 flex items-center justify-between md:mb-2">
-                    <div className="text-xs text-gray-600 md:text-sm">{t.product.price}</div>
-                    {(watch as any).paymentProtectionEnabled && (
-                      <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={false} />
-                    )}
-                  </div>
-                  <div className="text-xl font-bold text-primary-600 md:text-3xl">
-                    {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.price)}
-                  </div>
-                </div>
-              )}
-            </div>
+                )}
+              </div>
 
-            {/* MOBILE ONLY: Buy/Offer Section - Appears right after price like Ricardo */}
-            <div className="mb-3 lg:hidden">
-              {watch.isAuction ? (
-                <BidComponent
-                  itemId={watch.id}
-                  startPrice={watch.price}
-                  buyNowPrice={watch.buyNowPrice}
-                  auctionEnd={watch.auctionEnd}
-                  sellerId={watch.sellerId}
-                  shippingMethod={(watch as any).shippingMethod}
-                  paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
-                />
-              ) : (
-                <PriceOfferComponent
-                  watchId={watch.id}
-                  price={watch.price}
-                  sellerId={watch.sellerId}
-                  buyNowPrice={watch.buyNowPrice}
-                  shippingMethod={(watch as any).shippingMethod}
-                  paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
-                />
-              )}
-            </div>
+              {/* Buy/Offer Section */}
+              <div className="mb-3">
+                {watch.isAuction ? (
+                  <BidComponent
+                    itemId={watch.id}
+                    startPrice={watch.price}
+                    buyNowPrice={watch.buyNowPrice}
+                    auctionEnd={watch.auctionEnd}
+                    sellerId={watch.sellerId}
+                    shippingMethod={(watch as any).shippingMethod}
+                    paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
+                  />
+                ) : (
+                  <PriceOfferComponent
+                    watchId={watch.id}
+                    price={watch.price}
+                    sellerId={watch.sellerId}
+                    buyNowPrice={watch.buyNowPrice}
+                    shippingMethod={(watch as any).shippingMethod}
+                    paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
+                  />
+                )}
+              </div>
 
-            {/* MOBILE ONLY: Seller Profile - After buy buttons */}
-            <div className="mb-3 lg:hidden">
-              <SellerProfile
-                sellerId={watch.sellerId}
-                sellerName={seller?.name || t.common.unknown}
-                sellerEmail={seller?.email || ''}
-              />
-              
-              {/* Report-Button Mobile */}
-              {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
-                <div className="mt-3 border-t border-gray-200 pt-3">
-                  <button
-                    onClick={() => setShowReportModal(true)}
-                    className="flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-red-600"
-                  >
-                    <Flag className="h-4 w-4" />
-                    Angebot melden
-                  </button>
-                </div>
-              )}
+              {/* Seller Profile */}
+              <div className="mb-3">
+                <SellerProfile
+                  sellerId={watch.sellerId}
+                  sellerName={seller?.name || t.common.unknown}
+                  sellerEmail={seller?.email || ''}
+                />
+                
+                {/* Report-Button Mobile */}
+                {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
+                  <div className="mt-3 border-t border-gray-200 pt-3">
+                    <button
+                      onClick={() => setShowReportModal(true)}
+                      className="flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-red-600"
+                    >
+                      <Flag className="h-4 w-4" />
+                      Angebot melden
+                    </button>
+                  </div>
+                )}
+              </div>
             </div>
 
             {/* Product Stats - Feature 2: Social Proof */}
@@ -702,18 +793,12 @@ export function ProductPageClient({
 
             {/* Versand & Zahlung - Wie Ricardo */}
             <div className="mt-3 space-y-2 border-t border-gray-200 pt-3 md:mt-6 md:space-y-3 md:pt-6">
-              {/* Versandmethode */}
+              {/* Versandmethode - Mit korrekter Formatierung */}
               {(watch as any).shippingMethod && (
                 <div className="flex text-sm md:text-base">
-                  <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Versand:</span>
+                  <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Lieferung:</span>
                   <span className="w-2/3 text-gray-900">
-                    {(() => {
-                      const method = (watch as any).shippingMethod
-                      if (method === 'shipping') return 'Versand möglich'
-                      if (method === 'pickup') return 'Nur Abholung'
-                      if (method === 'both') return 'Versand oder Abholung'
-                      return method
-                    })()}
+                    {formatShippingMethod((watch as any).shippingMethod)}
                   </span>
                 </div>
               )}
@@ -752,41 +837,116 @@ export function ProductPageClient({
           </div>
         </div>
 
-        {/* Rechte Spalte: Gebote & Verkäufer - DESKTOP ONLY (hidden on mobile, shown inline above) */}
-        <div className="hidden space-y-4 md:space-y-6 lg:block">
-          {watch.isAuction ? (
-            <BidComponent
-              itemId={watch.id}
-              startPrice={watch.price}
-              buyNowPrice={watch.buyNowPrice}
-              auctionEnd={watch.auctionEnd}
-              sellerId={watch.sellerId}
-              shippingMethod={(watch as any).shippingMethod}
-              paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
-            />
-          ) : (
-            <PriceOfferComponent
-              watchId={watch.id}
-              price={watch.price}
-              sellerId={watch.sellerId}
-              buyNowPrice={watch.buyNowPrice}
-              shippingMethod={(watch as any).shippingMethod}
-              paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
-            />
-          )}
+        {/* Rechte Spalte: DESKTOP ONLY - Wie Ricardo mit Titel, Preis, Kauf, etc. */}
+        <div className="hidden space-y-4 lg:block">
+          {/* Hauptkarte mit Titel, Datum, Preis */}
+          <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+            {/* Titel */}
+            <h1 className="mb-2 text-xl font-bold text-gray-900 lg:text-2xl">
+              {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
+            </h1>
+            
+            {/* Datum mit Clock-Icon wie Ricardo */}
+            {watch.createdAt && (
+              <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-500">
+                <Clock className="h-4 w-4" />
+                {new Date(watch.createdAt).toLocaleDateString('de-CH', {
+                  day: 'numeric',
+                  month: 'short',
+                  year: 'numeric'
+                })}, {new Date(watch.createdAt).toLocaleTimeString('de-CH', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })} Uhr
+              </div>
+            )}
 
-          <SellerProfile
-            sellerId={watch.sellerId}
-            sellerName={seller?.name || t.common.unknown}
-            sellerEmail={seller?.email || ''}
-          />
+            {/* Preis */}
+            <div className="mb-4">
+              {watch.buyNowPrice ? (
+                <>
+                  <div className="text-sm text-gray-600">Sofort-Kaufpreis</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice)}
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="text-sm text-gray-600">Verkaufspreis</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    {new Intl.NumberFormat('de-CH').format(watch.price)}
+                  </div>
+                </>
+              )}
+              {(watch as any).paymentProtectionEnabled && (
+                <div className="mt-1">
+                  <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={true} />
+                </div>
+              )}
+            </div>
+
+            {/* Kauf/Gebot Component */}
+            {watch.isAuction ? (
+              <BidComponent
+                itemId={watch.id}
+                startPrice={watch.price}
+                buyNowPrice={watch.buyNowPrice}
+                auctionEnd={watch.auctionEnd}
+                sellerId={watch.sellerId}
+                shippingMethod={(watch as any).shippingMethod}
+                paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
+              />
+            ) : (
+              <PriceOfferComponent
+                watchId={watch.id}
+                price={watch.price}
+                sellerId={watch.sellerId}
+                buyNowPrice={watch.buyNowPrice}
+                shippingMethod={(watch as any).shippingMethod}
+                paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
+              />
+            )}
+
+            {/* Zu Favoriten hinzufügen - Wie Ricardo */}
+            <button
+              onClick={toggleFavorite}
+              disabled={favoriteLoading}
+              className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 font-semibold transition-colors disabled:opacity-50 ${
+                isFavorite
+                  ? 'border-red-500 bg-red-50 text-red-600 hover:bg-red-100'
+                  : 'border-primary-600 bg-white text-primary-600 hover:bg-primary-50'
+              }`}
+            >
+              <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
+              {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
+            </button>
+
+            {/* Lieferung - Wie Ricardo */}
+            {(watch as any).shippingMethod && (
+              <div className="mt-4 border-t border-gray-200 pt-4">
+                <div className="text-sm text-gray-600">Lieferung</div>
+                <div className="font-medium text-gray-900">
+                  {formatShippingMethod((watch as any).shippingMethod)}
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Verkäufer-Karte */}
+          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+            <SellerProfile
+              sellerId={watch.sellerId}
+              sellerName={seller?.name || t.common.unknown}
+              sellerEmail={seller?.email || ''}
+            />
+          </div>
 
           {/* Report-Button */}
           {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
-            <div className="mt-4 border-t border-gray-200 pt-4">
+            <div className="text-center">
               <button
                 onClick={() => setShowReportModal(true)}
-                className="flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-red-600"
+                className="inline-flex items-center gap-2 text-sm text-gray-500 transition-colors hover:text-red-600"
               >
                 <Flag className="h-4 w-4" />
                 Angebot melden
