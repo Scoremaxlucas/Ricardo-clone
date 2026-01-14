@@ -2,6 +2,19 @@
   "installCommand": "npm install --legacy-peer-deps",
   "buildCommand": "npm run build",
   "framework": "nextjs",
+  "redirects": [
+    {
+      "source": "/:path*",
+      "has": [
+        {
+          "type": "host",
+          "value": "helvenda.ch"
+        }
+      ],
+      "destination": "https://www.helvenda.ch/:path*",
+      "permanent": true
+    }
+  ],
   "env": {
     "VERCEL_BYPASS_FALLBACK_OVERSIZED_ERROR": "1"
   },
