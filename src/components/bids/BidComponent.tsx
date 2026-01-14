@@ -13,7 +13,6 @@ import Image from 'next/image'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
-import { BuyNowConfirmationModal } from './BuyNowConfirmationModal'
 
 interface Bid {
   id: string
@@ -96,7 +95,6 @@ export function BidComponent({
     seconds: number
     total: number
   } | null>(null)
-  const [showBuyNowModal, setShowBuyNowModal] = useState(false)
   const [showVerificationModal, setShowVerificationModal] = useState(false)
   const [verificationAction, setVerificationAction] = useState<'buy' | 'offer' | 'bid'>('buy')
 
@@ -361,11 +359,11 @@ export function BidComponent({
     }
   }
 
+  // RICARDO-STYLE: Redirect to checkout page instead of direct purchase
   const handleBuyNowClick = () => {
     if (!session?.user) {
-      const currentUrl =
-        typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
-      window.location.href = `/login?callbackUrl=${encodeURIComponent(currentUrl)}`
+      const checkoutUrl = `/checkout?watchId=${itemId}`
+      window.location.href = `/login?callbackUrl=${encodeURIComponent(checkoutUrl)}`
       return
     }
 
@@ -377,52 +375,9 @@ export function BidComponent({
     }
 
     if (!buyNowPrice) return
-    setShowBuyNowModal(true)
-  }
-
-  const handleBuyNowConfirm = async (selectedShippingMethod: ShippingMethod | null) => {
-    if (!buyNowPrice) return
-
-    setShowBuyNowModal(false)
-    setLoading(true)
-    setError('')
-    setSuccess('')
-
-    try {
-      const res = await fetch('/api/purchases/create', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          watchId: itemId,
-          price: buyNowPrice,
-          shippingMethod: selectedShippingMethod || null, // Nur die gewählte Methode, nicht das Array
-        }),
-      })
-
-      const data = await res.json()
-
-      if (res.ok) {
-        setSuccess(t.product.buyNowSuccess)
-        await loadBids()
-        // Prüfe auch auf abgelaufene Auktionen (um Purchase zu erstellen)
-        await fetch('/api/auctions/check-expired', { method: 'POST' })
-
-        // Aktualisiere Benachrichtigungen sofort
-        window.dispatchEvent(new CustomEvent('notifications-update'))
-
-        // Weiterleitung zur Kaufübersicht
-        setTimeout(() => {
-          window.location.href = '/my-watches/buying/purchased'
-        }, 1500)
-      } else {
-        setError(data.message || t.product.buyNowError)
-      }
-    } catch (error) {
-      console.error('Error buying now:', error)
-      setError(t.product.errorOccurred)
-    } finally {
-      setLoading(false)
-    }
+    
+    // Weiterleitung zur Checkout-Seite (wie Ricardo)
+    router.push(`/checkout?watchId=${itemId}`)
   }
 
   if (!session?.user) {
@@ -830,19 +785,6 @@ export function BidComponent({
             ))}
           </div>
         </div>
-      )}
-
-      {/* Buy Now Confirmation Modal */}
-      {buyNowPrice && (
-        <BuyNowConfirmationModal
-          isOpen={showBuyNowModal}
-          onClose={() => setShowBuyNowModal(false)}
-          onConfirm={handleBuyNowConfirm}
-          buyNowPrice={buyNowPrice}
-          shippingCost={shippingCost}
-          availableShippingMethods={normalizedShippingMethods}
-          isLoading={loading}
-        />
       )}
 
       <VerificationModal
