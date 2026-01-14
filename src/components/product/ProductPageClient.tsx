@@ -11,7 +11,7 @@ import { ProductStats } from '@/components/product/ProductStats'
 import { SimilarProducts } from '@/components/product/SimilarProducts'
 import { SellerProfile } from '@/components/seller/SellerProfile'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { ChevronLeft, ChevronRight, Clock, Flag, Heart, X } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Clock, Flag, Heart, X, Zap } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -629,63 +629,49 @@ export function ProductPageClient({
               )}
             </div>
 
-            {/* MOBILE ONLY: Titel, Datum, Preis, Buy/Offer, Seller */}
+            {/* MOBILE ONLY: Titel, Datum, Preis, Buy/Offer, Seller - Ricardo-Style */}
             <div className="lg:hidden">
               {/* Titel */}
-              <h1 className="mb-1 text-xl font-bold text-gray-900">
+              <h1 className="mb-1 text-lg font-bold leading-tight text-gray-900">
                 {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
               </h1>
 
-              {/* Einstelldatum */}
+              {/* Einstelldatum mit Clock-Icon wie Ricardo */}
               {watch.createdAt && (
-                <div className="mb-2 text-xs text-gray-500">
-                  Eingestellt am {new Date(watch.createdAt).toLocaleDateString('de-CH', {
-                    day: '2-digit',
-                    month: '2-digit',
+                <div className="mb-3 flex items-center gap-1 text-xs text-gray-500">
+                  <Clock className="h-3.5 w-3.5" />
+                  {new Date(watch.createdAt).toLocaleDateString('de-CH', {
+                    day: 'numeric',
+                    month: 'short',
                     year: 'numeric'
-                  })} um {new Date(watch.createdAt).toLocaleTimeString('de-CH', {
+                  })}, {new Date(watch.createdAt).toLocaleTimeString('de-CH', {
                     hour: '2-digit',
                     minute: '2-digit'
                   })} Uhr
                 </div>
               )}
 
-              {/* Preis */}
-              <div className="mb-3 rounded-lg bg-gray-50 p-3">
-                {watch.buyNowPrice ? (
-                  <>
-                    <div className="mb-2">
-                      <div className="text-xs text-gray-600">{t.product.startingPrice}</div>
-                      <div className="text-lg font-bold text-primary-600">
-                        {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.price)}
-                      </div>
-                    </div>
-                    <div className="border-t border-gray-200 pt-2">
-                      <div className="mb-1 flex items-center justify-between">
-                        <div className="text-xs text-gray-600">{t.product.buyNowPrice}</div>
-                        {(watch as any).paymentProtectionEnabled && (
-                          <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={false} />
-                        )}
-                      </div>
-                      <div className="text-xl font-bold text-green-600">
-                        {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice)}
-                      </div>
-                    </div>
-                  </>
-                ) : (
-                  <div>
-                    <div className="mb-1 flex items-center justify-between">
-                      <div className="text-xs text-gray-600">{t.product.price}</div>
-                      {(watch as any).paymentProtectionEnabled && (
-                        <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={false} />
-                      )}
-                    </div>
-                    <div className="text-xl font-bold text-primary-600">
-                      {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.price)}
-                    </div>
-                  </div>
-                )}
+              {/* Preis-Label wie Ricardo */}
+              <div className="mb-1 text-xs text-gray-600">Verkaufspreis</div>
+              <div className="mb-3 text-2xl font-bold text-gray-900">
+                {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice || watch.price)}
               </div>
+
+              {/* Sofortkauf Box - Ricardo Style */}
+              {!watch.isAuction && (
+                <div className="mb-3 rounded-lg border border-primary-200 bg-primary-50 p-3">
+                  <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary-700">
+                    <Zap className="h-3.5 w-3.5" />
+                    SOFORTKAUF VERFÜGBAR
+                  </div>
+                  <div className="text-xl font-bold text-primary-600">
+                    CHF {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice || watch.price)}
+                  </div>
+                  <div className="mt-0.5 text-xs text-primary-600">
+                    Artikel sofort kaufen ohne Verhandlung
+                  </div>
+                </div>
+              )}
 
               {/* Buy/Offer Section */}
               <div className="mb-3">
@@ -711,27 +697,56 @@ export function ProductPageClient({
                 )}
               </div>
 
-              {/* Seller Profile */}
-              <div className="mb-3">
+              {/* Versandinfo Hinweis */}
+              <div className="mb-3 text-center text-xs text-gray-500">
+                Versandoptionen werden im nächsten Schritt angezeigt
+              </div>
+
+              {/* Zu Favoriten Button - Full Width wie Ricardo */}
+              <button
+                onClick={toggleFavorite}
+                disabled={favoriteLoading}
+                className={`mb-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                  isFavorite
+                    ? 'border-red-500 bg-red-50 text-red-600'
+                    : 'border-primary-600 bg-white text-primary-600'
+                }`}
+              >
+                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
+              </button>
+
+              {/* Lieferung Info */}
+              {(watch as any).shippingMethod && (
+                <div className="mb-3 rounded-lg bg-gray-50 px-3 py-2">
+                  <div className="text-xs text-gray-600">Lieferung</div>
+                  <div className="text-sm font-medium text-gray-900">
+                    {formatShippingMethod((watch as any).shippingMethod)}
+                  </div>
+                </div>
+              )}
+
+              {/* Seller Profile - Kompakter */}
+              <div className="mb-3 rounded-lg border border-gray-200 bg-white">
                 <SellerProfile
                   sellerId={watch.sellerId}
                   sellerName={seller?.name || t.common.unknown}
                   sellerEmail={seller?.email || ''}
                 />
-
-                {/* Report-Button Mobile */}
-                {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
-                  <div className="mt-3 border-t border-gray-200 pt-3">
-                    <button
-                      onClick={() => setShowReportModal(true)}
-                      className="flex items-center gap-2 text-sm text-gray-600 transition-colors hover:text-red-600"
-                    >
-                      <Flag className="h-4 w-4" />
-                      Angebot melden
-                    </button>
-                  </div>
-                )}
               </div>
+
+              {/* Report-Button Mobile */}
+              {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
+                <div className="mb-3 text-center">
+                  <button
+                    onClick={() => setShowReportModal(true)}
+                    className="inline-flex items-center gap-1.5 text-xs text-gray-500 transition-colors hover:text-red-600"
+                  >
+                    <Flag className="h-3.5 w-3.5" />
+                    Angebot melden
+                  </button>
+                </div>
+              )}
             </div>
 
             {/* Product Stats - Feature 2: Social Proof */}
