@@ -538,18 +538,24 @@ export function ProductPageClient({
               )}
             </div>
 
-            {/* Titel & Artikelnummer */}
-            <div className="mb-2 flex flex-col md:mb-4 md:flex-row md:items-start md:justify-between">
-              <h1 className="flex-1 text-xl font-bold text-gray-900 md:text-2xl lg:text-3xl">
-                {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
-              </h1>
-              {watch.articleNumber && (
-                <div className="mt-1 text-xs text-gray-500 md:ml-4 md:mt-0 md:text-sm">
-                  <span className="font-medium">Artikelnummer:</span>{' '}
-                  <span className="font-mono text-gray-700">{watch.articleNumber}</span>
-                </div>
-              )}
-            </div>
+            {/* Titel */}
+            <h1 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl lg:text-3xl">
+              {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
+            </h1>
+            
+            {/* Einstelldatum mit Uhrzeit - wie Ricardo unter dem Titel */}
+            {watch.createdAt && (
+              <div className="mb-2 text-xs text-gray-500 md:mb-4 md:text-sm">
+                Eingestellt am {new Date(watch.createdAt).toLocaleDateString('de-CH', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  year: 'numeric'
+                })} um {new Date(watch.createdAt).toLocaleTimeString('de-CH', {
+                  hour: '2-digit',
+                  minute: '2-digit'
+                })} Uhr
+              </div>
+            )}
 
             <div className="mb-3 rounded-lg bg-gray-50 p-3 md:mb-6 md:p-4">
               {watch.buyNowPrice ? (
@@ -734,6 +740,15 @@ export function ProductPageClient({
             <div className="mt-3 border-t border-gray-200 pt-3 md:mt-6 md:pt-6">
               <ProductQuestions watchId={watch.id} sellerId={watch.sellerId} />
             </div>
+
+            {/* Artikelnummer - Ganz unten wie bei Ricardo */}
+            {watch.articleNumber && (
+              <div className="mt-3 border-t border-gray-200 pt-3 text-center md:mt-6 md:pt-6">
+                <span className="text-xs text-gray-400 md:text-sm">
+                  Artikelnummer: <span className="font-mono">{watch.articleNumber}</span>
+                </span>
+              </div>
+            )}
           </div>
         </div>
 

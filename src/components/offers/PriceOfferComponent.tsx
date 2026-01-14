@@ -1,10 +1,7 @@
 'use client'
 
 import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
-import { ShippingSelector } from '@/components/product/ShippingSelector'
-import { ShippingMethodSelector } from '@/components/shipping/ShippingMethodSelector'
 import { VerificationModal } from '@/components/verification/VerificationModal'
-import { ShippingMethod, getShippingCostForMethod } from '@/lib/shipping'
 import {
   AlertCircle,
   ChevronDown,
@@ -25,18 +22,12 @@ interface PriceOfferComponentProps {
   price: number
   sellerId: string
   buyNowPrice?: number | null
-  shippingMethod?: string | null // Deprecated - use watch object
+  shippingMethod?: string | null
   paymentProtectionEnabled?: boolean
-  // New shipping fields (Ricardo-style)
   watch?: {
     id: string
     price: number
     buyNowPrice?: number | null
-    deliveryMode?: 'shipping_only' | 'pickup_only' | 'shipping_and_pickup' | null
-    freeShippingThresholdChf?: number | null
-    shippingProfile?: string | null
-    pickupLocationZip?: string | null
-    pickupLocationCity?: string | null
   }
 }
 
@@ -54,53 +45,17 @@ export function PriceOfferComponent({
   const [offerAmount, setOfferAmount] = useState('')
   const [message, setMessage] = useState('')
   const [loading, setLoading] = useState(false)
-  const [buyNowLoading, setBuyNowLoading] = useState(false)
   const [isSeller, setIsSeller] = useState(false)
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
   const [showVerificationModal, setShowVerificationModal] = useState(false)
   const [verificationAction, setVerificationAction] = useState<'buy' | 'offer' | 'bid'>('offer')
-  const [selectedShippingMethod, setSelectedShippingMethod] = useState<ShippingMethod | null>(null)
-  const [availableShippingMethods, setAvailableShippingMethods] = useState<ShippingMethod[]>([])
   const [showPriceOfferForm, setShowPriceOfferForm] = useState(false)
-  const [isMobile, setIsMobile] = useState(false)
-
-  // New shipping selection (Ricardo-style)
-  const [shippingSelection, setShippingSelection] = useState<{
-    deliveryMode: 'shipping' | 'pickup'
-    shippingCode?: string
-    addons?: string[]
-  } | null>(null)
-
-  // Detect mobile device
-  useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
-    checkMobile()
-    window.addEventListener('resize', checkMobile)
-    return () => window.removeEventListener('resize', checkMobile)
-  }, [])
 
   useEffect(() => {
     if ((session?.user as { id?: string })?.id === sellerId) {
       setIsSeller(true)
     }
   }, [session, sellerId])
-
-  // Parse verfügbare Liefermethoden
-  useEffect(() => {
-    if (shippingMethod) {
-      try {
-        const parsed =
-          typeof shippingMethod === 'string' ? JSON.parse(shippingMethod) : shippingMethod
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          setAvailableShippingMethods(parsed)
-          // Setze erste Methode als Standard nur wenn noch keine ausgewählt
-          setSelectedShippingMethod(prev => prev || parsed[0])
-        }
-      } catch (e) {
-        console.error('Error parsing shippingMethod:', e)
-      }
-    }
-  }, [shippingMethod])
 
   // Lade Verifizierungsstatus
   useEffect(() => {
@@ -130,9 +85,11 @@ export function PriceOfferComponent({
   const minimumPrice = price * 0.6
   const maximumPrice = price - 0.01 // Muss niedriger als Verkaufspreis sein
 
-  const handleBuyNow = async () => {
+  // RICARDO-STYLE: Redirect to checkout page instead of direct purchase
+  const handleBuyNow = () => {
     if (!(session?.user as { id?: string })?.id) {
       toast.error('Bitte melden Sie sich an, um zu kaufen.')
+      router.push(`/login?callbackUrl=/checkout?watchId=${watchId}`)
       return
     }
 
@@ -148,86 +105,8 @@ export function PriceOfferComponent({
       return
     }
 
-    // Prüfe ob Liefermethode ausgewählt wurde
-    // Neue Logik: Wenn watch-Objekt vorhanden, verwende neue Shipping-Logik
-    if (watch) {
-      if (!shippingSelection) {
-        toast.error('Bitte wählen Sie eine Liefermethode aus.', {
-          position: 'top-right',
-          duration: 4000,
-        })
-        return
-      }
-
-      if (shippingSelection.deliveryMode === 'shipping' && !shippingSelection.shippingCode) {
-        toast.error('Bitte wählen Sie eine Versandoption aus.', {
-          position: 'top-right',
-          duration: 4000,
-        })
-        return
-      }
-    } else {
-      // Fallback: Alte Logik
-      if (availableShippingMethods.length > 0 && !selectedShippingMethod) {
-        toast.error('Bitte wählen Sie eine Liefermethode aus.', {
-          position: 'top-right',
-          duration: 4000,
-        })
-        return
-      }
-    }
-
-    setBuyNowLoading(true)
-
-    try {
-      // Verwende neue Order API wenn watch vorhanden, sonst alte Purchase API
-      const endpoint =
-        watch && paymentProtectionEnabled ? '/api/orders/create' : '/api/purchases/create'
-      const payload =
-        watch && paymentProtectionEnabled
-          ? {
-              watchId,
-              selectedDeliveryMode: shippingSelection!.deliveryMode,
-              selectedShippingCode: shippingSelection!.shippingCode,
-              selectedAddons: shippingSelection!.addons || [],
-            }
-          : {
-              watchId,
-              price,
-              shippingMethod: selectedShippingMethod || null,
-            }
-
-      const response = await fetch(endpoint, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(payload),
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.message || 'Fehler beim Kauf')
-      }
-
-      toast.success('Kauf erfolgreich! Sie werden zur Kaufübersicht weitergeleitet.')
-
-      // Aktualisiere Benachrichtigungen sofort
-      window.dispatchEvent(new CustomEvent('notifications-update'))
-
-      // Weiterleitung: Order → Order-Detail, Purchase → Purchased-Liste
-      if (watch && paymentProtectionEnabled && data.order?.id) {
-        router.push(`/orders/${data.order.id}`)
-      } else {
-        router.push('/my-watches/buying/purchased')
-      }
-    } catch (error: any) {
-      console.error('Error buying now:', error)
-      toast.error(error.message || 'Fehler beim Kauf')
-    } finally {
-      setBuyNowLoading(false)
-    }
+    // Weiterleitung zur Checkout-Seite (wie Ricardo)
+    router.push(`/checkout?watchId=${watchId}`)
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -413,108 +292,20 @@ export function PriceOfferComponent({
           </div>
         )}
 
-        {/* Liefermethoden-Auswahl */}
-        {watch ? (
-          // Neue Ricardo-style Shipping-Logik
-          <div className="mb-4">
-            <ShippingSelector
-              watch={{
-                id: watch.id,
-                price: watch.price,
-                buyNowPrice: watch.buyNowPrice,
-                deliveryMode: watch.deliveryMode || null,
-                freeShippingThresholdChf: watch.freeShippingThresholdChf || null,
-                shippingProfile: watch.shippingProfile || null,
-                pickupLocationZip: watch.pickupLocationZip || null,
-                pickupLocationCity: watch.pickupLocationCity || null,
-              }}
-              onSelectionChange={setShippingSelection}
-            />
-          </div>
-        ) : (
-          // Fallback: Alte Shipping-Logik
-          availableShippingMethods.length > 0 && (
-            <div className="mb-4">
-              <ShippingMethodSelector
-                availableMethods={availableShippingMethods}
-                selectedMethod={selectedShippingMethod}
-                onMethodChange={setSelectedShippingMethod}
-                showCosts={true}
-              />
-              {selectedShippingMethod && (
-                <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3">
-                  <div className="flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Artikelpreis:</span>
-                    <span className="font-semibold text-gray-900">
-                      CHF {new Intl.NumberFormat('de-CH').format(price)}
-                    </span>
-                  </div>
-                  <div className="mt-1 flex items-center justify-between text-sm">
-                    <span className="text-gray-600">Versandkosten:</span>
-                    <span className="font-semibold text-gray-900">
-                      {getShippingCostForMethod(selectedShippingMethod) === 0
-                        ? 'Kostenlos'
-                        : `CHF ${getShippingCostForMethod(selectedShippingMethod).toFixed(2)}`}
-                    </span>
-                  </div>
-                  <div className="mt-2 flex items-center justify-between border-t border-gray-200 pt-2 text-base font-bold">
-                    <span className="text-gray-900">Gesamtpreis:</span>
-                    <span className="text-primary-600">
-                      CHF{' '}
-                      {new Intl.NumberFormat('de-CH').format(
-                        price + getShippingCostForMethod(selectedShippingMethod)
-                      )}
-                    </span>
-                  </div>
-                </div>
-              )}
-            </div>
-          )
-        )}
-
+        {/* Jetzt kaufen Button - Leitet zur Checkout-Seite weiter (wie Ricardo) */}
         <button
           onClick={handleBuyNow}
-          disabled={buyNowLoading || isSeller || !(session?.user as { id?: string })?.id}
-          className="hidden w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50 md:flex"
+          disabled={isSeller || !(session?.user as { id?: string })?.id}
+          className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
           style={{ minHeight: '44px' }}
         >
-          {buyNowLoading ? (
-            <>
-              <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-              Wird verarbeitet...
-            </>
-          ) : (
-            <>
-              <ShoppingCart className="h-5 w-5" />
-              Jetzt kaufen
-            </>
-          )}
+          <ShoppingCart className="h-5 w-5" />
+          Jetzt kaufen
         </button>
+        <p className="mt-2 text-center text-xs text-gray-500">
+          Versandoptionen werden im nächsten Schritt angezeigt
+        </p>
       </div>
-
-      {/* Mobile Sticky CTA */}
-      {isMobile && (session?.user as { id?: string })?.id && !isSeller && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white p-4 shadow-lg md:hidden">
-          <button
-            onClick={handleBuyNow}
-            disabled={buyNowLoading || isSeller || !(session?.user as { id?: string })?.id}
-            className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-            style={{ minHeight: '48px' }}
-          >
-            {buyNowLoading ? (
-              <>
-                <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                Wird verarbeitet...
-              </>
-            ) : (
-              <>
-                <ShoppingCart className="h-5 w-5" />
-                Jetzt kaufen - CHF {new Intl.NumberFormat('de-CH').format(price)}
-              </>
-            )}
-          </button>
-        </div>
-      )}
 
       {/* SECONDARY: Preisvorschlag machen - COLLAPSIBLE */}
       <div className="border-t-2 border-gray-200 pt-3 md:pt-6">
