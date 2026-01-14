@@ -390,20 +390,20 @@ export function PriceOfferComponent({
   }
 
   return (
-    <div className="rounded-lg border-2 border-gray-200 bg-white p-6 shadow-lg">
+    <div className="rounded-lg border-2 border-gray-200 bg-white p-3 shadow-lg md:p-6">
       {/* PRIMARY: Sofortkauf-Option - PRIORITIZED */}
-      <div className="mb-6">
-        <div className="mb-4 rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5">
-          <div className="mb-2 flex items-center justify-between">
-            <div className="text-xs font-semibold uppercase tracking-wide text-green-700">
+      <div className="mb-3 md:mb-6">
+        <div className="mb-3 rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-3 md:mb-4 md:p-5">
+          <div className="mb-1 flex items-center justify-between md:mb-2">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-green-700 md:text-xs">
               Sofortkauf verfügbar
             </div>
-            <Zap className="h-4 w-4 text-green-600" />
+            <Zap className="h-3.5 w-3.5 text-green-600 md:h-4 md:w-4" />
           </div>
-          <div className="mb-1 text-3xl font-bold text-green-700">
+          <div className="mb-0.5 text-xl font-bold text-green-700 md:mb-1 md:text-3xl">
             CHF {new Intl.NumberFormat('de-CH').format(price)}
           </div>
-          <p className="text-xs text-green-600">Artikel sofort kaufen ohne Verhandlung</p>
+          <p className="text-[10px] text-green-600 md:text-xs">Artikel sofort kaufen ohne Verhandlung</p>
         </div>
 
         {/* Payment Protection Badge */}
@@ -517,27 +517,27 @@ export function PriceOfferComponent({
       )}
 
       {/* SECONDARY: Preisvorschlag machen - COLLAPSIBLE */}
-      <div className="border-t-2 border-gray-200 pt-6">
+      <div className="border-t-2 border-gray-200 pt-3 md:pt-6">
         <button
           type="button"
           onClick={() => setShowPriceOfferForm(!showPriceOfferForm)}
-          className="flex w-full items-center justify-between rounded-lg border-2 border-gray-200 bg-gray-50 p-4 transition-all hover:border-primary-300 hover:bg-gray-100"
+          className="flex w-full items-center justify-between rounded-lg border-2 border-gray-200 bg-gray-50 p-2.5 transition-all hover:border-primary-300 hover:bg-gray-100 md:p-4"
         >
-          <div className="flex items-center gap-3">
-            <div className="rounded-lg bg-primary-100 p-2">
-              <Tag className="h-5 w-5 text-primary-600" />
+          <div className="flex items-center gap-2 md:gap-3">
+            <div className="rounded-lg bg-primary-100 p-1.5 md:p-2">
+              <Tag className="h-4 w-4 text-primary-600 md:h-5 md:w-5" />
             </div>
             <div className="text-left">
-              <h3 className="text-lg font-bold text-gray-900">Preisvorschlag machen</h3>
-              <p className="text-sm text-gray-500">
-                Mindestens CHF {minimumPrice.toFixed(2)} (60% des Verkaufspreises)
+              <h3 className="text-sm font-bold text-gray-900 md:text-lg">Preisvorschlag machen</h3>
+              <p className="text-xs text-gray-500 md:text-sm">
+                Mindestens CHF {minimumPrice.toFixed(2)} (60%)
               </p>
             </div>
           </div>
           {showPriceOfferForm ? (
-            <ChevronUp className="h-5 w-5 text-gray-500" />
+            <ChevronUp className="h-4 w-4 text-gray-500 md:h-5 md:w-5" />
           ) : (
-            <ChevronDown className="h-5 w-5 text-gray-500" />
+            <ChevronDown className="h-4 w-4 text-gray-500 md:h-5 md:w-5" />
           )}
         </button>
 

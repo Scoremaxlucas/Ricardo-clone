@@ -152,13 +152,13 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
   }
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-6">
+    <div className="rounded-lg border border-gray-200 bg-white p-3 md:p-6">
       {/* Header */}
-      <div className="mb-6 flex items-center gap-2">
-        <MessageCircle className="h-5 w-5 text-primary-600" />
-        <h3 className="text-lg font-bold text-gray-900">Fragen und Antworten</h3>
+      <div className="mb-3 flex items-center gap-2 md:mb-6">
+        <MessageCircle className="h-4 w-4 text-primary-600 md:h-5 md:w-5" />
+        <h3 className="text-base font-bold text-gray-900 md:text-lg">Fragen und Antworten</h3>
         {questions.length > 0 && (
-          <span className="ml-auto text-sm text-gray-600">
+          <span className="ml-auto text-xs text-gray-600 md:text-sm">
             {questions.length} {questions.length === 1 ? 'Frage' : 'Fragen'}
           </span>
         )}
@@ -166,17 +166,17 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
 
       {/* Frage-Formular */}
       {!isSeller && (
-        <div className="mb-6 rounded-lg bg-gray-50 p-4">
+        <div className="mb-3 rounded-lg bg-gray-50 p-3 md:mb-6 md:p-4">
           <form onSubmit={handleSubmitQuestion}>
-            <label className="mb-2 block text-sm font-medium text-gray-700">
+            <label className="mb-1.5 block text-xs font-medium text-gray-700 md:mb-2 md:text-sm">
               Eine Frage stellen
             </label>
             <textarea
               value={questionText}
               onChange={e => setQuestionText(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-4 py-3 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 md:px-4 md:py-3 md:text-base"
               placeholder="Stellen Sie dem Verkäufer eine Frage zu diesem Artikel..."
-              rows={3}
+              rows={2}
               maxLength={800}
               disabled={!(session?.user as { id?: string })?.id}
             />
@@ -227,13 +227,13 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
       )}
 
       {/* Fragen-Liste */}
-      <div className="space-y-4">
+      <div className="space-y-3 md:space-y-4">
         {questions.length === 0 ? (
-          <div className="py-8 text-center text-gray-500">
-            <MessageCircle className="mx-auto mb-3 h-12 w-12 text-gray-300" />
-            <p>Noch keine Fragen gestellt.</p>
+          <div className="py-4 text-center text-gray-500 md:py-8">
+            <MessageCircle className="mx-auto mb-2 h-8 w-8 text-gray-300 md:mb-3 md:h-12 md:w-12" />
+            <p className="text-sm md:text-base">Noch keine Fragen gestellt.</p>
             {!isSeller && (
-              <p className="mt-1 text-sm">Seien Sie der Erste und stellen Sie eine Frage!</p>
+              <p className="mt-1 text-xs md:text-sm">Seien Sie der Erste und stellen Sie eine Frage!</p>
             )}
           </div>
         ) : (

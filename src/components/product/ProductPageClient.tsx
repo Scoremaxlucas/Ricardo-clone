@@ -340,8 +340,8 @@ export function ProductPageClient({
         </div>
       )}
 
-      {/* Breadcrumb */}
-      <div className="mb-4 text-sm text-gray-600">
+      {/* Breadcrumb - Hidden on mobile for cleaner look */}
+      <div className="mb-2 hidden text-sm text-gray-600 md:mb-4 md:block">
         <Link href="/" className="text-primary-600 hover:text-primary-700">
           {t.search.homepage}
         </Link>
@@ -356,13 +356,13 @@ export function ProductPageClient({
       </div>
 
       {/* Haupt-Grid: Links Bilder & Details, Rechts Sidebar */}
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-3">
         {/* Linke Spalte: Bilder & Details */}
-        <div className="space-y-6 lg:col-span-2">
+        <div className="space-y-4 md:space-y-6 lg:col-span-2">
           {/* Artikelbilder & Hauptinfos */}
-          <div className="rounded-lg bg-white p-6 shadow-md">
+          <div className="rounded-lg bg-white p-3 shadow-md md:p-6">
             {/* Bild oder Video */}
-            <div className="relative mb-6">
+            <div className="relative mb-3 md:mb-6">
               {watch.video ? (
                 <div className="relative">
                   <video
@@ -383,8 +383,8 @@ export function ProductPageClient({
                     className="relative flex w-full cursor-pointer items-center justify-center overflow-hidden rounded-lg bg-white"
                     style={{
                       aspectRatio: imageAspectRatio ? `${imageAspectRatio}` : 'auto',
-                      minHeight: '400px',
-                      maxHeight: '800px',
+                      minHeight: isMobile ? '250px' : '400px',
+                      maxHeight: isMobile ? '350px' : '800px',
                     }}
                     onClick={() => openImageModal(selectedImageIndex)}
                     onMouseMove={e => {
@@ -492,7 +492,7 @@ export function ProductPageClient({
 
                   {/* Thumbnail-Galerie */}
                   {images.length > 1 && (
-                    <div className="mt-4 flex gap-2 overflow-x-auto pb-2">
+                    <div className="mt-2 flex gap-1.5 overflow-x-auto pb-2 md:mt-4 md:gap-2">
                       {images.map((image, index) => (
                         <button
                           key={index}
@@ -500,7 +500,7 @@ export function ProductPageClient({
                             setSelectedImageIndex(index)
                             openImageModal(index)
                           }}
-                          className={`relative h-20 w-20 flex-shrink-0 cursor-pointer overflow-hidden rounded-lg border-2 transition-all ${
+                          className={`relative h-14 w-14 flex-shrink-0 cursor-pointer overflow-hidden rounded-md border-2 transition-all md:h-20 md:w-20 md:rounded-lg ${
                             selectedImageIndex === index
                               ? 'border-gray-600 ring-2 ring-gray-200'
                               : 'border-gray-200 hover:border-gray-300'
@@ -539,30 +539,30 @@ export function ProductPageClient({
             </div>
 
             {/* Titel & Artikelnummer */}
-            <div className="mb-4 flex items-start justify-between">
-              <h1 className="flex-1 text-3xl font-bold text-gray-900">
+            <div className="mb-2 flex flex-col md:mb-4 md:flex-row md:items-start md:justify-between">
+              <h1 className="flex-1 text-xl font-bold text-gray-900 md:text-2xl lg:text-3xl">
                 {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
               </h1>
               {watch.articleNumber && (
-                <div className="ml-4 text-sm text-gray-500">
+                <div className="mt-1 text-xs text-gray-500 md:ml-4 md:mt-0 md:text-sm">
                   <span className="font-medium">Artikelnummer:</span>{' '}
                   <span className="font-mono text-gray-700">{watch.articleNumber}</span>
                 </div>
               )}
             </div>
 
-            <div className="mb-6 rounded-lg bg-gray-50 p-4">
+            <div className="mb-3 rounded-lg bg-gray-50 p-3 md:mb-6 md:p-4">
               {watch.buyNowPrice ? (
                 <>
-                  <div className="mb-3">
-                    <div className="text-sm text-gray-600">{t.product.startingPrice}</div>
-                    <div className="text-2xl font-bold text-primary-600">
+                  <div className="mb-2 md:mb-3">
+                    <div className="text-xs text-gray-600 md:text-sm">{t.product.startingPrice}</div>
+                    <div className="text-lg font-bold text-primary-600 md:text-2xl">
                       {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.price)}
                     </div>
                   </div>
-                  <div className="border-t border-gray-200 pt-3">
-                    <div className="mb-2 flex items-center justify-between">
-                      <div className="text-sm text-gray-600">{t.product.buyNowPrice}</div>
+                  <div className="border-t border-gray-200 pt-2 md:pt-3">
+                    <div className="mb-1 flex items-center justify-between md:mb-2">
+                      <div className="text-xs text-gray-600 md:text-sm">{t.product.buyNowPrice}</div>
                       {(watch as any).paymentProtectionEnabled && (
                         <PaymentProtectionBadge
                           enabled={true}
@@ -571,20 +571,20 @@ export function ProductPageClient({
                         />
                       )}
                     </div>
-                    <div className="text-3xl font-bold text-green-600">
+                    <div className="text-xl font-bold text-green-600 md:text-3xl">
                       {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice)}
                     </div>
                   </div>
                 </>
               ) : (
                 <div>
-                  <div className="mb-2 flex items-center justify-between">
-                    <div className="text-sm text-gray-600">{t.product.price}</div>
+                  <div className="mb-1 flex items-center justify-between md:mb-2">
+                    <div className="text-xs text-gray-600 md:text-sm">{t.product.price}</div>
                     {(watch as any).paymentProtectionEnabled && (
                       <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={false} />
                     )}
                   </div>
-                  <div className="text-3xl font-bold text-primary-600">
+                  <div className="text-xl font-bold text-primary-600 md:text-3xl">
                     {t.common.chf} {new Intl.NumberFormat('de-CH').format(watch.price)}
                   </div>
                 </div>
@@ -592,49 +592,49 @@ export function ProductPageClient({
             </div>
 
             {/* Product Stats - Feature 2: Social Proof */}
-            <div className="mb-6">
+            <div className="mb-3 md:mb-6">
               <ProductStats watchId={watch.id} showViewersNow={true} showSoldLast24h={true} />
             </div>
 
-            {/* Produktdetails */}
-            <div className="space-y-3 border-t border-gray-200 pt-6">
-              <h2 className="mb-4 text-xl font-bold text-gray-900">{t.product.details}</h2>
+            {/* Produktdetails - Kompakt auf Mobile */}
+            <div className="space-y-2 border-t border-gray-200 pt-3 md:space-y-3 md:pt-6">
+              <h2 className="mb-2 text-base font-bold text-gray-900 md:mb-4 md:text-xl">{t.product.details}</h2>
 
-              {watch.brand && (
-                <div className="flex">
-                  <span className="w-1/3 font-semibold text-gray-700">{t.product.brand}:</span>
-                  <span className="w-2/3 text-gray-900">{watch.brand}</span>
-                </div>
-              )}
-              {watch.model && (
-                <div className="flex">
-                  <span className="w-1/3 font-semibold text-gray-700">{t.product.model}:</span>
-                  <span className="w-2/3 text-gray-900">{watch.model}</span>
-                </div>
-              )}
-              {(watch as any).referenceNumber && (
-                <div className="flex">
-                  <span className="w-1/3 font-semibold text-gray-700">Referenznummer:</span>
-                  <span className="w-2/3 text-gray-900">{(watch as any).referenceNumber}</span>
-                </div>
-              )}
               {watch.condition && (
-                <div className="flex">
-                  <span className="w-1/3 font-semibold text-gray-700">{t.product.condition}:</span>
+                <div className="flex text-sm md:text-base">
+                  <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">{t.product.condition}:</span>
                   <span className="w-2/3 text-gray-900">
                     {conditionMap[watch.condition] || watch.condition}
                   </span>
                 </div>
               )}
+              {watch.brand && (
+                <div className="flex text-sm md:text-base">
+                  <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">{t.product.brand}:</span>
+                  <span className="w-2/3 text-gray-900">{watch.brand}</span>
+                </div>
+              )}
+              {watch.model && (
+                <div className="flex text-sm md:text-base">
+                  <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">{t.product.model}:</span>
+                  <span className="w-2/3 text-gray-900">{watch.model}</span>
+                </div>
+              )}
+              {(watch as any).referenceNumber && (
+                <div className="flex text-sm md:text-base">
+                  <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Referenznummer:</span>
+                  <span className="w-2/3 text-gray-900">{(watch as any).referenceNumber}</span>
+                </div>
+              )}
               {(watch as any).year && (
-                <div className="flex">
-                  <span className="w-1/3 font-semibold text-gray-700">Jahr:</span>
+                <div className="flex text-sm md:text-base">
+                  <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Jahr:</span>
                   <span className="w-2/3 text-gray-900">{(watch as any).year}</span>
                 </div>
               )}
               {lieferumfang && (
-                <div className="flex">
-                  <span className="w-1/3 font-semibold text-gray-700">Lieferumfang:</span>
+                <div className="flex text-sm md:text-base">
+                  <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Lieferumfang:</span>
                   <span className="w-2/3 text-gray-900">{lieferumfang}</span>
                 </div>
               )}
@@ -642,28 +642,28 @@ export function ProductPageClient({
 
             {/* Beschreibung */}
             {watch.description && (
-              <div className="mt-6 border-t border-gray-200 pt-6">
-                <h2 className="mb-4 text-xl font-bold text-gray-900">{t.product.description}</h2>
-                <p className="whitespace-pre-line text-gray-700">{watch.description}</p>
+              <div className="mt-3 border-t border-gray-200 pt-3 md:mt-6 md:pt-6">
+                <h2 className="mb-2 text-base font-bold text-gray-900 md:mb-4 md:text-xl">{t.product.description}</h2>
+                <p className="whitespace-pre-line text-sm text-gray-700 md:text-base">{watch.description}</p>
               </div>
             )}
 
             {/* Karte für Abholort - IMMER anzeigen wenn Seller vorhanden */}
             {seller && (
-              <div className="mt-6 border-t border-gray-200 pt-6">
+              <div className="mt-3 border-t border-gray-200 pt-3 md:mt-6 md:pt-6">
                 <PickupMap city={seller.city || 'Schweiz'} postalCode={seller.postalCode || ''} />
               </div>
             )}
 
             {/* Fragen & Antworten */}
-            <div className="mt-6 border-t border-gray-200 pt-6">
+            <div className="mt-3 border-t border-gray-200 pt-3 md:mt-6 md:pt-6">
               <ProductQuestions watchId={watch.id} sellerId={watch.sellerId} />
             </div>
           </div>
         </div>
 
         {/* Rechte Spalte: Gebote & Verkäufer */}
-        <div className="space-y-6">
+        <div className="space-y-4 md:space-y-6">
           {watch.isAuction ? (
             <BidComponent
               itemId={watch.id}
