@@ -463,246 +463,127 @@ export function BidComponent({
   }, [])
 
   return (
-    <div className="mt-8 rounded-lg bg-white p-6 shadow">
-      <h2 className="mb-4 text-xl font-semibold text-gray-900">
-        {highestBid ? t.bid.currentHighestBid : t.bid.startAuction}
-      </h2>
+    <div className="space-y-3">
+      {/* Startgebot Box - Kompakt wie Ricardo */}
+      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+        <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+          {highestBid ? t.bid.currentHighestBid : 'Startgebot'}
+        </div>
+        <div className="text-2xl font-bold text-gray-900">
+          {highestBid 
+            ? `CHF ${new Intl.NumberFormat('de-CH').format(highestBid)}`
+            : `CHF ${new Intl.NumberFormat('de-CH').format(startPrice)}`
+          }
+        </div>
+        {highestBid && (
+          <div className="text-xs text-gray-500">
+            {bids.length} {bids.length === 1 ? t.product.bid_singular : t.product.bids}
+          </div>
+        )}
+      </div>
 
-      {/* Countdown */}
+      {/* Countdown - Kompakter */}
       {currentAuctionEnd && timeLeft && timeLeft.total > 0 && (
-        <div className="mb-4 rounded-lg border border-yellow-200 bg-gradient-to-r from-yellow-50 to-orange-50 p-4">
-          <div className="mb-2 flex items-center gap-2">
-            <Clock className="h-5 w-5 text-yellow-600" />
-            <span className="text-sm font-semibold text-yellow-800">{t.bid.auctionEndsIn}:</span>
-          </div>
-          <div className="flex items-center gap-3">
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">
-                {String(timeLeft.days).padStart(2, '0')}
-              </div>
-              <div className="text-xs text-yellow-600">Tag{timeLeft.days !== 1 ? 'e' : ''}</div>
-            </div>
-            <span className="font-bold text-yellow-600">:</span>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">
-                {String(timeLeft.hours).padStart(2, '0')}
-              </div>
-              <div className="text-xs text-yellow-600">
-                {timeLeft.hours !== 1 ? t.product.hours : t.product.hour}
-              </div>
-            </div>
-            <span className="font-bold text-yellow-600">:</span>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">
-                {String(timeLeft.minutes).padStart(2, '0')}
-              </div>
-              <div className="text-xs text-yellow-600">
-                {timeLeft.minutes !== 1 ? t.product.minutes : t.product.minute}
-              </div>
-            </div>
-            <span className="font-bold text-yellow-600">:</span>
-            <div className="text-center">
-              <div className="text-2xl font-bold text-yellow-700">
-                {String(timeLeft.seconds).padStart(2, '0')}
-              </div>
-              <div className="text-xs text-yellow-600">
-                {timeLeft.seconds !== 1 ? t.product.seconds : t.product.second}
-              </div>
-            </div>
-          </div>
+        <div className="flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2">
+          <Clock className="h-4 w-4 text-yellow-600" />
+          <span className="text-sm font-medium text-yellow-800">
+            {timeLeft.days > 0 && `${timeLeft.days}d `}
+            {String(timeLeft.hours).padStart(2, '0')}:
+            {String(timeLeft.minutes).padStart(2, '0')}:
+            {String(timeLeft.seconds).padStart(2, '0')}
+          </span>
           {timeLeft.total < 3 * 60 * 1000 && (
-            <div className="mt-2 text-xs font-medium text-red-600">
-              ⚠️ {t.product.lastThreeMinutes}
-            </div>
+            <span className="text-xs font-medium text-red-600">⚠️ Bald zu Ende!</span>
           )}
         </div>
       )}
 
       {currentAuctionEnd && timeLeft && timeLeft.total <= 0 && (
-        <div className="mb-4 rounded-lg border border-red-200 bg-red-50 p-3">
-          <div className="flex items-center gap-2">
-            <AlertCircle className="h-5 w-5 text-red-600" />
-            <span className="text-sm font-semibold text-red-700">{t.product.auctionEnded}</span>
-          </div>
-        </div>
-      )}
-
-      {highestBid && (
-        <div className="mb-4 rounded bg-primary-50 p-3">
-          <div className="text-2xl font-bold text-primary-700">
-            CHF {new Intl.NumberFormat('de-CH').format(highestBid)}
-          </div>
-          <div className="mt-1 text-sm text-gray-600">
-            {bids.length} {bids.length === 1 ? t.product.bid_singular : t.product.bids}
-          </div>
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+          <AlertCircle className="h-4 w-4 text-red-600" />
+          <span className="text-sm font-medium text-red-700">{t.product.auctionEnded}</span>
         </div>
       )}
 
       {error && (
-        <div className="mb-4 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-700">
+        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="mb-4 rounded border border-green-200 bg-green-50 p-3 text-sm text-green-700">
+        <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
           {success}
         </div>
       )}
 
       {!isSeller && (
-        <div className="space-y-4">
-          {/* Mitbieten */}
-          <div className="hidden md:block">
-            <label className="mb-2 block text-sm font-medium text-gray-700">
-              {t.product.yourBid} ({t.product.minimum} CHF {minBid.toFixed(2)})
-            </label>
-            <div className="flex items-stretch gap-2">
-              <input
-                type="text"
-                inputMode="decimal"
-                value={bidAmount}
-                onChange={e => setBidAmount(e.target.value)}
-                placeholder={`CHF ${minBid.toFixed(2)}`}
-                className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                disabled={isSeller}
-              />
-              <button
-                onClick={handleBid}
-                disabled={loading || !isAuctionActive || isSeller}
-                className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-md bg-primary-600 px-4 py-2 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ minWidth: '44px', minHeight: '44px' }}
-              >
-                <Gavel className="h-4 w-4" />
-                <span className="text-sm font-medium">{t.product.bid}</span>
-              </button>
-            </div>
+        <div className="space-y-2">
+          {/* Bieten Button - Kompakt wie Ricardo */}
+          <div className="flex items-stretch gap-2">
+            <input
+              type="text"
+              inputMode="decimal"
+              value={bidAmount}
+              onChange={e => setBidAmount(e.target.value)}
+              placeholder={`Min. CHF ${minBid.toFixed(0)}`}
+              className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              disabled={isSeller}
+            />
+            <button
+              onClick={handleBid}
+              disabled={loading || !isAuctionActive || isSeller}
+              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <Gavel className="h-4 w-4" />
+              BIETEN
+            </button>
           </div>
 
-          {/* Sofortkauf - Desktop */}
+          {/* Sofortkauf - Kompakt wie Ricardo */}
           {buyNowPrice && (
-            <div className="hidden border-t pt-4 md:block">
-              {/* Payment Protection Badge */}
-              {paymentProtectionEnabled && (
-                <div className="mb-3">
-                  <PaymentProtectionBadge enabled={paymentProtectionEnabled} />
+            <>
+              <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-3">
+                <div className="mb-0.5 flex items-center justify-between">
+                  <div className="text-[10px] font-semibold uppercase tracking-wide text-green-700">
+                    Sofort-Kaufpreis
+                  </div>
+                  <Zap className="h-3.5 w-3.5 text-green-600" />
                 </div>
-              )}
-              <button
-                onClick={handleBuyNowClick}
-                disabled={loading || !isAuctionActive || isSeller}
-                className="flex w-full flex-col items-center gap-1 rounded-md bg-green-600 px-6 py-3 font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ minHeight: '44px' }}
-              >
-                <div className="flex items-center gap-2">
-                  <Zap className="h-5 w-5" />
-                  <span>
-                    {t.product.buyNowFor} CHF {new Intl.NumberFormat('de-CH').format(buyNowPrice)}
-                  </span>
+                <div className="text-xl font-bold text-green-700">
+                  CHF {new Intl.NumberFormat('de-CH').format(buyNowPrice)}
                 </div>
-                {normalizedShippingMethods && normalizedShippingMethods.length > 0 && (
-                  <div className="text-sm font-normal opacity-90">
-                    {normalizedShippingMethods.length === 1 ? (
-                      <>
-                        {shippingCost > 0 ? (
-                          <>
-                            + CHF {new Intl.NumberFormat('de-CH').format(shippingCost)}{' '}
-                            {t.product.shippingCost}
-                            <span className="ml-2">
-                              ({t.product.total}: CHF{' '}
-                              {new Intl.NumberFormat('de-CH').format(buyNowPrice + shippingCost)})
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-white">+ Versandkosten wählbar</span>
-                        )}
-                      </>
-                    ) : (
-                      <span className="text-white">+ Versandmethode wählbar</span>
-                    )}
+                {paymentProtectionEnabled && (
+                  <div className="mt-1">
+                    <PaymentProtectionBadge enabled={paymentProtectionEnabled} compact={true} />
                   </div>
                 )}
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Mobile Sticky CTA Bar */}
-      {!isSeller && isMobile && isAuctionActive && !itemStatus?.isSold && (
-        <div className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white p-4 shadow-lg md:hidden">
-          {buyNowPrice ? (
-            <div className="space-y-2">
+              </div>
               <button
                 onClick={handleBuyNowClick}
                 disabled={loading || !isAuctionActive || isSeller}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-semibold text-white hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ minHeight: '48px' }}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
-                <Zap className="h-5 w-5" />
-                <span>
-                  {t.product.buyNowFor} CHF {new Intl.NumberFormat('de-CH').format(buyNowPrice)}
-                </span>
+                SOFORT KAUFEN
               </button>
-              <div className="flex items-stretch gap-2">
-                <input
-                  type="text"
-                  inputMode="decimal"
-                  value={bidAmount}
-                  onChange={e => setBidAmount(e.target.value)}
-                  placeholder={`CHF ${minBid.toFixed(2)}`}
-                  className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2.5 text-base text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                  disabled={isSeller}
-                  style={{ minHeight: '44px' }}
-                />
-                <button
-                  onClick={handleBid}
-                  disabled={loading || !isAuctionActive || isSeller}
-                  className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-primary-600 px-4 py-2.5 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  style={{ minWidth: '60px', minHeight: '44px' }}
-                >
-                  <Gavel className="h-5 w-5" />
-                  <span className="text-sm font-medium md:hidden">{t.product.bid}</span>
-                </button>
-              </div>
-            </div>
-          ) : (
-            <div className="flex items-stretch gap-2">
-              <input
-                type="text"
-                inputMode="decimal"
-                value={bidAmount}
-                onChange={e => setBidAmount(e.target.value)}
-                placeholder={`CHF ${minBid.toFixed(2)}`}
-                className="min-w-0 flex-1 rounded-md border border-gray-300 px-3 py-2.5 text-base text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
-                disabled={isSeller}
-                style={{ minHeight: '44px' }}
-              />
-              <button
-                onClick={handleBid}
-                disabled={loading || !isAuctionActive || isSeller}
-                className="flex shrink-0 items-center justify-center gap-1.5 rounded-md bg-primary-600 px-4 py-2.5 text-white hover:bg-primary-700 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ minWidth: '80px', minHeight: '44px' }}
-              >
-                <Gavel className="h-5 w-5" />
-                <span className="text-sm font-medium">{t.product.bid}</span>
-              </button>
-            </div>
+            </>
           )}
         </div>
       )}
 
+      {/* Mobile Sticky CTA - Entfernt, da jetzt inline kompakte Buttons */}
+
       {isSeller && (
-        <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-          <p className="text-sm text-blue-800">{t.product.cannotBidOwnItem}</p>
+        <div className="rounded-lg border border-blue-200 bg-blue-50 px-3 py-2">
+          <p className="text-xs text-blue-700">{t.product.cannotBidOwnItem}</p>
         </div>
       )}
 
-      {/* Gebote-Liste */}
+      {/* Gebote-Liste - Kompakt */}
       {bids.length > 0 && (
-        <div className="mt-6 border-t pt-6">
-          <h3 className="mb-3 text-sm font-medium text-gray-700">{t.product.bidsHistory}</h3>
-          <div className="max-h-48 space-y-2 overflow-y-auto">
+        <div className="border-t border-gray-100 pt-3">
+          <h3 className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">{t.product.bidsHistory}</h3>
+          <div className="max-h-32 space-y-1 overflow-y-auto">
             {bids.slice(0, 5).map(bid => (
               <div key={bid.id} className="flex items-center justify-between gap-2 text-sm">
                 <div className="flex min-w-0 flex-1 items-center gap-2">

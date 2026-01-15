@@ -10,6 +10,7 @@ interface SellerProfileProps {
   sellerId: string
   sellerName: string
   sellerEmail: string
+  compact?: boolean
 }
 
 interface SellerData {
@@ -29,7 +30,7 @@ interface SellerData {
   }>
 }
 
-export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfileProps) {
+export function SellerProfile({ sellerId, sellerName, sellerEmail, compact = false }: SellerProfileProps) {
   const { data: session } = useSession()
   const [sellerData, setSellerData] = useState<SellerData | null>(null)
   const [isFollowing, setIsFollowing] = useState(false)
@@ -164,9 +165,9 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
 
   if (loading) {
     return (
-      <div className="rounded-lg border border-gray-200 bg-white p-6">
+      <div className={compact ? 'p-3' : 'rounded-lg border border-gray-200 bg-white p-6'}>
         <div className="animate-pulse">
-          <div className="mb-4 h-4 w-1/3 rounded bg-gray-200"></div>
+          <div className="mb-2 h-4 w-1/3 rounded bg-gray-200"></div>
           <div className="h-4 w-1/2 rounded bg-gray-200"></div>
         </div>
       </div>
@@ -175,6 +176,61 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
 
   const stats = sellerData?.reviewStats || { total: 0, positivePercentage: 100, averageRating: 5 }
 
+  // === COMPACT MODE (wie Ricardo Sidebar) ===
+  if (compact) {
+    return (
+      <div className="p-3">
+        <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">Verkäufer</div>
+        
+        <div className="flex items-center gap-3">
+          {/* Kleiner Avatar */}
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white">
+            {getInitials(sellerName)}
+          </div>
+
+          <div className="min-w-0 flex-1">
+            {/* Name + Rating inline wie Ricardo */}
+            <div className="flex items-center gap-2">
+              <Link
+                href={`/users/${sellerId}`}
+                className="truncate text-sm font-semibold text-primary-600 hover:underline"
+              >
+                {sellerName}
+              </Link>
+              {/* Rating Badge wie Ricardo - nur anzeigen wenn vorhanden */}
+              {stats.total > 0 && (
+                <span className={`flex-shrink-0 rounded-full px-1.5 py-0.5 text-xs font-bold text-white ${
+                  stats.positivePercentage >= 95 ? 'bg-primary-500' :
+                  stats.positivePercentage >= 80 ? 'bg-yellow-500' :
+                  'bg-orange-500'
+                }`}>
+                  {stats.positivePercentage}%
+                </span>
+              )}
+            </div>
+
+            {/* Info Zeile */}
+            <div className="flex flex-wrap items-center gap-x-2 text-xs text-gray-500">
+              <span>{sellerData?.activeListings || 0} offene Angebote</span>
+              {stats.total > 0 && (
+                <span>• {stats.total} Bewertung{stats.total !== 1 ? 'en' : ''}</span>
+              )}
+            </div>
+
+            {/* Verifiziert Badge */}
+            {sellerData?.verified && (
+              <div className="mt-0.5 flex items-center gap-1 text-xs text-green-600">
+                <CheckCircle className="h-3 w-3" />
+                <span>Ausweis verifiziert</span>
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // === NORMAL MODE (volle Ansicht) ===
   return (
     <div className="rounded-lg border border-gray-200 bg-white p-6">
       <h3 className="mb-4 text-lg font-bold text-gray-900">Verkäufer</h3>

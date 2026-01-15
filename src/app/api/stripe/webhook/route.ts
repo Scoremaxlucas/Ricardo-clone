@@ -22,7 +22,7 @@ const MAX_PROCESSING_TIME = 30000
 /**
  * Stripe Webhook Handler
  * Verarbeitet Zahlungsbestätigungen und aktualisiert Rechnungen
- * 
+ *
  * Security Features:
  * - Rate limiting (100 requests per 10 seconds per IP)
  * - IP validation (basic check, signature is primary security)
@@ -567,7 +567,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
     try {
       const { calculateInvoiceForOrder } = await import('@/lib/invoice')
       const invoice = await calculateInvoiceForOrder(orderId)
-      
+
       // Update Order mit Invoice-Referenz
       await prisma.order.update({
         where: { id: orderId },
@@ -576,7 +576,7 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
           invoiceCreatedAt: new Date(),
         },
       })
-      
+
       console.log(`[stripe/webhook] ✅ Rechnung ${invoice.invoiceNumber} erstellt für Order ${orderId}`)
     } catch (invoiceError: any) {
       console.error(`[stripe/webhook] Fehler bei Rechnungserstellung für Order ${orderId}:`, invoiceError)

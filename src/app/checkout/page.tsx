@@ -155,7 +155,7 @@ function CheckoutPageContent() {
     setError('')
 
     const isPickup = selectedShipping === 'pickup'
-    
+
     // Shipping code mapping
     const shippingCodeMap: Record<string, string> = {
       'b-post': 'post_economy_2kg',
@@ -166,7 +166,7 @@ function CheckoutPageContent() {
       // === EINHEITLICHER ORDER-FLOW (Ricardo-Style) ===
       // Alle Käufe gehen jetzt über /api/orders/create
       // Die API entscheidet basierend auf paymentProtectionEnabled und deliveryMode
-      
+
       const createOrderRes = await fetch('/api/orders/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -210,13 +210,13 @@ function CheckoutPageContent() {
         // ABHOLUNG ODER VERSAND OHNE ZAHLUNGSSCHUTZ
         // Order wurde bereits erstellt mit Status "confirmed"
         // Käufer erhält E-Mail mit Zahlungsinformationen/Kontaktdaten
-        
+
         if (isPickup) {
           toast.success('Kauf erfolgreich! Kontaktieren Sie den Verkäufer für die Abholung.')
         } else {
           toast.success('Kauf erfolgreich! Überweisen Sie den Betrag innerhalb von 14 Tagen.')
         }
-        
+
         // Redirect zur Bestellübersicht
         router.push(`/my-watches/buying/orders?highlight=${orderId}`)
       }
@@ -255,8 +255,8 @@ function CheckoutPageContent() {
             <p className="mb-6 text-sm text-gray-600">
               {error || 'Der gesuchte Artikel konnte leider nicht gefunden werden.'}
             </p>
-            <button 
-              onClick={() => router.back()} 
+            <button
+              onClick={() => router.back()}
               className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-3 font-medium text-white transition-colors hover:bg-primary-700"
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -309,8 +309,8 @@ function CheckoutPageContent() {
       <div className="mx-auto max-w-4xl px-4 py-6 md:py-8">
         {/* Header */}
         <div className="mb-6 flex items-center">
-          <button 
-            onClick={() => router.back()} 
+          <button
+            onClick={() => router.back()}
             className="mr-3 rounded-full p-2 text-gray-600 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
           >
             <ArrowLeft className="h-5 w-5" />
@@ -347,7 +347,7 @@ function CheckoutPageContent() {
                       </div>
                     )}
                   </div>
-                  
+
                   {/* Details */}
                   <div className="flex flex-1 flex-col justify-between">
                     <div>
@@ -391,13 +391,13 @@ function CheckoutPageContent() {
                       const isSelected = selectedShipping === method
                       const isPickup = method === 'pickup'
                       const price = isPickup ? 0 : method === 'b-post' ? 8.50 : 12.50
-                      
+
                       return (
                         <label
                           key={method}
                           className={`flex cursor-pointer items-center rounded-xl border-2 p-4 transition-all ${
-                            isSelected 
-                              ? 'border-primary-500 bg-primary-50 shadow-sm' 
+                            isSelected
+                              ? 'border-primary-500 bg-primary-50 shadow-sm'
                               : 'border-gray-200 bg-white hover:border-gray-300 hover:bg-gray-50'
                           }`}
                         >
@@ -410,8 +410,8 @@ function CheckoutPageContent() {
                             className="sr-only"
                           />
                           <div className={`mr-4 flex h-5 w-5 items-center justify-center rounded-full border-2 transition-colors ${
-                            isSelected 
-                              ? 'border-primary-500 bg-primary-500' 
+                            isSelected
+                              ? 'border-primary-500 bg-primary-500'
                               : 'border-gray-300 bg-white'
                           }`}>
                             {isSelected && <Check className="h-3 w-3 text-white" />}
@@ -428,10 +428,10 @@ function CheckoutPageContent() {
                               </span>
                             </div>
                             <p className="ml-6 mt-0.5 text-xs text-gray-500">
-                              {isPickup 
-                                ? 'Direkt beim Verkäufer abholen' 
-                                : method === 'b-post' 
-                                  ? 'Lieferung in 3-4 Werktagen, bis 2 kg' 
+                              {isPickup
+                                ? 'Direkt beim Verkäufer abholen'
+                                : method === 'b-post'
+                                  ? 'Lieferung in 3-4 Werktagen, bis 2 kg'
                                   : 'Lieferung in 1-2 Werktagen, bis 2 kg'}
                             </p>
                           </div>
@@ -499,7 +499,7 @@ function CheckoutPageContent() {
                   <div>
                     <h3 className="font-semibold text-primary-800">Abholung beim Verkäufer</h3>
                     <p className="mt-1 text-sm text-primary-700">
-                      Nach der Kaufbestätigung erhalten Sie die Kontaktdaten. 
+                      Nach der Kaufbestätigung erhalten Sie die Kontaktdaten.
                       Bezahlung erfolgt bar bei Übergabe.
                     </p>
                   </div>
@@ -553,9 +553,9 @@ function CheckoutPageContent() {
                   onClick={handleCheckout}
                   disabled={isProcessing || !selectedShipping}
                   className={`w-full rounded-xl px-6 py-4 font-semibold text-white shadow-md transition-all disabled:opacity-50 ${
-                    selectedShipping === 'pickup' 
-                      ? 'bg-primary-600 hover:bg-primary-700 hover:shadow-lg' 
-                      : watch.paymentProtectionEnabled 
+                    selectedShipping === 'pickup'
+                      ? 'bg-primary-600 hover:bg-primary-700 hover:shadow-lg'
+                      : watch.paymentProtectionEnabled
                         ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 hover:shadow-lg'
                         : 'bg-primary-600 hover:bg-primary-700 hover:shadow-lg'
                   }`}

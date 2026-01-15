@@ -59,7 +59,7 @@ export async function sendOrderConfirmationEmail(orderId: string) {
 
   const buyerName = order.buyer.nickname || order.buyer.firstName || order.buyer.name || 'Käufer'
   const sellerName = order.seller.nickname || order.seller.firstName || order.seller.name || 'Verkäufer'
-  
+
   // Bild-URL parsen
   let imageUrl = ''
   try {
@@ -114,7 +114,7 @@ export async function sendOrderConfirmationEmail(orderId: string) {
   `
 
   const subject = `Bestellbestätigung #${order.orderNumber} - ${order.watch.title}`
-  
+
   const html = `
     <!DOCTYPE html>
     <html>
@@ -128,7 +128,7 @@ export async function sendOrderConfirmationEmail(orderId: string) {
       </div>
 
       <p>Hallo ${buyerName},</p>
-      
+
       <p>Ihre Bestellung <strong>#${order.orderNumber}</strong> wurde erfolgreich aufgegeben.</p>
 
       <!-- Artikel-Details -->
@@ -188,7 +188,7 @@ export async function sendOrderConfirmationEmail(orderId: string) {
 
       <!-- Button -->
       <div style="text-align: center; margin: 24px 0;">
-        <a href="${BASE_URL}/my-watches/buying/orders" 
+        <a href="${BASE_URL}/my-watches/buying/orders"
            style="display: inline-block; background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
           Bestellung ansehen
         </a>
@@ -214,8 +214,8 @@ Artikelpreis: CHF ${order.itemPrice.toFixed(2)}
 Versand: ${order.shippingCostChfFinal > 0 ? `CHF ${order.shippingCostChfFinal.toFixed(2)}` : 'Gratis (Abholung)'}
 Total: CHF ${order.totalAmount.toFixed(2)}
 
-${order.paymentMethod === 'cash_on_pickup' ? 
-  'Die Bezahlung erfolgt bar bei der Übergabe.' : 
+${order.paymentMethod === 'cash_on_pickup' ?
+  'Die Bezahlung erfolgt bar bei der Übergabe.' :
   `Bitte überweisen Sie CHF ${order.totalAmount.toFixed(2)} an den Verkäufer.\nZahlungsfrist: ${order.paymentDeadline ? new Date(order.paymentDeadline).toLocaleDateString('de-CH') : 'Nicht gesetzt'}`
 }
 
@@ -266,7 +266,7 @@ export async function sendPaymentReminderEmail(orderId: string, reminderNumber: 
 
   const buyerName = order.buyer.nickname || order.buyer.firstName || order.buyer.name || 'Käufer'
   const sellerName = order.seller.nickname || order.seller.firstName || order.seller.name || 'Verkäufer'
-  const daysRemaining = order.paymentDeadline 
+  const daysRemaining = order.paymentDeadline
     ? Math.ceil((new Date(order.paymentDeadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : 0
 
@@ -288,7 +288,7 @@ export async function sendPaymentReminderEmail(orderId: string, reminderNumber: 
 
       <div style="border: 1px solid #e5e7eb; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
         <p>Hallo ${buyerName},</p>
-        
+
         <p>Für Ihre Bestellung <strong>#${order.orderNumber}</strong> steht noch die Zahlung aus.</p>
 
         <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px; margin: 16px 0;">
@@ -308,7 +308,7 @@ export async function sendPaymentReminderEmail(orderId: string, reminderNumber: 
         <p>Bitte überweisen Sie den Betrag an ${sellerName} oder kontaktieren Sie den Verkäufer, falls es Probleme gibt.</p>
 
         <div style="text-align: center; margin: 24px 0;">
-          <a href="${BASE_URL}/my-watches/buying/orders/${order.id}" 
+          <a href="${BASE_URL}/my-watches/buying/orders/${order.id}"
              style="display: inline-block; background-color: ${urgencyColor}; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
             Bestellung ansehen
           </a>
@@ -400,7 +400,7 @@ export async function sendAutoCancellationEmail(orderId: string, reason: string)
 
       <div style="border: 1px solid #e5e7eb; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
         <p>Hallo ${buyerName},</p>
-        
+
         <p>Ihre Bestellung <strong>#${order.orderNumber}</strong> wurde automatisch storniert.</p>
 
         <div style="background-color: #fef2f2; padding: 16px; border-radius: 8px; margin: 16px 0;">
@@ -415,7 +415,7 @@ export async function sendAutoCancellationEmail(orderId: string, reason: string)
         <p>Der Artikel wurde wieder für andere Käufer freigegeben. Falls Sie noch Interesse haben, können Sie den Artikel erneut kaufen.</p>
 
         <div style="text-align: center; margin: 24px 0;">
-          <a href="${BASE_URL}/products/${order.watchId}" 
+          <a href="${BASE_URL}/products/${order.watchId}"
              style="display: inline-block; background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
             Artikel erneut ansehen
           </a>
@@ -438,7 +438,7 @@ export async function sendAutoCancellationEmail(orderId: string, reason: string)
 
       <div style="border: 1px solid #e5e7eb; border-top: none; padding: 20px; border-radius: 0 0 8px 8px;">
         <p>Hallo ${sellerName},</p>
-        
+
         <p>Die Bestellung <strong>#${order.orderNumber}</strong> wurde automatisch storniert, da der Käufer nicht innerhalb der Zahlungsfrist bezahlt hat.</p>
 
         <div style="background-color: #f9fafb; padding: 16px; border-radius: 8px; margin: 16px 0;">
@@ -449,7 +449,7 @@ export async function sendAutoCancellationEmail(orderId: string, reason: string)
         <p>Ihr Artikel wurde automatisch wieder für andere Käufer freigegeben.</p>
 
         <div style="text-align: center; margin: 24px 0;">
-          <a href="${BASE_URL}/my-watches/selling/active" 
+          <a href="${BASE_URL}/my-watches/selling/active"
              style="display: inline-block; background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
             Meine Angebote ansehen
           </a>

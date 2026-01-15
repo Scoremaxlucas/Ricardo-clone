@@ -629,17 +629,17 @@ export function ProductPageClient({
               )}
             </div>
 
-            {/* MOBILE ONLY: Titel, Datum, Preis, Buy/Offer, Seller - Ricardo-Style */}
+            {/* MOBILE ONLY: Titel, Datum, Preis, Buy/Offer, Seller - Kompakt wie Ricardo */}
             <div className="lg:hidden">
               {/* Titel */}
               <h1 className="mb-1 text-lg font-bold leading-tight text-gray-900">
                 {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
               </h1>
 
-              {/* Einstelldatum mit Clock-Icon wie Ricardo */}
+              {/* Einstelldatum mit Clock-Icon */}
               {watch.createdAt && (
-                <div className="mb-3 flex items-center gap-1 text-xs text-gray-500">
-                  <Clock className="h-3.5 w-3.5" />
+                <div className="mb-2 flex items-center gap-1 text-xs text-gray-500">
+                  <Clock className="h-3 w-3" />
                   {new Date(watch.createdAt).toLocaleDateString('de-CH', {
                     day: 'numeric',
                     month: 'short',
@@ -653,21 +653,16 @@ export function ProductPageClient({
 
               {/* Preis - Nur bei Auktionen separat anzeigen */}
               {watch.isAuction && (
-                <div className="mb-3">
+                <div className="mb-2">
                   <div className="text-xs text-gray-600">Startpreis</div>
-                  <div className="text-2xl font-bold text-gray-900">
+                  <div className="text-xl font-bold text-gray-900">
                     CHF {new Intl.NumberFormat('de-CH').format(watch.price)}
                   </div>
-                  {(watch as any).paymentProtectionEnabled && (
-                    <div className="mt-1">
-                      <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={true} />
-                    </div>
-                  )}
                 </div>
               )}
 
-              {/* Buy/Offer Section */}
-              <div className="mb-3">
+              {/* Buy/Offer Section - Kompakt */}
+              <div className="mb-2">
                 {watch.isAuction ? (
                   <BidComponent
                     itemId={watch.id}
@@ -690,48 +685,49 @@ export function ProductPageClient({
                 )}
               </div>
 
-              {/* Zu Favoriten Button - Full Width wie Ricardo */}
+              {/* Zu Favoriten Button - Kompakter */}
               <button
                 onClick={toggleFavorite}
                 disabled={favoriteLoading}
-                className={`mb-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm font-semibold transition-colors disabled:opacity-50 ${
+                className={`mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
                   isFavorite
-                    ? 'border-red-500 bg-red-50 text-red-600'
-                    : 'border-primary-600 bg-white text-primary-600'
+                    ? 'border-red-400 bg-red-50 text-red-600'
+                    : 'border-gray-300 bg-white text-gray-700'
                 }`}
               >
                 <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
                 {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
               </button>
 
-              {/* Lieferung Info */}
+              {/* Lieferung Info - Inline */}
               {(watch as any).shippingMethod && (
-                <div className="mb-3 rounded-lg bg-gray-50 px-3 py-2">
-                  <div className="text-xs text-gray-600">Lieferung</div>
-                  <div className="text-sm font-medium text-gray-900">
+                <div className="mb-2 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
+                  <span className="text-gray-500">Lieferung</span>
+                  <span className="font-medium text-gray-900">
                     {formatShippingMethod((watch as any).shippingMethod)}
-                  </div>
+                  </span>
                 </div>
               )}
 
-              {/* Seller Profile - Kompakter */}
-              <div className="mb-3 rounded-lg border border-gray-200 bg-white">
+              {/* Seller Profile - Kompakt */}
+              <div className="mb-2 rounded-lg border border-gray-200 bg-white">
                 <SellerProfile
                   sellerId={watch.sellerId}
                   sellerName={seller?.name || t.common.unknown}
                   sellerEmail={seller?.email || ''}
+                  compact={true}
                 />
               </div>
 
               {/* Report-Button Mobile */}
               {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
-                <div className="mb-3 text-center">
+                <div className="mb-2 text-center">
                   <button
                     onClick={() => setShowReportModal(true)}
-                    className="inline-flex items-center gap-1.5 text-xs text-gray-500 transition-colors hover:text-red-600"
+                    className="inline-flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-red-500"
                   >
-                    <Flag className="h-3.5 w-3.5" />
-                    Angebot melden
+                    <Flag className="h-3 w-3" />
+                    Melden
                   </button>
                 </div>
               )}
@@ -840,115 +836,113 @@ export function ProductPageClient({
           </div>
         </div>
 
-        {/* Rechte Spalte: DESKTOP ONLY - Muss volle Höhe haben für Sticky */}
+        {/* Rechte Spalte: DESKTOP ONLY - Kompakt wie Ricardo */}
         <div className="hidden lg:block">
-          {/* Sticky Container - DIESER ist sticky, nicht der äußere */}
-          <div className="sticky top-24 space-y-4">
-            {/* Hauptkarte mit Titel, Datum, Preis */}
-            <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
-            {/* Titel */}
-            <h1 className="mb-2 text-xl font-bold text-gray-900 lg:text-2xl">
-              {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
-            </h1>
+          {/* Sticky Container */}
+          <div className="sticky top-24 space-y-3">
+            {/* Hauptkarte mit Titel, Datum, Preis - Kompakt */}
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
+              {/* Titel - Kompakter */}
+              <h1 className="mb-1 text-lg font-bold leading-tight text-gray-900">
+                {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
+              </h1>
 
-            {/* Datum mit Clock-Icon wie Ricardo */}
-            {watch.createdAt && (
-              <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-500">
-                <Clock className="h-4 w-4" />
-                {new Date(watch.createdAt).toLocaleDateString('de-CH', {
-                  day: 'numeric',
-                  month: 'short',
-                  year: 'numeric'
-                })}, {new Date(watch.createdAt).toLocaleTimeString('de-CH', {
-                  hour: '2-digit',
-                  minute: '2-digit'
-                })} Uhr
-              </div>
-            )}
-
-            {/* Preis - Nur bei Auktionen separat anzeigen */}
-            {watch.isAuction && (
-              <div className="mb-4">
-                <div className="text-sm text-gray-600">Startpreis</div>
-                <div className="text-2xl font-bold text-gray-900">
-                  CHF {new Intl.NumberFormat('de-CH').format(watch.price)}
+              {/* Datum - Kleiner wie Ricardo */}
+              {watch.createdAt && (
+                <div className="mb-3 flex items-center gap-1 text-xs text-gray-500">
+                  <Clock className="h-3.5 w-3.5" />
+                  {new Date(watch.createdAt).toLocaleDateString('de-CH', {
+                    day: 'numeric',
+                    month: 'short',
+                    year: 'numeric'
+                  })}, {new Date(watch.createdAt).toLocaleTimeString('de-CH', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  })} Uhr
                 </div>
-                {(watch as any).paymentProtectionEnabled && (
-                  <div className="mt-1">
-                    <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={true} />
+              )}
+
+              {/* Preis - Nur bei Auktionen separat anzeigen */}
+              {watch.isAuction && (
+                <div className="mb-3">
+                  <div className="text-xs text-gray-600">Startpreis</div>
+                  <div className="text-xl font-bold text-gray-900">
+                    CHF {new Intl.NumberFormat('de-CH').format(watch.price)}
                   </div>
-                )}
-              </div>
-            )}
-
-            {/* Kauf/Gebot Component */}
-            {watch.isAuction ? (
-              <BidComponent
-                itemId={watch.id}
-                startPrice={watch.price}
-                buyNowPrice={watch.buyNowPrice}
-                auctionEnd={watch.auctionEnd}
-                sellerId={watch.sellerId}
-                shippingMethod={(watch as any).shippingMethod}
-                paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
-              />
-            ) : (
-              <PriceOfferComponent
-                watchId={watch.id}
-                price={watch.price}
-                sellerId={watch.sellerId}
-                buyNowPrice={watch.buyNowPrice}
-                shippingMethod={(watch as any).shippingMethod}
-                paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
-              />
-            )}
-
-            {/* Zu Favoriten hinzufügen - Wie Ricardo */}
-            <button
-              onClick={toggleFavorite}
-              disabled={favoriteLoading}
-              className={`mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 font-semibold transition-colors disabled:opacity-50 ${
-                isFavorite
-                  ? 'border-red-500 bg-red-50 text-red-600 hover:bg-red-100'
-                  : 'border-primary-600 bg-white text-primary-600 hover:bg-primary-50'
-              }`}
-            >
-              <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
-              {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
-            </button>
-
-            {/* Lieferung - Wie Ricardo */}
-            {(watch as any).shippingMethod && (
-              <div className="mt-4 border-t border-gray-200 pt-4">
-                <div className="text-sm text-gray-600">Lieferung</div>
-                <div className="font-medium text-gray-900">
-                  {formatShippingMethod((watch as any).shippingMethod)}
                 </div>
-              </div>
-            )}
-          </div>
+              )}
 
-          {/* Verkäufer-Karte */}
-          <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
-            <SellerProfile
-              sellerId={watch.sellerId}
-              sellerName={seller?.name || t.common.unknown}
-              sellerEmail={seller?.email || ''}
-            />
-          </div>
+              {/* Kauf/Gebot Component */}
+              {watch.isAuction ? (
+                <BidComponent
+                  itemId={watch.id}
+                  startPrice={watch.price}
+                  buyNowPrice={watch.buyNowPrice}
+                  auctionEnd={watch.auctionEnd}
+                  sellerId={watch.sellerId}
+                  shippingMethod={(watch as any).shippingMethod}
+                  paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
+                />
+              ) : (
+                <PriceOfferComponent
+                  watchId={watch.id}
+                  price={watch.price}
+                  sellerId={watch.sellerId}
+                  buyNowPrice={watch.buyNowPrice}
+                  shippingMethod={(watch as any).shippingMethod}
+                  paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
+                />
+              )}
 
-          {/* Report-Button */}
-          {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
-            <div className="text-center">
+              {/* Zu Favoriten hinzufügen - Kompakter */}
               <button
-                onClick={() => setShowReportModal(true)}
-                className="inline-flex items-center gap-2 text-sm text-gray-500 transition-colors hover:text-red-600"
+                onClick={toggleFavorite}
+                disabled={favoriteLoading}
+                className={`mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                  isFavorite
+                    ? 'border-red-400 bg-red-50 text-red-600 hover:bg-red-100'
+                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                }`}
               >
-                <Flag className="h-4 w-4" />
-                Angebot melden
+                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
               </button>
+
+              {/* Lieferung - Inline wie Ricardo */}
+              {(watch as any).shippingMethod && (
+                <div className="mt-3 border-t border-gray-100 pt-3">
+                  <div className="flex items-baseline justify-between text-sm">
+                    <span className="text-gray-500">Lieferung</span>
+                    <span className="font-medium text-gray-900">
+                      {formatShippingMethod((watch as any).shippingMethod)}
+                    </span>
+                  </div>
+                </div>
+              )}
             </div>
-          )}
+
+            {/* Verkäufer-Karte - Kompakter */}
+            <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
+              <SellerProfile
+                sellerId={watch.sellerId}
+                sellerName={seller?.name || t.common.unknown}
+                sellerEmail={seller?.email || ''}
+                compact={true}
+              />
+            </div>
+
+            {/* Links wie Ricardo: TEILEN | ÄHNLICHEN ARTIKEL VERKAUFEN */}
+            <div className="flex items-center justify-center gap-4 text-xs">
+              {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
+                <button
+                  onClick={() => setShowReportModal(true)}
+                  className="flex items-center gap-1 text-gray-500 transition-colors hover:text-red-600"
+                >
+                  <Flag className="h-3.5 w-3.5" />
+                  Melden
+                </button>
+              )}
+            </div>
           </div>
         </div>
       </div>

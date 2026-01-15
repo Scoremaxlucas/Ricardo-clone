@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * - Abholung (cash_on_pickup)
  * - Versand ohne Schutz (bank_transfer)
  * - Versand mit Schutz (stripe)
- * 
+ *
  * Ricardo-Style: 14-Tage-Zahlungsfrist für Direktzahlungen
  */
 export async function POST(request: NextRequest) {
@@ -206,7 +206,7 @@ export async function POST(request: NextRequest) {
     // === RICARDO-STYLE: Bestimme Zahlungsmethode und Fristen ===
     const isPickup = selectedDeliveryMode === 'pickup'
     const hasPaymentProtection = watch.paymentProtectionEnabled && !isPickup
-    
+
     // Zahlungsmethode bestimmen
     let paymentMethod: 'stripe' | 'bank_transfer' | 'cash_on_pickup'
     if (isPickup) {
@@ -219,7 +219,7 @@ export async function POST(request: NextRequest) {
 
     // Fristen berechnen
     const now = new Date()
-    
+
     // 14-Tage-Zahlungsfrist für Direktzahlungen (Banküberweisung)
     // Für Abholung gilt auch 14 Tage - Käufer muss Verkäufer kontaktieren
     const paymentDeadline = new Date(now)

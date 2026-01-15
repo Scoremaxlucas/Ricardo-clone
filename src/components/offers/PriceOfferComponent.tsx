@@ -148,79 +148,61 @@ export function PriceOfferComponent({
 
   if (isSeller) {
     return (
-      <div className="rounded-lg border-2 border-gray-200 bg-white p-6 shadow-lg">
-        <div className="mb-4 flex items-center gap-3">
-          <div className="rounded-lg bg-gray-100 p-2">
-            <Tag className="h-5 w-5 text-gray-600" />
+      <div className="space-y-3">
+        {/* Preis-Box für Verkäufer */}
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+            Ihr Verkaufspreis
           </div>
-          <h3 className="text-xl font-bold text-gray-900">Preisvorschläge</h3>
+          <div className="text-2xl font-bold text-gray-700">
+            CHF {new Intl.NumberFormat('de-CH').format(price)}
+          </div>
         </div>
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-          <p className="flex items-center gap-2 text-sm text-gray-600">
-            <Info className="h-4 w-4 text-gray-400" />
-            Als Verkäufer können Sie keine Preisvorschläge machen.
-          </p>
-        </div>
+        <p className="text-center text-xs text-gray-400">
+          Sie können Ihr eigenes Angebot nicht kaufen
+        </p>
       </div>
     )
   }
 
   if (!(session?.user as { id?: string })?.id) {
     return (
-      <div className="rounded-lg border-2 border-gray-200 bg-white p-6 shadow-lg">
-        {/* Sofortkauf-Option für nicht angemeldete Benutzer */}
-        <div className="mb-6">
-          <div className="mb-4 rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5">
-            <div className="mb-2 flex items-center justify-between">
-              <div className="text-xs font-semibold uppercase tracking-wide text-green-700">
-                Sofortkauf
-              </div>
-              <Zap className="h-4 w-4 text-green-600" />
+      <div className="space-y-3">
+        {/* Sofortkauf-Option für nicht angemeldete Benutzer - Kompakt */}
+        <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-3">
+          <div className="mb-1 flex items-center justify-between">
+            <div className="text-[10px] font-semibold uppercase tracking-wide text-green-700">
+              Sofortkauf
             </div>
-            <div className="mb-1 text-3xl font-bold text-green-700">
-              CHF {new Intl.NumberFormat('de-CH').format(price)}
-            </div>
-            <p className="text-xs text-green-600">Jetzt kaufen ohne Verhandlung</p>
+            <Zap className="h-3.5 w-3.5 text-green-600" />
           </div>
-
-          {/* Payment Protection Badge */}
+          <div className="text-2xl font-bold text-green-700">
+            CHF {new Intl.NumberFormat('de-CH').format(price)}
+          </div>
           {paymentProtectionEnabled && (
-            <div className="mb-4">
-              <PaymentProtectionBadge enabled={paymentProtectionEnabled} />
+            <div className="mt-1.5">
+              <PaymentProtectionBadge enabled={paymentProtectionEnabled} compact={true} />
             </div>
           )}
-
-          <button
-            disabled
-            className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-gray-300 px-6 py-3 font-semibold text-gray-500 shadow-sm"
-          >
-            <ShoppingCart className="h-5 w-5" />
-            Jetzt kaufen
-          </button>
-          <p className="mt-3 text-center text-xs text-gray-500">
-            Bitte melden Sie sich an, um zu kaufen
-          </p>
         </div>
 
-        {/* Preisvorschlag Info für nicht angemeldete */}
-        <div className="border-t-2 border-gray-200 pt-6">
-          <div className="mb-4 flex items-center gap-3">
-            <div className="rounded-lg bg-primary-100 p-2">
-              <Tag className="h-5 w-5 text-primary-600" />
-            </div>
-            <h3 className="text-xl font-bold text-gray-900">Preisvorschlag machen</h3>
-          </div>
+        <button
+          disabled
+          className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-500"
+        >
+          <ShoppingCart className="h-4 w-4" />
+          SOFORT KAUFEN
+        </button>
+        <p className="text-center text-xs text-gray-500">
+          Anmelden um zu kaufen
+        </p>
 
-          <div className="rounded-lg border-2 border-yellow-200 bg-yellow-50 p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-yellow-600" />
-              <div>
-                <p className="mb-1 text-sm font-medium text-yellow-800">Anmeldung erforderlich</p>
-                <p className="text-sm text-yellow-700">
-                  Bitte melden Sie sich an, um einen Preisvorschlag zu machen.
-                </p>
-              </div>
-            </div>
+        {/* Preisvorschlag - Kompakt */}
+        <div className="rounded-lg border border-gray-200 bg-white p-2.5">
+          <div className="flex items-center gap-2 text-gray-400">
+            <Tag className="h-4 w-4" />
+            <span className="text-sm">Preisvorschlag machen</span>
+            <span className="ml-auto text-xs">Anmeldung erforderlich</span>
           </div>
         </div>
       </div>
@@ -228,143 +210,113 @@ export function PriceOfferComponent({
   }
 
   return (
-    <div className="rounded-lg border-2 border-gray-200 bg-white p-3 shadow-lg md:p-6">
-      {/* PRIMARY: Sofortkauf-Option */}
-      <div className="mb-3 md:mb-6">
-        <div className="mb-3 rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-3 md:mb-4 md:p-5">
-          <div className="mb-1 flex items-center justify-between md:mb-2">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-green-700 md:text-xs">
-              Sofortkauf
-            </div>
-            <Zap className="h-3.5 w-3.5 text-green-600 md:h-4 md:w-4" />
+    <div className="space-y-3">
+      {/* PRIMARY: Sofortkauf-Option - Kompakt wie Ricardo */}
+      <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-3">
+        <div className="mb-1 flex items-center justify-between">
+          <div className="text-[10px] font-semibold uppercase tracking-wide text-green-700">
+            Sofortkauf
           </div>
-          <div className="mb-0.5 text-xl font-bold text-green-700 md:mb-1 md:text-3xl">
-            CHF {new Intl.NumberFormat('de-CH').format(price)}
-          </div>
-          <p className="text-[10px] text-green-600 md:text-xs">Jetzt kaufen ohne Verhandlung</p>
+          <Zap className="h-3.5 w-3.5 text-green-600" />
         </div>
-
-        {/* Payment Protection Badge */}
+        <div className="text-2xl font-bold text-green-700">
+          CHF {new Intl.NumberFormat('de-CH').format(price)}
+        </div>
         {paymentProtectionEnabled && (
-          <div className="mb-4">
-            <PaymentProtectionBadge enabled={paymentProtectionEnabled} />
+          <div className="mt-1.5">
+            <PaymentProtectionBadge enabled={paymentProtectionEnabled} compact={true} />
           </div>
         )}
-
-        {/* Jetzt kaufen Button - Leitet zur Checkout-Seite weiter (wie Ricardo) */}
-        <button
-          onClick={handleBuyNow}
-          disabled={isSeller || !(session?.user as { id?: string })?.id}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-green-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-          style={{ minHeight: '44px' }}
-        >
-          <ShoppingCart className="h-5 w-5" />
-          Jetzt kaufen
-        </button>
-        <p className="mt-2 text-center text-xs text-gray-500">
-          Versandoptionen werden im nächsten Schritt angezeigt
-        </p>
       </div>
 
-      {/* SECONDARY: Preisvorschlag machen - COLLAPSIBLE */}
-      <div className="border-t-2 border-gray-200 pt-3 md:pt-6">
-        <button
-          type="button"
-          onClick={() => setShowPriceOfferForm(!showPriceOfferForm)}
-          className="flex w-full items-center justify-between rounded-lg border-2 border-gray-200 bg-gray-50 p-2.5 transition-all hover:border-primary-300 hover:bg-gray-100 md:p-4"
-        >
-          <div className="flex items-center gap-2 md:gap-3">
-            <div className="rounded-lg bg-primary-100 p-1.5 md:p-2">
-              <Tag className="h-4 w-4 text-primary-600 md:h-5 md:w-5" />
-            </div>
-            <div className="text-left">
-              <h3 className="text-sm font-bold text-gray-900 md:text-lg">Preisvorschlag machen</h3>
-              <p className="text-xs text-gray-500 md:text-sm">
-                Mindestens CHF {minimumPrice.toFixed(2)} (60%)
-              </p>
-            </div>
+      {/* Jetzt kaufen Button - Kompakt */}
+      <button
+        onClick={handleBuyNow}
+        disabled={isSeller || !(session?.user as { id?: string })?.id}
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+      >
+        <ShoppingCart className="h-4 w-4" />
+        SOFORT KAUFEN
+      </button>
+
+      {/* SECONDARY: Preisvorschlag machen - Kompakt wie Ricardo */}
+      <button
+        type="button"
+        onClick={() => setShowPriceOfferForm(!showPriceOfferForm)}
+        className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white p-2.5 transition-all hover:border-gray-300"
+      >
+        <div className="flex items-center gap-2">
+          <Tag className="h-4 w-4 text-primary-600" />
+          <div className="text-left">
+            <span className="text-sm font-semibold text-gray-900">Preisvorschlag machen</span>
+            <span className="ml-2 text-xs text-gray-500">
+              Mindestens CHF {minimumPrice.toFixed(0)} (60%)
+            </span>
           </div>
-          {showPriceOfferForm ? (
-            <ChevronUp className="h-4 w-4 text-gray-500 md:h-5 md:w-5" />
-          ) : (
-            <ChevronDown className="h-4 w-4 text-gray-500 md:h-5 md:w-5" />
-          )}
-        </button>
+        </div>
+        {showPriceOfferForm ? (
+          <ChevronUp className="h-4 w-4 text-gray-400" />
+        ) : (
+          <ChevronDown className="h-4 w-4 text-gray-400" />
+        )}
+      </button>
 
-        {/* Collapsible Form */}
-        {showPriceOfferForm && (
-          <div className="mt-4 space-y-5 rounded-lg border border-gray-200 bg-gray-50 p-4">
-            <form onSubmit={handleSubmit} className="space-y-5">
-              {/* Preisvorschlag Input */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-700">
-                  Ihr Preisvorschlag (CHF)
-                </label>
-                <div className="relative">
-                  <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-4">
-                    <span className="font-medium text-gray-500">CHF</span>
-                  </div>
-                  <input
-                    type="text"
-                    inputMode="decimal"
-                    value={offerAmount}
-                    onChange={e => setOfferAmount(e.target.value)}
-                    placeholder={`z.B. ${minimumPrice.toFixed(2)}`}
-                    className="w-full rounded-lg border-2 border-gray-300 bg-white py-3 pl-16 pr-4 text-lg font-medium text-gray-900 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    disabled={loading}
-                    required
-                    style={{ minHeight: '44px' }}
-                  />
+      {/* Collapsible Form - Kompakt */}
+      {showPriceOfferForm && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <form onSubmit={handleSubmit} className="space-y-3">
+            {/* Preisvorschlag Input */}
+            <div>
+              <div className="relative">
+                <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+                  <span className="text-sm text-gray-500">CHF</span>
                 </div>
-                <div className="mt-2 flex items-center gap-2 text-xs text-gray-500">
-                  <Info className="h-3 w-3" />
-                  <span>
-                    Gültigkeitsbereich: CHF {minimumPrice.toFixed(2)} - CHF{' '}
-                    {maximumPrice.toFixed(2)}
-                  </span>
-                </div>
-              </div>
-
-              {/* Nachricht Input */}
-              <div>
-                <label className="mb-2 block text-sm font-semibold text-gray-700">
-                  Nachricht an den Verkäufer{' '}
-                  <span className="font-normal text-gray-400">(optional)</span>
-                </label>
-                <textarea
-                  value={message}
-                  onChange={e => setMessage(e.target.value)}
-                  placeholder="Teilen Sie dem Verkäufer mit, warum Sie diesen Preis vorschlagen..."
-                  rows={4}
-                  className="w-full resize-y rounded-lg border-2 border-gray-300 bg-white px-4 py-3 text-gray-900 transition-all focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                <input
+                  type="text"
+                  inputMode="decimal"
+                  value={offerAmount}
+                  onChange={e => setOfferAmount(e.target.value)}
+                  placeholder={`z.B. ${minimumPrice.toFixed(0)}`}
+                  className="w-full rounded-lg border border-gray-300 bg-white py-2 pl-12 pr-3 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
                   disabled={loading}
+                  required
                 />
               </div>
+            </div>
 
-              {/* Submit Button */}
-              <button
-                type="submit"
-                disabled={loading || !offerAmount}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 font-semibold text-white shadow-md transition-all hover:bg-primary-700 hover:shadow-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                style={{ minHeight: '44px' }}
-              >
-                {loading ? (
-                  <>
-                    <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
-                    Wird gesendet...
-                  </>
-                ) : (
-                  <>
-                    <Send className="h-5 w-5" />
-                    Preisvorschlag senden
-                  </>
-                )}
-              </button>
-            </form>
+            {/* Nachricht Input - Kompakter */}
+            <div>
+              <textarea
+                value={message}
+                onChange={e => setMessage(e.target.value)}
+                placeholder="Nachricht (optional)..."
+                rows={2}
+                className="w-full resize-none rounded-lg border border-gray-300 bg-white px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                disabled={loading}
+              />
+            </div>
 
-          </div>
-        )}
-      </div>
+            {/* Submit Button */}
+            <button
+              type="submit"
+              disabled={loading || !offerAmount}
+              className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {loading ? (
+                <>
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent"></div>
+                  Wird gesendet...
+                </>
+              ) : (
+                <>
+                  <Send className="h-4 w-4" />
+                  Vorschlag senden
+                </>
+              )}
+            </button>
+          </form>
+        </div>
+      )}
     </div>
   )
 }

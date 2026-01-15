@@ -1,6 +1,6 @@
 /**
  * POST /api/orders/[orderId]/confirm-payment
- * 
+ *
  * Verkäufer bestätigt Zahlungseingang für Direktzahlungen (Bank/Bar)
  * Ricardo-Style: Rechnung wird erst bei Zahlungsbestätigung erstellt
  */
@@ -16,7 +16,7 @@ export async function POST(
 ) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
@@ -79,7 +79,7 @@ export async function POST(
     try {
       const { calculateInvoiceForOrder } = await import('@/lib/invoice')
       invoice = await calculateInvoiceForOrder(orderId)
-      
+
       // Update Order mit Invoice-Referenz
       await prisma.order.update({
         where: { id: orderId },
@@ -88,7 +88,7 @@ export async function POST(
           invoiceCreatedAt: new Date(),
         },
       })
-      
+
       console.log(`[orders/confirm-payment] ✅ Rechnung ${invoice.invoiceNumber} erstellt für Order ${orderId}`)
     } catch (invoiceError: any) {
       console.error(`[orders/confirm-payment] Fehler bei Rechnungserstellung:`, invoiceError)
@@ -115,7 +115,7 @@ export async function POST(
     try {
       const { sendEmail } = await import('@/lib/email')
       const sellerName = order.seller.nickname || order.seller.firstName || order.seller.name || 'Verkäufer'
-      
+
       await sendEmail({
         to: order.buyer.email,
         subject: `Zahlung bestätigt - Bestellung #${order.orderNumber}`,
@@ -129,7 +129,7 @@ export async function POST(
               <p style="margin: 8px 0 0 0;"><strong>Artikel:</strong> ${order.watch.title}</p>
               <p style="margin: 8px 0 0 0;"><strong>Betrag:</strong> CHF ${order.totalAmount.toFixed(2)}</p>
             </div>
-            ${order.selectedDeliveryMode === 'pickup' 
+            ${order.selectedDeliveryMode === 'pickup'
               ? '<p>Bitte kontaktieren Sie den Verkäufer, um die Abholung zu koordinieren.</p>'
               : '<p>Der Verkäufer wird den Artikel in Kürze versenden.</p>'
             }

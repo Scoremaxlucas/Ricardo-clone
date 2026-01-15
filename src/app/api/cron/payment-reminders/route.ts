@@ -1,10 +1,10 @@
 /**
  * Cron Job: Payment Reminders & Auto-Cancellation
- * 
+ *
  * Läuft täglich und:
  * 1. Sendet Zahlungserinnerungen (Tag 7, Tag 10, Tag 13)
  * 2. Storniert Bestellungen nach 14 Tagen ohne Zahlung
- * 
+ *
  * Ricardo-Style: 14-Tage-Zahlungsfrist für Direktzahlungen
  */
 
@@ -75,7 +75,7 @@ export async function GET(request: NextRequest) {
       )
 
       // Erinnerungszeitpunkte: Tag 7 (7 Tage vor Frist), Tag 4 (4 Tage vor), Tag 1 (letzter Tag)
-      const shouldSendReminder = 
+      const shouldSendReminder =
         (daysUntilDeadline === 7 && order.paymentReminderCount < 1) ||
         (daysUntilDeadline === 4 && order.paymentReminderCount < 2) ||
         (daysUntilDeadline === 1 && order.paymentReminderCount < 3)
@@ -148,7 +148,7 @@ export async function GET(request: NextRequest) {
 
         // 3. Benachrichtigungen senden
         await sendAutoCancellationEmail(order.id, 'Zahlungsfrist von 14 Tagen abgelaufen')
-        
+
         results.ordersCancelled++
         console.log(`[cron/payment-reminders] Order ${order.orderNumber} automatisch storniert`)
       } catch (error: any) {
