@@ -257,7 +257,11 @@ function CheckoutPageContent() {
             </p>
             <button
               onClick={() => router.back()}
-              className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-3 font-medium text-white transition-colors hover:bg-primary-700"
+              className="inline-flex items-center rounded-lg px-6 py-3 font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-lg"
+              style={{
+                background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+                boxShadow: '0px 4px 16px rgba(20, 184, 166, 0.25)',
+              }}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
               Zurück
@@ -537,28 +541,28 @@ function CheckoutPageContent() {
               </div>
             )}
 
-            {/* Action Card */}
-            <Card className="overflow-hidden shadow-lg">
-              <div className="bg-white p-4 md:p-6">
+            {/* Action Card - Einheitlicher Teal-Gradient Style */}
+            <Card className="overflow-hidden shadow-xl ring-1 ring-gray-100">
+              <div className="bg-white p-5 md:p-6">
                 {/* Total prominenter anzeigen */}
-                <div className="mb-4 flex items-center justify-between border-b border-gray-100 pb-4">
-                  <span className="text-gray-600">Total zu zahlen</span>
-                  <span className="text-2xl font-bold text-gray-900">
-                    CHF {totalPrice.toFixed(2)}
-                  </span>
+                <div className="mb-5 rounded-lg bg-gray-50 p-4">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-600">Total zu zahlen</span>
+                    <span className="text-2xl font-bold text-gray-900">
+                      CHF {totalPrice.toFixed(2)}
+                    </span>
+                  </div>
                 </div>
 
-                {/* Button je nach Modus */}
+                {/* Button - Einheitlicher Teal-Gradient */}
                 <button
                   onClick={handleCheckout}
                   disabled={isProcessing || !selectedShipping}
-                  className={`w-full rounded-xl px-6 py-4 font-semibold text-white shadow-md transition-all disabled:opacity-50 ${
-                    selectedShipping === 'pickup'
-                      ? 'bg-primary-600 hover:bg-primary-700 hover:shadow-lg'
-                      : watch.paymentProtectionEnabled
-                        ? 'bg-gradient-to-r from-green-600 to-green-500 hover:from-green-700 hover:to-green-600 hover:shadow-lg'
-                        : 'bg-primary-600 hover:bg-primary-700 hover:shadow-lg'
-                  }`}
+                  className="w-full rounded-lg px-6 py-4 font-semibold text-white shadow-md transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:translate-y-0 disabled:opacity-50"
+                  style={{
+                    background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+                    boxShadow: '0px 4px 16px rgba(20, 184, 166, 0.25)',
+                  }}
                 >
                   {isProcessing ? (
                     <span className="flex items-center justify-center">
@@ -566,18 +570,18 @@ function CheckoutPageContent() {
                       Wird verarbeitet...
                     </span>
                   ) : selectedShipping === 'pickup' ? (
-                    <span className="flex items-center justify-center text-lg">
-                      <Check className="mr-2 h-5 w-5" />
+                    <span className="flex items-center justify-center">
+                      <ShoppingCart className="mr-2 h-5 w-5" />
                       Jetzt kaufen
                     </span>
                   ) : watch.paymentProtectionEnabled ? (
-                    <span className="flex items-center justify-center text-lg">
+                    <span className="flex items-center justify-center">
                       <Shield className="mr-2 h-5 w-5" />
                       Sicher bezahlen
                     </span>
                   ) : (
-                    <span className="flex items-center justify-center text-lg">
-                      <Check className="mr-2 h-5 w-5" />
+                    <span className="flex items-center justify-center">
+                      <ShoppingCart className="mr-2 h-5 w-5" />
                       Jetzt kaufen
                     </span>
                   )}
@@ -586,7 +590,7 @@ function CheckoutPageContent() {
                 {/* Erklärungstext */}
                 <p className="mt-4 text-center text-xs leading-relaxed text-gray-500">
                   {selectedShipping === 'pickup' ? (
-                    <>Mit Klick auf &quot;Jetzt kaufen&quot; wird der Kauf verbindlich. Die Bezahlung erfolgt bar bei Abholung.</>
+                    <>Mit Klick auf &quot;Jetzt kaufen&quot; wird der Kauf verbindlich. Bezahlung bar bei Abholung.</>
                   ) : watch.paymentProtectionEnabled ? (
                     <>Sichere Zahlung über Stripe. Ihr Geld ist geschützt bis zur Lieferung.</>
                   ) : (
@@ -594,19 +598,19 @@ function CheckoutPageContent() {
                   )}
                 </p>
 
-                {/* Trust Badges */}
-                <div className="mt-4 flex items-center justify-center gap-4 border-t border-gray-100 pt-4">
-                  <div className="flex items-center text-xs text-gray-400">
-                    <Shield className="mr-1 h-3.5 w-3.5" />
-                    Sicher
+                {/* Trust Badges - Kompakter */}
+                <div className="mt-4 flex items-center justify-center gap-6 border-t border-gray-100 pt-4">
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <Shield className="h-4 w-4 text-primary-500" />
+                    <span>Sicher</span>
                   </div>
-                  <div className="flex items-center text-xs text-gray-400">
-                    <Check className="mr-1 h-3.5 w-3.5" />
-                    Einfach
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <Check className="h-4 w-4 text-primary-500" />
+                    <span>Einfach</span>
                   </div>
-                  <div className="flex items-center text-xs text-gray-400">
-                    <Truck className="mr-1 h-3.5 w-3.5" />
-                    Schnell
+                  <div className="flex items-center gap-1.5 text-xs text-gray-500">
+                    <Truck className="h-4 w-4 text-primary-500" />
+                    <span>Schnell</span>
                   </div>
                 </div>
               </div>

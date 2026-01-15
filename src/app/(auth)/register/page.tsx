@@ -117,30 +117,26 @@ export default function RegisterPage() {
     }
   }
 
+  // Einheitlicher Input Style - Gleiches Design wie Login
+  const inputClassName = "block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400 transition-all focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+
   return (
     <div className="w-full max-w-md md:max-w-xl">
-      <div className="space-y-6 rounded-xl bg-white px-6 py-8 shadow-lg ring-1 ring-gray-100 md:px-10 md:py-10">
+      <div className="rounded-2xl bg-white px-6 py-6 shadow-xl ring-1 ring-gray-100 md:px-8 md:py-8">
+        {/* Header - Kompakter */}
         <div className="text-center">
-          <div className="mb-4 flex justify-center md:mb-6">
-            <Logo size="lg" />
+          <div className="mb-4 flex justify-center">
+            <Logo size="md" />
           </div>
-          <h2 className="text-2xl font-bold tracking-tight text-gray-900 md:text-3xl">
-            Neues Konto erstellen
-          </h2>
-          <p className="mt-2 text-center text-sm text-gray-600 md:mt-3">
-            Oder{' '}
-            <Link
-              href="/login"
-              className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
-            >
-              melden Sie sich mit Ihrem bestehenden Konto an
-            </Link>
+          <h1 className="text-2xl font-bold text-gray-900">Konto erstellen</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Starten Sie kostenlos auf Helvenda
           </p>
         </div>
 
-        <form className="mt-6 space-y-5 md:mt-8 md:space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
           {error && (
-            <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+            <div className="animate-shake rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               {error}
             </div>
           )}
@@ -149,8 +145,8 @@ export default function RegisterPage() {
             {/* Vorname + Nachname in 2-column grid on desktop */}
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
-                <label htmlFor="firstName" className="mb-2 block text-sm font-medium text-gray-700">
-                  Vorname *
+                <label htmlFor="firstName" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Vorname
                 </label>
                 <input
                   id="firstName"
@@ -161,14 +157,14 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   disabled={isLoading}
                   autoComplete="given-name"
-                  className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
+                  className={inputClassName}
                   placeholder="Max"
                 />
               </div>
 
               <div>
-                <label htmlFor="lastName" className="mb-2 block text-sm font-medium text-gray-700">
-                  Nachname *
+                <label htmlFor="lastName" className="mb-1.5 block text-sm font-medium text-gray-700">
+                  Nachname
                 </label>
                 <input
                   id="lastName"
@@ -179,15 +175,16 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   disabled={isLoading}
                   autoComplete="family-name"
-                  className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
+                  className={inputClassName}
                   placeholder="Mustermann"
                 />
               </div>
             </div>
 
+            {/* Nickname */}
             <div>
-              <label htmlFor="nickname" className="mb-2 block text-sm font-medium text-gray-700">
-                Nickname *
+              <label htmlFor="nickname" className="mb-1.5 block text-sm font-medium text-gray-700">
+                Benutzername
               </label>
               <input
                 id="nickname"
@@ -199,17 +196,18 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 disabled={isLoading}
                 autoComplete="username"
-                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
+                className={inputClassName}
                 placeholder="maxmustermann"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Dieser Name wird öffentlich angezeigt (mindestens 6 Zeichen)
+                Öffentlich sichtbar · Mind. 6 Zeichen
               </p>
             </div>
 
+            {/* Email */}
             <div>
-              <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700">
-                E-Mail-Adresse *
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
+                E-Mail-Adresse
               </label>
               <input
                 id="email"
@@ -220,16 +218,17 @@ export default function RegisterPage() {
                 onChange={handleChange}
                 disabled={isLoading}
                 autoComplete="email"
-                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
+                className={inputClassName}
                 placeholder="max@beispiel.com"
               />
             </div>
 
+            {/* Password */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                Passwort *
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-700">
+                Passwort
               </label>
-              <div className="relative mt-1">
+              <div className="relative">
                 <input
                   id="password"
                   name="password"
@@ -240,78 +239,62 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   disabled={isLoading}
                   autoComplete="new-password"
-                  className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
-                  placeholder="Passwort eingeben"
+                  className={`${inputClassName} pr-12`}
+                  placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
                   aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              {/* Password validation feedback */}
+              {/* Password validation feedback - Kompakter */}
               {formData.password && (
-                <div className="mt-2 space-y-1">
-                  <div className="flex items-center gap-2 text-xs">
+                <div className="mt-2 flex flex-wrap gap-x-4 gap-y-1">
+                  <div className="flex items-center gap-1.5 text-xs">
                     {passwordValidation.minLength ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                     ) : (
                       <XCircle className="h-3.5 w-3.5 text-gray-400" />
                     )}
-                    <span
-                      className={passwordValidation.minLength ? 'text-green-700' : 'text-gray-500'}
-                    >
-                      mind. 6 Zeichen
+                    <span className={passwordValidation.minLength ? 'text-green-700' : 'text-gray-500'}>
+                      6+ Zeichen
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
+                  <div className="flex items-center gap-1.5 text-xs">
                     {passwordValidation.hasNumber ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                     ) : (
                       <XCircle className="h-3.5 w-3.5 text-gray-400" />
                     )}
-                    <span
-                      className={passwordValidation.hasNumber ? 'text-green-700' : 'text-gray-500'}
-                    >
-                      mind. 1 Zahl
+                    <span className={passwordValidation.hasNumber ? 'text-green-700' : 'text-gray-500'}>
+                      1 Zahl
                     </span>
                   </div>
-                  <div className="flex items-center gap-2 text-xs">
+                  <div className="flex items-center gap-1.5 text-xs">
                     {passwordValidation.hasSpecialChar ? (
                       <CheckCircle2 className="h-3.5 w-3.5 text-green-600" />
                     ) : (
                       <XCircle className="h-3.5 w-3.5 text-gray-400" />
                     )}
-                    <span
-                      className={
-                        passwordValidation.hasSpecialChar ? 'text-green-700' : 'text-gray-500'
-                      }
-                    >
-                      mind. 1 Sonderzeichen
+                    <span className={passwordValidation.hasSpecialChar ? 'text-green-700' : 'text-gray-500'}>
+                      1 Sonderzeichen
                     </span>
                   </div>
                 </div>
               )}
-              {!formData.password && (
-                <p className="mt-1 text-xs text-gray-500">
-                  Mindestens 6 Zeichen, eine Zahl und ein Sonderzeichen erforderlich
-                </p>
-              )}
             </div>
 
+            {/* Confirm Password */}
             <div>
-              <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700">
-                Passwort bestätigen *
+              <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-gray-700">
+                Passwort bestätigen
               </label>
-              <div className="relative mt-1">
+              <div className="relative">
                 <input
                   id="confirmPassword"
                   name="confirmPassword"
@@ -321,95 +304,82 @@ export default function RegisterPage() {
                   onChange={handleChange}
                   disabled={isLoading}
                   autoComplete="new-password"
-                  className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
-                  placeholder="Passwort wiederholen"
+                  className={`${inputClassName} pr-12`}
+                  placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   disabled={isLoading}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
                   aria-label={showConfirmPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
                 >
-                  {showConfirmPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
-                  ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
-                  )}
+                  {showConfirmPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               </div>
-              {formData.confirmPassword &&
-                formData.password !== formData.confirmPassword &&
-                formData.confirmPassword.length > 0 && (
-                  <p className="mt-1 text-xs text-red-600">Passwörter stimmen nicht überein</p>
-                )}
+              {formData.confirmPassword && formData.password !== formData.confirmPassword && (
+                <p className="mt-1 text-xs text-red-600">Passwörter stimmen nicht überein</p>
+              )}
             </div>
           </div>
 
-          <div className="space-y-3">
-            <div className="flex items-start">
+          {/* Checkboxes - Kompakter */}
+          <div className="space-y-3 rounded-lg bg-gray-50 p-4">
+            <label className="flex cursor-pointer items-start gap-3">
               <input
                 id="age"
                 name="age"
                 type="checkbox"
                 required
                 disabled={isLoading}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 transition-colors focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
-              <label htmlFor="age" className="ml-2 block text-sm text-gray-900">
-                Ich bestätige, dass ich mindestens <strong>18 Jahre alt</strong> bin.
-              </label>
-            </div>
+              <span className="text-sm text-gray-700">
+                Ich bin mindestens <strong>18 Jahre</strong> alt
+              </span>
+            </label>
 
-            <div className="flex items-start">
+            <label className="flex cursor-pointer items-start gap-3">
               <input
                 id="terms"
                 name="terms"
                 type="checkbox"
                 required
                 disabled={isLoading}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 transition-colors focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
-              <label htmlFor="terms" className="ml-2 block text-sm text-gray-900">
+              <span className="text-sm text-gray-700">
                 Ich akzeptiere die{' '}
-                <Link href="/terms" className="text-primary-600 hover:text-primary-500">
-                  Allgemeinen Geschäftsbedingungen
+                <Link href="/terms" className="font-medium text-primary-600 hover:underline">
+                  AGB
                 </Link>{' '}
-                und die{' '}
-                <Link href="/privacy" className="text-primary-600 hover:text-primary-500">
+                und{' '}
+                <Link href="/privacy" className="font-medium text-primary-600 hover:underline">
                   Datenschutzerklärung
                 </Link>
-              </label>
-            </div>
-
+              </span>
+            </label>
           </div>
 
-          <div>
-            <Button
-              type="submit"
-              variant="primary-teal"
-              disabled={isLoading}
-              loading={isLoading}
-              className="w-full"
-            >
-              {isLoading ? 'Konto wird erstellt...' : 'Konto erstellen'}
-            </Button>
-            {/* Login link below button */}
-            <p className="mt-3 text-center text-sm text-gray-600">
-              Schon ein Konto?{' '}
-              <Link
-                href="/login"
-                className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
-              >
-                Anmelden
-              </Link>
-            </p>
-            {/* Reassurance line */}
-            <p className="mt-2 text-center text-xs text-gray-500">
-              Kostenlos. Wir senden dir eine Bestätigungs-E-Mail.
-            </p>
-          </div>
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isLoading}
+            loading={isLoading}
+            className="w-full py-3"
+          >
+            {isLoading ? 'Konto wird erstellt...' : 'Konto erstellen'}
+          </Button>
         </form>
+
+        {/* Footer */}
+        <p className="mt-6 text-center text-sm text-gray-500">
+          Bereits ein Konto?{' '}
+          <Link href="/login" className="font-semibold text-primary-600 hover:text-primary-700">
+            Anmelden
+          </Link>
+        </p>
       </div>
     </div>
   )

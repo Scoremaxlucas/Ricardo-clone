@@ -2,12 +2,20 @@ import React from 'react'
 import { cn } from '@/lib/utils'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
-  variant?: 'primary' | 'primary-teal' | 'secondary' | 'outline' | 'ghost'
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
   children: React.ReactNode
 }
 
+/**
+ * Button Component - Einheitliches Design-System
+ * 
+ * ALLE Primary Buttons nutzen jetzt den Teal-Gradient für:
+ * - Konsistenz auf der gesamten Platform
+ * - Vertrauenswürdiges, professionelles Erscheinungsbild
+ * - Passend zum Helvenda Brand
+ */
 export function Button({
   variant = 'primary',
   size = 'md',
@@ -18,47 +26,30 @@ export function Button({
   ...props
 }: ButtonProps) {
   const baseClasses =
-    'inline-flex items-center justify-center font-bold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer'
+    'inline-flex items-center justify-center font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer'
 
   const variants = {
-    'primary-teal': 'text-white rounded-[50px] focus:ring-primary-500',
-    primary: 'text-white rounded-[50px] focus:ring-primary-500',
+    primary: 'text-white rounded-lg focus:ring-primary-500 shadow-md hover:shadow-lg',
     secondary:
-      'bg-white text-primary-600 border-2 border-primary-500 hover:bg-primary-500 hover:text-white focus:ring-primary-500 rounded-[50px] shadow-sm hover:shadow-md',
+      'bg-white text-primary-600 border-2 border-primary-500 hover:bg-primary-50 focus:ring-primary-500 rounded-lg shadow-sm hover:shadow-md',
     outline:
-      'border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-primary-500 focus:ring-primary-500 rounded-xl',
-    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-primary-500 rounded-xl',
+      'border-2 border-gray-300 bg-white text-gray-700 hover:bg-gray-50 hover:border-primary-500 hover:text-primary-600 focus:ring-primary-500 rounded-lg',
+    ghost: 'text-gray-700 hover:bg-gray-100 focus:ring-primary-500 rounded-lg',
+    danger: 'text-white bg-red-600 hover:bg-red-700 focus:ring-red-500 rounded-lg shadow-md',
   }
 
   const sizes = {
     sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-3 text-base',
-    lg: 'px-8 py-4 text-lg',
+    md: 'px-6 py-2.5 text-sm',
+    lg: 'px-8 py-3 text-base',
   }
 
-  // Gradient für Primary Button - Orange für höhere Conversion (CTAs)
-  // Für sekundäre Primary-Buttons kann Teal-Gradient verwendet werden (vertrauensvoller)
-  const primaryTealStyle =
-    variant === 'primary-teal'
-      ? {
-          background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
-          boxShadow: '0px 4px 20px rgba(20, 184, 166, 0.3)',
-        }
-      : {}
-
-  const primaryTealHoverStyle =
-    variant === 'primary-teal'
-      ? {
-          transform: 'translateY(-1px)',
-          boxShadow: '0px 6px 24px rgba(20, 184, 166, 0.3)',
-          background: 'linear-gradient(135deg, #0d9488 0%, #14b8a6 100%)',
-        }
-      : {}
+  // EINHEITLICH: Teal-Gradient für alle Primary Buttons
   const primaryStyle =
     variant === 'primary'
       ? {
-          background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-          boxShadow: '0px 4px 20px rgba(249, 115, 22, 0.3)',
+          background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+          boxShadow: '0px 4px 16px rgba(20, 184, 166, 0.25)',
         }
       : {}
 
@@ -66,8 +57,8 @@ export function Button({
     variant === 'primary'
       ? {
           transform: 'translateY(-1px)',
-          boxShadow: '0px 6px 24px rgba(249, 115, 22, 0.3)',
-          background: 'linear-gradient(135deg, #ea580c 0%, #f97316 100%)',
+          boxShadow: '0px 6px 20px rgba(20, 184, 166, 0.35)',
+          background: 'linear-gradient(135deg, #0d9488 0%, #0f766e 100%)',
         }
       : {}
 
@@ -78,23 +69,18 @@ export function Button({
         variants[variant],
         sizes[size],
         className,
-        (variant === 'primary' || variant === 'primary-teal') &&
-          'hover:-translate-y-0.5 active:translate-y-0',
+        variant === 'primary' && 'hover:-translate-y-0.5 active:translate-y-0',
         variant === 'secondary' && 'hover:-translate-y-0.5 active:translate-y-0'
       )}
-      style={variant === 'primary' ? primaryStyle : variant === 'primary-teal' ? primaryTealStyle : undefined}
+      style={variant === 'primary' ? primaryStyle : undefined}
       onMouseEnter={e => {
         if (variant === 'primary' && !disabled && !loading) {
           Object.assign(e.currentTarget.style, primaryHoverStyle)
-        } else if (variant === 'primary-teal' && !disabled && !loading) {
-          Object.assign(e.currentTarget.style, primaryTealHoverStyle)
         }
       }}
       onMouseLeave={e => {
         if (variant === 'primary' && !disabled && !loading) {
           Object.assign(e.currentTarget.style, primaryStyle)
-        } else if (variant === 'primary-teal' && !disabled && !loading) {
-          Object.assign(e.currentTarget.style, primaryTealStyle)
         }
       }}
       disabled={disabled || loading}

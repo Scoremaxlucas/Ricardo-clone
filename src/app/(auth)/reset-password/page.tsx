@@ -205,7 +205,7 @@ function ResetPasswordContent() {
           <div className="flex flex-col gap-3">
             <Button
               type="submit"
-              variant="primary-teal"
+              variant="primary"
               disabled={isLoading}
               loading={isLoading}
               className="w-full"

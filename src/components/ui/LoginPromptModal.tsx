@@ -104,7 +104,7 @@ export function LoginPromptModal({
           {/* Actions */}
           <div className="flex justify-center">
             <Button
-              variant="primary-teal"
+              variant="primary"
               onClick={handleLogin}
               className="w-full sm:w-auto sm:px-8"
             >

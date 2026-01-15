@@ -83,26 +83,19 @@ function LoginPageContent() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="space-y-8 rounded-xl bg-white px-8 py-10 shadow-lg ring-1 ring-gray-100">
+      <div className="rounded-2xl bg-white px-8 py-8 shadow-xl ring-1 ring-gray-100">
+        {/* Header - Kompakter */}
         <div className="text-center">
-          <div className="mb-6 flex justify-center">
-            <Logo size="lg" />
+          <div className="mb-4 flex justify-center">
+            <Logo size="md" />
           </div>
-          <h2 className="mt-6 text-center text-3xl font-bold tracking-tight text-gray-900">
-            Bei Ihrem Konto anmelden
-          </h2>
-          <p className="mt-3 text-center text-sm text-gray-600">
-            Oder{' '}
-            <Link
-              href="/register"
-              className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
-            >
-              erstellen Sie ein neues Konto
-            </Link>
+          <h1 className="text-2xl font-bold text-gray-900">Willkommen zurück</h1>
+          <p className="mt-2 text-sm text-gray-500">
+            Melden Sie sich bei Ihrem Konto an
           </p>
         </div>
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
           {error && (
             <div className="animate-shake rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
               {error}
@@ -110,8 +103,9 @@ function LoginPageContent() {
           )}
 
           <div className="space-y-4">
+            {/* E-Mail Input */}
             <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
                 E-Mail-Adresse
               </label>
               <input
@@ -121,16 +115,17 @@ function LoginPageContent() {
                 required
                 value={email}
                 onChange={e => setEmail(e.target.value)}
-                className="relative mt-1 block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 sm:text-sm"
+                className="block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 text-gray-900 placeholder-gray-400 transition-all focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20"
                 placeholder="ihre@email.com"
               />
             </div>
 
+            {/* Passwort Input */}
             <div>
-              <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-700">
                 Passwort
               </label>
-              <div className="relative mt-1">
+              <div className="relative">
                 <input
                   id="password"
                   name="password"
@@ -139,59 +134,66 @@ function LoginPageContent() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   disabled={isLoading}
-                  className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
-                  placeholder="Ihr Passwort"
+                  className="block w-full rounded-lg border border-gray-300 bg-gray-50 px-4 py-3 pr-12 text-gray-900 placeholder-gray-400 transition-all focus:border-primary-500 focus:bg-white focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:opacity-50"
+                  placeholder="••••••••"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 flex items-center pr-3"
+                  className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
                 >
                   {showPassword ? (
-                    <EyeOff className="h-5 w-5 text-gray-400" />
+                    <EyeOff className="h-5 w-5" />
                   ) : (
-                    <Eye className="h-5 w-5 text-gray-400" />
+                    <Eye className="h-5 w-5" />
                   )}
                 </button>
               </div>
             </div>
           </div>
 
+          {/* Options Row */}
           <div className="flex items-center justify-between">
-            <div className="flex items-center">
+            <label className="flex cursor-pointer items-center gap-2">
               <input
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                className="h-4 w-4 rounded border-gray-300 text-primary-600 transition-colors focus:ring-2 focus:ring-primary-500/20"
+                className="h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                Angemeldet bleiben
-              </label>
-            </div>
+              <span className="text-sm text-gray-600">Angemeldet bleiben</span>
+            </label>
 
-            <div className="text-sm">
-              <Link
-                href="/forgot-password"
-                className="font-semibold text-primary-600 transition-colors hover:text-primary-700"
-              >
-                Passwort vergessen?
-              </Link>
-            </div>
-          </div>
-
-          <div>
-            <Button
-              type="submit"
-              variant="primary-teal"
-              disabled={isLoading}
-              loading={isLoading}
-              className="w-full"
+            <Link
+              href="/forgot-password"
+              className="text-sm font-medium text-primary-600 hover:text-primary-700"
             >
-              {isLoading ? 'Wird angemeldet...' : 'Anmelden'}
-            </Button>
+              Passwort vergessen?
+            </Link>
           </div>
+
+          {/* Submit Button */}
+          <Button
+            type="submit"
+            variant="primary"
+            disabled={isLoading}
+            loading={isLoading}
+            className="w-full py-3"
+          >
+            {isLoading ? 'Wird angemeldet...' : 'Anmelden'}
+          </Button>
         </form>
+
+        {/* Footer Link */}
+        <p className="mt-6 text-center text-sm text-gray-500">
+          Noch kein Konto?{' '}
+          <Link
+            href="/register"
+            className="font-semibold text-primary-600 hover:text-primary-700"
+          >
+            Jetzt registrieren
+          </Link>
+        </p>
       </div>
     </div>
   )

@@ -68,7 +68,7 @@ export default function ForgotPasswordPage() {
               Wir haben Ihnen eine E-Mail mit Anweisungen zum Zurücksetzen Ihres Passworts gesendet.
             </div>
             <Link href="/login">
-              <Button variant="primary-teal" className="w-full">
+              <Button variant="primary" className="w-full">
                 Zurück zur Anmeldung
               </Button>
             </Link>
@@ -100,7 +100,7 @@ export default function ForgotPasswordPage() {
             <div className="flex flex-col gap-3">
               <Button
                 type="submit"
-                variant="primary-teal"
+                variant="primary"
                 disabled={isLoading}
                 loading={isLoading}
                 className="w-full"
