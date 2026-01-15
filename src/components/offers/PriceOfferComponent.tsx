@@ -362,20 +362,6 @@ export function PriceOfferComponent({
               </button>
             </form>
 
-            {/* Info Box */}
-            <div className="rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-              <div className="flex items-start gap-2">
-                <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600" />
-                <div className="text-xs text-blue-800">
-                  <p className="mb-1 font-semibold">Wichtige Informationen:</p>
-                  <ul className="list-inside list-disc space-y-0.5 text-blue-700">
-                    <li>Der Preisvorschlag ist 48 Stunden gültig</li>
-                    <li>Sie können maximal 3 aktive Preisvorschläge pro Artikel haben</li>
-                    <li>Der Verkäufer wird per E-Mail benachrichtigt</li>
-                  </ul>
-                </div>
-              </div>
-            </div>
           </div>
         )}
       </div>
