@@ -447,7 +447,7 @@ export function ProductPageClient({
       </div>
 
       {/* Haupt-Grid: Links Bilder & Details, Rechts Sidebar */}
-      <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 items-start gap-4 md:gap-8 lg:grid-cols-3">
         {/* Linke Spalte: Bilder & Details */}
         <div className="space-y-4 md:space-y-6 lg:col-span-2">
           {/* Artikelbilder & Hauptinfos */}
@@ -849,8 +849,8 @@ export function ProductPageClient({
           </div>
         </div>
 
-        {/* Rechte Spalte: DESKTOP ONLY - Wie Ricardo mit Titel, Preis, Kauf, etc. */}
-        <div className="hidden space-y-4 lg:block">
+        {/* Rechte Spalte: DESKTOP ONLY - Wie Ricardo mit Titel, Preis, Kauf, etc. - STICKY */}
+        <div className="hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start">
           {/* Hauptkarte mit Titel, Datum, Preis */}
           <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
             {/* Titel */}

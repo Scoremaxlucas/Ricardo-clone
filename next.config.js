@@ -102,7 +102,7 @@ const nextConfig = {
               "img-src 'self' data: https: blob:",
               "font-src 'self' data:",
               "connect-src 'self' https://api.openai.com https://api.stripe.com https://*.stripe.com https://vercel.live wss://*.supabase.co https://*.supabase.co",
-              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com",
+              "frame-src 'self' https://js.stripe.com https://hooks.stripe.com https://www.google.com https://maps.google.com https://*.google.com https://www.openstreetmap.org",
               "object-src 'none'",
               "base-uri 'self'",
               "form-action 'self'",
