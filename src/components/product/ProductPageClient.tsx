@@ -447,7 +447,7 @@ export function ProductPageClient({
       </div>
 
       {/* Haupt-Grid: Links Bilder & Details, Rechts Sidebar */}
-      <div className="grid grid-cols-1 items-start gap-4 md:gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-3" style={{ alignItems: 'start' }}>
         {/* Linke Spalte: Bilder & Details */}
         <div className="space-y-4 md:space-y-6 lg:col-span-2">
           {/* Artikelbilder & Hauptinfos */}
@@ -841,8 +841,16 @@ export function ProductPageClient({
         </div>
 
         {/* Rechte Spalte: DESKTOP ONLY - Wie Ricardo mit Titel, Preis, Kauf, etc. - STICKY */}
-        <div className="hidden lg:block">
-          <div className="sticky top-20 space-y-4">
+        <div className="hidden lg:block" style={{ alignSelf: 'start' }}>
+          <div 
+            className="space-y-4"
+            style={{ 
+              position: 'sticky',
+              top: '80px',
+              maxHeight: 'calc(100vh - 100px)',
+              overflowY: 'auto'
+            }}
+          >
           {/* Hauptkarte mit Titel, Datum, Preis */}
           <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
             {/* Titel */}
