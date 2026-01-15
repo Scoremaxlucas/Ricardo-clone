@@ -447,7 +447,7 @@ export function ProductPageClient({
       </div>
 
       {/* Haupt-Grid: Links Bilder & Details, Rechts Sidebar */}
-      <div className="product-grid grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-3">
         {/* Linke Spalte: Bilder & Details */}
         <div className="space-y-4 md:space-y-6 lg:col-span-2">
           {/* Artikelbilder & Hauptinfos */}

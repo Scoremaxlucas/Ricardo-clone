@@ -338,17 +338,13 @@ body {
 }
 
 @layer components {
-  /* Product Grid - Für Sticky Sidebar */
-  .product-grid {
-    align-items: start;
-  }
-
   /* Sticky Sidebar - Wie Ricardo */
   .sticky-sidebar {
     position: -webkit-sticky;
     position: sticky;
     top: 90px;
-    align-self: start;
+    align-self: start; /* Nur die Sidebar selbst ist oben ausgerichtet */
+    height: fit-content; /* Höhe passt sich dem Inhalt an */
   }
 
   /* Buttons - Mit Gradienten und Animationen */
