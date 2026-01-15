@@ -651,27 +651,29 @@ export function ProductPageClient({
                 </div>
               )}
 
-              {/* Preis-Label wie Ricardo */}
-              <div className="mb-1 text-xs text-gray-600">Verkaufspreis</div>
-              <div className="mb-3 text-2xl font-bold text-gray-900">
-                {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice || watch.price)}
+              {/* Preis - Wie Desktop */}
+              <div className="mb-3">
+                {watch.buyNowPrice ? (
+                  <>
+                    <div className="text-xs text-gray-600">Sofort-Kaufpreis</div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      CHF {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice)}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div className="text-xs text-gray-600">Verkaufspreis</div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      CHF {new Intl.NumberFormat('de-CH').format(watch.price)}
+                    </div>
+                  </>
+                )}
+                {(watch as any).paymentProtectionEnabled && (
+                  <div className="mt-1">
+                    <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={true} />
+                  </div>
+                )}
               </div>
-
-              {/* Sofortkauf Box - Ricardo Style */}
-              {!watch.isAuction && (
-                <div className="mb-3 rounded-lg border border-primary-200 bg-primary-50 p-3">
-                  <div className="mb-1 flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-primary-700">
-                    <Zap className="h-3.5 w-3.5" />
-                    SOFORTKAUF VERFÜGBAR
-                  </div>
-                  <div className="text-xl font-bold text-primary-600">
-                    CHF {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice || watch.price)}
-                  </div>
-                  <div className="mt-0.5 text-xs text-primary-600">
-                    Artikel sofort kaufen ohne Verhandlung
-                  </div>
-                </div>
-              )}
 
               {/* Buy/Offer Section */}
               <div className="mb-3">
@@ -695,11 +697,6 @@ export function ProductPageClient({
                     paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
                   />
                 )}
-              </div>
-
-              {/* Versandinfo Hinweis */}
-              <div className="mb-3 text-center text-xs text-gray-500">
-                Versandoptionen werden im nächsten Schritt angezeigt
               </div>
 
               {/* Zu Favoriten Button - Full Width wie Ricardo */}
