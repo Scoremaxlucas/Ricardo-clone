@@ -840,10 +840,12 @@ export function ProductPageClient({
           </div>
         </div>
 
-        {/* Rechte Spalte: DESKTOP ONLY - Wie Ricardo: Sticky beim Scrollen */}
-        <div className="sticky-sidebar hidden lg:block">
-          {/* Hauptkarte mit Titel, Datum, Preis */}
-          <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+        {/* Rechte Spalte: DESKTOP ONLY - Muss volle Höhe haben für Sticky */}
+        <div className="hidden lg:block">
+          {/* Sticky Container - DIESER ist sticky, nicht der äußere */}
+          <div className="sticky top-24 space-y-4">
+            {/* Hauptkarte mit Titel, Datum, Preis */}
+            <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
             {/* Titel */}
             <h1 className="mb-2 text-xl font-bold text-gray-900 lg:text-2xl">
               {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
@@ -947,6 +949,7 @@ export function ProductPageClient({
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
 

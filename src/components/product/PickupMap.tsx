@@ -52,21 +52,29 @@ export function PickupMap({ city, postalCode }: PickupMapProps) {
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-      {/* Map Container - Wie Ricardo: Sauber und einfach */}
-      <div className="relative w-full" style={{ height: '300px' }}>
-        {/* Google Maps Embed - Direkt eingebettet wie Ricardo */}
+      {/* Map Container mit overflow:hidden um Google UI zu verstecken */}
+      <div 
+        className="relative w-full overflow-hidden"
+        style={{ height: '280px' }}
+      >
+        {/* Iframe ist GRÖSSER als Container und nach oben/links verschoben */}
+        {/* Das schneidet "View larger map" und "Directions" oben links ab */}
         <iframe
-          width="100%"
-          height="100%"
-          frameBorder="0"
-          scrolling="no"
           src={googleMapsEmbedUrl}
-          style={{ border: 0 }}
           title={`Karte von ${displayLocation}`}
           loading="lazy"
           onLoad={() => setMapLoaded(true)}
           allow="geolocation"
           referrerPolicy="no-referrer-when-downgrade"
+          style={{
+            border: 0,
+            position: 'absolute',
+            top: '-70px',      // Versteckt obere Google UI
+            left: '-15px',     // Versteckt linke UI
+            width: 'calc(100% + 30px)',
+            height: 'calc(100% + 120px)', // Extra Höhe für unten
+            pointerEvents: 'auto'
+          }}
         />
 
         {/* Loading Placeholder */}
@@ -84,7 +92,7 @@ export function PickupMap({ city, postalCode }: PickupMapProps) {
           href={googleMapsLink}
           target="_blank"
           rel="noopener noreferrer"
-          className="absolute left-3 top-3 z-20 flex items-center gap-1.5 rounded bg-primary-600 px-3 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-lg transition-colors hover:bg-primary-700 md:text-sm"
+          className="absolute left-3 top-3 z-30 flex items-center gap-1.5 rounded bg-primary-600 px-3 py-2 text-xs font-bold uppercase tracking-wide text-white shadow-lg transition-colors hover:bg-primary-700 md:text-sm"
         >
           {t.product.directions}
           <ExternalLink className="h-3.5 w-3.5 md:h-4 md:w-4" />

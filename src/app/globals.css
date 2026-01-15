@@ -338,15 +338,6 @@ body {
 }
 
 @layer components {
-  /* Sticky Sidebar - Wie Ricardo */
-  .sticky-sidebar {
-    position: -webkit-sticky;
-    position: sticky;
-    top: 90px;
-    align-self: start; /* Nur die Sidebar selbst ist oben ausgerichtet */
-    height: fit-content; /* Höhe passt sich dem Inhalt an */
-  }
-
   /* Buttons - Mit Gradienten und Animationen */
   .btn-primary {
     background: linear-gradient(135deg, #f97316 0%, #ea580c 100%);
