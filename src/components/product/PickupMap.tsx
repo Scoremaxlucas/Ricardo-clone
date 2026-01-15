@@ -53,7 +53,7 @@ export function PickupMap({ city, postalCode }: PickupMapProps) {
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-      <div className="relative w-full overflow-hidden" style={{ height: '280px' }}>
+      <div className="relative w-full overflow-hidden" style={{ height: '320px' }}>
         {/* Google Maps Embed - wie Ricardo */}
         {!mapError ? (
           <iframe

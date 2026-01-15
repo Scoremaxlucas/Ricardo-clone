@@ -226,18 +226,10 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
         </div>
       )}
 
-      {/* Fragen-Liste */}
-      <div className="space-y-3 md:space-y-4">
-        {questions.length === 0 ? (
-          <div className="py-4 text-center text-gray-500 md:py-8">
-            <MessageCircle className="mx-auto mb-2 h-8 w-8 text-gray-300 md:mb-3 md:h-12 md:w-12" />
-            <p className="text-sm md:text-base">Noch keine Fragen gestellt.</p>
-            {!isSeller && (
-              <p className="mt-1 text-xs md:text-sm">Seien Sie der Erste und stellen Sie eine Frage!</p>
-            )}
-          </div>
-        ) : (
-          questions.map(q => {
+      {/* Fragen-Liste - nur anzeigen wenn Fragen vorhanden */}
+      {questions.length > 0 && (
+        <div className="space-y-3 md:space-y-4">
+          {questions.map(q => {
             const isOwnQuestion = q.user.id === (session?.user as { id?: string })?.id
             const canAnswer = isSeller && !q.answer
 
@@ -368,9 +360,9 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
                 )}
               </div>
             )
-          })
-        )}
-      </div>
+          })}
+        </div>
+      )}
     </div>
   )
 }

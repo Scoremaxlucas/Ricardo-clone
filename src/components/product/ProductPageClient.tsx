@@ -850,7 +850,8 @@ export function ProductPageClient({
         </div>
 
         {/* Rechte Spalte: DESKTOP ONLY - Wie Ricardo mit Titel, Preis, Kauf, etc. - STICKY */}
-        <div className="hidden space-y-4 lg:sticky lg:top-24 lg:block lg:self-start">
+        <div className="hidden lg:block">
+          <div className="sticky top-24 space-y-4">
           {/* Hauptkarte mit Titel, Datum, Preis */}
           <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
             {/* Titel */}
@@ -965,6 +966,7 @@ export function ProductPageClient({
               </button>
             </div>
           )}
+          </div>
         </div>
       </div>
 
