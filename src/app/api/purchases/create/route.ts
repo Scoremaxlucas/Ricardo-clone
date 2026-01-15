@@ -1,6 +1,5 @@
 import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
-import { checkAndAwardBadges } from '@/lib/badge-system'
 import { calculateInvoiceForSale } from '@/lib/invoice'
 import { prisma } from '@/lib/prisma'
 import { updateSoldLast24h } from '@/lib/product-stats'
@@ -154,10 +153,6 @@ export async function POST(request: NextRequest) {
       // Silent fail - Statistics update should not block purchase
     })
 
-    // Badge-Vergabe für Käufer (Feature 9: Gamification)
-    checkAndAwardBadges(purchase.buyerId, 'purchase').catch(err => {
-      console.error('[purchases/create] Error awarding badges:', err)
-    })
 
     // Erstelle Rechnung SOFORT nach erfolgreichem Verkauf
     // Die Kommission wird direkt berechnet, auch wenn der Käufer noch nicht gezahlt hat

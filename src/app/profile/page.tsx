@@ -1,10 +1,7 @@
 'use client'
 
-import { BadgesSection } from '@/components/profile/BadgesSection'
-import { RewardDisplay } from '@/components/user/RewardDisplay'
 import { Card } from '@/components/ui/Card'
-import { useBadgeNotifications } from '@/hooks/useBadgeNotifications'
-import { Award, Camera, CheckCircle, Lock, X } from 'lucide-react'
+import { Camera, CheckCircle, Lock, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -25,10 +22,6 @@ export default function ProfilePage() {
   const [isVerified, setIsVerified] = useState<boolean | null>(null)
   const [verifiedAt, setVerifiedAt] = useState<string | null>(null)
   const [positivePercentage, setPositivePercentage] = useState<number | null>(null)
-
-  // Badge-Notifications (Feature 9)
-  const userId = (session?.user as { id?: string })?.id
-  useBadgeNotifications(userId)
 
   const [formData, setFormData] = useState({
     name: session?.user?.name || '',
@@ -503,24 +496,6 @@ export default function ProfilePage() {
               </button>
             </div>
           </Card>
-
-          {/* Badges Section */}
-          {userId && (
-            <Card className="p-4 sm:p-6">
-              <div className="mb-4 flex items-center gap-2">
-                <Award className="h-5 w-5 text-primary-600" />
-                <h2 className="text-xl font-semibold text-gray-900">Badges & Fortschritt</h2>
-              </div>
-              <BadgesSection userId={userId} />
-            </Card>
-          )}
-
-          {/* Rewards Section */}
-          {userId && (
-            <Card className="p-4 sm:p-6">
-              <RewardDisplay userId={userId} showTitle={true} />
-            </Card>
-          )}
 
           {/* Security Card */}
           <Card className="p-4 sm:p-6">

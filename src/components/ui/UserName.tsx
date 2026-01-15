@@ -2,7 +2,6 @@
 
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
-import { UserBadges } from './UserBadges'
 import { VerifiedBadge } from './VerifiedBadge'
 
 interface UserNameProps {
@@ -10,7 +9,6 @@ interface UserNameProps {
   userName: string
   className?: string
   showVerifiedBadge?: boolean
-  showBadges?: boolean
   badgeSize?: 'sm' | 'md' | 'lg'
   linkToProfile?: boolean
 }
@@ -20,7 +18,6 @@ export function UserName({
   userName,
   className = '',
   showVerifiedBadge = true,
-  showBadges = false,
   badgeSize = 'sm',
   linkToProfile = true,
 }: UserNameProps) {
@@ -59,7 +56,6 @@ export function UserName({
         {displayName}
       </span>
       {showVerifiedBadge && isVerified === true && <VerifiedBadge size={badgeSize} />}
-      {showBadges && <UserBadges userId={userId} limit={2} size={badgeSize} />}
     </>
   )
 

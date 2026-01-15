@@ -1,5 +1,4 @@
 import { authOptions } from '@/lib/auth'
-import { checkAndAwardBadges } from '@/lib/badge-system'
 import { prisma } from '@/lib/prisma'
 import { addStatusHistory } from '@/lib/status-history'
 import { getServerSession } from 'next-auth/next'
@@ -125,20 +124,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             },
           })
 
-          // Badge-Vergabe für Verkäufer (Feature 9: Gamification)
-          checkAndAwardBadges(purchase.watch.sellerId, 'sale').catch(err => {
-            console.error('[confirm-received] Error awarding seller badges:', err)
-          })
         }
       } catch (saleError) {
         console.error('[confirm-received] Error creating sale:', saleError)
         // Silent fail - Sale-Erstellung sollte nicht kritisch sein
       }
-
-      // Badge-Vergabe für Käufer beim Purchase-Abschluss (Feature 9: Gamification)
-      checkAndAwardBadges(purchase.buyerId, 'purchase').catch(err => {
-        console.error('[confirm-received] Error awarding buyer badges:', err)
-      })
     }
 
     // Benachrichtigung an Verkäufer

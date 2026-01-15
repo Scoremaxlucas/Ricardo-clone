@@ -1,6 +1,5 @@
 'use client'
 
-import { UserBadges } from '@/components/ui/UserBadges'
 import { CheckCircle, CheckCircle2, Package, Star } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -195,7 +194,6 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
             >
               {sellerName}
             </Link>
-            <UserBadges userId={sellerId} limit={2} size="sm" />
           </div>
 
           {/* Anzahl offener Angebote */}
