@@ -46,21 +46,21 @@ export function PickupMap({ city, postalCode }: PickupMapProps) {
       ? `${city}, Schweiz`
       : 'Schweiz'
   const googleMapsLink = `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}`
-  
+
   // Google Maps Embed URL
   const googleMapsEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(searchQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
       {/* Map Container - Clipped to hide Google UI */}
-      <div 
-        className="relative w-full overflow-hidden" 
+      <div
+        className="relative w-full overflow-hidden"
         style={{ height: '280px' }}
       >
         {/* Iframe Container - Größer als sichtbar, um UI zu verstecken */}
-        <div 
+        <div
           className="absolute"
-          style={{ 
+          style={{
             top: '-60px',  // Versteckt "View larger map" oben links
             left: '-10px',
             right: '0',
@@ -84,9 +84,9 @@ export function PickupMap({ city, postalCode }: PickupMapProps) {
         </div>
 
         {/* Weißer Overlay oben links um Google UI zu verdecken */}
-        <div 
+        <div
           className="pointer-events-none absolute bg-gradient-to-br from-white via-white to-transparent"
-          style={{ 
+          style={{
             top: 0,
             left: 0,
             width: '180px',
