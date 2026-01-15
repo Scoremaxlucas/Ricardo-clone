@@ -247,7 +247,6 @@ export function ProductQuestions({ watchId, sellerId }: ProductQuestionsProps) {
                       <UserName
                         userId={q.user.id}
                         userName={q.user.nickname || q.user.name || 'Benutzer'}
-                        showBadges={true}
                         badgeSize="sm"
                         className="font-medium text-gray-900"
                       />

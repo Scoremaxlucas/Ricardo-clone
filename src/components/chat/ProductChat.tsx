@@ -172,7 +172,6 @@ export function ProductChat({ watchId, sellerId }: ProductChatProps) {
                         <UserName
                           userId={msg.sender.id}
                           userName={msg.sender.name || msg.sender.email || 'Unbekannt'}
-                          showBadges={true}
                           badgeSize="sm"
                           className="font-semibold text-gray-900"
                         />

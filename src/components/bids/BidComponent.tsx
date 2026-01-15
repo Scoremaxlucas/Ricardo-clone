@@ -401,7 +401,6 @@ export function BidComponent({
                   <UserName
                     userId={bid.user.id}
                     userName={bid.user.nickname || bid.user.name || bid.user.email || 'Unbekannt'}
-                    showBadges={true}
                     badgeSize="sm"
                     className="text-sm text-gray-900"
                   />
@@ -734,7 +733,6 @@ export function BidComponent({
                   <UserName
                     userId={bid.user.id}
                     userName={bid.user.nickname || bid.user.name || bid.user.email || 'Unbekannt'}
-                    showBadges={true}
                     badgeSize="sm"
                     className="text-xs text-gray-900"
                   />
