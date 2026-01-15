@@ -48,31 +48,34 @@ export function PickupMap({ city, postalCode }: PickupMapProps) {
       : 'Schweiz'
   const googleMapsLink = `https://www.google.com/maps/search/${encodeURIComponent(searchQuery)}`
   
-  // Google Maps Embed URL - wie Ricardo
-  const googleMapsEmbedUrl = `https://www.google.com/maps?q=${encodeURIComponent(searchQuery)}&output=embed`
+  // Google Maps Embed URL - clean version
+  const googleMapsEmbedUrl = `https://maps.google.com/maps?q=${encodeURIComponent(searchQuery)}&t=&z=14&ie=UTF8&iwloc=&output=embed`
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-      <div className="relative w-full overflow-hidden" style={{ height: '320px' }}>
-        {/* Google Maps Embed - wie Ricardo */}
+      {/* Container mit overflow hidden um Google UI zu verstecken */}
+      <div className="relative w-full overflow-hidden" style={{ height: '280px' }}>
+        {/* Google Maps Embed - etwas größer um UI zu verstecken */}
         {!mapError ? (
-          <iframe
-            width="100%"
-            height="100%"
-            frameBorder="0"
-            scrolling="no"
-            src={googleMapsEmbedUrl}
-            style={{ border: 0 }}
-            title={`Karte von ${displayLocation}`}
-            loading="lazy"
-            onLoad={() => setMapLoaded(true)}
-            onError={() => setMapError(true)}
-            allow="geolocation"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
+          <div className="absolute inset-0" style={{ marginBottom: '-50px', height: 'calc(100% + 50px)' }}>
+            <iframe
+              width="100%"
+              height="100%"
+              frameBorder="0"
+              scrolling="no"
+              src={googleMapsEmbedUrl}
+              style={{ border: 0 }}
+              title={`Karte von ${displayLocation}`}
+              loading="lazy"
+              onLoad={() => setMapLoaded(true)}
+              onError={() => setMapError(true)}
+              allow="geolocation"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
+          </div>
         ) : (
           // Fallback: Statische Karte mit Link
-          <div className="flex h-full flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-blue-100 p-6">
+          <div className="absolute inset-0 flex flex-col items-center justify-center bg-gradient-to-b from-blue-50 to-blue-100 p-6">
             <div className="mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-primary-100">
               <MapPin className="h-8 w-8 text-primary-600" />
             </div>

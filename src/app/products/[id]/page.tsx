@@ -40,9 +40,9 @@ export default function ProductPage() {
 
   if (loading) {
     return (
-      <div className="flex min-h-screen flex-col bg-gray-50">
+      <div className="min-h-screen bg-gray-50">
         <Header />
-        <main className="flex-1 pb-8">
+        <main className="pb-8">
           <div className="mx-auto max-w-[1400px] px-4 py-8">
             <div className="flex min-h-[400px] items-center justify-center">
               <div className="text-gray-600">Lade Produkt...</div>
@@ -55,9 +55,9 @@ export default function ProductPage() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col bg-gray-50">
+    <div className="min-h-screen bg-gray-50">
       <Header />
-      <main className="flex-1 pb-8">
+      <main className="pb-8">
         <div className="mx-auto max-w-[1400px] px-4 py-8">
           <ProductPageClient
             watch={data?.watch || null}

@@ -226,25 +226,25 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail }: SellerProfi
 
           {/* Verifizierungsstatus */}
           {sellerData?.verified && (
-            <div className="mb-3 flex items-center gap-1 text-sm text-green-600">
+            <div className="flex items-center gap-1 text-sm text-green-600">
               <CheckCircle className="h-4 w-4" />
               <span>Ausweis verifiziert</span>
             </div>
           )}
-
-          {/* Folgen Button */}
-          <button
-            onClick={toggleFollow}
-            className={`w-full rounded-lg px-4 py-2 text-sm font-medium transition-colors ${
-              isFollowing
-                ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
-                : 'bg-primary-600 text-white hover:bg-primary-700'
-            }`}
-          >
-            {isFollowing ? 'Wird gefolgt' : 'FOLGEN'}
-          </button>
         </div>
       </div>
+
+      {/* Folgen Button - Zentriert und volle Breite */}
+      <button
+        onClick={toggleFollow}
+        className={`mt-4 w-full rounded-lg px-4 py-2.5 text-sm font-semibold transition-colors ${
+          isFollowing
+            ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+            : 'bg-primary-600 text-white hover:bg-primary-700'
+        }`}
+      >
+        {isFollowing ? 'Wird gefolgt' : 'FOLGEN'}
+      </button>
 
       {/* Andere Artikel des Verkäufers */}
       {sellerData?.otherItems && sellerData.otherItems.length > 0 && (
