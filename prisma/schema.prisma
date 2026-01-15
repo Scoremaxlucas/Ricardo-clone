@@ -1148,6 +1148,24 @@ model Order {
   shippingCostBreakdown String? // JSON: {base: number, sperrgut: number, pickhome: number, free_shipping_applied: bool}
   shippingRateSetId     String? @default("default_ch_post") // Rate-Set Identifier
 
+  // === PAYMENT METHOD (Ricardo-Style Unified) ===
+  paymentMethod String? // 'stripe' | 'bank_transfer' | 'cash_on_pickup'
+
+  // === PAYMENT DEADLINE & REMINDERS (Ricardo-Style) ===
+  paymentDeadline           DateTime? // 14 Tage nach Bestellung für Direktzahlung
+  paymentReminderSentAt     DateTime? // Letzte Zahlungserinnerung
+  paymentReminderCount      Int       @default(0) // Anzahl gesendeter Erinnerungen
+  paymentDeadlineMissed     Boolean   @default(false) // Zahlungsfrist verstrichen
+  paymentDeadlineMissedAt   DateTime? // Wann die Frist verstrichen ist
+  autoCancelledAt           DateTime? // Wann automatisch storniert wurde
+  autoCancelReason          String?   // Grund für Auto-Stornierung
+
+  // === CONTACT INFO (für Abholung/Direktzahlung) ===
+  contactDeadline       DateTime? // 7 Tage für Kontaktaufnahme
+  sellerContactedAt     DateTime? // Wann Verkäufer kontaktiert wurde
+  buyerContactedAt      DateTime? // Wann Käufer kontaktiert wurde
+  contactWarningSentAt  DateTime? // Kontakt-Warnung gesendet
+
   // Stripe IDs
   stripePaymentIntentId   String?
   stripeChargeId          String?
@@ -1183,6 +1201,10 @@ model Order {
   trackingNumber   String?
   trackingProvider String?
 
+  // === INVOICE REFERENCE (Rechnung erst bei Zahlung) ===
+  invoiceId       String? // FK zur Rechnung (erstellt bei Zahlungsbestätigung)
+  invoiceCreatedAt DateTime? // Wann Rechnung erstellt wurde
+
   // Relations
   watch         Watch          @relation(fields: [watchId], references: [id])
   buyer         User           @relation("OrderBuyer", fields: [buyerId], references: [id])
@@ -1199,6 +1221,8 @@ model Order {
   @@index([paymentStatus])
   @@index([stripePaymentIntentId])
   @@index([autoReleaseAt])
+  @@index([paymentDeadline]) // Für Cron-Job: Zahlungsfristen prüfen
+  @@index([paymentMethod])   // Für Filterung nach Zahlungsart
   @@map("orders")
 }
 

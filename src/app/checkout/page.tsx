@@ -155,38 +155,40 @@ function CheckoutPageContent() {
     setError('')
 
     const isPickup = selectedShipping === 'pickup'
-    const needsStripePayment = !isPickup && watch.paymentProtectionEnabled
+    
+    // Shipping code mapping
+    const shippingCodeMap: Record<string, string> = {
+      'b-post': 'post_economy_2kg',
+      'a-post': 'post_priority_2kg',
+    }
 
     try {
-      if (needsStripePayment) {
-        // VERSAND MIT ZAHLUNGSSCHUTZ: Order erstellen + Stripe Checkout
-        const deliveryMode = 'shipping'
-        const shippingCodeMap: Record<string, string> = {
-          'b-post': 'post_economy_2kg',
-          'a-post': 'post_priority_2kg',
-        }
+      // === EINHEITLICHER ORDER-FLOW (Ricardo-Style) ===
+      // Alle Käufe gehen jetzt über /api/orders/create
+      // Die API entscheidet basierend auf paymentProtectionEnabled und deliveryMode
+      
+      const createOrderRes = await fetch('/api/orders/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          watchId: watch.id,
+          selectedDeliveryMode: isPickup ? 'pickup' : 'shipping',
+          selectedShippingCode: isPickup ? null : (shippingCodeMap[selectedShipping] || selectedShipping),
+          selectedAddons: [],
+        }),
+      })
 
-        // Schritt 1: Erstelle Order
-        const createOrderRes = await fetch('/api/orders/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            watchId: watch.id,
-            selectedDeliveryMode: deliveryMode,
-            selectedShippingCode: shippingCodeMap[selectedShipping] || selectedShipping,
-            selectedAddons: [],
-          }),
-        })
+      if (!createOrderRes.ok) {
+        const errorData = await createOrderRes.json()
+        throw new Error(errorData.message || 'Fehler beim Erstellen der Bestellung')
+      }
 
-        if (!createOrderRes.ok) {
-          const errorData = await createOrderRes.json()
-          throw new Error(errorData.message || 'Fehler beim Erstellen der Bestellung')
-        }
+      const orderData = await createOrderRes.json()
+      const orderId = orderData.order.id
 
-        const orderData = await createOrderRes.json()
-        const orderId = orderData.order.id
-
-        // Schritt 2: Erstelle Checkout Session
+      // Prüfe ob Stripe-Zahlung erforderlich ist
+      if (orderData.requiresStripePayment) {
+        // VERSAND MIT ZAHLUNGSSCHUTZ: Stripe Checkout
         const checkoutRes = await fetch(`/api/orders/${orderId}/checkout`, {
           method: 'POST',
         })
@@ -198,35 +200,25 @@ function CheckoutPageContent() {
 
         const checkoutData = await checkoutRes.json()
 
-        // Schritt 3: Redirect zu Stripe Checkout
+        // Redirect zu Stripe Checkout
         if (checkoutData.checkoutUrl) {
           window.location.href = checkoutData.checkoutUrl
         } else {
           throw new Error('Keine Checkout URL erhalten')
         }
       } else {
-        // ABHOLUNG ODER VERSAND OHNE ZAHLUNGSSCHUTZ: Direkte Kaufbestätigung
-        // Ricardo-Logik: Kauf ist sofort verbindlich, keine Vorab-Zahlung nötig
-        const createPurchaseRes = await fetch('/api/purchases/create', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            watchId: watch.id,
-            shippingMethod: selectedShipping,
-            price: watch.buyNowPrice || watch.price,
-          }),
-        })
-
-        if (!createPurchaseRes.ok) {
-          const errorData = await createPurchaseRes.json()
-          throw new Error(errorData.message || 'Fehler beim Erstellen des Kaufs')
-        }
-
-        const purchaseData = await createPurchaseRes.json()
+        // ABHOLUNG ODER VERSAND OHNE ZAHLUNGSSCHUTZ
+        // Order wurde bereits erstellt mit Status "confirmed"
+        // Käufer erhält E-Mail mit Zahlungsinformationen/Kontaktdaten
         
-        // Erfolg! Redirect zur Kaufbestätigung
-        toast.success('Kauf erfolgreich! Bitte kontaktieren Sie den Verkäufer.')
-        router.push(`/my-watches/buying/purchased?highlight=${purchaseData.purchase.id}`)
+        if (isPickup) {
+          toast.success('Kauf erfolgreich! Kontaktieren Sie den Verkäufer für die Abholung.')
+        } else {
+          toast.success('Kauf erfolgreich! Überweisen Sie den Betrag innerhalb von 14 Tagen.')
+        }
+        
+        // Redirect zur Bestellübersicht
+        router.push(`/my-watches/buying/orders?highlight=${orderId}`)
       }
     } catch (err: any) {
       console.error('Error during checkout:', err)

@@ -562,6 +562,27 @@ async function handleCheckoutSessionCompleted(session: Stripe.Checkout.Session) 
       }
     }
 
+    // === RECHNUNGSERSTELLUNG (Ricardo-Style) ===
+    // Rechnung wird erst bei Zahlungsbestätigung erstellt, nicht bei Order-Erstellung
+    try {
+      const { calculateInvoiceForOrder } = await import('@/lib/invoice')
+      const invoice = await calculateInvoiceForOrder(orderId)
+      
+      // Update Order mit Invoice-Referenz
+      await prisma.order.update({
+        where: { id: orderId },
+        data: {
+          invoiceId: invoice.id,
+          invoiceCreatedAt: new Date(),
+        },
+      })
+      
+      console.log(`[stripe/webhook] ✅ Rechnung ${invoice.invoiceNumber} erstellt für Order ${orderId}`)
+    } catch (invoiceError: any) {
+      console.error(`[stripe/webhook] Fehler bei Rechnungserstellung für Order ${orderId}:`, invoiceError)
+      // Nicht kritisch - Invoice kann später erstellt werden
+    }
+
     // Benachrichtigungen
     try {
       // Benachrichtigung an Käufer

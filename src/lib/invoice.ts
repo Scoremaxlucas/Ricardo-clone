@@ -158,6 +158,140 @@ export async function calculateInvoiceForSale(purchaseId: string) {
   return invoice
 }
 
+/**
+ * Erstellt eine Rechnung für eine Order (neues einheitliches System)
+ * Ricardo-Style: Rechnung wird erst bei Zahlungsbestätigung erstellt
+ */
+export async function calculateInvoiceForOrder(orderId: string) {
+  // Hole Order mit Watch und Verkäufer
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    include: {
+      watch: {
+        include: {
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              firstName: true,
+              lastName: true,
+              email: true,
+              hasUnpaidInvoices: true,
+            },
+          },
+        },
+      },
+    },
+  })
+
+  if (!order) {
+    throw new Error('Order nicht gefunden')
+  }
+
+  // Prüfe ob bereits eine Rechnung für diese Order existiert
+  const existingInvoice = await prisma.invoice.findFirst({
+    where: {
+      saleId: orderId, // Wir verwenden saleId als Referenz für sowohl Purchase als auch Order
+    },
+  })
+
+  if (existingInvoice) {
+    console.log(`[invoice] Rechnung ${existingInvoice.invoiceNumber} existiert bereits für Order ${orderId}`)
+    return existingInvoice
+  }
+
+  const pricing = await getInvoicePricing()
+  const salePrice = order.itemPrice
+
+  // WICHTIG: Die 5% Kommission ist der GESAMTBETRAG inkl. MwSt (8.1%)
+  const totalCommission = await calculatePlatformFee(salePrice, {
+    platformFeeRate: pricing.commissionRate,
+    minimumCommission: pricing.minimumCommission,
+    maximumCommission: pricing.maximumCommission,
+  })
+
+  // Netto-Kommission (was Helvenda behält) = Gesamtbetrag / (1 + MwSt-Satz)
+  const netCommission = totalCommission / (1 + pricing.vatRate)
+
+  // MwSt-Betrag = Gesamtbetrag - Netto-Kommission
+  const vatAmount = totalCommission - netCommission
+
+  // Schweizer Rappenrundung auf 0.05 (5 Rappen)
+  const roundedVatAmount = Math.ceil(vatAmount * 20) / 20
+
+  // Sicherstellen, dass der Gesamtbetrag exakt der Kommission entspricht
+  const finalTotal = totalCommission
+  const finalSubtotal = finalTotal - roundedVatAmount
+
+  // Generiere Rechnungsnummer
+  const year = new Date().getFullYear()
+  const lastInvoice = await prisma.invoice.findFirst({
+    where: {
+      invoiceNumber: {
+        startsWith: `REV-${year}-`,
+      },
+    },
+    orderBy: {
+      invoiceNumber: 'desc',
+    },
+  })
+
+  let invoiceNumber = `REV-${year}-001`
+  if (lastInvoice) {
+    const lastNumber = parseInt(lastInvoice.invoiceNumber.split('-')[2])
+    if (!isNaN(lastNumber) && lastNumber > 0) {
+      invoiceNumber = `REV-${year}-${String(lastNumber + 1).padStart(3, '0')}`
+    }
+  }
+
+  // Erstelle Rechnung
+  const invoice = await prisma.invoice.create({
+    data: {
+      invoiceNumber,
+      sellerId: order.sellerId,
+      saleId: orderId, // Verwende orderId als Referenz
+      subtotal: finalSubtotal,
+      vatRate: pricing.vatRate,
+      vatAmount: roundedVatAmount,
+      total: finalTotal,
+      status: 'pending',
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000), // 14 Tage Frist
+      items: {
+        create: [
+          {
+            watchId: order.watchId,
+            description: `Kommission: ${order.watch.title}`,
+            quantity: 1,
+            price: finalSubtotal,
+            total: finalSubtotal,
+          },
+        ],
+      },
+    },
+    include: {
+      items: true,
+      seller: true,
+    },
+  })
+
+  // Erstelle Plattform-Benachrichtigung
+  try {
+    await prisma.notification.create({
+      data: {
+        userId: order.sellerId,
+        type: 'NEW_INVOICE',
+        title: 'Neue Rechnung erstellt',
+        message: `Eine neue Rechnung wurde für Sie erstellt: ${invoiceNumber} (CHF ${finalTotal.toFixed(2)}). Die Zahlungsaufforderung erhalten Sie in 14 Tagen.`,
+        link: `/my-watches/selling/fees?invoice=${invoice.id}`,
+      },
+    })
+  } catch (notificationError: any) {
+    // Silent fail - Notification-Fehler sollte nicht kritisch sein
+  }
+
+  return invoice
+}
+
 // Hilfsfunktion zum Versenden von Rechnungs-Benachrichtigungen (E-Mail + Plattform)
 export async function sendInvoiceNotificationAndEmail(invoice: any) {
   try {

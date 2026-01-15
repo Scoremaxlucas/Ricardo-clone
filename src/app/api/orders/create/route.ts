@@ -7,7 +7,12 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * POST /api/orders/create
- * Erstellt eine neue Order für Zahlungsschutz
+ * Erstellt eine neue Order - EINHEITLICH für alle Szenarien:
+ * - Abholung (cash_on_pickup)
+ * - Versand ohne Schutz (bank_transfer)
+ * - Versand mit Schutz (stripe)
+ * 
+ * Ricardo-Style: 14-Tage-Zahlungsfrist für Direktzahlungen
  */
 export async function POST(request: NextRequest) {
   try {
@@ -50,9 +55,12 @@ export async function POST(request: NextRequest) {
         buyNowPrice: true,
         sellerId: true,
         shippingMethod: true,
+        paymentProtectionEnabled: true, // Wichtig für Zahlungsmethode
         seller: {
           select: {
             id: true,
+            name: true,
+            email: true,
             stripeConnectedAccountId: true,
             stripeOnboardingComplete: true,
           },
@@ -195,6 +203,50 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // === RICARDO-STYLE: Bestimme Zahlungsmethode und Fristen ===
+    const isPickup = selectedDeliveryMode === 'pickup'
+    const hasPaymentProtection = watch.paymentProtectionEnabled && !isPickup
+    
+    // Zahlungsmethode bestimmen
+    let paymentMethod: 'stripe' | 'bank_transfer' | 'cash_on_pickup'
+    if (isPickup) {
+      paymentMethod = 'cash_on_pickup'
+    } else if (hasPaymentProtection) {
+      paymentMethod = 'stripe'
+    } else {
+      paymentMethod = 'bank_transfer'
+    }
+
+    // Fristen berechnen
+    const now = new Date()
+    
+    // 14-Tage-Zahlungsfrist für Direktzahlungen (Banküberweisung)
+    // Für Abholung gilt auch 14 Tage - Käufer muss Verkäufer kontaktieren
+    const paymentDeadline = new Date(now)
+    paymentDeadline.setDate(paymentDeadline.getDate() + 14)
+
+    // 7-Tage-Kontaktfrist (Käufer soll Verkäufer innerhalb von 7 Tagen kontaktieren)
+    const contactDeadline = new Date(now)
+    contactDeadline.setDate(contactDeadline.getDate() + 7)
+
+    // Status basierend auf Zahlungsmethode
+    let orderStatus: string
+    let paymentStatus: string
+
+    if (paymentMethod === 'stripe') {
+      // Stripe: Warten auf Zahlung über Stripe Checkout
+      orderStatus = 'awaiting_payment'
+      paymentStatus = 'created'
+    } else if (paymentMethod === 'cash_on_pickup') {
+      // Abholung: Kauf ist verbindlich, Zahlung bei Übergabe
+      orderStatus = 'confirmed'
+      paymentStatus = 'pending_cash'
+    } else {
+      // Banküberweisung: Kauf ist verbindlich, warten auf Überweisung
+      orderStatus = 'confirmed'
+      paymentStatus = 'pending_bank_transfer'
+    }
+
     // Erstelle Order
     // HINWEIS: protectionFee speichert jetzt die Zahlungsgebühr (Stripe Fee / "Helvenda Schutz Gebühr")
     // Diese wird vom Verkäufer bezahlt, nicht vom Käufer
@@ -215,8 +267,13 @@ export async function POST(request: NextRequest) {
         platformFee: fees.platformFee,
         protectionFee: fees._processingFeeOnly, // Stripe Processing Fee (für Transfer-Berechnung)
         totalAmount: fees.totalAmount,
-        orderStatus: 'awaiting_payment',
-        paymentStatus: 'created',
+        // === NEUE FELDER ===
+        paymentMethod,
+        orderStatus,
+        paymentStatus,
+        // Fristen (nur für Direktzahlungen relevant)
+        paymentDeadline: paymentMethod !== 'stripe' ? paymentDeadline : null,
+        contactDeadline: contactDeadline,
       },
       include: {
         watch: {
@@ -245,6 +302,34 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // === BENACHRICHTIGUNGEN SENDEN ===
+    // Benachrichtigung an Verkäufer
+    try {
+      const buyerName = order.buyer.name || order.buyer.email || 'Ein Käufer'
+      await prisma.notification.create({
+        data: {
+          userId: watch.sellerId,
+          type: 'PURCHASE',
+          title: 'Ihr Artikel wurde verkauft!',
+          message: `${buyerName} hat "${order.watch.title}" für CHF ${order.totalAmount.toFixed(2)} gekauft.`,
+          watchId: watchId,
+          link: `/my-watches/selling/sold`,
+        },
+      })
+    } catch (notifyError) {
+      console.error('[orders/create] Fehler bei Verkäufer-Benachrichtigung:', notifyError)
+    }
+
+    // E-Mail an Käufer mit Zahlungsinformationen (für Direktzahlungen)
+    if (paymentMethod !== 'stripe') {
+      try {
+        const { sendOrderConfirmationEmail } = await import('@/lib/email-orders')
+        await sendOrderConfirmationEmail(order.id)
+      } catch (emailError) {
+        console.error('[orders/create] Fehler bei Bestätigungs-E-Mail:', emailError)
+      }
+    }
+
     return NextResponse.json({
       success: true,
       order: {
@@ -253,7 +338,12 @@ export async function POST(request: NextRequest) {
         totalAmount: order.totalAmount,
         orderStatus: order.orderStatus,
         paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        paymentDeadline: order.paymentDeadline,
       },
+      // Info für Frontend
+      requiresStripePayment: paymentMethod === 'stripe',
+      isDirectPurchase: paymentMethod !== 'stripe',
     })
   } catch (error: any) {
     console.error('Error creating order:', error)
