@@ -173,14 +173,14 @@ export function PriceOfferComponent({
           <div className="mb-4 rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-5">
             <div className="mb-2 flex items-center justify-between">
               <div className="text-xs font-semibold uppercase tracking-wide text-green-700">
-                Sofortkauf verfügbar
+                Sofortkauf
               </div>
               <Zap className="h-4 w-4 text-green-600" />
             </div>
             <div className="mb-1 text-3xl font-bold text-green-700">
               CHF {new Intl.NumberFormat('de-CH').format(price)}
             </div>
-            <p className="text-xs text-green-600">Artikel sofort kaufen ohne Verhandlung</p>
+            <p className="text-xs text-green-600">Jetzt kaufen ohne Verhandlung</p>
           </div>
 
           {/* Payment Protection Badge */}
@@ -229,19 +229,19 @@ export function PriceOfferComponent({
 
   return (
     <div className="rounded-lg border-2 border-gray-200 bg-white p-3 shadow-lg md:p-6">
-      {/* PRIMARY: Sofortkauf-Option - PRIORITIZED */}
+      {/* PRIMARY: Sofortkauf-Option */}
       <div className="mb-3 md:mb-6">
         <div className="mb-3 rounded-lg border-2 border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-3 md:mb-4 md:p-5">
           <div className="mb-1 flex items-center justify-between md:mb-2">
             <div className="text-[10px] font-semibold uppercase tracking-wide text-green-700 md:text-xs">
-              Sofortkauf verfügbar
+              Sofortkauf
             </div>
             <Zap className="h-3.5 w-3.5 text-green-600 md:h-4 md:w-4" />
           </div>
           <div className="mb-0.5 text-xl font-bold text-green-700 md:mb-1 md:text-3xl">
             CHF {new Intl.NumberFormat('de-CH').format(price)}
           </div>
-          <p className="text-[10px] text-green-600 md:text-xs">Artikel sofort kaufen ohne Verhandlung</p>
+          <p className="text-[10px] text-green-600 md:text-xs">Jetzt kaufen ohne Verhandlung</p>
         </div>
 
         {/* Payment Protection Badge */}

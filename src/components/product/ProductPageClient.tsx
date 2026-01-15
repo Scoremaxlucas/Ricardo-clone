@@ -651,29 +651,20 @@ export function ProductPageClient({
                 </div>
               )}
 
-              {/* Preis - Wie Desktop */}
-              <div className="mb-3">
-                {watch.buyNowPrice ? (
-                  <>
-                    <div className="text-xs text-gray-600">Sofort-Kaufpreis</div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      CHF {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice)}
-                    </div>
-                  </>
-                ) : (
-                  <>
-                    <div className="text-xs text-gray-600">Verkaufspreis</div>
-                    <div className="text-2xl font-bold text-gray-900">
-                      CHF {new Intl.NumberFormat('de-CH').format(watch.price)}
-                    </div>
-                  </>
-                )}
-                {(watch as any).paymentProtectionEnabled && (
-                  <div className="mt-1">
-                    <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={true} />
+              {/* Preis - Nur bei Auktionen separat anzeigen */}
+              {watch.isAuction && (
+                <div className="mb-3">
+                  <div className="text-xs text-gray-600">Startpreis</div>
+                  <div className="text-2xl font-bold text-gray-900">
+                    CHF {new Intl.NumberFormat('de-CH').format(watch.price)}
                   </div>
-                )}
-              </div>
+                  {(watch as any).paymentProtectionEnabled && (
+                    <div className="mt-1">
+                      <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={true} />
+                    </div>
+                  )}
+                </div>
+              )}
 
               {/* Buy/Offer Section */}
               <div className="mb-3">
@@ -874,29 +865,20 @@ export function ProductPageClient({
               </div>
             )}
 
-            {/* Preis */}
-            <div className="mb-4">
-              {watch.buyNowPrice ? (
-                <>
-                  <div className="text-sm text-gray-600">Sofort-Kaufpreis</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {new Intl.NumberFormat('de-CH').format(watch.buyNowPrice)}
-                  </div>
-                </>
-              ) : (
-                <>
-                  <div className="text-sm text-gray-600">Verkaufspreis</div>
-                  <div className="text-2xl font-bold text-gray-900">
-                    {new Intl.NumberFormat('de-CH').format(watch.price)}
-                  </div>
-                </>
-              )}
-              {(watch as any).paymentProtectionEnabled && (
-                <div className="mt-1">
-                  <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={true} />
+            {/* Preis - Nur bei Auktionen separat anzeigen */}
+            {watch.isAuction && (
+              <div className="mb-4">
+                <div className="text-sm text-gray-600">Startpreis</div>
+                <div className="text-2xl font-bold text-gray-900">
+                  CHF {new Intl.NumberFormat('de-CH').format(watch.price)}
                 </div>
-              )}
-            </div>
+                {(watch as any).paymentProtectionEnabled && (
+                  <div className="mt-1">
+                    <PaymentProtectionBadge enabled={true} compact={true} showInfoLink={true} />
+                  </div>
+                )}
+              </div>
+            )}
 
             {/* Kauf/Gebot Component */}
             {watch.isAuction ? (
