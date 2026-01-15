@@ -225,16 +225,15 @@ html {
   /* Footer-Farbe für den Bereich unter dem Viewport - verhindert weißen Rand */
   background-color: #134e4a;
   height: 100%;
-  /* Prevent horizontal overflow on mobile */
-  overflow-x: hidden;
   width: 100%;
+  /* KEIN overflow-x: hidden hier - das bricht position: sticky! */
 }
 
 body {
-  /* Prevent horizontal overflow on mobile */
-  overflow-x: hidden;
   width: 100%;
   max-width: 100vw;
+  /* overflow-x: clip statt hidden - erlaubt sticky zu funktionieren */
+  overflow-x: clip;
 }
 
 /* Animationen */

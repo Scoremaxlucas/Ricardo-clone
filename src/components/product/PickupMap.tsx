@@ -69,10 +69,10 @@ export function PickupMap({ city, postalCode }: PickupMapProps) {
           style={{
             border: 0,
             position: 'absolute',
-            top: '-70px',      // Versteckt obere Google UI
-            left: '-15px',     // Versteckt linke UI
-            width: 'calc(100% + 30px)',
-            height: 'calc(100% + 120px)', // Extra Höhe für unten
+            top: '-60px',       // Versteckt obere Google UI
+            left: '-200px',     // VIEL mehr links - versteckt den ganzen weissen Bereich
+            width: 'calc(100% + 220px)',
+            height: 'calc(100% + 100px)',
             pointerEvents: 'auto'
           }}
         />
