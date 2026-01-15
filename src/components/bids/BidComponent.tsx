@@ -463,28 +463,56 @@ export function BidComponent({
   }, [])
 
   return (
-    <div className="space-y-3">
-      {/* Startgebot Box - Kompakt wie Ricardo */}
-      <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-        <div className="mb-0.5 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+    <div className="space-y-4">
+      {/* Startgebot Box - Wie Ricardo: Weiss, schwarzer Preis */}
+      <div className="rounded-lg border border-gray-200 bg-white p-4">
+        <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
           {highestBid ? t.bid.currentHighestBid : 'Startgebot'}
         </div>
         <div className="text-2xl font-bold text-gray-900">
           {highestBid 
-            ? `CHF ${new Intl.NumberFormat('de-CH').format(highestBid)}`
-            : `CHF ${new Intl.NumberFormat('de-CH').format(startPrice)}`
+            ? new Intl.NumberFormat('de-CH').format(highestBid)
+            : new Intl.NumberFormat('de-CH').format(startPrice)
           }
         </div>
-        {highestBid && (
-          <div className="text-xs text-gray-500">
-            {bids.length} {bids.length === 1 ? t.product.bid_singular : t.product.bids}
+        {paymentProtectionEnabled && (
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-primary-600">
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-primary-300 text-[10px] font-bold">H</span>
+            <span>Helvenda Schutz verfügbar</span>
           </div>
         )}
       </div>
 
+      {/* Bieten Input + Button - Wie Ricardo */}
+      {!isSeller && (
+        <div className="flex items-stretch gap-2">
+          <div className="relative flex-1">
+            <div className="pointer-events-none absolute inset-y-0 left-0 flex items-center pl-3">
+              <span className="text-sm text-gray-500">CHF</span>
+            </div>
+            <input
+              type="text"
+              inputMode="decimal"
+              value={bidAmount}
+              onChange={e => setBidAmount(e.target.value)}
+              placeholder={minBid.toFixed(0)}
+              className="w-full rounded-lg border border-gray-300 bg-white py-2.5 pl-12 pr-3 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+              disabled={isSeller || !isAuctionActive}
+            />
+          </div>
+          <button
+            onClick={handleBid}
+            disabled={loading || !isAuctionActive || isSeller || !bidAmount}
+            className="flex shrink-0 items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-5 py-2.5 text-sm font-semibold uppercase tracking-wide text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            BIETEN
+          </button>
+        </div>
+      )}
+
       {/* Countdown - Kompakter */}
       {currentAuctionEnd && timeLeft && timeLeft.total > 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2">
+        <div className="flex items-center gap-2 rounded-lg border border-yellow-200 bg-yellow-50 px-3 py-2.5">
           <Clock className="h-4 w-4 text-yellow-600" />
           <span className="text-sm font-medium text-yellow-800">
             {timeLeft.days > 0 && `${timeLeft.days}d `}
@@ -493,81 +521,67 @@ export function BidComponent({
             {String(timeLeft.seconds).padStart(2, '0')}
           </span>
           {timeLeft.total < 3 * 60 * 1000 && (
-            <span className="text-xs font-medium text-red-600">⚠️ Bald zu Ende!</span>
+            <span className="ml-auto text-xs font-medium text-red-600">⚠️ Bald zu Ende!</span>
           )}
         </div>
       )}
 
       {currentAuctionEnd && timeLeft && timeLeft.total <= 0 && (
-        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2">
+        <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2.5">
           <AlertCircle className="h-4 w-4 text-red-600" />
           <span className="text-sm font-medium text-red-700">{t.product.auctionEnded}</span>
         </div>
       )}
 
       {error && (
-        <div className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
+        <div className="rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700">
           {error}
         </div>
       )}
 
       {success && (
-        <div className="rounded border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
+        <div className="rounded-lg border border-green-200 bg-green-50 px-3 py-2 text-xs text-green-700">
           {success}
         </div>
       )}
 
-      {!isSeller && (
-        <div className="space-y-2">
-          {/* Bieten Button - Kompakt wie Ricardo */}
-          <div className="flex items-stretch gap-2">
-            <input
-              type="text"
-              inputMode="decimal"
-              value={bidAmount}
-              onChange={e => setBidAmount(e.target.value)}
-              placeholder={`Min. CHF ${minBid.toFixed(0)}`}
-              className="min-w-0 flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
-              disabled={isSeller}
-            />
-            <button
-              onClick={handleBid}
-              disabled={loading || !isAuctionActive || isSeller}
-              className="flex shrink-0 items-center gap-1.5 whitespace-nowrap rounded-lg bg-amber-500 px-4 py-2 text-sm font-semibold text-white hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-50"
-            >
-              <Gavel className="h-4 w-4" />
-              BIETEN
-            </button>
-          </div>
+      {/* Favoriten Button Platzhalter - wird in ProductPageClient gerendert */}
 
-          {/* Sofortkauf - Kompakt wie Ricardo */}
-          {buyNowPrice && (
-            <>
-              <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-3">
-                <div className="mb-0.5 flex items-center justify-between">
-                  <div className="text-[10px] font-semibold uppercase tracking-wide text-green-700">
-                    Sofort-Kaufpreis
-                  </div>
-                  <Zap className="h-3.5 w-3.5 text-green-600" />
-                </div>
-                <div className="text-xl font-bold text-green-700">
-                  CHF {new Intl.NumberFormat('de-CH').format(buyNowPrice)}
-                </div>
-                {paymentProtectionEnabled && (
-                  <div className="mt-1">
-                    <PaymentProtectionBadge enabled={paymentProtectionEnabled} compact={true} />
-                  </div>
-                )}
+      {/* MoneyGuard Style Box - Wie Ricardo */}
+      {!isSeller && (
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+          <div className="flex items-center gap-2.5">
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-primary-300 text-xs font-bold text-primary-600">H</span>
+            <div className="flex-1">
+              <span className="text-sm font-semibold text-gray-900">Helvenda Schutz:</span>
+              <span className="ml-1 text-sm text-gray-600">Optionale Absicherung</span>
+            </div>
+            <ChevronDown className="h-4 w-4 text-gray-400" />
+          </div>
+        </div>
+      )}
+
+      {/* Sofortkauf - Nur wenn vorhanden */}
+      {!isSeller && buyNowPrice && (
+        <div className="space-y-3 border-t border-gray-200 pt-4">
+          <div className="rounded-lg border border-primary-200 bg-gradient-to-br from-primary-50/50 to-white p-4">
+            <div className="mb-1 flex items-center justify-between">
+              <div className="text-xs font-semibold uppercase tracking-wide text-primary-600">
+                Sofort-Kaufpreis
               </div>
-              <button
-                onClick={handleBuyNowClick}
-                disabled={loading || !isAuctionActive || isSeller}
-                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
-              >
-                SOFORT KAUFEN
-              </button>
-            </>
-          )}
+              <Zap className="h-4 w-4 text-primary-500" />
+            </div>
+            <div className="text-xl font-bold text-gray-900">
+              CHF {new Intl.NumberFormat('de-CH').format(buyNowPrice)}
+            </div>
+          </div>
+          <button
+            onClick={handleBuyNowClick}
+            disabled={loading || !isAuctionActive || isSeller}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            SOFORT KAUFEN
+          </button>
         </div>
       )}
 

@@ -148,13 +148,13 @@ export function PriceOfferComponent({
 
   if (isSeller) {
     return (
-      <div className="space-y-3">
-        {/* Preis-Box für Verkäufer */}
-        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-          <div className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-gray-500">
+      <div className="space-y-4">
+        {/* Preis-Box für Verkäufer - Wie Ricardo */}
+        <div className="rounded-lg border border-gray-200 bg-white p-4">
+          <div className="mb-1 text-xs font-semibold uppercase tracking-wide text-gray-500">
             Ihr Verkaufspreis
           </div>
-          <div className="text-2xl font-bold text-gray-700">
+          <div className="text-2xl font-bold text-gray-900">
             CHF {new Intl.NumberFormat('de-CH').format(price)}
           </div>
         </div>
@@ -167,28 +167,29 @@ export function PriceOfferComponent({
 
   if (!(session?.user as { id?: string })?.id) {
     return (
-      <div className="space-y-3">
-        {/* Sofortkauf-Option für nicht angemeldete Benutzer - Kompakt */}
-        <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-3">
+      <div className="space-y-4">
+        {/* Sofortkauf-Option für nicht angemeldete - Wie Ricardo */}
+        <div className="rounded-lg border border-primary-200 bg-gradient-to-br from-primary-50/50 to-white p-4">
           <div className="mb-1 flex items-center justify-between">
-            <div className="text-[10px] font-semibold uppercase tracking-wide text-green-700">
+            <div className="text-xs font-semibold uppercase tracking-wide text-primary-600">
               Sofortkauf
             </div>
-            <Zap className="h-3.5 w-3.5 text-green-600" />
+            <Zap className="h-4 w-4 text-primary-500" />
           </div>
-          <div className="text-2xl font-bold text-green-700">
+          <div className="text-2xl font-bold text-gray-900">
             CHF {new Intl.NumberFormat('de-CH').format(price)}
           </div>
           {paymentProtectionEnabled && (
-            <div className="mt-1.5">
-              <PaymentProtectionBadge enabled={paymentProtectionEnabled} compact={true} />
+            <div className="mt-2 flex items-center gap-1.5 text-xs text-primary-600">
+              <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-primary-300 text-[10px] font-bold">H</span>
+              <span>Helvenda Schutz verfügbar</span>
             </div>
           )}
         </div>
 
         <button
           disabled
-          className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-gray-300 px-4 py-2.5 text-sm font-semibold text-gray-500"
+          className="flex w-full cursor-not-allowed items-center justify-center gap-2 rounded-lg bg-gray-300 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-gray-500"
         >
           <ShoppingCart className="h-4 w-4" />
           SOFORT KAUFEN
@@ -197,10 +198,10 @@ export function PriceOfferComponent({
           Anmelden um zu kaufen
         </p>
 
-        {/* Preisvorschlag - Kompakt */}
-        <div className="rounded-lg border border-gray-200 bg-white p-2.5">
+        {/* Preisvorschlag - Disabled Style */}
+        <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
           <div className="flex items-center gap-2 text-gray-400">
-            <Tag className="h-4 w-4" />
+            <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-gray-300 text-xs font-bold">H</span>
             <span className="text-sm">Preisvorschlag machen</span>
             <span className="ml-auto text-xs">Anmeldung erforderlich</span>
           </div>
@@ -210,55 +211,60 @@ export function PriceOfferComponent({
   }
 
   return (
-    <div className="space-y-3">
-      {/* PRIMARY: Sofortkauf-Option - Kompakt wie Ricardo */}
-      <div className="rounded-lg border border-green-200 bg-gradient-to-br from-green-50 to-emerald-50 p-3">
+    <div className="space-y-4">
+      {/* PRIMARY: Sofortkauf-Option - Wie Ricardo: Weiss mit grüner Border, schwarzer Preis */}
+      <div className="rounded-lg border border-primary-200 bg-gradient-to-br from-primary-50/50 to-white p-4">
         <div className="mb-1 flex items-center justify-between">
-          <div className="text-[10px] font-semibold uppercase tracking-wide text-green-700">
+          <div className="text-xs font-semibold uppercase tracking-wide text-primary-600">
             Sofortkauf
           </div>
-          <Zap className="h-3.5 w-3.5 text-green-600" />
+          <Zap className="h-4 w-4 text-primary-500" />
         </div>
-        <div className="text-2xl font-bold text-green-700">
+        <div className="text-2xl font-bold text-gray-900">
           CHF {new Intl.NumberFormat('de-CH').format(price)}
         </div>
         {paymentProtectionEnabled && (
-          <div className="mt-1.5">
-            <PaymentProtectionBadge enabled={paymentProtectionEnabled} compact={true} />
+          <div className="mt-2 flex items-center gap-1.5 text-xs text-primary-600">
+            <span className="inline-flex h-4 w-4 items-center justify-center rounded-full border border-primary-300 text-[10px] font-bold">H</span>
+            <span>Helvenda Schutz verfügbar</span>
           </div>
         )}
       </div>
 
-      {/* Jetzt kaufen Button - Kompakt */}
+      {/* Jetzt kaufen Button - Teal Gradient wie auf der Platform */}
       <button
         onClick={handleBuyNow}
         disabled={isSeller || !(session?.user as { id?: string })?.id}
-        className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white transition-all hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+        className="flex w-full items-center justify-center gap-2 rounded-lg bg-gradient-to-r from-primary-500 to-primary-600 px-4 py-3 text-sm font-semibold uppercase tracking-wide text-white shadow-md transition-all hover:from-primary-600 hover:to-primary-700 hover:shadow-lg disabled:cursor-not-allowed disabled:opacity-50"
       >
         <ShoppingCart className="h-4 w-4" />
         SOFORT KAUFEN
       </button>
 
-      {/* SECONDARY: Preisvorschlag machen - Kompakt wie Ricardo */}
+      {/* Favoriten Button Platzhalter - wird in ProductPageClient gerendert */}
+
+      {/* SECONDARY: Preisvorschlag machen - Wie Ricardo MoneyGuard Style */}
       <button
         type="button"
         onClick={() => setShowPriceOfferForm(!showPriceOfferForm)}
-        className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white p-2.5 transition-all hover:border-gray-300"
+        className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-gray-50 p-3 transition-all hover:bg-gray-100"
       >
-        <div className="flex items-center gap-2">
-          <Tag className="h-4 w-4 text-primary-600" />
+        <div className="flex items-center gap-2.5">
+          <span className="inline-flex h-5 w-5 items-center justify-center rounded-full border border-primary-300 text-xs font-bold text-primary-600">H</span>
           <div className="text-left">
             <span className="text-sm font-semibold text-gray-900">Preisvorschlag machen</span>
-            <span className="ml-2 text-xs text-gray-500">
-              Mindestens CHF {minimumPrice.toFixed(0)} (60%)
-            </span>
           </div>
         </div>
-        {showPriceOfferForm ? (
-          <ChevronUp className="h-4 w-4 text-gray-400" />
-        ) : (
-          <ChevronDown className="h-4 w-4 text-gray-400" />
-        )}
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">
+            Min. CHF {minimumPrice.toFixed(0)} (60%)
+          </span>
+          {showPriceOfferForm ? (
+            <ChevronUp className="h-4 w-4 text-gray-400" />
+          ) : (
+            <ChevronDown className="h-4 w-4 text-gray-400" />
+          )}
+        </div>
       </button>
 
       {/* Collapsible Form - Kompakt */}

@@ -629,17 +629,17 @@ export function ProductPageClient({
               )}
             </div>
 
-            {/* MOBILE ONLY: Titel, Datum, Preis, Buy/Offer, Seller - Kompakt wie Ricardo */}
+            {/* MOBILE ONLY: Titel, Datum, Preis, Buy/Offer, Seller - Wie Ricardo */}
             <div className="lg:hidden">
               {/* Titel */}
-              <h1 className="mb-1 text-lg font-bold leading-tight text-gray-900">
+              <h1 className="mb-2 text-xl font-bold leading-tight text-gray-900">
                 {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
               </h1>
 
               {/* Einstelldatum mit Clock-Icon */}
               {watch.createdAt && (
-                <div className="mb-2 flex items-center gap-1 text-xs text-gray-500">
-                  <Clock className="h-3 w-3" />
+                <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-500">
+                  <Clock className="h-4 w-4" />
                   {new Date(watch.createdAt).toLocaleDateString('de-CH', {
                     day: 'numeric',
                     month: 'short',
@@ -651,18 +651,8 @@ export function ProductPageClient({
                 </div>
               )}
 
-              {/* Preis - Nur bei Auktionen separat anzeigen */}
-              {watch.isAuction && (
-                <div className="mb-2">
-                  <div className="text-xs text-gray-600">Startpreis</div>
-                  <div className="text-xl font-bold text-gray-900">
-                    CHF {new Intl.NumberFormat('de-CH').format(watch.price)}
-                  </div>
-                </div>
-              )}
-
-              {/* Buy/Offer Section - Kompakt */}
-              <div className="mb-2">
+              {/* Buy/Offer Section - Enthält jetzt die Preisanzeige */}
+              <div className="mb-4">
                 {watch.isAuction ? (
                   <BidComponent
                     itemId={watch.id}
@@ -685,32 +675,32 @@ export function ProductPageClient({
                 )}
               </div>
 
-              {/* Zu Favoriten Button - Kompakter */}
+              {/* Zu Favoriten Button - Wie Ricardo */}
               <button
                 onClick={toggleFavorite}
                 disabled={favoriteLoading}
-                className={`mb-2 flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                className={`mb-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
                   isFavorite
                     ? 'border-red-400 bg-red-50 text-red-600'
-                    : 'border-gray-300 bg-white text-gray-700'
+                    : 'border-gray-200 bg-white text-primary-600'
                 }`}
               >
                 <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
                 {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
               </button>
 
-              {/* Lieferung Info - Inline */}
+              {/* Lieferung Info */}
               {(watch as any).shippingMethod && (
-                <div className="mb-2 flex items-center justify-between rounded-lg bg-gray-50 px-3 py-2 text-sm">
-                  <span className="text-gray-500">Lieferung</span>
-                  <span className="font-medium text-gray-900">
+                <div className="mb-4">
+                  <div className="text-sm text-gray-500">Lieferung</div>
+                  <div className="mt-1 text-sm font-medium text-gray-900">
                     {formatShippingMethod((watch as any).shippingMethod)}
-                  </span>
+                  </div>
                 </div>
               )}
 
-              {/* Seller Profile - Kompakt */}
-              <div className="mb-2 rounded-lg border border-gray-200 bg-white">
+              {/* Seller Profile */}
+              <div className="mb-4 rounded-lg border border-gray-200 bg-white">
                 <SellerProfile
                   sellerId={watch.sellerId}
                   sellerName={seller?.name || t.common.unknown}
@@ -719,18 +709,24 @@ export function ProductPageClient({
                 />
               </div>
 
-              {/* Report-Button Mobile */}
-              {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
-                <div className="mb-2 text-center">
+              {/* Links wie Ricardo: TEILEN | MELDEN */}
+              <div className="mb-4 flex items-center justify-center gap-6 text-sm">
+                <button className="flex items-center gap-1.5 font-medium text-primary-600">
+                  <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                  </svg>
+                  TEILEN
+                </button>
+                {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
                   <button
                     onClick={() => setShowReportModal(true)}
-                    className="inline-flex items-center gap-1 text-xs text-gray-400 transition-colors hover:text-red-500"
+                    className="flex items-center gap-1.5 font-medium text-gray-500"
                   >
-                    <Flag className="h-3 w-3" />
-                    Melden
+                    <Flag className="h-4 w-4" />
+                    MELDEN
                   </button>
-                </div>
-              )}
+                )}
+              </div>
             </div>
 
             {/* Product Stats - Feature 2: Social Proof */}
@@ -836,21 +832,21 @@ export function ProductPageClient({
           </div>
         </div>
 
-        {/* Rechte Spalte: DESKTOP ONLY - Kompakt wie Ricardo */}
+        {/* Rechte Spalte: DESKTOP ONLY - Wie Ricardo */}
         <div className="hidden lg:block">
           {/* Sticky Container */}
-          <div className="sticky top-24 space-y-3">
-            {/* Hauptkarte mit Titel, Datum, Preis - Kompakt */}
-            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm">
-              {/* Titel - Kompakter */}
-              <h1 className="mb-1 text-lg font-bold leading-tight text-gray-900">
+          <div className="sticky top-24 space-y-4">
+            {/* Hauptkarte mit Titel, Datum, Preis */}
+            <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
+              {/* Titel */}
+              <h1 className="mb-2 text-xl font-bold leading-tight text-gray-900">
                 {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
               </h1>
 
-              {/* Datum - Kleiner wie Ricardo */}
+              {/* Datum */}
               {watch.createdAt && (
-                <div className="mb-3 flex items-center gap-1 text-xs text-gray-500">
-                  <Clock className="h-3.5 w-3.5" />
+                <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-500">
+                  <Clock className="h-4 w-4" />
                   {new Date(watch.createdAt).toLocaleDateString('de-CH', {
                     day: 'numeric',
                     month: 'short',
@@ -862,17 +858,7 @@ export function ProductPageClient({
                 </div>
               )}
 
-              {/* Preis - Nur bei Auktionen separat anzeigen */}
-              {watch.isAuction && (
-                <div className="mb-3">
-                  <div className="text-xs text-gray-600">Startpreis</div>
-                  <div className="text-xl font-bold text-gray-900">
-                    CHF {new Intl.NumberFormat('de-CH').format(watch.price)}
-                  </div>
-                </div>
-              )}
-
-              {/* Kauf/Gebot Component */}
+              {/* Kauf/Gebot Component - Enthält jetzt die Preisanzeige */}
               {watch.isAuction ? (
                 <BidComponent
                   itemId={watch.id}
@@ -894,34 +880,32 @@ export function ProductPageClient({
                 />
               )}
 
-              {/* Zu Favoriten hinzufügen - Kompakter */}
+              {/* Zu Favoriten hinzufügen - Wie Ricardo */}
               <button
                 onClick={toggleFavorite}
                 disabled={favoriteLoading}
-                className={`mt-3 flex w-full items-center justify-center gap-1.5 rounded-lg border px-3 py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
                   isFavorite
                     ? 'border-red-400 bg-red-50 text-red-600 hover:bg-red-100'
-                    : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                    : 'border-gray-200 bg-white text-primary-600 hover:bg-gray-50'
                 }`}
               >
                 <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
                 {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
               </button>
 
-              {/* Lieferung - Inline wie Ricardo */}
+              {/* Lieferung - Wie Ricardo */}
               {(watch as any).shippingMethod && (
-                <div className="mt-3 border-t border-gray-100 pt-3">
-                  <div className="flex items-baseline justify-between text-sm">
-                    <span className="text-gray-500">Lieferung</span>
-                    <span className="font-medium text-gray-900">
-                      {formatShippingMethod((watch as any).shippingMethod)}
-                    </span>
+                <div className="mt-4 border-t border-gray-100 pt-4">
+                  <div className="text-sm text-gray-500">Lieferung</div>
+                  <div className="mt-1 text-sm font-medium text-gray-900">
+                    {formatShippingMethod((watch as any).shippingMethod)}
                   </div>
                 </div>
               )}
             </div>
 
-            {/* Verkäufer-Karte - Kompakter */}
+            {/* Verkäufer-Karte */}
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
               <SellerProfile
                 sellerId={watch.sellerId}
@@ -931,15 +915,21 @@ export function ProductPageClient({
               />
             </div>
 
-            {/* Links wie Ricardo: TEILEN | ÄHNLICHEN ARTIKEL VERKAUFEN */}
-            <div className="flex items-center justify-center gap-4 text-xs">
+            {/* Links wie Ricardo: TEILEN | MELDEN */}
+            <div className="flex items-center justify-center gap-6 py-2 text-sm">
+              <button className="flex items-center gap-1.5 font-medium text-primary-600 transition-colors hover:text-primary-700">
+                <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" />
+                </svg>
+                TEILEN
+              </button>
               {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
                 <button
                   onClick={() => setShowReportModal(true)}
-                  className="flex items-center gap-1 text-gray-500 transition-colors hover:text-red-600"
+                  className="flex items-center gap-1.5 font-medium text-gray-500 transition-colors hover:text-red-600"
                 >
-                  <Flag className="h-3.5 w-3.5" />
-                  Melden
+                  <Flag className="h-4 w-4" />
+                  MELDEN
                 </button>
               )}
             </div>
