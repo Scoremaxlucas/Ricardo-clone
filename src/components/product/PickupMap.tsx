@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ExternalLink, MapPin, Navigation } from 'lucide-react'
+import { ExternalLink } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 
 interface PickupMapProps {
@@ -52,46 +52,21 @@ export function PickupMap({ city, postalCode }: PickupMapProps) {
 
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
-      {/* Map Container - Clipped to hide Google UI */}
-      <div
-        className="relative w-full overflow-hidden"
-        style={{ height: '280px' }}
-      >
-        {/* Iframe Container - Größer als sichtbar, um UI zu verstecken */}
-        <div
-          className="absolute"
-          style={{
-            top: '-60px',  // Versteckt "View larger map" oben links
-            left: '-10px',
-            right: '0',
-            bottom: '-30px', // Versteckt Google Logo unten
-            width: 'calc(100% + 10px)'
-          }}
-        >
-          <iframe
-            width="100%"
-            height="100%"
-            frameBorder="0"
-            scrolling="no"
-            src={googleMapsEmbedUrl}
-            style={{ border: 0 }}
-            title={`Karte von ${displayLocation}`}
-            loading="lazy"
-            onLoad={() => setMapLoaded(true)}
-            allow="geolocation"
-            referrerPolicy="no-referrer-when-downgrade"
-          />
-        </div>
-
-        {/* Weißer Overlay oben links um Google UI zu verdecken */}
-        <div
-          className="pointer-events-none absolute bg-gradient-to-br from-white via-white to-transparent"
-          style={{
-            top: 0,
-            left: 0,
-            width: '180px',
-            height: '70px',
-          }}
+      {/* Map Container - Wie Ricardo: Sauber und einfach */}
+      <div className="relative w-full" style={{ height: '300px' }}>
+        {/* Google Maps Embed - Direkt eingebettet wie Ricardo */}
+        <iframe
+          width="100%"
+          height="100%"
+          frameBorder="0"
+          scrolling="no"
+          src={googleMapsEmbedUrl}
+          style={{ border: 0 }}
+          title={`Karte von ${displayLocation}`}
+          loading="lazy"
+          onLoad={() => setMapLoaded(true)}
+          allow="geolocation"
+          referrerPolicy="no-referrer-when-downgrade"
         />
 
         {/* Loading Placeholder */}
@@ -104,7 +79,7 @@ export function PickupMap({ city, postalCode }: PickupMapProps) {
           </div>
         )}
 
-        {/* WEGBESCHREIBUNG Button */}
+        {/* WEGBESCHREIBUNG Button - Wie Ricardo oben links */}
         <a
           href={googleMapsLink}
           target="_blank"
