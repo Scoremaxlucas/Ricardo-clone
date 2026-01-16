@@ -408,35 +408,48 @@ export default function ProfilePage() {
                   Klicken Sie auf das Kamera-Icon, um Ihr Profilbild zu ändern. Unterstützte Formate:
                   JPG, PNG, GIF (max. 5MB)
                 </p>
-                <div className="flex flex-wrap gap-2">
-                  {previewImage && (
+                <div className="flex flex-wrap items-center gap-3">
+                  {previewImage ? (
                     <>
                       <button
                         onClick={handleImageUpload}
                         disabled={isUploading}
-                        className="min-h-[44px] rounded-md bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                        className="min-h-[44px] rounded-lg px-5 py-2.5 text-sm font-semibold text-white transition-all hover:-translate-y-0.5 hover:shadow-lg disabled:translate-y-0 disabled:cursor-not-allowed disabled:opacity-50"
+                        style={{
+                          background: 'linear-gradient(135deg, #14b8a6 0%, #0d9488 100%)',
+                          boxShadow: '0px 4px 16px rgba(20, 184, 166, 0.25)',
+                        }}
                       >
-                        {isUploading ? 'Wird hochgeladen...' : 'Speichern'}
+                        {isUploading ? 'Wird hochgeladen...' : 'Bild speichern'}
                       </button>
                       <button
                         onClick={() => {
                           setPreviewImage(null)
                           fileInputRef.current!.value = ''
                         }}
-                        className="min-h-[44px] rounded-md bg-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-300"
+                        className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                       >
                         Abbrechen
                       </button>
                     </>
-                  )}
-                  {profileImage && !previewImage && (
-                    <button
-                      onClick={handleRemoveImage}
-                      className="flex min-h-[44px] items-center gap-1 rounded-md bg-red-100 px-4 py-2 text-sm font-medium text-red-700 transition-colors hover:bg-red-200"
-                    >
-                      <X className="h-4 w-4" />
-                      Entfernen
-                    </button>
+                  ) : (
+                    <>
+                      <button
+                        onClick={() => fileInputRef.current?.click()}
+                        className="min-h-[44px] rounded-lg border border-gray-300 bg-white px-4 py-2.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                      >
+                        <Camera className="mr-2 inline-block h-4 w-4" />
+                        Profilbild ändern
+                      </button>
+                      {profileImage && (
+                        <button
+                          onClick={handleRemoveImage}
+                          className="text-sm text-gray-500 transition-colors hover:text-red-600"
+                        >
+                          Bild entfernen
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>
