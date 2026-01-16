@@ -13,7 +13,6 @@ import {
   Filter,
   Flag,
   MapPin,
-  MessageCircle,
   Minus,
   Package,
   Search,
@@ -403,12 +402,6 @@ export default function PublicProfilePage() {
                     </>
                   ) : (session?.user as { id?: string })?.id ? (
                     <>
-                      <Link
-                        href={`/search?userId=${userId}`}
-                        className="inline-flex items-center justify-center rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow"
-                      >
-                        Nachricht senden
-                      </Link>
                       <button
                         onClick={handleFollow}
                         disabled={followLoading}
