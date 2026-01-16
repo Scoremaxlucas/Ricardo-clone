@@ -66,21 +66,21 @@ export default function ContactPage() {
     return (
       <div className="flex min-h-screen flex-col bg-gray-50">
         <Header />
-        <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12">
-          <div className="rounded-lg bg-white p-8 text-center shadow-md">
-            <CheckCircle className="mx-auto mb-4 h-16 w-16 text-green-600" />
-            <h2 className="mb-2 text-2xl font-bold text-gray-900">{t.contact.messageSent}</h2>
-            <p className="mb-6 text-gray-600">{t.contact.messageSentDesc}</p>
-            <div className="flex flex-wrap justify-center gap-4">
+        <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-8 sm:py-12">
+          <div className="rounded-lg bg-white p-4 text-center shadow-md sm:p-8">
+            <CheckCircle className="mx-auto mb-3 h-12 w-12 text-green-600 sm:mb-4 sm:h-16 sm:w-16" />
+            <h2 className="mb-2 text-xl font-bold text-gray-900 sm:text-2xl">{t.contact.messageSent}</h2>
+            <p className="mb-4 text-sm text-gray-600 sm:mb-6 sm:text-base">{t.contact.messageSentDesc}</p>
+            <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
               <Link
                 href="/"
-                className="rounded-lg bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
+                className="rounded-lg bg-primary-600 px-5 py-2.5 text-sm text-white transition-colors hover:bg-primary-700 sm:px-6 sm:py-3 sm:text-base"
               >
                 {t.contact.backToHome}
               </Link>
               <button
                 onClick={() => setSubmitted(false)}
-                className="rounded-lg border-2 border-primary-600 bg-white px-6 py-3 text-primary-600 transition-colors hover:bg-primary-50"
+                className="rounded-lg border-2 border-primary-600 bg-white px-5 py-2.5 text-sm text-primary-600 transition-colors hover:bg-primary-50 sm:px-6 sm:py-3 sm:text-base"
               >
                 {t.contact.sendAnother}
               </button>
@@ -95,86 +95,24 @@ export default function ContactPage() {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
-      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-12">
+      <main className="mx-auto w-full max-w-4xl flex-1 px-4 py-8 sm:py-12">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="mb-4 text-4xl font-bold text-gray-900">{t.contact.title}</h1>
-          <p className="text-lg text-gray-600">{t.contact.subtitle}</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:mb-4 sm:text-4xl">{t.contact.title}</h1>
+          <p className="text-sm text-gray-600 sm:text-lg">{t.contact.subtitle}</p>
         </div>
 
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-3">
-          {/* Contact Info */}
-          <div className="space-y-6 lg:col-span-1">
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-md">
-              <h2 className="mb-4 text-xl font-bold text-gray-900">{t.contact.contactMethods}</h2>
+        <div className="grid grid-cols-1 gap-6 sm:gap-8 lg:grid-cols-3">
+          {/* Contact Form - First on mobile */}
+          <div className="order-1 lg:order-2 lg:col-span-2">
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md sm:p-6 md:p-8">
+              <h2 className="mb-4 text-lg font-bold text-gray-900 sm:mb-6 sm:text-2xl">{t.contact.sendMessage}</h2>
 
-              <div className="space-y-4">
-                <div className="flex items-start gap-3">
-                  <Mail className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{t.contact.email}</h3>
-                    <p className="text-sm text-gray-600">{t.contact.emailAddress}</p>
-                    <p className="mt-1 text-xs text-gray-500">{t.contact.emailResponseTime}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <MessageCircle className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{t.contact.emmaAI}</h3>
-                    <p className="text-sm text-gray-600">{t.contact.emmaAIAvailable}</p>
-                    <p className="mt-1 text-xs text-gray-500">{t.contact.emmaAILocation}</p>
-                  </div>
-                </div>
-
-                <div className="flex items-start gap-3">
-                  <Phone className="mt-1 h-5 w-5 flex-shrink-0 text-primary-600" />
-                  <div>
-                    <h3 className="font-semibold text-gray-900">{t.contact.phone}</h3>
-                    <p className="text-sm text-gray-600">{t.contact.phoneComingSoon}</p>
-                    <p className="mt-1 text-xs text-gray-500">{t.contact.phoneWorkingOnIt}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
-              <div className="flex items-start gap-3">
-                <AlertCircle className="mt-1 h-5 w-5 flex-shrink-0 text-blue-600" />
-                <div>
-                  <h3 className="mb-2 font-semibold text-blue-900">{t.contact.note}</h3>
-                  <p className="text-sm text-blue-800">{t.contact.noteText}</p>
-                </div>
-              </div>
-            </div>
-
-            <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-md">
-              <h3 className="mb-3 font-semibold text-gray-900">{t.contact.moreHelp}</h3>
-              <ul className="space-y-2">
-                <li>
-                  <Link href="/help" className="text-sm text-primary-600 hover:text-primary-700">
-                    {t.contact.helpCenter}
-                  </Link>
-                </li>
-                <li>
-                  <Link href="/faq" className="text-sm text-primary-600 hover:text-primary-700">
-                    {t.contact.faq}
-                  </Link>
-                </li>
-              </ul>
-            </div>
-          </div>
-
-          {/* Contact Form */}
-          <div className="lg:col-span-2">
-            <div className="rounded-lg border border-gray-200 bg-white p-8 shadow-md">
-              <h2 className="mb-6 text-2xl font-bold text-gray-900">{t.contact.sendMessage}</h2>
-
-              <form onSubmit={handleSubmit} className="space-y-6">
+              <form onSubmit={handleSubmit} className="space-y-4 sm:space-y-6">
                 <div>
                   <label
                     htmlFor="category"
-                    className="mb-2 block text-sm font-medium text-gray-700"
+                    className="mb-1 block text-xs font-medium text-gray-700 sm:mb-2 sm:text-sm"
                   >
                     {t.contact.categoryRequired}
                   </label>
@@ -182,7 +120,7 @@ export default function ContactPage() {
                     id="category"
                     value={formData.category}
                     onChange={e => setFormData({ ...formData, category: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 sm:px-4 sm:text-base"
                     required
                   >
                     <option value="">{t.contact.pleaseSelect}</option>
@@ -195,7 +133,7 @@ export default function ContactPage() {
                 </div>
 
                 <div>
-                  <label htmlFor="email" className="mb-2 block text-sm font-medium text-gray-700">
+                  <label htmlFor="email" className="mb-1 block text-xs font-medium text-gray-700 sm:mb-2 sm:text-sm">
                     {t.contact.yourEmailRequired}
                   </label>
                   <input
@@ -203,14 +141,14 @@ export default function ContactPage() {
                     id="email"
                     value={formData.email}
                     onChange={e => setFormData({ ...formData, email: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 sm:px-4 sm:text-base"
                     placeholder={t.contact.emailPlaceholder}
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="subject" className="mb-2 block text-sm font-medium text-gray-700">
+                  <label htmlFor="subject" className="mb-1 block text-xs font-medium text-gray-700 sm:mb-2 sm:text-sm">
                     {t.contact.subjectRequired}
                   </label>
                   <input
@@ -218,30 +156,30 @@ export default function ContactPage() {
                     id="subject"
                     value={formData.subject}
                     onChange={e => setFormData({ ...formData, subject: e.target.value })}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 sm:px-4 sm:text-base"
                     placeholder={t.contact.subjectPlaceholder}
                     required
                   />
                 </div>
 
                 <div>
-                  <label htmlFor="message" className="mb-2 block text-sm font-medium text-gray-700">
+                  <label htmlFor="message" className="mb-1 block text-xs font-medium text-gray-700 sm:mb-2 sm:text-sm">
                     {t.contact.messageRequired}
                   </label>
                   <textarea
                     id="message"
                     value={formData.message}
                     onChange={e => setFormData({ ...formData, message: e.target.value })}
-                    rows={8}
-                    className="w-full rounded-lg border border-gray-300 px-4 py-2 focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
+                    rows={6}
+                    className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-primary-500 focus:ring-2 focus:ring-primary-500 sm:px-4 sm:text-base"
                     placeholder={t.contact.messagePlaceholder}
                     required
                   />
                 </div>
 
                 <div className="flex items-start gap-2">
-                  <input type="checkbox" id="privacy" className="mt-1" required />
-                  <label htmlFor="privacy" className="text-sm text-gray-600">
+                  <input type="checkbox" id="privacy" className="mt-0.5 sm:mt-1" required />
+                  <label htmlFor="privacy" className="text-xs text-gray-600 sm:text-sm">
                     {t.contact.privacyAgreement}
                   </label>
                 </div>
@@ -249,21 +187,83 @@ export default function ContactPage() {
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:px-6 sm:py-3 sm:text-base"
                 >
                   {submitting ? (
                     <>
-                      <div className="h-5 w-5 animate-spin rounded-full border-b-2 border-white"></div>
+                      <div className="h-4 w-4 animate-spin rounded-full border-b-2 border-white sm:h-5 sm:w-5"></div>
                       {t.contact.sending}
                     </>
                   ) : (
                     <>
-                      <Send className="h-5 w-5" />
+                      <Send className="h-4 w-4 sm:h-5 sm:w-5" />
                       {t.contact.send}
                     </>
                   )}
                 </button>
               </form>
+            </div>
+          </div>
+
+          {/* Contact Info - Second on mobile */}
+          <div className="order-2 space-y-4 sm:space-y-6 lg:order-1 lg:col-span-1">
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md sm:p-6">
+              <h2 className="mb-3 text-base font-bold text-gray-900 sm:mb-4 sm:text-xl">{t.contact.contactMethods}</h2>
+
+              <div className="space-y-3 sm:space-y-4">
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <Mail className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600 sm:mt-1 sm:h-5 sm:w-5" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 sm:text-base">{t.contact.email}</h3>
+                    <p className="text-xs text-gray-600 sm:text-sm">{t.contact.emailAddress}</p>
+                    <p className="mt-0.5 text-xs text-gray-500 sm:mt-1">{t.contact.emailResponseTime}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <MessageCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600 sm:mt-1 sm:h-5 sm:w-5" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 sm:text-base">{t.contact.emmaAI}</h3>
+                    <p className="text-xs text-gray-600 sm:text-sm">{t.contact.emmaAIAvailable}</p>
+                    <p className="mt-0.5 text-xs text-gray-500 sm:mt-1">{t.contact.emmaAILocation}</p>
+                  </div>
+                </div>
+
+                <div className="flex items-start gap-2 sm:gap-3">
+                  <Phone className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600 sm:mt-1 sm:h-5 sm:w-5" />
+                  <div>
+                    <h3 className="text-sm font-semibold text-gray-900 sm:text-base">{t.contact.phone}</h3>
+                    <p className="text-xs text-gray-600 sm:text-sm">{t.contact.phoneComingSoon}</p>
+                    <p className="mt-0.5 text-xs text-gray-500 sm:mt-1">{t.contact.phoneWorkingOnIt}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 sm:p-6">
+              <div className="flex items-start gap-2 sm:gap-3">
+                <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-blue-600 sm:mt-1 sm:h-5 sm:w-5" />
+                <div>
+                  <h3 className="mb-1 text-sm font-semibold text-blue-900 sm:mb-2 sm:text-base">{t.contact.note}</h3>
+                  <p className="text-xs text-blue-800 sm:text-sm">{t.contact.noteText}</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md sm:p-6">
+              <h3 className="mb-2 text-sm font-semibold text-gray-900 sm:mb-3 sm:text-base">{t.contact.moreHelp}</h3>
+              <ul className="space-y-1 sm:space-y-2">
+                <li>
+                  <Link href="/help" className="text-xs text-primary-600 hover:text-primary-700 sm:text-sm">
+                    {t.contact.helpCenter}
+                  </Link>
+                </li>
+                <li>
+                  <Link href="/faq" className="text-xs text-primary-600 hover:text-primary-700 sm:text-sm">
+                    {t.contact.faq}
+                  </Link>
+                </li>
+              </ul>
             </div>
           </div>
         </div>

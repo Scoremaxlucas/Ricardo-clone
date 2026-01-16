@@ -129,61 +129,61 @@ export default function HelpPage() {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-12">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:py-12">
         {/* Header */}
-        <div className="mb-8">
-          <h1 className="mb-4 text-4xl font-bold text-gray-900">{t.help.title}</h1>
-          <p className="text-lg text-gray-600">{t.help.subtitle}</p>
+        <div className="mb-6 sm:mb-8">
+          <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:mb-4 sm:text-4xl">{t.help.title}</h1>
+          <p className="text-sm text-gray-600 sm:text-lg">{t.help.subtitle}</p>
         </div>
 
         {/* Search Bar */}
-        <div className="mb-8">
+        <div className="mb-6 sm:mb-8">
           <div className="relative">
-            <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 transform text-gray-400 sm:left-4 sm:h-5 sm:w-5" />
             <input
               type="text"
               placeholder={t.help.searchPlaceholder}
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 py-4 pl-12 pr-4 text-lg focus:border-primary-500 focus:ring-2 focus:ring-primary-500"
+              className="w-full rounded-lg border border-gray-300 py-3 pl-10 pr-4 text-base focus:border-primary-500 focus:ring-2 focus:ring-primary-500 sm:py-4 sm:pl-12 sm:text-lg"
             />
           </div>
         </div>
 
         {/* Quick Actions */}
-        <div className="mb-12 grid grid-cols-1 gap-4 md:grid-cols-3">
+        <div className="mb-8 grid grid-cols-1 gap-3 sm:mb-12 sm:gap-4 md:grid-cols-3">
           <Link
             href="/faq"
-            className="rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
+            className="rounded-lg border border-gray-200 bg-white p-4 shadow-md transition-shadow hover:shadow-lg sm:p-6"
           >
-            <div className="mb-2 flex items-center gap-3">
-              <HelpCircle className="h-6 w-6 text-primary-600" />
-              <h3 className="text-lg font-semibold text-gray-900">{t.help.faq}</h3>
+            <div className="mb-1 flex items-center gap-2 sm:mb-2 sm:gap-3">
+              <HelpCircle className="h-5 w-5 text-primary-600 sm:h-6 sm:w-6" />
+              <h3 className="text-base font-semibold text-gray-900 sm:text-lg">{t.help.faq}</h3>
             </div>
-            <p className="text-sm text-gray-600">{t.help.faqDesc}</p>
+            <p className="text-xs text-gray-600 sm:text-sm">{t.help.faqDesc}</p>
           </Link>
           <Link
             href="/contact"
-            className="rounded-lg border border-gray-200 bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
+            className="rounded-lg border border-gray-200 bg-white p-4 shadow-md transition-shadow hover:shadow-lg sm:p-6"
           >
-            <div className="mb-2 flex items-center gap-3">
-              <MessageCircle className="h-6 w-6 text-primary-600" />
-              <h3 className="text-lg font-semibold text-gray-900">{t.help.contact}</h3>
+            <div className="mb-1 flex items-center gap-2 sm:mb-2 sm:gap-3">
+              <MessageCircle className="h-5 w-5 text-primary-600 sm:h-6 sm:w-6" />
+              <h3 className="text-base font-semibold text-gray-900 sm:text-lg">{t.help.contact}</h3>
             </div>
-            <p className="text-sm text-gray-600">{t.help.contactDesc}</p>
+            <p className="text-xs text-gray-600 sm:text-sm">{t.help.contactDesc}</p>
           </Link>
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-md">
-            <div className="mb-2 flex items-center gap-3">
-              <MessageCircle className="h-6 w-6 text-primary-600" />
-              <h3 className="text-lg font-semibold text-gray-900">{t.help.emmaAI}</h3>
+          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-md sm:p-6">
+            <div className="mb-1 flex items-center gap-2 sm:mb-2 sm:gap-3">
+              <MessageCircle className="h-5 w-5 text-primary-600 sm:h-6 sm:w-6" />
+              <h3 className="text-base font-semibold text-gray-900 sm:text-lg">{t.help.emmaAI}</h3>
             </div>
-            <p className="text-sm text-gray-600">{t.help.emmaAIDesc}</p>
-            <p className="mt-2 text-xs text-gray-500">{t.help.emmaAvailable}</p>
+            <p className="text-xs text-gray-600 sm:text-sm">{t.help.emmaAIDesc}</p>
+            <p className="mt-1 text-xs text-gray-500 sm:mt-2">{t.help.emmaAvailable}</p>
           </div>
         </div>
 
         {/* Categories */}
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {filteredCategories.map(category => {
             const Icon = category.icon
             return (
@@ -191,16 +191,16 @@ export default function HelpPage() {
                 key={category.id}
                 className="rounded-lg border border-gray-200 bg-white shadow-md"
               >
-                <div className="p-6">
-                  <div className="mb-4 flex items-center gap-4">
-                    <div className={`rounded-lg p-3 ${category.color}`}>
-                      <Icon className="h-6 w-6" />
+                <div className="p-4 sm:p-6">
+                  <div className="mb-3 flex items-center gap-3 sm:mb-4 sm:gap-4">
+                    <div className={`rounded-lg p-2 sm:p-3 ${category.color}`}>
+                      <Icon className="h-5 w-5 sm:h-6 sm:w-6" />
                     </div>
-                    <h2 className="text-2xl font-bold text-gray-900">
+                    <h2 className="text-lg font-bold text-gray-900 sm:text-2xl">
                       {t.help[category.titleKey as keyof typeof t.help]}
                     </h2>
                   </div>
-                  <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
+                  <div className="grid grid-cols-1 gap-2 sm:gap-3 md:grid-cols-2">
                     {category.articles.map(article => {
                       const articleData =
                         t.helpArticles[article.slug as keyof typeof t.helpArticles]
@@ -208,12 +208,12 @@ export default function HelpPage() {
                         <Link
                           key={article.id}
                           href={`/help/${article.slug}`}
-                          className="flex items-center justify-between rounded-lg border border-gray-100 p-4 transition-colors hover:bg-gray-50"
+                          className="flex items-center justify-between rounded-lg border border-gray-100 p-3 transition-colors hover:bg-gray-50 sm:p-4"
                         >
-                          <span className="font-medium text-gray-700">
+                          <span className="text-sm font-medium text-gray-700 sm:text-base">
                             {articleData?.title || article.slug}
                           </span>
-                          <ChevronRight className="h-5 w-5 text-gray-400" />
+                          <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400 sm:h-5 sm:w-5" />
                         </Link>
                       )
                     })}
@@ -226,13 +226,13 @@ export default function HelpPage() {
 
         {/* No Results */}
         {filteredCategories.length === 0 && (
-          <div className="py-12 text-center">
-            <BookOpen className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-            <h3 className="mb-2 text-xl font-semibold text-gray-900">{t.help.noResults}</h3>
-            <p className="mb-6 text-gray-600">{t.help.noResultsDesc}</p>
+          <div className="py-8 text-center sm:py-12">
+            <BookOpen className="mx-auto mb-3 h-12 w-12 text-gray-400 sm:mb-4 sm:h-16 sm:w-16" />
+            <h3 className="mb-2 text-lg font-semibold text-gray-900 sm:text-xl">{t.help.noResults}</h3>
+            <p className="mb-4 text-sm text-gray-600 sm:mb-6 sm:text-base">{t.help.noResultsDesc}</p>
             <Link
               href="/contact"
-              className="inline-block rounded-lg bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
+              className="inline-block rounded-lg bg-primary-600 px-5 py-2.5 text-sm text-white transition-colors hover:bg-primary-700 sm:px-6 sm:py-3 sm:text-base"
             >
               {t.help.contactUs}
             </Link>
@@ -240,19 +240,19 @@ export default function HelpPage() {
         )}
 
         {/* Contact CTA */}
-        <div className="mt-12 rounded-lg border border-primary-200 bg-primary-50 p-8 text-center">
-          <h3 className="mb-2 text-2xl font-bold text-gray-900">{t.help.stillQuestions}</h3>
-          <p className="mb-6 text-gray-600">{t.help.stillQuestionsDesc}</p>
-          <div className="flex flex-wrap justify-center gap-4">
+        <div className="mt-8 rounded-lg border border-primary-200 bg-primary-50 p-4 text-center sm:mt-12 sm:p-8">
+          <h3 className="mb-2 text-lg font-bold text-gray-900 sm:text-2xl">{t.help.stillQuestions}</h3>
+          <p className="mb-4 text-sm text-gray-600 sm:mb-6 sm:text-base">{t.help.stillQuestionsDesc}</p>
+          <div className="flex flex-col justify-center gap-3 sm:flex-row sm:gap-4">
             <Link
               href="/contact"
-              className="rounded-lg bg-primary-600 px-6 py-3 font-medium text-white transition-colors hover:bg-primary-700"
+              className="rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white transition-colors hover:bg-primary-700 sm:px-6 sm:py-3 sm:text-base"
             >
               {t.help.contactForm}
             </Link>
             <Link
               href="/faq"
-              className="rounded-lg border-2 border-primary-600 bg-white px-6 py-3 font-medium text-primary-600 transition-colors hover:bg-primary-50"
+              className="rounded-lg border-2 border-primary-600 bg-white px-5 py-2.5 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 sm:px-6 sm:py-3 sm:text-base"
             >
               {t.help.viewFAQ}
             </Link>
