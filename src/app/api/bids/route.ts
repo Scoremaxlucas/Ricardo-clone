@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { broadcastBidEvent, broadcastAuctionUpdate } from '@/lib/realtime-broadcast'
+import { shouldSendNotification } from '@/lib/notification-preferences'
 
 // Neues Gebot erstellen
 export async function POST(request: NextRequest) {
@@ -284,31 +285,36 @@ export async function POST(request: NextRequest) {
         // Fehler wird geloggt, aber Purchase bleibt bestehen
       }
 
-      // Sende E-Mail-Benachrichtigung an Verkäufer
+      // Sende E-Mail-Benachrichtigung an Verkäufer (wenn aktiviert)
       try {
-        const { sendEmail, getSaleNotificationEmail } = await import('@/lib/email')
-        const seller = purchase.watch.seller
-        const buyer = purchase.buyer
-        const sellerName = seller.nickname || seller.firstName || seller.name || 'Verkäufer'
-        const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
+        const shouldSendSale = await shouldSendNotification(purchase.watch.sellerId, 'emailOnSaleCompleted')
+        if (shouldSendSale) {
+          const { sendEmail, getSaleNotificationEmail } = await import('@/lib/email')
+          const seller = purchase.watch.seller
+          const buyer = purchase.buyer
+          const sellerName = seller.nickname || seller.firstName || seller.name || 'Verkäufer'
+          const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
 
-        const { subject, html, text } = getSaleNotificationEmail(
-          sellerName,
-          buyerName,
-          purchase.watch.title,
-          watch.buyNowPrice || watch.price,
-          'buy-now',
-          watchId
-        )
+          const { subject, html, text } = getSaleNotificationEmail(
+            sellerName,
+            buyerName,
+            purchase.watch.title,
+            watch.buyNowPrice || watch.price,
+            'buy-now',
+            watchId
+          )
 
-        await sendEmail({
-          to: seller.email,
-          subject,
-          html,
-          text,
-        })
+          await sendEmail({
+            to: seller.email,
+            subject,
+            html,
+            text,
+          })
 
-        console.log(`[bids] Verkaufs-E-Mail gesendet an ${seller.email}`)
+          console.log(`[bids] ✅ Verkaufs-E-Mail gesendet an ${seller.email}`)
+        } else {
+          console.log(`[bids] ⏭️ Verkaufs-E-Mail übersprungen (Präferenz deaktiviert)`)
+        }
       } catch (emailError: any) {
         console.error('Fehler beim Senden der Verkaufs-E-Mail:', emailError)
         // E-Mail-Fehler sollte den Kauf nicht verhindern
@@ -338,64 +344,69 @@ export async function POST(request: NextRequest) {
         // Fehler sollte den Kauf nicht verhindern
       }
 
-      // Sende Bestätigungs-E-Mail an Käufer
+      // Sende Bestätigungs-E-Mail an Käufer (wenn aktiviert)
       try {
-        const { sendEmail, getPurchaseConfirmationEmail } = await import('@/lib/email')
-        const { getShippingCost } = await import('@/lib/shipping')
-        const seller = purchase.watch.seller
-        const buyer = purchase.buyer
-        const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
-        const sellerName =
-          seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
+        const shouldSendPurchase = await shouldSendNotification(session.user.id, 'emailOnPurchase')
+        if (shouldSendPurchase) {
+          const { sendEmail, getPurchaseConfirmationEmail } = await import('@/lib/email')
+          const { getShippingCost } = await import('@/lib/shipping')
+          const seller = purchase.watch.seller
+          const buyer = purchase.buyer
+          const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
+          const sellerName =
+            seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
 
-        // Berechne Versandkosten
-        const shippingMethod = watch.shippingMethod
-        let shippingMethods: any = null
-        try {
-          if (shippingMethod) {
-            shippingMethods =
-              typeof shippingMethod === 'string' ? JSON.parse(shippingMethod) : shippingMethod
+          // Berechne Versandkosten
+          const shippingMethod = watch.shippingMethod
+          let shippingMethods: any = null
+          try {
+            if (shippingMethod) {
+              shippingMethods =
+                typeof shippingMethod === 'string' ? JSON.parse(shippingMethod) : shippingMethod
+            }
+          } catch {
+            shippingMethods = null
           }
-        } catch {
-          shippingMethods = null
-        }
-        const shippingCost = getShippingCost(shippingMethods)
+          const shippingCost = getShippingCost(shippingMethods)
 
-        // Generiere automatische Zahlungsinformationen SOFORT nach Kauf
-        let paymentInfo = null
-        try {
-          const { generatePaymentInfo } = await import('@/lib/payment-info')
-          paymentInfo = await generatePaymentInfo(purchase.id)
-          console.log(`[bids] ✅ Zahlungsinformationen generiert für Purchase ${purchase.id}`)
-        } catch (paymentInfoError: any) {
-          console.warn(
-            '[bids] ⚠️  Konnte Zahlungsinformationen nicht generieren:',
-            paymentInfoError.message
+          // Generiere automatische Zahlungsinformationen SOFORT nach Kauf
+          let paymentInfo = null
+          try {
+            const { generatePaymentInfo } = await import('@/lib/payment-info')
+            paymentInfo = await generatePaymentInfo(purchase.id)
+            console.log(`[bids] ✅ Zahlungsinformationen generiert für Purchase ${purchase.id}`)
+          } catch (paymentInfoError: any) {
+            console.warn(
+              '[bids] ⚠️  Konnte Zahlungsinformationen nicht generieren:',
+              paymentInfoError.message
+            )
+          }
+
+          const { subject, html, text } = getPurchaseConfirmationEmail(
+            buyerName,
+            sellerName,
+            watch.title,
+            watch.buyNowPrice || watch.price,
+            shippingCost,
+            'buy-now',
+            purchase.id,
+            watchId,
+            paymentInfo // Zahlungsinformationen übergeben
           )
+
+          await sendEmail({
+            to: buyer.email,
+            subject,
+            html,
+            text,
+          })
+
+          console.log(
+            `[bids] ✅ Kaufbestätigungs-E-Mail mit Zahlungsinformationen gesendet an Käufer ${buyer.email}`
+          )
+        } else {
+          console.log(`[bids] ⏭️ Kaufbestätigungs-E-Mail übersprungen (Präferenz deaktiviert)`)
         }
-
-        const { subject, html, text } = getPurchaseConfirmationEmail(
-          buyerName,
-          sellerName,
-          watch.title,
-          watch.buyNowPrice || watch.price,
-          shippingCost,
-          'buy-now',
-          purchase.id,
-          watchId,
-          paymentInfo // Zahlungsinformationen übergeben
-        )
-
-        await sendEmail({
-          to: buyer.email,
-          subject,
-          html,
-          text,
-        })
-
-        console.log(
-          `[bids] ✅ Kaufbestätigungs-E-Mail mit Zahlungsinformationen gesendet an Käufer ${buyer.email}`
-        )
       } catch (emailError: any) {
         console.error('[bids] ❌ Fehler beim Senden der Kaufbestätigungs-E-Mail:', emailError)
         // E-Mail-Fehler sollte den Kauf nicht verhindern
@@ -609,64 +620,74 @@ export async function POST(request: NextRequest) {
       console.error('[bids] ❌ Fehler beim Senden der Gebotsbestätigungs-E-Mail:', emailError)
     }
 
-    // E-Mail: Gebotsbenachrichtigung an Verkäufer
+    // E-Mail: Gebotsbenachrichtigung an Verkäufer (wenn aktiviert)
     try {
-      const { sendEmail, getBidNotificationEmail } = await import('@/lib/email')
-      const sellerName =
-        watch.seller.nickname || watch.seller.name || 'Verkäufer'
-      const bidderName =
-        bid.user.nickname || bid.user.name || bid.user.email || 'Ein Bieter'
-      const { subject, html, text } = getBidNotificationEmail(
-        sellerName,
-        watch.title,
-        finalAmount,
-        bidderName,
-        watchId
-      )
-      await sendEmail({
-        to: watch.seller.email,
-        subject,
-        html,
-        text,
-      })
-      console.log(
-        `[bids] ✅ Gebotsbenachrichtigungs-E-Mail gesendet an Verkäufer ${watch.seller.email}`
-      )
+      const shouldSendBid = await shouldSendNotification(watch.sellerId, 'emailOnNewBid')
+      if (shouldSendBid) {
+        const { sendEmail, getBidNotificationEmail } = await import('@/lib/email')
+        const sellerName =
+          watch.seller.nickname || watch.seller.name || 'Verkäufer'
+        const bidderName =
+          bid.user.nickname || bid.user.name || bid.user.email || 'Ein Bieter'
+        const { subject, html, text } = getBidNotificationEmail(
+          sellerName,
+          watch.title,
+          finalAmount,
+          bidderName,
+          watchId
+        )
+        await sendEmail({
+          to: watch.seller.email,
+          subject,
+          html,
+          text,
+        })
+        console.log(
+          `[bids] ✅ Gebotsbenachrichtigungs-E-Mail gesendet an Verkäufer ${watch.seller.email}`
+        )
+      } else {
+        console.log(`[bids] ⏭️ Gebotsbenachrichtigung übersprungen (Präferenz deaktiviert)`)
+      }
     } catch (emailError: any) {
       console.error('[bids] ❌ Fehler beim Senden der Gebotsbenachrichtigungs-E-Mail:', emailError)
     }
 
-    // E-Mail: Überboten-Benachrichtigung an vorherigen Höchstbietenden (wenn vorhanden)
+    // E-Mail: Überboten-Benachrichtigung an vorherigen Höchstbietenden (wenn vorhanden und aktiviert)
     if (highestBid && highestBid.userId !== session.user.id) {
       try {
-        const { sendEmail, getOutbidNotificationEmail } = await import('@/lib/email')
-        const previousBidder = await prisma.user.findUnique({
-          where: { id: highestBid.userId },
-          select: {
-            email: true,
-            name: true,
-            nickname: true,
-            firstName: true,
-          },
-        })
-        if (previousBidder && previousBidder.email) {
-          const previousBidderName =
-            previousBidder.nickname || previousBidder.firstName || previousBidder.name || 'Käufer'
-          const { subject, html, text } = getOutbidNotificationEmail(
-            previousBidderName,
-            watch.title,
-            finalAmount, // Neues Höchstgebot
-            watchId
-          )
-          await sendEmail({
-            to: previousBidder.email,
-            subject,
-            html,
-            text,
+        const shouldSendOutbid = await shouldSendNotification(highestBid.userId, 'emailOnOutbid')
+        if (shouldSendOutbid) {
+          const { sendEmail, getOutbidNotificationEmail } = await import('@/lib/email')
+          const previousBidder = await prisma.user.findUnique({
+            where: { id: highestBid.userId },
+            select: {
+              email: true,
+              name: true,
+              nickname: true,
+              firstName: true,
+            },
           })
-          console.log(
-            `[bids] ✅ Überboten-Benachrichtigungs-E-Mail gesendet an ${previousBidder.email}`
-          )
+          if (previousBidder && previousBidder.email) {
+            const previousBidderName =
+              previousBidder.nickname || previousBidder.firstName || previousBidder.name || 'Käufer'
+            const { subject, html, text } = getOutbidNotificationEmail(
+              previousBidderName,
+              watch.title,
+              finalAmount, // Neues Höchstgebot
+              watchId
+            )
+            await sendEmail({
+              to: previousBidder.email,
+              subject,
+              html,
+              text,
+            })
+            console.log(
+              `[bids] ✅ Überboten-Benachrichtigungs-E-Mail gesendet an ${previousBidder.email}`
+            )
+          }
+        } else {
+          console.log(`[bids] ⏭️ Überboten-Benachrichtigung übersprungen (Präferenz deaktiviert)`)
         }
       } catch (emailError: any) {
         console.error(

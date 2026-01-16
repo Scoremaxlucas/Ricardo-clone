@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { shouldSendNotification } from '@/lib/notification-preferences'
 
 // POST - Neuen Preisvorschlag erstellen
 export async function POST(request: NextRequest) {
@@ -199,36 +200,41 @@ export async function POST(request: NextRequest) {
       },
     })
 
-    // E-Mail: Preisvorschlag erhalten an Verkäufer
+    // E-Mail: Preisvorschlag erhalten an Verkäufer (wenn aktiviert)
     try {
-      const { sendEmail, getPriceOfferReceivedEmail } = await import('@/lib/email')
-      const sellerName =
-        priceOffer.watch.seller.nickname ||
-        priceOffer.watch.seller.firstName ||
-        priceOffer.watch.seller.name ||
-        'Verkäufer'
-      const buyerName =
-        priceOffer.buyer.nickname ||
-        priceOffer.buyer.firstName ||
-        priceOffer.buyer.name ||
-        priceOffer.buyer.email ||
-        'Ein Käufer'
-      const { subject, html, text } = getPriceOfferReceivedEmail(
-        sellerName,
-        priceOffer.watch.title,
-        amountFloat,
-        buyerName,
-        watchId
-      )
-      await sendEmail({
-        to: priceOffer.watch.seller.email,
-        subject,
-        html,
-        text,
-      })
-      console.log(
-        `[offers] ✅ Preisvorschlag-Erhalten-E-Mail gesendet an Verkäufer ${priceOffer.watch.seller.email}`
-      )
+      const shouldSendOffer = await shouldSendNotification(watch.sellerId, 'emailOnNewOffer')
+      if (shouldSendOffer) {
+        const { sendEmail, getPriceOfferReceivedEmail } = await import('@/lib/email')
+        const sellerName =
+          priceOffer.watch.seller.nickname ||
+          priceOffer.watch.seller.firstName ||
+          priceOffer.watch.seller.name ||
+          'Verkäufer'
+        const buyerName =
+          priceOffer.buyer.nickname ||
+          priceOffer.buyer.firstName ||
+          priceOffer.buyer.name ||
+          priceOffer.buyer.email ||
+          'Ein Käufer'
+        const { subject, html, text } = getPriceOfferReceivedEmail(
+          sellerName,
+          priceOffer.watch.title,
+          amountFloat,
+          buyerName,
+          watchId
+        )
+        await sendEmail({
+          to: priceOffer.watch.seller.email,
+          subject,
+          html,
+          text,
+        })
+        console.log(
+          `[offers] ✅ Preisvorschlag-Erhalten-E-Mail gesendet an Verkäufer ${priceOffer.watch.seller.email}`
+        )
+      } else {
+        console.log(`[offers] ⏭️ Preisvorschlag-E-Mail übersprungen (Präferenz deaktiviert)`)
+      }
     } catch (emailError: any) {
       console.error(
         '[offers] ❌ Fehler beim Senden der Preisvorschlag-Erhalten-E-Mail:',

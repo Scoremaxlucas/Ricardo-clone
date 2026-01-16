@@ -1,4 +1,5 @@
 import { getAuctionEndingSoonEmail, sendEmail } from '@/lib/email'
+import { shouldSendNotification } from '@/lib/notification-preferences'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -120,6 +121,15 @@ export async function GET(request: NextRequest) {
         const userName = bidder.firstName || bidder.nickname || 'Bieter'
 
         try {
+          // Prüfe Benachrichtigungs-Präferenzen
+          const shouldSend = await shouldSendNotification(bidder.id, 'emailOnAuctionEnding')
+          if (!shouldSend) {
+            console.log(
+              `[cron/auction-reminders] ⏭️ 24h reminder skipped for ${bidder.email} (preference disabled)`
+            )
+            continue
+          }
+
           const { subject, html, text } = getAuctionEndingSoonEmail(
             userName,
             auction.title,
@@ -139,11 +149,11 @@ export async function GET(request: NextRequest) {
 
           emailsSent24h++
           console.log(
-            `[cron/auction-reminders] 24h reminder sent to ${bidder.email} for ${auction.title}`
+            `[cron/auction-reminders] ✅ 24h reminder sent to ${bidder.email} for ${auction.title}`
           )
         } catch (error: any) {
           console.error(
-            `[cron/auction-reminders] Failed to send 24h reminder to ${bidder.email}:`,
+            `[cron/auction-reminders] ❌ Failed to send 24h reminder to ${bidder.email}:`,
             error.message
           )
           errors.push(`24h reminder to ${bidder.email}: ${error.message}`)
@@ -183,6 +193,15 @@ export async function GET(request: NextRequest) {
         const userName = bidder.firstName || bidder.nickname || 'Bieter'
 
         try {
+          // Prüfe Benachrichtigungs-Präferenzen
+          const shouldSend = await shouldSendNotification(bidder.id, 'emailOnAuctionEnding')
+          if (!shouldSend) {
+            console.log(
+              `[cron/auction-reminders] ⏭️ 1h reminder skipped for ${bidder.email} (preference disabled)`
+            )
+            continue
+          }
+
           const { subject, html, text } = getAuctionEndingSoonEmail(
             userName,
             auction.title,
@@ -202,11 +221,11 @@ export async function GET(request: NextRequest) {
 
           emailsSent1h++
           console.log(
-            `[cron/auction-reminders] 1h reminder sent to ${bidder.email} for ${auction.title}`
+            `[cron/auction-reminders] ✅ 1h reminder sent to ${bidder.email} for ${auction.title}`
           )
         } catch (error: any) {
           console.error(
-            `[cron/auction-reminders] Failed to send 1h reminder to ${bidder.email}:`,
+            `[cron/auction-reminders] ❌ Failed to send 1h reminder to ${bidder.email}:`,
             error.message
           )
           errors.push(`1h reminder to ${bidder.email}: ${error.message}`)

@@ -3,6 +3,8 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { addStatusHistory } from '@/lib/status-history'
+import { shouldSendNotification } from '@/lib/notification-preferences'
+import { sendEmail, getShippingNotificationEmail } from '@/lib/email'
 
 /**
  * POST: Versand-Informationen hinzufügen/aktualisieren
@@ -120,6 +122,35 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       })
     } catch (error) {
       console.error('[shipping] Fehler beim Erstellen der Benachrichtigung:', error)
+    }
+
+    // E-Mail an Käufer senden (wenn aktiviert)
+    try {
+      const shouldSend = await shouldSendNotification(purchase.buyerId, 'emailOnShipping')
+      if (shouldSend && updatedPurchase.buyer.email) {
+        const buyerName = updatedPurchase.buyer.name || 'Kunde'
+        
+        const { subject, html, text } = getShippingNotificationEmail(
+          buyerName,
+          updatedPurchase.watch.title,
+          trackingNumber,
+          trackingProvider,
+          purchase.watchId
+        )
+        
+        await sendEmail({
+          to: updatedPurchase.buyer.email,
+          subject,
+          html,
+          text,
+        })
+        
+        console.log(`[shipping] ✅ Versand-E-Mail an ${updatedPurchase.buyer.email} gesendet`)
+      } else {
+        console.log(`[shipping] ⏭️ Versand-E-Mail übersprungen (Präferenz deaktiviert)`)
+      }
+    } catch (error) {
+      console.error('[shipping] ❌ Fehler beim Senden der Versand-E-Mail:', error)
     }
 
     console.log(`[shipping] Versand-Informationen für Purchase ${id} hinzugefügt`)

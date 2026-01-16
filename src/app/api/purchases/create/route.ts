@@ -1,6 +1,7 @@
 import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { calculateInvoiceForSale } from '@/lib/invoice'
+import { shouldSendNotification } from '@/lib/notification-preferences'
 import { prisma } from '@/lib/prisma'
 import { updateSoldLast24h } from '@/lib/product-stats'
 import { getShippingCostForMethod } from '@/lib/shipping'
@@ -213,93 +214,98 @@ export async function POST(request: NextRequest) {
       // Käufer muss Verkäufer kontaktieren, um Zahlungsdetails zu erhalten
     }
 
-    // Sende Bestätigungs-E-Mail an Käufer mit Zahlungsinformationen
+    // Sende Bestätigungs-E-Mail an Käufer mit Zahlungsinformationen (wenn aktiviert)
     try {
-      const { sendEmail, getPurchaseConfirmationEmail } = await import('@/lib/email')
-      const buyer = purchase.buyer
-      const seller = purchase.watch.seller
-      const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
-      const sellerName =
-        seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
+      const shouldSendPurchase = await shouldSendNotification(session.user.id, 'emailOnPurchase')
+      if (shouldSendPurchase) {
+        const { sendEmail, getPurchaseConfirmationEmail } = await import('@/lib/email')
+        const buyer = purchase.buyer
+        const seller = purchase.watch.seller
+        const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
+        const sellerName =
+          seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
 
-      // Berechne Versandkosten basierend auf gewählter Methode
-      const rawShippingMethod = purchase.shippingMethod || watch.shippingMethod
-      let shippingCost = 0
-      if (rawShippingMethod) {
-        try {
-          // shippingMethod kann jetzt ein einzelner String sein (gewählte Methode) oder ein Array (Legacy)
-          let method: string | null = null
-          if (typeof rawShippingMethod === 'string') {
-            // Prüfe ob es ein JSON-Array ist oder ein einzelner String
-            try {
-              const parsed = JSON.parse(rawShippingMethod)
-              if (Array.isArray(parsed) && parsed.length > 0) {
-                method = parsed[0] // Legacy: Nimm erste Methode
-              } else {
-                method = rawShippingMethod // Einzelner String
+        // Berechne Versandkosten basierend auf gewählter Methode
+        const rawShippingMethod = purchase.shippingMethod || watch.shippingMethod
+        let shippingCost = 0
+        if (rawShippingMethod) {
+          try {
+            // shippingMethod kann jetzt ein einzelner String sein (gewählte Methode) oder ein Array (Legacy)
+            let method: string | null = null
+            if (typeof rawShippingMethod === 'string') {
+              // Prüfe ob es ein JSON-Array ist oder ein einzelner String
+              try {
+                const parsed = JSON.parse(rawShippingMethod)
+                if (Array.isArray(parsed) && parsed.length > 0) {
+                  method = parsed[0] // Legacy: Nimm erste Methode
+                } else {
+                  method = rawShippingMethod // Einzelner String
+                }
+              } catch {
+                // Kein JSON, also einzelner String
+                method = rawShippingMethod
               }
-            } catch {
-              // Kein JSON, also einzelner String
-              method = rawShippingMethod
             }
-          }
 
-          if (method) {
-            shippingCost = getShippingCostForMethod(method as any)
+            if (method) {
+              shippingCost = getShippingCostForMethod(method as any)
+            }
+          } catch (error) {
+            console.error('[purchases/create] Fehler beim Berechnen der Versandkosten:', error)
           }
-        } catch (error) {
-          console.error('[purchases/create] Fehler beim Berechnen der Versandkosten:', error)
         }
+
+        // Get product image and seller rating
+        let imageUrl: string | undefined
+        try {
+          const images = watch.images ? JSON.parse(watch.images) : []
+          imageUrl = Array.isArray(images) && images.length > 0 ? images[0] : undefined
+        } catch {
+          imageUrl = undefined
+        }
+
+        const sellerReviews = await prisma.review.findMany({
+          where: { reviewedUserId: watch.sellerId },
+          select: { rating: true },
+        })
+        const sellerRating =
+          sellerReviews.length > 0
+            ? sellerReviews.reduce(
+                (sum: number, r: { rating: string }) =>
+                  sum + (r.rating === 'positive' ? 5 : r.rating === 'neutral' ? 3 : 1),
+                0
+              ) / sellerReviews.length
+            : undefined
+        const sellerReviewCount = sellerReviews.length
+
+        const { subject, html, text } = getPurchaseConfirmationEmail(
+          buyerName,
+          sellerName,
+          watch.title,
+          purchase.price || watch.price,
+          shippingCost,
+          watch.isAuction ? 'auction' : 'buy-now',
+          purchase.id,
+          watchId,
+          paymentInfo, // Zahlungsinformationen übergeben
+          imageUrl,
+          sellerRating,
+          sellerReviewCount
+        )
+
+        await sendEmail({
+          to: buyer.email,
+          subject,
+          html,
+          text,
+        })
+
+        console.log(
+          `[purchases/create] ✅ Kaufbestätigungs-E-Mail mit Zahlungsinformationen gesendet an Käufer ${buyer.email}`
+        )
+      } else {
+        console.log(`[purchases/create] ⏭️ Kaufbestätigungs-E-Mail übersprungen (Präferenz deaktiviert)`)
       }
-
-      // Get product image and seller rating
-      let imageUrl: string | undefined
-      try {
-        const images = watch.images ? JSON.parse(watch.images) : []
-        imageUrl = Array.isArray(images) && images.length > 0 ? images[0] : undefined
-      } catch {
-        imageUrl = undefined
-      }
-
-      const sellerReviews = await prisma.review.findMany({
-        where: { reviewedUserId: watch.sellerId },
-        select: { rating: true },
-      })
-      const sellerRating =
-        sellerReviews.length > 0
-          ? sellerReviews.reduce(
-              (sum: number, r: { rating: string }) =>
-                sum + (r.rating === 'positive' ? 5 : r.rating === 'neutral' ? 3 : 1),
-              0
-            ) / sellerReviews.length
-          : undefined
-      const sellerReviewCount = sellerReviews.length
-
-      const { subject, html, text } = getPurchaseConfirmationEmail(
-        buyerName,
-        sellerName,
-        watch.title,
-        purchase.price || watch.price,
-        shippingCost,
-        watch.isAuction ? 'auction' : 'buy-now',
-        purchase.id,
-        watchId,
-        paymentInfo, // Zahlungsinformationen übergeben
-        imageUrl,
-        sellerRating,
-        sellerReviewCount
-      )
-
-      await sendEmail({
-        to: buyer.email,
-        subject,
-        html,
-        text,
-      })
-
-      console.log(
-        `[purchases/create] ✅ Kaufbestätigungs-E-Mail mit Zahlungsinformationen gesendet an Käufer ${buyer.email}`
-      )
     } catch (emailError: any) {
       console.error(
         '[purchases/create] ❌ Fehler beim Senden der Kaufbestätigungs-E-Mail:',

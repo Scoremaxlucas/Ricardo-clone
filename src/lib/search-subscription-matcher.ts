@@ -1,4 +1,5 @@
 import { getSearchMatchFoundEmail, sendEmail, getEmailBaseUrl } from './email'
+import { shouldSendNotification } from './notification-preferences'
 import { prisma } from './prisma'
 
 interface WatchData {
@@ -60,24 +61,31 @@ export async function checkSearchSubscriptions(watch: WatchData) {
       const user = subscription.user
       const watchUrl = `${getEmailBaseUrl()}/products/${watch.id}`
 
-      // E-Mail senden
+      // E-Mail senden (wenn aktiviert)
       try {
-        const { subject, html, text } = getSearchMatchFoundEmail(
-          user.name || 'Lieber Nutzer',
-          watch.title,
-          watch.price,
-          watchUrl,
-          subscription
-        )
+        const shouldSend = await shouldSendNotification(user.id, 'emailOnSearchMatch')
+        if (shouldSend) {
+          const { subject, html, text } = getSearchMatchFoundEmail(
+            user.name || 'Lieber Nutzer',
+            watch.title,
+            watch.price,
+            watchUrl,
+            subscription
+          )
 
-        await sendEmail({
-          to: user.email,
-          subject,
-          html,
-          text,
-        })
+          await sendEmail({
+            to: user.email,
+            subject,
+            html,
+            text,
+          })
+          console.log(`[search-subscription] ✅ Suchabo-E-Mail an ${user.email} gesendet`)
+        } else {
+          console.log(`[search-subscription] ⏭️ Suchabo-E-Mail übersprungen (Präferenz deaktiviert)`)
+        }
       } catch (error) {
         // Silent fail - E-Mail-Fehler sollten nicht die Hauptfunktionalität blockieren
+        console.error(`[search-subscription] ❌ E-Mail-Fehler:`, error)
       }
 
       // In-App-Benachrichtigung erstellen

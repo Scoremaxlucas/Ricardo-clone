@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { sendEmail, getAnswerNotificationEmail } from '@/lib/email'
+import { shouldSendNotification } from '@/lib/notification-preferences'
 
 // Nachrichten für ein Angebot abrufen
 export async function GET(request: NextRequest) {
@@ -238,33 +239,40 @@ export async function POST(request: NextRequest) {
     // E-Mail-Benachrichtigung senden, wenn der Verkäufer auf eine Frage antwortet
     if (session.user.id === watch.sellerId && receiverId !== watch.sellerId) {
       try {
-        // Hole Empfänger-Details
-        const receiver = await prisma.user.findUnique({
-          where: { id: receiverId },
-          select: { name: true, email: true, firstName: true },
-        })
-
-        if (receiver && receiver.email) {
-          const buyerName = receiver.firstName || receiver.name || 'Kunde'
-          const sellerName = session.user.name || 'Verkäufer'
-
-          const emailContent = getAnswerNotificationEmail(
-            buyerName,
-            sellerName,
-            watch.title,
-            content,
-            watchId,
-            isPublic
-          )
-
-          await sendEmail({
-            to: receiver.email,
-            subject: emailContent.subject,
-            html: emailContent.html,
-            text: emailContent.text,
+        // Prüfe Benachrichtigungs-Präferenzen
+        const shouldSend = await shouldSendNotification(receiverId, 'emailOnNewMessage')
+        
+        if (shouldSend) {
+          // Hole Empfänger-Details
+          const receiver = await prisma.user.findUnique({
+            where: { id: receiverId },
+            select: { name: true, email: true, firstName: true },
           })
 
-          console.log(`E-Mail-Benachrichtigung an ${receiver.email} gesendet`)
+          if (receiver && receiver.email) {
+            const buyerName = receiver.firstName || receiver.name || 'Kunde'
+            const sellerName = session.user.name || 'Verkäufer'
+
+            const emailContent = getAnswerNotificationEmail(
+              buyerName,
+              sellerName,
+              watch.title,
+              content,
+              watchId,
+              isPublic
+            )
+
+            await sendEmail({
+              to: receiver.email,
+              subject: emailContent.subject,
+              html: emailContent.html,
+              text: emailContent.text,
+            })
+
+            console.log(`[messages] ✅ E-Mail-Benachrichtigung an ${receiver.email} gesendet`)
+          }
+        } else {
+          console.log(`[messages] ⏭️ E-Mail übersprungen (Präferenz deaktiviert) für User ${receiverId}`)
         }
       } catch (error) {
         // E-Mail-Fehler sollten nicht die Nachricht-Erstellung verhindern
