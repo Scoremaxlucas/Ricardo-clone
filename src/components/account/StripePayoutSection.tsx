@@ -7,7 +7,6 @@ import {
   Clock,
   Loader2,
   RefreshCw,
-  Shield,
 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -165,265 +164,102 @@ export function StripePayoutSection() {
 
   const currentStatus = status?.status || 'NOT_STARTED'
   const hasPendingPayouts = (pendingPayouts?.count || 0) > 0
-  const hasActionRequired =
-    (status?.requirements?.currently_due?.length || 0) > 0 ||
-    (status?.requirements?.past_due?.length || 0) > 0
-
-  // Get status display info
-  const getStatusInfo = () => {
-    switch (currentStatus) {
-      case 'VERIFIED':
-        return {
-          icon: <CheckCircle2 className="h-5 w-5 text-green-600" />,
-          label: 'Verifiziert',
-          labelClass: 'bg-green-100 text-green-700',
-          title: 'Auszahlungen aktiv',
-          description:
-            'Ihre Auszahlungsdaten sind verifiziert. Erlöse werden nach Freigabe automatisch überwiesen.',
-        }
-      case 'IN_PROGRESS':
-        return {
-          icon: <Clock className="h-5 w-5 text-blue-500" />,
-          label: 'In Prüfung',
-          labelClass: 'bg-blue-100 text-blue-700',
-          title: 'Verifizierung läuft',
-          description:
-            'Ihre Angaben werden geprüft. Dies kann einige Minuten bis Tage dauern.',
-        }
-      case 'ACTION_REQUIRED':
-        return {
-          icon: <AlertCircle className="h-5 w-5 text-amber-500" />,
-          label: 'Aktion erforderlich',
-          labelClass: 'bg-amber-100 text-amber-700',
-          title: 'Angaben erforderlich',
-          description:
-            'Bitte vervollständigen Sie Ihre Angaben, um Auszahlungen zu aktivieren.',
-        }
-      default:
-        return {
-          icon: <Banknote className="h-5 w-5 text-gray-400" />,
-          label: 'Nicht eingerichtet',
-          labelClass: 'bg-gray-100 text-gray-600',
-          title: 'Auszahlung nicht eingerichtet',
-          description:
-            'Richten Sie Auszahlungen ein, um Verkaufserlöse aus Zahlungsschutz-Verkäufen zu erhalten.',
-        }
-    }
-  }
-
-  const statusInfo = getStatusInfo()
-
-  // Get CTA button info
-  const getCtaInfo = () => {
-    switch (currentStatus) {
-      case 'VERIFIED':
-        return {
-          text: 'Auszahlungsdaten verwalten',
-          variant: 'secondary' as const,
-        }
-      case 'ACTION_REQUIRED':
-        return {
-          text: 'Weiter einrichten',
-          variant: 'primary' as const,
-        }
-      case 'IN_PROGRESS':
-        return {
-          text: 'Status ansehen',
-          variant: 'secondary' as const,
-        }
-      default:
-        return {
-          text: 'Jetzt einrichten',
-          variant: 'primary' as const,
-        }
-    }
-  }
-
-  const ctaInfo = getCtaInfo()
 
   return (
     <>
       <div id="stripe-payout-section" className="border-t border-gray-200 pt-6">
-        {/* Header */}
-        <div className="mb-4 flex items-start justify-between">
-          <div>
-            <h3 className="mb-1 flex items-center text-lg font-semibold text-gray-900">
-              <Shield className="mr-2 h-5 w-5 text-primary-600" />
-              Auszahlungen (Zahlungsschutz)
-            </h3>
-            <p className="text-xs text-gray-500">
-              Verkaufserlöse aus Zahlungsschutz-Transaktionen • Abwicklung über Stripe
-            </p>
-          </div>
+        {/* Compact Header */}
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="flex items-center text-sm font-medium text-gray-900">
+            <Banknote className="mr-2 h-4 w-4 text-gray-500" />
+            Auszahlungen
+          </h3>
           <button
             type="button"
             onClick={() => loadStatus()}
             disabled={loading}
-            className="rounded-md p-1.5 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
-            title="Status aktualisieren"
+            className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+            title="Aktualisieren"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
           </button>
         </div>
 
-        {/* Status Card */}
-        <div className="mb-4 rounded-lg border border-gray-200 bg-white p-4">
-          <div className="flex items-start gap-3">
-            <div className="mt-0.5">{statusInfo.icon}</div>
-            <div className="flex-1">
-              <div className="mb-1 flex items-center gap-2">
-                <span className="font-medium text-gray-900">{statusInfo.title}</span>
-                <span
-                  className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusInfo.labelClass}`}
-                >
-                  {statusInfo.label}
-                </span>
-              </div>
-              <p className="text-sm text-gray-600">{statusInfo.description}</p>
-            </div>
+        {/* Compact Status Display */}
+        <div className="mb-3 flex items-center justify-between rounded-lg border border-gray-200 bg-gray-50 px-3 py-2.5">
+          <div className="flex items-center gap-2">
+            {currentStatus === 'VERIFIED' ? (
+              <>
+                <CheckCircle2 className="h-4 w-4 text-green-600" />
+                <span className="text-sm text-gray-700">Aktiv</span>
+              </>
+            ) : currentStatus === 'IN_PROGRESS' ? (
+              <>
+                <Clock className="h-4 w-4 text-blue-500" />
+                <span className="text-sm text-gray-700">Wird geprüft</span>
+              </>
+            ) : currentStatus === 'ACTION_REQUIRED' ? (
+              <>
+                <AlertCircle className="h-4 w-4 text-amber-500" />
+                <span className="text-sm text-gray-700">Einrichtung fortsetzen</span>
+              </>
+            ) : (
+              <>
+                <div className="h-4 w-4 rounded-full border-2 border-gray-300" />
+                <span className="text-sm text-gray-500">Nicht eingerichtet</span>
+              </>
+            )}
           </div>
+          
+          <button
+            type="button"
+            onClick={handleOpenOnboarding}
+            className={`rounded px-3 py-1.5 text-xs font-medium transition-colors ${
+              currentStatus === 'NOT_STARTED' || currentStatus === 'ACTION_REQUIRED'
+                ? 'bg-gray-900 text-white hover:bg-gray-800'
+                : 'border border-gray-300 bg-white text-gray-600 hover:bg-gray-50'
+            }`}
+          >
+            {currentStatus === 'VERIFIED'
+              ? 'Verwalten'
+              : currentStatus === 'IN_PROGRESS'
+                ? 'Ansehen'
+                : currentStatus === 'ACTION_REQUIRED'
+                  ? 'Fortsetzen'
+                  : 'Einrichten'}
+          </button>
         </div>
 
-        {/* Pending Payouts Alert */}
+        {/* Pending Payouts - Only show when relevant */}
         {hasPendingPayouts && (
-          <div className="mb-4 rounded-lg border border-amber-200 bg-amber-50 p-4">
-            <div className="flex items-start gap-3">
-              <AlertCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-amber-600" />
-              <div className="flex-1">
-                <p className="font-medium text-amber-800">
-                  {pendingPayouts!.count} Auszahlung{pendingPayouts!.count > 1 ? 'en' : ''}{' '}
-                  ausstehend
-                </p>
-                <p className="mt-1 text-sm text-amber-700">
-                  Gesamtbetrag: CHF {pendingPayouts!.totalAmount.toFixed(2)}
-                </p>
-                {currentStatus !== 'VERIFIED' && (
-                  <p className="mt-1 text-sm text-amber-600">
-                    Bitte richten Sie Ihre Auszahlungsdaten ein, um diese Beträge zu erhalten.
-                  </p>
-                )}
+          <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2.5">
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <AlertCircle className="h-4 w-4 text-amber-600" />
+                <span className="text-sm text-amber-800">
+                  CHF {pendingPayouts!.totalAmount.toFixed(2)} ausstehend
+                </span>
               </div>
-            </div>
-
-            {currentStatus === 'VERIFIED' && (
-              <div className="mt-3">
+              {currentStatus === 'VERIFIED' && (
                 <button
                   type="button"
                   onClick={handleProcessPendingPayouts}
                   disabled={processingPayouts}
-                  className="inline-flex items-center gap-2 rounded-md bg-amber-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-amber-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="rounded bg-amber-600 px-3 py-1 text-xs font-medium text-white hover:bg-amber-700 disabled:opacity-50"
                 >
-                  {processingPayouts ? (
-                    <>
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Wird verarbeitet...
-                    </>
-                  ) : (
-                    <>
-                      <Banknote className="h-4 w-4" />
-                      Auszahlungen verarbeiten
-                    </>
-                  )}
+                  {processingPayouts ? 'Läuft...' : 'Auszahlen'}
                 </button>
-              </div>
-            )}
+              )}
+            </div>
           </div>
         )}
 
-        {/* CTA Button */}
-        <div className="space-y-3">
-          <button
-            type="button"
-            onClick={handleOpenOnboarding}
-            className={`inline-flex w-full items-center justify-center gap-2 rounded-md px-4 py-2.5 text-sm font-medium transition-colors focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 sm:w-auto ${
-              ctaInfo.variant === 'primary'
-                ? 'bg-primary-600 text-white hover:bg-primary-700'
-                : 'border border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
-            }`}
-          >
-            <Shield className="h-4 w-4" />
-            {ctaInfo.text}
-          </button>
-
-          {/* Requirements Progress (for action required or in progress) */}
-          {(currentStatus === 'ACTION_REQUIRED' || currentStatus === 'IN_PROGRESS') && (
-            <div
-              className={`rounded-lg border p-3 ${
-                currentStatus === 'ACTION_REQUIRED'
-                  ? 'border-amber-200 bg-amber-50'
-                  : 'border-blue-200 bg-blue-50'
-              }`}
-            >
-              <div className="mb-2 flex items-center justify-between text-sm">
-                <span
-                  className={
-                    currentStatus === 'ACTION_REQUIRED' ? 'text-amber-700' : 'text-blue-700'
-                  }
-                >
-                  Einrichtungs-Fortschritt
-                </span>
-                <span
-                  className={`font-medium ${
-                    currentStatus === 'ACTION_REQUIRED' ? 'text-amber-800' : 'text-blue-800'
-                  }`}
-                >
-                  {currentStatus === 'IN_PROGRESS' ? 'Wird geprüft' : 'Angaben erforderlich'}
-                </span>
-              </div>
-              <div
-                className={`h-2 w-full overflow-hidden rounded-full ${
-                  currentStatus === 'ACTION_REQUIRED' ? 'bg-amber-200' : 'bg-blue-200'
-                }`}
-              >
-                <div
-                  className={`h-full transition-all duration-300 ${
-                    currentStatus === 'ACTION_REQUIRED' ? 'bg-amber-500' : 'bg-blue-500'
-                  }`}
-                  style={{
-                    width:
-                      currentStatus === 'IN_PROGRESS'
-                        ? '80%'
-                        : hasActionRequired
-                          ? '30%'
-                          : '50%',
-                  }}
-                />
-              </div>
-              {status?.requirements?.currently_due &&
-                status.requirements.currently_due.length > 0 && (
-                  <p
-                    className={`mt-2 text-xs ${
-                      currentStatus === 'ACTION_REQUIRED' ? 'text-amber-600' : 'text-blue-600'
-                    }`}
-                  >
-                    {status.requirements.currently_due.length} Angabe(n) noch erforderlich
-                  </p>
-                )}
-              {status?.requirements?.pending_verification &&
-                status.requirements.pending_verification.length > 0 && (
-                  <p className="mt-2 text-xs text-blue-600">
-                    {status.requirements.pending_verification.length} Prüfung(en) ausstehend
-                  </p>
-                )}
-            </div>
-          )}
-
-          {/* Info Box */}
-          <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
-            <div className="flex items-start gap-2">
-              <Shield className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-600" />
-              <div>
-                <p className="text-xs font-medium text-gray-700">
-                  Was ist der Helvenda Zahlungsschutz?
-                </p>
-                <p className="mt-1 text-xs text-gray-500">
-                  Beim Zahlungsschutz werden Zahlungen sicher gehalten, bis der Käufer den Erhalt
-                  bestätigt. Dann wird das Geld automatisch an Sie überwiesen.
-                </p>
-              </div>
-            </div>
-          </div>
-        </div>
+        {/* Subtle hint - only for NOT_STARTED */}
+        {currentStatus === 'NOT_STARTED' && !hasPendingPayouts && (
+          <p className="text-xs text-gray-400">
+            Nur nötig bei Verkäufen mit Zahlungsschutz
+          </p>
+        )}
       </div>
 
       {/* Onboarding Modal */}

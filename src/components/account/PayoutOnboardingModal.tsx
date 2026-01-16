@@ -2,7 +2,7 @@
 
 import { loadConnectAndInitialize } from '@stripe/connect-js'
 import { ConnectAccountOnboarding, ConnectComponentsProvider } from '@stripe/react-connect-js'
-import { ExternalLink, Loader2, Lock, X } from 'lucide-react'
+import { Clock, ExternalLink, Loader2, Lock, Shield, X } from 'lucide-react'
 import { useCallback, useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
 
@@ -15,8 +15,10 @@ interface PayoutOnboardingModalProps {
 type ConnectInstance = Awaited<ReturnType<typeof loadConnectAndInitialize>>
 
 /**
- * Cleaner modal for Stripe Connect embedded onboarding
- * Minimalist design - direct to Stripe without unnecessary info boxes
+ * Clean, user-friendly modal for Stripe Connect embedded onboarding
+ * - Friendly intro before Stripe iframe
+ * - Auto-redirect on fallback
+ * - Mobile-optimized
  */
 export function PayoutOnboardingModal({
   open,
@@ -27,6 +29,7 @@ export function PayoutOnboardingModal({
   const [loading, setLoading] = useState(true)
   const [fallbackMode, setFallbackMode] = useState(false)
   const [fallbackLoading, setFallbackLoading] = useState(false)
+  const [showStripeForm, setShowStripeForm] = useState(false)
 
   // Fetch client secret for embedded onboarding
   const fetchClientSecret = useCallback(async (): Promise<string> => {
@@ -51,6 +54,7 @@ export function PayoutOnboardingModal({
       setStripeConnectInstance(null)
       setLoading(true)
       setFallbackMode(false)
+      setShowStripeForm(false)
       return
     }
 
@@ -69,7 +73,7 @@ export function PayoutOnboardingModal({
           appearance: {
             overlays: 'dialog',
             variables: {
-              colorPrimary: '#008080',
+              colorPrimary: '#0d9488',
               colorBackground: '#ffffff',
               fontFamily: 'system-ui, -apple-system, sans-serif',
               borderRadius: '8px',
@@ -82,8 +86,13 @@ export function PayoutOnboardingModal({
         setLoading(false)
       } catch (err: any) {
         console.error('[PayoutOnboardingModal] Initialization error:', err)
+        // Auto-redirect on fallback after short delay
         setFallbackMode(true)
         setLoading(false)
+        // Automatically trigger redirect after 2 seconds
+        setTimeout(() => {
+          handleFallbackRedirect()
+        }, 2000)
       }
     }
 
@@ -103,7 +112,7 @@ export function PayoutOnboardingModal({
     onClose()
 
     // Show toast
-    toast.success('Status wird aktualisiert...', { duration: 2000 })
+    toast.success('Einrichtung abgeschlossen!', { duration: 3000 })
   }, [onClose, onStatusChange])
 
   // Fallback: Use redirect flow
@@ -126,7 +135,7 @@ export function PayoutOnboardingModal({
       }
     } catch (err: any) {
       console.error('[PayoutOnboardingModal] Fallback error:', err)
-      toast.error('Fehler beim Öffnen der Einrichtung')
+      toast.error('Fehler beim Öffnen. Bitte versuchen Sie es erneut.')
       setFallbackLoading(false)
     }
   }, [])
@@ -169,13 +178,13 @@ export function PayoutOnboardingModal({
 
   return (
     <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4"
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-2 sm:p-4"
       onClick={handleBackdropClick}
     >
-      <div className="relative mx-auto flex w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl">
+      <div className="relative mx-auto flex w-full max-w-2xl flex-col overflow-hidden rounded-xl bg-white shadow-2xl max-h-[95vh] sm:max-h-[90vh]">
         {/* Minimal Header */}
-        <div className="flex shrink-0 items-center justify-between border-b border-gray-100 bg-white px-6 py-4">
-          <h2 className="text-lg font-semibold text-gray-900">Auszahlung einrichten</h2>
+        <div className="flex shrink-0 items-center justify-between border-b border-gray-100 bg-white px-4 py-3 sm:px-6 sm:py-4">
+          <h2 className="text-base font-semibold text-gray-900 sm:text-lg">Auszahlung einrichten</h2>
           <button
             type="button"
             onClick={onClose}
@@ -187,60 +196,87 @@ export function PayoutOnboardingModal({
           </button>
         </div>
 
-        {/* Content - Allow scrolling to see full Stripe footer */}
-        <div className="flex max-h-[80vh] min-h-0 flex-1 flex-col overflow-y-auto bg-white">
+        {/* Content - Mobile-optimized scrolling */}
+        <div className="flex min-h-0 flex-1 flex-col overflow-y-auto bg-white">
           {/* Loading State */}
           {loading && (
-            <div className="flex flex-col items-center justify-center py-20">
-              <Loader2 className="mb-4 h-8 w-8 animate-spin text-primary-600" />
-              <p className="text-sm text-gray-500">Stripe wird geladen...</p>
+            <div className="flex flex-col items-center justify-center py-16 sm:py-20">
+              <Loader2 className="mb-4 h-7 w-7 animate-spin text-primary-600 sm:h-8 sm:w-8" />
+              <p className="text-sm text-gray-500">Wird vorbereitet...</p>
             </div>
           )}
 
-          {/* Fallback Mode - Clean & Simple */}
+          {/* Fallback Mode - Auto-redirecting */}
           {fallbackMode && !loading && (
-            <div className="p-8 text-center">
-              <div className="mx-auto mb-6 flex h-16 w-16 items-center justify-center rounded-full bg-primary-50">
-                <Lock className="h-8 w-8 text-primary-600" />
+            <div className="p-6 text-center sm:p-8">
+              <Loader2 className="mx-auto mb-4 h-8 w-8 animate-spin text-primary-600" />
+              <p className="text-sm text-gray-600">
+                Sie werden weitergeleitet...
+              </p>
+              <p className="mt-2 text-xs text-gray-400">
+                Falls nichts passiert:{' '}
+                <button
+                  type="button"
+                  onClick={handleFallbackRedirect}
+                  disabled={fallbackLoading}
+                  className="text-primary-600 underline hover:text-primary-700"
+                >
+                  Manuell öffnen
+                </button>
+              </p>
+            </div>
+          )}
+
+          {/* Intro Screen - Before showing Stripe */}
+          {stripeConnectInstance && !loading && !fallbackMode && !showStripeForm && (
+            <div className="p-6 sm:p-8">
+              {/* Friendly intro */}
+              <div className="mb-6 text-center">
+                <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-primary-50 sm:h-16 sm:w-16">
+                  <Shield className="h-7 w-7 text-primary-600 sm:h-8 sm:w-8" />
+                </div>
+                <h3 className="mb-2 text-lg font-medium text-gray-900">
+                  Bankkonto verbinden
+                </h3>
+                <p className="mx-auto max-w-sm text-sm text-gray-500">
+                  Damit Sie Verkaufserlöse erhalten können, verbinden Sie einmalig Ihr Bankkonto.
+                </p>
               </div>
 
-              <h3 className="mb-2 text-lg font-medium text-gray-900">Bankkonto verbinden</h3>
-              <p className="mx-auto mb-6 max-w-sm text-sm text-gray-500">
-                Verbinden Sie Ihr Bankkonto sicher über Stripe, um Auszahlungen zu erhalten.
-              </p>
+              {/* Info points */}
+              <div className="mb-6 space-y-3">
+                <div className="flex items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
+                  <Lock className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                  <span className="text-sm text-gray-600">Sichere Übertragung via Stripe</span>
+                </div>
+                <div className="flex items-center gap-3 rounded-lg bg-gray-50 px-4 py-3">
+                  <Clock className="h-4 w-4 flex-shrink-0 text-gray-400" />
+                  <span className="text-sm text-gray-600">Dauert ca. 2-3 Minuten</span>
+                </div>
+              </div>
 
+              {/* CTA */}
               <button
                 type="button"
-                onClick={handleFallbackRedirect}
-                disabled={fallbackLoading}
-                className="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                onClick={() => setShowStripeForm(true)}
+                className="w-full rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white transition-colors hover:bg-primary-700"
               >
-                {fallbackLoading ? (
-                  <>
-                    <Loader2 className="h-4 w-4 animate-spin" />
-                    Wird geöffnet...
-                  </>
-                ) : (
-                  <>
-                    <ExternalLink className="h-4 w-4" />
-                    Mit Stripe verbinden
-                  </>
-                )}
+                Weiter zur Einrichtung
               </button>
 
-              <p className="mt-4 text-xs text-gray-400">
-                Sie werden nach Abschluss automatisch zurückgeleitet
+              <p className="mt-4 text-center text-xs text-gray-400">
+                Einmalige Einrichtung • Danach automatische Auszahlungen
               </p>
             </div>
           )}
 
-          {/* Embedded Onboarding - Direct, no info boxes, fills remaining space */}
-          {stripeConnectInstance && !loading && !fallbackMode && (
+          {/* Embedded Onboarding - Stripe Form */}
+          {stripeConnectInstance && !loading && !fallbackMode && showStripeForm && (
             <>
               <style
                 dangerouslySetInnerHTML={{
                   __html: `
-                /* Ensure Stripe Connect content is fully visible - no clipping */
+                /* Ensure Stripe Connect content is fully visible */
                 [class*="ConnectAccountOnboarding"] {
                   display: block !important;
                   min-height: auto !important;
@@ -248,15 +284,13 @@ export function PayoutOnboardingModal({
                   margin: 0 !important;
                   padding: 0 !important;
                 }
-                /* Ensure iframe allows full content to be visible */
                 [class*="ConnectAccountOnboarding"] iframe {
                   display: block !important;
                   border: none !important;
                   margin: 0 !important;
                   padding: 0 !important;
-                  min-height: 500px !important;
+                  min-height: 450px !important;
                 }
-                /* Ensure wrapper allows scrolling */
                 [class*="ConnectComponentsProvider"] {
                   display: block !important;
                   height: auto !important;
@@ -267,7 +301,7 @@ export function PayoutOnboardingModal({
               `,
                 }}
               />
-              <div className="flex min-h-[500px] flex-col">
+              <div className="flex min-h-[450px] flex-col">
                 <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
                   <ConnectAccountOnboarding onExit={handleOnboardingExit} />
                 </ConnectComponentsProvider>
