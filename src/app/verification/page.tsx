@@ -618,17 +618,8 @@ export default function VerificationPage() {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
-      <div className="mx-auto max-w-4xl px-4 py-12">
-        <div className="mb-6">
-          <Link
-            href="/"
-            className="inline-flex items-center font-medium text-primary-600 hover:text-primary-700"
-          >
-            ← Zurück zur Hauptseite
-          </Link>
-        </div>
-
-        <div className="rounded-lg bg-white p-8 shadow-md">
+      <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
+        <div className="rounded-lg bg-white p-6 shadow-md sm:p-8">
           <div className="mb-6">
             <h1 className="mb-2 text-3xl font-bold text-gray-900">Verifizierung</h1>
             <p className="text-gray-600">

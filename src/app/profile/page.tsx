@@ -1,7 +1,9 @@
 'use client'
 
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
 import { Card } from '@/components/ui/Card'
-import { Camera, CheckCircle, Lock, X } from 'lucide-react'
+import { Camera, CheckCircle, Lock } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -310,7 +312,13 @@ export default function ProfilePage() {
   }
 
   if (status === 'loading') {
-    return <div className="flex min-h-screen items-center justify-center">Lädt...</div>
+    return (
+      <>
+        <Header />
+        <div className="flex min-h-screen items-center justify-center">Lädt...</div>
+        <Footer />
+      </>
+    )
   }
 
   if (!session) {
@@ -319,18 +327,13 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-6 sm:py-12">
-      <div className="mx-auto max-w-4xl px-4 sm:px-6">
-        {/* Back Link */}
-        <div className="mb-4 text-sm text-gray-600">
-          <Link href="/" className="text-primary-600 hover:text-primary-700">
-            ← Zurück zur Hauptseite
-          </Link>
-        </div>
-
-        {/* Page Header */}
-        <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
-          <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Mein Profil</h1>
+    <>
+      <Header />
+      <main className="min-h-screen bg-gray-50 py-6 sm:py-8">
+        <div className="mx-auto max-w-4xl px-4 sm:px-6">
+          {/* Page Header */}
+          <div className="mb-6 flex flex-col gap-4 sm:mb-8 sm:flex-row sm:items-center sm:justify-between">
+            <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Mein Profil</h1>
           {isVerified === true && (
             <div className="flex items-center rounded-lg border border-green-300 bg-green-100 px-3 py-2 sm:px-4">
               <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
@@ -627,6 +630,8 @@ export default function ProfilePage() {
           </Card>
         </div>
       </div>
-    </div>
+      </main>
+      <Footer />
+    </>
   )
 }

@@ -1,16 +1,17 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import Link from 'next/link'
+import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
 import {
   CheckCircle,
   AlertTriangle,
   XCircle,
   Clock,
   RefreshCw,
-  ArrowLeft,
   Wrench,
 } from 'lucide-react'
+import Link from 'next/link'
+import { useState, useEffect } from 'react'
 
 interface OutageData {
   id: string
@@ -134,30 +135,29 @@ export default function StatusPage() {
 
   if (loading && !data) {
     return (
-      <div className="min-h-screen bg-gray-50 py-12">
-        <div className="mx-auto max-w-3xl px-4">
-          <div className="flex items-center justify-center py-20">
-            <RefreshCw className="h-8 w-8 animate-spin text-primary-600" />
+      <>
+        <Header />
+        <div className="min-h-screen bg-gray-50 py-12">
+          <div className="mx-auto max-w-3xl px-4">
+            <div className="flex items-center justify-center py-20">
+              <RefreshCw className="h-8 w-8 animate-spin text-primary-600" />
+            </div>
           </div>
         </div>
-      </div>
+        <Footer />
+      </>
     )
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
-      <div className="mx-auto max-w-3xl px-4">
-        {/* Header */}
-        <div className="mb-8">
-          <Link
-            href="/"
-            className="mb-4 inline-flex items-center gap-1 text-sm text-gray-600 hover:text-gray-900"
-          >
-            <ArrowLeft className="h-4 w-4" />
-            Zurück zur Startseite
-          </Link>
-          <div className="flex items-center justify-between">
-            <h1 className="text-2xl font-bold text-gray-900">Systemstatus</h1>
+    <>
+      <Header />
+      <main className="min-h-screen bg-gray-50 py-6 sm:py-8">
+        <div className="mx-auto max-w-3xl px-4">
+          {/* Page Title */}
+          <div className="mb-8">
+            <div className="flex items-center justify-between">
+              <h1 className="text-2xl font-bold text-gray-900">Systemstatus</h1>
             <button
               onClick={fetchStatus}
               disabled={loading}
@@ -341,7 +341,9 @@ export default function StatusPage() {
             </div>
           </>
         )}
-      </div>
-    </div>
+        </div>
+      </main>
+      <Footer />
+    </>
   )
 }
