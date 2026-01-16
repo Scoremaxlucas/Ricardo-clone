@@ -1,13 +1,11 @@
 'use client'
 
 import { useLanguage } from '@/contexts/LanguageContext'
-import { ChevronDown, Filter, Grid3x3, List, X } from 'lucide-react'
+import { ChevronDown, Filter, X } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useMemo } from 'react'
 
 interface MobileSearchControlsProps {
-  viewMode: 'grid' | 'list'
-  onViewModeChange: (mode: 'grid' | 'list') => void
   onFilterOpen: () => void
   onSortOpen: () => void
   resultsCount: number
@@ -15,8 +13,6 @@ interface MobileSearchControlsProps {
 }
 
 export function MobileSearchControls({
-  viewMode,
-  onViewModeChange,
   onFilterOpen,
   onSortOpen,
   resultsCount,
@@ -127,36 +123,6 @@ export function MobileSearchControls({
           <span className="truncate">{sortLabel}</span>
           <ChevronDown className="h-4 w-4 flex-shrink-0" />
         </button>
-
-        {/* View toggle */}
-        <div className="flex h-11 items-center rounded-lg border border-gray-300 bg-white p-1">
-          <button
-            type="button"
-            onClick={() => onViewModeChange('grid')}
-            className={`flex h-9 w-9 items-center justify-center rounded transition-colors ${
-              viewMode === 'grid'
-                ? 'bg-primary-100 text-primary-600'
-                : 'text-gray-400 hover:bg-gray-100'
-            }`}
-            aria-label="Rasteransicht"
-            aria-pressed={viewMode === 'grid'}
-          >
-            <Grid3x3 className="h-4 w-4" />
-          </button>
-          <button
-            type="button"
-            onClick={() => onViewModeChange('list')}
-            className={`flex h-9 w-9 items-center justify-center rounded transition-colors ${
-              viewMode === 'list'
-                ? 'bg-primary-100 text-primary-600'
-                : 'text-gray-400 hover:bg-gray-100'
-            }`}
-            aria-label="Listenansicht"
-            aria-pressed={viewMode === 'list'}
-          >
-            <List className="h-4 w-4" />
-          </button>
-        </div>
       </div>
     </div>
   )

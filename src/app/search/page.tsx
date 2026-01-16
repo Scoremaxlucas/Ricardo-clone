@@ -12,7 +12,7 @@ import { ProductCard } from '@/components/ui/ProductCard'
 
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
-import { ChevronDown, Filter, Grid3x3, List, Loader2, Package, Search, X } from 'lucide-react'
+import { ChevronDown, Filter, Loader2, Package, Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
@@ -41,7 +41,6 @@ function SearchPageContent() {
   const { t, translateSubcategory } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [watches, setWatches] = useState<WatchItem[]>([])
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [openFilter, setOpenFilter] = useState<string | null>(null)
   const [availableBrands, setAvailableBrands] = useState<string[]>([])
@@ -379,8 +378,6 @@ function SearchPageContent() {
 
       {/* Mobile Controls - Sticky */}
       <MobileSearchControls
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
         onFilterOpen={() => setIsFilterSheetOpen(true)}
         onSortOpen={() => setIsSortSheetOpen(true)}
         resultsCount={watches.length}
@@ -983,23 +980,6 @@ function SearchPageContent() {
                 )}
               </div>
 
-              {/* View Toggle */}
-              <div className="flex items-center gap-2 rounded-lg border border-gray-200 bg-white p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`rounded p-2 transition-colors ${viewMode === 'grid' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:bg-gray-100'}`}
-                  aria-label="Rasteransicht"
-                >
-                  <Grid3x3 className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`rounded p-2 transition-colors ${viewMode === 'list' ? 'bg-primary-100 text-primary-600' : 'text-gray-400 hover:bg-gray-100'}`}
-                  aria-label="Listenansicht"
-                >
-                  <List className="h-5 w-5" />
-                </button>
-              </div>
             </div>
           </div>
 
@@ -1065,7 +1045,7 @@ function SearchPageContent() {
                 </Link>
               </div>
             </div>
-          ) : viewMode === 'grid' ? (
+          ) : (
             // GRID VIEW - Mobile: 2 columns, tight spacing. Desktop: 4-6 columns
             <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
               {watches.map(w => (
@@ -1084,30 +1064,6 @@ function SearchPageContent() {
                       return newSet
                     })
                   }}
-                />
-              ))}
-            </div>
-          ) : (
-            // LIST VIEW
-            <div className="space-y-3">
-              {watches.map(w => (
-                <ProductCard
-                  key={w.id}
-                  {...w}
-                  variant="list"
-                  favorites={favorites}
-                  onFavoriteToggle={(id, isFavorite) => {
-                    setFavorites(prev => {
-                      const newSet = new Set(prev)
-                      if (isFavorite) {
-                        newSet.add(id)
-                      } else {
-                        newSet.delete(id)
-                      }
-                      return newSet
-                    })
-                  }}
-                  showBuyNowButton={true}
                 />
               ))}
             </div>
