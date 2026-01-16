@@ -9,7 +9,7 @@ import { MobileSortSheet } from '@/components/search/MobileSortSheet'
 import { ProductCard } from '@/components/ui/ProductCard'
 
 import { useLanguage } from '@/contexts/LanguageContext'
-import { ChevronDown, Grid3x3, List, Loader2, Package } from 'lucide-react'
+import { ChevronDown, Loader2, Package } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
@@ -38,7 +38,6 @@ function CategoriesPageContent() {
   const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [watches, setWatches] = useState<WatchItem[]>([])
-  const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid')
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [openFilter, setOpenFilter] = useState<string | null>(null)
 
@@ -176,8 +175,6 @@ function CategoriesPageContent() {
 
       {/* Mobile Controls - Sticky */}
       <MobileSearchControls
-        viewMode={viewMode}
-        onViewModeChange={setViewMode}
         onFilterOpen={() => setIsFilterSheetOpen(true)}
         onSortOpen={() => setIsSortSheetOpen(true)}
         resultsCount={watches.length}
@@ -267,31 +264,6 @@ function CategoriesPageContent() {
                 )}
               </div>
 
-              {/* View Toggle */}
-              <div className="flex items-center gap-1 rounded-lg border border-gray-200 bg-white p-1">
-                <button
-                  onClick={() => setViewMode('grid')}
-                  className={`rounded p-2 transition-colors ${
-                    viewMode === 'grid'
-                      ? 'bg-primary-100 text-primary-600'
-                      : 'text-gray-400 hover:bg-gray-100'
-                  }`}
-                  aria-label="Gitteransicht"
-                >
-                  <Grid3x3 className="h-5 w-5" />
-                </button>
-                <button
-                  onClick={() => setViewMode('list')}
-                  className={`rounded p-2 transition-colors ${
-                    viewMode === 'list'
-                      ? 'bg-primary-100 text-primary-600'
-                      : 'text-gray-400 hover:bg-gray-100'
-                  }`}
-                  aria-label="Listenansicht"
-                >
-                  <List className="h-5 w-5" />
-                </button>
-              </div>
             </div>
           </div>
 
@@ -314,7 +286,7 @@ function CategoriesPageContent() {
                 Aktuell sind keine Artikel verfügbar.
               </p>
             </div>
-          ) : viewMode === 'grid' ? (
+          ) : (
             // Grid view
             <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
               {watches.map(w => (
@@ -345,29 +317,6 @@ function CategoriesPageContent() {
                       return newSet
                     })
                   }}
-                />
-              ))}
-            </div>
-          ) : (
-            // List view
-            <div className="space-y-3">
-              {watches.map(w => (
-                <ProductCard
-                  key={w.id}
-                  id={w.id}
-                  title={w.title}
-                  brand={w.brand}
-                  price={w.price}
-                  images={w.images}
-                  city={w.city}
-                  postalCode={w.postalCode}
-                  auctionEnd={w.auctionEnd}
-                  buyNowPrice={w.buyNowPrice}
-                  isAuction={w.isAuction}
-                  bids={w.bids}
-                  boosters={w.boosters}
-                  variant="list"
-                  showBuyNowButton={true}
                 />
               ))}
             </div>
