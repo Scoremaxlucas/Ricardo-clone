@@ -253,8 +253,8 @@ export default function ProfilePage() {
       return
     }
 
-    if (passwordData.newPassword.length < 6) {
-      setPasswordError('Das neue Passwort muss mindestens 6 Zeichen lang sein')
+    if (passwordData.newPassword.length < 8) {
+      setPasswordError('Das neue Passwort muss mindestens 8 Zeichen lang sein')
       return
     }
 
@@ -575,10 +575,10 @@ export default function ProfilePage() {
                     value={passwordData.newPassword}
                     onChange={handlePasswordChange}
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
-                    placeholder="Mindestens 6 Zeichen, eine Zahl und ein Sonderzeichen"
+                    placeholder="Mindestens 8 Zeichen, eine Zahl und ein Sonderzeichen"
                   />
                   <p className="mt-1 text-xs text-gray-500">
-                    Mindestens 6 Zeichen, eine Zahl und ein Sonderzeichen erforderlich
+                    Mindestens 8 Zeichen, eine Zahl und ein Sonderzeichen erforderlich
                   </p>
                 </div>
 

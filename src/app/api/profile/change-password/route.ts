@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { getPasswordChangedEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 
@@ -18,10 +19,10 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Bitte füllen Sie alle Felder aus' }, { status: 400 })
     }
 
-    // Validierung des neuen Passworts
-    if (newPassword.length < 6) {
+    // Validierung des neuen Passworts (vereinheitlicht mit reset-password)
+    if (newPassword.length < 8) {
       return NextResponse.json(
-        { message: 'Das neue Passwort muss mindestens 6 Zeichen lang sein' },
+        { message: 'Das neue Passwort muss mindestens 8 Zeichen lang sein' },
         { status: 400 }
       )
     }
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     // Hole den User aus der Datenbank
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { id: true, password: true },
+      select: { id: true, email: true, firstName: true, nickname: true, password: true },
     })
 
     if (!user) {
@@ -72,14 +73,35 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Hash das neue Passwort
-    const hashedPassword = await bcrypt.hash(newPassword, 10)
+    // Client-Info für Sicherheits-E-Mail
+    const forwarded = request.headers.get('x-forwarded-for')
+    const ipAddress = forwarded ? forwarded.split(',')[0].trim() : 'Unbekannt'
+    const userAgent = request.headers.get('user-agent') || 'Unbekannt'
+
+    // Hash das neue Passwort (12 Rounds, vereinheitlicht mit reset-password)
+    const hashedPassword = await bcrypt.hash(newPassword, 12)
 
     // Aktualisiere das Passwort
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { password: hashedPassword },
+      data: { 
+        password: hashedPassword,
+        passwordChangedAt: new Date(),
+      },
     })
+
+    // Sende Bestätigungs-E-Mail (Sicherheitsfeature)
+    const userName = user.firstName || user.nickname || 'Benutzer'
+    const { subject, html, text } = getPasswordChangedEmail(userName, ipAddress, userAgent)
+    
+    await sendEmail({
+      to: user.email,
+      subject,
+      html,
+      text,
+    })
+
+    console.log(`[change-password] Password changed successfully for ${user.email}`)
 
     return NextResponse.json({
       message: 'Passwort erfolgreich geändert',

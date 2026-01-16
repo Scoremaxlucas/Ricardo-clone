@@ -48,6 +48,18 @@ function ResetPasswordContent() {
       return
     }
 
+    if (!/\d/.test(password)) {
+      setError('Passwort muss mindestens eine Zahl enthalten.')
+      setIsLoading(false)
+      return
+    }
+
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      setError('Passwort muss mindestens ein Sonderzeichen enthalten.')
+      setIsLoading(false)
+      return
+    }
+
     try {
       const response = await fetch('/api/auth/reset-password', {
         method: 'POST',
@@ -155,7 +167,7 @@ function ResetPasswordContent() {
                   value={password}
                   onChange={e => setPassword(e.target.value)}
                   className="relative block w-full appearance-none rounded-lg border border-gray-300 px-3 py-2.5 pr-10 text-gray-900 placeholder-gray-400 transition-colors focus:z-10 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20 disabled:cursor-not-allowed disabled:bg-gray-50 disabled:text-gray-500 sm:text-sm"
-                  placeholder="Mindestens 8 Zeichen"
+                  placeholder="Mindestens 8 Zeichen, Zahl und Sonderzeichen"
                 />
                 <button
                   type="button"

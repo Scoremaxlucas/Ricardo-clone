@@ -13,9 +13,24 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Token und Passwort sind erforderlich' }, { status: 400 })
     }
 
+    // Validierung des neuen Passworts (vereinheitlicht mit change-password)
     if (password.length < 8) {
       return NextResponse.json(
         { message: 'Das Passwort muss mindestens 8 Zeichen lang sein' },
+        { status: 400 }
+      )
+    }
+
+    if (!/\d/.test(password)) {
+      return NextResponse.json(
+        { message: 'Das Passwort muss mindestens eine Zahl enthalten' },
+        { status: 400 }
+      )
+    }
+
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(password)) {
+      return NextResponse.json(
+        { message: 'Das Passwort muss mindestens ein Sonderzeichen enthalten' },
         { status: 400 }
       )
     }
