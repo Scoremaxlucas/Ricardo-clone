@@ -3,7 +3,7 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { Card } from '@/components/ui/Card'
-import { Camera, CheckCircle, Lock } from 'lucide-react'
+import { Bell, Camera, CheckCircle, Lock } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -607,24 +607,46 @@ export default function ProfilePage() {
             )}
           </Card>
 
-          {/* Datenschutz-Link */}
-          <Card className="mt-6 p-4">
-            <Link
-              href="/settings/privacy"
-              className="flex items-center justify-between text-gray-700 hover:text-primary-600"
-            >
-              <div className="flex items-center gap-3">
-                <Lock className="h-5 w-5" />
-                <div>
-                  <p className="font-medium">Datenschutz & Daten</p>
-                  <p className="text-sm text-gray-500">
-                    Daten exportieren, Cookie-Einstellungen, Konto löschen
-                  </p>
+          {/* Einstellungen Links */}
+          <div className="mt-6 space-y-3">
+            {/* Benachrichtigungen */}
+            <Card className="p-4">
+              <Link
+                href="/settings/notifications"
+                className="flex items-center justify-between text-gray-700 hover:text-primary-600"
+              >
+                <div className="flex items-center gap-3">
+                  <Bell className="h-5 w-5" />
+                  <div>
+                    <p className="font-medium">Benachrichtigungen</p>
+                    <p className="text-sm text-gray-500">
+                      E-Mail-Benachrichtigungen verwalten
+                    </p>
+                  </div>
                 </div>
-              </div>
-              <span className="text-gray-400">→</span>
-            </Link>
-          </Card>
+                <span className="text-gray-400">→</span>
+              </Link>
+            </Card>
+
+            {/* Datenschutz */}
+            <Card className="p-4">
+              <Link
+                href="/settings/privacy"
+                className="flex items-center justify-between text-gray-700 hover:text-primary-600"
+              >
+                <div className="flex items-center gap-3">
+                  <Lock className="h-5 w-5" />
+                  <div>
+                    <p className="font-medium">Datenschutz & Daten</p>
+                    <p className="text-sm text-gray-500">
+                      Daten exportieren, Cookie-Einstellungen, Konto löschen
+                    </p>
+                  </div>
+                </div>
+                <span className="text-gray-400">→</span>
+              </Link>
+            </Card>
+          </div>
         </div>
       </div>
       </main>

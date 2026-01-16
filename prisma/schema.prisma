@@ -986,6 +986,29 @@ model UserPreferences {
   updatedAt           DateTime @default(now())
   user                User     @relation(fields: [userId], references: [id], onDelete: Cascade)
 
+  // === BENACHRICHTIGUNGS-EINSTELLUNGEN ===
+  // Verkäufer-Benachrichtigungen
+  emailOnNewMessage     Boolean @default(true) // Neue Nachricht zu Inserat
+  emailOnNewBid         Boolean @default(true) // Neues Gebot auf Auktion
+  emailOnNewOffer       Boolean @default(true) // Neues Preisangebot
+  emailOnSaleCompleted  Boolean @default(true) // Verkauf abgeschlossen
+  
+  // Käufer-Benachrichtigungen  
+  emailOnOutbid         Boolean @default(true) // Überboten bei Auktion
+  emailOnAuctionEnding  Boolean @default(true) // Auktion endet bald (30 min)
+  emailOnPurchase       Boolean @default(true) // Kauf bestätigt
+  emailOnShipping       Boolean @default(true) // Artikel versendet
+  
+  // Suchabo-Benachrichtigungen
+  emailOnSearchMatch    Boolean @default(true) // Neuer Treffer für Suchabo
+  
+  // Favoriten-Benachrichtigungen
+  emailOnFavoritePriceChange Boolean @default(false) // Preisänderung bei Favorit
+  
+  // Marketing & Sonstiges
+  emailMarketing        Boolean @default(false) // Newsletter & Angebote
+  emailDigestFrequency  String  @default("instant") // 'instant', 'daily', 'weekly', 'none'
+
   @@index([userId])
   @@map("user_preferences")
 }
