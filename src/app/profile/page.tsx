@@ -485,9 +485,6 @@ export default function ProfilePage() {
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder="Ihr Nickname (wird im Header angezeigt)"
                 />
-                <p className="mt-1 text-xs text-gray-500">
-                  Ihr Nickname wird im Header angezeigt (z.B. "Hallo, Administrator2000")
-                </p>
               </div>
 
               <div>
