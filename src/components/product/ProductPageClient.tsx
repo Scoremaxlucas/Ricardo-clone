@@ -49,8 +49,10 @@ export function ProductPageClient({
   const [isMobile, setIsMobile] = useState(false)
   const [pinchZoom, setPinchZoom] = useState(1)
   const [pinchStartDistance, setPinchStartDistance] = useState<number | null>(null)
+  const [showStickyBar, setShowStickyBar] = useState(false)
   const imageContainerRef = useRef<HTMLDivElement>(null)
   const zoomImageRef = useRef<HTMLImageElement>(null)
+  const priceAreaRef = useRef<HTMLDivElement>(null)
 
   // Detect mobile device
   useEffect(() => {
@@ -61,6 +63,25 @@ export function ProductPageClient({
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
   }, [])
+
+  // Show sticky bar when scrolling past price area (mobile only)
+  useEffect(() => {
+    if (!isMobile) {
+      setShowStickyBar(false)
+      return
+    }
+
+    const handleScroll = () => {
+      if (priceAreaRef.current) {
+        const rect = priceAreaRef.current.getBoundingClientRect()
+        // Show sticky bar when price area is scrolled out of view
+        setShowStickyBar(rect.bottom < 100)
+      }
+    }
+
+    window.addEventListener('scroll', handleScroll, { passive: true })
+    return () => window.removeEventListener('scroll', handleScroll)
+  }, [isMobile])
 
   // Track view (Feature 2: Social Proof)
   useEffect(() => {
@@ -652,7 +673,7 @@ export function ProductPageClient({
               )}
 
               {/* Buy/Offer Section - Enthält jetzt die Preisanzeige */}
-              <div className="mb-4">
+              <div ref={priceAreaRef} className="mb-4">
                 {watch.isAuction ? (
                   <BidComponent
                     itemId={watch.id}
@@ -939,6 +960,66 @@ export function ProductPageClient({
         isOpen={showReportModal}
         onClose={() => setShowReportModal(false)}
       />
+
+      {/* Mobile Sticky CTA Bar */}
+      {isMobile && showStickyBar && (
+        <div 
+          className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.1)] transition-transform duration-300"
+          style={{ 
+            paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
+            transform: showStickyBar ? 'translateY(0)' : 'translateY(100%)'
+          }}
+        >
+          <div className="flex items-center justify-between gap-3">
+            {/* Price */}
+            <div className="min-w-0 flex-shrink-0">
+              <div className="text-xs text-gray-500">
+                {watch.isAuction ? 'Aktuelles Gebot' : 'Preis'}
+              </div>
+              <div className="text-lg font-bold text-gray-900">
+                CHF {watch.price?.toLocaleString('de-CH', { minimumFractionDigits: 2 })}
+              </div>
+            </div>
+
+            {/* Action Button */}
+            <div className="flex items-center gap-2">
+              {/* Favorite Button */}
+              <button
+                onClick={toggleFavorite}
+                disabled={favoriteLoading}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
+                  isFavorite 
+                    ? 'border-red-400 bg-red-50 text-red-500' 
+                    : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
+                }`}
+              >
+                <Heart className={`h-5 w-5 ${isFavorite ? 'fill-current' : ''}`} />
+              </button>
+
+              {/* Buy/Bid Button */}
+              <button
+                onClick={() => {
+                  // Scroll to price area
+                  priceAreaRef.current?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+                }}
+                className="flex h-11 items-center justify-center gap-2 rounded-full bg-primary-600 px-6 font-semibold text-white shadow-lg transition-all hover:bg-primary-700"
+              >
+                {watch.isAuction ? (
+                  <>
+                    <Zap className="h-4 w-4" />
+                    Bieten
+                  </>
+                ) : (
+                  <>
+                    <Zap className="h-4 w-4" />
+                    Kaufen
+                  </>
+                )}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </>
   )
 }

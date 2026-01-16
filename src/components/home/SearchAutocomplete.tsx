@@ -1,7 +1,7 @@
 'use client'
 
 import { useLanguage } from '@/contexts/LanguageContext'
-import { Search, TrendingUp, X } from 'lucide-react'
+import { Clock, Search, TrendingUp, X } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useRef, useState } from 'react'
 
@@ -12,12 +12,50 @@ interface SearchAutocompleteProps {
   initialValue?: string
 }
 
+// LocalStorage key for recent searches
+const RECENT_SEARCHES_KEY = 'helvenda_recent_searches'
+const MAX_RECENT_SEARCHES = 5
+
+// Helper functions for recent searches
+const getRecentSearches = (): string[] => {
+  if (typeof window === 'undefined') return []
+  try {
+    const stored = localStorage.getItem(RECENT_SEARCHES_KEY)
+    return stored ? JSON.parse(stored) : []
+  } catch {
+    return []
+  }
+}
+
+const addRecentSearch = (query: string): void => {
+  if (typeof window === 'undefined' || !query.trim()) return
+  try {
+    const recent = getRecentSearches()
+    // Remove if already exists and add to front
+    const filtered = recent.filter(s => s.toLowerCase() !== query.toLowerCase())
+    const updated = [query, ...filtered].slice(0, MAX_RECENT_SEARCHES)
+    localStorage.setItem(RECENT_SEARCHES_KEY, JSON.stringify(updated))
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+const clearRecentSearches = (): void => {
+  if (typeof window === 'undefined') return
+  try {
+    localStorage.removeItem(RECENT_SEARCHES_KEY)
+  } catch {
+    // Ignore storage errors
+  }
+}
+
 /**
  * Intelligente Suchleiste mit Autocomplete (Feature 1)
  *
  * Features:
  * - Live-Suggestions basierend auf User-Eingabe
  * - Populäre Suchbegriffe wenn kein Input
+ * - Letzte Suchanfragen (localStorage)
  * - Debounced API-Calls für Performance
  * - Keyboard-Navigation (Arrow keys, Enter, Escape)
  * - Mobile-optimiert
@@ -32,24 +70,46 @@ export function SearchAutocomplete({
   const { t } = useLanguage()
   const [query, setQuery] = useState(initialValue)
   const [suggestions, setSuggestions] = useState<string[]>([])
+  const [recentSearches, setRecentSearches] = useState<string[]>([])
   const [isOpen, setIsOpen] = useState(false)
   const [selectedIndex, setSelectedIndex] = useState(-1)
   const [isLoading, setIsLoading] = useState(false)
   const [showPopular, setShowPopular] = useState(false)
+  const [showRecent, setShowRecent] = useState(false)
   const [hasInteracted, setHasInteracted] = useState(false)
 
   const inputRef = useRef<HTMLInputElement>(null)
   const suggestionsRef = useRef<HTMLDivElement>(null)
   const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
+  // Load recent searches on mount
+  useEffect(() => {
+    setRecentSearches(getRecentSearches())
+  }, [])
+
   // Debounced API-Call für Suggestions
   const fetchSuggestions = useCallback(async (searchTerm: string) => {
     if (searchTerm.trim().length < 2 && searchTerm.trim().length > 0) {
       setSuggestions([])
       setShowPopular(false)
+      setShowRecent(false)
       return
     }
 
+    // If empty, show recent searches first (if any)
+    if (searchTerm.trim().length === 0) {
+      const recent = getRecentSearches()
+      setRecentSearches(recent)
+      if (recent.length > 0) {
+        setShowRecent(true)
+        setShowPopular(false)
+        setSuggestions([])
+        setIsLoading(false)
+        return
+      }
+    }
+
+    setShowRecent(false)
     setIsLoading(true)
     try {
       const url = `/api/search/suggestions?q=${encodeURIComponent(searchTerm)}&limit=8`
@@ -104,6 +164,10 @@ export function SearchAutocomplete({
       const searchTerm = selectedQuery || query.trim()
       if (!searchTerm) return
 
+      // Save to recent searches
+      addRecentSearch(searchTerm)
+      setRecentSearches(getRecentSearches())
+
       setIsOpen(false)
       setSelectedIndex(-1)
 
@@ -117,9 +181,21 @@ export function SearchAutocomplete({
     [query, onSearch, router]
   )
 
+  // Handle clearing recent searches
+  const handleClearRecent = useCallback(() => {
+    clearRecentSearches()
+    setRecentSearches([])
+    setShowRecent(false)
+    // Fetch popular instead
+    fetchSuggestions('')
+  }, [fetchSuggestions])
+
   // Keyboard Navigation
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
-    if (!isOpen || suggestions.length === 0) {
+    // Determine which list to navigate
+    const items = showRecent && recentSearches.length > 0 ? recentSearches : suggestions
+    
+    if (!isOpen || items.length === 0) {
       if (e.key === 'Enter') {
         handleSubmit()
       }
@@ -129,7 +205,7 @@ export function SearchAutocomplete({
     switch (e.key) {
       case 'ArrowDown':
         e.preventDefault()
-        setSelectedIndex(prev => (prev < suggestions.length - 1 ? prev + 1 : prev))
+        setSelectedIndex(prev => (prev < items.length - 1 ? prev + 1 : prev))
         break
       case 'ArrowUp':
         e.preventDefault()
@@ -137,8 +213,8 @@ export function SearchAutocomplete({
         break
       case 'Enter':
         e.preventDefault()
-        if (selectedIndex >= 0 && selectedIndex < suggestions.length) {
-          handleSubmit(suggestions[selectedIndex])
+        if (selectedIndex >= 0 && selectedIndex < items.length) {
+          handleSubmit(items[selectedIndex])
         } else {
           handleSubmit()
         }
@@ -224,7 +300,7 @@ export function SearchAutocomplete({
       </form>
 
       {/* Suggestions Dropdown */}
-      {isOpen && (suggestions.length > 0 || isLoading) && (
+      {isOpen && (suggestions.length > 0 || isLoading || showRecent) && (
         <div
           ref={suggestionsRef}
           className="absolute z-50 mt-2 w-full rounded-xl border border-gray-200 bg-white shadow-xl animate-in fade-in slide-in-from-top-2 duration-200"
@@ -233,6 +309,45 @@ export function SearchAutocomplete({
             <div className="flex items-center justify-center px-4 py-3">
               <div className="h-5 w-5 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"></div>
             </div>
+          ) : showRecent && recentSearches.length > 0 ? (
+            <>
+              {/* Recent Searches */}
+              <div className="flex items-center justify-between border-b border-gray-100 px-4 py-2">
+                <div className="flex items-center gap-2 text-xs font-semibold uppercase text-gray-500">
+                  <Clock className="h-4 w-4" />
+                  Letzte Suchanfragen
+                </div>
+                <button
+                  onClick={(e) => {
+                    e.preventDefault()
+                    e.stopPropagation()
+                    handleClearRecent()
+                  }}
+                  className="text-xs text-gray-400 hover:text-gray-600"
+                >
+                  Löschen
+                </button>
+              </div>
+              <ul className="max-h-64 overflow-y-auto py-2">
+                {recentSearches.map((search, index) => (
+                  <li
+                    key={`recent-${index}`}
+                    onClick={() => handleSubmit(search)}
+                    onMouseEnter={() => setSelectedIndex(index)}
+                    className={`cursor-pointer px-4 py-3 text-sm transition-colors duration-150 ease-out ${
+                      index === selectedIndex
+                        ? 'bg-primary-50 text-primary-700'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <div className="flex items-center gap-2">
+                      <Clock className="h-4 w-4 text-gray-400" />
+                      <span>{search}</span>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            </>
           ) : (
             <>
               {showPopular && (

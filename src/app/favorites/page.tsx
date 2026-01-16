@@ -6,8 +6,52 @@ import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
-import { Heart, Loader2 } from 'lucide-react'
+import { ArrowDown, ArrowUp, Heart, Loader2 } from 'lucide-react'
 import { ProductCard, type ProductCardData } from '@/components/product/ProductCard'
+
+// LocalStorage key for tracking favorite prices
+const FAVORITE_PRICES_KEY = 'helvenda_favorite_prices'
+
+interface FavoritePrice {
+  price: number
+  savedAt: string
+}
+
+// Helper to get/set favorite prices in localStorage
+const getFavoritePrices = (): Record<string, FavoritePrice> => {
+  if (typeof window === 'undefined') return {}
+  try {
+    const stored = localStorage.getItem(FAVORITE_PRICES_KEY)
+    return stored ? JSON.parse(stored) : {}
+  } catch {
+    return {}
+  }
+}
+
+const saveFavoritePrice = (productId: string, price: number): void => {
+  if (typeof window === 'undefined') return
+  try {
+    const prices = getFavoritePrices()
+    // Only save if not already saved (preserve original price)
+    if (!prices[productId]) {
+      prices[productId] = { price, savedAt: new Date().toISOString() }
+      localStorage.setItem(FAVORITE_PRICES_KEY, JSON.stringify(prices))
+    }
+  } catch {
+    // Ignore storage errors
+  }
+}
+
+const removeFavoritePrice = (productId: string): void => {
+  if (typeof window === 'undefined') return
+  try {
+    const prices = getFavoritePrices()
+    delete prices[productId]
+    localStorage.setItem(FAVORITE_PRICES_KEY, JSON.stringify(prices))
+  } catch {
+    // Ignore storage errors
+  }
+}
 
 interface Product {
   id: string
@@ -19,6 +63,7 @@ interface Product {
   condition: string
   isAuction: boolean
   currentBid?: number
+  priceChange?: { original: number; direction: 'up' | 'down'; percent: number } | null
 }
 
 export default function FavoritesPage() {
@@ -47,19 +92,40 @@ export default function FavoritesPage() {
       if (response.ok) {
         const data = await response.json()
         const watches = data.watches || []
+        const savedPrices = getFavoritePrices()
 
         // Transformiere zu Product-Format
-        const products: Product[] = watches.map((w: any) => ({
-          id: w.id,
-          title: w.title,
-          brand: w.brand,
-          model: w.model,
-          price: w.price,
-          images: w.images || [],
-          condition: w.condition || '',
-          isAuction: w.isAuction || false,
-          currentBid: w.price, // Bei Auktionen ist price bereits der aktuelle Preis
-        }))
+        const products: Product[] = watches.map((w: any) => {
+          // Calculate price change
+          let priceChange: Product['priceChange'] = null
+          const savedPrice = savedPrices[w.id]
+          
+          if (savedPrice && savedPrice.price !== w.price) {
+            const diff = w.price - savedPrice.price
+            const percent = Math.abs(Math.round((diff / savedPrice.price) * 100))
+            priceChange = {
+              original: savedPrice.price,
+              direction: diff > 0 ? 'up' : 'down',
+              percent
+            }
+          } else if (!savedPrice) {
+            // Save current price for future comparisons
+            saveFavoritePrice(w.id, w.price)
+          }
+
+          return {
+            id: w.id,
+            title: w.title,
+            brand: w.brand,
+            model: w.model,
+            price: w.price,
+            images: w.images || [],
+            condition: w.condition || '',
+            isAuction: w.isAuction || false,
+            currentBid: w.price, // Bei Auktionen ist price bereits der aktuelle Preis
+            priceChange,
+          }
+        })
 
         setFavorites(products)
       }
@@ -75,6 +141,8 @@ export default function FavoritesPage() {
       const res = await fetch(`/api/favorites/${productId}`, { method: 'DELETE' })
       if (res.ok) {
         setFavorites(prev => prev.filter(p => p.id !== productId))
+        // Also remove saved price
+        removeFavoritePrice(productId)
       }
     } catch (error) {
       console.error('Error removing favorite:', error)
@@ -156,19 +224,37 @@ export default function FavoritesPage() {
               }
 
               return (
-                <ProductCard
-                  key={product.id}
-                  product={productCardData}
-                  variant="default"
-                  showCondition={true}
-                  onFavoriteToggle={async (productId, isFavorite) => {
-                    if (!isFavorite) {
-                      // Remove from favorites
-                      await removeFavorite(productId)
-                    }
-                  }}
-                  className="h-full"
-                />
+                <div key={product.id} className="relative h-full">
+                  {/* Price Change Badge */}
+                  {product.priceChange && (
+                    <div 
+                      className={`absolute left-2 top-2 z-10 flex items-center gap-1 rounded-full px-2 py-1 text-xs font-semibold shadow-sm ${
+                        product.priceChange.direction === 'down' 
+                          ? 'bg-green-500 text-white' 
+                          : 'bg-red-500 text-white'
+                      }`}
+                    >
+                      {product.priceChange.direction === 'down' ? (
+                        <ArrowDown className="h-3 w-3" />
+                      ) : (
+                        <ArrowUp className="h-3 w-3" />
+                      )}
+                      {product.priceChange.percent}%
+                    </div>
+                  )}
+                  <ProductCard
+                    product={productCardData}
+                    variant="default"
+                    showCondition={true}
+                    onFavoriteToggle={async (productId, isFavorite) => {
+                      if (!isFavorite) {
+                        // Remove from favorites
+                        await removeFavorite(productId)
+                      }
+                    }}
+                    className="h-full"
+                  />
+                </div>
               )
             })}
           </div>

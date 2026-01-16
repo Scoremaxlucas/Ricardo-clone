@@ -1,7 +1,7 @@
 'use client'
 
 import { UserName } from '@/components/ui/UserName'
-import { Globe, Lock, MessageCircle, Send } from 'lucide-react'
+import { Globe, Lock, MessageCircle, Send, Zap } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -26,12 +26,21 @@ interface ProductChatProps {
   sellerId: string
 }
 
+// Quick reply templates for sellers
+const QUICK_REPLY_TEMPLATES = [
+  { label: 'Noch verfügbar', text: 'Ja, der Artikel ist noch verfügbar.' },
+  { label: 'Versandkosten', text: 'Der Versand innerhalb der Schweiz kostet CHF 8.50 (B-Post) oder CHF 12.50 (A-Post).' },
+  { label: 'Abholung', text: 'Gerne können Sie den Artikel persönlich abholen. Bitte kontaktieren Sie mich für einen Termin.' },
+  { label: 'Preis fest', text: 'Der Preis ist fest und bereits fair kalkuliert.' },
+]
+
 export function ProductChat({ watchId, sellerId }: ProductChatProps) {
   const { data: session } = useSession()
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [isPublic, setIsPublic] = useState(false)
   const [loading, setLoading] = useState(false)
+  const [showQuickReplies, setShowQuickReplies] = useState(false)
   const messagesEndRef = useRef<HTMLDivElement>(null)
 
   const isSeller = (session?.user as { id?: string })?.id === sellerId
@@ -212,11 +221,43 @@ export function ProductChat({ watchId, sellerId }: ProductChatProps) {
 
       {/* Eingabe-Formular */}
       <form onSubmit={handleSend} className="space-y-3">
+        {/* Quick Reply Templates for Sellers */}
+        {isSeller && (
+          <div className="relative">
+            <button
+              type="button"
+              onClick={() => setShowQuickReplies(!showQuickReplies)}
+              className="flex items-center gap-1.5 text-sm text-primary-600 hover:text-primary-700"
+            >
+              <Zap className="h-4 w-4" />
+              Schnellantworten
+            </button>
+            
+            {showQuickReplies && (
+              <div className="mt-2 flex flex-wrap gap-2">
+                {QUICK_REPLY_TEMPLATES.map((template, index) => (
+                  <button
+                    key={index}
+                    type="button"
+                    onClick={() => {
+                      setNewMessage(prev => prev ? `${prev}\n\n${template.text}` : template.text)
+                      setShowQuickReplies(false)
+                    }}
+                    className="rounded-full border border-primary-200 bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100"
+                  >
+                    {template.label}
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+
         <div className="flex items-start gap-2">
           <textarea
             value={newMessage}
             onChange={e => setNewMessage(e.target.value)}
-            placeholder="Stellen Sie eine Frage..."
+            placeholder={isSeller ? "Antworten Sie auf die Frage..." : "Stellen Sie eine Frage..."}
             rows={3}
             className="flex-1 resize-none rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
             required
