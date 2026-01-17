@@ -81,7 +81,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Prüfe ob bereits eine aktive Order für DIESEN Käufer existiert
-    const existingOrder = watch.orders.find(
+    const existingOrder = (watch.orders || []).find(
       o => o.orderStatus !== 'canceled' && o.paymentStatus !== 'refunded'
     )
 
@@ -114,6 +114,19 @@ export async function POST(request: NextRequest) {
 
     // Berechne Preise
     const itemPrice = watch.buyNowPrice || watch.price
+    
+    // Validate item price
+    if (!itemPrice || itemPrice <= 0) {
+      console.error('[orders/create] Invalid item price:', { 
+        buyNowPrice: watch.buyNowPrice, 
+        price: watch.price,
+        watchId 
+      })
+      return NextResponse.json(
+        { message: 'Artikel hat keinen gültigen Preis' },
+        { status: 400 }
+      )
+    }
     let shippingCostChfFinal = 0
     let shippingCostBreakdown: any = {
       base: 0,
@@ -180,7 +193,17 @@ export async function POST(request: NextRequest) {
     }
 
     // Berechne Gebühren
-    const fees = await calculateOrderFees(itemPrice, shippingCostChfFinal, true)
+    console.log('[orders/create] Calculating fees for:', { itemPrice, shippingCostChfFinal })
+    let fees
+    try {
+      fees = await calculateOrderFees(itemPrice, shippingCostChfFinal, true)
+    } catch (feeError: any) {
+      console.error('[orders/create] Fee calculation error:', feeError)
+      return NextResponse.json(
+        { message: 'Fehler bei der Gebührenberechnung', error: feeError.message },
+        { status: 500 }
+      )
+    }
 
     // Generiere Order-Nummer
     const year = new Date().getFullYear()
