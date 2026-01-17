@@ -16,7 +16,6 @@ import {
   Package,
   Phone,
   Shield,
-  ShoppingBag,
   Sparkles,
   Truck,
   User,
@@ -513,21 +512,14 @@ export default function PurchaseSuccessPage() {
             </div>
           )}
 
-          {/* Action Buttons */}
-          <div className="flex flex-col gap-4 sm:flex-row">
+          {/* Action Button */}
+          <div className="flex justify-center">
             <Link
               href={`/my-watches/buying/purchased?highlight=${order.id}&action=contact`}
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-6 py-4 font-semibold text-white shadow-lg shadow-emerald-200 transition-all hover:from-emerald-700 hover:to-teal-700 hover:shadow-xl"
+              className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-8 py-4 font-semibold text-white shadow-lg shadow-emerald-200 transition-all hover:from-emerald-700 hover:to-teal-700 hover:shadow-xl"
             >
               <MessageCircle className="h-5 w-5" />
               Verkäufer kontaktieren
-            </Link>
-            <Link
-              href="/my-watches/buying/purchased"
-              className="flex flex-1 items-center justify-center gap-2 rounded-xl border-2 border-gray-200 bg-white px-6 py-4 font-semibold text-gray-700 transition-all hover:border-gray-300 hover:bg-gray-50"
-            >
-              <ShoppingBag className="h-5 w-5" />
-              Alle Käufe ansehen
             </Link>
           </div>
 

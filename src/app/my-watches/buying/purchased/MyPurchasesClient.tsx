@@ -162,7 +162,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
   // Handle highlight and action from query params (from success page redirect)
   // Use ref to track if action has been processed to prevent re-triggering
   const actionProcessedRef = useRef(false)
-  
+
   useEffect(() => {
     const highlight = searchParams.get('highlight')
     const action = searchParams.get('action')
@@ -184,7 +184,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
           actionProcessedRef.current = true
           setSelectedPurchase(purchaseToHighlight)
           setShowSellerInfo(true)
-          
+
           // Clear URL params IMMEDIATELY to prevent re-opening on close
           router.replace('/my-watches/buying/purchased', { scroll: false })
         }
