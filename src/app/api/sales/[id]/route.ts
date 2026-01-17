@@ -112,6 +112,136 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       })
     }
 
+    // If still not found by purchaseId, try to find by orderId (new system)
+    if (!purchase) {
+      console.log(`[sales/${searchId}] Not found by purchaseId/watchId, trying orderId...`)
+      
+      // Try to find an order directly
+      const order = await prisma.order.findFirst({
+        where: {
+          id: searchId,
+          sellerId: session.user.id,
+        },
+        include: {
+          watch: {
+            select: {
+              id: true,
+              title: true,
+              brand: true,
+              model: true,
+              images: true,
+              price: true,
+              buyNowPrice: true,
+              shippingMethod: true,
+              paymentProtectionEnabled: true,
+              bids: {
+                orderBy: { amount: 'desc' as const },
+                take: 1,
+                select: {
+                  id: true,
+                  amount: true,
+                },
+              },
+            },
+          },
+          buyer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+              firstName: true,
+              lastName: true,
+              phone: true,
+              paymentMethods: true,
+            },
+          },
+        },
+      })
+      
+      if (order) {
+        console.log(`[sales/${searchId}] Found order ${order.id} for watch: ${order.watch.title}`)
+        
+        const watch = order.watch as any
+        let images: string[] = []
+
+        // Parse images safely
+        try {
+          if (watch.images) {
+            if (typeof watch.images === 'string') {
+              if (watch.images.startsWith('[') || watch.images.startsWith('{')) {
+                images = JSON.parse(watch.images)
+              } else {
+                images = watch.images.split(',').filter((img: string) => img.trim().length > 0)
+              }
+            } else if (Array.isArray(watch.images)) {
+              images = watch.images
+            }
+          }
+        } catch {
+          images = []
+        }
+        
+        const paymentProtectionEnabled = watch.paymentProtectionEnabled || false
+        const isPaidViaStripe = order.paymentStatus === 'paid' || order.paymentStatus === 'released'
+        
+        // Fetch buyer address from UserAddress table
+        const buyerAddress = order.buyer ? await getMainAddress(order.buyer.id) : null
+        const buyerWithAddress = order.buyer
+          ? {
+              ...order.buyer,
+              street: buyerAddress?.street || null,
+              streetNumber: buyerAddress?.streetNumber || null,
+              postalCode: buyerAddress?.postalCode || null,
+              city: buyerAddress?.city || null,
+            }
+          : null
+        
+        // Build sale from Order data
+        const saleFromOrder = {
+          id: order.id,
+          soldAt: order.createdAt,
+          shippingMethod: order.selectedDeliveryMode === 'pickup' ? 'pickup' : order.selectedShippingCode || 'shipping',
+          paid: isPaidViaStripe,
+          paidAt: order.paidAt,
+          paymentProtectionEnabled,
+          isPaidViaStripe,
+          stripePaymentStatus: order.paymentStatus || null,
+          orderId: order.id,
+          status: order.orderStatus || 'pending',
+          itemReceived: order.buyerConfirmedReceipt || false,
+          itemReceivedAt: order.buyerConfirmedAt,
+          paymentConfirmed: isPaidViaStripe,
+          paymentConfirmedAt: order.paidAt,
+          contactDeadline: order.contactDeadline?.toISOString() || null,
+          sellerContactedAt: order.sellerContactedAt?.toISOString() || null,
+          buyerContactedAt: order.buyerContactedAt?.toISOString() || null,
+          contactWarningSentAt: order.contactWarningSentAt?.toISOString() || null,
+          contactDeadlineMissed: order.contactDeadlineMissed || false,
+          disputeOpenedAt: order.disputeOpenedAt?.toISOString() || null,
+          disputeReason: order.disputeReason || null,
+          disputeStatus: order.disputeStatus || null,
+          disputeResolvedAt: order.disputeResolvedAt?.toISOString() || null,
+          trackingNumber: order.trackingNumber || null,
+          trackingProvider: order.trackingProvider || null,
+          shippedAt: order.shippedAt?.toISOString() || null,
+          estimatedDeliveryDate: null,
+          watch: {
+            id: watch.id,
+            title: watch.title,
+            brand: watch.brand,
+            model: watch.model,
+            images: images,
+            price: watch.price,
+            finalPrice: order.itemPrice || watch.price,
+            purchaseType: 'buy-now' as const,
+          },
+          buyer: buyerWithAddress,
+        }
+        
+        return NextResponse.json({ sale: saleFromOrder })
+      }
+    }
+
     // Still not found - return debug info
     if (!purchase) {
       const allPurchases = await prisma.purchase.findMany({
@@ -123,10 +253,24 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         orderBy: { createdAt: 'desc' },
         take: 10,
       })
+      
+      const allOrders = await prisma.order.findMany({
+        where: {
+          sellerId: session.user.id,
+          orderStatus: { not: 'canceled' },
+        },
+        select: { id: true, watchId: true, orderStatus: true, createdAt: true },
+        orderBy: { createdAt: 'desc' },
+        take: 10,
+      })
 
       console.log(
         `[sales/${searchId}] Not found. Available purchases:`,
         JSON.stringify(allPurchases)
+      )
+      console.log(
+        `[sales/${searchId}] Available orders:`,
+        JSON.stringify(allOrders)
       )
 
       return NextResponse.json(
@@ -136,6 +280,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
             searchedId: searchId,
             sellerId: session.user.id,
             availablePurchases: allPurchases,
+            availableOrders: allOrders,
           },
         },
         { status: 404 }

@@ -57,7 +57,8 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
   const [deleteError, setDeleteError] = useState<string | null>(null)
 
   // Sale details drawer state
-  const [selectedPurchaseId, setSelectedPurchaseId] = useState<string | null>(null)
+  const [selectedSaleId, setSelectedSaleId] = useState<string | null>(null)
+  const [selectedSaleType, setSelectedSaleType] = useState<'purchase' | 'order'>('purchase')
   const [drawerOpen, setDrawerOpen] = useState(false)
 
   // Debounce search
@@ -234,6 +235,7 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
         bidCount: 0,
         highestBid: null,
         purchaseId: null,
+        orderId: null, // Drafts don't have orders
       }
     }
   )
@@ -241,9 +243,10 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
   // Get current listings based on tab
   const currentListings = activeTab === 'drafts' ? draftsAsListings : listings
 
-  // Handle sale click - open drawer
-  const handleSaleClick = (purchaseId: string) => {
-    setSelectedPurchaseId(purchaseId)
+  // Handle sale click - open drawer (supports both purchases and orders)
+  const handleSaleClick = (saleId: string, type: 'purchase' | 'order') => {
+    setSelectedSaleId(saleId)
+    setSelectedSaleType(type)
     setDrawerOpen(true)
   }
 
@@ -287,11 +290,11 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
 
       {/* Sale Details Drawer */}
       <SaleDetailsDrawer
-        purchaseId={selectedPurchaseId}
+        purchaseId={selectedSaleId}
         isOpen={drawerOpen}
         onClose={() => {
           setDrawerOpen(false)
-          setSelectedPurchaseId(null)
+          setSelectedSaleId(null)
         }}
         onUpdate={fetchData}
       />

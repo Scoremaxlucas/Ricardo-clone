@@ -11,7 +11,7 @@ interface ListingsGridProps {
   activeTab: TabType
   onDelete: (id: string) => void
   onDuplicate: (id: string) => void
-  onSaleClick?: (purchaseId: string) => void
+  onSaleClick?: (saleId: string, type: 'purchase' | 'order') => void
 }
 
 // Loading Skeleton for cards - Compact

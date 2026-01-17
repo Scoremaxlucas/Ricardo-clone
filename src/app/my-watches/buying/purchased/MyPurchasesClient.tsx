@@ -288,6 +288,23 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
         let orderId = purchase.orderId
 
         if (!orderId) {
+          // Determine delivery mode from shippingMethod
+          const isPickupMethod = purchase.shippingMethod === 'pickup' ||
+                                  purchase.shippingMethod === 'abholung' ||
+                                  !purchase.shippingMethod
+          const deliveryMode = isPickupMethod ? 'pickup' : 'shipping'
+
+          // Map old shipping method to new shipping code
+          let shippingCode = null
+          if (!isPickupMethod && purchase.shippingMethod) {
+            // Map legacy shipping methods to new codes
+            if (purchase.shippingMethod === 'b-post' || purchase.shippingMethod === 'b_post') {
+              shippingCode = 'post_economy_2kg'
+            } else if (purchase.shippingMethod === 'a-post' || purchase.shippingMethod === 'a_post') {
+              shippingCode = 'post_priority_2kg'
+            }
+          }
+
           // Create Order first
           const createOrderRes = await fetch('/api/orders/create', {
             method: 'POST',
@@ -295,6 +312,9 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
             body: JSON.stringify({
               watchId: purchase.watch.id,
               purchaseId: purchase.id,
+              selectedDeliveryMode: deliveryMode,
+              selectedShippingCode: shippingCode,
+              // Legacy field for backwards compatibility
               shippingMethod: purchase.shippingMethod || 'pickup',
             }),
           })

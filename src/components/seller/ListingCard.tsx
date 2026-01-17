@@ -19,13 +19,14 @@ export interface ListingCardProps {
   status: ListingStatus
   bidCount: number
   highestBid: number | null
-  purchaseId?: string | null // For sold items - opens sale details drawer
+  purchaseId?: string | null // For sold items - opens sale details drawer (old system)
+  orderId?: string | null // For sold items - opens sale details drawer (new system)
   // Dispute fields für Verkäufer-Übersicht
   disputeOpenedAt?: string | null
   disputeStatus?: string | null
   onDelete: (id: string) => void
   onDuplicate: (id: string) => void
-  onSaleClick?: (purchaseId: string) => void // Opens drawer for sold items
+  onSaleClick?: (saleId: string, type: 'purchase' | 'order') => void // Opens drawer for sold items
 }
 
 const statusConfig = {
@@ -62,6 +63,7 @@ export function ListingCard({
   bidCount,
   highestBid,
   purchaseId,
+  orderId,
   disputeOpenedAt,
   disputeStatus,
   onDelete,
@@ -71,12 +73,16 @@ export function ListingCard({
   const mainImage = images[0] || null
   const articleUrl = `/products/${id}`
   const displayPrice = highestBid || price
+  
+  // Determine which sale ID to use (prefer purchaseId, fallback to orderId)
+  const saleId = purchaseId || orderId
+  const saleType: 'purchase' | 'order' = purchaseId ? 'purchase' : 'order'
 
   // Handle click for sold items - open drawer instead of navigating
   const handleSoldClick = (e: React.MouseEvent) => {
-    if (status === 'sold' && purchaseId && onSaleClick) {
+    if (status === 'sold' && saleId && onSaleClick) {
       e.preventDefault()
-      onSaleClick(purchaseId)
+      onSaleClick(saleId, saleType)
     }
   }
 
@@ -109,7 +115,7 @@ export function ListingCard({
       {/* Image Container - 4:3 aspect ratio for compact look */}
       <div className="relative aspect-[4/3] overflow-hidden bg-gray-100">
         {mainImage ? (
-          status === 'sold' && purchaseId && onSaleClick ? (
+          status === 'sold' && saleId && onSaleClick ? (
             <button onClick={handleSoldClick} className="h-full w-full">
               <img
                 src={mainImage}
@@ -160,7 +166,7 @@ export function ListingCard({
 
         {/* Quick Actions - Visible on hover */}
         <div className="absolute inset-0 flex items-center justify-center gap-1.5 bg-black/40 opacity-0 transition-opacity group-hover:opacity-100">
-          {status === 'sold' && purchaseId && onSaleClick ? (
+          {status === 'sold' && saleId && onSaleClick ? (
             // Sold items: Open sale details drawer
             <button
               onClick={handleSoldClick}
@@ -223,7 +229,7 @@ export function ListingCard({
       {/* Content - Compact */}
       <div className="p-2">
         {/* Title */}
-        {status === 'sold' && purchaseId && onSaleClick ? (
+        {status === 'sold' && saleId && onSaleClick ? (
           <button onClick={handleSoldClick} className="w-full text-left">
             <h3 className="line-clamp-1 text-xs font-semibold text-gray-900 transition-colors hover:text-primary-600">
               {title}

@@ -46,6 +46,7 @@ export interface SellerListing {
   bidCount: number
   highestBid: number | null
   purchaseId: string | null
+  orderId: string | null // NEW: Support for Order system
   // Dispute fields für Verkäufer-Übersicht
   disputeOpenedAt: string | null
   disputeStatus: string | null
@@ -127,6 +128,15 @@ export async function GET(request: NextRequest) {
             disputeStatus: true,
           },
         },
+        // NEW: Also fetch orders to properly detect sold items
+        orders: {
+          select: {
+            id: true,
+            orderStatus: true,
+            disputeOpenedAt: true,
+            disputeStatus: true,
+          },
+        },
         bids: {
           select: { amount: true },
           orderBy: { amount: 'desc' },
@@ -145,9 +155,21 @@ export async function GET(request: NextRequest) {
     })
 
     // Calculate status for each listing
+    // IMPORTANT: Check BOTH purchases AND orders to determine sold status
     const listingsWithStatus = allListings.map(listing => {
+      // Check purchases (old system)
       const activePurchases = listing.purchases.filter(p => p.status !== 'cancelled')
-      const isSold = activePurchases.length > 0
+      const hasPurchase = activePurchases.length > 0
+      
+      // Check orders (new system) - canceled orders don't count as sold
+      const activeOrders = listing.orders.filter(o => 
+        o.orderStatus !== 'canceled' && o.orderStatus !== 'cancelled'
+      )
+      const hasOrder = activeOrders.length > 0
+      
+      // Item is sold if it has EITHER an active purchase OR an active order
+      const isSold = hasPurchase || hasOrder
+      
       const auctionEndDate = listing.auctionEnd ? new Date(listing.auctionEnd) : null
       const isAuctionExpired = auctionEndDate && auctionEndDate <= now
 
@@ -170,17 +192,23 @@ export async function GET(request: NextRequest) {
         }
       }
 
-      // Get purchaseId for sold items (first active purchase)
-      const activePurchase = isSold ? activePurchases[0] : null
+      // Get IDs for sold items (prefer purchase, fallback to order)
+      const activePurchase = hasPurchase ? activePurchases[0] : null
+      const activeOrder = hasOrder ? activeOrders[0] : null
       const purchaseId = activePurchase?.id || null
+      const orderId = activeOrder?.id || null
 
       // Debug logging for sold items
       if (isSold) {
         console.log(
-          `[seller/listings] Sold item: ${listing.title}, purchaseId: ${purchaseId}, purchases: ${JSON.stringify(listing.purchases)}`
+          `[seller/listings] Sold item: ${listing.title}, purchaseId: ${purchaseId}, orderId: ${orderId}, ` +
+          `purchases: ${listing.purchases.length}, orders: ${listing.orders.length}`
         )
       }
 
+      // Get dispute data from either purchase or order
+      const disputeSource = activePurchase || activeOrder
+      
       return {
         id: listing.id,
         articleNumber: listing.articleNumber,
@@ -196,9 +224,10 @@ export async function GET(request: NextRequest) {
         bidCount: listing._count.bids,
         highestBid: listing.bids[0]?.amount || null,
         purchaseId,
+        orderId, // NEW: Include orderId for Order-based sales
         // Dispute-Daten für Verkäufer-Übersicht
-        disputeOpenedAt: activePurchase?.disputeOpenedAt?.toISOString() || null,
-        disputeStatus: activePurchase?.disputeStatus || null,
+        disputeOpenedAt: disputeSource?.disputeOpenedAt?.toISOString() || null,
+        disputeStatus: disputeSource?.disputeStatus || null,
       }
     })
 
