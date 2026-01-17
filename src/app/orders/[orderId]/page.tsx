@@ -590,7 +590,7 @@ export default function OrderDetailPage() {
                   const payoutFee = sellerAmountBeforePayout * 0.0025 + 0.55
                   const combinedFee = Math.round((processingFee + payoutFee) * 100) / 100
                   const sellerReceives = Math.round((order.itemPrice - order.platformFee - combinedFee) * 100) / 100
-                  
+
                   return (
                     <>
                       <div className="flex justify-between text-red-600">

@@ -20,7 +20,6 @@ import {
   CreditCard,
   ExternalLink,
   Loader2,
-  Mail,
   MessageSquare,
   Package,
   PackageCheck,
@@ -951,22 +950,17 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                             </button>
                           </div>
                           <div className="space-y-1.5 text-sm text-gray-700">
-                            {(purchase.watch.seller.firstName ||
-                              purchase.watch.seller.lastName) && (
-                              <div className="font-medium text-gray-900">
-                                {purchase.watch.seller.firstName} {purchase.watch.seller.lastName}
-                              </div>
-                            )}
+                            {/* Show seller name */}
+                            <div className="font-medium text-gray-900">
+                              {purchase.watch.seller.firstName && purchase.watch.seller.lastName
+                                ? `${purchase.watch.seller.firstName} ${purchase.watch.seller.lastName}`
+                                : purchase.watch.seller.name || 'Verkäufer'}
+                            </div>
+                            {/* Only show phone as quick preview - email is in full details */}
                             {purchase.watch.seller.phone && (
                               <div className="flex items-center gap-1.5">
                                 <Phone className="h-3.5 w-3.5 text-gray-400" />
                                 {purchase.watch.seller.phone}
-                              </div>
-                            )}
-                            {purchase.watch.seller.email && (
-                              <div className="flex items-center gap-1.5">
-                                <Mail className="h-3.5 w-3.5 text-gray-400" />
-                                {purchase.watch.seller.email}
                               </div>
                             )}
                           </div>
