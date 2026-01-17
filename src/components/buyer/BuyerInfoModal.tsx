@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { X, CheckCircle, Mail, Phone, MapPin, CreditCard, User, Copy, Check, ShoppingBag } from 'lucide-react'
+import { X, CheckCircle, Mail, Phone, MapPin, CreditCard, User, Copy, Check } from 'lucide-react'
 import { toast } from 'react-hot-toast'
 
 interface BuyerInfo {
@@ -70,7 +70,7 @@ export function BuyerInfoModal({
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
       <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
         {/* Header */}
-        <div className="sticky top-0 z-10 border-b border-gray-100 bg-gradient-to-r from-amber-500 to-orange-500 px-6 py-5">
+        <div className="sticky top-0 z-10 border-b border-gray-100 bg-gradient-to-r from-primary-600 to-teal-500 px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
               <h2 className="text-xl font-bold text-white">Käuferinformationen</h2>
@@ -88,13 +88,13 @@ export function BuyerInfoModal({
 
         <div className="p-6">
           {/* Success Banner */}
-          <div className="mb-6 flex items-center gap-3 rounded-xl bg-gradient-to-r from-amber-50 to-orange-50 p-4 ring-1 ring-amber-200/50">
-            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-500">
-              <ShoppingBag className="h-5 w-5 text-white" />
+          <div className="mb-6 flex items-center gap-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 p-4 ring-1 ring-emerald-200/50">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500">
+              <CheckCircle className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="font-semibold text-amber-800">Käuferdaten verfügbar</p>
-              <p className="text-sm text-amber-600">
+              <p className="font-semibold text-emerald-800">Käuferdaten freigeschaltet</p>
+              <p className="text-sm text-emerald-600">
                 Als Verkäufer haben Sie Zugriff auf die vollständigen Käuferdaten für den Versand.
               </p>
             </div>
