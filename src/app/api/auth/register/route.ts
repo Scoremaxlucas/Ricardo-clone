@@ -237,6 +237,18 @@ export async function POST(request: NextRequest) {
       // Don't fail registration if email fails - user can request resend
     }
 
+    // Sync user to Bexio automatically (non-blocking)
+    try {
+      if (process.env.BEXIO_API_TOKEN) {
+        const { syncUserToBexio } = await import('@/lib/bexio-sync')
+        await syncUserToBexio(user.id)
+        console.log(`[register] ✅ User ${user.id} synced to Bexio`)
+      }
+    } catch (bexioError: any) {
+      // Don't fail registration if Bexio sync fails
+      console.error(`[register] ⚠️ Bexio sync failed for user ${user.id}:`, bexioError.message)
+    }
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user
 

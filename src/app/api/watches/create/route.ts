@@ -1021,6 +1021,24 @@ export async function POST(request: NextRequest) {
     // Follow-Funktionalität ist derzeit nicht verfügbar (Follow Model fehlt im Schema)
     // TODO: Follow-Funktionalität wieder aktivieren, wenn Follow Model hinzugefügt wird
 
+    // Sync seller to Bexio if not already synced (non-blocking)
+    try {
+      if (process.env.BEXIO_API_TOKEN && session.user.id) {
+        const userForBexio = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          select: { bexioContactId: true },
+        })
+        if (!userForBexio?.bexioContactId) {
+          const { syncUserToBexio } = await import('@/lib/bexio-sync')
+          await syncUserToBexio(session.user.id)
+          console.log(`[watches/create] ✅ User ${session.user.id} synced to Bexio`)
+        }
+      }
+    } catch (bexioError: any) {
+      // Don't fail watch creation if Bexio sync fails
+      console.error(`[watches/create] ⚠️ Bexio sync failed:`, bexioError.message)
+    }
+
     // Erstelle Rechnung für Booster, falls ein kostenpflichtiger Booster gewählt wurde
     try {
       if (booster && booster !== 'none') {
