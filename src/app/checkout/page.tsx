@@ -180,7 +180,11 @@ function CheckoutPageContent() {
 
       if (!createOrderRes.ok) {
         const errorData = await createOrderRes.json()
-        throw new Error(errorData.message || 'Fehler beim Erstellen der Bestellung')
+        console.error('Order creation error:', errorData)
+        const errorMsg = errorData.error 
+          ? `${errorData.message}: ${errorData.error}` 
+          : errorData.message || 'Fehler beim Erstellen der Bestellung'
+        throw new Error(errorMsg)
       }
 
       const orderData = await createOrderRes.json()

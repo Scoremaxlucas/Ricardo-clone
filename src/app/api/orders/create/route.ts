@@ -296,7 +296,7 @@ export async function POST(request: NextRequest) {
       contactDeadline: contactDeadline,
     }
     console.log('[orders/create] Creating order with data:', JSON.stringify(orderData, null, 2))
-    
+
     let order
     try {
       order = await prisma.order.create({
@@ -332,10 +332,10 @@ export async function POST(request: NextRequest) {
       console.error('[orders/create] Prisma error code:', prismaError.code)
       console.error('[orders/create] Prisma error meta:', prismaError.meta)
       return NextResponse.json(
-        { 
-          message: 'Datenbankfehler beim Erstellen der Bestellung', 
+        {
+          message: 'Datenbankfehler beim Erstellen der Bestellung',
           error: prismaError.message,
-          code: prismaError.code 
+          code: prismaError.code
         },
         { status: 500 }
       )
