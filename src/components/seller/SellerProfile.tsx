@@ -62,7 +62,7 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail, compact = fal
         const followsKey = `seller_follows_${currentUserId}`
         const currentFollows = JSON.parse(localStorage.getItem(followsKey) || '[]')
         setIsFollowing(currentFollows.includes(sellerId))
-        
+
         // Cleanup: Remove old global key if exists (migration)
         if (localStorage.getItem('seller_follows')) {
           localStorage.removeItem('seller_follows')
@@ -98,7 +98,7 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail, compact = fal
     try {
       const currentUserId = (session.user as { id?: string })?.id
       if (!currentUserId) return
-      
+
       // Use user-specific key to avoid sharing follows between users
       const followsKey = `seller_follows_${currentUserId}`
       const currentFollows = JSON.parse(localStorage.getItem(followsKey) || '[]')
@@ -194,7 +194,7 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail, compact = fal
     return (
       <div className="p-4">
         <div className="mb-3 text-xs font-semibold uppercase tracking-wide text-gray-500">Verkäufer</div>
-        
+
         <div className="flex items-center gap-3">
           {/* Avatar */}
           <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white">

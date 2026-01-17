@@ -63,7 +63,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
     // Get userId for user-specific localStorage key
     const currentUserId = (session?.user as { id?: string })?.id
     const readPurchasesKey = currentUserId ? `readPurchases_${currentUserId}` : 'readPurchases'
-    
+
     // Markiere initial purchases als gelesen (sofort, ohne Wartezeit)
     if (initialPurchases.length > 0) {
       const readPurchases = JSON.parse(localStorage.getItem(readPurchasesKey) || '[]')

@@ -152,7 +152,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
     // Cleanup: Remove buggy global localStorage key (was shared between all users!)
     localStorage.removeItem('profileImage')
-    
+
     // Profilbild aus Session laden (korrekt pro User)
     if (session?.user?.image) {
       setProfileImage(session.user.image)

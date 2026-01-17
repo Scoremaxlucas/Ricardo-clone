@@ -54,6 +54,9 @@ export async function POST(request: Request) {
     { name: 'shippingCostChfFinal', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingCostChfFinal" DOUBLE PRECISION NOT NULL DEFAULT 0' },
     { name: 'shippingCostBreakdown', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingCostBreakdown" TEXT' },
     { name: 'shippingRateSetId', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingRateSetId" TEXT DEFAULT \'default_ch_post\'' },
+    // Invoice columns (missing!)
+    { name: 'invoiceId', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoiceId" TEXT' },
+    { name: 'invoiceCreatedAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoiceCreatedAt" TIMESTAMP(3)' },
   ]
 
   for (const col of columns) {
