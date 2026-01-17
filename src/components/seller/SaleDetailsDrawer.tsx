@@ -146,12 +146,20 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
     }
   }
 
+  const [confirmingPayment, setConfirmingPayment] = useState(false)
+  
   const handleConfirmPayment = async () => {
     if (!sale) return
+    setConfirmingPayment(true)
     try {
-      const res = await fetch(`/api/purchases/${sale.id}/confirm-payment`, { method: 'POST' })
+      // Für Orders: Verwende Order-API, für Purchases: Verwende Purchase-API
+      const apiEndpoint = sale.orderId
+        ? `/api/orders/${sale.orderId}/confirm-payment`
+        : `/api/purchases/${sale.id}/confirm-payment`
+      
+      const res = await fetch(apiEndpoint, { method: 'POST' })
       if (res.ok) {
-        toast.success('Zahlung bestätigt!')
+        toast.success('Zahlung bestätigt! Rechnung wurde erstellt.')
         onUpdate?.()
         await reloadSale()
       } else {
@@ -160,6 +168,8 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
       }
     } catch {
       toast.error('Fehler beim Bestätigen')
+    } finally {
+      setConfirmingPayment(false)
     }
   }
 
@@ -582,14 +592,25 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
         {sale && (
           <div className="border-t border-gray-200 p-3 sm:p-4">
             <div className="flex flex-col gap-3">
-              {/* Confirm payment button */}
-              {!sale.paymentConfirmed && sale.paid && (
+              {/* Confirm payment button - für ALLE nicht-bezahlten Verkäufe */}
+              {/* Zeige Button wenn: nicht bezahlt via Stripe UND nicht bereits bestätigt */}
+              {!sale.paymentConfirmed && !sale.isPaidViaStripe && sale.status !== 'completed' && (
                 <button
                   onClick={handleConfirmPayment}
-                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-medium text-white hover:bg-green-700"
+                  disabled={confirmingPayment}
+                  className="flex w-full items-center justify-center gap-2 rounded-lg bg-green-600 px-4 py-3 font-medium text-white hover:bg-green-700 disabled:opacity-50"
                 >
-                  <CreditCard className="h-5 w-5" />
-                  Zahlung erhalten bestätigen
+                  {confirmingPayment ? (
+                    <>
+                      <div className="h-5 w-5 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                      Wird bestätigt...
+                    </>
+                  ) : (
+                    <>
+                      <CreditCard className="h-5 w-5" />
+                      Zahlung erhalten bestätigen
+                    </>
+                  )}
                 </button>
               )}
 

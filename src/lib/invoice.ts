@@ -301,6 +301,18 @@ export async function calculateInvoiceForOrder(orderId: string) {
     // Silent fail - Notification-Fehler sollte nicht kritisch sein
   }
 
+  // Sync invoice to Bexio automatically (non-blocking)
+  try {
+    if (process.env.BEXIO_API_TOKEN) {
+      const { createBexioInvoice } = await import('@/lib/bexio-sync')
+      const bexioResult = await createBexioInvoice(invoice.id)
+      console.log(`[invoice/order] ✅ Invoice ${invoice.invoiceNumber} synced to Bexio (ID: ${bexioResult.bexioInvoiceId}, QR: ${bexioResult.qrReference})`)
+    }
+  } catch (bexioError: any) {
+    // Don't fail invoice creation if Bexio sync fails
+    console.error(`[invoice/order] ⚠️ Bexio sync failed for invoice ${invoice.invoiceNumber}:`, bexioError.message)
+  }
+
   return invoice
 }
 

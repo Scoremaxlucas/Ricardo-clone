@@ -53,9 +53,12 @@ export async function POST(
     }
 
     // Prüfe ob Order für Zahlungsbestätigung geeignet ist
-    if (!['pending_bank_transfer', 'pending_cash'].includes(order.paymentStatus)) {
+    // Akzeptiere: pending_bank_transfer, pending_cash, created (für alle Zahlungsarten)
+    // NICHT akzeptieren: bereits bezahlt (paid, released) oder storniert (refunded, canceled)
+    const invalidStatuses = ['paid', 'released', 'refunded', 'canceled']
+    if (invalidStatuses.includes(order.paymentStatus)) {
       return NextResponse.json(
-        { message: 'Diese Bestellung kann nicht als bezahlt markiert werden' },
+        { message: 'Diese Bestellung wurde bereits bezahlt oder storniert' },
         { status: 400 }
       )
     }

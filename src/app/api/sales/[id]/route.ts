@@ -201,7 +201,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         // We use safe defaults for those fields
         const contactDeadline = order.contactDeadline
         const contactDeadlineMissed = contactDeadline ? new Date() > new Date(contactDeadline) : false
-        
+
         const saleFromOrder = {
           id: order.id,
           soldAt: order.createdAt,

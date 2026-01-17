@@ -44,17 +44,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       return NextResponse.json({ message: 'Zahlung wurde bereits bestätigt' }, { status: 400 })
     }
 
-    // WICHTIG: Verkäufer kann nur bestätigen, wenn der Käufer bereits als bezahlt markiert hat
-    // Dies verhindert, dass Verkäufer fälschlicherweise bestätigen, dass sie bezahlt wurden
-    if (!purchase.paid) {
-      return NextResponse.json(
-        {
-          message:
-            'Der Käufer muss zuerst bestätigen, dass er bezahlt hat, bevor Sie die Zahlung bestätigen können.',
-        },
-        { status: 400 }
-      )
-    }
+    // Ricardo-Style: Verkäufer kann direkt bestätigen dass Zahlung erhalten wurde
+    // Der Käufer muss NICHT zuerst "als bezahlt markieren"
+    // Dies vereinfacht den Flow bei Bar-, TWINT- oder Banküberweisungszahlungen
 
     // WICHTIG: Prüfe ob ein Dispute offen ist - blockiere Bestätigung bei aktivem Dispute
     if (
