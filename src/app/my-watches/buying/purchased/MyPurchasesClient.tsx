@@ -763,8 +763,8 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                                 : 'Sofortkauf'}
                             </span>
                             {/* Helvenda Zahlungsschutz Badge - NOT for pickup! */}
-                            {purchase.paymentProtectionEnabled && 
-                             purchase.shippingMethod !== 'pickup' && 
+                            {purchase.paymentProtectionEnabled &&
+                             purchase.shippingMethod !== 'pickup' &&
                              purchase.shippingMethod !== 'abholung' && (
                               <span
                                 className="flex items-center gap-1 rounded bg-green-50 px-2 py-0.5 font-medium text-green-700"
@@ -844,7 +844,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                               <span className="text-xs text-gray-600">{uiState.deadlineText}</span>
                             )}
                             {/* Pickup payment info */}
-                            {(purchase.shippingMethod === 'pickup' || purchase.shippingMethod === 'abholung') && 
+                            {(purchase.shippingMethod === 'pickup' || purchase.shippingMethod === 'abholung') &&
                              !purchase.paymentConfirmed && !purchase.itemReceived && (
                               <span className="text-xs font-medium text-blue-600">
                                 💰 Zahlung bei Abholung

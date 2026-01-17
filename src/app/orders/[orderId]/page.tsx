@@ -102,8 +102,9 @@ export default function OrderDetailPage() {
       const orderData = data.order
 
       setOrder(orderData)
-      setIsBuyer(orderData.buyerId === ((session?.user as { id?: string })?.id ?? ''))
-      setIsSeller(orderData.sellerId === ((session?.user as { id?: string })?.id ?? ''))
+      // Use the isBuyer/isSeller flags from API (more reliable than comparing IDs)
+      setIsBuyer(orderData.isBuyer === true)
+      setIsSeller(orderData.isSeller === true)
     } catch (err: any) {
       console.error('[OrderDetail] Error:', err)
       // Don't redirect - show error state instead
@@ -281,10 +282,10 @@ export default function OrderDetailPage() {
         {/* Breadcrumb */}
         <div className="mb-6">
           <Link
-            href={isBuyer ? '/my-watches/buying' : '/my-watches/selling'}
+            href={isBuyer ? '/my-watches/buying/purchased' : '/my-watches/selling'}
             className="inline-flex items-center font-medium text-primary-600 hover:text-primary-700"
           >
-            ← Zurück zu {isBuyer ? 'Meine Käufe' : 'Meine Verkäufe'}
+            ← Zurück zu {isBuyer ? 'Gekaufte Artikel' : 'Meine Verkäufe'}
           </Link>
         </div>
 

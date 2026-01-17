@@ -85,7 +85,7 @@ export function getOrderUIState(
 
   // Check if this is a PICKUP order - no payment protection for pickup!
   // Pickup = payment happens in person, no Stripe needed
-  const isPickup = purchase.shippingMethod === 'pickup' || 
+  const isPickup = purchase.shippingMethod === 'pickup' ||
                    purchase.shippingMethod === 'abholung' ||
                    (purchase as any).selectedDeliveryMode === 'pickup'
 
