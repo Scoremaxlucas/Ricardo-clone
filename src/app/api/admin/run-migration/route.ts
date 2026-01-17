@@ -10,21 +10,21 @@ import { NextResponse } from 'next/server'
  */
 export async function POST() {
   const session = await getServerSession(authOptions)
-  
+
   // Check if user is admin
   if (!session?.user?.email) {
     return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
   }
-  
+
   // Check if user is admin (add your admin emails here)
   const adminEmails = ['admin@helvenda.ch', 'lucas@helvenda.ch', 'a@a.ch']
   if (!adminEmails.includes(session.user.email)) {
     return NextResponse.json({ error: 'Nicht autorisiert - nur für Admins' }, { status: 403 })
   }
-  
+
   const results: string[] = []
   const errors: string[] = []
-  
+
   // List of columns to add
   const columns = [
     { name: 'paymentMethod', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentMethod" TEXT' },
@@ -46,7 +46,7 @@ export async function POST() {
     { name: 'shippingCostBreakdown', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingCostBreakdown" TEXT' },
     { name: 'shippingRateSetId', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingRateSetId" TEXT DEFAULT \'default_ch_post\'' },
   ]
-  
+
   for (const col of columns) {
     try {
       await prisma.$executeRawUnsafe(col.sql)
@@ -60,13 +60,13 @@ export async function POST() {
       }
     }
   }
-  
+
   return NextResponse.json({
     success: errors.length === 0,
     results,
     errors,
-    message: errors.length === 0 
-      ? 'Migration erfolgreich ausgeführt!' 
+    message: errors.length === 0
+      ? 'Migration erfolgreich ausgeführt!'
       : 'Migration teilweise fehlgeschlagen - siehe errors',
   })
 }
