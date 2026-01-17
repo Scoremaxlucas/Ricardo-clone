@@ -31,8 +31,8 @@ import {
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
-import { useEffect, useState } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
+import { useEffect, useRef, useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface MyPurchasesClientProps {
@@ -41,6 +41,7 @@ interface MyPurchasesClientProps {
 
 export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const { data: session } = useSession()
   const [purchases, setPurchases] = useState<MyPurchaseItem[]>(initialPurchases)
   const [isInitialLoad, setIsInitialLoad] = useState(true) // Track if initial data has been confirmed
@@ -56,6 +57,8 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
   )
   const [processingStripePayment, setProcessingStripePayment] = useState<string | null>(null) // purchaseId being processed
   const [protectionUnavailable, setProtectionUnavailable] = useState(false) // true when protection was expected but seller lacks Stripe
+  const [highlightedPurchaseId, setHighlightedPurchaseId] = useState<string | null>(null)
+  const highlightedRef = useRef<HTMLDivElement>(null)
 
   // OPTIMIERT: Lade Updates non-blocking im Hintergrund (Polling)
   // WICHTIG: Initial purchases werden sofort angezeigt, Updates kommen später
@@ -155,6 +158,48 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
       }
     }
   }, [initialPurchases])
+
+  // Handle highlight and action from query params (from success page redirect)
+  useEffect(() => {
+    const highlight = searchParams.get('highlight')
+    const action = searchParams.get('action')
+
+    if (highlight && purchases.length > 0) {
+      setHighlightedPurchaseId(highlight)
+
+      // Find the purchase to highlight (check both purchase ID and order ID)
+      const purchaseToHighlight = purchases.find(
+        p => p.id === highlight || p.orderId === highlight
+      )
+
+      if (purchaseToHighlight) {
+        // Expand and scroll to the highlighted purchase
+        setExpandedPurchaseId(purchaseToHighlight.id)
+
+        // Auto-open seller info modal if action=contact
+        if (action === 'contact') {
+          setSelectedPurchase(purchaseToHighlight)
+          setShowSellerInfo(true)
+        }
+
+        // Scroll to highlighted purchase after a short delay
+        setTimeout(() => {
+          if (highlightedRef.current) {
+            highlightedRef.current.scrollIntoView({ behavior: 'smooth', block: 'center' })
+          }
+        }, 300)
+      }
+
+      // Clear highlight after 5 seconds
+      const clearTimer = setTimeout(() => {
+        setHighlightedPurchaseId(null)
+        // Clear URL params without full reload
+        router.replace('/my-watches/buying/purchased', { scroll: false })
+      }, 5000)
+
+      return () => clearTimeout(clearTimer)
+    }
+  }, [searchParams, purchases, router])
 
   const handleMarkPaid = () => {
     fetch(`/api/purchases/my-purchases?t=${Date.now()}`)
@@ -642,10 +687,17 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
               Loader2,
             }
 
+            const isHighlighted = highlightedPurchaseId === purchase.id || highlightedPurchaseId === purchase.orderId
+
             return (
               <div
                 key={purchase.id}
-                className="rounded-lg border border-gray-200 bg-white shadow-sm transition-shadow hover:shadow-md"
+                ref={isHighlighted ? highlightedRef : undefined}
+                className={`rounded-lg border bg-white shadow-sm transition-all ${
+                  isHighlighted
+                    ? 'border-primary-400 ring-2 ring-primary-200 shadow-lg shadow-primary-100'
+                    : 'border-gray-200 hover:shadow-md'
+                }`}
               >
                 {/* Header Row */}
                 <div className="p-4">

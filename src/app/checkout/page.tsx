@@ -224,14 +224,8 @@ function CheckoutPageContent() {
         // Order wurde bereits erstellt mit Status "confirmed"
         // Käufer erhält E-Mail mit Zahlungsinformationen/Kontaktdaten
 
-        if (isPickup) {
-          toast.success('Kauf erfolgreich! Kontaktieren Sie den Verkäufer für die Abholung.')
-        } else {
-          toast.success('Kauf erfolgreich! Überweisen Sie den Betrag innerhalb von 14 Tagen.')
-        }
-
-        // Redirect zur Bestellübersicht
-        router.push(`/my-watches/buying/orders?highlight=${orderId}`)
+        // Redirect zur Erfolgsseite (wie bei Ricardo)
+        router.push(`/orders/${orderId}/success`)
       }
     } catch (err: any) {
       console.error('Error during checkout:', err)

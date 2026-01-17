@@ -131,6 +131,13 @@ export async function GET(
         totalAmount: order.totalAmount,
         orderStatus: order.orderStatus,
         paymentStatus: order.paymentStatus,
+        // Payment & Delivery Info (for success page)
+        paymentMethod: (order as any).paymentMethod || null,
+        paymentDeadline: (order as any).paymentDeadline || null,
+        contactDeadline: (order as any).contactDeadline || null,
+        selectedDeliveryMode: (order as any).selectedDeliveryMode || null,
+        selectedShippingCode: (order as any).selectedShippingCode || null,
+        // Confirmation & Receipt
         buyerConfirmedReceipt: order.buyerConfirmedReceipt,
         buyerConfirmedAt: order.buyerConfirmedAt,
         disputeStatus: order.disputeStatus,
