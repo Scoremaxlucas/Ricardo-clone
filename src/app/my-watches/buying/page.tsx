@@ -219,7 +219,17 @@ export default function MyBuyingPage() {
     )
   }
 
+  // Reihenfolge nach Wichtigkeit/Häufigkeit (Ricardo-Style)
   const menuItems = [
+    {
+      title: t.myBuying.purchased,
+      description: t.myBuying.purchasedDesc,
+      icon: ShoppingBag,
+      href: '/my-watches/buying/purchased',
+      color: 'text-emerald-600',
+      gradient: 'from-emerald-500/10 to-teal-500/5',
+      count: stats.purchased,
+    },
     {
       title: t.myBuying.activeBids,
       description: t.myBuying.activeBidsDesc,
@@ -237,15 +247,6 @@ export default function MyBuyingPage() {
       color: 'text-sky-600',
       gradient: 'from-sky-500/10 to-blue-500/5',
       count: stats.offers,
-    },
-    {
-      title: t.myBuying.purchased,
-      description: t.myBuying.purchasedDesc,
-      icon: ShoppingBag,
-      href: '/my-watches/buying/purchased',
-      color: 'text-emerald-600',
-      gradient: 'from-emerald-500/10 to-teal-500/5',
-      count: stats.purchased,
     },
     {
       title: t.myBuying.reviews,
@@ -337,15 +338,15 @@ export default function MyBuyingPage() {
 
       {/* Main Content */}
       <div className="mx-auto max-w-6xl px-4 py-10 sm:px-6 lg:px-8">
-        {/* Quick Overview Chips */}
+        {/* Quick Overview Chips - Reihenfolge wie Tiles */}
         {hasQuickOverview && (
           <QuickOverviewChips>
+            {stats.purchased > 0 && (
+              <QuickOverviewChip label="Gekaufte Artikel" value={stats.purchased} />
+            )}
             {stats.bidding > 0 && <QuickOverviewChip label="Aktive Gebote" value={stats.bidding} />}
             {stats.offers > 0 && (
               <QuickOverviewChip label="Preisvorschläge" value={stats.offers} highlight={true} />
-            )}
-            {stats.purchased > 0 && (
-              <QuickOverviewChip label="Gekaufte Artikel" value={stats.purchased} />
             )}
             {stats.searches > 0 && (
               <QuickOverviewChip label="Suchaufträge" value={stats.searches} />
