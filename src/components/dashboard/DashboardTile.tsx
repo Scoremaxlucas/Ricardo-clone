@@ -37,7 +37,7 @@ export function DashboardTile({
     >
       {/* Gradient Background */}
       <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-0 transition-opacity duration-300 group-hover:opacity-100`} />
-      
+
       {/* Content */}
       <div className="relative z-10 flex h-full flex-col p-6">
         {/* Top Row: Icon and Badge */}
@@ -48,7 +48,7 @@ export function DashboardTile({
             {/* Subtle glow on hover */}
             <div className="absolute inset-0 rounded-2xl bg-primary-500/0 transition-all duration-300 group-hover:bg-primary-500/5" />
           </div>
-          
+
           {/* Badge/Count with animation */}
           {badge || (hasNotification && (
             <span className="relative inline-flex items-center justify-center">

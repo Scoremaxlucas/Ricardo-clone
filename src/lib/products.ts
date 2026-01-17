@@ -30,7 +30,7 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
     const now = new Date()
 
     // WICHTIG: Zeige nur existierende Artikel (gelöschte werden automatisch nicht angezeigt)
-    // Filter für moderationStatus und Purchase-Status
+    // Filter für moderationStatus und Purchase/Order-Status
     const watches = await prisma.watch.findMany({
       where: {
         AND: [
@@ -43,22 +43,29 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
           },
           {
             // WICHTIG: Zeige Artikel die NICHT verkauft sind
-            // Neue Artikel ohne Purchase werden angezeigt
-            // Artikel mit nur cancelled purchases werden angezeigt
-            OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }],
+            // Prüfe sowohl alte purchases als auch neue orders
+            AND: [
+              // Keine aktiven purchases (altes System)
+              {
+                OR: [
+                  { purchases: { none: {} } },
+                  { purchases: { every: { status: 'cancelled' } } },
+                ],
+              },
+              // Keine aktiven orders (neues System)
+              {
+                OR: [
+                  { orders: { none: {} } },
+                  { orders: { every: { orderStatus: 'canceled' } } },
+                ],
+              },
+            ],
           },
           {
-            // WICHTIG: Zeige aktive Auktionen oder verkaufte Auktionen
-            // Neue Artikel ohne auctionEnd werden angezeigt
+            // WICHTIG: Zeige aktive Auktionen oder noch nicht begonnene
             OR: [
               { auctionEnd: null },
               { auctionEnd: { gt: now } },
-              {
-                AND: [
-                  { auctionEnd: { lte: now } },
-                  { purchases: { some: { status: { not: 'cancelled' } } } },
-                ],
-              },
             ],
           },
         ],

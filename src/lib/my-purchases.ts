@@ -35,6 +35,8 @@ export interface MyPurchaseItem {
   hasStripePayment?: boolean // true if paid via Stripe (protected), false if bank transfer (unprotected)
   paymentProtectionEnabled?: boolean // from watch
   orderId?: string | null // Order ID if exists (for Stripe checkout)
+  orderNumber?: string // Order number for display
+  paymentMethod?: string | null // 'stripe' | 'bank_transfer' | 'cash_on_pickup'
   watch: {
     id: string
     title: string
@@ -60,12 +62,11 @@ export interface MyPurchaseItem {
 
 /**
  * Fetch user's purchases server-side for instant rendering
- * ULTRA-OPTIMIZED: No N+1 problem - purchase.price is already the final price
+ * UNIFIED: Fetches both old purchases AND new orders
  */
 export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> {
   try {
-    // ULTRA-MINIMALE Query: purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
-    // KEINE bids Query nötig - das würde N+1 Problem verursachen
+    // Query 1: Old purchases system
     const purchases = await prisma.purchase.findMany({
       where: {
         buyerId: userId,
@@ -73,7 +74,7 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
       },
       select: {
         id: true,
-        price: true, // purchase.price ist bereits der finale Preis
+        price: true,
         createdAt: true,
         shippingMethod: true,
         paymentConfirmed: true,
@@ -97,6 +98,7 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
         trackingNumber: true,
         trackingProvider: true,
         shippedAt: true,
+        watchId: true,
         watch: {
           select: {
             id: true,
@@ -109,26 +111,6 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
             shippingMethod: true,
             isAuction: true,
             paymentProtectionEnabled: true,
-            orders: {
-              where: {
-                buyerId: userId,
-              },
-              select: {
-                id: true,
-                stripePaymentIntentId: true,
-                stripeChargeId: true,
-                paymentStatus: true,
-                itemPrice: true,
-                shippingCost: true,
-                platformFee: true,
-                protectionFee: true,
-                totalAmount: true,
-              },
-              take: 1,
-              orderBy: {
-                createdAt: 'desc',
-              },
-            },
             seller: {
               select: {
                 id: true,
@@ -148,100 +130,232 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
       orderBy: { createdAt: 'desc' },
     })
 
-    return purchases.map(purchase => {
-      const watch = purchase.watch
+    // Query 2: New orders system (for items bought via checkout)
+    const orders = await prisma.order.findMany({
+      where: {
+        buyerId: userId,
+        orderStatus: { not: 'canceled' },
+      },
+      select: {
+        id: true,
+        orderNumber: true,
+        createdAt: true,
+        orderStatus: true,
+        paymentStatus: true,
+        paymentMethod: true,
+        itemPrice: true,
+        shippingCost: true,
+        platformFee: true,
+        protectionFee: true,
+        totalAmount: true,
+        paidAt: true,
+        shippedAt: true,
+        deliveredAt: true,
+        trackingNumber: true,
+        trackingProvider: true,
+        buyerConfirmedReceipt: true,
+        buyerConfirmedAt: true,
+        disputeStatus: true,
+        disputeOpenedAt: true,
+        disputeReason: true,
+        disputeResolvedAt: true,
+        contactDeadline: true,
+        sellerContactedAt: true,
+        buyerContactedAt: true,
+        contactWarningSentAt: true,
+        paymentDeadline: true,
+        paymentReminderSentAt: true,
+        paymentDeadlineMissed: true,
+        stripePaymentIntentId: true,
+        stripeChargeId: true,
+        selectedDeliveryMode: true,
+        watchId: true,
+        watch: {
+          select: {
+            id: true,
+            title: true,
+            brand: true,
+            model: true,
+            images: true,
+            price: true,
+            buyNowPrice: true,
+            shippingMethod: true,
+            isAuction: true,
+            paymentProtectionEnabled: true,
+            seller: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                phone: true,
+                firstName: true,
+                lastName: true,
+                paymentMethods: true,
+                stripeConnectedAccountId: true,
+                stripeOnboardingComplete: true,
+              },
+            },
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
 
-      // Parse images
-      let images: string[] = []
-      if (watch.images) {
-        try {
-          if (typeof watch.images === 'string') {
-            if (watch.images.startsWith('[') || watch.images.startsWith('{')) {
-              images = JSON.parse(watch.images)
-            } else {
-              images = watch.images.split(',').filter(img => img.trim().length > 0)
-            }
-          } else if (Array.isArray(watch.images)) {
-            images = watch.images
+    // Collect watchIds that have orders (to avoid duplicates)
+    const orderWatchIds = new Set(orders.map(o => o.watchId))
+
+    // Helper function to parse images
+    const parseImages = (images: any): string[] => {
+      if (!images) return []
+      try {
+        if (typeof images === 'string') {
+          if (images.startsWith('[') || images.startsWith('{')) {
+            return JSON.parse(images)
+          } else {
+            return images.split(',').filter((img: string) => img.trim().length > 0)
           }
-        } catch {
-          images = []
+        } else if (Array.isArray(images)) {
+          return images
         }
+      } catch {
+        return []
       }
+      return []
+    }
 
-      // Check if there's a Stripe payment (protected) or bank transfer (unprotected)
-      const order = watch.orders?.[0]
-      const hasStripePayment = !!(order?.stripePaymentIntentId || order?.stripeChargeId)
-      const paymentProtectionEnabled = watch.paymentProtectionEnabled || false
+    // Map old purchases (but skip if there's an order for the same watch)
+    const purchaseItems = purchases
+      .filter(p => !orderWatchIds.has(p.watchId)) // Skip if order exists for same watch
+      .map(purchase => {
+        const watch = purchase.watch
+        const images = parseImages(watch.images)
+        const finalPrice = purchase.price || watch.price || 0
+        const purchaseType = watch.isAuction && finalPrice !== watch.buyNowPrice ? 'auction' : 'buy-now'
 
-      // IMPORTANT: Derive payment status from Order if Stripe payment exists
-      // This ensures the UI reflects Stripe payment status correctly
-      const isPaidViaStripe = order?.paymentStatus === 'paid' || order?.paymentStatus === 'released'
-      const effectivePaid = purchase.paymentConfirmed || purchase.paid || isPaidViaStripe
+        return {
+          id: purchase.id,
+          purchasedAt: purchase.createdAt.toISOString(),
+          shippingMethod: purchase.shippingMethod || watch.shippingMethod || null,
+          paid: purchase.paymentConfirmed || purchase.paid || false,
+          status: purchase.status || 'pending',
+          itemReceived: purchase.itemReceived || false,
+          itemReceivedAt: purchase.itemReceivedAt?.toISOString() || null,
+          paymentConfirmed: purchase.paymentConfirmed || false,
+          paymentConfirmedAt: purchase.paymentConfirmedAt?.toISOString() || null,
+          contactDeadline: purchase.contactDeadline?.toISOString() || null,
+          sellerContactedAt: purchase.sellerContactedAt?.toISOString() || null,
+          buyerContactedAt: purchase.buyerContactedAt?.toISOString() || null,
+          contactWarningSentAt: purchase.contactWarningSentAt?.toISOString() || null,
+          contactDeadlineMissed: purchase.contactDeadlineMissed || false,
+          paymentDeadline: purchase.paymentDeadline?.toISOString() || null,
+          paymentReminderSentAt: purchase.paymentReminderSentAt?.toISOString() || null,
+          paymentDeadlineMissed: purchase.paymentDeadlineMissed || false,
+          disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
+          disputeReason: purchase.disputeReason || null,
+          disputeStatus: purchase.disputeStatus || null,
+          disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
+          trackingNumber: purchase.trackingNumber || null,
+          trackingProvider: purchase.trackingProvider || null,
+          shippedAt: purchase.shippedAt?.toISOString() || null,
+          hasStripePayment: false,
+          paymentProtectionEnabled: watch.paymentProtectionEnabled || false,
+          orderId: null,
+          watch: {
+            id: watch.id,
+            title: watch.title || 'Unbekanntes Produkt',
+            brand: watch.brand || '',
+            model: watch.model || '',
+            images: images || [],
+            seller: watch.seller ? {
+              ...watch.seller,
+              stripeConnectedAccountId: watch.seller.stripeConnectedAccountId || null,
+              stripeOnboardingComplete: watch.seller.stripeOnboardingComplete || false,
+            } : null,
+            price: watch.price || 0,
+            finalPrice,
+            purchaseType,
+          },
+        }
+      })
 
-      // purchase.price ist bereits der finale Preis (winning bid oder buyNowPrice)
-      const finalPrice = purchase.price || watch.price || 0
-      // Bestimme purchaseType basierend auf isAuction und buyNowPrice
-      const purchaseType =
-        watch.isAuction && finalPrice !== watch.buyNowPrice ? 'auction' : 'buy-now'
+    // Map new orders to the same format
+    const orderItems = orders.map(order => {
+      const watch = order.watch
+      const images = parseImages(watch.images)
+      const finalPrice = order.itemPrice || watch.price || 0
+      const hasStripePayment = !!(order.stripePaymentIntentId || order.stripeChargeId)
+      const isPaid = order.paymentStatus === 'paid' || order.paymentStatus === 'released' || order.paymentStatus === 'release_pending'
+
+      // Map order status to purchase-like status
+      let status = 'pending'
+      if (order.orderStatus === 'completed') status = 'completed'
+      else if (order.orderStatus === 'shipped') status = 'shipped'
+      else if (order.orderStatus === 'paid') status = 'paid'
+      else if (order.orderStatus === 'awaiting_payment') status = 'pending'
+      else if (order.orderStatus === 'confirmed') status = 'confirmed'
 
       return {
-        id: purchase.id,
-        purchasedAt: purchase.createdAt.toISOString(),
-        shippingMethod: purchase.shippingMethod || watch.shippingMethod || null,
-        paid: effectivePaid,
-        status: purchase.status || 'pending',
-        itemReceived: purchase.itemReceived || false,
-        itemReceivedAt: purchase.itemReceivedAt?.toISOString() || null,
-        paymentConfirmed: purchase.paymentConfirmed || isPaidViaStripe,
-        paymentConfirmedAt: purchase.paymentConfirmedAt?.toISOString() || null,
-        contactDeadline: purchase.contactDeadline?.toISOString() || null,
-        sellerContactedAt: purchase.sellerContactedAt?.toISOString() || null,
-        buyerContactedAt: purchase.buyerContactedAt?.toISOString() || null,
-        contactWarningSentAt: purchase.contactWarningSentAt?.toISOString() || null,
-        contactDeadlineMissed: purchase.contactDeadlineMissed || false,
-        paymentDeadline: purchase.paymentDeadline?.toISOString() || null,
-        paymentReminderSentAt: purchase.paymentReminderSentAt?.toISOString() || null,
-        paymentDeadlineMissed: purchase.paymentDeadlineMissed || false,
-        disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
-        disputeReason: purchase.disputeReason || null,
-        disputeStatus: purchase.disputeStatus || null,
-        disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
-        trackingNumber: purchase.trackingNumber || null,
-        trackingProvider: purchase.trackingProvider || null,
-        shippedAt: purchase.shippedAt?.toISOString() || null,
-        // Price breakdown from Order if available
-        itemPrice: order?.itemPrice || undefined,
-        shippingCost: order?.shippingCost || undefined,
-        platformFee: order?.platformFee || undefined,
-        protectionFee: order?.protectionFee || undefined,
-        totalAmount: order?.totalAmount || undefined,
+        id: order.id,
+        purchasedAt: order.createdAt.toISOString(),
+        shippingMethod: order.selectedDeliveryMode || watch.shippingMethod || null,
+        paid: isPaid,
+        status,
+        itemReceived: order.buyerConfirmedReceipt || false,
+        itemReceivedAt: order.buyerConfirmedAt?.toISOString() || null,
+        paymentConfirmed: isPaid,
+        paymentConfirmedAt: order.paidAt?.toISOString() || null,
+        contactDeadline: order.contactDeadline?.toISOString() || null,
+        sellerContactedAt: order.sellerContactedAt?.toISOString() || null,
+        buyerContactedAt: order.buyerContactedAt?.toISOString() || null,
+        contactWarningSentAt: order.contactWarningSentAt?.toISOString() || null,
+        contactDeadlineMissed: false,
+        paymentDeadline: order.paymentDeadline?.toISOString() || null,
+        paymentReminderSentAt: order.paymentReminderSentAt?.toISOString() || null,
+        paymentDeadlineMissed: order.paymentDeadlineMissed || false,
+        disputeOpenedAt: order.disputeOpenedAt?.toISOString() || null,
+        disputeReason: order.disputeReason || null,
+        disputeStatus: order.disputeStatus || null,
+        disputeResolvedAt: order.disputeResolvedAt?.toISOString() || null,
+        trackingNumber: order.trackingNumber || null,
+        trackingProvider: order.trackingProvider || null,
+        shippedAt: order.shippedAt?.toISOString() || null,
+        // Price breakdown from Order
+        itemPrice: order.itemPrice || undefined,
+        shippingCost: order.shippingCost || undefined,
+        platformFee: order.platformFee || undefined,
+        protectionFee: order.protectionFee || undefined,
+        totalAmount: order.totalAmount || undefined,
         // Payment method tracking
         hasStripePayment,
-        paymentProtectionEnabled,
-        orderId: order?.id || null,
+        paymentProtectionEnabled: watch.paymentProtectionEnabled || false,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        paymentMethod: order.paymentMethod,
         watch: {
           id: watch.id,
           title: watch.title || 'Unbekanntes Produkt',
           brand: watch.brand || '',
           model: watch.model || '',
           images: images || [],
-          seller: watch.seller
-            ? {
-                ...watch.seller,
-                stripeConnectedAccountId: watch.seller.stripeConnectedAccountId || null,
-                stripeOnboardingComplete: watch.seller.stripeOnboardingComplete || false,
-              }
-            : null,
+          seller: watch.seller ? {
+            ...watch.seller,
+            stripeConnectedAccountId: watch.seller.stripeConnectedAccountId || null,
+            stripeOnboardingComplete: watch.seller.stripeOnboardingComplete || false,
+          } : null,
           price: watch.price || 0,
           finalPrice,
-          purchaseType,
+          purchaseType: 'buy-now' as const,
         },
       }
     })
+
+    // Merge and sort by date (newest first)
+    const allItems = [...orderItems, ...purchaseItems]
+    allItems.sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime())
+
+    return allItems
   } catch (error) {
     console.error('Error fetching my purchases:', error)
-    // Return empty array on error to prevent Server Component crash
     return []
   }
 }

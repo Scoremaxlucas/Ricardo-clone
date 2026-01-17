@@ -565,6 +565,17 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                         </div>
                       </Link>
                       <Link
+                        href="/my-watches/buying/purchased"
+                        prefetch={true}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="block px-4 py-2 pl-8 text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="flex items-center">
+                          <Package className="mr-2 h-4 w-4" />
+                          Meine Bestellungen
+                        </div>
+                      </Link>
+                      <Link
                         href="/my-watches/account"
                         prefetch={true}
                         onClick={() => setIsProfileMenuOpen(false)}

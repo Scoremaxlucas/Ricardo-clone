@@ -1,7 +1,8 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { X, Shield, Loader2 } from 'lucide-react'
+import { X, Shield, Loader2, CheckCircle, Mail, Phone, MapPin, CreditCard, User, Copy, Check } from 'lucide-react'
+import { toast } from 'react-hot-toast'
 
 interface SellerInfo {
   id: string
@@ -93,6 +94,15 @@ export function SellerInfoModal({
     }
   }, [isOpen, sellerId])
 
+  const [copiedField, setCopiedField] = useState<string | null>(null)
+
+  const copyToClipboard = (text: string, fieldName: string) => {
+    navigator.clipboard.writeText(text)
+    setCopiedField(fieldName)
+    toast.success('Kopiert!')
+    setTimeout(() => setCopiedField(null), 2000)
+  }
+
   if (!isOpen) return null
 
   // Parse payment methods
@@ -105,147 +115,212 @@ export function SellerInfoModal({
     }
   }
 
+  const sellerFullName = sellerInfo?.firstName && sellerInfo?.lastName 
+    ? `${sellerInfo.firstName} ${sellerInfo.lastName}`
+    : sellerInfo?.name || 'Verkäufer'
+
+  const sellerFullAddress = sellerInfo?.street || sellerInfo?.city
+    ? `${sellerInfo.street || ''} ${sellerInfo.streetNumber || ''}, ${sellerInfo.postalCode || ''} ${sellerInfo.city || ''}`.trim()
+    : null
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50 p-4">
-      <div className="max-h-[90vh] w-full max-w-2xl overflow-y-auto rounded-lg bg-white shadow-xl">
-        <div className="sticky top-0 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
-          <h2 className="text-xl font-bold text-gray-900">Verkäuferinformationen</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 transition-colors hover:text-gray-600"
-            aria-label="Schliessen"
-          >
-            <X className="h-6 w-6" />
-          </button>
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 p-4 backdrop-blur-sm">
+      <div className="max-h-[90vh] w-full max-w-xl overflow-y-auto rounded-2xl bg-white shadow-2xl">
+        {/* Header */}
+        <div className="sticky top-0 z-10 border-b border-gray-100 bg-gradient-to-r from-primary-600 to-teal-500 px-6 py-5">
+          <div className="flex items-center justify-between">
+            <div>
+              <h2 className="text-xl font-bold text-white">Verkäuferinformationen</h2>
+              <p className="mt-1 text-sm text-white/80">{watchTitle}</p>
+            </div>
+            <button
+              onClick={onClose}
+              className="rounded-full bg-white/20 p-2 text-white transition-colors hover:bg-white/30"
+              aria-label="Schliessen"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
 
         <div className="p-6">
-          <div className="mb-4 text-sm text-gray-600">
-            Für: <span className="font-semibold text-gray-900">{watchTitle}</span>
+          {/* Success Banner */}
+          <div className="mb-6 flex items-center gap-3 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 p-4 ring-1 ring-emerald-200/50">
+            <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-emerald-500">
+              <CheckCircle className="h-5 w-5 text-white" />
+            </div>
+            <div>
+              <p className="font-semibold text-emerald-800">Kontaktdaten freigeschaltet</p>
+              <p className="text-sm text-emerald-600">
+                Als Käufer haben Sie jetzt Zugriff auf die vollständigen Verkäuferdaten.
+              </p>
+            </div>
           </div>
 
           {loading ? (
             <div className="flex items-center justify-center py-12">
-              <div className="h-8 w-8 animate-spin rounded-full border-b-2 border-primary-600"></div>
+              <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
             </div>
           ) : sellerInfo ? (
-            <div className="space-y-6">
-              {/* Name */}
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-gray-700">Name</h3>
-                <div className="space-y-2 rounded-lg bg-gray-50 p-4">
-                  {sellerInfo.firstName && (
-                    <div>
-                      <span className="text-xs text-gray-500">Vorname:</span>
-                      <div className="font-medium text-gray-900">{sellerInfo.firstName}</div>
-                    </div>
-                  )}
-                  {sellerInfo.lastName && (
-                    <div>
-                      <span className="text-xs text-gray-500">Nachname:</span>
-                      <div className="font-medium text-gray-900">{sellerInfo.lastName}</div>
-                    </div>
-                  )}
-                  {!sellerInfo.firstName && !sellerInfo.lastName && sellerInfo.name && (
-                    <div>
-                      <span className="text-xs text-gray-500">Name:</span>
-                      <div className="font-medium text-gray-900">{sellerInfo.name}</div>
-                    </div>
-                  )}
+            <div className="space-y-4">
+              {/* Name Card */}
+              <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                <div className="mb-3 flex items-center gap-2">
+                  <User className="h-4 w-4 text-gray-500" />
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Name</span>
+                </div>
+                <div className="flex items-center justify-between">
+                  <span className="text-lg font-semibold text-gray-900">{sellerFullName}</span>
+                  <button
+                    onClick={() => copyToClipboard(sellerFullName, 'name')}
+                    className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+                    title="Kopieren"
+                  >
+                    {copiedField === 'name' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                  </button>
                 </div>
               </div>
 
-              {/* Kontakt */}
-              <div>
-                <h3 className="mb-3 text-sm font-semibold text-gray-700">Kontakt</h3>
-                <div className="space-y-2 rounded-lg bg-gray-50 p-4">
-                  {sellerInfo.email && (
-                    <div>
-                      <span className="text-xs text-gray-500">E-Mail:</span>
-                      <div className="font-medium text-gray-900">{sellerInfo.email}</div>
+              {/* Contact Cards */}
+              <div className="grid gap-4 sm:grid-cols-2">
+                {/* Email */}
+                {sellerInfo.email && (
+                  <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Mail className="h-4 w-4 text-gray-500" />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">E-Mail</span>
                     </div>
-                  )}
-                  {sellerInfo.phone && (
-                    <div>
-                      <span className="text-xs text-gray-500">Telefonnummer:</span>
-                      <div className="font-medium text-gray-900">{sellerInfo.phone}</div>
+                    <div className="flex items-center justify-between gap-2">
+                      <a 
+                        href={`mailto:${sellerInfo.email}`}
+                        className="truncate font-medium text-primary-600 hover:text-primary-700 hover:underline"
+                      >
+                        {sellerInfo.email}
+                      </a>
+                      <button
+                        onClick={() => copyToClipboard(sellerInfo.email!, 'email')}
+                        className="flex-shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+                        title="Kopieren"
+                      >
+                        {copiedField === 'email' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                      </button>
                     </div>
-                  )}
-                </div>
+                  </div>
+                )}
+
+                {/* Phone */}
+                {sellerInfo.phone && (
+                  <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                    <div className="mb-2 flex items-center gap-2">
+                      <Phone className="h-4 w-4 text-gray-500" />
+                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Telefon</span>
+                    </div>
+                    <div className="flex items-center justify-between gap-2">
+                      <a 
+                        href={`tel:${sellerInfo.phone}`}
+                        className="font-medium text-primary-600 hover:text-primary-700 hover:underline"
+                      >
+                        {sellerInfo.phone}
+                      </a>
+                      <button
+                        onClick={() => copyToClipboard(sellerInfo.phone!, 'phone')}
+                        className="flex-shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+                        title="Kopieren"
+                      >
+                        {copiedField === 'phone' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                      </button>
+                    </div>
+                  </div>
+                )}
               </div>
 
-              {/* Adresse */}
-              {(sellerInfo.street ||
-                sellerInfo.streetNumber ||
-                sellerInfo.postalCode ||
-                sellerInfo.city) && (
-                <div>
-                  <h3 className="mb-3 text-sm font-semibold text-gray-700">Adresse</h3>
-                  <div className="space-y-2 rounded-lg bg-gray-50 p-4">
-                    {(sellerInfo.street || sellerInfo.streetNumber) && (
-                      <div>
-                        <span className="text-xs text-gray-500">Strasse:</span>
-                        <div className="font-medium text-gray-900">
-                          {sellerInfo.street || ''} {sellerInfo.streetNumber || ''}
-                        </div>
-                      </div>
-                    )}
-                    {(sellerInfo.postalCode || sellerInfo.city) && (
-                      <div>
-                        <span className="text-xs text-gray-500">PLZ & Ortschaft:</span>
-                        <div className="font-medium text-gray-900">
-                          {sellerInfo.postalCode || ''} {sellerInfo.city || ''}
-                        </div>
-                      </div>
-                    )}
+              {/* Address Card */}
+              {sellerFullAddress && (
+                <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                  <div className="mb-2 flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-gray-500" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Adresse</span>
+                  </div>
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      {(sellerInfo.street || sellerInfo.streetNumber) && (
+                        <p className="font-medium text-gray-900">
+                          {sellerInfo.street} {sellerInfo.streetNumber}
+                        </p>
+                      )}
+                      {(sellerInfo.postalCode || sellerInfo.city) && (
+                        <p className="text-gray-600">
+                          {sellerInfo.postalCode} {sellerInfo.city}
+                        </p>
+                      )}
+                    </div>
+                    <button
+                      onClick={() => copyToClipboard(sellerFullAddress, 'address')}
+                      className="flex-shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
+                      title="Kopieren"
+                    >
+                      {copiedField === 'address' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                    </button>
                   </div>
                 </div>
               )}
 
-              {/* Zahlungsmethoden */}
+              {/* Payment Methods Card */}
               {paymentMethods.length > 0 && (
-                <div>
-                  <h3 className="mb-3 text-sm font-semibold text-gray-700">
-                    Akzeptierte Zahlungsmethoden
-                  </h3>
-                  <div className="space-y-3 rounded-lg bg-gray-50 p-4">
+                <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
+                  <div className="mb-3 flex items-center gap-2">
+                    <CreditCard className="h-4 w-4 text-gray-500" />
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
+                      Zahlungsmethoden
+                    </span>
+                  </div>
+                  <div className="space-y-3">
                     {paymentMethods.map((method, index) => (
                       <div
                         key={index}
-                        className="border-b border-gray-200 pb-3 last:border-0 last:pb-0"
+                        className="rounded-lg bg-white p-3 ring-1 ring-gray-200"
                       >
                         {method.type === 'twint' && (
                           <div>
-                            <div className="mb-1 font-medium text-gray-900">TWINT</div>
+                            <div className="mb-1 flex items-center gap-2">
+                              <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">TWINT</span>
+                            </div>
                             {method.phone && (
-                              <div className="text-sm text-gray-600">Telefon: {method.phone}</div>
+                              <div className="mt-2 flex items-center justify-between">
+                                <span className="text-sm text-gray-600">{method.phone}</span>
+                                <button
+                                  onClick={() => copyToClipboard(method.phone, `twint-${index}`)}
+                                  className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                >
+                                  {copiedField === `twint-${index}` ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                                </button>
+                              </div>
                             )}
                           </div>
                         )}
                         {method.type === 'bank' && (
                           <div>
-                            <div className="mb-1 font-medium text-gray-900">Banküberweisung</div>
+                            <div className="mb-2 flex items-center gap-2">
+                              <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Bank</span>
+                            </div>
                             {method.iban && (
-                              <div className="text-sm text-gray-600">IBAN: {method.iban}</div>
+                              <div className="flex items-center justify-between rounded bg-gray-50 p-2">
+                                <span className="font-mono text-sm text-gray-700">{method.iban}</span>
+                                <button
+                                  onClick={() => copyToClipboard(method.iban, `iban-${index}`)}
+                                  className="ml-2 rounded p-1 text-gray-400 hover:bg-gray-200 hover:text-gray-600"
+                                >
+                                  {copiedField === `iban-${index}` ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
+                                </button>
+                              </div>
                             )}
                             {(method.accountHolderFirstName || method.accountHolderLastName) && (
-                              <div className="text-sm text-gray-600">
-                                Kontoinhaber: {method.accountHolderFirstName || ''}{' '}
-                                {method.accountHolderLastName || ''}
-                              </div>
+                              <p className="mt-2 text-sm text-gray-600">
+                                Kontoinhaber: {method.accountHolderFirstName} {method.accountHolderLastName}
+                              </p>
                             )}
                             {method.bank && (
-                              <div className="text-sm text-gray-600">Bank: {method.bank}</div>
-                            )}
-                          </div>
-                        )}
-                        {method.type === 'creditcard' && (
-                          <div>
-                            <div className="mb-1 font-medium text-gray-900">Kreditkarte</div>
-                            {method.cardNumber && (
-                              <div className="text-sm text-gray-600">
-                                Kartennummer: {method.cardNumber}
-                              </div>
+                              <p className="text-sm text-gray-500">{method.bank}</p>
                             )}
                           </div>
                         )}
@@ -255,56 +330,40 @@ export function SellerInfoModal({
                 </div>
               )}
 
-              {paymentMethods.length === 0 && !paymentProtectionEnabled && (
-                <div className="text-sm italic text-gray-500">
-                  Keine Zahlungsmethoden hinterlegt
+              {/* Helvenda Zahlungsschutz - Stripe Payment Option */}
+              {paymentProtectionEnabled && onPayViaStripe && (
+                <div className="rounded-xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50 p-5">
+                  <div className="mb-3 flex items-center gap-2">
+                    <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500">
+                      <Shield className="h-4 w-4 text-white" />
+                    </div>
+                    <h3 className="font-semibold text-emerald-800">Helvenda Zahlungsschutz</h3>
+                  </div>
+                  <p className="mb-4 text-sm text-emerald-700">
+                    Bezahlen Sie sicher über unsere Plattform. Ihr Geld wird erst nach Erhalt und Prüfung der Ware an den Verkäufer freigegeben.
+                  </p>
+                  <button
+                    onClick={() => {
+                      onPayViaStripe()
+                      onClose()
+                    }}
+                    disabled={isProcessingStripePayment}
+                    className="flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-500 to-teal-500 px-4 py-3 font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:shadow-xl hover:shadow-emerald-500/30 disabled:opacity-50"
+                  >
+                    {isProcessingStripePayment ? (
+                      <>
+                        <Loader2 className="h-5 w-5 animate-spin" />
+                        Wird vorbereitet...
+                      </>
+                    ) : (
+                      <>
+                        <Shield className="h-5 w-5" />
+                        Sicher bezahlen
+                      </>
+                    )}
+                  </button>
                 </div>
               )}
-
-              {/* Helvenda Zahlungsschutz - Stripe Payment Option */}
-              {paymentProtectionEnabled &&
-                sellerInfo?.stripeConnectedAccountId &&
-                sellerInfo?.stripeOnboardingComplete &&
-                onPayViaStripe && (
-                  <div className="mt-6 rounded-lg border-2 border-green-200 bg-green-50 p-4">
-                    <div className="mb-3 flex items-center gap-2">
-                      <Shield className="h-5 w-5 text-green-600" />
-                      <h3 className="font-semibold text-green-800">Helvenda Zahlungsschutz</h3>
-                    </div>
-                    <p className="mb-4 text-sm text-green-700">
-                      Bei diesem Artikel ist der Helvenda Zahlungsschutz aktiviert. Bezahlen Sie
-                      sicher über unsere Plattform - Ihr Geld wird erst nach Erhalt und Prüfung der
-                      Ware an den Verkäufer freigegeben.
-                    </p>
-                    <button
-                      onClick={() => {
-                        onPayViaStripe()
-                        onClose()
-                      }}
-                      disabled={isProcessingStripePayment}
-                      className="flex w-full items-center justify-center gap-2 rounded-md bg-green-600 px-4 py-3 font-medium text-white transition-colors hover:bg-green-700 disabled:opacity-50"
-                    >
-                      {isProcessingStripePayment ? (
-                        <>
-                          <Loader2 className="h-5 w-5 animate-spin" />
-                          Wird vorbereitet...
-                        </>
-                      ) : (
-                        <>
-                          <Shield className="h-5 w-5" />
-                          Sicher bezahlen
-                        </>
-                      )}
-                    </button>
-                  </div>
-                )}
-
-{/* 
-                Hinweis: Die Warnung "Zahlungsschutz ausstehend" wurde entfernt.
-                Der Käufer soll nicht durch den Onboarding-Status des Verkäufers verwirrt werden.
-                Der Verkäufer richtet die Auszahlung ein, wenn er das Geld erhalten möchte.
-                Der Käufer kann ganz normal über die angezeigten Zahlungsmethoden bezahlen.
-              */}
             </div>
           ) : (
             <div className="py-12 text-center text-gray-500">
@@ -313,10 +372,11 @@ export function SellerInfoModal({
           )}
         </div>
 
-        <div className="sticky bottom-0 border-t border-gray-200 bg-gray-50 px-6 py-4">
+        {/* Footer */}
+        <div className="sticky bottom-0 border-t border-gray-100 bg-gray-50 px-6 py-4">
           <button
             onClick={onClose}
-            className="w-full rounded-md bg-gray-200 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-300"
+            className="w-full rounded-xl bg-gray-200 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-300"
           >
             Schliessen
           </button>

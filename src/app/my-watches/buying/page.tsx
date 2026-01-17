@@ -274,7 +274,7 @@ export default function MyBuyingPage() {
   return (
     <div className="min-h-screen bg-gradient-to-b from-gray-50 via-white to-gray-50">
       <Header />
-      
+
       {/* Hero Section */}
       <div className="relative overflow-hidden border-b border-gray-100 bg-gradient-to-br from-primary-600 via-primary-500 to-teal-500">
         {/* Background Pattern */}
@@ -283,7 +283,7 @@ export default function MyBuyingPage() {
           <div className="absolute -bottom-8 -right-8 h-96 w-96 rounded-full bg-teal-300/20 blur-3xl" />
           <div className="absolute left-1/2 top-1/2 h-64 w-64 -translate-x-1/2 -translate-y-1/2 rounded-full bg-white/10 blur-2xl" />
         </div>
-        
+
         <div className="relative mx-auto max-w-6xl px-4 py-12 sm:px-6 lg:px-8">
           {/* Breadcrumb */}
           <div className="mb-6 flex items-center gap-2 text-sm text-white/70">

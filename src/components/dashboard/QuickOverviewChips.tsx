@@ -58,8 +58,8 @@ export function QuickOverviewChip({
       }`}
     >
       <span className={`flex h-7 w-7 items-center justify-center rounded-lg text-sm font-bold ${
-        highlight 
-          ? 'bg-primary-500 text-white shadow-sm' 
+        highlight
+          ? 'bg-primary-500 text-white shadow-sm'
           : 'bg-gray-100 text-gray-700 group-hover:bg-primary-100 group-hover:text-primary-700'
       }`}>
         {value}
