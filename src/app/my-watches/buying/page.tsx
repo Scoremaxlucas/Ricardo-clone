@@ -5,7 +5,7 @@ import { QuickOverviewChip, QuickOverviewChips } from '@/components/dashboard/Qu
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { Gavel, Package, Search, ShoppingBag, Star, Tag, ChevronRight, Sparkles } from 'lucide-react'
+import { ChevronRight, Gavel, Search, ShoppingBag, Star, Tag } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -353,12 +353,6 @@ export default function MyBuyingPage() {
           </QuickOverviewChips>
         )}
 
-        {/* Section Title */}
-        <div className="mb-6 flex items-center gap-3">
-          <Sparkles className="h-5 w-5 text-primary-500" />
-          <h2 className="text-lg font-semibold text-gray-900">Ihre Aktivitäten</h2>
-        </div>
-
         {/* Dashboard Tiles - Responsive grid */}
         <div className="mb-12 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
           {menuItems.map(item => (
@@ -374,26 +368,6 @@ export default function MyBuyingPage() {
             />
           ))}
         </div>
-
-        {/* Empty state hint */}
-        {!hasQuickOverview && (
-          <div className="mb-12 rounded-2xl border border-dashed border-gray-200 bg-gray-50/50 p-8 text-center">
-            <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-2xl bg-primary-50">
-              <Package className="h-7 w-7 text-primary-500" />
-            </div>
-            <h3 className="mb-2 text-lg font-semibold text-gray-900">Noch keine Aktivitäten</h3>
-            <p className="mb-4 text-sm text-gray-500">
-              Starten Sie mit dem Kaufen oder Bieten auf Artikel, um Ihre Aktivitäten hier zu sehen.
-            </p>
-            <Link
-              href="/"
-              className="inline-flex items-center gap-2 rounded-xl bg-primary-600 px-5 py-2.5 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md"
-            >
-              Artikel entdecken
-              <ChevronRight className="h-4 w-4" />
-            </Link>
-          </div>
-        )}
       </div>
       <Footer />
     </div>
