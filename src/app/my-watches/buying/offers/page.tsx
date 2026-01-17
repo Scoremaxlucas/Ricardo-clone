@@ -4,7 +4,9 @@ import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
-import { ArrowLeft, Tag, CheckCircle, XCircle, Clock, Loader2 } from 'lucide-react'
+import { Tag, CheckCircle, XCircle, Clock, Loader2, ShoppingBag, Gavel, Search } from 'lucide-react'
+import { Header } from '@/components/layout/Header'
+import { Footer } from '@/components/layout/Footer'
 
 interface PriceOffer {
   id: string
@@ -79,8 +81,12 @@ export default function OffersPage() {
 
   if (status === 'loading' || loading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+      <div className="flex min-h-screen flex-col bg-gray-50">
+        <Header />
+        <div className="flex flex-1 items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
+        </div>
+        <Footer />
       </div>
     )
   }
@@ -88,8 +94,12 @@ export default function OffersPage() {
   // Wenn nicht authentifiziert, zeige Loading (Redirect wird in useEffect behandelt)
   if (status === 'unauthenticated' || !session) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <div className="text-gray-500">Weiterleitung zur Anmeldung...</div>
+      <div className="flex min-h-screen flex-col bg-gray-50">
+        <Header />
+        <div className="flex flex-1 items-center justify-center">
+          <div className="text-gray-500">Weiterleitung zur Anmeldung...</div>
+        </div>
+        <Footer />
       </div>
     )
   }
@@ -144,133 +154,200 @@ export default function OffersPage() {
     }
   }
 
+  // Calculate stats
+  const pendingOffers = offers.filter(o => o.status === 'pending' || o.status === 'new' || o.status === 'counter')
+  const acceptedOffers = offers.filter(o => o.status === 'accepted')
+
   return (
-    <div className="min-h-screen bg-gray-50 py-12">
-      <div className="mx-auto max-w-7xl px-4">
-        <Link
-          href="/my-watches/buying"
-          className="mb-6 inline-flex items-center text-gray-600 hover:text-gray-900"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Zurück zu Mein Kaufen
-        </Link>
+    <div className="flex min-h-screen flex-col bg-gray-50">
+      <Header />
+      <main className="flex-1 py-6">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {/* Breadcrumb */}
+          <nav className="mb-4 text-sm text-gray-500" aria-label="Breadcrumb">
+            <ol className="flex items-center gap-2">
+              <li>
+                <Link href="/" className="hover:text-primary-600">
+                  Startseite
+                </Link>
+              </li>
+              <li aria-hidden="true">›</li>
+              <li>
+                <Link href="/my-watches/buying" className="hover:text-primary-600">
+                  Mein Kaufen
+                </Link>
+              </li>
+              <li aria-hidden="true">›</li>
+              <li className="text-gray-900">Preisvorschläge</li>
+            </ol>
+          </nav>
 
-        <h1 className="mb-8 flex items-center text-3xl font-bold text-gray-900">
-          <Tag className="mr-3 h-8 w-8 text-primary-600" />
-          Meine Preisvorschläge
-        </h1>
-
-        {offers.length === 0 ? (
-          <div className="rounded-lg bg-white p-8 shadow-md">
-            <div className="py-12 text-center">
-              <Tag className="mx-auto mb-4 h-16 w-16 text-gray-400" />
-              <h3 className="mb-2 text-lg font-semibold text-gray-900">Keine Preisvorschläge</h3>
-              <p className="mb-6 text-gray-600">Sie haben noch keine Preisvorschläge abgegeben.</p>
-              <Link
-                href="/"
-                className="inline-flex items-center rounded-md bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
-              >
-                Angebote durchstöbern
-              </Link>
+          {/* Header with Icon */}
+          <div className="mb-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex items-center gap-3">
+              <div className="rounded-xl bg-primary-100 p-2.5">
+                <Tag className="h-6 w-6 text-primary-600" />
+              </div>
+              <div>
+                <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Meine Preisvorschläge</h1>
+                <p className="text-sm text-gray-500">Übersicht Ihrer abgegebenen Preisvorschläge</p>
+              </div>
             </div>
-          </div>
-        ) : (
-          <div className="space-y-4">
-            {offers.map(offer => {
-              const images = parseImages(offer.watch.images)
-              return (
-                <div
-                  key={offer.id}
-                  className="rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
-                >
-                  <div className="flex gap-6">
-                    {/* Bild */}
-                    <Link href={`/products/${offer.watch.id}`} className="flex-shrink-0">
-                      {images.length > 0 ? (
-                        <img
-                          src={images[0]}
-                          alt={offer.watch.title}
-                          className="h-32 w-32 rounded-lg object-cover"
-                        />
-                      ) : (
-                        <div className="flex h-32 w-32 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
-                          Kein Bild
-                        </div>
-                      )}
-                    </Link>
 
-                    {/* Details */}
-                    <div className="flex-1">
-                      <Link
-                        href={`/products/${offer.watch.id}`}
-                        className="mb-2 block text-lg font-semibold text-gray-900 hover:text-primary-600"
-                      >
-                        {offer.watch.title}
+            {/* Summary Box */}
+            {offers.length > 0 && (
+              <div className="flex items-center gap-3 rounded-xl border border-primary-200 bg-primary-50 px-5 py-3">
+                <Tag className="h-8 w-8 text-primary-600" />
+                <div>
+                  <p className="text-sm text-gray-600">
+                    {pendingOffers.length} ausstehend, {acceptedOffers.length} akzeptiert
+                  </p>
+                  <p className="text-lg font-bold text-primary-600">
+                    {offers.length} Vorschläge total
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+
+          {/* Secondary Navigation */}
+          <div className="mb-6 flex flex-wrap gap-3">
+            <Link
+              href="/my-watches/buying/purchased"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+            >
+              <ShoppingBag className="h-4 w-4 text-gray-500" />
+              Gekaufte Artikel
+            </Link>
+            <Link
+              href="/my-watches/buying/bidding"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+            >
+              <Gavel className="h-4 w-4 text-gray-500" />
+              Am Bieten
+            </Link>
+            <Link
+              href="/my-watches/buying/search-subscriptions"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+            >
+              <Search className="h-4 w-4 text-gray-500" />
+              Suchaufträge
+            </Link>
+          </div>
+
+          {offers.length === 0 ? (
+            <div className="rounded-lg bg-white p-8 shadow-md">
+              <div className="py-12 text-center">
+                <Tag className="mx-auto mb-4 h-16 w-16 text-gray-400" />
+                <h3 className="mb-2 text-lg font-semibold text-gray-900">Keine Preisvorschläge</h3>
+                <p className="mb-6 text-gray-600">Sie haben noch keine Preisvorschläge abgegeben.</p>
+                <Link
+                  href="/"
+                  className="inline-flex items-center rounded-md bg-primary-600 px-6 py-3 text-white transition-colors hover:bg-primary-700"
+                >
+                  Angebote durchstöbern
+                </Link>
+              </div>
+            </div>
+          ) : (
+            <div className="space-y-4">
+              {offers.map(offer => {
+                const images = parseImages(offer.watch.images)
+                return (
+                  <div
+                    key={offer.id}
+                    className="rounded-lg bg-white p-6 shadow-md transition-shadow hover:shadow-lg"
+                  >
+                    <div className="flex gap-6">
+                      {/* Bild */}
+                      <Link href={`/products/${offer.watch.id}`} className="flex-shrink-0">
+                        {images.length > 0 ? (
+                          <img
+                            src={images[0]}
+                            alt={offer.watch.title}
+                            className="h-32 w-32 rounded-lg object-cover"
+                          />
+                        ) : (
+                          <div className="flex h-32 w-32 items-center justify-center rounded-lg bg-gray-100 text-gray-400">
+                            Kein Bild
+                          </div>
+                        )}
                       </Link>
 
-                      <div className="mb-4 flex items-center gap-4">
-                        <div>
-                          <div className="text-sm text-gray-600">Verkaufspreis</div>
-                          <div className="text-lg font-semibold text-gray-900">
-                            CHF {new Intl.NumberFormat('de-CH').format(offer.watch.price)}
-                          </div>
-                        </div>
-                        <div>
-                          <div className="text-sm text-gray-600">Ihr Preisvorschlag</div>
-                          <div className="text-lg font-bold text-primary-600">
-                            CHF {new Intl.NumberFormat('de-CH').format(offer.amount)}
-                          </div>
-                        </div>
-                      </div>
-
-                      {offer.message && (
-                        <div className="mb-4 rounded-lg bg-gray-50 p-3">
-                          <div className="mb-1 text-sm text-gray-600">Ihre Nachricht</div>
-                          <div className="text-sm text-gray-900">{offer.message}</div>
-                        </div>
-                      )}
-
-                      <div className="flex items-center justify-between">
-                        <div
-                          className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${getStatusColor(offer.status)}`}
+                      {/* Details */}
+                      <div className="flex-1">
+                        <Link
+                          href={`/products/${offer.watch.id}`}
+                          className="mb-2 block text-lg font-semibold text-gray-900 hover:text-primary-600"
                         >
-                          {getStatusIcon(offer.status)}
-                          <span className="text-sm font-medium">{getStatusText(offer.status)}</span>
+                          {offer.watch.title}
+                        </Link>
+
+                        <div className="mb-4 flex items-center gap-4">
+                          <div>
+                            <div className="text-sm text-gray-600">Verkaufspreis</div>
+                            <div className="text-lg font-semibold text-gray-900">
+                              CHF {new Intl.NumberFormat('de-CH').format(offer.watch.price)}
+                            </div>
+                          </div>
+                          <div>
+                            <div className="text-sm text-gray-600">Ihr Preisvorschlag</div>
+                            <div className="text-lg font-bold text-primary-600">
+                              CHF {new Intl.NumberFormat('de-CH').format(offer.amount)}
+                            </div>
+                          </div>
                         </div>
 
-                        <div className="text-sm text-gray-500">
-                          {new Date(offer.createdAt).toLocaleDateString('de-CH', {
-                            day: '2-digit',
-                            month: '2-digit',
-                            year: 'numeric',
-                            hour: '2-digit',
-                            minute: '2-digit',
-                          })}
-                        </div>
-                      </div>
+                        {offer.message && (
+                          <div className="mb-4 rounded-lg bg-gray-50 p-3">
+                            <div className="mb-1 text-sm text-gray-600">Ihre Nachricht</div>
+                            <div className="text-sm text-gray-900">{offer.message}</div>
+                          </div>
+                        )}
 
-                      {offer.status === 'accepted' && (
-                        <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3">
-                          <p className="text-sm text-green-800">
-                            Der Verkäufer hat Ihren Preisvorschlag akzeptiert! Sie können jetzt den
-                            Kauf abschließen.
-                          </p>
-                          <Link
-                            href={`/products/${offer.watch.id}`}
-                            className="mt-2 inline-block text-sm font-semibold text-green-700 hover:text-green-800"
+                        <div className="flex items-center justify-between">
+                          <div
+                            className={`inline-flex items-center gap-2 rounded-full border px-3 py-1 ${getStatusColor(offer.status)}`}
                           >
-                            Zum Angebot →
-                          </Link>
+                            {getStatusIcon(offer.status)}
+                            <span className="text-sm font-medium">{getStatusText(offer.status)}</span>
+                          </div>
+
+                          <div className="text-sm text-gray-500">
+                            {new Date(offer.createdAt).toLocaleDateString('de-CH', {
+                              day: '2-digit',
+                              month: '2-digit',
+                              year: 'numeric',
+                              hour: '2-digit',
+                              minute: '2-digit',
+                            })}
+                          </div>
                         </div>
-                      )}
+
+                        {offer.status === 'accepted' && (
+                          <div className="mt-4 rounded-lg border border-green-200 bg-green-50 p-3">
+                            <p className="text-sm text-green-800">
+                              Der Verkäufer hat Ihren Preisvorschlag akzeptiert! Sie können jetzt den
+                              Kauf abschließen.
+                            </p>
+                            <Link
+                              href={`/products/${offer.watch.id}`}
+                              className="mt-2 inline-block text-sm font-semibold text-green-700 hover:text-green-800"
+                            >
+                              Zum Angebot →
+                            </Link>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
-                </div>
-              )
-            })}
-          </div>
-        )}
-      </div>
+                )
+              })}
+            </div>
+          )}
+        </div>
+      </main>
+      <Footer />
     </div>
   )
 }
