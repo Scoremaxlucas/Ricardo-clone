@@ -250,6 +250,21 @@ export async function POST(request: NextRequest) {
     // Erstelle Order
     // HINWEIS: protectionFee speichert jetzt die Zahlungsgebühr (Stripe Fee / "Helvenda Schutz Gebühr")
     // Diese wird vom Verkäufer bezahlt, nicht vom Käufer
+    console.log('[orders/create] Creating order with data:', {
+      orderNumber,
+      watchId,
+      buyerId,
+      sellerId: watch.sellerId,
+      itemPrice: fees.itemPrice,
+      shippingCostChfFinal,
+      platformFee: fees.platformFee,
+      protectionFee: fees._processingFeeOnly,
+      totalAmount: fees.totalAmount,
+      paymentMethod,
+      orderStatus,
+      paymentStatus,
+      selectedDeliveryMode,
+    })
     const order = await prisma.order.create({
       data: {
         orderNumber,
@@ -347,10 +362,15 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error creating order:', error)
+    console.error('Error stack:', error.stack)
+    console.error('Error name:', error.name)
+    console.error('Error code:', error.code)
     return NextResponse.json(
       {
         message: 'Fehler beim Erstellen der Bestellung',
         error: error.message,
+        code: error.code,
+        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
       },
       { status: 500 }
     )
