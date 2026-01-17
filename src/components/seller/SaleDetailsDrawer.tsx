@@ -99,7 +99,7 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
         // Use dedicated API endpoint for single sale
         const res = await fetch(`/api/sales/${purchaseId}?t=${Date.now()}`)
         const data = await res.json()
-        
+
         if (res.ok) {
           setSale(data.sale || null)
         } else {
@@ -147,7 +147,7 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
   }
 
   const [confirmingPayment, setConfirmingPayment] = useState(false)
-  
+
   const handleConfirmPayment = async () => {
     if (!sale) return
     setConfirmingPayment(true)
@@ -156,7 +156,7 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
       const apiEndpoint = sale.orderId
         ? `/api/orders/${sale.orderId}/confirm-payment`
         : `/api/purchases/${sale.id}/confirm-payment`
-      
+
       const res = await fetch(apiEndpoint, { method: 'POST' })
       if (res.ok) {
         toast.success('Zahlung bestätigt! Rechnung wurde erstellt.')
@@ -228,7 +228,7 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
               {purchaseId && (
                 <p className="mt-2 text-xs text-gray-400">Gesuchte ID: {purchaseId}</p>
               )}
-              
+
               {/* Debug info */}
               {debugInfo && (
                 <div className="mt-4 w-full rounded-lg bg-gray-100 p-4 text-left text-xs">
@@ -251,7 +251,7 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
                   )}
                 </div>
               )}
-              
+
               <button
                 onClick={() => {
                   setLoading(true)
@@ -571,8 +571,10 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
                 </div>
               )}
 
-              {/* Shipping Info */}
-              {sale.paymentConfirmed && (
+              {/* Shipping Info - nur bei Versand, NICHT bei Abholung */}
+              {sale.paymentConfirmed && 
+               sale.shippingMethod !== 'pickup' && 
+               sale.shippingMethod !== 'abholung' && (
                 <div>
                   <h4 className="mb-3 font-medium text-gray-900">Versand</h4>
                   <ShippingInfoCard
