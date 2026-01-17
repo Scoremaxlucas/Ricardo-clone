@@ -291,16 +291,18 @@ export default function PurchaseSuccessPage() {
                   </div>
                 </div>
 
-                {/* Price */}
+                {/* Price - Only what buyer pays */}
                 <div className="text-right">
                   <div className="text-2xl font-bold text-gray-900">
-                    CHF {order.totalAmount.toFixed(2)}
+                    CHF {(order.itemPrice + (order.shippingCost || 0)).toFixed(2)}
                   </div>
-                  <p className="mt-1 text-xs text-gray-500">inkl. Gebühren</p>
+                  {order.shippingCost > 0 && (
+                    <p className="mt-1 text-xs text-gray-500">inkl. Versand</p>
+                  )}
                 </div>
               </div>
 
-              {/* Price Breakdown */}
+              {/* Price Breakdown - Only show what buyer pays */}
               <div className="mt-6 rounded-xl bg-gray-50 p-4">
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
@@ -313,22 +315,14 @@ export default function PurchaseSuccessPage() {
                       <span className="font-medium">CHF {order.shippingCost.toFixed(2)}</span>
                     </div>
                   )}
-                  {order.platformFee > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Servicegebühr</span>
-                      <span className="font-medium">CHF {order.platformFee.toFixed(2)}</span>
-                    </div>
-                  )}
-                  {order.protectionFee > 0 && (
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Zahlungsschutz</span>
-                      <span className="font-medium">CHF {order.protectionFee.toFixed(2)}</span>
-                    </div>
-                  )}
+                  {/* Note: platformFee and protectionFee are paid by SELLER, not buyer */}
+                  {/* So we don't show them here */}
                   <div className="border-t border-gray-200 pt-2">
                     <div className="flex justify-between font-semibold">
                       <span className="text-gray-900">Gesamtbetrag</span>
-                      <span className="text-emerald-600">CHF {order.totalAmount.toFixed(2)}</span>
+                      <span className="text-emerald-600">
+                        CHF {(order.itemPrice + (order.shippingCost || 0)).toFixed(2)}
+                      </span>
                     </div>
                   </div>
                 </div>
@@ -483,8 +477,8 @@ export default function PurchaseSuccessPage() {
             </div>
           </div>
 
-          {/* Payment Protection Info (only for Stripe) */}
-          {isStripePayment && (
+          {/* Payment Protection Info (only for Stripe shipping, NOT pickup) */}
+          {isStripePayment && !isPickup && (
             <div className="mb-6 overflow-hidden rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50">
               <div className="p-6">
                 <div className="flex items-start gap-4">
