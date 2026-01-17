@@ -424,13 +424,16 @@ export default function NotificationsPage() {
                               ) {
                                 // Extrahiere Offer-ID aus Link falls möglich
                                 const offerIdMatch = notification.link.match(/offer[=:]([^&]+)/)
-                                if (offerIdMatch && offerIdMatch[1]) {
+                                const currentUserId = (session?.user as { id?: string })?.id
+                                if (offerIdMatch && offerIdMatch[1] && currentUserId) {
+                                  // Use user-specific key to avoid sharing between users
+                                  const readOffersKey = `readOffers_${currentUserId}`
                                   const readOffers = JSON.parse(
-                                    localStorage.getItem('readOffers') || '[]'
+                                    localStorage.getItem(readOffersKey) || '[]'
                                   )
                                   if (!readOffers.includes(offerIdMatch[1])) {
                                     readOffers.push(offerIdMatch[1])
-                                    localStorage.setItem('readOffers', JSON.stringify(readOffers))
+                                    localStorage.setItem(readOffersKey, JSON.stringify(readOffers))
                                     window.dispatchEvent(new CustomEvent('offers-viewed'))
                                   }
                                 } else {

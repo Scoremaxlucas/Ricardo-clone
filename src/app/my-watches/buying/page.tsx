@@ -103,6 +103,9 @@ export default function MyBuyingPage() {
         console.error('Error loading bids:', error)
       }
 
+      // Get userId for user-specific localStorage keys
+      const currentUserId = (session?.user as { id?: string })?.id
+
       // Lade Preisvorschläge - zähle nur ungelesene
       try {
         const offersRes = await fetch('/api/offers?type=sent')
@@ -110,8 +113,9 @@ export default function MyBuyingPage() {
           const offersData = await offersRes.json()
           const allOffers = offersData.offers || []
 
-          // Lade gelesene Preisvorschläge aus localStorage
-          const readOffers = JSON.parse(localStorage.getItem('readOffers') || '[]')
+          // Lade gelesene Preisvorschläge aus localStorage (user-specific key)
+          const readOffersKey = currentUserId ? `readOffers_${currentUserId}` : 'readOffers'
+          const readOffers = JSON.parse(localStorage.getItem(readOffersKey) || '[]')
           const unreadOffers = allOffers.filter((offer: any) => !readOffers.includes(offer.id))
 
           setStats(prev => ({ ...prev, offers: unreadOffers.length }))
@@ -127,8 +131,9 @@ export default function MyBuyingPage() {
           const purchasesData = await purchasesRes.json()
           const allPurchases = purchasesData.purchases || []
 
-          // Lade gelesene Purchases aus localStorage
-          const readPurchases = JSON.parse(localStorage.getItem('readPurchases') || '[]')
+          // Lade gelesene Purchases aus localStorage (user-specific key)
+          const readPurchasesKey = currentUserId ? `readPurchases_${currentUserId}` : 'readPurchases'
+          const readPurchases = JSON.parse(localStorage.getItem(readPurchasesKey) || '[]')
           const unreadPurchases = allPurchases.filter(
             (purchase: any) => !readPurchases.includes(purchase.id)
           )

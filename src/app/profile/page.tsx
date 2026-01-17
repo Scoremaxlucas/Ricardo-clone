@@ -194,11 +194,11 @@ export default function ProfilePage() {
       }
 
       const data = await response.json()
-      
+
       // Update local state mit der neuen Bild-URL
       setProfileImage(data.imageUrl)
       setPreviewImage(null)
-      
+
       // Session aktualisieren damit das Bild überall erscheint
       await update({ image: data.imageUrl })
 
@@ -234,7 +234,7 @@ export default function ProfilePage() {
       // Update local state
       setProfileImage(null)
       setPreviewImage(null)
-      
+
       // Session aktualisieren
       await update({ image: null })
 

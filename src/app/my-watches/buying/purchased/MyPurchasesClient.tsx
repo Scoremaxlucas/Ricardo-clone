@@ -29,6 +29,7 @@ import {
   Shield,
   ShoppingBag,
 } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
@@ -40,6 +41,7 @@ interface MyPurchasesClientProps {
 
 export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) {
   const router = useRouter()
+  const { data: session } = useSession()
   const [purchases, setPurchases] = useState<MyPurchaseItem[]>(initialPurchases)
   const [isInitialLoad, setIsInitialLoad] = useState(true) // Track if initial data has been confirmed
   const [selectedPurchase, setSelectedPurchase] = useState<MyPurchaseItem | null>(null)
@@ -58,13 +60,17 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
   // OPTIMIERT: Lade Updates non-blocking im Hintergrund (Polling)
   // WICHTIG: Initial purchases werden sofort angezeigt, Updates kommen später
   useEffect(() => {
+    // Get userId for user-specific localStorage key
+    const currentUserId = (session?.user as { id?: string })?.id
+    const readPurchasesKey = currentUserId ? `readPurchases_${currentUserId}` : 'readPurchases'
+    
     // Markiere initial purchases als gelesen (sofort, ohne Wartezeit)
     if (initialPurchases.length > 0) {
-      const readPurchases = JSON.parse(localStorage.getItem('readPurchases') || '[]')
+      const readPurchases = JSON.parse(localStorage.getItem(readPurchasesKey) || '[]')
       const newReadPurchases = Array.from(
         new Set([...readPurchases, ...initialPurchases.map(p => p.id)])
       )
-      localStorage.setItem('readPurchases', JSON.stringify(newReadPurchases))
+      localStorage.setItem(readPurchasesKey, JSON.stringify(newReadPurchases))
       window.dispatchEvent(new CustomEvent('purchases-viewed'))
     }
 
@@ -84,12 +90,12 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
           if (data.purchases && Array.isArray(data.purchases) && data.purchases.length > 0) {
             setPurchases(data.purchases)
 
-            // Markiere alle Purchases als gelesen
-            const readPurchases = JSON.parse(localStorage.getItem('readPurchases') || '[]')
+            // Markiere alle Purchases als gelesen (user-specific key)
+            const readPurchases = JSON.parse(localStorage.getItem(readPurchasesKey) || '[]')
             const newReadPurchases = Array.from(
               new Set([...readPurchases, ...data.purchases.map((p: any) => p.id)])
             )
-            localStorage.setItem('readPurchases', JSON.stringify(newReadPurchases))
+            localStorage.setItem(readPurchasesKey, JSON.stringify(newReadPurchases))
             window.dispatchEvent(new CustomEvent('purchases-viewed'))
           } else if (
             initialPurchases.length === 0 &&

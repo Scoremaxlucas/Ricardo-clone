@@ -58,12 +58,14 @@ export default function OffersPage() {
       if (data.offers) {
         setOffers(data.offers)
 
-        // Markiere alle Preisvorschläge als gelesen
-        const readOffers = JSON.parse(localStorage.getItem('readOffers') || '[]')
+        // Markiere alle Preisvorschläge als gelesen (user-specific key)
+        const currentUserId = (session?.user as { id?: string })?.id
+        const readOffersKey = currentUserId ? `readOffers_${currentUserId}` : 'readOffers'
+        const readOffers = JSON.parse(localStorage.getItem(readOffersKey) || '[]')
         const newReadOffers = Array.from(
           new Set([...readOffers, ...data.offers.map((o: PriceOffer) => o.id)])
         )
-        localStorage.setItem('readOffers', JSON.stringify(newReadOffers))
+        localStorage.setItem(readOffersKey, JSON.stringify(newReadOffers))
 
         // Trigger event für Badge-Update
         window.dispatchEvent(new CustomEvent('offers-viewed'))

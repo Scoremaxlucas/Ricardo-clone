@@ -54,10 +54,19 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail, compact = fal
 
     const checkFollowStatus = () => {
       if (!session?.user) return
+      const currentUserId = (session.user as { id?: string })?.id
+      if (!currentUserId) return
 
       try {
-        const currentFollows = JSON.parse(localStorage.getItem('seller_follows') || '[]')
+        // Use user-specific key to avoid sharing follows between users
+        const followsKey = `seller_follows_${currentUserId}`
+        const currentFollows = JSON.parse(localStorage.getItem(followsKey) || '[]')
         setIsFollowing(currentFollows.includes(sellerId))
+        
+        // Cleanup: Remove old global key if exists (migration)
+        if (localStorage.getItem('seller_follows')) {
+          localStorage.removeItem('seller_follows')
+        }
       } catch (error) {
         console.error('Error checking follow status:', error)
       }
@@ -87,13 +96,17 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail, compact = fal
 
     // Vorerst lokale Speicherung (kann später mit DB erweitert werden)
     try {
-      const followKey = `follow_${sellerId}`
-      const currentFollows = JSON.parse(localStorage.getItem('seller_follows') || '[]')
+      const currentUserId = (session.user as { id?: string })?.id
+      if (!currentUserId) return
+      
+      // Use user-specific key to avoid sharing follows between users
+      const followsKey = `seller_follows_${currentUserId}`
+      const currentFollows = JSON.parse(localStorage.getItem(followsKey) || '[]')
 
       if (isFollowing) {
         // Entfolgen
         const newFollows = currentFollows.filter((id: string) => id !== sellerId)
-        localStorage.setItem('seller_follows', JSON.stringify(newFollows))
+        localStorage.setItem(followsKey, JSON.stringify(newFollows))
         setIsFollowing(false)
         toast.success('Sie folgen diesem Verkäufer nicht mehr.', {
           position: 'top-right',
@@ -112,7 +125,7 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail, compact = fal
       } else {
         // Folgen
         currentFollows.push(sellerId)
-        localStorage.setItem('seller_follows', JSON.stringify(currentFollows))
+        localStorage.setItem(followsKey, JSON.stringify(currentFollows))
         setIsFollowing(true)
         toast.success(
           'Sie folgen jetzt diesem Verkäufer! Sie werden benachrichtigt, wenn er neue Artikel einstellt.',

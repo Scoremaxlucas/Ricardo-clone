@@ -150,9 +150,13 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
       setTimeout(loadDeferredData, 100)
     }
 
-    // Profilbild aus localStorage (synchron, aber klein)
-    const storedImage = localStorage.getItem('profileImage')
-    if (storedImage) setProfileImage(storedImage)
+    // Cleanup: Remove buggy global localStorage key (was shared between all users!)
+    localStorage.removeItem('profileImage')
+    
+    // Profilbild aus Session laden (korrekt pro User)
+    if (session?.user?.image) {
+      setProfileImage(session.user.image)
+    }
   }, [session?.user])
 
   // === REALTIME: Notification updates via Supabase ===
