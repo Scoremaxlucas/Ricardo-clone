@@ -359,31 +359,17 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
     }
   }
 
-  // Filtere Purchases nach Status und Suche
+  // Filtere Purchases nach Status und Suche - VEREINFACHT
   const filteredPurchases = purchases.filter(purchase => {
-    // Status filter
-    if (statusFilter !== 'all') {
-      const stateInfo = getPurchaseStateInfo(
-        {
-          status: purchase.status,
-          contactDeadline: purchase.contactDeadline,
-          sellerContactedAt: purchase.sellerContactedAt,
-          buyerContactedAt: purchase.buyerContactedAt,
-          contactDeadlineMissed: purchase.contactDeadlineMissed,
-          paymentDeadline: purchase.paymentDeadline,
-          paymentConfirmed: purchase.paymentConfirmed,
-          paymentDeadlineMissed: purchase.paymentDeadlineMissed,
-          paid: purchase.paid,
-          itemReceived: purchase.itemReceived,
-          trackingNumber: purchase.trackingNumber || null,
-          shippedAt: purchase.shippedAt || null,
-          disputeOpenedAt: purchase.disputeOpenedAt,
-          disputeStatus: purchase.disputeStatus,
-        },
-        purchase.id
-      )
-      if (statusFilter !== stateInfo.state) return false
+    // Status filter - nur noch "all", "open", "completed"
+    if (statusFilter === 'open') {
+      // Offen = alles was nicht abgeschlossen oder storniert ist
+      if (purchase.status === 'completed' || purchase.status === 'cancelled') return false
+    } else if (statusFilter === 'completed') {
+      // Nur abgeschlossene
+      if (purchase.status !== 'completed') return false
     }
+    // 'all' zeigt alles
 
     // Search filter
     if (searchQuery.trim()) {
@@ -485,12 +471,10 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
     }
   })
 
-  // Berechne Statistiken
+  // VEREINFACHT: Nur 2 Status wie Ricardo - "Offen" und "Abgeschlossen"
   const stats = {
     total: purchases.length,
-    pending: purchases.filter(p => p.status === 'pending').length,
-    payment_confirmed: purchases.filter(p => p.status === 'payment_confirmed').length,
-    item_received: purchases.filter(p => p.status === 'item_received').length,
+    open: purchases.filter(p => p.status !== 'completed' && p.status !== 'cancelled').length,
     completed: purchases.filter(p => p.status === 'completed').length,
   }
 
@@ -529,57 +513,46 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
         </div>
       </div>
 
-      {/* Filter Tabs */}
-      <div className="mb-6 flex flex-wrap gap-2 border-b border-gray-200 pb-2">
+      {/* Filter Tabs - VEREINFACHT wie Ricardo: nur "Offen" und "Abgeschlossen" */}
+      <div className="mb-6 flex gap-1 border-b border-gray-200">
         <button
           onClick={() => setStatusFilter('all')}
-          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`relative px-4 py-3 text-sm font-medium transition-colors ${
             statusFilter === 'all'
-              ? 'border-b-2 border-primary-600 text-primary-600'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'text-primary-600'
+              : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           Alle ({stats.total})
+          {statusFilter === 'all' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
+          )}
         </button>
         <button
-          onClick={() => setStatusFilter('pending')}
-          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
-            statusFilter === 'pending'
-              ? 'border-b-2 border-yellow-600 text-yellow-600'
-              : 'text-gray-600 hover:text-gray-900'
+          onClick={() => setStatusFilter('open')}
+          className={`relative px-4 py-3 text-sm font-medium transition-colors ${
+            statusFilter === 'open'
+              ? 'text-primary-600'
+              : 'text-gray-500 hover:text-gray-900'
           }`}
         >
-          Ausstehend ({stats.pending})
-        </button>
-        <button
-          onClick={() => setStatusFilter('payment_confirmed')}
-          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
-            statusFilter === 'payment_confirmed'
-              ? 'border-b-2 border-blue-600 text-blue-600'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Zahlung bestätigt ({stats.payment_confirmed})
-        </button>
-        <button
-          onClick={() => setStatusFilter('item_received')}
-          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
-            statusFilter === 'item_received'
-              ? 'border-b-2 border-orange-600 text-orange-600'
-              : 'text-gray-600 hover:text-gray-900'
-          }`}
-        >
-          Erhalt bestätigt ({stats.item_received})
+          Offen ({stats.open})
+          {statusFilter === 'open' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
+          )}
         </button>
         <button
           onClick={() => setStatusFilter('completed')}
-          className={`rounded-t-lg px-4 py-2 text-sm font-medium transition-colors ${
+          className={`relative px-4 py-3 text-sm font-medium transition-colors ${
             statusFilter === 'completed'
-              ? 'border-b-2 border-green-600 text-green-600'
-              : 'text-gray-600 hover:text-gray-900'
+              ? 'text-primary-600'
+              : 'text-gray-500 hover:text-gray-900'
           }`}
         >
           Abgeschlossen ({stats.completed})
+          {statusFilter === 'completed' && (
+            <span className="absolute bottom-0 left-0 right-0 h-0.5 bg-primary-600" />
+          )}
         </button>
       </div>
 
@@ -768,42 +741,10 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                             </div>
                           </div>
 
-                          {/* Metadata Row */}
-                          <div className="mb-3 flex flex-wrap items-center gap-3 text-xs text-gray-500">
-                            <span
-                              className={`rounded px-2 py-0.5 font-medium ${
-                                purchase.watch.purchaseType === 'auction'
-                                  ? 'bg-purple-50 text-purple-700'
-                                  : 'bg-blue-50 text-blue-700'
-                              }`}
-                            >
-                              {purchase.watch.purchaseType === 'auction'
-                                ? 'Ersteigert'
-                                : 'Sofortkauf'}
-                            </span>
-                            {/* Helvenda Zahlungsschutz Badge - NOT for pickup! */}
-                            {purchase.paymentProtectionEnabled &&
-                             purchase.shippingMethod !== 'pickup' &&
-                             purchase.shippingMethod !== 'abholung' && (
-                              <span
-                                className="flex items-center gap-1 rounded bg-green-50 px-2 py-0.5 font-medium text-green-700"
-                                title="Helvenda Zahlungsschutz aktiv - Ihre Zahlung wird sicher verwahrt"
-                              >
-                                <Shield className="h-3 w-3" />
-                                Geschützt
-                              </span>
-                            )}
-                            {/* Bezahlt Badge - zeigt wenn Zahlung erfolgt ist */}
-                            {purchase.paymentConfirmed && (
-                              <span
-                                className="flex items-center gap-1 rounded bg-emerald-50 px-2 py-0.5 font-medium text-emerald-700"
-                                title="Zahlung erfolgreich"
-                              >
-                                <CheckCircle className="h-3 w-3" />
-                                Bezahlt
-                              </span>
-                            )}
+                          {/* VEREINFACHT: Nur wichtigste Infos - Ricardo-Style */}
+                          <div className="mb-3 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-gray-500">
                             <span>
+                              Gekauft am{' '}
                               {new Date(purchase.purchasedAt).toLocaleDateString('de-CH', {
                                 day: '2-digit',
                                 month: '2-digit',
@@ -812,61 +753,43 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                             </span>
                             {purchase.watch.seller && (
                               <span>
-                                Verkäufer:{' '}
-                                {purchase.watch.seller.firstName && purchase.watch.seller.lastName
-                                  ? `${purchase.watch.seller.firstName} ${purchase.watch.seller.lastName}`
-                                  : purchase.watch.seller.name || 'Unbekannt'}
-                              </span>
-                            )}
-                            {purchase.shippingMethod && (
-                              <span
-                                className={
-                                  purchase.shippingMethod === 'pickup' || purchase.shippingMethod === 'abholung'
-                                    ? 'rounded bg-blue-50 px-2 py-0.5 text-blue-700'
-                                    : ''
-                                }
-                              >
-                                {purchase.shippingMethod === 'pickup' || purchase.shippingMethod === 'abholung'
-                                  ? 'Abholung'
-                                  : purchase.shippingMethod === 'b-post'
-                                    ? 'B-Post'
-                                    : purchase.shippingMethod === 'a-post'
-                                      ? 'A-Post'
-                                      : 'Versand'}
+                                von{' '}
+                                <span className="font-medium text-gray-700">
+                                  {purchase.watch.seller.firstName && purchase.watch.seller.lastName
+                                    ? `${purchase.watch.seller.firstName} ${purchase.watch.seller.lastName}`
+                                    : purchase.watch.seller.name || 'Verkäufer'}
+                                </span>
                               </span>
                             )}
                           </div>
 
-                          {/* Status Badge */}
-                          <div className="mb-3 flex items-center gap-2">
-                            <span
-                              className={`inline-flex items-center gap-1.5 rounded-md px-2.5 py-1 text-xs font-medium ${
-                                uiState.statusTone === 'success'
-                                  ? 'bg-green-50 text-green-700'
-                                  : uiState.statusTone === 'danger'
-                                    ? 'bg-red-50 text-red-700'
-                                    : uiState.statusTone === 'warn'
-                                      ? 'bg-yellow-50 text-yellow-700'
-                                      : 'bg-gray-50 text-gray-700'
-                              }`}
-                            >
-                              {uiState.statusTone === 'success' ? (
-                                <CheckCircle className="h-3 w-3" />
-                              ) : uiState.statusTone === 'danger' ? (
-                                <AlertCircle className="h-3 w-3" />
-                              ) : (
-                                <Clock className="h-3 w-3" />
-                              )}
-                              {uiState.statusLabel}
-                            </span>
-                            {uiState.deadlineText && (
-                              <span className="text-xs text-gray-600">{uiState.deadlineText}</span>
+                          {/* Status - VEREINFACHT: Nur ein klarer Status + optionale Aktion */}
+                          <div className="flex flex-wrap items-center gap-2">
+                            {/* Bezahlt-Status als Checkmark */}
+                            {purchase.paymentConfirmed && (
+                              <span className="inline-flex items-center gap-1 text-sm text-emerald-600">
+                                <CheckCircle className="h-4 w-4" />
+                                Bezahlt
+                              </span>
                             )}
-                            {/* Pickup payment info */}
-                            {(purchase.shippingMethod === 'pickup' || purchase.shippingMethod === 'abholung') &&
-                             !purchase.paymentConfirmed && !purchase.itemReceived && (
-                              <span className="text-xs font-medium text-blue-600">
-                                💰 Zahlung bei Abholung
+                            {/* Versandt-Status */}
+                            {purchase.trackingNumber && (
+                              <span className="inline-flex items-center gap-1 text-sm text-blue-600">
+                                <Package className="h-4 w-4" />
+                                Versandt
+                              </span>
+                            )}
+                            {/* Abholung Badge */}
+                            {(purchase.shippingMethod === 'pickup' || purchase.shippingMethod === 'abholung') && (
+                              <span className="rounded-full bg-gray-100 px-2.5 py-0.5 text-xs font-medium text-gray-600">
+                                Abholung
+                              </span>
+                            )}
+                            {/* Abgeschlossen Badge */}
+                            {purchase.status === 'completed' && (
+                              <span className="inline-flex items-center gap-1 text-sm font-medium text-green-600">
+                                <CheckCircle className="h-4 w-4" />
+                                Abgeschlossen
                               </span>
                             )}
                           </div>
@@ -912,183 +835,103 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                   </div>
                 </div>
 
-                {/* Expanded Details */}
+                {/* Expanded Details - VEREINFACHT */}
                 {isExpanded && (
                   <div className="border-t border-gray-100 bg-gray-50 p-4">
                     <div className="space-y-4">
-                      {/* Timeline */}
-                      <div className="flex flex-wrap items-center gap-3 text-xs text-gray-600">
-                        <div className="flex items-center gap-1.5">
-                          <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                          <span>Kauf abgeschlossen</span>
-                        </div>
-                        {(purchase.sellerContactedAt || purchase.buyerContactedAt) && (
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                            <span>Kontakt aufgenommen</span>
-                          </div>
-                        )}
-                        {purchase.paymentConfirmed && (
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                            <span>Zahlung bestätigt</span>
-                          </div>
-                        )}
-                        {purchase.trackingNumber && (
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-1.5 w-1.5 rounded-full bg-blue-500" />
-                            <span>Versandt</span>
-                          </div>
-                        )}
-                        {purchase.itemReceived && (
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                            <span>Erhalt bestätigt</span>
-                          </div>
-                        )}
-                        {purchase.status === 'completed' && (
-                          <div className="flex items-center gap-1.5">
-                            <div className="h-1.5 w-1.5 rounded-full bg-green-500" />
-                            <span className="font-medium text-gray-900">Abgeschlossen</span>
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Seller Contact */}
+                      {/* Verkäufer-Kontakt - Wichtigste Info */}
                       {purchase.watch.seller && (
-                        <div className="rounded-lg border border-gray-200 bg-white p-3">
-                          <div className="mb-2 flex items-center justify-between">
-                            <span className="text-sm font-semibold text-gray-900">Verkäufer</span>
+                        <div className="rounded-lg border border-gray-200 bg-white p-4">
+                          <div className="flex items-center justify-between">
+                            <div>
+                              <div className="text-sm text-gray-500">Verkäufer</div>
+                              <div className="font-medium text-gray-900">
+                                {purchase.watch.seller.firstName && purchase.watch.seller.lastName
+                                  ? `${purchase.watch.seller.firstName} ${purchase.watch.seller.lastName}`
+                                  : purchase.watch.seller.name || 'Verkäufer'}
+                              </div>
+                              {purchase.watch.seller.phone && (
+                                <div className="mt-1 flex items-center gap-1.5 text-sm text-gray-600">
+                                  <Phone className="h-3.5 w-3.5" />
+                                  {purchase.watch.seller.phone}
+                                </div>
+                              )}
+                            </div>
                             <button
                               onClick={() => {
                                 setSelectedPurchase(purchase)
                                 setShowSellerInfo(true)
                               }}
-                              className="text-xs text-primary-600 hover:text-primary-700 hover:underline"
+                              className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary-700"
                             >
-                              Vollständige Details
+                              Kontakt
                             </button>
-                          </div>
-                          <div className="space-y-1.5 text-sm text-gray-700">
-                            {/* Show seller name */}
-                            <div className="font-medium text-gray-900">
-                              {purchase.watch.seller.firstName && purchase.watch.seller.lastName
-                                ? `${purchase.watch.seller.firstName} ${purchase.watch.seller.lastName}`
-                                : purchase.watch.seller.name || 'Verkäufer'}
-                            </div>
-                            {/* Only show phone as quick preview - email is in full details */}
-                            {purchase.watch.seller.phone && (
-                              <div className="flex items-center gap-1.5">
-                                <Phone className="h-3.5 w-3.5 text-gray-400" />
-                                {purchase.watch.seller.phone}
-                              </div>
-                            )}
                           </div>
                         </div>
                       )}
 
-                      {/* Payment Info */}
-                      {(purchase.sellerContactedAt || purchase.buyerContactedAt) &&
-                        !purchase.paymentConfirmed && (
-                          <div className="rounded-lg border border-gray-200 bg-white p-3">
-                            <div className="mb-2 flex items-center gap-2">
-                              <CreditCard className="h-4 w-4 text-gray-600" />
-                              <span className="text-sm font-semibold text-gray-900">
-                                Zahlungsinformationen
-                              </span>
-                            </div>
-                            <PaymentInfoCard purchaseId={purchase.id} showQRCode={false} />
-                          </div>
-                        )}
-
-                      {/* Shipping Tracking */}
+                      {/* Versand-Tracking - nur wenn vorhanden */}
                       {purchase.trackingNumber && (
-                        <div className="rounded-lg border border-gray-200 bg-white p-3">
+                        <div className="rounded-lg border border-gray-200 bg-white p-4">
                           <div className="mb-2 flex items-center gap-2">
                             <Package className="h-4 w-4 text-gray-600" />
-                            <span className="text-sm font-semibold text-gray-900">
-                              Versand-Tracking
-                            </span>
+                            <span className="font-medium text-gray-900">Versand-Tracking</span>
                           </div>
                           <ShippingInfoCard purchaseId={purchase.id} />
                         </div>
                       )}
 
-                      {/* Bestelldetails Link - nur wenn Order existiert */}
-                      {purchase.paymentProtectionEnabled && purchase.orderId && (
-                        <Link
-                          href={`/orders/${purchase.orderId}`}
-                          className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-primary-600 bg-white px-4 py-3 text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50"
-                        >
-                          <ExternalLink className="h-4 w-4" />
-                          Bestelldetails & Zahlungsschutz-Status
-                        </Link>
-                      )}
-
-                      {/* Zahlungsschutz Bestätigung - nur wenn bezahlt */}
-                      {purchase.paymentProtectionEnabled &&
-                        purchase.paymentConfirmed &&
-                        !purchase.orderId && (
-                          <div className="rounded-lg border border-green-200 bg-green-50 p-3 text-center text-sm text-green-700">
-                            <Shield className="mx-auto mb-1 h-4 w-4" />
-                            Zahlungsschutz aktiv - Zahlung wurde erfolgreich abgewickelt
-                          </div>
-                        )}
-
-                      {/*
-                        Der "Jetzt mit Zahlungsschutz bezahlen" Button wurde entfernt,
-                        da er bereits als Primary Action oben rechts angezeigt wird ("Sicher bezahlen").
-                        Doppelte Buttons vermeiden.
-                      */}
-
-                      {/* Dispute Link - wenn ein Dispute offen ist */}
+                      {/* Dispute Warnung */}
                       {purchase.disputeOpenedAt && (
-                        <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
+                        <div className="rounded-lg border border-orange-200 bg-orange-50 p-4">
                           <div className="flex items-center justify-between">
                             <div className="flex items-center gap-2">
                               <AlertTriangle className="h-4 w-4 text-orange-600" />
-                              <span className="text-sm font-medium text-orange-800">
-                                Dispute aktiv
-                              </span>
-                              <span className="rounded-full bg-orange-100 px-2 py-0.5 text-xs text-orange-700">
-                                {purchase.disputeStatus === 'pending'
-                                  ? 'In Bearbeitung'
-                                  : purchase.disputeStatus === 'resolved'
-                                    ? 'Gelöst'
-                                    : purchase.disputeStatus === 'rejected'
-                                      ? 'Abgelehnt'
-                                      : purchase.disputeStatus}
-                              </span>
+                              <span className="font-medium text-orange-800">Problem gemeldet</span>
                             </div>
                             <Link
                               href={`/disputes/${purchase.id}`}
-                              className="flex items-center gap-1 text-sm font-medium text-orange-700 hover:text-orange-800 hover:underline"
+                              className="text-sm font-medium text-orange-700 hover:underline"
                             >
-                              Details ansehen
-                              <ExternalLink className="h-3 w-3" />
+                              Details →
                             </Link>
                           </div>
                         </div>
                       )}
 
-                      {/* Secondary Actions */}
-                      {uiState.secondaryActions.length > 0 && (
-                        <div className="flex flex-wrap gap-2 border-t border-gray-200 pt-3">
-                          {uiState.secondaryActions.map((action, idx) => {
-                            const Icon = action.icon ? iconMap[action.icon] : null
-                            return (
-                              <button
-                                key={idx}
-                                onClick={action.onClick}
-                                className="flex items-center gap-1.5 rounded-md border border-gray-300 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                              >
-                                {Icon && <Icon className="h-4 w-4" />}
-                                {action.label}
-                              </button>
-                            )
-                          })}
-                        </div>
-                      )}
+                      {/* Aktions-Buttons */}
+                      <div className="flex flex-wrap gap-2">
+                        {/* Bestelldetails wenn Order existiert */}
+                        {purchase.orderId && (
+                          <Link
+                            href={`/orders/${purchase.orderId}`}
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                          >
+                            <ExternalLink className="h-4 w-4" />
+                            Bestelldetails
+                          </Link>
+                        )}
+                        {/* Artikel ansehen */}
+                        <Link
+                          href={`/products/${purchase.watch.id}`}
+                          className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                        >
+                          Angebot ansehen
+                        </Link>
+                        {/* Problem melden - nur wenn noch kein Dispute */}
+                        {!purchase.disputeOpenedAt && purchase.status !== 'completed' && (
+                          <button
+                            onClick={() => {
+                              setSelectedPurchase(purchase)
+                              setShowDisputeModal(true)
+                            }}
+                            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                          >
+                            <AlertTriangle className="h-4 w-4" />
+                            Problem melden
+                          </button>
+                        )}
+                      </div>
                     </div>
                   </div>
                 )}
