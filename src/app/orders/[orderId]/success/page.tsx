@@ -234,7 +234,7 @@ export default function PurchaseSuccessPage() {
           <div className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
             <div className="border-b border-gray-100 bg-gray-50 px-6 py-4">
               <h2 className="flex items-center text-lg font-semibold text-gray-900">
-                <ShoppingBag className="mr-2 h-5 w-5 text-emerald-600" />
+                <Package className="mr-2 h-5 w-5 text-emerald-600" />
                 Ihr Kauf
               </h2>
             </div>
