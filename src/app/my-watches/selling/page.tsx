@@ -3,7 +3,7 @@ import { Header } from '@/components/layout/Header'
 import { SellerListingsClient } from '@/components/seller'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { Package, Plus, Receipt, Tag } from 'lucide-react'
+import { Package, Plus, Receipt, Tag, X } from 'lucide-react'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
@@ -98,6 +98,13 @@ export default async function MySellingPage() {
                   {pendingOffersCount}
                 </span>
               )}
+            </Link>
+            <Link
+              href="/my-watches/selling/cancel-request"
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+            >
+              <X className="h-4 w-4 text-gray-500" />
+              Stornierungsantrag
             </Link>
           </div>
 
