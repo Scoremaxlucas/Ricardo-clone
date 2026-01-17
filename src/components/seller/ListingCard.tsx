@@ -73,7 +73,7 @@ export function ListingCard({
   const mainImage = images[0] || null
   const articleUrl = `/products/${id}`
   const displayPrice = highestBid || price
-  
+
   // Determine which sale ID to use (prefer purchaseId, fallback to orderId)
   const saleId = purchaseId || orderId
   const saleType: 'purchase' | 'order' = purchaseId ? 'purchase' : 'order'

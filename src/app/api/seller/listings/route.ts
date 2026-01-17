@@ -160,16 +160,16 @@ export async function GET(request: NextRequest) {
       // Check purchases (old system)
       const activePurchases = listing.purchases.filter(p => p.status !== 'cancelled')
       const hasPurchase = activePurchases.length > 0
-      
+
       // Check orders (new system) - canceled orders don't count as sold
-      const activeOrders = listing.orders.filter(o => 
+      const activeOrders = listing.orders.filter(o =>
         o.orderStatus !== 'canceled' && o.orderStatus !== 'cancelled'
       )
       const hasOrder = activeOrders.length > 0
-      
+
       // Item is sold if it has EITHER an active purchase OR an active order
       const isSold = hasPurchase || hasOrder
-      
+
       const auctionEndDate = listing.auctionEnd ? new Date(listing.auctionEnd) : null
       const isAuctionExpired = auctionEndDate && auctionEndDate <= now
 
@@ -208,7 +208,7 @@ export async function GET(request: NextRequest) {
 
       // Get dispute data from either purchase or order
       const disputeSource = activePurchase || activeOrder
-      
+
       return {
         id: listing.id,
         articleNumber: listing.articleNumber,

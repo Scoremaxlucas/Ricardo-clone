@@ -115,7 +115,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
     // If still not found by purchaseId, try to find by orderId (new system)
     if (!purchase) {
       console.log(`[sales/${searchId}] Not found by purchaseId/watchId, trying orderId...`)
-      
+
       // Try to find an order directly
       const order = await prisma.order.findFirst({
         where: {
@@ -157,10 +157,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           },
         },
       })
-      
+
       if (order) {
         console.log(`[sales/${searchId}] Found order ${order.id} for watch: ${order.watch.title}`)
-        
+
         const watch = order.watch as any
         let images: string[] = []
 
@@ -180,10 +180,10 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         } catch {
           images = []
         }
-        
+
         const paymentProtectionEnabled = watch.paymentProtectionEnabled || false
         const isPaidViaStripe = order.paymentStatus === 'paid' || order.paymentStatus === 'released'
-        
+
         // Fetch buyer address from UserAddress table
         const buyerAddress = order.buyer ? await getMainAddress(order.buyer.id) : null
         const buyerWithAddress = order.buyer
@@ -195,7 +195,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
               city: buyerAddress?.city || null,
             }
           : null
-        
+
         // Build sale from Order data
         const saleFromOrder = {
           id: order.id,
@@ -237,7 +237,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           },
           buyer: buyerWithAddress,
         }
-        
+
         return NextResponse.json({ sale: saleFromOrder })
       }
     }
@@ -253,7 +253,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
         orderBy: { createdAt: 'desc' },
         take: 10,
       })
-      
+
       const allOrders = await prisma.order.findMany({
         where: {
           sellerId: session.user.id,
