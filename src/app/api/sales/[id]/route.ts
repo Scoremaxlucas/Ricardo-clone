@@ -197,6 +197,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           : null
 
         // Build sale from Order data
+        // Note: Some fields from Purchase model don't exist in Order model
+        // We use safe defaults for those fields
+        const contactDeadline = order.contactDeadline
+        const contactDeadlineMissed = contactDeadline ? new Date() > new Date(contactDeadline) : false
+        
         const saleFromOrder = {
           id: order.id,
           soldAt: order.createdAt,
@@ -212,11 +217,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           itemReceivedAt: order.buyerConfirmedAt,
           paymentConfirmed: isPaidViaStripe,
           paymentConfirmedAt: order.paidAt,
-          contactDeadline: order.contactDeadline?.toISOString() || null,
+          contactDeadline: contactDeadline?.toISOString() || null,
           sellerContactedAt: order.sellerContactedAt?.toISOString() || null,
           buyerContactedAt: order.buyerContactedAt?.toISOString() || null,
           contactWarningSentAt: order.contactWarningSentAt?.toISOString() || null,
-          contactDeadlineMissed: order.contactDeadlineMissed || false,
+          contactDeadlineMissed: contactDeadlineMissed, // Calculated from deadline, not stored on Order
           disputeOpenedAt: order.disputeOpenedAt?.toISOString() || null,
           disputeReason: order.disputeReason || null,
           disputeStatus: order.disputeStatus || null,
@@ -224,7 +229,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
           trackingNumber: order.trackingNumber || null,
           trackingProvider: order.trackingProvider || null,
           shippedAt: order.shippedAt?.toISOString() || null,
-          estimatedDeliveryDate: null,
+          estimatedDeliveryDate: null, // Not stored on Order model
           watch: {
             id: watch.id,
             title: watch.title,
