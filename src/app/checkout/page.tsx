@@ -179,11 +179,20 @@ function CheckoutPageContent() {
       })
 
       if (!createOrderRes.ok) {
-        const errorData = await createOrderRes.json()
-        console.error('Order creation error:', errorData)
-        const errorMsg = errorData.error
-          ? `${errorData.message}: ${errorData.error}`
-          : errorData.message || 'Fehler beim Erstellen der Bestellung'
+        let errorMsg = 'Fehler beim Erstellen der Bestellung'
+        try {
+          const errorData = await createOrderRes.json()
+          console.error('Order creation error response:', JSON.stringify(errorData, null, 2))
+          errorMsg = errorData.error
+            ? `${errorData.message}: ${errorData.error}`
+            : errorData.message || errorMsg
+          if (errorData.code) {
+            errorMsg += ` (Code: ${errorData.code})`
+          }
+        } catch (parseError) {
+          console.error('Failed to parse error response:', parseError)
+          errorMsg = `Server error: ${createOrderRes.status} ${createOrderRes.statusText}`
+        }
         throw new Error(errorMsg)
       }
 
