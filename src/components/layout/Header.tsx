@@ -531,15 +531,16 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                         <p className="truncate text-sm text-gray-500">{session.user?.email}</p>
                       </div>
 
+                      {/* Ricardo-Style: Kompaktes Menü mit 6 Einträgen */}
                       <Link
-                        href="/profile"
+                        href="/my-watches/buying"
                         prefetch={true}
                         onClick={() => setIsProfileMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                       >
                         <div className="flex items-center">
-                          <User className="mr-2 h-4 w-4" />
-                          {t.header.myProfile}
+                          <Gavel className="mr-2 h-4 w-4" />
+                          {t.header.myBuying}
                         </div>
                       </Link>
                       <Link
@@ -554,42 +555,6 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                         </div>
                       </Link>
                       <Link
-                        href="/my-watches/buying"
-                        prefetch={true}
-                        onClick={() => setIsProfileMenuOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                      >
-                        <div className="flex items-center">
-                          <ShoppingBag className="mr-2 h-4 w-4" />
-                          {t.header.myBuying}
-                        </div>
-                      </Link>
-                      <Link
-                        href="/my-watches/buying/purchased"
-                        prefetch={true}
-                        onClick={() => setIsProfileMenuOpen(false)}
-                        className="block px-4 py-2 pl-8 text-sm text-gray-600 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                      >
-                        <div className="flex items-center">
-                          <Package className="mr-2 h-4 w-4" />
-                          Meine Bestellungen
-                        </div>
-                      </Link>
-                      <Link
-                        href="/my-watches/account"
-                        prefetch={true}
-                        onClick={() => setIsProfileMenuOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
-                      >
-                        <div className="flex items-center">
-                          <Settings className="mr-2 h-4 w-4" />
-                          {t.header.settings}
-                        </div>
-                      </Link>
-
-                      <div className="my-1 border-t border-gray-100" />
-
-                      <Link
                         href="/my-watches/selling/fees"
                         prefetch={true}
                         onClick={() => setIsProfileMenuOpen(false)}
@@ -597,18 +562,29 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                       >
                         <div className="flex items-center">
                           <Wallet className="mr-2 h-4 w-4" />
-                          {t.header.feesAndInvoices}
+                          Gebühren
                         </div>
                       </Link>
                       <Link
-                        href="/my-watches/selling/cancel-request"
+                        href="/profile"
                         prefetch={true}
                         onClick={() => setIsProfileMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                       >
                         <div className="flex items-center">
-                          <X className="mr-2 h-4 w-4" />
-                          {t.header.cancel}
+                          <Settings className="mr-2 h-4 w-4" />
+                          Benutzerkonto
+                        </div>
+                      </Link>
+                      <Link
+                        href={`/seller/${(session?.user as any)?.id}`}
+                        prefetch={true}
+                        onClick={() => setIsProfileMenuOpen(false)}
+                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                      >
+                        <div className="flex items-center">
+                          <User className="mr-2 h-4 w-4" />
+                          Öffentliches Profil
                         </div>
                       </Link>
 
@@ -777,13 +753,13 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             <div className="flex-1 overflow-y-auto py-2">
               {session ? (
                 <>
-                  {/* Logged in user menu - Ricardo style order with smooth transitions */}
+                  {/* Ricardo-Style: Kompaktes Menü mit 6 Einträgen */}
                   <Link
                     href="/my-watches/buying"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
                   >
-                    <ShoppingBag className="h-5 w-5 text-gray-400" />
+                    <Gavel className="h-5 w-5 text-gray-400" />
                     <span className="text-[15px]">{t.header.myBuying}</span>
                   </Link>
                   <Link
@@ -800,23 +776,23 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                     className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
                   >
                     <Wallet className="h-5 w-5 text-gray-400" />
-                    <span className="text-[15px]">{t.header.feesAndInvoices}</span>
-                  </Link>
-                  <Link
-                    href="/my-watches/account"
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
-                  >
-                    <Settings className="h-5 w-5 text-gray-400" />
-                    <span className="text-[15px]">{t.header.settings}</span>
+                    <span className="text-[15px]">Gebühren</span>
                   </Link>
                   <Link
                     href="/profile"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
                   >
+                    <Settings className="h-5 w-5 text-gray-400" />
+                    <span className="text-[15px]">Benutzerkonto</span>
+                  </Link>
+                  <Link
+                    href={`/seller/${(session?.user as any)?.id}`}
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
+                  >
                     <User className="h-5 w-5 text-gray-400" />
-                    <span className="text-[15px]">{t.header.myProfile}</span>
+                    <span className="text-[15px]">Öffentliches Profil</span>
                   </Link>
 
                   {/* Admin Dashboard - subtle, only for admins */}
@@ -901,13 +877,14 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               </p>
               <p className="truncate text-sm text-gray-500">{session.user?.email}</p>
             </div>
+            {/* Ricardo-Style: Kompaktes Menü */}
             <Link
-              href="/profile"
+              href="/my-watches/buying"
               onClick={() => setIsProfileMenuOpen(false)}
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100"
             >
-              <User className="h-5 w-5" />
-              <span>{t.header.myProfile}</span>
+              <Gavel className="h-5 w-5" />
+              <span>{t.header.myBuying}</span>
             </Link>
             <Link
               href="/my-watches"
@@ -917,12 +894,42 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               <Package className="h-5 w-5" />
               <span>{t.header.mySelling}</span>
             </Link>
-            <button onClick={() => setIsProfileMenuOpen(false)} className="w-full text-left">
-              <div className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100">
-                <X className="h-5 w-5" />
-                <span>Schließen</span>
-              </div>
-            </button>
+            <Link
+              href="/my-watches/selling/fees"
+              onClick={() => setIsProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100"
+            >
+              <Wallet className="h-5 w-5" />
+              <span>Gebühren</span>
+            </Link>
+            <Link
+              href="/profile"
+              onClick={() => setIsProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100"
+            >
+              <Settings className="h-5 w-5" />
+              <span>Benutzerkonto</span>
+            </Link>
+            <Link
+              href={`/seller/${(session?.user as any)?.id}`}
+              onClick={() => setIsProfileMenuOpen(false)}
+              className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100"
+            >
+              <User className="h-5 w-5" />
+              <span>Öffentliches Profil</span>
+            </Link>
+            <div className="mt-2 border-t pt-2">
+              <button
+                onClick={async () => {
+                  setIsProfileMenuOpen(false)
+                  await signOut({ callbackUrl: '/' })
+                }}
+                className="flex w-full items-center gap-3 rounded-lg px-4 py-3 text-red-600 hover:bg-red-50"
+              >
+                <LogOut className="h-5 w-5" />
+                <span>{t.header.logout}</span>
+              </button>
+            </div>
           </div>
         </>
       )}
