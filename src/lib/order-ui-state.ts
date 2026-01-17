@@ -83,19 +83,25 @@ export function getOrderUIState(
     statusTone = 'warn'
   }
 
+  // Check if this is a PICKUP order - no payment protection for pickup!
+  // Pickup = payment happens in person, no Stripe needed
+  const isPickup = purchase.shippingMethod === 'pickup' || 
+                   purchase.shippingMethod === 'abholung' ||
+                   (purchase as any).selectedDeliveryMode === 'pickup'
+
   // Check if this is a protected purchase where Stripe payment should be primary
-  // JUST-IN-TIME ONBOARDING: Show "Sicher bezahlen" whenever protection is enabled
-  // The seller's Stripe account will be created/onboarded when payout is needed
-  const hasProtection = purchase.paymentProtectionEnabled
+  // IMPORTANT: Pickup orders NEVER have payment protection
+  // JUST-IN-TIME ONBOARDING: Show "Sicher bezahlen" whenever protection is enabled (but NOT for pickup)
+  const hasProtection = purchase.paymentProtectionEnabled && !isPickup
   const canPayViaStripe = hasProtection // No longer requires seller to have Stripe pre-configured
 
   // Primary action based on state (only one!)
   if (stateInfo.nextAction) {
     switch (stateInfo.nextAction.action) {
       case 'contact_seller':
-        // For protected purchases with Stripe, show "Sicher bezahlen" as primary even in CONTACT_PENDING
-        // The buyer can pay immediately via Stripe without needing to contact seller first
-        if (canPayViaStripe) {
+        // For PICKUP: Always show "Verkäufer kontaktieren" - no Stripe payment
+        // For SHIPPING with protection: show "Sicher bezahlen" as primary
+        if (canPayViaStripe && !isPickup) {
           primaryAction = {
             label: isProcessingPayment ? 'Wird vorbereitet...' : 'Sicher bezahlen',
             onClick: handlers.onPay,
@@ -113,21 +119,33 @@ export function getOrderUIState(
         break
 
       case 'pay':
-        primaryAction = {
-          label: isProcessingPayment
-            ? 'Wird vorbereitet...'
-            : canPayViaStripe
-              ? 'Sicher bezahlen'
-              : 'Jetzt bezahlen',
-          onClick: handlers.onPay,
-          icon: canPayViaStripe ? 'Shield' : 'CreditCard',
-          variant: 'primary',
+        // For PICKUP: Payment happens in person, no online payment button
+        if (isPickup) {
+          // Pickup orders: After contact, primary action is to confirm receipt
+          primaryAction = {
+            label: 'Erhalt bestätigen',
+            onClick: handlers.onConfirmReceipt,
+            icon: 'PackageCheck',
+            variant: 'primary',
+          }
+        } else {
+          primaryAction = {
+            label: isProcessingPayment
+              ? 'Wird vorbereitet...'
+              : canPayViaStripe
+                ? 'Sicher bezahlen'
+                : 'Jetzt bezahlen',
+            onClick: handlers.onPay,
+            icon: canPayViaStripe ? 'Shield' : 'CreditCard',
+            variant: 'primary',
+          }
         }
         break
 
       case 'confirm_receipt':
-        // Only show if item is shipped (has tracking or shippedAt)
-        if (purchase.trackingNumber || purchase.shippedAt || purchase.paymentConfirmed) {
+        // For PICKUP: Can confirm receipt after contact (no payment tracking needed)
+        // For SHIPPING: Only show if item is shipped (has tracking or shippedAt)
+        if (isPickup || purchase.trackingNumber || purchase.shippedAt || purchase.paymentConfirmed) {
           primaryAction = {
             label: 'Erhalt bestätigen',
             onClick: handlers.onConfirmReceipt,
@@ -151,15 +169,15 @@ export function getOrderUIState(
   // Secondary actions (only when primary action exists and state allows)
   // Never show contradictory actions
   if (stateInfo.state === 'CONTACT_PENDING') {
-    // For protected purchases, "Sicher bezahlen" is primary, so contact seller is secondary
-    if (canPayViaStripe) {
+    // For protected purchases (NOT pickup), "Sicher bezahlen" is primary, so contact seller is secondary
+    if (canPayViaStripe && !isPickup) {
       secondaryActions.push({
         label: 'Verkäufer kontaktieren',
         onClick: handlers.onContactSeller,
         icon: 'MessageSquare',
       })
     }
-    // For unprotected purchases, contact seller is primary, no secondary actions
+    // For unprotected purchases OR pickup, contact seller is primary, no secondary actions
   } else if (stateInfo.state === 'PAYMENT_PENDING') {
     // Payment is primary, contact seller is secondary
     secondaryActions.push({

@@ -762,8 +762,10 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                                 ? 'Ersteigert'
                                 : 'Sofortkauf'}
                             </span>
-                            {/* Helvenda Zahlungsschutz Badge */}
-                            {purchase.paymentProtectionEnabled && (
+                            {/* Helvenda Zahlungsschutz Badge - NOT for pickup! */}
+                            {purchase.paymentProtectionEnabled && 
+                             purchase.shippingMethod !== 'pickup' && 
+                             purchase.shippingMethod !== 'abholung' && (
                               <span
                                 className="flex items-center gap-1 rounded bg-green-50 px-2 py-0.5 font-medium text-green-700"
                                 title="Helvenda Zahlungsschutz aktiv - Ihre Zahlung wird sicher verwahrt"
@@ -798,8 +800,14 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                               </span>
                             )}
                             {purchase.shippingMethod && (
-                              <span>
-                                {purchase.shippingMethod === 'pickup'
+                              <span
+                                className={
+                                  purchase.shippingMethod === 'pickup' || purchase.shippingMethod === 'abholung'
+                                    ? 'rounded bg-blue-50 px-2 py-0.5 text-blue-700'
+                                    : ''
+                                }
+                              >
+                                {purchase.shippingMethod === 'pickup' || purchase.shippingMethod === 'abholung'
                                   ? 'Abholung'
                                   : purchase.shippingMethod === 'b-post'
                                     ? 'B-Post'
@@ -834,6 +842,13 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                             </span>
                             {uiState.deadlineText && (
                               <span className="text-xs text-gray-600">{uiState.deadlineText}</span>
+                            )}
+                            {/* Pickup payment info */}
+                            {(purchase.shippingMethod === 'pickup' || purchase.shippingMethod === 'abholung') && 
+                             !purchase.paymentConfirmed && !purchase.itemReceived && (
+                              <span className="text-xs font-medium text-blue-600">
+                                💰 Zahlung bei Abholung
+                              </span>
                             )}
                           </div>
                         </div>
@@ -1102,7 +1117,12 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                 setSelectedPurchase(null)
               }}
               // Payment protection props for Stripe payment
-              paymentProtectionEnabled={selectedPurchase.paymentProtectionEnabled}
+              // IMPORTANT: No payment protection for pickup orders!
+              paymentProtectionEnabled={
+                selectedPurchase.paymentProtectionEnabled &&
+                selectedPurchase.shippingMethod !== 'pickup' &&
+                selectedPurchase.shippingMethod !== 'abholung'
+              }
               onPayViaStripe={() => handlePayment(selectedPurchase)}
               isProcessingStripePayment={processingStripePayment === selectedPurchase.id}
             />
