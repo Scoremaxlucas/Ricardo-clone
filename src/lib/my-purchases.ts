@@ -230,7 +230,7 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
         const watch = purchase.watch
         const images = parseImages(watch.images)
         const finalPrice = purchase.price || watch.price || 0
-        const purchaseType = watch.isAuction && finalPrice !== watch.buyNowPrice ? 'auction' : 'buy-now'
+        const purchaseType: 'auction' | 'buy-now' = watch.isAuction && finalPrice !== watch.buyNowPrice ? 'auction' : 'buy-now'
 
         return {
           id: purchase.id,
@@ -346,11 +346,11 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
           finalPrice,
           purchaseType: 'buy-now' as const,
         },
-      }
+      } as MyPurchaseItem
     })
 
     // Merge and sort by date (newest first)
-    const allItems = [...orderItems, ...purchaseItems]
+    const allItems: MyPurchaseItem[] = [...orderItems, ...purchaseItems]
     allItems.sort((a, b) => new Date(b.purchasedAt).getTime() - new Date(a.purchasedAt).getTime())
 
     return allItems

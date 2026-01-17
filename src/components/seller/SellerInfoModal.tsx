@@ -115,7 +115,7 @@ export function SellerInfoModal({
     }
   }
 
-  const sellerFullName = sellerInfo?.firstName && sellerInfo?.lastName 
+  const sellerFullName = sellerInfo?.firstName && sellerInfo?.lastName
     ? `${sellerInfo.firstName} ${sellerInfo.lastName}`
     : sellerInfo?.name || 'Verkäufer'
 
@@ -191,7 +191,7 @@ export function SellerInfoModal({
                       <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">E-Mail</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                      <a 
+                      <a
                         href={`mailto:${sellerInfo.email}`}
                         className="truncate font-medium text-primary-600 hover:text-primary-700 hover:underline"
                       >
@@ -216,7 +216,7 @@ export function SellerInfoModal({
                       <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Telefon</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
-                      <a 
+                      <a
                         href={`tel:${sellerInfo.phone}`}
                         className="font-medium text-primary-600 hover:text-primary-700 hover:underline"
                       >
