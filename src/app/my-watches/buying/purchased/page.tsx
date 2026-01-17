@@ -35,7 +35,7 @@ export default async function MyPurchasedPage() {
     // Count active bids
     prisma.bid.count({
       where: {
-        bidderId: session.user.id,
+        userId: session.user.id,
         watch: {
           isAuction: true,
           auctionEnd: { gt: new Date() },
@@ -52,8 +52,8 @@ export default async function MyPurchasedPage() {
   ])
 
   // Calculate summary stats
-  const pendingPurchases = purchases.filter(p => 
-    p.status === 'pending' || 
+  const pendingPurchases = purchases.filter(p =>
+    p.status === 'pending' ||
     (!p.paymentConfirmed && !p.paid)
   )
   const totalSpent = purchases
