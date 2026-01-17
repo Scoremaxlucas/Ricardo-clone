@@ -160,6 +160,9 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
   }, [initialPurchases])
 
   // Handle highlight and action from query params (from success page redirect)
+  // Use ref to track if action has been processed to prevent re-triggering
+  const actionProcessedRef = useRef(false)
+  
   useEffect(() => {
     const highlight = searchParams.get('highlight')
     const action = searchParams.get('action')
@@ -176,10 +179,14 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
         // Expand and scroll to the highlighted purchase
         setExpandedPurchaseId(purchaseToHighlight.id)
 
-        // Auto-open seller info modal if action=contact
-        if (action === 'contact') {
+        // Auto-open seller info modal if action=contact (only once!)
+        if (action === 'contact' && !actionProcessedRef.current) {
+          actionProcessedRef.current = true
           setSelectedPurchase(purchaseToHighlight)
           setShowSellerInfo(true)
+          
+          // Clear URL params IMMEDIATELY to prevent re-opening on close
+          router.replace('/my-watches/buying/purchased', { scroll: false })
         }
 
         // Scroll to highlighted purchase after a short delay
@@ -193,8 +200,6 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
       // Clear highlight after 5 seconds
       const clearTimer = setTimeout(() => {
         setHighlightedPurchaseId(null)
-        // Clear URL params without full reload
-        router.replace('/my-watches/buying/purchased', { scroll: false })
       }, 5000)
 
       return () => clearTimeout(clearTimer)
