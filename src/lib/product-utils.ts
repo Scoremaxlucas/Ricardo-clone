@@ -100,6 +100,7 @@ export interface ListingData {
   images?: string[] | string
   favoritesCount?: number
   viewsCount?: number
+  sellerId?: string // Für "eigenes Angebot" Badge - keine Favoriten auf eigene Artikel
 }
 
 /**

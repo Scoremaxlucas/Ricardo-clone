@@ -36,6 +36,7 @@ export interface UnifiedProductCardData {
   href?: string
   createdAt?: string
   paymentProtectionEnabled?: boolean
+  sellerId?: string // Für "eigenes Angebot" Prüfung
 }
 
 interface UnifiedProductCardProps {
@@ -99,6 +100,9 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
   const isNew = product.createdAt
     ? Date.now() - new Date(product.createdAt).getTime() < 7 * 24 * 60 * 60 * 1000
     : false
+
+  // Check if this is user's own listing (no favorites on own products like Ricardo)
+  const isOwnListing = session?.user && product.sellerId === (session.user as { id?: string })?.id
 
   // Format price
   // WICHTIG: Immer 2 Dezimalstellen anzeigen, damit Preise wie CHF 1.80 korrekt angezeigt werden
@@ -228,20 +232,29 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             </div>
           )}
 
-          {/* Favorite Button */}
-          <button
-            onClick={handleFavoriteClick}
-            className={`absolute right-1.5 top-1.5 z-10 rounded-full p-1 shadow-md transition-all ${
-              isFavorite
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-            } ${isLoadingFavorite ? 'cursor-wait opacity-50' : ''}`}
-            aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
-          >
-            <Heart
-              className={`h-3 w-3 transition-all ${isFavorite ? 'scale-110 fill-current' : ''}`}
-            />
-          </button>
+          {/* Favorite Button - Nur für fremde Artikel (wie Ricardo) */}
+          {!isOwnListing && (
+            <button
+              onClick={handleFavoriteClick}
+              className={`absolute right-1.5 top-1.5 z-10 rounded-full p-1 shadow-md transition-all ${
+                isFavorite
+                  ? 'bg-red-500 text-white hover:bg-red-600'
+                  : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
+              } ${isLoadingFavorite ? 'cursor-wait opacity-50' : ''}`}
+              aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
+            >
+              <Heart
+                className={`h-3 w-3 transition-all ${isFavorite ? 'scale-110 fill-current' : ''}`}
+              />
+            </button>
+          )}
+          
+          {/* Eigenes Angebot Badge - Wie Ricardo */}
+          {isOwnListing && (
+            <div className="absolute right-1.5 top-1.5 z-10 rounded-full bg-primary-600 px-2 py-0.5 text-[9px] font-medium text-white shadow-md">
+              Ihr Angebot
+            </div>
+          )}
 
           {/* Badges - Ricardo-style: Gold > Silber > Bronze */}
           <div className="absolute left-1.5 top-1.5 z-10 flex flex-col gap-1">
@@ -418,19 +431,31 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
               </div>
             )}
           </div>
-          <button
-            onClick={handleFavoriteClick}
-            className={`absolute right-2 top-2 z-10 rounded-full p-1.5 shadow-md transition-all ${
-              isFavorite
-                ? 'bg-red-500 text-white hover:bg-red-600'
-                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-            }`}
-            aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
-          >
-            <Heart
-              className={`h-4 w-4 transition-all ${isFavorite ? 'scale-110 fill-current' : ''}`}
-            />
-          </button>
+          
+          {/* Favorite Button - Nur für fremde Artikel (wie Ricardo) */}
+          {!isOwnListing && (
+            <button
+              onClick={handleFavoriteClick}
+              className={`absolute right-2 top-2 z-10 rounded-full p-1.5 shadow-md transition-all ${
+                isFavorite
+                  ? 'bg-red-500 text-white hover:bg-red-600'
+                  : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
+              }`}
+              aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
+            >
+              <Heart
+                className={`h-4 w-4 transition-all ${isFavorite ? 'scale-110 fill-current' : ''}`}
+              />
+            </button>
+          )}
+          
+          {/* Eigenes Angebot Badge - Wie Ricardo */}
+          {isOwnListing && (
+            <div className="absolute right-2 top-2 z-10 rounded-full bg-primary-600 px-2 py-0.5 text-[10px] font-medium text-white shadow-md">
+              Ihr Angebot
+            </div>
+          )}
+          
           {/* Badges - Ricardo-style: Gold > Silber > Bronze */}
           <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
             {hasGold && (
@@ -560,20 +585,29 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
           </div>
         )}
 
-        {/* Favorite Button */}
-        <button
-          onClick={handleFavoriteClick}
-          className={`absolute right-1.5 top-1.5 z-10 rounded-full p-1 shadow-md transition-all ${
-            isFavorite
-              ? 'bg-red-500 text-white hover:bg-red-600'
-              : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
-          } ${isLoadingFavorite ? 'cursor-wait opacity-50' : ''}`}
-          aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
-        >
-          <Heart
-            className={`h-3 w-3 transition-all ${isFavorite ? 'scale-110 fill-current' : ''}`}
-          />
-        </button>
+        {/* Favorite Button - Nur für fremde Artikel (wie Ricardo) */}
+        {!isOwnListing && (
+          <button
+            onClick={handleFavoriteClick}
+            className={`absolute right-1.5 top-1.5 z-10 rounded-full p-1 shadow-md transition-all ${
+              isFavorite
+                ? 'bg-red-500 text-white hover:bg-red-600'
+                : 'bg-white/90 text-gray-600 hover:bg-white hover:text-red-500'
+            } ${isLoadingFavorite ? 'cursor-wait opacity-50' : ''}`}
+            aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
+          >
+            <Heart
+              className={`h-3 w-3 transition-all ${isFavorite ? 'scale-110 fill-current' : ''}`}
+            />
+          </button>
+        )}
+        
+        {/* Eigenes Angebot Badge - Wie Ricardo */}
+        {isOwnListing && (
+          <div className="absolute right-1.5 top-1.5 z-10 rounded-full bg-primary-600 px-2 py-0.5 text-[9px] font-medium text-white shadow-md">
+            Ihr Angebot
+          </div>
+        )}
 
         {/* Badges - Ricardo-style: Gold > Silber > Bronze */}
         <div className="absolute left-1.5 top-1.5 z-10 flex flex-col gap-1">

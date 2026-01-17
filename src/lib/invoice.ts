@@ -166,7 +166,7 @@ export async function calculateInvoiceForSale(purchaseId: string) {
       console.log(`[invoice] ✅ Invoice ${invoice.invoiceNumber} synced to Bexio:`)
       console.log(`[invoice]    - Bexio Invoice ID: ${bexioResult.bexioInvoiceId}`)
       console.log(`[invoice]    - QR Reference: ${bexioResult.qrReference}`)
-      
+
       // Aktualisiere Invoice-Objekt mit Bexio-Daten für Return
       invoice.bexioInvoiceId = bexioResult.bexioInvoiceId
       invoice.qrReference = bexioResult.qrReference
@@ -327,7 +327,7 @@ export async function calculateInvoiceForOrder(orderId: string) {
       console.log(`[invoice/order] ✅ Invoice ${invoice.invoiceNumber} synced to Bexio:`)
       console.log(`[invoice/order]    - Bexio Invoice ID: ${bexioResult.bexioInvoiceId}`)
       console.log(`[invoice/order]    - QR Reference: ${bexioResult.qrReference}`)
-      
+
       // Aktualisiere Invoice-Objekt mit Bexio-Daten für Return
       invoice.bexioInvoiceId = bexioResult.bexioInvoiceId
       invoice.qrReference = bexioResult.qrReference

@@ -83,6 +83,9 @@ export function ProductCard({
 
   const mainImage = images.length > 0 ? images[0] : null
 
+  // Check if this is user's own listing (no favorites on own products like Ricardo)
+  const isOwnListing = session?.user && product.sellerId === (session.user as { id?: string })?.id
+
   // Check if product is favorite on mount
   useEffect(() => {
     let isMounted = true
@@ -341,23 +344,32 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Top-right Heart Button - Min 44x44px for touch with smooth animation */}
-        <button
-          onClick={handleFavoriteClick}
-          className={`absolute right-2 top-2 inline-flex items-center justify-center rounded-full shadow-sm backdrop-blur transition-all duration-200 active:scale-90 ${
-            isFavorite
-              ? 'bg-red-50 hover:bg-red-100'
-              : 'bg-white/90 hover:bg-white hover:shadow-md'
-          }`}
-          style={{ minWidth: '44px', minHeight: '44px' }}
-          aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
-        >
-          <Heart
-            className={`h-5 w-5 transition-all duration-200 ${
-              isFavorite ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-500 hover:text-red-400'
+        {/* Top-right Heart Button - Nur für fremde Artikel (wie Ricardo) */}
+        {!isOwnListing && (
+          <button
+            onClick={handleFavoriteClick}
+            className={`absolute right-2 top-2 inline-flex items-center justify-center rounded-full shadow-sm backdrop-blur transition-all duration-200 active:scale-90 ${
+              isFavorite
+                ? 'bg-red-50 hover:bg-red-100'
+                : 'bg-white/90 hover:bg-white hover:shadow-md'
             }`}
-          />
-        </button>
+            style={{ minWidth: '44px', minHeight: '44px' }}
+            aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
+          >
+            <Heart
+              className={`h-5 w-5 transition-all duration-200 ${
+                isFavorite ? 'fill-red-500 text-red-500 scale-110' : 'text-gray-500 hover:text-red-400'
+              }`}
+            />
+          </button>
+        )}
+        
+        {/* Eigenes Angebot Badge - Wie Ricardo */}
+        {isOwnListing && (
+          <div className="absolute right-2 top-2 z-10 rounded-full bg-primary-600 px-2 py-1 text-[10px] font-medium text-white shadow-md">
+            Ihr Angebot
+          </div>
+        )}
       </div>
 
       {/* Content Wrapper */}

@@ -28,6 +28,7 @@ interface ModernProductCardProps {
   onFavoriteToggle?: (id: string, isFavorite: boolean) => void
   favorites?: Set<string>
   className?: string
+  sellerId?: string // Für "eigenes Angebot" Badge
 }
 
 export function ModernProductCard({
@@ -52,10 +53,14 @@ export function ModernProductCard({
   onFavoriteToggle,
   favorites,
   className = '',
+  sellerId,
 }: ModernProductCardProps) {
   const { data: session } = useSession()
   const [isFavorite, setIsFavorite] = useState(favorites?.has(id) || false)
   const [imageError, setImageError] = useState(false)
+
+  // Check if this is user's own listing (no favorites on own products like Ricardo)
+  const isOwnListing = session?.user && sellerId === (session.user as { id?: string })?.id
 
   const toggleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault()
@@ -197,18 +202,27 @@ export function ModernProductCard({
           </div>
         )}
 
-        {/* Favorite Button */}
-        <button
-          onClick={toggleFavorite}
-          className={`absolute right-3 top-3 z-10 rounded-full p-2 shadow-md transition-all ${
-            isFavorite
-              ? 'bg-red-500 text-white hover:bg-red-600'
-              : 'bg-white/90 text-[#3A3A3A] hover:bg-white hover:text-red-500'
-          } `}
-          aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
-        >
-          <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-        </button>
+        {/* Favorite Button - Nur für fremde Artikel (wie Ricardo) */}
+        {!isOwnListing && (
+          <button
+            onClick={toggleFavorite}
+            className={`absolute right-3 top-3 z-10 rounded-full p-2 shadow-md transition-all ${
+              isFavorite
+                ? 'bg-red-500 text-white hover:bg-red-600'
+                : 'bg-white/90 text-[#3A3A3A] hover:bg-white hover:text-red-500'
+            } `}
+            aria-label={isFavorite ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
+          >
+            <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+          </button>
+        )}
+        
+        {/* Eigenes Angebot Badge - Wie Ricardo */}
+        {isOwnListing && (
+          <div className="absolute right-3 top-3 z-10 rounded-full bg-primary-600 px-2.5 py-1 text-[10px] font-medium text-white shadow-md">
+            Ihr Angebot
+          </div>
+        )}
 
         {/* Badges oben links - Booster oder Auktion */}
         <div className="absolute left-3 top-3 z-10 flex flex-col gap-1.5">

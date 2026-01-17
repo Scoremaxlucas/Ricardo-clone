@@ -696,19 +696,32 @@ export function ProductPageClient({
                 )}
               </div>
 
-              {/* Zu Favoriten Button - Wie Ricardo */}
-              <button
-                onClick={toggleFavorite}
-                disabled={favoriteLoading}
-                className={`mb-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
-                  isFavorite
-                    ? 'border-red-400 bg-red-50 text-red-600'
-                    : 'border-gray-200 bg-white text-primary-600'
-                }`}
-              >
-                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-                {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
-              </button>
+              {/* Zu Favoriten Button - Wie Ricardo: Nur für fremde Artikel */}
+              {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
+                <button
+                  onClick={toggleFavorite}
+                  disabled={favoriteLoading}
+                  className={`mb-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                    isFavorite
+                      ? 'border-red-400 bg-red-50 text-red-600'
+                      : 'border-gray-200 bg-white text-primary-600'
+                  }`}
+                >
+                  <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                  {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
+                </button>
+              )}
+              
+              {/* Nicht eingeloggte User: Favoriten-Button ohne Funktion */}
+              {!session?.user && (
+                <button
+                  onClick={() => router.push('/auth/signin')}
+                  className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-600 transition-colors hover:bg-gray-50"
+                >
+                  <Heart className="h-4 w-4" />
+                  ZU FAVORITEN HINZUFÜGEN
+                </button>
+              )}
 
               {/* Lieferung Info */}
               {(watch as any).shippingMethod && (
@@ -895,19 +908,32 @@ export function ProductPageClient({
                 />
               )}
 
-              {/* Zu Favoriten hinzufügen - Wie Ricardo */}
-              <button
-                onClick={toggleFavorite}
-                disabled={favoriteLoading}
-                className={`mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
-                  isFavorite
-                    ? 'border-red-400 bg-red-50 text-red-600 hover:bg-red-100'
-                    : 'border-gray-200 bg-white text-primary-600 hover:bg-gray-50'
-                }`}
-              >
-                <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
-                {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
-              </button>
+              {/* Zu Favoriten hinzufügen - Wie Ricardo: Nur für fremde Artikel */}
+              {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
+                <button
+                  onClick={toggleFavorite}
+                  disabled={favoriteLoading}
+                  className={`mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 px-4 py-2.5 text-sm font-semibold uppercase tracking-wide transition-colors disabled:opacity-50 ${
+                    isFavorite
+                      ? 'border-red-400 bg-red-50 text-red-600 hover:bg-red-100'
+                      : 'border-gray-200 bg-white text-primary-600 hover:bg-gray-50'
+                  }`}
+                >
+                  <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
+                  {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
+                </button>
+              )}
+              
+              {/* Nicht eingeloggte User: Favoriten-Button ohne Funktion */}
+              {!session?.user && (
+                <button
+                  onClick={() => router.push('/auth/signin')}
+                  className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-600 transition-colors hover:bg-gray-50"
+                >
+                  <Heart className="h-4 w-4" />
+                  ZU FAVORITEN HINZUFÜGEN
+                </button>
+              )}
 
               {/* Lieferung - Wie Ricardo */}
               {(watch as any).shippingMethod && (

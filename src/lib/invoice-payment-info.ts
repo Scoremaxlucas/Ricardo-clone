@@ -120,7 +120,7 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
     // Fallback: Rechnungsnummer (nur wenn Bexio-Sync nicht funktioniert hat)
     reference = invoice.invoiceNumber.replace(/[^0-9A-Za-z]/g, '').substring(0, 25)
     console.warn(`[invoice-payment-info] ⚠️ Keine Bexio-Referenz gefunden, verwende Fallback: ${reference}`)
-    
+
     // Versuche nochmal Bexio-Sync (falls Token jetzt verfügbar ist)
     if (process.env.BEXIO_API_TOKEN && !invoice.bexioInvoiceId) {
       console.log('[invoice-payment-info] Versuche nachträglichen Bexio-Sync...')

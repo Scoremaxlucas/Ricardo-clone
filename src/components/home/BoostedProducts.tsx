@@ -2,6 +2,7 @@
 
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Award, Clock, Heart, Medal, Sparkles } from 'lucide-react'
+import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
@@ -22,6 +23,7 @@ interface Item {
   boosters?: string[]
   city?: string
   postalCode?: string
+  sellerId?: string // Für "eigenes Angebot" Badge
 }
 
 interface BoostedProductsProps {
@@ -30,9 +32,14 @@ interface BoostedProductsProps {
 
 export function BoostedProducts({ boosterType }: BoostedProductsProps) {
   const { t } = useLanguage()
+  const { data: session } = useSession()
   const [favorites, setFavorites] = useState<string[]>([])
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
+  
+  // Helper to check if item is user's own listing
+  const isOwnListing = (sellerId?: string) => 
+    session?.user && sellerId === (session.user as { id?: string })?.id
 
   useEffect(() => {
     const fetchItems = async () => {
@@ -146,17 +153,27 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
                       <span className="text-xs text-gray-400">{t.home.noImage}</span>
                     </div>
                   )}
-                  <button
-                    onClick={() => toggleFavorite(product.id)}
-                    aria-label={favorites.includes(product.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
-                    className={`absolute right-1.5 top-1.5 rounded-full p-1 transition-colors ${
-                      favorites.includes(product.id)
-                        ? 'bg-red-500 text-white'
-                        : 'bg-white/90 text-gray-400 hover:text-red-500'
-                    }`}
-                  >
-                    <Heart className="h-3 w-3" />
-                  </button>
+                  {/* Favorite Button - Nur für fremde Artikel (wie Ricardo) */}
+                  {!isOwnListing(product.sellerId) && (
+                    <button
+                      onClick={() => toggleFavorite(product.id)}
+                      aria-label={favorites.includes(product.id) ? 'Aus Favoriten entfernen' : 'Zu Favoriten hinzufügen'}
+                      className={`absolute right-1.5 top-1.5 rounded-full p-1 transition-colors ${
+                        favorites.includes(product.id)
+                          ? 'bg-red-500 text-white'
+                          : 'bg-white/90 text-gray-400 hover:text-red-500'
+                      }`}
+                    >
+                      <Heart className="h-3 w-3" />
+                    </button>
+                  )}
+                  
+                  {/* Eigenes Angebot Badge - Wie Ricardo */}
+                  {isOwnListing(product.sellerId) && (
+                    <div className="absolute right-1.5 top-1.5 z-10 rounded-full bg-primary-600 px-2 py-0.5 text-[9px] font-medium text-white shadow-md">
+                      Ihr Angebot
+                    </div>
+                  )}
                   {isGold && (
                     <div className="absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 p-1.5 text-amber-900 shadow-md">
                       <Award className="h-3 w-3" />

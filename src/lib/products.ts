@@ -19,6 +19,7 @@ export interface ProductItem {
   articleNumber?: number | null
   href?: string // WICHTIG: Expliziter href für Produktlinks
   paymentProtectionEnabled?: boolean // Helvenda Zahlungsschutz
+  sellerId?: string // Für "eigenes Angebot" Prüfung in ProductCards
 }
 
 /**
@@ -209,6 +210,8 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
         paymentProtectionEnabled: w.paymentProtectionEnabled || false,
         // WICHTIG: Setze href explizit, damit der richtige Link verwendet wird
         href: `/products/${productId}`,
+        // WICHTIG: sellerId für "eigenes Angebot" Badge in ProductCards
+        sellerId: w.seller?.id,
       }
     })
   } catch (error) {
