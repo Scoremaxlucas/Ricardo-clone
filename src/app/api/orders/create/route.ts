@@ -16,7 +16,22 @@ import { NextRequest, NextResponse } from 'next/server'
  */
 export async function POST(request: NextRequest) {
   try {
+    console.log('[orders/create] Starting order creation...')
+
+    // Quick DB health check
+    try {
+      await prisma.$queryRaw`SELECT 1`
+      console.log('[orders/create] Database connection OK')
+    } catch (dbError: any) {
+      console.error('[orders/create] Database connection failed:', dbError)
+      return NextResponse.json(
+        { message: 'Datenbankverbindung fehlgeschlagen', error: dbError.message },
+        { status: 500 }
+      )
+    }
+
     const session = await getServerSession(authOptions)
+    console.log('[orders/create] Session:', session?.user?.id ? 'OK' : 'MISSING')
 
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
@@ -44,8 +59,10 @@ export async function POST(request: NextRequest) {
     }
 
     const buyerId = session.user.id
+    console.log('[orders/create] BuyerId:', buyerId)
 
     // Lade Watch mit Verkäufer - use select to avoid missing columns
+    console.log('[orders/create] Loading watch:', watchId)
     const watch = await prisma.watch.findUnique({
       where: { id: watchId },
       select: {
@@ -77,8 +94,10 @@ export async function POST(request: NextRequest) {
     })
 
     if (!watch) {
+      console.error('[orders/create] Watch not found:', watchId)
       return NextResponse.json({ message: 'Artikel nicht gefunden' }, { status: 404 })
     }
+    console.log('[orders/create] Watch loaded:', { id: watch.id, price: watch.price, buyNowPrice: watch.buyNowPrice, sellerId: watch.sellerId })
 
     // Prüfe ob bereits eine aktive Order für DIESEN Käufer existiert
     const existingOrder = (watch.orders || []).find(
@@ -225,6 +244,7 @@ export async function POST(request: NextRequest) {
         orderNumber = `ORD-${year}-${String(lastNumber + 1).padStart(3, '0')}`
       }
     }
+    console.log('[orders/create] Generated order number:', orderNumber)
 
     // === RICARDO-STYLE: Bestimme Zahlungsmethode und Fristen ===
     const isPickup = selectedDeliveryMode === 'pickup'
