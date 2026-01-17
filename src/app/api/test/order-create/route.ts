@@ -93,7 +93,7 @@ export async function GET(request: Request) {
     } catch (e: any) {
       results.errors.push(`6. Fee calculation failed: ${e.message}`)
     }
-    
+
     // Step 7: Try to create an order (DRY RUN - no actual creation unless testCreate=true)
     const testCreate = url.searchParams.get('testCreate') === 'true'
     if (watchId && buyerId && testCreate) {
@@ -102,14 +102,14 @@ export async function GET(request: Request) {
           where: { id: watchId },
           select: { id: true, price: true, buyNowPrice: true, sellerId: true },
         })
-        
+
         if (!watch) {
           results.errors.push('7. Order creation skipped: Watch not found')
         } else {
           const { calculateOrderFees } = await import('@/lib/order-fees')
           const itemPrice = watch.buyNowPrice || watch.price
           const fees = await calculateOrderFees(itemPrice, 0, true)
-          
+
           const year = new Date().getFullYear()
           const lastOrder = await prisma.order.findFirst({
             where: { orderNumber: { startsWith: `ORD-${year}-` } },
@@ -122,7 +122,7 @@ export async function GET(request: Request) {
               orderNumber = `ORD-${year}-${String(lastNumber + 1).padStart(3, '0')}`
             }
           }
-          
+
           const orderData = {
             orderNumber,
             watchId: watch.id,
@@ -145,13 +145,13 @@ export async function GET(request: Request) {
             paymentDeadline: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
             contactDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
           }
-          
+
           results.orderData = orderData
-          
+
           const order = await prisma.order.create({
             data: orderData,
           })
-          
+
           results.steps.push(`7. Order created: ${order.orderNumber}`)
           results.createdOrder = order
         }
@@ -166,7 +166,7 @@ export async function GET(request: Request) {
     } else {
       results.steps.push('7. Order creation: Skipped (need watchId, buyerId, and testCreate=true)')
     }
-    
+
     return NextResponse.json(results)
   } catch (error: any) {
     results.errors.push(`Unexpected error: ${error.message}`)
