@@ -114,13 +114,13 @@ export async function POST(request: NextRequest) {
 
     // Berechne Preise
     const itemPrice = watch.buyNowPrice || watch.price
-    
+
     // Validate item price
     if (!itemPrice || itemPrice <= 0) {
-      console.error('[orders/create] Invalid item price:', { 
-        buyNowPrice: watch.buyNowPrice, 
+      console.error('[orders/create] Invalid item price:', {
+        buyNowPrice: watch.buyNowPrice,
         price: watch.price,
-        watchId 
+        watchId
       })
       return NextResponse.json(
         { message: 'Artikel hat keinen gültigen Preis' },
@@ -273,72 +273,73 @@ export async function POST(request: NextRequest) {
     // Erstelle Order
     // HINWEIS: protectionFee speichert jetzt die Zahlungsgebühr (Stripe Fee / "Helvenda Schutz Gebühr")
     // Diese wird vom Verkäufer bezahlt, nicht vom Käufer
-    console.log('[orders/create] Creating order with data:', {
+    const orderData = {
       orderNumber,
       watchId,
       buyerId,
       sellerId: watch.sellerId,
       itemPrice: fees.itemPrice,
+      shippingCost: shippingCostChfFinal,
       shippingCostChfFinal,
+      shippingCostBreakdown: JSON.stringify(shippingCostBreakdown),
+      selectedDeliveryMode,
+      selectedShippingCode: shippingCode,
+      selectedAddons: selectedAddons ? JSON.stringify(selectedAddons) : null,
+      shippingRateSetId: 'default_ch_post',
       platformFee: fees.platformFee,
       protectionFee: fees._processingFeeOnly,
       totalAmount: fees.totalAmount,
       paymentMethod,
       orderStatus,
       paymentStatus,
-      selectedDeliveryMode,
-    })
-    const order = await prisma.order.create({
-      data: {
-        orderNumber,
-        watchId,
-        buyerId,
-        sellerId: watch.sellerId,
-        itemPrice: fees.itemPrice,
-        shippingCost: shippingCostChfFinal, // Deprecated - use shippingCostChfFinal
-        shippingCostChfFinal,
-        shippingCostBreakdown: JSON.stringify(shippingCostBreakdown),
-        selectedDeliveryMode,
-        selectedShippingCode: shippingCode,
-        selectedAddons: selectedAddons ? JSON.stringify(selectedAddons) : null,
-        shippingRateSetId: 'default_ch_post',
-        platformFee: fees.platformFee,
-        protectionFee: fees._processingFeeOnly, // Stripe Processing Fee (für Transfer-Berechnung)
-        totalAmount: fees.totalAmount,
-        // === NEUE FELDER ===
-        paymentMethod,
-        orderStatus,
-        paymentStatus,
-        // Fristen (nur für Direktzahlungen relevant)
-        paymentDeadline: paymentMethod !== 'stripe' ? paymentDeadline : null,
-        contactDeadline: contactDeadline,
-      },
-      include: {
-        watch: {
-          select: {
-            id: true,
-            title: true,
-            brand: true,
-            model: true,
-            images: true,
+      paymentDeadline: paymentMethod !== 'stripe' ? paymentDeadline : null,
+      contactDeadline: contactDeadline,
+    }
+    console.log('[orders/create] Creating order with data:', JSON.stringify(orderData, null, 2))
+    
+    let order
+    try {
+      order = await prisma.order.create({
+        data: orderData,
+        include: {
+          watch: {
+            select: {
+              id: true,
+              title: true,
+              brand: true,
+              model: true,
+              images: true,
+            },
+          },
+          buyer: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
+          },
+          seller: {
+            select: {
+              id: true,
+              name: true,
+              email: true,
+            },
           },
         },
-        buyer: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
+      })
+    } catch (prismaError: any) {
+      console.error('[orders/create] Prisma error creating order:', prismaError)
+      console.error('[orders/create] Prisma error code:', prismaError.code)
+      console.error('[orders/create] Prisma error meta:', prismaError.meta)
+      return NextResponse.json(
+        { 
+          message: 'Datenbankfehler beim Erstellen der Bestellung', 
+          error: prismaError.message,
+          code: prismaError.code 
         },
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    })
+        { status: 500 }
+      )
+    }
 
     // === BENACHRICHTIGUNGEN SENDEN ===
     // Benachrichtigung an Verkäufer
