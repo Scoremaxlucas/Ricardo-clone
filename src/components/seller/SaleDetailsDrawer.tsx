@@ -572,8 +572,8 @@ export function SaleDetailsDrawer({ purchaseId, isOpen, onClose, onUpdate }: Sal
               )}
 
               {/* Shipping Info - nur bei Versand, NICHT bei Abholung */}
-              {sale.paymentConfirmed && 
-               sale.shippingMethod !== 'pickup' && 
+              {sale.paymentConfirmed &&
+               sale.shippingMethod !== 'pickup' &&
                sale.shippingMethod !== 'abholung' && (
                 <div>
                   <h4 className="mb-3 font-medium text-gray-900">Versand</h4>
