@@ -37,6 +37,13 @@ export default function ProfilePage() {
   })
   const fileInputRef = useRef<HTMLInputElement>(null)
 
+  // Cleanup: Remove old global localStorage key (was causing bug where all users shared same image)
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      localStorage.removeItem('profileImage') // Remove the buggy global key
+    }
+  }, [])
+
   // Lade Nickname aus DB, falls nicht in Session
   useEffect(() => {
     const userId = (session?.user as { id?: string })?.id
@@ -98,20 +105,31 @@ export default function ProfilePage() {
       })
     }
 
-    // Profilbild aus localStorage laden
-    if (typeof window !== 'undefined') {
-      const storedImage = localStorage.getItem('profileImage')
-      if (storedImage) {
-        setProfileImage(storedImage)
-        return
-      }
-    }
-
-    // Dann aus Session
-    if (session?.user?.image) {
+    // Profilbild aus der Datenbank/Session laden (NICHT aus localStorage!)
+    const userId = (session?.user as { id?: string })?.id
+    if (userId) {
+      // Lade das aktuelle Profilbild aus der Datenbank
+      fetch(`/api/profile/get-image?userId=${userId}`)
+        .then(res => res.json())
+        .then(data => {
+          if (data.image) {
+            setProfileImage(data.image)
+          } else if (session?.user?.image) {
+            // Fallback auf Session-Bild
+            setProfileImage(session.user.image)
+          }
+        })
+        .catch(err => {
+          console.error('Error loading profile image:', err)
+          // Fallback auf Session-Bild
+          if (session?.user?.image) {
+            setProfileImage(session.user.image)
+          }
+        })
+    } else if (session?.user?.image) {
       setProfileImage(session.user.image)
     }
-  }, [session?.user?.name, session?.user?.email, session?.user?.image])
+  }, [session?.user?.name, session?.user?.email, session?.user?.image, (session?.user as { id?: string })?.id])
 
   // Initialen aus Name extrahieren
   const getInitials = (name?: string | null) => {
@@ -150,37 +168,81 @@ export default function ProfilePage() {
   const handleImageUpload = async () => {
     if (!fileInputRef.current?.files?.[0]) return
 
+    const userId = (session?.user as { id?: string })?.id
+    if (!userId) {
+      toast.error('Nicht eingeloggt')
+      return
+    }
+
     setIsUploading(true)
     const file = fileInputRef.current.files[0]
 
-    // Konvertiere zu Base64
-    const reader = new FileReader()
-    reader.onloadend = () => {
-      const base64Image = reader.result as string
-      setProfileImage(base64Image)
-      setPreviewImage(null)
+    try {
+      // Upload zum Server (Vercel Blob Storage)
+      const formData = new FormData()
+      formData.append('image', file)
+      formData.append('userId', userId)
 
-      // In localStorage speichern
-      if (typeof window !== 'undefined') {
-        localStorage.setItem('profileImage', base64Image)
+      const response = await fetch('/api/profile/upload-image', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Upload fehlgeschlagen')
       }
 
+      const data = await response.json()
+      
+      // Update local state mit der neuen Bild-URL
+      setProfileImage(data.imageUrl)
+      setPreviewImage(null)
+      
+      // Session aktualisieren damit das Bild überall erscheint
+      await update({ image: data.imageUrl })
+
       toast.success('Profilbild erfolgreich aktualisiert!')
+    } catch (error: any) {
+      console.error('Error uploading profile image:', error)
+      toast.error(error.message || 'Fehler beim Hochladen des Profilbilds')
+    } finally {
       setIsUploading(false)
     }
-    reader.readAsDataURL(file)
   }
 
-  const handleRemoveImage = () => {
-    setProfileImage(null)
-    setPreviewImage(null)
-
-    // Aus localStorage entfernen
-    if (typeof window !== 'undefined') {
-      localStorage.removeItem('profileImage')
+  const handleRemoveImage = async () => {
+    const userId = (session?.user as { id?: string })?.id
+    if (!userId) {
+      toast.error('Nicht eingeloggt')
+      return
     }
 
-    toast.success('Profilbild entfernt')
+    try {
+      // Entferne vom Server
+      const response = await fetch('/api/profile/upload-image', {
+        method: 'DELETE',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId }),
+      })
+
+      if (!response.ok) {
+        const errorData = await response.json()
+        throw new Error(errorData.message || 'Fehler beim Entfernen')
+      }
+
+      // Update local state
+      setProfileImage(null)
+      setPreviewImage(null)
+      
+      // Session aktualisieren
+      await update({ image: null })
+
+      toast.success('Profilbild entfernt')
+    } catch (error: any) {
+      console.error('Error removing profile image:', error)
+      toast.error(error.message || 'Fehler beim Entfernen des Profilbilds')
+    }
   }
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {

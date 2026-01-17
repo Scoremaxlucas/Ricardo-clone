@@ -12,7 +12,7 @@ export async function POST(request: Request) {
   // Allow access via CRON_SECRET or admin session
   const url = new URL(request.url)
   const secret = url.searchParams.get('secret')
-  
+
   if (secret === process.env.CRON_SECRET) {
     // Authorized via CRON_SECRET
     console.log('[run-migration] Authorized via CRON_SECRET')
