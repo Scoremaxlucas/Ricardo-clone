@@ -33,6 +33,7 @@ export interface InvoicePaymentInfo {
 
 /**
  * Generiert Zahlungsinformationen für eine Rechnung
+ * WICHTIG: Wenn Bexio-Sync aktiv ist, wird die Bexio-Referenz verwendet
  */
 export async function generateInvoicePaymentInfo(invoiceId: string): Promise<InvoicePaymentInfo> {
   const invoice = await prisma.invoice.findUnique({
@@ -44,6 +45,9 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
       status: true,
       dueDate: true,
       refundedAt: true,
+      // Bexio-Sync Felder
+      bexioInvoiceId: true,
+      qrReference: true,
       seller: {
         select: {
           id: true,
@@ -105,8 +109,31 @@ export async function generateInvoicePaymentInfo(invoiceId: string): Promise<Inv
   const bic = PAYMENT_CONFIG.bic
   const accountHolder = PAYMENT_CONFIG.creditorName
 
-  // Generiere Referenz (Rechnungsnummer als Referenz)
-  const reference = invoice.invoiceNumber.replace(/[^0-9A-Za-z]/g, '').substring(0, 25)
+  // WICHTIG: Verwende Bexio QR-Referenz wenn vorhanden (für korrektes Payment Matching)
+  // Fallback: Rechnungsnummer (falls Bexio-Sync fehlgeschlagen ist)
+  let reference: string
+  if (invoice.qrReference) {
+    // Bexio-Referenz verwenden - wurde von createBexioInvoice generiert
+    reference = invoice.qrReference
+    console.log(`[invoice-payment-info] ✅ Verwende Bexio QR-Referenz: ${reference}`)
+  } else {
+    // Fallback: Rechnungsnummer (nur wenn Bexio-Sync nicht funktioniert hat)
+    reference = invoice.invoiceNumber.replace(/[^0-9A-Za-z]/g, '').substring(0, 25)
+    console.warn(`[invoice-payment-info] ⚠️ Keine Bexio-Referenz gefunden, verwende Fallback: ${reference}`)
+    
+    // Versuche nochmal Bexio-Sync (falls Token jetzt verfügbar ist)
+    if (process.env.BEXIO_API_TOKEN && !invoice.bexioInvoiceId) {
+      console.log('[invoice-payment-info] Versuche nachträglichen Bexio-Sync...')
+      try {
+        const { createBexioInvoice } = await import('@/lib/bexio-sync')
+        const bexioResult = await createBexioInvoice(invoice.id)
+        reference = bexioResult.qrReference
+        console.log(`[invoice-payment-info] ✅ Nachträglicher Bexio-Sync erfolgreich: ${reference}`)
+      } catch (syncError: any) {
+        console.error(`[invoice-payment-info] ❌ Nachträglicher Bexio-Sync fehlgeschlagen: ${syncError.message}`)
+      }
+    }
+  }
 
   // Generiere QR-Code String (Swiss QR-Bill Format)
   // WICHTIG: Debtor-Felder nur ausfüllen wenn Name vorhanden ist
@@ -328,8 +355,17 @@ function generateQRCodeString(params: {
   }
 
   // Referenz bereinigen und formatieren (nur alphanumerisch, genau 25 Zeichen)
-  // WICHTIG: Referenz muss genau 25 Zeichen lang sein für Swiss QR-Bill
-  const formattedReference = formatQRReference(reference)
+  // WICHTIG: Wenn Referenz bereits SCOR-Format ist (RF...), nicht modifizieren!
+  let formattedReference: string
+  if (reference.startsWith('RF') && reference.length === 25) {
+    // Bereits im SCOR-Format (von Bexio) - direkt verwenden
+    formattedReference = reference
+    console.log('[invoice-payment-info] ✅ Verwende SCOR-Referenz:', formattedReference)
+  } else {
+    // Fallback: formatQRReference für alte Referenzen
+    formattedReference = formatQRReference(reference)
+    console.log('[invoice-payment-info] Formatierte Referenz:', formattedReference)
+  }
 
   // Betrag formatieren (immer mit 2 Dezimalstellen)
   const formattedAmount = Math.abs(amount).toFixed(2)

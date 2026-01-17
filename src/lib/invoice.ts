@@ -128,6 +128,7 @@ export async function calculateInvoiceForSale(purchaseId: string) {
             description: `Kommission: ${purchase.watch.title}`,
             quantity: 1,
             price: finalSubtotal,
+            amount: finalSubtotal, // WICHTIG: Für Bexio-Sync
             total: finalSubtotal,
           },
         ],
@@ -155,16 +156,30 @@ export async function calculateInvoiceForSale(purchaseId: string) {
     // Silent fail - Notification-Fehler sollte nicht kritisch sein
   }
 
-  // Sync invoice to Bexio automatically (non-blocking)
-  try {
-    if (process.env.BEXIO_API_TOKEN) {
+  // Sync invoice to Bexio automatically
+  // WICHTIG: Bexio ist das primäre Buchhaltungssystem - Sync ist kritisch
+  if (process.env.BEXIO_API_TOKEN) {
+    try {
+      console.log(`[invoice] 🔄 Starte Bexio-Sync für ${invoice.invoiceNumber}...`)
       const { createBexioInvoice } = await import('@/lib/bexio-sync')
       const bexioResult = await createBexioInvoice(invoice.id)
-      console.log(`[invoice] ✅ Invoice ${invoice.invoiceNumber} synced to Bexio (ID: ${bexioResult.bexioInvoiceId}, QR: ${bexioResult.qrReference})`)
+      console.log(`[invoice] ✅ Invoice ${invoice.invoiceNumber} synced to Bexio:`)
+      console.log(`[invoice]    - Bexio Invoice ID: ${bexioResult.bexioInvoiceId}`)
+      console.log(`[invoice]    - QR Reference: ${bexioResult.qrReference}`)
+      
+      // Aktualisiere Invoice-Objekt mit Bexio-Daten für Return
+      invoice.bexioInvoiceId = bexioResult.bexioInvoiceId
+      invoice.qrReference = bexioResult.qrReference
+    } catch (bexioError: any) {
+      // Log detaillierten Fehler - Bexio-Sync ist wichtig!
+      console.error(`[invoice] ❌ Bexio sync FAILED for invoice ${invoice.invoiceNumber}:`)
+      console.error(`[invoice]    - Error: ${bexioError.message}`)
+      console.error(`[invoice]    - Stack: ${bexioError.stack}`)
+      // Invoice bleibt lokal gespeichert, aber ohne Bexio-Verknüpfung
+      // Payment-Info wird Fallback-Referenz verwenden
     }
-  } catch (bexioError: any) {
-    // Don't fail invoice creation if Bexio sync fails
-    console.error(`[invoice] ⚠️ Bexio sync failed for invoice ${invoice.invoiceNumber}:`, bexioError.message)
+  } else {
+    console.warn(`[invoice] ⚠️ BEXIO_API_TOKEN nicht gesetzt - kein Bexio-Sync!`)
   }
 
   return invoice
@@ -275,6 +290,7 @@ export async function calculateInvoiceForOrder(orderId: string) {
             description: `Kommission: ${order.watch.title}`,
             quantity: 1,
             price: finalSubtotal,
+            amount: finalSubtotal, // WICHTIG: Für Bexio-Sync
             total: finalSubtotal,
           },
         ],
@@ -301,16 +317,28 @@ export async function calculateInvoiceForOrder(orderId: string) {
     // Silent fail - Notification-Fehler sollte nicht kritisch sein
   }
 
-  // Sync invoice to Bexio automatically (non-blocking)
-  try {
-    if (process.env.BEXIO_API_TOKEN) {
+  // Sync invoice to Bexio automatically
+  // WICHTIG: Bexio ist das primäre Buchhaltungssystem - Sync ist kritisch
+  if (process.env.BEXIO_API_TOKEN) {
+    try {
+      console.log(`[invoice/order] 🔄 Starte Bexio-Sync für ${invoice.invoiceNumber}...`)
       const { createBexioInvoice } = await import('@/lib/bexio-sync')
       const bexioResult = await createBexioInvoice(invoice.id)
-      console.log(`[invoice/order] ✅ Invoice ${invoice.invoiceNumber} synced to Bexio (ID: ${bexioResult.bexioInvoiceId}, QR: ${bexioResult.qrReference})`)
+      console.log(`[invoice/order] ✅ Invoice ${invoice.invoiceNumber} synced to Bexio:`)
+      console.log(`[invoice/order]    - Bexio Invoice ID: ${bexioResult.bexioInvoiceId}`)
+      console.log(`[invoice/order]    - QR Reference: ${bexioResult.qrReference}`)
+      
+      // Aktualisiere Invoice-Objekt mit Bexio-Daten für Return
+      invoice.bexioInvoiceId = bexioResult.bexioInvoiceId
+      invoice.qrReference = bexioResult.qrReference
+    } catch (bexioError: any) {
+      // Log detaillierten Fehler - Bexio-Sync ist wichtig!
+      console.error(`[invoice/order] ❌ Bexio sync FAILED for invoice ${invoice.invoiceNumber}:`)
+      console.error(`[invoice/order]    - Error: ${bexioError.message}`)
+      console.error(`[invoice/order]    - Stack: ${bexioError.stack}`)
     }
-  } catch (bexioError: any) {
-    // Don't fail invoice creation if Bexio sync fails
-    console.error(`[invoice/order] ⚠️ Bexio sync failed for invoice ${invoice.invoiceNumber}:`, bexioError.message)
+  } else {
+    console.warn(`[invoice/order] ⚠️ BEXIO_API_TOKEN nicht gesetzt - kein Bexio-Sync!`)
   }
 
   return invoice
@@ -437,6 +465,7 @@ export async function createCreditNoteForInvoice(originalInvoiceId: string, reas
           description: `Korrektur/Storno: ${item.description}`,
           quantity: item.quantity,
           price: -item.price, // Negativ
+          amount: -item.total, // WICHTIG: Für Bexio-Sync (Negativ)
           total: -item.total, // Negativ
         })),
       },
