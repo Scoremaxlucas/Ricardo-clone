@@ -8,18 +8,30 @@ import { NextResponse } from 'next/server'
  * Runs the missing Order columns migration
  * Only accessible by admins
  */
-export async function POST() {
-  const session = await getServerSession(authOptions)
-
-  // Check if user is admin
-  if (!session?.user?.email) {
-    return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
-  }
-
-  // Check if user is admin (add your admin emails here)
-  const adminEmails = ['admin@helvenda.ch', 'lucas@helvenda.ch', 'a@a.ch']
-  if (!adminEmails.includes(session.user.email)) {
-    return NextResponse.json({ error: 'Nicht autorisiert - nur für Admins' }, { status: 403 })
+export async function POST(request: Request) {
+  // Allow access via CRON_SECRET, temporary migration key, or admin session
+  const url = new URL(request.url)
+  const secret = url.searchParams.get('secret')
+  
+  // Temporary migration key - REMOVE AFTER MIGRATION
+  const TEMP_MIGRATION_KEY = 'helvenda-migrate-2026-01-17'
+  
+  if (secret === process.env.CRON_SECRET || secret === TEMP_MIGRATION_KEY) {
+    // Authorized via secret
+    console.log('[run-migration] Authorized via secret key')
+  } else {
+    // Check session
+    const session = await getServerSession(authOptions)
+    
+    if (!session?.user?.email) {
+      return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
+    }
+    
+    // Check if user is admin (add your admin emails here)
+    const adminEmails = ['admin@helvenda.ch', 'lucas@helvenda.ch', 'a@a.ch']
+    if (!adminEmails.includes(session.user.email)) {
+      return NextResponse.json({ error: 'Nicht autorisiert - nur für Admins' }, { status: 403 })
+    }
   }
 
   const results: string[] = []

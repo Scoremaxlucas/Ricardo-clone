@@ -7,7 +7,7 @@ export default function MigratePage() {
   const { data: session, status } = useSession()
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
-  
+
   const runMigration = async () => {
     setLoading(true)
     try {
@@ -21,11 +21,11 @@ export default function MigratePage() {
     }
     setLoading(false)
   }
-  
+
   if (status === 'loading') {
     return <div className="p-8">Loading...</div>
   }
-  
+
   if (!session) {
     return (
       <div className="p-8">
@@ -34,18 +34,18 @@ export default function MigratePage() {
       </div>
     )
   }
-  
+
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <h1 className="text-2xl font-bold mb-4">Database Migration</h1>
       <p className="mb-4 text-gray-600">
         Diese Seite fügt fehlende Spalten zur Orders-Tabelle hinzu (paymentMethod, contactDeadline, etc.)
       </p>
-      
+
       <p className="mb-4 text-sm text-gray-500">
         Eingeloggt als: {session.user?.email}
       </p>
-      
+
       <button
         onClick={runMigration}
         disabled={loading}
@@ -53,7 +53,7 @@ export default function MigratePage() {
       >
         {loading ? 'Migration läuft...' : 'Migration ausführen'}
       </button>
-      
+
       {result && (
         <div className="mt-6 p-4 bg-gray-100 rounded-lg">
           <h2 className="font-bold mb-2">Ergebnis:</h2>
