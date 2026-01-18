@@ -39,6 +39,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           createdAt: true,
           refundedAt: true,
           originalInvoiceId: true,
+          // Bexio-Sync Felder - WICHTIG für korrektes Payment Matching
+          qrReference: true,
+          bexioInvoiceId: true,
           items: {
             select: {
               id: true,
@@ -92,6 +95,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           createdAt: true,
           refundedAt: true,
           originalInvoiceId: true,
+          // Bexio-Sync Felder - WICHTIG für korrektes Payment Matching
+          qrReference: true,
+          bexioInvoiceId: true,
           items: {
             select: {
               id: true,
@@ -453,14 +459,16 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       )
       receiptY += 6
 
-      // Referenz
+      // Referenz - WICHTIG: Bexio QR-Referenz verwenden wenn verfügbar
       pdf.setFontSize(6)
       pdf.setFont('helvetica', 'bold')
       pdf.text('Referenz', receiptMargin, receiptY)
       receiptY += 3
       pdf.setFontSize(8)
       pdf.setFont('helvetica', 'normal')
-      const formattedRef = invoice.invoiceNumber.replace(/(.{5})/g, '$1 ').trim()
+      // Bexio-Referenz hat Priorität (z.B. RF18XXXXX), sonst interne Nummer formatieren
+      const referenceToUse = (invoice as any).qrReference || invoice.invoiceNumber
+      const formattedRef = referenceToUse.replace(/(.{5})/g, '$1 ').trim()
       pdf.text(formattedRef, receiptMargin, receiptY)
       receiptY += 6
 
@@ -582,8 +590,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         const creditorCity = creditorAddress.city?.trim() || ''
 
         // Referenz bereinigen und formatieren (nur alphanumerisch, genau 25 Zeichen)
-        // WICHTIG: Referenz muss genau 25 Zeichen lang sein für Swiss QR-Bill
-        const formattedReference = formatQRReference(invoice.invoiceNumber)
+        // WICHTIG: Bexio QR-Referenz verwenden wenn verfügbar (für korrektes Payment Matching)
+        let formattedReference: string
+        if ((invoice as any).qrReference && (invoice as any).qrReference.startsWith('RF')) {
+          // Bexio-Referenz ist bereits im korrekten SCOR-Format (RF + 23 Zeichen = 25 Zeichen)
+          formattedReference = (invoice as any).qrReference
+          console.log('[QR-Bill] ✅ Verwende Bexio QR-Referenz:', formattedReference)
+        } else {
+          // Fallback: Interne Rechnungsnummer formatieren
+          formattedReference = formatQRReference(invoice.invoiceNumber)
+          console.log('[QR-Bill] ⚠️ Keine Bexio-Referenz, verwende Fallback:', formattedReference)
+        }
 
         // Validiere Referenz
         if (formattedReference.length !== 25) {
