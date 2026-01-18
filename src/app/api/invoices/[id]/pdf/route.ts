@@ -605,7 +605,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         // WICHTIG: Für den QR-Code müssen alle Leerzeichen entfernt werden!
         // Die Anzeige-Referenz kann Leerzeichen haben, aber der QR-Code nicht.
         const qrCodeReference = formattedReference.replace(/\s/g, '').trim()
-        
+
         // Validiere Referenz (ohne Leerzeichen)
         if (qrCodeReference.length === 0) {
           console.error('[QR-Bill] ❌ Referenz ist leer nach Bereinigung!')
@@ -620,7 +620,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         if (!/^[0-9A-Za-z]+$/.test(qrCodeReference)) {
           console.error('[QR-Bill] ⚠️  Referenz enthält ungültige Zeichen:', qrCodeReference)
         }
-        
+
         console.log('[QR-Bill] Referenz für Anzeige:', formattedReference)
         console.log('[QR-Bill] Referenz für QR-Code:', qrCodeReference)
 
@@ -681,48 +681,64 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           console.error('[QR-Bill] ⚠️  Creditor City ist leer, verwende Fallback')
         }
 
-        // Swiss QR-Bill Format (SPC - Swiss Payments Code) Version 2.0
-        // WICHTIG: Alle Felder müssen korrekt formatiert sein für funktionsfähigen QR-Code
-        // Strukturierte Adressen (Typ K) mit kombinierten Feldern für Strasse+Hausnummer und PLZ+Ort
+        // Swiss QR-Bill Format (SPC - Swiss Payments Code) Version 2.2
+        // KRITISCH: Der QR-String muss EXAKT 31 Zeilen haben (oder 32 mit Billing Info)
+        // Quelle: SIX Swiss Implementation Guidelines for the QR-bill v2.2
+        // 
+        // Für Adresstyp "K" (kombiniert):
+        // - Zeile 7: Strasse + Hausnummer ODER Adresszeile 1
+        // - Zeile 8: PLZ + Ort ODER Adresszeile 2
+        // - Zeile 9: LEER (PLZ nicht verwendet bei Typ K, aber Zeile muss existieren!)
+        // - Zeile 10: LEER (Ort nicht verwendet bei Typ K, aber Zeile muss existieren!)
+        
         const qrString = [
-          'SPC', // QR-Type (Swiss Payments Code)
-          '0200', // Version 2.0
-          '1', // Coding Type (1 = UTF-8)
-          cleanIban, // Creditor IBAN (ohne Leerzeichen, max 21 Zeichen)
-          'K', // Creditor Address Type (K = Structured address)
-          (creditorName || 'Score-Max GmbH').substring(0, 70), // Creditor Name (max 70 Zeichen)
-          creditorStreetLine.substring(0, 70) || PAYMENT_CONFIG.getStreetLine().substring(0, 70), // Creditor Street + Number (max 70 Zeichen)
-          creditorCityLine.substring(0, 70) || PAYMENT_CONFIG.getCityLine().substring(0, 70), // Creditor Postal Code + City (max 70 Zeichen)
-          creditorCountryCode, // Creditor Country (genau 2 Zeichen)
-          '', // Ultimate creditor name (optional, leer lassen wenn nicht benötigt)
-          '', // Ultimate creditor street (optional)
-          '', // Ultimate creditor postal code + city (optional)
-          '', // Ultimate creditor country (optional)
-          formattedAmount, // Amount (immer mit 2 Dezimalstellen, z.B. "123.45")
-          'CHF', // Currency (3 Zeichen)
-          hasDebtorInfo ? 'K' : '', // Ultimate debtor address type (K = Structured, leer wenn kein Name)
-          (hasDebtorInfo ? debtorName : '').substring(0, 70), // Ultimate debtor name (max 70 Zeichen, leer wenn kein Name)
-          (hasDebtorInfo ? debtorStreet : '').substring(0, 70), // Ultimate debtor street + number (max 70 Zeichen, leer wenn kein Name)
-          (hasDebtorInfo ? debtorCityLine : '').substring(0, 70), // Ultimate debtor postal code + city (max 70 Zeichen, leer wenn kein Name)
-          hasDebtorInfo ? debtorCountry : '', // Ultimate debtor country (2 Zeichen, leer wenn kein Name)
-          'SCOR', // Reference type (SCOR = Creditor Reference)
-          qrCodeReference, // Reference (OHNE Leerzeichen, max 25 Zeichen alphanumerisch)
-          '', // Additional information (optional, leer lassen)
-          'EPD', // Trailer (End of Payment Data)
+          'SPC',                                                                    // 01: QR-Type
+          '0200',                                                                   // 02: Version
+          '1',                                                                      // 03: Coding (UTF-8)
+          cleanIban,                                                                // 04: IBAN (21 Zeichen)
+          'K',                                                                      // 05: Creditor Adresstyp (K=kombiniert)
+          (creditorName || 'Score-Max GmbH').substring(0, 70),                      // 06: Creditor Name
+          (creditorStreetLine || PAYMENT_CONFIG.getStreetLine()).substring(0, 70), // 07: Creditor Strasse+Nr (Adresszeile 1)
+          (creditorCityLine || PAYMENT_CONFIG.getCityLine()).substring(0, 70),     // 08: Creditor PLZ+Ort (Adresszeile 2)
+          '',                                                                       // 09: Creditor PLZ (LEER bei Typ K!)
+          '',                                                                       // 10: Creditor Ort (LEER bei Typ K!)
+          creditorCountryCode,                                                      // 11: Creditor Land (2 Zeichen)
+          '',                                                                       // 12: Ultimate Creditor Adresstyp
+          '',                                                                       // 13: Ultimate Creditor Name
+          '',                                                                       // 14: Ultimate Creditor Strasse
+          '',                                                                       // 15: Ultimate Creditor PLZ+Ort/Adresszeile2
+          '',                                                                       // 16: Ultimate Creditor PLZ
+          '',                                                                       // 17: Ultimate Creditor Ort
+          '',                                                                       // 18: Ultimate Creditor Land
+          formattedAmount,                                                          // 19: Betrag
+          'CHF',                                                                    // 20: Währung
+          hasDebtorInfo ? 'K' : '',                                                 // 21: Debtor Adresstyp
+          (hasDebtorInfo ? debtorName : '').substring(0, 70),                       // 22: Debtor Name
+          (hasDebtorInfo ? debtorStreet : '').substring(0, 70),                     // 23: Debtor Strasse (Adresszeile 1)
+          (hasDebtorInfo ? debtorCityLine : '').substring(0, 70),                   // 24: Debtor PLZ+Ort (Adresszeile 2)
+          '',                                                                       // 25: Debtor PLZ (LEER bei Typ K!)
+          '',                                                                       // 26: Debtor Ort (LEER bei Typ K!)
+          hasDebtorInfo ? debtorCountry : '',                                       // 27: Debtor Land
+          'SCOR',                                                                   // 28: Referenztyp (SCOR = Creditor Reference)
+          qrCodeReference,                                                          // 29: Referenz (ohne Leerzeichen!)
+          '',                                                                       // 30: Unstrukturierte Mitteilung
+          'EPD',                                                                    // 31: Trailer
         ].join('\n')
 
-        // Stelle sicher, dass QR-String genau 24 Zeilen hat
+        // Validiere Zeilenanzahl - MUSS 31 sein!
         const qrLines = qrString.split('\n')
-        if (qrLines.length !== 24) {
+        if (qrLines.length !== 31) {
           console.error(
-            '[QR-Bill] ⚠️  QR-String hat falsche Anzahl Zeilen:',
+            '[QR-Bill] ❌ KRITISCH: QR-String hat falsche Anzahl Zeilen:',
             qrLines.length,
-            'erwartet: 24'
+            'erwartet: 31'
           )
-          console.error(
-            '[QR-Bill] Zeilen:',
-            qrLines.map((line, i) => `${i + 1}: ${line}`).join('\n')
-          )
+          console.error('[QR-Bill] Zeilen:')
+          qrLines.forEach((line, i) => {
+            console.error(`  ${String(i + 1).padStart(2, '0')}: "${line}"`)
+          })
+        } else {
+          console.log('[QR-Bill] ✅ QR-String hat korrekte 31 Zeilen')
         }
 
         // Validiere QR-Code
@@ -786,51 +802,56 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         // Add QR code image
         pdf.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
 
-        // Swiss cross in center of QR code (7x7mm) - Offizielles Swiss QR-Bill Design
-        // Gemäss Swiss QR-Bill Spezifikation: Weisser Rahmen, schwarzer Hintergrund, weisses Kreuz
-        const crossSize = 7
+        // Swiss cross in center of QR code - Offizielle Swiss QR-Bill Spezifikation
+        // Quelle: SIX Swiss Payment Standards - Swiss QR-Bill Implementation Guidelines
+        // Das Swiss Cross ist genau 7x7mm mit definierten Proportionen
+        
+        const crossSize = 7 // Gesamtgrösse 7x7mm
         const crossX = qrX + (qrSize - crossSize) / 2
         const crossY = qrY + (qrSize - crossSize) / 2
         
-        // 1. Weisser äusserer Rahmen (gesamtes Quadrat)
+        // Offizielle Proportionen des Schweizer Kreuzes:
+        // - Weisser Rahmen: 1/7 der Gesamtgrösse = 1mm
+        // - Schwarzes Quadrat: 5/7 der Gesamtgrösse = 5mm
+        // - Kreuzarm-Breite: 1/5 des schwarzen Quadrats = 1mm
+        // - Kreuzarm-Länge: 3/5 des schwarzen Quadrats = 3mm (von Mitte aus)
+        
+        const whiteBorder = 1.0 // 1mm weisser Rahmen
+        const blackSize = 5.0   // 5mm schwarzes Quadrat
+        const armWidth = 1.0    // 1mm Kreuzarm-Breite
+        const armLength = 3.0   // 3mm Kreuzarm-Länge (Gesamtlänge = 2 * 1.5mm von Mitte)
+        
+        // 1. Weisser Hintergrund (komplettes 7x7mm Quadrat)
         pdf.setFillColor(255, 255, 255)
         pdf.rect(crossX, crossY, crossSize, crossSize, 'F')
         
-        // 2. Schwarzer innerer Hintergrund (mit Abstand zum Rahmen)
-        const borderWidth = 0.6 // Weisser Rahmen ca. 0.6mm
+        // 2. Schwarzes inneres Quadrat (5x5mm, zentriert)
+        const blackX = crossX + whiteBorder
+        const blackY = crossY + whiteBorder
         pdf.setFillColor(0, 0, 0)
-        pdf.rect(
-          crossX + borderWidth,
-          crossY + borderWidth,
-          crossSize - 2 * borderWidth,
-          crossSize - 2 * borderWidth,
-          'F'
-        )
+        pdf.rect(blackX, blackY, blackSize, blackSize, 'F')
         
-        // 3. Weisses Schweizer Kreuz auf schwarzem Hintergrund
-        // Das Kreuz ist proportional: ca. 35% der inneren Fläche breit
-        const innerSize = crossSize - 2 * borderWidth
-        const crossArmWidth = innerSize * 0.35 // Breite des Kreuzarms
-        const crossArmLength = innerSize * 0.7 // Länge des Kreuzarms
-        const innerCenter = crossSize / 2
+        // 3. Weisses Schweizer Kreuz (zentriert im schwarzen Quadrat)
+        const centerX = blackX + blackSize / 2
+        const centerY = blackY + blackSize / 2
         
         pdf.setFillColor(255, 255, 255)
         
         // Horizontaler Balken des Kreuzes
         pdf.rect(
-          crossX + innerCenter - crossArmLength / 2,
-          crossY + innerCenter - crossArmWidth / 2,
-          crossArmLength,
-          crossArmWidth,
+          centerX - armLength / 2,  // X: Mitte - halbe Länge
+          centerY - armWidth / 2,   // Y: Mitte - halbe Breite
+          armLength,                // Breite: 3mm
+          armWidth,                 // Höhe: 1mm
           'F'
         )
         
         // Vertikaler Balken des Kreuzes
         pdf.rect(
-          crossX + innerCenter - crossArmWidth / 2,
-          crossY + innerCenter - crossArmLength / 2,
-          crossArmWidth,
-          crossArmLength,
+          centerX - armWidth / 2,   // X: Mitte - halbe Breite
+          centerY - armLength / 2,  // Y: Mitte - halbe Länge
+          armWidth,                 // Breite: 1mm
+          armLength,                // Höhe: 3mm
           'F'
         )
 
