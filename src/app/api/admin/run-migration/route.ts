@@ -36,27 +36,45 @@ export async function POST(request: Request) {
 
   // List of columns to add
   const columns = [
-    { name: 'paymentMethod', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentMethod" TEXT' },
-    { name: 'paymentDeadline', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentDeadline" TIMESTAMP(3)' },
-    { name: 'paymentReminderSentAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentReminderSentAt" TIMESTAMP(3)' },
-    { name: 'paymentReminderCount', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentReminderCount" INTEGER NOT NULL DEFAULT 0' },
-    { name: 'paymentDeadlineMissed', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentDeadlineMissed" BOOLEAN NOT NULL DEFAULT false' },
-    { name: 'paymentDeadlineMissedAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentDeadlineMissedAt" TIMESTAMP(3)' },
-    { name: 'autoCancelledAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "autoCancelledAt" TIMESTAMP(3)' },
-    { name: 'autoCancelReason', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "autoCancelReason" TEXT' },
-    { name: 'contactDeadline', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "contactDeadline" TIMESTAMP(3)' },
-    { name: 'sellerContactedAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "sellerContactedAt" TIMESTAMP(3)' },
-    { name: 'buyerContactedAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "buyerContactedAt" TIMESTAMP(3)' },
-    { name: 'contactWarningSentAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "contactWarningSentAt" TIMESTAMP(3)' },
-    { name: 'selectedDeliveryMode', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "selectedDeliveryMode" TEXT' },
-    { name: 'selectedShippingCode', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "selectedShippingCode" TEXT' },
-    { name: 'selectedAddons', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "selectedAddons" TEXT' },
-    { name: 'shippingCostChfFinal', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingCostChfFinal" DOUBLE PRECISION NOT NULL DEFAULT 0' },
-    { name: 'shippingCostBreakdown', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingCostBreakdown" TEXT' },
-    { name: 'shippingRateSetId', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingRateSetId" TEXT DEFAULT \'default_ch_post\'' },
-    // Invoice columns (missing!)
-    { name: 'invoiceId', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoiceId" TEXT' },
-    { name: 'invoiceCreatedAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoiceCreatedAt" TIMESTAMP(3)' },
+    // === Orders Table ===
+    { name: 'orders.paymentMethod', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentMethod" TEXT' },
+    { name: 'orders.paymentDeadline', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentDeadline" TIMESTAMP(3)' },
+    { name: 'orders.paymentReminderSentAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentReminderSentAt" TIMESTAMP(3)' },
+    { name: 'orders.paymentReminderCount', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentReminderCount" INTEGER NOT NULL DEFAULT 0' },
+    { name: 'orders.paymentDeadlineMissed', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentDeadlineMissed" BOOLEAN NOT NULL DEFAULT false' },
+    { name: 'orders.paymentDeadlineMissedAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "paymentDeadlineMissedAt" TIMESTAMP(3)' },
+    { name: 'orders.autoCancelledAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "autoCancelledAt" TIMESTAMP(3)' },
+    { name: 'orders.autoCancelReason', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "autoCancelReason" TEXT' },
+    { name: 'orders.contactDeadline', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "contactDeadline" TIMESTAMP(3)' },
+    { name: 'orders.sellerContactedAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "sellerContactedAt" TIMESTAMP(3)' },
+    { name: 'orders.buyerContactedAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "buyerContactedAt" TIMESTAMP(3)' },
+    { name: 'orders.contactWarningSentAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "contactWarningSentAt" TIMESTAMP(3)' },
+    { name: 'orders.selectedDeliveryMode', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "selectedDeliveryMode" TEXT' },
+    { name: 'orders.selectedShippingCode', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "selectedShippingCode" TEXT' },
+    { name: 'orders.selectedAddons', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "selectedAddons" TEXT' },
+    { name: 'orders.shippingCostChfFinal', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingCostChfFinal" DOUBLE PRECISION NOT NULL DEFAULT 0' },
+    { name: 'orders.shippingCostBreakdown', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingCostBreakdown" TEXT' },
+    { name: 'orders.shippingRateSetId', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingRateSetId" TEXT DEFAULT \'default_ch_post\'' },
+    { name: 'orders.invoiceId', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoiceId" TEXT' },
+    { name: 'orders.invoiceCreatedAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoiceCreatedAt" TIMESTAMP(3)' },
+    
+    // === UserPreferences Table - Notification Settings ===
+    // Verkäufer-Benachrichtigungen
+    { name: 'prefs.emailOnNewMessage', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnNewMessage" BOOLEAN NOT NULL DEFAULT true' },
+    { name: 'prefs.emailOnNewBid', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnNewBid" BOOLEAN NOT NULL DEFAULT true' },
+    { name: 'prefs.emailOnNewOffer', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnNewOffer" BOOLEAN NOT NULL DEFAULT true' },
+    { name: 'prefs.emailOnSaleCompleted', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnSaleCompleted" BOOLEAN NOT NULL DEFAULT true' },
+    // Käufer-Benachrichtigungen
+    { name: 'prefs.emailOnOutbid', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnOutbid" BOOLEAN NOT NULL DEFAULT true' },
+    { name: 'prefs.emailOnAuctionEnding', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnAuctionEnding" BOOLEAN NOT NULL DEFAULT true' },
+    { name: 'prefs.emailOnPurchase', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnPurchase" BOOLEAN NOT NULL DEFAULT true' },
+    { name: 'prefs.emailOnShipping', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnShipping" BOOLEAN NOT NULL DEFAULT true' },
+    // Suchabo & Favoriten
+    { name: 'prefs.emailOnSearchMatch', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnSearchMatch" BOOLEAN NOT NULL DEFAULT true' },
+    { name: 'prefs.emailOnFavoritePriceChange', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnFavoritePriceChange" BOOLEAN NOT NULL DEFAULT false' },
+    // Marketing & Frequency
+    { name: 'prefs.emailMarketing', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailMarketing" BOOLEAN NOT NULL DEFAULT false' },
+    { name: 'prefs.emailDigestFrequency', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailDigestFrequency" TEXT NOT NULL DEFAULT \'instant\'' },
   ]
 
   for (const col of columns) {
