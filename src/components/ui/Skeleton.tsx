@@ -17,38 +17,38 @@ interface SkeletonProps extends React.HTMLAttributes<HTMLDivElement> {
 
 /**
  * Skeleton Component - Accessible loading placeholder
- * 
+ *
  * @example
  * // Basic skeleton
  * <Skeleton className="h-4 w-full" />
- * 
+ *
  * // Text skeleton with multiple lines
  * <Skeleton lines={3} />
- * 
+ *
  * // Avatar skeleton
  * <Skeleton circle width={48} height={48} />
  */
-export function Skeleton({ 
-  className, 
+export function Skeleton({
+  className,
   width,
   height,
   circle = false,
   lines,
   variant = 'shimmer',
-  ...props 
+  ...props
 }: SkeletonProps) {
   // If lines are specified, render multiple skeletons
   if (lines && lines > 1) {
     return (
-      <div 
-        className="space-y-2" 
-        role="status" 
+      <div
+        className="space-y-2"
+        role="status"
         aria-label="Wird geladen..."
         aria-busy="true"
       >
         {Array.from({ length: lines }).map((_, i) => (
-          <Skeleton 
-            key={i} 
+          <Skeleton
+            key={i}
             className={cn(
               'h-4',
               // Last line is shorter for visual variety
@@ -113,18 +113,18 @@ export function ProductCardSkeleton() {
     <div className="overflow-hidden rounded-lg border border-gray-100 bg-white shadow-sm">
       {/* Image */}
       <Skeleton className="aspect-square w-full" />
-      
+
       {/* Content */}
       <div className="p-4 space-y-3">
         {/* Title */}
         <Skeleton className="h-5 w-3/4" />
-        
+
         {/* Brand */}
         <Skeleton className="h-4 w-1/2" />
-        
+
         {/* Price */}
         <Skeleton className="h-6 w-1/3" />
-        
+
         {/* Meta info */}
         <div className="flex gap-2">
           <Skeleton className="h-4 w-16" />
@@ -140,7 +140,7 @@ export function ProductCardSkeleton() {
  */
 export function ProductGridSkeleton({ count = 12 }: { count?: number }) {
   return (
-    <div 
+    <div
       className="grid grid-cols-2 gap-4 md:grid-cols-3 lg:grid-cols-4"
       role="status"
       aria-label={`${count} Produkte werden geladen...`}
@@ -172,7 +172,7 @@ export function TableRowSkeleton({ columns = 5 }: { columns?: number }) {
  */
 export function TableSkeleton({ rows = 5, columns = 5 }: { rows?: number; columns?: number }) {
   return (
-    <div 
+    <div
       className="overflow-hidden rounded-lg border"
       role="status"
       aria-label="Tabelle wird geladen..."
@@ -205,7 +205,7 @@ export function UserProfileSkeleton() {
     <div className="flex items-center gap-4" role="status" aria-label="Profil wird geladen...">
       {/* Avatar */}
       <Skeleton circle width={64} height={64} />
-      
+
       {/* Info */}
       <div className="space-y-2 flex-1">
         <Skeleton className="h-5 w-32" />
@@ -230,7 +230,7 @@ export function OrderCardSkeleton() {
         </div>
         <Skeleton className="h-6 w-20 rounded-full" />
       </div>
-      
+
       {/* Product */}
       <div className="flex gap-4">
         <Skeleton className="h-20 w-20 rounded" />
@@ -240,7 +240,7 @@ export function OrderCardSkeleton() {
           <Skeleton className="h-5 w-1/4" />
         </div>
       </div>
-      
+
       {/* Actions */}
       <div className="flex gap-2 pt-2 border-t">
         <Skeleton className="h-9 w-24" />
@@ -302,19 +302,19 @@ export function FullPageSkeleton({ title = 'Wird geladen...' }: { title?: string
     <div className="min-h-screen bg-gray-50 p-6">
       <div className="max-w-7xl mx-auto space-y-6">
         <PageHeaderSkeleton />
-        
+
         {/* Stats row */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
           {Array.from({ length: 4 }).map((_, i) => (
             <StatsCardSkeleton key={i} />
           ))}
         </div>
-        
+
         {/* Content */}
         <div className="rounded-lg border bg-white p-6">
           <Skeleton lines={6} />
         </div>
-        
+
         {/* Screen reader */}
         <span className="sr-only" role="status" aria-live="polite">
           {title}

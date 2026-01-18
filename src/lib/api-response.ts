@@ -34,38 +34,38 @@ export const ErrorCodes = {
   UNAUTHORIZED: 'UNAUTHORIZED',
   FORBIDDEN: 'FORBIDDEN',
   SESSION_EXPIRED: 'SESSION_EXPIRED',
-  
+
   // Validation errors
   VALIDATION_ERROR: 'VALIDATION_ERROR',
   INVALID_INPUT: 'INVALID_INPUT',
   MISSING_FIELD: 'MISSING_FIELD',
-  
+
   // Resource errors
   NOT_FOUND: 'NOT_FOUND',
   ALREADY_EXISTS: 'ALREADY_EXISTS',
   CONFLICT: 'CONFLICT',
-  
+
   // Rate limiting
   RATE_LIMITED: 'RATE_LIMITED',
-  
+
   // Database errors
   DATABASE_ERROR: 'DATABASE_ERROR',
   UNIQUE_CONSTRAINT: 'UNIQUE_CONSTRAINT',
   FOREIGN_KEY_ERROR: 'FOREIGN_KEY_ERROR',
   CONNECTION_ERROR: 'CONNECTION_ERROR',
-  
+
   // External service errors
   EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR',
   PAYMENT_ERROR: 'PAYMENT_ERROR',
   EMAIL_ERROR: 'EMAIL_ERROR',
-  
+
   // Business logic errors
   AUCTION_ENDED: 'AUCTION_ENDED',
   INSUFFICIENT_BID: 'INSUFFICIENT_BID',
   SELF_BID: 'SELF_BID',
   ITEM_UNAVAILABLE: 'ITEM_UNAVAILABLE',
   PAYMENT_REQUIRED: 'PAYMENT_REQUIRED',
-  
+
   // Server errors
   INTERNAL_ERROR: 'INTERNAL_ERROR',
   SERVICE_UNAVAILABLE: 'SERVICE_UNAVAILABLE',
@@ -121,16 +121,16 @@ export const errors = {
   unauthorized: (message = 'Nicht autorisiert. Bitte melden Sie sich an.') =>
     error(ErrorCodes.UNAUTHORIZED, message, 401),
 
-  forbidden: (message = 'Zugriff verweigert.') => 
+  forbidden: (message = 'Zugriff verweigert.') =>
     error(ErrorCodes.FORBIDDEN, message, 403),
 
-  notFound: (resource = 'Ressource') => 
+  notFound: (resource = 'Ressource') =>
     error(ErrorCodes.NOT_FOUND, `${resource} nicht gefunden`, 404),
 
   validationError: (message: string, details?: Record<string, unknown>) =>
     error(ErrorCodes.VALIDATION_ERROR, message, 400, details),
 
-  invalidInput: (message: string) => 
+  invalidInput: (message: string) =>
     error(ErrorCodes.INVALID_INPUT, message, 400),
 
   missingField: (field: string) =>
@@ -139,7 +139,7 @@ export const errors = {
   alreadyExists: (resource = 'Ressource') =>
     error(ErrorCodes.ALREADY_EXISTS, `${resource} existiert bereits`, 409),
 
-  conflict: (message: string) => 
+  conflict: (message: string) =>
     error(ErrorCodes.CONFLICT, message, 409),
 
   rateLimited: (retryAfter?: number) =>
@@ -173,7 +173,7 @@ export const errors = {
   paymentError: (message = 'Ein Zahlungsfehler ist aufgetreten.') =>
     error(ErrorCodes.PAYMENT_ERROR, message, 402),
 
-  auctionEnded: () => 
+  auctionEnded: () =>
     error(ErrorCodes.AUCTION_ENDED, 'Die Auktion ist bereits beendet', 400),
 
   insufficientBid: (minBid: number) =>
@@ -183,7 +183,7 @@ export const errors = {
       400
     ),
 
-  selfBid: () => 
+  selfBid: () =>
     error(ErrorCodes.SELF_BID, 'Sie können nicht auf Ihr eigenes Angebot bieten', 400),
 
   itemUnavailable: () =>

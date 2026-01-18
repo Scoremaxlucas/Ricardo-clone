@@ -1,6 +1,6 @@
 /**
  * Accessibility Utilities
- * 
+ *
  * Provides helpers for:
  * - Screen reader announcements
  * - Focus management
@@ -17,12 +17,12 @@
  * Uses ARIA live regions for dynamic content updates
  */
 export function announce(
-  message: string, 
+  message: string,
   priority: 'polite' | 'assertive' = 'polite'
 ): void {
   // Find or create the announcer element
   let announcer = document.getElementById('sr-announcer')
-  
+
   if (!announcer) {
     announcer = document.createElement('div')
     announcer.id = 'sr-announcer'
@@ -43,12 +43,12 @@ export function announce(
     `
     document.body.appendChild(announcer)
   }
-  
+
   // Update priority if different
   if (announcer.getAttribute('aria-live') !== priority) {
     announcer.setAttribute('aria-live', priority)
   }
-  
+
   // Clear and set message (this triggers the announcement)
   announcer.textContent = ''
   requestAnimationFrame(() => {
@@ -91,13 +91,13 @@ export function trapFocus(element: HTMLElement): () => void {
   const focusableElements = element.querySelectorAll<HTMLElement>(
     'button:not([disabled]), [href], input:not([disabled]), select:not([disabled]), textarea:not([disabled]), [tabindex]:not([tabindex="-1"])'
   )
-  
+
   const firstElement = focusableElements[0]
   const lastElement = focusableElements[focusableElements.length - 1]
-  
+
   const handleKeydown = (e: KeyboardEvent) => {
     if (e.key !== 'Tab') return
-    
+
     if (e.shiftKey) {
       // Shift + Tab
       if (document.activeElement === firstElement) {
@@ -112,12 +112,12 @@ export function trapFocus(element: HTMLElement): () => void {
       }
     }
   }
-  
+
   element.addEventListener('keydown', handleKeydown)
-  
+
   // Focus first element
   firstElement?.focus()
-  
+
   // Return cleanup function
   return () => {
     element.removeEventListener('keydown', handleKeydown)
@@ -132,7 +132,7 @@ export function useFocusReturn(): {
   restoreFocus: () => void
 } {
   let previousActiveElement: HTMLElement | null = null
-  
+
   return {
     saveFocus: () => {
       previousActiveElement = document.activeElement as HTMLElement
@@ -150,10 +150,10 @@ export function useFocusReturn(): {
  * Useful after page navigation or dynamic content updates
  */
 export function moveFocusTo(selector: string | HTMLElement): void {
-  const element = typeof selector === 'string' 
+  const element = typeof selector === 'string'
     ? document.querySelector<HTMLElement>(selector)
     : selector
-    
+
   if (element) {
     // Make element focusable if it isn't
     if (!element.hasAttribute('tabindex') && !isFocusableElement(element)) {
@@ -198,16 +198,16 @@ export function enableArrowNavigation(
     loop = true,
     onSelect,
   } = options || {}
-  
+
   const getItems = () => Array.from(container.querySelectorAll<HTMLElement>(selector))
-  
+
   const handleKeydown = (e: KeyboardEvent) => {
     const items = getItems()
     if (items.length === 0) return
-    
+
     const currentIndex = items.findIndex(item => item === document.activeElement)
     let nextIndex: number | null = null
-    
+
     // Determine direction based on key and orientation
     const isUp = e.key === 'ArrowUp'
     const isDown = e.key === 'ArrowDown'
@@ -216,14 +216,14 @@ export function enableArrowNavigation(
     const isHome = e.key === 'Home'
     const isEnd = e.key === 'End'
     const isEnter = e.key === 'Enter' || e.key === ' '
-    
+
     // Handle selection
     if (isEnter && currentIndex !== -1) {
       e.preventDefault()
       onSelect?.(items[currentIndex])
       return
     }
-    
+
     // Handle navigation
     if (
       (orientation !== 'horizontal' && (isUp || isDown)) ||
@@ -231,29 +231,29 @@ export function enableArrowNavigation(
       isHome || isEnd
     ) {
       e.preventDefault()
-      
+
       if (isHome) {
         nextIndex = 0
       } else if (isEnd) {
         nextIndex = items.length - 1
       } else if (isUp || isLeft) {
-        nextIndex = currentIndex > 0 
-          ? currentIndex - 1 
+        nextIndex = currentIndex > 0
+          ? currentIndex - 1
           : (loop ? items.length - 1 : 0)
       } else if (isDown || isRight) {
-        nextIndex = currentIndex < items.length - 1 
-          ? currentIndex + 1 
+        nextIndex = currentIndex < items.length - 1
+          ? currentIndex + 1
           : (loop ? 0 : items.length - 1)
       }
-      
+
       if (nextIndex !== null && items[nextIndex]) {
         items[nextIndex].focus()
       }
     }
   }
-  
+
   container.addEventListener('keydown', handleKeydown)
-  
+
   return () => {
     container.removeEventListener('keydown', handleKeydown)
   }
@@ -278,17 +278,17 @@ export function createDescribedBy(
   description: string
 ): () => void {
   const descriptionId = generateId('desc')
-  
+
   // Create description element
   const descEl = document.createElement('div')
   descEl.id = descriptionId
   descEl.className = 'sr-only'
   descEl.textContent = description
   element.parentElement?.appendChild(descEl)
-  
+
   // Link to element
   element.setAttribute('aria-describedby', descriptionId)
-  
+
   // Return cleanup function
   return () => {
     element.removeAttribute('aria-describedby')
@@ -336,8 +336,8 @@ export function getSelectableProps(
  */
 export function createSkipLink(targetId: string, label: string): string {
   return `
-    <a 
-      href="#${targetId}" 
+    <a
+      href="#${targetId}"
       class="skip-link sr-only focus:not-sr-only focus:fixed focus:top-4 focus:left-4 focus:z-[9999] focus:bg-primary-600 focus:text-white focus:px-4 focus:py-2 focus:rounded-md focus:shadow-lg"
     >
       ${label}
@@ -358,7 +358,7 @@ export function checkContrast(
   background: string
 ): 'AAA' | 'AA' | 'AA Large' | 'Fail' {
   const ratio = getContrastRatio(foreground, background)
-  
+
   if (ratio >= 7) return 'AAA'
   if (ratio >= 4.5) return 'AA'
   if (ratio >= 3) return 'AA Large'
@@ -382,12 +382,12 @@ function getContrastRatio(color1: string, color2: string): number {
 function getLuminance(color: string): number {
   const rgb = hexToRgb(color)
   if (!rgb) return 0
-  
+
   const [r, g, b] = rgb.map(c => {
     const s = c / 255
     return s <= 0.03928 ? s / 12.92 : Math.pow((s + 0.055) / 1.055, 2.4)
   })
-  
+
   return 0.2126 * r + 0.7152 * g + 0.0722 * b
 }
 

@@ -1,9 +1,9 @@
 /**
  * API Response Caching Utilities
- * 
+ *
  * Provides in-memory caching for frequently accessed data
  * with automatic expiration and cache invalidation.
- * 
+ *
  * In production, consider using Redis for distributed caching.
  */
 
@@ -38,17 +38,17 @@ const cache = new Map<string, CacheEntry<unknown>>()
  */
 export function getFromCache<T>(key: string): T | null {
   const entry = cache.get(key)
-  
+
   if (!entry) {
     return null
   }
-  
+
   // Check if expired
   if (Date.now() > entry.expiresAt) {
     cache.delete(key)
     return null
   }
-  
+
   return entry.data as T
 }
 
@@ -61,7 +61,7 @@ export function setInCache<T>(
   options?: CacheOptions
 ): void {
   const { ttl = 60, tags = [] } = options || {} // Default 60 seconds
-  
+
   cache.set(key, {
     data,
     expiresAt: Date.now() + ttl * 1000,
@@ -82,14 +82,14 @@ export function deleteFromCache(key: string): void {
 export function invalidateByTag(tag: string): number {
   let count = 0
   const entries = Array.from(cache.entries())
-  
+
   for (const [key, entry] of entries) {
     if (entry.tags.includes(tag)) {
       cache.delete(key)
       count++
     }
   }
-  
+
   return count
 }
 
@@ -99,14 +99,14 @@ export function invalidateByTag(tag: string): number {
 export function invalidateByPattern(pattern: RegExp): number {
   let count = 0
   const keys = Array.from(cache.keys())
-  
+
   for (const key of keys) {
     if (pattern.test(key)) {
       cache.delete(key)
       count++
     }
   }
-  
+
   return count
 }
 
@@ -127,14 +127,14 @@ export function getCacheStats(): {
 } {
   const keys = Array.from(cache.keys())
   const entries = Array.from(cache.entries())
-  
+
   // Rough memory estimate (not accurate but gives an idea)
   let memoryEstimate = 0
   for (const [key, entry] of entries) {
     memoryEstimate += key.length * 2 // Key string
     memoryEstimate += JSON.stringify(entry.data).length * 2 // Data (rough)
   }
-  
+
   return {
     size: cache.size,
     keys,
@@ -148,7 +148,7 @@ export function getCacheStats(): {
 
 /**
  * Wrap a function with caching
- * 
+ *
  * @example
  * const getUser = withCache(
  *   (id: string) => prisma.user.findUnique({ where: { id } }),
@@ -163,19 +163,19 @@ export function withCache<TArgs extends unknown[], TResult>(
 ): (...args: TArgs) => Promise<TResult> {
   return async (...args: TArgs): Promise<TResult> => {
     const key = getCacheKey(...args)
-    
+
     // Try to get from cache
     const cached = getFromCache<TResult>(key)
     if (cached !== null) {
       return cached
     }
-    
+
     // Fetch fresh data
     const result = await fn(...args)
-    
+
     // Store in cache
     setInCache(key, result, options)
-    
+
     return result
   }
 }
@@ -191,16 +191,16 @@ export function withStaleWhileRevalidate<TArgs extends unknown[], TResult>(
 ): (...args: TArgs) => Promise<TResult> {
   const { staleTime = 30, ...cacheOptions } = options || {}
   const refreshing = new Set<string>()
-  
+
   return async (...args: TArgs): Promise<TResult> => {
     const key = getCacheKey(...args)
     const entry = cache.get(key)
-    
+
     // Fresh cache hit
     if (entry && Date.now() < entry.expiresAt) {
       return entry.data as TResult
     }
-    
+
     // Stale cache hit - return stale and refresh in background
     if (entry && Date.now() < entry.expiresAt + staleTime * 1000) {
       // Don't refresh if already refreshing
@@ -217,7 +217,7 @@ export function withStaleWhileRevalidate<TArgs extends unknown[], TResult>(
       }
       return entry.data as TResult
     }
-    
+
     // No cache or too stale - fetch fresh
     const result = await fn(...args)
     setInCache(key, result, cacheOptions)
@@ -233,21 +233,21 @@ export const CacheKeys = {
   // Categories
   categories: () => 'categories:all',
   category: (id: string) => `category:${id}`,
-  
+
   // Users
   user: (id: string) => `user:${id}`,
   userProfile: (id: string) => `user:profile:${id}`,
-  
+
   // Watches
   watch: (id: string) => `watch:${id}`,
   watchList: (params: string) => `watches:list:${params}`,
   watchSearch: (query: string) => `watches:search:${query}`,
-  
+
   // Settings
   feeSettings: () => 'settings:fees',
   shippingRates: () => 'settings:shipping',
   boosterPrices: () => 'settings:boosters',
-  
+
   // Statistics
   platformStats: () => 'stats:platform',
   userStats: (id: string) => `stats:user:${id}`,
@@ -264,10 +264,10 @@ export const CacheTags = {
   watches: 'tag:watches',
   orders: 'tag:orders',
   settings: 'tag:settings',
-  
+
   // User-specific tags
   user: (id: string) => `tag:user:${id}`,
-  
+
   // Watch-specific tags
   watch: (id: string) => `tag:watch:${id}`,
 }
@@ -284,14 +284,14 @@ export function cleanupExpiredEntries(): number {
   let count = 0
   const now = Date.now()
   const entries = Array.from(cache.entries())
-  
+
   for (const [key, entry] of entries) {
     if (now > entry.expiresAt) {
       cache.delete(key)
       count++
     }
   }
-  
+
   return count
 }
 
@@ -323,7 +323,7 @@ export const CacheTimes = {
   MEDIUM: 300, // 5 minutes
   LONG: 3600, // 1 hour
   DAY: 86400, // 24 hours
-  
+
   // Specific use cases
   USER_PROFILE: 300, // 5 minutes
   CATEGORIES: 3600, // 1 hour (rarely changes)

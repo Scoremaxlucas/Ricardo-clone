@@ -5,7 +5,7 @@
  * - User → Bexio Contact sync
  * - Invoice → Bexio Invoice sync
  * - Payment matching via QR references
- * 
+ *
  * Features:
  * - Automatic retry with exponential backoff
  * - Comprehensive logging
@@ -46,7 +46,7 @@ async function withRetry<T>(
   context?: Record<string, unknown>
 ): Promise<T> {
   let lastError: Error | null = null
-  
+
   for (let attempt = 1; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
     try {
       const result = await operation()
@@ -56,20 +56,20 @@ async function withRetry<T>(
       return result
     } catch (error: any) {
       lastError = error
-      
+
       // Log the error
       console.error(`[bexio-sync] ⚠️ ${operationName} failed (attempt ${attempt}/${RETRY_CONFIG.maxRetries})`)
       console.error(`[bexio-sync]    Error: ${error.message}`)
       if (context) {
         console.error(`[bexio-sync]    Context:`, JSON.stringify(context, null, 2))
       }
-      
+
       // Don't retry if it's a validation error (4xx)
       if (error.status && error.status >= 400 && error.status < 500) {
         console.error(`[bexio-sync] ❌ ${operationName} - Client error (${error.status}), not retrying`)
         throw error
       }
-      
+
       // Calculate delay with exponential backoff
       if (attempt < RETRY_CONFIG.maxRetries) {
         const delay = Math.min(
@@ -81,7 +81,7 @@ async function withRetry<T>(
       }
     }
   }
-  
+
   // All retries exhausted
   console.error(`[bexio-sync] ❌ ${operationName} failed after ${RETRY_CONFIG.maxRetries} attempts`)
   throw lastError
@@ -103,14 +103,14 @@ async function logSyncEvent(
     status,
     ...details,
   }
-  
+
   // Log to console (in production, this would go to a logging service)
   if (status === 'FAILURE') {
     console.error('[bexio-sync] SYNC_EVENT:', JSON.stringify(logMessage))
   } else {
     console.log('[bexio-sync] SYNC_EVENT:', JSON.stringify(logMessage))
   }
-  
+
   // Optional: Store sync events in database for debugging
   // await prisma.syncEvent.create({ data: logMessage })
 }
@@ -147,7 +147,7 @@ const BEXIO_CONFIG = {
 export async function syncUserToBexio(userId: string): Promise<number> {
   console.log(`[bexio-sync] 🔄 syncUserToBexio START für User ${userId}`)
   const startTime = Date.now()
-  
+
   try {
     const bexio = getBexioClient()
 
@@ -186,8 +186,8 @@ export async function syncUserToBexio(userId: string): Promise<number> {
         'updateContact',
         { userId, bexioContactId: user.bexioContactId }
       )
-      
-      await logSyncEvent('USER_SYNC', userId, 'SUCCESS', { 
+
+      await logSyncEvent('USER_SYNC', userId, 'SUCCESS', {
         action: 'update',
         bexioContactId: user.bexioContactId,
         durationMs: Date.now() - startTime
@@ -202,7 +202,7 @@ export async function syncUserToBexio(userId: string): Promise<number> {
       'findContactByEmail',
       { email: user.email }
     )
-    
+
     if (existingContact && existingContact.id) {
       console.log(`[bexio-sync]    Existierender Kontakt gefunden: ${existingContact.id}`)
       // Link to existing contact
@@ -210,8 +210,8 @@ export async function syncUserToBexio(userId: string): Promise<number> {
         where: { id: userId },
         data: { bexioContactId: existingContact.id },
       })
-      
-      await logSyncEvent('USER_SYNC', userId, 'SUCCESS', { 
+
+      await logSyncEvent('USER_SYNC', userId, 'SUCCESS', {
         action: 'link_existing',
         bexioContactId: existingContact.id,
         durationMs: Date.now() - startTime
@@ -243,16 +243,16 @@ export async function syncUserToBexio(userId: string): Promise<number> {
       data: { bexioContactId: newContact.id },
     })
 
-    await logSyncEvent('USER_SYNC', userId, 'SUCCESS', { 
+    await logSyncEvent('USER_SYNC', userId, 'SUCCESS', {
       action: 'create',
       bexioContactId: newContact.id,
       durationMs: Date.now() - startTime
     })
-    
+
     console.log(`[bexio-sync] ✅ syncUserToBexio COMPLETE - Bexio Contact ID: ${newContact.id}`)
     return newContact.id!
   } catch (error: any) {
-    await logSyncEvent('USER_SYNC', userId, 'FAILURE', { 
+    await logSyncEvent('USER_SYNC', userId, 'FAILURE', {
       error: error.message,
       durationMs: Date.now() - startTime
     })
@@ -373,7 +373,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
     )
     console.log(`[bexio-sync] ✅ Rechnung als versendet markiert`)
   }
-  
+
   // Log success event
   await logSyncEvent('INVOICE_SYNC', invoiceId, 'SUCCESS', {
     bexioInvoiceId: bexioInvoice.id,

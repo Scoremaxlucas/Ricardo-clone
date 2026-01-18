@@ -23,10 +23,10 @@ export async function POST(request: NextRequest) {
       limit: 30,
       window: 60, // 1 minute
     })
-    
+
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
-        { 
+        {
           message: 'Zu viele Gebote. Bitte warten Sie einen Moment.',
           retryAfter: Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000)
         },

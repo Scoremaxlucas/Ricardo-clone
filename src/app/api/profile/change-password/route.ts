@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
       limit: 5,
       window: 3600, // 1 hour
     })
-    
+
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
         { message: 'Zu viele Versuche. Bitte versuchen Sie es später erneut.' },
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     // Aktualisiere das Passwort
     await prisma.user.update({
       where: { id: session.user.id },
-      data: { 
+      data: {
         password: hashedPassword,
         passwordChangedAt: new Date(),
       },
@@ -108,7 +108,7 @@ export async function POST(request: NextRequest) {
     // Sende Bestätigungs-E-Mail (Sicherheitsfeature)
     const userName = user.firstName || user.nickname || 'Benutzer'
     const { subject, html, text } = getPasswordChangedEmail(userName, ipAddress, userAgent)
-    
+
     await sendEmail({
       to: user.email,
       subject,

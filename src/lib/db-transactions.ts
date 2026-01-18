@@ -1,6 +1,6 @@
 /**
  * Database Transaction Utilities
- * 
+ *
  * Provides safe database transactions with automatic rollback on error
  * and typed return values.
  */
@@ -14,7 +14,7 @@ type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0
 /**
  * Execute a function within a database transaction
  * Automatically rolls back on error
- * 
+ *
  * @example
  * const result = await withTransaction(async (tx) => {
  *   const user = await tx.user.create({ data: { email: 'test@test.com' } })
@@ -35,16 +35,16 @@ export async function withTransaction<T>(
     timeout: 10000, // 10 seconds
     isolationLevel: Prisma.TransactionIsolationLevel.ReadCommitted,
   }
-  
+
   const mergedOptions = { ...defaultOptions, ...options }
-  
+
   return prisma.$transaction(fn, mergedOptions) as Promise<T>
 }
 
 /**
  * Execute multiple Prisma operations atomically
  * Use this for simple batch operations
- * 
+ *
  * @example
  * const [user, profile] = await batchTransaction([
  *   prisma.user.create({ data: { email: 'test@test.com' } }),
@@ -60,7 +60,7 @@ export async function batchTransaction<T extends Prisma.PrismaPromise<unknown>[]
 /**
  * Retry a database operation with exponential backoff
  * Useful for handling transient database errors
- * 
+ *
  * @example
  * const user = await retryOperation(
  *   () => prisma.user.create({ data: { email: 'test@test.com' } }),
@@ -75,30 +75,30 @@ export async function retryOperation<T>(
     shouldRetry?: (error: unknown) => boolean
   }
 ): Promise<T> {
-  const { 
-    maxRetries = 3, 
+  const {
+    maxRetries = 3,
     baseDelayMs = 100,
-    shouldRetry = defaultShouldRetry 
+    shouldRetry = defaultShouldRetry
   } = options || {}
-  
+
   let lastError: unknown
-  
+
   for (let attempt = 1; attempt <= maxRetries; attempt++) {
     try {
       return await operation()
     } catch (error) {
       lastError = error
-      
+
       if (!shouldRetry(error) || attempt === maxRetries) {
         throw error
       }
-      
+
       // Exponential backoff
       const delay = baseDelayMs * Math.pow(2, attempt - 1)
       await new Promise(resolve => setTimeout(resolve, delay))
     }
   }
-  
+
   throw lastError
 }
 
@@ -107,12 +107,12 @@ export async function retryOperation<T>(
  */
 function defaultShouldRetry(error: unknown): boolean {
   const prismaError = error as { code?: string; message?: string }
-  
+
   // Connection errors are retryable
   if (prismaError.code === 'P1001' || prismaError.code === 'P1002') {
     return true
   }
-  
+
   // Timeout errors are retryable
   if (
     prismaError.message?.toLowerCase().includes('timeout') ||
@@ -120,19 +120,19 @@ function defaultShouldRetry(error: unknown): boolean {
   ) {
     return true
   }
-  
+
   // Transaction conflict errors are retryable
   if (prismaError.code === 'P2034') {
     return true
   }
-  
+
   return false
 }
 
 /**
  * Optimistic locking helper
  * Ensures data hasn't changed between read and write
- * 
+ *
  * @example
  * await optimisticUpdate(
  *   () => prisma.user.findUnique({ where: { id: '1' } }),
@@ -154,25 +154,25 @@ export async function optimisticUpdate<T, V>(
     if (!data) {
       throw new Error('Record not found')
     }
-    
+
     const version = getVersion(data)
-    
+
     try {
       await update(data)
       return // Success
     } catch (error) {
       const prismaError = error as { code?: string }
-      
+
       // P2025: Record not found (version mismatch in WHERE clause)
       if (prismaError.code === 'P2025' && attempt < maxRetries) {
         // Retry with fresh data
         continue
       }
-      
+
       throw error
     }
   }
-  
+
   throw new Error('Optimistic locking failed after max retries')
 }
 
@@ -193,12 +193,12 @@ export async function safeUpsert<T>(
     return await create()
   } catch (error) {
     const prismaError = error as { code?: string }
-    
+
     // Unique constraint violation - record was created in between
     if (prismaError.code === 'P2002') {
       return await update()
     }
-    
+
     throw error
   }
 }
@@ -216,13 +216,13 @@ export async function withLock<T>(
   }
 ): Promise<T> {
   const { timeout = 30000, waitForLock = false } = options || {}
-  
+
   // Use a simple database-based locking mechanism
   // In production, consider using Redis for distributed locking
-  
+
   const lockId = `lock:${lockKey}`
   const lockExpiry = new Date(Date.now() + timeout)
-  
+
   try {
     // Try to acquire lock
     await prisma.rateLimit.create({
@@ -232,13 +232,13 @@ export async function withLock<T>(
       },
     }).catch(async (error) => {
       const prismaError = error as { code?: string }
-      
+
       if (prismaError.code === 'P2002') {
         // Lock exists - check if expired
         const existingLock = await prisma.rateLimit.findFirst({
           where: { identifier: lockId },
         })
-        
+
         if (existingLock && existingLock.createdAt < new Date(Date.now() - timeout)) {
           // Lock expired, delete and retry
           await prisma.rateLimit.delete({ where: { id: existingLock.id } })
@@ -250,18 +250,18 @@ export async function withLock<T>(
           })
           return
         }
-        
+
         if (!waitForLock) {
           throw new Error(`Lock ${lockKey} is already held`)
         }
-        
+
         // Wait and retry (simplified - in production use proper polling)
         throw new Error(`Lock ${lockKey} is already held, waiting not implemented`)
       }
-      
+
       throw error
     })
-    
+
     // Execute operation
     return await operation()
   } finally {

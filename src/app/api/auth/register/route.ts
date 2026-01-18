@@ -17,22 +17,22 @@ export async function POST(request: NextRequest) {
 
   try {
     // SECURITY: Rate limiting - max 5 registrations per IP per hour
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
-               request.headers.get('x-real-ip') || 
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+               request.headers.get('x-real-ip') ||
                'unknown'
     const rateLimitResult = await checkRateLimit({
       identifier: `register:${ip}`,
       limit: 5,
       window: 3600, // 1 hour
     })
-    
+
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
-        { 
+        {
           message: 'Zu viele Registrierungsversuche. Bitte versuchen Sie es später erneut.',
           retryAfter: Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000)
         },
-        { 
+        {
           status: 429,
           headers: {
             'Retry-After': String(Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000)),

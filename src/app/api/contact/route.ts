@@ -9,18 +9,18 @@ const CONTACT_EMAIL =
 export async function POST(request: NextRequest) {
   try {
     // SECURITY: Rate limiting - max 10 contact requests per IP per hour
-    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
-               request.headers.get('x-real-ip') || 
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
+               request.headers.get('x-real-ip') ||
                'unknown'
     const rateLimitResult = await checkRateLimit({
       identifier: `contact:${ip}`,
       limit: 10,
       window: 3600, // 1 hour
     })
-    
+
     if (!rateLimitResult.allowed) {
       return NextResponse.json(
-        { 
+        {
           message: 'Zu viele Anfragen. Bitte versuchen Sie es später erneut.',
           retryAfter: Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000)
         },

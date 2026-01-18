@@ -11,7 +11,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
 
 /**
  * Button Component - Einheitliches Design-System
- * 
+ *
  * ALLE Primary Buttons nutzen jetzt den Teal-Gradient für:
  * - Konsistenz auf der gesamten Platform
  * - Vertrauenswürdiges, professionelles Erscheinungsbild
@@ -98,9 +98,9 @@ export function Button({
           <span className="sr-only" role="status" aria-live="polite">
             {loadingText}
           </span>
-          <svg 
-            className="-ml-1 mr-2 h-4 w-4 animate-spin" 
-            fill="none" 
+          <svg
+            className="-ml-1 mr-2 h-4 w-4 animate-spin"
+            fill="none"
             viewBox="0 0 24 24"
             aria-hidden="true"
           >
