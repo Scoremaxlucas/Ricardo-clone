@@ -35,12 +35,13 @@ export default function AdminPricingPage() {
   const [saving, setSaving] = useState(false)
   const [editingBooster, setEditingBooster] = useState<BoosterPrice | null>(null)
   const [boosters, setBoosters] = useState<BoosterPrice[]>([])
+  // Defaults - werden durch API geladen (sollten nie angezeigt werden, nur Fallback)
   const [settings, setSettings] = useState<PricingSettings>({
-    platformMarginRate: 0.1, // 10%
-    protectionFeeRate: 0.03, // 3% Zahlungsschutz-Gebühr
+    platformMarginRate: 0.05, // 5% (korrekte Helvenda-Standard)
+    protectionFeeRate: 0, // 0% - Zahlungsschutz ist INKLUSIVE (keine Gebühr für Käufer)
     vatRate: 0.081, // 8.1%
-    minimumCommission: 0,
-    maximumCommission: 220, // Kostendach CHF 220.-
+    minimumCommission: 0.1, // CHF 0.10
+    maximumCommission: 150, // CHF 150.- (korrekte Helvenda-Standard)
     listingFee: 0,
     transactionFee: 0,
   })
@@ -291,9 +292,9 @@ export default function AdminPricingPage() {
               </div>
 
               {/* Zahlungsschutz-Gebühr (Helvenda Schutz) */}
-              <div className="rounded-lg border-2 border-primary-200 bg-primary-50 p-4">
+              <div className="rounded-lg border-2 border-green-200 bg-green-50 p-4">
                 <div className="mb-2 flex items-center gap-2">
-                  <Shield className="h-5 w-5 text-primary-600" />
+                  <Shield className="h-5 w-5 text-green-600" />
                   <label className="block text-sm font-semibold text-gray-900">
                     Helvenda Schutz (Zahlungsschutz-Gebühr)
                   </label>
@@ -306,20 +307,17 @@ export default function AdminPricingPage() {
                     max="1"
                     value={settings.protectionFeeRate}
                     onChange={e => handleChange('protectionFeeRate', e.target.value)}
-                    className="w-32 rounded-md border border-primary-300 bg-white px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
+                    className="w-32 rounded-md border border-green-300 bg-white px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-green-500"
+                    disabled
                   />
-                  <span className="font-medium text-primary-700">
-                    = {(settings.protectionFeeRate * 100).toFixed(2)}%
+                  <span className="font-medium text-green-700">
+                    = {(settings.protectionFeeRate * 100).toFixed(2)}% (FIX)
                   </span>
                 </div>
-                <p className="mt-2 text-xs text-gray-600">
-                  Gebühr für Zahlungsschutz bei Orders (z.B. 0.02 = 2%). Diese Gebühr wird
-                  zusätzlich zum Artikelpreis berechnet und bietet Käufern und Verkäufern
-                  Sicherheit.
-                </p>
-                <div className="mt-3 rounded bg-white p-3 text-xs text-gray-600">
-                  <strong>Beispiel:</strong> Bei einem CHF 1'000 Artikel beträgt die
-                  Zahlungsschutz-Gebühr CHF {(1000 * settings.protectionFeeRate).toFixed(2)}
+                <div className="mt-2 rounded bg-white p-3 text-xs text-green-700">
+                  <strong>✓ Ricardo-Modell:</strong> Der Zahlungsschutz ist <strong>INKLUSIVE</strong> für Käufer.
+                  Käufer zahlen NUR den Artikelpreis + Versandkosten. Diese Gebühr wird daher immer auf <strong>0%</strong> gesetzt.
+                  Der Verkäufer trägt die Zahlungsgebühren (Stripe Processing Fee).
                 </div>
               </div>
 
@@ -357,7 +355,7 @@ export default function AdminPricingPage() {
                   className="w-32 rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                 />
                 <p className="mt-1 text-xs text-gray-500">
-                  Maximale Kommission (z.B. CHF 220.-). Wenn 10% Marge diesen Betrag übersteigt,
+                  Maximale Kommission (Standard: CHF 150.-). Wenn {(settings.platformMarginRate * 100).toFixed(0)}% Marge diesen Betrag übersteigt,
                   wird er auf diesen Wert gedeckelt.
                 </p>
               </div>
@@ -367,51 +365,62 @@ export default function AdminPricingPage() {
                 <h3 className="mb-4 text-lg font-medium text-gray-900">
                   Beispiel-Berechnung (CHF 1'000 Verkauf)
                 </h3>
-                <div className="space-y-2 rounded-lg bg-gray-50 p-4">
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">Verkaufspreis:</span>
-                    <span className="font-medium">CHF 1'000.00</span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-gray-600">
-                      Plattform-Gebühr ({(settings.platformMarginRate * 100).toFixed(2)}%):
-                    </span>
-                    <span className="font-medium">
-                      CHF {(1000 * settings.platformMarginRate).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between">
-                    <span className="text-primary-700">
-                      <Shield className="mr-1 inline h-4 w-4" />
-                      Helvenda Schutz ({(settings.protectionFeeRate * 100).toFixed(2)}%):
-                    </span>
-                    <span className="font-medium text-primary-700">
-                      CHF {(1000 * settings.protectionFeeRate).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">
-                      MwSt ({(settings.vatRate * 100).toFixed(2)}%):
-                    </span>
-                    <span className="font-medium">
-                      CHF {(1000 * settings.platformMarginRate * settings.vatRate).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="flex justify-between border-t pt-2">
-                    <span className="font-semibold text-gray-900">Total zu zahlen:</span>
-                    <span className="font-semibold text-primary-600">
-                      CHF {(1000 * settings.platformMarginRate * (1 + settings.vatRate)).toFixed(2)}
-                    </span>
-                  </div>
-                  <div className="mt-3 rounded border border-primary-200 bg-primary-50 p-3 text-xs">
-                    <div className="flex justify-between text-primary-700">
+
+                {/* Käufer-Perspektive */}
+                <div className="mb-4 rounded-lg border border-blue-200 bg-blue-50 p-4">
+                  <h4 className="mb-3 text-sm font-semibold text-blue-900">Was zahlt der Käufer?</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-blue-700">Artikelpreis:</span>
+                      <span className="font-medium text-blue-900">CHF 1'000.00</span>
+                    </div>
+                    <div className="flex justify-between text-xs text-blue-600">
                       <span>
-                        <strong>Mit Zahlungsschutz:</strong> Käufer zahlt zusätzlich{' '}
-                        {(settings.protectionFeeRate * 100).toFixed(2)}% für Sicherheit
+                        <Shield className="mr-1 inline h-3 w-3" />
+                        Zahlungsschutz:
                       </span>
-                      <span className="font-semibold">
-                        CHF {(1000 * (1 + settings.protectionFeeRate)).toFixed(2)}
+                      <span className="font-medium">INKLUSIVE (0%)</span>
+                    </div>
+                    <div className="flex justify-between border-t border-blue-300 pt-2">
+                      <span className="font-semibold text-blue-900">Käufer zahlt total:</span>
+                      <span className="font-semibold text-blue-900">CHF 1'000.00</span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Verkäufer-Perspektive */}
+                <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
+                  <h4 className="mb-3 text-sm font-semibold text-gray-900">Was zahlt der Verkäufer?</h4>
+                  <div className="space-y-2">
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">Verkaufspreis:</span>
+                      <span className="font-medium">CHF 1'000.00</span>
+                    </div>
+                    <div className="flex justify-between">
+                      <span className="text-gray-600">
+                        Plattform-Gebühr ({(settings.platformMarginRate * 100).toFixed(2)}%):
                       </span>
+                      <span className="font-medium">
+                        CHF {(1000 * settings.platformMarginRate).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">
+                        MwSt auf Gebühr ({(settings.vatRate * 100).toFixed(2)}%):
+                      </span>
+                      <span className="font-medium">
+                        CHF {(1000 * settings.platformMarginRate * settings.vatRate).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="flex justify-between border-t pt-2">
+                      <span className="font-semibold text-gray-900">Total Gebühren (Verkäufer):</span>
+                      <span className="font-semibold text-primary-600">
+                        CHF {(1000 * settings.platformMarginRate * (1 + settings.vatRate)).toFixed(2)}
+                      </span>
+                    </div>
+                    <div className="mt-2 text-xs text-gray-500">
+                      <strong>Hinweis:</strong> Zusätzlich fallen Zahlungsgebühren (Stripe) an, die vom Verkäufer getragen werden.
+                      Diese sind nicht Teil der Plattform-Gebühr und werden separat berechnet.
                     </div>
                   </div>
                 </div>
