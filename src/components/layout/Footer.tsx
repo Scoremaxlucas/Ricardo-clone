@@ -38,8 +38,9 @@ export function Footer() {
 
   return (
     <footer
-      className="relative mt-auto overflow-hidden bg-gray-900 text-white"
+      className="relative mt-auto overflow-hidden text-white"
       style={{
+        background: 'linear-gradient(180deg, #0d6560 0%, #0a4f4a 100%)', // Darker teal for better contrast
         padding: '32px 0 24px',
       }}
     >
@@ -51,7 +52,7 @@ export function Footer() {
             <div className="mb-3 flex items-center">
               <Logo size="sm" className="text-white" />
             </div>
-            <p className="text-sm leading-relaxed text-gray-300">{t.home.hero.subtitle}</p>
+            <p className="text-sm leading-relaxed text-white/90">{t.home.hero.subtitle}</p>
           </div>
 
           {/* Für Käufer */}
@@ -76,7 +77,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/categories"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.header.categories}
                 </Link>
@@ -84,7 +85,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/auctions"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.header.auctions}
                 </Link>
@@ -92,7 +93,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/favorites"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.header.favorites}
                 </Link>
@@ -100,7 +101,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/my-watches/buying"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.header.myBuying}
                 </Link>
@@ -130,7 +131,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/sell"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.header.sell}
                 </Link>
@@ -138,7 +139,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/my-watches"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.header.mySelling}
                 </Link>
@@ -146,7 +147,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/my-watches/selling/fees"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.header.feesAndInvoices}
                 </Link>
@@ -154,7 +155,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/fees"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   Gebührenreglement
                 </Link>
@@ -184,7 +185,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/help"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.footer.helpCenter}
                 </Link>
@@ -192,7 +193,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/faq"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.footer.faq}
                 </Link>
@@ -200,7 +201,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/contact"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.footer.contactUs}
                 </Link>
@@ -208,7 +209,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/help/shipping-options"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.product.shipping}
                 </Link>
@@ -216,7 +217,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/help/safe-buying"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.footer.safety}
                 </Link>
@@ -224,7 +225,7 @@ export function Footer() {
               <li>
                 <Link
                   href="/help/system-outages"
-                  className="text-sm text-gray-300 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                  className="text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
                 >
                   {t.helpArticles?.['system-outages']?.title || 'Grundsätze bei Systemausfällen'}
                 </Link>
@@ -234,10 +235,10 @@ export function Footer() {
         </div>
 
         {/* TIER B: Legal Strip - Compact single bar */}
-        <div className="mt-6 border-t border-gray-700 pt-4">
+        <div className="mt-6 border-t border-white/30 pt-4">
           <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between md:gap-4">
             {/* Left: Copyright + Address */}
-            <div className="flex flex-col gap-1.5 text-sm text-gray-400 md:gap-1">
+            <div className="flex flex-col gap-1.5 text-sm text-white/80 md:gap-1">
               <p>© {new Date().getFullYear()} Helvenda.ch - {t.footer.allRightsReserved}</p>
               <address className="not-italic">
                 Inhaber und Betreiber von helvenda.ch ist die Firma Score-Max GmbH, in der Hauswiese
@@ -247,24 +248,24 @@ export function Footer() {
 
             {/* Right: Legal Links */}
             <nav
-              className="flex flex-wrap items-center gap-4 text-sm text-gray-400 md:flex-nowrap"
+              className="flex flex-wrap items-center gap-4 text-sm text-white/80 md:flex-nowrap"
               aria-label="Rechtliche Links"
             >
               <Link
                 href="/privacy"
-                className="transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                className="transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
               >
                 {t.footer.privacyPolicy}
               </Link>
               <Link
                 href="/terms"
-                className="transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                className="transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
               >
                 {t.footer.termsOfService}
               </Link>
               <Link
                 href="/imprint"
-                className="transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-gray-900"
+                className="transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
               >
                 {t.footer.imprint}
               </Link>
