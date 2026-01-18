@@ -65,12 +65,11 @@ export async function syncUserToBexio(userId: string): Promise<number> {
 
   // Prüfen ob bereits ein Bexio-Kontakt existiert
   if (user.bexioContactId) {
-    // Update existing contact
+    // Update existing contact (ohne address - Bexio API Fehler)
     await bexio.updateContact(user.bexioContactId, {
       name_1: user.lastName || user.name || '',
       name_2: user.firstName || '',
       mail: user.email,
-      address: mainAddress?.street || undefined,
       postcode: mainAddress?.postalCode || undefined,
       city: mainAddress?.city || undefined,
       country_id: 1, // Schweiz
@@ -90,15 +89,17 @@ export async function syncUserToBexio(userId: string): Promise<number> {
   }
 
   // Neuen Kontakt erstellen
+  // WICHTIG: user_id und owner_id sind Pflichtfelder in Bexio!
   const newContact = await bexio.createContact({
     contact_type_id: 2, // Person
     name_1: user.lastName || user.name || 'Unbekannt',
     name_2: user.firstName || '',
     mail: user.email,
-    address: mainAddress?.street || undefined,
     postcode: mainAddress?.postalCode || undefined,
     city: mainAddress?.city || undefined,
     country_id: 1, // Schweiz
+    user_id: BEXIO_CONFIG.DEFAULT_USER_ID, // Pflichtfeld!
+    owner_id: BEXIO_CONFIG.DEFAULT_USER_ID, // Pflichtfeld!
   })
 
   // Bexio ID speichern

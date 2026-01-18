@@ -322,7 +322,7 @@ function SellingFeesContent() {
                         <p className={`mt-0.5 text-sm ${isOverdue ? 'font-medium text-red-600' : 'text-gray-500'}`}>
                           {isPaid && invoice.paidAt
                             ? `Bezahlt am ${formatDate(invoice.paidAt)}`
-                            : isOverdue 
+                            : isOverdue
                               ? `War fällig am ${formatDate(invoice.dueDate)}`
                               : `Fällig ${formatDate(invoice.dueDate)}`
                           }
