@@ -436,6 +436,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
             shippedAt: a.shippedAt || null,
             disputeOpenedAt: a.disputeOpenedAt,
             disputeStatus: a.disputeStatus,
+            autoReleaseAt: a.autoReleaseAt || null,
           },
           a.id
         )
@@ -455,6 +456,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
             shippedAt: b.shippedAt || null,
             disputeOpenedAt: b.disputeOpenedAt,
             disputeStatus: b.disputeStatus,
+            autoReleaseAt: b.autoReleaseAt || null,
           },
           b.id
         )
@@ -616,6 +618,7 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                 shippedAt: purchase.shippedAt || null,
                 disputeOpenedAt: purchase.disputeOpenedAt,
                 disputeStatus: purchase.disputeStatus,
+                autoReleaseAt: purchase.autoReleaseAt || null, // Ricardo-style deadline
               },
               purchase.id
             )
@@ -793,6 +796,37 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                               </span>
                             )}
                           </div>
+
+                          {/* Ricardo-Style Deadline Anzeige - prominent wenn Erhalt-Bestätigung ausstehend */}
+                          {stateInfo.state === 'RECEIPT_PENDING' && stateInfo.deadline?.daysRemaining && (
+                            <div className="mt-2 inline-flex items-center gap-2 rounded-lg bg-amber-50 px-3 py-1.5 text-sm">
+                              <Clock className="h-4 w-4 text-amber-600" />
+                              <span className="text-amber-800">
+                                <span className="font-semibold">
+                                  {stateInfo.deadline.daysRemaining} {stateInfo.deadline.daysRemaining === 1 ? 'Tag' : 'Tage'}
+                                </span>
+                                {' '}verbleibend, um Erhalt zu bestätigen
+                              </span>
+                            </div>
+                          )}
+                          {/* Erhalt-Bestätigung fällig heute */}
+                          {stateInfo.state === 'RECEIPT_PENDING' && stateInfo.deadline?.date && !stateInfo.deadline?.daysRemaining && !stateInfo.deadline?.isOverdue && (
+                            <div className="mt-2 inline-flex items-center gap-2 rounded-lg bg-orange-100 px-3 py-1.5 text-sm">
+                              <Clock className="h-4 w-4 text-orange-600" />
+                              <span className="font-medium text-orange-800">
+                                Heute letzte Chance zur Bestätigung – danach automatisch freigegeben
+                              </span>
+                            </div>
+                          )}
+                          {/* Auto-Released */}
+                          {stateInfo.state === 'RECEIPT_PENDING' && stateInfo.deadline?.isOverdue && (
+                            <div className="mt-2 inline-flex items-center gap-2 rounded-lg bg-gray-100 px-3 py-1.5 text-sm">
+                              <CheckCircle className="h-4 w-4 text-gray-500" />
+                              <span className="text-gray-600">
+                                Automatisch freigegeben
+                              </span>
+                            </div>
+                          )}
                         </div>
 
                         {/* Right Side - Primary Action */}

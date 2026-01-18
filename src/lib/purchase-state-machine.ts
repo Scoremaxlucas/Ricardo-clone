@@ -119,6 +119,7 @@ export function getPurchaseStateInfo(
     shippedAt: string | null
     disputeOpenedAt: string | null
     disputeStatus: string | null
+    autoReleaseAt?: string | null // Ricardo-style: Deadline für automatische Freigabe
   },
   purchaseId: string
 ): PurchaseStateInfo {
@@ -197,6 +198,13 @@ export function getPurchaseStateInfo(
     }
 
     case 'RECEIPT_PENDING': {
+      // Ricardo-style: Deadline for receipt confirmation (autoReleaseAt)
+      const autoReleaseAt = purchase.autoReleaseAt ? new Date(purchase.autoReleaseAt) : null
+      const daysRemaining = autoReleaseAt
+        ? Math.ceil((autoReleaseAt.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
+        : null
+      const isOverdue = autoReleaseAt ? autoReleaseAt < now : false
+
       return {
         state,
         label: 'Erhalt ausstehend',
@@ -206,6 +214,12 @@ export function getPurchaseStateInfo(
           type: 'primary',
           action: 'confirm_receipt',
         },
+        deadline: autoReleaseAt ? {
+          label: 'Automatische Bestätigung',
+          date: autoReleaseAt,
+          isOverdue,
+          daysRemaining: daysRemaining && daysRemaining > 0 ? daysRemaining : null,
+        } : undefined,
       }
     }
 

@@ -25,6 +25,8 @@ export interface MyPurchaseItem {
   trackingNumber?: string | null
   trackingProvider?: string | null
   shippedAt?: string | null
+  // Auto-release deadline (Ricardo-style: buyer has X days to confirm receipt)
+  autoReleaseAt?: string | null
   // Price breakdown fields
   itemPrice?: number
   shippingCost?: number
@@ -169,6 +171,7 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
         stripePaymentIntentId: true,
         stripeChargeId: true,
         selectedDeliveryMode: true,
+        autoReleaseAt: true, // Ricardo-style: Deadline für automatische Freigabe
         watchId: true,
         watch: {
           select: {
@@ -319,6 +322,8 @@ export async function getMyPurchases(userId: string): Promise<MyPurchaseItem[]> 
         trackingNumber: order.trackingNumber || null,
         trackingProvider: order.trackingProvider || null,
         shippedAt: order.shippedAt?.toISOString() || null,
+        // Auto-release deadline (Ricardo-style)
+        autoReleaseAt: order.autoReleaseAt?.toISOString() || null,
         // Price breakdown from Order
         itemPrice: order.itemPrice || undefined,
         shippingCost: order.shippingCost || undefined,
