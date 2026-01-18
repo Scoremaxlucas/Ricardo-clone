@@ -363,7 +363,7 @@ export function ProductCard({
             />
           </button>
         )}
-        
+
         {/* Eigenes Angebot Badge - Wie Ricardo */}
         {isOwnListing && (
           <div className="absolute right-2 top-2 z-10 rounded-full bg-primary-600 px-2 py-1 text-[10px] font-medium text-white shadow-md">

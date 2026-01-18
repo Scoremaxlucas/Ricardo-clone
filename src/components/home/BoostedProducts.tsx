@@ -36,9 +36,9 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
   const [favorites, setFavorites] = useState<string[]>([])
   const [items, setItems] = useState<Item[]>([])
   const [loading, setLoading] = useState(true)
-  
+
   // Helper to check if item is user's own listing
-  const isOwnListing = (sellerId?: string) => 
+  const isOwnListing = (sellerId?: string) =>
     session?.user && sellerId === (session.user as { id?: string })?.id
 
   useEffect(() => {
@@ -167,7 +167,7 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
                       <Heart className="h-3 w-3" />
                     </button>
                   )}
-                  
+
                   {/* Eigenes Angebot Badge - Wie Ricardo */}
                   {isOwnListing(product.sellerId) && (
                     <div className="absolute right-1.5 top-1.5 z-10 rounded-full bg-primary-600 px-2 py-0.5 text-[9px] font-medium text-white shadow-md">

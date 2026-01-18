@@ -711,7 +711,7 @@ export function ProductPageClient({
                   {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
                 </button>
               )}
-              
+
               {/* Nicht eingeloggte User: Favoriten-Button ohne Funktion */}
               {!session?.user && (
                 <button
@@ -923,7 +923,7 @@ export function ProductPageClient({
                   {isFavorite ? 'AUS FAVORITEN ENTFERNEN' : 'ZU FAVORITEN HINZUFÜGEN'}
                 </button>
               )}
-              
+
               {/* Nicht eingeloggte User: Favoriten-Button ohne Funktion */}
               {!session?.user && (
                 <button
@@ -989,9 +989,9 @@ export function ProductPageClient({
 
       {/* Mobile Sticky CTA Bar */}
       {isMobile && showStickyBar && (
-        <div 
+        <div
           className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.1)] transition-transform duration-300"
-          style={{ 
+          style={{
             paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
             transform: showStickyBar ? 'translateY(0)' : 'translateY(100%)'
           }}
@@ -1014,8 +1014,8 @@ export function ProductPageClient({
                 onClick={toggleFavorite}
                 disabled={favoriteLoading}
                 className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
-                  isFavorite 
-                    ? 'border-red-400 bg-red-50 text-red-500' 
+                  isFavorite
+                    ? 'border-red-400 bg-red-50 text-red-500'
                     : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
                 }`}
               >

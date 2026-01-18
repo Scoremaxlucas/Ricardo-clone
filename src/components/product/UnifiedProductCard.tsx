@@ -248,7 +248,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
               />
             </button>
           )}
-          
+
           {/* Eigenes Angebot Badge - Wie Ricardo */}
           {isOwnListing && (
             <div className="absolute right-1.5 top-1.5 z-10 rounded-full bg-primary-600 px-2 py-0.5 text-[9px] font-medium text-white shadow-md">
@@ -431,7 +431,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
               </div>
             )}
           </div>
-          
+
           {/* Favorite Button - Nur für fremde Artikel (wie Ricardo) */}
           {!isOwnListing && (
             <button
@@ -448,14 +448,14 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
               />
             </button>
           )}
-          
+
           {/* Eigenes Angebot Badge - Wie Ricardo */}
           {isOwnListing && (
             <div className="absolute right-2 top-2 z-10 rounded-full bg-primary-600 px-2 py-0.5 text-[10px] font-medium text-white shadow-md">
               Ihr Angebot
             </div>
           )}
-          
+
           {/* Badges - Ricardo-style: Gold > Silber > Bronze */}
           <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
             {hasGold && (
@@ -601,7 +601,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             />
           </button>
         )}
-        
+
         {/* Eigenes Angebot Badge - Wie Ricardo */}
         {isOwnListing && (
           <div className="absolute right-1.5 top-1.5 z-10 rounded-full bg-primary-600 px-2 py-0.5 text-[9px] font-medium text-white shadow-md">

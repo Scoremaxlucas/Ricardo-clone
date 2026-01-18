@@ -216,7 +216,7 @@ export function ModernProductCard({
             <Heart className={`h-4 w-4 ${isFavorite ? 'fill-current' : ''}`} />
           </button>
         )}
-        
+
         {/* Eigenes Angebot Badge - Wie Ricardo */}
         {isOwnListing && (
           <div className="absolute right-3 top-3 z-10 rounded-full bg-primary-600 px-2.5 py-1 text-[10px] font-medium text-white shadow-md">
