@@ -406,20 +406,21 @@ function SellPageContent() {
     toast.success('Entwurf wiederhergestellt', { icon: '📝' })
   }, [pendingDraft, router])
 
-  // Handler: Neu beginnen (Entwurf verwerfen)
+  // Handler: Entwurf verwerfen (löscht den Entwurf permanent)
   const handleStartFresh = useCallback(async () => {
     if (pendingDraft?.id) {
-      // Lösche den alten Entwurf
+      // Lösche den alten Entwurf permanent
       try {
         await fetch(`/api/drafts/${pendingDraft.id}`, { method: 'DELETE' })
+        toast.success('Entwurf wurde gelöscht', { icon: '🗑️' })
       } catch (error) {
         console.error('[Draft] Error deleting old draft:', error)
+        toast.error('Fehler beim Löschen des Entwurfs')
       }
     }
     setShowDraftPrompt(false)
     setPendingDraft(null)
     setCurrentDraftId(null)
-    toast.success('Neues Inserat gestartet', { icon: '✨' })
   }, [pendingDraft])
 
   // Scroll to top and focus heading when step changes (backup for direct URL navigation)
@@ -1129,7 +1130,19 @@ function SellPageContent() {
       {/* Draft restore prompt (Ricardo-Style) */}
       {showDraftPrompt && pendingDraft && (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+          <div className="relative w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+            {/* Close button (X) - dismiss without action */}
+            <button
+              onClick={() => {
+                setShowDraftPrompt(false)
+                setPendingDraft(null)
+              }}
+              className="absolute right-4 top-4 rounded-full p-1 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+              aria-label="Schliessen"
+            >
+              <X className="h-5 w-5" />
+            </button>
+
             <div className="mb-4 flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100">
                 <FileEdit className="h-6 w-6 text-primary-600" />
@@ -1171,9 +1184,9 @@ function SellPageContent() {
             <div className="flex gap-3">
               <button
                 onClick={handleStartFresh}
-                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50"
+                className="flex-1 rounded-lg border border-red-200 bg-red-50 px-4 py-3 font-medium text-red-700 transition-colors hover:bg-red-100"
               >
-                Neu beginnen
+                Entwurf verwerfen
               </button>
               <button
                 onClick={handleContinueDraft}

@@ -75,7 +75,7 @@ const SHIPPING_LABELS: Record<string, string> = {
 // Booster-Datenstruktur mit short/details/bullets (Watch-out.ch Style: Boost/Turbo-Boost/Super-Boost)
 const BOOSTER_DETAILS: Record<
   string,
-  { 
+  {
     short: string
     detailsTitle: string
     bullets: string[]
@@ -401,7 +401,7 @@ export function StepReviewPublish({
           {boosters.slice(0, 2).map(booster => {
             const details = BOOSTER_DETAILS[booster.id]
             const isSelected = selectedBooster === booster.id
-            
+
             return (
               <button
                 key={booster.id}
@@ -430,12 +430,12 @@ export function StepReviewPublish({
                   </div>
                   <h4 className="text-lg font-bold text-gray-900 sm:text-xl">{booster.name}</h4>
                 </div>
-                
+
                 {/* Description */}
                 <p className="mb-4 text-sm leading-relaxed text-gray-600">
                   {details?.short || booster.description}
                 </p>
-                
+
                 {/* Bullet Points */}
                 <ul className="mb-4 flex-1 space-y-1.5">
                   {details?.bullets?.slice(0, 4).map((bullet, index) => (
@@ -445,7 +445,7 @@ export function StepReviewPublish({
                     </li>
                   ))}
                 </ul>
-                
+
                 {/* Price */}
                 <div className="mt-auto border-t border-gray-100 pt-3">
                   <span className="text-xl font-bold sm:text-2xl" style={{ color: booster.badgeColor }}>
@@ -455,7 +455,7 @@ export function StepReviewPublish({
                     <span className="ml-2 text-sm text-gray-500">{details.fineprint}</span>
                   )}
                 </div>
-                
+
                 {/* Selection indicator */}
                 {isSelected && (
                   <div className="absolute right-3 top-3">
@@ -465,13 +465,13 @@ export function StepReviewPublish({
               </button>
             )
           })}
-          
+
           {/* Row 2: Super-Boost (spans full width on mobile, half on desktop) + No Booster */}
           {boosters.slice(2).map(booster => {
             const details = BOOSTER_DETAILS[booster.id]
             const isSelected = selectedBooster === booster.id
             const isSuperBoost = booster.id === 'super-boost'
-            
+
             return (
               <button
                 key={booster.id}
@@ -502,12 +502,12 @@ export function StepReviewPublish({
                   </div>
                   <h4 className="text-lg font-bold text-gray-900 sm:text-xl">{booster.name}</h4>
                 </div>
-                
+
                 {/* Description */}
                 <p className="mb-4 text-sm leading-relaxed text-gray-600">
                   {details?.short || booster.description}
                 </p>
-                
+
                 {/* Bullet Points */}
                 <ul className="mb-4 flex-1 space-y-1.5">
                   {details?.bullets?.map((bullet, index) => (
@@ -517,7 +517,7 @@ export function StepReviewPublish({
                     </li>
                   ))}
                 </ul>
-                
+
                 {/* Price */}
                 <div className="mt-auto border-t border-gray-100 pt-3">
                   <span className="text-xl font-bold sm:text-2xl" style={{ color: booster.badgeColor }}>
@@ -527,7 +527,7 @@ export function StepReviewPublish({
                     <span className="ml-2 text-sm text-gray-500">{details.fineprint}</span>
                   )}
                 </div>
-                
+
                 {/* Selection indicator */}
                 {isSelected && (
                   <div className="absolute right-3 top-3">
@@ -537,7 +537,7 @@ export function StepReviewPublish({
               </button>
             )
           })}
-          
+
           {/* No Booster option - compact */}
           <button
             type="button"
@@ -557,16 +557,16 @@ export function StepReviewPublish({
               </div>
               <h4 className="text-lg font-bold text-gray-900 sm:text-xl">Kein Booster</h4>
             </div>
-            
+
             <p className="mb-4 flex-1 text-sm leading-relaxed text-gray-600">
               Das Angebot wird ohne besondere Hervorhebung veröffentlicht.
             </p>
-            
+
             <div className="mt-auto border-t border-gray-100 pt-3">
               <span className="text-xl font-bold text-gray-700 sm:text-2xl">CHF 0.–</span>
               <span className="ml-2 text-sm text-gray-500">kostenlos</span>
             </div>
-            
+
             {selectedBooster === 'none' && (
               <div className="absolute right-3 top-3">
                 <CheckCircle className="h-6 w-6 text-primary-600" />
