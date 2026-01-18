@@ -86,7 +86,7 @@ export function ProductCard({
   // Check if this is user's own listing (no favorites on own products like Ricardo)
   const isOwnListing = session?.user && product.sellerId === (session.user as { id?: string })?.id
 
-  // Check if product is favorite on mount
+  // Check if product is favorite on mount mit Synchronisierung
   useEffect(() => {
     let isMounted = true
     const abortController = new AbortController()
@@ -115,10 +115,20 @@ export function ProductCard({
       }
     }
     checkFavorite()
+    
+    // Listen for favorite changes from other components
+    const handleFavoriteChanged = (event: CustomEvent<{ watchId: string; isFavorite: boolean }>) => {
+      if (event.detail.watchId === product.id && isMounted) {
+        setIsFavorite(event.detail.isFavorite)
+      }
+    }
+    
+    window.addEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
 
     return () => {
       isMounted = false
       abortController.abort()
+      window.removeEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
     }
   }, [product.id, session?.user])
 
@@ -153,6 +163,10 @@ export function ProductCard({
           toast.error('Fehler beim Entfernen aus Favoriten')
         } else {
           toast.success('Aus Favoriten entfernt', { icon: '❤️' })
+          // Dispatch global event für Synchronisation
+          window.dispatchEvent(new CustomEvent('favoriteChanged', { 
+            detail: { watchId: product.id, isFavorite: false } 
+          }))
         }
       } else {
         const response = await fetch('/api/favorites', {
@@ -167,6 +181,10 @@ export function ProductCard({
           toast.error('Fehler beim Hinzufügen zu Favoriten')
         } else {
           toast.success('Zu Favoriten hinzugefügt', { icon: '❤️' })
+          // Dispatch global event für Synchronisation
+          window.dispatchEvent(new CustomEvent('favoriteChanged', { 
+            detail: { watchId: product.id, isFavorite: true } 
+          }))
         }
       }
     } catch (error) {

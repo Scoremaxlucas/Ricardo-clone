@@ -104,7 +104,7 @@ export function ProductPageClient({
     }
   }, [watch?.id])
 
-  // Check if watch is in favorites
+  // Check if watch is in favorites - mit Synchronisierung bei Fokus/Visibility-Änderung
   useEffect(() => {
     const checkFavorite = async () => {
       if (!session?.user || !watch?.id) return
@@ -119,10 +119,32 @@ export function ProductPageClient({
         console.error('Error checking favorite:', error)
       }
     }
+    
+    // Initial check
     checkFavorite()
+    
+    // Re-check when page becomes visible again (user might have changed favorites elsewhere)
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        checkFavorite()
+      }
+    }
+    
+    // Re-check when window gains focus
+    const handleFocus = () => {
+      checkFavorite()
+    }
+    
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+    window.addEventListener('focus', handleFocus)
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      window.removeEventListener('focus', handleFocus)
+    }
   }, [watch?.id, session?.user])
 
-  // Toggle favorite
+  // Toggle favorite mit globalem Event für Synchronisation
   const toggleFavorite = async () => {
     if (!session?.user) {
       const currentUrl = typeof window !== 'undefined' ? window.location.pathname : '/'
@@ -135,14 +157,26 @@ export function ProductPageClient({
     try {
       if (isFavorite) {
         const res = await fetch(`/api/favorites/${watch.id}`, { method: 'DELETE' })
-        if (res.ok) setIsFavorite(false)
+        if (res.ok) {
+          setIsFavorite(false)
+          // Dispatch global event für Synchronisation mit anderen Komponenten
+          window.dispatchEvent(new CustomEvent('favoriteChanged', { 
+            detail: { watchId: watch.id, isFavorite: false } 
+          }))
+        }
       } else {
         const res = await fetch('/api/favorites', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ watchId: watch.id }),
         })
-        if (res.ok) setIsFavorite(true)
+        if (res.ok) {
+          setIsFavorite(true)
+          // Dispatch global event für Synchronisation mit anderen Komponenten
+          window.dispatchEvent(new CustomEvent('favoriteChanged', { 
+            detail: { watchId: watch.id, isFavorite: true } 
+          }))
+        }
       }
     } catch (error) {
       console.error('Error toggling favorite:', error)
@@ -150,6 +184,20 @@ export function ProductPageClient({
       setFavoriteLoading(false)
     }
   }
+  
+  // Listen for favorite changes from other components
+  useEffect(() => {
+    const handleFavoriteChanged = (event: CustomEvent<{ watchId: string; isFavorite: boolean }>) => {
+      if (event.detail.watchId === watch?.id) {
+        setIsFavorite(event.detail.isFavorite)
+      }
+    }
+    
+    window.addEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
+    return () => {
+      window.removeEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
+    }
+  }, [watch?.id])
 
   // Berechne Aspect Ratio des aktuellen Bildes
   useEffect(() => {

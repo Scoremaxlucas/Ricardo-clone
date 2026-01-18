@@ -133,7 +133,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
     })
   }, [])
 
-  // Load favorite status
+  // Load favorite status mit Synchronisierung
   useEffect(() => {
     if (!session?.user) return
 
@@ -150,6 +150,18 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
     }
 
     checkFavorite()
+    
+    // Listen for favorite changes from other components (z.B. ProductPageClient)
+    const handleFavoriteChanged = (event: CustomEvent<{ watchId: string; isFavorite: boolean }>) => {
+      if (event.detail.watchId === product.id) {
+        setIsFavorite(event.detail.isFavorite)
+      }
+    }
+    
+    window.addEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
+    return () => {
+      window.removeEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
+    }
   }, [session?.user, product.id])
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
@@ -177,6 +189,10 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
         setIsFavorite(!newFavoriteState)
       } else {
         onFavoriteToggle?.(product.id, newFavoriteState)
+        // Dispatch global event für Synchronisation mit anderen Komponenten
+        window.dispatchEvent(new CustomEvent('favoriteChanged', { 
+          detail: { watchId: product.id, isFavorite: newFavoriteState } 
+        }))
       }
     } catch (error) {
       console.error('Error toggling favorite:', error)

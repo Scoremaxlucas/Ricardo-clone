@@ -82,6 +82,24 @@ export function SimilarProducts({
     }
 
     fetchFavorites()
+    
+    // Listen for favorite changes from other components
+    const handleFavoriteChanged = (event: CustomEvent<{ watchId: string; isFavorite: boolean }>) => {
+      setFavorites(prev => {
+        const newSet = new Set(prev)
+        if (event.detail.isFavorite) {
+          newSet.add(event.detail.watchId)
+        } else {
+          newSet.delete(event.detail.watchId)
+        }
+        return newSet
+      })
+    }
+    
+    window.addEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
+    return () => {
+      window.removeEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
+    }
   }, [session?.user])
 
   const toggleFavorite = async (watchId: string, e: React.MouseEvent) => {
@@ -93,20 +111,27 @@ export function SimilarProducts({
       return
     }
 
+    const wasFavorite = favorites.has(watchId)
+
     try {
-      const method = favorites.has(watchId) ? 'DELETE' : 'POST'
+      const method = wasFavorite ? 'DELETE' : 'POST'
       const response = await fetch(`/api/favorites/${watchId}`, { method })
 
       if (response.ok) {
+        const newIsFavorite = !wasFavorite
         setFavorites(prev => {
           const newSet = new Set(prev)
-          if (favorites.has(watchId)) {
+          if (wasFavorite) {
             newSet.delete(watchId)
           } else {
             newSet.add(watchId)
           }
           return newSet
         })
+        // Dispatch global event für Synchronisation
+        window.dispatchEvent(new CustomEvent('favoriteChanged', { 
+          detail: { watchId, isFavorite: newIsFavorite } 
+        }))
       }
     } catch (error) {
       console.error('Error toggling favorite:', error)
