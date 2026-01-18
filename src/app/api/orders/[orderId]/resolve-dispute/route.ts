@@ -163,10 +163,10 @@ export async function POST(
 
           // Sende Info-E-Mail an Verkäufer
           if (watchWithDetails.seller?.email) {
-            const sellerName = watchWithDetails.seller.firstName || 
-                              watchWithDetails.seller.name || 
+            const sellerName = watchWithDetails.seller.firstName ||
+                              watchWithDetails.seller.name ||
                               'Verkäufer'
-            
+
             await sendEmail({
               to: watchWithDetails.seller.email,
               subject: `Dispute gelöst - Artikel "${watchWithDetails.title}" kann neu eingestellt werden`,
@@ -178,7 +178,7 @@ export async function POST(
                   <p><strong>Der Artikel ist jetzt inaktiv.</strong></p>
                   <p>Falls Sie den Artikel erneut verkaufen möchten, können Sie ihn in Ihrem Dashboard unter "Mein Verkaufen" → "Beendete Artikel" wieder aktivieren oder als neues Angebot einstellen.</p>
                   <p style="margin-top: 20px;">
-                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://helvenda.ch'}/my-watches/selling" 
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://helvenda.ch'}/my-watches/selling"
                        style="background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                       Zu meinen Verkäufen
                     </a>

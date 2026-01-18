@@ -1,7 +1,6 @@
 'use client'
 
 import { BidComponent } from '@/components/bids/BidComponent'
-import { FavoriteButton } from '@/components/favorites/FavoriteButton'
 import { ReportModal } from '@/components/moderation/ReportModal'
 import { PriceOfferComponent } from '@/components/offers/PriceOfferComponent'
 import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
@@ -493,9 +492,7 @@ export function ProductPageClient({
                     controls
                     className="h-96 w-full rounded-lg bg-black object-contain"
                   />
-                  <div className="absolute right-4 top-4">
-                    <FavoriteButton watchId={watch.id} />
-                  </div>
+                  {/* FavoriteButton entfernt - bereits im Sidebar vorhanden (Ricardo-Style) */}
                 </div>
               ) : images.length > 0 ? (
                 <>
@@ -607,10 +604,7 @@ export function ProductPageClient({
                       </div>
                     )}
 
-                    {/* Favorite Button */}
-                    <div className="absolute right-4 top-4">
-                      <FavoriteButton watchId={watch.id} />
-                    </div>
+                    {/* FavoriteButton entfernt - bereits im Sidebar vorhanden (Ricardo-Style) */}
                   </div>
 
                   {/* Thumbnail-Galerie */}
@@ -654,9 +648,7 @@ export function ProductPageClient({
               ) : (
                 <div className="relative flex h-96 w-full items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-400">
                   {t.home.noImage}
-                  <div className="absolute right-4 top-4">
-                    <FavoriteButton watchId={watch.id} />
-                  </div>
+                  {/* FavoriteButton entfernt - bereits im Sidebar vorhanden (Ricardo-Style) */}
                 </div>
               )}
             </div>

@@ -380,7 +380,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           // Der Verkäufer kann ihn dann über "Mein Verkaufen" manuell reaktivieren
           const pastDate = new Date()
           pastDate.setDate(pastDate.getDate() - 1) // Gestern
-          
+
           await prisma.watch.update({
             where: { id: purchase.watchId },
             data: {
@@ -388,19 +388,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               // Optional: Markiere als storniert für bessere Übersicht
             },
           })
-          
+
           console.log(
             `[dispute/resolve] ℹ️  RICARDO-STYLE: Watch ${purchase.watchId} bleibt INAKTIV. ` +
             `Verkäufer muss manuell reaktivieren falls gewünscht.`
           )
-          
+
           // Sende Info-E-Mail an Verkäufer
           try {
             const sellerEmail = purchase.watch.seller?.email
-            const sellerName = purchase.watch.seller?.firstName || 
-                              purchase.watch.seller?.name || 
+            const sellerName = purchase.watch.seller?.firstName ||
+                              purchase.watch.seller?.name ||
                               'Verkäufer'
-            
+
             if (sellerEmail) {
               await sendEmail({
                 to: sellerEmail,
@@ -413,7 +413,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
                     <p><strong>Der Artikel ist jetzt inaktiv.</strong></p>
                     <p>Falls Sie den Artikel erneut verkaufen möchten, können Sie ihn in Ihrem Dashboard unter "Mein Verkaufen" → "Beendete Artikel" wieder aktivieren oder als neues Angebot einstellen.</p>
                     <p style="margin-top: 20px;">
-                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://helvenda.ch'}/my-watches/selling" 
+                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://helvenda.ch'}/my-watches/selling"
                          style="background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
                         Zu meinen Verkäufen
                       </a>
