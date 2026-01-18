@@ -313,16 +313,16 @@ export function hasVisibilityBoost(listing: ListingData): boolean {
 }
 
 /**
- * Get boost type for styling (gold > silber > bronze)
- * Ricardo-style naming: Bronze, Silber, Gold
+ * Get boost type for styling (super-boost > turbo-boost > boost)
+ * Watch-out.ch Style: Boost, Turbo-Boost, Super-Boost
  * Used for visual enhancement badges
  */
-export function getBoostType(listing: ListingData): 'gold' | 'silber' | 'bronze' | null {
+export function getBoostType(listing: ListingData): 'super-boost' | 'turbo-boost' | 'boost' | null {
   const boosters = listing.boosters || []
-  // Support both old and new naming during transition
-  if (boosters.includes('gold') || boosters.includes('super-boost')) return 'gold'
-  if (boosters.includes('silber') || boosters.includes('turbo-boost')) return 'silber'
-  if (boosters.includes('bronze') || boosters.includes('boost')) return 'bronze'
+  // Watch-out.ch Style with backwards compat for gold/silber/bronze
+  if (boosters.includes('super-boost') || boosters.includes('gold')) return 'super-boost'
+  if (boosters.includes('turbo-boost') || boosters.includes('silber')) return 'turbo-boost'
+  if (boosters.includes('boost') || boosters.includes('bronze')) return 'boost'
   return null
 }
 

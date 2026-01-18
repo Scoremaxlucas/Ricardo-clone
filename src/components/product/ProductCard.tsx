@@ -262,7 +262,7 @@ export function ProductCard({
         )}
 
         {/* Top-left: Badges - MAX 2 BADGES, strict hierarchy */}
-        {/* Priority: 1) Auction/Sofortkauf 2) Condition (Wie neu) 3) Gold/Silber/Bronze (only if no auction) */}
+        {/* Priority: 1) Auction/Sofortkauf 2) Condition (Wie neu) 3) Super-Boost/Turbo-Boost/Boost (only if no auction) */}
         <div className="absolute left-2 top-2 flex flex-col gap-1">
           {(() => {
             const badges: React.ReactNode[] = []
@@ -281,30 +281,30 @@ export function ProductCard({
               )
             }
 
-            // Priority 2: Gold boost (only if NOT auction, to avoid clutter)
-            if (!isAuction && isBoosted && boostType === 'gold' && badges.length < MAX_BADGES) {
+            // Priority 2: Super-Boost (only if NOT auction, to avoid clutter)
+            if (!isAuction && isBoosted && boostType === 'super-boost' && badges.length < MAX_BADGES) {
               badges.push(
                 <span
-                  key="gold"
-                  className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 px-2 py-0.5 text-[11px] font-semibold text-amber-900 shadow-sm"
-                  title="Premium-Platzierung"
+                  key="super-boost"
+                  className="inline-flex items-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm"
+                  title="Höchste Sichtbarkeit"
                 >
                   <Award className="mr-1 h-3 w-3" />
-                  Gold
+                  Super-Boost
                 </span>
               )
             }
 
-            // Priority 3: Silber boost (only if NOT auction)
-            if (!isAuction && isBoosted && boostType === 'silber' && badges.length < MAX_BADGES) {
+            // Priority 3: Turbo-Boost (only if NOT auction)
+            if (!isAuction && isBoosted && boostType === 'turbo-boost' && badges.length < MAX_BADGES) {
               badges.push(
                 <span
-                  key="silber"
-                  className="inline-flex items-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 px-2 py-0.5 text-[11px] font-semibold text-slate-800 shadow-sm"
-                  title="Hervorgehobene Platzierung"
+                  key="turbo-boost"
+                  className="inline-flex items-center rounded-full bg-gradient-to-r from-violet-500 to-purple-600 px-2 py-0.5 text-[11px] font-semibold text-white shadow-sm"
+                  title="Sehr prominente Platzierung"
                 >
                   <Medal className="mr-1 h-3 w-3" />
-                  Silber
+                  Turbo-Boost
                 </span>
               )
             }
@@ -324,16 +324,16 @@ export function ProductCard({
               )
             }
 
-            // Priority 5: Bronze boost (lowest priority, only if space and not auction)
-            if (!isAuction && isBoosted && boostType === 'bronze' && badges.length < MAX_BADGES) {
+            // Priority 5: Boost (lowest priority, only if space and not auction)
+            if (!isAuction && isBoosted && boostType === 'boost' && badges.length < MAX_BADGES) {
               badges.push(
                 <span
-                  key="bronze"
-                  className="inline-flex items-center rounded-full bg-gradient-to-r from-orange-200 to-amber-300 px-2 py-0.5 text-[11px] font-medium text-orange-900 shadow-sm"
-                  title="Hervorgehobene Platzierung"
+                  key="boost"
+                  className="inline-flex items-center rounded-full bg-gradient-to-r from-sky-400 to-blue-500 px-2 py-0.5 text-[11px] font-medium text-white shadow-sm"
+                  title="Bessere Platzierung"
                 >
                   <Star className="mr-1 h-3 w-3" />
-                  Bronze
+                  Boost
                 </span>
               )
             }

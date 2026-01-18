@@ -588,47 +588,47 @@ async function executeSearchQuery(params: {
     ), 0)
     +
     -- ============ BOOSTER BONUS (paid promotion) ============
-    -- Support both old (super-boost/turbo-boost/boost) and new (gold/silber/bronze) naming
+    -- Watch-out.ch Style: super-boost/turbo-boost/boost (with backwards compat for gold/silber/bronze)
     CASE
-      WHEN w.boosters LIKE '%gold%' OR w.boosters LIKE '%super-boost%' THEN 10000.0
-      WHEN w.boosters LIKE '%silber%' OR w.boosters LIKE '%turbo-boost%' THEN 1000.0
-      WHEN w.boosters LIKE '%bronze%' OR w.boosters LIKE '%boost%' THEN 200.0
+      WHEN w.boosters LIKE '%super-boost%' OR w.boosters LIKE '%gold%' THEN 10000.0
+      WHEN w.boosters LIKE '%turbo-boost%' OR w.boosters LIKE '%silber%' THEN 1000.0
+      WHEN w.boosters LIKE '%boost%' OR w.boosters LIKE '%bronze%' THEN 200.0
       ELSE 0
     END
   )`
 
-  // Gold-first ordering: Gold boosters ALWAYS appear first (guaranteed top position)
-  const goldFirstClause = `CASE WHEN w.boosters LIKE '%gold%' OR w.boosters LIKE '%super-boost%' THEN 0 ELSE 1 END`
+  // Super-Boost-first ordering: Super-Boost ALWAYS appears first (guaranteed top position)
+  const superBoostFirstClause = `CASE WHEN w.boosters LIKE '%super-boost%' OR w.boosters LIKE '%gold%' THEN 0 ELSE 1 END`
 
   switch (sort.field) {
     case 'relevance':
-      // Gold first, then by score, then by date
-      orderByClause = `${goldFirstClause} ASC, ${scoreExpression} DESC, w."createdAt" DESC`
+      // Super-Boost first, then by score, then by date
+      orderByClause = `${superBoostFirstClause} ASC, ${scoreExpression} DESC, w."createdAt" DESC`
       break
     case 'price':
-      // Gold first, then by price
+      // Super-Boost first, then by price
       orderByClause =
         sort.direction === 'asc'
-          ? `${goldFirstClause} ASC, w.price ASC, w."createdAt" DESC`
-          : `${goldFirstClause} ASC, w.price DESC, w."createdAt" DESC`
+          ? `${superBoostFirstClause} ASC, w.price ASC, w."createdAt" DESC`
+          : `${superBoostFirstClause} ASC, w.price DESC, w."createdAt" DESC`
       break
     case 'createdAt':
-      // Gold first, then by date
+      // Super-Boost first, then by date
       orderByClause =
         sort.direction === 'asc'
-          ? `${goldFirstClause} ASC, w."createdAt" ASC`
-          : `${goldFirstClause} ASC, w."createdAt" DESC`
+          ? `${superBoostFirstClause} ASC, w."createdAt" ASC`
+          : `${superBoostFirstClause} ASC, w."createdAt" DESC`
       break
     case 'auctionEnd':
-      // Gold first, then by auction end
-      orderByClause = `${goldFirstClause} ASC, w."auctionEnd" ASC NULLS LAST, w."createdAt" DESC`
+      // Super-Boost first, then by auction end
+      orderByClause = `${superBoostFirstClause} ASC, w."auctionEnd" ASC NULLS LAST, w."createdAt" DESC`
       break
     case 'bids':
-      // Gold first, then by bid count
-      orderByClause = `${goldFirstClause} ASC, (SELECT COUNT(*) FROM bids b WHERE b."watchId" = w.id) DESC, w."createdAt" DESC`
+      // Super-Boost first, then by bid count
+      orderByClause = `${superBoostFirstClause} ASC, (SELECT COUNT(*) FROM bids b WHERE b."watchId" = w.id) DESC, w."createdAt" DESC`
       break
     default:
-      orderByClause = `${goldFirstClause} ASC, ${scoreExpression} DESC, w."createdAt" DESC`
+      orderByClause = `${superBoostFirstClause} ASC, ${scoreExpression} DESC, w."createdAt" DESC`
   }
 
   // Build the final query

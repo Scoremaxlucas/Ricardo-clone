@@ -154,10 +154,10 @@ export function ModernProductCard({
   }
 
   const getHighestBooster = () => {
-    // Support both old and new naming
-    if (boosters.includes('gold') || boosters.includes('super-boost')) return 'gold'
-    if (boosters.includes('silber') || boosters.includes('turbo-boost')) return 'silber'
-    if (boosters.includes('bronze') || boosters.includes('boost')) return 'bronze'
+    // Watch-out.ch Style: Super-Boost > Turbo-Boost > Boost (with backwards compat for gold/silber/bronze)
+    if (boosters.includes('super-boost') || boosters.includes('gold')) return 'super-boost'
+    if (boosters.includes('turbo-boost') || boosters.includes('silber')) return 'turbo-boost'
+    if (boosters.includes('boost') || boosters.includes('bronze')) return 'boost'
     return null
   }
 
@@ -233,20 +233,20 @@ export function ModernProductCard({
               <span>Auktion</span>
             </div>
           )}
-          {/* Booster Badge - Ricardo-style: Gold > Silber > Bronze */}
+          {/* Booster Badge - Watch-out.ch Style: Super-Boost > Turbo-Boost > Boost */}
           {booster && (
             <div
               className={`flex items-center justify-center rounded-full p-1.5 shadow-md ${
-                booster === 'gold'
-                  ? 'bg-gradient-to-r from-amber-400 to-yellow-500 text-amber-900'
-                  : booster === 'silber'
-                    ? 'bg-gradient-to-r from-slate-300 to-slate-400 text-slate-800'
-                    : 'bg-gradient-to-r from-orange-300 to-amber-400 text-orange-900'
+                booster === 'super-boost'
+                  ? 'bg-gradient-to-r from-amber-400 to-orange-500 text-white'
+                  : booster === 'turbo-boost'
+                    ? 'bg-gradient-to-r from-violet-500 to-purple-600 text-white'
+                    : 'bg-gradient-to-r from-sky-400 to-blue-500 text-white'
               } `}
             >
-              {booster === 'gold' ? (
+              {booster === 'super-boost' ? (
                 <Award className="h-3 w-3" />
-              ) : booster === 'silber' ? (
+              ) : booster === 'turbo-boost' ? (
                 <Medal className="h-3 w-3" />
               ) : (
                 <Star className="h-3 w-3" />

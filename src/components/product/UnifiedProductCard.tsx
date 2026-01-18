@@ -89,12 +89,12 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
 
   const mainImage = images[0] || null
 
-  // Parse boosters (support both old and new naming: gold/silber/bronze and super-boost/turbo-boost/boost)
+  // Parse boosters (Watch-out.ch Style: super-boost/turbo-boost/boost, with backwards compat for gold/silber/bronze)
   const boosters = product.boosters || []
-  const hasGold = boosters.includes('gold') || boosters.includes('super-boost')
-  const hasSilber = (boosters.includes('silber') || boosters.includes('turbo-boost')) && !hasGold
-  const hasBronze =
-    (boosters.includes('bronze') || boosters.includes('boost')) && !hasGold && !hasSilber
+  const hasSuperBoost = boosters.includes('super-boost') || boosters.includes('gold')
+  const hasTurboBoost = (boosters.includes('turbo-boost') || boosters.includes('silber')) && !hasSuperBoost
+  const hasBoost =
+    (boosters.includes('boost') || boosters.includes('bronze')) && !hasSuperBoost && !hasTurboBoost
 
   // Check if product is new (less than 7 days old)
   const isNew = product.createdAt
@@ -272,20 +272,20 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             </div>
           )}
 
-          {/* Badges - Ricardo-style: Gold > Silber > Bronze */}
+          {/* Badges - Watch-out.ch Style: Super-Boost > Turbo-Boost > Boost */}
           <div className="absolute left-1.5 top-1.5 z-10 flex flex-col gap-1">
-            {hasGold && (
-              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 p-1.5 text-amber-900 shadow-md">
+            {hasSuperBoost && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 p-1.5 text-white shadow-md">
                 <Award className="h-3 w-3" />
               </div>
             )}
-            {hasSilber && (
-              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 p-1.5 text-slate-800 shadow-md">
+            {hasTurboBoost && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-purple-600 p-1.5 text-white shadow-md">
                 <Medal className="h-3 w-3" />
               </div>
             )}
-            {hasBronze && (
-              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-orange-300 to-amber-400 p-1.5 text-orange-900 shadow-md">
+            {hasBoost && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-sky-400 to-blue-500 p-1.5 text-white shadow-md">
                 <Star className="h-3 w-3" />
               </div>
             )}
@@ -299,7 +299,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             {product.isAuction && (
               <div
                 className={`absolute left-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm ${
-                  hasGold || hasSilber || hasBronze ? 'top-8' : 'top-1.5'
+                  hasSuperBoost || hasTurboBoost || hasBoost ? 'top-8' : 'top-1.5'
                 }`}
               >
                 <Gavel className="h-2.5 w-2.5" />
@@ -472,20 +472,20 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             </div>
           )}
 
-          {/* Badges - Ricardo-style: Gold > Silber > Bronze */}
+          {/* Badges - Watch-out.ch Style: Super-Boost > Turbo-Boost > Boost */}
           <div className="absolute left-2 top-2 z-10 flex flex-col gap-1">
-            {hasGold && (
-              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 p-1.5 text-amber-900 shadow-md">
+            {hasSuperBoost && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 p-1.5 text-white shadow-md">
                 <Award className="h-3.5 w-3.5" />
               </div>
             )}
-            {hasSilber && (
-              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 p-1.5 text-slate-800 shadow-md">
+            {hasTurboBoost && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-purple-600 p-1.5 text-white shadow-md">
                 <Medal className="h-3.5 w-3.5" />
               </div>
             )}
-            {hasBronze && (
-              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-orange-300 to-amber-400 p-1.5 text-orange-900 shadow-md">
+            {hasBoost && (
+              <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-sky-400 to-blue-500 p-1.5 text-white shadow-md">
                 <Star className="h-3.5 w-3.5" />
               </div>
             )}
@@ -496,7 +496,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
               </div>
             )}
             {/* Auction Badge - Immer sichtbar wenn Auktion (falls kein Booster) - Subtiler */}
-            {product.isAuction && !hasGold && !hasSilber && !hasBronze && (
+            {product.isAuction && !hasSuperBoost && !hasTurboBoost && !hasBoost && (
               <div className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm">
                 <Gavel className="h-2.5 w-2.5" />
                 <span>Auktion</span>
@@ -625,20 +625,20 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
           </div>
         )}
 
-        {/* Badges - Ricardo-style: Gold > Silber > Bronze */}
+        {/* Badges - Watch-out.ch Style: Super-Boost > Turbo-Boost > Boost */}
         <div className="absolute left-1.5 top-1.5 z-10 flex flex-col gap-1">
-          {hasGold && (
-            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 p-1 text-amber-900 shadow-md">
+          {hasSuperBoost && (
+            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 p-1 text-white shadow-md">
               <Award className="h-3 w-3" />
             </div>
           )}
-          {hasSilber && (
-            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 p-1 text-slate-800 shadow-md">
+          {hasTurboBoost && (
+            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-purple-600 p-1 text-white shadow-md">
               <Medal className="h-3 w-3" />
             </div>
           )}
-          {hasBronze && (
-            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-orange-300 to-amber-400 p-1 text-orange-900 shadow-md">
+          {hasBoost && (
+            <div className="flex items-center justify-center rounded-full bg-gradient-to-r from-sky-400 to-blue-500 p-1 text-white shadow-md">
               <Star className="h-3 w-3" />
             </div>
           )}
@@ -649,7 +649,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
             </div>
           )}
           {/* Auction Badge - Immer sichtbar wenn Auktion (falls kein Booster) - Subtiler */}
-          {product.isAuction && !hasGold && !hasSilber && !hasBronze && (
+          {product.isAuction && !hasSuperBoost && !hasTurboBoost && !hasBoost && (
             <div className="absolute left-1.5 top-1.5 z-10 flex items-center gap-1 rounded-md bg-gray-800/70 px-1.5 py-0.5 text-[9px] font-medium text-white backdrop-blur-sm">
               <Gavel className="h-2.5 w-2.5" />
               <span>Auktion</span>

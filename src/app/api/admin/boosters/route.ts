@@ -43,6 +43,7 @@ export async function GET(request: NextRequest) {
     if (boosters.length === 0) {
       console.log('[admin/boosters] Keine Booster gefunden, erstelle Standard-Booster...')
 
+      // Watch-out.ch Style: Boost / Turbo-Boost / Super-Boost
       const defaultBoosters = [
         {
           code: 'none',
@@ -52,26 +53,24 @@ export async function GET(request: NextRequest) {
           isActive: true,
         },
         {
-          code: 'bronze',
-          name: 'Bronze',
-          description: 'Grundlegende Hervorhebung: Ihr Angebot wird in Suchergebnissen fett hervorgehoben',
-          price: 5.0,
+          code: 'boost',
+          name: 'Boost',
+          description: 'Bessere Platzierung in Suchergebnissen für mehr Aufmerksamkeit',
+          price: 19.90,
           isActive: true,
         },
         {
-          code: 'silber',
-          name: 'Silber',
-          description:
-            'Erhöhte Sichtbarkeit: Hervorhebung + Platzierung in der "Empfohlen"-Sektion auf der Startseite',
-          price: 15.0,
+          code: 'turbo-boost',
+          name: 'Turbo-Boost',
+          description: 'Sehr prominente Platzierung + erhöhte Sichtbarkeit in Listen',
+          price: 39.90,
           isActive: true,
         },
         {
-          code: 'gold',
-          name: 'Gold',
-          description:
-            'Maximale Sichtbarkeit: Premium-Platzierung ganz oben in allen Suchergebnissen + Startseite',
-          price: 30.0,
+          code: 'super-boost',
+          name: 'Super-Boost',
+          description: 'Top-Position + Premium-Startseite + Priorität bei Empfehlungen',
+          price: 69.90,
           isActive: true,
         },
       ]

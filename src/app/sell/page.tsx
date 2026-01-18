@@ -69,7 +69,7 @@ function SellPageContent() {
   const [showDraftRestored, setShowDraftRestored] = useState(false)
   const [touchedSteps, setTouchedSteps] = useState<Set<number>>(new Set()) // Track which steps user has interacted with
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null) // Current draft ID for image operations
-  
+
   // Draft restore prompt (Ricardo-Style)
   const [showDraftPrompt, setShowDraftPrompt] = useState(false)
   const [pendingDraft, setPendingDraft] = useState<any>(null)
@@ -379,7 +379,7 @@ function SellPageContent() {
   // Handler: Entwurf fortsetzen (Ricardo-Style)
   const handleContinueDraft = useCallback(() => {
     if (!pendingDraft) return
-    
+
     const draft = pendingDraft
     setFormData(prev => ({
       ...prev,
@@ -560,12 +560,12 @@ function SellPageContent() {
           if (data.draft) {
             const draft = data.draft
             // Prüfe ob der Entwurf sinnvollen Inhalt hat
-            const hasContent = 
+            const hasContent =
               (draft.formData?.title && draft.formData.title.trim().length > 0) ||
               (draft.formData?.description && draft.formData.description.trim().length > 0) ||
               (draft.draftImages && draft.draftImages.length > 0) ||
               draft.selectedCategory
-            
+
             if (hasContent) {
               // Zeige Prompt statt automatisches Restore
               setPendingDraft(draft)
@@ -1141,13 +1141,13 @@ function SellPageContent() {
                 </p>
               </div>
             </div>
-            
+
             {/* Preview */}
             <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
               <div className="flex gap-4">
                 {pendingDraft.draftImages?.[0]?.url && (
-                  <img 
-                    src={pendingDraft.draftImages[0].url} 
+                  <img
+                    src={pendingDraft.draftImages[0].url}
                     alt="Vorschau"
                     className="h-16 w-16 rounded-lg object-cover"
                   />

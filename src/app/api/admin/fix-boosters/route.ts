@@ -5,7 +5,8 @@ import { authOptions } from '@/lib/auth'
 
 /**
  * POST /api/admin/fix-boosters
- * One-time migration to update booster codes from old naming to new
+ * Migration to update booster codes from Bronze/Silber/Gold to Boost/Turbo-Boost/Super-Boost
+ * Watch-out.ch Style
  * Only accessible by admins
  */
 export async function POST(request: NextRequest) {
@@ -16,76 +17,69 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Update old booster codes to new naming
+    // Update old booster codes (bronze/silber/gold) to new naming (boost/turbo-boost/super-boost)
     const updates = await prisma.$transaction([
-      // boost -> bronze
+      // bronze -> boost
       prisma.boosterPrice.updateMany({
-        where: { code: 'boost' },
+        where: { code: 'bronze' },
         data: {
-          code: 'bronze',
-          name: 'Bronze',
-          description: 'Grundlegende Hervorhebung: Ihr Angebot wird in Suchergebnissen fett hervorgehoben',
+          code: 'boost',
+          name: 'Boost',
+          description: 'Bessere Platzierung in Suchergebnissen für mehr Aufmerksamkeit',
+          price: 19.90,
         },
       }),
-      // turbo-boost -> silber
+      // silber -> turbo-boost
       prisma.boosterPrice.updateMany({
-        where: { code: 'turbo-boost' },
+        where: { code: 'silber' },
         data: {
-          code: 'silber',
-          name: 'Silber',
-          description: 'Erhöhte Sichtbarkeit: Hervorhebung + Platzierung in der Empfohlen-Sektion',
+          code: 'turbo-boost',
+          name: 'Turbo-Boost',
+          description: 'Sehr prominente Platzierung + erhöhte Sichtbarkeit in Listen',
+          price: 39.90,
         },
       }),
-      // turbo (alternative old code) -> silber
+      // gold -> super-boost
       prisma.boosterPrice.updateMany({
-        where: { code: 'turbo' },
+        where: { code: 'gold' },
         data: {
-          code: 'silber',
-          name: 'Silber',
-          description: 'Erhöhte Sichtbarkeit: Hervorhebung + Platzierung in der Empfohlen-Sektion',
-        },
-      }),
-      // super-boost -> gold
-      prisma.boosterPrice.updateMany({
-        where: { code: 'super-boost' },
-        data: {
-          code: 'gold',
-          name: 'Gold',
-          description: 'Maximale Sichtbarkeit: Premium-Platzierung ganz oben in allen Suchergebnissen + Startseite',
-        },
-      }),
-      // super (alternative old code) -> gold
-      prisma.boosterPrice.updateMany({
-        where: { code: 'super' },
-        data: {
-          code: 'gold',
-          name: 'Gold',
-          description: 'Maximale Sichtbarkeit: Premium-Platzierung ganz oben in allen Suchergebnissen + Startseite',
+          code: 'super-boost',
+          name: 'Super-Boost',
+          description: 'Top-Position + Premium-Startseite + Priorität bei Empfehlungen',
+          price: 69.90,
         },
       }),
     ])
 
     // Also update any watches that have old booster codes (boosters is a String field)
+    // Note: The boosters field stores a JSON array as string, e.g. '["bronze"]' or just 'bronze'
     const watchUpdates = await prisma.$transaction([
+      // bronze -> boost
       prisma.watch.updateMany({
-        where: { boosters: { contains: 'boost' } },
-        data: { boosters: 'bronze' },
+        where: { boosters: 'bronze' },
+        data: { boosters: 'boost' },
       }),
       prisma.watch.updateMany({
-        where: { boosters: { contains: 'turbo-boost' } },
-        data: { boosters: 'silber' },
+        where: { boosters: '["bronze"]' },
+        data: { boosters: '["boost"]' },
+      }),
+      // silber -> turbo-boost
+      prisma.watch.updateMany({
+        where: { boosters: 'silber' },
+        data: { boosters: 'turbo-boost' },
       }),
       prisma.watch.updateMany({
-        where: { boosters: { contains: 'turbo' } },
-        data: { boosters: 'silber' },
+        where: { boosters: '["silber"]' },
+        data: { boosters: '["turbo-boost"]' },
+      }),
+      // gold -> super-boost
+      prisma.watch.updateMany({
+        where: { boosters: 'gold' },
+        data: { boosters: 'super-boost' },
       }),
       prisma.watch.updateMany({
-        where: { boosters: { contains: 'super-boost' } },
-        data: { boosters: 'gold' },
-      }),
-      prisma.watch.updateMany({
-        where: { boosters: { contains: 'super' } },
-        data: { boosters: 'gold' },
+        where: { boosters: '["gold"]' },
+        data: { boosters: '["super-boost"]' },
       }),
     ])
 

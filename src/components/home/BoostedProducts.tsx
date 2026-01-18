@@ -27,7 +27,7 @@ interface Item {
 }
 
 interface BoostedProductsProps {
-  boosterType: 'silber' | 'gold' | 'turbo-boost' | 'super-boost' // Support both old and new naming
+  boosterType: 'turbo-boost' | 'super-boost' | 'silber' | 'gold' // Watch-out.ch Style (with backwards compat)
 }
 
 export function BoostedProducts({ boosterType }: BoostedProductsProps) {
@@ -104,18 +104,18 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
     return null
   }
 
-  // Support both old and new naming
-  const isGold = boosterType === 'gold' || boosterType === 'super-boost'
+  // Watch-out.ch Style (with backwards compat for gold/silber)
+  const isSuperBoost = boosterType === 'super-boost' || boosterType === 'gold'
 
   return (
     <section className="bg-gray-50 py-12 md:py-16 lg:py-20">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center">
           <h2 className="mb-2 text-xl font-bold text-gray-900">
-            {isGold ? '🏆 Gold Angebote' : '🥈 Silber Angebote'}
+            {isSuperBoost ? '🚀 Super-Boost Angebote' : '⚡ Turbo-Boost Angebote'}
           </h2>
           <p className="text-sm text-gray-600">
-            {isGold ? 'Unsere Premium-Angebote mit maximaler Sichtbarkeit' : 'Empfohlene Angebote mit erhöhter Sichtbarkeit'}
+            {isSuperBoost ? 'Unsere Premium-Angebote mit höchster Sichtbarkeit' : 'Empfohlene Angebote mit erhöhter Sichtbarkeit'}
           </p>
         </div>
 
@@ -174,13 +174,13 @@ export function BoostedProducts({ boosterType }: BoostedProductsProps) {
                       Ihr Angebot
                     </div>
                   )}
-                  {isGold && (
-                    <div className="absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-yellow-500 p-1.5 text-amber-900 shadow-md">
+                  {isSuperBoost && (
+                    <div className="absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-gradient-to-r from-amber-400 to-orange-500 p-1.5 text-white shadow-md">
                       <Award className="h-3 w-3" />
                     </div>
                   )}
-                  {!isGold && (
-                    <div className="absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-gradient-to-r from-slate-300 to-slate-400 p-1.5 text-slate-800 shadow-md">
+                  {!isSuperBoost && (
+                    <div className="absolute left-1.5 top-1.5 flex items-center justify-center rounded-full bg-gradient-to-r from-violet-500 to-purple-600 p-1.5 text-white shadow-md">
                       <Medal className="h-3 w-3" />
                     </div>
                   )}

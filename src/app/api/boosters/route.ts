@@ -5,34 +5,34 @@ import { NextRequest, NextResponse } from 'next/server'
  * Returns all active boosters for public use (prices are public)
  * Used by the selling wizard to display booster options
  * 
- * Note: Hardcoded to ensure consistent Bronze/Silber/Gold naming
+ * Watch-out.ch Style: Boost / Turbo-Boost / Super-Boost
  */
 export async function GET(request: NextRequest) {
-  // Fixed booster options - Bronze/Silber/Gold system
+  // Fixed booster options - Boost/Turbo-Boost/Super-Boost system (Watch-out.ch Style)
   const boosterOptions = [
     {
-      id: 'bronze',
-      name: 'Bronze',
-      description: 'Fette Hervorhebung in Suchergebnissen',
-      price: 10.0,
-      badge: 'BRONZE',
-      badgeColor: '#b45309', // amber-700
+      id: 'boost',
+      name: 'Boost',
+      description: 'Bessere Platzierung in Suchergebnissen',
+      price: 19.90,
+      badge: 'BOOST',
+      badgeColor: '#0ea5e9', // sky-500 (blau)
     },
     {
-      id: 'silber',
-      name: 'Silber',
-      description: 'Hervorhebung + Startseiten-Platzierung',
-      price: 25.0,
-      badge: 'SILBER',
-      badgeColor: '#64748b', // slate-500
+      id: 'turbo-boost',
+      name: 'Turbo-Boost',
+      description: 'Sehr prominente Platzierung + erhöhte Sichtbarkeit',
+      price: 39.90,
+      badge: 'TURBO',
+      badgeColor: '#8b5cf6', // violet-500 (lila)
     },
     {
-      id: 'gold',
-      name: 'Gold',
-      description: 'Top-Position + Premium-Startseite',
-      price: 45.0,
-      badge: 'GOLD',
-      badgeColor: '#d97706', // amber-600
+      id: 'super-boost',
+      name: 'Super-Boost',
+      description: 'Top-Position + Premium-Startseite + Priorität',
+      price: 69.90,
+      badge: 'SUPER',
+      badgeColor: '#f59e0b', // amber-500 (gold/orange)
     },
   ]
 

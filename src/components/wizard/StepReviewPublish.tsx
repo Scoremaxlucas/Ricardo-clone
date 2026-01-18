@@ -69,41 +69,44 @@ const SHIPPING_LABELS: Record<string, string> = {
   'a-post': 'A-Post (CHF 12.50)',
 }
 
-// Booster-Datenstruktur mit short/details/bullets (Ricardo-Style: Bronze/Silber/Gold)
+// Booster-Datenstruktur mit short/details/bullets (Watch-out.ch Style: Boost/Turbo-Boost/Super-Boost)
 const BOOSTER_DETAILS: Record<
   string,
   { short: string; detailsTitle: string; bullets: string[]; fineprint?: string }
 > = {
-  bronze: {
-    short: 'Fette Hervorhebung in Suchergebnissen',
-    detailsTitle: 'Bronze – Vorteile',
+  boost: {
+    short: 'Bessere Platzierung in Suchergebnissen',
+    detailsTitle: 'Boost – Vorteile',
     bullets: [
-      'Fette Hervorhebung in allen Suchergebnissen',
-      'Höhere Sichtbarkeit gegenüber Standard-Angeboten',
-      'Ideal für Artikel mit kleinem Budget',
-    ],
-    fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
-  },
-  silber: {
-    short: 'Hervorhebung + Startseiten-Platzierung',
-    detailsTitle: 'Silber – Vorteile',
-    bullets: [
-      'Alle Bronze-Vorteile inklusive',
-      'Erscheint in der "Empfohlen"-Sektion auf der Startseite',
+      'Verbesserte Sichtbarkeit für Ihr Angebot',
       'Bessere Platzierung in Suchergebnissen',
-      'Erreicht deutlich mehr potenzielle Käufer',
+      'Mehr Aufmerksamkeit von potenziellen Käufern',
+      'Erhöhte Klickrate',
     ],
     fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
   },
-  gold: {
-    short: 'Top-Position + Premium-Startseite',
-    detailsTitle: 'Gold – Vorteile',
+  'turbo-boost': {
+    short: 'Sehr prominente Platzierung + erhöhte Sichtbarkeit',
+    detailsTitle: 'Turbo-Boost – Vorteile',
     bullets: [
-      'Alle Silber-Vorteile inklusive',
-      'GARANTIERT ganz oben in allen Suchergebnissen',
-      'Premium-Platzierung auf der Startseite',
-      'Maximale Reichweite für schnellen Verkauf',
-      'Perfekt für wertvolle Artikel',
+      'Alle Boost-Vorteile inklusive',
+      'Sehr prominente Platzierung in Listen',
+      'Erhöhte Sichtbarkeit in Suchergebnissen',
+      'Bessere Positionierung gegenüber Standard-Angeboten',
+      'Mehr Aufmerksamkeit für Ihr Angebot',
+    ],
+    fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
+  },
+  'super-boost': {
+    short: 'Top-Position + Premium-Startseite + Priorität',
+    detailsTitle: 'Super-Boost – Vorteile',
+    bullets: [
+      'Höchste Sichtbarkeit auf der Plattform',
+      'Hervorgehobene Platzierung in Suchergebnissen',
+      'Top-Position in Kategorie-Übersichten',
+      'Längere Laufzeit des Boosters',
+      'Priorität bei Empfehlungen',
+      'Erhöhte Sichtbarkeit auf der Startseite',
     ],
     fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
   },
