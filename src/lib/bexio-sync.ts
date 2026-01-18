@@ -179,7 +179,8 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
       amount: '1',
       text: item.description,
       unit_price: unitPrice.toString(),
-      tax_id: 1, // MwSt. (ID 1 = meistens Standard-Satz)
+      account_id: 3000, // Ertragskonto (Standard CH Kontenplan)
+      tax_id: 2, // Versuche ID 2 (oft 0% oder Befreit)
     }
   })
 
