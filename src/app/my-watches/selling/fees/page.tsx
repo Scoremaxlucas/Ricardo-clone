@@ -5,16 +5,12 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { InvoicePaymentModal } from '@/components/payment/InvoicePaymentModal'
 import {
-  Calendar,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   Clock,
   Download,
-  FileText,
-  Package,
   Receipt,
-  Tag,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
@@ -82,12 +78,11 @@ function SellingFeesContent() {
   useEffect(() => {
     const invoiceId = searchParams.get('invoice')
     if (invoiceId && invoices.length > 0) {
-      // Find if invoice is paid or open to switch tab
       const invoice = invoices.find(i => i.id === invoiceId)
       if (invoice) {
         setActiveTab(invoice.status === 'paid' ? 'paid' : 'open')
       }
-
+      
       setTimeout(() => {
         const invoiceElement = invoiceRefs.current[invoiceId]
         if (invoiceElement) {
@@ -182,58 +177,31 @@ function SellingFeesContent() {
 
   const filteredInvoices = activeTab === 'open' ? openInvoices : paidInvoices
 
-  // Calculations
   const totalPaid = useMemo(
     () => paidInvoices.reduce((sum, inv) => sum + inv.total, 0),
     [paidInvoices]
   )
 
   const formatCurrency = (amount: number) =>
-    new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(
-      amount
-    )
+    new Intl.NumberFormat('de-CH', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(amount)
 
   const formatDate = (date: string) => new Date(date).toLocaleDateString('de-CH')
 
-  // Get days until due or days overdue
-  const getDaysInfo = (dueDate: string, status: string) => {
+  // Get days overdue
+  const getDaysOverdue = (dueDate: string) => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const due = new Date(dueDate)
     due.setHours(0, 0, 0, 0)
-    const diffTime = due.getTime() - today.getTime()
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-
-    if (status === 'overdue' || diffDays < 0) {
-      return { text: `${Math.abs(diffDays)} Tage überfällig`, isOverdue: true }
-    } else if (diffDays === 0) {
-      return { text: 'Heute fällig', isOverdue: false }
-    } else if (diffDays <= 3) {
-      return { text: `In ${diffDays} Tagen fällig`, isOverdue: false }
-    }
-    return { text: `Fällig am ${formatDate(dueDate)}`, isOverdue: false }
+    const diffTime = today.getTime() - due.getTime()
+    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
+    return diffDays > 0 ? diffDays : 0
   }
 
-  // Get first item's watch info for preview
-  const getPreviewInfo = (invoice: Invoice) => {
+  // Get first item's image
+  const getFirstImage = (invoice: Invoice) => {
     const firstItem = invoice.items[0]
-    // Helper to clean title (remove surrounding quotes)
-    const cleanTitle = (title: string) => title.replace(/^["']|["']$/g, '').trim()
-    
-    if (firstItem?.watch) {
-      return {
-        image: firstItem.watch.images?.[0] || null,
-        title: cleanTitle(firstItem.watch.title || firstItem.description),
-        brand: firstItem.watch.brand,
-        model: firstItem.watch.model,
-      }
-    }
-    return {
-      image: null,
-      title: cleanTitle(firstItem?.description || 'Verkaufsgebühr'),
-      brand: null,
-      model: null,
-    }
+    return firstItem?.watch?.images?.[0] || null
   }
 
   if (status === 'loading' || loading) {
@@ -251,330 +219,173 @@ function SellingFeesContent() {
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
 
-      <main className="flex-1 py-6">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {/* Breadcrumb */}
-          <nav className="mb-4 text-sm text-gray-500" aria-label="Breadcrumb">
-            <ol className="flex items-center gap-2">
-              <li>
-                <Link href="/" className="hover:text-primary-600">
-                  Startseite
-                </Link>
-              </li>
-              <li aria-hidden="true">›</li>
-              <li>
-                <Link href="/my-watches/selling" className="hover:text-primary-600">
-                  Mein Verkaufen
-                </Link>
-              </li>
-              <li aria-hidden="true">›</li>
-              <li className="text-gray-900">Gebühren & Rechnungen</li>
-            </ol>
-          </nav>
-
-          {/* Header with Icon */}
-          <div className="mb-6 flex items-center gap-3">
-            <div className="rounded-xl bg-gradient-to-br from-primary-500 to-teal-500 p-3 shadow-lg shadow-primary-200">
-              <Receipt className="h-7 w-7 text-white" />
-            </div>
-            <div>
-              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Gebühren & Rechnungen</h1>
-              <p className="text-sm text-gray-500">Übersicht Ihrer Verkaufsgebühren</p>
-            </div>
-          </div>
-
-          {/* Secondary Navigation */}
-          <div className="mb-6 flex flex-wrap gap-3">
-            <Link
-              href="/my-watches/selling"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+      <main className="flex-1 py-8">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          {/* Simple Header */}
+          <div className="mb-6">
+            <Link 
+              href="/my-watches/selling" 
+              className="text-sm text-gray-500 hover:text-primary-600"
             >
-              <Package className="h-4 w-4 text-gray-500" />
-              Meine Angebote
+              ← Mein Verkaufen
             </Link>
-            <Link
-              href="/my-watches/selling/offers"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
-            >
-              <Tag className="h-4 w-4 text-gray-500" />
-              Preisvorschläge
-            </Link>
+            <h1 className="mt-2 text-2xl font-bold text-gray-900">Gebühren & Rechnungen</h1>
           </div>
 
           {/* Tabs */}
-          <div className="mb-6 border-b border-gray-200">
-            <nav className="-mb-px flex gap-6">
-              <button
-                onClick={() => setActiveTab('open')}
-                className={`flex items-center gap-2 border-b-2 pb-3 text-sm font-medium transition-colors ${
-                  activeTab === 'open'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                }`}
-              >
-                <Clock className="h-4 w-4" />
-                Offen
-                {openInvoices.length > 0 && (
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    activeTab === 'open' ? 'bg-primary-100 text-primary-700' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {openInvoices.length}
-                  </span>
-                )}
-              </button>
-              <button
-                onClick={() => setActiveTab('paid')}
-                className={`flex items-center gap-2 border-b-2 pb-3 text-sm font-medium transition-colors ${
-                  activeTab === 'paid'
-                    ? 'border-primary-500 text-primary-600'
-                    : 'border-transparent text-gray-500 hover:border-gray-300 hover:text-gray-700'
-                }`}
-              >
-                <CheckCircle2 className="h-4 w-4" />
-                Bezahlt
-                {paidInvoices.length > 0 && (
-                  <span className={`rounded-full px-2 py-0.5 text-xs font-semibold ${
-                    activeTab === 'paid' ? 'bg-green-100 text-green-700' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {paidInvoices.length}
-                  </span>
-                )}
-              </button>
-            </nav>
+          <div className="mb-6 flex gap-1 rounded-lg bg-gray-100 p-1">
+            <button
+              onClick={() => setActiveTab('open')}
+              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === 'open'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Offen {openInvoices.length > 0 && `(${openInvoices.length})`}
+            </button>
+            <button
+              onClick={() => setActiveTab('paid')}
+              className={`flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors ${
+                activeTab === 'paid'
+                  ? 'bg-white text-gray-900 shadow-sm'
+                  : 'text-gray-600 hover:text-gray-900'
+              }`}
+            >
+              Bezahlt {paidInvoices.length > 0 && `(${paidInvoices.length})`}
+            </button>
           </div>
 
           {/* Invoice List */}
           {filteredInvoices.length === 0 ? (
-            <div className="rounded-2xl border border-gray-200 bg-white p-12 text-center shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white py-16 text-center">
               {activeTab === 'open' ? (
                 <>
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-green-100">
-                    <CheckCircle2 className="h-8 w-8 text-green-600" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Keine offenen Rechnungen</h3>
-                  <p className="mt-2 text-gray-500">Alle Gebühren sind bezahlt. Weiter so!</p>
+                  <CheckCircle2 className="mx-auto h-12 w-12 text-green-500" />
+                  <p className="mt-4 font-medium text-gray-900">Keine offenen Rechnungen</p>
+                  <p className="mt-1 text-sm text-gray-500">Alles bezahlt!</p>
                 </>
               ) : (
                 <>
-                  <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-gray-100">
-                    <Receipt className="h-8 w-8 text-gray-400" />
-                  </div>
-                  <h3 className="text-lg font-semibold text-gray-900">Keine bezahlten Rechnungen</h3>
-                  <p className="mt-2 text-gray-500">Sie haben noch keine Rechnungen bezahlt.</p>
+                  <Receipt className="mx-auto h-12 w-12 text-gray-300" />
+                  <p className="mt-4 font-medium text-gray-900">Keine bezahlten Rechnungen</p>
                 </>
               )}
             </div>
           ) : (
-            <div className="space-y-4">
-              {filteredInvoices.map((invoice) => {
+            <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
+              {filteredInvoices.map((invoice, index) => {
                 const isOverdue = invoice.status === 'overdue'
                 const isPaid = invoice.status === 'paid'
                 const isExpanded = expandedInvoice === invoice.id
                 const isHighlighted = highlightedInvoiceId === invoice.id
-                const preview = getPreviewInfo(invoice)
-                const daysInfo = !isPaid ? getDaysInfo(invoice.dueDate, invoice.status) : null
+                const firstImage = getFirstImage(invoice)
+                const daysOverdue = getDaysOverdue(invoice.dueDate)
 
                 return (
                   <div
                     key={invoice.id}
-                    ref={el => {
-                      invoiceRefs.current[invoice.id] = el
-                    }}
-                    className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-all ${
-                      isHighlighted
-                        ? 'border-primary-400 ring-2 ring-primary-200'
-                        : isOverdue
-                          ? 'border-red-200'
-                          : 'border-gray-200 hover:border-gray-300'
+                    ref={el => { invoiceRefs.current[invoice.id] = el }}
+                    className={`${index > 0 ? 'border-t border-gray-100' : ''} ${
+                      isHighlighted ? 'bg-primary-50' : ''
                     }`}
                   >
-                    {/* Main Invoice Row */}
-                    <div className="p-4 sm:p-5">
-                      <div className="flex flex-col gap-4 sm:flex-row sm:items-center">
-                        {/* Left: Preview Image + Info */}
-                        <div className="flex flex-1 items-center gap-4">
-                          {/* Article Preview */}
-                          <div className="relative h-16 w-16 flex-shrink-0 overflow-hidden rounded-xl bg-gray-100 sm:h-20 sm:w-20">
-                            {preview.image ? (
-                              <Image
-                                src={preview.image}
-                                alt={preview.title}
-                                fill
-                                className="object-cover"
-                              />
-                            ) : (
-                              <div className="flex h-full w-full items-center justify-center">
-                                <FileText className="h-8 w-8 text-gray-400" />
-                              </div>
-                            )}
-                            {/* Status Overlay */}
-                            {!isPaid && (
-                              <div className={`absolute bottom-0 left-0 right-0 py-0.5 text-center text-xs font-medium text-white ${
-                                isOverdue ? 'bg-red-500' : 'bg-amber-500'
-                              }`}>
-                                {isOverdue ? 'Überfällig' : 'Offen'}
-                              </div>
-                            )}
+                    {/* Invoice Row */}
+                    <div className="flex items-center gap-4 p-4">
+                      {/* Image */}
+                      <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
+                        {firstImage ? (
+                          <Image src={firstImage} alt="" fill className="object-cover" />
+                        ) : (
+                          <div className="flex h-full w-full items-center justify-center">
+                            <Receipt className="h-6 w-6 text-gray-400" />
                           </div>
+                        )}
+                      </div>
 
-                          {/* Invoice Info */}
-                          <div className="min-w-0 flex-1">
-                            <div className="flex items-center gap-2">
-                              <h3 className="truncate font-semibold text-gray-900">
-                                {preview.title}
-                              </h3>
-                            </div>
-                            {preview.brand && (
-                              <p className="mt-0.5 text-sm text-gray-500">
-                                {preview.brand} {preview.model}
-                              </p>
-                            )}
-                            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
-                              <span className="font-mono text-gray-400">{invoice.invoiceNumber}</span>
-                              {daysInfo && (
-                                daysInfo.isOverdue ? (
-                                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700">
-                                    <Clock className="h-3 w-3" />
-                                    {daysInfo.text}
-                                  </span>
-                                ) : (
-                                  <span className="flex items-center gap-1 text-gray-500">
-                                    <Calendar className="h-3 w-3" />
-                                    {daysInfo.text}
-                                  </span>
-                                )
-                              )}
-                              {isPaid && invoice.paidAt && (
-                                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-700">
-                                  <CheckCircle2 className="h-3 w-3" />
-                                  Bezahlt am {formatDate(invoice.paidAt)}
-                                </span>
-                              )}
-                            </div>
-                          </div>
+                      {/* Info */}
+                      <div className="min-w-0 flex-1">
+                        <div className="flex items-center gap-2">
+                          <span className="text-sm font-medium text-gray-900">
+                            {invoice.invoiceNumber}
+                          </span>
+                          {isOverdue && daysOverdue > 0 && (
+                            <span className="inline-flex items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+                              <Clock className="h-3 w-3" />
+                              {daysOverdue}d überfällig
+                            </span>
+                          )}
                         </div>
+                        <p className="mt-0.5 text-sm text-gray-500">
+                          {isPaid && invoice.paidAt
+                            ? `Bezahlt am ${formatDate(invoice.paidAt)}`
+                            : `Fällig ${formatDate(invoice.dueDate)}`
+                          }
+                        </p>
+                      </div>
 
-                        {/* Right: Amount + Actions */}
-                        <div className="flex items-center justify-between gap-4 sm:justify-end">
-                          <div className="text-right">
-                            <p className="text-xl font-bold text-gray-900 sm:text-2xl">
-                              CHF {formatCurrency(invoice.total)}
-                            </p>
-                            <p className="text-xs text-gray-500">inkl. MwSt.</p>
-                          </div>
+                      {/* Amount + Actions */}
+                      <div className="flex items-center gap-3">
+                        <span className="text-lg font-semibold text-gray-900">
+                          CHF {formatCurrency(invoice.total)}
+                        </span>
 
-                          <div className="flex items-center gap-1.5">
-                            {!isPaid && (
-                              <button
-                                onClick={() => handlePayInvoice(invoice)}
-                                className="rounded-lg bg-primary-600 px-3.5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
-                              >
-                                Bezahlen
-                              </button>
-                            )}
+                        {!isPaid && (
+                          <button
+                            onClick={() => handlePayInvoice(invoice)}
+                            className="rounded-lg bg-primary-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-primary-700"
+                          >
+                            Bezahlen
+                          </button>
+                        )}
 
-                            <button
-                              onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}
-                              className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-                              title="PDF herunterladen"
-                            >
-                              <Download className="h-4 w-4" />
-                            </button>
-
-                            <button
-                              onClick={() => setExpandedInvoice(isExpanded ? null : invoice.id)}
-                              className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
-                              title={isExpanded ? 'Details ausblenden' : 'Details anzeigen'}
-                            >
-                              {isExpanded ? (
-                                <ChevronUp className="h-4 w-4" />
-                              ) : (
-                                <ChevronDown className="h-4 w-4" />
-                              )}
-                            </button>
-                          </div>
-                        </div>
+                        <button
+                          onClick={() => setExpandedInvoice(isExpanded ? null : invoice.id)}
+                          className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                        >
+                          {isExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                        </button>
                       </div>
                     </div>
 
                     {/* Expanded Details */}
                     {isExpanded && (
-                      <div className="border-t border-gray-100 bg-gradient-to-b from-gray-50 to-white p-4 sm:p-5">
+                      <div className="border-t border-gray-100 bg-gray-50 px-4 py-4">
                         {/* Items */}
-                        <div className="mb-4">
-                          <h4 className="mb-3 text-sm font-medium text-gray-700">Positionen</h4>
-                          <div className="space-y-3">
-                            {invoice.items.map(item => (
-                              <div
-                                key={item.id}
-                                className="flex items-center justify-between rounded-xl border border-gray-100 bg-white p-3 shadow-sm"
-                              >
-                                <div className="flex items-center gap-3">
-                                  {item.watch?.images?.[0] ? (
-                                    <div className="relative h-12 w-12 overflow-hidden rounded-lg">
-                                      <Image
-                                        src={item.watch.images[0]}
-                                        alt={item.watch?.title || ''}
-                                        fill
-                                        className="object-cover"
-                                      />
-                                    </div>
-                                  ) : (
-                                    <div className="flex h-12 w-12 items-center justify-center rounded-lg bg-gray-100">
-                                      <Receipt className="h-5 w-5 text-gray-400" />
-                                    </div>
-                                  )}
-                                  <div>
-                                    <p className="font-medium text-gray-900">{item.description}</p>
-                                    {item.watch && (
-                                      <p className="text-sm text-gray-500">
-                                        {item.watch.brand} {item.watch.model}
-                                      </p>
-                                    )}
-                                  </div>
-                                </div>
-                                <span className="font-semibold text-gray-900">
-                                  CHF {formatCurrency(item.total)}
-                                </span>
-                              </div>
-                            ))}
+                        <div className="space-y-2">
+                          {invoice.items.map(item => (
+                            <div key={item.id} className="flex justify-between text-sm">
+                              <span className="text-gray-600">{item.description}</span>
+                              <span className="text-gray-900">CHF {formatCurrency(item.total)}</span>
+                            </div>
+                          ))}
+                        </div>
+
+                        {/* Totals */}
+                        <div className="mt-4 border-t border-gray-200 pt-3">
+                          <div className="flex justify-between text-sm">
+                            <span className="text-gray-500">Zwischensumme</span>
+                            <span className="text-gray-900">CHF {formatCurrency(invoice.subtotal)}</span>
+                          </div>
+                          <div className="mt-1 flex justify-between text-sm">
+                            <span className="text-gray-500">MwSt. ({(invoice.vatRate * 100).toFixed(1)}%)</span>
+                            <span className="text-gray-900">CHF {formatCurrency(invoice.vatAmount)}</span>
+                          </div>
+                          <div className="mt-2 flex justify-between font-medium">
+                            <span className="text-gray-900">Total</span>
+                            <span className="text-gray-900">CHF {formatCurrency(invoice.total)}</span>
                           </div>
                         </div>
 
-                        {/* Summary */}
-                        <div className="rounded-xl border border-gray-100 bg-white p-4 shadow-sm sm:ml-auto sm:max-w-xs">
-                          <div className="space-y-2 text-sm">
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">Zwischensumme</span>
-                              <span className="text-gray-900">CHF {formatCurrency(invoice.subtotal)}</span>
-                            </div>
-                            <div className="flex justify-between">
-                              <span className="text-gray-500">MwSt. ({(invoice.vatRate * 100).toFixed(1)}%)</span>
-                              <span className="text-gray-900">CHF {formatCurrency(invoice.vatAmount)}</span>
-                            </div>
-                            <div className="flex justify-between border-t border-gray-200 pt-2 font-semibold">
-                              <span className="text-gray-900">Gesamt</span>
-                              <span className="text-primary-600">CHF {formatCurrency(invoice.total)}</span>
-                            </div>
-                          </div>
-                        </div>
-
-                        {/* Meta */}
-                        <div className="mt-4 flex flex-wrap gap-4 text-xs text-gray-500">
-                          <span className="flex items-center gap-1">
-                            <Calendar className="h-3.5 w-3.5" />
-                            Erstellt: {formatDate(invoice.createdAt)}
-                          </span>
-                          <span className="flex items-center gap-1">
-                            <Clock className="h-3.5 w-3.5" />
-                            Fällig: {formatDate(invoice.dueDate)}
-                          </span>
-                          {invoice.paidAt && (
-                            <span className="flex items-center gap-1 text-green-600">
-                              <CheckCircle2 className="h-3.5 w-3.5" />
-                              Bezahlt: {formatDate(invoice.paidAt)}
-                            </span>
-                          )}
+                        {/* Actions */}
+                        <div className="mt-4 flex gap-2">
+                          <button
+                            onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}
+                            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                          >
+                            <Download className="h-4 w-4" />
+                            PDF
+                          </button>
                         </div>
                       </div>
                     )}
@@ -586,16 +397,8 @@ function SellingFeesContent() {
 
           {/* Paid Summary */}
           {activeTab === 'paid' && paidInvoices.length > 0 && (
-            <div className="mt-6 rounded-xl border border-green-200 bg-green-50 p-4">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-2 text-green-700">
-                  <CheckCircle2 className="h-5 w-5" />
-                  <span className="font-medium">{paidInvoices.length} bezahlte Rechnungen</span>
-                </div>
-                <span className="text-lg font-bold text-green-700">
-                  Total: CHF {formatCurrency(totalPaid)}
-                </span>
-              </div>
+            <div className="mt-4 text-center text-sm text-gray-500">
+              Total bezahlt: CHF {formatCurrency(totalPaid)}
             </div>
           )}
         </div>
