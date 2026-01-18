@@ -90,7 +90,7 @@ function SellingFeesContent() {
       if (invoice) {
         setActiveTab(invoice.status === 'paid' ? 'paid' : 'open')
       }
-      
+
       setTimeout(() => {
         const invoiceElement = invoiceRefs.current[invoiceId]
         if (invoiceElement) {
@@ -216,7 +216,7 @@ function SellingFeesContent() {
     due.setHours(0, 0, 0, 0)
     const diffTime = due.getTime() - today.getTime()
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
+
     if (status === 'overdue' || diffDays < 0) {
       return { text: `${Math.abs(diffDays)} Tage überfällig`, isOverdue: true }
     } else if (diffDays === 0) {
@@ -312,7 +312,7 @@ function SellingFeesContent() {
                     </div>
                   </div>
                 </div>
-                
+
                 {overdueCount > 0 && (
                   <div className="flex items-center gap-2 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">
                     <AlertCircle className="h-4 w-4" />
@@ -431,10 +431,10 @@ function SellingFeesContent() {
                       invoiceRefs.current[invoice.id] = el
                     }}
                     className={`overflow-hidden rounded-2xl border bg-white shadow-sm transition-all ${
-                      isHighlighted 
-                        ? 'border-primary-400 ring-2 ring-primary-200' 
-                        : isOverdue 
-                          ? 'border-red-200' 
+                      isHighlighted
+                        ? 'border-primary-400 ring-2 ring-primary-200'
+                        : isOverdue
+                          ? 'border-red-200'
                           : 'border-gray-200 hover:border-gray-300'
                     }`}
                   >

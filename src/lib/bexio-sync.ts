@@ -117,7 +117,10 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
   bexioInvoiceId: number
   qrReference: string
 }> {
+  console.log(`[bexio-sync] 🔄 createBexioInvoice START für Invoice ${invoiceId}`)
+  
   const bexio = getBexioClient()
+  console.log(`[bexio-sync] ✅ Bexio Client erstellt`)
 
   // Invoice mit Items und User laden
   const invoice = await prisma.invoice.findUnique({
@@ -131,17 +134,28 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
   if (!invoice) {
     throw new Error(`Invoice ${invoiceId} not found`)
   }
+  console.log(`[bexio-sync] ✅ Invoice geladen: ${invoice.invoiceNumber}, ${invoice.items.length} Items`)
+  
+  // Debug: Log alle Item-Werte
+  invoice.items.forEach((item, idx) => {
+    console.log(`[bexio-sync]    Item ${idx}: total=${item.total}, price=${item.price}, amount=${(item as any).amount}, desc=${item.description}`)
+  })
 
   // Sicherstellen dass Seller in Bexio existiert
   let bexioContactId = invoice.seller.bexioContactId
   if (!bexioContactId) {
+    console.log(`[bexio-sync] 🔄 Seller ${invoice.sellerId} hat keine Bexio-ID, sync...`)
     bexioContactId = await syncUserToBexio(invoice.sellerId)
+    console.log(`[bexio-sync] ✅ Seller synced, Bexio Contact ID: ${bexioContactId}`)
+  } else {
+    console.log(`[bexio-sync] ✅ Seller hat bereits Bexio-ID: ${bexioContactId}`)
   }
 
   // Eindeutige QR-Referenz generieren (verwende numerischen Hash für base36 Encoding)
   const userIdHash = hashStringToNumber(invoice.sellerId)
   const invoiceIdHash = hashStringToNumber(invoice.id)
   const qrReference = generateUniqueQRReference(userIdHash, invoiceIdHash)
+  console.log(`[bexio-sync] ✅ QR-Referenz generiert: ${qrReference}`)
 
   // Datum formatieren
   const issuedDate = new Date(invoice.createdAt)
@@ -151,13 +165,25 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
   const formatDate = (d: Date) => d.toISOString().split('T')[0]
 
   // Positionen erstellen
-  const positions: BexioInvoicePosition[] = invoice.items.map(item => ({
-    type: 'KbPositionCustom',
-    amount: '1',
-    text: item.description,
-    unit_price: item.amount.toString(),
-    tax_id: BEXIO_CONFIG.TAX_RATE_ID,
-  }))
+  // WICHTIG: Verwende item.total (immer korrekt) statt item.amount (könnte 0 oder null sein)
+  const positions: BexioInvoicePosition[] = invoice.items.map(item => {
+    // Priorität: total > price > amount (als Fallback)
+    const unitPrice = item.total || item.price || item.amount || 0
+    if (unitPrice <= 0) {
+      console.error(`[bexio-sync] ⚠️ Item ${item.id} hat ungültigen Preis: total=${item.total}, price=${item.price}, amount=${item.amount}`)
+    }
+    return {
+      type: 'KbPositionCustom',
+      amount: '1',
+      text: item.description,
+      unit_price: unitPrice.toString(),
+      tax_id: BEXIO_CONFIG.TAX_RATE_ID,
+    }
+  })
+
+  console.log(`[bexio-sync] 🔄 Erstelle Bexio Rechnung mit ${positions.length} Positionen...`)
+  console.log(`[bexio-sync]    - Contact ID: ${bexioContactId}`)
+  console.log(`[bexio-sync]    - Positionen:`, JSON.stringify(positions, null, 2))
 
   // Bexio Rechnung erstellen
   const bexioInvoice = await bexio.createInvoice({
@@ -178,13 +204,17 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
     positions,
     qr_reference: qrReference,
   })
+  console.log(`[bexio-sync] ✅ Bexio Rechnung erstellt, ID: ${bexioInvoice.id}`)
 
   // Rechnung als versendet markieren
   if (bexioInvoice.id) {
+    console.log(`[bexio-sync] 🔄 Markiere Rechnung als versendet...`)
     await bexio.issueInvoice(bexioInvoice.id)
+    console.log(`[bexio-sync] ✅ Rechnung als versendet markiert`)
   }
 
   // QR-Referenz und Bexio ID in unserer DB speichern
+  console.log(`[bexio-sync] 🔄 Speichere qrReference und bexioInvoiceId in DB...`)
   await prisma.invoice.update({
     where: { id: invoiceId },
     data: {
@@ -192,7 +222,9 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
       bexioInvoiceId: bexioInvoice.id,
     },
   })
+  console.log(`[bexio-sync] ✅ DB Update erfolgreich`)
 
+  console.log(`[bexio-sync] ✅ createBexioInvoice COMPLETE - Bexio ID: ${bexioInvoice.id}, QR: ${qrReference}`)
   return {
     bexioInvoiceId: bexioInvoice.id!,
     qrReference,
