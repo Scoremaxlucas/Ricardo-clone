@@ -168,6 +168,7 @@ export function StepPrice({
                 disabled={isPriceLocked}
                 min="0"
                 step="0.01"
+                autoComplete="off"
                 className={`w-full rounded-lg border py-3 pl-14 pr-4 text-lg font-medium transition-colors ${
                   isPriceLocked
                     ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
@@ -207,6 +208,7 @@ export function StepPrice({
                   disabled={isPriceLocked}
                   min="0"
                   step="0.01"
+                  autoComplete="off"
                   className={`w-full rounded-lg border py-3 pl-14 pr-4 text-lg font-medium transition-colors ${
                     isPriceLocked
                       ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
@@ -280,6 +282,7 @@ export function StepPrice({
                   disabled={isBuyNowPriceLocked}
                   min="0"
                   step="0.01"
+                  autoComplete="off"
                   className={`w-full rounded-lg border py-3 pl-14 pr-4 transition-colors ${
                     isBuyNowPriceLocked
                       ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
