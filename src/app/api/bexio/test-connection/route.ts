@@ -1,8 +1,8 @@
 /**
  * Bexio Connection Test API
- * 
+ *
  * GET /api/bexio/test-connection?secret=CRON_SECRET
- * 
+ *
  * Testet die Bexio-Verbindung und gibt detaillierte Infos zurück.
  */
 
@@ -16,7 +16,7 @@ export async function GET(request: NextRequest) {
     // Auth check
     const { searchParams } = new URL(request.url)
     const secret = searchParams.get('secret')
-    
+
     if (secret !== process.env.CRON_SECRET) {
       const session = await getServerSession(authOptions)
       if (!session?.user?.isAdmin) {
@@ -48,7 +48,7 @@ export async function GET(request: NextRequest) {
     try {
       const { getBexioClient } = await import('@/lib/bexio-client')
       const bexio = getBexioClient()
-      
+
       // Try to get a list of contacts (simple API call)
       const contacts = await (bexio as any).request('GET', '/contact?limit=1')
       results.bexioConnection = {

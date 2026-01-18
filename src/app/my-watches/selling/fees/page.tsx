@@ -5,19 +5,16 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { InvoicePaymentModal } from '@/components/payment/InvoicePaymentModal'
 import {
-  AlertCircle,
   Calendar,
   CheckCircle2,
   ChevronDown,
   ChevronUp,
   Clock,
-  CreditCard,
   Download,
   FileText,
   Package,
   Receipt,
   Tag,
-  Wallet,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
@@ -186,19 +183,9 @@ function SellingFeesContent() {
   const filteredInvoices = activeTab === 'open' ? openInvoices : paidInvoices
 
   // Calculations
-  const totalPending = useMemo(
-    () => openInvoices.reduce((sum, inv) => sum + inv.total, 0),
-    [openInvoices]
-  )
-
   const totalPaid = useMemo(
     () => paidInvoices.reduce((sum, inv) => sum + inv.total, 0),
     [paidInvoices]
-  )
-
-  const overdueCount = useMemo(
-    () => invoices.filter(inv => inv.status === 'overdue').length,
-    [invoices]
   )
 
   const formatCurrency = (amount: number) =>
@@ -283,54 +270,14 @@ function SellingFeesContent() {
           </nav>
 
           {/* Header with Icon */}
-          <div className="mb-6 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
-            <div className="flex items-center gap-3">
-              <div className="rounded-xl bg-gradient-to-br from-primary-500 to-teal-500 p-3 shadow-lg shadow-primary-200">
-                <Receipt className="h-7 w-7 text-white" />
-              </div>
-              <div>
-                <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Gebühren & Rechnungen</h1>
-                <p className="text-sm text-gray-500">Übersicht Ihrer Verkaufsgebühren</p>
-              </div>
+          <div className="mb-6 flex items-center gap-3">
+            <div className="rounded-xl bg-gradient-to-br from-primary-500 to-teal-500 p-3 shadow-lg shadow-primary-200">
+              <Receipt className="h-7 w-7 text-white" />
             </div>
-
-            {/* Summary Box with Pay All CTA */}
-            {openInvoices.length > 0 && (
-              <div className="flex flex-col gap-3 rounded-2xl border border-amber-200 bg-gradient-to-br from-amber-50 to-orange-50 p-5 shadow-sm lg:min-w-[380px]">
-                <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-3">
-                    <div className="rounded-full bg-amber-100 p-2">
-                      <Wallet className="h-5 w-5 text-amber-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-medium text-amber-800">
-                        {openInvoices.length} offene {openInvoices.length === 1 ? 'Rechnung' : 'Rechnungen'}
-                      </p>
-                      <p className="text-2xl font-bold text-amber-900">
-                        CHF {formatCurrency(totalPending)}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-
-                {overdueCount > 0 && (
-                  <div className="flex items-center gap-2 rounded-lg bg-red-100 px-3 py-2 text-sm text-red-700">
-                    <AlertCircle className="h-4 w-4" />
-                    <span className="font-medium">{overdueCount} überfällig</span>
-                  </div>
-                )}
-
-                {openInvoices.length > 1 && (
-                  <button
-                    onClick={() => handlePayInvoice(openInvoices[0])}
-                    className="mt-1 flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-primary-600 to-teal-600 px-5 py-3 font-semibold text-white shadow-lg shadow-primary-200 transition-all hover:from-primary-700 hover:to-teal-700 hover:shadow-xl"
-                  >
-                    <CreditCard className="h-5 w-5" />
-                    Jetzt bezahlen
-                  </button>
-                )}
-              </div>
-            )}
+            <div>
+              <h1 className="text-2xl font-bold text-gray-900 sm:text-3xl">Gebühren & Rechnungen</h1>
+              <p className="text-sm text-gray-500">Übersicht Ihrer Verkaufsgebühren</p>
+            </div>
           </div>
 
           {/* Secondary Navigation */}
