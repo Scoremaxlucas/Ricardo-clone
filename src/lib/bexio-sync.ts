@@ -167,6 +167,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
 
   // Positionen erstellen
   // WICHTIG: Verwende item.total (immer korrekt) statt item.amount (könnte 0 oder null sein)
+  // WICHTIG: Keine tax_id - Bexio verwendet Default basierend auf mwst_type
   const positions: BexioInvoicePosition[] = invoice.items.map(item => {
     // Priorität: total > price > amount (als Fallback)
     const unitPrice = item.total || item.price || item.amount || 0
@@ -178,7 +179,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
       amount: '1',
       text: item.description,
       unit_price: unitPrice.toString(),
-      tax_id: BEXIO_CONFIG.TAX_RATE_ID,
+      // tax_id wird weggelassen - Bexio nutzt Default (8.1% MWST)
     }
   })
 
@@ -187,23 +188,23 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
   console.log(`[bexio-sync]    - Positionen:`, JSON.stringify(positions, null, 2))
 
   // Bexio Rechnung erstellen
+  // WICHTIG: qr_reference ist KEIN gültiges Bexio API Feld - stattdessen im Title!
   const bexioInvoice = await bexio.createInvoice({
-    title: `Helvenda Rechnung ${invoice.invoiceNumber} - Ref: ${qrReference}`,
+    title: `Helvenda ${invoice.invoiceNumber} | QR-Ref: ${qrReference}`,
     contact_id: bexioContactId,
     user_id: BEXIO_CONFIG.DEFAULT_USER_ID,
     is_valid_from: formatDate(issuedDate),
     is_valid_to: formatDate(dueDate),
     mwst_type: 0, // inkl. MWST
     mwst_is_net: false,
-    show_position_taxes: true,
+    show_position_taxes: false, // Keine separate Steueranzeige
     language_id: BEXIO_CONFIG.LANGUAGE_ID,
     bank_account_id: BEXIO_CONFIG.BANK_ACCOUNT_ID,
     currency_id: BEXIO_CONFIG.CURRENCY_ID,
     payment_type_id: BEXIO_CONFIG.PAYMENT_TYPE_ID,
-    header: `Vielen Dank für Ihren Verkauf auf Helvenda.\n\nBitte verwenden Sie bei der Zahlung die folgende Referenznummer:\n${formatQRReferenceForDisplay(qrReference)}`,
+    header: `Vielen Dank für Ihren Verkauf auf Helvenda.\n\nZahlungsreferenz: ${formatQRReferenceForDisplay(qrReference)}`,
     footer: 'Bei Fragen kontaktieren Sie uns unter support@helvenda.ch',
     positions,
-    qr_reference: qrReference,
   })
   console.log(`[bexio-sync] ✅ Bexio Rechnung erstellt, ID: ${bexioInvoice.id}`)
 
