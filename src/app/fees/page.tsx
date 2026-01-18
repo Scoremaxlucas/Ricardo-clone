@@ -11,7 +11,7 @@ export default function FeesPage() {
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6 md:p-8 lg:p-12">
             <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl">Gebührenreglement</h1>
-            <p className="mb-6 text-sm text-gray-600 sm:mb-8 sm:text-base">Gültig seit 17.01.2025</p>
+            <p className="mb-6 text-sm text-gray-600 sm:mb-8 sm:text-base">Gültig seit 18.01.2026</p>
 
             <div className="prose prose-sm max-w-none sm:prose-base lg:prose-lg">
               <div className="space-y-6 text-gray-700 sm:space-y-8">
@@ -188,31 +188,43 @@ export default function FeesPage() {
                   <h2 className="mb-3 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl">4. Optionale Booster</h2>
 
                   <p className="mb-3 text-sm sm:mb-4 sm:text-base">
-                    Verkäufer können ihre Angebote mit kostenpflichtigen Boostern hervorheben:
+                    Verkäufer können ihre Angebote mit kostenpflichtigen Boostern hervorheben und so die Sichtbarkeit erhöhen:
                   </p>
 
                   {/* Mobile: Karten-Layout */}
                   <div className="space-y-3 sm:hidden">
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    {/* Boost */}
+                    <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-900">Highlight</span>
-                        <span className="text-sm font-semibold text-primary-600">CHF 2.90</span>
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs text-white">⚡</span>
+                          <span className="font-medium text-gray-900">Boost</span>
+                        </div>
+                        <span className="text-sm font-semibold text-blue-600">CHF 19.90</span>
                       </div>
-                      <p className="mt-1 text-xs text-gray-600">Farblich hervorgehobener Rahmen</p>
+                      <p className="mt-2 text-xs text-gray-600">Bessere Platzierung in Suchergebnissen und erhöhte Sichtbarkeit</p>
                     </div>
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    {/* Turbo-Boost */}
+                    <div className="rounded-lg border border-violet-200 bg-violet-50 p-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-900">Top-Platzierung</span>
-                        <span className="text-sm font-semibold text-primary-600">CHF 4.90</span>
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500 text-xs text-white">🚀</span>
+                          <span className="font-medium text-gray-900">Turbo-Boost</span>
+                        </div>
+                        <span className="text-sm font-semibold text-violet-600">CHF 39.90</span>
                       </div>
-                      <p className="mt-1 text-xs text-gray-600">Angebot erscheint weiter oben in Suchergebnissen</p>
+                      <p className="mt-2 text-xs text-gray-600">Sehr prominente Platzierung + alle Boost-Vorteile inklusive</p>
                     </div>
-                    <div className="rounded-lg border border-gray-200 bg-gray-50 p-3">
+                    {/* Super-Boost */}
+                    <div className="rounded-lg border border-orange-200 bg-orange-50 p-3">
                       <div className="flex items-center justify-between">
-                        <span className="font-medium text-gray-900">Homepage-Feature</span>
-                        <span className="text-sm font-semibold text-primary-600">CHF 9.90</span>
+                        <div className="flex items-center gap-2">
+                          <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-xs text-white">👑</span>
+                          <span className="font-medium text-gray-900">Super-Boost</span>
+                        </div>
+                        <span className="text-sm font-semibold text-orange-600">CHF 69.90</span>
                       </div>
-                      <p className="mt-1 text-xs text-gray-600">Angebot auf der Startseite anzeigen</p>
+                      <p className="mt-2 text-xs text-gray-600">Höchste Sichtbarkeit, Top-Position + Startseiten-Präsenz</p>
                     </div>
                   </div>
 
@@ -228,36 +240,58 @@ export default function FeesPage() {
                             Preis
                           </th>
                           <th className="px-4 py-3 text-left text-sm font-semibold text-gray-900 md:px-6">
-                            Beschreibung
+                            Vorteile
                           </th>
                         </tr>
                       </thead>
                       <tbody className="divide-y divide-gray-200 bg-white">
-                        <tr>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 md:px-6 md:py-4">
-                            Highlight
+                        <tr className="bg-blue-50/30">
+                          <td className="whitespace-nowrap px-4 py-3 text-sm md:px-6 md:py-4">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-blue-500 text-sm text-white">⚡</span>
+                              <span className="font-medium text-gray-900">Boost</span>
+                            </div>
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">CHF 2.90</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-blue-600 md:px-6 md:py-4">CHF 19.90</td>
                           <td className="px-4 py-3 text-sm text-gray-600 md:px-6 md:py-4">
-                            Farblich hervorgehobener Rahmen
+                            <ul className="list-inside list-disc space-y-0.5">
+                              <li>Verbesserte Sichtbarkeit</li>
+                              <li>Bessere Platzierung in Suchergebnissen</li>
+                              <li>Erhöhte Klickrate</li>
+                            </ul>
                           </td>
                         </tr>
-                        <tr>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 md:px-6 md:py-4">
-                            Top-Platzierung
+                        <tr className="bg-violet-50/30">
+                          <td className="whitespace-nowrap px-4 py-3 text-sm md:px-6 md:py-4">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-500 text-sm text-white">🚀</span>
+                              <span className="font-medium text-gray-900">Turbo-Boost</span>
+                            </div>
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">CHF 4.90</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-violet-600 md:px-6 md:py-4">CHF 39.90</td>
                           <td className="px-4 py-3 text-sm text-gray-600 md:px-6 md:py-4">
-                            Angebot erscheint weiter oben in Suchergebnissen
+                            <ul className="list-inside list-disc space-y-0.5">
+                              <li>Alle Boost-Vorteile inklusive</li>
+                              <li>Sehr prominente Platzierung in Listen</li>
+                              <li>Erhöhte Sichtbarkeit in Suchergebnissen</li>
+                            </ul>
                           </td>
                         </tr>
-                        <tr>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm font-medium text-gray-900 md:px-6 md:py-4">
-                            Homepage-Feature
+                        <tr className="bg-orange-50/30">
+                          <td className="whitespace-nowrap px-4 py-3 text-sm md:px-6 md:py-4">
+                            <div className="flex items-center gap-2">
+                              <span className="flex h-7 w-7 items-center justify-center rounded-full bg-orange-500 text-sm text-white">👑</span>
+                              <span className="font-medium text-gray-900">Super-Boost</span>
+                            </div>
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm text-gray-700 md:px-6 md:py-4">CHF 9.90</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-orange-600 md:px-6 md:py-4">CHF 69.90</td>
                           <td className="px-4 py-3 text-sm text-gray-600 md:px-6 md:py-4">
-                            Angebot auf der Startseite anzeigen
+                            <ul className="list-inside list-disc space-y-0.5">
+                              <li>Alle Turbo-Boost-Vorteile inklusive</li>
+                              <li>Höchste Sichtbarkeit auf der Plattform</li>
+                              <li>Top-Position in Kategorie-Übersichten</li>
+                              <li>Erhöhte Sichtbarkeit auf der Startseite</li>
+                            </ul>
                           </td>
                         </tr>
                       </tbody>
@@ -265,8 +299,8 @@ export default function FeesPage() {
                   </div>
 
                   <p className="mt-3 text-xs text-gray-600 sm:mt-4 sm:text-sm">
-                    Booster-Gebühren werden sofort bei Aktivierung fällig und sind nicht
-                    erstattungsfähig.
+                    Booster-Gebühren werden bei Veröffentlichung des Angebots fällig. Alle Preise inkl. MwSt.
+                    Booster können jederzeit auf eine höhere Stufe upgegradet werden.
                   </p>
                 </section>
 
@@ -341,7 +375,7 @@ export default function FeesPage() {
 
                 <div className="mt-6 border-t border-gray-200 pt-4 sm:mt-8 sm:pt-6">
                   <p className="text-xs text-gray-600 sm:text-sm">
-                    <strong>Gebührenreglement gültig seit 17.01.2025</strong>
+                    <strong>Gebührenreglement gültig seit 18.01.2026</strong>
                   </p>
                 </div>
               </div>
