@@ -215,33 +215,20 @@ export function WizardFooter({
               ← Zurück
             </button>
           )}
-          {onSaveDraft && (
-            <div className="flex items-center gap-1.5 sm:gap-2">
-              {/* Manual save button */}
-              <button
-                type="button"
-                onClick={onSaveDraft}
-                disabled={isSavingDraft}
-                className="whitespace-nowrap rounded-lg border-2 border-primary-300 px-2 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50 disabled:cursor-not-allowed disabled:opacity-50 sm:px-3 sm:py-2 sm:text-sm md:px-4 md:py-2.5 md:text-base"
-              >
-                <span className="hidden sm:inline">Entwurf speichern</span>
-                <span className="sm:hidden">Speichern</span>
-              </button>
-
-              {/* Autosave status */}
-              {isSavingDraft ? (
-                <span className="flex items-center gap-1.5 text-xs text-gray-500">
-                  <span className="h-3 w-3 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
-                  <span className="hidden sm:inline">Wird gespeichert…</span>
-                </span>
-              ) : lastSavedAt ? (
-                <span className="hidden items-center gap-1.5 text-xs text-gray-500 sm:flex">
-                  <CheckCircle className="h-3 w-3 text-green-500" />
-                  <span>{formatLastSaved(lastSavedAt)}</span>
-                </span>
-              ) : null}
-            </div>
-          )}
+          {/* Auto-save status (Ricardo-Style: kein manueller Button, nur Status) */}
+          <div className="flex items-center gap-1.5 sm:gap-2">
+            {isSavingDraft ? (
+              <span className="flex items-center gap-1.5 text-xs text-gray-500">
+                <span className="h-3 w-3 animate-spin rounded-full border-2 border-gray-400 border-t-transparent" />
+                <span className="hidden sm:inline">Wird gespeichert…</span>
+              </span>
+            ) : lastSavedAt ? (
+              <span className="flex items-center gap-1.5 text-xs text-green-600">
+                <CheckCircle className="h-3.5 w-3.5" />
+                <span className="hidden sm:inline">{formatLastSaved(lastSavedAt)}</span>
+              </span>
+            ) : null}
+          </div>
         </div>
 
         <div className="flex items-center gap-2 sm:gap-3">

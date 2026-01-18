@@ -277,7 +277,7 @@ export default function OrderDetailPage() {
   const images = parseImages(order.watch.images)
   const isBuyerView = isBuyer
   const isPickup = order.selectedDeliveryMode === 'pickup' || order.paymentMethod === 'cash_on_pickup'
-  
+
   // Bei Abholung: Kein Zahlungsschutz, keine Stripe-Zahlung
   // Bestätigung erfolgt persönlich bei Übergabe
   const canConfirmReceipt =
@@ -421,7 +421,7 @@ export default function OrderDetailPage() {
                     </p>
                   </div>
                 </div>
-                
+
                 {/* Bei Abholung: Spezielle Timeline */}
                 {isPickup && (
                   <>
@@ -445,7 +445,7 @@ export default function OrderDetailPage() {
                     )}
                   </>
                 )}
-                
+
                 {/* Bei Online-Zahlung: Standard Timeline */}
                 {!isPickup && (
                   <>
@@ -693,7 +693,7 @@ export default function OrderDetailPage() {
                       </>
                     )
                   }
-                  
+
                   // Online-Zahlung: Kombinierte Zahlungsgebühr (Processing + Payout)
                   const processingFee = order.protectionFee || 0
                   const sellerAmountBeforePayout = order.itemPrice - order.platformFee - processingFee

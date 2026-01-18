@@ -16,7 +16,7 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext'
 import { clearDraft, clearOtherUserDrafts } from '@/lib/draft-storage'
 import { canSell, getVerificationStatus } from '@/lib/verification'
-import { AlertCircle, CheckCircle, Loader2, Shield, X } from 'lucide-react'
+import { AlertCircle, CheckCircle, FileEdit, Loader2, Shield, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
@@ -69,6 +69,10 @@ function SellPageContent() {
   const [showDraftRestored, setShowDraftRestored] = useState(false)
   const [touchedSteps, setTouchedSteps] = useState<Set<number>>(new Set()) // Track which steps user has interacted with
   const [currentDraftId, setCurrentDraftId] = useState<string | null>(null) // Current draft ID for image operations
+  
+  // Draft restore prompt (Ricardo-Style)
+  const [showDraftPrompt, setShowDraftPrompt] = useState(false)
+  const [pendingDraft, setPendingDraft] = useState<any>(null)
 
   // Form state
   const [titleImageIndex, setTitleImageIndex] = useState<number>(0)
@@ -295,11 +299,13 @@ function SellPageContent() {
     [currentStep, router, selectedCategory, formData, scrollToTop]
   )
 
-  const nextStep = () => {
+  const nextStep = async () => {
     // Mark current step as touched when user tries to proceed
     setTouchedSteps(prev => new Set(prev).add(currentStep))
 
     if (validateStep(currentStep)) {
+      // Auto-save bei jedem Schrittwechsel (Ricardo-Style)
+      await saveDraftData()
       goToStep(currentStep + 1)
     } else {
       toast.error('Bitte füllen Sie alle erforderlichen Felder aus', {
@@ -309,7 +315,9 @@ function SellPageContent() {
     }
   }
 
-  const prevStep = () => {
+  const prevStep = async () => {
+    // Auto-save auch bei Zurück (falls Änderungen gemacht wurden)
+    await saveDraftData()
     goToStep(currentStep - 1, true)
   }
 
@@ -367,6 +375,52 @@ function SellPageContent() {
     titleImageIndex,
     currentDraftId,
   ])
+
+  // Handler: Entwurf fortsetzen (Ricardo-Style)
+  const handleContinueDraft = useCallback(() => {
+    if (!pendingDraft) return
+    
+    const draft = pendingDraft
+    setFormData(prev => ({
+      ...prev,
+      ...draft.formData,
+      images: draft.draftImages?.map((img: any) => img.url) || draft.images || [],
+    }))
+    setSelectedCategory(draft.selectedCategory || '')
+    setSelectedSubcategory(draft.selectedSubcategory || '')
+    setSelectedBooster(draft.selectedBooster || 'none')
+    setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
+    setCurrentStep(draft.currentStep || 0)
+    if (draft.coverImageId && draft.draftImages) {
+      const coverIndex = draft.draftImages.findIndex((img: any) => img.id === draft.coverImageId)
+      setTitleImageIndex(coverIndex >= 0 ? coverIndex : draft.titleImageIndex || 0)
+    } else {
+      setTitleImageIndex(draft.titleImageIndex || 0)
+    }
+    setCurrentDraftId(draft.id)
+    setShowDraftRestored(true)
+    setLastSavedAt(new Date(draft.updatedAt))
+    setShowDraftPrompt(false)
+    setPendingDraft(null)
+    router.push(`/sell?step=${draft.currentStep}`)
+    toast.success('Entwurf wiederhergestellt', { icon: '📝' })
+  }, [pendingDraft, router])
+
+  // Handler: Neu beginnen (Entwurf verwerfen)
+  const handleStartFresh = useCallback(async () => {
+    if (pendingDraft?.id) {
+      // Lösche den alten Entwurf
+      try {
+        await fetch(`/api/drafts/${pendingDraft.id}`, { method: 'DELETE' })
+      } catch (error) {
+        console.error('[Draft] Error deleting old draft:', error)
+      }
+    }
+    setShowDraftPrompt(false)
+    setPendingDraft(null)
+    setCurrentDraftId(null)
+    toast.success('Neues Inserat gestartet', { icon: '✨' })
+  }, [pendingDraft])
 
   // Scroll to top and focus heading when step changes (backup for direct URL navigation)
   useEffect(() => {
@@ -497,48 +551,31 @@ function SellPageContent() {
         // Ignore localStorage errors
       }
 
-      // DO NOT auto-restore drafts!
-      // Each new listing should start fresh.
-      // Drafts are only restored when explicitly requested via:
-      // 1. URL parameter ?draft=xxx
-      // 2. localStorage flag helvenda_restore_draft_id (set by "Entwurf fortsetzen" button)
-      //
-      // The code above already handles these cases, so we just return here.
-      // Old drafts will be cleared when a new article is published.
-      return
-
-      // REMOVED: Automatic draft restoration - this was causing the problem
-      // where old listing data was being shown for new listings
-      /*
+      // Ricardo-Style: Prüfe ob ein Entwurf existiert und zeige Prompt
+      // Nur wenn kein expliziter Draft-Request (URL oder localStorage) vorhanden war
       try {
         const response = await fetch('/api/sell/drafts/current')
         if (response.ok) {
           const data = await response.json()
           if (data.draft) {
             const draft = data.draft
-            setFormData(prev => ({
-              ...prev,
-              ...draft.formData,
-              images: draft.draftImages?.map((img: any) => img.url) || draft.images || [],
-            }))
-            setSelectedCategory(draft.selectedCategory || '')
-            setSelectedSubcategory(draft.selectedSubcategory || '')
-            setSelectedBooster(draft.selectedBooster || 'none')
-            setPaymentProtectionEnabled(draft.paymentProtectionEnabled || false)
-            setCurrentStep(draft.currentStep || 0)
-            if (draft.coverImageId && draft.draftImages) {
-              const coverIndex = draft.draftImages.findIndex(
-                (img: any) => img.id === draft.coverImageId
-              )
-              setTitleImageIndex(coverIndex >= 0 ? coverIndex : draft.titleImageIndex || 0)
-            } else {
-              setTitleImageIndex(draft.titleImageIndex || 0)
+            // Prüfe ob der Entwurf sinnvollen Inhalt hat
+            const hasContent = 
+              (draft.formData?.title && draft.formData.title.trim().length > 0) ||
+              (draft.formData?.description && draft.formData.description.trim().length > 0) ||
+              (draft.draftImages && draft.draftImages.length > 0) ||
+              draft.selectedCategory
+            
+            if (hasContent) {
+              // Zeige Prompt statt automatisches Restore
+              setPendingDraft(draft)
+              setShowDraftPrompt(true)
             }
-            setCurrentDraftId(draft.id)
-            setShowDraftRestored(true)
-            setLastSavedAt(new Date(draft.updatedAt))
-          } else {
-      */
+          }
+        }
+      } catch (error) {
+        console.error('[Draft] Error checking for existing draft:', error)
+      }
     }
 
     restoreDraft()
@@ -1088,6 +1125,66 @@ function SellPageContent() {
       style={{ overflowX: 'hidden', width: '100%', maxWidth: '100vw' }}
     >
       <Header />
+
+      {/* Draft restore prompt (Ricardo-Style) */}
+      {showDraftPrompt && pendingDraft && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
+          <div className="w-full max-w-md rounded-xl bg-white p-6 shadow-2xl">
+            <div className="mb-4 flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-full bg-primary-100">
+                <FileEdit className="h-6 w-6 text-primary-600" />
+              </div>
+              <div>
+                <h3 className="text-lg font-semibold text-gray-900">Entwurf gefunden</h3>
+                <p className="text-sm text-gray-500">
+                  Zuletzt bearbeitet: {new Date(pendingDraft.updatedAt).toLocaleString('de-CH')}
+                </p>
+              </div>
+            </div>
+            
+            {/* Preview */}
+            <div className="mb-6 rounded-lg border border-gray-200 bg-gray-50 p-4">
+              <div className="flex gap-4">
+                {pendingDraft.draftImages?.[0]?.url && (
+                  <img 
+                    src={pendingDraft.draftImages[0].url} 
+                    alt="Vorschau"
+                    className="h-16 w-16 rounded-lg object-cover"
+                  />
+                )}
+                <div className="min-w-0 flex-1">
+                  <p className="truncate font-medium text-gray-900">
+                    {pendingDraft.formData?.title || 'Kein Titel'}
+                  </p>
+                  <p className="text-sm text-gray-500">
+                    {pendingDraft.selectedCategory || 'Keine Kategorie'} • Schritt {(pendingDraft.currentStep || 0) + 1}/6
+                  </p>
+                  {pendingDraft.formData?.price && (
+                    <p className="mt-1 font-semibold text-primary-600">
+                      CHF {pendingDraft.formData.price}
+                    </p>
+                  )}
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3">
+              <button
+                onClick={handleStartFresh}
+                className="flex-1 rounded-lg border border-gray-300 bg-white px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-50"
+              >
+                Neu beginnen
+              </button>
+              <button
+                onClick={handleContinueDraft}
+                className="flex-1 rounded-lg bg-primary-600 px-4 py-3 font-medium text-white transition-colors hover:bg-primary-700"
+              >
+                Fortsetzen
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Draft restored banner */}
       {showDraftRestored && (

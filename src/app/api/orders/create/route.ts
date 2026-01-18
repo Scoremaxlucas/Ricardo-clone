@@ -295,7 +295,7 @@ export async function POST(request: NextRequest) {
     // Bei Abholung (cash_on_pickup): KEINE Stripe-Gebühren, da keine Online-Zahlung!
     // Die 5% Plattform-Kommission gilt unabhängig von der Zahlungsmethode.
     const actualProtectionFee = isPickup ? 0 : fees._processingFeeOnly
-    
+
     const orderData = {
       orderNumber,
       watchId,
