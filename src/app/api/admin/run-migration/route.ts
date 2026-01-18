@@ -57,7 +57,7 @@ export async function POST(request: Request) {
     { name: 'orders.shippingRateSetId', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "shippingRateSetId" TEXT DEFAULT \'default_ch_post\'' },
     { name: 'orders.invoiceId', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoiceId" TEXT' },
     { name: 'orders.invoiceCreatedAt', sql: 'ALTER TABLE "orders" ADD COLUMN IF NOT EXISTS "invoiceCreatedAt" TIMESTAMP(3)' },
-    
+
     // === UserPreferences Table - Notification Settings ===
     // Verkäufer-Benachrichtigungen
     { name: 'prefs.emailOnNewMessage', sql: 'ALTER TABLE "user_preferences" ADD COLUMN IF NOT EXISTS "emailOnNewMessage" BOOLEAN NOT NULL DEFAULT true' },

@@ -77,25 +77,31 @@ export async function POST(
 
     console.log(`[orders/confirm-payment] ✅ Order ${order.orderNumber} als bezahlt markiert`)
 
-    // 2. Erstelle Rechnung (Ricardo-Style: erst bei Zahlungsbestätigung)
+    // 2. Rechnung prüfen/erstellen
+    // Rechnung wurde bereits bei Order-Erstellung erstellt (Ricardo-Style)
+    // Falls nicht vorhanden (alte Orders), jetzt erstellen
     let invoice = null
-    try {
-      const { calculateInvoiceForOrder } = await import('@/lib/invoice')
-      invoice = await calculateInvoiceForOrder(orderId)
+    if (!order.invoiceId) {
+      try {
+        const { calculateInvoiceForOrder } = await import('@/lib/invoice')
+        invoice = await calculateInvoiceForOrder(orderId)
 
-      // Update Order mit Invoice-Referenz
-      await prisma.order.update({
-        where: { id: orderId },
-        data: {
-          invoiceId: invoice.id,
-          invoiceCreatedAt: new Date(),
-        },
-      })
+        // Update Order mit Invoice-Referenz
+        await prisma.order.update({
+          where: { id: orderId },
+          data: {
+            invoiceId: invoice.id,
+            invoiceCreatedAt: new Date(),
+          },
+        })
 
-      console.log(`[orders/confirm-payment] ✅ Rechnung ${invoice.invoiceNumber} erstellt für Order ${orderId}`)
-    } catch (invoiceError: any) {
-      console.error(`[orders/confirm-payment] Fehler bei Rechnungserstellung:`, invoiceError)
-      // Nicht kritisch - Invoice kann später erstellt werden
+        console.log(`[orders/confirm-payment] ✅ Rechnung ${invoice.invoiceNumber} erstellt für Order ${orderId} (nachträglich)`)
+      } catch (invoiceError: any) {
+        console.error(`[orders/confirm-payment] Fehler bei Rechnungserstellung:`, invoiceError)
+        // Nicht kritisch - Invoice kann später erstellt werden
+      }
+    } else {
+      console.log(`[orders/confirm-payment] Rechnung bereits vorhanden für Order ${orderId} (invoiceId: ${order.invoiceId})`)
     }
 
     // 3. Benachrichtigung an Käufer

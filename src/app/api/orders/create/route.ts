@@ -361,6 +361,28 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    // === RECHNUNG SOFORT ERSTELLEN (Ricardo-Style) ===
+    // Verkäufer-Kommission wird sofort berechnet, unabhängig vom Zahlungsstatus
+    let invoice = null
+    try {
+      const { calculateInvoiceForOrder } = await import('@/lib/invoice')
+      invoice = await calculateInvoiceForOrder(order.id)
+      
+      // Update Order mit Invoice-Referenz
+      await prisma.order.update({
+        where: { id: order.id },
+        data: {
+          invoiceId: invoice.id,
+          invoiceCreatedAt: new Date(),
+        },
+      })
+      
+      console.log(`[orders/create] ✅ Rechnung ${invoice.invoiceNumber} erstellt für Order ${order.id} (sofort nach Verkauf)`)
+    } catch (invoiceError: any) {
+      console.error('[orders/create] ❌ Fehler bei Rechnungserstellung:', invoiceError)
+      // Nicht kritisch - Order bleibt bestehen, Rechnung kann später erstellt werden
+    }
+
     // === BENACHRICHTIGUNGEN SENDEN ===
     // Benachrichtigung an Verkäufer
     try {
