@@ -43,15 +43,23 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
       return NextResponse.json({ message: 'Benutzer nicht gefunden' }, { status: 404 })
     }
 
-    // Genehmige Verifizierung
+    // Genehmige Verifizierung und LÖSCHE Ausweiskopien (Datenschutz-Compliance)
+    // Gemäss DSG Art. 6 / DSGVO Art. 5: Personendaten dürfen nur so lange aufbewahrt
+    // werden, wie es für den Zweck erforderlich ist. Nach erfolgreicher Prüfung
+    // wird nur das Ergebnis gespeichert, nicht die sensiblen Dokumente.
     await prisma.user.update({
       where: { id: userId },
       data: {
         verificationStatus: 'approved',
         verificationReviewedAt: new Date(),
         verificationReviewedBy: session.user.id,
-        verified: true, // Stelle sicher, dass verified true ist
+        verified: true,
         verifiedAt: new Date(),
+        // KRITISCH: Ausweiskopien nach erfolgreicher Verifizierung löschen!
+        // Nur der Dokumenttyp wird behalten (nicht-sensitiv)
+        idDocument: null,
+        idDocumentPage1: null,
+        idDocumentPage2: null,
       },
     })
 

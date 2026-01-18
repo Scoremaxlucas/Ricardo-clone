@@ -11,7 +11,7 @@ export default function PrivacyPage() {
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
           <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6 md:p-8 lg:p-12">
             <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:text-3xl">Datenschutzerklärung</h1>
-            <p className="mb-6 text-sm text-gray-600 sm:mb-8 sm:text-base">Gültig seit 28. Dezember 2025</p>
+            <p className="mb-6 text-sm text-gray-600 sm:mb-8 sm:text-base">Gültig seit 18. Januar 2026</p>
 
             <div className="prose prose-sm max-w-none sm:prose-base lg:prose-lg">
               <div className="space-y-6 text-gray-700 sm:space-y-8">
@@ -60,8 +60,21 @@ export default function PrivacyPage() {
                     <li>Vollständige Adresse</li>
                     <li>Telefonnummer</li>
                     <li>Bankverbindung (IBAN) für Auszahlungen</li>
-                    <li>Optional: Ausweisdokument zur Identitätsprüfung</li>
+                    <li>Ausweisdokument zur Identitätsprüfung (ID-Karte oder Reisepass)</li>
                   </ul>
+
+                  <div className="mb-3 rounded-lg border border-green-200 bg-green-50 p-3 sm:mb-4 sm:p-4">
+                    <h4 className="mb-2 text-sm font-semibold text-green-800 sm:text-base">
+                      Wichtiger Hinweis zu Ausweisdokumenten
+                    </h4>
+                    <p className="text-xs text-green-700 sm:text-sm">
+                      Ihre Ausweiskopie wird ausschliesslich zur einmaligen Identitätsprüfung verwendet 
+                      und <strong>unmittelbar nach Abschluss der Prüfung automatisch und unwiderruflich gelöscht</strong>. 
+                      Wir speichern nur das Ergebnis der Prüfung (verifiziert: ja/nein) und den Dokumenttyp, 
+                      nicht jedoch das Dokument selbst. Bei einer erneuten Verifizierung ist ein neuer Upload erforderlich.
+                      Nicht abgeschlossene Verifizierungsanträge werden nach 30 Tagen automatisch bereinigt.
+                    </p>
+                  </div>
 
                   <h3 className="mb-2 mt-4 text-lg font-semibold text-gray-900 sm:mb-3 sm:mt-6 sm:text-xl">
                     2.3 Bei Nutzung des Zahlungsschutzes
@@ -283,7 +296,7 @@ export default function PrivacyPage() {
 
                 <div className="mt-6 border-t border-gray-200 pt-4 sm:mt-8 sm:pt-6">
                   <p className="text-xs text-gray-600 sm:text-sm">
-                    <strong>Datenschutzerklärung gültig seit 28. Dezember 2025</strong>
+                    <strong>Datenschutzerklärung gültig seit 18. Januar 2026</strong>
                   </p>
                 </div>
               </div>
