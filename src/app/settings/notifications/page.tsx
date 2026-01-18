@@ -76,7 +76,7 @@ const translations = {
       },
       other: {
         title: 'Weitere',
-        subtitle: 'Suchabo, Favoriten & Marketing',
+        subtitle: 'Suchabo & Favoriten',
       },
       digest: {
         title: 'E-Mail-Häufigkeit',
@@ -122,7 +122,7 @@ const translations = {
       },
       other: {
         title: 'Other',
-        subtitle: 'Search alerts, favorites & marketing',
+        subtitle: 'Search alerts & favorites',
       },
       digest: {
         title: 'Email Frequency',
@@ -168,7 +168,7 @@ const translations = {
       },
       other: {
         title: 'Autres',
-        subtitle: 'Alertes de recherche, favoris & marketing',
+        subtitle: 'Alertes de recherche & favoris',
       },
       digest: {
         title: 'Fréquence des e-mails',
@@ -214,7 +214,7 @@ const translations = {
       },
       other: {
         title: 'Altro',
-        subtitle: 'Avvisi di ricerca, preferiti & marketing',
+        subtitle: 'Avvisi di ricerca & preferiti',
       },
       digest: {
         title: 'Frequenza email',
@@ -534,13 +534,6 @@ export default function NotificationSettingsPage() {
                 label={t.options.emailOnFavoritePriceChange}
                 enabled={preferences.emailOnFavoritePriceChange}
                 onChange={(v) => updatePreference('emailOnFavoritePriceChange', v)}
-                disabled={saving}
-              />
-              <NotificationRow
-                icon={Mail}
-                label={t.options.emailMarketing}
-                enabled={preferences.emailMarketing}
-                onChange={(v) => updatePreference('emailMarketing', v)}
                 disabled={saving}
               />
             </div>
