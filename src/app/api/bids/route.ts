@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { broadcastBidEvent, broadcastAuctionUpdate } from '@/lib/realtime-broadcast'
 import { shouldSendNotification } from '@/lib/notification-preferences'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 // Neues Gebot erstellen
 export async function POST(request: NextRequest) {
@@ -13,6 +14,23 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { message: 'Nicht autorisiert. Bitte melden Sie sich an.' },
         { status: 401 }
+      )
+    }
+
+    // SECURITY: Rate limiting - max 30 bids per user per minute (prevents bid spam)
+    const rateLimitResult = await checkRateLimit({
+      identifier: `bid:${session.user.id}`,
+      limit: 30,
+      window: 60, // 1 minute
+    })
+    
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { 
+          message: 'Zu viele Gebote. Bitte warten Sie einen Moment.',
+          retryAfter: Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000)
+        },
+        { status: 429 }
       )
     }
 

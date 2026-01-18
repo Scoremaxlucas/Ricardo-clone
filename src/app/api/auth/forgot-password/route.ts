@@ -1,5 +1,6 @@
 import { getPasswordResetEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limit'
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -7,6 +8,27 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - max 3 password reset requests per IP per hour
+    // This prevents email enumeration and spam attacks
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+               request.headers.get('x-real-ip') || 
+               'unknown'
+    const rateLimitResult = await checkRateLimit({
+      identifier: `forgot-password:${ip}`,
+      limit: 3,
+      window: 3600, // 1 hour
+    })
+    
+    if (!rateLimitResult.allowed) {
+      // Still return success message to prevent email enumeration
+      console.log(`[forgot-password] Rate limit exceeded for IP: ${ip}`)
+      return NextResponse.json({
+        message:
+          'Falls ein Konto mit dieser E-Mail existiert, haben wir Ihnen einen Link zum Zurücksetzen des Passworts gesendet.',
+        success: true,
+      })
+    }
+
     const { email } = await request.json()
 
     if (!email) {

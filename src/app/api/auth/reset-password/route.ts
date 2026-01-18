@@ -1,5 +1,6 @@
 import { getPasswordChangedEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limit'
 import bcrypt from 'bcryptjs'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -7,6 +8,23 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - max 5 reset attempts per IP per hour
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+               request.headers.get('x-real-ip') || 
+               'unknown'
+    const rateLimitResult = await checkRateLimit({
+      identifier: `reset-password:${ip}`,
+      limit: 5,
+      window: 3600, // 1 hour
+    })
+    
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { message: 'Zu viele Versuche. Bitte versuchen Sie es später erneut.' },
+        { status: 429 }
+      )
+    }
+
     const { token, password } = await request.json()
 
     if (!token || !password) {

@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { getPasswordChangedEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limit'
 import bcrypt from 'bcryptjs'
 
 export async function POST(request: NextRequest) {
@@ -10,6 +11,20 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    // SECURITY: Rate limiting - max 5 password changes per user per hour
+    const rateLimitResult = await checkRateLimit({
+      identifier: `change-password:${session.user.id}`,
+      limit: 5,
+      window: 3600, // 1 hour
+    })
+    
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { message: 'Zu viele Versuche. Bitte versuchen Sie es später erneut.' },
+        { status: 429 }
+      )
     }
 
     const data = await request.json()

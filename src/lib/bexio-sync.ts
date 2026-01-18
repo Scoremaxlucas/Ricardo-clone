@@ -5,6 +5,11 @@
  * - User → Bexio Contact sync
  * - Invoice → Bexio Invoice sync
  * - Payment matching via QR references
+ * 
+ * Features:
+ * - Automatic retry with exponential backoff
+ * - Comprehensive logging
+ * - Error tracking
  */
 
 import { prisma } from '@/lib/prisma'
@@ -14,6 +19,101 @@ import {
   generateUniqueQRReference,
   parseQRReference,
 } from './unique-qr-reference'
+
+// ============================================
+// RETRY CONFIGURATION
+// ============================================
+
+const RETRY_CONFIG = {
+  maxRetries: 3,
+  baseDelayMs: 1000, // 1 second
+  maxDelayMs: 10000, // 10 seconds
+}
+
+/**
+ * Sleep for a specified duration
+ */
+function sleep(ms: number): Promise<void> {
+  return new Promise(resolve => setTimeout(resolve, ms))
+}
+
+/**
+ * Execute a function with automatic retry and exponential backoff
+ */
+async function withRetry<T>(
+  operation: () => Promise<T>,
+  operationName: string,
+  context?: Record<string, unknown>
+): Promise<T> {
+  let lastError: Error | null = null
+  
+  for (let attempt = 1; attempt <= RETRY_CONFIG.maxRetries; attempt++) {
+    try {
+      const result = await operation()
+      if (attempt > 1) {
+        console.log(`[bexio-sync] ✅ ${operationName} succeeded on attempt ${attempt}`)
+      }
+      return result
+    } catch (error: any) {
+      lastError = error
+      
+      // Log the error
+      console.error(`[bexio-sync] ⚠️ ${operationName} failed (attempt ${attempt}/${RETRY_CONFIG.maxRetries})`)
+      console.error(`[bexio-sync]    Error: ${error.message}`)
+      if (context) {
+        console.error(`[bexio-sync]    Context:`, JSON.stringify(context, null, 2))
+      }
+      
+      // Don't retry if it's a validation error (4xx)
+      if (error.status && error.status >= 400 && error.status < 500) {
+        console.error(`[bexio-sync] ❌ ${operationName} - Client error (${error.status}), not retrying`)
+        throw error
+      }
+      
+      // Calculate delay with exponential backoff
+      if (attempt < RETRY_CONFIG.maxRetries) {
+        const delay = Math.min(
+          RETRY_CONFIG.baseDelayMs * Math.pow(2, attempt - 1),
+          RETRY_CONFIG.maxDelayMs
+        )
+        console.log(`[bexio-sync]    Retrying in ${delay}ms...`)
+        await sleep(delay)
+      }
+    }
+  }
+  
+  // All retries exhausted
+  console.error(`[bexio-sync] ❌ ${operationName} failed after ${RETRY_CONFIG.maxRetries} attempts`)
+  throw lastError
+}
+
+/**
+ * Log sync event for debugging and monitoring
+ */
+async function logSyncEvent(
+  type: 'USER_SYNC' | 'INVOICE_SYNC' | 'PAYMENT_MATCH' | 'ERROR',
+  entityId: string,
+  status: 'SUCCESS' | 'FAILURE',
+  details?: Record<string, unknown>
+): Promise<void> {
+  const logMessage = {
+    timestamp: new Date().toISOString(),
+    type,
+    entityId,
+    status,
+    ...details,
+  }
+  
+  // Log to console (in production, this would go to a logging service)
+  if (status === 'FAILURE') {
+    console.error('[bexio-sync] SYNC_EVENT:', JSON.stringify(logMessage))
+  } else {
+    console.log('[bexio-sync] SYNC_EVENT:', JSON.stringify(logMessage))
+  }
+  
+  // Optional: Store sync events in database for debugging
+  // await prisma.syncEvent.create({ data: logMessage })
+}
 
 /**
  * Konvertiert einen String (cuid) in eine numerische ID für QR-Referenz
@@ -42,73 +142,122 @@ const BEXIO_CONFIG = {
 
 /**
  * Synchronisiert einen Helvenda-User als Kontakt zu Bexio
+ * Mit automatischem Retry bei Fehlern
  */
 export async function syncUserToBexio(userId: string): Promise<number> {
-  const bexio = getBexioClient()
+  console.log(`[bexio-sync] 🔄 syncUserToBexio START für User ${userId}`)
+  const startTime = Date.now()
+  
+  try {
+    const bexio = getBexioClient()
 
-  // User mit Adresse laden
-  const user = await prisma.user.findUnique({
-    where: { id: userId },
-    include: {
-      addresses: {
-        where: { type: 'MAIN' },
-        take: 1,
+    // User mit Adresse laden
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      include: {
+        addresses: {
+          where: { type: 'MAIN' },
+          take: 1,
+        },
       },
-    },
-  })
-
-  if (!user) {
-    throw new Error(`User ${userId} not found`)
-  }
-
-  const mainAddress = user.addresses[0]
-
-  // Prüfen ob bereits ein Bexio-Kontakt existiert
-  if (user.bexioContactId) {
-    // Update existing contact (ohne address - Bexio API Fehler)
-    await bexio.updateContact(user.bexioContactId, {
-      name_1: user.lastName || user.name || '',
-      name_2: user.firstName || '',
-      mail: user.email,
-      postcode: mainAddress?.postalCode || undefined,
-      city: mainAddress?.city || undefined,
-      country_id: 1, // Schweiz
     })
-    return user.bexioContactId
-  }
 
-  // Erst prüfen ob E-Mail bereits existiert
-  const existingContact = await bexio.findContactByEmail(user.email)
-  if (existingContact && existingContact.id) {
-    // Link to existing contact
+    if (!user) {
+      await logSyncEvent('USER_SYNC', userId, 'FAILURE', { error: 'User not found' })
+      throw new Error(`User ${userId} not found`)
+    }
+
+    const mainAddress = user.addresses[0]
+    console.log(`[bexio-sync]    User gefunden: ${user.email}, Adresse: ${mainAddress ? 'ja' : 'nein'}`)
+
+    // Prüfen ob bereits ein Bexio-Kontakt existiert
+    if (user.bexioContactId) {
+      console.log(`[bexio-sync]    Existierender Bexio-Kontakt: ${user.bexioContactId}, update...`)
+      // Update existing contact with retry
+      await withRetry(
+        () => bexio.updateContact(user.bexioContactId!, {
+          name_1: user.lastName || user.name || '',
+          name_2: user.firstName || '',
+          mail: user.email,
+          postcode: mainAddress?.postalCode || undefined,
+          city: mainAddress?.city || undefined,
+          country_id: 1, // Schweiz
+        }),
+        'updateContact',
+        { userId, bexioContactId: user.bexioContactId }
+      )
+      
+      await logSyncEvent('USER_SYNC', userId, 'SUCCESS', { 
+        action: 'update',
+        bexioContactId: user.bexioContactId,
+        durationMs: Date.now() - startTime
+      })
+      return user.bexioContactId
+    }
+
+    // Erst prüfen ob E-Mail bereits existiert
+    console.log(`[bexio-sync]    Suche existierenden Kontakt für ${user.email}...`)
+    const existingContact = await withRetry(
+      () => bexio.findContactByEmail(user.email),
+      'findContactByEmail',
+      { email: user.email }
+    )
+    
+    if (existingContact && existingContact.id) {
+      console.log(`[bexio-sync]    Existierender Kontakt gefunden: ${existingContact.id}`)
+      // Link to existing contact
+      await prisma.user.update({
+        where: { id: userId },
+        data: { bexioContactId: existingContact.id },
+      })
+      
+      await logSyncEvent('USER_SYNC', userId, 'SUCCESS', { 
+        action: 'link_existing',
+        bexioContactId: existingContact.id,
+        durationMs: Date.now() - startTime
+      })
+      return existingContact.id
+    }
+
+    // Neuen Kontakt erstellen with retry
+    console.log(`[bexio-sync]    Erstelle neuen Kontakt...`)
+    const newContact = await withRetry(
+      () => bexio.createContact({
+        contact_type_id: 2, // Person
+        name_1: user.lastName || user.name || 'Unbekannt',
+        name_2: user.firstName || '',
+        mail: user.email,
+        postcode: mainAddress?.postalCode || undefined,
+        city: mainAddress?.city || undefined,
+        country_id: 1, // Schweiz
+        user_id: BEXIO_CONFIG.DEFAULT_USER_ID, // Pflichtfeld!
+        owner_id: BEXIO_CONFIG.DEFAULT_USER_ID, // Pflichtfeld!
+      }),
+      'createContact',
+      { userId, email: user.email }
+    )
+
+    // Bexio ID speichern
     await prisma.user.update({
       where: { id: userId },
-      data: { bexioContactId: existingContact.id },
+      data: { bexioContactId: newContact.id },
     })
-    return existingContact.id
+
+    await logSyncEvent('USER_SYNC', userId, 'SUCCESS', { 
+      action: 'create',
+      bexioContactId: newContact.id,
+      durationMs: Date.now() - startTime
+    })
+    
+    console.log(`[bexio-sync] ✅ syncUserToBexio COMPLETE - Bexio Contact ID: ${newContact.id}`)
+    return newContact.id!
+  } catch (error: any) {
+    await logSyncEvent('USER_SYNC', userId, 'FAILURE', { 
+      error: error.message,
+      durationMs: Date.now() - startTime
+    })
+    throw error
   }
-
-  // Neuen Kontakt erstellen
-  // WICHTIG: user_id und owner_id sind Pflichtfelder in Bexio!
-  const newContact = await bexio.createContact({
-    contact_type_id: 2, // Person
-    name_1: user.lastName || user.name || 'Unbekannt',
-    name_2: user.firstName || '',
-    mail: user.email,
-    postcode: mainAddress?.postalCode || undefined,
-    city: mainAddress?.city || undefined,
-    country_id: 1, // Schweiz
-    user_id: BEXIO_CONFIG.DEFAULT_USER_ID, // Pflichtfeld!
-    owner_id: BEXIO_CONFIG.DEFAULT_USER_ID, // Pflichtfeld!
-  })
-
-  // Bexio ID speichern
-  await prisma.user.update({
-    where: { id: userId },
-    data: { bexioContactId: newContact.id },
-  })
-
-  return newContact.id!
 }
 
 /**
@@ -187,35 +336,51 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
   console.log(`[bexio-sync]    - Contact ID: ${bexioContactId}`)
   console.log(`[bexio-sync]    - Positionen:`, JSON.stringify(positions, null, 2))
 
-  // Bexio Rechnung erstellen
+  // Bexio Rechnung erstellen MIT RETRY
   // WICHTIG: qr_reference ist KEIN gültiges Bexio API Feld - stattdessen im Title!
   // mwst_type: 2 = ohne MwSt. (vereinfacht Bexio-Sync, da keine tax_id nötig)
   // Die MwSt. ist bereits in unserer Kommission enthalten und wird intern verrechnet
-  const bexioInvoice = await bexio.createInvoice({
-    title: `Helvenda ${invoice.invoiceNumber} | QR-Ref: ${qrReference}`,
-    contact_id: bexioContactId,
-    user_id: BEXIO_CONFIG.DEFAULT_USER_ID,
-    is_valid_from: formatDate(issuedDate),
-    is_valid_to: formatDate(dueDate),
-    mwst_type: 0, // inkl. MwSt. - vielleicht verwendet Bexio dann Default
-    mwst_is_net: true,
-    show_position_taxes: false,
-    language_id: BEXIO_CONFIG.LANGUAGE_ID,
-    bank_account_id: BEXIO_CONFIG.BANK_ACCOUNT_ID,
-    currency_id: BEXIO_CONFIG.CURRENCY_ID,
-    payment_type_id: BEXIO_CONFIG.PAYMENT_TYPE_ID,
-    header: `Vielen Dank für Ihren Verkauf auf Helvenda.\n\nZahlungsreferenz: ${formatQRReferenceForDisplay(qrReference)}`,
-    footer: 'Bei Fragen kontaktieren Sie uns unter support@helvenda.ch\nDer Betrag enthält 8.1% MwSt.',
-    positions,
-  })
+  const bexioInvoice = await withRetry(
+    () => bexio.createInvoice({
+      title: `Helvenda ${invoice.invoiceNumber} | QR-Ref: ${qrReference}`,
+      contact_id: bexioContactId,
+      user_id: BEXIO_CONFIG.DEFAULT_USER_ID,
+      is_valid_from: formatDate(issuedDate),
+      is_valid_to: formatDate(dueDate),
+      mwst_type: 0, // inkl. MwSt. - vielleicht verwendet Bexio dann Default
+      mwst_is_net: true,
+      show_position_taxes: false,
+      language_id: BEXIO_CONFIG.LANGUAGE_ID,
+      bank_account_id: BEXIO_CONFIG.BANK_ACCOUNT_ID,
+      currency_id: BEXIO_CONFIG.CURRENCY_ID,
+      payment_type_id: BEXIO_CONFIG.PAYMENT_TYPE_ID,
+      header: `Vielen Dank für Ihren Verkauf auf Helvenda.\n\nZahlungsreferenz: ${formatQRReferenceForDisplay(qrReference)}`,
+      footer: 'Bei Fragen kontaktieren Sie uns unter support@helvenda.ch\nDer Betrag enthält 8.1% MwSt.',
+      positions,
+    }),
+    'createInvoice',
+    { invoiceId, invoiceNumber: invoice.invoiceNumber, contactId: bexioContactId }
+  )
   console.log(`[bexio-sync] ✅ Bexio Rechnung erstellt, ID: ${bexioInvoice.id}`)
 
-  // Rechnung als versendet markieren
+  // Rechnung als versendet markieren MIT RETRY
   if (bexioInvoice.id) {
     console.log(`[bexio-sync] 🔄 Markiere Rechnung als versendet...`)
-    await bexio.issueInvoice(bexioInvoice.id)
+    await withRetry(
+      () => bexio.issueInvoice(bexioInvoice.id!),
+      'issueInvoice',
+      { bexioInvoiceId: bexioInvoice.id }
+    )
     console.log(`[bexio-sync] ✅ Rechnung als versendet markiert`)
   }
+  
+  // Log success event
+  await logSyncEvent('INVOICE_SYNC', invoiceId, 'SUCCESS', {
+    bexioInvoiceId: bexioInvoice.id,
+    qrReference,
+    invoiceNumber: invoice.invoiceNumber,
+    total: invoice.total.toString(),
+  })
 
   // QR-Referenz und Bexio ID in unserer DB speichern
   console.log(`[bexio-sync] 🔄 Speichere qrReference und bexioInvoiceId in DB...`)

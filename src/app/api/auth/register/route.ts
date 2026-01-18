@@ -1,6 +1,7 @@
 import { getEmailVerificationEmail, sendEmail } from '@/lib/email'
 import { shouldShowDetailedErrors } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limit'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
@@ -15,6 +16,34 @@ export async function POST(request: NextRequest) {
   let userCreated = false
 
   try {
+    // SECURITY: Rate limiting - max 5 registrations per IP per hour
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+               request.headers.get('x-real-ip') || 
+               'unknown'
+    const rateLimitResult = await checkRateLimit({
+      identifier: `register:${ip}`,
+      limit: 5,
+      window: 3600, // 1 hour
+    })
+    
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { 
+          message: 'Zu viele Registrierungsversuche. Bitte versuchen Sie es später erneut.',
+          retryAfter: Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000)
+        },
+        { 
+          status: 429,
+          headers: {
+            'Retry-After': String(Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000)),
+            'X-RateLimit-Limit': '5',
+            'X-RateLimit-Remaining': String(rateLimitResult.remaining),
+            'X-RateLimit-Reset': rateLimitResult.resetAt.toISOString(),
+          }
+        }
+      )
+    }
+
     const { firstName, lastName, nickname, email, password, marketingConsent } = await request.json()
 
     // Normalize and trim all input fields first

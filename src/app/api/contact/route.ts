@@ -1,12 +1,33 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
+import { checkRateLimit } from '@/lib/rate-limit'
 
 const CONTACT_EMAIL =
   process.env.CONTACT_EMAIL || process.env.RESEND_FROM_EMAIL || 'support@helvenda.ch'
 
 export async function POST(request: NextRequest) {
   try {
+    // SECURITY: Rate limiting - max 10 contact requests per IP per hour
+    const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 
+               request.headers.get('x-real-ip') || 
+               'unknown'
+    const rateLimitResult = await checkRateLimit({
+      identifier: `contact:${ip}`,
+      limit: 10,
+      window: 3600, // 1 hour
+    })
+    
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        { 
+          message: 'Zu viele Anfragen. Bitte versuchen Sie es später erneut.',
+          retryAfter: Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000)
+        },
+        { status: 429 }
+      )
+    }
+
     const body = await request.json()
     const { category, email, subject, message } = body
 
