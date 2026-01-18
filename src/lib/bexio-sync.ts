@@ -167,6 +167,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
 
   // Positionen erstellen
   // WICHTIG: Verwende item.total (immer korrekt) statt item.amount (könnte 0 oder null sein)
+  // Keine tax_id nötig da mwst_type: 2 (ohne MwSt. - bereits im Betrag enthalten)
   const positions: BexioInvoicePosition[] = invoice.items.map(item => {
     // Priorität: total > price > amount (als Fallback)
     const unitPrice = item.total || item.price || item.amount || 0
@@ -178,7 +179,6 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
       amount: '1',
       text: item.description,
       unit_price: unitPrice.toString(),
-      tax_id: 16, // Standard-MwSt. 8.1% (häufigste ID in Bexio)
     }
   })
 
@@ -188,21 +188,23 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
 
   // Bexio Rechnung erstellen
   // WICHTIG: qr_reference ist KEIN gültiges Bexio API Feld - stattdessen im Title!
+  // mwst_type: 2 = ohne MwSt. (vereinfacht Bexio-Sync, da keine tax_id nötig)
+  // Die MwSt. ist bereits in unserer Kommission enthalten und wird intern verrechnet
   const bexioInvoice = await bexio.createInvoice({
     title: `Helvenda ${invoice.invoiceNumber} | QR-Ref: ${qrReference}`,
     contact_id: bexioContactId,
     user_id: BEXIO_CONFIG.DEFAULT_USER_ID,
     is_valid_from: formatDate(issuedDate),
     is_valid_to: formatDate(dueDate),
-    mwst_type: 0, // inkl. MWST
-    mwst_is_net: false,
-    show_position_taxes: false, // Keine separate Steueranzeige
+    mwst_type: 2, // ohne MwSt. (MwSt. bereits in Betrag enthalten)
+    mwst_is_net: true,
+    show_position_taxes: false,
     language_id: BEXIO_CONFIG.LANGUAGE_ID,
     bank_account_id: BEXIO_CONFIG.BANK_ACCOUNT_ID,
     currency_id: BEXIO_CONFIG.CURRENCY_ID,
     payment_type_id: BEXIO_CONFIG.PAYMENT_TYPE_ID,
     header: `Vielen Dank für Ihren Verkauf auf Helvenda.\n\nZahlungsreferenz: ${formatQRReferenceForDisplay(qrReference)}`,
-    footer: 'Bei Fragen kontaktieren Sie uns unter support@helvenda.ch',
+    footer: 'Bei Fragen kontaktieren Sie uns unter support@helvenda.ch\nDer Betrag enthält 8.1% MwSt.',
     positions,
   })
   console.log(`[bexio-sync] ✅ Bexio Rechnung erstellt, ID: ${bexioInvoice.id}`)
