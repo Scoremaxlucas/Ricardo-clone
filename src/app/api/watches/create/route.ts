@@ -1044,15 +1044,45 @@ export async function POST(request: NextRequest) {
       if (booster && booster !== 'none') {
         const boosterCode = typeof booster === 'string' ? booster : booster[0]
 
-        // Hole Booster-Details
-        const boosterPrice = await prisma.boosterPrice.findUnique({
+        // Mapping für Rückwärtskompatibilität (neue Codes -> alte Codes falls nötig)
+        const boosterCodeMapping: Record<string, string> = {
+          'boost': 'bronze',
+          'turbo-boost': 'silber',
+          'super-boost': 'gold',
+        }
+
+        // Hardcoded Preise als Fallback (Watch-out.ch Style)
+        const hardcodedPrices: Record<string, { price: number; name: string }> = {
+          'boost': { price: 19.90, name: 'Boost' },
+          'turbo-boost': { price: 39.90, name: 'Turbo-Boost' },
+          'super-boost': { price: 69.90, name: 'Super-Boost' },
+          'bronze': { price: 19.90, name: 'Boost' },
+          'silber': { price: 39.90, name: 'Turbo-Boost' },
+          'gold': { price: 69.90, name: 'Super-Boost' },
+        }
+
+        // Hole Booster-Details - versuche zuerst neuen Code, dann alten Code
+        let boosterPrice = await prisma.boosterPrice.findUnique({
           where: { code: boosterCode },
         })
 
-        if (boosterPrice && boosterPrice.price > 0) {
+        // Falls neuer Code nicht gefunden, versuche alten Code
+        if (!boosterPrice && boosterCodeMapping[boosterCode]) {
+          boosterPrice = await prisma.boosterPrice.findUnique({
+            where: { code: boosterCodeMapping[boosterCode] },
+          })
+          console.log(`[watches/create] Booster-Code '${boosterCode}' nicht gefunden, verwende Fallback '${boosterCodeMapping[boosterCode]}'`)
+        }
+
+        // Verwende hardcoded Preise als letzten Fallback
+        const boosterData = boosterPrice || hardcodedPrices[boosterCode]
+        const boosterName = boosterPrice?.name || hardcodedPrices[boosterCode]?.name || boosterCode
+        const boosterPriceValue = boosterPrice?.price ?? hardcodedPrices[boosterCode]?.price ?? 0
+
+        if (boosterPriceValue > 0) {
           const vatRate = 0.081 // 8.1% MwSt
           // Preis ist bereits inkl. MwSt - berechne Netto und MwSt-Betrag
-          const total = boosterPrice.price // Total ist der Preis inkl. MwSt
+          const total = boosterPriceValue // Total ist der Preis inkl. MwSt
           const subtotal = total / (1 + vatRate) // Netto-Preis ohne MwSt
           const vatAmount = total - subtotal // MwSt-Betrag
           // Schweizer Rappenrundung auf 0.05
@@ -1095,9 +1125,10 @@ export async function POST(request: NextRequest) {
                 create: [
                   {
                     watchId: watch.id,
-                    description: `Booster: ${boosterPrice.name}`,
+                    description: `Booster: ${boosterName}`,
                     quantity: 1,
                     price: roundedSubtotal,
+                    amount: roundedSubtotal, // For Bexio sync
                     total: roundedSubtotal,
                   },
                 ],
@@ -1106,8 +1137,19 @@ export async function POST(request: NextRequest) {
           })
 
           console.log(
-            `[watches/create] Booster-Rechnung erstellt: ${invoiceNumber} für ${boosterPrice.name} (CHF ${roundedTotal.toFixed(2)} inkl. MwSt)`
+            `[watches/create] ✅ Booster-Rechnung erstellt: ${invoiceNumber} für ${boosterName} (CHF ${roundedTotal.toFixed(2)} inkl. MwSt)`
           )
+
+          // Sync to Bexio (non-blocking)
+          try {
+            if (process.env.BEXIO_API_TOKEN) {
+              const { createBexioInvoice } = await import('@/lib/bexio-sync')
+              const bexioResult = await createBexioInvoice(invoice.id)
+              console.log(`[watches/create] ✅ Booster-Rechnung ${invoiceNumber} zu Bexio synchronisiert (ID: ${bexioResult.bexioInvoiceId})`)
+            }
+          } catch (bexioError: any) {
+            console.error(`[watches/create] ⚠️ Bexio-Sync für Booster-Rechnung fehlgeschlagen:`, bexioError.message)
+          }
 
           // Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
           try {
@@ -1120,7 +1162,7 @@ export async function POST(request: NextRequest) {
         }
       }
     } catch (invoiceError: any) {
-      console.error('[watches/create] Fehler bei Booster-Rechnungserstellung:', invoiceError)
+      console.error('[watches/create] ❌ Fehler bei Booster-Rechnungserstellung:', invoiceError)
       // Fehler wird ignoriert, Watch war erfolgreich erstellt
     }
 

@@ -67,29 +67,71 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
     currentBoosters = currentBoosters.filter(code => code && code !== 'none')
 
+    // Mapping für Rückwärtskompatibilität (neue Codes -> alte Codes falls nötig)
+    const boosterCodeMapping: Record<string, string> = {
+      'boost': 'bronze',
+      'turbo-boost': 'silber',
+      'super-boost': 'gold',
+      'bronze': 'boost',
+      'silber': 'turbo-boost',
+      'gold': 'super-boost',
+    }
+
+    // Hardcoded Preise als Fallback (Watch-out.ch Style)
+    const hardcodedPrices: Record<string, { price: number; name: string }> = {
+      'boost': { price: 19.90, name: 'Boost' },
+      'turbo-boost': { price: 39.90, name: 'Turbo-Boost' },
+      'super-boost': { price: 69.90, name: 'Super-Boost' },
+      'bronze': { price: 19.90, name: 'Boost' },
+      'silber': { price: 39.90, name: 'Turbo-Boost' },
+      'gold': { price: 69.90, name: 'Super-Boost' },
+    }
+
     // Hole aktuellen und neuen Booster-Preis
     const currentBoosterCode = currentBoosters.length > 0 ? currentBoosters[0] : null
     let currentBoosterPrice = 0
     let newBoosterPrice = 0
 
     if (currentBoosterCode) {
-      const currentBooster = await prisma.boosterPrice.findUnique({
+      let currentBooster = await prisma.boosterPrice.findUnique({
         where: { code: currentBoosterCode },
       })
+      // Versuche Fallback
+      if (!currentBooster && boosterCodeMapping[currentBoosterCode]) {
+        currentBooster = await prisma.boosterPrice.findUnique({
+          where: { code: boosterCodeMapping[currentBoosterCode] },
+        })
+      }
       if (currentBooster) {
         currentBoosterPrice = currentBooster.price
+      } else if (hardcodedPrices[currentBoosterCode]) {
+        currentBoosterPrice = hardcodedPrices[currentBoosterCode].price
       }
     }
 
-    const newBoosterRecord = await prisma.boosterPrice.findUnique({
+    // Versuche neuen Booster zu finden (mit Fallback auf alten Code)
+    let newBoosterRecord = await prisma.boosterPrice.findUnique({
       where: { code: newBooster },
     })
 
-    if (!newBoosterRecord) {
+    if (!newBoosterRecord && boosterCodeMapping[newBooster]) {
+      newBoosterRecord = await prisma.boosterPrice.findUnique({
+        where: { code: boosterCodeMapping[newBooster] },
+      })
+    }
+
+    // Verwende hardcoded Preise als Fallback
+    const newBoosterData = newBoosterRecord || (hardcodedPrices[newBooster] ? {
+      ...hardcodedPrices[newBooster],
+      code: newBooster,
+    } : null)
+
+    if (!newBoosterData) {
       return NextResponse.json({ message: 'Booster nicht gefunden' }, { status: 404 })
     }
 
-    newBoosterPrice = newBoosterRecord.price
+    newBoosterPrice = newBoosterRecord?.price ?? hardcodedPrices[newBooster]?.price ?? 0
+    const newBoosterName = newBoosterRecord?.name ?? hardcodedPrices[newBooster]?.name ?? newBooster
 
     // Berechne Differenz (kann auch negativ sein, wenn man downgradet)
     const priceDifference = newBoosterPrice - currentBoosterPrice
@@ -163,10 +205,11 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
             {
               watchId: watch.id,
               description: currentBoosterCode
-                ? `Booster-Upgrade: ${newBoosterRecord.name} (Differenz)`
-                : `Booster: ${newBoosterRecord.name}`,
+                ? `Booster-Upgrade: ${newBoosterName} (Differenz)`
+                : `Booster: ${newBoosterName}`,
               quantity: 1,
               price: roundedSubtotal,
+              amount: roundedSubtotal, // For Bexio sync
               total: roundedSubtotal,
             },
           ],
@@ -175,8 +218,19 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     })
 
     console.log(
-      `[upgrade-booster] Booster-Rechnung erstellt: ${invoiceNumber} für ${newBoosterRecord.name} (${currentBoosterCode ? 'Differenz' : 'Vollpreis'} CHF ${roundedTotal.toFixed(2)} inkl. MwSt) - Watch ${watch.id}`
+      `[upgrade-booster] ✅ Booster-Rechnung erstellt: ${invoiceNumber} für ${newBoosterName} (${currentBoosterCode ? 'Differenz' : 'Vollpreis'} CHF ${roundedTotal.toFixed(2)} inkl. MwSt) - Watch ${watch.id}`
     )
+
+    // Sync to Bexio (non-blocking)
+    try {
+      if (process.env.BEXIO_API_TOKEN) {
+        const { createBexioInvoice } = await import('@/lib/bexio-sync')
+        const bexioResult = await createBexioInvoice(invoice.id)
+        console.log(`[upgrade-booster] ✅ Booster-Rechnung ${invoiceNumber} zu Bexio synchronisiert (ID: ${bexioResult.bexioInvoiceId})`)
+      }
+    } catch (bexioError: any) {
+      console.error(`[upgrade-booster] ⚠️ Bexio-Sync für Booster-Rechnung fehlgeschlagen:`, bexioError.message)
+    }
 
     // Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
     try {

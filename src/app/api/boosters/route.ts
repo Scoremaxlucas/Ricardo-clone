@@ -4,7 +4,7 @@ import { NextRequest, NextResponse } from 'next/server'
  * GET /api/boosters
  * Returns all active boosters for public use (prices are public)
  * Used by the selling wizard to display booster options
- * 
+ *
  * Watch-out.ch Style: Boost / Turbo-Boost / Super-Boost
  */
 export async function GET(request: NextRequest) {
