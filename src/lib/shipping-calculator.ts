@@ -71,8 +71,6 @@ export async function calculateShippingCost(
     throw new Error(`Base rate not found: ${baseCode}`)
   }
 
-  const basePrice = baseRate.basePriceChf
-
   // Berechne Add-ons (mit Fallback)
   let sperrgutPrice = 0
   let pickhomePrice = 0
