@@ -167,7 +167,6 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
 
   // Positionen erstellen
   // WICHTIG: Verwende item.total (immer korrekt) statt item.amount (könnte 0 oder null sein)
-  // WICHTIG: Keine tax_id - Bexio verwendet Default basierend auf mwst_type
   const positions: BexioInvoicePosition[] = invoice.items.map(item => {
     // Priorität: total > price > amount (als Fallback)
     const unitPrice = item.total || item.price || item.amount || 0
@@ -179,7 +178,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
       amount: '1',
       text: item.description,
       unit_price: unitPrice.toString(),
-      // tax_id wird weggelassen - Bexio nutzt Default (8.1% MWST)
+      tax_id: 16, // Standard-MwSt. 8.1% (häufigste ID in Bexio)
     }
   })
 
