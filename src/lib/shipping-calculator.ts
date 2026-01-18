@@ -21,6 +21,18 @@ export interface ShippingCostResult {
   shippingCode: string
 }
 
+// Fallback-Preise falls DB-Catalog leer ist (Schweizer Post Tarife 2024)
+const FALLBACK_RATES: Record<string, number> = {
+  post_economy_2kg: 9.0,
+  post_economy_10kg: 12.0,
+  post_economy_30kg: 21.0,
+  post_priority_2kg: 13.5,
+  post_priority_10kg: 15.0,
+  post_priority_30kg: 24.0,
+  addon_sperrgut: 13.0,
+  addon_pickhome: 3.4,
+}
+
 /**
  * Berechnet Versandkosten basierend auf Selection und Catalog
  * Single Source of Truth für Preisberechnung
@@ -32,43 +44,49 @@ export async function calculateShippingCost(
   allowedAddons?: { sperrgut?: boolean; pickhome?: boolean }
 ): Promise<ShippingCostResult> {
   const rateSetId = 'default_ch_post'
-
-  // Lade Catalog-Einträge
-  const catalogEntries = await prisma.shippingRateCatalog.findMany({
-    where: {
-      rateSetId,
-      isActive: true,
-    },
-  })
-
-  // Finde Base Rate
   const baseCode = `post_${selection.service}_${selection.weightTier}kg`
-  const baseRate = catalogEntries.find(r => r.code === baseCode)
 
-  if (!baseRate) {
+  // Versuche Catalog aus DB zu laden
+  let catalogEntries: Array<{ code: string; basePriceChf: number }> = []
+  try {
+    catalogEntries = await prisma.shippingRateCatalog.findMany({
+      where: {
+        rateSetId,
+        isActive: true,
+      },
+      select: {
+        code: true,
+        basePriceChf: true,
+      },
+    })
+  } catch (e) {
+    console.warn('[shipping-calculator] DB lookup failed, using fallback rates')
+  }
+
+  // Finde Base Rate (DB oder Fallback)
+  const baseRate = catalogEntries.find(r => r.code === baseCode)
+  const basePrice = baseRate?.basePriceChf ?? FALLBACK_RATES[baseCode]
+
+  if (basePrice === undefined) {
     throw new Error(`Base rate not found: ${baseCode}`)
   }
 
   const basePrice = baseRate.basePriceChf
 
-  // Berechne Add-ons
+  // Berechne Add-ons (mit Fallback)
   let sperrgutPrice = 0
   let pickhomePrice = 0
 
   // Sperrgut
   if (selection.addons?.sperrgut && allowedAddons?.sperrgut !== false) {
     const sperrgutRate = catalogEntries.find(r => r.code === 'addon_sperrgut')
-    if (sperrgutRate) {
-      sperrgutPrice = sperrgutRate.basePriceChf
-    }
+    sperrgutPrice = sperrgutRate?.basePriceChf ?? FALLBACK_RATES['addon_sperrgut'] ?? 0
   }
 
   // Pick@home
   if (selection.addons?.pickhome && allowedAddons?.pickhome !== false) {
     const pickhomeRate = catalogEntries.find(r => r.code === 'addon_pickhome')
-    if (pickhomeRate) {
-      pickhomePrice = pickhomeRate.basePriceChf
-    }
+    pickhomePrice = pickhomeRate?.basePriceChf ?? FALLBACK_RATES['addon_pickhome'] ?? 0
   }
 
   // Berechne Total
