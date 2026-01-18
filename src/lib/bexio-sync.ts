@@ -179,7 +179,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
       amount: '1',
       text: item.description,
       unit_price: unitPrice.toString(),
-      // Keine account_id und tax_id - Bexio soll Defaults verwenden
+      tax_id: 3, // Export 0% aus 3.0/taxes API (einziger aktiver)
     }
   })
 
@@ -197,7 +197,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
     user_id: BEXIO_CONFIG.DEFAULT_USER_ID,
     is_valid_from: formatDate(issuedDate),
     is_valid_to: formatDate(dueDate),
-    mwst_type: 2, // ohne MwSt. (MwSt. bereits in Betrag enthalten)
+    mwst_type: 0, // inkl. MwSt. - vielleicht verwendet Bexio dann Default
     mwst_is_net: true,
     show_position_taxes: false,
     language_id: BEXIO_CONFIG.LANGUAGE_ID,
