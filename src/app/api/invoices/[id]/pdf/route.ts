@@ -791,86 +791,88 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         pdf.rect(crossX + 2.5, crossY + 1.5, 2, crossSize - 3, 'F')
 
         // ========== ZAHLTEIL - Right side info ==========
-        const infoX = paymentMargin + qrSize + 10
+        // Swiss QR-Bill: Info rechts neben dem QR-Code
+        const infoX = paymentMargin + qrSize + 8  // Direkt nach dem QR-Code
         let infoY = paymentY + 8
 
-        // Währung / Betrag
-        pdf.setFontSize(8)
-        pdf.setFont('helvetica', 'bold')
-        pdf.text('Währung', infoX, infoY)
-        pdf.text('Betrag', infoX + 25, infoY)
-        infoY += 4
-        pdf.setFontSize(10)
-        pdf.setFont('helvetica', 'normal')
-        pdf.text('CHF', infoX, infoY)
-        pdf.text(invoice.total.toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g, ' '), infoX + 25, infoY)
-        infoY += 10
-
-        // Konto / Zahlbar an (right column of Zahlteil)
-        const rightInfoX = pageWidth - 70
-        let rightInfoY = paymentY + 8
-
+        // Währung / Betrag (oben links nach QR-Code)
         pdf.setFontSize(6)
         pdf.setFont('helvetica', 'bold')
-        pdf.text('Konto / Zahlbar an', rightInfoX, rightInfoY)
-        rightInfoY += 3
+        pdf.text('Währung', infoX, infoY)
+        pdf.text('Betrag', infoX + 20, infoY)
+        infoY += 3
         pdf.setFontSize(8)
         pdf.setFont('helvetica', 'normal')
-        pdf.text(PAYMENT_CONFIG.iban, rightInfoX, rightInfoY)
-        rightInfoY += 3
-        pdf.text(PAYMENT_CONFIG.creditorName, rightInfoX, rightInfoY)
-        rightInfoY += 3
+        pdf.text('CHF', infoX, infoY)
+        pdf.text(invoice.total.toFixed(2), infoX + 20, infoY)
+        infoY += 8
+
+        // Konto / Zahlbar an
+        pdf.setFontSize(6)
+        pdf.setFont('helvetica', 'bold')
+        pdf.text('Konto / Zahlbar an', infoX, infoY)
+        infoY += 3
+        pdf.setFontSize(8)
+        pdf.setFont('helvetica', 'normal')
+        pdf.text(PAYMENT_CONFIG.iban, infoX, infoY)
+        infoY += 3
+        pdf.text(PAYMENT_CONFIG.creditorName, infoX, infoY)
+        infoY += 3
         pdf.text(
           `${PAYMENT_CONFIG.address.street} ${PAYMENT_CONFIG.address.streetNumber}`,
-          rightInfoX,
-          rightInfoY
+          infoX,
+          infoY
         )
-        rightInfoY += 3
+        infoY += 3
         pdf.text(
           `${PAYMENT_CONFIG.address.postalCode} ${PAYMENT_CONFIG.address.city}`,
-          rightInfoX,
-          rightInfoY
+          infoX,
+          infoY
         )
-        rightInfoY += 6
+        infoY += 6
 
         // Referenz
         pdf.setFontSize(6)
         pdf.setFont('helvetica', 'bold')
-        pdf.text('Referenz', rightInfoX, rightInfoY)
-        rightInfoY += 3
+        pdf.text('Referenz', infoX, infoY)
+        infoY += 3
         pdf.setFontSize(8)
         pdf.setFont('helvetica', 'normal')
-        pdf.text(formattedRef, rightInfoX, rightInfoY)
-        rightInfoY += 6
+        // Referenz in Gruppen formatieren für bessere Lesbarkeit
+        pdf.text(formattedRef, infoX, infoY)
+        infoY += 6
 
         // Zahlbar durch
         pdf.setFontSize(6)
         pdf.setFont('helvetica', 'bold')
-        pdf.text('Zahlbar durch', rightInfoX, rightInfoY)
-        rightInfoY += 3
+        pdf.text('Zahlbar durch', infoX, infoY)
+        infoY += 3
         pdf.setFontSize(8)
         pdf.setFont('helvetica', 'normal')
         if (sellerWithAddress.firstName && sellerWithAddress.lastName) {
           pdf.text(
             `${sellerWithAddress.firstName} ${sellerWithAddress.lastName}`,
-            rightInfoX,
-            rightInfoY
+            infoX,
+            infoY
           )
-          rightInfoY += 3
+          infoY += 3
+        } else if (sellerWithAddress.name) {
+          pdf.text(sellerWithAddress.name, infoX, infoY)
+          infoY += 3
         }
         if (sellerWithAddress.street) {
           pdf.text(
             `${sellerWithAddress.street} ${sellerWithAddress.streetNumber || ''}`.trim(),
-            rightInfoX,
-            rightInfoY
+            infoX,
+            infoY
           )
-          rightInfoY += 3
+          infoY += 3
         }
         if (sellerWithAddress.postalCode && sellerWithAddress.city) {
           pdf.text(
             `${sellerWithAddress.postalCode} ${sellerWithAddress.city}`,
-            rightInfoX,
-            rightInfoY
+            infoX,
+            infoY
           )
         }
       } catch (error) {

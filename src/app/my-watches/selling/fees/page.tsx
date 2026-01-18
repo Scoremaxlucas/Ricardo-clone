@@ -139,7 +139,8 @@ function SellingFeesContent() {
     // Direkter Download ohne Profilprüfung (vereinfacht)
     setDownloadingPdf(invoiceId)
     try {
-      const res = await fetch(`/api/invoices/${invoiceId}/pdf-v2`)
+      // Zurück zur alten PDF Route (pdf-v2 hat Probleme in Vercel serverless)
+      const res = await fetch(`/api/invoices/${invoiceId}/pdf`)
       if (!res.ok) {
         const errorText = await res.text()
         console.error('PDF Download Fehler:', errorText)

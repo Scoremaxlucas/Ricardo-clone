@@ -89,8 +89,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     })
   } catch (error: any) {
     console.error('[pdf-v2] Fehler:', error)
+    console.error('[pdf-v2] Stack:', error.stack)
     return NextResponse.json(
-      { message: 'Fehler beim Generieren der Rechnung', error: error.message },
+      { 
+        message: 'Fehler beim Generieren der Rechnung', 
+        error: error.message,
+        stack: process.env.NODE_ENV === 'development' ? error.stack : undefined
+      },
       { status: 500 }
     )
   }
