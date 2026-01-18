@@ -269,7 +269,7 @@ export default function AdminPricingPage() {
         {activeTab === 'fees' && (
           <div className="rounded-lg bg-white p-6 shadow">
             <div className="space-y-6">
-              {/* Plattform-Marge (10%) */}
+              {/* Plattform-Marge (5%) */}
               <div>
                 <label className="mb-2 block text-sm font-medium text-gray-700">
                   Plattform-Gebühr (in Prozent)
@@ -288,7 +288,7 @@ export default function AdminPricingPage() {
                     = {(settings.platformMarginRate * 100).toFixed(2)}%
                   </span>
                 </div>
-                <p className="mt-1 text-xs text-gray-500">Von jedem Verkauf (z.B. 0.1 = 10%)</p>
+                <p className="mt-1 text-xs text-gray-500">Von jedem Verkauf (z.B. 0.05 = 5%)</p>
               </div>
 
               {/* Zahlungsschutz-Gebühr (Helvenda Schutz) */}
