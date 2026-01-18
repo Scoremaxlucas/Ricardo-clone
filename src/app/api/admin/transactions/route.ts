@@ -1,48 +1,77 @@
-import { authOptions } from '@/lib/auth'
+/**
+ * Admin Transactions API
+ * Liefert alle Transaktionen für die Admin-Übersicht
+ *
+ * AKTUALISIERT: Verwendet jetzt primär Order-Tabelle,
+ * inkludiert aber auch Legacy-Purchase-Daten für vollständige Historie
+ */
+
+import { requireAdmin } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
-
-// Helper function to check admin status
-async function checkAdmin(session: any): Promise<boolean> {
-  if (!session?.user?.id && !session?.user?.email) {
-    return false
-  }
-
-  let user = null
-  if (session.user.id) {
-    user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      select: { isAdmin: true, email: true },
-    })
-  }
-
-  if (!user && session.user.email) {
-    user = await prisma.user.findUnique({
-      where: { email: session.user.email },
-      select: { isAdmin: true, email: true },
-    })
-  }
-
-  const isAdminInDb = user?.isAdmin === true
-
-  return isAdminInDb
-}
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Admin-Prüfung
+    const authError = await requireAdmin()
+    if (authError) return authError
 
-    if (!(await checkAdmin(session))) {
-      return NextResponse.json(
-        { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
-        { status: 403 }
-      )
-    }
+    const searchParams = request.nextUrl.searchParams
+    const source = searchParams.get('source') || 'all' // 'all', 'orders', 'legacy'
+    const limit = parseInt(searchParams.get('limit') || '100')
 
-    // Lade alle Käufe
-    // WICHTIG: Explizites select verwenden, um disputeInitiatedBy zu vermeiden
-    const purchases = await prisma.purchase.findMany({
+    // Lade Orders (NEUE Transaktionen)
+    const orders = source !== 'legacy' ? await prisma.order.findMany({
+      select: {
+        id: true,
+        orderNumber: true,
+        itemPrice: true,
+        shippingCost: true,
+        platformFee: true,
+        protectionFee: true,
+        totalAmount: true,
+        orderStatus: true,
+        paymentStatus: true,
+        paymentMethod: true,
+        paidAt: true,
+        createdAt: true,
+        watch: {
+          select: {
+            id: true,
+            title: true,
+            brand: true,
+            model: true,
+          },
+        },
+        buyer: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            nickname: true,
+          },
+        },
+        seller: {
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            firstName: true,
+            lastName: true,
+            nickname: true,
+          },
+        },
+      },
+      orderBy: {
+        createdAt: 'desc',
+      },
+      take: limit,
+    }) : []
+
+    // Lade Legacy-Purchases (für historische Daten)
+    const legacyPurchases = source !== 'orders' ? await prisma.purchase.findMany({
       select: {
         id: true,
         price: true,
@@ -50,130 +79,150 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         buyer: {
           select: {
+            id: true,
             name: true,
             email: true,
+            firstName: true,
+            lastName: true,
+            nickname: true,
           },
         },
         watch: {
           select: {
-            title: true,
             id: true,
+            title: true,
+            brand: true,
+            model: true,
             price: true,
             sellerId: true,
           },
         },
-        // Nur benötigte Felder selektieren (disputeInitiatedBy wird NICHT selektiert)
       },
       orderBy: {
         createdAt: 'desc',
       },
-    })
+      take: limit,
+    }) : []
 
-    // Hole Seller-Infos separat für alle Purchases
-    const sellerIds = Array.from(new Set(purchases.map(p => p.watch.sellerId)))
-    const sellers = await prisma.user.findMany({
+    // Hole Seller-Infos für Legacy-Purchases
+    const sellerIds = Array.from(new Set(legacyPurchases.map(p => p.watch.sellerId)))
+    const sellers = sellerIds.length > 0 ? await prisma.user.findMany({
       where: { id: { in: sellerIds } },
-      select: { id: true, name: true, email: true },
-    })
+      select: { id: true, name: true, email: true, firstName: true, lastName: true, nickname: true },
+    }) : []
     const sellerMap = new Map(sellers.map(s => [s.id, s]))
 
-    // Jetzt für Sales
-    const sales = await prisma.sale.findMany({
-      include: {
-        seller: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-        watch: {
-          select: {
-            title: true,
-            id: true,
-            price: true,
-          },
-        },
-        buyer: {
-          select: {
-            name: true,
-            email: true,
-          },
-        },
-      },
-      orderBy: {
-        createdAt: 'desc',
-      },
+    // Formatiere Orders als Transaktionen
+    const orderTransactions = orders.map(order => {
+      const buyerName = order.buyer.nickname || order.buyer.firstName || order.buyer.name || 'Unbekannt'
+      const sellerName = order.seller.nickname || order.seller.firstName || order.seller.name || 'Unbekannt'
+
+      return {
+        id: order.id,
+        orderNumber: order.orderNumber,
+        type: 'order' as const,
+        source: 'order' as const,
+        price: order.itemPrice,
+        shippingCost: order.shippingCost,
+        platformFee: order.platformFee,
+        protectionFee: order.protectionFee,
+        totalAmount: order.totalAmount,
+        status: order.orderStatus,
+        paymentStatus: order.paymentStatus,
+        paymentMethod: order.paymentMethod,
+        buyerId: order.buyer.id,
+        buyerName,
+        buyerEmail: order.buyer.email,
+        sellerId: order.seller.id,
+        sellerName,
+        sellerEmail: order.seller.email,
+        watchId: order.watch.id,
+        watchTitle: order.watch.title,
+        watchBrand: order.watch.brand,
+        watchModel: order.watch.model,
+        paidAt: order.paidAt?.toISOString() || null,
+        createdAt: order.createdAt.toISOString(),
+      }
     })
 
-    // Lade Pricing-Einstellungen (Standard: 10% Marge, max. CHF 220.-)
-    const DEFAULT_PRICING = {
-      platformMarginRate: 0.1,
-      maximumCommission: 220,
-    }
-    // TODO: Später aus Pricing-API laden, aktuell Default-Werte
-    const pricing = DEFAULT_PRICING
+    // Formatiere Legacy-Purchases als Transaktionen
+    const legacyTransactions = legacyPurchases.map(p => {
+      const price = p.price || p.watch.price || 0
+      const seller = sellerMap.get(p.watch.sellerId)
+      const buyerName = p.buyer.nickname || p.buyer.firstName || p.buyer.name || 'Unbekannt'
+      const sellerName = seller?.nickname || seller?.firstName || seller?.name || 'Unbekannt'
 
-    // Kombiniere und formatiere Transaktionen
-    const transactions = [
-      ...purchases.map(p => {
-        const price = p.price || p.watch.price || 0
-        const seller = sellerMap.get(p.watch.sellerId)
-        const calculatedMargin = price * pricing.platformMarginRate
-        const margin = pricing.maximumCommission
-          ? Math.min(calculatedMargin, pricing.maximumCommission)
-          : calculatedMargin
-        return {
-          id: p.id,
-          type: 'purchase' as const,
-          price,
-          margin,
-          buyerName: p.buyer.name,
-          buyerEmail: p.buyer.email,
-          sellerName: seller?.name || null,
-          sellerEmail: seller?.email || '',
-          watchTitle: p.watch.title,
-          watchId: p.watch.id,
-          createdAt: p.createdAt.toISOString(),
-        }
-      }),
-      ...sales.map(s => {
-        const price = s.price || s.watch.price || 0
-        const calculatedMargin = price * pricing.platformMarginRate
-        const margin = pricing.maximumCommission
-          ? Math.min(calculatedMargin, pricing.maximumCommission)
-          : calculatedMargin
-        return {
-          id: s.id,
-          type: 'sale' as const,
-          price,
-          margin,
-          buyerName: s.buyer?.name || null,
-          buyerEmail: s.buyer?.email || '',
-          sellerName: s.seller.name,
-          sellerEmail: s.seller.email,
-          watchTitle: s.watch.title,
-          watchId: s.watch.id,
-          createdAt: s.createdAt.toISOString(),
-        }
-      }),
-    ].sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      // Berechne Marge (Legacy: 10% mit max CHF 220)
+      const calculatedMargin = price * 0.1
+      const platformFee = Math.min(calculatedMargin, 220)
 
-    // Berechne Statistiken
-    const totalRevenue = transactions.reduce((sum, t) => sum + t.price, 0)
-    const totalTransactions = transactions.length
-    const platformMargin = transactions.reduce((sum, t) => sum + t.margin, 0)
+      return {
+        id: p.id,
+        orderNumber: null,
+        type: 'legacy_purchase' as const,
+        source: 'purchase' as const,
+        price,
+        shippingCost: 0,
+        platformFee,
+        protectionFee: null,
+        totalAmount: price,
+        status: p.status,
+        paymentStatus: p.status === 'completed' ? 'paid' : p.status,
+        paymentMethod: null,
+        buyerId: p.buyer.id,
+        buyerName,
+        buyerEmail: p.buyer.email,
+        sellerId: p.watch.sellerId,
+        sellerName,
+        sellerEmail: seller?.email || '',
+        watchId: p.watch.id,
+        watchTitle: p.watch.title,
+        watchBrand: p.watch.brand,
+        watchModel: p.watch.model,
+        paidAt: null,
+        createdAt: p.createdAt.toISOString(),
+      }
+    })
+
+    // Kombiniere und sortiere nach Datum
+    const allTransactions = [...orderTransactions, ...legacyTransactions]
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+      .slice(0, limit)
+
+    // Berechne Statistiken (nur aus Orders für Genauigkeit)
+    const paidOrders = orders.filter(o =>
+      o.paymentStatus === 'paid' || o.paymentStatus === 'released'
+    )
+
+    const totalRevenue = paidOrders.reduce((sum, o) => sum + o.itemPrice, 0)
+    const totalPlatformFees = paidOrders.reduce((sum, o) => sum + (o.platformFee || 0), 0)
+
+    // Legacy-Umsatz separat berechnen
+    const completedLegacy = legacyPurchases.filter(p => p.status === 'completed')
+    const legacyRevenue = completedLegacy.reduce((sum, p) => sum + (p.price || p.watch.price || 0), 0)
 
     return NextResponse.json({
-      transactions,
+      transactions: allTransactions,
       stats: {
-        totalRevenue,
-        totalTransactions,
-        platformMargin,
+        // Aktuelle Order-Statistiken (primär)
+        totalOrders: orders.length,
+        paidOrders: paidOrders.length,
+        orderRevenue: Math.round(totalRevenue * 100) / 100,
+        platformFees: Math.round(totalPlatformFees * 100) / 100,
+
+        // Legacy-Statistiken (sekundär)
+        legacyPurchases: legacyPurchases.length,
+        completedLegacyPurchases: completedLegacy.length,
+        legacyRevenue: Math.round(legacyRevenue * 100) / 100,
+
+        // Kombiniert
+        totalTransactions: allTransactions.length,
+        totalRevenue: Math.round((totalRevenue + legacyRevenue) * 100) / 100,
+        platformMargin: Math.round(totalPlatformFees * 100) / 100,
       },
     })
   } catch (error: any) {
-    console.error('Error fetching transactions:', error)
-    console.error('Error details:', error.message, error.stack)
+    console.error('[admin/transactions] Error:', error)
     return NextResponse.json(
       { message: 'Fehler beim Laden der Transaktionen', error: error.message },
       { status: 500 }

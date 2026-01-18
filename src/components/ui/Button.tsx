@@ -19,7 +19,7 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
  * - Konsistenz auf der gesamten Platform
  * - Vertrauenswürdiges, professionelles Erscheinungsbild
  * - Passend zum Helvenda Brand
- * 
+ *
  * Mobile Optimierungen:
  * - Minimum 44px Touch Target
  * - Haptic Feedback auf unterstützten Geräten

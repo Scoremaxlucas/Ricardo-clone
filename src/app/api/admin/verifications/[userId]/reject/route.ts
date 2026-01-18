@@ -68,7 +68,7 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
           userId: userId,
           type: 'VERIFICATION_REJECTED',
           title: 'Verifizierung abgelehnt',
-          message: reason 
+          message: reason
             ? `Ihre Verifizierung wurde abgelehnt. Grund: ${reason}. Bitte laden Sie erneut gültige Dokumente hoch.`
             : 'Ihre Verifizierung wurde abgelehnt. Bitte laden Sie erneut gültige Dokumente hoch.',
           link: '/verification',

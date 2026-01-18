@@ -1,55 +1,25 @@
-import { authOptions } from '@/lib/auth'
+/**
+ * Admin Statistics API
+ * Detaillierte Statistiken für das Admin-Dashboard
+ *
+ * AKTUALISIERT: Verwendet jetzt Order-Tabelle für aktuelle Transaktionsdaten
+ */
+
+import { requireAdmin } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
-/**
- * GET: Detaillierte Statistiken für Admin-Dashboard
- */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id && !session?.user?.email) {
-      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    // Prüfe Admin-Status
-    const isAdminInSession = session?.user?.isAdmin === true
-
-    // Prüfe ob User Admin ist (per ID oder E-Mail)
-    let user = null
-    if (session.user.id) {
-      user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { isAdmin: true, email: true },
-      })
-    }
-
-    // Falls nicht gefunden per ID, versuche per E-Mail
-    if (!user && session.user.email) {
-      user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        select: { isAdmin: true, email: true },
-      })
-    }
-
-    // Prüfe Admin-Status: Session ODER Datenbank
-    const isAdminInDb = user?.isAdmin === true
-    const isAdmin = isAdminInSession || isAdminInDb
-
-    if (!isAdmin) {
-      return NextResponse.json(
-        { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
-        { status: 403 }
-      )
-    }
+    // Admin-Prüfung
+    const authError = await requireAdmin()
+    if (authError) return authError
 
     const now = new Date()
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
     const sevenDaysAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
 
-    // Alle Daten parallel laden
+    // Alle Daten parallel laden - AKTUALISIERT für Order-Tabelle
     const [
       // Benutzer-Statistiken
       totalUsers,
@@ -62,24 +32,20 @@ export async function GET(request: NextRequest) {
 
       // Angebots-Statistiken
       totalWatches,
-      activeWatches,
-      soldWatches,
       auctionWatches,
       buyNowWatches,
-      expiredWatches,
       newWatchesLast30Days,
       newWatchesLast7Days,
 
-      // Transaktions-Statistiken
-      allPurchases,
-      completedPurchases,
-      pendingPurchases,
-      cancelledPurchases,
+      // NEU: Order-basierte Transaktionsstatistiken
+      allOrders,
 
-      // Dispute-Statistiken
-      pendingDisputes,
-      resolvedDisputes,
-      closedDisputes,
+      // Legacy-Purchases für historische Daten
+      allLegacyPurchases,
+
+      // Dispute-Statistiken - kombiniert aus Order und Purchase
+      orderDisputes,
+      purchaseDisputes,
 
       // Kategorien-Statistiken
       watchesByCategory,
@@ -101,55 +67,50 @@ export async function GET(request: NextRequest) {
 
       // Angebote
       prisma.watch.count(),
-      prisma.watch.count({
-        where: {
-          purchases: { none: {} },
-          OR: [{ auctionEnd: null }, { auctionEnd: { gt: now } }],
-        },
-      }),
-      prisma.watch.count({
-        where: {
-          purchases: { some: {} },
-        },
-      }),
       prisma.watch.count({ where: { isAuction: true } }),
       prisma.watch.count({ where: { isAuction: false } }),
-      prisma.watch.count({
-        where: {
-          auctionEnd: { lt: now },
-          purchases: { none: {} },
-        },
-      }),
       prisma.watch.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
       prisma.watch.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
 
-      // Transaktionen
-      // WICHTIG: Explizites select verwenden, um disputeInitiatedBy zu vermeiden
+      // Orders (AKTUALISIERT - primäre Datenquelle)
+      prisma.order.findMany({
+        select: {
+          id: true,
+          itemPrice: true,
+          platformFee: true,
+          orderStatus: true,
+          paymentStatus: true,
+          createdAt: true,
+          paidAt: true,
+        },
+      }),
+
+      // Legacy Purchases (für historische Vollständigkeit)
       prisma.purchase.findMany({
         select: {
           id: true,
           price: true,
           status: true,
+          createdAt: true,
           watch: {
-            select: { price: true, buyNowPrice: true, isAuction: true },
+            select: { price: true },
           },
-          // Nur benötigte Felder selektieren (disputeInitiatedBy wird NICHT selektiert)
         },
       }),
-      prisma.purchase.count({ where: { status: 'completed' } }),
-      prisma.purchase.count({
-        where: { status: { in: ['pending', 'payment_confirmed', 'shipped'] } },
-      }),
-      prisma.purchase.count({ where: { status: 'cancelled' } }),
 
-      // Disputes
-      prisma.purchase.count({
-        where: { disputeStatus: 'pending', disputeOpenedAt: { not: null } },
+      // Order Disputes
+      prisma.order.findMany({
+        where: { disputeStatus: { not: 'none' } },
+        select: { id: true, disputeStatus: true },
       }),
-      prisma.purchase.count({ where: { disputeStatus: 'resolved' } }),
-      prisma.purchase.count({ where: { disputeStatus: 'closed' } }),
 
-      // Kategorien - verwende WatchCategory Relation
+      // Purchase Disputes (Legacy)
+      prisma.purchase.findMany({
+        where: { disputeOpenedAt: { not: null } },
+        select: { id: true, disputeStatus: true },
+      }),
+
+      // Kategorien
       prisma.watchCategory
         .findMany({
           include: {
@@ -159,7 +120,6 @@ export async function GET(request: NextRequest) {
           },
         })
         .then(categories => {
-          // Gruppiere nach category name
           const categoryCounts: { [key: string]: number } = {}
           categories.forEach(wc => {
             const catName = wc.category?.name || 'Unbekannt'
@@ -184,47 +144,92 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
-    // Berechne Umsatz
-    const totalRevenue = allPurchases.reduce((sum, purchase) => {
-      return sum + (purchase.price || purchase.watch?.price || 0)
-    }, 0)
+    // === Berechne Order-basierte Statistiken ===
+    const paidOrders = allOrders.filter(
+      o => o.paymentStatus === 'paid' || o.paymentStatus === 'released'
+    )
+    const pendingOrders = allOrders.filter(
+      o => o.paymentStatus === 'created' || o.orderStatus === 'awaiting_payment'
+    )
 
-    const completedRevenue = allPurchases
-      .filter(p => p.status === 'completed')
-      .reduce((sum, purchase) => {
-        return sum + (purchase.price || purchase.watch?.price || 0)
-      }, 0)
+    // Order-Umsatz (korrekt)
+    const orderRevenue = paidOrders.reduce((sum, o) => sum + o.itemPrice, 0)
+    const orderPlatformFees = paidOrders.reduce((sum, o) => sum + (o.platformFee || 0), 0)
 
-    const averagePurchasePrice = completedPurchases > 0 ? completedRevenue / completedPurchases : 0
+    // Legacy-Umsatz
+    const completedLegacy = allLegacyPurchases.filter(p => p.status === 'completed')
+    const legacyRevenue = completedLegacy.reduce(
+      (sum, p) => sum + (p.price || p.watch?.price || 0),
+      0
+    )
 
-    // Berechne Erfolgsrate
-    const successRate = totalWatches > 0 ? (soldWatches / totalWatches) * 100 : 0
+    // Kombinierter Umsatz
+    const totalRevenue = orderRevenue + legacyRevenue
 
-    // Berechne durchschnittliche Verkaufsdauer (für verkaufte Angebote)
-    const soldWatchesWithDates = await prisma.watch.findMany({
+    // Durchschnittspreis (nur aus bezahlten Orders)
+    const averageOrderPrice = paidOrders.length > 0 ? orderRevenue / paidOrders.length : 0
+
+    // Aktive und verkaufte Angebote
+    const soldWatchIds = new Set([
+      ...allOrders.filter(o => o.paymentStatus === 'paid' || o.paymentStatus === 'released').map(o => o.id),
+    ])
+
+    // Aktive Watches (ohne Order und nicht abgelaufen)
+    const activeWatches = await prisma.watch.count({
       where: {
-        purchases: { some: {} },
-      },
-      include: {
-        purchases: {
-          take: 1,
-          orderBy: { createdAt: 'asc' },
-        },
+        orders: { none: {} },
+        OR: [
+          { auctionEnd: null },
+          { auctionEnd: { gt: now } },
+        ],
       },
     })
 
-    const saleDurations = soldWatchesWithDates
-      .map(watch => {
-        if (!watch.purchases || watch.purchases.length === 0) return null
-        const purchaseDate = watch.purchases[0].createdAt
-        const watchCreated = watch.createdAt
-        return (purchaseDate.getTime() - watchCreated.getTime()) / (1000 * 60 * 60 * 24) // Tage
+    // Abgelaufene Watches
+    const expiredWatches = await prisma.watch.count({
+      where: {
+        auctionEnd: { lt: now },
+        orders: { none: {} },
+      },
+    })
+
+    // Verkaufte Watches = Anzahl bezahlter Orders
+    const soldWatches = paidOrders.length
+
+    // Erfolgsrate
+    const successRate = totalWatches > 0 ? (soldWatches / totalWatches) * 100 : 0
+
+    // === Berechne Disputes ===
+    const orderPendingDisputes = orderDisputes.filter(
+      d => d.disputeStatus === 'pending' || d.disputeStatus === 'open'
+    ).length
+    const orderResolvedDisputes = orderDisputes.filter(d => d.disputeStatus === 'resolved').length
+    const orderClosedDisputes = orderDisputes.filter(
+      d => d.disputeStatus === 'closed' || d.disputeStatus === 'rejected'
+    ).length
+
+    const purchasePendingDisputes = purchaseDisputes.filter(d => d.disputeStatus === 'pending').length
+    const purchaseResolvedDisputes = purchaseDisputes.filter(d => d.disputeStatus === 'resolved').length
+    const purchaseClosedDisputes = purchaseDisputes.filter(
+      d => d.disputeStatus === 'closed' || d.disputeStatus === 'rejected'
+    ).length
+
+    const totalPendingDisputes = orderPendingDisputes + purchasePendingDisputes
+    const totalResolvedDisputes = orderResolvedDisputes + purchaseResolvedDisputes
+    const totalClosedDisputes = orderClosedDisputes + purchaseClosedDisputes
+
+    // Durchschnittliche Verkaufsdauer (für Orders)
+    const ordersWithDuration = allOrders
+      .filter(o => o.paidAt)
+      .map(o => {
+        const created = new Date(o.createdAt)
+        const paid = new Date(o.paidAt!)
+        return (paid.getTime() - created.getTime()) / (1000 * 60 * 60 * 24) // Tage
       })
-      .filter((d): d is number => d !== null)
 
     const averageSaleDuration =
-      saleDurations.length > 0
-        ? saleDurations.reduce((sum, d) => sum + d, 0) / saleDurations.length
+      ordersWithDuration.length > 0
+        ? ordersWithDuration.reduce((sum, d) => sum + d, 0) / ordersWithDuration.length
         : 0
 
     // Top Kategorien formatieren
@@ -235,7 +240,7 @@ export async function GET(request: NextRequest) {
         }))
       : []
 
-    // Zeitliche Entwicklung (letzte 7 Tage)
+    // Zeitliche Entwicklung (letzte 7 Tage) - AKTUALISIERT für Orders
     const dailyStats = []
     try {
       for (let i = 6; i >= 0; i--) {
@@ -245,22 +250,21 @@ export async function GET(request: NextRequest) {
         const endOfDay = new Date(date)
         endOfDay.setHours(23, 59, 59, 999)
 
-        const [users, watches, purchases] = await Promise.all([
+        const [users, watches, orders] = await Promise.all([
           prisma.user.count({ where: { createdAt: { gte: startOfDay, lte: endOfDay } } }),
           prisma.watch.count({ where: { createdAt: { gte: startOfDay, lte: endOfDay } } }),
-          prisma.purchase.count({ where: { createdAt: { gte: startOfDay, lte: endOfDay } } }),
+          prisma.order.count({ where: { createdAt: { gte: startOfDay, lte: endOfDay } } }),
         ])
 
         dailyStats.push({
           date: startOfDay.toISOString().split('T')[0],
           users,
           watches,
-          purchases,
+          orders, // Umbenannt von "purchases" zu "orders"
         })
       }
     } catch (dailyStatsError) {
-      console.error('Error calculating daily stats:', dailyStatsError)
-      // Setze leere dailyStats bei Fehler
+      console.error('[admin/statistics] Error calculating daily stats:', dailyStatsError)
     }
 
     return NextResponse.json({
@@ -289,23 +293,36 @@ export async function GET(request: NextRequest) {
         averageSaleDuration: Math.round(averageSaleDuration * 100) / 100,
       },
 
-      // Transaktionen
+      // Transaktionen (AKTUALISIERT)
       transactions: {
-        total: allPurchases.length,
-        completed: completedPurchases,
-        pending: pendingPurchases,
-        cancelled: cancelledPurchases,
+        // Order-basierte Stats (primär)
+        totalOrders: allOrders.length,
+        paidOrders: paidOrders.length,
+        pendingOrders: pendingOrders.length,
+        orderRevenue: Math.round(orderRevenue * 100) / 100,
+        platformFees: Math.round(orderPlatformFees * 100) / 100,
+        averageOrderPrice: Math.round(averageOrderPrice * 100) / 100,
+
+        // Legacy-Stats (sekundär)
+        legacyPurchases: allLegacyPurchases.length,
+        completedLegacyPurchases: completedLegacy.length,
+        legacyRevenue: Math.round(legacyRevenue * 100) / 100,
+
+        // Kombiniert
+        total: allOrders.length + allLegacyPurchases.length,
+        completed: paidOrders.length + completedLegacy.length,
         totalRevenue: Math.round(totalRevenue * 100) / 100,
-        completedRevenue: Math.round(completedRevenue * 100) / 100,
-        averagePrice: Math.round(averagePurchasePrice * 100) / 100,
       },
 
-      // Disputes
+      // Disputes (kombiniert)
       disputes: {
-        pending: pendingDisputes,
-        resolved: resolvedDisputes,
-        closed: closedDisputes,
-        total: pendingDisputes + resolvedDisputes + closedDisputes,
+        pending: totalPendingDisputes,
+        resolved: totalResolvedDisputes,
+        closed: totalClosedDisputes,
+        total: orderDisputes.length + purchaseDisputes.length,
+        // Aufschlüsselung
+        orderDisputes: orderDisputes.length,
+        purchaseDisputes: purchaseDisputes.length,
       },
 
       // Kategorien
@@ -323,7 +340,7 @@ export async function GET(request: NextRequest) {
       dailyStats,
     })
   } catch (error: any) {
-    console.error('Error fetching statistics:', error)
+    console.error('[admin/statistics] Error:', error)
     return NextResponse.json(
       { message: 'Fehler beim Laden der Statistiken: ' + error.message },
       { status: 500 }

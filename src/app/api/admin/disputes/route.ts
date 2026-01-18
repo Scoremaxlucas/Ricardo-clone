@@ -1,203 +1,303 @@
-import { authOptions } from '@/lib/auth'
+/**
+ * Admin Disputes API
+ * Alle Disputes und Stornierungsanträge für Admin
+ *
+ * AKTUALISIERT: Kombiniert Order-Disputes (neu) mit Purchase-Disputes (legacy)
+ */
+
+import { requireAdmin } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
-/**
- * GET: Alle Disputes abrufen (nur für Admins)
- */
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
-
-    if (!session?.user?.id && !session?.user?.email) {
-      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    // Prüfe Admin-Status
-    const isAdminInSession = session?.user?.isAdmin === true
-
-    // Prüfe ob User Admin ist (per ID oder E-Mail)
-    let user = null
-    if (session.user.id) {
-      user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { isAdmin: true, email: true },
-      })
-    }
-
-    // Falls nicht gefunden per ID, versuche per E-Mail
-    if (!user && session.user.email) {
-      user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        select: { isAdmin: true, email: true },
-      })
-    }
-
-    // Prüfe Admin-Status: Session ODER Datenbank
-    const isAdminInDb = user?.isAdmin === true
-    const isAdmin = isAdminInSession || isAdminInDb
-
-    if (!isAdmin) {
-      return NextResponse.json(
-        { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
-        { status: 403 }
-      )
-    }
+    // Admin-Prüfung
+    const authError = await requireAdmin()
+    if (authError) return authError
 
     // Filter-Parameter
     const searchParams = request.nextUrl.searchParams
-    const status = searchParams.get('status') // pending, resolved, closed
+    const status = searchParams.get('status') // pending, resolved, closed, all
     const type = searchParams.get('type') || 'all' // all, dispute, cancellation
-    const sortBy = searchParams.get('sortBy') || 'openedAt' // openedAt, resolvedAt
-    const sortOrder = searchParams.get('sortOrder') || 'desc' // asc, desc
+    const source = searchParams.get('source') || 'all' // all, order, purchase
+    const sortBy = searchParams.get('sortBy') || 'openedAt'
+    const sortOrder = searchParams.get('sortOrder') || 'desc'
 
-    // Baue Where-Klausel für Disputes
-    const disputeWhere: any = {
+    // === LADE ORDER-DISPUTES (NEU) ===
+    const orderDisputes = (source === 'all' || source === 'order') && (type === 'all' || type === 'dispute')
+      ? await prisma.order.findMany({
+          where: {
+            disputeStatus: status && status !== 'all'
+              ? status
+              : { not: 'none' },
+          },
+          select: {
+            id: true,
+            orderNumber: true,
+            watchId: true,
+            itemPrice: true,
+            totalAmount: true,
+            orderStatus: true,
+            paymentStatus: true,
+            paymentMethod: true,
+            disputeStatus: true,
+            disputeOpenedAt: true,
+            disputeReason: true,
+            disputeDescription: true,
+            disputeResolvedAt: true,
+            disputeResolvedBy: true,
+            createdAt: true,
+            watch: {
+              select: {
+                id: true,
+                title: true,
+                brand: true,
+                model: true,
+                images: true,
+                price: true,
+              },
+            },
+            buyer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                nickname: true,
+              },
+            },
+            seller: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                nickname: true,
+              },
+            },
+          },
+          orderBy: {
+            [sortBy === 'openedAt' ? 'disputeOpenedAt' : 'disputeResolvedAt']:
+              sortOrder === 'asc' ? 'asc' : 'desc',
+          },
+        })
+      : []
+
+    // === LADE LEGACY PURCHASE-DISPUTES ===
+    const purchaseDisputeWhere: any = {
       disputeOpenedAt: { not: null },
     }
-
     if (status && status !== 'all') {
-      disputeWhere.disputeStatus = status
+      purchaseDisputeWhere.disputeStatus = status
     }
 
-    // Baue Where-Klausel für Stornierungsanträge
+    const purchaseDisputes = (source === 'all' || source === 'purchase') && (type === 'all' || type === 'dispute')
+      ? await prisma.purchase.findMany({
+          where: purchaseDisputeWhere,
+          select: {
+            id: true,
+            watchId: true,
+            price: true,
+            status: true,
+            createdAt: true,
+            disputeOpenedAt: true,
+            disputeReason: true,
+            disputeDescription: true,
+            disputeStatus: true,
+            disputeResolvedAt: true,
+            disputeResolvedBy: true,
+            disputeDeadline: true,
+            disputeAttachments: true,
+            disputeReminderCount: true,
+            disputeEscalationLevel: true,
+            sellerResponseDeadline: true,
+            sellerRespondedAt: true,
+            disputeRefundRequired: true,
+            disputeRefundAmount: true,
+            watch: {
+              select: {
+                id: true,
+                title: true,
+                brand: true,
+                model: true,
+                images: true,
+                price: true,
+                seller: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    nickname: true,
+                  },
+                },
+              },
+            },
+            buyer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                nickname: true,
+              },
+            },
+          },
+          orderBy: {
+            [sortBy === 'openedAt' ? 'disputeOpenedAt' : 'disputeResolvedAt']:
+              sortOrder === 'asc' ? 'asc' : 'desc',
+          },
+        })
+      : []
+
+    // === LADE STORNIERUNGSANTRÄGE (nur aus Purchase) ===
     const cancellationWhere: any = {
       cancellationRequestedAt: { not: null },
     }
-
     if (status && status !== 'all') {
       cancellationWhere.cancellationRequestStatus = status
     }
 
-    // Lade Disputes
-    // WICHTIG: Explizites select verwenden, um nur existierende Felder zu laden
-    // (disputeInitiatedBy existiert möglicherweise noch nicht in der DB)
-    const disputePurchases =
-      type === 'all' || type === 'dispute'
-        ? await prisma.purchase.findMany({
-            where: disputeWhere,
-            select: {
-              id: true,
-              watchId: true,
-              price: true,
-              status: true,
-              createdAt: true,
-              disputeOpenedAt: true,
-              disputeReason: true,
-              disputeDescription: true,
-              disputeStatus: true,
-              disputeResolvedAt: true,
-              disputeResolvedBy: true,
-              disputeDeadline: true,
-              disputeAttachments: true,
-              disputeReminderCount: true,
-              // Ricardo-Style Fields
-              disputeEscalationLevel: true,
-              sellerResponseDeadline: true,
-              sellerRespondedAt: true,
-              disputeRefundRequired: true,
-              disputeRefundAmount: true,
-              watch: {
-                select: {
-                  id: true,
-                  title: true,
-                  brand: true,
-                  model: true,
-                  images: true,
-                  price: true,
-                  seller: {
-                    select: {
-                      id: true,
-                      name: true,
-                      email: true,
-                      firstName: true,
-                      lastName: true,
-                      nickname: true,
-                    },
+    const cancellationPurchases = (type === 'all' || type === 'cancellation') && (source === 'all' || source === 'purchase')
+      ? await prisma.purchase.findMany({
+          where: cancellationWhere,
+          select: {
+            id: true,
+            watchId: true,
+            price: true,
+            status: true,
+            createdAt: true,
+            cancellationRequestedAt: true,
+            cancellationRequestReason: true,
+            cancellationRequestDescription: true,
+            cancellationRequestStatus: true,
+            cancellationRequestResolvedAt: true,
+            cancellationRequestResolvedBy: true,
+            watch: {
+              select: {
+                id: true,
+                title: true,
+                brand: true,
+                model: true,
+                images: true,
+                price: true,
+                seller: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    nickname: true,
                   },
                 },
               },
-              buyer: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  firstName: true,
-                  lastName: true,
-                  nickname: true,
-                },
+            },
+            buyer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                nickname: true,
               },
             },
-            orderBy: {
-              [sortBy === 'openedAt' ? 'disputeOpenedAt' : 'disputeResolvedAt']:
-                sortOrder === 'asc' ? 'asc' : 'desc',
-            },
-          })
-        : []
+          },
+          orderBy: {
+            cancellationRequestedAt: sortOrder === 'asc' ? 'asc' : 'desc',
+          },
+        })
+      : []
 
-    // Lade Stornierungsanträge
-    // WICHTIG: Explizites select verwenden, um nur existierende Felder zu laden
-    const cancellationPurchases =
-      type === 'all' || type === 'cancellation'
-        ? await prisma.purchase.findMany({
-            where: cancellationWhere,
-            select: {
-              id: true,
-              watchId: true,
-              price: true,
-              status: true,
-              createdAt: true,
-              cancellationRequestedAt: true,
-              cancellationRequestReason: true,
-              cancellationRequestDescription: true,
-              cancellationRequestStatus: true,
-              cancellationRequestResolvedAt: true,
-              cancellationRequestResolvedBy: true,
-              watch: {
-                select: {
-                  id: true,
-                  title: true,
-                  brand: true,
-                  model: true,
-                  images: true,
-                  price: true,
-                  seller: {
-                    select: {
-                      id: true,
-                      name: true,
-                      email: true,
-                      firstName: true,
-                      lastName: true,
-                      nickname: true,
-                    },
-                  },
-                },
-              },
-              buyer: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  firstName: true,
-                  lastName: true,
-                  nickname: true,
-                },
-              },
-            },
-            orderBy: {
-              cancellationRequestedAt: sortOrder === 'asc' ? 'asc' : 'desc',
-            },
-          })
-        : []
+    // === FORMATIERE ORDER-DISPUTES ===
+    const formattedOrderDisputes = orderDisputes.map(order => {
+      let images: string[] = []
+      try {
+        if (order.watch.images) {
+          images = typeof order.watch.images === 'string'
+            ? JSON.parse(order.watch.images)
+            : order.watch.images
+        }
+      } catch (e) {
+        images = []
+      }
 
-    // Formatiere Disputes für Frontend
-    const disputes = disputePurchases.map(purchase => {
-      const reason = purchase.disputeReason || 'unknown'
-      const description = purchase.disputeDescription || ''
+      const buyerName = order.buyer.nickname || order.buyer.firstName || order.buyer.name || 'Unbekannt'
+      const sellerName = order.seller.nickname || order.seller.firstName || order.seller.name || 'Unbekannt'
+
+      return {
+        id: order.id,
+        orderId: order.id,
+        orderNumber: order.orderNumber,
+        purchaseId: null, // Kein Purchase
+        watchId: order.watchId,
+        watch: {
+          id: order.watch.id,
+          title: order.watch.title,
+          brand: order.watch.brand,
+          model: order.watch.model,
+          images,
+          price: order.watch.price,
+        },
+        buyer: {
+          id: order.buyer.id,
+          name: buyerName,
+          email: order.buyer.email,
+        },
+        seller: {
+          id: order.seller.id,
+          name: sellerName,
+          email: order.seller.email,
+        },
+        disputeReason: order.disputeReason || 'unknown',
+        disputeDescription: order.disputeDescription || '',
+        disputeStatus: order.disputeStatus || 'pending',
+        disputeOpenedAt: order.disputeOpenedAt?.toISOString() || null,
+        disputeDeadline: null, // Order hat kein separates Deadline-Feld
+        disputeAttachments: [],
+        disputeReminderCount: 0,
+        disputeResolvedAt: order.disputeResolvedAt?.toISOString() || null,
+        disputeResolvedBy: order.disputeResolvedBy || null,
+        disputeEscalationLevel: 0,
+        sellerResponseDeadline: null,
+        sellerRespondedAt: null,
+        disputeRefundRequired: false,
+        disputeRefundAmount: null,
+        purchaseStatus: order.orderStatus,
+        paymentStatus: order.paymentStatus,
+        purchasePrice: order.itemPrice,
+        totalAmount: order.totalAmount,
+        createdAt: order.createdAt.toISOString(),
+        type: 'dispute' as const,
+        source: 'order' as const,
+      }
+    })
+
+    // === FORMATIERE PURCHASE-DISPUTES (Legacy) ===
+    const formattedPurchaseDisputes = purchaseDisputes.map(purchase => {
+      let images: string[] = []
+      try {
+        if (purchase.watch.images) {
+          images = typeof purchase.watch.images === 'string'
+            ? JSON.parse(purchase.watch.images)
+            : purchase.watch.images
+        }
+      } catch (e) {
+        images = []
+      }
+
+      const buyerName = purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Unbekannt'
+      const sellerName = purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Unbekannt'
 
       return {
         id: purchase.id,
+        orderId: null,
+        orderNumber: null,
         purchaseId: purchase.id,
         watchId: purchase.watchId,
         watch: {
@@ -205,58 +305,63 @@ export async function GET(request: NextRequest) {
           title: purchase.watch.title,
           brand: purchase.watch.brand,
           model: purchase.watch.model,
-          images: purchase.watch.images ? JSON.parse(purchase.watch.images) : [],
+          images,
           price: purchase.watch.price,
         },
         buyer: {
           id: purchase.buyer.id,
-          name:
-            purchase.buyer.nickname ||
-            purchase.buyer.firstName ||
-            purchase.buyer.name ||
-            'Unbekannt',
+          name: buyerName,
           email: purchase.buyer.email,
         },
         seller: {
           id: purchase.watch.seller.id,
-          name:
-            purchase.watch.seller.nickname ||
-            purchase.watch.seller.firstName ||
-            purchase.watch.seller.name ||
-            'Unbekannt',
+          name: sellerName,
           email: purchase.watch.seller.email,
         },
-        disputeReason: reason,
-        disputeDescription: description,
+        disputeReason: purchase.disputeReason || 'unknown',
+        disputeDescription: purchase.disputeDescription || '',
         disputeStatus: purchase.disputeStatus || 'pending',
         disputeOpenedAt: purchase.disputeOpenedAt?.toISOString() || null,
         disputeDeadline: purchase.disputeDeadline?.toISOString() || null,
-        disputeAttachments: purchase.disputeAttachments
-          ? JSON.parse(purchase.disputeAttachments)
-          : [],
+        disputeAttachments: purchase.disputeAttachments ? JSON.parse(purchase.disputeAttachments) : [],
         disputeReminderCount: purchase.disputeReminderCount || 0,
         disputeResolvedAt: purchase.disputeResolvedAt?.toISOString() || null,
         disputeResolvedBy: purchase.disputeResolvedBy || null,
-        // Ricardo-Style Fields
         disputeEscalationLevel: purchase.disputeEscalationLevel || 0,
         sellerResponseDeadline: purchase.sellerResponseDeadline?.toISOString() || null,
         sellerRespondedAt: purchase.sellerRespondedAt?.toISOString() || null,
         disputeRefundRequired: purchase.disputeRefundRequired || false,
         disputeRefundAmount: purchase.disputeRefundAmount || null,
         purchaseStatus: purchase.status,
+        paymentStatus: null,
         purchasePrice: purchase.price,
+        totalAmount: purchase.price,
         createdAt: purchase.createdAt.toISOString(),
-        type: 'dispute',
+        type: 'dispute' as const,
+        source: 'purchase' as const,
       }
     })
 
-    // Formatiere Stornierungsanträge für Frontend
-    const cancellations = cancellationPurchases.map(purchase => {
-      const reason = purchase.cancellationRequestReason || 'unknown'
-      const description = purchase.cancellationRequestDescription || ''
+    // === FORMATIERE STORNIERUNGSANTRÄGE ===
+    const formattedCancellations = cancellationPurchases.map(purchase => {
+      let images: string[] = []
+      try {
+        if (purchase.watch.images) {
+          images = typeof purchase.watch.images === 'string'
+            ? JSON.parse(purchase.watch.images)
+            : purchase.watch.images
+        }
+      } catch (e) {
+        images = []
+      }
+
+      const buyerName = purchase.buyer.nickname || purchase.buyer.firstName || purchase.buyer.name || 'Unbekannt'
+      const sellerName = purchase.watch.seller.nickname || purchase.watch.seller.firstName || purchase.watch.seller.name || 'Unbekannt'
 
       return {
         id: purchase.id,
+        orderId: null,
+        orderNumber: null,
         purchaseId: purchase.id,
         watchId: purchase.watchId,
         watch: {
@@ -264,42 +369,49 @@ export async function GET(request: NextRequest) {
           title: purchase.watch.title,
           brand: purchase.watch.brand,
           model: purchase.watch.model,
-          images: purchase.watch.images ? JSON.parse(purchase.watch.images) : [],
+          images,
           price: purchase.watch.price,
         },
         buyer: {
           id: purchase.buyer.id,
-          name:
-            purchase.buyer.nickname ||
-            purchase.buyer.firstName ||
-            purchase.buyer.name ||
-            'Unbekannt',
+          name: buyerName,
           email: purchase.buyer.email,
         },
         seller: {
           id: purchase.watch.seller.id,
-          name:
-            purchase.watch.seller.nickname ||
-            purchase.watch.seller.firstName ||
-            purchase.watch.seller.name ||
-            'Unbekannt',
+          name: sellerName,
           email: purchase.watch.seller.email,
         },
-        disputeReason: reason,
-        disputeDescription: description,
+        disputeReason: purchase.cancellationRequestReason || 'unknown',
+        disputeDescription: purchase.cancellationRequestDescription || '',
         disputeStatus: purchase.cancellationRequestStatus || 'pending',
         disputeOpenedAt: purchase.cancellationRequestedAt?.toISOString() || null,
+        disputeDeadline: null,
+        disputeAttachments: [],
+        disputeReminderCount: 0,
         disputeResolvedAt: purchase.cancellationRequestResolvedAt?.toISOString() || null,
         disputeResolvedBy: purchase.cancellationRequestResolvedBy || null,
+        disputeEscalationLevel: 0,
+        sellerResponseDeadline: null,
+        sellerRespondedAt: null,
+        disputeRefundRequired: false,
+        disputeRefundAmount: null,
         purchaseStatus: purchase.status,
+        paymentStatus: null,
         purchasePrice: purchase.price,
+        totalAmount: purchase.price,
         createdAt: purchase.createdAt.toISOString(),
-        type: 'cancellation',
+        type: 'cancellation' as const,
+        source: 'purchase' as const,
       }
     })
 
-    // Kombiniere beide Listen
-    const allItems = [...disputes, ...cancellations]
+    // === KOMBINIERE ALLE DISPUTES ===
+    const allItems = [
+      ...formattedOrderDisputes,
+      ...formattedPurchaseDisputes,
+      ...formattedCancellations,
+    ]
 
     // Sortiere kombiniert nach Datum
     allItems.sort((a, b) => {
@@ -308,16 +420,19 @@ export async function GET(request: NextRequest) {
       return sortOrder === 'asc' ? dateA - dateB : dateB - dateA
     })
 
-    // Statistiken
+    // === STATISTIKEN ===
     const stats = {
       total: allItems.length,
-      pending: allItems.filter(d => d.disputeStatus === 'pending').length,
+      pending: allItems.filter(d => d.disputeStatus === 'pending' || d.disputeStatus === 'open').length,
       escalated: allItems.filter(d => d.disputeStatus === 'escalated').length,
       underReview: allItems.filter(d => d.disputeStatus === 'under_review').length,
       resolved: allItems.filter(d => d.disputeStatus === 'resolved').length,
       rejected: allItems.filter(d => d.disputeStatus === 'rejected').length,
-      closed: allItems.filter(d => d.disputeStatus === 'closed' || d.disputeStatus === 'rejected')
-        .length,
+      closed: allItems.filter(d => d.disputeStatus === 'closed' || d.disputeStatus === 'rejected').length,
+      // Aufschlüsselung nach Quelle
+      orderDisputes: formattedOrderDisputes.length,
+      purchaseDisputes: formattedPurchaseDisputes.length,
+      cancellations: formattedCancellations.length,
     }
 
     return NextResponse.json({
@@ -325,7 +440,7 @@ export async function GET(request: NextRequest) {
       stats,
     })
   } catch (error: any) {
-    console.error('Error fetching disputes:', error)
+    console.error('[admin/disputes] Error:', error)
     return NextResponse.json(
       { message: 'Fehler beim Abrufen der Disputes: ' + error.message },
       { status: 500 }

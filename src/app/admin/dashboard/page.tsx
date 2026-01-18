@@ -3,11 +3,13 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import {
+  Activity,
   AlertCircle,
   AlertTriangle,
   Banknote,
   BarChart3,
   CreditCard,
+  Database,
   DollarSign,
   FileCheck,
   Receipt,
@@ -213,44 +215,15 @@ export default function AdminDashboard() {
           <p className="mt-2 text-gray-600">Übersicht und Verwaltung der Plattform</p>
         </div>
 
-        {/* Statistiken */}
-        <div className="mb-8 grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-4">
-          <StatCard
-            title="Benutzer"
-            value={stats?.totalUsers || 0}
-            subtitle={`${stats?.activeUsers || 0} aktiv, ${stats?.blockedUsers || 0} blockiert`}
-            icon={Users}
-            color="blue"
-            href="/admin/users"
-          />
-          <StatCard
-            title="Aktive Angebote"
-            value={stats?.activeWatches || 0}
-            subtitle={`${stats?.totalWatches || 0} gesamt, ${stats?.soldWatches || 0} verkauft`}
-            icon={ShoppingBag}
-            color="green"
-            href="/admin/watches"
-          />
-          <StatCard
-            title="Gesamtumsatz"
-            value={`CHF ${(stats?.totalRevenue || 0).toLocaleString('de-CH')}`}
-            subtitle={`Marge: CHF ${(stats?.platformMargin || 0).toLocaleString('de-CH')}`}
-            icon={DollarSign}
-            color="purple"
-            href="/admin/transactions"
-          />
-          <StatCard
-            title="Verifizierungen"
-            value={stats?.pendingVerifications || 0}
-            subtitle={`${stats?.pendingVerifications || 0} ausstehend, ${stats?.verifiedUsers || 0} verifiziert`}
-            icon={FileCheck}
-            color="orange"
-            href="/admin/verifications"
-          />
-        </div>
-
         {/* Quick Actions */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          <ActionCard
+            title="Gesamtumsatz"
+            description={`CHF ${(stats?.totalRevenue || 0).toLocaleString('de-CH')} Umsatz, CHF ${(stats?.platformMargin || 0).toLocaleString('de-CH')} Marge`}
+            icon={DollarSign}
+            href="/admin/transactions"
+            color="purple"
+          />
           <ActionCard
             title="Benutzerverwaltung"
             description="Benutzer verwalten, blockieren, mahnen"
@@ -347,6 +320,20 @@ export default function AdminDashboard() {
             href="/admin/system-outages"
             color="red"
           />
+          <ActionCard
+            title="Stripe Monitoring"
+            description="Zahlungsstatus und Stripe-Aktivitäten überwachen"
+            icon={Activity}
+            href="/admin/stripe/monitoring"
+            color="purple"
+          />
+          <ActionCard
+            title="Bexio Integration"
+            description="Rechnungen und Buchhaltung mit Bexio synchronisieren"
+            icon={Database}
+            href="/admin/bexio"
+            color="blue"
+          />
         </div>
       </div>
       <Footer />
@@ -421,6 +408,8 @@ function ActionCard({
     indigo: 'text-indigo-600 bg-indigo-50',
     red: 'text-red-600 bg-red-50',
     yellow: 'text-yellow-600 bg-yellow-50',
+    emerald: 'text-emerald-600 bg-emerald-50',
+    teal: 'text-teal-600 bg-teal-50',
   }
 
   return (

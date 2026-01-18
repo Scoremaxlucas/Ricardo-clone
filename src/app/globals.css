@@ -1296,7 +1296,7 @@ div.min-h-screen > footer {
   select {
     min-height: 44px;
   }
-  
+
   /* Clickable list items */
   [role="option"],
   [role="menuitem"],
@@ -1307,7 +1307,7 @@ div.min-h-screen > footer {
     display: flex;
     align-items: center;
   }
-  
+
   /* Form inputs should be comfortable to tap */
   input[type="text"],
   input[type="email"],
@@ -1321,7 +1321,7 @@ div.min-h-screen > footer {
     min-height: 48px;
     font-size: 16px; /* Prevents iOS zoom on focus */
   }
-  
+
   /* Prevent iOS zoom on input focus */
   input, textarea, select {
     font-size: max(16px, 1em);
@@ -1400,7 +1400,7 @@ div.min-h-screen > footer {
   [role="button"] {
     -webkit-tap-highlight-color: rgba(20, 184, 166, 0.1);
   }
-  
+
   /* Active state for touch */
   button:active,
   a:active,
@@ -1415,7 +1415,7 @@ div.min-h-screen > footer {
   .mobile-sticky-header {
     padding-top: env(safe-area-inset-top);
   }
-  
+
   .mobile-sticky-footer {
     padding-bottom: env(safe-area-inset-bottom);
   }
@@ -1439,7 +1439,7 @@ div.min-h-screen > footer {
     outline: none;
     box-shadow: none;
   }
-  
+
   /* But show for keyboard navigation */
   *:focus-visible {
     outline: 2px solid var(--color-primary);

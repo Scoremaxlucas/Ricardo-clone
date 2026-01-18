@@ -68,9 +68,9 @@ export default function PrivacyPage() {
                       Wichtiger Hinweis zu Ausweisdokumenten
                     </h4>
                     <p className="text-xs text-green-700 sm:text-sm">
-                      Ihre Ausweiskopie wird ausschliesslich zur einmaligen Identitätsprüfung verwendet 
-                      und <strong>unmittelbar nach Abschluss der Prüfung automatisch und unwiderruflich gelöscht</strong>. 
-                      Wir speichern nur das Ergebnis der Prüfung (verifiziert: ja/nein) und den Dokumenttyp, 
+                      Ihre Ausweiskopie wird ausschliesslich zur einmaligen Identitätsprüfung verwendet
+                      und <strong>unmittelbar nach Abschluss der Prüfung automatisch und unwiderruflich gelöscht</strong>.
+                      Wir speichern nur das Ergebnis der Prüfung (verifiziert: ja/nein) und den Dokumenttyp,
                       nicht jedoch das Dokument selbst. Bei einer erneuten Verifizierung ist ein neuer Upload erforderlich.
                       Nicht abgeschlossene Verifizierungsanträge werden nach 30 Tagen automatisch bereinigt.
                     </p>

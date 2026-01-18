@@ -46,19 +46,29 @@ interface Statistics {
     averageSaleDuration: number
   }
   transactions: {
+    // Order-basiert (primär)
+    totalOrders: number
+    paidOrders: number
+    pendingOrders: number
+    orderRevenue: number
+    platformFees: number
+    averageOrderPrice: number
+    // Legacy (sekundär)
+    legacyPurchases: number
+    completedLegacyPurchases: number
+    legacyRevenue: number
+    // Kombiniert
     total: number
     completed: number
-    pending: number
-    cancelled: number
     totalRevenue: number
-    completedRevenue: number
-    averagePrice: number
   }
   disputes: {
     pending: number
     resolved: number
     closed: number
     total: number
+    orderDisputes: number
+    purchaseDisputes: number
   }
   categories: Array<{
     category: string
@@ -74,7 +84,7 @@ interface Statistics {
     date: string
     users: number
     watches: number
-    purchases: number
+    orders: number // Umbenannt von purchases
   }>
 }
 
@@ -417,9 +427,12 @@ export default function AdminStatisticsPage() {
             <div className="rounded-lg bg-white p-6 shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Gesamt</p>
+                  <p className="text-sm font-medium text-gray-600">Orders</p>
                   <p className="mt-2 text-3xl font-bold text-gray-900">
-                    {formatNumber(stats.transactions.total)}
+                    {formatNumber(stats.transactions.totalOrders || 0)}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    + {formatNumber(stats.transactions.legacyPurchases || 0)} Legacy
                   </p>
                 </div>
                 <ShoppingBag className="h-8 w-8 text-gray-400" />
@@ -428,9 +441,9 @@ export default function AdminStatisticsPage() {
             <div className="rounded-lg bg-white p-6 shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Abgeschlossen</p>
+                  <p className="text-sm font-medium text-gray-600">Bezahlt</p>
                   <p className="mt-2 text-3xl font-bold text-green-600">
-                    {formatNumber(stats.transactions.completed)}
+                    {formatNumber(stats.transactions.paidOrders || stats.transactions.completed || 0)}
                   </p>
                 </div>
                 <CheckCircle className="h-8 w-8 text-green-500" />
@@ -441,7 +454,7 @@ export default function AdminStatisticsPage() {
                 <div>
                   <p className="text-sm font-medium text-gray-600">Gesamtumsatz</p>
                   <p className="mt-2 text-3xl font-bold text-blue-600">
-                    {formatCurrency(stats.transactions.totalRevenue)}
+                    {formatCurrency(stats.transactions.totalRevenue || 0)}
                   </p>
                 </div>
                 <DollarSign className="h-8 w-8 text-blue-500" />
@@ -450,13 +463,34 @@ export default function AdminStatisticsPage() {
             <div className="rounded-lg bg-white p-6 shadow">
               <div className="flex items-center justify-between">
                 <div>
-                  <p className="text-sm font-medium text-gray-600">Ø Verkaufspreis</p>
+                  <p className="text-sm font-medium text-gray-600">Plattform-Gebühren</p>
                   <p className="mt-2 text-3xl font-bold text-purple-600">
-                    {formatCurrency(stats.transactions.averagePrice)}
+                    {formatCurrency(stats.transactions.platformFees || 0)}
                   </p>
                 </div>
                 <TrendingUp className="h-8 w-8 text-purple-500" />
               </div>
+            </div>
+          </div>
+          {/* Zusätzliche Transaktions-Details */}
+          <div className="mt-4 grid grid-cols-1 gap-4 md:grid-cols-3">
+            <div className="rounded-lg bg-white p-6 shadow">
+              <p className="text-sm font-medium text-gray-600">Order-Umsatz</p>
+              <p className="mt-2 text-2xl font-bold text-gray-900">
+                {formatCurrency(stats.transactions.orderRevenue || 0)}
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-6 shadow">
+              <p className="text-sm font-medium text-gray-600">Ø Bestellwert</p>
+              <p className="mt-2 text-2xl font-bold text-gray-900">
+                {formatCurrency(stats.transactions.averageOrderPrice || 0)}
+              </p>
+            </div>
+            <div className="rounded-lg bg-white p-6 shadow">
+              <p className="text-sm font-medium text-gray-600">Ausstehend</p>
+              <p className="mt-2 text-2xl font-bold text-yellow-600">
+                {formatNumber(stats.transactions.pendingOrders || 0)}
+              </p>
             </div>
           </div>
         </div>
@@ -566,7 +600,7 @@ export default function AdminStatisticsPage() {
                         Neue Angebote
                       </th>
                       <th className="px-6 py-3 text-left text-xs font-medium uppercase text-gray-500">
-                        Neue Käufe
+                        Neue Orders
                       </th>
                     </tr>
                   </thead>
@@ -583,7 +617,7 @@ export default function AdminStatisticsPage() {
                           {formatNumber(day.watches)}
                         </td>
                         <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-600">
-                          {formatNumber(day.purchases)}
+                          {formatNumber(day.orders || 0)}
                         </td>
                       </tr>
                     ))}

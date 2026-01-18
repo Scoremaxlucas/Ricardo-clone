@@ -1,195 +1,153 @@
-import { shouldShowDetailedErrors } from "@/lib/env"
-import { authOptions } from '@/lib/auth'
+/**
+ * Admin Stats API
+ * Liefert Statistiken für das Admin-Dashboard
+ *
+ * AKTUALISIERT: Verwendet jetzt Order-Tabelle statt Purchase für aktuelle Daten
+ */
+
+import { shouldShowDetailedErrors } from '@/lib/env'
+import { requireAdmin } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
   try {
-    const session = await getServerSession(authOptions)
+    // Admin-Prüfung mit zentralem Helper
+    const authError = await requireAdmin()
+    if (authError) return authError
 
-    console.log('Stats API called, session:', {
-      userId: session?.user?.id,
-      email: session?.user?.email,
-    })
+    const now = new Date()
 
-    if (!session?.user?.id && !session?.user?.email) {
-      console.log('No session user id or email')
-      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
-    }
-
-    // Prüfe Admin-Status: Zuerst aus Session, dann aus Datenbank
-    const isAdminInSession = session?.user?.isAdmin === true
-
-    // Prüfe ob User Admin ist (per ID oder E-Mail)
-    let user = null
-    if (session.user.id) {
-      user = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { isAdmin: true, email: true },
-      })
-      console.log('User found by ID:', { email: user?.email, isAdmin: user?.isAdmin })
-    }
-
-    // Falls nicht gefunden per ID, versuche per E-Mail
-    if (!user && session.user.email) {
-      console.log('User not found by ID, trying email:', session.user.email)
-      user = await prisma.user.findUnique({
-        where: { email: session.user.email },
-        select: { isAdmin: true, email: true },
-      })
-      console.log('User found by email:', { email: user?.email, isAdmin: user?.isAdmin })
-    }
-
-    // Prüfe Admin-Status: Session ODER Datenbank
-    const isAdminInDb = user?.isAdmin === true
-    const isAdmin = isAdminInSession || isAdminInDb
-
-    console.log('Admin check:', {
-      isAdminInSession,
-      isAdminInDb,
-      isAdmin,
-      userIsAdmin: user?.isAdmin,
-      userEmail: session.user.email,
-      sessionUserId: session.user.id,
-    })
-
-    if (!isAdmin) {
-      console.log('Access denied - not admin')
-      return NextResponse.json(
-        { message: 'Zugriff verweigert. Admin-Rechte erforderlich.' },
-        { status: 403 }
-      )
-    }
-
-    console.log('Admin access granted, calculating stats...')
-
-    // Statistiken berechnen
+    // Statistiken berechnen - AKTUALISIERT für Order-Tabelle
     const [
+      // Benutzer-Statistiken
       totalUsers,
       activeUsers,
       blockedUsers,
-      totalWatches,
-      watches,
-      purchases,
       verifiedUsers,
       pendingVerifications,
-      disputePurchases,
+
+      // Angebots-Statistiken
+      totalWatches,
+
+      // NEU: Verwende Order-Tabelle für verkaufte Artikel und Umsatz
+      orders,
+
+      // Aktive Watches (ohne Order)
+      activeWatchesCount,
+
+      // Dispute-Statistiken - AKTUALISIERT: Kombiniere Order und Purchase Disputes
+      orderDisputes,
+      purchaseDisputes,
+
+      // Payout Change Requests
       pendingPayoutChangeRequests,
     ] = await Promise.all([
-      // Benutzer-Statistiken
+      // Benutzer
       prisma.user.count(),
       prisma.user.count({ where: { isBlocked: false } }),
       prisma.user.count({ where: { isBlocked: true } }),
-      // Angebots-Statistiken
-      prisma.watch.count(),
-      // Alle Artikel mit Purchases zum Filtern
-      prisma.watch.findMany({
-        select: {
-          id: true,
-          auctionEnd: true,
-          purchases: {
-            select: {
-              id: true,
-            },
-          },
-        },
-      }),
-      // Transaktions-Statistiken
-      // WICHTIG: Explizites select verwenden, um disputeInitiatedBy zu vermeiden
-      prisma.purchase.findMany({
-        select: {
-          id: true,
-          price: true,
-          watch: {
-            select: { price: true },
-          },
-          // Nur benötigte Felder selektieren (disputeInitiatedBy wird NICHT selektiert)
-        },
-      }),
-      // Verifizierungs-Statistiken
       prisma.user.count({ where: { verified: true, verificationStatus: 'approved' } }),
       prisma.user.count({ where: { verificationStatus: 'pending' } }),
-      // Dispute-Statistiken: Nutze die gleiche Logik wie /api/admin/disputes
-      // WICHTIG: Explizites select verwenden, um disputeInitiatedBy zu vermeiden
-      // (disputeInitiatedBy existiert möglicherweise noch nicht in der DB)
+
+      // Angebote
+      prisma.watch.count(),
+
+      // Orders (für Umsatz und verkaufte Artikel)
+      prisma.order.findMany({
+        select: {
+          id: true,
+          itemPrice: true,
+          platformFee: true,
+          paymentStatus: true,
+          orderStatus: true,
+        },
+      }),
+
+      // Aktive Angebote (ohne Order und nicht abgelaufen)
+      prisma.watch.count({
+        where: {
+          orders: { none: {} },
+          OR: [
+            { auctionEnd: null },
+            { auctionEnd: { gt: now } },
+          ],
+        },
+      }),
+
+      // Order Disputes (neue Disputes)
+      prisma.order.findMany({
+        where: {
+          disputeStatus: { not: 'none' },
+        },
+        select: {
+          id: true,
+          disputeStatus: true,
+        },
+      }),
+
+      // Purchase Disputes (Legacy-Disputes)
       prisma.purchase.findMany({
         where: { disputeOpenedAt: { not: null } },
         select: {
           id: true,
           disputeStatus: true,
-          // Nur benötigte Felder selektieren (disputeInitiatedBy wird NICHT selektiert)
         },
       }),
+
       // Payout Change Requests
       prisma.payoutChangeRequest.count({
         where: { status: 'PENDING' },
       }),
     ])
 
-    // Berechne aktive und verkaufte Angebote aus den Watch-Daten
-    const now = new Date()
-    const activeWatches = watches.filter(watch => {
-      const hasNoPurchase = !watch.purchases || watch.purchases.length === 0
-      const isNotExpired = !watch.auctionEnd || new Date(watch.auctionEnd) > now
-      return hasNoPurchase && isNotExpired
-    }).length
+    // Berechne Umsatz aus Orders (korrekte Datenquelle)
+    const completedOrders = orders.filter(
+      o => o.paymentStatus === 'paid' || o.paymentStatus === 'released'
+    )
+    const totalRevenue = completedOrders.reduce((sum, order) => sum + order.itemPrice, 0)
 
-    const soldWatches = watches.filter(watch => {
-      return watch.purchases && watch.purchases.length > 0
-    }).length
+    // Plattform-Marge aus Orders (akkurat)
+    const platformMargin = completedOrders.reduce((sum, order) => sum + (order.platformFee || 0), 0)
 
-    // Umsatz berechnen (price aus Purchase oder Fallback auf watch.price)
-    const totalRevenue = purchases.reduce((sum, purchase) => {
-      return sum + (purchase.price || purchase.watch?.price || 0)
-    }, 0)
+    // Verkaufte Angebote = Orders mit bezahltem Status
+    const soldWatches = completedOrders.length
 
-    // Berechne pending Disputes aus den Dispute-Daten
-    // Nutze die gleiche Logik wie /api/admin/disputes
-    const pendingDisputes = disputePurchases.filter(d => d.disputeStatus === 'pending').length
-
-    // Platform-Marge - verwende Default, Pricing wird später aus Datenbank geladen
-    // TODO: Pricing-Einstellungen aus Datenbank laden
-    const platformMarginRate = 0.05
-    const platformMargin = totalRevenue * platformMarginRate
+    // Kombiniere Disputes aus beiden Tabellen
+    const orderPendingDisputes = orderDisputes.filter(
+      d => d.disputeStatus === 'pending' || d.disputeStatus === 'open'
+    ).length
+    const purchasePendingDisputes = purchaseDisputes.filter(
+      d => d.disputeStatus === 'pending'
+    ).length
+    const pendingDisputes = orderPendingDisputes + purchasePendingDisputes
 
     const result = {
       totalUsers: totalUsers || 0,
       activeUsers: activeUsers || 0,
       blockedUsers: blockedUsers || 0,
       totalWatches: totalWatches || 0,
-      activeWatches: activeWatches || 0,
+      activeWatches: activeWatchesCount || 0,
       soldWatches: soldWatches || 0,
-      totalRevenue: totalRevenue || 0,
-      platformMargin: platformMargin || 0,
+      totalRevenue: Math.round(totalRevenue * 100) / 100,
+      platformMargin: Math.round(platformMargin * 100) / 100,
       verifiedUsers: verifiedUsers || 0,
       pendingVerifications: pendingVerifications || 0,
       pendingDisputes: pendingDisputes || 0,
       pendingPayoutChangeRequests: pendingPayoutChangeRequests || 0,
+      // Zusätzliche Stats für bessere Übersicht
+      totalOrders: orders.length,
+      completedOrders: completedOrders.length,
     }
-
-    console.log('Stats calculated:', result)
-    console.log('Total users from DB:', totalUsers)
-    console.log('Active users from DB:', activeUsers)
 
     return NextResponse.json(result)
   } catch (error: any) {
-    console.error('Error fetching admin stats:', error)
-    console.error('Error name:', error?.name)
-    console.error('Error message:', error?.message)
-    console.error('Error stack:', error?.stack)
-
-    // Prüfe ob es ein Prisma-Fehler ist
-    if (error?.code) {
-      console.error('Prisma error code:', error.code)
-    }
+    console.error('[admin/stats] Error:', error)
 
     return NextResponse.json(
       {
         message: 'Fehler beim Laden der Statistiken',
         error: error?.message || 'Unbekannter Fehler',
-        errorName: error?.name,
-        errorCode: error?.code,
         stack: shouldShowDetailedErrors() ? error?.stack : undefined,
       },
       { status: 500 }

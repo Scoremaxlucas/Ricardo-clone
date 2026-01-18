@@ -266,8 +266,8 @@ export default function ForbiddenItemsPage() {
               Verbotene Artikel
             </h1>
             <p className="mx-auto max-w-2xl text-sm text-gray-600 sm:text-base">
-              Die folgende Liste enthält Produkte und Inhalte, die auf Helvenda nicht angeboten werden dürfen. 
-              Diese Liste ist nicht abschliessend – Helvenda behält sich vor, jederzeit weitere Produkte 
+              Die folgende Liste enthält Produkte und Inhalte, die auf Helvenda nicht angeboten werden dürfen.
+              Diese Liste ist nicht abschliessend – Helvenda behält sich vor, jederzeit weitere Produkte
               zu verbieten oder Angebote ohne Angabe von Gründen zu entfernen.
             </p>
           </div>
@@ -279,8 +279,8 @@ export default function ForbiddenItemsPage() {
               <div>
                 <h2 className="font-semibold text-amber-800">Rechtlicher Hinweis</h2>
                 <p className="mt-1 text-sm text-amber-700">
-                  Das Anbieten verbotener Artikel kann zur sofortigen Sperrung Ihres Kontos führen. 
-                  Bei schwerwiegenden Verstössen behält sich Helvenda vor, die zuständigen Behörden 
+                  Das Anbieten verbotener Artikel kann zur sofortigen Sperrung Ihres Kontos führen.
+                  Bei schwerwiegenden Verstössen behält sich Helvenda vor, die zuständigen Behörden
                   zu informieren. Bereits angefallene Gebühren werden bei Verstössen nicht erstattet.
                 </p>
               </div>
@@ -326,21 +326,21 @@ export default function ForbiddenItemsPage() {
             <h2 className="mb-3 font-semibold text-blue-800">Ausnahmen & Sonderfälle</h2>
             <div className="space-y-3 text-sm text-blue-700">
               <p>
-                <strong>Sammler und Antiquitäten:</strong> Bestimmte historische Gegenstände 
-                (z.B. antike Waffen, historische Uniformen) können unter strengen Auflagen 
+                <strong>Sammler und Antiquitäten:</strong> Bestimmte historische Gegenstände
+                (z.B. antike Waffen, historische Uniformen) können unter strengen Auflagen
                 erlaubt sein. Kontaktieren Sie uns vorab unter{' '}
                 <a href="mailto:support@helvenda.ch" className="underline">
                   support@helvenda.ch
                 </a>.
               </p>
               <p>
-                <strong>Gewerbliche Verkäufer:</strong> Für bestimmte Produktkategorien 
-                (z.B. Medizinprodukte, Alkohol) können gewerbliche Verkäufer mit entsprechenden 
+                <strong>Gewerbliche Verkäufer:</strong> Für bestimmte Produktkategorien
+                (z.B. Medizinprodukte, Alkohol) können gewerbliche Verkäufer mit entsprechenden
                 Lizenzen eine Sondergenehmigung beantragen.
               </p>
               <p>
-                <strong>Im Zweifelsfall:</strong> Wenn Sie unsicher sind, ob Ihr Artikel 
-                erlaubt ist, kontaktieren Sie uns bitte vor dem Einstellen. Wir helfen 
+                <strong>Im Zweifelsfall:</strong> Wenn Sie unsicher sind, ob Ihr Artikel
+                erlaubt ist, kontaktieren Sie uns bitte vor dem Einstellen. Wir helfen
                 Ihnen gerne weiter.
               </p>
             </div>
@@ -350,7 +350,7 @@ export default function ForbiddenItemsPage() {
           <div className="mt-8 rounded-lg border border-gray-200 bg-white p-4 sm:p-6">
             <h2 className="mb-3 font-semibold text-gray-900">Verstoss melden</h2>
             <p className="mb-4 text-sm text-gray-600">
-              Haben Sie ein Angebot entdeckt, das gegen unsere Richtlinien verstösst? 
+              Haben Sie ein Angebot entdeckt, das gegen unsere Richtlinien verstösst?
               Bitte melden Sie es uns, damit wir entsprechende Massnahmen ergreifen können.
             </p>
             <a

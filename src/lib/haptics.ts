@@ -1,18 +1,18 @@
 /**
  * Haptic Feedback Utility for Mobile Devices
- * 
+ *
  * Provides tactile feedback for user interactions on supported devices.
  * Falls back gracefully on unsupported devices.
- * 
+ *
  * @example
  * import { haptic } from '@/lib/haptics'
- * 
+ *
  * // On button click
  * haptic.light()
- * 
+ *
  * // On success
  * haptic.success()
- * 
+ *
  * // On error
  * haptic.error()
  */
@@ -52,7 +52,7 @@ export function isHapticSupported(): boolean {
  */
 function vibrate(pattern: HapticPattern): void {
   if (!isHapticSupported()) return
-  
+
   try {
     navigator.vibrate(pattern)
   } catch (e) {
@@ -67,25 +67,25 @@ function vibrate(pattern: HapticPattern): void {
 export const haptic: HapticFeedback = {
   // Light tap - subtle, for regular button presses
   light: () => vibrate(10),
-  
+
   // Medium tap - more noticeable, for toggles
   medium: () => vibrate(20),
-  
+
   // Heavy tap - strong, for significant actions
   heavy: () => vibrate(40),
-  
+
   // Success - double pulse pattern
   success: () => vibrate([10, 50, 10]),
-  
+
   // Error - triple pulse pattern (attention-grabbing)
   error: () => vibrate([50, 30, 50, 30, 50]),
-  
+
   // Warning - double medium pulse
   warning: () => vibrate([30, 50, 30]),
-  
+
   // Selection changed - very light
   selection: () => vibrate(5),
-  
+
   // Custom pattern for special cases
   custom: (pattern: HapticPattern) => vibrate(pattern),
 }
@@ -100,7 +100,7 @@ export function useHaptic(): HapticFeedback {
 
 /**
  * Wrapper to add haptic feedback to any click handler
- * 
+ *
  * @example
  * <button onClick={withHaptic(handleClick, 'light')}>Click me</button>
  */
@@ -116,7 +116,7 @@ export function withHaptic<T extends (...args: any[]) => any>(
 
 /**
  * Higher-order function for async handlers with success/error haptics
- * 
+ *
  * @example
  * const handleSubmit = withHapticAsync(async () => {
  *   await api.submit()
