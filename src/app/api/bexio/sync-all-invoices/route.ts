@@ -1,8 +1,8 @@
 /**
  * Bexio Sync All Invoices API
- * 
+ *
  * POST /api/bexio/sync-all-invoices
- * 
+ *
  * Synchronisiert alle Rechnungen ohne Bexio-Referenz nachträglich zu Bexio.
  * Dies ist wichtig für Rechnungen, die erstellt wurden bevor Bexio-Sync aktiv war,
  * oder wenn der Sync fehlgeschlagen ist.
@@ -19,7 +19,7 @@ export async function POST(request: NextRequest) {
     // Check for CRON_SECRET or admin session
     const { searchParams } = new URL(request.url)
     const secret = searchParams.get('secret')
-    
+
     if (secret === process.env.CRON_SECRET) {
       // Valid cron request
     } else {
@@ -78,9 +78,9 @@ export async function POST(request: NextRequest) {
     for (const invoice of unsyncedInvoices) {
       try {
         console.log(`[bexio/sync-all] Syncing invoice ${invoice.invoiceNumber}...`)
-        
+
         const result = await createBexioInvoice(invoice.id)
-        
+
         results.push({
           invoiceId: invoice.id,
           invoiceNumber: invoice.invoiceNumber,
@@ -88,11 +88,11 @@ export async function POST(request: NextRequest) {
           bexioInvoiceId: result.bexioInvoiceId,
           qrReference: result.qrReference,
         })
-        
+
         console.log(`[bexio/sync-all] ✅ Invoice ${invoice.invoiceNumber} synced: Bexio ID ${result.bexioInvoiceId}, Ref: ${result.qrReference}`)
       } catch (error: any) {
         console.error(`[bexio/sync-all] ❌ Failed to sync invoice ${invoice.invoiceNumber}:`, error.message)
-        
+
         results.push({
           invoiceId: invoice.id,
           invoiceNumber: invoice.invoiceNumber,
@@ -127,7 +127,7 @@ export async function GET(request: NextRequest) {
     // Check for CRON_SECRET or admin session
     const { searchParams } = new URL(request.url)
     const secret = searchParams.get('secret')
-    
+
     if (secret === process.env.CRON_SECRET) {
       // Valid cron request
     } else {
