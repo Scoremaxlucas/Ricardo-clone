@@ -367,7 +367,7 @@ export async function POST(request: NextRequest) {
     try {
       const { calculateInvoiceForOrder } = await import('@/lib/invoice')
       invoice = await calculateInvoiceForOrder(order.id)
-      
+
       // Update Order mit Invoice-Referenz
       await prisma.order.update({
         where: { id: order.id },
@@ -376,7 +376,7 @@ export async function POST(request: NextRequest) {
           invoiceCreatedAt: new Date(),
         },
       })
-      
+
       console.log(`[orders/create] ✅ Rechnung ${invoice.invoiceNumber} erstellt für Order ${order.id} (sofort nach Verkauf)`)
     } catch (invoiceError: any) {
       console.error('[orders/create] ❌ Fehler bei Rechnungserstellung:', invoiceError)

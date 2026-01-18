@@ -18,7 +18,6 @@ import {
   Shield,
   Sparkles,
   Truck,
-  User,
 } from 'lucide-react'
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
@@ -323,60 +322,6 @@ export default function PurchaseSuccessPage() {
                         CHF {(order.itemPrice + (order.shippingCost || 0)).toFixed(2)}
                       </span>
                     </div>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Seller Info Card */}
-          <div className="mb-6 overflow-hidden rounded-2xl border border-gray-200 bg-white shadow-lg">
-            <div className="border-b border-gray-100 bg-gray-50 px-6 py-4">
-              <h2 className="flex items-center text-lg font-semibold text-gray-900">
-                <User className="mr-2 h-5 w-5 text-emerald-600" />
-                Verkäufer
-              </h2>
-            </div>
-
-            <div className="p-6">
-              <div className="flex items-center justify-between">
-                <div className="flex items-center gap-4">
-                  <div className="flex h-14 w-14 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-teal-500 text-xl font-bold text-white">
-                    {(order.seller.firstName?.[0] || order.seller.name?.[0] || 'V').toUpperCase()}
-                  </div>
-                  <div>
-                    <p className="font-semibold text-gray-900">
-                      {order.seller.firstName && order.seller.lastName
-                        ? `${order.seller.firstName} ${order.seller.lastName}`
-                        : order.seller.name || 'Verkäufer'}
-                    </p>
-                    <p className="text-sm text-gray-500">
-                      Mitglied bei Helvenda
-                    </p>
-                  </div>
-                </div>
-
-                <Link
-                  href={`/users/${order.seller.id}`}
-                  className="rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
-                >
-                  Profil ansehen
-                </Link>
-              </div>
-
-              {/* Contact Info Hint */}
-              <div className="mt-4 rounded-xl border border-emerald-200 bg-emerald-50 p-4">
-                <div className="flex items-start gap-3">
-                  <div className="flex-shrink-0">
-                    <Check className="h-5 w-5 text-emerald-600" />
-                  </div>
-                  <div>
-                    <p className="font-medium text-emerald-800">
-                      Kontaktdaten freigeschaltet
-                    </p>
-                    <p className="mt-1 text-sm text-emerald-700">
-                      Sie können den Verkäufer jetzt direkt kontaktieren, um {isPickup ? 'die Abholung zu vereinbaren' : 'Details zur Lieferung zu besprechen'}.
-                    </p>
                   </div>
                 </div>
               </div>

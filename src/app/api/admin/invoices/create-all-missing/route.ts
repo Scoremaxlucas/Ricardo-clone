@@ -5,10 +5,10 @@ import { prisma } from '@/lib/prisma'
 
 /**
  * POST /api/admin/invoices/create-all-missing
- * 
+ *
  * Erstellt Rechnungen für alle verkauften Artikel ohne Rechnung.
  * Unterstützt sowohl Purchases als auch Orders.
- * 
+ *
  * Admin-only Endpoint.
  */
 export async function POST(request: NextRequest) {
@@ -16,26 +16,26 @@ export async function POST(request: NextRequest) {
     // Check auth via CRON_SECRET or session
     const url = new URL(request.url)
     const secret = url.searchParams.get('secret')
-    
+
     if (secret !== process.env.CRON_SECRET) {
       const session = await getServerSession(authOptions)
-      
+
       if (!session?.user?.email) {
         return NextResponse.json({ error: 'Nicht autorisiert' }, { status: 401 })
       }
-      
+
       // Check admin
       const adminEmails = ['admin@helvenda.ch', 'lucas@helvenda.ch', 'a@a.ch']
       const user = await prisma.user.findUnique({
         where: { email: session.user.email },
         select: { isAdmin: true },
       })
-      
+
       if (!user?.isAdmin && !adminEmails.includes(session.user.email)) {
         return NextResponse.json({ error: 'Admin-Rechte erforderlich' }, { status: 403 })
       }
     }
-    
+
     const results: {
       purchases: { created: number; skipped: number; failed: number; details: string[] }
       orders: { created: number; skipped: number; failed: number; details: string[] }
@@ -43,7 +43,7 @@ export async function POST(request: NextRequest) {
       purchases: { created: 0, skipped: 0, failed: 0, details: [] },
       orders: { created: 0, skipped: 0, failed: 0, details: [] },
     }
-    
+
     // === PURCHASES (altes System) ===
     // Finde alle Purchases ohne Rechnung
     const purchasesWithoutInvoice = await prisma.purchase.findMany({
@@ -71,9 +71,9 @@ export async function POST(request: NextRequest) {
         },
       },
     })
-    
+
     console.log(`[create-all-missing] ${purchasesWithoutInvoice.length} Purchases ohne Rechnung gefunden`)
-    
+
     for (const purchase of purchasesWithoutInvoice) {
       try {
         const { calculateInvoiceForSale } = await import('@/lib/invoice')
@@ -85,7 +85,7 @@ export async function POST(request: NextRequest) {
         results.purchases.details.push(`❌ Purchase ${purchase.id}: ${error.message}`)
       }
     }
-    
+
     // === ORDERS (neues System) ===
     // Finde alle Orders ohne Rechnung (die nicht storniert sind)
     const ordersWithoutInvoice = await prisma.order.findMany({
@@ -106,14 +106,14 @@ export async function POST(request: NextRequest) {
         },
       },
     })
-    
+
     console.log(`[create-all-missing] ${ordersWithoutInvoice.length} Orders ohne Rechnung gefunden`)
-    
+
     for (const order of ordersWithoutInvoice) {
       try {
         const { calculateInvoiceForOrder } = await import('@/lib/invoice')
         const invoice = await calculateInvoiceForOrder(order.id)
-        
+
         // Update Order mit Invoice-Referenz
         await prisma.order.update({
           where: { id: order.id },
@@ -122,7 +122,7 @@ export async function POST(request: NextRequest) {
             invoiceCreatedAt: new Date(),
           },
         })
-        
+
         results.orders.created++
         results.orders.details.push(`✅ Order ${order.orderNumber}: ${invoice.invoiceNumber} (${order.watch?.title || 'Unbekannt'})`)
       } catch (error: any) {
@@ -130,10 +130,10 @@ export async function POST(request: NextRequest) {
         results.orders.details.push(`❌ Order ${order.orderNumber || order.id}: ${error.message}`)
       }
     }
-    
+
     const totalCreated = results.purchases.created + results.orders.created
     const totalFailed = results.purchases.failed + results.orders.failed
-    
+
     return NextResponse.json({
       success: totalFailed === 0,
       message: `${totalCreated} Rechnungen erstellt, ${totalFailed} fehlgeschlagen`,
