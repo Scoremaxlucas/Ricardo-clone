@@ -602,17 +602,27 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           console.log('[QR-Bill] ⚠️ Keine Bexio-Referenz, verwende Fallback:', formattedReference)
         }
 
-        // Validiere Referenz
-        if (formattedReference.length !== 25) {
+        // WICHTIG: Für den QR-Code müssen alle Leerzeichen entfernt werden!
+        // Die Anzeige-Referenz kann Leerzeichen haben, aber der QR-Code nicht.
+        const qrCodeReference = formattedReference.replace(/\s/g, '').trim()
+        
+        // Validiere Referenz (ohne Leerzeichen)
+        if (qrCodeReference.length === 0) {
+          console.error('[QR-Bill] ❌ Referenz ist leer nach Bereinigung!')
+        }
+        if (qrCodeReference.length > 25) {
           console.error(
-            '[QR-Bill] ⚠️  Referenz hat ungültige Länge:',
-            formattedReference.length,
-            'erwartet: 25'
+            '[QR-Bill] ⚠️  Referenz ist zu lang:',
+            qrCodeReference.length,
+            'max: 25'
           )
         }
-        if (!/^[0-9A-Za-z ]{25}$/.test(formattedReference)) {
-          console.error('[QR-Bill] ⚠️  Referenz enthält ungültige Zeichen:', formattedReference)
+        if (!/^[0-9A-Za-z]+$/.test(qrCodeReference)) {
+          console.error('[QR-Bill] ⚠️  Referenz enthält ungültige Zeichen:', qrCodeReference)
         }
+        
+        console.log('[QR-Bill] Referenz für Anzeige:', formattedReference)
+        console.log('[QR-Bill] Referenz für QR-Code:', qrCodeReference)
 
         // Betrag formatieren (immer mit 2 Dezimalstellen, keine Tausender-Trennzeichen)
         const formattedAmount = Math.abs(invoice.total).toFixed(2)
@@ -696,7 +706,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           (hasDebtorInfo ? debtorCityLine : '').substring(0, 70), // Ultimate debtor postal code + city (max 70 Zeichen, leer wenn kein Name)
           hasDebtorInfo ? debtorCountry : '', // Ultimate debtor country (2 Zeichen, leer wenn kein Name)
           'SCOR', // Reference type (SCOR = Creditor Reference)
-          formattedReference, // Reference (genau 25 Zeichen, alphanumerisch, mit Leerzeichen aufgefüllt)
+          qrCodeReference, // Reference (OHNE Leerzeichen, max 25 Zeichen alphanumerisch)
           '', // Additional information (optional, leer lassen)
           'EPD', // Trailer (End of Payment Data)
         ].join('\n')
@@ -776,19 +786,53 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         // Add QR code image
         pdf.addImage(qrCodeDataUrl, 'PNG', qrX, qrY, qrSize, qrSize)
 
-        // Swiss cross in center of QR code (7x7mm)
+        // Swiss cross in center of QR code (7x7mm) - Offizielles Swiss QR-Bill Design
+        // Gemäss Swiss QR-Bill Spezifikation: Weisser Rahmen, schwarzer Hintergrund, weisses Kreuz
         const crossSize = 7
         const crossX = qrX + (qrSize - crossSize) / 2
         const crossY = qrY + (qrSize - crossSize) / 2
+        
+        // 1. Weisser äusserer Rahmen (gesamtes Quadrat)
         pdf.setFillColor(255, 255, 255)
         pdf.rect(crossX, crossY, crossSize, crossSize, 'F')
+        
+        // 2. Schwarzer innerer Hintergrund (mit Abstand zum Rahmen)
+        const borderWidth = 0.6 // Weisser Rahmen ca. 0.6mm
         pdf.setFillColor(0, 0, 0)
-        pdf.rect(crossX + 0.5, crossY + 0.5, crossSize - 1, crossSize - 1, 'F')
+        pdf.rect(
+          crossX + borderWidth,
+          crossY + borderWidth,
+          crossSize - 2 * borderWidth,
+          crossSize - 2 * borderWidth,
+          'F'
+        )
+        
+        // 3. Weisses Schweizer Kreuz auf schwarzem Hintergrund
+        // Das Kreuz ist proportional: ca. 35% der inneren Fläche breit
+        const innerSize = crossSize - 2 * borderWidth
+        const crossArmWidth = innerSize * 0.35 // Breite des Kreuzarms
+        const crossArmLength = innerSize * 0.7 // Länge des Kreuzarms
+        const innerCenter = crossSize / 2
+        
         pdf.setFillColor(255, 255, 255)
-        // Horizontal bar of cross
-        pdf.rect(crossX + 1.5, crossY + 2.5, crossSize - 3, 2, 'F')
-        // Vertical bar of cross
-        pdf.rect(crossX + 2.5, crossY + 1.5, 2, crossSize - 3, 'F')
+        
+        // Horizontaler Balken des Kreuzes
+        pdf.rect(
+          crossX + innerCenter - crossArmLength / 2,
+          crossY + innerCenter - crossArmWidth / 2,
+          crossArmLength,
+          crossArmWidth,
+          'F'
+        )
+        
+        // Vertikaler Balken des Kreuzes
+        pdf.rect(
+          crossX + innerCenter - crossArmWidth / 2,
+          crossY + innerCenter - crossArmLength / 2,
+          crossArmWidth,
+          crossArmLength,
+          'F'
+        )
 
         // ========== ZAHLTEIL - Right side info ==========
         // Swiss QR-Bill: Info rechts neben dem QR-Code
