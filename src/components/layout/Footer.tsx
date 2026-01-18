@@ -43,8 +43,8 @@ export function Footer() {
           </div>
 
           {/* Help Links - Horizontal scroll on mobile, wrap on desktop */}
-          <nav 
-            className="-mx-4 flex items-center gap-x-5 overflow-x-auto px-4 scrollbar-hide md:mx-0 md:flex-wrap md:gap-x-6 md:gap-y-2 md:overflow-visible md:px-0" 
+          <nav
+            className="-mx-4 flex items-center gap-x-5 overflow-x-auto px-4 scrollbar-hide md:mx-0 md:flex-wrap md:gap-x-6 md:gap-y-2 md:overflow-visible md:px-0"
             aria-label="Hilfe-Links"
           >
             <Link href="/help" className={linkClass}>
@@ -97,6 +97,12 @@ export function Footer() {
                 className="transition-colors hover:text-white hover:underline"
               >
                 {t.footer.termsOfService}
+              </Link>
+              <Link
+                href="/forbidden-items"
+                className="transition-colors hover:text-white hover:underline"
+              >
+                Verbotsliste
               </Link>
               <Link
                 href="/imprint"

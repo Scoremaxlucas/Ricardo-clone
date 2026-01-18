@@ -218,7 +218,7 @@ export default function TermsPage() {
 
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 mt-4 sm:mt-6">3.6 Links und Web-Adressen</h3>
                   <p className="text-sm sm:text-base mb-3 sm:mb-4">
-                    Die auf dem Marktplatz veröffentlichten Angebote und Inhalte (inkl. Bilder) dürfen keinerlei URL-Links oder Web-Adressen enthalten. Davon ausgenommen sind Angebote in Form von Kleinanzeigen sowie die in der allgemeinen Verbotsliste aufgeführten Ausnahmen.
+                    Die auf dem Marktplatz veröffentlichten Angebote und Inhalte (inkl. Bilder) dürfen keinerlei URL-Links oder Web-Adressen enthalten. Davon ausgenommen sind Angebote in Form von Kleinanzeigen sowie die in der <a href="/forbidden-items" className="text-primary-600 hover:underline">allgemeinen Verbotsliste</a> aufgeführten Ausnahmen.
                   </p>
 
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 mt-4 sm:mt-6">3.7 Nutzung von Inhalten</h3>
@@ -255,7 +255,7 @@ export default function TermsPage() {
 
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 mt-4 sm:mt-6">4.1 Unzulässige Angebote</h3>
                   <p className="text-sm sm:text-base mb-3 sm:mb-4">
-                    Helvenda ist befugt, das Anbieten bestimmter Produkte und Produktgruppen auf dem Marktplatz jederzeit nach eigenem Ermessen und ohne Angabe von Gründen zu verbieten. Eine nicht abschliessende, laufend aktualisierte Übersicht findet sich in der allgemeinen Verbotsliste.
+                    Helvenda ist befugt, das Anbieten bestimmter Produkte und Produktgruppen auf dem Marktplatz jederzeit nach eigenem Ermessen und ohne Angabe von Gründen zu verbieten. Eine nicht abschliessende, laufend aktualisierte Übersicht findet sich in der <a href="/forbidden-items" className="text-primary-600 hover:underline">allgemeinen Verbotsliste</a>.
                   </p>
 
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 mt-4 sm:mt-6">4.2 Veröffentlichte Inhalte, Angebote und Gebote; Kategorien</h3>
@@ -295,7 +295,7 @@ export default function TermsPage() {
 
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 mt-4 sm:mt-6">5.2 Kein Verkauf verbotener Artikel</h3>
                   <p className="text-sm sm:text-base mb-3 sm:mb-4">
-                    Es ist verboten, Produkte anzubieten, deren Angebot, Verkauf, Kauf, Abgabe oder Verwendung gegen gesetzliche Vorschriften oder gegen die guten Sitten verstossen könnten. Helvenda führt eine nicht abschliessende und laufend aktualisierte Verbotsliste (vgl. Marktplatzbetrieb / Unzulässige Angebote) von Produkten, deren Angebot oder Bewerbung ohne vorgängige ausdrückliche Erlaubnis von Helvenda verboten ist. Unabhängig von der Eintragung eines Produkts auf der Liste behält sich Helvenda das jederzeitige Recht vor, Angebote zu löschen und die zuständigen Behörden oder verletzte Dritte zu orientieren.
+                    Es ist verboten, Produkte anzubieten, deren Angebot, Verkauf, Kauf, Abgabe oder Verwendung gegen gesetzliche Vorschriften oder gegen die guten Sitten verstossen könnten. Helvenda führt eine nicht abschliessende und laufend aktualisierte <a href="/forbidden-items" className="text-primary-600 hover:underline">Verbotsliste</a> (vgl. Marktplatzbetrieb / Unzulässige Angebote) von Produkten, deren Angebot oder Bewerbung ohne vorgängige ausdrückliche Erlaubnis von Helvenda verboten ist. Unabhängig von der Eintragung eines Produkts auf der Liste behält sich Helvenda das jederzeitige Recht vor, Angebote zu löschen und die zuständigen Behörden oder verletzte Dritte zu orientieren.
                   </p>
 
                   <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2 sm:mb-3 mt-4 sm:mt-6">5.3 Wahrheitsgemässe und vollständige Angaben über die Kaufsache</h3>
