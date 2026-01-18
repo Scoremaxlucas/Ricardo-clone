@@ -179,7 +179,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
       amount: '1',
       text: item.description,
       unit_price: unitPrice.toString(),
-      account_id: 101, // Handelserlös (3200) - aus 2.0/accounts API
+      // Keine account_id und tax_id - Bexio soll Defaults verwenden
     }
   })
 
