@@ -19,7 +19,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ success: false, message: 'User ID fehlt' }, { status: 400 })
     }
 
-    // Prüfe, ob der aktuelle User eine Purchase mit diesem Verkäufer hat
+    // Prüfe, ob der aktuelle User eine Purchase ODER Order mit diesem Verkäufer hat
     const hasPurchase = await prisma.purchase.findFirst({
       where: {
         buyerId: session.user.id,
@@ -29,7 +29,16 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    if (!hasPurchase) {
+    // NEU: Prüfe auch Orders (neues System)
+    const hasOrder = await prisma.order.findFirst({
+      where: {
+        buyerId: session.user.id,
+        sellerId: userId,
+        orderStatus: { notIn: ['canceled', 'refunded'] },
+      },
+    })
+
+    if (!hasPurchase && !hasOrder) {
       return NextResponse.json(
         { success: false, message: 'Sie haben keine gekaufte Uhr von diesem Verkäufer' },
         { status: 403 }
