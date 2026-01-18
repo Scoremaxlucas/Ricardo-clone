@@ -148,7 +148,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       const buyerDisplayName = activeOrder.buyer?.firstName && activeOrder.buyer?.lastName
         ? `${activeOrder.buyer.firstName} ${activeOrder.buyer.lastName}`
         : activeOrder.buyer?.name || 'Käufer'
-      
+
       saleInfo = {
         soldAt: activeOrder.createdAt.toISOString(),
         soldPrice: activeOrder.totalAmount,
@@ -185,7 +185,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         const buyerDisplayName = activePurchase.buyer?.firstName && activePurchase.buyer?.lastName
           ? `${activePurchase.buyer.firstName} ${activePurchase.buyer.lastName}`
           : activePurchase.buyer?.name || 'Käufer'
-        
+
         saleInfo = {
           soldAt: activePurchase.createdAt.toISOString(),
           soldPrice: activePurchase.price,

@@ -23,7 +23,6 @@ async function sendReceiptReminders() {
   // - bezahlt wurden
   // - Käufer hat noch nicht bestätigt
   // - autoReleaseAt ist innerhalb der nächsten 24 Stunden
-  // - receiptReminderSentAt ist NULL (noch keine Erinnerung gesendet)
   const ordersNeedingReminder = await prisma.order.findMany({
     where: {
       paymentStatus: { in: ['paid', 'release_pending'] },
@@ -32,13 +31,8 @@ async function sendReceiptReminders() {
         gte: now,
         lte: reminderWindow,
       },
-      // @ts-ignore - Field might not exist yet
-      receiptReminderSentAt: null,
     },
-    select: {
-      id: true,
-      orderNumber: true,
-      autoReleaseAt: true,
+    include: {
       buyer: {
         select: {
           id: true,

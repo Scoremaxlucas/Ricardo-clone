@@ -695,7 +695,7 @@ export function ProductPageClient({
                         Verkauft
                       </span>
                     </div>
-                    
+
                     {/* Verkaufspreis */}
                     <div className="p-4 text-center">
                       <div className="text-sm text-gray-500">Verkauft für</div>
