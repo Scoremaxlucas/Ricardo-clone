@@ -27,7 +27,7 @@ export async function GET(request: NextRequest) {
   // Try to get accounts (chart of accounts)
   const endpoints = [
     '/account',
-    '/accounts', 
+    '/accounts',
     '/chart_of_accounts',
     '/accounting/accounts',
     '/tax',
@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       const res = await fetch(`https://api.bexio.com/2.0${ep}`, { headers })
       if (res.ok) {
         const data = await res.json()
-        results[ep] = Array.isArray(data) ? data.slice(0, 5) : data
+        results[ep] = Array.isArray(data) ? data.slice(0, 30) : data
       } else {
         results[ep] = { status: res.status, statusText: res.statusText }
       }
