@@ -660,7 +660,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
 
                 {isLanguageMenuOpen && (
                   <div
-                    className="absolute right-0 top-full z-[10000] w-36 rounded-md border border-gray-200 bg-white py-0.5 shadow-lg"
+                    className="absolute right-0 top-full z-[10000] w-40 rounded-md border border-gray-200 bg-white py-1 shadow-lg"
                     style={{ marginTop: '4px', pointerEvents: 'auto' }}
                   >
                     {languages.map(lang => (
@@ -670,16 +670,16 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                           setLanguage(lang.code)
                           setIsLanguageMenuOpen(false)
                         }}
-                        className={`flex w-full items-center gap-2 px-2.5 py-1.5 text-left text-xs transition-colors hover:bg-gray-50 ${
+                        className={`flex min-h-[44px] w-full items-center gap-2.5 px-3 py-2.5 text-left text-sm transition-colors hover:bg-gray-50 ${
                           language === lang.code
                             ? 'bg-primary-50 font-medium text-primary-600'
                             : 'text-gray-700 hover:text-primary-600'
                         }`}
                       >
-                        <span className="text-base">{lang.flag}</span>
+                        <span className="text-lg">{lang.flag}</span>
                         <span className="flex-1">{lang.name}</span>
                         {language === lang.code && (
-                          <span className="text-xs text-primary-600">✓</span>
+                          <span className="text-sm text-primary-600">✓</span>
                         )}
                       </button>
                     ))}

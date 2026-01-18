@@ -213,6 +213,7 @@ export default function RegisterPage() {
                 id="email"
                 name="email"
                 type="email"
+                inputMode="email"
                 required
                 value={formData.email}
                 onChange={handleChange}

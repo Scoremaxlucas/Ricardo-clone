@@ -1282,3 +1282,185 @@ div.min-h-screen > footer {
   outline: 3px solid var(--color-primary);
   outline-offset: 4px;
 }
+
+/* ===== MOBILE-SPECIFIC OPTIMIZATIONS ===== */
+
+/* Ensure minimum touch targets on mobile (44px as per Apple HIG / Google Material) */
+@media (max-width: 768px) {
+  /* Interactive elements minimum size */
+  button:not(.touch-target-exempt),
+  a[href]:not(.touch-target-exempt),
+  [role="button"]:not(.touch-target-exempt),
+  input[type="checkbox"],
+  input[type="radio"],
+  select {
+    min-height: 44px;
+  }
+  
+  /* Clickable list items */
+  [role="option"],
+  [role="menuitem"],
+  [role="tab"],
+  li > a,
+  li > button {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+  
+  /* Form inputs should be comfortable to tap */
+  input[type="text"],
+  input[type="email"],
+  input[type="password"],
+  input[type="number"],
+  input[type="tel"],
+  input[type="url"],
+  input[type="search"],
+  textarea,
+  select {
+    min-height: 48px;
+    font-size: 16px; /* Prevents iOS zoom on focus */
+  }
+  
+  /* Prevent iOS zoom on input focus */
+  input, textarea, select {
+    font-size: max(16px, 1em);
+  }
+}
+
+/* Touch target utility - exempt from minimum size */
+.touch-target-exempt {
+  min-height: auto !important;
+  min-width: auto !important;
+}
+
+/* Mobile-optimized scrolling containers */
+.mobile-scroll-snap {
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+}
+
+.mobile-scroll-snap > * {
+  scroll-snap-align: start;
+}
+
+/* Horizontal scroll without visible scrollbar (mobile-friendly) */
+.mobile-horizontal-scroll {
+  display: flex;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  gap: 1rem;
+  padding-bottom: 0.5rem;
+}
+
+.mobile-horizontal-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+/* Pull-to-refresh indicator styles */
+.pull-to-refresh-indicator {
+  position: absolute;
+  top: 0;
+  left: 50%;
+  transform: translateX(-50%) translateY(-100%);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  border-radius: 50%;
+  background: white;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  z-index: 100;
+}
+
+.pull-to-refresh-indicator.active {
+  transform: translateX(-50%) translateY(20px);
+}
+
+.pull-to-refresh-indicator svg {
+  transition: transform 0.2s ease;
+}
+
+.pull-to-refresh-indicator.ready svg {
+  transform: rotate(180deg);
+}
+
+.pull-to-refresh-indicator.refreshing svg {
+  animation: spin 1s linear infinite;
+}
+
+/* Mobile tap highlight - subtle but visible */
+@media (hover: none) and (pointer: coarse) {
+  button,
+  a,
+  [role="button"] {
+    -webkit-tap-highlight-color: rgba(20, 184, 166, 0.1);
+  }
+  
+  /* Active state for touch */
+  button:active,
+  a:active,
+  [role="button"]:active {
+    opacity: 0.85;
+    transform: scale(0.98);
+  }
+}
+
+/* Sticky elements on mobile should account for notch */
+@supports (padding-top: env(safe-area-inset-top)) {
+  .mobile-sticky-header {
+    padding-top: env(safe-area-inset-top);
+  }
+  
+  .mobile-sticky-footer {
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+/* Bottom navigation safe area */
+.mobile-bottom-nav {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Mobile modal/sheet backdrop */
+.mobile-backdrop {
+  -webkit-backdrop-filter: blur(4px);
+  backdrop-filter: blur(4px);
+}
+
+/* Improved focus for touch devices */
+@media (hover: none) {
+  /* Hide focus ring on touch - rely on active state instead */
+  *:focus:not(:focus-visible) {
+    outline: none;
+    box-shadow: none;
+  }
+  
+  /* But show for keyboard navigation */
+  *:focus-visible {
+    outline: 2px solid var(--color-primary);
+    outline-offset: 2px;
+  }
+}
+
+/* Mobile text selection */
+.mobile-no-select {
+  -webkit-user-select: none;
+  user-select: none;
+  -webkit-touch-callout: none;
+}
+
+/* Mobile-friendly image containers */
+.mobile-image-container {
+  touch-action: pan-x pan-y pinch-zoom;
+}
+
+/* Momentum scrolling for lists */
+.mobile-momentum-scroll {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}

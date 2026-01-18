@@ -210,7 +210,7 @@ export function WizardFooter({
             <button
               type="button"
               onClick={onPrevious}
-              className="whitespace-nowrap rounded-lg border-2 border-gray-300 px-2 py-1.5 text-xs font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50 sm:px-3 sm:py-2 sm:text-sm md:px-4 md:py-2.5 md:text-base"
+              className="min-h-[44px] whitespace-nowrap rounded-lg border-2 border-gray-300 px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:border-gray-400 hover:bg-gray-50 sm:px-4 sm:py-2.5 md:px-5 md:text-base"
             >
               ← Zurück
             </button>
@@ -244,7 +244,7 @@ export function WizardFooter({
               disabled={!canProceed || isSubmitting}
               onMouseEnter={() => !canProceed && disabledReason && setShowTooltip(true)}
               onMouseLeave={() => setShowTooltip(false)}
-              className={`rounded-full px-3 py-1.5 text-xs font-bold text-white transition-all duration-300 sm:px-4 sm:py-2 sm:text-sm md:px-6 md:py-2.5 md:text-base ${
+              className={`min-h-[44px] rounded-full px-4 py-2.5 text-sm font-bold text-white transition-all duration-300 sm:px-5 sm:py-2.5 md:px-6 md:py-3 md:text-base ${
                 canProceed && !isSubmitting
                   ? 'bg-gradient-to-r from-primary-500 to-primary-600 shadow-lg hover:-translate-y-0.5 hover:shadow-xl'
                   : 'cursor-not-allowed bg-gray-300'

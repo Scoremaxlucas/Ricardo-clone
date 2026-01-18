@@ -1,11 +1,14 @@
-import React from 'react'
+import React, { useCallback } from 'react'
 import { cn } from '@/lib/utils'
+import { haptic } from '@/lib/haptics'
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost' | 'danger'
   size?: 'sm' | 'md' | 'lg'
   loading?: boolean
   loadingText?: string // Accessible loading text for screen readers
+  /** Enable haptic feedback on click (default: true) */
+  hapticFeedback?: boolean
   children: React.ReactNode
 }
 
@@ -16,20 +19,34 @@ interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
  * - Konsistenz auf der gesamten Platform
  * - Vertrauenswürdiges, professionelles Erscheinungsbild
  * - Passend zum Helvenda Brand
+ * 
+ * Mobile Optimierungen:
+ * - Minimum 44px Touch Target
+ * - Haptic Feedback auf unterstützten Geräten
  */
 export function Button({
   variant = 'primary',
   size = 'md',
   loading = false,
   loadingText = 'Wird geladen...',
+  hapticFeedback = true,
   className,
   children,
   disabled,
+  onClick,
   'aria-label': ariaLabel,
   ...props
 }: ButtonProps) {
+  // Wrap onClick to add haptic feedback
+  const handleClick = useCallback((e: React.MouseEvent<HTMLButtonElement>) => {
+    if (hapticFeedback && !disabled && !loading) {
+      haptic.light()
+    }
+    onClick?.(e)
+  }, [hapticFeedback, disabled, loading, onClick])
+  // Minimum 44px touch target for mobile accessibility
   const baseClasses =
-    'inline-flex items-center justify-center font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer'
+    'inline-flex items-center justify-center font-semibold transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none cursor-pointer min-h-[44px]'
 
   const variants = {
     primary: 'text-white rounded-lg focus:ring-primary-500 shadow-md hover:shadow-lg',
@@ -41,10 +58,11 @@ export function Button({
     danger: 'text-white bg-red-600 hover:bg-red-700 focus:ring-red-500 rounded-lg shadow-md',
   }
 
+  // Sizes ensure minimum 44px height for touch accessibility
   const sizes = {
-    sm: 'px-4 py-2 text-sm',
-    md: 'px-6 py-2.5 text-sm',
-    lg: 'px-8 py-3 text-base',
+    sm: 'px-4 py-2.5 text-sm',    // ~44px with text
+    md: 'px-6 py-2.5 text-sm',    // ~44px with text
+    lg: 'px-8 py-3 text-base',    // ~48px with text
   }
 
   // EINHEITLICH: Teal-Gradient für alle Primary Buttons
@@ -86,6 +104,7 @@ export function Button({
           Object.assign(e.currentTarget.style, primaryStyle)
         }
       }}
+      onClick={handleClick}
       disabled={disabled || loading}
       aria-disabled={disabled || loading}
       aria-busy={loading}

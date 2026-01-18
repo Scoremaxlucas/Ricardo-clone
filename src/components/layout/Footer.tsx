@@ -18,7 +18,8 @@ import Link from 'next/link'
 export function Footer() {
   const { t } = useLanguage()
 
-  const linkClass = "text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a]"
+  // Mobile: horizontal scroll, Desktop: wrap
+  const linkClass = "touch-target-exempt whitespace-nowrap text-sm text-white/90 transition-colors hover:text-white hover:underline focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white focus-visible:ring-offset-2 focus-visible:ring-offset-[#0a4f4a] py-2 md:py-0"
 
   return (
     <footer
@@ -30,7 +31,7 @@ export function Footer() {
     >
       <div className="relative z-10 mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Main Content: Logo + Help Links */}
-        <div className="flex flex-col gap-6 md:flex-row md:items-start md:justify-between">
+        <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
           {/* Brand */}
           <div className="flex-shrink-0">
             <div className="mb-2 flex items-center">
@@ -41,8 +42,11 @@ export function Footer() {
             </p>
           </div>
 
-          {/* Help Links - Single Row on Desktop */}
-          <nav className="flex flex-wrap items-center gap-x-6 gap-y-2" aria-label="Hilfe-Links">
+          {/* Help Links - Horizontal scroll on mobile, wrap on desktop */}
+          <nav 
+            className="-mx-4 flex items-center gap-x-5 overflow-x-auto px-4 scrollbar-hide md:mx-0 md:flex-wrap md:gap-x-6 md:gap-y-2 md:overflow-visible md:px-0" 
+            aria-label="Hilfe-Links"
+          >
             <Link href="/help" className={linkClass}>
               {t.footer.helpCenter}
             </Link>
@@ -59,11 +63,13 @@ export function Footer() {
               {t.footer.safety}
             </Link>
             <Link href="/fees" className={linkClass}>
-              Gebührenreglement
+              Gebühren
             </Link>
             <Link href="/help/system-outages" className={linkClass}>
               Systemausfälle
             </Link>
+            {/* Spacer for scroll padding on mobile */}
+            <span className="w-1 flex-shrink-0 md:hidden" aria-hidden="true" />
           </nav>
         </div>
 

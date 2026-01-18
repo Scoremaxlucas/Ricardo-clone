@@ -161,6 +161,7 @@ export function StepPrice({
             <div className="relative">
               <input
                 type="number"
+                inputMode="decimal"
                 name="price"
                 required
                 value={formData.price}
@@ -201,6 +202,7 @@ export function StepPrice({
               <div className="relative">
                 <input
                   type="number"
+                  inputMode="decimal"
                   name="price"
                   required
                   value={formData.price}
@@ -276,6 +278,7 @@ export function StepPrice({
               <div className="relative">
                 <input
                   type="number"
+                  inputMode="decimal"
                   name="buyNowPrice"
                   value={formData.buyNowPrice}
                   onChange={onInputChange}
