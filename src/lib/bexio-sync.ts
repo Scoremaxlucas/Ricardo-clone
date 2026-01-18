@@ -118,7 +118,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
   qrReference: string
 }> {
   console.log(`[bexio-sync] 🔄 createBexioInvoice START für Invoice ${invoiceId}`)
-  
+
   const bexio = getBexioClient()
   console.log(`[bexio-sync] ✅ Bexio Client erstellt`)
 
@@ -135,7 +135,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
     throw new Error(`Invoice ${invoiceId} not found`)
   }
   console.log(`[bexio-sync] ✅ Invoice geladen: ${invoice.invoiceNumber}, ${invoice.items.length} Items`)
-  
+
   // Debug: Log alle Item-Werte
   invoice.items.forEach((item, idx) => {
     console.log(`[bexio-sync]    Item ${idx}: total=${item.total}, price=${item.price}, amount=${(item as any).amount}, desc=${item.description}`)
