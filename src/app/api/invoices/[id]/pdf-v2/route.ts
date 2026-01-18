@@ -1,6 +1,6 @@
 /**
  * Swiss QR-Invoice PDF Generation v2
- * 
+ *
  * Verwendet die professionelle swissqrbill Bibliothek für 100% korrekte
  * Swiss QR-Bill Generierung, die von allen Schweizer Banking-Apps akzeptiert wird.
  */
@@ -207,9 +207,9 @@ async function generateInvoicePDF({ invoice, sellerName, sellerAddress }: Genera
       pdf.font('Helvetica').fillColor('#000000').fontSize(10)
 
       for (const item of invoice.items) {
-        const description = item.description || 
+        const description = item.description ||
           (item.watch ? `Kommission: ${item.watch.title}` : 'Position')
-        
+
         pdf.text(description, 50, y, { width: 420 })
         pdf.text(formatCurrency(item.total), 500, y, { align: 'right' })
         y += 20

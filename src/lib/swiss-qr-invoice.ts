@@ -1,6 +1,6 @@
 /**
  * Swiss QR-Invoice Generator
- * 
+ *
  * Verwendet die professionelle swissqrbill Bibliothek für korrekte
  * Swiss QR-Bill Generierung, die von allen Schweizer Banking-Apps akzeptiert wird.
  */

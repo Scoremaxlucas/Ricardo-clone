@@ -133,30 +133,33 @@ function SellingFeesContent() {
     }
   }
 
-  const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
-    const canProceed = await checkProfileBeforeAction(() =>
-      downloadPDFInternal(invoiceId, invoiceNumber)
-    )
-    if (canProceed) downloadPDFInternal(invoiceId, invoiceNumber)
-  }
+  const [downloadingPdf, setDownloadingPdf] = useState<string | null>(null)
 
-  const downloadPDFInternal = async (invoiceId: string, invoiceNumber: string) => {
+  const handleDownloadPDF = async (invoiceId: string, invoiceNumber: string) => {
+    // Direkter Download ohne Profilprüfung (vereinfacht)
+    setDownloadingPdf(invoiceId)
     try {
-      // Verwende neue PDF-v2 Route mit professioneller Swiss QR-Bill Bibliothek
       const res = await fetch(`/api/invoices/${invoiceId}/pdf-v2`)
-      if (res.ok) {
-        const blob = await res.blob()
-        const url = window.URL.createObjectURL(blob)
-        const a = document.createElement('a')
-        a.href = url
-        a.download = `Rechnung_${invoiceNumber}.pdf`
-        document.body.appendChild(a)
-        a.click()
-        window.URL.revokeObjectURL(url)
-        document.body.removeChild(a)
+      if (!res.ok) {
+        const errorText = await res.text()
+        console.error('PDF Download Fehler:', errorText)
+        alert(`Fehler beim Herunterladen: ${res.status}`)
+        return
       }
+      const blob = await res.blob()
+      const url = window.URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `Rechnung_${invoiceNumber}.pdf`
+      document.body.appendChild(a)
+      a.click()
+      window.URL.revokeObjectURL(url)
+      document.body.removeChild(a)
     } catch (error) {
       console.error('Error downloading PDF:', error)
+      alert('Fehler beim Herunterladen der PDF')
+    } finally {
+      setDownloadingPdf(null)
     }
   }
 
@@ -331,10 +334,27 @@ function SellingFeesContent() {
                       </div>
 
                       {/* Amount + Actions */}
-                      <div className="flex items-center gap-3">
+                      <div className="flex items-center gap-2">
                         <span className="text-lg font-semibold text-gray-900">
                           CHF {formatCurrency(invoice.total)}
                         </span>
+
+                        {/* PDF Button - direkt sichtbar */}
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation()
+                            handleDownloadPDF(invoice.id, invoice.invoiceNumber)
+                          }}
+                          disabled={downloadingPdf === invoice.id}
+                          className="rounded-lg border border-gray-200 p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700 disabled:opacity-50"
+                          title="PDF herunterladen"
+                        >
+                          {downloadingPdf === invoice.id ? (
+                            <div className="h-4 w-4 animate-spin rounded-full border-2 border-gray-300 border-t-primary-600" />
+                          ) : (
+                            <Download className="h-4 w-4" />
+                          )}
+                        </button>
 
                         {!isPaid && (
                           <button
@@ -383,16 +403,6 @@ function SellingFeesContent() {
                           </div>
                         </div>
 
-                        {/* Actions */}
-                        <div className="mt-4 flex gap-2">
-                          <button
-                            onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}
-                            className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-50"
-                          >
-                            <Download className="h-4 w-4" />
-                            PDF
-                          </button>
-                        </div>
                       </div>
                     )}
                   </div>
