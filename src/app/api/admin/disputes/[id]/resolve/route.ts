@@ -361,73 +361,78 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         // Sale-Fehler sollte nicht die Dispute-Lösung verhindern
       }
 
-      // 3. Stelle sicher, dass das Watch wieder verfügbar ist
-      // Prüfe ob es noch andere Purchases für dieses Watch gibt
+      // 3. RICARDO-STYLE: Artikel wird NICHT automatisch reaktiviert
+      // Der Verkäufer muss den Artikel manuell neu einstellen, falls gewünscht
+      // Dies gibt dem Verkäufer Kontrolle (Artikel könnte beschädigt sein, etc.)
       try {
-        const otherPurchases = await prisma.purchase.findMany({
-          where: {
-            watchId: purchase.watchId,
-            id: { not: id }, // Andere Purchases ausschließen
-            status: { not: 'cancelled' }, // Nur nicht-stornierte Purchases
+        const watch = await prisma.watch.findUnique({
+          where: { id: purchase.watchId },
+          select: {
+            id: true,
+            title: true,
+            auctionEnd: true,
+            isAuction: true,
           },
         })
 
-        // Wenn keine anderen aktiven Purchases existieren, mache das Watch wieder verfügbar
-        if (otherPurchases.length === 0) {
-          const watch = await prisma.watch.findUnique({
+        if (watch) {
+          // Setze auctionEnd auf Vergangenheit, damit der Artikel als "beendet" gilt
+          // Der Verkäufer kann ihn dann über "Mein Verkaufen" manuell reaktivieren
+          const pastDate = new Date()
+          pastDate.setDate(pastDate.getDate() - 1) // Gestern
+          
+          await prisma.watch.update({
             where: { id: purchase.watchId },
-            select: {
-              id: true,
-              auctionEnd: true,
-              auctionDuration: true,
-              isAuction: true,
-              createdAt: true,
+            data: {
+              auctionEnd: pastDate,
+              // Optional: Markiere als storniert für bessere Übersicht
             },
           })
-
-          if (watch) {
-            // Wenn es eine Auktion ist und bereits abgelaufen war, verlängere sie
-            if (watch.isAuction && watch.auctionDuration) {
-              const now = new Date()
-              const newAuctionEnd = new Date(
-                now.getTime() + watch.auctionDuration * 24 * 60 * 60 * 1000
-              )
-
-              await prisma.watch.update({
-                where: { id: purchase.watchId },
-                data: {
-                  auctionEnd: newAuctionEnd,
-                },
-              })
-              console.log(
-                `[dispute/resolve] ✅ Watch ${purchase.watchId} wurde wieder aktiviert (Auktion verlängert bis ${newAuctionEnd.toISOString()})`
-              )
-            } else if (!watch.isAuction) {
-              // Für Sofortkauf: Setze auctionEnd auf null oder in die Zukunft
-              const futureDate = new Date()
-              futureDate.setFullYear(futureDate.getFullYear() + 1) // 1 Jahr in die Zukunft
-
-              await prisma.watch.update({
-                where: { id: purchase.watchId },
-                data: {
-                  auctionEnd: futureDate,
-                },
-              })
-              console.log(
-                `[dispute/resolve] ✅ Watch ${purchase.watchId} wurde wieder aktiviert (Sofortkauf)`
-              )
-            } else {
-              // Falls auctionEnd bereits in der Zukunft liegt, ist es bereits aktiv
-              console.log(`[dispute/resolve] ℹ️  Watch ${purchase.watchId} ist bereits aktiv`)
-            }
-          }
-        } else {
+          
           console.log(
-            `[dispute/resolve] ℹ️  Watch ${purchase.watchId} bleibt verkauft (${otherPurchases.length} andere aktive Purchases)`
+            `[dispute/resolve] ℹ️  RICARDO-STYLE: Watch ${purchase.watchId} bleibt INAKTIV. ` +
+            `Verkäufer muss manuell reaktivieren falls gewünscht.`
           )
+          
+          // Sende Info-E-Mail an Verkäufer
+          try {
+            const sellerEmail = purchase.watch.seller?.email
+            const sellerName = purchase.watch.seller?.firstName || 
+                              purchase.watch.seller?.name || 
+                              'Verkäufer'
+            
+            if (sellerEmail) {
+              await sendEmail({
+                to: sellerEmail,
+                subject: `Dispute gelöst - Artikel "${watch.title}" kann neu eingestellt werden`,
+                html: `
+                  <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                    <h2 style="color: #0d9488;">Dispute wurde gelöst</h2>
+                    <p>Hallo ${sellerName},</p>
+                    <p>Der Dispute für Ihren Artikel <strong>"${watch.title}"</strong> wurde gelöst und der Kauf wurde storniert.</p>
+                    <p><strong>Der Artikel ist jetzt inaktiv.</strong></p>
+                    <p>Falls Sie den Artikel erneut verkaufen möchten, können Sie ihn in Ihrem Dashboard unter "Mein Verkaufen" → "Beendete Artikel" wieder aktivieren oder als neues Angebot einstellen.</p>
+                    <p style="margin-top: 20px;">
+                      <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://helvenda.ch'}/my-watches/selling" 
+                         style="background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                        Zu meinen Verkäufen
+                      </a>
+                    </p>
+                    <p style="margin-top: 30px; color: #666; font-size: 12px;">
+                      Bei Fragen kontaktieren Sie uns unter support@helvenda.ch
+                    </p>
+                  </div>
+                `,
+              })
+              console.log(`[dispute/resolve] ✅ Info-E-Mail an Verkäufer ${sellerEmail} gesendet`)
+            }
+          } catch (emailError: any) {
+            console.error('[dispute/resolve] ⚠️ Fehler beim Senden der Verkäufer-Info-E-Mail:', emailError)
+            // E-Mail-Fehler sollte nicht die Dispute-Lösung verhindern
+          }
         }
       } catch (watchError: any) {
-        console.error('[dispute/resolve] ❌ Fehler beim Aktivieren des Watch:', watchError)
+        console.error('[dispute/resolve] ❌ Fehler beim Deaktivieren des Watch:', watchError)
       }
 
       // 4. Setze Purchase-Felder zurück

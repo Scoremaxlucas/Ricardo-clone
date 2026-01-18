@@ -36,7 +36,7 @@ export function validateQRBill(qrString: string): QRBillValidationResult {
   }
 
   // === HEADER (Zeilen 1-3) ===
-  
+
   // Zeile 1: QR-Type
   fields.qrType = lines[0]
   if (fields.qrType !== 'SPC') {

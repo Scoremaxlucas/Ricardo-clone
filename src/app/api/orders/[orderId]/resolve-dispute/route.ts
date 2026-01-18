@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { checkAdmin } from '@/lib/auth-utils'
 import { releaseFunds } from '@/lib/release-funds'
 import { stripe } from '@/lib/stripe-server'
+import { sendEmail } from '@/lib/email'
 
 /**
  * POST /api/orders/[orderId]/resolve-dispute
@@ -126,6 +127,76 @@ export async function POST(
         })
       }
 
+      // === RICARDO-STYLE: Watch bleibt INAKTIV nach Stornierung ===
+      // Der Verkäufer muss manuell neu einstellen, falls gewünscht
+      try {
+        const watchWithDetails = await prisma.watch.findUnique({
+          where: { id: order.watchId },
+          include: {
+            seller: {
+              select: {
+                id: true,
+                email: true,
+                name: true,
+                firstName: true,
+              },
+            },
+          },
+        })
+
+        if (watchWithDetails) {
+          // Setze auctionEnd auf Vergangenheit, damit der Artikel als "beendet" gilt
+          const pastDate = new Date()
+          pastDate.setDate(pastDate.getDate() - 1)
+
+          await prisma.watch.update({
+            where: { id: order.watchId },
+            data: {
+              auctionEnd: pastDate,
+            },
+          })
+
+          console.log(
+            `[dispute] RICARDO-STYLE: Watch ${order.watchId} bleibt INAKTIV. ` +
+            `Verkäufer muss manuell reaktivieren.`
+          )
+
+          // Sende Info-E-Mail an Verkäufer
+          if (watchWithDetails.seller?.email) {
+            const sellerName = watchWithDetails.seller.firstName || 
+                              watchWithDetails.seller.name || 
+                              'Verkäufer'
+            
+            await sendEmail({
+              to: watchWithDetails.seller.email,
+              subject: `Dispute gelöst - Artikel "${watchWithDetails.title}" kann neu eingestellt werden`,
+              html: `
+                <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+                  <h2 style="color: #0d9488;">Dispute wurde gelöst</h2>
+                  <p>Hallo ${sellerName},</p>
+                  <p>Der Dispute für Ihren Artikel <strong>"${watchWithDetails.title}"</strong> (Bestellung ${order.orderNumber}) wurde gelöst und der Kauf wurde storniert. Das Geld wurde an den Käufer zurückerstattet.</p>
+                  <p><strong>Der Artikel ist jetzt inaktiv.</strong></p>
+                  <p>Falls Sie den Artikel erneut verkaufen möchten, können Sie ihn in Ihrem Dashboard unter "Mein Verkaufen" → "Beendete Artikel" wieder aktivieren oder als neues Angebot einstellen.</p>
+                  <p style="margin-top: 20px;">
+                    <a href="${process.env.NEXT_PUBLIC_APP_URL || 'https://helvenda.ch'}/my-watches/selling" 
+                       style="background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block;">
+                      Zu meinen Verkäufen
+                    </a>
+                  </p>
+                  <p style="margin-top: 30px; color: #666; font-size: 12px;">
+                    Bei Fragen kontaktieren Sie uns unter support@helvenda.ch
+                  </p>
+                </div>
+              `,
+            })
+            console.log(`[dispute] ✅ Info-E-Mail an Verkäufer ${watchWithDetails.seller.email} gesendet`)
+          }
+        }
+      } catch (watchError: any) {
+        console.error('[dispute] ⚠️ Fehler beim Deaktivieren des Watch:', watchError)
+        // Fehler sollte nicht die Dispute-Lösung verhindern
+      }
+
       // Benachrichtigungen
       try {
         await prisma.notification.create({
@@ -142,9 +213,9 @@ export async function POST(
           data: {
             userId: order.sellerId,
             type: 'DISPUTE_RESOLVED',
-            title: 'Dispute gelöst - Rückerstattung',
-            message: `Der Dispute für Bestellung ${order.orderNumber} wurde gelöst. Das Geld wurde an den Käufer zurückerstattet.`,
-            link: `/orders/${order.id}`,
+            title: 'Dispute gelöst - Artikel kann neu eingestellt werden',
+            message: `Der Dispute für Bestellung ${order.orderNumber} wurde gelöst. Das Geld wurde zurückerstattet. Sie können den Artikel bei Bedarf unter "Mein Verkaufen" neu einstellen.`,
+            link: `/my-watches/selling`,
           },
         })
       } catch (error: any) {
@@ -153,7 +224,7 @@ export async function POST(
 
       return NextResponse.json({
         success: true,
-        message: 'Dispute gelöst - Geld zurückerstattet',
+        message: 'Dispute gelöst - Geld zurückerstattet. Artikel kann vom Verkäufer manuell neu eingestellt werden.',
         refundId: refund.id,
       })
     } else if (resolution === 'release') {

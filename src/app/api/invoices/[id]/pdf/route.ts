@@ -684,13 +684,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         // Swiss QR-Bill Format (SPC - Swiss Payments Code) Version 2.2
         // KRITISCH: Der QR-String muss EXAKT 31 Zeilen haben (oder 32 mit Billing Info)
         // Quelle: SIX Swiss Implementation Guidelines for the QR-bill v2.2
-        // 
+        //
         // Für Adresstyp "K" (kombiniert):
         // - Zeile 7: Strasse + Hausnummer ODER Adresszeile 1
         // - Zeile 8: PLZ + Ort ODER Adresszeile 2
         // - Zeile 9: LEER (PLZ nicht verwendet bei Typ K, aber Zeile muss existieren!)
         // - Zeile 10: LEER (Ort nicht verwendet bei Typ K, aber Zeile muss existieren!)
-        
+
         const qrString = [
           'SPC',                                                                    // 01: QR-Type
           '0200',                                                                   // 02: Version
@@ -805,38 +805,38 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         // Swiss cross in center of QR code - Offizielle Swiss QR-Bill Spezifikation
         // Quelle: SIX Swiss Payment Standards - Swiss QR-Bill Implementation Guidelines
         // Das Swiss Cross ist genau 7x7mm mit definierten Proportionen
-        
+
         const crossSize = 7 // Gesamtgrösse 7x7mm
         const crossX = qrX + (qrSize - crossSize) / 2
         const crossY = qrY + (qrSize - crossSize) / 2
-        
+
         // Offizielle Proportionen des Schweizer Kreuzes:
         // - Weisser Rahmen: 1/7 der Gesamtgrösse = 1mm
         // - Schwarzes Quadrat: 5/7 der Gesamtgrösse = 5mm
         // - Kreuzarm-Breite: 1/5 des schwarzen Quadrats = 1mm
         // - Kreuzarm-Länge: 3/5 des schwarzen Quadrats = 3mm (von Mitte aus)
-        
+
         const whiteBorder = 1.0 // 1mm weisser Rahmen
         const blackSize = 5.0   // 5mm schwarzes Quadrat
         const armWidth = 1.0    // 1mm Kreuzarm-Breite
         const armLength = 3.0   // 3mm Kreuzarm-Länge (Gesamtlänge = 2 * 1.5mm von Mitte)
-        
+
         // 1. Weisser Hintergrund (komplettes 7x7mm Quadrat)
         pdf.setFillColor(255, 255, 255)
         pdf.rect(crossX, crossY, crossSize, crossSize, 'F')
-        
+
         // 2. Schwarzes inneres Quadrat (5x5mm, zentriert)
         const blackX = crossX + whiteBorder
         const blackY = crossY + whiteBorder
         pdf.setFillColor(0, 0, 0)
         pdf.rect(blackX, blackY, blackSize, blackSize, 'F')
-        
+
         // 3. Weisses Schweizer Kreuz (zentriert im schwarzen Quadrat)
         const centerX = blackX + blackSize / 2
         const centerY = blackY + blackSize / 2
-        
+
         pdf.setFillColor(255, 255, 255)
-        
+
         // Horizontaler Balken des Kreuzes
         pdf.rect(
           centerX - armLength / 2,  // X: Mitte - halbe Länge
@@ -845,7 +845,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           armWidth,                 // Höhe: 1mm
           'F'
         )
-        
+
         // Vertikaler Balken des Kreuzes
         pdf.rect(
           centerX - armWidth / 2,   // X: Mitte - halbe Breite
