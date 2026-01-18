@@ -82,7 +82,7 @@ function SellingFeesContent() {
       if (invoice) {
         setActiveTab(invoice.status === 'paid' ? 'paid' : 'open')
       }
-      
+
       setTimeout(() => {
         const invoiceElement = invoiceRefs.current[invoiceId]
         if (invoiceElement) {
@@ -220,11 +220,11 @@ function SellingFeesContent() {
       <Header />
 
       <main className="flex-1 py-8">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8">
           {/* Simple Header */}
           <div className="mb-6">
-            <Link 
-              href="/my-watches/selling" 
+            <Link
+              href="/my-watches/selling"
               className="text-sm text-gray-500 hover:text-primary-600"
             >
               ← Mein Verkaufen
