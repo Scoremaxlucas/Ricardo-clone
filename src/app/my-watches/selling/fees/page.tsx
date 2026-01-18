@@ -187,15 +187,18 @@ function SellingFeesContent() {
 
   const formatDate = (date: string) => new Date(date).toLocaleDateString('de-CH')
 
-  // Get days overdue
-  const getDaysOverdue = (dueDate: string) => {
+  // Check if overdue and get days
+  const getOverdueInfo = (dueDate: string) => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     const due = new Date(dueDate)
     due.setHours(0, 0, 0, 0)
     const diffTime = today.getTime() - due.getTime()
     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24))
-    return diffDays > 0 ? diffDays : 0
+    return {
+      isOverdue: diffDays > 0,
+      days: diffDays > 0 ? diffDays : 0
+    }
   }
 
   // Get first item's image
@@ -275,12 +278,12 @@ function SellingFeesContent() {
           ) : (
             <div className="overflow-hidden rounded-xl border border-gray-200 bg-white">
               {filteredInvoices.map((invoice, index) => {
-                const isOverdue = invoice.status === 'overdue'
                 const isPaid = invoice.status === 'paid'
                 const isExpanded = expandedInvoice === invoice.id
                 const isHighlighted = highlightedInvoiceId === invoice.id
                 const firstImage = getFirstImage(invoice)
-                const daysOverdue = getDaysOverdue(invoice.dueDate)
+                const overdueInfo = !isPaid ? getOverdueInfo(invoice.dueDate) : null
+                const isOverdue = overdueInfo?.isOverdue || false
 
                 return (
                   <div
@@ -288,10 +291,10 @@ function SellingFeesContent() {
                     ref={el => { invoiceRefs.current[invoice.id] = el }}
                     className={`${index > 0 ? 'border-t border-gray-100' : ''} ${
                       isHighlighted ? 'bg-primary-50' : ''
-                    }`}
+                    } ${isOverdue ? 'bg-red-50' : ''}`}
                   >
                     {/* Invoice Row */}
-                    <div className="flex items-center gap-4 p-4">
+                    <div className={`flex items-center gap-4 p-4 ${isOverdue ? 'border-l-4 border-l-red-500' : ''}`}>
                       {/* Image */}
                       <div className="relative h-14 w-14 flex-shrink-0 overflow-hidden rounded-lg bg-gray-100">
                         {firstImage ? (
@@ -306,20 +309,22 @@ function SellingFeesContent() {
                       {/* Info */}
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2">
-                          <span className="text-sm font-medium text-gray-900">
+                          <span className={`text-sm font-medium ${isOverdue ? 'text-red-700' : 'text-gray-900'}`}>
                             {invoice.invoiceNumber}
                           </span>
-                          {isOverdue && daysOverdue > 0 && (
-                            <span className="inline-flex items-center gap-1 rounded bg-red-100 px-1.5 py-0.5 text-xs font-medium text-red-700">
+                          {isOverdue && overdueInfo && (
+                            <span className="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white">
                               <Clock className="h-3 w-3" />
-                              {daysOverdue}d überfällig
+                              {overdueInfo.days} Tage
                             </span>
                           )}
                         </div>
-                        <p className="mt-0.5 text-sm text-gray-500">
+                        <p className={`mt-0.5 text-sm ${isOverdue ? 'font-medium text-red-600' : 'text-gray-500'}`}>
                           {isPaid && invoice.paidAt
                             ? `Bezahlt am ${formatDate(invoice.paidAt)}`
-                            : `Fällig ${formatDate(invoice.dueDate)}`
+                            : isOverdue 
+                              ? `War fällig am ${formatDate(invoice.dueDate)}`
+                              : `Fällig ${formatDate(invoice.dueDate)}`
                           }
                         </p>
                       </div>
