@@ -524,7 +524,7 @@ function AdminInvoicesPageContent() {
                     <div className="mb-4 flex flex-wrap gap-2">
                       {/* PDF Download */}
                       <a
-                        href={`/api/invoices/${invoice.id}/pdf`}
+                        href={`/api/invoices/${invoice.id}/pdf-v2`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="inline-flex items-center rounded-lg border border-gray-300 bg-white px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50"

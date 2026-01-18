@@ -79,4 +79,29 @@ export const PAYMENT_CONFIG = {
     }
     return { isValid: true }
   },
+
+  // Helper methods for swiss-qr-invoice.ts
+  getCreditorName(): string {
+    return this.creditorName
+  },
+
+  getStreet(): string {
+    return this.address.street
+  },
+
+  getBuildingNumber(): string {
+    return this.address.streetNumber
+  },
+
+  getPostalCode(): string {
+    return this.address.postalCode
+  },
+
+  getCity(): string {
+    return this.address.city
+  },
+
+  getIBAN(): string {
+    return this.iban
+  },
 }

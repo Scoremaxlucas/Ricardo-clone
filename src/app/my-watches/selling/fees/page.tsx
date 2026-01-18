@@ -142,7 +142,8 @@ function SellingFeesContent() {
 
   const downloadPDFInternal = async (invoiceId: string, invoiceNumber: string) => {
     try {
-      const res = await fetch(`/api/invoices/${invoiceId}/pdf`)
+      // Verwende neue PDF-v2 Route mit professioneller Swiss QR-Bill Bibliothek
+      const res = await fetch(`/api/invoices/${invoiceId}/pdf-v2`)
       if (res.ok) {
         const blob = await res.blob()
         const url = window.URL.createObjectURL(blob)

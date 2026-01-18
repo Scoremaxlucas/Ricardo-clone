@@ -344,7 +344,7 @@ export default function UserInvoicesPage() {
                     </div>
                     <div className="flex gap-2">
                       <a
-                        href={`/api/invoices/${invoice.id}/pdf`}
+                        href={`/api/invoices/${invoice.id}/pdf-v2`}
                         target="_blank"
                         rel="noopener noreferrer"
                         className="rounded p-2 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
