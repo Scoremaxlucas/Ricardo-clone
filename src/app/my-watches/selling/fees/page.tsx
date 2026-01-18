@@ -217,17 +217,20 @@ function SellingFeesContent() {
   // Get first item's watch info for preview
   const getPreviewInfo = (invoice: Invoice) => {
     const firstItem = invoice.items[0]
+    // Helper to clean title (remove surrounding quotes)
+    const cleanTitle = (title: string) => title.replace(/^["']|["']$/g, '').trim()
+    
     if (firstItem?.watch) {
       return {
         image: firstItem.watch.images?.[0] || null,
-        title: firstItem.watch.title || firstItem.description,
+        title: cleanTitle(firstItem.watch.title || firstItem.description),
         brand: firstItem.watch.brand,
         model: firstItem.watch.model,
       }
     }
     return {
       image: null,
-      title: firstItem?.description || 'Verkaufsgebühr',
+      title: cleanTitle(firstItem?.description || 'Verkaufsgebühr'),
       brand: null,
       model: null,
     }
@@ -426,16 +429,23 @@ function SellingFeesContent() {
                                 {preview.brand} {preview.model}
                               </p>
                             )}
-                            <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-gray-500">
-                              <span className="font-mono">{invoice.invoiceNumber}</span>
+                            <div className="mt-1.5 flex flex-wrap items-center gap-2 text-xs text-gray-500">
+                              <span className="font-mono text-gray-400">{invoice.invoiceNumber}</span>
                               {daysInfo && (
-                                <span className={`flex items-center gap-1 ${daysInfo.isOverdue ? 'font-medium text-red-600' : ''}`}>
-                                  <Calendar className="h-3 w-3" />
-                                  {daysInfo.text}
-                                </span>
+                                daysInfo.isOverdue ? (
+                                  <span className="inline-flex items-center gap-1 rounded-full bg-red-100 px-2 py-0.5 font-semibold text-red-700">
+                                    <Clock className="h-3 w-3" />
+                                    {daysInfo.text}
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-gray-500">
+                                    <Calendar className="h-3 w-3" />
+                                    {daysInfo.text}
+                                  </span>
+                                )
                               )}
                               {isPaid && invoice.paidAt && (
-                                <span className="flex items-center gap-1 text-green-600">
+                                <span className="inline-flex items-center gap-1 rounded-full bg-green-100 px-2 py-0.5 font-medium text-green-700">
                                   <CheckCircle2 className="h-3 w-3" />
                                   Bezahlt am {formatDate(invoice.paidAt)}
                                 </span>
@@ -453,11 +463,11 @@ function SellingFeesContent() {
                             <p className="text-xs text-gray-500">inkl. MwSt.</p>
                           </div>
 
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-1.5">
                             {!isPaid && (
                               <button
                                 onClick={() => handlePayInvoice(invoice)}
-                                className="rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
+                                className="rounded-lg bg-primary-600 px-3.5 py-1.5 text-sm font-semibold text-white transition-colors hover:bg-primary-700"
                               >
                                 Bezahlen
                               </button>
@@ -465,20 +475,21 @@ function SellingFeesContent() {
 
                             <button
                               onClick={() => handleDownloadPDF(invoice.id, invoice.invoiceNumber)}
-                              className="rounded-lg border border-gray-200 bg-white p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
+                              className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
                               title="PDF herunterladen"
                             >
-                              <Download className="h-5 w-5" />
+                              <Download className="h-4 w-4" />
                             </button>
 
                             <button
                               onClick={() => setExpandedInvoice(isExpanded ? null : invoice.id)}
-                              className="rounded-lg border border-gray-200 bg-white p-2 text-gray-500 transition-colors hover:bg-gray-50 hover:text-gray-700"
+                              className="rounded-md p-1.5 text-gray-400 transition-colors hover:bg-gray-100 hover:text-gray-600"
+                              title={isExpanded ? 'Details ausblenden' : 'Details anzeigen'}
                             >
                               {isExpanded ? (
-                                <ChevronUp className="h-5 w-5" />
+                                <ChevronUp className="h-4 w-4" />
                               ) : (
-                                <ChevronDown className="h-5 w-5" />
+                                <ChevronDown className="h-4 w-4" />
                               )}
                             </button>
                           </div>
