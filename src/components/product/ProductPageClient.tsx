@@ -11,7 +11,7 @@ import { ProductStats } from '@/components/product/ProductStats'
 import { SimilarProducts } from '@/components/product/SimilarProducts'
 import { SellerProfile } from '@/components/seller/SellerProfile'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { ChevronLeft, ChevronRight, Clock, Flag, Heart, X, Zap } from 'lucide-react'
+import { CheckCircle, ChevronLeft, ChevronRight, Clock, Flag, Heart, ShoppingBag, X, Zap } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -19,12 +19,20 @@ import { useRouter } from 'next/navigation'
 import { useEffect, useRef, useState } from 'react'
 import { useSwipeable } from 'react-swipeable'
 
+interface SaleInfo {
+  soldAt: string | null
+  soldPrice: number | null
+  isCurrentUserBuyer: boolean
+  buyerName: string | null
+}
+
 interface ProductPageClientProps {
   watch: any
   images: string[]
   conditionMap: Record<string, string>
   lieferumfang: string
   seller: any
+  saleInfo?: SaleInfo | null // Ricardo-style: Info über Verkauf
 }
 
 export function ProductPageClient({
@@ -33,7 +41,10 @@ export function ProductPageClient({
   conditionMap,
   lieferumfang,
   seller,
+  saleInfo,
 }: ProductPageClientProps) {
+  // Ricardo-style: Artikel ist verkauft
+  const isSold = watch.isSold || !!saleInfo
   const { t } = useLanguage()
   const { data: session } = useSession()
   const router = useRouter()
@@ -674,30 +685,77 @@ export function ProductPageClient({
 
               {/* Buy/Offer Section - Enthält jetzt die Preisanzeige */}
               <div ref={priceAreaRef} className="mb-4">
-                {watch.isAuction ? (
-                  <BidComponent
-                    itemId={watch.id}
-                    startPrice={watch.price}
-                    buyNowPrice={watch.buyNowPrice}
-                    auctionEnd={watch.auctionEnd}
-                    sellerId={watch.sellerId}
-                    shippingMethod={(watch as any).shippingMethod}
-                    paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
-                  />
+                {/* === RICARDO-STYLE: VERKAUFT Badge === */}
+                {isSold ? (
+                  <div className="rounded-xl border-2 border-gray-300 bg-gray-50">
+                    {/* Verkauft Banner */}
+                    <div className="flex items-center justify-center gap-2 rounded-t-lg bg-gray-700 px-4 py-3">
+                      <CheckCircle className="h-5 w-5 text-white" />
+                      <span className="text-lg font-bold uppercase tracking-wider text-white">
+                        Verkauft
+                      </span>
+                    </div>
+                    
+                    {/* Verkaufspreis */}
+                    <div className="p-4 text-center">
+                      <div className="text-sm text-gray-500">Verkauft für</div>
+                      <div className="text-2xl font-bold text-gray-900">
+                        CHF {new Intl.NumberFormat('de-CH').format(saleInfo?.soldPrice || watch.buyNowPrice || watch.price)}
+                      </div>
+                      {saleInfo?.soldAt && (
+                        <div className="mt-1 text-xs text-gray-400">
+                          am {new Date(saleInfo.soldAt).toLocaleDateString('de-CH', {
+                            day: '2-digit',
+                            month: '2-digit',
+                            year: 'numeric'
+                          })}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Hinweis für Käufer */}
+                    {saleInfo?.isCurrentUserBuyer && (
+                      <div className="border-t border-gray-200 bg-emerald-50 px-4 py-3">
+                        <div className="flex items-center gap-2 text-sm text-emerald-700">
+                          <ShoppingBag className="h-4 w-4" />
+                          <span className="font-medium">Sie haben diesen Artikel gekauft</span>
+                        </div>
+                        <Link
+                          href="/my-watches/buying/purchased"
+                          className="mt-2 inline-block text-sm font-medium text-primary-600 hover:underline"
+                        >
+                          Zu meinen Käufen →
+                        </Link>
+                      </div>
+                    )}
+                  </div>
                 ) : (
-                  <PriceOfferComponent
-                    watchId={watch.id}
-                    price={watch.price}
-                    sellerId={watch.sellerId}
-                    buyNowPrice={watch.buyNowPrice}
-                    shippingMethod={(watch as any).shippingMethod}
-                    paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
-                  />
+                  /* Normaler Kauf-Bereich wenn NICHT verkauft */
+                  watch.isAuction ? (
+                    <BidComponent
+                      itemId={watch.id}
+                      startPrice={watch.price}
+                      buyNowPrice={watch.buyNowPrice}
+                      auctionEnd={watch.auctionEnd}
+                      sellerId={watch.sellerId}
+                      shippingMethod={(watch as any).shippingMethod}
+                      paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
+                    />
+                  ) : (
+                    <PriceOfferComponent
+                      watchId={watch.id}
+                      price={watch.price}
+                      sellerId={watch.sellerId}
+                      buyNowPrice={watch.buyNowPrice}
+                      shippingMethod={(watch as any).shippingMethod}
+                      paymentProtectionEnabled={(watch as any).paymentProtectionEnabled ?? false}
+                    />
+                  )
                 )}
               </div>
 
-              {/* Zu Favoriten Button - Wie Ricardo: Nur für fremde Artikel */}
-              {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
+              {/* Zu Favoriten Button - Wie Ricardo: Nur für fremde Artikel UND nicht verkauft */}
+              {!isSold && session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
                 <button
                   onClick={toggleFavorite}
                   disabled={favoriteLoading}
@@ -712,8 +770,8 @@ export function ProductPageClient({
                 </button>
               )}
 
-              {/* Nicht eingeloggte User: Favoriten-Button ohne Funktion */}
-              {!session?.user && (
+              {/* Nicht eingeloggte User: Favoriten-Button ohne Funktion - Nicht bei verkauften Artikeln */}
+              {!isSold && !session?.user && (
                 <button
                   onClick={() => router.push('/auth/signin')}
                   className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-600 transition-colors hover:bg-gray-50"
@@ -887,7 +945,32 @@ export function ProductPageClient({
               )}
 
               {/* Kauf/Gebot Component - Enthält jetzt die Preisanzeige */}
-              {watch.isAuction ? (
+              {isSold ? (
+                /* VERKAUFT Anzeige für Desktop-Sidebar */
+                <div className="rounded-xl border-2 border-gray-300 bg-gray-50">
+                  <div className="flex items-center justify-center gap-2 rounded-t-lg bg-gray-700 px-4 py-3">
+                    <CheckCircle className="h-5 w-5 text-white" />
+                    <span className="text-lg font-bold uppercase tracking-wider text-white">Verkauft</span>
+                  </div>
+                  <div className="p-4 text-center">
+                    <div className="text-sm text-gray-500">Verkauft für</div>
+                    <div className="text-2xl font-bold text-gray-900">
+                      CHF {new Intl.NumberFormat('de-CH').format(saleInfo?.soldPrice || watch.buyNowPrice || watch.price)}
+                    </div>
+                  </div>
+                  {saleInfo?.isCurrentUserBuyer && (
+                    <div className="border-t border-gray-200 bg-emerald-50 px-4 py-3 text-center">
+                      <div className="flex items-center justify-center gap-2 text-sm text-emerald-700">
+                        <ShoppingBag className="h-4 w-4" />
+                        <span className="font-medium">Sie haben diesen Artikel gekauft</span>
+                      </div>
+                      <Link href="/my-watches/buying/purchased" className="mt-2 inline-block text-sm font-medium text-primary-600 hover:underline">
+                        Zu meinen Käufen →
+                      </Link>
+                    </div>
+                  )}
+                </div>
+              ) : watch.isAuction ? (
                 <BidComponent
                   itemId={watch.id}
                   startPrice={watch.price}
@@ -908,8 +991,8 @@ export function ProductPageClient({
                 />
               )}
 
-              {/* Zu Favoriten hinzufügen - Wie Ricardo: Nur für fremde Artikel */}
-              {session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
+              {/* Zu Favoriten hinzufügen - Nur für fremde, nicht-verkaufte Artikel */}
+              {!isSold && session?.user && (session.user as { id?: string })?.id !== watch.sellerId && (
                 <button
                   onClick={toggleFavorite}
                   disabled={favoriteLoading}
@@ -924,8 +1007,8 @@ export function ProductPageClient({
                 </button>
               )}
 
-              {/* Nicht eingeloggte User: Favoriten-Button ohne Funktion */}
-              {!session?.user && (
+              {/* Nicht eingeloggte User: Favoriten-Button - Nicht bei verkauften Artikeln */}
+              {!isSold && !session?.user && (
                 <button
                   onClick={() => router.push('/auth/signin')}
                   className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-600 transition-colors hover:bg-gray-50"
@@ -987,8 +1070,8 @@ export function ProductPageClient({
         onClose={() => setShowReportModal(false)}
       />
 
-      {/* Mobile Sticky CTA Bar */}
-      {isMobile && showStickyBar && (
+      {/* Mobile Sticky CTA Bar - Nicht für verkaufte Artikel */}
+      {isMobile && showStickyBar && !isSold && (
         <div
           className="fixed bottom-0 left-0 right-0 z-40 border-t border-gray-200 bg-white px-4 py-3 shadow-[0_-4px_12px_rgba(0,0,0,0.1)] transition-transform duration-300"
           style={{

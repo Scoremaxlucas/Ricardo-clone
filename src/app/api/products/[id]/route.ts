@@ -1,5 +1,7 @@
 import { getMainAddress } from '@/lib/address'
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -7,6 +9,8 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const { id } = await params
+    const session = await getServerSession(authOptions)
+    const currentUserId = session?.user?.id || null
 
     if (!id) {
       return NextResponse.json({ error: 'No ID provided' }, { status: 400 })
@@ -107,6 +111,90 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         }
       : null
 
+    // === RICARDO-STYLE: Prüfe ob Artikel verkauft wurde ===
+    // Prüfe sowohl alte Purchases als auch neue Orders
+    let isSold = false
+    let saleInfo: {
+      soldAt: string | null
+      soldPrice: number | null
+      isCurrentUserBuyer: boolean
+      buyerName: string | null
+    } | null = null
+
+    // Prüfe Orders (neues System)
+    const activeOrder = await prisma.order.findFirst({
+      where: {
+        watchId: watch.id,
+        orderStatus: { notIn: ['canceled', 'refunded'] },
+      },
+      select: {
+        id: true,
+        createdAt: true,
+        totalAmount: true,
+        buyerId: true,
+        buyer: {
+          select: {
+            name: true,
+            firstName: true,
+            lastName: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    })
+
+    if (activeOrder) {
+      isSold = true
+      const buyerDisplayName = activeOrder.buyer?.firstName && activeOrder.buyer?.lastName
+        ? `${activeOrder.buyer.firstName} ${activeOrder.buyer.lastName}`
+        : activeOrder.buyer?.name || 'Käufer'
+      
+      saleInfo = {
+        soldAt: activeOrder.createdAt.toISOString(),
+        soldPrice: activeOrder.totalAmount,
+        isCurrentUserBuyer: currentUserId === activeOrder.buyerId,
+        buyerName: currentUserId === activeOrder.buyerId ? buyerDisplayName : null, // Nur für Käufer sichtbar
+      }
+    }
+
+    // Fallback: Prüfe alte Purchases (falls kein Order gefunden)
+    if (!isSold) {
+      const activePurchase = await prisma.purchase.findFirst({
+        where: {
+          watchId: watch.id,
+          status: { notIn: ['cancelled'] },
+        },
+        select: {
+          id: true,
+          createdAt: true,
+          price: true,
+          buyerId: true,
+          buyer: {
+            select: {
+              name: true,
+              firstName: true,
+              lastName: true,
+            },
+          },
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      if (activePurchase) {
+        isSold = true
+        const buyerDisplayName = activePurchase.buyer?.firstName && activePurchase.buyer?.lastName
+          ? `${activePurchase.buyer.firstName} ${activePurchase.buyer.lastName}`
+          : activePurchase.buyer?.name || 'Käufer'
+        
+        saleInfo = {
+          soldAt: activePurchase.createdAt.toISOString(),
+          soldPrice: activePurchase.price,
+          isCurrentUserBuyer: currentUserId === activePurchase.buyerId,
+          buyerName: currentUserId === activePurchase.buyerId ? buyerDisplayName : null,
+        }
+      }
+    }
+
     return NextResponse.json({
       watch: {
         id: watch.id,
@@ -141,10 +229,14 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         shippingMethod: watch.shippingMethod,
         sellerId: watch.sellerId,
         moderationStatus: watch.moderationStatus,
+        // Ricardo-Style: Verkaufsstatus
+        isSold,
       },
       images,
       conditionMap,
       seller: sellerWithAddress,
+      // Sale info (nur wenn verkauft)
+      saleInfo: isSold ? saleInfo : null,
     })
   } catch (error: unknown) {
     const err = error as Error

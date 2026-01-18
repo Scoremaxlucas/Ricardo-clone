@@ -16,6 +16,12 @@ export default function ProductPage() {
     images: string[]
     conditionMap: Record<string, string>
     seller: any
+    saleInfo?: {
+      soldAt: string | null
+      soldPrice: number | null
+      isCurrentUserBuyer: boolean
+      buyerName: string | null
+    } | null
   } | null>(null)
 
   useEffect(() => {
@@ -65,6 +71,7 @@ export default function ProductPage() {
             conditionMap={data?.conditionMap || {}}
             lieferumfang=""
             seller={data?.seller || null}
+            saleInfo={data?.saleInfo || null}
           />
         </div>
       </main>

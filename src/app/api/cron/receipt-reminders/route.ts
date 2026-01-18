@@ -5,7 +5,7 @@ import { sendEmail } from '@/lib/email'
 /**
  * POST/GET /api/cron/receipt-reminders
  * Ricardo-Style: Erinnert Käufer an ausstehende Erhalt-Bestätigung
- * 
+ *
  * Wird alle 6 Stunden aufgerufen via Vercel Cron
  * Sendet Erinnerungen 24 Stunden vor Auto-Release
  */
@@ -72,14 +72,14 @@ async function sendReceiptReminders() {
       }
 
       const buyerName = order.buyer.firstName || order.buyer.name || 'Käufer'
-      const hoursRemaining = order.autoReleaseAt 
+      const hoursRemaining = order.autoReleaseAt
         ? Math.round((new Date(order.autoReleaseAt).getTime() - now.getTime()) / (1000 * 60 * 60))
         : 24
 
       const watchImage = (() => {
         try {
-          const images = typeof order.watch.images === 'string' 
-            ? JSON.parse(order.watch.images) 
+          const images = typeof order.watch.images === 'string'
+            ? JSON.parse(order.watch.images)
             : order.watch.images
           return Array.isArray(images) && images.length > 0 ? images[0] : null
         } catch {
@@ -101,22 +101,22 @@ async function sendReceiptReminders() {
 </head>
 <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif; background-color: #f4f4f5; margin: 0; padding: 20px;">
   <div style="max-width: 600px; margin: 0 auto; background: white; border-radius: 12px; overflow: hidden; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
-    
+
     <!-- Header -->
     <div style="background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); padding: 24px; text-align: center;">
       <h1 style="color: white; margin: 0; font-size: 24px;">🕐 Erinnerung</h1>
     </div>
-    
+
     <!-- Content -->
     <div style="padding: 32px;">
       <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
         Hallo ${buyerName},
       </p>
-      
+
       <p style="font-size: 16px; color: #374151; margin-bottom: 24px;">
         Sie haben vor kurzem folgenden Artikel gekauft:
       </p>
-      
+
       <!-- Produkt Card -->
       <div style="border: 1px solid #e5e7eb; border-radius: 12px; padding: 16px; margin-bottom: 24px; display: flex; gap: 16px;">
         ${watchImage ? `<img src="${watchImage}" alt="${order.watch.title}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover;">` : ''}
@@ -126,38 +126,38 @@ async function sendReceiptReminders() {
           <p style="margin: 8px 0 0 0; color: #6b7280; font-size: 12px;">Bestellung: ${order.orderNumber}</p>
         </div>
       </div>
-      
+
       <!-- Warning Box -->
       <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 12px; padding: 16px; margin-bottom: 24px;">
         <p style="margin: 0; color: #92400e; font-size: 14px;">
           <strong>⏰ Noch ca. ${hoursRemaining} Stunden</strong>
           <br><br>
-          Bitte bestätigen Sie den Erhalt der Ware, falls Sie diese bereits erhalten haben. 
+          Bitte bestätigen Sie den Erhalt der Ware, falls Sie diese bereits erhalten haben.
           Wenn Sie nicht reagieren, wird die Zahlung automatisch an den Verkäufer freigegeben.
         </p>
       </div>
-      
+
       <p style="font-size: 14px; color: #6b7280; margin-bottom: 24px;">
         Falls die Ware noch nicht angekommen ist oder Sie ein Problem haben, kontaktieren Sie bitte den Verkäufer oder melden Sie ein Problem.
       </p>
-      
+
       <!-- CTA Button -->
       <div style="text-align: center; margin: 32px 0;">
-        <a href="https://helvenda.ch/my-watches/buying/purchased?highlight=${order.id}" 
+        <a href="https://helvenda.ch/my-watches/buying/purchased?highlight=${order.id}"
            style="display: inline-block; background: linear-gradient(135deg, #0f766e 0%, #14b8a6 100%); color: white; text-decoration: none; padding: 14px 32px; border-radius: 8px; font-weight: 600; font-size: 16px;">
           Erhalt jetzt bestätigen
         </a>
       </div>
-      
+
       <p style="font-size: 12px; color: #9ca3af; margin-top: 32px; text-align: center;">
         Dies ist eine automatische Erinnerung von Helvenda.
       </p>
     </div>
-    
+
     <!-- Footer -->
     <div style="background: #f9fafb; padding: 24px; text-align: center; border-top: 1px solid #e5e7eb;">
       <p style="margin: 0; color: #6b7280; font-size: 12px;">
-        Bei Fragen erreichen Sie uns unter 
+        Bei Fragen erreichen Sie uns unter
         <a href="mailto:support@helvenda.ch" style="color: #0f766e;">support@helvenda.ch</a>
       </p>
     </div>
@@ -189,7 +189,7 @@ async function sendReceiptReminders() {
 
 export async function POST(request: NextRequest) {
   const secret = request.nextUrl.searchParams.get('secret')
-  
+
   if (secret !== process.env.CRON_SECRET) {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
   }
