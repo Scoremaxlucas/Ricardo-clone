@@ -179,7 +179,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
       amount: '1',
       text: item.description,
       unit_price: unitPrice.toString(),
-      tax_id: 0, // Keine MwSt. (0 = befreit/keine)
+      tax_id: 1, // MwSt. (ID 1 = meistens Standard-Satz)
     }
   })
 
