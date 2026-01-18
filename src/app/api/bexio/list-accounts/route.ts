@@ -41,7 +41,7 @@ export async function GET(request: NextRequest) {
       const res = await fetch(`https://api.bexio.com/2.0${ep}`, { headers })
       if (res.ok) {
         const data = await res.json()
-        results[ep] = Array.isArray(data) ? data.slice(0, 30) : data
+        results[ep] = Array.isArray(data) ? data : data // Alle zurückgeben
       } else {
         results[ep] = { status: res.status, statusText: res.statusText }
       }
