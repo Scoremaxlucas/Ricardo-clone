@@ -29,6 +29,8 @@ interface Order {
   protectionFee: number | null
   orderStatus: string
   paymentStatus: string
+  paymentMethod: string | null // 'stripe' | 'bank_transfer' | 'cash_on_pickup'
+  selectedDeliveryMode: string | null // 'shipping' | 'pickup'
   paidAt: string | null
   shippedAt: string | null
   deliveredAt: string | null
@@ -54,11 +56,17 @@ interface Order {
     id: string
     name: string | null
     email: string
+    firstName?: string | null
+    lastName?: string | null
+    phone?: string | null
   }
   seller: {
     id: string
     name: string | null
     email: string
+    firstName?: string | null
+    lastName?: string | null
+    phone?: string | null
   }
   createdAt: string
 }
@@ -268,12 +276,17 @@ export default function OrderDetailPage() {
 
   const images = parseImages(order.watch.images)
   const isBuyerView = isBuyer
+  const isPickup = order.selectedDeliveryMode === 'pickup' || order.paymentMethod === 'cash_on_pickup'
+  
+  // Bei Abholung: Kein Zahlungsschutz, keine Stripe-Zahlung
+  // Bestätigung erfolgt persönlich bei Übergabe
   const canConfirmReceipt =
     isBuyer &&
+    !isPickup && // Nicht bei Abholung - da persönliche Übergabe
     order.paymentStatus === 'paid' &&
     !order.buyerConfirmedReceipt &&
     order.disputeStatus === 'none'
-  const canOpenDispute = isBuyer && order.paymentStatus === 'paid' && order.disputeStatus === 'none'
+  const canOpenDispute = isBuyer && !isPickup && order.paymentStatus === 'paid' && order.disputeStatus === 'none'
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -331,129 +344,183 @@ export default function OrderDetailPage() {
               </div>
             </div>
 
-            {/* Zahlungsschutz Status */}
-            <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
-              <div className="flex items-start">
-                <Shield className="mr-3 h-6 w-6 text-blue-600" />
-                <div className="flex-1">
-                  <h3 className="mb-2 font-semibold text-blue-900">Zahlungsschutz Status</h3>
-                  {order.paymentStatus === 'paid' && !order.buyerConfirmedReceipt && (
-                    <p className="text-sm text-blue-800">
-                      Ihr Geld wird geschützt gehalten. Bitte bestätigen Sie den Erhalt der Ware, um
-                      die Zahlung freizugeben.
-                    </p>
-                  )}
-                  {order.buyerConfirmedReceipt && (
-                    <p className="text-sm text-blue-800">
-                      ✅ Sie haben den Erhalt bestätigt. Die Zahlung wurde freigegeben.
-                    </p>
-                  )}
-                  {order.paymentStatus === 'released' && (
-                    <p className="text-sm text-blue-800">
-                      ✅ Die Zahlung wurde erfolgreich an den Verkäufer freigegeben.
-                    </p>
-                  )}
-                  {order.paymentStatus === 'refunded' && (
-                    <p className="text-sm text-blue-800">Die Zahlung wurde zurückerstattet.</p>
-                  )}
-                  {order.disputeStatus !== 'none' && (
-                    <p className="mt-2 text-sm text-orange-800">
-                      ⚠️ Ein Dispute wurde geöffnet. Der Fall wird geprüft.
-                    </p>
-                  )}
-                  {order.autoReleaseAt && order.paymentStatus === 'paid' && (
-                    <p className="mt-2 text-sm text-blue-800">
-                      <Clock className="mr-1 inline h-4 w-4" />
-                      Automatische Freigabe: {new Date(order.autoReleaseAt).toLocaleString('de-CH')}
-                    </p>
-                  )}
+            {/* Zahlungsschutz Status - NUR bei Online-Zahlung anzeigen */}
+            {!isPickup && (
+              <div className="rounded-lg border border-blue-200 bg-blue-50 p-6">
+                <div className="flex items-start">
+                  <Shield className="mr-3 h-6 w-6 text-blue-600" />
+                  <div className="flex-1">
+                    <h3 className="mb-2 font-semibold text-blue-900">Zahlungsschutz Status</h3>
+                    {order.paymentStatus === 'paid' && !order.buyerConfirmedReceipt && (
+                      <p className="text-sm text-blue-800">
+                        Ihr Geld wird geschützt gehalten. Bitte bestätigen Sie den Erhalt der Ware, um
+                        die Zahlung freizugeben.
+                      </p>
+                    )}
+                    {order.buyerConfirmedReceipt && (
+                      <p className="text-sm text-blue-800">
+                        ✅ Sie haben den Erhalt bestätigt. Die Zahlung wurde freigegeben.
+                      </p>
+                    )}
+                    {order.paymentStatus === 'released' && (
+                      <p className="text-sm text-blue-800">
+                        ✅ Die Zahlung wurde erfolgreich an den Verkäufer freigegeben.
+                      </p>
+                    )}
+                    {order.paymentStatus === 'refunded' && (
+                      <p className="text-sm text-blue-800">Die Zahlung wurde zurückerstattet.</p>
+                    )}
+                    {order.disputeStatus !== 'none' && (
+                      <p className="mt-2 text-sm text-orange-800">
+                        ⚠️ Ein Dispute wurde geöffnet. Der Fall wird geprüft.
+                      </p>
+                    )}
+                    {order.autoReleaseAt && order.paymentStatus === 'paid' && (
+                      <p className="mt-2 text-sm text-blue-800">
+                        <Clock className="mr-1 inline h-4 w-4" />
+                        Automatische Freigabe: {new Date(order.autoReleaseAt).toLocaleString('de-CH')}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
-            </div>
+            )}
+
+            {/* Abholung Info - NUR bei Abholung anzeigen */}
+            {isPickup && (
+              <div className="rounded-lg border border-amber-200 bg-amber-50 p-6">
+                <div className="flex items-start">
+                  <User className="mr-3 h-6 w-6 text-amber-600" />
+                  <div className="flex-1">
+                    <h3 className="mb-2 font-semibold text-amber-900">Abholung vereinbaren</h3>
+                    <p className="text-sm text-amber-800">
+                      Dieser Artikel wird persönlich abgeholt. Bitte kontaktieren Sie {isBuyer ? 'den Verkäufer' : 'den Käufer'}, um einen Abholtermin zu vereinbaren.
+                    </p>
+                    <p className="mt-2 text-sm text-amber-800">
+                      <strong>Hinweis:</strong> Die Zahlung erfolgt bar bei der Übergabe. Es gibt keinen Zahlungsschutz bei Abholung.
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
 
             {/* Timeline */}
             <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
-              <h2 className="mb-4 text-xl font-semibold text-gray-900">Zeitachse</h2>
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">
+                {isPickup ? 'Status' : 'Zeitachse'}
+              </h2>
               <div className="space-y-4">
                 <div className="flex items-start">
                   <CheckCircle className="mr-3 h-5 w-5 text-green-600" />
                   <div>
-                    <p className="font-medium text-gray-900">Bestellung erstellt</p>
+                    <p className="font-medium text-gray-900">
+                      {isPickup ? 'Kauf bestätigt' : 'Bestellung erstellt'}
+                    </p>
                     <p className="text-sm text-gray-600">
                       {new Date(order.createdAt).toLocaleString('de-CH')}
                     </p>
                   </div>
                 </div>
-                {order.paidAt && (
-                  <div className="flex items-start">
-                    <CreditCard className="mr-3 h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="font-medium text-gray-900">Zahlung erhalten</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(order.paidAt).toLocaleString('de-CH')}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {order.shippedAt && (
-                  <div className="flex items-start">
-                    <Truck className="mr-3 h-5 w-5 text-blue-600" />
-                    <div>
-                      <p className="font-medium text-gray-900">Versandt</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(order.shippedAt).toLocaleString('de-CH')}
-                      </p>
-                      {order.trackingNumber && (
+                
+                {/* Bei Abholung: Spezielle Timeline */}
+                {isPickup && (
+                  <>
+                    <div className="flex items-start">
+                      <Clock className="mr-3 h-5 w-5 text-amber-600" />
+                      <div>
+                        <p className="font-medium text-gray-900">Abholung vereinbaren</p>
                         <p className="text-sm text-gray-600">
-                          Tracking: {order.trackingNumber} ({order.trackingProvider})
+                          Bitte kontaktieren Sie {isBuyer ? 'den Verkäufer' : 'den Käufer'} für die Terminvereinbarung
                         </p>
-                      )}
+                      </div>
                     </div>
-                  </div>
+                    {order.orderStatus === 'completed' && (
+                      <div className="flex items-start">
+                        <CheckCircle className="mr-3 h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">Abgeholt & Bezahlt</p>
+                          <p className="text-sm text-gray-600">Transaktion abgeschlossen</p>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
-                {order.buyerConfirmedAt && (
-                  <div className="flex items-start">
-                    <CheckCircle className="mr-3 h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="font-medium text-gray-900">Erhalt bestätigt</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(order.buyerConfirmedAt).toLocaleString('de-CH')}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {order.releasedAt && (
-                  <div className="flex items-start">
-                    <CheckCircle className="mr-3 h-5 w-5 text-green-600" />
-                    <div>
-                      <p className="font-medium text-gray-900">Zahlung freigegeben</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(order.releasedAt).toLocaleString('de-CH')}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {order.disputeOpenedAt && (
-                  <div className="flex items-start">
-                    <AlertTriangle className="mr-3 h-5 w-5 text-orange-600" />
-                    <div>
-                      <p className="font-medium text-gray-900">Dispute geöffnet</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(order.disputeOpenedAt).toLocaleString('de-CH')}
-                      </p>
-                    </div>
-                  </div>
-                )}
-                {order.refundedAt && (
-                  <div className="flex items-start">
-                    <XCircle className="mr-3 h-5 w-5 text-red-600" />
-                    <div>
-                      <p className="font-medium text-gray-900">Zurückerstattet</p>
-                      <p className="text-sm text-gray-600">
-                        {new Date(order.refundedAt).toLocaleString('de-CH')}
-                      </p>
-                    </div>
-                  </div>
+                
+                {/* Bei Online-Zahlung: Standard Timeline */}
+                {!isPickup && (
+                  <>
+                    {order.paidAt && (
+                      <div className="flex items-start">
+                        <CreditCard className="mr-3 h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">Zahlung erhalten</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(order.paidAt).toLocaleString('de-CH')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {order.shippedAt && (
+                      <div className="flex items-start">
+                        <Truck className="mr-3 h-5 w-5 text-blue-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">Versandt</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(order.shippedAt).toLocaleString('de-CH')}
+                          </p>
+                          {order.trackingNumber && (
+                            <p className="text-sm text-gray-600">
+                              Tracking: {order.trackingNumber} ({order.trackingProvider})
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
+                    {order.buyerConfirmedAt && (
+                      <div className="flex items-start">
+                        <CheckCircle className="mr-3 h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">Erhalt bestätigt</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(order.buyerConfirmedAt).toLocaleString('de-CH')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {order.releasedAt && (
+                      <div className="flex items-start">
+                        <CheckCircle className="mr-3 h-5 w-5 text-green-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">Zahlung freigegeben</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(order.releasedAt).toLocaleString('de-CH')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {order.disputeOpenedAt && (
+                      <div className="flex items-start">
+                        <AlertTriangle className="mr-3 h-5 w-5 text-orange-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">Dispute geöffnet</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(order.disputeOpenedAt).toLocaleString('de-CH')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                    {order.refundedAt && (
+                      <div className="flex items-start">
+                        <XCircle className="mr-3 h-5 w-5 text-red-600" />
+                        <div>
+                          <p className="font-medium text-gray-900">Zurückerstattet</p>
+                          <p className="text-sm text-gray-600">
+                            {new Date(order.refundedAt).toLocaleString('de-CH')}
+                          </p>
+                        </div>
+                      </div>
+                    )}
+                  </>
                 )}
               </div>
             </div>
@@ -565,14 +632,29 @@ export default function OrderDetailPage() {
                 </div>
                 {isBuyer && (
                   <>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Versandkosten:</span>
-                      <span className="font-medium">CHF {order.shippingCost.toFixed(2)}</span>
-                    </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Zahlungsschutz:</span>
-                      <span className="font-medium text-green-600">Inklusive</span>
-                    </div>
+                    {!isPickup && (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Versandkosten:</span>
+                        <span className="font-medium">CHF {order.shippingCost.toFixed(2)}</span>
+                      </div>
+                    )}
+                    {isPickup ? (
+                      <>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Lieferung:</span>
+                          <span className="font-medium">Abholung (kostenlos)</span>
+                        </div>
+                        <div className="flex justify-between">
+                          <span className="text-gray-600">Zahlung:</span>
+                          <span className="font-medium">Bar bei Übergabe</span>
+                        </div>
+                      </>
+                    ) : (
+                      <div className="flex justify-between">
+                        <span className="text-gray-600">Zahlungsschutz:</span>
+                        <span className="font-medium text-green-600">Inklusive</span>
+                      </div>
+                    )}
                     <div className="border-t border-gray-200 pt-2">
                       <div className="flex justify-between">
                         <span className="font-semibold text-gray-900">Gesamt:</span>
@@ -584,7 +666,35 @@ export default function OrderDetailPage() {
                   </>
                 )}
                 {isSeller && (() => {
-                  // Berechne kombinierte Zahlungsgebühr (Processing + Payout)
+                  // Bei Abholung: KEINE Stripe-Gebühren, nur Plattform-Kommission
+                  if (isPickup) {
+                    const sellerReceives = Math.round((order.itemPrice - order.platformFee) * 100) / 100
+                    return (
+                      <>
+                        <div className="flex justify-between text-red-600">
+                          <span>Kommission (5%):</span>
+                          <span className="font-medium">- CHF {order.platformFee.toFixed(2)}</span>
+                        </div>
+                        <div className="flex justify-between text-gray-500">
+                          <span>Zahlungsgebühr:</span>
+                          <span className="font-medium">CHF 0.00</span>
+                        </div>
+                        <p className="text-xs text-gray-500">
+                          (Keine Gebühr bei Barzahlung)
+                        </p>
+                        <div className="border-t border-gray-200 pt-2">
+                          <div className="flex justify-between">
+                            <span className="font-semibold text-gray-900">Sie erhalten bar:</span>
+                            <span className="text-lg font-bold text-green-600">
+                              CHF {sellerReceives.toFixed(2)}
+                            </span>
+                          </div>
+                        </div>
+                      </>
+                    )
+                  }
+                  
+                  // Online-Zahlung: Kombinierte Zahlungsgebühr (Processing + Payout)
                   const processingFee = order.protectionFee || 0
                   const sellerAmountBeforePayout = order.itemPrice - order.platformFee - processingFee
                   const payoutFee = sellerAmountBeforePayout * 0.0025 + 0.55

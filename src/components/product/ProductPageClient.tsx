@@ -119,25 +119,25 @@ export function ProductPageClient({
         console.error('Error checking favorite:', error)
       }
     }
-    
+
     // Initial check
     checkFavorite()
-    
+
     // Re-check when page becomes visible again (user might have changed favorites elsewhere)
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible') {
         checkFavorite()
       }
     }
-    
+
     // Re-check when window gains focus
     const handleFocus = () => {
       checkFavorite()
     }
-    
+
     document.addEventListener('visibilitychange', handleVisibilityChange)
     window.addEventListener('focus', handleFocus)
-    
+
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange)
       window.removeEventListener('focus', handleFocus)
@@ -160,8 +160,8 @@ export function ProductPageClient({
         if (res.ok) {
           setIsFavorite(false)
           // Dispatch global event für Synchronisation mit anderen Komponenten
-          window.dispatchEvent(new CustomEvent('favoriteChanged', { 
-            detail: { watchId: watch.id, isFavorite: false } 
+          window.dispatchEvent(new CustomEvent('favoriteChanged', {
+            detail: { watchId: watch.id, isFavorite: false }
           }))
         }
       } else {
@@ -173,8 +173,8 @@ export function ProductPageClient({
         if (res.ok) {
           setIsFavorite(true)
           // Dispatch global event für Synchronisation mit anderen Komponenten
-          window.dispatchEvent(new CustomEvent('favoriteChanged', { 
-            detail: { watchId: watch.id, isFavorite: true } 
+          window.dispatchEvent(new CustomEvent('favoriteChanged', {
+            detail: { watchId: watch.id, isFavorite: true }
           }))
         }
       }
@@ -184,7 +184,7 @@ export function ProductPageClient({
       setFavoriteLoading(false)
     }
   }
-  
+
   // Listen for favorite changes from other components
   useEffect(() => {
     const handleFavoriteChanged = (event: CustomEvent<{ watchId: string; isFavorite: boolean }>) => {
@@ -192,7 +192,7 @@ export function ProductPageClient({
         setIsFavorite(event.detail.isFavorite)
       }
     }
-    
+
     window.addEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
     return () => {
       window.removeEventListener('favoriteChanged', handleFavoriteChanged as EventListener)

@@ -291,8 +291,11 @@ export async function POST(request: NextRequest) {
     }
 
     // Erstelle Order
-    // HINWEIS: protectionFee speichert jetzt die Zahlungsgebühr (Stripe Fee / "Helvenda Schutz Gebühr")
-    // Diese wird vom Verkäufer bezahlt, nicht vom Käufer
+    // HINWEIS: protectionFee speichert die Zahlungsgebühr (Stripe Fee)
+    // Bei Abholung (cash_on_pickup): KEINE Stripe-Gebühren, da keine Online-Zahlung!
+    // Die 5% Plattform-Kommission gilt unabhängig von der Zahlungsmethode.
+    const actualProtectionFee = isPickup ? 0 : fees._processingFeeOnly
+    
     const orderData = {
       orderNumber,
       watchId,
@@ -307,7 +310,7 @@ export async function POST(request: NextRequest) {
       selectedAddons: selectedAddons ? JSON.stringify(selectedAddons) : null,
       shippingRateSetId: 'default_ch_post',
       platformFee: fees.platformFee,
-      protectionFee: fees._processingFeeOnly,
+      protectionFee: actualProtectionFee, // 0 bei Abholung, sonst Stripe-Gebühr
       totalAmount: fees.totalAmount,
       paymentMethod,
       orderStatus,

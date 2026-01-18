@@ -150,14 +150,14 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
     }
 
     checkFavorite()
-    
+
     // Listen for favorite changes from other components (z.B. ProductPageClient)
     const handleFavoriteChanged = (event: CustomEvent<{ watchId: string; isFavorite: boolean }>) => {
       if (event.detail.watchId === product.id) {
         setIsFavorite(event.detail.isFavorite)
       }
     }
-    
+
     window.addEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
     return () => {
       window.removeEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
@@ -190,8 +190,8 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
       } else {
         onFavoriteToggle?.(product.id, newFavoriteState)
         // Dispatch global event für Synchronisation mit anderen Komponenten
-        window.dispatchEvent(new CustomEvent('favoriteChanged', { 
-          detail: { watchId: product.id, isFavorite: newFavoriteState } 
+        window.dispatchEvent(new CustomEvent('favoriteChanged', {
+          detail: { watchId: product.id, isFavorite: newFavoriteState }
         }))
       }
     } catch (error) {

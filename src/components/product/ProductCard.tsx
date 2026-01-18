@@ -115,14 +115,14 @@ export function ProductCard({
       }
     }
     checkFavorite()
-    
+
     // Listen for favorite changes from other components
     const handleFavoriteChanged = (event: CustomEvent<{ watchId: string; isFavorite: boolean }>) => {
       if (event.detail.watchId === product.id && isMounted) {
         setIsFavorite(event.detail.isFavorite)
       }
     }
-    
+
     window.addEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
 
     return () => {
@@ -164,8 +164,8 @@ export function ProductCard({
         } else {
           toast.success('Aus Favoriten entfernt', { icon: '❤️' })
           // Dispatch global event für Synchronisation
-          window.dispatchEvent(new CustomEvent('favoriteChanged', { 
-            detail: { watchId: product.id, isFavorite: false } 
+          window.dispatchEvent(new CustomEvent('favoriteChanged', {
+            detail: { watchId: product.id, isFavorite: false }
           }))
         }
       } else {
@@ -182,8 +182,8 @@ export function ProductCard({
         } else {
           toast.success('Zu Favoriten hinzugefügt', { icon: '❤️' })
           // Dispatch global event für Synchronisation
-          window.dispatchEvent(new CustomEvent('favoriteChanged', { 
-            detail: { watchId: product.id, isFavorite: true } 
+          window.dispatchEvent(new CustomEvent('favoriteChanged', {
+            detail: { watchId: product.id, isFavorite: true }
           }))
         }
       }

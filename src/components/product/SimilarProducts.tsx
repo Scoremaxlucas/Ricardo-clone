@@ -82,7 +82,7 @@ export function SimilarProducts({
     }
 
     fetchFavorites()
-    
+
     // Listen for favorite changes from other components
     const handleFavoriteChanged = (event: CustomEvent<{ watchId: string; isFavorite: boolean }>) => {
       setFavorites(prev => {
@@ -95,7 +95,7 @@ export function SimilarProducts({
         return newSet
       })
     }
-    
+
     window.addEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
     return () => {
       window.removeEventListener('favoriteChanged', handleFavoriteChanged as EventListener)
@@ -129,8 +129,8 @@ export function SimilarProducts({
           return newSet
         })
         // Dispatch global event für Synchronisation
-        window.dispatchEvent(new CustomEvent('favoriteChanged', { 
-          detail: { watchId, isFavorite: newIsFavorite } 
+        window.dispatchEvent(new CustomEvent('favoriteChanged', {
+          detail: { watchId, isFavorite: newIsFavorite }
         }))
       }
     } catch (error) {
