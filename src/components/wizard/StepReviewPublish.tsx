@@ -7,13 +7,16 @@ import {
   CheckCircle,
   ChevronDown,
   ChevronUp,
+  Crown,
   Edit2,
   FileText,
   Image as ImageIcon,
+  Rocket,
   Shield,
   Sparkles,
   Tag,
   Truck,
+  Zap,
 } from 'lucide-react'
 import { useEffect, useRef, useState } from 'react'
 
@@ -72,44 +75,86 @@ const SHIPPING_LABELS: Record<string, string> = {
 // Booster-Datenstruktur mit short/details/bullets (Watch-out.ch Style: Boost/Turbo-Boost/Super-Boost)
 const BOOSTER_DETAILS: Record<
   string,
-  { short: string; detailsTitle: string; bullets: string[]; fineprint?: string }
+  { 
+    short: string
+    detailsTitle: string
+    bullets: string[]
+    fineprint?: string
+    icon: 'zap' | 'rocket' | 'crown'
+    gradient: string
+    iconBg: string
+    iconColor: string
+    cardBg: string
+    borderColor: string
+  }
 > = {
   boost: {
-    short: 'Bessere Platzierung in Suchergebnissen',
-    detailsTitle: 'Boost – Vorteile',
+    short: 'Verbesserte Sichtbarkeit für Ihr Angebot. Bessere Platzierung in Suchergebnissen und mehr Aufmerksamkeit.',
+    detailsTitle: 'Booster',
     bullets: [
-      'Verbesserte Sichtbarkeit für Ihr Angebot',
-      'Bessere Platzierung in Suchergebnissen',
-      'Mehr Aufmerksamkeit von potenziellen Käufern',
+      'Verbesserte Sichtbarkeit',
+      'Bessere Platzierung',
+      'Mehr Aufmerksamkeit',
       'Erhöhte Klickrate',
+      'Standard-Boost-Funktionen',
     ],
-    fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
+    fineprint: 'pro Laufzeit',
+    icon: 'zap',
+    gradient: 'from-blue-500 to-cyan-400',
+    iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-400',
+    iconColor: 'text-white',
+    cardBg: 'bg-white',
+    borderColor: 'border-blue-200 hover:border-blue-400',
   },
   'turbo-boost': {
-    short: 'Sehr prominente Platzierung + erhöhte Sichtbarkeit',
-    detailsTitle: 'Turbo-Boost – Vorteile',
+    short: 'Sehr prominente Platzierung. Erhöhte Sichtbarkeit in Listen und bessere Positionierung.',
+    detailsTitle: 'Turbo-Boost',
     bullets: [
-      'Alle Boost-Vorteile inklusive',
-      'Sehr prominente Platzierung in Listen',
-      'Erhöhte Sichtbarkeit in Suchergebnissen',
-      'Bessere Positionierung gegenüber Standard-Angeboten',
+      'Sehr prominente Platzierung',
+      'Erhöhte Sichtbarkeit in Listen',
+      'Bessere Positionierung in Suchergebnissen',
       'Mehr Aufmerksamkeit für Ihr Angebot',
     ],
-    fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
+    fineprint: 'pro Laufzeit',
+    icon: 'rocket',
+    gradient: 'from-violet-500 to-purple-400',
+    iconBg: 'bg-gradient-to-br from-violet-500 to-purple-400',
+    iconColor: 'text-white',
+    cardBg: 'bg-violet-50/50',
+    borderColor: 'border-violet-200 hover:border-violet-400',
   },
   'super-boost': {
-    short: 'Top-Position + Premium-Startseite + Priorität',
-    detailsTitle: 'Super-Boost – Vorteile',
+    short: 'Höchste Sichtbarkeit! Hervorgehobene Platzierung in Suchergebnissen, Top-Position in Kategorien, Priorität bei Empfehlungen und erhöhte Sichtbarkeit auf der Startseite.',
+    detailsTitle: 'Super-Boost',
     bullets: [
-      'Höchste Sichtbarkeit auf der Plattform',
       'Hervorgehobene Platzierung in Suchergebnissen',
       'Top-Position in Kategorie-Übersichten',
       'Längere Laufzeit des Boosters',
       'Priorität bei Empfehlungen',
       'Erhöhte Sichtbarkeit auf der Startseite',
     ],
-    fineprint: 'Die Booster-Gebühr wird bei Veröffentlichung fällig.',
+    fineprint: 'pro Laufzeit',
+    icon: 'crown',
+    gradient: 'from-amber-400 to-orange-400',
+    iconBg: 'bg-gradient-to-br from-amber-400 to-orange-400',
+    iconColor: 'text-white',
+    cardBg: 'bg-amber-50/50',
+    borderColor: 'border-amber-200 hover:border-amber-400',
   },
+}
+
+// Helper to get icon component
+const BoosterIcon = ({ type, className }: { type: 'zap' | 'rocket' | 'crown'; className?: string }) => {
+  switch (type) {
+    case 'zap':
+      return <Zap className={className} />
+    case 'rocket':
+      return <Rocket className={className} />
+    case 'crown':
+      return <Crown className={className} />
+    default:
+      return <Zap className={className} />
+  }
 }
 
 export function StepReviewPublish({
@@ -350,147 +395,205 @@ export function StepReviewPublish({
           </div>
         </div>
 
-        <div className="grid grid-cols-2 gap-2 sm:gap-3 md:gap-4 lg:grid-cols-4">
-          {/* No booster option */}
+        {/* Watch-out.ch Style: 2x2 Grid with Icons and Colored Cards */}
+        <div className="grid gap-3 sm:grid-cols-2 sm:gap-4">
+          {/* Row 1: Boost + Turbo-Boost */}
+          {boosters.slice(0, 2).map(booster => {
+            const details = BOOSTER_DETAILS[booster.id]
+            const isSelected = selectedBooster === booster.id
+            
+            return (
+              <button
+                key={booster.id}
+                type="button"
+                onClick={() => {
+                  if (!isBoostersLocked) {
+                    onBoosterChange(booster.id)
+                    if (booster.id !== selectedBooster) {
+                      setExpandedBooster(booster.id)
+                    }
+                  }
+                }}
+                disabled={isBoostersLocked}
+                className={`relative flex flex-col rounded-xl border-2 p-4 text-left transition-all sm:p-5 ${
+                  isBoostersLocked
+                    ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
+                    : isSelected
+                      ? 'border-primary-500 ring-2 ring-primary-200 ' + (details?.cardBg || 'bg-white')
+                      : (details?.cardBg || 'bg-white') + ' ' + (details?.borderColor || 'border-gray-200')
+                }`}
+              >
+                {/* Header with Icon */}
+                <div className="mb-3 flex items-center gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${details?.iconBg || 'bg-blue-500'} shadow-lg sm:h-12 sm:w-12`}>
+                    {details && <BoosterIcon type={details.icon} className="h-5 w-5 text-white sm:h-6 sm:w-6" />}
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-900 sm:text-xl">{booster.name}</h4>
+                </div>
+                
+                {/* Description */}
+                <p className="mb-4 text-sm leading-relaxed text-gray-600">
+                  {details?.short || booster.description}
+                </p>
+                
+                {/* Bullet Points */}
+                <ul className="mb-4 flex-1 space-y-1.5">
+                  {details?.bullets?.slice(0, 4).map((bullet, index) => (
+                    <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                      <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500" />
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                {/* Price */}
+                <div className="mt-auto border-t border-gray-100 pt-3">
+                  <span className="text-xl font-bold sm:text-2xl" style={{ color: booster.badgeColor }}>
+                    {formatCHF(booster.price)}
+                  </span>
+                  {details?.fineprint && (
+                    <span className="ml-2 text-sm text-gray-500">{details.fineprint}</span>
+                  )}
+                </div>
+                
+                {/* Selection indicator */}
+                {isSelected && (
+                  <div className="absolute right-3 top-3">
+                    <CheckCircle className="h-6 w-6 text-primary-600" />
+                  </div>
+                )}
+              </button>
+            )
+          })}
+          
+          {/* Row 2: Super-Boost (spans full width on mobile, half on desktop) + No Booster */}
+          {boosters.slice(2).map(booster => {
+            const details = BOOSTER_DETAILS[booster.id]
+            const isSelected = selectedBooster === booster.id
+            const isSuperBoost = booster.id === 'super-boost'
+            
+            return (
+              <button
+                key={booster.id}
+                type="button"
+                onClick={() => {
+                  if (!isBoostersLocked) {
+                    onBoosterChange(booster.id)
+                    if (booster.id !== selectedBooster) {
+                      setExpandedBooster(booster.id)
+                    }
+                  }
+                }}
+                disabled={isBoostersLocked}
+                className={`relative flex flex-col rounded-xl border-2 p-4 text-left transition-all sm:p-5 ${
+                  isSuperBoost ? 'col-span-full sm:col-span-1' : ''
+                } ${
+                  isBoostersLocked
+                    ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
+                    : isSelected
+                      ? 'border-primary-500 ring-2 ring-primary-200 ' + (details?.cardBg || 'bg-white')
+                      : (details?.cardBg || 'bg-white') + ' ' + (details?.borderColor || 'border-gray-200')
+                }`}
+              >
+                {/* Header with Icon */}
+                <div className="mb-3 flex items-center gap-3">
+                  <div className={`flex h-10 w-10 items-center justify-center rounded-xl ${details?.iconBg || 'bg-amber-400'} shadow-lg sm:h-12 sm:w-12`}>
+                    {details && <BoosterIcon type={details.icon} className="h-5 w-5 text-white sm:h-6 sm:w-6" />}
+                  </div>
+                  <h4 className="text-lg font-bold text-gray-900 sm:text-xl">{booster.name}</h4>
+                </div>
+                
+                {/* Description */}
+                <p className="mb-4 text-sm leading-relaxed text-gray-600">
+                  {details?.short || booster.description}
+                </p>
+                
+                {/* Bullet Points */}
+                <ul className="mb-4 flex-1 space-y-1.5">
+                  {details?.bullets?.map((bullet, index) => (
+                    <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
+                      <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500" />
+                      <span>{bullet}</span>
+                    </li>
+                  ))}
+                </ul>
+                
+                {/* Price */}
+                <div className="mt-auto border-t border-gray-100 pt-3">
+                  <span className="text-xl font-bold sm:text-2xl" style={{ color: booster.badgeColor }}>
+                    {formatCHF(booster.price)}
+                  </span>
+                  {details?.fineprint && (
+                    <span className="ml-2 text-sm text-gray-500">{details.fineprint}</span>
+                  )}
+                </div>
+                
+                {/* Selection indicator */}
+                {isSelected && (
+                  <div className="absolute right-3 top-3">
+                    <CheckCircle className="h-6 w-6 text-primary-600" />
+                  </div>
+                )}
+              </button>
+            )
+          })}
+          
+          {/* No Booster option - compact */}
           <button
             type="button"
             onClick={() => !isBoostersLocked && onBoosterChange('none')}
             disabled={isBoostersLocked}
-            className={`relative flex min-h-[120px] flex-col rounded-lg border-2 p-2.5 text-left transition-all sm:min-h-[140px] sm:rounded-xl sm:p-3 md:min-h-[160px] md:p-4 ${
+            className={`relative flex flex-col rounded-xl border-2 bg-white p-4 text-left transition-all sm:p-5 ${
               isBoostersLocked
                 ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
                 : selectedBooster === 'none'
-                  ? 'border-primary-500 bg-white ring-2 ring-primary-200'
+                  ? 'border-primary-500 ring-2 ring-primary-200'
                   : 'border-gray-200 hover:border-gray-300'
             }`}
           >
-            <div className="mb-1.5 inline-flex self-start rounded-full bg-gray-100 px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide text-gray-600 sm:mb-2 sm:px-2.5 sm:py-1 sm:text-[10px]">
-              STANDARD
+            <div className="mb-3 flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-200 sm:h-12 sm:w-12">
+                <Sparkles className="h-5 w-5 text-gray-500 sm:h-6 sm:w-6" />
+              </div>
+              <h4 className="text-lg font-bold text-gray-900 sm:text-xl">Kein Booster</h4>
             </div>
-            <h4 className="text-sm font-bold text-gray-900 sm:text-base">Kein Booster</h4>
-            <p className="mt-1 flex-1 text-[11px] leading-snug text-gray-600 sm:mt-1.5 sm:text-[13px] sm:leading-relaxed">
-              <span className="hidden sm:inline">Das Angebot wird nicht besonders hervorgehoben</span>
-              <span className="sm:hidden">Ohne Hervorhebung</span>
+            
+            <p className="mb-4 flex-1 text-sm leading-relaxed text-gray-600">
+              Das Angebot wird ohne besondere Hervorhebung veröffentlicht.
             </p>
-            <div className="mt-2 border-t border-gray-100 pt-2 sm:mt-3 sm:pt-3">
-              <span className="text-sm font-bold text-gray-900 sm:text-base md:text-lg">CHF 0.–</span>
+            
+            <div className="mt-auto border-t border-gray-100 pt-3">
+              <span className="text-xl font-bold text-gray-700 sm:text-2xl">CHF 0.–</span>
+              <span className="ml-2 text-sm text-gray-500">kostenlos</span>
             </div>
+            
             {selectedBooster === 'none' && (
-              <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
-                <CheckCircle className="h-4 w-4 text-primary-600 sm:h-5 sm:w-5" />
+              <div className="absolute right-3 top-3">
+                <CheckCircle className="h-6 w-6 text-primary-600" />
               </div>
             )}
           </button>
-
-          {/* Dynamic boosters */}
-          {boosters.map(booster => (
-            <button
-              key={booster.id}
-              type="button"
-              onClick={() => {
-                if (!isBoostersLocked) {
-                  onBoosterChange(booster.id)
-                  // Auto-expand on mobile when selecting
-                  if (booster.id !== selectedBooster) {
-                    setExpandedBooster(booster.id)
-                  }
-                }
-              }}
-              disabled={isBoostersLocked}
-              className={`relative flex min-h-[120px] flex-col rounded-lg border-2 p-2.5 text-left transition-all sm:min-h-[140px] sm:rounded-xl sm:p-3 md:min-h-[160px] md:p-4 ${
-                isBoostersLocked
-                  ? 'cursor-not-allowed border-gray-200 bg-gray-50 opacity-60'
-                  : selectedBooster === booster.id
-                    ? 'border-primary-500 bg-white ring-2 ring-primary-200'
-                    : 'border-gray-200 hover:border-gray-300'
-              }`}
-            >
-              <div
-                className="mb-1.5 inline-flex self-start rounded-full px-2 py-0.5 text-[9px] font-bold uppercase tracking-wide sm:mb-2 sm:px-2.5 sm:py-1 sm:text-[10px]"
-                style={{
-                  backgroundColor: booster.badgeColor + '15',
-                  color: booster.badgeColor,
-                }}
-              >
-                {booster.badge}
-              </div>
-              <h4 className="text-sm font-bold text-gray-900 sm:text-base">{booster.name}</h4>
-              <p className="mt-1 flex-1 text-[11px] leading-snug text-gray-600 sm:mt-1.5 sm:text-[13px] sm:leading-relaxed">
-                <span className="hidden sm:inline">{booster.short || booster.description}</span>
-                <span className="line-clamp-2 sm:hidden">{booster.short || booster.description}</span>
-              </p>
-              <div className="mt-2 border-t border-gray-100 pt-2 sm:mt-3 sm:pt-3">
-                <span className="text-sm font-bold sm:text-base md:text-lg" style={{ color: booster.badgeColor }}>
-                  {formatCHF(booster.price)}
-                </span>
-              </div>
-              {selectedBooster === booster.id && (
-                <div className="absolute right-2 top-2 sm:right-3 sm:top-3">
-                  <CheckCircle className="h-4 w-4 text-primary-600 sm:h-5 sm:w-5" />
-                </div>
-              )}
-            </button>
-          ))}
         </div>
 
-        {/* Detail Panel - Desktop: Always show when selected, Mobile: Accordion */}
-        {selectedBoosterData && (
-          <>
-            {/* Desktop: Always visible detail panel */}
-            <div className="mt-6 hidden rounded-xl border border-gray-200 bg-gray-50/50 p-6 md:block">
-              <h4 className="mb-4 text-lg font-semibold text-gray-900">
-                {selectedBoosterData.detailsTitle || `${selectedBoosterData.name} – Details`}
-              </h4>
-              <ul className="space-y-2.5">
-                {selectedBoosterData.bullets?.map((bullet, index) => (
-                  <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                    <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500" />
-                    <span>{bullet}</span>
-                  </li>
-                ))}
-              </ul>
-              {selectedBoosterData.fineprint && (
-                <p className="mt-4 text-xs text-gray-500">{selectedBoosterData.fineprint}</p>
+        {/* Info Banner for selected paid booster */}
+        {selectedBooster !== 'none' && selectedBoosterData && (
+          <div className="mt-4 flex items-start gap-3 rounded-xl border border-primary-200 bg-primary-50/50 p-4">
+            <div className={`flex h-8 w-8 items-center justify-center rounded-lg ${BOOSTER_DETAILS[selectedBooster]?.iconBg || 'bg-primary-500'}`}>
+              {BOOSTER_DETAILS[selectedBooster] && (
+                <BoosterIcon type={BOOSTER_DETAILS[selectedBooster].icon} className="h-4 w-4 text-white" />
               )}
             </div>
-
-            {/* Mobile: Accordion for booster details */}
-            <div className="mt-4 md:hidden">
-              <button
-                type="button"
-                onClick={() =>
-                  setExpandedBooster(expandedBooster === selectedBooster ? null : selectedBooster)
-                }
-                className="flex w-full items-center justify-between rounded-lg border border-gray-200 bg-white px-4 py-3 text-left transition-colors hover:bg-gray-50"
-              >
-                <span className="font-medium text-gray-900">Details anzeigen</span>
-                {expandedBooster === selectedBooster ? (
-                  <ChevronUp className="h-5 w-5 text-gray-500" />
-                ) : (
-                  <ChevronDown className="h-5 w-5 text-gray-500" />
-                )}
-              </button>
-              {expandedBooster === selectedBooster && (
-                <div className="mt-2 rounded-lg border border-gray-200 bg-gray-50/50 p-4">
-                  <h4 className="mb-3 text-base font-semibold text-gray-900">
-                    {selectedBoosterData.detailsTitle || `${selectedBoosterData.name} – Details`}
-                  </h4>
-                  <ul className="space-y-2">
-                    {selectedBoosterData.bullets?.map((bullet, index) => (
-                      <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
-                        <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500" />
-                        <span>{bullet}</span>
-                      </li>
-                    ))}
-                  </ul>
-                  {selectedBoosterData.fineprint && (
-                    <p className="mt-3 text-xs text-gray-500">{selectedBoosterData.fineprint}</p>
-                  )}
-                </div>
-              )}
+            <div className="flex-1">
+              <p className="text-sm font-medium text-gray-900">
+                {selectedBoosterData.name} ausgewählt
+              </p>
+              <p className="text-xs text-gray-600">
+                Die Booster-Gebühr von <strong>{formatCHF(selectedBoosterData.price)}</strong> wird bei Veröffentlichung fällig.
+              </p>
             </div>
-          </>
+          </div>
         )}
+
       </div>
 
       {/* Final validation message */}
