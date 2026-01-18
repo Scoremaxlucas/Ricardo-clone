@@ -38,7 +38,7 @@ export default function AdminPricingPage() {
   // Defaults - werden durch API geladen (sollten nie angezeigt werden, nur Fallback)
   const [settings, setSettings] = useState<PricingSettings>({
     platformMarginRate: 0.05, // 5% (korrekte Helvenda-Standard)
-    protectionFeeRate: 0, // 0% - Zahlungsschutz ist INKLUSIVE (keine Gebühr für Käufer)
+    protectionFeeRate: 0.03, // 3% - Helvenda Schutz Gebühr
     vatRate: 0.081, // 8.1%
     minimumCommission: 0.1, // CHF 0.10
     maximumCommission: 150, // CHF 150.- (korrekte Helvenda-Standard)
@@ -308,7 +308,6 @@ export default function AdminPricingPage() {
                     value={settings.protectionFeeRate}
                     onChange={e => handleChange('protectionFeeRate', e.target.value)}
                     className="w-32 rounded-md border border-green-300 bg-white px-3 py-2 text-gray-900 focus:border-green-500 focus:outline-none focus:ring-green-500"
-                    disabled
                   />
                   <span className="font-medium text-green-700">
                     = {(settings.protectionFeeRate * 100).toFixed(2)}% (FIX)
@@ -316,8 +315,7 @@ export default function AdminPricingPage() {
                 </div>
                 <div className="mt-2 rounded bg-white p-3 text-xs text-green-700">
                   <strong>✓ Ricardo-Modell:</strong> Der Zahlungsschutz ist <strong>INKLUSIVE</strong> für Käufer.
-                  Käufer zahlen NUR den Artikelpreis + Versandkosten. Diese Gebühr wird daher immer auf <strong>0%</strong> gesetzt.
-                  Der Verkäufer trägt die Zahlungsgebühren (Stripe Processing Fee).
+                  Käufer zahlen NUR den Artikelpreis + Versandkosten. Die Helvenda Schutz Gebühr wird vom Verkäufer getragen.
                 </div>
               </div>
 
