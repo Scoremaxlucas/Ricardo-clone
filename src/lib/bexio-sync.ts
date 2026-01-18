@@ -167,7 +167,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
 
   // Positionen erstellen
   // WICHTIG: Verwende item.total (immer korrekt) statt item.amount (könnte 0 oder null sein)
-  // Keine tax_id nötig da mwst_type: 2 (ohne MwSt. - bereits im Betrag enthalten)
+  // tax_id: 0 = keine/befreite MwSt. (da mwst_type: 2)
   const positions: BexioInvoicePosition[] = invoice.items.map(item => {
     // Priorität: total > price > amount (als Fallback)
     const unitPrice = item.total || item.price || item.amount || 0
@@ -179,6 +179,7 @@ export async function createBexioInvoice(invoiceId: string): Promise<{
       amount: '1',
       text: item.description,
       unit_price: unitPrice.toString(),
+      tax_id: 0, // Keine MwSt. (0 = befreit/keine)
     }
   })
 
