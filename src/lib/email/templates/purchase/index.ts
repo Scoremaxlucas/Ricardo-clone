@@ -10,26 +10,64 @@ import { getHelvendaEmailTemplate } from '../../base-template'
  */
 export function getPurchaseConfirmationEmail(
   buyerName: string,
+  sellerName: string,
   watchTitle: string,
   price: number,
-  sellerName: string,
-  purchaseId: string
+  shippingCost?: number,
+  purchaseType?: 'auction' | 'buy-now',
+  purchaseId?: string,
+  watchId?: string,
+  paymentInfo?: any,
+  imageUrl?: string,
+  sellerRating?: number,
+  sellerReviewCount?: number
 ) {
   const baseUrl = getEmailBaseUrl()
-  const purchasesUrl = `${baseUrl}/meine-kaeufe`
+  const purchasesUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Kaufbestätigung - ${watchTitle}`
+
+  const purchaseTypeText = purchaseType === 'auction' ? 'Auktion' : 'Sofortkauf'
+  const totalPrice = shippingCost ? price + shippingCost : price
+  const shippingInfo = shippingCost
+    ? `<p style="margin: 8px 0 0 0;"><strong>Versandkosten:</strong> CHF ${shippingCost.toFixed(2)}</p>
+       <p style="margin: 8px 0 0 0;"><strong>Gesamtpreis:</strong> CHF ${totalPrice.toFixed(2)}</p>`
+    : ''
+
+  const sellerInfo = sellerRating && sellerReviewCount
+    ? `<p style="margin: 8px 0 0 0;"><strong>Verkäufer-Bewertung:</strong> ${sellerRating.toFixed(1)}/5 (${sellerReviewCount} Bewertungen)</p>`
+    : ''
+
+  const imageSection = imageUrl
+    ? `<div style="text-align: center; margin: 20px 0;">
+        <img src="${imageUrl}" alt="${watchTitle}" style="max-width: 300px; border-radius: 8px; margin: 0 auto;" />
+      </div>`
+    : ''
+
+  const paymentInfoSection = paymentInfo
+    ? `<div style="background-color: #fef9c3; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #f59e0b;">
+        <p style="margin: 0; font-weight: 600;">Zahlungsinformationen:</p>
+        ${paymentInfo.qrCode ? `<p style="margin: 8px 0 0 0;"><strong>QR-Referenz:</strong> ${paymentInfo.qrReference || 'N/A'}</p>` : ''}
+        ${paymentInfo.iban ? `<p style="margin: 8px 0 0 0;"><strong>IBAN:</strong> ${paymentInfo.iban}</p>` : ''}
+        ${paymentInfo.reference ? `<p style="margin: 8px 0 0 0;"><strong>Referenz:</strong> ${paymentInfo.reference}</p>` : ''}
+      </div>`
+    : ''
 
   const html = getHelvendaEmailTemplate({
     title: 'Kaufbestätigung',
     greeting: `Hallo ${buyerName},`,
     content: `
       <p>Vielen Dank für Ihren Kauf!</p>
+      ${imageSection}
       <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
         <p style="margin: 0;"><strong>Artikel:</strong> ${watchTitle}</p>
         <p style="margin: 8px 0 0 0;"><strong>Preis:</strong> CHF ${price.toFixed(2)}</p>
+        ${shippingInfo}
         <p style="margin: 8px 0 0 0;"><strong>Verkäufer:</strong> ${sellerName}</p>
-        <p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">Bestellnr.: ${purchaseId}</p>
+        ${sellerInfo}
+        <p style="margin: 8px 0 0 0;"><strong>Verkaufstyp:</strong> ${purchaseTypeText}</p>
+        ${purchaseId ? `<p style="margin: 8px 0 0 0; font-size: 12px; color: #9ca3af;">Bestellnr.: ${purchaseId}</p>` : ''}
       </div>
+      ${paymentInfoSection}
       <p>Der Verkäufer wurde benachrichtigt und wird sich bei Ihnen melden.</p>
     `,
     buttonText: 'Meine Käufe',
@@ -51,7 +89,7 @@ export function getPaymentRequestEmail(
   purchaseId: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const purchasesUrl = `${baseUrl}/meine-kaeufe`
+  const purchasesUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Zahlungsaufforderung - ${watchTitle}`
 
   const html = getHelvendaEmailTemplate({
@@ -83,7 +121,7 @@ export function getContactDeadlineWarningEmail(
   role: 'buyer' | 'seller'
 ) {
   const baseUrl = getEmailBaseUrl()
-  const url = role === 'buyer' ? `${baseUrl}/meine-kaeufe` : `${baseUrl}/meine-verkaeufe`
+  const url = role === 'buyer' ? `${baseUrl}/my-watches/buying/purchased` : `${baseUrl}/my-watches/selling/sold`
   const subject = `Wichtig: Kontaktfrist läuft ab - ${watchTitle}`
 
   const content =
@@ -119,7 +157,7 @@ export function getPaymentReminderEmail(
   daysOverdue: number
 ) {
   const baseUrl = getEmailBaseUrl()
-  const purchasesUrl = `${baseUrl}/meine-kaeufe`
+  const purchasesUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Zahlungserinnerung - ${watchTitle}`
 
   let urgency = ''
@@ -197,7 +235,7 @@ export function getListingConfirmationEmail(
   watchId: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const watchUrl = `${baseUrl}/watches/${watchId}`
+  const watchUrl = `${baseUrl}/products/${watchId}`
   const subject = `Artikel eingestellt - ${watchTitle}`
 
   const html = getHelvendaEmailTemplate({

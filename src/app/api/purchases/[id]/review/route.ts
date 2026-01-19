@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
-import { sendReviewNotificationEmail } from '@/lib/email'
+import { shouldSendNotification } from '@/lib/notification-preferences'
 
 // GET: Bewertung für einen Purchase abrufen
 export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -148,14 +148,41 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       },
     })
 
-    // Sende E-Mail-Benachrichtigung an den Verkäufer
+    // Sende E-Mail-Benachrichtigung an den Verkäufer (wenn aktiviert)
     try {
-      await sendReviewNotificationEmail(
-        purchase.watch.seller.email,
-        purchase.watch.seller.name || 'Verkäufer',
-        rating,
-        session.user.name || 'Ein Käufer'
-      )
+      const shouldSend = await shouldSendNotification(purchase.watch.sellerId, 'emailOnSaleCompleted')
+      if (shouldSend) {
+        const { sendEmail, getReviewNotificationEmail } = await import('@/lib/email')
+        const recipientName =
+          purchase.watch.seller.nickname ||
+          purchase.watch.seller.firstName ||
+          purchase.watch.seller.name ||
+          'Verkäufer'
+        const reviewerName =
+          session.user.nickname ||
+          session.user.name ||
+          session.user.email ||
+          'Ein Käufer'
+        const ratingNumber = rating === 'positive' ? 5 : rating === 'neutral' ? 3 : 1
+        const { subject, html, text } = getReviewNotificationEmail(
+          recipientName,
+          reviewerName,
+          ratingNumber,
+          comment || '',
+          purchase.watch.title
+        )
+        await sendEmail({
+          to: purchase.watch.seller.email,
+          subject,
+          html,
+          text,
+        })
+        console.log(
+          `[purchases/review] ✅ Bewertungs-E-Mail gesendet an Verkäufer ${purchase.watch.seller.email}`
+        )
+      } else {
+        console.log(`[purchases/review] ⏭️ Bewertungs-E-Mail übersprungen (Präferenz deaktiviert)`)
+      }
     } catch (emailError) {
       console.error('[purchases/review] Fehler beim Versenden der E-Mail:', emailError)
       // E-Mail-Fehler soll nicht die Bewertung verhindern

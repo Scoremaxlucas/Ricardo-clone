@@ -118,31 +118,40 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
       const { purchase, updatedOffer } = result
 
-      // E-Mail: Preisvorschlag akzeptiert an Käufer
+      // E-Mail: Preisvorschlag akzeptiert an Käufer (wenn aktiviert)
       try {
-        const { sendEmail, getPriceOfferAcceptedEmail } = await import('@/lib/email')
-        const buyerName =
-          priceOffer.buyer.nickname ||
-          priceOffer.buyer.firstName ||
-          priceOffer.buyer.name ||
-          priceOffer.buyer.email ||
-          'Käufer'
-        const { subject, html, text } = getPriceOfferAcceptedEmail(
-          buyerName,
-          priceOffer.watch.title,
-          priceOffer.amount,
-          priceOffer.watchId,
-          purchase.id
+        const { shouldSendNotification } = await import('@/lib/notification-preferences')
+        const shouldSendOfferAccepted = await shouldSendNotification(
+          priceOffer.buyerId,
+          'emailOnNewOffer'
         )
-        await sendEmail({
-          to: priceOffer.buyer.email,
-          subject,
-          html,
-          text,
-        })
-        console.log(
-          `[offers] ✅ Preisvorschlag-Akzeptiert-E-Mail gesendet an Käufer ${priceOffer.buyer.email}`
-        )
+        if (shouldSendOfferAccepted) {
+          const { sendEmail, getPriceOfferAcceptedEmail } = await import('@/lib/email')
+          const buyerName =
+            priceOffer.buyer.nickname ||
+            priceOffer.buyer.firstName ||
+            priceOffer.buyer.name ||
+            priceOffer.buyer.email ||
+            'Käufer'
+          const { subject, html, text } = getPriceOfferAcceptedEmail(
+            buyerName,
+            priceOffer.watch.title,
+            priceOffer.amount,
+            priceOffer.watchId,
+            purchase.id
+          )
+          await sendEmail({
+            to: priceOffer.buyer.email,
+            subject,
+            html,
+            text,
+          })
+          console.log(
+            `[offers] ✅ Preisvorschlag-Akzeptiert-E-Mail gesendet an Käufer ${priceOffer.buyer.email}`
+          )
+        } else {
+          console.log(`[offers] ⏭️ Preisvorschlag-Akzeptiert-E-Mail übersprungen (Präferenz deaktiviert)`)
+        }
       } catch (emailError: any) {
         console.error(
           '[offers] ❌ Fehler beim Senden der Preisvorschlag-Akzeptiert-E-Mail:',
@@ -274,6 +283,47 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           buyer: true,
         },
       })
+
+      // E-Mail: Preisvorschlag abgelehnt an Käufer (wenn aktiviert)
+      try {
+        const { shouldSendNotification } = await import('@/lib/notification-preferences')
+        const shouldSendOfferRejected = await shouldSendNotification(
+          priceOffer.buyerId,
+          'emailOnNewOffer'
+        )
+        if (shouldSendOfferRejected) {
+          const { sendEmail, getPriceOfferRejectedEmail } = await import('@/lib/email')
+          const buyerName =
+            priceOffer.buyer.nickname ||
+            priceOffer.buyer.firstName ||
+            priceOffer.buyer.name ||
+            priceOffer.buyer.email ||
+            'Käufer'
+          const { subject, html, text } = getPriceOfferRejectedEmail(
+            buyerName,
+            priceOffer.watch.title,
+            priceOffer.amount,
+            priceOffer.watchId
+          )
+          await sendEmail({
+            to: priceOffer.buyer.email,
+            subject,
+            html,
+            text,
+          })
+          console.log(
+            `[offers] ✅ Preisvorschlag-Abgelehnt-E-Mail gesendet an Käufer ${priceOffer.buyer.email}`
+          )
+        } else {
+          console.log(`[offers] ⏭️ Preisvorschlag-Abgelehnt-E-Mail übersprungen (Präferenz deaktiviert)`)
+        }
+      } catch (emailError: any) {
+        // Fallback: Try to use a generic rejection email if specific template doesn't exist
+        console.error(
+          '[offers] ❌ Fehler beim Senden der Preisvorschlag-Abgelehnt-E-Mail:',
+          emailError
+        )
+      }
 
       // Benachrichtigung für den Käufer
       try {

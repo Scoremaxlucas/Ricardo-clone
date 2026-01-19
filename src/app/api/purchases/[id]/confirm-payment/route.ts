@@ -156,6 +156,47 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       )
     }
 
+    // E-Mail: Zahlungseingang an Verkäufer (wenn aktiviert)
+    try {
+      const { shouldSendNotification } = await import('@/lib/notification-preferences')
+      const shouldSend = await shouldSendNotification(purchase.watch.sellerId, 'emailOnSaleCompleted')
+      if (shouldSend) {
+        const { sendEmail, getPaymentReceivedEmail } = await import('@/lib/email')
+        const sellerName =
+          purchase.watch.seller.nickname ||
+          purchase.watch.seller.firstName ||
+          purchase.watch.seller.name ||
+          'Verkäufer'
+        const buyerName =
+          purchase.buyer.nickname ||
+          purchase.buyer.firstName ||
+          purchase.buyer.name ||
+          purchase.buyer.email ||
+          'Käufer'
+        const { subject, html, text } = getPaymentReceivedEmail(
+          sellerName,
+          purchase.watch.title,
+          purchase.price || 0,
+          buyerName
+        )
+        await sendEmail({
+          to: purchase.watch.seller.email,
+          subject,
+          html,
+          text,
+        })
+        console.log(
+          `[purchases/confirm-payment] ✅ Zahlungseingangs-E-Mail gesendet an Verkäufer ${purchase.watch.seller.email}`
+        )
+      } else {
+        console.log(
+          `[purchases/confirm-payment] ⏭️ Zahlungseingangs-E-Mail übersprungen (Präferenz deaktiviert)`
+        )
+      }
+    } catch (emailError: any) {
+      console.error('[purchases/confirm-payment] Fehler beim Senden der Zahlungseingangs-E-Mail:', emailError)
+    }
+
     return NextResponse.json({
       message: 'Zahlung erfolgreich bestätigt',
       purchase: updatedPurchase,

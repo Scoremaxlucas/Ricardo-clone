@@ -655,11 +655,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         await prisma.notification.create({
           data: {
             userId: purchase.watch.sellerId,
-            type: 'PURCHASE',
+            type: 'DISPUTE_REFUND_REQUIRED',
             title: '💰 Rückerstattung erforderlich',
             message: `Sie müssen CHF ${(refundAmount || purchase.price || 0).toFixed(2)} an ${buyerName} zurückerstatten. Frist: ${refundDeadline.toLocaleDateString('de-CH')}`,
             link: `/disputes/${id}`,
             watchId: purchase.watchId,
+            purchaseId: purchase.id,
           },
         })
       } catch (emailError: any) {
@@ -741,16 +742,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     )
 
     try {
-      await prisma.notification.create({
-        data: {
-          userId: initiatorId,
-          type: 'PURCHASE',
-          title: `✅ ${isCancellation ? 'Stornierungsantrag' : 'Dispute'} erfolgreich gelöst`,
-          message: initiatorMessage,
-          link: isInitiatedByBuyer ? `/my-watches/buying/purchased` : `/my-watches/selling/sold`,
-          watchId: purchase.watchId,
-        },
-      })
+        await prisma.notification.create({
+          data: {
+            userId: initiatorId,
+            type: 'DISPUTE_RESOLVED',
+            title: `✅ ${isCancellation ? 'Stornierungsantrag' : 'Dispute'} erfolgreich gelöst`,
+            message: initiatorMessage,
+            link: isInitiatedByBuyer ? `/my-watches/buying/purchased` : `/my-watches/selling/sold`,
+            watchId: purchase.watchId,
+            purchaseId: purchase.id,
+          },
+        })
     } catch (error) {
       console.error('[dispute/resolve] Fehler bei Initiator-Benachrichtigung:', error)
     }
@@ -771,11 +773,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         await prisma.notification.create({
           data: {
             userId: loserId,
-            type: 'PURCHASE',
+            type: 'DISPUTE_RESOLVED',
             title: `⚠️ ${isCancellation ? 'Stornierungsantrag' : 'Dispute'} gelöst`,
             message: loserMessage,
             link: isLoserBuyer ? `/my-watches/buying/purchased` : `/my-watches/selling/sold`,
             watchId: purchase.watchId,
+            purchaseId: purchase.id,
           },
         })
       } catch (error) {

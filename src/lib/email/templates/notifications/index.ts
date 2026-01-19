@@ -13,21 +13,39 @@ export function getSaleNotificationEmail(
   buyerName: string,
   watchTitle: string,
   price: number,
-  watchId: string
+  purchaseType?: 'auction' | 'buy-now',
+  watchId?: string,
+  imageUrl?: string,
+  buyerRating?: number,
+  buyerReviewCount?: number
 ) {
   const baseUrl = getEmailBaseUrl()
-  const salesUrl = `${baseUrl}/meine-verkaeufe`
+  const salesUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Ihr Artikel wurde verkauft - ${watchTitle}`
+
+  const purchaseTypeText = purchaseType === 'auction' ? 'Auktion' : 'Sofortkauf'
+  const buyerInfo = buyerRating && buyerReviewCount
+    ? `<p style="margin: 8px 0 0 0;"><strong>Käufer-Bewertung:</strong> ${buyerRating.toFixed(1)}/5 (${buyerReviewCount} Bewertungen)</p>`
+    : ''
+
+  const imageSection = imageUrl
+    ? `<div style="text-align: center; margin: 20px 0;">
+        <img src="${imageUrl}" alt="${watchTitle}" style="max-width: 300px; border-radius: 8px; margin: 0 auto;" />
+      </div>`
+    : ''
 
   const html = getHelvendaEmailTemplate({
     title: 'Verkauf erfolgreich! 🎉',
     greeting: `Hallo ${sellerName},`,
     content: `
       <p>Herzlichen Glückwunsch! Ihr Artikel wurde verkauft.</p>
+      ${imageSection}
       <div style="background-color: #ecfdf5; border-radius: 8px; padding: 20px; margin: 20px 0; border-left: 4px solid #10b981;">
         <p style="margin: 0;"><strong>Verkaufter Artikel:</strong> ${watchTitle}</p>
         <p style="margin: 8px 0 0 0;"><strong>Preis:</strong> CHF ${price.toFixed(2)}</p>
         <p style="margin: 8px 0 0 0;"><strong>Käufer:</strong> ${buyerName}</p>
+        <p style="margin: 8px 0 0 0;"><strong>Verkaufstyp:</strong> ${purchaseTypeText}</p>
+        ${buyerInfo}
       </div>
       <p>Bitte bereiten Sie den Versand vor, sobald die Zahlung eingegangen ist.</p>
     `,
@@ -80,11 +98,32 @@ export function getShippingNotificationEmail(
   buyerName: string,
   watchTitle: string,
   trackingNumber?: string,
-  trackingUrl?: string
+  trackingProvider?: string,
+  watchId?: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const purchasesUrl = `${baseUrl}/meine-kaeufe`
+  const purchasesUrl = `${baseUrl}/my-watches/buying/purchased`
   const subject = `Ihr Artikel wurde versendet - ${watchTitle}`
+
+  const trackingInfo = trackingNumber
+    ? `<p style="margin: 8px 0 0 0;"><strong>Tracking-Nummer:</strong> ${trackingNumber}</p>`
+    : ''
+  const providerInfo = trackingProvider
+    ? `<p style="margin: 8px 0 0 0;"><strong>Versanddienstleister:</strong> ${trackingProvider}</p>`
+    : ''
+
+  // Generate tracking URL if provider is known
+  let trackingUrl: string | undefined
+  if (trackingNumber && trackingProvider) {
+    const providerLower = trackingProvider.toLowerCase()
+    if (providerLower.includes('post') || providerLower.includes('swiss')) {
+      trackingUrl = `https://www.post.ch/de/privat/sendungen-empfangen/sendungen-verfolgen?formattedParcelCodes=${trackingNumber}`
+    } else if (providerLower.includes('dhl')) {
+      trackingUrl = `https://www.dhl.ch/de/privatkunden/pakete-empfangen/verfolgen.html?lang=de&idc=${trackingNumber}`
+    } else if (providerLower.includes('ups')) {
+      trackingUrl = `https://www.ups.com/track?tracknum=${trackingNumber}`
+    }
+  }
 
   const html = getHelvendaEmailTemplate({
     title: 'Artikel versendet 📦',
@@ -93,15 +132,12 @@ export function getShippingNotificationEmail(
       <p>Gute Nachrichten! Ihr Artikel wurde versendet.</p>
       <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
         <p style="margin: 0;"><strong>Artikel:</strong> ${watchTitle}</p>
-        ${
-          trackingNumber
-            ? `<p style="margin: 8px 0 0 0;"><strong>Tracking:</strong> ${trackingNumber}</p>`
-            : ''
-        }
+        ${trackingInfo}
+        ${providerInfo}
       </div>
       ${
         trackingUrl
-          ? `<p><a href="${trackingUrl}" style="color: #0f766e;">Sendung verfolgen →</a></p>`
+          ? `<p><a href="${trackingUrl}" style="color: #0f766e; text-decoration: none; font-weight: 600;">📦 Sendung verfolgen →</a></p>`
           : ''
       }
     `,
@@ -122,7 +158,7 @@ export function getPaymentReceivedEmail(
   buyerName: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const salesUrl = `${baseUrl}/meine-verkaeufe`
+  const salesUrl = `${baseUrl}/my-watches/selling/sold`
   const subject = `Zahlung erhalten - ${watchTitle}`
 
   const html = getHelvendaEmailTemplate({
@@ -155,7 +191,7 @@ export function getPriceOfferReceivedEmail(
   watchId: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const watchUrl = `${baseUrl}/watches/${watchId}`
+  const watchUrl = `${baseUrl}/products/${watchId}`
   const subject = `Neuer Preisvorschlag für ${watchTitle}`
 
   const html = getHelvendaEmailTemplate({
@@ -184,10 +220,13 @@ export function getPriceOfferAcceptedEmail(
   buyerName: string,
   watchTitle: string,
   acceptedPrice: number,
-  watchId: string
+  watchId: string,
+  purchaseId?: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const checkoutUrl = `${baseUrl}/checkout?watchId=${watchId}`
+  const purchasesUrl = purchaseId
+    ? `${baseUrl}/my-watches/buying/purchased?purchase=${purchaseId}`
+    : `${baseUrl}/my-watches/buying/purchased`
   const subject = `Ihr Preisvorschlag wurde angenommen - ${watchTitle}`
 
   const html = getHelvendaEmailTemplate({
@@ -201,8 +240,39 @@ export function getPriceOfferAcceptedEmail(
       </div>
       <p>Schließen Sie jetzt den Kauf ab!</p>
     `,
-    buttonText: 'Zum Checkout',
-    buttonUrl: checkoutUrl,
+    buttonText: 'Zum Kauf',
+    buttonUrl: purchasesUrl,
+  })
+
+  return { subject, html }
+}
+
+/**
+ * Preisvorschlag abgelehnt
+ */
+export function getPriceOfferRejectedEmail(
+  buyerName: string,
+  watchTitle: string,
+  rejectedPrice: number,
+  watchId: string
+) {
+  const baseUrl = getEmailBaseUrl()
+  const watchUrl = `${baseUrl}/products/${watchId}`
+  const subject = `Preisvorschlag abgelehnt - ${watchTitle}`
+
+  const html = getHelvendaEmailTemplate({
+    title: 'Preisvorschlag abgelehnt',
+    greeting: `Hallo ${buyerName},`,
+    content: `
+      <p>Der Verkäufer hat Ihren Preisvorschlag leider abgelehnt.</p>
+      <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0;"><strong>Artikel:</strong> ${watchTitle}</p>
+        <p style="margin: 8px 0 0 0;"><strong>Abgelehnter Preis:</strong> CHF ${rejectedPrice.toFixed(2)}</p>
+      </div>
+      <p>Sie können einen neuen Preisvorschlag machen oder den Artikel zum Sofortpreis kaufen.</p>
+    `,
+    buttonText: 'Artikel ansehen',
+    buttonUrl: watchUrl,
   })
 
   return { subject, html }

@@ -220,6 +220,25 @@ export default function NotificationsPage() {
         return <Clock className="h-5 w-5 text-red-500" />
       case 'WARNING':
         return <AlertTriangle className="h-5 w-5 text-orange-600" />
+      case 'DISPUTE_OPENED':
+        return <AlertTriangle className="h-5 w-5 text-red-600" />
+      case 'DISPUTE_RESOLVED':
+        return <Check className="h-5 w-5 text-green-600" />
+      case 'DISPUTE_REFUND_REQUIRED':
+        return <AlertTriangle className="h-5 w-5 text-orange-600" />
+      case 'NEW_INVOICE':
+        return <Package className="h-5 w-5 text-blue-500" />
+      case 'PAYMENT_REQUEST':
+      case 'PAYMENT_REMINDER':
+        return <Clock className="h-5 w-5 text-yellow-600" />
+      case 'ACCOUNT_BLOCKED':
+        return <AlertTriangle className="h-5 w-5 text-red-600" />
+      case 'ACCOUNT_UNBLOCKED':
+        return <Check className="h-5 w-5 text-green-600" />
+      case 'SEARCH_MATCH':
+        return <Package className="h-5 w-5 text-emerald-500" />
+      case 'USER_REPORTED':
+        return <AlertTriangle className="h-5 w-5 text-orange-600" />
       default:
         return <Bell className="h-5 w-5 text-gray-500" />
     }

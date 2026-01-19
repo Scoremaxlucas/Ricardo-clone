@@ -140,8 +140,7 @@ export async function calculateInvoiceForSale(purchaseId: string) {
     },
   })
 
-  // Erstelle nur Plattform-Benachrichtigung (E-Mail wird nach 14 Tagen gesendet)
-  // Die erste Zahlungsaufforderung wird nach 14 Tagen über den Mahnprozess gesendet
+  // Erstelle Plattform-Benachrichtigung
   try {
     await prisma.notification.create({
       data: {
@@ -154,6 +153,43 @@ export async function calculateInvoiceForSale(purchaseId: string) {
     })
   } catch (notificationError: any) {
     // Silent fail - Notification-Fehler sollte nicht kritisch sein
+  }
+
+  // Sende E-Mail-Benachrichtigung (optional, da Zahlungsaufforderung nach 14 Tagen kommt)
+  try {
+    const seller = await prisma.user.findUnique({
+      where: { id: purchase.watch.sellerId },
+      select: { email: true, name: true, firstName: true, nickname: true },
+    })
+
+    if (seller?.email) {
+      const { sendEmail, getInvoiceNotificationEmail } = await import('@/lib/email')
+      const sellerName = seller.nickname || seller.firstName || seller.name || 'Nutzer'
+      const dueDateFormatted = invoice.dueDate.toLocaleDateString('de-CH', {
+        year: 'numeric',
+        month: 'long',
+        day: 'numeric',
+      })
+
+      const { subject, html, text } = getInvoiceNotificationEmail(
+        sellerName,
+        invoiceNumber,
+        finalTotal,
+        dueDateFormatted
+      )
+
+      await sendEmail({
+        to: seller.email,
+        subject,
+        html,
+        text,
+      })
+
+      console.log(`[invoice] ✅ Rechnungsbenachrichtigungs-E-Mail gesendet an ${seller.email}`)
+    }
+  } catch (emailError: any) {
+    console.error('[invoice] Fehler beim Senden der Rechnungsbenachrichtigungs-E-Mail:', emailError)
+    // E-Mail-Fehler sollte nicht kritisch sein
   }
 
   // Sync invoice to Bexio automatically

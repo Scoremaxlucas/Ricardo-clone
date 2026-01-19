@@ -15,7 +15,7 @@ export function getBidConfirmationEmail(
   watchId: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const articleUrl = `${baseUrl}/watches/${watchId}`
+  const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Gebotsbestätigung - ${articleTitle}`
 
   const html = getHelvendaEmailTemplate({
@@ -46,7 +46,7 @@ export function getOutbidNotificationEmail(
   watchId: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const articleUrl = `${baseUrl}/watches/${watchId}`
+  const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Sie wurden überboten - ${articleTitle}`
 
   const html = getHelvendaEmailTemplate({
@@ -74,10 +74,13 @@ export function getAuctionEndWonEmail(
   buyerName: string,
   articleTitle: string,
   finalPrice: number,
-  watchId: string
+  watchId: string,
+  purchaseId?: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const checkoutUrl = `${baseUrl}/checkout?watchId=${watchId}`
+  const purchasesUrl = purchaseId 
+    ? `${baseUrl}/my-watches/buying/purchased?purchase=${purchaseId}`
+    : `${baseUrl}/my-watches/buying/purchased`
   const subject = `Herzlichen Glückwunsch! Sie haben gewonnen - ${articleTitle}`
 
   const html = getHelvendaEmailTemplate({
@@ -91,8 +94,8 @@ export function getAuctionEndWonEmail(
       </div>
       <p>Schließen Sie jetzt den Kauf ab, um den Artikel zu erhalten.</p>
     `,
-    buttonText: 'Zum Checkout',
-    buttonUrl: checkoutUrl,
+    buttonText: 'Zum Kauf',
+    buttonUrl: purchasesUrl,
   })
 
   return { subject, html }
@@ -106,10 +109,13 @@ export function getAuctionEndSellerEmail(
   articleTitle: string,
   finalPrice: number,
   winnerName: string,
-  watchId: string
+  watchId: string,
+  purchaseId?: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const orderUrl = `${baseUrl}/meine-verkaeufe`
+  const salesUrl = purchaseId
+    ? `${baseUrl}/my-watches/selling/sold?purchase=${purchaseId}`
+    : `${baseUrl}/my-watches/selling/sold`
   const subject = `Ihre Auktion wurde beendet - ${articleTitle}`
 
   const html = getHelvendaEmailTemplate({
@@ -125,7 +131,38 @@ export function getAuctionEndSellerEmail(
       <p>Sobald der Käufer bezahlt hat, werden Sie benachrichtigt.</p>
     `,
     buttonText: 'Verkäufe ansehen',
-    buttonUrl: orderUrl,
+    buttonUrl: salesUrl,
+  })
+
+  return { subject, html }
+}
+
+/**
+ * Auktion verloren - Käufer (nicht gewonnen)
+ */
+export function getAuctionEndLostEmail(
+  buyerName: string,
+  articleTitle: string,
+  winningBid: number,
+  watchId: string
+) {
+  const baseUrl = getEmailBaseUrl()
+  const articleUrl = `${baseUrl}/products/${watchId}`
+  const subject = `Auktion beendet - ${articleTitle}`
+
+  const html = getHelvendaEmailTemplate({
+    title: 'Auktion beendet',
+    greeting: `Hallo ${buyerName},`,
+    content: `
+      <p>Die Auktion für "${articleTitle}" ist beendet.</p>
+      <div style="background-color: #f3f4f6; border-radius: 8px; padding: 20px; margin: 20px 0;">
+        <p style="margin: 0;"><strong>Artikel:</strong> ${articleTitle}</p>
+        <p style="margin: 8px 0 0 0;"><strong>Gewinngebot:</strong> CHF ${winningBid.toFixed(2)}</p>
+      </div>
+      <p>Leider haben Sie diese Auktion nicht gewonnen. Schauen Sie sich unsere anderen Angebote an!</p>
+    `,
+    buttonText: 'Weitere Angebote ansehen',
+    buttonUrl: `${baseUrl}/search`,
   })
 
   return { subject, html }
@@ -142,7 +179,7 @@ export function getBidNotificationEmail(
   watchId: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const articleUrl = `${baseUrl}/watches/${watchId}`
+  const articleUrl = `${baseUrl}/products/${watchId}`
   const subject = `Neues Gebot auf ${articleTitle}`
 
   const html = getHelvendaEmailTemplate({

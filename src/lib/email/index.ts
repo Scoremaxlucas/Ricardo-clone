@@ -29,6 +29,7 @@ export {
   getBidConfirmationEmail,
   getOutbidNotificationEmail,
   getAuctionEndWonEmail,
+  getAuctionEndLostEmail,
   getAuctionEndSellerEmail,
   getBidNotificationEmail,
 } from './templates/auction'
@@ -51,6 +52,7 @@ export {
   getPaymentReceivedEmail,
   getPriceOfferReceivedEmail,
   getPriceOfferAcceptedEmail,
+  getPriceOfferRejectedEmail,
   getAnswerNotificationEmail,
   getSearchMatchFoundEmail,
 } from './templates/notifications'

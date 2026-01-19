@@ -247,33 +247,34 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     // Benachrichtigung an die andere Partei (mit Antwortfrist)
     try {
-      await prisma.notification.create({
-        data: {
-          userId: otherParty.id,
-          type: 'PURCHASE',
-          title: isBuyer
-            ? '🚨 Dispute eröffnet - Stellungnahme erforderlich'
-            : '⚠️ Dispute eröffnet',
-          message: `${openerName} hat einen Dispute für "${purchase.watch.title}" eröffnet. Grund: ${getReasonLabel(reason)}.${isBuyer ? ` Antwortfrist: ${sellerResponseDeadline?.toLocaleDateString('de-CH') || 'Keine'}` : ' Bitte warten Sie auf die Bearbeitung.'}`,
-          link: otherPartyLink,
-          watchId: purchase.watchId,
-        },
-      })
+        await prisma.notification.create({
+          data: {
+            userId: otherParty.id,
+            type: 'DISPUTE_OPENED',
+            title: isBuyer
+              ? '🚨 Dispute eröffnet - Stellungnahme erforderlich'
+              : '⚠️ Dispute eröffnet',
+            message: `${openerName} hat einen Dispute für "${purchase.watch.title}" eröffnet. Grund: ${getReasonLabel(reason)}.${isBuyer ? ` Antwortfrist: ${sellerResponseDeadline?.toLocaleDateString('de-CH') || 'Keine'}` : ' Bitte warten Sie auf die Bearbeitung.'}`,
+            link: otherPartyLink,
+            watchId: purchase.watchId,
+            purchaseId: purchase.id,
+          },
+        })
     } catch (error) {
       console.error('[dispute] Fehler beim Erstellen der Benachrichtigung:', error)
     }
 
-    // E-Mail-Benachrichtigung an andere Partei (Ricardo-Style mit Deadline)
+    // E-Mail-Benachrichtigung an andere Partei
     try {
-      const { getDisputeOpenedEmailRicardoStyle } = await import('@/lib/email')
-      const { subject, html, text } = getDisputeOpenedEmailRicardoStyle(
+      const { getDisputeOpenedEmail } = await import('@/lib/email')
+      const { subject, html, text } = getDisputeOpenedEmail(
         otherParty.nickname || otherParty.firstName || otherParty.name || 'Nutzer',
         openerName,
         purchase.watch.title,
-        reason,
-        description,
+        getReasonLabel(reason),
+        description || '',
         isBuyer ? 'seller' : 'buyer',
-        sellerResponseDeadline,
+        sellerResponseDeadline || undefined,
         purchase.id
       )
 
@@ -283,31 +284,9 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         html,
         text,
       })
+      console.log(`[dispute] ✅ Dispute-E-Mail gesendet an ${otherParty.email}`)
     } catch (emailError) {
-      // Fallback auf alte Email-Funktion wenn neue nicht existiert
-      console.error(
-        '[dispute] Fehler beim Senden der Dispute-E-Mail (Ricardo-Style), versuche Fallback:',
-        emailError
-      )
-      try {
-        const { getDisputeOpenedEmail } = await import('@/lib/email')
-        const { subject, html, text } = getDisputeOpenedEmail(
-          otherParty.nickname || otherParty.firstName || otherParty.name || 'Nutzer',
-          openerName,
-          purchase.watch.title,
-          reason,
-          description,
-          isBuyer ? 'seller' : 'buyer'
-        )
-        await sendEmail({
-          to: otherParty.email,
-          subject,
-          html,
-          text,
-        })
-      } catch (fallbackError) {
-        console.error('[dispute] Auch Fallback-Email fehlgeschlagen:', fallbackError)
-      }
+      console.error('[dispute] Fehler beim Senden der Dispute-E-Mail:', emailError)
     }
 
     // Benachrichtigung an Admins mit höherer Priorität
@@ -321,11 +300,12 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         await prisma.notification.create({
           data: {
             userId: admin.id,
-            type: 'PURCHASE',
+            type: 'DISPUTE_OPENED',
             title: '🔔 Neuer Dispute - Aktion erforderlich',
             message: `Ein Dispute wurde für "${purchase.watch.title}" eröffnet. Grund: ${getReasonLabel(reason)}. Frist: ${disputeDeadline.toLocaleDateString('de-CH')}`,
             link: `/admin/disputes/${id}`,
             watchId: purchase.watchId,
+            purchaseId: purchase.id,
           },
         })
       }

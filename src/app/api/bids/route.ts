@@ -617,23 +617,28 @@ export async function POST(request: NextRequest) {
       // Don't fail the bid if notification fails
     }
 
-    // E-Mail: Gebotsbestätigung an Käufer
+    // E-Mail: Gebotsbestätigung an Käufer (wenn aktiviert)
     try {
-      const { sendEmail, getBidConfirmationEmail } = await import('@/lib/email')
-      const buyerName = bid.user.nickname || bid.user.name || 'Käufer'
-      const { subject, html, text } = getBidConfirmationEmail(
-        buyerName,
-        watch.title,
-        finalAmount,
-        watchId
-      )
-      await sendEmail({
-        to: bid.user.email,
-        subject,
-        html,
-        text,
-      })
-      console.log(`[bids] ✅ Gebotsbestätigungs-E-Mail gesendet an Käufer ${bid.user.email}`)
+      const shouldSendBidConfirmation = await shouldSendNotification(session.user.id, 'emailOnNewBid')
+      if (shouldSendBidConfirmation) {
+        const { sendEmail, getBidConfirmationEmail } = await import('@/lib/email')
+        const buyerName = bid.user.nickname || bid.user.name || 'Käufer'
+        const { subject, html, text } = getBidConfirmationEmail(
+          buyerName,
+          watch.title,
+          finalAmount,
+          watchId
+        )
+        await sendEmail({
+          to: bid.user.email,
+          subject,
+          html,
+          text,
+        })
+        console.log(`[bids] ✅ Gebotsbestätigungs-E-Mail gesendet an Käufer ${bid.user.email}`)
+      } else {
+        console.log(`[bids] ⏭️ Gebotsbestätigungs-E-Mail übersprungen (Präferenz deaktiviert)`)
+      }
     } catch (emailError: any) {
       console.error('[bids] ❌ Fehler beim Senden der Gebotsbestätigungs-E-Mail:', emailError)
     }
