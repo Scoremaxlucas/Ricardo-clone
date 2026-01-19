@@ -112,28 +112,31 @@ export async function POST(request: NextRequest) {
           
           if (watches.length > 0) {
             const watchIds = watches.map(w => w.id)
+            // Verwende IN statt ANY für bessere Kompatibilität
+            const watchIdsStr = watchIds.map(id => `'${id.replace(/'/g, "''")}'`).join(',')
+            
             await prisma.$executeRawUnsafe(`
-              DELETE FROM "bids" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "favorites" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "price_offers" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "purchases" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "sales" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "messages" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "watch_categories" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "watch_views" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "reports" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "admin_notes" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "moderation_history" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "invoice_items" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "collection_items" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "auction_viewers" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "stories" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "browsing_history" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "ai_search_results" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "orders" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "product_stats" WHERE "watchId" = ANY($1::text[]);
-              DELETE FROM "watches" WHERE "id" = ANY($1::text[]);
-            `, watchIds)
+              DELETE FROM "bids" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "favorites" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "price_offers" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "purchases" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "sales" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "messages" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "watch_categories" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "watch_views" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "reports" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "admin_notes" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "moderation_history" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "invoice_items" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "collection_items" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "auction_viewers" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "stories" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "browsing_history" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "ai_search_results" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "orders" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "product_stats" WHERE "watchId" IN (${watchIdsStr});
+              DELETE FROM "watches" WHERE "id" IN (${watchIdsStr});
+            `)
           }
           
           // Jetzt lösche den User
