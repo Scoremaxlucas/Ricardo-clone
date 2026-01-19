@@ -1,7 +1,7 @@
 -- Add notification preference columns to user_preferences table
 -- These columns were missing from the initial table creation
 
-ALTER TABLE "user_preferences" 
+ALTER TABLE "user_preferences"
 ADD COLUMN IF NOT EXISTS "emailOnNewMessage" BOOLEAN NOT NULL DEFAULT true,
 ADD COLUMN IF NOT EXISTS "emailOnNewBid" BOOLEAN NOT NULL DEFAULT true,
 ADD COLUMN IF NOT EXISTS "emailOnNewOffer" BOOLEAN NOT NULL DEFAULT true,

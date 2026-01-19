@@ -41,8 +41,8 @@ Or copy the SQL content and run it in your database management tool.
 ## Verification
 After running the migration, verify the columns exist:
 ```sql
-SELECT column_name, data_type, column_default 
-FROM information_schema.columns 
-WHERE table_name = 'user_preferences' 
+SELECT column_name, data_type, column_default
+FROM information_schema.columns
+WHERE table_name = 'user_preferences'
 AND column_name LIKE 'email%';
 ```

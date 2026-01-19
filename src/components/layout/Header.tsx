@@ -566,7 +566,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                         </div>
                       </Link>
                       <Link
-                        href="/profile"
+                        href="/my-watches/account"
                         prefetch={true}
                         onClick={() => setIsProfileMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
@@ -779,7 +779,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                     <span className="text-[15px]">Gebühren</span>
                   </Link>
                   <Link
-                    href="/profile"
+                    href="/my-watches/account"
                     onClick={() => setIsMobileMenuOpen(false)}
                     className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
                   >
@@ -903,7 +903,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               <span>Gebühren</span>
             </Link>
             <Link
-              href="/profile"
+              href="/my-watches/account"
               onClick={() => setIsProfileMenuOpen(false)}
               className="flex items-center gap-3 rounded-lg px-4 py-3 text-gray-700 hover:bg-gray-100"
             >

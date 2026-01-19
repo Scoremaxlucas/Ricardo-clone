@@ -3,7 +3,7 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { Card } from '@/components/ui/Card'
-import { Bell, Camera, CheckCircle, Lock } from 'lucide-react'
+import { Bell, Camera, CheckCircle, Lock, Settings, Wallet } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -671,6 +671,25 @@ export default function ProfilePage() {
 
           {/* Einstellungen Links */}
           <div className="mt-6 space-y-3">
+            {/* Benutzerkonto / Account Settings */}
+            <Card className="p-4">
+              <Link
+                href="/my-watches/account"
+                className="flex items-center justify-between text-gray-700 hover:text-primary-600"
+              >
+                <div className="flex items-center gap-3">
+                  <Settings className="h-5 w-5" />
+                  <div>
+                    <p className="font-medium">Benutzerkonto</p>
+                    <p className="text-sm text-gray-500">
+                      Adresse, IBAN, Auszahlungen & E-Mail ändern
+                    </p>
+                  </div>
+                </div>
+                <span className="text-gray-400">→</span>
+              </Link>
+            </Card>
+
             {/* Benachrichtigungen */}
             <Card className="p-4">
               <Link
