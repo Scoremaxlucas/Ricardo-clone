@@ -55,40 +55,56 @@ export async function POST(request: NextRequest) {
 
           // Sperren (RICARDO-STYLE: Soft Delete)
           case 'block':
-            await prisma.watch.update({
-              where: { id: watchId },
-              data: { moderationStatus: 'blocked' },
-            })
-            await prisma.moderationHistory.create({
-              data: {
-                watchId,
-                adminId,
-                action: 'blocked',
-                details: JSON.stringify({
-                  bulk: true,
-                  reason: reason || 'Bulk-Sperrung durch Admin',
-                }),
-              },
+            // Verwende Transaktion für atomare Operation
+            await prisma.$transaction(async (tx) => {
+              // Setze moderationStatus und isActive (für zusätzliche Sicherheit)
+              await tx.watch.update({
+                where: { id: watchId },
+                data: { 
+                  moderationStatus: 'blocked',
+                  isActive: false, // Zusätzliche Sicherheit: Artikel ist nicht aktiv
+                },
+              })
+              // Erstelle History-Eintrag
+              await tx.moderationHistory.create({
+                data: {
+                  watchId,
+                  adminId,
+                  action: 'blocked',
+                  details: JSON.stringify({
+                    bulk: true,
+                    reason: reason || 'Bulk-Sperrung durch Admin',
+                  }),
+                },
+              })
             })
             results.success++
             break
 
           // Entfernen (RICARDO-STYLE: Soft Delete)
           case 'remove':
-            await prisma.watch.update({
-              where: { id: watchId },
-              data: { moderationStatus: 'removed' },
-            })
-            await prisma.moderationHistory.create({
-              data: {
-                watchId,
-                adminId,
-                action: 'removed',
-                details: JSON.stringify({
-                  bulk: true,
-                  reason: reason || 'Bulk-Entfernung durch Admin',
-                }),
-              },
+            // Verwende Transaktion für atomare Operation
+            await prisma.$transaction(async (tx) => {
+              // Setze moderationStatus und isActive (für zusätzliche Sicherheit)
+              await tx.watch.update({
+                where: { id: watchId },
+                data: { 
+                  moderationStatus: 'removed',
+                  isActive: false, // Zusätzliche Sicherheit: Artikel ist nicht aktiv
+                },
+              })
+              // Erstelle History-Eintrag
+              await tx.moderationHistory.create({
+                data: {
+                  watchId,
+                  adminId,
+                  action: 'removed',
+                  details: JSON.stringify({
+                    bulk: true,
+                    reason: reason || 'Bulk-Entfernung durch Admin',
+                  }),
+                },
+              })
             })
             results.success++
             break
@@ -129,12 +145,20 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Logging für Debugging
+    console.log(`[bulk-action] ${action}: ${results.success} erfolgreich, ${results.failed} fehlgeschlagen`)
+    if (results.errors.length > 0) {
+      console.warn('[bulk-action] Fehler:', results.errors)
+    }
+
     return NextResponse.json({
       message: `${results.success} Angebote erfolgreich bearbeitet`,
       results,
+      // Hinweis: ISR-Cache wird automatisch nach 60 Sekunden invalidiert
+      // Für sofortige Sichtbarkeit: Hard Refresh im Browser (Cmd+Shift+R)
     })
   } catch (error: any) {
-    console.error('Error performing bulk action:', error)
+    console.error('[bulk-action] Error performing bulk action:', error)
     return NextResponse.json(
       { message: 'Fehler bei Bulk-Aktion: ' + error.message },
       { status: 500 }

@@ -429,6 +429,7 @@ export async function DELETE(
         where: { id },
         data: {
           moderationStatus: newStatus,
+          isActive: false, // Zusätzliche Sicherheit: Artikel ist nicht aktiv
           updatedAt: new Date(),
         },
       })

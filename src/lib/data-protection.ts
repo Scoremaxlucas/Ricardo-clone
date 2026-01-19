@@ -49,9 +49,15 @@ export async function isArticleVisible(articleId: string): Promise<{
     }
 
     const now = new Date()
+    
+    // Moderation Status Filter: Zeige nur wenn moderationStatus null, pending oder approved
+    // Verstecke: rejected, blocked, removed, ended
+    const hiddenStatuses = ['rejected', 'blocked', 'removed', 'ended']
+    const isModerationVisible = !article.moderationStatus || !hiddenStatuses.includes(article.moderationStatus)
+    
     const filters = {
-      // Moderation Status Filter: Zeige alle außer 'rejected'
-      moderationStatus: article.moderationStatus !== 'rejected',
+      // Moderation Status Filter: Zeige alle außer 'rejected', 'blocked', 'removed', 'ended'
+      moderationStatus: isModerationVisible,
       
       // Purchase Filter: Zeige wenn keine Purchases ODER alle storniert
       purchases: article.purchases.length === 0 || 
@@ -69,7 +75,7 @@ export async function isArticleVisible(articleId: string): Promise<{
     return {
       visible,
       reason: visible ? undefined : 
-        !filters.moderationStatus ? 'moderationStatus is rejected' :
+        !filters.moderationStatus ? `moderationStatus is ${article.moderationStatus || 'null'}` :
         !filters.purchases ? 'has active purchases' :
         !filters.auction ? 'auction expired without purchase' :
         'unknown reason',
