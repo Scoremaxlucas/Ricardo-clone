@@ -12,84 +12,84 @@ async function ensureNotificationColumnsExist() {
       BEGIN
         -- Add columns if they don't exist
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailOnNewMessage'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailOnNewMessage" BOOLEAN NOT NULL DEFAULT true;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailOnNewBid'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailOnNewBid" BOOLEAN NOT NULL DEFAULT true;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailOnNewOffer'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailOnNewOffer" BOOLEAN NOT NULL DEFAULT true;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailOnSaleCompleted'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailOnSaleCompleted" BOOLEAN NOT NULL DEFAULT true;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailOnOutbid'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailOnOutbid" BOOLEAN NOT NULL DEFAULT true;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailOnAuctionEnding'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailOnAuctionEnding" BOOLEAN NOT NULL DEFAULT true;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailOnPurchase'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailOnPurchase" BOOLEAN NOT NULL DEFAULT true;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailOnShipping'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailOnShipping" BOOLEAN NOT NULL DEFAULT true;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailOnSearchMatch'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailOnSearchMatch" BOOLEAN NOT NULL DEFAULT true;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailOnFavoritePriceChange'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailOnFavoritePriceChange" BOOLEAN NOT NULL DEFAULT false;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailMarketing'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailMarketing" BOOLEAN NOT NULL DEFAULT false;
         END IF;
-        
+
         IF NOT EXISTS (
-          SELECT 1 FROM information_schema.columns 
+          SELECT 1 FROM information_schema.columns
           WHERE table_name = 'user_preferences' AND column_name = 'emailDigestFrequency'
         ) THEN
           ALTER TABLE "user_preferences" ADD COLUMN "emailDigestFrequency" TEXT NOT NULL DEFAULT 'instant';
@@ -195,7 +195,7 @@ export async function PUT(request: NextRequest) {
     const data = await request.json()
 
     // Validiere emailDigestFrequency
-    if (data.emailDigestFrequency && 
+    if (data.emailDigestFrequency &&
         !['instant', 'daily', 'weekly', 'none'].includes(data.emailDigestFrequency)) {
       return NextResponse.json(
         { message: 'Ungültige Digest-Frequenz' },
@@ -256,9 +256,9 @@ export async function PUT(request: NextRequest) {
       emailDigestFrequency: preferences.emailDigestFrequency,
     }
 
-    return NextResponse.json({ 
+    return NextResponse.json({
       message: 'Einstellungen gespeichert',
-      preferences: notificationPreferences 
+      preferences: notificationPreferences
     })
   } catch (error: any) {
     console.error('[notifications/preferences] PUT error:', error)

@@ -1282,7 +1282,7 @@ export default function AdminModerateWatchesPage() {
                   <h3 className="text-lg font-semibold text-white">
                     {removeModal.action === 'block' ? 'Angebot sperren' : 'Angebot entfernen'}
                   </h3>
-                  <p className="text-sm text-white/80">Ricardo-Prinzip: Daten bleiben erhalten</p>
+                  <p className="text-sm text-white/80">Daten bleiben erhalten</p>
                 </div>
                 {!removeModal.isProcessing && (
                   <button
@@ -1356,7 +1356,7 @@ export default function AdminModerateWatchesPage() {
                 <div className="flex items-start gap-3">
                   <CheckCircle className="mt-0.5 h-5 w-5 flex-shrink-0 text-blue-600" />
                   <div className="flex-1">
-                    <h4 className="font-semibold text-blue-900">Ricardo-Prinzip</h4>
+                    <h4 className="font-semibold text-blue-900">Datenaufbewahrung</h4>
                     <p className="mt-1 text-sm text-blue-800">
                       {removeModal.action === 'block' ? (
                         <>
