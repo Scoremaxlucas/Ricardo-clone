@@ -6,10 +6,32 @@ import { NextRequest, NextResponse } from 'next/server'
 /**
  * POST /api/admin/users/cleanup-simple
  *
- * Löscht ALLE User außer dem aktuellen Admin.
- * Nutzt Prisma Cascade Delete für abhängige Daten.
+ * DEAKTIVIERT: Dieser Endpoint wurde nach dem finalen Cleanup deaktiviert.
+ * Keine weiteren Löschungen mehr möglich.
  */
 export async function POST(request: NextRequest) {
+  // ENDPOINT KOMPLETT DEAKTIVIERT - KEINE LÖSCHUNGEN MEHR MÖGLICH
+  return NextResponse.json({
+    success: false,
+    message: '❌ Cleanup-Endpoint wurde deaktiviert. Keine Löschungen mehr möglich.',
+    disabled: true,
+  }, { status: 403 })
+}
+
+/**
+ * GET /api/admin/users/cleanup-simple
+ * 
+ * DEAKTIVIERT: Nur für Info
+ */
+export async function GET(request: NextRequest) {
+  return NextResponse.json({
+    message: 'Cleanup-Endpoint wurde deaktiviert. Keine Löschungen mehr möglich.',
+    disabled: true,
+  })
+}
+
+// ALTER CODE - DEAKTIVIERT
+async function _OLD_POST_DISABLED(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -178,11 +200,11 @@ export async function POST(request: NextRequest) {
     const cleanupComplete = remainingNonAdmin === 0
 
     let message = `✅ ${deleted} von ${usersToDelete.length} Usern gelöscht. Sie (${currentAdmin.email}) bleiben erhalten.`
-    
+
     if (cleanupComplete) {
       message += ` 🎉 Cleanup abgeschlossen! Nur noch Admin-User vorhanden.`
     }
-    
+
     if (failedUsers.length > 0) {
       message += ` ⚠️ ${failedUsers.length} User konnten nicht gelöscht werden.`
       console.error(`[cleanup-simple] Fehlgeschlagene User:`, failedUsers)

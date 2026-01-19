@@ -86,30 +86,25 @@ export default function AdminUsersPage() {
     if (isAdminInSession) {
       console.log('Admin confirmed, loading users...')
 
-      // AUTOMATISCHER CLEANUP: Lösche alle Test-User beim ersten Besuch (nur wenn noch nicht-Admin-User vorhanden)
+      // FINALE LÖSCHUNG: Lösche letzten nicht-Admin-User beim ersten Besuch
       const cleanupDone = sessionStorage.getItem('cleanup-done')
       if (!cleanupDone) {
-        console.log('Automatischer Cleanup wird ausgeführt...')
-        fetch('/api/admin/users/cleanup-simple', {
+        console.log('Finale Löschung wird ausgeführt...')
+        fetch('/api/admin/users/delete-last-non-admin', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ confirm: true }),
         })
           .then(r => r.json())
           .then(data => {
-            console.log('Cleanup Ergebnis:', data)
-            // Setze Flag nur wenn Cleanup erfolgreich abgeschlossen wurde
-            if (data.cleanupComplete) {
-              sessionStorage.setItem('cleanup-done', 'true')
-              console.log(`✅ Cleanup abgeschlossen. Keine weiteren Löschungen mehr möglich.`)
-            }
+            console.log('Löschung Ergebnis:', data)
+            sessionStorage.setItem('cleanup-done', 'true')
             if (data.deleted > 0) {
-              console.log(`✅ ${data.deleted} Test-User automatisch gelöscht`)
+              console.log(`✅ ${data.deleted} nicht-Admin-User gelöscht. Cleanup abgeschlossen.`)
             }
             loadUsers()
           })
           .catch(e => {
-            console.error('Cleanup Fehler:', e)
+            console.error('Löschung Fehler:', e)
             loadUsers()
           })
       } else {
