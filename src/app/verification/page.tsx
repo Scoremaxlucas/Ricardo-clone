@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { CheckCircle, XCircle, CreditCard, Smartphone, Building2 } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 type PaymentMethodType = 'twint' | 'bank' | 'creditcard' | null
 
@@ -21,6 +22,7 @@ interface PaymentMethod {
 }
 
 export default function VerificationPage() {
+  const { t } = useLanguage()
   const { data: session, status } = useSession()
   const router = useRouter()
   const [loading, setLoading] = useState(false)
@@ -585,7 +587,7 @@ export default function VerificationPage() {
           message: data.message,
           data: data,
         })
-        setError(data.message || 'Ein Fehler ist aufgetreten')
+        setError(data.message || t.verification.error)
       }
     } catch (error: any) {
       console.error('Error submitting verification:', error)
@@ -594,7 +596,7 @@ export default function VerificationPage() {
         stack: error.stack,
         name: error.name,
       })
-      setError(`Ein Fehler ist aufgetreten: ${error.message || 'Bitte versuchen Sie es erneut.'}`)
+      setError(`${t.verification.error}: ${error.message || t.common.error}`)
     } finally {
       setLoading(false)
     }
@@ -604,7 +606,7 @@ export default function VerificationPage() {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
-        <div className="mx-auto max-w-4xl px-4 py-12 text-center text-gray-600">Lädt...</div>
+        <div className="mx-auto max-w-4xl px-4 py-12 text-center text-gray-600">{t.common.loading}</div>
         <Footer />
       </div>
     )
@@ -621,9 +623,9 @@ export default function VerificationPage() {
       <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
         <div className="rounded-lg bg-white p-6 shadow-md sm:p-8">
           <div className="mb-6">
-            <h1 className="mb-2 text-3xl font-bold text-gray-900">Verifizierung</h1>
+            <h1 className="mb-2 text-3xl font-bold text-gray-900">{t.verification.title}</h1>
             <p className="text-gray-600">
-              Um kaufen und verkaufen zu können, benötigen wir Ihre Verifizierungsdaten.
+              {t.verification.subtitle}
             </p>
           </div>
 
@@ -632,7 +634,7 @@ export default function VerificationPage() {
               <div className="flex items-center">
                 <CheckCircle className="mr-2 h-5 w-5 text-green-600" />
                 <span className="font-medium text-green-800">
-                  Sie sind bereits verifiziert! Sie können Ihre Daten hier aktualisieren.
+                  {t.verification.submitted}
                 </span>
               </div>
             </div>
@@ -653,24 +655,24 @@ export default function VerificationPage() {
           <form onSubmit={handleSubmit} className="space-y-8">
             {/* Persönliche Daten */}
             <div>
-              <h2 className="mb-4 text-xl font-semibold text-gray-900">Persönliche Daten</h2>
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">{t.verification.personalData}</h2>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Anrede *</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">{t.verification.titleLabel} *</label>
                   <select
                     value={title}
                     onChange={e => setTitle(e.target.value)}
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
                     required
                   >
-                    <option value="">Bitte wählen</option>
+                    <option value="">{t.verification.selectType}</option>
                     <option value="Herr">Herr</option>
                     <option value="Frau">Frau</option>
                     <option value="Divers">Divers</option>
                   </select>
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Vorname *</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">{t.verification.firstName} *</label>
                   <input
                     type="text"
                     value={firstName}
@@ -680,7 +682,7 @@ export default function VerificationPage() {
                   />
                 </div>
                 <div className="md:col-span-2">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Nachname *</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">{t.verification.lastName} *</label>
                   <input
                     type="text"
                     value={lastName}
@@ -694,10 +696,10 @@ export default function VerificationPage() {
 
             {/* Wohnadresse */}
             <div>
-              <h2 className="mb-4 text-xl font-semibold text-gray-900">Wohnadresse</h2>
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">{t.verification.address}</h2>
               <div className="grid grid-cols-1 gap-4 md:grid-cols-5">
                 <div className="md:col-span-3">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Strasse *</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">{t.verification.street} *</label>
                   <input
                     type="text"
                     value={street}
@@ -708,7 +710,7 @@ export default function VerificationPage() {
                 </div>
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Strassen-Nr. *
+                    {t.verification.streetNumber} *
                   </label>
                   <input
                     type="text"
@@ -720,7 +722,7 @@ export default function VerificationPage() {
                 </div>
                 <div className="md:col-span-1"></div>
                 <div>
-                  <label className="mb-2 block text-sm font-medium text-gray-700">PLZ *</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">{t.verification.postalCode} *</label>
                   <input
                     type="text"
                     value={postalCode}
@@ -731,7 +733,7 @@ export default function VerificationPage() {
                 </div>
                 <div className="md:col-span-3">
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Ortschaft *
+                    {t.verification.city} *
                   </label>
                   <input
                     type="text"
@@ -743,7 +745,7 @@ export default function VerificationPage() {
                 </div>
                 <div className="md:col-span-1"></div>
                 <div className="md:col-span-4">
-                  <label className="mb-2 block text-sm font-medium text-gray-700">Land *</label>
+                  <label className="mb-2 block text-sm font-medium text-gray-700">{t.verification.country} *</label>
                   <input
                     type="text"
                     value={country}
@@ -770,7 +772,7 @@ export default function VerificationPage() {
                   htmlFor="hasDeliveryAddress"
                   className="ml-2 text-sm font-medium text-gray-700"
                 >
-                  Abweichende Lieferadresse
+                  {t.verification.hasDeliveryAddress}
                 </label>
               </div>
 
@@ -787,7 +789,7 @@ export default function VerificationPage() {
                   </div>
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Strassen-Nr.
+                      {t.verification.streetNumber}
                     </label>
                     <input
                       type="text"
@@ -808,7 +810,7 @@ export default function VerificationPage() {
                   </div>
                   <div className="md:col-span-3">
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Ortschaft
+                      {t.verification.city}
                     </label>
                     <input
                       type="text"
@@ -834,7 +836,7 @@ export default function VerificationPage() {
 
             {/* Geburtsdatum */}
             <div>
-              <h2 className="mb-4 text-xl font-semibold text-gray-900">Geburtsdatum *</h2>
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">{t.verification.dateOfBirth} *</h2>
               <input
                 type="date"
                 value={dateOfBirth}
@@ -844,22 +846,21 @@ export default function VerificationPage() {
                 required
               />
               <p className="mt-2 text-sm text-gray-600">
-                Sie müssen mindestens 18 Jahre alt sein, um sich zu verifizieren.
+                {t.verification.dateOfBirthDesc}
               </p>
             </div>
 
             {/* Ausweiskopie */}
             <div>
-              <h2 className="mb-4 text-xl font-semibold text-gray-900">Ausweiskopie *</h2>
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">{t.verification.idDocument} *</h2>
               <p className="mb-4 text-sm text-gray-600">
-                Bitte laden Sie eine Kopie Ihres gültigen Ausweises hoch (Identitätskarte oder
-                Reisepass). Max. 5 MB, Format: JPG, PNG oder PDF.
+                {t.verification.idDocumentDesc}
               </p>
 
               <div className="space-y-4">
                 <div>
                   <label className="mb-2 block text-sm font-medium text-gray-700">
-                    Ausweistyp *
+                    {t.verification.idDocumentType} *
                   </label>
                   <select
                     value={idDocumentType || ''}
@@ -884,9 +885,9 @@ export default function VerificationPage() {
                     className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-primary-500 md:w-1/2"
                     required
                   >
-                    <option value="">Bitte wählen</option>
-                    <option value="ID">Identitätskarte (ID)</option>
-                    <option value="Passport">Reisepass</option>
+                    <option value="">{t.verification.selectType}</option>
+                    <option value="ID">{t.verification.idCard}</option>
+                    <option value="Passport">{t.verification.passport}</option>
                   </select>
                 </div>
 
@@ -894,7 +895,7 @@ export default function VerificationPage() {
                 {idDocumentType === 'Passport' && (
                   <div>
                     <label className="mb-2 block text-sm font-medium text-gray-700">
-                      Reisepass hochladen *
+                      {t.verification.passportDocument} hochladen *
                     </label>
                     <input
                       type="file"
@@ -922,7 +923,7 @@ export default function VerificationPage() {
                     />
                     {idDocumentPreview && (
                       <div className="mt-4">
-                        <p className="mb-2 text-sm font-medium text-gray-700">Vorschau:</p>
+                        <p className="mb-2 text-sm font-medium text-gray-700">{t.verification.preview}</p>
                           <img
                             src={idDocumentPreview}
                             alt="Reisepass Vorschau"
@@ -946,7 +947,7 @@ export default function VerificationPage() {
                   <div className="space-y-4">
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Identitätskarte - Seite 1
+                        {t.verification.idCardPage1}
                       </label>
                       <input
                         type="file"
@@ -995,7 +996,7 @@ export default function VerificationPage() {
 
                     <div>
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Identitätskarte - Seite 2
+                        {t.verification.idCardPage2}
                       </label>
                       <input
                         type="file"
@@ -1054,10 +1055,9 @@ export default function VerificationPage() {
 
             {/* Zahlungsmittel */}
             <div>
-              <h2 className="mb-4 text-xl font-semibold text-gray-900">Zahlungsmittel *</h2>
+              <h2 className="mb-4 text-xl font-semibold text-gray-900">{t.verification.paymentMethods} *</h2>
               <p className="mb-4 text-sm text-gray-600">
-                Wählen Sie mindestens ein Zahlungsmittel aus und füllen Sie die entsprechenden
-                Informationen aus:
+                {t.verification.paymentMethodsDesc}
               </p>
 
               <div className="space-y-4">
@@ -1073,13 +1073,13 @@ export default function VerificationPage() {
                     />
                     <label htmlFor="payment-twint" className="ml-3 flex items-center">
                       <Smartphone className="mr-2 h-5 w-5 text-blue-600" />
-                      <span className="font-medium text-gray-900">TWINT</span>
+                      <span className="font-medium text-gray-900">{t.verification.twint}</span>
                     </label>
                   </div>
                   {selectedPaymentMethods.some(pm => pm.type === 'twint') && (
                     <div className="ml-7 mt-3">
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        Telefonnummer *
+                        {t.verification.twint} {t.common.phone || 'Telefonnummer'} *
                       </label>
                       <input
                         type="tel"
@@ -1104,14 +1104,14 @@ export default function VerificationPage() {
                     />
                     <label htmlFor="payment-bank" className="ml-3 flex items-center">
                       <Building2 className="mr-2 h-5 w-5 text-green-600" />
-                      <span className="font-medium text-gray-900">Banküberweisung</span>
+                      <span className="font-medium text-gray-900">{t.verification.bankTransfer}</span>
                     </label>
                   </div>
                   {selectedPaymentMethods.some(pm => pm.type === 'bank') && (
                     <div className="ml-7 mt-3 space-y-3">
                       <div>
                         <label className="mb-2 block text-sm font-medium text-gray-700">
-                          IBAN *
+                          {t.verification.iban} *
                         </label>
                         <input
                           type="text"
@@ -1146,7 +1146,7 @@ export default function VerificationPage() {
                       <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                         <div>
                           <label className="mb-2 block text-sm font-medium text-gray-700">
-                            Vorname Kontoinhaber *
+                            {t.verification.accountHolderFirstName} *
                           </label>
                           <input
                             type="text"
@@ -1164,7 +1164,7 @@ export default function VerificationPage() {
                         </div>
                         <div>
                           <label className="mb-2 block text-sm font-medium text-gray-700">
-                            Nachname Kontoinhaber *
+                            {t.verification.accountHolderLastName} *
                           </label>
                           <input
                             type="text"
@@ -1181,7 +1181,7 @@ export default function VerificationPage() {
                       </div>
                       <div>
                         <label className="mb-2 block text-sm font-medium text-gray-700">
-                          Bank *
+                          {t.verification.bank} *
                         </label>
                         <input
                           type="text"
@@ -1207,7 +1207,7 @@ export default function VerificationPage() {
                     />
                     <label htmlFor="payment-creditcard" className="ml-3 flex items-center">
                       <CreditCard className="mr-2 h-5 w-5 text-purple-600" />
-                      <span className="font-medium text-gray-900">Kreditkarte</span>
+                      <span className="font-medium text-gray-900">{t.verification.creditCard}</span>
                     </label>
                   </div>
                   {selectedPaymentMethods.some(pm => pm.type === 'creditcard') && (
@@ -1228,7 +1228,7 @@ export default function VerificationPage() {
                 href="/"
                 className="rounded-md border border-gray-300 px-6 py-2 text-gray-700 hover:bg-gray-50"
               >
-                Abbrechen
+                {t.common.cancel}
               </Link>
               <button
                 type="submit"
@@ -1236,10 +1236,10 @@ export default function VerificationPage() {
                 className="rounded-md bg-primary-600 px-6 py-2 text-white hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 {loading
-                  ? 'Wird gespeichert...'
+                  ? t.verification.submitting
                   : isVerified
-                    ? 'Aktualisieren'
-                    : 'Verifizierung abschliessen'}
+                    ? t.common.save
+                    : t.verification.submit}
               </button>
             </div>
           </form>
