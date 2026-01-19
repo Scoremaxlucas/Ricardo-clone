@@ -509,25 +509,25 @@ export default function AdminUsersPage() {
                   onClick={() => handleBulkAction('unblock')}
                   className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white transition-colors hover:bg-green-700"
                 >
-                  {t.common.unblock || 'Entblocken'}
+                  Entblocken
                 </button>
                 <button
                   onClick={() => handleBulkAction('warn')}
                   className="rounded-lg bg-yellow-600 px-4 py-2 text-sm text-white transition-colors hover:bg-yellow-700"
                 >
-                  {t.common.warn || 'Verwarnen'}
+                  Verwarnen
                 </button>
                 <button
                   onClick={() => handleBulkAction('grantAdmin')}
                   className="rounded-lg bg-purple-600 px-4 py-2 text-sm text-white transition-colors hover:bg-purple-700"
                 >
-                  {t.common.grantAdmin || 'Admin-Rechte vergeben'}
+                  Admin-Rechte vergeben
                 </button>
                 <button
                   onClick={() => handleBulkAction('revokeAdmin')}
                   className="rounded-lg bg-orange-600 px-4 py-2 text-sm text-white transition-colors hover:bg-orange-700"
                 >
-                  {t.common.revokeAdmin || 'Admin-Rechte entziehen'}
+                  Admin-Rechte entziehen
                 </button>
                 <button
                   onClick={() => setSelectedUsers(new Set())}
@@ -656,11 +656,11 @@ export default function AdminUsersPage() {
                         {user.verificationStatus === 'rejected' && (
                           <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
                             <XCircle className="mr-1 h-3 w-3" />
-                            {t.common.rejected || 'Abgelehnt'}
+                            Abgelehnt
                           </span>
                         )}
                         {!user.verificationStatus && (
-                          <span className="text-sm text-gray-500">{t.common.notStarted || 'Nicht gestartet'}</span>
+                          <span className="text-sm text-gray-500">Nicht gestartet</span>
                         )}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
