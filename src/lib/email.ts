@@ -1536,7 +1536,7 @@ export function getDisputeOpenedEmail(
   sellerResponseDeadline?: string | Date,
   purchaseId?: string
 ) {
-  const deadline = sellerResponseDeadline 
+  const deadline = sellerResponseDeadline
     ? (typeof sellerResponseDeadline === 'string' ? new Date(sellerResponseDeadline) : sellerResponseDeadline)
     : undefined
   return getDisputeOpenedEmailNew(recipientName, openerName, watchTitle, reason, description, role, deadline, purchaseId)

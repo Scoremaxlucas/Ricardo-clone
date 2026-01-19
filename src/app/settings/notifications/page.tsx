@@ -288,10 +288,10 @@ function NotificationRow({
   disabled?: boolean
 }) {
   return (
-    <div className="flex items-center justify-between py-3">
-      <div className="flex items-center gap-3">
-        <Icon className="h-5 w-5 text-gray-400" />
-        <span className="text-sm text-gray-700">{label}</span>
+    <div className="flex items-center justify-between py-2.5 sm:py-3">
+      <div className="flex items-center gap-2 sm:gap-3 min-w-0 flex-1 pr-2">
+        <Icon className="h-4 w-4 sm:h-5 sm:w-5 text-gray-400 flex-shrink-0" />
+        <span className="text-xs sm:text-sm text-gray-700 break-words">{label}</span>
       </div>
       <Toggle enabled={enabled} onChange={onChange} disabled={disabled} />
     </div>
@@ -347,7 +347,12 @@ export default function NotificationSettingsPage() {
         throw new Error(data.message)
       }
     } catch (error: any) {
-      toast.error(t.error + ': ' + error.message)
+      // Extract a more user-friendly error message
+      let errorMessage = error.message || t.error
+      if (errorMessage.includes('emailOnNewMessage') || errorMessage.includes('does not exist')) {
+        errorMessage = 'Datenbankfehler: Bitte kontaktieren Sie den Support. Die Einstellungen konnten nicht gespeichert werden.'
+      }
+      toast.error(errorMessage, { duration: 5000 })
       // Revert on error
       const response = await fetch('/api/notifications/preferences')
       if (response.ok) {
@@ -401,38 +406,39 @@ export default function NotificationSettingsPage() {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
-      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-12">
+      <main className="mx-auto w-full max-w-2xl flex-1 px-4 py-6 sm:py-12">
         <Link
           href="/profile"
-          className="mb-6 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600"
+          className="mb-4 sm:mb-6 inline-flex items-center gap-2 text-sm text-gray-600 hover:text-primary-600"
         >
           <ArrowLeft className="h-4 w-4" />
-          {t.backToProfile}
+          <span className="hidden sm:inline">{t.backToProfile}</span>
+          <span className="sm:hidden">Zurück</span>
         </Link>
 
-        <div className="mb-8 flex items-center justify-between">
+        <div className="mb-6 sm:mb-8 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-gray-900">{t.title}</h1>
-            <p className="text-gray-600">{t.subtitle}</p>
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-900">{t.title}</h1>
+            <p className="text-sm sm:text-base text-gray-600">{t.subtitle}</p>
           </div>
           {saving && (
-            <div className="flex items-center gap-2 text-sm text-gray-500">
+            <div className="flex items-center gap-2 text-xs sm:text-sm text-gray-500">
               <Loader2 className="h-4 w-4 animate-spin" />
               {t.saving}
             </div>
           )}
         </div>
 
-        <div className="space-y-6">
+        <div className="space-y-4 sm:space-y-6">
           {/* Verkäufer-Benachrichtigungen */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-100">
-                <Package className="h-5 w-5 text-primary-600" />
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-100">
+                <Package className="h-4 w-4 sm:h-5 sm:w-5 text-primary-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">{t.sections.seller.title}</h2>
-                <p className="text-sm text-gray-500">{t.sections.seller.subtitle}</p>
+                <h2 className="text-sm sm:text-base font-semibold text-gray-900">{t.sections.seller.title}</h2>
+                <p className="text-xs sm:text-sm text-gray-500">{t.sections.seller.subtitle}</p>
               </div>
             </div>
             <div className="divide-y divide-gray-100">
@@ -468,14 +474,14 @@ export default function NotificationSettingsPage() {
           </div>
 
           {/* Käufer-Benachrichtigungen */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
-                <ShoppingCart className="h-5 w-5 text-blue-600" />
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 items-center justify-center rounded-full bg-blue-100">
+                <ShoppingCart className="h-4 w-4 sm:h-5 sm:w-5 text-blue-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">{t.sections.buyer.title}</h2>
-                <p className="text-sm text-gray-500">{t.sections.buyer.subtitle}</p>
+                <h2 className="text-sm sm:text-base font-semibold text-gray-900">{t.sections.buyer.title}</h2>
+                <p className="text-xs sm:text-sm text-gray-500">{t.sections.buyer.subtitle}</p>
               </div>
             </div>
             <div className="divide-y divide-gray-100">
@@ -511,14 +517,14 @@ export default function NotificationSettingsPage() {
           </div>
 
           {/* Suchabo, Favoriten & Marketing */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
-                <Sparkles className="h-5 w-5 text-amber-600" />
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 items-center justify-center rounded-full bg-amber-100">
+                <Sparkles className="h-4 w-4 sm:h-5 sm:w-5 text-amber-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">{t.sections.other.title}</h2>
-                <p className="text-sm text-gray-500">{t.sections.other.subtitle}</p>
+                <h2 className="text-sm sm:text-base font-semibold text-gray-900">{t.sections.other.title}</h2>
+                <p className="text-xs sm:text-sm text-gray-500">{t.sections.other.subtitle}</p>
               </div>
             </div>
             <div className="divide-y divide-gray-100">
@@ -540,21 +546,21 @@ export default function NotificationSettingsPage() {
           </div>
 
           {/* E-Mail-Häufigkeit */}
-          <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+          <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
-              <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-gray-100">
-                <Bell className="h-5 w-5 text-gray-600" />
+              <div className="flex h-8 w-8 sm:h-10 sm:w-10 flex-shrink-0 items-center justify-center rounded-full bg-gray-100">
+                <Bell className="h-4 w-4 sm:h-5 sm:w-5 text-gray-600" />
               </div>
               <div>
-                <h2 className="font-semibold text-gray-900">{t.sections.digest.title}</h2>
-                <p className="text-sm text-gray-500">{t.sections.digest.subtitle}</p>
+                <h2 className="text-sm sm:text-base font-semibold text-gray-900">{t.sections.digest.title}</h2>
+                <p className="text-xs sm:text-sm text-gray-500">{t.sections.digest.subtitle}</p>
               </div>
             </div>
             <div className="mt-4 space-y-2">
               {(['instant', 'daily', 'weekly', 'none'] as const).map((freq) => (
                 <label
                   key={freq}
-                  className={`flex cursor-pointer items-center gap-3 rounded-lg border p-3 transition-colors ${
+                  className={`flex cursor-pointer items-center gap-2 sm:gap-3 rounded-lg border p-2.5 sm:p-3 transition-colors ${
                     preferences.emailDigestFrequency === freq
                       ? 'border-primary-500 bg-primary-50'
                       : 'border-gray-200 hover:border-gray-300'
@@ -567,9 +573,9 @@ export default function NotificationSettingsPage() {
                     checked={preferences.emailDigestFrequency === freq}
                     onChange={() => updatePreference('emailDigestFrequency', freq)}
                     disabled={saving}
-                    className="h-4 w-4 text-primary-600 focus:ring-primary-500"
+                    className="h-4 w-4 flex-shrink-0 text-primary-600 focus:ring-primary-500"
                   />
-                  <span className="text-sm text-gray-700">{t.frequency[freq]}</span>
+                  <span className="text-xs sm:text-sm text-gray-700">{t.frequency[freq]}</span>
                 </label>
               ))}
             </div>
