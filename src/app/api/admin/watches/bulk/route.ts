@@ -57,12 +57,11 @@ export async function POST(request: NextRequest) {
           case 'block':
             // Verwende Transaktion für atomare Operation
             await prisma.$transaction(async (tx) => {
-              // Setze moderationStatus und isActive (für zusätzliche Sicherheit)
+              // Setze moderationStatus auf 'blocked'
               await tx.watch.update({
                 where: { id: watchId },
                 data: { 
                   moderationStatus: 'blocked',
-                  isActive: false, // Zusätzliche Sicherheit: Artikel ist nicht aktiv
                 },
               })
               // Erstelle History-Eintrag
@@ -85,12 +84,11 @@ export async function POST(request: NextRequest) {
           case 'remove':
             // Verwende Transaktion für atomare Operation
             await prisma.$transaction(async (tx) => {
-              // Setze moderationStatus und isActive (für zusätzliche Sicherheit)
+              // Setze moderationStatus auf 'removed'
               await tx.watch.update({
                 where: { id: watchId },
                 data: { 
                   moderationStatus: 'removed',
-                  isActive: false, // Zusätzliche Sicherheit: Artikel ist nicht aktiv
                 },
               })
               // Erstelle History-Eintrag

@@ -274,7 +274,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 }
 
 // DELETE: Angebot entfernen (RICARDO-STYLE: Soft Delete für Artikel mit Transaktionen)
-// 
+//
 // RICARDO-PHILOSOPHIE:
 // - Artikel mit Geboten/Käufen werden NIE wirklich gelöscht
 // - Stattdessen: moderationStatus = 'removed' (Soft Delete)
@@ -398,11 +398,11 @@ export async function DELETE(
     // ============================================
     // ADMIN-AKTIONEN (RICARDO-STYLE)
     // ============================================
-    
+
     // Prüfe ob Artikel Transaktionen hat
-    const hasTransactions = 
-      watch._count.bids > 0 || 
-      watch._count.purchases > 0 || 
+    const hasTransactions =
+      watch._count.bids > 0 ||
+      watch._count.purchases > 0 ||
       watch._count.priceOffers > 0
 
     // Prüfe auf aktive Zahlungen
@@ -424,12 +424,11 @@ export async function DELETE(
     if (hasTransactions || activeOrders.length > 0) {
       // Setze moderationStatus auf 'removed' oder 'blocked'
       const newStatus = action === 'block' ? 'blocked' : 'removed'
-      
+
       await prisma.watch.update({
         where: { id },
         data: {
           moderationStatus: newStatus,
-          isActive: false, // Zusätzliche Sicherheit: Artikel ist nicht aktiv
           updatedAt: new Date(),
         },
       })

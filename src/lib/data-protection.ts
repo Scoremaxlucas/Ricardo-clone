@@ -1,6 +1,6 @@
 /**
  * DATA PROTECTION - GOLDEN RULE
- * 
+ *
  * NIEMALS dürfen bestehende Artikel oder User durch Code-Änderungen verschwinden oder gelöscht werden.
  * Dies ist eine kritische Geschäftsregel und muss bei jeder Änderung beachtet werden.
  */
@@ -49,23 +49,23 @@ export async function isArticleVisible(articleId: string): Promise<{
     }
 
     const now = new Date()
-    
+
     // Moderation Status Filter: Zeige nur wenn moderationStatus null, pending oder approved
     // Verstecke: rejected, blocked, removed, ended
     const hiddenStatuses = ['rejected', 'blocked', 'removed', 'ended']
     const isModerationVisible = !article.moderationStatus || !hiddenStatuses.includes(article.moderationStatus)
-    
+
     const filters = {
       // Moderation Status Filter: Zeige alle außer 'rejected', 'blocked', 'removed', 'ended'
       moderationStatus: isModerationVisible,
-      
+
       // Purchase Filter: Zeige wenn keine Purchases ODER alle storniert
-      purchases: article.purchases.length === 0 || 
+      purchases: article.purchases.length === 0 ||
                  article.purchases.every(p => p.status === 'cancelled'),
-      
+
       // Auction Filter: Zeige wenn keine Auktion ODER noch nicht abgelaufen ODER Purchase vorhanden
-      auction: !article.isAuction || 
-               !article.auctionEnd || 
+      auction: !article.isAuction ||
+               !article.auctionEnd ||
                article.auctionEnd > now ||
                article.purchases.some(p => p.status !== 'cancelled'),
     }
@@ -74,7 +74,7 @@ export async function isArticleVisible(articleId: string): Promise<{
 
     return {
       visible,
-      reason: visible ? undefined : 
+      reason: visible ? undefined :
         !filters.moderationStatus ? `moderationStatus is ${article.moderationStatus || 'null'}` :
         !filters.purchases ? 'has active purchases' :
         !filters.auction ? 'auction expired without purchase' :
