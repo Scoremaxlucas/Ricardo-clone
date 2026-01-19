@@ -6,9 +6,17 @@ import { NextRequest, NextResponse } from 'next/server'
 /**
  * POST /api/admin/users/force-delete-non-admin
  *
- * FORCIERTE LÖSCHUNG mit manueller Bereinigung aller abhängigen Daten.
+ * DAUERHAFT DEAKTIVIERT - Dieser Endpoint war nur für den Launch-Cleanup gedacht.
+ * Keine User-Löschungen mehr möglich.
  */
 export async function POST(request: NextRequest) {
+  return NextResponse.json(
+    { 
+      message: 'Dieser Endpoint ist dauerhaft deaktiviert. User-Löschungen sind nicht mehr möglich.',
+      disabled: true 
+    },
+    { status: 403 }
+  )
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
@@ -90,7 +98,7 @@ export async function POST(request: NextRequest) {
         await prisma.message.deleteMany({ where: { senderId: userId } }).catch(() => {})
         await prisma.message.deleteMany({ where: { receiverId: userId } }).catch(() => {})
         await prisma.notification.deleteMany({ where: { userId } }).catch(() => {})
-        
+
         // Lösche InvoiceItems ZUERST, dann Invoices
         const invoices = await prisma.invoice.findMany({
           where: { sellerId: userId },

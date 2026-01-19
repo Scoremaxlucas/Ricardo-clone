@@ -7,17 +7,16 @@ export async function GET(request: NextRequest) {
   })
 }
 
+/**
+ * POST /api/admin/users/cleanup-test
+ *
+ * DAUERHAFT DEAKTIVIERT - Dieser Endpoint war nur für den Launch-Cleanup gedacht.
+ */
 export async function POST(request: NextRequest) {
-  try {
-    const body = await request.json()
-    return NextResponse.json({
-      message: 'POST funktioniert!',
-      received: body,
-      timestamp: new Date().toISOString()
-    })
-  } catch (error: any) {
-    return NextResponse.json({
-      error: error.message
-    }, { status: 500 })
-  }
-}
+  return NextResponse.json(
+    { 
+      message: 'Dieser Endpoint ist dauerhaft deaktiviert.',
+      disabled: true 
+    },
+    { status: 403 }
+  )

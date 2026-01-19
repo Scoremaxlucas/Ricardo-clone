@@ -6,10 +6,17 @@ import { NextRequest, NextResponse } from 'next/server'
 /**
  * POST /api/admin/users/delete-last-non-admin
  *
- * FINALE LÖSCHUNG: Löscht den letzten nicht-Admin-User.
- * Wird nach erfolgreicher Ausführung deaktiviert.
+ * DAUERHAFT DEAKTIVIERT - Dieser Endpoint war nur für den Launch-Cleanup gedacht.
+ * Keine User-Löschungen mehr möglich.
  */
 export async function POST(request: NextRequest) {
+  return NextResponse.json(
+    { 
+      message: 'Dieser Endpoint ist dauerhaft deaktiviert. User-Löschungen sind nicht mehr möglich.',
+      disabled: true 
+    },
+    { status: 403 }
+  )
   try {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {

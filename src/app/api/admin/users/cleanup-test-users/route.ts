@@ -6,17 +6,17 @@ import { NextRequest, NextResponse } from 'next/server'
 /**
  * POST /api/admin/users/cleanup-test-users
  *
- * KRITISCH: Löscht ALLE Nicht-Admin-User und deren Daten
- *
- * Sicherheitsmaßnahmen:
- * - Nur für Admin-User
- * - Erfordert explizite Bestätigung (confirm=true)
- * - Admin-User werden NIEMALS gelöscht
- * - Gibt detaillierte Statistiken zurück
- *
- * WICHTIG: Diese Route sollte nur vor dem Launch verwendet werden!
+ * DAUERHAFT DEAKTIVIERT - Dieser Endpoint war nur für den Launch-Cleanup gedacht.
+ * Keine User-Löschungen mehr möglich.
  */
 export async function POST(request: NextRequest) {
+  return NextResponse.json(
+    { 
+      message: 'Dieser Endpoint ist dauerhaft deaktiviert. User-Löschungen sind nicht mehr möglich.',
+      disabled: true 
+    },
+    { status: 403 }
+  )
   try {
     const session = await getServerSession(authOptions)
 
