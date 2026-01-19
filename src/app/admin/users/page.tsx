@@ -7,6 +7,7 @@ import { UserReportsModal } from '@/components/admin/UserReportsModal'
 import { WarnUserModal } from '@/components/admin/WarnUserModal'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
+import { useLanguage } from '@/contexts/LanguageContext'
 import {
   AlertTriangle,
   Ban,
@@ -49,6 +50,7 @@ interface User {
 }
 
 export default function AdminUsersPage() {
+  const { t } = useLanguage()
   const { data: session, status } = useSession()
   const router = useRouter()
   const [users, setUsers] = useState<User[]>([])
@@ -356,7 +358,7 @@ export default function AdminUsersPage() {
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
           <div className="mx-auto h-12 w-12 animate-spin rounded-full border-b-2 border-primary-600"></div>
-          <p className="mt-4 text-gray-600">Lädt...</p>
+          <p className="mt-4 text-gray-600">{t.common.loading}</p>
         </div>
       </div>
     )
@@ -369,9 +371,9 @@ export default function AdminUsersPage() {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
         <div className="text-center">
-          <p className="text-gray-600">Sie haben keine Berechtigung für diese Seite.</p>
+          <p className="text-gray-600">{t.common.error}</p>
           <Link href="/" className="mt-4 text-primary-600 hover:text-primary-700">
-            Zurück zur Hauptseite
+            {t.admin.users.backToHomepage}
           </Link>
         </div>
       </div>
@@ -406,12 +408,12 @@ export default function AdminUsersPage() {
         <div className="mb-8">
           <div className="flex items-center justify-between">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900">Benutzerverwaltung</h1>
-              <p className="mt-2 text-gray-600">Verwalten Sie alle Benutzer der Plattform</p>
+              <h1 className="text-3xl font-bold text-gray-900">{t.admin.users.title}</h1>
+              <p className="mt-2 text-gray-600">{t.admin.users.subtitle}</p>
             </div>
             <div className="flex gap-4">
               <Link href="/" className="font-medium text-primary-600 hover:text-primary-700">
-                ← Zurück zur Hauptseite
+                ← {t.admin.users.backToHomepage}
               </Link>
               <Link
                 href="/admin/dashboard"
@@ -430,7 +432,7 @@ export default function AdminUsersPage() {
               <Search className="absolute left-3 top-1/2 h-5 w-5 -translate-y-1/2 transform text-gray-400" />
               <input
                 type="text"
-                placeholder="Nach E-Mail, Name oder Nickname suchen..."
+                placeholder={t.admin.users.searchPlaceholder}
                 value={searchQuery}
                 onChange={e => setSearchQuery(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 py-2 pl-10 pr-4 text-gray-900 focus:outline-none focus:ring-2 focus:ring-primary-500"
@@ -445,7 +447,7 @@ export default function AdminUsersPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Alle
+                {t.admin.users.filterAll}
               </button>
               <button
                 onClick={() => setFilter('reported')}
@@ -455,7 +457,7 @@ export default function AdminUsersPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Gemeldet
+                {t.admin.users.filterReported}
                 {users.filter(u => (u.pendingReports || 0) > 0).length > 0 && (
                   <span className="ml-2 rounded-full bg-red-500 px-2 py-0.5 text-xs text-white">
                     {users.filter(u => (u.pendingReports || 0) > 0).length}
@@ -470,7 +472,7 @@ export default function AdminUsersPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                Blockiert
+                {t.admin.users.filterBlocked}
               </button>
               <button
                 onClick={() => setFilter('verified')}
@@ -501,37 +503,37 @@ export default function AdminUsersPage() {
                   onClick={() => handleBulkAction('block')}
                   className="rounded-lg bg-red-600 px-4 py-2 text-sm text-white transition-colors hover:bg-red-700"
                 >
-                  Blockieren
+                  {t.admin.users.filterBlocked}
                 </button>
                 <button
                   onClick={() => handleBulkAction('unblock')}
                   className="rounded-lg bg-green-600 px-4 py-2 text-sm text-white transition-colors hover:bg-green-700"
                 >
-                  Entblocken
+                  {t.common.unblock || 'Entblocken'}
                 </button>
                 <button
                   onClick={() => handleBulkAction('warn')}
                   className="rounded-lg bg-yellow-600 px-4 py-2 text-sm text-white transition-colors hover:bg-yellow-700"
                 >
-                  Verwarnen
+                  {t.common.warn || 'Verwarnen'}
                 </button>
                 <button
                   onClick={() => handleBulkAction('grantAdmin')}
                   className="rounded-lg bg-purple-600 px-4 py-2 text-sm text-white transition-colors hover:bg-purple-700"
                 >
-                  Admin-Rechte vergeben
+                  {t.common.grantAdmin || 'Admin-Rechte vergeben'}
                 </button>
                 <button
                   onClick={() => handleBulkAction('revokeAdmin')}
                   className="rounded-lg bg-orange-600 px-4 py-2 text-sm text-white transition-colors hover:bg-orange-700"
                 >
-                  Admin-Rechte entziehen
+                  {t.common.revokeAdmin || 'Admin-Rechte entziehen'}
                 </button>
                 <button
                   onClick={() => setSelectedUsers(new Set())}
                   className="rounded-lg border border-gray-300 px-4 py-2 text-sm transition-colors hover:bg-gray-50"
                 >
-                  Abbrechen
+                  {t.common.cancel}
                 </button>
               </div>
             </div>
@@ -557,28 +559,28 @@ export default function AdminUsersPage() {
                     </label>
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Benutzer
+                    {t.admin.users.title}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Admin
+                    {t.admin.users.admin}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Status
+                    {t.admin.users.status}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Verifizierung
+                    {t.admin.users.verification}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Warnungen
+                    {t.admin.users.warnings}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Meldungen
+                    {t.admin.users.reports}
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Registriert
+                    {t.admin.users.registered}
                   </th>
                   <th className="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-gray-500">
-                    Aktionen
+                    {t.admin.users.actions}
                   </th>
                 </tr>
               </thead>
@@ -616,7 +618,7 @@ export default function AdminUsersPage() {
                         {user.isAdmin ? (
                           <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
                             <Shield className="mr-1 h-3 w-3" />
-                            Admin
+                            {t.admin.users.admin}
                           </span>
                         ) : (
                           <span className="text-xs text-gray-400">—</span>
@@ -626,12 +628,12 @@ export default function AdminUsersPage() {
                         {user.isBlocked ? (
                           <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
                             <Ban className="mr-1 h-3 w-3" />
-                            Blockiert
+                            {t.admin.users.filterBlocked}
                           </span>
                         ) : (
                           <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                             <CheckCircle className="mr-1 h-3 w-3" />
-                            Aktiv
+                            {t.admin.users.active}
                           </span>
                         )}
                       </td>
@@ -648,17 +650,17 @@ export default function AdminUsersPage() {
                         {user.verificationStatus === 'approved' && user.verified && (
                           <span className="inline-flex items-center rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-800">
                             <CheckCircle className="mr-1 h-3 w-3" />
-                            Verifiziert
+                            {t.admin.users.verified}
                           </span>
                         )}
                         {user.verificationStatus === 'rejected' && (
                           <span className="inline-flex items-center rounded-full bg-red-100 px-2.5 py-0.5 text-xs font-medium text-red-800">
                             <XCircle className="mr-1 h-3 w-3" />
-                            Abgelehnt
+                            {t.common.rejected || 'Abgelehnt'}
                           </span>
                         )}
                         {!user.verificationStatus && (
-                          <span className="text-sm text-gray-500">Nicht gestartet</span>
+                          <span className="text-sm text-gray-500">{t.common.notStarted || 'Nicht gestartet'}</span>
                         )}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4 text-sm text-gray-500">
