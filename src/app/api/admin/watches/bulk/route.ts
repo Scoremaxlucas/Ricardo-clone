@@ -60,7 +60,7 @@ export async function POST(request: NextRequest) {
               // Setze moderationStatus auf 'blocked'
               await tx.watch.update({
                 where: { id: watchId },
-                data: { 
+                data: {
                   moderationStatus: 'blocked',
                 },
               })
@@ -87,7 +87,7 @@ export async function POST(request: NextRequest) {
               // Setze moderationStatus auf 'removed'
               await tx.watch.update({
                 where: { id: watchId },
-                data: { 
+                data: {
                   moderationStatus: 'removed',
                 },
               })
