@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
 
 /**
  * GET /api/admin/users/cleanup-simple
- * 
+ *
  * DEAKTIVIERT: Nur für Info
  */
 export async function GET(request: NextRequest) {
