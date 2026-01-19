@@ -199,9 +199,9 @@ export async function POST(request: NextRequest) {
           await tx.systemOutage.deleteMany({
             where: {
               OR: [
-                { createdById: userId },
-                { resolvedById: userId },
-                { extendedById: userId },
+                { createdBy: userId },
+                { resolvedBy: userId },
+                { extensionAppliedBy: userId },
               ],
             },
           })
