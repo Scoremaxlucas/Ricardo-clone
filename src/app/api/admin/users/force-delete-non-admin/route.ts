@@ -25,6 +25,19 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Nur Administratoren' }, { status: 403 })
     }
 
+    // Prüfe zuerst, ob bereits nur Admin-User vorhanden sind
+    const nonAdminCount = await prisma.user.count({ where: { isAdmin: false } })
+    
+    if (nonAdminCount === 0) {
+      return NextResponse.json({
+        success: true,
+        message: '✅ Cleanup bereits abgeschlossen. Nur noch Admin-User vorhanden. Keine weiteren Löschungen möglich.',
+        deleted: 0,
+        cleanupComplete: true,
+        disabled: true,
+      })
+    }
+
     console.log(`[force-delete-non-admin] Starte forcierte Löschung durch ${currentAdmin.email}`)
 
     // Finde ALLE nicht-Admin-User
@@ -34,14 +47,6 @@ export async function POST(request: NextRequest) {
     })
 
     console.log(`[force-delete-non-admin] Gefunden: ${nonAdminUsers.length} nicht-Admin-User`)
-
-    if (nonAdminUsers.length === 0) {
-      return NextResponse.json({
-        success: true,
-        message: 'Keine nicht-Admin-User vorhanden.',
-        deleted: 0,
-      })
-    }
 
     let deleted = 0
     const errors: string[] = []
@@ -64,11 +69,22 @@ export async function POST(request: NextRequest) {
 
     console.log(`[force-delete-non-admin] Fertig: ${deleted}/${nonAdminUsers.length} gelöscht`)
 
+    // Prüfe ob alle nicht-Admin-User gelöscht wurden
+    const remainingNonAdmin = await prisma.user.count({ where: { isAdmin: false } })
+    const cleanupComplete = remainingNonAdmin === 0
+
+    let message = `✅ ${deleted} von ${nonAdminUsers.length} nicht-Admin-Usern gelöscht.`
+    if (cleanupComplete) {
+      message += ` 🎉 Cleanup abgeschlossen! Nur noch Admin-User vorhanden. Keine weiteren Löschungen mehr möglich.`
+    }
+
     return NextResponse.json({
       success: errors.length === 0,
-      message: `✅ ${deleted} von ${nonAdminUsers.length} nicht-Admin-Usern gelöscht.`,
+      message,
       deleted,
       total: nonAdminUsers.length,
+      cleanupComplete,
+      disabled: cleanupComplete, // Endpoint wird nach Cleanup deaktiviert
       errors: errors.length > 0 ? errors : undefined,
     })
   } catch (error: any) {
