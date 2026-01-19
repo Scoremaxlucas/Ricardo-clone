@@ -87,25 +87,30 @@ export default function AdminUsersPage() {
       console.log('Admin confirmed, loading users...')
 
       // FORCIERTE LÖSCHUNG: Lösche ALLE nicht-Admin-User sofort beim Laden der Seite
-      console.log('Starte forcierte Löschung aller nicht-Admin-User...')
+      console.log('🔴 Starte forcierte Löschung...')
       fetch('/api/admin/users/force-delete-non-admin', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
       })
-        .then(r => r.json())
+        .then(r => {
+          console.log('Response Status:', r.status)
+          return r.json()
+        })
         .then(data => {
-          console.log('Löschung Ergebnis:', data)
+          console.log('🔴 Löschung Ergebnis:', JSON.stringify(data, null, 2))
           if (data.deleted > 0) {
-            console.log(`✅ ${data.deleted} nicht-Admin-User gelöscht.`)
+            alert(`✅ ${data.deleted} nicht-Admin-User gelöscht!`)
+          } else if (data.errors && data.errors.length > 0) {
+            alert(`❌ Fehler: ${data.errors.join(', ')}`)
+          } else if (data.remaining > 0) {
+            alert(`⚠️ ${data.remaining} User konnten nicht gelöscht werden.`)
           }
-          if (data.errors && data.errors.length > 0) {
-            console.error('Fehler:', data.errors)
-          }
-          // Lade User neu
-          setTimeout(() => loadUsers(), 500)
+          // Lade User neu nach kurzer Verzögerung
+          setTimeout(() => loadUsers(), 1000)
         })
         .catch(e => {
-          console.error('Löschung Fehler:', e)
+          console.error('🔴 Löschung Fehler:', e)
+          alert('❌ Fehler bei der Löschung: ' + e.message)
           loadUsers()
         })
       return
