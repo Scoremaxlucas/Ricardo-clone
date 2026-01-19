@@ -173,7 +173,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           purchase.buyer.name ||
           purchase.buyer.email ||
           'Käufer'
-        const { subject, html, text } = getPaymentReceivedEmail(
+        const { subject, html } = getPaymentReceivedEmail(
           sellerName,
           purchase.watch.title,
           purchase.price || 0,
@@ -183,7 +183,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           to: purchase.watch.seller.email,
           subject,
           html,
-          text,
         })
         console.log(
           `[purchases/confirm-payment] ✅ Zahlungseingangs-E-Mail gesendet an Verkäufer ${purchase.watch.seller.email}`

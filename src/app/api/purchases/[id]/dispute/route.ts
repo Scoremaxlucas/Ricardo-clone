@@ -267,14 +267,14 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     // E-Mail-Benachrichtigung an andere Partei
     try {
       const { getDisputeOpenedEmail } = await import('@/lib/email')
-      const { subject, html, text } = getDisputeOpenedEmail(
+      const { subject, html } = getDisputeOpenedEmail(
         otherParty.nickname || otherParty.firstName || otherParty.name || 'Nutzer',
         openerName,
         purchase.watch.title,
         getReasonLabel(reason),
         description || '',
         isBuyer ? 'seller' : 'buyer',
-        sellerResponseDeadline || undefined,
+        sellerResponseDeadline ? sellerResponseDeadline.toLocaleDateString('de-CH') : undefined,
         purchase.id
       )
 
@@ -282,7 +282,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
         to: otherParty.email,
         subject,
         html,
-        text,
       })
       console.log(`[dispute] ✅ Dispute-E-Mail gesendet an ${otherParty.email}`)
     } catch (emailError) {

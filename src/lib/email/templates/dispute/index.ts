@@ -19,7 +19,7 @@ export function getDisputeOpenedEmail(
   purchaseId?: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const disputeUrl = role === 'buyer' 
+  const disputeUrl = role === 'buyer'
     ? `${baseUrl}/my-watches/buying/purchased${purchaseId ? `?purchase=${purchaseId}` : ''}`
     : `${baseUrl}/my-watches/selling/sold${purchaseId ? `?purchase=${purchaseId}` : ''}`
   const subject = `Streitfall eröffnet - ${watchTitle}`

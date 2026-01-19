@@ -1,5 +1,10 @@
 import nodemailer from 'nodemailer'
 import { Resend } from 'resend'
+import { getReviewNotificationEmail as getReviewNotificationEmailNew } from './email/templates/notifications'
+import { getInvoiceNotificationEmail as getInvoiceNotificationEmailNew } from './email/templates/purchase'
+import { getPaymentReceivedEmail as getPaymentReceivedEmailNew } from './email/templates/notifications'
+import { getDisputeOpenedEmail as getDisputeOpenedEmailNew } from './email/templates/dispute'
+import { getPriceOfferRejectedEmail as getPriceOfferRejectedEmailNew } from './email/templates/notifications'
 
 // Resend Client initialisieren (falls API Key vorhanden)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
@@ -948,7 +953,19 @@ Helvenda.ch - Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz
 // ============================================================================
 // REVIEW NOTIFICATION (Watch-Out Style)
 // ============================================================================
+// Re-export from new modular templates for backward compatibility
 export function getReviewNotificationEmail(
+  recipientName: string,
+  reviewerName: string,
+  rating: number,
+  comment: string,
+  watchTitle: string
+) {
+  return getReviewNotificationEmailNew(recipientName, reviewerName, rating, comment, watchTitle)
+}
+
+// Legacy function - kept for backward compatibility
+export function getReviewNotificationEmailLegacy(
   userName: string,
   rating: 'positive' | 'neutral' | 'negative',
   reviewerName: string
@@ -1149,7 +1166,18 @@ Helvenda.ch - Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz
 // ============================================================================
 // INVOICE NOTIFICATION (Watch-Out Style)
 // ============================================================================
+// Re-export from new modular templates for backward compatibility
 export function getInvoiceNotificationEmail(
+  sellerName: string,
+  invoiceNumber: string,
+  amount: number,
+  dueDate: string
+) {
+  return getInvoiceNotificationEmailNew(sellerName, invoiceNumber, amount, dueDate)
+}
+
+// Legacy function with old signature - kept for backward compatibility but deprecated
+export function getInvoiceNotificationEmailLegacy(
   userName: string,
   invoiceNumber: string,
   invoiceTotal: number,
@@ -1260,7 +1288,7 @@ export async function sendReviewNotificationEmail(
   rating: 'positive' | 'neutral' | 'negative',
   reviewerName: string
 ) {
-  const emailContent = getReviewNotificationEmail(userName, rating, reviewerName)
+  const emailContent = getReviewNotificationEmailLegacy(userName, rating, reviewerName)
   return await sendEmail({
     to: userEmail,
     subject: emailContent.subject,
@@ -1279,7 +1307,7 @@ export async function sendInvoiceNotificationEmail(
   dueDate: Date,
   invoiceId: string
 ) {
-  const emailContent = getInvoiceNotificationEmail(
+  const emailContent = getInvoiceNotificationEmailLegacy(
     userName,
     invoiceNumber,
     invoiceTotal,
@@ -1497,7 +1525,25 @@ Sie erhalten diese E-Mail, weil die Zahlungsfrist für einen Ihrer Käufe abläu
 // Template für letzte Erinnerung mit Konto-Sperre (Tag 58)
 
 // Template für Dispute-Eröffnung
+// Re-export from new modular templates for backward compatibility
 export function getDisputeOpenedEmail(
+  recipientName: string,
+  openerName: string,
+  watchTitle: string,
+  reason: string,
+  description: string,
+  role: 'buyer' | 'seller',
+  sellerResponseDeadline?: string | Date,
+  purchaseId?: string
+) {
+  const deadline = sellerResponseDeadline 
+    ? (typeof sellerResponseDeadline === 'string' ? new Date(sellerResponseDeadline) : sellerResponseDeadline)
+    : undefined
+  return getDisputeOpenedEmailNew(recipientName, openerName, watchTitle, reason, description, role, deadline, purchaseId)
+}
+
+// Legacy function - kept for backward compatibility
+export function getDisputeOpenedEmailLegacy(
   userName: string,
   openerName: string,
   productTitle: string,
@@ -3002,7 +3048,19 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 }
 
 // Template für Zahlungseingangsbestätigung (für Verkäufer)
+// Re-export from new modular templates for backward compatibility
 export function getPaymentReceivedEmail(
+  sellerName: string,
+  watchTitle: string,
+  amount: number,
+  buyerName: string,
+  purchaseId?: string
+) {
+  return getPaymentReceivedEmailNew(sellerName, watchTitle, amount, buyerName)
+}
+
+// Legacy function - kept for backward compatibility
+export function getPaymentReceivedEmailLegacy(
   sellerName: string,
   articleTitle: string,
   paymentAmount: number,
@@ -3266,6 +3324,16 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
   `.trim()
 
   return { subject, html, text }
+}
+
+// Re-export from new modular templates for backward compatibility
+export function getPriceOfferRejectedEmail(
+  buyerName: string,
+  watchTitle: string,
+  rejectedPrice: number,
+  watchId: string
+) {
+  return getPriceOfferRejectedEmailNew(buyerName, watchTitle, rejectedPrice, watchId)
 }
 
 // Template für Angebotsbestätigung (für Verkäufer)

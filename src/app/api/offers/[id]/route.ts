@@ -299,7 +299,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             priceOffer.buyer.name ||
             priceOffer.buyer.email ||
             'Käufer'
-          const { subject, html, text } = getPriceOfferRejectedEmail(
+          const { subject, html } = getPriceOfferRejectedEmail(
             buyerName,
             priceOffer.watch.title,
             priceOffer.amount,
@@ -309,7 +309,6 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             to: priceOffer.buyer.email,
             subject,
             html,
-            text,
           })
           console.log(
             `[offers] ✅ Preisvorschlag-Abgelehnt-E-Mail gesendet an Käufer ${priceOffer.buyer.email}`

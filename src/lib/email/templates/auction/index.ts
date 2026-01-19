@@ -78,7 +78,7 @@ export function getAuctionEndWonEmail(
   purchaseId?: string
 ) {
   const baseUrl = getEmailBaseUrl()
-  const purchasesUrl = purchaseId 
+  const purchasesUrl = purchaseId
     ? `${baseUrl}/my-watches/buying/purchased?purchase=${purchaseId}`
     : `${baseUrl}/my-watches/buying/purchased`
   const subject = `Herzlichen Glückwunsch! Sie haben gewonnen - ${articleTitle}`

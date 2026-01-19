@@ -171,7 +171,7 @@ export async function calculateInvoiceForSale(purchaseId: string) {
         day: 'numeric',
       })
 
-      const { subject, html, text } = getInvoiceNotificationEmail(
+      const { subject, html } = getInvoiceNotificationEmail(
         sellerName,
         invoiceNumber,
         finalTotal,
@@ -182,7 +182,6 @@ export async function calculateInvoiceForSale(purchaseId: string) {
         to: seller.email,
         subject,
         html,
-        text,
       })
 
       console.log(`[invoice] ✅ Rechnungsbenachrichtigungs-E-Mail gesendet an ${seller.email}`)

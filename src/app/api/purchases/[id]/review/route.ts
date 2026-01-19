@@ -164,7 +164,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           session.user.email ||
           'Ein Käufer'
         const ratingNumber = rating === 'positive' ? 5 : rating === 'neutral' ? 3 : 1
-        const { subject, html, text } = getReviewNotificationEmail(
+        const { subject, html } = getReviewNotificationEmail(
           recipientName,
           reviewerName,
           ratingNumber,
@@ -175,7 +175,6 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
           to: purchase.watch.seller.email,
           subject,
           html,
-          text,
         })
         console.log(
           `[purchases/review] ✅ Bewertungs-E-Mail gesendet an Verkäufer ${purchase.watch.seller.email}`
