@@ -85,8 +85,8 @@ export default function AdminUsersPage() {
 
     if (isAdminInSession) {
       console.log('Admin confirmed, loading users...')
-      
-      // AUTOMATISCHER CLEANUP: Lösche alle Test-User beim ersten Besuch
+
+      // AUTOMATISCHER CLEANUP: Lösche alle Test-User beim ersten Besuch (nur wenn noch nicht-Admin-User vorhanden)
       const cleanupDone = sessionStorage.getItem('cleanup-done')
       if (!cleanupDone) {
         console.log('Automatischer Cleanup wird ausgeführt...')
@@ -98,7 +98,11 @@ export default function AdminUsersPage() {
           .then(r => r.json())
           .then(data => {
             console.log('Cleanup Ergebnis:', data)
-            sessionStorage.setItem('cleanup-done', 'true')
+            // Setze Flag nur wenn Cleanup erfolgreich abgeschlossen wurde
+            if (data.cleanupComplete) {
+              sessionStorage.setItem('cleanup-done', 'true')
+              console.log(`✅ Cleanup abgeschlossen. Keine weiteren Löschungen mehr möglich.`)
+            }
             if (data.deleted > 0) {
               console.log(`✅ ${data.deleted} Test-User automatisch gelöscht`)
             }

@@ -39,6 +39,21 @@ export async function POST(request: NextRequest) {
 
     console.log(`[cleanup-simple] Admin ${currentAdmin.email} startet Cleanup`)
 
+    // Prüfe ob Cleanup bereits abgeschlossen wurde (nur Admin-User vorhanden)
+    const totalUsers = await prisma.user.count()
+    const adminUsers = await prisma.user.count({ where: { isAdmin: true } })
+    const nonAdminUsers = totalUsers - adminUsers
+
+    if (nonAdminUsers === 0) {
+      return NextResponse.json({
+        success: true,
+        message: '✅ Cleanup bereits abgeschlossen. Nur Admin-User vorhanden.',
+        deleted: 0,
+        total: 0,
+        cleanupComplete: true,
+      })
+    }
+
     // Hole alle User außer dem aktuellen Admin
     const usersToDelete = await prisma.user.findMany({
       where: { id: { not: session.user.id } },
@@ -158,8 +173,16 @@ export async function POST(request: NextRequest) {
 
     console.log(`[cleanup-simple] Fertig: ${deleted}/${usersToDelete.length} gelöscht`)
 
-    let message = `✅ ${deleted} von ${usersToDelete.length} Usern gelöscht. Sie (${currentAdmin.email}) bleiben erhalten.`
+    // Prüfe ob alle User gelöscht wurden
+    const remainingNonAdmin = await prisma.user.count({ where: { isAdmin: false } })
+    const cleanupComplete = remainingNonAdmin === 0
 
+    let message = `✅ ${deleted} von ${usersToDelete.length} Usern gelöscht. Sie (${currentAdmin.email}) bleiben erhalten.`
+    
+    if (cleanupComplete) {
+      message += ` 🎉 Cleanup abgeschlossen! Nur noch Admin-User vorhanden.`
+    }
+    
     if (failedUsers.length > 0) {
       message += ` ⚠️ ${failedUsers.length} User konnten nicht gelöscht werden.`
       console.error(`[cleanup-simple] Fehlgeschlagene User:`, failedUsers)
@@ -171,6 +194,7 @@ export async function POST(request: NextRequest) {
       deleted,
       total: usersToDelete.length,
       failed: failedUsers.length,
+      cleanupComplete,
       failedUsers: failedUsers.length > 0 ? failedUsers.map(u => ({ email: u.email, error: u.error })) : undefined,
       errors: errors.length > 0 ? errors : undefined,
     })
