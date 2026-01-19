@@ -634,40 +634,40 @@ export default function BulkUploadPage() {
         </div>
 
         {/* Schritt-Anzeige */}
-        <div className="mb-8 rounded-lg bg-white p-6 shadow-md">
-          <div className="flex items-center justify-between">
-            <div className="flex flex-1 items-center gap-4">
+        <div className="mb-8 rounded-lg bg-white p-4 shadow-md sm:p-6">
+          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex flex-1 items-center gap-2 sm:gap-4">
               <div
-                className={`flex items-center gap-2 ${currentStep === 'articles' ? 'text-primary-600' : currentStep === 'settings' || currentStep === 'review' ? 'text-green-600' : 'text-gray-400'}`}
+                className={`flex items-center gap-1.5 sm:gap-2 ${currentStep === 'articles' ? 'text-primary-600' : currentStep === 'settings' || currentStep === 'review' ? 'text-green-600' : 'text-gray-400'}`}
               >
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${currentStep === 'articles' ? 'bg-primary-600 text-white' : currentStep === 'settings' || currentStep === 'review' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}
                 >
                   1
                 </div>
-                <span className="font-medium">Artikel-Details</span>
+                <span className="text-sm font-medium sm:text-base">Artikel-Details</span>
               </div>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-gray-400 sm:h-5 sm:w-5" />
               <div
-                className={`flex items-center gap-2 ${currentStep === 'settings' ? 'text-primary-600' : currentStep === 'review' ? 'text-green-600' : 'text-gray-400'}`}
+                className={`flex items-center gap-1.5 sm:gap-2 ${currentStep === 'settings' ? 'text-primary-600' : currentStep === 'review' ? 'text-green-600' : 'text-gray-400'}`}
               >
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${currentStep === 'settings' ? 'bg-primary-600 text-white' : currentStep === 'review' ? 'bg-green-600 text-white' : 'bg-gray-200 text-gray-600'}`}
                 >
                   2
                 </div>
-                <span className="font-medium">Angebotsdetails</span>
+                <span className="text-sm font-medium sm:text-base">Angebotsdetails</span>
               </div>
-              <ChevronRight className="h-5 w-5 text-gray-400" />
+              <ChevronRight className="h-4 w-4 text-gray-400 sm:h-5 sm:w-5" />
               <div
-                className={`flex items-center gap-2 ${currentStep === 'review' ? 'text-primary-600' : 'text-gray-400'}`}
+                className={`flex items-center gap-1.5 sm:gap-2 ${currentStep === 'review' ? 'text-primary-600' : 'text-gray-400'}`}
               >
                 <div
                   className={`flex h-8 w-8 items-center justify-center rounded-full font-bold ${currentStep === 'review' ? 'bg-primary-600 text-white' : 'bg-gray-200 text-gray-600'}`}
                 >
                   3
                 </div>
-                <span className="font-medium">Veröffentlichen</span>
+                <span className="text-sm font-medium sm:text-base">Veröffentlichen</span>
               </div>
             </div>
           </div>
@@ -700,7 +700,7 @@ export default function BulkUploadPage() {
         {/* SCHRITT 1: Artikel-Details */}
         {currentStep === 'articles' && (
           <div className="space-y-6">
-            <div className="rounded-lg bg-white p-6 shadow-md">
+            <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
               <h2 className="mb-4 text-xl font-semibold text-gray-900">
                 Schritt 1: Artikel-Details eingeben
               </h2>
@@ -711,14 +711,14 @@ export default function BulkUploadPage() {
 
               {/* CSV Upload Option */}
               <div className="mb-6 rounded-lg border-2 border-dashed border-gray-300 p-4">
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="mb-1 text-sm font-medium text-gray-700">
                       Oder laden Sie eine CSV-Datei hoch
                     </p>
                     <p className="text-xs text-gray-500">Spalten: Titel, Beschreibung, Zustand</p>
                   </div>
-                  <div className="flex gap-2">
+                  <div className="flex flex-col gap-2 sm:flex-row">
                     <input
                       ref={fileInputRef}
                       type="file"
@@ -728,14 +728,14 @@ export default function BulkUploadPage() {
                     />
                     <button
                       onClick={() => fileInputRef.current?.click()}
-                      className="flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                      className="flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
                     >
                       <Upload className="mr-2 h-4 w-4" />
                       CSV hochladen
                     </button>
                     <button
                       onClick={downloadTemplate}
-                      className="flex items-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
+                      className="flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
                     >
                       <Download className="mr-2 h-4 w-4" />
                       Vorlage
@@ -901,11 +901,11 @@ export default function BulkUploadPage() {
                 ))}
               </div>
 
-              <div className="flex items-center justify-between">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   onClick={addProduct}
                   disabled={products.length >= 100}
-                  className="flex items-center rounded-md bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   <Plus className="mr-2 h-4 w-4" />
                   Artikel hinzufügen ({products.length}/100)
@@ -914,7 +914,7 @@ export default function BulkUploadPage() {
                 <button
                   onClick={goToStep2}
                   disabled={products.length === 0}
-                  className="flex items-center rounded-md bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full items-center justify-center rounded-md bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   Weiter zu Schritt 2
                   <ChevronRight className="ml-2 h-4 w-4" />
@@ -927,7 +927,7 @@ export default function BulkUploadPage() {
         {/* SCHRITT 2: Angebotsdetails */}
         {currentStep === 'settings' && (
           <div className="space-y-6">
-            <div className="rounded-lg bg-white p-6 shadow-md">
+            <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
               <h2 className="mb-4 text-xl font-semibold text-gray-900">
                 Schritt 2: Angebotsdetails festlegen
               </h2>
@@ -1114,24 +1114,24 @@ export default function BulkUploadPage() {
                 </div>
               </div>
 
-              <div className="flex items-center justify-between border-t pt-4">
+              <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   onClick={() => setCurrentStep('articles')}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
+                  className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto"
                 >
                   Zurück
                 </button>
-                <div className="flex gap-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:gap-4">
                   <button
                     onClick={applyCommonSettings}
-                    className="rounded-md bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200"
+                    className="w-full rounded-md bg-gray-100 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-200 sm:w-auto"
                   >
                     Auf alle anwenden
                   </button>
                   <button
                     onClick={goToStep3}
                     disabled={!commonSettings.price || !commonSettings.category}
-                    className="flex items-center rounded-md bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
+                    className="flex w-full items-center justify-center rounded-md bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                   >
                     Weiter zu Schritt 3
                     <ChevronRight className="ml-2 h-4 w-4" />
@@ -1145,7 +1145,7 @@ export default function BulkUploadPage() {
         {/* SCHRITT 3: Veröffentlichen */}
         {currentStep === 'review' && (
           <div className="space-y-6">
-            <div className="rounded-lg bg-white p-6 shadow-md">
+            <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
               <div className="mb-6 flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900">Schritt 3: Veröffentlichen</h2>
                 <div className="flex items-center gap-2">
@@ -1304,17 +1304,17 @@ export default function BulkUploadPage() {
                 })}
               </div>
 
-              <div className="flex items-center justify-between border-t pt-4">
+              <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
                 <button
                   onClick={() => setCurrentStep('settings')}
-                  className="rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50"
+                  className="w-full rounded-md border border-gray-300 px-4 py-2 text-gray-700 transition-colors hover:bg-gray-50 sm:w-auto"
                 >
                   Zurück
                 </button>
                 <button
                   onClick={handlePublish}
                   disabled={isLoading || selectedProducts.size === 0}
-                  className="flex items-center rounded-md bg-green-600 px-6 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50"
+                  className="flex w-full items-center justify-center rounded-md bg-green-600 px-6 py-2 font-medium text-white transition-colors hover:bg-green-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   {isLoading ? (
                     <>
