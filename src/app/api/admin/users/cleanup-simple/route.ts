@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * POST /api/admin/users/cleanup-simple
- * 
+ *
  * Löscht ALLE User außer dem aktuellen Admin.
  * Nutzt Prisma Cascade Delete für abhängige Daten.
  */
