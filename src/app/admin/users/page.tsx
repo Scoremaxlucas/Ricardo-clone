@@ -86,30 +86,39 @@ export default function AdminUsersPage() {
     if (isAdminInSession) {
       console.log('Admin confirmed, loading users...')
 
-      // FINALE LÖSCHUNG: Lösche letzten nicht-Admin-User beim ersten Besuch
-      const cleanupDone = sessionStorage.getItem('cleanup-done')
-      if (!cleanupDone) {
-        console.log('Finale Löschung wird ausgeführt...')
-        fetch('/api/admin/users/delete-last-non-admin', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+      // FINALE LÖSCHUNG: Lösche letzten nicht-Admin-User automatisch
+      // Prüfe zuerst, ob noch nicht-Admin-User vorhanden sind
+      fetch('/api/admin/users')
+        .then(r => r.json())
+        .then(users => {
+          const nonAdminUsers = users.filter((u: any) => !u.isAdmin)
+          if (nonAdminUsers.length > 0) {
+            console.log(`Finale Löschung: ${nonAdminUsers.length} nicht-Admin-User gefunden, lösche...`)
+            fetch('/api/admin/users/delete-last-non-admin', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            })
+              .then(r => r.json())
+              .then(data => {
+                console.log('Löschung Ergebnis:', data)
+                if (data.deleted > 0) {
+                  console.log(`✅ ${data.deleted} nicht-Admin-User gelöscht. Cleanup abgeschlossen.`)
+                }
+                loadUsers()
+              })
+              .catch(e => {
+                console.error('Löschung Fehler:', e)
+                loadUsers()
+              })
+          } else {
+            console.log('Keine nicht-Admin-User gefunden, Cleanup bereits abgeschlossen.')
+            loadUsers()
+          }
         })
-          .then(r => r.json())
-          .then(data => {
-            console.log('Löschung Ergebnis:', data)
-            sessionStorage.setItem('cleanup-done', 'true')
-            if (data.deleted > 0) {
-              console.log(`✅ ${data.deleted} nicht-Admin-User gelöscht. Cleanup abgeschlossen.`)
-            }
-            loadUsers()
-          })
-          .catch(e => {
-            console.error('Löschung Fehler:', e)
-            loadUsers()
-          })
-      } else {
-        loadUsers()
-      }
+        .catch(e => {
+          console.error('Fehler beim Prüfen der User:', e)
+          loadUsers()
+        })
       return
     }
 

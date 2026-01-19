@@ -27,7 +27,7 @@ export async function POST(request: NextRequest) {
 
     // Prüfe ob bereits nur Admin-User vorhanden sind
     const nonAdminCount = await prisma.user.count({ where: { isAdmin: false } })
-    
+
     if (nonAdminCount === 0) {
       return NextResponse.json({
         success: true,
