@@ -923,11 +923,11 @@ export default function VerificationPage() {
                     {idDocumentPreview && (
                       <div className="mt-4">
                         <p className="mb-2 text-sm font-medium text-gray-700">Vorschau:</p>
-                        <img
-                          src={idDocumentPreview}
-                          alt="Reisepass Vorschau"
-                          className="max-w-md rounded-md border border-gray-300"
-                        />
+                          <img
+                            src={idDocumentPreview}
+                            alt="Reisepass Vorschau"
+                            className="w-full max-w-md rounded-md border border-gray-300"
+                          />
                       </div>
                     )}
                     {idDocument && !idDocumentPreview && (
@@ -979,7 +979,7 @@ export default function VerificationPage() {
                           <img
                             src={idDocumentPage1Preview}
                             alt="ID Seite 1 Vorschau"
-                            className="max-w-md rounded-md border border-gray-300"
+                            className="w-full max-w-md rounded-md border border-gray-300"
                           />
                         </div>
                       )}
@@ -1028,7 +1028,7 @@ export default function VerificationPage() {
                           <img
                             src={idDocumentPage2Preview}
                             alt="ID Seite 2 Vorschau"
-                            className="max-w-md rounded-md border border-gray-300"
+                            className="w-full max-w-md rounded-md border border-gray-300"
                           />
                         </div>
                       )}
@@ -1143,7 +1143,7 @@ export default function VerificationPage() {
                           style={{ letterSpacing: '0.05em' }}
                         />
                       </div>
-                      <div className="grid grid-cols-2 gap-3">
+                      <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
                         <div>
                           <label className="mb-2 block text-sm font-medium text-gray-700">
                             Vorname Kontoinhaber *

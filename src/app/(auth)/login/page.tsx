@@ -83,7 +83,7 @@ function LoginPageContent() {
 
   return (
     <div className="w-full max-w-md">
-      <div className="rounded-2xl bg-white px-8 py-8 shadow-xl ring-1 ring-gray-100">
+      <div className="rounded-2xl bg-white px-6 py-6 shadow-xl ring-1 ring-gray-100 md:px-8 md:py-8">
         {/* Header - Kompakter */}
         <div className="text-center">
           <div className="mb-4 flex justify-center">
