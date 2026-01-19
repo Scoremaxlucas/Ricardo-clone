@@ -189,7 +189,7 @@ export async function POST(request: NextRequest) {
             where: { OR: [{ adminId: userId }, { userId }] },
           })
           await tx.moderationHistory.deleteMany({ where: { adminId: userId } })
-          await tx.pricingHistory.deleteMany({ where: { userId } })
+          await tx.pricingHistory.deleteMany({ where: { changedBy: userId } })
           await tx.payoutProfile.deleteMany({ where: { userId } })
           await tx.payoutChangeRequest.deleteMany({
             where: { OR: [{ userId }, { decidedBy: userId }] },
