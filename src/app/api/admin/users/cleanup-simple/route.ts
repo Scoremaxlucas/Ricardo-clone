@@ -47,106 +47,111 @@ export async function POST(request: NextRequest) {
 
     let deleted = 0
     const errors: string[] = []
-    const failedUsers: string[] = []
+    const failedUsers: Array<{ id: string; email: string; error: string }> = []
 
     for (const user of usersToDelete) {
       try {
         // Versuche zuerst mit Prisma (Cascade Delete)
         await prisma.user.delete({ where: { id: user.id } })
         deleted++
-        console.log(`[cleanup-simple] Gelöscht: ${user.email}`)
+        console.log(`[cleanup-simple] ✅ Gelöscht: ${user.email}`)
       } catch (error: any) {
-        console.error(`[cleanup-simple] Fehler bei ${user.email}:`, error.message)
-        errors.push(`${user.email}: ${error.message}`)
-        failedUsers.push(user.id)
+        const errorMsg = error.message || String(error)
+        console.error(`[cleanup-simple] ⚠️ Prisma Delete fehlgeschlagen bei ${user.email}:`, errorMsg)
         
         // Versuche manuell zu löschen mit Raw SQL (umgeht Constraints)
         try {
-          console.log(`[cleanup-simple] Versuche Raw SQL Delete für ${user.email}...`)
+          console.log(`[cleanup-simple] 🔄 Versuche Raw SQL Delete für ${user.email}...`)
           
-          // Lösche alle abhängigen Daten manuell (sicher escaped)
-          const userIdEscaped = user.id.replace(/'/g, "''")
-          await prisma.$executeRawUnsafe(`
-            DELETE FROM "bids" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "favorites" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "price_offers" WHERE "buyerId" = '${userIdEscaped}';
-            DELETE FROM "purchases" WHERE "buyerId" = '${userIdEscaped}';
-            DELETE FROM "messages" WHERE "senderId" = '${userIdEscaped}' OR "receiverId" = '${userIdEscaped}';
-            DELETE FROM "notifications" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "invoices" WHERE "sellerId" = '${userIdEscaped}';
-            DELETE FROM "sales" WHERE "sellerId" = '${userIdEscaped}' OR "buyerId" = '${userIdEscaped}';
-            DELETE FROM "reviews" WHERE "reviewerId" = '${userIdEscaped}' OR "reviewedUserId" = '${userIdEscaped}';
-            DELETE FROM "search_subscriptions" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "max_bids" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "browsing_history" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "ai_conversations" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "ai_search_results" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "collections" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "user_badges" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "user_streaks" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "rewards" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "drafts" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "user_preferences" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "user_activities" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "search_queries" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "user_addresses" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "sessions" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "accounts" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "reports" WHERE "reportedBy" = '${userIdEscaped}';
-            DELETE FROM "user_reports" WHERE "reportedBy" = '${userIdEscaped}' OR "reportedUserId" = '${userIdEscaped}';
-            DELETE FROM "admin_notes" WHERE "adminId" = '${userIdEscaped}';
-            DELETE FROM "user_admin_notes" WHERE "adminId" = '${userIdEscaped}' OR "userId" = '${userIdEscaped}';
-            DELETE FROM "moderation_history" WHERE "adminId" = '${userIdEscaped}';
-            DELETE FROM "pricing_history" WHERE "changedBy" = '${userIdEscaped}';
-            DELETE FROM "payout_profiles" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "payout_change_requests" WHERE "userId" = '${userIdEscaped}' OR "decidedBy" = '${userIdEscaped}';
-            DELETE FROM "payout_audit_logs" WHERE "actorUserId" = '${userIdEscaped}';
-            DELETE FROM "dispute_comments" WHERE "userId" = '${userIdEscaped}';
-            DELETE FROM "system_outages" WHERE "createdBy" = '${userIdEscaped}' OR "resolvedBy" = '${userIdEscaped}' OR "extensionAppliedBy" = '${userIdEscaped}';
-          `)
-          
-          // Lösche Watches und deren abhängige Daten
+          // Lösche Watches ZUERST (können Constraints verursachen)
           const watches = await prisma.watch.findMany({
             where: { sellerId: user.id },
             select: { id: true },
           })
           
           if (watches.length > 0) {
+            console.log(`[cleanup-simple]   Lösche ${watches.length} Watches...`)
             const watchIds = watches.map(w => w.id)
-            // Verwende IN statt ANY für bessere Kompatibilität
-            const watchIdsStr = watchIds.map(id => `'${id.replace(/'/g, "''")}'`).join(',')
             
-            await prisma.$executeRawUnsafe(`
-              DELETE FROM "bids" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "favorites" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "price_offers" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "purchases" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "sales" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "messages" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "watch_categories" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "watch_views" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "reports" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "admin_notes" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "moderation_history" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "invoice_items" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "collection_items" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "auction_viewers" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "stories" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "browsing_history" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "ai_search_results" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "orders" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "product_stats" WHERE "watchId" IN (${watchIdsStr});
-              DELETE FROM "watches" WHERE "id" IN (${watchIdsStr});
-            `)
+            // Lösche watch-abhängige Daten einzeln (robuster)
+            for (const watchId of watchIds) {
+              try {
+                await prisma.bid.deleteMany({ where: { watchId } })
+                await prisma.favorite.deleteMany({ where: { watchId } })
+                await prisma.priceOffer.deleteMany({ where: { watchId } })
+                await prisma.purchase.deleteMany({ where: { watchId } })
+                await prisma.message.deleteMany({ where: { watchId } })
+                await prisma.watchCategory.deleteMany({ where: { watchId } })
+                await prisma.watchView.deleteMany({ where: { watchId } })
+                await prisma.report.deleteMany({ where: { watchId } })
+                await prisma.adminNote.deleteMany({ where: { watchId } })
+                await prisma.moderationHistory.deleteMany({ where: { watchId } })
+                await prisma.invoiceItem.deleteMany({ where: { watchId } })
+                await prisma.collectionItem.deleteMany({ where: { watchId } })
+                await prisma.auctionViewer.deleteMany({ where: { watchId } })
+                await prisma.story.deleteMany({ where: { watchId } })
+                await prisma.browsingHistory.deleteMany({ where: { watchId } })
+                await prisma.aISearchResult.deleteMany({ where: { watchId } })
+                await prisma.order.deleteMany({ where: { watchId } })
+                await prisma.productStats.deleteMany({ where: { watchId } })
+              } catch (e: any) {
+                // Ignoriere Fehler für einzelne Watch-Deletes
+                console.log(`[cleanup-simple]   Warnung bei Watch ${watchId}: ${e.message}`)
+              }
+            }
+            
+            // Lösche Watches
+            await prisma.watch.deleteMany({ where: { sellerId: user.id } })
           }
+          
+          // Lösche User-spezifische Daten
+          console.log(`[cleanup-simple]   Lösche User-Daten für ${user.email}...`)
+          await prisma.bid.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.favorite.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.priceOffer.deleteMany({ where: { buyerId: user.id } }).catch(() => {})
+          await prisma.purchase.deleteMany({ where: { buyerId: user.id } }).catch(() => {})
+          await prisma.message.deleteMany({ where: { OR: [{ senderId: user.id }, { receiverId: user.id }] } }).catch(() => {})
+          await prisma.notification.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.invoice.deleteMany({ where: { sellerId: user.id } }).catch(() => {})
+          await prisma.sale.deleteMany({ where: { OR: [{ sellerId: user.id }, { buyerId: user.id }] } }).catch(() => {})
+          await prisma.review.deleteMany({ where: { OR: [{ reviewerId: user.id }, { reviewedUserId: user.id }] } }).catch(() => {})
+          await prisma.searchSubscription.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.maxBid.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.browsingHistory.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.aIConversation.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.aISearchResult.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.collection.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.userBadge.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.userStreak.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.reward.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.draft.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.userPreferences.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.userActivity.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.searchQuery.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.userAddress.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.session.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.account.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.report.deleteMany({ where: { reportedBy: user.id } }).catch(() => {})
+          await prisma.userReport.deleteMany({ where: { OR: [{ reportedBy: user.id }, { reportedUserId: user.id }] } }).catch(() => {})
+          await prisma.adminNote.deleteMany({ where: { adminId: user.id } }).catch(() => {})
+          await prisma.userAdminNote.deleteMany({ where: { OR: [{ adminId: user.id }, { userId: user.id }] } }).catch(() => {})
+          await prisma.moderationHistory.deleteMany({ where: { adminId: user.id } }).catch(() => {})
+          await prisma.pricingHistory.deleteMany({ where: { changedBy: user.id } }).catch(() => {})
+          await prisma.payoutProfile.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.payoutChangeRequest.deleteMany({ where: { OR: [{ userId: user.id }, { decidedBy: user.id }] } }).catch(() => {})
+          await prisma.payoutAuditLog.deleteMany({ where: { actorUserId: user.id } }).catch(() => {})
+          await prisma.disputeComment.deleteMany({ where: { userId: user.id } }).catch(() => {})
+          await prisma.systemOutage.deleteMany({ where: { OR: [{ createdBy: user.id }, { resolvedBy: user.id }, { extensionAppliedBy: user.id }] } }).catch(() => {})
           
           // Jetzt lösche den User
           await prisma.user.delete({ where: { id: user.id } })
           deleted++
-          console.log(`[cleanup-simple] ✅ ${user.email} mit Raw SQL gelöscht`)
+          console.log(`[cleanup-simple] ✅ ${user.email} mit manuellem Delete gelöscht`)
         } catch (rawError: any) {
-          console.error(`[cleanup-simple] ❌ Raw SQL Delete fehlgeschlagen für ${user.email}:`, rawError.message)
-          failedUsers.push(user.id)
+          const rawErrorMsg = rawError.message || String(rawError)
+          console.error(`[cleanup-simple] ❌ Alle Delete-Versuche fehlgeschlagen für ${user.email}:`, rawErrorMsg)
+          failedUsers.push({ id: user.id, email: user.email, error: rawErrorMsg })
+          errors.push(`${user.email}: ${rawErrorMsg}`)
         }
       }
     }
@@ -157,6 +162,7 @@ export async function POST(request: NextRequest) {
     
     if (failedUsers.length > 0) {
       message += ` ⚠️ ${failedUsers.length} User konnten nicht gelöscht werden.`
+      console.error(`[cleanup-simple] Fehlgeschlagene User:`, failedUsers)
     }
 
     return NextResponse.json({
@@ -165,6 +171,7 @@ export async function POST(request: NextRequest) {
       deleted,
       total: usersToDelete.length,
       failed: failedUsers.length,
+      failedUsers: failedUsers.length > 0 ? failedUsers.map(u => ({ email: u.email, error: u.error })) : undefined,
       errors: errors.length > 0 ? errors : undefined,
     })
   } catch (error: any) {
