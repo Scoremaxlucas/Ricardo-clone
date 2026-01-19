@@ -5,21 +5,21 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * POST /api/admin/users/cleanup-test-users
- * 
+ *
  * KRITISCH: Löscht ALLE Nicht-Admin-User und deren Daten
- * 
+ *
  * Sicherheitsmaßnahmen:
  * - Nur für Admin-User
  * - Erfordert explizite Bestätigung (confirm=true)
  * - Admin-User werden NIEMALS gelöscht
  * - Gibt detaillierte Statistiken zurück
- * 
+ *
  * WICHTIG: Diese Route sollte nur vor dem Launch verwendet werden!
  */
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     // Prüfe Admin-Status
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
@@ -242,7 +242,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
