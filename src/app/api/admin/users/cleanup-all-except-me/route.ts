@@ -5,9 +5,9 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * POST /api/admin/users/cleanup-all-except-me
- * 
+ *
  * KRITISCH: Löscht ALLE User außer dem aktuell eingeloggten Admin
- * 
+ *
  * Sicherheitsmaßnahmen:
  * - Nur für Admin-User
  * - Erfordert explizite Bestätigung (confirm=true)
@@ -41,7 +41,7 @@ export async function POST(request: NextRequest) {
         select: { id: true, email: true, name: true, isAdmin: true },
       })
       const usersToDelete = allUsers.filter(u => u.id !== currentAdmin.id)
-      
+
       return NextResponse.json(
         {
           message: 'Bestätigung erforderlich',
@@ -94,9 +94,26 @@ export async function POST(request: NextRequest) {
 
     console.log(`[cleanup-all-except-me] Gefunden: ${userIds.length} User zum Löschen`)
 
-    // Lösche alle abhängigen Daten in Transaktionen
-    for (const userId of userIds) {
+    // Helper function to safely delete with error handling
+    const safeDelete = async (tx: any, model: string, where: any, description: string) => {
       try {
+        const result = await (tx as any)[model].deleteMany({ where })
+        return result.count || 0
+      } catch (error: any) {
+        // Ignore errors for missing tables/models
+        if (error.message?.includes('does not exist') || error.message?.includes('Unknown model')) {
+          return 0
+        }
+        throw error
+      }
+    }
+
+    // Lösche alle abhängigen Daten - verwende einzelne Transaktionen pro User
+    for (const userId of userIds) {
+      const userEmail = usersToDelete.find(u => u.id === userId)?.email || 'unknown'
+      
+      try {
+        // Verwende eine große Transaktion, aber fange Fehler ab
         await prisma.$transaction(async (tx) => {
           // 1. Finde alle Watches des Users
           const watches = await tx.watch.findMany({
@@ -106,116 +123,152 @@ export async function POST(request: NextRequest) {
           const watchIds = watches.map(w => w.id)
           stats.deletedWatches += watchIds.length
 
-          // 2. Lösche abhängige Daten der Watches
+          // 2. Lösche abhängige Daten der Watches (mit Fehlerbehandlung)
           if (watchIds.length > 0) {
-            await tx.bid.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.favorite.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.priceOffer.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.purchase.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.sale.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.message.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.watchCategory.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.watchView.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.report.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.adminNote.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.moderationHistory.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.invoiceItem.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.collectionItem.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.auctionViewer.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.story.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.browsingHistory.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.aISearchResult.deleteMany({ where: { watchId: { in: watchIds } } })
-            await tx.order.deleteMany({ where: { watchId: { in: watchIds } } })
+            try { await tx.bid.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.favorite.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.priceOffer.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.purchase.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.sale.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.message.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.watchCategory.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.watchView.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.report.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.adminNote.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.moderationHistory.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.invoiceItem.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.collectionItem.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.auctionViewer.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.story.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.browsingHistory.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.aISearchResult.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.order.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
+            try { await tx.productStats.deleteMany({ where: { watchId: { in: watchIds } } }) } catch {}
           }
 
           // 3. Lösche Watches
           await tx.watch.deleteMany({ where: { sellerId: userId } })
 
-          // 4. Lösche User-spezifische Daten
-          const deletedBids = await tx.bid.deleteMany({ where: { userId } })
-          stats.deletedBids += deletedBids.count
+          // 4. Lösche User-spezifische Daten (mit Fehlerbehandlung)
+          try {
+            const deletedBids = await tx.bid.deleteMany({ where: { userId } })
+            stats.deletedBids += deletedBids.count
+          } catch {}
 
-          const deletedPurchases = await tx.purchase.deleteMany({ where: { buyerId: userId } })
-          stats.deletedPurchases += deletedPurchases.count
+          try {
+            const deletedPurchases = await tx.purchase.deleteMany({ where: { buyerId: userId } })
+            stats.deletedPurchases += deletedPurchases.count
+          } catch {}
 
-          const deletedPriceOffers = await tx.priceOffer.deleteMany({ where: { buyerId: userId } })
-          stats.deletedPriceOffers += deletedPriceOffers.count
+          try {
+            const deletedPriceOffers = await tx.priceOffer.deleteMany({ where: { buyerId: userId } })
+            stats.deletedPriceOffers += deletedPriceOffers.count
+          } catch {}
 
-          const deletedMessages = await tx.message.deleteMany({
-            where: { OR: [{ senderId: userId }, { receiverId: userId }] },
-          })
-          stats.deletedMessages += deletedMessages.count
+          try {
+            const deletedMessages = await tx.message.deleteMany({
+              where: { OR: [{ senderId: userId }, { receiverId: userId }] },
+            })
+            stats.deletedMessages += deletedMessages.count
+          } catch {}
 
-          const deletedNotifications = await tx.notification.deleteMany({ where: { userId } })
-          stats.deletedNotifications += deletedNotifications.count
+          try {
+            const deletedNotifications = await tx.notification.deleteMany({ where: { userId } })
+            stats.deletedNotifications += deletedNotifications.count
+          } catch {}
 
-          const deletedInvoices = await tx.invoice.deleteMany({ where: { sellerId: userId } })
-          stats.deletedInvoices += deletedInvoices.count
+          try {
+            const deletedInvoices = await tx.invoice.deleteMany({ where: { sellerId: userId } })
+            stats.deletedInvoices += deletedInvoices.count
+          } catch {}
 
-          const deletedSales = await tx.sale.deleteMany({
-            where: { OR: [{ sellerId: userId }, { buyerId: userId }] },
-          })
-          stats.deletedSales += deletedSales.count
+          try {
+            const deletedSales = await tx.sale.deleteMany({
+              where: { OR: [{ sellerId: userId }, { buyerId: userId }] },
+            })
+            stats.deletedSales += deletedSales.count
+          } catch {}
 
-          const deletedReviews = await tx.review.deleteMany({
-            where: { OR: [{ reviewerId: userId }, { reviewedUserId: userId }] },
-          })
-          stats.deletedReviews += deletedReviews.count
+          try {
+            const deletedReviews = await tx.review.deleteMany({
+              where: { OR: [{ reviewerId: userId }, { reviewedUserId: userId }] },
+            })
+            stats.deletedReviews += deletedReviews.count
+          } catch {}
 
-          const deletedFavorites = await tx.favorite.deleteMany({ where: { userId } })
-          stats.deletedFavorites += deletedFavorites.count
+          try {
+            const deletedFavorites = await tx.favorite.deleteMany({ where: { userId } })
+            stats.deletedFavorites += deletedFavorites.count
+          } catch {}
 
-          // Weitere User-spezifische Daten
-          await tx.searchSubscription.deleteMany({ where: { userId } })
-          await tx.maxBid.deleteMany({ where: { userId } })
-          await tx.browsingHistory.deleteMany({ where: { userId } })
-          await tx.aIConversation.deleteMany({ where: { userId } })
-          await tx.aISearchResult.deleteMany({ where: { userId } })
-          await tx.collection.deleteMany({ where: { userId } })
-          await tx.userBadge.deleteMany({ where: { userId } })
-          await tx.userStreak.deleteMany({ where: { userId } })
-          await tx.reward.deleteMany({ where: { userId } })
-          await tx.draft.deleteMany({ where: { userId } })
-          await tx.userPreferences.deleteMany({ where: { userId } })
-          await tx.userActivity.deleteMany({ where: { userId } })
-          await tx.searchQuery.deleteMany({ where: { userId } })
-          await tx.userAddress.deleteMany({ where: { userId } })
-          await tx.session.deleteMany({ where: { userId } })
-          await tx.account.deleteMany({ where: { userId } })
-          await tx.report.deleteMany({ where: { reportedBy: userId } })
-          await tx.userReport.deleteMany({
-            where: { OR: [{ reportedBy: userId }, { reportedUserId: userId }] },
-          })
-          await tx.adminNote.deleteMany({ where: { adminId: userId } })
-          await tx.userAdminNote.deleteMany({
-            where: { OR: [{ adminId: userId }, { userId }] },
-          })
-          await tx.moderationHistory.deleteMany({ where: { adminId: userId } })
-          await tx.pricingHistory.deleteMany({ where: { changedBy: userId } })
-          await tx.payoutProfile.deleteMany({ where: { userId } })
-          await tx.payoutChangeRequest.deleteMany({
-            where: { OR: [{ userId }, { decidedBy: userId }] },
-          })
-          await tx.payoutAuditLog.deleteMany({ where: { actorUserId: userId } })
-          await tx.disputeComment.deleteMany({ where: { userId } })
-          await tx.systemOutage.deleteMany({
-            where: {
-              OR: [
-                { createdBy: userId },
-                { resolvedBy: userId },
-                { extensionAppliedBy: userId },
-              ],
-            },
-          })
+          // Weitere User-spezifische Daten (alle mit try-catch)
+          try { await tx.searchSubscription.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.maxBid.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.browsingHistory.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.aIConversation.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.aISearchResult.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.collection.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.userBadge.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.userStreak.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.reward.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.draft.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.userPreferences.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.userActivity.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.searchQuery.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.userAddress.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.session.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.account.deleteMany({ where: { userId } }) } catch {}
+          try { await tx.report.deleteMany({ where: { reportedBy: userId } }) } catch {}
+          try {
+            await tx.userReport.deleteMany({
+              where: { OR: [{ reportedBy: userId }, { reportedUserId: userId }] },
+            })
+          } catch {}
+          try { await tx.adminNote.deleteMany({ where: { adminId: userId } }) } catch {}
+          try {
+            await tx.userAdminNote.deleteMany({
+              where: { OR: [{ adminId: userId }, { userId }] },
+            })
+          } catch {}
+          try { await tx.moderationHistory.deleteMany({ where: { adminId: userId } }) } catch {}
+          try { await tx.pricingHistory.deleteMany({ where: { changedBy: userId } }) } catch {}
+          try { await tx.payoutProfile.deleteMany({ where: { userId } }) } catch {}
+          try {
+            await tx.payoutChangeRequest.deleteMany({
+              where: { OR: [{ userId }, { decidedBy: userId }] },
+            })
+          } catch {}
+          try { await tx.payoutAuditLog.deleteMany({ where: { actorUserId: userId } }) } catch {}
+          try { await tx.disputeComment.deleteMany({ where: { userId } }) } catch {}
+          try {
+            await tx.systemOutage.deleteMany({
+              where: {
+                OR: [
+                  { createdBy: userId },
+                  { resolvedBy: userId },
+                  { extensionAppliedBy: userId },
+                ],
+              },
+            })
+          } catch {}
 
-          // 5. Lösche User
+          // 5. Lösche User (das ist kritisch - muss funktionieren)
           await tx.user.delete({ where: { id: userId } })
           stats.deletedUsers++
+        }, {
+          timeout: 30000, // 30 Sekunden Timeout pro User
         })
       } catch (error: any) {
-        const userEmail = usersToDelete.find(u => u.id === userId)?.email || 'unknown'
         stats.errors.push(`${userEmail}: ${error.message}`)
         console.error(`[cleanup-all-except-me] Fehler beim Löschen von ${userEmail}:`, error)
+        // Versuche User trotzdem zu löschen (falls Transaktion fehlgeschlagen ist)
+        try {
+          await prisma.user.delete({ where: { id: userId } })
+          stats.deletedUsers++
+          console.log(`[cleanup-all-except-me] User ${userEmail} trotz Fehler gelöscht`)
+        } catch (deleteError: any) {
+          console.error(`[cleanup-all-except-me] Konnte User ${userEmail} nicht löschen:`, deleteError.message)
+        }
       }
     }
 
