@@ -194,7 +194,7 @@ export async function POST(request: NextRequest) {
           await tx.payoutChangeRequest.deleteMany({
             where: { OR: [{ userId }, { decidedBy: userId }] },
           })
-          await tx.payoutAuditLog.deleteMany({ where: { actorId: userId } })
+          await tx.payoutAuditLog.deleteMany({ where: { actorUserId: userId } })
           await tx.disputeComment.deleteMany({ where: { userId } })
           await tx.systemOutage.deleteMany({
             where: {
