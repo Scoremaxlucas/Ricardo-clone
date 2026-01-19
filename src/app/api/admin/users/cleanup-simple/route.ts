@@ -64,45 +64,46 @@ export async function POST(request: NextRequest) {
         try {
           console.log(`[cleanup-simple] Versuche Raw SQL Delete für ${user.email}...`)
           
-          // Lösche alle abhängigen Daten manuell
+          // Lösche alle abhängigen Daten manuell (sicher escaped)
+          const userIdEscaped = user.id.replace(/'/g, "''")
           await prisma.$executeRawUnsafe(`
-            DELETE FROM "bids" WHERE "userId" = $1;
-            DELETE FROM "favorites" WHERE "userId" = $1;
-            DELETE FROM "price_offers" WHERE "buyerId" = $1;
-            DELETE FROM "purchases" WHERE "buyerId" = $1;
-            DELETE FROM "messages" WHERE "senderId" = $1 OR "receiverId" = $1;
-            DELETE FROM "notifications" WHERE "userId" = $1;
-            DELETE FROM "invoices" WHERE "sellerId" = $1;
-            DELETE FROM "sales" WHERE "sellerId" = $1 OR "buyerId" = $1;
-            DELETE FROM "reviews" WHERE "reviewerId" = $1 OR "reviewedUserId" = $1;
-            DELETE FROM "search_subscriptions" WHERE "userId" = $1;
-            DELETE FROM "max_bids" WHERE "userId" = $1;
-            DELETE FROM "browsing_history" WHERE "userId" = $1;
-            DELETE FROM "ai_conversations" WHERE "userId" = $1;
-            DELETE FROM "ai_search_results" WHERE "userId" = $1;
-            DELETE FROM "collections" WHERE "userId" = $1;
-            DELETE FROM "user_badges" WHERE "userId" = $1;
-            DELETE FROM "user_streaks" WHERE "userId" = $1;
-            DELETE FROM "rewards" WHERE "userId" = $1;
-            DELETE FROM "drafts" WHERE "userId" = $1;
-            DELETE FROM "user_preferences" WHERE "userId" = $1;
-            DELETE FROM "user_activities" WHERE "userId" = $1;
-            DELETE FROM "search_queries" WHERE "userId" = $1;
-            DELETE FROM "user_addresses" WHERE "userId" = $1;
-            DELETE FROM "sessions" WHERE "userId" = $1;
-            DELETE FROM "accounts" WHERE "userId" = $1;
-            DELETE FROM "reports" WHERE "reportedBy" = $1;
-            DELETE FROM "user_reports" WHERE "reportedBy" = $1 OR "reportedUserId" = $1;
-            DELETE FROM "admin_notes" WHERE "adminId" = $1;
-            DELETE FROM "user_admin_notes" WHERE "adminId" = $1 OR "userId" = $1;
-            DELETE FROM "moderation_history" WHERE "adminId" = $1;
-            DELETE FROM "pricing_history" WHERE "changedBy" = $1;
-            DELETE FROM "payout_profiles" WHERE "userId" = $1;
-            DELETE FROM "payout_change_requests" WHERE "userId" = $1 OR "decidedBy" = $1;
-            DELETE FROM "payout_audit_logs" WHERE "actorUserId" = $1;
-            DELETE FROM "dispute_comments" WHERE "userId" = $1;
-            DELETE FROM "system_outages" WHERE "createdBy" = $1 OR "resolvedBy" = $1 OR "extensionAppliedBy" = $1;
-          `, user.id)
+            DELETE FROM "bids" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "favorites" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "price_offers" WHERE "buyerId" = '${userIdEscaped}';
+            DELETE FROM "purchases" WHERE "buyerId" = '${userIdEscaped}';
+            DELETE FROM "messages" WHERE "senderId" = '${userIdEscaped}' OR "receiverId" = '${userIdEscaped}';
+            DELETE FROM "notifications" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "invoices" WHERE "sellerId" = '${userIdEscaped}';
+            DELETE FROM "sales" WHERE "sellerId" = '${userIdEscaped}' OR "buyerId" = '${userIdEscaped}';
+            DELETE FROM "reviews" WHERE "reviewerId" = '${userIdEscaped}' OR "reviewedUserId" = '${userIdEscaped}';
+            DELETE FROM "search_subscriptions" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "max_bids" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "browsing_history" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "ai_conversations" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "ai_search_results" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "collections" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "user_badges" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "user_streaks" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "rewards" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "drafts" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "user_preferences" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "user_activities" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "search_queries" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "user_addresses" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "sessions" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "accounts" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "reports" WHERE "reportedBy" = '${userIdEscaped}';
+            DELETE FROM "user_reports" WHERE "reportedBy" = '${userIdEscaped}' OR "reportedUserId" = '${userIdEscaped}';
+            DELETE FROM "admin_notes" WHERE "adminId" = '${userIdEscaped}';
+            DELETE FROM "user_admin_notes" WHERE "adminId" = '${userIdEscaped}' OR "userId" = '${userIdEscaped}';
+            DELETE FROM "moderation_history" WHERE "adminId" = '${userIdEscaped}';
+            DELETE FROM "pricing_history" WHERE "changedBy" = '${userIdEscaped}';
+            DELETE FROM "payout_profiles" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "payout_change_requests" WHERE "userId" = '${userIdEscaped}' OR "decidedBy" = '${userIdEscaped}';
+            DELETE FROM "payout_audit_logs" WHERE "actorUserId" = '${userIdEscaped}';
+            DELETE FROM "dispute_comments" WHERE "userId" = '${userIdEscaped}';
+            DELETE FROM "system_outages" WHERE "createdBy" = '${userIdEscaped}' OR "resolvedBy" = '${userIdEscaped}' OR "extensionAppliedBy" = '${userIdEscaped}';
+          `)
           
           // Lösche Watches und deren abhängige Daten
           const watches = await prisma.watch.findMany({
