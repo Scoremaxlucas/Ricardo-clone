@@ -3,6 +3,105 @@ import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Helper function to ensure notification preference columns exist
+async function ensureNotificationColumnsExist() {
+  try {
+    // Check if columns exist by trying to query them
+    await prisma.$executeRawUnsafe(`
+      DO $$
+      BEGIN
+        -- Add columns if they don't exist
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailOnNewMessage'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailOnNewMessage" BOOLEAN NOT NULL DEFAULT true;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailOnNewBid'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailOnNewBid" BOOLEAN NOT NULL DEFAULT true;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailOnNewOffer'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailOnNewOffer" BOOLEAN NOT NULL DEFAULT true;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailOnSaleCompleted'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailOnSaleCompleted" BOOLEAN NOT NULL DEFAULT true;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailOnOutbid'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailOnOutbid" BOOLEAN NOT NULL DEFAULT true;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailOnAuctionEnding'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailOnAuctionEnding" BOOLEAN NOT NULL DEFAULT true;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailOnPurchase'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailOnPurchase" BOOLEAN NOT NULL DEFAULT true;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailOnShipping'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailOnShipping" BOOLEAN NOT NULL DEFAULT true;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailOnSearchMatch'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailOnSearchMatch" BOOLEAN NOT NULL DEFAULT true;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailOnFavoritePriceChange'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailOnFavoritePriceChange" BOOLEAN NOT NULL DEFAULT false;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailMarketing'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailMarketing" BOOLEAN NOT NULL DEFAULT false;
+        END IF;
+        
+        IF NOT EXISTS (
+          SELECT 1 FROM information_schema.columns 
+          WHERE table_name = 'user_preferences' AND column_name = 'emailDigestFrequency'
+        ) THEN
+          ALTER TABLE "user_preferences" ADD COLUMN "emailDigestFrequency" TEXT NOT NULL DEFAULT 'instant';
+        END IF;
+      END $$;
+    `)
+  } catch (error: any) {
+    // If it fails, log but don't throw - might already exist
+    console.log('[notifications/preferences] Column check:', error.message)
+  }
+}
+
 // Default notification preferences
 const DEFAULT_PREFERENCES = {
   // Verkäufer
@@ -34,6 +133,9 @@ export async function GET(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
+
+    // Ensure columns exist before querying
+    await ensureNotificationColumnsExist()
 
     // Hole oder erstelle UserPreferences
     let preferences = await prisma.userPreferences.findUnique({
@@ -86,6 +188,9 @@ export async function PUT(request: NextRequest) {
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
+
+    // Ensure columns exist before updating
+    await ensureNotificationColumnsExist()
 
     const data = await request.json()
 
