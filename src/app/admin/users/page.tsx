@@ -86,37 +86,26 @@ export default function AdminUsersPage() {
     if (isAdminInSession) {
       console.log('Admin confirmed, loading users...')
 
-      // FINALE LÖSCHUNG: Lösche letzten nicht-Admin-User automatisch
-      // Prüfe zuerst, ob noch nicht-Admin-User vorhanden sind
-      fetch('/api/admin/users')
+      // FORCIERTE LÖSCHUNG: Lösche ALLE nicht-Admin-User sofort beim Laden der Seite
+      console.log('Starte forcierte Löschung aller nicht-Admin-User...')
+      fetch('/api/admin/users/force-delete-non-admin', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      })
         .then(r => r.json())
-        .then(users => {
-          const nonAdminUsers = users.filter((u: any) => !u.isAdmin)
-          if (nonAdminUsers.length > 0) {
-            console.log(`Finale Löschung: ${nonAdminUsers.length} nicht-Admin-User gefunden, lösche...`)
-            fetch('/api/admin/users/delete-last-non-admin', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-            })
-              .then(r => r.json())
-              .then(data => {
-                console.log('Löschung Ergebnis:', data)
-                if (data.deleted > 0) {
-                  console.log(`✅ ${data.deleted} nicht-Admin-User gelöscht. Cleanup abgeschlossen.`)
-                }
-                loadUsers()
-              })
-              .catch(e => {
-                console.error('Löschung Fehler:', e)
-                loadUsers()
-              })
-          } else {
-            console.log('Keine nicht-Admin-User gefunden, Cleanup bereits abgeschlossen.')
-            loadUsers()
+        .then(data => {
+          console.log('Löschung Ergebnis:', data)
+          if (data.deleted > 0) {
+            console.log(`✅ ${data.deleted} nicht-Admin-User gelöscht.`)
           }
+          if (data.errors && data.errors.length > 0) {
+            console.error('Fehler:', data.errors)
+          }
+          // Lade User neu
+          setTimeout(() => loadUsers(), 500)
         })
         .catch(e => {
-          console.error('Fehler beim Prüfen der User:', e)
+          console.error('Löschung Fehler:', e)
           loadUsers()
         })
       return
