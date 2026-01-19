@@ -1,5 +1,5 @@
 // Bookmarklet zum Anwenden der Notification Preferences Migration
-// 
+//
 // Anleitung:
 // 1. Kopiere den gesamten Code unten
 // 2. Erstelle ein neues Bookmark in deinem Browser
@@ -9,7 +9,7 @@
 
 javascript:(function(){
   if(!confirm('Möchtest du die Notification Preferences Migration anwenden?')) return;
-  
+
   fetch('/api/admin/apply-migration', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' }
