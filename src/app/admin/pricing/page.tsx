@@ -314,7 +314,7 @@ export default function AdminPricingPage() {
                   </span>
                 </div>
                 <div className="mt-2 rounded bg-white p-3 text-xs text-green-700">
-                  <strong>✓ Ricardo-Modell:</strong> Der Zahlungsschutz ist <strong>INKLUSIVE</strong> für Käufer.
+                  <strong>✓ Zahlungsschutz-Modell:</strong> Der Zahlungsschutz ist <strong>INKLUSIVE</strong> für Käufer.
                   Käufer zahlen NUR den Artikelpreis + Versandkosten. Die Helvenda Schutz Gebühr wird vom Verkäufer getragen.
                 </div>
               </div>
