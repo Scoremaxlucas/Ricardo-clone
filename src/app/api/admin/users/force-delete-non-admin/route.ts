@@ -90,6 +90,15 @@ export async function POST(request: NextRequest) {
         await prisma.message.deleteMany({ where: { senderId: userId } }).catch(() => {})
         await prisma.message.deleteMany({ where: { receiverId: userId } }).catch(() => {})
         await prisma.notification.deleteMany({ where: { userId } }).catch(() => {})
+        
+        // Lösche InvoiceItems ZUERST, dann Invoices
+        const invoices = await prisma.invoice.findMany({
+          where: { sellerId: userId },
+          select: { id: true },
+        })
+        for (const invoice of invoices) {
+          await prisma.invoiceItem.deleteMany({ where: { invoiceId: invoice.id } }).catch(() => {})
+        }
         await prisma.invoice.deleteMany({ where: { sellerId: userId } }).catch(() => {})
         await prisma.sale.deleteMany({ where: { sellerId: userId } }).catch(() => {})
         await prisma.sale.deleteMany({ where: { buyerId: userId } }).catch(() => {})
