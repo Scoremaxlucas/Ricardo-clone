@@ -1,6 +1,3 @@
-import { authOptions } from '@/lib/auth'
-import { prisma } from '@/lib/prisma'
-import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 /**
@@ -13,11 +10,10 @@ export async function POST(request: NextRequest) {
   return NextResponse.json(
     {
       message: 'Dieser Endpoint ist dauerhaft deaktiviert. User-Löschungen sind nicht mehr möglich.',
-      disabled: true
+      disabled: true,
     },
     { status: 403 }
   )
-  try {
     const session = await getServerSession(authOptions)
 
     if (!session?.user?.id) {
