@@ -68,6 +68,7 @@ export default function AdminUsersPage() {
   const [emailChangeUserId, setEmailChangeUserId] = useState<string | null>(null)
   const [emailChangeUserName, setEmailChangeUserName] = useState<string | null>(null)
   const [emailChangeCurrentEmail, setEmailChangeCurrentEmail] = useState<string>('')
+  const [cleaningUp, setCleaningUp] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -410,6 +411,13 @@ export default function AdminUsersPage() {
               <p className="mt-2 text-gray-600">Verwalten Sie alle Benutzer der Plattform</p>
             </div>
             <div className="flex gap-4">
+              <button
+                onClick={handleCleanupTestUsers}
+                disabled={cleaningUp}
+                className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {cleaningUp ? 'Löschen...' : '🧹 Alle Test-User löschen'}
+              </button>
               <Link href="/" className="font-medium text-primary-600 hover:text-primary-700">
                 ← Zurück zur Hauptseite
               </Link>
@@ -560,6 +568,9 @@ export default function AdminUsersPage() {
                     Benutzer
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
+                    Admin
+                  </th>
+                  <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
                     Status
                   </th>
                   <th className="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-gray-500">
@@ -602,17 +613,22 @@ export default function AdminUsersPage() {
                               `${user.firstName} ${user.lastName}` ||
                               user.nickname ||
                               'Unbekannt'}
-                            {user.isAdmin && (
-                              <span className="ml-2 inline-flex items-center rounded bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
-                                Admin
-                              </span>
-                            )}
                           </div>
                           <div className="text-sm text-gray-500">{user.email}</div>
                           {user.nickname && (
                             <div className="text-sm text-gray-400">@{user.nickname}</div>
                           )}
                         </div>
+                      </td>
+                      <td className="whitespace-nowrap px-6 py-4">
+                        {user.isAdmin ? (
+                          <span className="inline-flex items-center rounded-full bg-purple-100 px-2.5 py-0.5 text-xs font-medium text-purple-800">
+                            <Shield className="mr-1 h-3 w-3" />
+                            Admin
+                          </span>
+                        ) : (
+                          <span className="text-xs text-gray-400">—</span>
+                        )}
                       </td>
                       <td className="whitespace-nowrap px-6 py-4">
                         {user.isBlocked ? (

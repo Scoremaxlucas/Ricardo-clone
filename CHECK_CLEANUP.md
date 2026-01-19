@@ -12,7 +12,7 @@ fetch('/api/admin/users/cleanup-test-users')
     console.log('📊 Aktuelle Statistiken:', data);
     console.log('Admin-User:', data.stats.adminUsers);
     console.log('Nicht-Admin-User:', data.stats.nonAdminUsers);
-    
+
     if (data.stats.nonAdminUsers > 0) {
       console.warn('⚠️ Es gibt noch Nicht-Admin-User!');
       console.log('Möchtest du den Cleanup nochmal durchführen?');
