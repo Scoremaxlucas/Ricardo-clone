@@ -219,21 +219,18 @@ export default function AdminDashboard() {
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           <ActionCard
             title="Gesamtumsatz"
-            description={`CHF ${(stats?.totalRevenue || 0).toLocaleString('de-CH')} Umsatz, CHF ${(stats?.platformMargin || 0).toLocaleString('de-CH')} Marge`}
             icon={DollarSign}
             href="/admin/transactions"
             color="purple"
           />
           <ActionCard
             title="Benutzerverwaltung"
-            description="Benutzer verwalten, blockieren, mahnen"
             icon={Users}
             href="/admin/users"
             color="blue"
           />
           <ActionCard
             title="Verifizierungen prüfen"
-            description="Ausweis-Kopien prüfen und freigeben"
             icon={FileCheck}
             href="/admin/verifications"
             color="orange"
@@ -241,21 +238,18 @@ export default function AdminDashboard() {
           />
           <ActionCard
             title="Transaktionen"
-            description="Alle Käufe und Verkäufe einsehen"
             icon={TrendingUp}
             href="/admin/transactions"
             color="green"
           />
           <ActionCard
             title="Angebote moderieren"
-            description="Angebote prüfen und verwalten"
             icon={ShoppingBag}
             href="/admin/moderate-watches"
             color="purple"
           />
           <ActionCard
             title="Kontaktanfragen"
-            description="Support-Anfragen bearbeiten"
             icon={AlertCircle}
             href="/admin/contact-requests"
             color="blue"
@@ -263,28 +257,24 @@ export default function AdminDashboard() {
           />
           <ActionCard
             title="Statistiken"
-            description="Detaillierte Statistiken und Reports"
             icon={BarChart3}
             href="/admin/statistics"
             color="indigo"
           />
           <ActionCard
             title="Sicherheit"
-            description="Blockierte Benutzer und Warnungen"
             icon={Shield}
             href="/admin/security"
             color="red"
           />
           <ActionCard
             title="Pricing verwalten"
-            description="Plattform-Gebühren und Margen einstellen"
             icon={DollarSign}
             href="/admin/pricing"
             color="yellow"
           />
           <ActionCard
             title="Rechnungen & Mahnwesen"
-            description="Überfällige Zahlungen verwalten"
             icon={Receipt}
             href="/admin/invoices"
             color="red"
@@ -292,7 +282,6 @@ export default function AdminDashboard() {
           />
           <ActionCard
             title="Disputes verwalten"
-            description="Streitfälle bearbeiten und lösen"
             icon={AlertTriangle}
             href="/admin/disputes"
             color="orange"
@@ -300,14 +289,12 @@ export default function AdminDashboard() {
           />
           <ActionCard
             title="Bestellungen & Zahlungen"
-            description="Zahlungen freigeben, zurückhalten, Auszahlungen verwalten"
             icon={CreditCard}
             href="/admin/orders"
             color="emerald"
           />
           <ActionCard
             title="Bankverbindungs-Änderungen"
-            description="Anfragen zur Änderung von Bankverbindungen bearbeiten"
             icon={Banknote}
             href="/admin/payout-change-requests"
             color="teal"
@@ -315,21 +302,18 @@ export default function AdminDashboard() {
           />
           <ActionCard
             title="Systemausfälle"
-            description="Ausfälle melden und Auktionsverlängerungen verwalten"
             icon={Zap}
             href="/admin/system-outages"
             color="red"
           />
           <ActionCard
             title="Stripe Monitoring"
-            description="Zahlungsstatus und Stripe-Aktivitäten überwachen"
             icon={Activity}
             href="/admin/stripe/monitoring"
             color="purple"
           />
           <ActionCard
             title="Bexio Integration"
-            description="Rechnungen und Buchhaltung mit Bexio synchronisieren"
             icon={Database}
             href="/admin/bexio"
             color="blue"
@@ -387,14 +371,12 @@ function StatCard({
 
 function ActionCard({
   title,
-  description,
   icon: Icon,
   href,
   color,
   badge,
 }: {
   title: string
-  description: string
   icon: any
   href: string
   color: string
@@ -415,21 +397,18 @@ function ActionCard({
   return (
     <Link href={href} className="block">
       <div className="rounded-lg bg-white p-6 shadow transition-shadow hover:shadow-md">
-        <div className="flex items-start justify-between">
-          <div className="flex-1">
-            <div className="flex items-center gap-3">
-              <div className={`${colorClasses[color as keyof typeof colorClasses]} rounded-lg p-2`}>
-                <Icon className="h-5 w-5" />
-              </div>
-              <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
-              {badge !== undefined && badge > 0 && (
-                <span className="ml-auto rounded-full bg-red-500 px-2 py-1 text-xs font-semibold text-white">
-                  {badge}
-                </span>
-              )}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <div className={`${colorClasses[color as keyof typeof colorClasses]} rounded-lg p-2`}>
+              <Icon className="h-5 w-5" />
             </div>
-            <p className="mt-2 text-sm text-gray-600">{description}</p>
+            <h3 className="text-lg font-semibold text-gray-900">{title}</h3>
           </div>
+          {badge !== undefined && badge > 0 && (
+            <span className="rounded-full bg-red-500 px-2 py-1 text-xs font-semibold text-white">
+              {badge}
+            </span>
+          )}
         </div>
       </div>
     </Link>

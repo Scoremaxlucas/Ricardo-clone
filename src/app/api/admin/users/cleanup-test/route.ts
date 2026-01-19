@@ -14,9 +14,9 @@ export async function GET(request: NextRequest) {
  */
 export async function POST(request: NextRequest) {
   return NextResponse.json(
-    { 
+    {
       message: 'Dieser Endpoint ist dauerhaft deaktiviert.',
-      disabled: true 
+      disabled: true
     },
     { status: 403 }
   )
