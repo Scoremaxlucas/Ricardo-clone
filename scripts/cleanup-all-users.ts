@@ -1,9 +1,9 @@
 #!/usr/bin/env tsx
 /**
  * Cleanup Script - Löscht alle User außer Admin-Usern
- * 
+ *
  * Usage: npx tsx scripts/cleanup-all-users.ts [admin-email]
- * 
+ *
  * Wenn keine E-Mail angegeben, werden nur User mit isAdmin=true behalten
  */
 
