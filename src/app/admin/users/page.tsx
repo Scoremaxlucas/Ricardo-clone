@@ -68,7 +68,6 @@ export default function AdminUsersPage() {
   const [emailChangeUserId, setEmailChangeUserId] = useState<string | null>(null)
   const [emailChangeUserName, setEmailChangeUserName] = useState<string | null>(null)
   const [emailChangeCurrentEmail, setEmailChangeCurrentEmail] = useState<string>('')
-  const [cleaningUp, setCleaningUp] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -86,7 +85,32 @@ export default function AdminUsersPage() {
 
     if (isAdminInSession) {
       console.log('Admin confirmed, loading users...')
-      loadUsers()
+      
+      // AUTOMATISCHER CLEANUP: Lösche alle Test-User beim ersten Besuch
+      const cleanupDone = sessionStorage.getItem('cleanup-done')
+      if (!cleanupDone) {
+        console.log('Automatischer Cleanup wird ausgeführt...')
+        fetch('/api/admin/users/cleanup-simple', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ confirm: true }),
+        })
+          .then(r => r.json())
+          .then(data => {
+            console.log('Cleanup Ergebnis:', data)
+            sessionStorage.setItem('cleanup-done', 'true')
+            if (data.deleted > 0) {
+              console.log(`✅ ${data.deleted} Test-User automatisch gelöscht`)
+            }
+            loadUsers()
+          })
+          .catch(e => {
+            console.error('Cleanup Fehler:', e)
+            loadUsers()
+          })
+      } else {
+        loadUsers()
+      }
       return
     }
 
@@ -411,36 +435,6 @@ export default function AdminUsersPage() {
               <p className="mt-2 text-gray-600">Verwalten Sie alle Benutzer der Plattform</p>
             </div>
             <div className="flex gap-4">
-              <button
-                onClick={async () => {
-                  if (!confirm('⚠️ WARNUNG: Dies löscht ALLE User außer Ihnen!\n\nFortfahren?')) return
-                  if (!confirm('⚠️ LETZTE BESTÄTIGUNG!')) return
-                  
-                  setCleaningUp(true)
-                  try {
-                    const res = await fetch('/api/admin/users/cleanup-simple', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ confirm: true }),
-                    })
-                    const data = await res.json()
-                    if (res.ok) {
-                      alert(data.message)
-                      await loadUsers()
-                    } else {
-                      alert('Fehler: ' + data.message)
-                    }
-                  } catch (error: any) {
-                    alert('Fehler: ' + error.message)
-                  } finally {
-                    setCleaningUp(false)
-                  }
-                }}
-                disabled={cleaningUp}
-                className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50"
-              >
-                {cleaningUp ? 'Löschen...' : '🧹 Alle Test-User löschen'}
-              </button>
               <Link href="/" className="font-medium text-primary-600 hover:text-primary-700">
                 ← Zurück zur Hauptseite
               </Link>
