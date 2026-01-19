@@ -26,6 +26,7 @@ import {
 } from 'lucide-react'
 import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { categoryConfig } from '@/data/categories'
 import { CategoryFields } from '@/components/forms/CategoryFieldsNew'
 
@@ -54,6 +55,7 @@ interface ProductForm {
 type Step = 'articles' | 'settings' | 'review'
 
 export default function BulkUploadPage() {
+  const { t } = useLanguage()
   const { data: session, status } = useSession()
   const router = useRouter()
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -620,16 +622,16 @@ export default function BulkUploadPage() {
             href="/sell"
             className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700"
           >
-            ← Zurück zum Verkaufen
+            ← {t.bulk.backToSelling}
           </Link>
         </div>
 
         <div className="mb-8">
           <h1 className="mb-2 text-3xl font-bold text-gray-900">
-            Mehrere Artikel gleichzeitig hochladen
+            {t.bulk.title}
           </h1>
           <p className="text-gray-600">
-            Erstellen Sie bis zu 100 Artikel in drei einfachen Schritten.
+            {t.bulk.subtitle}
           </p>
         </div>
 
@@ -645,7 +647,7 @@ export default function BulkUploadPage() {
                 >
                   1
                 </div>
-                <span className="text-sm font-medium sm:text-base">Artikel-Details</span>
+                <span className="text-sm font-medium sm:text-base">{t.bulk.step1}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-gray-400 sm:h-5 sm:w-5" />
               <div
@@ -656,7 +658,7 @@ export default function BulkUploadPage() {
                 >
                   2
                 </div>
-                <span className="text-sm font-medium sm:text-base">Angebotsdetails</span>
+                <span className="text-sm font-medium sm:text-base">{t.bulk.step2}</span>
               </div>
               <ChevronRight className="h-4 w-4 text-gray-400 sm:h-5 sm:w-5" />
               <div
@@ -667,7 +669,7 @@ export default function BulkUploadPage() {
                 >
                   3
                 </div>
-                <span className="text-sm font-medium sm:text-base">Veröffentlichen</span>
+                <span className="text-sm font-medium sm:text-base">{t.bulk.step3}</span>
               </div>
             </div>
           </div>
@@ -702,11 +704,10 @@ export default function BulkUploadPage() {
           <div className="space-y-6">
             <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
               <h2 className="mb-4 text-xl font-semibold text-gray-900">
-                Schritt 1: Artikel-Details eingeben
+                {t.bulk.step1Title}
               </h2>
               <p className="mb-6 text-gray-600">
-                Geben Sie für jeden Artikel Titel, Beschreibung, Zustand und Fotos ein. Diese werden
-                als Entwürfe gespeichert.
+                {t.bulk.step1Desc}
               </p>
 
               {/* CSV Upload Option */}
@@ -714,9 +715,9 @@ export default function BulkUploadPage() {
                 <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                   <div>
                     <p className="mb-1 text-sm font-medium text-gray-700">
-                      Oder laden Sie eine CSV-Datei hoch
+                      {t.bulk.csvUpload}
                     </p>
-                    <p className="text-xs text-gray-500">Spalten: Titel, Beschreibung, Zustand</p>
+                    <p className="text-xs text-gray-500">{t.bulk.csvColumns}</p>
                   </div>
                   <div className="flex flex-col gap-2 sm:flex-row">
                     <input
@@ -731,14 +732,14 @@ export default function BulkUploadPage() {
                       className="flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
                     >
                       <Upload className="mr-2 h-4 w-4" />
-                      CSV hochladen
+                      {t.bulk.uploadCsv}
                     </button>
                     <button
                       onClick={downloadTemplate}
                       className="flex items-center justify-center rounded-md border border-gray-300 px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50"
                     >
                       <Download className="mr-2 h-4 w-4" />
-                      Vorlage
+                      {t.bulk.template}
                     </button>
                   </div>
                 </div>
@@ -749,12 +750,12 @@ export default function BulkUploadPage() {
                 {products.map((product, index) => (
                   <div key={product.id} className="rounded-lg border border-gray-200 p-4">
                     <div className="mb-4 flex items-center justify-between">
-                      <h3 className="font-medium text-gray-900">Artikel {index + 1}</h3>
+                      <h3 className="font-medium text-gray-900">{t.bulk.article} {index + 1}</h3>
                       <div className="flex items-center gap-2">
                         <div className="group relative">
                           <button
                             className="p-2 text-gray-600 transition-colors hover:text-primary-600"
-                            title="Duplizieren"
+                            title={t.bulk.duplicate}
                           >
                             <Copy className="h-4 w-4" />
                           </button>
@@ -767,7 +768,7 @@ export default function BulkUploadPage() {
                                   onClick={() => duplicateMultiple(product.id, count)}
                                   className="block w-full rounded px-3 py-1 text-left text-sm hover:bg-gray-100"
                                 >
-                                  {count} {count === 1 ? 'Kopie' : 'Kopien'}
+                                  {count} {count === 1 ? t.bulk.copy : t.bulk.copies}
                                 </button>
                               ))}
                             </div>
@@ -776,7 +777,7 @@ export default function BulkUploadPage() {
                         <button
                           onClick={() => duplicateProduct(product.id)}
                           className="p-2 text-gray-600 transition-colors hover:text-primary-600"
-                          title="Einmal duplizieren"
+                          title={t.bulk.duplicate}
                         >
                           <Copy className="h-4 w-4" />
                         </button>
@@ -802,7 +803,7 @@ export default function BulkUploadPage() {
                     <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
                       <div className="md:col-span-2">
                         <label className="mb-1 block text-sm font-medium text-gray-700">
-                          Titel <span className="text-red-500">*</span>
+                          {t.bulk.titleLabel} <span className="text-red-500">*</span>
                         </label>
                         <input
                           type="text"
@@ -815,7 +816,7 @@ export default function BulkUploadPage() {
 
                       <div className="md:col-span-2">
                         <label className="mb-1 block text-sm font-medium text-gray-700">
-                          Beschreibung <span className="text-red-500">*</span>
+                          {t.bulk.description} <span className="text-red-500">*</span>
                         </label>
                         <textarea
                           value={product.description}
@@ -908,7 +909,7 @@ export default function BulkUploadPage() {
                   className="flex w-full items-center justify-center rounded-md bg-primary-600 px-4 py-2 text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
                   <Plus className="mr-2 h-4 w-4" />
-                  Artikel hinzufügen ({products.length}/100)
+                  {t.bulk.addArticleCount.replace('{count}', products.length.toString())}
                 </button>
 
                 <button
@@ -916,7 +917,7 @@ export default function BulkUploadPage() {
                   disabled={products.length === 0}
                   className="flex w-full items-center justify-center rounded-md bg-primary-600 px-6 py-2 font-medium text-white transition-colors hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50 sm:w-auto"
                 >
-                  Weiter zu Schritt 2
+                  {t.bulk.continueToStep2}
                   <ChevronRight className="ml-2 h-4 w-4" />
                 </button>
               </div>
@@ -929,7 +930,7 @@ export default function BulkUploadPage() {
           <div className="space-y-6">
             <div className="rounded-lg bg-white p-4 shadow-md sm:p-6">
               <h2 className="mb-4 text-xl font-semibold text-gray-900">
-                Schritt 2: Angebotsdetails festlegen
+                {t.bulk.step2Title}
               </h2>
               <p className="mb-6 text-gray-600">
                 Legen Sie Angebotstyp, Preis, Lieferart und weitere Details fest, die auf ein oder

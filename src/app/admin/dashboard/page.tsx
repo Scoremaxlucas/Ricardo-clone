@@ -2,6 +2,7 @@
 
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
+import { useLanguage } from '@/contexts/LanguageContext'
 import {
   Activity,
   AlertCircle,
@@ -40,6 +41,7 @@ interface Stats {
 }
 
 export default function AdminDashboard() {
+  const { t } = useLanguage()
   const { data: session, status } = useSession()
   const router = useRouter()
   const [stats, setStats] = useState<Stats | null>(null)
@@ -211,109 +213,109 @@ export default function AdminDashboard() {
       <Header />
       <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 lg:px-8">
         <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900">Admin-Dashboard</h1>
-          <p className="mt-2 text-gray-600">Übersicht und Verwaltung der Plattform</p>
+          <h1 className="text-3xl font-bold text-gray-900">{t.admin.dashboard.title}</h1>
+          <p className="mt-2 text-gray-600">{t.admin.dashboard.subtitle}</p>
         </div>
 
         {/* Quick Actions */}
         <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
           <ActionCard
-            title="Gesamtumsatz"
+            title={t.admin.dashboard.totalRevenue}
             icon={DollarSign}
             href="/admin/transactions"
             color="purple"
           />
           <ActionCard
-            title="Benutzerverwaltung"
+            title={t.admin.dashboard.userManagement}
             icon={Users}
             href="/admin/users"
             color="blue"
           />
           <ActionCard
-            title="Verifizierungen prüfen"
+            title={t.admin.dashboard.checkVerifications}
             icon={FileCheck}
             href="/admin/verifications"
             color="orange"
             badge={stats?.pendingVerifications || 0}
           />
           <ActionCard
-            title="Transaktionen"
+            title={t.admin.dashboard.transactions}
             icon={TrendingUp}
             href="/admin/transactions"
             color="green"
           />
           <ActionCard
-            title="Angebote moderieren"
+            title={t.admin.dashboard.moderateOffers}
             icon={ShoppingBag}
             href="/admin/moderate-watches"
             color="purple"
           />
           <ActionCard
-            title="Kontaktanfragen"
+            title={t.admin.dashboard.contactInquiries}
             icon={AlertCircle}
             href="/admin/contact-requests"
             color="blue"
             badge={0}
           />
           <ActionCard
-            title="Statistiken"
+            title={t.admin.dashboard.statistics}
             icon={BarChart3}
             href="/admin/statistics"
             color="indigo"
           />
           <ActionCard
-            title="Sicherheit"
+            title={t.admin.dashboard.security}
             icon={Shield}
             href="/admin/security"
             color="red"
           />
           <ActionCard
-            title="Pricing verwalten"
+            title={t.admin.dashboard.managePricing}
             icon={DollarSign}
             href="/admin/pricing"
             color="yellow"
           />
           <ActionCard
-            title="Rechnungen & Mahnwesen"
+            title={t.admin.dashboard.invoicesDunning}
             icon={Receipt}
             href="/admin/invoices"
             color="red"
             badge={0}
           />
           <ActionCard
-            title="Disputes verwalten"
+            title={t.admin.dashboard.manageDisputes}
             icon={AlertTriangle}
             href="/admin/disputes"
             color="orange"
             badge={stats?.pendingDisputes || 0}
           />
           <ActionCard
-            title="Bestellungen & Zahlungen"
+            title={t.admin.dashboard.ordersPayments}
             icon={CreditCard}
             href="/admin/orders"
             color="emerald"
           />
           <ActionCard
-            title="Bankverbindungs-Änderungen"
+            title={t.admin.dashboard.bankChanges}
             icon={Banknote}
             href="/admin/payout-change-requests"
             color="teal"
             badge={stats?.pendingPayoutChangeRequests || 0}
           />
           <ActionCard
-            title="Systemausfälle"
+            title={t.admin.dashboard.systemOutages}
             icon={Zap}
             href="/admin/system-outages"
             color="red"
           />
           <ActionCard
-            title="Stripe Monitoring"
+            title={t.admin.dashboard.stripeMonitoring}
             icon={Activity}
             href="/admin/stripe/monitoring"
             color="purple"
           />
           <ActionCard
-            title="Bexio Integration"
+            title={t.admin.dashboard.bexioIntegration}
             icon={Database}
             href="/admin/bexio"
             color="blue"

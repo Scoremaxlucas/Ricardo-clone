@@ -2,12 +2,14 @@
 
 import { Button } from '@/components/ui/Button'
 import { Logo } from '@/components/ui/Logo'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { CheckCircle2, Eye, EyeOff, XCircle } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function RegisterPage() {
+  const { t } = useLanguage()
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
@@ -42,33 +44,33 @@ export default function RegisterPage() {
     setError('')
 
     if (formData.password !== formData.confirmPassword) {
-      setError('Passwörter stimmen nicht überein')
+      setError(t.register.passwordsDontMatch)
       setIsLoading(false)
       return
     }
 
     if (formData.password.length < 6) {
-      setError('Passwort muss mindestens 6 Zeichen lang sein')
+      setError(t.register.passwordTooShort)
       setIsLoading(false)
       return
     }
 
     // Prüfe auf mindestens eine Zahl
     if (!/\d/.test(formData.password)) {
-      setError('Passwort muss mindestens eine Zahl enthalten')
+      setError(t.register.passwordNoNumber)
       setIsLoading(false)
       return
     }
 
     // Prüfe auf mindestens ein Sonderzeichen
     if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(formData.password)) {
-      setError('Passwort muss mindestens ein Sonderzeichen enthalten')
+      setError(t.register.passwordNoSpecialChar)
       setIsLoading(false)
       return
     }
 
     if (formData.nickname.length < 6) {
-      setError('Nickname muss mindestens 6 Zeichen lang sein')
+      setError(t.register.nicknameTooShort)
       setIsLoading(false)
       return
     }
@@ -97,7 +99,7 @@ export default function RegisterPage() {
       } else {
         const data = await response.json()
         // Show detailed error including errorCode if available
-        const errorMessage = data.message || 'Ein Fehler ist aufgetreten'
+        const errorMessage = data.message || t.register.error
         const errorDetails = data.errorCode
           ? `${errorMessage} (Fehlercode: ${data.errorCode})`
           : errorMessage
@@ -111,7 +113,7 @@ export default function RegisterPage() {
         setError(errorDetails)
       }
     } catch (error) {
-      setError('Ein Fehler ist aufgetreten')
+      setError(t.register.error)
     } finally {
       setIsLoading(false)
     }
@@ -128,9 +130,9 @@ export default function RegisterPage() {
           <div className="mb-4 flex justify-center">
             <Logo size="md" />
           </div>
-          <h1 className="text-2xl font-bold text-gray-900">Konto erstellen</h1>
+          <h1 className="text-2xl font-bold text-gray-900">{t.register.title}</h1>
           <p className="mt-2 text-sm text-gray-500">
-            Starten Sie kostenlos auf Helvenda
+            {t.register.subtitle}
           </p>
         </div>
 
@@ -146,7 +148,7 @@ export default function RegisterPage() {
             <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
               <div>
                 <label htmlFor="firstName" className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Vorname
+                  {t.register.firstName}
                 </label>
                 <input
                   id="firstName"
@@ -164,7 +166,7 @@ export default function RegisterPage() {
 
               <div>
                 <label htmlFor="lastName" className="mb-1.5 block text-sm font-medium text-gray-700">
-                  Nachname
+                  {t.register.lastName}
                 </label>
                 <input
                   id="lastName"
@@ -184,7 +186,7 @@ export default function RegisterPage() {
             {/* Nickname */}
             <div>
               <label htmlFor="nickname" className="mb-1.5 block text-sm font-medium text-gray-700">
-                Benutzername
+                {t.register.username}
               </label>
               <input
                 id="nickname"
@@ -200,14 +202,14 @@ export default function RegisterPage() {
                 placeholder="maxmustermann"
               />
               <p className="mt-1 text-xs text-gray-500">
-                Öffentlich sichtbar · Mind. 6 Zeichen
+                {t.register.usernameDesc}
               </p>
             </div>
 
             {/* Email */}
             <div>
               <label htmlFor="email" className="mb-1.5 block text-sm font-medium text-gray-700">
-                E-Mail-Adresse
+                {t.register.email}
               </label>
               <input
                 id="email"
@@ -227,7 +229,7 @@ export default function RegisterPage() {
             {/* Password */}
             <div>
               <label htmlFor="password" className="mb-1.5 block text-sm font-medium text-gray-700">
-                Passwort
+                {t.register.password}
               </label>
               <div className="relative">
                 <input
@@ -248,7 +250,7 @@ export default function RegisterPage() {
                   onClick={() => setShowPassword(!showPassword)}
                   disabled={isLoading}
                   className="absolute inset-y-0 right-0 flex items-center pr-4 text-gray-400 hover:text-gray-600"
-                  aria-label={showPassword ? 'Passwort verbergen' : 'Passwort anzeigen'}
+                  aria-label={showPassword ? t.register.hidePassword : t.register.showPassword}
                 >
                   {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
@@ -263,7 +265,7 @@ export default function RegisterPage() {
                       <XCircle className="h-3.5 w-3.5 text-gray-400" />
                     )}
                     <span className={passwordValidation.minLength ? 'text-green-700' : 'text-gray-500'}>
-                      6+ Zeichen
+                      {t.register.passwordRequirement1}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs">
@@ -273,7 +275,7 @@ export default function RegisterPage() {
                       <XCircle className="h-3.5 w-3.5 text-gray-400" />
                     )}
                     <span className={passwordValidation.hasNumber ? 'text-green-700' : 'text-gray-500'}>
-                      1 Zahl
+                      {t.register.passwordRequirement2}
                     </span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs">
@@ -283,7 +285,7 @@ export default function RegisterPage() {
                       <XCircle className="h-3.5 w-3.5 text-gray-400" />
                     )}
                     <span className={passwordValidation.hasSpecialChar ? 'text-green-700' : 'text-gray-500'}>
-                      1 Sonderzeichen
+                      {t.register.passwordRequirement3}
                     </span>
                   </div>
                 </div>
@@ -293,7 +295,7 @@ export default function RegisterPage() {
             {/* Confirm Password */}
             <div>
               <label htmlFor="confirmPassword" className="mb-1.5 block text-sm font-medium text-gray-700">
-                Passwort bestätigen
+                {t.register.confirmPassword}
               </label>
               <div className="relative">
                 <input
@@ -319,7 +321,7 @@ export default function RegisterPage() {
                 </button>
               </div>
               {formData.confirmPassword && formData.password !== formData.confirmPassword && (
-                <p className="mt-1 text-xs text-red-600">Passwörter stimmen nicht überein</p>
+                <p className="mt-1 text-xs text-red-600">{t.register.passwordsDontMatch}</p>
               )}
             </div>
           </div>
@@ -336,7 +338,7 @@ export default function RegisterPage() {
                 className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-gray-700">
-                Ich bin mindestens <strong>18 Jahre</strong> alt
+                {t.register.ageCheck}
               </span>
             </label>
 
@@ -350,13 +352,13 @@ export default function RegisterPage() {
                 className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary-600 focus:ring-primary-500"
               />
               <span className="text-sm text-gray-700">
-                Ich akzeptiere die{' '}
+                {t.register.termsCheck}{' '}
                 <Link href="/terms" className="font-medium text-primary-600 hover:underline">
-                  AGB
+                  {t.register.terms}
                 </Link>{' '}
-                und{' '}
+                {t.register.and}{' '}
                 <Link href="/privacy" className="font-medium text-primary-600 hover:underline">
-                  Datenschutzerklärung
+                  {t.register.privacy}
                 </Link>
               </span>
             </label>
@@ -370,15 +372,15 @@ export default function RegisterPage() {
             loading={isLoading}
             className="w-full py-3"
           >
-            {isLoading ? 'Konto wird erstellt...' : 'Konto erstellen'}
+            {isLoading ? t.register.submitting : t.register.submit}
           </Button>
         </form>
 
         {/* Footer */}
         <p className="mt-6 text-center text-sm text-gray-500">
-          Bereits ein Konto?{' '}
+          {t.register.alreadyHaveAccount}{' '}
           <Link href="/login" className="font-semibold text-primary-600 hover:text-primary-700">
-            Anmelden
+            {t.register.login}
           </Link>
         </p>
       </div>
