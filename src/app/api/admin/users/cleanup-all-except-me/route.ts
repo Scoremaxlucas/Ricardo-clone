@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
     // Lösche alle abhängigen Daten - verwende einzelne Transaktionen pro User
     for (const userId of userIds) {
       const userEmail = usersToDelete.find(u => u.id === userId)?.email || 'unknown'
-      
+
       try {
         // Verwende eine große Transaktion, aber fange Fehler ab
         await prisma.$transaction(async (tx) => {

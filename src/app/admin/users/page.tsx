@@ -68,7 +68,6 @@ export default function AdminUsersPage() {
   const [emailChangeUserId, setEmailChangeUserId] = useState<string | null>(null)
   const [emailChangeUserName, setEmailChangeUserName] = useState<string | null>(null)
   const [emailChangeCurrentEmail, setEmailChangeCurrentEmail] = useState<string>('')
-  const [cleaningUp, setCleaningUp] = useState(false)
 
   useEffect(() => {
     if (status === 'loading') return
@@ -352,45 +351,6 @@ export default function AdminUsersPage() {
     }
   }
 
-  const handleCleanupTestUsers = async () => {
-    if (!confirm('⚠️ WARNUNG: Dies löscht ALLE User außer Ihnen!\n\nNur Sie bleiben erhalten.\n\nMöchten Sie wirklich fortfahren?')) {
-      return
-    }
-
-    if (!confirm('⚠️ LETZTE BESTÄTIGUNG: Dies kann NICHT rückgängig gemacht werden!\n\nSind Sie sicher?')) {
-      return
-    }
-
-    setCleaningUp(true)
-    try {
-      const res = await fetch('/api/admin/users/cleanup-all-except-me', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ confirm: true }),
-      })
-
-      const data = await res.json()
-
-      if (res.ok) {
-        toast.success(`✅ Cleanup abgeschlossen: ${data.stats.deletedUsers} User gelöscht. Sie bleiben erhalten.`, {
-          duration: 5000,
-        })
-        if (data.warning) {
-          toast.error(data.warning, { duration: 5000 })
-        }
-        // Reload users
-        await loadUsers()
-      } else {
-        toast.error(data.message || 'Fehler beim Cleanup')
-      }
-    } catch (error: any) {
-      console.error('Error during cleanup:', error)
-      toast.error('Fehler beim Cleanup: ' + error.message)
-    } finally {
-      setCleaningUp(false)
-    }
-  }
-
   if (status === 'loading' || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
@@ -450,13 +410,6 @@ export default function AdminUsersPage() {
               <p className="mt-2 text-gray-600">Verwalten Sie alle Benutzer der Plattform</p>
             </div>
             <div className="flex gap-4">
-              <button
-                onClick={handleCleanupTestUsers}
-                disabled={cleaningUp}
-                className="rounded-lg bg-red-600 px-4 py-2 font-medium text-white transition-colors hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                {cleaningUp ? 'Löschen...' : '🧹 Alle Test-User löschen'}
-              </button>
               <Link href="/" className="font-medium text-primary-600 hover:text-primary-700">
                 ← Zurück zur Hauptseite
               </Link>
