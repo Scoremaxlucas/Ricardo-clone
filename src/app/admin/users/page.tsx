@@ -353,7 +353,7 @@ export default function AdminUsersPage() {
   }
 
   const handleCleanupTestUsers = async () => {
-    if (!confirm('⚠️ WARNUNG: Dies löscht ALLE Nicht-Admin-User und deren Daten!\n\nNur Admin-User bleiben erhalten.\n\nMöchten Sie wirklich fortfahren?')) {
+    if (!confirm('⚠️ WARNUNG: Dies löscht ALLE User außer Ihnen!\n\nNur Sie bleiben erhalten.\n\nMöchten Sie wirklich fortfahren?')) {
       return
     }
 
@@ -363,7 +363,7 @@ export default function AdminUsersPage() {
 
     setCleaningUp(true)
     try {
-      const res = await fetch('/api/admin/users/cleanup-test-users', {
+      const res = await fetch('/api/admin/users/cleanup-all-except-me', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ confirm: true }),
@@ -372,7 +372,7 @@ export default function AdminUsersPage() {
       const data = await res.json()
 
       if (res.ok) {
-        toast.success(`✅ Cleanup abgeschlossen: ${data.stats.deletedUsers} User gelöscht`, {
+        toast.success(`✅ Cleanup abgeschlossen: ${data.stats.deletedUsers} User gelöscht. Sie bleiben erhalten.`, {
           duration: 5000,
         })
         if (data.warning) {
