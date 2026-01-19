@@ -352,6 +352,45 @@ export default function AdminUsersPage() {
     }
   }
 
+  const handleCleanupTestUsers = async () => {
+    if (!confirm('⚠️ WARNUNG: Dies löscht ALLE Nicht-Admin-User und deren Daten!\n\nNur Admin-User bleiben erhalten.\n\nMöchten Sie wirklich fortfahren?')) {
+      return
+    }
+
+    if (!confirm('⚠️ LETZTE BESTÄTIGUNG: Dies kann NICHT rückgängig gemacht werden!\n\nSind Sie sicher?')) {
+      return
+    }
+
+    setCleaningUp(true)
+    try {
+      const res = await fetch('/api/admin/users/cleanup-test-users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ confirm: true }),
+      })
+
+      const data = await res.json()
+
+      if (res.ok) {
+        toast.success(`✅ Cleanup abgeschlossen: ${data.stats.deletedUsers} User gelöscht`, {
+          duration: 5000,
+        })
+        if (data.warning) {
+          toast.error(data.warning, { duration: 5000 })
+        }
+        // Reload users
+        await loadUsers()
+      } else {
+        toast.error(data.message || 'Fehler beim Cleanup')
+      }
+    } catch (error: any) {
+      console.error('Error during cleanup:', error)
+      toast.error('Fehler beim Cleanup: ' + error.message)
+    } finally {
+      setCleaningUp(false)
+    }
+  }
+
   if (status === 'loading' || loading) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-gray-50">
