@@ -58,21 +58,21 @@ export async function POST(request: NextRequest) {
       } catch (error: any) {
         const errorMsg = error.message || String(error)
         console.error(`[cleanup-simple] ⚠️ Prisma Delete fehlgeschlagen bei ${user.email}:`, errorMsg)
-        
+
         // Versuche manuell zu löschen mit Raw SQL (umgeht Constraints)
         try {
           console.log(`[cleanup-simple] 🔄 Versuche Raw SQL Delete für ${user.email}...`)
-          
+
           // Lösche Watches ZUERST (können Constraints verursachen)
           const watches = await prisma.watch.findMany({
             where: { sellerId: user.id },
             select: { id: true },
           })
-          
+
           if (watches.length > 0) {
             console.log(`[cleanup-simple]   Lösche ${watches.length} Watches...`)
             const watchIds = watches.map(w => w.id)
-            
+
             // Lösche watch-abhängige Daten einzeln (robuster)
             for (const watchId of watchIds) {
               try {
@@ -99,11 +99,11 @@ export async function POST(request: NextRequest) {
                 console.log(`[cleanup-simple]   Warnung bei Watch ${watchId}: ${e.message}`)
               }
             }
-            
+
             // Lösche Watches
             await prisma.watch.deleteMany({ where: { sellerId: user.id } })
           }
-          
+
           // Lösche User-spezifische Daten
           console.log(`[cleanup-simple]   Lösche User-Daten für ${user.email}...`)
           await prisma.bid.deleteMany({ where: { userId: user.id } }).catch(() => {})
@@ -142,7 +142,7 @@ export async function POST(request: NextRequest) {
           await prisma.payoutAuditLog.deleteMany({ where: { actorUserId: user.id } }).catch(() => {})
           await prisma.disputeComment.deleteMany({ where: { userId: user.id } }).catch(() => {})
           await prisma.systemOutage.deleteMany({ where: { OR: [{ createdBy: user.id }, { resolvedBy: user.id }, { extensionAppliedBy: user.id }] } }).catch(() => {})
-          
+
           // Jetzt lösche den User
           await prisma.user.delete({ where: { id: user.id } })
           deleted++
@@ -159,7 +159,7 @@ export async function POST(request: NextRequest) {
     console.log(`[cleanup-simple] Fertig: ${deleted}/${usersToDelete.length} gelöscht`)
 
     let message = `✅ ${deleted} von ${usersToDelete.length} Usern gelöscht. Sie (${currentAdmin.email}) bleiben erhalten.`
-    
+
     if (failedUsers.length > 0) {
       message += ` ⚠️ ${failedUsers.length} User konnten nicht gelöscht werden.`
       console.error(`[cleanup-simple] Fehlgeschlagene User:`, failedUsers)
