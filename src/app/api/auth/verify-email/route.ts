@@ -1,4 +1,4 @@
-import { getWelcomeEmail, sendEmail } from '@/lib/email'
+import { getVerificationApprovalEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -46,20 +46,21 @@ export async function GET(request: NextRequest) {
       },
     })
 
-    // Send welcome email
+    // Send verification approval email (the preferred email template)
     const userName = user.firstName || user.nickname || 'Benutzer'
     try {
-      const { subject, html, text } = getWelcomeEmail(userName)
+      const { subject, html, text } = getVerificationApprovalEmail(userName, user.email)
       await sendEmail({
         to: user.email,
         subject,
         html,
         text,
+        useNoReply: true, // Verification confirmation: automatic system email
       })
-      console.log(`[verify-email] Welcome email sent to ${user.email}`)
+      console.log(`[verify-email] Verification approval email sent to ${user.email}`)
     } catch (emailError: any) {
-      console.error(`[verify-email] Failed to send welcome email:`, emailError)
-      // Don't fail verification if welcome email fails
+      console.error(`[verify-email] Failed to send verification email:`, emailError)
+      // Don't fail verification if email fails
     }
 
     // Create welcome notification

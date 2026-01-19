@@ -1,5 +1,5 @@
 import { authOptions } from '@/lib/auth'
-import { getManualEmailVerificationEmail, getWelcomeEmail, sendEmail } from '@/lib/email'
+import { getVerificationApprovalEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -62,26 +62,22 @@ export async function POST(
       },
     })
 
-    // Send notification email to user
+    // Send verification approval email (the preferred email template)
     const userName = user.firstName || user.nickname || 'Benutzer'
-
-    // Send manual verification notification
-    const { subject, html, text } = getManualEmailVerificationEmail(userName, adminName)
-    await sendEmail({
-      to: user.email,
-      subject,
-      html,
-      text,
-    })
-
-    // Also send welcome email
-    const welcomeEmail = getWelcomeEmail(userName)
-    await sendEmail({
-      to: user.email,
-      subject: welcomeEmail.subject,
-      html: welcomeEmail.html,
-      text: welcomeEmail.text,
-    })
+    try {
+      const { subject, html, text } = getVerificationApprovalEmail(userName, user.email)
+      await sendEmail({
+        to: user.email,
+        subject,
+        html,
+        text,
+        useNoReply: true, // Verification confirmation: automatic system email
+      })
+      console.log(`[admin/verify-email] Verification approval email sent to ${user.email}`)
+    } catch (emailError: any) {
+      console.error(`[admin/verify-email] Failed to send verification email:`, emailError)
+      // Don't fail verification if email fails
+    }
 
     // Create notification for user
     await prisma.notification.create({
