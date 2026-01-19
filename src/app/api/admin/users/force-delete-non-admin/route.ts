@@ -5,7 +5,7 @@ import { NextRequest, NextResponse } from 'next/server'
 
 /**
  * POST /api/admin/users/force-delete-non-admin
- * 
+ *
  * FORCIERTE LÖSCHUNG mit manueller Bereinigung aller abhängigen Daten.
  */
 export async function POST(request: NextRequest) {
@@ -54,7 +54,7 @@ export async function POST(request: NextRequest) {
           where: { sellerId: userId },
           select: { id: true },
         })
-        
+
         for (const watch of watches) {
           const watchId = watch.id
           // Lösche Watch-abhängige Daten
@@ -78,7 +78,7 @@ export async function POST(request: NextRequest) {
           await prisma.order.deleteMany({ where: { watchId } }).catch(() => {})
           await prisma.productStats.deleteMany({ where: { watchId } }).catch(() => {})
         }
-        
+
         // Lösche Watches
         await prisma.watch.deleteMany({ where: { sellerId: userId } }).catch(() => {})
 
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
         await prisma.systemOutage.deleteMany({ where: { createdBy: userId } }).catch(() => {})
         await prisma.systemOutage.deleteMany({ where: { resolvedBy: userId } }).catch(() => {})
         await prisma.systemOutage.deleteMany({ where: { extensionAppliedBy: userId } }).catch(() => {})
-        await prisma.auctionViewer.deleteMany({ where: { visitorId: userId } }).catch(() => {})
+        await prisma.auctionViewer.deleteMany({ where: { userId } }).catch(() => {})
         await prisma.order.deleteMany({ where: { buyerId: userId } }).catch(() => {})
         await prisma.order.deleteMany({ where: { sellerId: userId } }).catch(() => {})
         await prisma.conversation.deleteMany({ where: { userId } }).catch(() => {})
