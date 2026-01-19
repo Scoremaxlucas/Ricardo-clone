@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     },
     { status: 403 }
   )
-    const session = await getServerSession(authOptions)
+}
 
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
