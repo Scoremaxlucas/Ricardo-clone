@@ -1,13 +1,13 @@
 #!/usr/bin/env tsx
 /**
  * Script zum Löschen aller Test-User (Nicht-Admin-User)
- * 
+ *
  * WICHTIG: Diese Aktion ist irreversibel!
  * Nur ausführen, wenn du sicher bist, dass du alle Test-User löschen möchtest.
- * 
+ *
  * Usage:
  *   tsx scripts/cleanup-test-users.ts
- * 
+ *
  * Oder mit Bestätigung:
  *   tsx scripts/cleanup-test-users.ts --confirm
  */
@@ -238,7 +238,7 @@ async function main() {
   // Finale Statistiken
   const remainingUsers = await prisma.user.count()
   const remainingAdminUsers = await prisma.user.count({ where: { isAdmin: true } })
-  
+
   console.log('\n🎯 Finale Statistiken:')
   console.log(`   Verbleibende User: ${remainingUsers}`)
   console.log(`   Admin-User: ${remainingAdminUsers}`)

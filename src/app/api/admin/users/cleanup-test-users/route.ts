@@ -180,9 +180,9 @@ export async function POST(request: NextRequest) {
           await tx.userAddress.deleteMany({ where: { userId } })
           await tx.session.deleteMany({ where: { userId } })
           await tx.account.deleteMany({ where: { userId } })
-          await tx.report.deleteMany({ where: { reportedById: userId } })
+          await tx.report.deleteMany({ where: { reportedBy: userId } })
           await tx.userReport.deleteMany({
-            where: { OR: [{ reportedById: userId }, { reportedUserId: userId }] },
+            where: { OR: [{ reportedBy: userId }, { reportedUserId: userId }] },
           })
           await tx.adminNote.deleteMany({ where: { adminId: userId } })
           await tx.userAdminNote.deleteMany({
