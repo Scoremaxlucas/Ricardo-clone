@@ -609,7 +609,7 @@ function SellPageContent() {
 
     restoreDraft()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [session?.user?.id]) // Only depend on user ID, not the whole session object
+  }, [(session?.user as { id?: string })?.id]) // Only depend on user ID, not the whole session object
 
   // Auto-save on changes (debounced) - Server-seitig
   // ONLY save when user has meaningful content AND hasn't just published
