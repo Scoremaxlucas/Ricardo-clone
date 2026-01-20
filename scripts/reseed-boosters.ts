@@ -18,7 +18,7 @@ async function main() {
       code: 'boost',
       name: 'Boost',
       description: 'Das Angebot wird in einer Liste von ähnlichen Modellen fett hervorgehoben',
-      price: 10.0,
+      price: 5.0,
       isActive: true,
     },
     {
@@ -26,7 +26,7 @@ async function main() {
       name: 'Turbo-Boost',
       description:
         'Das Angebot wird nicht nur hervorgehoben sondern erscheint teilweise auf der Hauptseite als "Turbo-Boost-Angebot"',
-      price: 25.0,
+      price: 10.0,
       isActive: true,
     },
     {
@@ -34,7 +34,7 @@ async function main() {
       name: 'Super-Boost',
       description:
         'Das Angebot wird hervorgehoben, erscheint teilweise auf der Hauptseite und wird immer zuoberst in der Liste angezeigt',
-      price: 45.0,
+      price: 25.0,
       isActive: true,
     },
   ]

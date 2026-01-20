@@ -1053,12 +1053,12 @@ export async function POST(request: NextRequest) {
 
         // Hardcoded Preise als Fallback (Watch-out.ch Style)
         const hardcodedPrices: Record<string, { price: number; name: string }> = {
-          'boost': { price: 19.90, name: 'Boost' },
-          'turbo-boost': { price: 39.90, name: 'Turbo-Boost' },
-          'super-boost': { price: 69.90, name: 'Super-Boost' },
-          'bronze': { price: 19.90, name: 'Boost' },
-          'silber': { price: 39.90, name: 'Turbo-Boost' },
-          'gold': { price: 69.90, name: 'Super-Boost' },
+          'boost': { price: 5.0, name: 'Boost' },
+          'turbo-boost': { price: 10.0, name: 'Turbo-Boost' },
+          'super-boost': { price: 25.0, name: 'Super-Boost' },
+          'bronze': { price: 5.0, name: 'Boost' },
+          'silber': { price: 10.0, name: 'Turbo-Boost' },
+          'gold': { price: 25.0, name: 'Super-Boost' },
         }
 
         // Hole Booster-Details - versuche zuerst neuen Code, dann alten Code

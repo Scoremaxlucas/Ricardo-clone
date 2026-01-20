@@ -14,7 +14,7 @@ export async function GET(request: NextRequest) {
       id: 'boost',
       name: 'Boost',
       description: 'Bessere Platzierung in Suchergebnissen',
-      price: 19.90,
+      price: 5.0,
       badge: 'BOOST',
       badgeColor: '#0ea5e9', // sky-500 (blau)
     },
@@ -22,7 +22,7 @@ export async function GET(request: NextRequest) {
       id: 'turbo-boost',
       name: 'Turbo-Boost',
       description: 'Sehr prominente Platzierung + erhöhte Sichtbarkeit',
-      price: 39.90,
+      price: 10.0,
       badge: 'TURBO',
       badgeColor: '#8b5cf6', // violet-500 (lila)
     },
@@ -30,7 +30,7 @@ export async function GET(request: NextRequest) {
       id: 'super-boost',
       name: 'Super-Boost',
       description: 'Top-Position + Premium-Startseite + Priorität',
-      price: 69.90,
+      price: 25.0,
       badge: 'SUPER',
       badgeColor: '#f59e0b', // amber-500 (gold/orange)
     },

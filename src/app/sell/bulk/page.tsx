@@ -87,6 +87,22 @@ export default function BulkUploadPage() {
   // Ausgewählte Artikel für Veröffentlichung
   const [selectedProducts, setSelectedProducts] = useState<Set<string>>(new Set())
 
+  // Redirect mobile users to regular sell page
+  useEffect(() => {
+    const checkMobile = () => {
+      // Check if screen width is mobile (less than 768px)
+      const isMobile = window.innerWidth < 768
+      if (isMobile) {
+        router.push('/sell')
+      }
+    }
+
+    // Check on mount and on resize
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [router])
+
   // Prüfe Verifizierungsstatus und lade Booster
   useEffect(() => {
     const loadVerificationStatus = async () => {

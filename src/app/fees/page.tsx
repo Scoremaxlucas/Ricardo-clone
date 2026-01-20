@@ -200,7 +200,7 @@ export default function FeesPage() {
                           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-blue-500 text-xs text-white">⚡</span>
                           <span className="font-medium text-gray-900">Boost</span>
                         </div>
-                        <span className="text-sm font-semibold text-blue-600">CHF 19.90</span>
+                        <span className="text-sm font-semibold text-blue-600">CHF 5.00</span>
                       </div>
                       <p className="mt-2 text-xs text-gray-600">Bessere Platzierung in Suchergebnissen und erhöhte Sichtbarkeit</p>
                     </div>
@@ -211,7 +211,7 @@ export default function FeesPage() {
                           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-violet-500 text-xs text-white">🚀</span>
                           <span className="font-medium text-gray-900">Turbo-Boost</span>
                         </div>
-                        <span className="text-sm font-semibold text-violet-600">CHF 39.90</span>
+                        <span className="text-sm font-semibold text-violet-600">CHF 10.00</span>
                       </div>
                       <p className="mt-2 text-xs text-gray-600">Sehr prominente Platzierung + alle Boost-Vorteile inklusive</p>
                     </div>
@@ -222,7 +222,7 @@ export default function FeesPage() {
                           <span className="flex h-6 w-6 items-center justify-center rounded-full bg-orange-500 text-xs text-white">👑</span>
                           <span className="font-medium text-gray-900">Super-Boost</span>
                         </div>
-                        <span className="text-sm font-semibold text-orange-600">CHF 69.90</span>
+                        <span className="text-sm font-semibold text-orange-600">CHF 25.00</span>
                       </div>
                       <p className="mt-2 text-xs text-gray-600">Höchste Sichtbarkeit, Top-Position + Startseiten-Präsenz</p>
                     </div>
@@ -252,7 +252,7 @@ export default function FeesPage() {
                               <span className="font-medium text-gray-900">Boost</span>
                             </div>
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-blue-600 md:px-6 md:py-4">CHF 19.90</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-blue-600 md:px-6 md:py-4">CHF 5.00</td>
                           <td className="px-4 py-3 text-sm text-gray-600 md:px-6 md:py-4">
                             <ul className="list-inside list-disc space-y-0.5">
                               <li>Verbesserte Sichtbarkeit</li>
@@ -268,7 +268,7 @@ export default function FeesPage() {
                               <span className="font-medium text-gray-900">Turbo-Boost</span>
                             </div>
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-violet-600 md:px-6 md:py-4">CHF 39.90</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-violet-600 md:px-6 md:py-4">CHF 10.00</td>
                           <td className="px-4 py-3 text-sm text-gray-600 md:px-6 md:py-4">
                             <ul className="list-inside list-disc space-y-0.5">
                               <li>Alle Boost-Vorteile inklusive</li>
@@ -284,7 +284,7 @@ export default function FeesPage() {
                               <span className="font-medium text-gray-900">Super-Boost</span>
                             </div>
                           </td>
-                          <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-orange-600 md:px-6 md:py-4">CHF 69.90</td>
+                          <td className="whitespace-nowrap px-4 py-3 text-sm font-semibold text-orange-600 md:px-6 md:py-4">CHF 25.00</td>
                           <td className="px-4 py-3 text-sm text-gray-600 md:px-6 md:py-4">
                             <ul className="list-inside list-disc space-y-0.5">
                               <li>Alle Turbo-Boost-Vorteile inklusive</li>

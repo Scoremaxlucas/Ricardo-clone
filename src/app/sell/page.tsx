@@ -451,9 +451,20 @@ function SellPageContent() {
     return () => clearTimeout(timeoutId)
   }, [currentStep])
 
+  // Track if we've already checked for drafts to prevent showing prompt multiple times
+  const draftCheckRef = useRef(false)
+  const hasActiveDraftRef = useRef(false)
+
   // Restore draft on mount - Try server first, fallback to localStorage
   useEffect(() => {
+    // Only check for drafts once on initial mount, not on every session change
+    if (draftCheckRef.current) return
+    if (!session?.user) return // Wait for session to be available
+
     const restoreDraft = async () => {
+      // Mark that we've checked to prevent re-running (even if session object changes)
+      draftCheckRef.current = true
+
       // Check URL query parameter first (for "Entwurf fortsetzen" link)
       const urlDraftId = searchParams.get('draft')
       if (urlDraftId) {
@@ -483,6 +494,7 @@ function SellPageContent() {
             setCurrentDraftId(draft.id)
             setShowDraftRestored(true)
             setLastSavedAt(new Date(draft.updatedAt))
+            hasActiveDraftRef.current = true
             router.push(`/sell?step=${draft.currentStep}`)
             return
           }
@@ -523,17 +535,13 @@ function SellPageContent() {
             setCurrentDraftId(draft.id) // Set draft ID for image operations
             setShowDraftRestored(true)
             setLastSavedAt(new Date(draft.updatedAt))
+            hasActiveDraftRef.current = true
             router.push(`/sell?step=${draft.currentStep}`)
             return
           }
         } catch (error) {
           console.error('[Draft] Error loading specific draft:', error)
         }
-      }
-
-      if (!session?.user) {
-        // Not logged in - cannot restore draft (must be logged in to sell)
-        return
       }
 
       // Clear drafts from other users on mount
@@ -554,6 +562,7 @@ function SellPageContent() {
 
       // Ricardo-Style: Prüfe ob ein Entwurf existiert und zeige Prompt
       // Nur wenn kein expliziter Draft-Request (URL oder localStorage) vorhanden war
+      // UND nur wenn der User noch nicht aktiv an einem Entwurf arbeitet
       try {
         const response = await fetch('/api/sell/drafts/current')
         if (response.ok) {
@@ -568,9 +577,28 @@ function SellPageContent() {
               draft.selectedCategory
 
             if (hasContent) {
-              // Zeige Prompt statt automatisches Restore
-              setPendingDraft(draft)
-              setShowDraftPrompt(true)
+              // Prüfe ob User bereits aktiv an diesem Entwurf arbeitet
+              // (z.B. wenn currentDraftId gesetzt ist oder Formular bereits ausgefüllt ist)
+              // WICHTIG: Prüfe den aktuellen State zum Zeitpunkt der Prüfung
+              const isAlreadyWorkingOnDraft =
+                currentDraftId === draft.id ||
+                hasActiveDraftRef.current ||
+                (formData.title && formData.title.trim().length > 0) ||
+                (formData.description && formData.description.trim().length > 0) ||
+                (formData.images && formData.images.length > 0) ||
+                selectedCategory
+
+              // Nur Prompt zeigen wenn User NICHT bereits aktiv arbeitet
+              if (!isAlreadyWorkingOnDraft) {
+                setPendingDraft(draft)
+                setShowDraftPrompt(true)
+              } else {
+                // User arbeitet bereits daran, setze draft ID falls noch nicht gesetzt
+                if (!currentDraftId && draft.id) {
+                  setCurrentDraftId(draft.id)
+                  hasActiveDraftRef.current = true
+                }
+              }
             }
           }
         }
@@ -580,7 +608,8 @@ function SellPageContent() {
     }
 
     restoreDraft()
-  }, [session?.user])
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [session?.user?.id]) // Only depend on user ID, not the whole session object
 
   // Auto-save on changes (debounced) - Server-seitig
   // ONLY save when user has meaningful content AND hasn't just published

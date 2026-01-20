@@ -3,7 +3,6 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { put } from '@vercel/blob'
-import { compressImage } from '@/lib/image-compression'
 
 // POST: Upload image for a draft
 export async function POST(
@@ -42,13 +41,17 @@ export async function POST(
       return NextResponse.json({ message: 'Keine Datei hochgeladen' }, { status: 400 })
     }
 
-    // Compress image
-    const compressedFile = await compressImage(file)
-
-    // Upload to Vercel Blob Storage
-    const blob = await put(`drafts/${draftId}/${Date.now()}-${file.name}`, compressedFile, {
+    // Note: Image is already compressed on client-side, so we use the file directly
+    // If we wanted to compress server-side too, we'd need to convert the base64 string to File:
+    // const compressedBase64 = await compressImage(file)
+    // const base64Data = compressedBase64.split(',')[1]
+    // const buffer = Buffer.from(base64Data, 'base64')
+    // const compressedFile = new File([buffer], file.name, { type: 'image/jpeg' })
+    
+    // Upload to Vercel Blob Storage (file is already compressed on client)
+    const blob = await put(`drafts/${draftId}/${Date.now()}-${file.name}`, file, {
       access: 'public',
-      contentType: file.type,
+      contentType: file.type || 'image/jpeg',
     })
 
     // Get current max sortOrder for this draft

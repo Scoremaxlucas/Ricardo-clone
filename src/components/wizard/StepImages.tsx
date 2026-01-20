@@ -163,10 +163,17 @@ export function StepImages({
           })
         }
 
-        // Convert base64 to File for upload
-        const base64Response = await fetch(compressedImage)
-        const blob = await base64Response.blob()
-        const uploadFile = new File([blob], file.name, { type: file.type })
+        // Convert base64 data URL to File for upload
+        // More reliable than using fetch() on data URLs
+        const base64Data = compressedImage.split(',')[1]
+        const byteCharacters = atob(base64Data)
+        const byteNumbers = new Array(byteCharacters.length)
+        for (let i = 0; i < byteCharacters.length; i++) {
+          byteNumbers[i] = byteCharacters.charCodeAt(i)
+        }
+        const byteArray = new Uint8Array(byteNumbers)
+        const blob = new Blob([byteArray], { type: 'image/jpeg' })
+        const uploadFile = new File([blob], file.name, { type: 'image/jpeg' })
 
         // Upload immediately to server
         const uploadFormData = new FormData()
