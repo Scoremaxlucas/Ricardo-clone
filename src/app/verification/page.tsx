@@ -1079,7 +1079,7 @@ export default function VerificationPage() {
                   {selectedPaymentMethods.some(pm => pm.type === 'twint') && (
                     <div className="ml-7 mt-3">
                       <label className="mb-2 block text-sm font-medium text-gray-700">
-                        {t.verification.twint} {t.common.phone || 'Telefonnummer'} *
+                        {t.verification.twint} Telefonnummer *
                       </label>
                       <input
                         type="tel"
