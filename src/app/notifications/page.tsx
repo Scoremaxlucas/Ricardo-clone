@@ -322,7 +322,7 @@ export default function NotificationsPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
 
-      <div className="mx-auto max-w-4xl px-4 py-4 sm:px-6 sm:py-8">
+      <div className="mx-auto max-w-6xl px-4 py-4 sm:px-6 sm:py-8">
         <div className="rounded-lg border border-gray-200 bg-white shadow-sm overflow-hidden">
           {/* Header */}
           <div className="border-b border-gray-200 p-4 sm:p-6">

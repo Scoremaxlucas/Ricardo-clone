@@ -26,7 +26,9 @@ export async function GET(request: NextRequest) {
       where.archived = true
     } else {
       // Standard: Archivierte ausschließen (außer wenn explizit archivedOnly=true)
-      where.archived = false
+      // Handle null values for backward compatibility (existing notifications before migration)
+      // Use NOT to exclude archived=true, which will include both false and null
+      where.archived = { not: true }
     }
 
     if (unreadOnly) {
@@ -45,7 +47,8 @@ export async function GET(request: NextRequest) {
       where: {
         userId: session.user.id,
         isRead: false,
-        archived: false, // Nur nicht-archivierte zählen
+        // Nur nicht-archivierte zählen (handle null for backward compatibility)
+        archived: { not: true },
       },
     })
 
@@ -76,7 +79,8 @@ export async function PATCH(request: NextRequest) {
         where: {
           userId: session.user.id,
           isRead: false,
-          archived: false,
+          // Handle null for backward compatibility
+          archived: { not: true },
         },
         data: {
           isRead: true,

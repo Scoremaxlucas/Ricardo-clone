@@ -15,6 +15,8 @@ export async function GET(request: NextRequest) {
       where: {
         userId: session.user.id,
         isRead: false,
+        // Nur nicht-archivierte zählen (handle null for backward compatibility)
+        archived: { not: true },
       },
     })
 
