@@ -411,17 +411,38 @@ function SellPageContent() {
     if (pendingDraft?.id) {
       // Lösche den alten Entwurf permanent
       try {
-        await fetch(`/api/drafts/${pendingDraft.id}`, { method: 'DELETE' })
-        toast.success('Entwurf wurde gelöscht', { icon: '🗑️' })
+        const response = await fetch(`/api/drafts/${pendingDraft.id}`, { method: 'DELETE' })
+        if (response.ok) {
+          toast.success('Entwurf wurde gelöscht', { icon: '🗑️' })
+          
+          // Clear any localStorage draft data
+          const userId = (session?.user as { id?: string })?.id
+          if (userId) {
+            try {
+              localStorage.removeItem(`helvenda:sellDraft:${userId}`)
+              localStorage.removeItem('helvenda_listing_draft')
+              localStorage.removeItem('helvenda_restore_draft_id')
+            } catch (e) {
+              // Ignore localStorage errors
+            }
+          }
+        } else {
+          const errorData = await response.json().catch(() => ({}))
+          throw new Error(errorData.message || 'Löschen fehlgeschlagen')
+        }
       } catch (error) {
         console.error('[Draft] Error deleting old draft:', error)
         toast.error('Fehler beim Löschen des Entwurfs')
       }
     }
+    // Close modal and clear state
     setShowDraftPrompt(false)
     setPendingDraft(null)
     setCurrentDraftId(null)
-  }, [pendingDraft])
+    // Mark that we've checked for drafts to prevent re-checking immediately
+    draftCheckRef.current = true
+    hasActiveDraftRef.current = false
+  }, [pendingDraft, session?.user])
 
   // Scroll to top and focus heading when step changes (backup for direct URL navigation)
   useEffect(() => {

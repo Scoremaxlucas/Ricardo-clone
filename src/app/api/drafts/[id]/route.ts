@@ -58,3 +58,50 @@ export async function GET(
   }
 }
 
+// DELETE: Entwurf löschen
+export async function DELETE(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const session = await getServerSession(authOptions)
+    const { id } = await params
+
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    // Verify ownership before deleting
+    const draft = await prisma.draft.findUnique({
+      where: { id },
+      select: { userId: true },
+    })
+
+    if (!draft) {
+      return NextResponse.json({ message: 'Entwurf nicht gefunden' }, { status: 404 })
+    }
+
+    if (draft.userId !== session.user.id) {
+      return NextResponse.json(
+        { message: 'Sie sind nicht berechtigt, diesen Entwurf zu löschen' },
+        { status: 403 }
+      )
+    }
+
+    // Delete the draft (CASCADE will handle draftImages)
+    await prisma.draft.delete({
+      where: { id },
+    })
+
+    console.log(`[Drafts API] Deleted draft ${id} for user ${session.user.id}`)
+
+    return NextResponse.json({ message: 'Entwurf gelöscht' })
+  } catch (error: any) {
+    console.error('[Drafts API] Error deleting draft:', error)
+    return NextResponse.json(
+      { message: 'Fehler beim Löschen des Entwurfs', error: error.message },
+      { status: 500 }
+    )
+  }
+}
+
