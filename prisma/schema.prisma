@@ -662,6 +662,8 @@ model Notification {
   link         String?
   isRead       Boolean   @default(false)
   readAt       DateTime?
+  archived     Boolean   @default(false)
+  archivedAt   DateTime?
   createdAt    DateTime  @default(now())
   userId       String
   watchId      String?
@@ -672,6 +674,7 @@ model Notification {
   user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
 
   @@index([userId, isRead])
+  @@index([userId, archived])
   @@index([createdAt])
   @@map("notifications")
 }

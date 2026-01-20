@@ -14,10 +14,19 @@ export async function GET(request: NextRequest) {
 
     const { searchParams } = new URL(request.url)
     const unreadOnly = searchParams.get('unreadOnly') === 'true'
+    const archivedOnly = searchParams.get('archivedOnly') === 'true'
     const limit = parseInt(searchParams.get('limit') || '50')
 
     const where: any = {
       userId: session.user.id,
+    }
+
+    if (archivedOnly) {
+      // Nur archivierte anzeigen
+      where.archived = true
+    } else {
+      // Standard: Archivierte ausschließen (außer wenn explizit archivedOnly=true)
+      where.archived = false
     }
 
     if (unreadOnly) {
@@ -36,6 +45,7 @@ export async function GET(request: NextRequest) {
       where: {
         userId: session.user.id,
         isRead: false,
+        archived: false, // Nur nicht-archivierte zählen
       },
     })
 
@@ -58,14 +68,15 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })
     }
 
-    const { notificationId, markAllAsRead } = await request.json()
+    const { notificationId, markAllAsRead, archive } = await request.json()
 
     if (markAllAsRead) {
-      // Alle als gelesen markieren
+      // Alle als gelesen markieren (nur nicht-archivierte)
       await prisma.notification.updateMany({
         where: {
           userId: session.user.id,
           isRead: false,
+          archived: false,
         },
         data: {
           isRead: true,
@@ -75,7 +86,6 @@ export async function PATCH(request: NextRequest) {
 
       return NextResponse.json({ message: 'All notifications marked as read' })
     } else if (notificationId) {
-      // Einzelne als gelesen markieren
       const notification = await prisma.notification.findUnique({
         where: { id: notificationId },
       })
@@ -84,15 +94,31 @@ export async function PATCH(request: NextRequest) {
         return NextResponse.json({ message: 'Not found' }, { status: 404 })
       }
 
-      await prisma.notification.update({
-        where: { id: notificationId },
-        data: {
-          isRead: true,
-          readAt: new Date(),
-        },
-      })
+      if (archive !== undefined) {
+        // Archivieren oder Archivierung aufheben
+        await prisma.notification.update({
+          where: { id: notificationId },
+          data: {
+            archived: archive,
+            archivedAt: archive ? new Date() : null,
+          },
+        })
 
-      return NextResponse.json({ message: 'Notification marked as read' })
+        return NextResponse.json({
+          message: archive ? 'Notification archived' : 'Notification unarchived',
+        })
+      } else {
+        // Als gelesen markieren
+        await prisma.notification.update({
+          where: { id: notificationId },
+          data: {
+            isRead: true,
+            readAt: new Date(),
+          },
+        })
+
+        return NextResponse.json({ message: 'Notification marked as read' })
+      }
     }
 
     return NextResponse.json({ message: 'Invalid request' }, { status: 400 })

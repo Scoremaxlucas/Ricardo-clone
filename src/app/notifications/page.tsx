@@ -6,6 +6,8 @@ import { WarningDetailModal } from '@/components/user/WarningDetailModal'
 import { useLanguage } from '@/contexts/LanguageContext'
 import {
   AlertTriangle,
+  Archive,
+  ArchiveX,
   Bell,
   Check,
   CheckCheck,
@@ -30,6 +32,8 @@ interface Notification {
   link: string | null
   isRead: boolean
   readAt: string | null
+  archived: boolean
+  archivedAt: string | null
   createdAt: string
 }
 
@@ -39,7 +43,7 @@ export default function NotificationsPage() {
   const { t } = useLanguage()
   const [notifications, setNotifications] = useState<Notification[]>([])
   const [loading, setLoading] = useState(true)
-  const [filter, setFilter] = useState<'all' | 'unread'>('all')
+  const [filter, setFilter] = useState<'all' | 'unread' | 'archived'>('all')
   const [selectedWarning, setSelectedWarning] = useState<Notification | null>(null)
 
   useEffect(() => {
@@ -91,7 +95,11 @@ export default function NotificationsPage() {
   const fetchNotifications = async () => {
     try {
       setLoading(true)
-      const res = await fetch(`/api/notifications?unreadOnly=${filter === 'unread'}`)
+      const unreadOnly = filter === 'unread'
+      const archivedOnly = filter === 'archived'
+      const res = await fetch(
+        `/api/notifications?unreadOnly=${unreadOnly}&archivedOnly=${archivedOnly}`
+      )
       if (res.ok) {
         const data = await res.json()
         const unreadCount = data.notifications?.filter((n: Notification) => !n.isRead).length || 0
@@ -99,7 +107,9 @@ export default function NotificationsPage() {
           '[notifications] Benachrichtigungen geladen:',
           data.notifications?.length || 0,
           'ungelesen:',
-          unreadCount
+          unreadCount,
+          'filter:',
+          filter
         )
 
         // Aktualisiere State direkt von der API
@@ -199,6 +209,31 @@ export default function NotificationsPage() {
     }
   }
 
+  const toggleArchive = async (notificationId: string, currentlyArchived: boolean) => {
+    try {
+      const res = await fetch('/api/notifications', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ notificationId, archive: !currentlyArchived }),
+      })
+
+      if (res.ok) {
+        // Optimistic Update
+        setNotifications(prev =>
+          prev.map(n =>
+            n.id === notificationId
+              ? { ...n, archived: !currentlyArchived, archivedAt: !currentlyArchived ? new Date().toISOString() : null }
+              : n
+          )
+        )
+        // Refresh to get updated list
+        fetchNotifications()
+      }
+    } catch (error) {
+      console.error('Error archiving notification:', error)
+    }
+  }
+
   const getIcon = (type: string) => {
     switch (type) {
       case 'BID':
@@ -280,8 +315,8 @@ export default function NotificationsPage() {
     )
   }
 
-  const filteredNotifications =
-    filter === 'unread' ? notifications.filter(n => !n.isRead) : notifications
+  // Filter logic: API already filters by archived status, but we need to handle counts
+  const filteredNotifications = notifications
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -297,7 +332,7 @@ export default function NotificationsPage() {
                 <h1 className="text-xl sm:text-2xl font-bold text-gray-900 truncate">{t.notifications.title}</h1>
               </div>
 
-              {notifications.some(n => !n.isRead) && (
+              {filter !== 'archived' && notifications.some(n => !n.isRead && !n.archived) && (
                 <button
                   onClick={markAllAsRead}
                   className="flex items-center justify-center gap-2 rounded-md px-3 py-2 text-xs sm:text-sm font-medium text-primary-600 transition-colors hover:bg-primary-50 whitespace-nowrap flex-shrink-0 self-start sm:self-auto"
@@ -319,7 +354,7 @@ export default function NotificationsPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                {t.notifications.all} ({notifications.length})
+                {t.notifications.all} ({notifications.filter(n => !n.archived).length})
               </button>
               <button
                 onClick={() => setFilter('unread')}
@@ -329,7 +364,17 @@ export default function NotificationsPage() {
                     : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                 }`}
               >
-                {t.notifications.unread} ({notifications.filter(n => !n.isRead).length})
+                {t.notifications.unread} ({notifications.filter(n => !n.isRead && !n.archived).length})
+              </button>
+              <button
+                onClick={() => setFilter('archived')}
+                className={`rounded-md px-3 sm:px-4 py-2 text-xs sm:text-sm font-medium transition-colors whitespace-nowrap flex-shrink-0 ${
+                  filter === 'archived'
+                    ? 'bg-primary-600 text-white'
+                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                }`}
+              >
+                {t.notifications.archived} ({notifications.filter(n => n.archived).length})
               </button>
             </div>
           </div>
@@ -343,7 +388,9 @@ export default function NotificationsPage() {
                 <p className="text-sm">
                   {filter === 'unread'
                     ? t.notifications.noUnreadNotifications
-                    : t.notifications.noNotificationsYet}
+                    : filter === 'archived'
+                      ? t.notifications.noArchivedNotifications
+                      : t.notifications.noNotificationsYet}
                 </p>
               </div>
             ) : (
@@ -377,15 +424,28 @@ export default function NotificationsPage() {
                           </div>
                         </div>
 
-                        {!notification.isRead && (
+                        <div className="flex items-center gap-1">
+                          {!notification.isRead && (
+                            <button
+                              onClick={() => markAsRead(notification.id)}
+                              className="flex-shrink-0 p-1 text-gray-400 transition-colors hover:text-primary-600"
+                              title={t.notifications.markAsRead}
+                            >
+                              <Check className="h-5 w-5" />
+                            </button>
+                          )}
                           <button
-                            onClick={() => markAsRead(notification.id)}
-                            className="flex-shrink-0 p-1 text-gray-400 transition-colors hover:text-primary-600"
-                            title={t.notifications.markAsRead}
+                            onClick={() => toggleArchive(notification.id, notification.archived)}
+                            className="flex-shrink-0 p-1 text-gray-400 transition-colors hover:text-gray-600"
+                            title={notification.archived ? t.notifications.unarchive : t.notifications.archive}
                           >
-                            <Check className="h-5 w-5" />
+                            {notification.archived ? (
+                              <ArchiveX className="h-5 w-5" />
+                            ) : (
+                              <Archive className="h-5 w-5" />
+                            )}
                           </button>
-                        )}
+                        </div>
                       </div>
 
                       {notification.type === 'WARNING' ? (
