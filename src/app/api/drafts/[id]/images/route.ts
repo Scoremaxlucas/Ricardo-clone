@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { put } from '@vercel/blob'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
 
 // POST: Upload image for a draft
 export async function POST(
@@ -47,7 +47,7 @@ export async function POST(
     // const base64Data = compressedBase64.split(',')[1]
     // const buffer = Buffer.from(base64Data, 'base64')
     // const compressedFile = new File([buffer], file.name, { type: 'image/jpeg' })
-    
+
     // Upload to Vercel Blob Storage (file is already compressed on client)
     const blob = await put(`drafts/${draftId}/${Date.now()}-${file.name}`, file, {
       access: 'public',

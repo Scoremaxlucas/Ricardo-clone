@@ -3,7 +3,7 @@
 import { EditPolicy } from '@/lib/edit-policy'
 import { compressImage } from '@/lib/image-compression'
 import { Loader2, Lock, Star, Upload, X } from 'lucide-react'
-import React, { useState, useRef } from 'react'
+import React, { useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 
 interface DraftImage {
@@ -106,13 +106,13 @@ export function StepImages({
             duration: 3000,
           }
         )
-        
+
         // Set first image as title image if none set
         if (currentImageCount === 0) {
           await onTitleImageChange(0)
         }
       }
-      
+
       // Reset input
       e.target.value = ''
       return

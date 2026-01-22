@@ -4,14 +4,14 @@ import { ProfileCompletionGate } from '@/components/account/ProfileCompletionGat
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import {
-  StepCategorySelection,
-  StepDetails,
-  StepImages,
-  StepPrice,
-  StepProgress,
-  StepReviewPublish,
-  StepShippingPayment,
-  WizardFooter,
+    StepCategorySelection,
+    StepDetails,
+    StepImages,
+    StepPrice,
+    StepProgress,
+    StepReviewPublish,
+    StepShippingPayment,
+    WizardFooter,
 } from '@/components/wizard'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { clearDraft, clearOtherUserDrafts } from '@/lib/draft-storage'
@@ -414,7 +414,7 @@ function SellPageContent() {
         const response = await fetch(`/api/drafts/${pendingDraft.id}`, { method: 'DELETE' })
         if (response.ok) {
           toast.success('Entwurf wurde gelöscht', { icon: '🗑️' })
-          
+
           // Clear any localStorage draft data
           const userId = (session?.user as { id?: string })?.id
           if (userId) {

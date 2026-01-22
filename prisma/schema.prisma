@@ -248,6 +248,10 @@ model Watch {
   auctionEnd               DateTime?
   auctionDuration          Int?
   autoRenew                Boolean   @default(false)
+  /** Sofortkauf: Laufzeitende. Wird automatisch verlängert (Cron). */
+  listingExpiresAt         DateTime?
+  /** Sofortkauf: Verlängerungsdauer in Tagen (z.B. 30). Default 30. */
+  listingDurationDays      Int?      @default(30)
   lastBidAt                DateTime?
   images                   String
   video                    String?
@@ -995,19 +999,19 @@ model UserPreferences {
   emailOnNewBid         Boolean @default(true) // Neues Gebot auf Auktion
   emailOnNewOffer       Boolean @default(true) // Neues Preisangebot
   emailOnSaleCompleted  Boolean @default(true) // Verkauf abgeschlossen
-  
-  // Käufer-Benachrichtigungen  
+
+  // Käufer-Benachrichtigungen
   emailOnOutbid         Boolean @default(true) // Überboten bei Auktion
   emailOnAuctionEnding  Boolean @default(true) // Auktion endet bald (30 min)
   emailOnPurchase       Boolean @default(true) // Kauf bestätigt
   emailOnShipping       Boolean @default(true) // Artikel versendet
-  
+
   // Suchabo-Benachrichtigungen
   emailOnSearchMatch    Boolean @default(true) // Neuer Treffer für Suchabo
-  
+
   // Favoriten-Benachrichtigungen
   emailOnFavoritePriceChange Boolean @default(false) // Preisänderung bei Favorit
-  
+
   // Marketing & Sonstiges
   emailMarketing        Boolean @default(false) // Newsletter & Angebote
   emailDigestFrequency  String  @default("instant") // 'instant', 'daily', 'weekly', 'none'

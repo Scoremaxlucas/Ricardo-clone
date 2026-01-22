@@ -653,6 +653,12 @@ export async function POST(request: NextRequest) {
       watchData.auctionEnd = auctionEndDate
       watchData.auctionDuration = auctionDurationInt
       watchData.autoRenew = autoRenew === true || autoRenew === 'true' || false
+    } else {
+      // Sofortkauf: Laufzeit mit automatischer Verlängerung (immer 30 Tage, Cron verlängert)
+      const listingDays = 30
+      const expiresAt = new Date(Date.now() + listingDays * 24 * 60 * 60 * 1000)
+      ;(watchData as any).listingExpiresAt = expiresAt
+      ;(watchData as any).listingDurationDays = listingDays
     }
 
     // Generiere eindeutige Artikelnummer

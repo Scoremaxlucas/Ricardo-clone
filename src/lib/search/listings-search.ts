@@ -257,6 +257,13 @@ async function executeSearchQuery(params: {
   parameters.push(now)
   paramIndex++
 
+  // Sofortkauf: abgelaufene (listingExpiresAt < now) global ausblenden
+  conditions.push(
+    `(w."isAuction" = true OR w."listingExpiresAt" IS NULL OR w."listingExpiresAt" > $${paramIndex})`
+  )
+  parameters.push(now)
+  paramIndex++
+
   // Filter: Category
   if (filters.category) {
     conditions.push(`(
@@ -314,7 +321,12 @@ async function executeSearchQuery(params: {
     parameters.push(now)
     paramIndex++
   } else if (filters.isAuction === false) {
-    conditions.push(`w."isAuction" = false`)
+    // Sofortkauf: nur anzeigen wenn nicht abgelaufen (null = Legacy, keine Laufzeit)
+    conditions.push(
+      `w."isAuction" = false AND (w."listingExpiresAt" IS NULL OR w."listingExpiresAt" > $${paramIndex})`
+    )
+    parameters.push(now)
+    paramIndex++
   }
 
   // Filter: Postal code
@@ -902,7 +914,14 @@ async function searchWithoutQuery(
   if (filters.isAuction === true) {
     ;(where.AND as any[]).push({ isAuction: true, auctionEnd: { gt: now } })
   } else if (filters.isAuction === false) {
-    ;(where.AND as any[]).push({ isAuction: false })
+    // Sofortkauf: nur anzeigen wenn nicht abgelaufen (listingExpiresAt null = Legacy)
+    ;(where.AND as any[]).push({
+      isAuction: false,
+      OR: [
+        { listingExpiresAt: null },
+        { listingExpiresAt: { gt: now } },
+      ],
+    })
   }
 
   if (filters.postalCode) {
@@ -1057,6 +1076,14 @@ async function searchWithSimpleLike(
       // Exclude ended auctions
       {
         OR: [{ auctionEnd: null }, { auctionEnd: { gt: now } }],
+      },
+      // Sofortkauf: abgelaufene global ausblenden
+      {
+        OR: [
+          { isAuction: true },
+          { listingExpiresAt: null },
+          { listingExpiresAt: { gt: now } },
+        ],
       },
       // Search condition: match any token in title, brand, model, or description
       {
@@ -1245,6 +1272,13 @@ export async function getBrandCounts(
       },
       { OR: [{ purchases: { none: {} } }, { purchases: { every: { status: 'cancelled' } } }] },
       { OR: [{ auctionEnd: null }, { auctionEnd: { gt: now } }] },
+      {
+        OR: [
+          { isAuction: true },
+          { listingExpiresAt: null },
+          { listingExpiresAt: { gt: now } },
+        ],
+      },
     ],
   }
 
