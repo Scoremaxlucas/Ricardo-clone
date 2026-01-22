@@ -1,6 +1,9 @@
 import { shouldShowDetailedErrors } from "@/lib/env"
 import { NextRequest, NextResponse } from 'next/server'
 
+export const dynamic = 'force-dynamic'
+export const maxDuration = 30 // 30 Sekunden Timeout für GPT-4 Vision
+
 /**
  * GPT-4 VISION BILDERKENNUNG
  *
@@ -36,7 +39,17 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    console.log(`[classify-vision] Bild empfangen, Größe: ${Math.round(base64Data.length / 1024)} KB`)
+    // Validierung: Bild darf nicht zu groß sein (max 4MB base64 = ca. 3MB Bild)
+    const sizeKB = Math.round(base64Data.length / 1024)
+    if (base64Data.length > 4 * 1024 * 1024) {
+      console.warn(`[classify-vision] Bild zu groß: ${sizeKB} KB`)
+      return NextResponse.json(
+        { error: 'Bild ist zu groß. Bitte verwenden Sie ein kleineres Bild (max. 3 MB).' },
+        { status: 400 }
+      )
+    }
+
+    console.log(`[classify-vision] Bild empfangen, Größe: ${sizeKB} KB`)
 
     // Erstelle detaillierten Prompt für GPT-4 Vision mit FOKUS auf präzise Erkennung
     const systemPrompt = `Du bist ein Experte für die Klassifizierung von Produkten für einen Online-Marktplatz.

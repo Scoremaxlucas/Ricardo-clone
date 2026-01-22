@@ -4011,13 +4011,18 @@ export function AIDetection({
           throw new Error('Ungültiges Bild-Format')
         }
 
+        // Timeout für mobile Netzwerke (30 Sekunden)
+        const controller = new AbortController()
+        const timeoutId = setTimeout(() => controller.abort(), 30000)
+
         const visionResponse = await fetch('/api/ai/classify-vision', {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({ imageBase64: base64Data }),
-        })
+          signal: controller.signal,
+        }).finally(() => clearTimeout(timeoutId))
 
         if (!visionResponse.ok) {
           const errorData = await visionResponse.json().catch(() => ({}))
@@ -4059,9 +4064,18 @@ export function AIDetection({
         }
       } catch (visionError: any) {
         console.error('⚠️ GPT-4 Vision Fehler:', visionError)
+        // Benutzerfreundliche Fehlermeldung
+        let errorMsg = 'Bilderkennung fehlgeschlagen. '
+        if (visionError.name === 'AbortError') {
+          errorMsg += 'Zeitüberschreitung - bitte versuchen Sie es erneut.'
+        } else if (visionError.message?.includes('Failed to fetch') || visionError.message?.includes('Load failed')) {
+          errorMsg += 'Netzwerkfehler - bitte prüfen Sie Ihre Internetverbindung.'
+        } else {
+          errorMsg += visionError.message || 'Bitte versuchen Sie es erneut.'
+        }
         // Setze Fehler nur wenn kein Fallback verfügbar ist
         if (!process.env.NEXT_PUBLIC_ENABLE_GOOGLE_VISION && !process.env.NEXT_PUBLIC_ENABLE_TENSORFLOW) {
-          setError(visionError.message || 'Fehler bei GPT-4 Vision Erkennung')
+          setError(errorMsg)
           setIsAnalyzing(false)
           return
         }
@@ -4879,15 +4893,31 @@ export function AIDetection({
     }
   }
 
-  const handleFile = (file: File) => {
+  const handleFile = async (file: File) => {
     if (file.type.startsWith('image/')) {
-      const reader = new FileReader()
-      reader.onload = e => {
-        const imageUrl = e.target?.result as string
-        setUploadedImage(imageUrl)
-        analyzeImage(imageUrl)
+      setIsAnalyzing(true)
+      setError(null)
+
+      try {
+        // Dynamisch importieren um SSR-Probleme zu vermeiden
+        const { compressImage } = await import('@/lib/image-compression')
+
+        // Komprimiere Bild für schnellere und stabilere KI-Erkennung
+        // Besonders wichtig für Handy-Fotos (oft 10+ MB)
+        const compressedImage = await compressImage(file, {
+          maxWidth: 1024,
+          maxHeight: 1024,
+          quality: 0.7,
+          maxSizeMB: 0.8,
+        })
+
+        setUploadedImage(compressedImage)
+        analyzeImage(compressedImage)
+      } catch (err: any) {
+        console.error('Fehler beim Komprimieren:', err)
+        setError('Bild konnte nicht verarbeitet werden. Bitte versuchen Sie es erneut.')
+        setIsAnalyzing(false)
       }
-      reader.readAsDataURL(file)
     }
   }
 
