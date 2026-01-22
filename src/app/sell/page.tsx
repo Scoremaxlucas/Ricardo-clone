@@ -241,20 +241,32 @@ function SellPageContent() {
     return completed
   }
 
-  // Scroll to top helper
-  const scrollToTop = useCallback(() => {
-    // Use setTimeout to ensure DOM has updated after step change
+  // Scroll to wizard content (not page top) - better UX on mobile
+  const scrollToWizardContent = useCallback(() => {
     setTimeout(() => {
-      // Try scrolling wizard container first
-      if (wizardContainerRef.current) {
-        wizardContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
-      }
-      // Always scroll window to top as well
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      // Also try scrolling the main container if it exists
-      const mainContainer = document.querySelector('main') || document.body
-      if (mainContainer) {
-        mainContainer.scrollTo?.({ top: 0, behavior: 'smooth' })
+      // Find the form element (wizard content)
+      const formElement = formRef.current
+      if (formElement) {
+        // Calculate offset to show form with some padding
+        const headerOffset = 80 // Account for sticky header if any
+        const elementPosition = formElement.getBoundingClientRect().top
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+
+        window.scrollTo({
+          top: Math.max(0, offsetPosition),
+          behavior: 'smooth',
+        })
+      } else {
+        // Fallback: scroll to wizard container
+        if (wizardContainerRef.current) {
+          const headerOffset = 60
+          const elementPosition = wizardContainerRef.current.getBoundingClientRect().top
+          const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+          window.scrollTo({
+            top: Math.max(0, offsetPosition),
+            behavior: 'smooth',
+          })
+        }
       }
     }, 100)
   }, [])
@@ -268,7 +280,7 @@ function SellPageContent() {
       if (clampedStep < currentStep) {
         setCurrentStep(clampedStep)
         router.push(`/sell?step=${clampedStep}`, { scroll: false })
-        scrollToTop()
+        scrollToWizardContent()
         return
       }
 
@@ -288,15 +300,15 @@ function SellPageContent() {
       if (clampedStep > maxAllowed) {
         setCurrentStep(maxAllowed)
         router.push(`/sell?step=${maxAllowed}`, { scroll: false })
-        scrollToTop()
+        scrollToWizardContent()
         return
       }
 
       setCurrentStep(clampedStep)
       router.push(`/sell?step=${clampedStep}`, { scroll: false })
-      scrollToTop()
+      scrollToWizardContent()
     },
-    [currentStep, router, selectedCategory, formData, scrollToTop]
+    [currentStep, router, selectedCategory, formData, scrollToWizardContent]
   )
 
   const nextStep = async () => {
@@ -444,23 +456,22 @@ function SellPageContent() {
     hasActiveDraftRef.current = false
   }, [pendingDraft, session?.user])
 
-  // Scroll to top and focus heading when step changes (backup for direct URL navigation)
+  // Scroll to wizard content when step changes (backup for direct URL navigation)
   useEffect(() => {
-    // Use a longer timeout to ensure DOM has fully rendered
     const timeoutId = setTimeout(() => {
-      // Try scrolling wizard container first
-      if (wizardContainerRef.current) {
-        wizardContainerRef.current.scrollTo({ top: 0, behavior: 'smooth' })
-      }
-      // Always scroll window to top
-      window.scrollTo({ top: 0, behavior: 'smooth' })
-      // Also try scrolling the main container if it exists
-      const mainContainer = document.querySelector('main') || document.body
-      if (mainContainer) {
-        mainContainer.scrollTo?.({ top: 0, behavior: 'smooth' })
+      // Scroll to form element so user sees the content directly
+      const formElement = formRef.current
+      if (formElement) {
+        const headerOffset = 80
+        const elementPosition = formElement.getBoundingClientRect().top
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+        window.scrollTo({
+          top: Math.max(0, offsetPosition),
+          behavior: 'smooth',
+        })
       }
 
-      // Focus heading after scroll (check global ref set by StepReviewPublish)
+      // Focus heading after scroll
       requestAnimationFrame(() => {
         const headingRef = (window as any).stepHeadingRef
         if (headingRef) {

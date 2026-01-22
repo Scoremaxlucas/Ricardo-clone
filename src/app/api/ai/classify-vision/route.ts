@@ -74,9 +74,9 @@ Antworte IMMER im folgenden JSON-Format:
   "subcategory": "Unterkategorie Name",
   "productName": "Präziser Produktname (z.B. 'Elektrofahrrad Trek Powerfly' NICHT 'Moped')",
   "confidence": 95,
-  "description": "Kurze Beschreibung des erkannten Produkts",
+  "description": "Kurze sachliche Beschreibung des erkannten Produkts",
   "suggestedTitle": "Vorschlag für Artikel-Titel (max 80 Zeichen)",
-  "suggestedDescription": "Vorschlag für Artikel-Beschreibung (2-3 Sätze, professionell)",
+  "suggestedDescription": "1-2 kurze, sachliche Sätze. Nur erkennbare Fakten (Marke, Modell, Zustand). Keine Werbesprache.",
   "keyFeatures": ["Feature 1", "Feature 2", "Feature 3"]
 }
 
@@ -112,7 +112,7 @@ Erkenne:
 3. Welche Unterkategorie?
 4. Generiere einen präzisen Produktnamen
 5. Generiere einen verkaufsfördernden Titel
-6. Generiere eine kurze Beschreibung
+6. Generiere eine kurze, sachliche Beschreibung (1-2 Sätze, nur Fakten, keine Werbesprache)
 
 Antworte NUR im JSON-Format wie oben spezifiziert.`
 

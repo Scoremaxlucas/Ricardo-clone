@@ -30,18 +30,16 @@ export async function POST(request: NextRequest) {
     if (imageBase64) {
       const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '')
 
-      const systemPrompt = `Du bist ein professioneller Verkaufsassistent für einen Online-Marktplatz.
-Erstelle präzise, vertrauenswürdige Artikelbeschreibungen basierend auf Bildern.
+      const systemPrompt = `Du erstellst kurze, sachliche Artikelbeschreibungen für einen Online-Marktplatz.
 
 Anforderungen:
-- Professionell und vertrauenswürdig
-- 3-5 Sätze
+- 1-2 Sätze, knapp und faktenbasiert
 - Auf Deutsch
-- Erwähne wichtige Details die auf dem Bild erkennbar sind (Zustand, Besonderheiten, Marke, Modell)
-- Keine Übertreibungen
-- Format: Fließtext, keine Bullet Points`
+- Nur erkennbare Fakten: Marke, Modell, Zustand, ggf. Farbe/Material
+- Keine Werbesprache, keine Übertreibungen, keine Superlative
+- Neutrale Formulierung`
 
-      const userPrompt = `Analysiere dieses Bild und erstelle eine professionelle Artikelbeschreibung.
+      const userPrompt = `Analysiere das Bild und erstelle eine kurze, sachliche Beschreibung.
 
 ${title ? `Titel: ${title}` : ''}
 ${category ? `Kategorie: ${category}` : ''}
@@ -50,7 +48,7 @@ ${brand ? `Marke: ${brand}` : ''}
 ${model ? `Modell: ${model}` : ''}
 ${condition ? `Zustand: ${condition}` : ''}
 
-Beschreibe das Produkt genau wie es auf dem Bild zu sehen ist.`
+Nur Fakten, die auf dem Bild erkennbar sind. Keine Werbesprache.`
 
       const response = await fetch('https://api.openai.com/v1/chat/completions', {
         method: 'POST',
@@ -81,8 +79,8 @@ Beschreibe das Produkt genau wie es auf dem Bild zu sehen ist.`
               ],
             },
           ],
-          max_tokens: 300,
-          temperature: 0.7,
+          max_tokens: 150,
+          temperature: 0.3,
         }),
       })
 
@@ -102,7 +100,7 @@ Beschreibe das Produkt genau wie es auf dem Bild zu sehen ist.`
     }
 
     // Text-basierte Generierung (Fallback oder wenn kein Bild vorhanden)
-    const prompt = `Erstelle eine professionelle, verkaufsfördernde Artikelbeschreibung für einen Online-Marktplatz.
+    const prompt = `Erstelle eine kurze, sachliche Artikelbeschreibung.
 
 Artikel-Details:
 - Titel: ${title}
@@ -113,12 +111,9 @@ ${model ? `- Modell: ${model}` : ''}
 ${condition ? `- Zustand: ${condition}` : ''}
 
 Anforderungen:
-- Professionell und vertrauenswürdig
-- 3-5 Sätze
+- 1-2 Sätze, knapp und faktenbasiert
 - Auf Deutsch
-- Erwähne wichtige Details (Zustand, Besonderheiten)
-- Keine Übertreibungen
-- Format: Fließtext, keine Bullet Points
+- Nur Fakten (Zustand, Besonderheiten), keine Werbesprache
 
 Beschreibung:`
 
@@ -135,15 +130,15 @@ Beschreibung:`
           {
             role: 'system',
             content:
-              'Du bist ein professioneller Verkaufsassistent für einen Online-Marktplatz. Erstelle präzise, vertrauenswürdige Artikelbeschreibungen.',
+              'Du erstellst kurze, sachliche Artikelbeschreibungen. 1-2 Sätze, nur Fakten, keine Werbesprache.',
           },
           {
             role: 'user',
             content: prompt,
           },
         ],
-        max_tokens: 200,
-        temperature: 0.7,
+        max_tokens: 120,
+        temperature: 0.3,
       }),
     })
 

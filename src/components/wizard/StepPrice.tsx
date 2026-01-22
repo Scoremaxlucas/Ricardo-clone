@@ -50,7 +50,7 @@ export function StepPrice({
         <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
           Preis festlegen
         </h2>
-        <p className="hidden text-sm text-gray-600 sm:block">Wählen Sie zwischen Festpreis oder Auktion</p>
+        <p className="text-xs text-gray-600 sm:text-sm">Wählen Sie zwischen Festpreis oder Auktion</p>
       </div>
 
       {/* Sale type selection */}
@@ -153,10 +153,10 @@ export function StepPrice({
       {/* Price inputs - conditional based on sale type */}
       <div className="space-y-6">
         {!formData.isAuction ? (
-          /* FIXED PRICE MODE - Only show price field */
+          /* FIXED PRICE MODE - Show price field */
           <div className="space-y-2">
             <label className="block text-sm font-medium text-gray-700">
-              Preis (CHF) <span className="text-red-500">*</span>
+              Verkaufspreis (CHF) <span className="text-red-500">*</span>
             </label>
             <div className="relative">
               <input
@@ -175,7 +175,7 @@ export function StepPrice({
                     ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
                     : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
                 }`}
-                placeholder=""
+                placeholder="0.00"
               />
               {isPriceLocked && (
                 <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
@@ -187,8 +187,8 @@ export function StepPrice({
                 CHF
               </span>
             </div>
-            <p className="text-sm text-gray-500">
-              Der Käufer kann den Artikel sofort zu diesem Preis kaufen.
+            <p className="text-xs text-gray-500 sm:text-sm">
+              Der Käufer kann den Artikel sofort zu diesem Preis kaufen (Sofortkauf).
             </p>
           </div>
         ) : (
@@ -216,7 +216,7 @@ export function StepPrice({
                       ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
                       : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
                   }`}
-                  placeholder=""
+                  placeholder="0.00"
                 />
                 {isPriceLocked && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
@@ -228,7 +228,7 @@ export function StepPrice({
                   CHF
                 </span>
               </div>
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500 sm:text-sm">
                 Die Auktion startet bei diesem Preis. Bieter können darüber bieten.
               </p>
             </div>
@@ -293,7 +293,7 @@ export function StepPrice({
                         ? 'border-red-300 bg-red-50 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
                         : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
                   }`}
-                  placeholder=""
+                  placeholder="0.00"
                 />
                 {isBuyNowPriceLocked && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
@@ -306,27 +306,27 @@ export function StepPrice({
                 </span>
               </div>
               {!buyNowValid && (
-                <p className="text-sm font-medium text-red-600">
+                <p className="text-xs font-medium text-red-600 sm:text-sm">
                   Der Sofortkaufpreis muss höher als der Startpreis sein.
                 </p>
               )}
-              <p className="text-sm text-gray-500">
+              <p className="text-xs text-gray-500 sm:text-sm">
                 Käufer können die Auktion sofort zum Sofortkaufpreis beenden.
               </p>
             </div>
 
             {/* Auto-renew option */}
-            <label className="flex items-center gap-3 rounded-lg border border-gray-200 bg-white p-4">
+            <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
               <input
                 type="checkbox"
                 name="autoRenew"
                 checked={formData.autoRenew}
                 onChange={onInputChange}
-                className="h-5 w-5 rounded border-gray-300 text-primary-600"
+                className="mt-0.5 h-5 w-5 rounded border-gray-300 text-primary-600"
               />
               <div>
-                <span className="font-medium text-gray-700">Automatisch erneuern</span>
-                <p className="text-sm text-gray-500">
+                <span className="text-sm font-medium text-gray-700 sm:text-base">Automatisch erneuern</span>
+                <p className="text-xs text-gray-500 sm:text-sm">
                   Auktion wird automatisch erneuert, wenn keine Gebote eingehen.
                 </p>
               </div>
