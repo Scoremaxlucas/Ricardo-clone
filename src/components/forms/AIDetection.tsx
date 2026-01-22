@@ -2,7 +2,7 @@
 
 import { useLanguage } from '@/contexts/LanguageContext'
 import { AlertCircle, Image as ImageIcon, Loader2, Search, Sparkles, Upload, X } from 'lucide-react'
-import { useRef, useState, useEffect } from 'react'
+import { useEffect, useRef, useState } from 'react'
 
 interface AIDetectionProps {
   onCategoryDetected: (
@@ -4806,19 +4806,19 @@ export function AIDetection({
     const normalizedText = text.toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()
     // Zusätzlich: Version ohne Leerzeichen für zusammengeschriebene Wörter
     const textNoSpaces = normalizedText.replace(/\s/g, '')
-    
+
     console.log('🔍 Text-Analyse:', { original: text, normalized: normalizedText, noSpaces: textNoSpaces })
-    
+
     let result = textDetectionResults.find(r =>
       r.keywords.some(keyword => {
         const normalizedKeyword = keyword.toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()
         const keywordNoSpaces = normalizedKeyword.replace(/\s/g, '')
-        
+
         // Match wenn:
         // 1. Normalisierter Text enthält normalisiertes Keyword
         // 2. Text ohne Leerzeichen enthält Keyword ohne Leerzeichen
         // 3. Keyword ohne Leerzeichen ist im Text ohne Leerzeichen enthalten
-        return normalizedText.includes(normalizedKeyword) || 
+        return normalizedText.includes(normalizedKeyword) ||
                textNoSpaces.includes(keywordNoSpaces) ||
                normalizedKeyword.includes(normalizedText) ||
                keywordNoSpaces.includes(textNoSpaces)
