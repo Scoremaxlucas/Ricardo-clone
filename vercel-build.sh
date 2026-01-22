@@ -16,10 +16,11 @@ npx prisma generate
 
 # CRITICAL: Push database schema to ensure all columns exist
 echo "🗄️ Pushing database schema..."
-if npx prisma db push --accept-data-loss; then
-  echo "✅ Database schema pushed successfully"
-else
-  echo "⚠️ Database push failed - attempting manual column fixes..."
+npx prisma db push --accept-data-loss || true
+echo "✅ Database schema push attempted"
+
+# ALWAYS run manual column fixes to ensure all columns exist
+echo "🔧 Ensuring all required columns exist..."
   # Try to add critical missing columns manually
   npx prisma db execute --stdin <<'SQLEOF'
 -- Existing dispute columns
@@ -88,9 +89,12 @@ ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "adminNotes" TEXT;
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paymentArrangement" BOOLEAN DEFAULT false;
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paymentArrangementDate" TIMESTAMP(3);
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paymentArrangementNotes" TEXT;
+
+-- Sofortkauf Listing Expiry (Auto-Renew) Fields
+ALTER TABLE "Watch" ADD COLUMN IF NOT EXISTS "listingExpiresAt" TIMESTAMP(3);
+ALTER TABLE "Watch" ADD COLUMN IF NOT EXISTS "listingDurationDays" INTEGER DEFAULT 30;
 SQLEOF
-  echo "✅ Manual column fixes applied (including Ricardo-Style dispute columns)"
-fi
+echo "✅ All required columns ensured"
 
 # Create monitoring tables if they don't exist
 echo "📊 Creating monitoring tables..."
