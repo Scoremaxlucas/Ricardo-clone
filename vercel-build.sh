@@ -15,8 +15,8 @@ echo "✅ Database schema push attempted"
 
 # ALWAYS run manual column fixes to ensure all columns exist
 echo "🔧 Ensuring all required columns exist..."
-  # Try to add critical missing columns manually
-  npx prisma db execute --stdin <<'SQLEOF'
+# Try to add critical missing columns manually
+npx prisma db execute --schema prisma/schema.prisma --stdin <<'SQLEOF' || true
 -- Existing dispute columns
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeReminderCount" INTEGER NOT NULL DEFAULT 0;
 ALTER TABLE "purchases" ADD COLUMN IF NOT EXISTS "disputeDeadline" TIMESTAMP(3);
