@@ -1,16 +1,10 @@
 #!/bin/bash
 set -e
 
-# Fix nodemailer version in package.json before installing
-echo "🔧 Updating nodemailer version in package.json..."
-sed -i.bak 's/"nodemailer": "\^6\.10\.1"/"nodemailer": "^7.0.11"/g' package.json || true
-sed -i.bak 's/"nodemailer": "\^7\.0\.7"/"nodemailer": "^7.0.11"/g' package.json || true
+# NOTE: npm install is already done by Vercel before this script runs
+# We just need to generate Prisma client and apply DB migrations
 
-# Install dependencies with legacy peer deps
-echo "📦 Installing dependencies..."
-npm install --legacy-peer-deps
-
-# Generate Prisma client
+# Generate Prisma client (in case cache is stale)
 echo "🔨 Generating Prisma client..."
 npx prisma generate
 
