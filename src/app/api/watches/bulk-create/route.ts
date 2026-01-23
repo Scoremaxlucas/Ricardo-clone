@@ -126,14 +126,7 @@ export async function POST(request: NextRequest) {
           sellerId: session.user.id,
         }
 
-        if (!auctionEndDate) {
-          // Sofortkauf: Laufzeit mit automatischer Verlängerung (30 Tage)
-          const listingDays = 30
-          watchData.listingExpiresAt = new Date(
-            Date.now() + listingDays * 24 * 60 * 60 * 1000
-          )
-          watchData.listingDurationDays = listingDays
-        }
+        // NOTE: listingExpiresAt wird vom Cron-Job gesetzt nachdem die Migration angewandt wurde
 
         const created = await prisma.watch.create({
           data: watchData,

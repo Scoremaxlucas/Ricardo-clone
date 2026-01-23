@@ -154,7 +154,7 @@ export function StepDetails({
               <label className="block text-sm font-medium text-gray-700">
                 Beschreibung <span className="text-red-500">*</span>
               </label>
-              {formData.images.length > 0 && !isDescriptionLocked && (
+              {(formData.images.length > 0 || formData.title?.trim()) && !isDescriptionLocked && (
                 <button
                   type="button"
                   onClick={onGenerateDescription}

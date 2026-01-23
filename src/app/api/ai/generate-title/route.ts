@@ -1,12 +1,13 @@
+import { imageInputToBase64 } from '@/lib/ai-image-utils'
 import { NextRequest, NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic'
+export const maxDuration = 30
 
 /**
  * KI-TITEL-GENERIERUNG BASIEREND AUF BILD
- *
- * Nutzt GPT-4 Vision um einen präzisen, verkaufsfördernden Titel zu generieren
- * Ähnlich wie bei Helvenda: Nur Vorschlag, keine automatische Ausfüllung
+ * Unterstützt base64 data URL oder Bild-URL (z.B. Vercel Blob).
  */
-
 export async function POST(request: NextRequest) {
   try {
     const { imageBase64, category, subcategory, context } = await request.json()
@@ -16,7 +17,6 @@ export async function POST(request: NextRequest) {
     }
 
     const openaiApiKey = process.env.OPENAI_API_KEY
-
     if (!openaiApiKey) {
       return NextResponse.json(
         { error: 'OpenAI API Key nicht konfiguriert' },
@@ -24,8 +24,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Entferne Data-URL Prefix falls vorhanden
-    const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '')
+    const base64Data = await imageInputToBase64(imageBase64)
 
     const systemPrompt = `Du bist ein Experte für die Erstellung von verkaufsfördernden Produkttiteln für einen Online-Marktplatz.
 
@@ -56,7 +55,6 @@ Erkenne:
 
 Antworte NUR mit dem Titel, keine weiteren Erklärungen.`
 
-    // Rufe OpenAI GPT-4 Vision API auf
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -64,38 +62,31 @@ Antworte NUR mit dem Titel, keine weiteren Erklärungen.`
         Authorization: `Bearer ${openaiApiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o', // GPT-4 Vision für beste Genauigkeit
+        model: 'gpt-4o',
         messages: [
-          {
-            role: 'system',
-            content: systemPrompt,
-          },
+          { role: 'system', content: systemPrompt },
           {
             role: 'user',
             content: [
-              {
-                type: 'text',
-                text: userPrompt,
-              },
+              { type: 'text', text: userPrompt },
               {
                 type: 'image_url',
-                image_url: {
-                  url: `data:image/jpeg;base64,${base64Data}`,
-                },
+                image_url: { url: `data:image/jpeg;base64,${base64Data}` },
               },
             ],
           },
         ],
         max_tokens: 100,
-        temperature: 0.5, // Balance zwischen Kreativität und Präzision
+        temperature: 0.5,
       }),
     })
 
     if (!response.ok) {
-      const error = await response.json()
-      console.error('OpenAI API Fehler:', error)
+      const err = await response.json().catch(() => ({}))
+      const msg = err?.error?.message || err?.message || `HTTP ${response.status}`
+      console.error('[generate-title] OpenAI error:', msg)
       return NextResponse.json(
-        { error: 'Fehler bei der Titel-Generierung' },
+        { error: msg || 'Fehler bei der Titel-Generierung' },
         { status: 500 }
       )
     }
@@ -103,16 +94,13 @@ Antworte NUR mit dem Titel, keine weiteren Erklärungen.`
     const data = await response.json()
     const title = data.choices[0]?.message?.content?.trim() || ''
 
-    return NextResponse.json({
-      title,
-      model: 'gpt-4o-vision',
-    })
+    return NextResponse.json({ title, model: 'gpt-4o-vision' })
   } catch (error: any) {
-    console.error('Fehler bei Titel-Generierung:', error)
+    console.error('[generate-title] Error:', error)
+    const msg = error?.message || 'Fehler bei der Titel-Generierung'
     return NextResponse.json(
-      { error: 'Fehler bei der Titel-Generierung: ' + error.message },
-      { status: 500 }
+      { error: msg },
+      { status: error?.message?.includes('zu groß') || error?.message?.includes('Kein Bild') ? 400 : 500 }
     )
   }
 }
-

@@ -114,3 +114,32 @@ export function needsCompression(file: File, maxSizeMB: number = 2): boolean {
   return file.size > maxSizeMB * 1024 * 1024
 }
 
+/**
+ * Komprimiert eine Data-URL (z.B. von formData.images) vor dem Senden an KI-APIs.
+ * Verhindert Timeouts/Fehler auf dem Handy bei grossen Bildern.
+ */
+export async function compressDataUrl(
+  dataUrl: string,
+  options: CompressionOptions = {}
+): Promise<string> {
+  if (!dataUrl?.startsWith('data:image/')) return dataUrl
+  const base64 = dataUrl.includes(',') ? dataUrl.split(',')[1] : ''
+  if (!base64 || base64.length < 500) return dataUrl
+  try {
+    const binary = atob(base64)
+    const bytes = new Uint8Array(binary.length)
+    for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i)
+    const blob = new Blob([bytes], { type: 'image/jpeg' })
+    const file = new File([blob], 'image.jpg', { type: 'image/jpeg' })
+    return compressImage(file, {
+      maxWidth: 1024,
+      maxHeight: 1024,
+      quality: 0.7,
+      maxSizeMB: 0.8,
+      ...options,
+    })
+  } catch {
+    return dataUrl
+  }
+}
+

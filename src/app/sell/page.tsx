@@ -14,6 +14,7 @@ import {
     WizardFooter,
 } from '@/components/wizard'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { compressDataUrl } from '@/lib/image-compression'
 import { clearDraft, clearOtherUserDrafts } from '@/lib/draft-storage'
 import { canSell, getVerificationStatus } from '@/lib/verification'
 import { AlertCircle, CheckCircle, FileEdit, Loader2, Shield, X } from 'lucide-react'
@@ -804,52 +805,84 @@ function SellPageContent() {
     setShowAIDetection(false)
   }
 
+  // Fetch with timeout (Handy: langsame Netze)
+  const fetchWithTimeout = async (url: string, opts: RequestInit, ms: number) => {
+    const c = new AbortController()
+    const t = setTimeout(() => c.abort(), ms)
+    try {
+      const r = await fetch(url, { ...opts, signal: c.signal })
+      return r
+    } finally {
+      clearTimeout(t)
+    }
+  }
+
   // Generate title with AI
   const handleGenerateTitle = async () => {
-    if (formData.images.length === 0) return
+    if (formData.images.length === 0) {
+      toast.error('Bitte zuerst mindestens ein Bild hochladen.', { position: 'top-right' })
+      return
+    }
 
+    const toastId = toast.loading('Titel wird generiert…', { position: 'top-center' })
     try {
       setIsGeneratingTitle(true)
-      const response = await fetch('/api/ai/generate-title', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64: formData.images[0],
-          category: selectedCategory,
-          subcategory: selectedSubcategory,
-        }),
-      })
-      if (response.ok) {
-        const data = await response.json()
-        if (data.title) {
-          // Typing effect
-          const fullText = data.title
-          let currentIndex = 0
-
-          if (typingIntervalRef.current) {
-            clearInterval(typingIntervalRef.current)
-          }
-
-          setFormData(prev => ({ ...prev, title: '' }))
-
-          typingIntervalRef.current = setInterval(() => {
-            if (currentIndex < fullText.length) {
-              setFormData(prev => ({
-                ...prev,
-                title: fullText.substring(0, currentIndex + 1),
-              }))
-              currentIndex++
-            } else {
-              if (typingIntervalRef.current) {
-                clearInterval(typingIntervalRef.current)
-                typingIntervalRef.current = null
-              }
-            }
-          }, 20)
-        }
+      let img = formData.images[0]
+      if (typeof img === 'string' && img.startsWith('data:image/')) {
+        img = await compressDataUrl(img)
       }
-    } catch (error) {
-      console.error('Fehler bei Titel-Generierung:', error)
+      const response = await fetchWithTimeout(
+        '/api/ai/generate-title',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: img,
+            category: selectedCategory,
+            subcategory: selectedSubcategory,
+          }),
+        },
+        45000
+      )
+      const data = await response.json().catch(() => ({}))
+
+      toast.dismiss(toastId)
+      if (response.ok && data.title) {
+        const fullText = data.title
+        let currentIndex = 0
+        if (typingIntervalRef.current) clearInterval(typingIntervalRef.current)
+        setFormData(prev => ({ ...prev, title: '' }))
+        typingIntervalRef.current = setInterval(() => {
+          if (currentIndex < fullText.length) {
+            setFormData(prev => ({
+              ...prev,
+              title: fullText.substring(0, currentIndex + 1),
+            }))
+            currentIndex++
+          } else {
+            if (typingIntervalRef.current) {
+              clearInterval(typingIntervalRef.current)
+              typingIntervalRef.current = null
+            }
+          }
+        }, 20)
+        toast.success('Titel generiert', { position: 'top-center' })
+      } else {
+        toast.error(data?.error || 'Titel-Generierung fehlgeschlagen.', {
+          position: 'top-center',
+          duration: 6000,
+        })
+      }
+    } catch (e: any) {
+      toast.dismiss(toastId)
+      console.error('Fehler bei Titel-Generierung:', e)
+      const isAbort = e?.name === 'AbortError'
+      toast.error(
+        isAbort
+          ? 'Zeitüberschreitung. Bitte erneut versuchen (besseres Netz).'
+          : 'Titel-Generierung fehlgeschlagen. Bitte erneut versuchen.',
+        { position: 'top-center', duration: 6000 }
+      )
     } finally {
       setIsGeneratingTitle(false)
     }
@@ -857,28 +890,59 @@ function SellPageContent() {
 
   // Generate description with AI
   const handleGenerateDescription = async () => {
-    if (formData.images.length === 0) return
+    if (formData.images.length === 0 && !formData.title?.trim()) {
+      toast.error('Bitte zuerst ein Bild hochladen oder einen Titel eingeben.', {
+        position: 'top-center',
+      })
+      return
+    }
 
+    const toastId = toast.loading('Beschreibung wird generiert…', { position: 'top-center' })
     try {
       setIsGeneratingDescription(true)
-      const response = await fetch('/api/ai/generate-description', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          imageBase64: formData.images[0],
-          category: selectedCategory,
-          subcategory: selectedSubcategory,
-          title: formData.title,
-        }),
-      })
-      if (response.ok) {
-        const data = await response.json()
-        if (data.description) {
-          setFormData(prev => ({ ...prev, description: data.description }))
-        }
+      let img = formData.images[0]
+      if (img && typeof img === 'string' && img.startsWith('data:image/')) {
+        img = await compressDataUrl(img)
       }
-    } catch (error) {
-      console.error('Fehler bei Beschreibung-Generierung:', error)
+      const response = await fetchWithTimeout(
+        '/api/ai/generate-description',
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            imageBase64: img || undefined,
+            category: selectedCategory,
+            subcategory: selectedSubcategory,
+            title: formData.title || undefined,
+            brand: formData.brand || undefined,
+            model: formData.model || undefined,
+            condition: formData.condition || undefined,
+          }),
+        },
+        45000
+      )
+      const data = await response.json().catch(() => ({}))
+
+      toast.dismiss(toastId)
+      if (response.ok && data.description) {
+        setFormData(prev => ({ ...prev, description: data.description }))
+        toast.success('Beschreibung generiert', { position: 'top-center' })
+      } else {
+        toast.error(data?.error || 'Beschreibungs-Generierung fehlgeschlagen.', {
+          position: 'top-center',
+          duration: 6000,
+        })
+      }
+    } catch (e: any) {
+      toast.dismiss(toastId)
+      console.error('Fehler bei Beschreibung-Generierung:', e)
+      const isAbort = e?.name === 'AbortError'
+      toast.error(
+        isAbort
+          ? 'Zeitüberschreitung. Bitte erneut versuchen (besseres Netz).'
+          : 'Beschreibungs-Generierung fehlgeschlagen. Bitte erneut versuchen.',
+        { position: 'top-center', duration: 6000 }
+      )
     } finally {
       setIsGeneratingDescription(false)
     }

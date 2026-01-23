@@ -72,7 +72,7 @@ export function StepPrice({
             type="button"
             onClick={() =>
               !isSaleTypeLocked &&
-              onFormDataChange({ isAuction: false, auctionDuration: '', buyNowPrice: '' })
+              onFormDataChange({ isAuction: false, auctionDuration: '' })
             }
             disabled={isSaleTypeLocked}
             className={`relative flex flex-col items-center gap-2 rounded-xl border-2 p-3 transition-all sm:gap-3 sm:p-4 md:p-6 ${
@@ -153,43 +153,94 @@ export function StepPrice({
       {/* Price inputs - conditional based on sale type */}
       <div className="space-y-6">
         {!formData.isAuction ? (
-          /* FIXED PRICE MODE - Show price field */
-          <div className="space-y-2">
-            <label className="block text-sm font-medium text-gray-700">
-              Verkaufspreis (CHF) <span className="text-red-500">*</span>
-            </label>
-            <div className="relative">
-              <input
-                type="number"
-                inputMode="decimal"
-                name="price"
-                required
-                value={formData.price}
-                onChange={onInputChange}
-                disabled={isPriceLocked}
-                min="0"
-                step="0.01"
-                autoComplete="off"
-                className={`w-full rounded-lg border py-3 pl-14 pr-4 text-lg font-medium transition-colors ${
-                  isPriceLocked
-                    ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
-                    : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
-                }`}
-                placeholder="0.00"
-              />
-              {isPriceLocked && (
-                <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
-                  <Lock className="h-3 w-3" />
-                  Preis kann nicht mehr geändert werden
+          /* FIXED PRICE MODE - Basispreis + Sofortkaufpreis */
+          <div className="space-y-6">
+            {/* Basispreis (für Preisvorschläge) */}
+            <div className="space-y-2">
+              <label className="block text-sm font-medium text-gray-700">
+                Basispreis (CHF) <span className="text-red-500">*</span>
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  name="price"
+                  required
+                  value={formData.price}
+                  onChange={onInputChange}
+                  disabled={isPriceLocked}
+                  min="0"
+                  step="0.01"
+                  autoComplete="off"
+                  className={`w-full rounded-lg border py-3 pl-14 pr-4 text-lg font-medium transition-colors ${
+                    isPriceLocked
+                      ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
+                      : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
+                  }`}
+                  placeholder="0.00"
+                />
+                {isPriceLocked && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                    <Lock className="h-3 w-3" />
+                    Preis kann nicht mehr geändert werden
+                  </p>
+                )}
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-gray-500">
+                  CHF
+                </span>
+              </div>
+              <p className="text-xs text-gray-500 sm:text-sm">
+                Mindestpreis für Preisvorschläge. Käufer können Angebote machen.
+              </p>
+            </div>
+
+            {/* Sofortkaufpreis */}
+            <div className="space-y-2">
+              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                Sofortkaufpreis (CHF)
+                <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
+                  Optional
+                </span>
+              </label>
+              <div className="relative">
+                <input
+                  type="number"
+                  inputMode="decimal"
+                  name="buyNowPrice"
+                  value={formData.buyNowPrice}
+                  onChange={onInputChange}
+                  disabled={isBuyNowPriceLocked}
+                  min="0"
+                  step="0.01"
+                  autoComplete="off"
+                  className={`w-full rounded-lg border py-3 pl-14 pr-4 transition-colors ${
+                    isBuyNowPriceLocked
+                      ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
+                      : !buyNowValid
+                        ? 'border-red-300 bg-red-50 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
+                        : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
+                  }`}
+                  placeholder="0.00"
+                />
+                {isBuyNowPriceLocked && (
+                  <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
+                    <Lock className="h-3 w-3" />
+                    Sofortkaufpreis kann nicht mehr geändert werden
+                  </p>
+                )}
+                <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-gray-500">
+                  CHF
+                </span>
+              </div>
+              {!buyNowValid && (
+                <p className="text-xs font-medium text-red-600 sm:text-sm">
+                  Der Sofortkaufpreis muss höher als der Basispreis sein.
                 </p>
               )}
-              <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-gray-500">
-                CHF
-              </span>
+              <p className="text-xs text-gray-500 sm:text-sm">
+                Der Käufer kann den Artikel sofort zu diesem Preis kaufen.
+              </p>
             </div>
-            <p className="text-xs text-gray-500 sm:text-sm">
-              Der Käufer kann den Artikel sofort zu diesem Preis kaufen (Sofortkauf).
-            </p>
           </div>
         ) : (
           /* AUCTION MODE - Show start price, optional buy-now, and duration */

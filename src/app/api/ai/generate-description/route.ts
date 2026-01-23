@@ -1,18 +1,18 @@
+import { imageInputToBase64 } from '@/lib/ai-image-utils'
 import { NextRequest, NextResponse } from 'next/server'
+
+export const dynamic = 'force-dynamic'
+export const maxDuration = 30
 
 /**
  * KI-BESCHREIBUNGS-GENERIERUNG
- *
- * Nutzt OpenAI GPT-4 Vision API um professionelle Artikelbeschreibungen zu generieren
- * Unterstützt sowohl Text-basierte als auch Bild-basierte Generierung
+ * Unterstützt Bild (base64 oder URL) und/oder Titel + Metadaten.
  */
-
 export async function POST(request: NextRequest) {
   try {
     const { title, category, subcategory, brand, model, condition, imageBase64 } =
       await request.json()
 
-    // Entweder Titel ODER Bild muss vorhanden sein
     if (!title && !imageBase64) {
       return NextResponse.json(
         { error: 'Titel oder Bild ist erforderlich' },
@@ -21,16 +21,14 @@ export async function POST(request: NextRequest) {
     }
 
     const openaiApiKey = process.env.OPENAI_API_KEY
-
     if (!openaiApiKey) {
-      return NextResponse.json({ error: 'OpenAI API Key nicht konfiguriert' }, { status: 500 })
+      return NextResponse.json(
+        { error: 'OpenAI API Key nicht konfiguriert' },
+        { status: 500 }
+      )
     }
 
-    // Wenn Bild vorhanden, nutze GPT-4 Vision für bessere Beschreibung
-    if (imageBase64) {
-      const base64Data = imageBase64.replace(/^data:image\/[a-z]+;base64,/, '')
-
-      const systemPrompt = `Du erstellst kurze, sachliche Artikelbeschreibungen für einen Online-Marktplatz.
+    const systemPrompt = `Du erstellst kurze, sachliche Artikelbeschreibungen für einen Online-Marktplatz.
 
 Anforderungen:
 - 1-2 Sätze, knapp und faktenbasiert
@@ -39,7 +37,12 @@ Anforderungen:
 - Keine Werbesprache, keine Übertreibungen, keine Superlative
 - Neutrale Formulierung`
 
-      const userPrompt = `Analysiere das Bild und erstelle eine kurze, sachliche Beschreibung.
+    // 1. Versuche Bild-basierte Generierung (GPT-4 Vision)
+    if (imageBase64) {
+      try {
+        const base64Data = await imageInputToBase64(imageBase64)
+
+        const userPrompt = `Analysiere das Bild und erstelle eine kurze, sachliche Beschreibung.
 
 ${title ? `Titel: ${title}` : ''}
 ${category ? `Kategorie: ${category}` : ''}
@@ -50,56 +53,54 @@ ${condition ? `Zustand: ${condition}` : ''}
 
 Nur Fakten, die auf dem Bild erkennbar sind. Keine Werbesprache.`
 
-      const response = await fetch('https://api.openai.com/v1/chat/completions', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${openaiApiKey}`,
-        },
-        body: JSON.stringify({
-          model: 'gpt-4o', // GPT-4 Vision für Bild-Analyse
-          messages: [
-            {
-              role: 'system',
-              content: systemPrompt,
-            },
-            {
-              role: 'user',
-              content: [
-                {
-                  type: 'text',
-                  text: userPrompt,
-                },
-                {
-                  type: 'image_url',
-                  image_url: {
-                    url: `data:image/jpeg;base64,${base64Data}`,
+        const response = await fetch('https://api.openai.com/v1/chat/completions', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${openaiApiKey}`,
+          },
+          body: JSON.stringify({
+            model: 'gpt-4o',
+            messages: [
+              { role: 'system', content: systemPrompt },
+              {
+                role: 'user',
+                content: [
+                  { type: 'text', text: userPrompt },
+                  {
+                    type: 'image_url',
+                    image_url: { url: `data:image/jpeg;base64,${base64Data}` },
                   },
-                },
-              ],
-            },
-          ],
-          max_tokens: 150,
-          temperature: 0.3,
-        }),
-      })
-
-      if (!response.ok) {
-        const error = await response.json()
-        console.error('OpenAI GPT-4 Vision API Fehler:', error)
-        // Fallback zu Text-basierter Generierung
-      } else {
-        const data = await response.json()
-        const description = data.choices[0]?.message?.content?.trim() || ''
-
-        return NextResponse.json({
-          description,
-          model: 'gpt-4o-vision',
+                ],
+              },
+            ],
+            max_tokens: 150,
+            temperature: 0.3,
+          }),
         })
+
+        if (response.ok) {
+          const data = await response.json()
+          const description = data.choices[0]?.message?.content?.trim() || ''
+          if (description) {
+            return NextResponse.json({ description, model: 'gpt-4o-vision' })
+          }
+        }
+        const errBody = await response.json().catch(() => ({}))
+        console.warn('[generate-description] Vision failed, falling back to text:', errBody?.error?.message)
+      } catch (visionErr: any) {
+        console.warn('[generate-description] Vision error, falling back to text:', visionErr?.message)
       }
     }
 
-    // Text-basierte Generierung (Fallback oder wenn kein Bild vorhanden)
+    // 2. Text-basierte Generierung (Fallback oder nur Titel)
+    if (!title) {
+      return NextResponse.json(
+        { error: 'Für die Beschreibung werden Titel oder Bild benötigt.' },
+        { status: 400 }
+      )
+    }
+
     const prompt = `Erstelle eine kurze, sachliche Artikelbeschreibung.
 
 Artikel-Details:
@@ -117,7 +118,6 @@ Anforderungen:
 
 Beschreibung:`
 
-    // Rufe OpenAI API auf
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
       method: 'POST',
       headers: {
@@ -125,17 +125,14 @@ Beschreibung:`
         Authorization: `Bearer ${openaiApiKey}`,
       },
       body: JSON.stringify({
-        model: 'gpt-4o-mini', // Kostengünstig und schnell
+        model: 'gpt-4o-mini',
         messages: [
           {
             role: 'system',
             content:
               'Du erstellst kurze, sachliche Artikelbeschreibungen. 1-2 Sätze, nur Fakten, keine Werbesprache.',
           },
-          {
-            role: 'user',
-            content: prompt,
-          },
+          { role: 'user', content: prompt },
         ],
         max_tokens: 120,
         temperature: 0.3,
@@ -143,23 +140,22 @@ Beschreibung:`
     })
 
     if (!response.ok) {
-      const error = await response.json()
-      console.error('OpenAI API Fehler:', error)
-      return NextResponse.json(
-        { error: 'Fehler bei der Beschreibungsgenerierung' },
-        { status: 500 }
-      )
+      const err = await response.json().catch(() => ({}))
+      const msg = err?.error?.message || err?.message || 'Fehler bei der Beschreibungsgenerierung'
+      console.error('[generate-description] OpenAI error:', msg)
+      return NextResponse.json({ error: msg }, { status: 500 })
     }
 
     const data = await response.json()
     const description = data.choices[0]?.message?.content?.trim() || ''
 
-    return NextResponse.json({
-      description,
-      model: 'gpt-4o-mini',
-    })
-  } catch (error) {
-    console.error('Fehler bei Beschreibungsgenerierung:', error)
-    return NextResponse.json({ error: 'Fehler bei der Beschreibungsgenerierung' }, { status: 500 })
+    return NextResponse.json({ description, model: 'gpt-4o-mini' })
+  } catch (error: any) {
+    console.error('[generate-description] Error:', error)
+    const msg = error?.message || 'Fehler bei der Beschreibungsgenerierung'
+    return NextResponse.json(
+      { error: msg },
+      { status: msg.includes('zu groß') || msg.includes('Kein Bild') ? 400 : 500 }
+    )
   }
 }
