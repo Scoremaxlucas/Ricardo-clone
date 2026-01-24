@@ -118,13 +118,14 @@ export function StepImages({
       return
     }
 
-    const currentImageCount = formData.images.length
+    // Capture initial image count BEFORE uploads
+    const initialImageCount = formData.images.length
+    const initialImages = [...formData.images] // Snapshot of current images
     const newImageUrls: string[] = []
-    let processedCount = 0
 
     for (let i = 0; i < files.length; i++) {
       const file = files[i]
-      const tempIndex = currentImageCount + i
+      const tempIndex = initialImageCount + newImageUrls.length
 
       // Check file type
       if (!file.type.startsWith('image/')) {
@@ -157,7 +158,7 @@ export function StepImages({
 
         // Show progress for multiple images
         if (files.length > 1) {
-          toast.loading(`Bild ${processedCount + 1} von ${files.length} wird hochgeladen...`, {
+          toast.loading(`Bild ${newImageUrls.length + 1} von ${files.length} wird hochgeladen...`, {
             id: 'image-upload-progress',
             position: 'top-right',
           })
@@ -168,8 +169,8 @@ export function StepImages({
         const base64Data = compressedImage.split(',')[1]
         const byteCharacters = atob(base64Data)
         const byteNumbers = new Array(byteCharacters.length)
-        for (let i = 0; i < byteCharacters.length; i++) {
-          byteNumbers[i] = byteCharacters.charCodeAt(i)
+        for (let j = 0; j < byteCharacters.length; j++) {
+          byteNumbers[j] = byteCharacters.charCodeAt(j)
         }
         const byteArray = new Uint8Array(byteNumbers)
         const blob = new Blob([byteArray], { type: 'image/jpeg' })
@@ -192,14 +193,13 @@ export function StepImages({
         const { image } = await uploadResponse.json()
         newImageUrls.push(image.url)
 
-        processedCount++
-
-        // Update UI immediately
-        const updatedImages = [...formData.images, image.url]
+        // Update UI with ALL accumulated images (initial + all new so far)
+        // This ensures correct order regardless of React batching
+        const updatedImages = [...initialImages, ...newImageUrls]
         onImagesChange(updatedImages)
 
-        // Set first image as title image if none set
-        if (currentImageCount === 0 && processedCount === 1) {
+        // Set first image as title image if this is the first ever image
+        if (initialImageCount === 0 && newImageUrls.length === 1) {
           await onTitleImageChange(0)
         }
       } catch (error) {
