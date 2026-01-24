@@ -14,8 +14,8 @@ import {
     WizardFooter,
 } from '@/components/wizard'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { compressDataUrl } from '@/lib/image-compression'
 import { clearDraft, clearOtherUserDrafts } from '@/lib/draft-storage'
+import { compressDataUrl } from '@/lib/image-compression'
 import { canSell, getVerificationStatus } from '@/lib/verification'
 import { AlertCircle, CheckCircle, FileEdit, Loader2, Shield, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -768,37 +768,57 @@ function SellPageContent() {
       const currentImages = [...formData.images]
       if (!currentImages.includes(imageUrl)) {
         // KRITISCH: AI-Bild SOFORT zum Draft hochladen, damit es sortOrder 0 bekommt
-        if (currentDraftId && imageUrl.startsWith('data:image/')) {
+        if (imageUrl.startsWith('data:image/')) {
           try {
-            // Konvertiere base64 zu File
-            const base64Data = imageUrl.split(',')[1]
-            const byteCharacters = atob(base64Data)
-            const byteNumbers = new Array(byteCharacters.length)
-            for (let i = 0; i < byteCharacters.length; i++) {
-              byteNumbers[i] = byteCharacters.charCodeAt(i)
+            // Stelle sicher dass ein Draft existiert
+            let draftId = currentDraftId
+            if (!draftId) {
+              console.log('[AI Scan] Kein Draft vorhanden, erstelle neuen...')
+              const draftResponse = await fetch('/api/drafts/current')
+              if (draftResponse.ok) {
+                const draftData = await draftResponse.json()
+                draftId = draftData.draft?.id
+                if (draftId) {
+                  setCurrentDraftId(draftId)
+                  console.log('[AI Scan] Draft erstellt:', draftId)
+                }
+              }
             }
-            const byteArray = new Uint8Array(byteNumbers)
-            const blob = new Blob([byteArray], { type: 'image/jpeg' })
-            const uploadFile = new File([blob], `ai-scan-${Date.now()}.jpg`, { type: 'image/jpeg' })
 
-            // Upload zum Draft
-            const uploadFormData = new FormData()
-            uploadFormData.append('file', uploadFile)
+            if (draftId) {
+              // Konvertiere base64 zu File
+              const base64Data = imageUrl.split(',')[1]
+              const byteCharacters = atob(base64Data)
+              const byteNumbers = new Array(byteCharacters.length)
+              for (let i = 0; i < byteCharacters.length; i++) {
+                byteNumbers[i] = byteCharacters.charCodeAt(i)
+              }
+              const byteArray = new Uint8Array(byteNumbers)
+              const blob = new Blob([byteArray], { type: 'image/jpeg' })
+              const uploadFile = new File([blob], `ai-scan-${Date.now()}.jpg`, { type: 'image/jpeg' })
 
-            const uploadResponse = await fetch(`/api/drafts/${currentDraftId}/images`, {
-              method: 'POST',
-              body: uploadFormData,
-            })
+              // Upload zum Draft
+              const uploadFormData = new FormData()
+              uploadFormData.append('file', uploadFile)
 
-            if (uploadResponse.ok) {
-              const { image } = await uploadResponse.json()
-              // Verwende die Blob-URL statt base64
-              currentImages.push(image.url)
-              console.log('[AI Scan] Bild erfolgreich zum Draft hochgeladen mit sortOrder 0')
+              const uploadResponse = await fetch(`/api/drafts/${draftId}/images`, {
+                method: 'POST',
+                body: uploadFormData,
+              })
+
+              if (uploadResponse.ok) {
+                const { image } = await uploadResponse.json()
+                // Verwende die Blob-URL statt base64
+                currentImages.push(image.url)
+                console.log('[AI Scan] Bild erfolgreich zum Draft hochgeladen mit sortOrder 0')
+              } else {
+                // Fallback: verwende base64
+                currentImages.push(imageUrl)
+                console.warn('[AI Scan] Upload fehlgeschlagen, verwende base64')
+              }
             } else {
-              // Fallback: verwende base64
               currentImages.push(imageUrl)
-              console.warn('[AI Scan] Upload fehlgeschlagen, verwende base64')
+              console.warn('[AI Scan] Kein Draft verfügbar, verwende base64')
             }
           } catch (error) {
             console.error('[AI Scan] Fehler beim Upload:', error)
@@ -807,7 +827,7 @@ function SellPageContent() {
         } else {
           currentImages.push(imageUrl)
         }
-        
+
         setFormData(prev => ({ ...prev, images: currentImages }))
         if (currentImages.length === 1) {
           setTitleImageIndex(0)
