@@ -763,11 +763,51 @@ function SellPageContent() {
     setDetectedProductName(productName || '')
     setDetectedConfidence(confidence)
 
-    // Add image if provided
+    // Add image if provided AND upload to draft
     if (imageUrl) {
       const currentImages = [...formData.images]
       if (!currentImages.includes(imageUrl)) {
-        currentImages.push(imageUrl)
+        // KRITISCH: AI-Bild SOFORT zum Draft hochladen, damit es sortOrder 0 bekommt
+        if (currentDraftId && imageUrl.startsWith('data:image/')) {
+          try {
+            // Konvertiere base64 zu File
+            const base64Data = imageUrl.split(',')[1]
+            const byteCharacters = atob(base64Data)
+            const byteNumbers = new Array(byteCharacters.length)
+            for (let i = 0; i < byteCharacters.length; i++) {
+              byteNumbers[i] = byteCharacters.charCodeAt(i)
+            }
+            const byteArray = new Uint8Array(byteNumbers)
+            const blob = new Blob([byteArray], { type: 'image/jpeg' })
+            const uploadFile = new File([blob], `ai-scan-${Date.now()}.jpg`, { type: 'image/jpeg' })
+
+            // Upload zum Draft
+            const uploadFormData = new FormData()
+            uploadFormData.append('file', uploadFile)
+
+            const uploadResponse = await fetch(`/api/drafts/${currentDraftId}/images`, {
+              method: 'POST',
+              body: uploadFormData,
+            })
+
+            if (uploadResponse.ok) {
+              const { image } = await uploadResponse.json()
+              // Verwende die Blob-URL statt base64
+              currentImages.push(image.url)
+              console.log('[AI Scan] Bild erfolgreich zum Draft hochgeladen mit sortOrder 0')
+            } else {
+              // Fallback: verwende base64
+              currentImages.push(imageUrl)
+              console.warn('[AI Scan] Upload fehlgeschlagen, verwende base64')
+            }
+          } catch (error) {
+            console.error('[AI Scan] Fehler beim Upload:', error)
+            currentImages.push(imageUrl)
+          }
+        } else {
+          currentImages.push(imageUrl)
+        }
+        
         setFormData(prev => ({ ...prev, images: currentImages }))
         if (currentImages.length === 1) {
           setTitleImageIndex(0)
