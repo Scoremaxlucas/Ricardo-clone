@@ -262,17 +262,31 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               {session && (
                 <Link
                   href="/favorites"
-                  className="relative flex items-center gap-1.5 rounded-md px-2 py-1.5 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
-                  style={{ minHeight: '44px' }}
+                  className="relative flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
                   title={t.header.favorites}
                 >
-                  <Heart className="h-5 w-5 flex-shrink-0" />
-                  <span className="text-sm font-medium md:hidden">
-                    {t.header.favorites}
-                  </span>
+                  <Heart className="h-5 w-5" />
                   {deferredData.favoritesCount > 0 && (
-                    <span className="absolute -right-1 -top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500/90 text-[10px] font-bold text-white">
+                    <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
                       {deferredData.favoritesCount > 9 ? '9+' : deferredData.favoritesCount}
+                    </span>
+                  )}
+                </Link>
+              )}
+
+              {/* Benachrichtigungen - Ricardo-Style */}
+              {session && (
+                <Link
+                  href="/notifications"
+                  className="relative flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  title={t.header.notifications}
+                >
+                  <Bell className="h-5 w-5" />
+                  {deferredData.unreadNotifications > 0 && (
+                    <span className="absolute right-1 top-1 flex h-4 w-4 items-center justify-center rounded-full bg-red-500 text-[10px] font-bold text-white">
+                      {deferredData.unreadNotifications > 9 ? '9+' : deferredData.unreadNotifications}
                     </span>
                   )}
                 </Link>
@@ -753,7 +767,22 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             <div className="flex-1 overflow-y-auto py-2">
               {session ? (
                 <>
-                  {/* Ricardo-Style: Kompaktes Menü mit 6 Einträgen */}
+                  {/* Benachrichtigungen - prominent mit Badge */}
+                  <Link
+                    href="/notifications"
+                    onClick={() => setIsMobileMenuOpen(false)}
+                    className="flex w-full items-center gap-3 px-5 py-3.5 text-gray-700 transition-all duration-200 hover:bg-gray-50 hover:pl-6"
+                  >
+                    <Bell className="h-5 w-5 text-gray-400" />
+                    <span className="text-[15px]">{t.header.notifications}</span>
+                    {deferredData.unreadNotifications > 0 && (
+                      <span className="ml-auto flex h-5 w-5 items-center justify-center rounded-full bg-red-500 text-[11px] font-bold text-white">
+                        {deferredData.unreadNotifications > 9 ? '9+' : deferredData.unreadNotifications}
+                      </span>
+                    )}
+                  </Link>
+
+                  {/* Ricardo-Style: Kompaktes Menü */}
                   <Link
                     href="/my-watches/buying"
                     onClick={() => setIsMobileMenuOpen(false)}
