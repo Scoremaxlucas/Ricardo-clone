@@ -232,6 +232,17 @@ export async function POST(request: NextRequest) {
     // Entferne Duplikate
     allImages = Array.from(new Set(allImages))
 
+    // KRITISCH: Titelbild an erste Stelle setzen
+    // Der Client sendet titleImage als Index des gewählten Titelbilds
+    const titleImageIndex = typeof rawData.titleImage === 'number' ? rawData.titleImage : 0
+    if (titleImageIndex > 0 && titleImageIndex < allImages.length) {
+      // Verschiebe das Titelbild an die erste Stelle
+      const titleImg = allImages[titleImageIndex]
+      allImages.splice(titleImageIndex, 1) // Entferne aus aktueller Position
+      allImages.unshift(titleImg) // Füge an erster Stelle ein
+      console.log(`[Watch Create] Titelbild von Index ${titleImageIndex} an Position 0 verschoben`)
+    }
+
     console.log('Data cleanup:', {
       originalDescriptionType: typeof rawData.description,
       originalDescriptionIsArray: Array.isArray(rawData.description),
