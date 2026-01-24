@@ -708,20 +708,7 @@ export function ProductPageClient({
                 {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
               </h1>
 
-              {/* Einstelldatum mit Clock-Icon */}
-              {watch.createdAt && (
-                <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-500">
-                  <Clock className="h-4 w-4" />
-                  {new Date(watch.createdAt).toLocaleDateString('de-CH', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                  })}, {new Date(watch.createdAt).toLocaleTimeString('de-CH', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })} Uhr
-                </div>
-              )}
+              {/* Einstelldatum ausgeblendet (niedriges Volumen) */}
 
               {/* Buy/Offer Section - Enthält jetzt die Preisanzeige */}
               <div ref={priceAreaRef} className="mb-4">
@@ -969,20 +956,7 @@ export function ProductPageClient({
                 {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
               </h1>
 
-              {/* Datum */}
-              {watch.createdAt && (
-                <div className="mb-4 flex items-center gap-1.5 text-sm text-gray-500">
-                  <Clock className="h-4 w-4" />
-                  {new Date(watch.createdAt).toLocaleDateString('de-CH', {
-                    day: 'numeric',
-                    month: 'short',
-                    year: 'numeric'
-                  })}, {new Date(watch.createdAt).toLocaleTimeString('de-CH', {
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })} Uhr
-                </div>
-              )}
+              {/* Datum ausgeblendet (niedriges Volumen) */}
 
               {/* Kauf/Gebot Component - Enthält jetzt die Preisanzeige */}
               {isSold ? (
