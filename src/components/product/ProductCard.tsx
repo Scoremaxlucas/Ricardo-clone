@@ -469,18 +469,8 @@ export function ProductCard({
           </div>
         )}
 
-        {/* Meta Row - "Neu eingestellt" + Location + Delivery */}
+        {/* Meta Row - Location + Delivery (Datum ausgeblendet) */}
         <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-gray-500">
-          {/* "Neu eingestellt" label (subtle, only for new listings) */}
-          {isNewListing && (
-            <>
-              <span className="font-medium text-primary-600">
-                Neu eingestellt{timeSinceCreated ? ` · ${timeSinceCreated}` : ''}
-              </span>
-              <span className="text-gray-300">•</span>
-            </>
-          )}
-
           {/* Location */}
           {(product.city || product.postalCode) && (
             <>
