@@ -26,3 +26,10 @@ Siehe: `docs/kuh-bilddatei-schnellstart.md` für detaillierte Anleitung.
 
 5. **Fiverr**: https://www.fiverr.com
    - Suche nach "mascot design" ($20-50)
+
+---
+
+## SEO (Open Graph, JSON-LD)
+
+- Homepage-OG-Bild wird dynamisch generiert (`app/opengraph-image.tsx`).
+- **logo-og.png**: Logo für JSON-LD Organization (z. B. 512×512 px). Optional; falls vorhanden, in `WebSiteJsonLd` eingetragen.

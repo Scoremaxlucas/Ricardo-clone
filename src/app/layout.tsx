@@ -2,6 +2,7 @@ import { CookieConsent } from '@/components/CookieConsent'
 import { DeferredComponents } from '@/components/DeferredComponents'
 import { SkipLinks } from '@/components/accessibility/SkipLinks'
 import { Providers } from '@/components/providers'
+import { BASE_URL } from '@/lib/seo'
 import type { Metadata, Viewport } from 'next'
 import { Inter } from 'next/font/google'
 import { Toaster } from 'react-hot-toast'
@@ -29,6 +30,7 @@ const inter = Inter({
 })
 
 export const metadata: Metadata = {
+  metadataBase: new URL(BASE_URL),
   title: 'Helvenda.ch - Schweizer Online-Marktplatz',
   description:
     'Der Schweizer Online-Marktplatz für Private und Gewerbetreibende. Kaufen, verkaufen und handeln Sie einfach und sicher.',
