@@ -56,6 +56,9 @@ export function HeroServer({ title = 'Finden Sie lokale Deals in der Schweiz' }:
           <h1 className="text-2xl font-bold tracking-tight text-white md:text-3xl lg:text-[28px]">
             {title}
           </h1>
+          <p className="mt-2 text-base text-white/90 md:text-lg">
+            Kaufen &amp; Verkaufen · Schweizer Marktplatz
+          </p>
 
           {/* Trust Badges - Kompakt und modern */}
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 md:gap-x-8">

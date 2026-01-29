@@ -59,3 +59,32 @@ Falls die Datei fehlt, bleibt das Schema gültig; nur der `logo`-Eintrag wird ni
 - [ ] Optional: `public/images/logo-og.png` angelegt
 
 Nach dem Redeploy und nach dem ersten Crawl (oft innerhalb von 1–2 Tagen) nutzt Google Sitemap und Metadaten für die Indizierung.
+
+---
+
+## 5. Warum erscheint Helvenda (noch) nicht? / „Related topics“ (Marktplatz, verkaufen)
+
+**"URL is available to Google" ≠ bereits indexiert**
+
+- „Available to Google“ bedeutet nur: Die Seite *kann* indexiert werden. Sie ist damit nicht automatisch schon im Index.
+- **Request Indexing** in der Search Console nutzen:
+  1. **URL Inspection** → `https://helvenda.ch/` eingeben → **LIVE TEST** (oder Ergebnis öffnen).
+  2. Unten auf **„Request indexing“** klicken (bei „Page changed?“).
+  3. Für weitere wichtige URLs (z. B. `/search`, `/sell`) ggf. wiederholen.
+
+**Indexierung braucht Zeit**
+
+- Auch nach „Request indexing“ kann es **Tage bis wenige Wochen** dauern, bis eine Seite im Index ist und in Suchergebnissen erscheint.
+- Neue bzw. unbekannte Domains werden oft seltener gecrawlt.
+
+**Ranking für „helvenda“, „Marktplatz“, „verkaufen“**
+
+- Ranking hängt u. a. von Inhalt, Links und Vertrauen ab. „Helvenda“ konkurriert mit z. B. „Helvetii“, „Helvada“; „Marktplatz“ / „verkaufen“ mit vielen etablierten Seiten.
+- On-Page ist vorbereitet: **Titel**, **Description**, **H1**, **Subtitle** und **JSON-LD** enthalten u. a. „Marktplatz“, „kaufen“, „verkaufen“, „Schweiz“. Das hilft Google, das Thema zuzuordnen.
+- **„URL has no enhancements“** in der Search Console: Das bezieht sich auf spezielle Rich Results (z. B. Produkte, FAQ). WebSite- und Organization-Schema helfen trotzdem für die Grund-Auffindbarkeit; Produktseiten mit Product-Schema können später „Enhancements“ liefern.
+
+**Kurz:**
+
+1. **Request Indexing** für `https://helvenda.ch/` (und ggf. weitere wichtige URLs) ausführen.
+2. **Geduld**: Indexierung und besseres Ranking für „helvenda“ / „Marktplatz“ / „verkaufen“ brauchen Zeit.
+3. Sitemap eingereicht lassen, **NEXT_PUBLIC_APP_URL** korrekt setzen, Redeploy – dann greifen die Anpassungen.

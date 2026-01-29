@@ -29,22 +29,32 @@ import { Suspense } from 'react'
 // ISR: Revalidate alle 60 Sekunden
 export const revalidate = 60
 
-// SEO Metadata
+// SEO Metadata – keywords für Marktplatz, kaufen, verkaufen, marketplace, selling
 export const metadata: Metadata = {
-  title: 'Helvenda - Der Schweizer Online-Marktplatz',
+  title: 'Helvenda - Der Schweizer Online-Marktplatz | Kaufen & Verkaufen',
   description:
-    'Kaufen und verkaufen Sie einfach und sicher auf dem Schweizer Online-Marktplatz. Tausende Produkte von privaten Verkäufern und Händlern.',
+    'Helvenda: Schweizer Marktplatz zum Kaufen und Verkaufen. Einfach und sicher – Privat und Händler. Marktplatz, verkaufen, kaufen, Schweiz.',
+  keywords: [
+    'Helvenda',
+    'Schweizer Marktplatz',
+    'Online-Marktplatz',
+    'kaufen',
+    'verkaufen',
+    'marketplace',
+    'selling',
+    'Schweiz',
+  ],
   openGraph: {
-    title: 'Helvenda - Der Schweizer Online-Marktplatz',
-    description: 'Kaufen und verkaufen Sie einfach und sicher auf dem Schweizer Online-Marktplatz.',
+    title: 'Helvenda - Schweizer Marktplatz | Kaufen & Verkaufen',
+    description: 'Helvenda: Schweizer Marktplatz zum Kaufen und Verkaufen. Einfach und sicher.',
     type: 'website',
     locale: 'de_CH',
     siteName: 'Helvenda',
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Helvenda - Der Schweizer Online-Marktplatz',
-    description: 'Kaufen und verkaufen Sie einfach und sicher auf dem Schweizer Online-Marktplatz.',
+    title: 'Helvenda - Schweizer Marktplatz | Kaufen & Verkaufen',
+    description: 'Helvenda: Schweizer Marktplatz zum Kaufen und Verkaufen. Einfach und sicher.',
   },
   alternates: {
     canonical: 'https://helvenda.ch',

@@ -5,10 +5,15 @@ export function WebSiteJsonLd() {
     '@context': 'https://schema.org',
     '@type': 'WebSite',
     name: 'Helvenda',
-    alternateName: 'Helvenda.ch',
+    alternateName: [
+      'Helvenda.ch',
+      'Helvenda Marktplatz',
+      'Schweizer Marktplatz',
+      'Helvenda Marketplace',
+    ],
     url: abs(''),
     description:
-      'Der Schweizer Online-Marktplatz. Kaufen und verkaufen Sie einfach und sicher.',
+      'Helvenda: Schweizer Online-Marktplatz zum Kaufen und Verkaufen. Einfach und sicher. Marktplatz, verkaufen, kaufen, Schweiz.',
     potentialAction: {
       '@type': 'SearchAction',
       target: {
