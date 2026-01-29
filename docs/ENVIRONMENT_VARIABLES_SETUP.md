@@ -87,6 +87,9 @@ Value: http://localhost:3000 (für Development)
 Umgebungen: ✅ Production, ✅ Preview, ✅ Development
 ```
 
+**SEO (Sitemap, OG, Canonical):**  
+`NEXT_PUBLIC_APP_URL` (oder `APP_DOMAIN`) wird in `src/lib/seo.ts` als Basis-URL für Sitemap, robots.txt, Open-Graph- und Canonical-URLs genutzt. Für Production auf `https://helvenda.ch` setzen → siehe [SEO_SETUP.md](SEO_SETUP.md).
+
 ---
 
 ### 3. `API_DOMAIN` - Separate API-Domain (Optional, für Zukunft)

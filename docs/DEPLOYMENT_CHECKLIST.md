@@ -68,6 +68,12 @@ GET /api/admin/validate-watches
 3. Prüfe Datenbank direkt: `SELECT * FROM watches WHERE moderationStatus != 'rejected'`
 4. Kontaktiere Entwickler
 
+## SEO & Production URL (einmalig)
+
+- [ ] **Vercel:** `NEXT_PUBLIC_APP_URL` = `https://helvenda.ch` (Production) gesetzt
+- [ ] **Google Search Console:** Property `helvenda.ch` verifiziert, Sitemap `https://helvenda.ch/sitemap.xml` eingetragen  
+  → Details: [docs/SEO_SETUP.md](SEO_SETUP.md)
+
 ## Schutzmechanismen:
 
 - `src/lib/data-protection.ts`: Validierungs-Funktionen
