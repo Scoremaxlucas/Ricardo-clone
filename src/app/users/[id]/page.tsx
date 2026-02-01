@@ -385,6 +385,9 @@ export default function PublicProfilePage() {
                         </div>
                       )}
                     </div>
+                    {user.bio && (
+                      <p className="mt-2 text-sm text-gray-600 leading-relaxed">{user.bio}</p>
+                    )}
                   </div>
                 </div>
 

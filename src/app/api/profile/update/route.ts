@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     const {
       name,
       nickname,
+      bio,
       phone,
       street,
       streetNumber,
@@ -73,6 +74,7 @@ export async function POST(request: NextRequest) {
       data: {
         name: name.trim(),
         nickname: nickname?.trim() || null,
+        bio: bio != null ? (bio.trim() || null) : undefined,
         phone: phone?.trim() || null,
         // Update firstName and lastName from name
         firstName: name.trim().split(' ')[0] || null,

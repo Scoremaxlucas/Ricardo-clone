@@ -31,6 +31,7 @@ export default function ProfilePage() {
     name: session?.user?.name || '',
     email: session?.user?.email || '',
     nickname: (session?.user as { nickname?: string | null })?.nickname || '',
+    bio: '',
   })
   const [passwordData, setPasswordData] = useState({
     currentPassword: '',
@@ -81,7 +82,7 @@ export default function ProfilePage() {
         })
         .catch(err => console.error('Error loading verification status:', err))
 
-      // Lade Bewertungsstatistiken
+      // Lade Bewertungsstatistiken und Bio
       fetch(`/api/users/${userId}/stats`)
         .then(res => res.json())
         .then(data => {
@@ -90,6 +91,9 @@ export default function ProfilePage() {
             data.stats?.positivePercentage !== undefined
           ) {
             setPositivePercentage(data.stats.positivePercentage)
+          }
+          if (data.user?.bio != null) {
+            setFormData(prev => ({ ...prev, bio: data.user.bio || '' }))
           }
         })
         .catch(err => console.error('Error loading user stats:', err))
@@ -100,11 +104,13 @@ export default function ProfilePage() {
   useEffect(() => {
     // Formular-Daten aktualisieren
     if (session?.user) {
-      setFormData({
-        name: session.user.name || '',
-        email: session.user.email || '',
-        nickname: (session.user as { nickname?: string | null })?.nickname || '',
-      })
+      const u = session.user
+      setFormData(prev => ({
+        ...prev,
+        name: u.name || '',
+        email: u.email || '',
+        nickname: (u as { nickname?: string | null })?.nickname || '',
+      }))
     }
 
     // Profilbild aus der Datenbank/Session laden (NICHT aus localStorage!)
@@ -247,7 +253,9 @@ export default function ProfilePage() {
     }
   }
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleInputChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value,
@@ -270,6 +278,7 @@ export default function ProfilePage() {
         body: JSON.stringify({
           name: formData.name,
           nickname: formData.nickname,
+          bio: formData.bio?.trim() || null,
         }),
       })
 
@@ -548,6 +557,20 @@ export default function ProfilePage() {
                   className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
                   placeholder={t.profile.nicknamePlaceholder}
                 />
+              </div>
+
+              <div>
+                <label className="mb-2 block text-sm font-medium text-gray-700">{t.profile.bio}</label>
+                <textarea
+                  name="bio"
+                  value={formData.bio}
+                  onChange={handleInputChange}
+                  rows={4}
+                  maxLength={500}
+                  className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500"
+                  placeholder={t.profile.bioPlaceholder}
+                />
+                <p className="mt-1 text-xs text-gray-500">{t.profile.bioHint}</p>
               </div>
 
               <div>
