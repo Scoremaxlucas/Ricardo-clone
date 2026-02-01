@@ -48,7 +48,18 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where: { isBlocked: false } }),
       prisma.user.count({ where: { isBlocked: true } }),
       prisma.user.count({ where: { verified: true, verificationStatus: 'approved' } }),
-      prisma.user.count({ where: { verificationStatus: 'pending' } }),
+      // Nur Verifizierungsanfragen (eingereichte Anträge), nicht alle unverifizierten User
+      prisma.user.count({
+        where: {
+          verificationStatus: 'pending',
+          verified: true,
+          OR: [
+            { idDocument: { not: null } },
+            { idDocumentPage1: { not: null } },
+            { idDocumentPage2: { not: null } },
+          ],
+        },
+      }),
 
       // Angebote
       prisma.watch.count(),

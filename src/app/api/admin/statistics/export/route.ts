@@ -77,7 +77,17 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where: { isBlocked: false } }),
       prisma.user.count({ where: { isBlocked: true } }),
       prisma.user.count({ where: { verified: true, verificationStatus: 'approved' } }),
-      prisma.user.count({ where: { verificationStatus: 'pending' } }),
+      prisma.user.count({
+        where: {
+          verificationStatus: 'pending',
+          verified: true,
+          OR: [
+            { idDocument: { not: null } },
+            { idDocumentPage1: { not: null } },
+            { idDocumentPage2: { not: null } },
+          ],
+        },
+      }),
       prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
       prisma.user.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
       prisma.watch.count(),
