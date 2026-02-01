@@ -116,6 +116,7 @@ export function CategoryFields({
   if (category === 'games-konsolen') {
     return (
       <GamesKonsolenFields
+        subcategory={subcategory}
         formData={formData}
         onChange={onChange}
         disabled={disabled}

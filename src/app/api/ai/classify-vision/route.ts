@@ -87,7 +87,8 @@ Verwende die folgenden Kategorien (nur diese!):
 - kleidung-accessoires: Kleidung & Accessoires
 - haushalt-wohnen: Haushalt & Wohnen
 - sport-freizeit: Sport & Freizeit
-- buecher-filme-musik: Bücher, Filme & Musik
+- games-konsolen: Videospiele, Konsolen (PS4, PS5, Xbox, Switch, PC-Spiele) – NICHT Bücher!
+- buecher-filme-musik: Bücher, Filme & Musik (NICHT Videospiele!)
 - spielzeug-basteln: Spielzeug & Basteln
 - tiere: Tiere
 - garten-pflanzen: Garten & Pflanzen
@@ -99,6 +100,8 @@ WICHTIG:
 - Prüfe ALLE Details (Pedale, Motor, Akku, Rahmen-Form, Größe)
 - Bei Unsicherheit zwischen ähnlichen Produkten: Wähle die Kategorie die am besten passt basierend auf den VISUELLEN Merkmalen
 - Elektrofahrräder gehören IMMER zu "fahrraeder", NICHT zu "auto-motorrad"!
+- Videospiele (PS4, PS5, Xbox, Switch, PC-Spiele) gehören IMMER zu "games-konsolen", NICHT zu "buecher-filme-musik"!
+  Beispiel-Unterkategorien für games-konsolen: "Spiele für PS4", "Spiele für PS5", "Spiele für Xbox", "Spiele für Switch", "PC-Spiele", "PlayStation 4", "PlayStation 5", "Xbox Series X/S", "Nintendo Switch"
 
 Sei EXTREM präzise bei der Unterscheidung zwischen ähnlichen Produkten!`
 
