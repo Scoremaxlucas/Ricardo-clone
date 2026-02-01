@@ -53,6 +53,7 @@ function SellPageContent() {
   const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
   const wizardContainerRef = useRef<HTMLDivElement>(null)
   const stepHeadingRef = useRef<HTMLHeadingElement>(null)
+  const submitInProgressRef = useRef(false) // Synchronous guard against double submit
 
   // State
   const [isLoading, setIsLoading] = useState(false)
@@ -1102,9 +1103,14 @@ function SellPageContent() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
+    // CRITICAL: Prevent duplicate submits (bad connection, double-click)
+    if (submitInProgressRef.current) return
+    submitInProgressRef.current = true
+
     // Check profile completeness before publishing
     const canPublish = await checkProfileBeforePublish()
     if (!canPublish) {
+      submitInProgressRef.current = false
       return // Gate modal is already shown
     }
 
@@ -1124,6 +1130,7 @@ function SellPageContent() {
         })
         setCurrentStep(i)
         setIsLoading(false)
+        submitInProgressRef.current = false
         return
       }
     }
@@ -1226,6 +1233,7 @@ function SellPageContent() {
           duration: 5000,
         })
         setIsLoading(false)
+        submitInProgressRef.current = false
       }
     } catch (err: any) {
       console.error('Error submitting form:', err)
@@ -1234,6 +1242,9 @@ function SellPageContent() {
         duration: 5000,
       })
       setIsLoading(false)
+      submitInProgressRef.current = false
+    } finally {
+      submitInProgressRef.current = false // Always reset on completion
     }
   }
 
