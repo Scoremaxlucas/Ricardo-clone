@@ -82,9 +82,23 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error fetching verification data:', error)
+    console.error('Error stack:', error?.stack)
+    
+    // Benutzerfreundliche Fehlermeldung (ohne technische Details)
+    let userMessage = 'Fehler beim Laden der Verifizierungsdaten. Bitte versuchen Sie es erneut.'
+    let statusCode = 500
+    
+    // Prisma-spezifische Fehler
+    if (error?.code === 'P2025') {
+      userMessage = 'Der Benutzer wurde nicht gefunden.'
+      statusCode = 404
+    } else if (error?.code?.startsWith?.('P')) {
+      userMessage = 'Datenbankfehler. Bitte versuchen Sie es später erneut.'
+    }
+    
     return NextResponse.json(
-      { message: 'Fehler beim Laden der Verifizierungsdaten: ' + error.message },
-      { status: 500 }
+      { message: userMessage },
+      { status: statusCode }
     )
   }
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Link from 'next/link'
@@ -29,6 +29,9 @@ export default function VerificationPage() {
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
   const [isVerified, setIsVerified] = useState(false)
+  
+  // Synchroner Guard gegen doppeltes Absenden
+  const submitInProgressRef = useRef(false)
 
   // Persönliche Daten
   const [title, setTitle] = useState('')
@@ -237,6 +240,14 @@ export default function VerificationPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    
+    // KRITISCH: Verhindere doppeltes Absenden (z.B. bei schlechter Verbindung, Doppelklick)
+    if (submitInProgressRef.current) {
+      console.log('Submit bereits in Bearbeitung, ignoriere doppelten Aufruf')
+      return
+    }
+    submitInProgressRef.current = true
+    
     setLoading(true)
     setError('')
     setSuccess('')
@@ -260,6 +271,7 @@ export default function VerificationPage() {
     ) {
       setError('Bitte füllen Sie alle Pflichtfelder aus')
       setLoading(false)
+      submitInProgressRef.current = false
       return
     }
 
@@ -268,12 +280,14 @@ export default function VerificationPage() {
     if (!postalCodeRegex.test(postalCode.trim())) {
       setError('Die PLZ muss aus genau 4 Ziffern bestehen (z.B. 8001)')
       setLoading(false)
+      submitInProgressRef.current = false
       return
     }
 
     if (!dateOfBirth) {
       setError('Bitte geben Sie Ihr Geburtsdatum an')
       setLoading(false)
+      submitInProgressRef.current = false
       return
     }
 
@@ -282,6 +296,7 @@ export default function VerificationPage() {
     if (birthDate >= new Date()) {
       setError('Das Geburtsdatum muss in der Vergangenheit liegen')
       setLoading(false)
+      submitInProgressRef.current = false
       return
     }
 
@@ -294,11 +309,13 @@ export default function VerificationPage() {
       if (actualAge < 18) {
         setError('Sie müssen mindestens 18 Jahre alt sein')
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
     } else if (age < 18) {
       setError('Sie müssen mindestens 18 Jahre alt sein')
       setLoading(false)
+      submitInProgressRef.current = false
       return
     }
 
@@ -315,12 +332,14 @@ export default function VerificationPage() {
           'Bitte füllen Sie alle Felder der Lieferadresse aus oder deaktivieren Sie die Option'
         )
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
       // PLZ-Validierung für Lieferadresse
       if (!postalCodeRegex.test(deliveryPostalCode.trim())) {
         setError('Die PLZ der Lieferadresse muss aus genau 4 Ziffern bestehen (z.B. 8001)')
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
     }
@@ -345,6 +364,7 @@ export default function VerificationPage() {
     ) {
       setError('Bitte wählen Sie einen Ausweistyp aus')
       setLoading(false)
+      submitInProgressRef.current = false
       return
     }
 
@@ -356,6 +376,7 @@ export default function VerificationPage() {
           'Bitte laden Sie mindestens eine Seite Ihrer Identitätskarte hoch (Seite 1 oder Seite 2)'
         )
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -364,12 +385,14 @@ export default function VerificationPage() {
         if (idDocumentPage1.size > 5 * 1024 * 1024) {
           setError('Seite 1 der Identitätskarte darf maximal 5 MB groß sein')
           setLoading(false)
+          submitInProgressRef.current = false
           return
         }
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
         if (!allowedTypes.includes(idDocumentPage1.type)) {
           setError('Seite 1 der Identitätskarte muss im Format JPG, PNG oder PDF vorliegen')
           setLoading(false)
+          submitInProgressRef.current = false
           return
         }
       }
@@ -379,12 +402,14 @@ export default function VerificationPage() {
         if (idDocumentPage2.size > 5 * 1024 * 1024) {
           setError('Seite 2 der Identitätskarte darf maximal 5 MB groß sein')
           setLoading(false)
+          submitInProgressRef.current = false
           return
         }
         const allowedTypes = ['image/jpeg', 'image/png', 'image/jpg', 'application/pdf']
         if (!allowedTypes.includes(idDocumentPage2.type)) {
           setError('Seite 2 der Identitätskarte muss im Format JPG, PNG oder PDF vorliegen')
           setLoading(false)
+          submitInProgressRef.current = false
           return
         }
       }
@@ -393,12 +418,14 @@ export default function VerificationPage() {
       if (!idDocument) {
         setError('Bitte laden Sie eine Kopie Ihres Reisepasses hoch')
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
       if (idDocument.size > 5 * 1024 * 1024) {
         setError('Die Ausweiskopie darf maximal 5 MB groß sein')
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -406,6 +433,7 @@ export default function VerificationPage() {
       if (!allowedTypes.includes(idDocument.type)) {
         setError('Die Ausweiskopie muss im Format JPG, PNG oder PDF vorliegen')
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
     }
@@ -414,6 +442,7 @@ export default function VerificationPage() {
     if (selectedPaymentMethods.length === 0) {
       setError('Bitte wählen Sie mindestens ein Zahlungsmittel aus')
       setLoading(false)
+      submitInProgressRef.current = false
       return
     }
 
@@ -422,6 +451,7 @@ export default function VerificationPage() {
     if (twintMethod && (!twintMethod.phone || twintMethod.phone.trim() === '')) {
       setError('Bitte geben Sie Ihre Telefonnummer für TWINT an')
       setLoading(false)
+      submitInProgressRef.current = false
       return
     }
 
@@ -431,6 +461,7 @@ export default function VerificationPage() {
       if (!bankMethod.iban || bankMethod.iban.trim() === '') {
         setError('Bitte geben Sie Ihre IBAN für die Banküberweisung an')
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -461,6 +492,7 @@ export default function VerificationPage() {
       if (!ibanCleaned.startsWith('CH')) {
         setError(`Die IBAN muss mit "CH" beginnen. Eingegeben: "${bankMethod.iban}"`)
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -473,6 +505,7 @@ export default function VerificationPage() {
           `Die IBAN ist unvollständig. Erwartet: 21 Zeichen (ohne Leerzeichen), gefunden: ${ibanCleaned.length} Zeichen. Nach "CH" und 2 Prüfziffern sollten 17 Zeichen folgen, gefunden: ${afterCHLength} Zeichen. Es fehlen ${missingChars} Zeichen. Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`
         )
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -481,6 +514,7 @@ export default function VerificationPage() {
           `Die IBAN ist zu lang. Erwartet: 21 Zeichen (ohne Leerzeichen), gefunden: ${ibanCleaned.length} Zeichen. Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`
         )
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -488,6 +522,7 @@ export default function VerificationPage() {
       if (!/^CH/.test(ibanCleaned)) {
         setError(`Die IBAN muss mit "CH" beginnen. Eingegeben: "${bankMethod.iban}"`)
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -496,6 +531,7 @@ export default function VerificationPage() {
           `Nach "CH" müssen 2 Ziffern folgen (Prüfziffern). Eingegeben: "${bankMethod.iban}"`
         )
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -505,6 +541,7 @@ export default function VerificationPage() {
           `Nach "CH" und den 2 Prüfziffern müssen genau 17 alphanumerische Zeichen folgen. Gefunden: ${afterCH.length} Zeichen. Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`
         )
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -513,6 +550,7 @@ export default function VerificationPage() {
           `Nach "CH" und den 2 Prüfziffern dürfen nur alphanumerische Zeichen (A-Z, 0-9) folgen. Gefunden: "${afterCH}". Format: CH12 3456 7890 1234 5678 9. Eingegeben: "${bankMethod.iban}"`
         )
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -522,6 +560,7 @@ export default function VerificationPage() {
           `Die IBAN hat ein ungültiges Format. Gefunden: "${ibanCleaned}". Erwartetes Format: CH12 3456 7890 1234 5678 9 (Schweizer IBAN: CH + 2 Ziffern + 17 alphanumerische Zeichen). Eingegeben: "${bankMethod.iban}"`
         )
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
 
@@ -531,55 +570,89 @@ export default function VerificationPage() {
       if (!bankMethod.accountHolderFirstName || !bankMethod.accountHolderLastName) {
         setError('Bitte geben Sie Vor- und Nachname des Kontoinhabers an')
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
       if (!bankMethod.bank || bankMethod.bank.trim() === '') {
         setError('Bitte geben Sie den Namen der Bank an')
         setLoading(false)
+        submitInProgressRef.current = false
         return
       }
     }
 
     try {
-      const res = await fetch('/api/verification/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          // Persönliche Daten
-          title,
-          firstName,
-          lastName,
-          // Wohnadresse
-          street,
-          streetNumber,
-          postalCode,
-          city,
-          country,
-          // Lieferadresse
-          hasDeliveryAddress,
-          deliveryStreet: hasDeliveryAddress ? deliveryStreet : null,
-          deliveryStreetNumber: hasDeliveryAddress ? deliveryStreetNumber : null,
-          deliveryPostalCode: hasDeliveryAddress ? deliveryPostalCode : null,
-          deliveryCity: hasDeliveryAddress ? deliveryCity : null,
-          deliveryCountry: hasDeliveryAddress ? deliveryCountry : null,
-          // Geburtsdatum
-          dateOfBirth,
-          // Ausweiskopie
-          idDocument: idDocumentBase64,
-          idDocumentPage1: idDocumentPage1Base64,
-          idDocumentPage2: idDocumentPage2Base64,
-          idDocumentType: idDocumentType || null,
-          // Zahlungsmittel
-          paymentMethods: selectedPaymentMethods,
-        }),
-      })
+      // AbortController für Timeout (90 Sekunden für große Dokumente)
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), 90000)
+
+      let res: Response
+      try {
+        res = await fetch('/api/verification/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            // Persönliche Daten
+            title,
+            firstName,
+            lastName,
+            // Wohnadresse
+            street,
+            streetNumber,
+            postalCode,
+            city,
+            country,
+            // Lieferadresse
+            hasDeliveryAddress,
+            deliveryStreet: hasDeliveryAddress ? deliveryStreet : null,
+            deliveryStreetNumber: hasDeliveryAddress ? deliveryStreetNumber : null,
+            deliveryPostalCode: hasDeliveryAddress ? deliveryPostalCode : null,
+            deliveryCity: hasDeliveryAddress ? deliveryCity : null,
+            deliveryCountry: hasDeliveryAddress ? deliveryCountry : null,
+            // Geburtsdatum
+            dateOfBirth,
+            // Ausweiskopie
+            idDocument: idDocumentBase64,
+            idDocumentPage1: idDocumentPage1Base64,
+            idDocumentPage2: idDocumentPage2Base64,
+            idDocumentType: idDocumentType || null,
+            // Zahlungsmittel
+            paymentMethods: selectedPaymentMethods,
+          }),
+          signal: controller.signal,
+        })
+      } finally {
+        clearTimeout(timeoutId)
+      }
 
       console.log('API Response Status:', res.status)
-      const data = await res.json()
+
+      // Robustes JSON-Parsing: Erst Text lesen, dann parsen
+      let data: { message?: string; [key: string]: any }
+      const responseText = await res.text()
+      
+      try {
+        data = responseText ? JSON.parse(responseText) : {}
+      } catch (parseError) {
+        console.error('JSON Parse Error:', parseError, 'Response:', responseText.substring(0, 500))
+        // Falls kein gültiges JSON, einen sinnvollen Fehler anzeigen
+        if (res.status >= 500) {
+          setError('Server-Fehler. Bitte versuchen Sie es später erneut.')
+        } else if (res.status === 413) {
+          setError('Die Dateien sind zu gross. Bitte verwenden Sie kleinere Bilder (max. 5 MB pro Bild).')
+        } else {
+          setError('Fehler bei der Verarbeitung. Bitte versuchen Sie es erneut.')
+        }
+        setLoading(false)
+        submitInProgressRef.current = false
+        return
+      }
+      
       console.log('API Response Data:', data)
 
       if (res.ok) {
-        // Weiterleitung zur Hauptseite mit Query-Parameter für Toast
+        // Erfolg: Ref wird NICHT zurückgesetzt, da wir weiterleiten
+        // (verhindert erneutes Absenden während der Weiterleitung)
         router.push('/?verificationSubmitted=true')
       } else {
         console.error('API Error Response:', {
@@ -588,6 +661,7 @@ export default function VerificationPage() {
           data: data,
         })
         setError(data.message || t.verification.error)
+        submitInProgressRef.current = false
       }
     } catch (error: any) {
       console.error('Error submitting verification:', error)
@@ -596,7 +670,16 @@ export default function VerificationPage() {
         stack: error.stack,
         name: error.name,
       })
-      setError(`${t.verification.error}: ${error.message || t.common.error}`)
+      
+      // Benutzerfreundliche Fehlermeldungen
+      if (error.name === 'AbortError') {
+        setError('Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es mit kleineren Bildern erneut.')
+      } else if (error.message?.includes('Failed to fetch') || error.message?.includes('Load failed')) {
+        setError('Netzwerkfehler. Bitte prüfen Sie Ihre Internetverbindung und versuchen Sie es erneut.')
+      } else {
+        setError(`${t.verification.error}: ${error.message || t.common.error}`)
+      }
+      submitInProgressRef.current = false
     } finally {
       setLoading(false)
     }

@@ -6,6 +6,9 @@ import { encrypt } from '@/lib/crypto'
 import { getIbanLast4 } from '@/lib/iban-validator'
 import { upsertUserAddress, deleteUserAddress, validateSwissPostalCode } from '@/lib/address'
 
+// Max payload size check (15MB total to accommodate ID documents)
+const MAX_PAYLOAD_SIZE = 15 * 1024 * 1024
+
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions)
@@ -13,7 +16,26 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
-    const body = await request.json()
+    // Check content-length header if available
+    const contentLength = request.headers.get('content-length')
+    if (contentLength && parseInt(contentLength) > MAX_PAYLOAD_SIZE) {
+      return NextResponse.json(
+        { message: 'Die Dateien sind zu gross. Bitte verwenden Sie kleinere Bilder (max. 5 MB pro Bild).' },
+        { status: 413 }
+      )
+    }
+
+    // Parse JSON body with error handling
+    let body: any
+    try {
+      body = await request.json()
+    } catch (parseError: any) {
+      console.error('JSON Parse Error in verification submit:', parseError)
+      return NextResponse.json(
+        { message: 'Ungültige Anfrage. Bitte versuchen Sie es erneut.' },
+        { status: 400 }
+      )
+    }
     const {
       title,
       firstName,
@@ -317,9 +339,40 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error submitting verification:', error)
+    console.error('Error stack:', error?.stack)
+    
+    // Benutzerfreundliche Fehlermeldungen basierend auf Fehlertyp
+    let userMessage = 'Fehler beim Speichern der Verifizierung. Bitte versuchen Sie es erneut.'
+    let statusCode = 500
+    
+    // Prisma-spezifische Fehler
+    if (error?.code === 'P2002') {
+      userMessage = 'Ein Eintrag mit diesen Daten existiert bereits.'
+      statusCode = 409
+    } else if (error?.code === 'P2025') {
+      userMessage = 'Der Benutzer wurde nicht gefunden.'
+      statusCode = 404
+    } else if (error?.code?.startsWith?.('P')) {
+      userMessage = 'Datenbankfehler. Bitte versuchen Sie es später erneut.'
+    }
+    // Verschlüsselungsfehler
+    else if (error?.message?.includes('encrypt') || error?.message?.includes('crypto')) {
+      userMessage = 'Fehler bei der Datenverschlüsselung. Bitte versuchen Sie es erneut.'
+    }
+    // Netzwerk/Timeout-Fehler
+    else if (error?.message?.includes('timeout') || error?.message?.includes('ETIMEDOUT')) {
+      userMessage = 'Die Anfrage hat zu lange gedauert. Bitte versuchen Sie es erneut.'
+      statusCode = 504
+    }
+    // Payload zu gross
+    else if (error?.message?.includes('too large') || error?.message?.includes('PAYLOAD_TOO_LARGE')) {
+      userMessage = 'Die Dateien sind zu gross. Bitte verwenden Sie kleinere Bilder.'
+      statusCode = 413
+    }
+    
     return NextResponse.json(
-      { message: 'Fehler beim Speichern der Verifizierung: ' + error.message },
-      { status: 500 }
+      { message: userMessage },
+      { status: statusCode }
     )
   }
 }
