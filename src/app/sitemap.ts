@@ -2,6 +2,10 @@ import { prisma } from '@/lib/prisma'
 import { abs } from '@/lib/seo'
 import type { MetadataRoute } from 'next'
 
+// Force dynamic rendering - sitemap needs database access at runtime
+export const dynamic = 'force-dynamic'
+export const revalidate = 3600 // Revalidate every hour
+
 export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   const base = abs('')
 
