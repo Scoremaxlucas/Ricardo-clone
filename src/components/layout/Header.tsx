@@ -257,13 +257,12 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             </Link>
 
             {/* Actions Row - Favoriten, Profile, Menu (like Ricardo) */}
-            <div className="flex items-center gap-1">
+            <div className="flex min-w-0 items-center gap-1">
               {/* Favoriten */}
               {session && (
                 <Link
                   href="/favorites"
-                  className="relative flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
-                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.favorites}
                 >
                   <Heart className="h-5 w-5" />
@@ -279,8 +278,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               {session && (
                 <Link
                   href="/notifications"
-                  className="relative flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
-                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.notifications}
                 >
                   <Bell className="h-5 w-5" />
@@ -292,20 +290,19 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 </Link>
               )}
 
-              {/* Profile Avatar */}
+              {/* Profile Avatar - feste Größe, overflow-hidden gegen Layout-Bugs */}
               {session ? (
                 <button
                   type="button"
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
-                  className="relative flex items-center justify-center rounded-full bg-primary-600 text-white transition-all hover:bg-primary-700"
-                  style={{ minWidth: '44px', minHeight: '44px' }}
+                  className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-600 text-white transition-all hover:bg-primary-700"
                   title={t.header.profileMenu}
                 >
                   {getProfileImage() ? (
                     <img
                       src={getProfileImage() || undefined}
                       alt={session.user?.name || t.header.myProfile}
-                      className="h-full w-full rounded-full object-cover"
+                      className="h-full w-full object-cover"
                     />
                   ) : (
                     <span className="text-xs font-semibold">{getInitials(session.user?.name)}</span>
@@ -325,8 +322,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               <button
                 type="button"
                 onClick={() => setIsMobileMenuOpen(true)}
-                className="flex items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
-                style={{ minWidth: '44px', minHeight: '44px' }}
+                className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                 title="Menü"
               >
                 <ChevronDown className="h-5 w-5" />
@@ -507,15 +503,15 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 >
                   <button
                     type="button"
-                    className="flex items-center gap-1.5 rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100"
+                    className="flex flex-shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100"
                     title={t.header.profileMenu}
                   >
-                    <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary-600 text-white">
+                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-600 text-white">
                       {getProfileImage() ? (
                         <img
                           src={getProfileImage() || undefined}
                           alt={session.user?.name || t.header.myProfile}
-                          className="h-full w-full rounded-full object-cover"
+                          className="h-full w-full object-cover"
                         />
                       ) : (
                         <span className="text-[10px] font-semibold">
