@@ -9,6 +9,56 @@ import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
 import { useLanguage } from '@/contexts/LanguageContext'
 
+// Vercel body limit 4.5 MB – compress images to stay under limit
+const MAX_BASE64_PER_IMAGE = 1.2 * 1024 * 1024 // ~1.2 MB base64
+const MAX_PDF_SIZE = 2.5 * 1024 * 1024 // 2.5 MB – PDFs are not compressed
+async function compressImageToBase64(file: File): Promise<string> {
+  if (file.type === 'application/pdf') {
+    if (file.size > MAX_PDF_SIZE) throw new Error('PDF maximal 2.5 MB. Bitte verwenden Sie JPG oder PNG.')
+    return new Promise((res, rej) => {
+      const r = new FileReader()
+      r.onloadend = () => res(r.result as string)
+      r.onerror = rej
+      r.readAsDataURL(file)
+    })
+  }
+  return new Promise((resolve, reject) => {
+    const img = new Image()
+    const url = URL.createObjectURL(file)
+    img.onload = () => {
+      URL.revokeObjectURL(url)
+      const max = 1600
+      let w = img.width
+      let h = img.height
+      if (w > max || h > max) {
+        if (w > h) { h = (h * max) / w; w = max } else { w = (w * max) / h; h = max }
+      }
+      const c = document.createElement('canvas')
+      c.width = w
+      c.height = h
+      const ctx = c.getContext('2d')
+      if (!ctx) { reject(new Error('Canvas not supported')); return }
+      ctx.drawImage(img, 0, 0, w, h)
+      let q = 0.85
+      const tryEncode = () => {
+        const data = c.toDataURL('image/jpeg', q)
+        if (data.length > MAX_BASE64_PER_IMAGE && q > 0.4) {
+          q -= 0.1
+          tryEncode()
+        } else {
+          resolve(data)
+        }
+      }
+      tryEncode()
+    }
+    img.onerror = () => {
+      URL.revokeObjectURL(url)
+      reject(new Error('Image load failed'))
+    }
+    img.src = url
+  })
+}
+
 type PaymentMethodType = 'twint' | 'bank' | 'creditcard' | null
 
 interface PaymentMethod {
@@ -382,8 +432,8 @@ export default function VerificationPage() {
 
       // Validierung Seite 1 falls hochgeladen
       if (idDocumentPage1) {
-        if (idDocumentPage1.size > 10 * 1024 * 1024) {
-          setError('Seite 1 der Identitätskarte darf maximal 10 MB groß sein')
+        if (idDocumentPage1.size > 15 * 1024 * 1024) {
+          setError('Seite 1 der Identitätskarte darf maximal 15 MB gross sein')
           setLoading(false)
           submitInProgressRef.current = false
           return
@@ -399,8 +449,8 @@ export default function VerificationPage() {
 
       // Validierung Seite 2 falls hochgeladen
       if (idDocumentPage2) {
-        if (idDocumentPage2.size > 10 * 1024 * 1024) {
-          setError('Seite 2 der Identitätskarte darf maximal 10 MB groß sein')
+        if (idDocumentPage2.size > 15 * 1024 * 1024) {
+          setError('Seite 2 der Identitätskarte darf maximal 15 MB gross sein')
           setLoading(false)
           submitInProgressRef.current = false
           return
@@ -422,8 +472,8 @@ export default function VerificationPage() {
         return
       }
 
-      if (idDocument.size > 10 * 1024 * 1024) {
-        setError('Die Ausweiskopie darf maximal 10 MB groß sein')
+      if (idDocument.size > 15 * 1024 * 1024) {
+        setError('Die Ausweiskopie darf maximal 15 MB gross sein')
         setLoading(false)
         submitInProgressRef.current = false
         return
@@ -639,7 +689,7 @@ export default function VerificationPage() {
         if (res.status >= 500) {
           setError('Server-Fehler. Bitte versuchen Sie es später erneut.')
         } else if (res.status === 413) {
-          setError('Die Dateien sind zu gross. Bitte verwenden Sie kleinere Bilder (max. 10 MB pro Bild).')
+          setError('Die Dateien sind zu gross. Bitte verwenden Sie kleinere Bilder (max. 15 MB pro Bild).')
         } else {
           setError('Fehler bei der Verarbeitung. Bitte versuchen Sie es erneut.')
         }
@@ -987,18 +1037,14 @@ export default function VerificationPage() {
                         const file = e.target.files?.[0]
                         if (file) {
                           setIdDocument(file)
-                          // Erstelle Preview und Base64 für Bilder
-                          const reader = new FileReader()
-                          reader.onloadend = () => {
-                            const base64 = reader.result as string
+                          compressImageToBase64(file).then((base64) => {
                             setIdDocumentBase64(base64)
-                            if (file.type.startsWith('image/')) {
+                            if (file.type.startsWith('image/') || base64.startsWith('data:image/')) {
                               setIdDocumentPreview(base64)
                             } else {
                               setIdDocumentPreview(null)
                             }
-                          }
-                          reader.readAsDataURL(file)
+                          }).catch((err: any) => setError(err?.message || 'Fehler beim Verarbeiten der Datei.'))
                         }
                       }}
                       className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
@@ -1039,18 +1085,14 @@ export default function VerificationPage() {
                           const file = e.target.files?.[0]
                           if (file) {
                             setIdDocumentPage1(file)
-                            // Erstelle Preview und Base64 für Bilder
-                            const reader = new FileReader()
-                            reader.onloadend = () => {
-                              const base64 = reader.result as string
+                            compressImageToBase64(file).then((base64) => {
                               setIdDocumentPage1Base64(base64)
-                              if (file.type.startsWith('image/')) {
+                              if (file.type.startsWith('image/') || base64.startsWith('data:image/')) {
                                 setIdDocumentPage1Preview(base64)
                               } else {
                                 setIdDocumentPage1Preview(null)
                               }
-                            }
-                            reader.readAsDataURL(file)
+                            }).catch((err: any) => setError(err?.message || 'Fehler beim Verarbeiten der Datei.'))
                           }
                         }}
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 focus:border-primary-500 focus:outline-none focus:ring-primary-500"
@@ -1088,18 +1130,14 @@ export default function VerificationPage() {
                           const file = e.target.files?.[0]
                           if (file) {
                             setIdDocumentPage2(file)
-                            // Erstelle Preview und Base64 für Bilder
-                            const reader = new FileReader()
-                            reader.onloadend = () => {
-                              const base64 = reader.result as string
+                            compressImageToBase64(file).then((base64) => {
                               setIdDocumentPage2Base64(base64)
-                              if (file.type.startsWith('image/')) {
+                              if (file.type.startsWith('image/') || base64.startsWith('data:image/')) {
                                 setIdDocumentPage2Preview(base64)
                               } else {
                                 setIdDocumentPage2Preview(null)
                               }
-                            }
-                            reader.readAsDataURL(file)
+                            }).catch((err: any) => setError(err?.message || 'Fehler beim Verarbeiten der Datei.'))
                           }
                         }}
                         className="w-full rounded-md border border-gray-300 px-3 py-2 text-gray-900 file:mr-4 file:rounded-md file:border-0 file:bg-primary-50 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-primary-700 hover:file:bg-primary-100 focus:border-primary-500 focus:outline-none focus:ring-primary-500"

@@ -6,8 +6,8 @@ import { encrypt } from '@/lib/crypto'
 import { getIbanLast4 } from '@/lib/iban-validator'
 import { upsertUserAddress, deleteUserAddress, validateSwissPostalCode } from '@/lib/address'
 
-// Max payload size check (25MB total to accommodate high-resolution ID documents)
-const MAX_PAYLOAD_SIZE = 25 * 1024 * 1024
+// Vercel body limit 4.5 MB; client compresses images to fit
+const MAX_PAYLOAD_SIZE = 4 * 1024 * 1024 // 4 MB to stay under 4.5 MB
 
 export async function POST(request: NextRequest) {
   try {
@@ -20,7 +20,7 @@ export async function POST(request: NextRequest) {
     const contentLength = request.headers.get('content-length')
     if (contentLength && parseInt(contentLength) > MAX_PAYLOAD_SIZE) {
       return NextResponse.json(
-        { message: 'Die Dateien sind zu gross. Bitte verwenden Sie kleinere Bilder (max. 5 MB pro Bild).' },
+        { message: 'Die Dateien sind zu gross. Bitte verwenden Sie kleinere Bilder (max. 15 MB pro Bild).' },
         { status: 413 }
       )
     }
