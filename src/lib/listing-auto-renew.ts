@@ -10,7 +10,9 @@ export interface ListingAutoRenewResult {
 }
 
 /**
- * Verlängert abgelaufene Auktionen (autoRenew) und abgelaufene Sofortkauf-Artikel.
+ * Verlängert abgelaufene Auktionen und abgelaufene Sofortkauf-Artikel.
+ * Auktionen werden verlängert wenn:
+ * - autoRenew=true ODER keine Gebote abgegeben wurden (automatische Verlängerung)
  * Wird von /api/watches/auto-renew und /api/cron/listing-auto-renew aufgerufen.
  */
 export async function runListingAutoRenew(): Promise<ListingAutoRenewResult> {
@@ -23,11 +25,14 @@ export async function runListingAutoRenew(): Promise<ListingAutoRenewResult> {
   const expiredAuctions = await prisma.watch.findMany({
     where: {
       isAuction: true,
-      autoRenew: true,
       auctionEnd: { lt: now },
       auctionDuration: { not: null },
       purchases: { none: {} },
       sales: { none: {} },
+      OR: [
+        { autoRenew: true },
+        { bids: { none: {} } }, // Keine Gebote → automatisch verlängern
+      ],
     },
     select: {
       id: true,
