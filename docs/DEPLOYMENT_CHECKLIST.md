@@ -68,6 +68,11 @@ GET /api/admin/validate-watches
 3. Prüfe Datenbank direkt: `SELECT * FROM watches WHERE moderationStatus != 'rejected'`
 4. Kontaktiere Entwickler
 
+## Vercel Projekt-Setup (einmalig)
+
+- [ ] **Nur helvenda deployen:** ricardo-clone von Git trennen, um doppelte Deployments zu vermeiden  
+  → Details: [docs/VERCEL_PROJECT_CONFIG.md](VERCEL_PROJECT_CONFIG.md)
+
 ## SEO & Production URL (einmalig)
 
 - [ ] **Vercel:** `NEXT_PUBLIC_APP_URL` = `https://helvenda.ch` (Production) gesetzt
