@@ -6,8 +6,8 @@ import { encrypt } from '@/lib/crypto'
 import { getIbanLast4 } from '@/lib/iban-validator'
 import { upsertUserAddress, deleteUserAddress, validateSwissPostalCode } from '@/lib/address'
 
-// Max payload size check (15MB total to accommodate ID documents)
-const MAX_PAYLOAD_SIZE = 15 * 1024 * 1024
+// Max payload size check (25MB total to accommodate high-resolution ID documents)
+const MAX_PAYLOAD_SIZE = 25 * 1024 * 1024
 
 export async function POST(request: NextRequest) {
   try {

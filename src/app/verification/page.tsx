@@ -382,8 +382,8 @@ export default function VerificationPage() {
 
       // Validierung Seite 1 falls hochgeladen
       if (idDocumentPage1) {
-        if (idDocumentPage1.size > 5 * 1024 * 1024) {
-          setError('Seite 1 der Identitätskarte darf maximal 5 MB groß sein')
+        if (idDocumentPage1.size > 10 * 1024 * 1024) {
+          setError('Seite 1 der Identitätskarte darf maximal 10 MB groß sein')
           setLoading(false)
           submitInProgressRef.current = false
           return
@@ -399,8 +399,8 @@ export default function VerificationPage() {
 
       // Validierung Seite 2 falls hochgeladen
       if (idDocumentPage2) {
-        if (idDocumentPage2.size > 5 * 1024 * 1024) {
-          setError('Seite 2 der Identitätskarte darf maximal 5 MB groß sein')
+        if (idDocumentPage2.size > 10 * 1024 * 1024) {
+          setError('Seite 2 der Identitätskarte darf maximal 10 MB groß sein')
           setLoading(false)
           submitInProgressRef.current = false
           return
@@ -422,8 +422,8 @@ export default function VerificationPage() {
         return
       }
 
-      if (idDocument.size > 5 * 1024 * 1024) {
-        setError('Die Ausweiskopie darf maximal 5 MB groß sein')
+      if (idDocument.size > 10 * 1024 * 1024) {
+        setError('Die Ausweiskopie darf maximal 10 MB groß sein')
         setLoading(false)
         submitInProgressRef.current = false
         return
@@ -639,7 +639,7 @@ export default function VerificationPage() {
         if (res.status >= 500) {
           setError('Server-Fehler. Bitte versuchen Sie es später erneut.')
         } else if (res.status === 413) {
-          setError('Die Dateien sind zu gross. Bitte verwenden Sie kleinere Bilder (max. 5 MB pro Bild).')
+          setError('Die Dateien sind zu gross. Bitte verwenden Sie kleinere Bilder (max. 10 MB pro Bild).')
         } else {
           setError('Fehler bei der Verarbeitung. Bitte versuchen Sie es erneut.')
         }
