@@ -29,17 +29,13 @@ export function Logo({ className = '', size = 'md' }: LogoProps) {
           xmlns="http://www.w3.org/2000/svg"
           style={{ display: 'block' }}
         >
-          {/* Outer ring */}
-          <circle cx="20" cy="20" r="18" stroke="#0f766e" strokeWidth="1.5" fill="none" />
-          {/* Inner ring: left arc + right arc */}
-          <path d="M15 8 A13 13 0 0 0 15 32" stroke="#0f766e" strokeWidth="1.5" fill="none" />
-          <path d="M25 8 A13 13 0 0 1 25 32" stroke="#0f766e" strokeWidth="1.5" fill="none" />
-          {/* H integrated with inner ring */}
+          <rect width="40" height="40" rx="8" fill="#0f766e" />
           <path
-            d="M15 8 V32 M25 8 V32 M15 20 H25"
-            stroke="#0f766e"
-            strokeWidth="2"
+            d="M12 12 L12 28 M12 20 L28 20 M28 12 L28 28"
+            stroke="white"
+            strokeWidth="3.5"
             strokeLinecap="round"
+            strokeLinejoin="round"
           />
         </svg>
       </div>
