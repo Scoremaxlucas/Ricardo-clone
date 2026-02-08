@@ -29,7 +29,7 @@ export function Logo({ className = '', size = 'md' }: LogoProps) {
           xmlns="http://www.w3.org/2000/svg"
           style={{ display: 'block' }}
         >
-          <rect width="40" height="40" rx="8" fill="#0f766e" />
+          <circle cx="20" cy="20" r="20" fill="#0f766e" />
           <path
             d="M12 12 L12 28 M12 20 L28 20 M28 12 L28 28"
             stroke="white"
