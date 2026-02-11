@@ -1,6 +1,14 @@
 import { prisma } from '@/lib/prisma'
 import { NextRequest, NextResponse } from 'next/server'
 
+// Check if user agent is a bot/crawler
+function isBot(ua: string | null): boolean {
+  if (!ua) return false
+  return /bot|crawl|spider|slurp|bing|yandex|baidu|duckduck|facebook|twitter|whatsapp|telegram|preview|headlesschrome|vercel-screenshot|lighthouse|pagespeed|gtmetrix|pingdom|uptimerobot/i.test(
+    ua
+  )
+}
+
 // Parse user agent into device, browser, and OS
 function parseUserAgent(ua: string | null) {
   if (!ua) return { device: 'unknown', browser: 'unknown', os: 'unknown' }
@@ -47,6 +55,12 @@ export async function POST(request: NextRequest) {
     }
 
     const ua = request.headers.get('user-agent')
+
+    // Skip bots and crawlers
+    if (isBot(ua)) {
+      return NextResponse.json({ ok: true })
+    }
+
     const { device, browser, os } = parseUserAgent(ua)
 
     // Get country from Vercel headers (available on Vercel deployments)
