@@ -1541,3 +1541,49 @@ model AlertLog {
   @@index([sentAt])
   @@map("alert_logs")
 }
+
+// ============================================
+// WEBSITE ANALYTICS - Visitor & Engagement Tracking
+// ============================================
+
+model PageView {
+  id          String   @id @default(cuid())
+  path        String // URL path (e.g., "/", "/watches/abc123")
+  referrer    String? // Where the visitor came from
+  userAgent   String? // Browser user agent string
+  sessionId   String // Anonymous session identifier (cookie-based)
+  userId      String? // Logged-in user ID (optional)
+  country     String? // Country from IP geolocation
+  city        String? // City from IP geolocation
+  device      String? // 'desktop', 'mobile', 'tablet'
+  browser     String? // 'Chrome', 'Safari', 'Firefox', etc.
+  os          String? // 'Windows', 'macOS', 'iOS', 'Android', etc.
+  screenWidth Int? // Screen width in pixels
+  duration    Int? // Time on page in seconds (updated on leave)
+  createdAt   DateTime @default(now())
+
+  @@index([path])
+  @@index([sessionId])
+  @@index([userId])
+  @@index([createdAt])
+  @@index([device])
+  @@index([country])
+  @@index([path, createdAt])
+  @@map("page_views")
+}
+
+model AnalyticsEvent {
+  id        String   @id @default(cuid())
+  name      String // Event name: 'click_listing', 'add_favorite', 'search', 'signup', 'purchase', etc.
+  sessionId String // Anonymous session identifier
+  userId    String? // Logged-in user ID (optional)
+  path      String? // Page where event occurred
+  metadata  String? // JSON string with event-specific data
+  createdAt DateTime @default(now())
+
+  @@index([name])
+  @@index([sessionId])
+  @@index([createdAt])
+  @@index([name, createdAt])
+  @@map("analytics_events")
+}

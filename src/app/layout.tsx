@@ -1,3 +1,4 @@
+import { AnalyticsTracker } from '@/components/AnalyticsTracker'
 import { CookieConsent } from '@/components/CookieConsent'
 import { DeferredComponents } from '@/components/DeferredComponents'
 import { SkipLinks } from '@/components/accessibility/SkipLinks'
@@ -91,6 +92,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               },
             }}
           />
+
+          {/* Analytics Tracker - lightweight, non-blocking */}
+          <AnalyticsTracker />
 
           {/* Nicht-kritische Komponenten - verzögert geladen */}
           <DeferredComponents />

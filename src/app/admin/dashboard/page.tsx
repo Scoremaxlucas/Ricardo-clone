@@ -309,6 +309,12 @@ export default function AdminDashboard() {
             color="red"
           />
           <ActionCard
+            title="Website Analytics"
+            icon={BarChart3}
+            href="/admin/analytics"
+            color="teal"
+          />
+          <ActionCard
             title={t.admin.dashboard.stripeMonitoring}
             icon={Activity}
             href="/admin/stripe/monitoring"
