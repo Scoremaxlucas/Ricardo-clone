@@ -6,14 +6,19 @@ import {
   Activity,
   ArrowLeft,
   BarChart3,
+  ChevronDown,
+  ChevronRight,
   Clock,
   Eye,
   Globe,
+  LogIn,
+  MapPin,
   Monitor,
   MousePointerClick,
   Smartphone,
   Tablet,
   TrendingUp,
+  User,
   Users,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -55,6 +60,28 @@ interface AnalyticsData {
   countries: Array<{ name: string; value: number }>
   hourlyDistribution: Array<{ hour: string; views: number }>
   topEvents: Array<{ name: string; count: number }>
+  visitors: Array<{
+    sessionId: string
+    isLoggedIn: boolean
+    user: {
+      name: string | null
+      email: string
+      image: string | null
+      memberSince: string
+    } | null
+    device: string | null
+    browser: string | null
+    os: string | null
+    country: string | null
+    city: string | null
+    referrer: string | null
+    firstSeen: string
+    lastSeen: string
+    pageCount: number
+    totalDuration: number
+    isActive: boolean
+    pages: Array<{ path: string; time: string; duration: number | null }>
+  }>
 }
 
 const COLORS = [
@@ -134,6 +161,253 @@ function ChartCard({
     <div className="rounded-xl border border-gray-200 bg-white p-5 shadow-sm">
       <h3 className="mb-4 text-lg font-semibold text-gray-800">{title}</h3>
       {children}
+    </div>
+  )
+}
+
+function VisitorRow({
+  visitor,
+}: {
+  visitor: NonNullable<AnalyticsData['visitors']>[number]
+}) {
+  const [expanded, setExpanded] = useState(false)
+  const timeSince = (iso: string) => {
+    const diff = Date.now() - new Date(iso).getTime()
+    const min = Math.floor(diff / 60000)
+    if (min < 1) return 'gerade eben'
+    if (min < 60) return `vor ${min}m`
+    const hrs = Math.floor(min / 60)
+    if (hrs < 24) return `vor ${hrs}h`
+    const days = Math.floor(hrs / 24)
+    return `vor ${days}d`
+  }
+
+  const deviceIcon =
+    visitor.device === 'mobile' ? (
+      <Smartphone className="h-4 w-4" />
+    ) : visitor.device === 'tablet' ? (
+      <Tablet className="h-4 w-4" />
+    ) : (
+      <Monitor className="h-4 w-4" />
+    )
+
+  return (
+    <div
+      className={`rounded-lg border transition-colors ${
+        visitor.isActive
+          ? 'border-green-200 bg-green-50/50'
+          : 'border-gray-100 bg-gray-50/50'
+      }`}
+    >
+      {/* Main row */}
+      <button
+        onClick={() => setExpanded(!expanded)}
+        className="flex w-full items-center gap-3 p-3 text-left"
+      >
+        {/* Expand icon */}
+        {expanded ? (
+          <ChevronDown className="h-4 w-4 flex-shrink-0 text-gray-400" />
+        ) : (
+          <ChevronRight className="h-4 w-4 flex-shrink-0 text-gray-400" />
+        )}
+
+        {/* Avatar / Icon */}
+        <div className="flex-shrink-0">
+          {visitor.user?.image ? (
+            <img
+              src={visitor.user.image}
+              alt=""
+              className="h-9 w-9 rounded-full object-cover"
+            />
+          ) : visitor.isLoggedIn ? (
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-teal-100">
+              <LogIn className="h-4 w-4 text-teal-700" />
+            </div>
+          ) : (
+            <div className="flex h-9 w-9 items-center justify-center rounded-full bg-gray-200">
+              <User className="h-4 w-4 text-gray-500" />
+            </div>
+          )}
+        </div>
+
+        {/* Name / Identity */}
+        <div className="min-w-0 flex-1">
+          <div className="flex items-center gap-2">
+            <span className="truncate text-sm font-medium text-gray-900">
+              {visitor.user?.name || visitor.user?.email || 'Anonymer Besucher'}
+            </span>
+            {visitor.isActive && (
+              <span className="flex items-center gap-1 rounded-full bg-green-100 px-1.5 py-0.5 text-[10px] font-semibold text-green-700">
+                <span className="relative flex h-1.5 w-1.5">
+                  <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-green-400 opacity-75" />
+                  <span className="relative inline-flex h-1.5 w-1.5 rounded-full bg-green-500" />
+                </span>
+                LIVE
+              </span>
+            )}
+          </div>
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-0.5 text-xs text-gray-500">
+            {visitor.user?.email && (
+              <span>{visitor.user.email}</span>
+            )}
+            {!visitor.isLoggedIn && visitor.sessionId && (
+              <span className="font-mono text-[10px] text-gray-400">
+                {visitor.sessionId}
+              </span>
+            )}
+          </div>
+        </div>
+
+        {/* Meta info */}
+        <div className="hidden flex-shrink-0 items-center gap-4 text-xs text-gray-500 sm:flex">
+          {/* Location */}
+          {(visitor.country || visitor.city) && (
+            <span className="flex items-center gap-1">
+              <MapPin className="h-3 w-3" />
+              {[visitor.city, visitor.country].filter(Boolean).join(', ')}
+            </span>
+          )}
+
+          {/* Device */}
+          <span className="flex items-center gap-1">
+            {deviceIcon}
+            {visitor.browser}
+          </span>
+
+          {/* Pages */}
+          <span className="flex items-center gap-1">
+            <Eye className="h-3 w-3" />
+            {visitor.pageCount} {visitor.pageCount === 1 ? 'Seite' : 'Seiten'}
+          </span>
+
+          {/* Duration */}
+          {visitor.totalDuration > 0 && (
+            <span className="flex items-center gap-1">
+              <Clock className="h-3 w-3" />
+              {formatDuration(visitor.totalDuration)}
+            </span>
+          )}
+
+          {/* Time */}
+          <span className="w-16 text-right text-gray-400">
+            {timeSince(visitor.lastSeen)}
+          </span>
+        </div>
+      </button>
+
+      {/* Expanded details */}
+      {expanded && (
+        <div className="border-t border-gray-200 px-3 pb-3 pt-3">
+          {/* Mobile meta (shown on small screens) */}
+          <div className="mb-3 flex flex-wrap gap-3 text-xs text-gray-500 sm:hidden">
+            {(visitor.country || visitor.city) && (
+              <span className="flex items-center gap-1">
+                <MapPin className="h-3 w-3" />
+                {[visitor.city, visitor.country].filter(Boolean).join(', ')}
+              </span>
+            )}
+            <span className="flex items-center gap-1">
+              {deviceIcon}
+              {visitor.browser} / {visitor.os}
+            </span>
+            <span className="flex items-center gap-1">
+              <Eye className="h-3 w-3" />
+              {visitor.pageCount} Seiten
+            </span>
+            {visitor.totalDuration > 0 && (
+              <span className="flex items-center gap-1">
+                <Clock className="h-3 w-3" />
+                {formatDuration(visitor.totalDuration)}
+              </span>
+            )}
+          </div>
+
+          {/* Info grid */}
+          <div className="mb-3 grid grid-cols-2 gap-2 text-xs sm:grid-cols-4">
+            <div className="rounded-md bg-white p-2">
+              <span className="text-gray-400">Gerät</span>
+              <p className="font-medium text-gray-700">
+                {visitor.device} / {visitor.os}
+              </p>
+            </div>
+            <div className="rounded-md bg-white p-2">
+              <span className="text-gray-400">Browser</span>
+              <p className="font-medium text-gray-700">{visitor.browser}</p>
+            </div>
+            <div className="rounded-md bg-white p-2">
+              <span className="text-gray-400">Quelle</span>
+              <p className="truncate font-medium text-gray-700">
+                {visitor.referrer
+                  ? (() => {
+                      try {
+                        return new URL(visitor.referrer).hostname
+                      } catch {
+                        return visitor.referrer
+                      }
+                    })()
+                  : 'Direkt'}
+              </p>
+            </div>
+            <div className="rounded-md bg-white p-2">
+              <span className="text-gray-400">Erste Aktivität</span>
+              <p className="font-medium text-gray-700">
+                {new Date(visitor.firstSeen).toLocaleString('de-CH', {
+                  day: '2-digit',
+                  month: '2-digit',
+                  hour: '2-digit',
+                  minute: '2-digit',
+                })}
+              </p>
+            </div>
+          </div>
+
+          {visitor.user && (
+            <div className="mb-3 rounded-md bg-teal-50 p-2 text-xs">
+              <span className="font-medium text-teal-700">
+                Registrierter Nutzer
+              </span>
+              <span className="ml-2 text-teal-600">
+                Mitglied seit{' '}
+                {new Date(visitor.user.memberSince).toLocaleDateString(
+                  'de-CH'
+                )}
+              </span>
+            </div>
+          )}
+
+          {/* Page journey */}
+          <div>
+            <p className="mb-2 text-xs font-medium text-gray-500">
+              Seitenverlauf
+            </p>
+            <div className="space-y-1">
+              {visitor.pages.map((page, j) => (
+                <div
+                  key={j}
+                  className="flex items-center gap-2 text-xs"
+                >
+                  <span className="w-12 flex-shrink-0 text-right font-mono text-gray-400">
+                    {new Date(page.time).toLocaleTimeString('de-CH', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      second: '2-digit',
+                    })}
+                  </span>
+                  <span className="h-2 w-2 flex-shrink-0 rounded-full bg-teal-400" />
+                  <span className="truncate font-mono text-gray-700">
+                    {page.path}
+                  </span>
+                  {page.duration && page.duration > 0 && (
+                    <span className="flex-shrink-0 text-gray-400">
+                      ({formatDuration(page.duration)})
+                    </span>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
@@ -670,6 +944,19 @@ export default function AnalyticsDashboard() {
                         {event.count}
                       </span>
                     </div>
+                  ))}
+                </div>
+              </ChartCard>
+            </div>
+          )}
+
+          {/* Detailed Visitor Sessions */}
+          {data.visitors && data.visitors.length > 0 && (
+            <div className="mb-6">
+              <ChartCard title={`Besucher-Details (${data.visitors.length} Sitzungen)`}>
+                <div className="space-y-2">
+                  {data.visitors.map((visitor, i) => (
+                    <VisitorRow key={i} visitor={visitor} />
                   ))}
                 </div>
               </ChartCard>

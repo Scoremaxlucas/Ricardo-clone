@@ -220,6 +220,122 @@ export async function GET(request: NextRequest) {
     )
     const activeNow = new Set(recentViews.map((pv) => pv.sessionId)).size
 
+    // === DETAILED VISITOR SESSIONS ===
+    // Group page views by session and enrich with user data
+    const sessionMap: Record<
+      string,
+      {
+        sessionId: string
+        userId: string | null
+        pages: Array<{ path: string; time: string; duration: number | null }>
+        device: string | null
+        browser: string | null
+        os: string | null
+        country: string | null
+        city: string | null
+        referrer: string | null
+        firstSeen: Date
+        lastSeen: Date
+        totalDuration: number
+      }
+    > = {}
+
+    for (const pv of pageViews) {
+      if (!sessionMap[pv.sessionId]) {
+        sessionMap[pv.sessionId] = {
+          sessionId: pv.sessionId,
+          userId: pv.userId,
+          pages: [],
+          device: pv.device,
+          browser: pv.browser,
+          os: pv.os,
+          country: pv.country,
+          city: pv.city,
+          referrer: pv.referrer,
+          firstSeen: pv.createdAt,
+          lastSeen: pv.createdAt,
+          totalDuration: 0,
+        }
+      }
+      const sess = sessionMap[pv.sessionId]
+      sess.pages.push({
+        path: pv.path,
+        time: pv.createdAt.toISOString(),
+        duration: pv.duration,
+      })
+      if (pv.userId) sess.userId = pv.userId
+      if (pv.createdAt < sess.firstSeen) sess.firstSeen = pv.createdAt
+      if (pv.createdAt > sess.lastSeen) sess.lastSeen = pv.createdAt
+      if (pv.duration) sess.totalDuration += pv.duration
+    }
+
+    // Get user details for logged-in sessions
+    const userIds = [
+      ...new Set(
+        Object.values(sessionMap)
+          .map((s) => s.userId)
+          .filter(Boolean)
+      ),
+    ] as string[]
+
+    const users =
+      userIds.length > 0
+        ? await prisma.user.findMany({
+            where: { id: { in: userIds } },
+            select: {
+              id: true,
+              email: true,
+              name: true,
+              firstName: true,
+              lastName: true,
+              nickname: true,
+              image: true,
+              createdAt: true,
+              lastLoginAt: true,
+            },
+          })
+        : []
+    const userMap = Object.fromEntries(users.map((u) => [u.id, u]))
+
+    // Build sorted visitor list (most recent first), limit to 50
+    const visitors = Object.values(sessionMap)
+      .sort((a, b) => b.lastSeen.getTime() - a.lastSeen.getTime())
+      .slice(0, 50)
+      .map((sess) => {
+        const user = sess.userId ? userMap[sess.userId] : null
+        return {
+          sessionId: sess.sessionId.substring(0, 12) + '...',
+          isLoggedIn: !!sess.userId,
+          user: user
+            ? {
+                name:
+                  user.firstName && user.lastName
+                    ? `${user.firstName} ${user.lastName}`
+                    : user.name || user.nickname || null,
+                email: user.email,
+                image: user.image,
+                memberSince: user.createdAt.toISOString(),
+              }
+            : null,
+          device: sess.device,
+          browser: sess.browser,
+          os: sess.os,
+          country: sess.country,
+          city: sess.city,
+          referrer: sess.referrer,
+          firstSeen: sess.firstSeen.toISOString(),
+          lastSeen: sess.lastSeen.toISOString(),
+          pageCount: sess.pages.length,
+          totalDuration: sess.totalDuration,
+          isActive:
+            now.getTime() - sess.lastSeen.getTime() < 30 * 60 * 1000,
+          pages: sess.pages.sort(
+            (a, b) =>
+              new Date(a.time).getTime() - new Date(b.time).getTime()
+          ),
+        }
+      })
+
     return NextResponse.json({
       summary: {
         totalPageViews,
@@ -239,6 +355,7 @@ export async function GET(request: NextRequest) {
       countries,
       hourlyDistribution,
       topEvents,
+      visitors,
     })
   } catch (error) {
     console.error('Analytics data error:', error)
