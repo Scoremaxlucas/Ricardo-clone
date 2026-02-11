@@ -270,13 +270,11 @@ export async function GET(request: NextRequest) {
     }
 
     // Get user details for logged-in sessions
-    const userIds = [
-      ...new Set(
-        Object.values(sessionMap)
-          .map((s) => s.userId)
-          .filter(Boolean)
-      ),
-    ] as string[]
+    const userIdSet = new Set<string>()
+    Object.values(sessionMap).forEach((s) => {
+      if (s.userId) userIdSet.add(s.userId)
+    })
+    const userIds = Array.from(userIdSet)
 
     const users =
       userIds.length > 0
