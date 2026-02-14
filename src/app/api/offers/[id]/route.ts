@@ -145,6 +145,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             subject,
             html,
             text,
+            userId: priceOffer.buyerId,
           })
           console.log(
             `[offers] ✅ Preisvorschlag-Akzeptiert-E-Mail gesendet an Käufer ${priceOffer.buyer.email}`
@@ -258,6 +259,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
           subject,
           html,
           text,
+          userId: priceOffer.buyerId,
         })
 
         console.log(`[offers] ✅ Kaufbestätigungs-E-Mail gesendet an Käufer ${buyer.email}`)
@@ -309,6 +311,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
             to: priceOffer.buyer.email,
             subject,
             html,
+            userId: priceOffer.buyerId,
           })
           console.log(
             `[offers] ✅ Preisvorschlag-Abgelehnt-E-Mail gesendet an Käufer ${priceOffer.buyer.email}`

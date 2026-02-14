@@ -15,8 +15,16 @@ export { getEmailBaseUrl, getFromEmail, resend, transporter } from './config'
 export {
   getHelvendaEmailTemplate,
   getHelvendaEmailTemplateLegacy,
+  injectUnsubscribeLink,
   type EmailTemplateOptions,
 } from './base-template'
+
+// Unsubscribe
+export {
+  generateUnsubscribeToken,
+  verifyUnsubscribeToken,
+  getUnsubscribeUrl,
+} from './unsubscribe'
 
 // Auth templates
 export {

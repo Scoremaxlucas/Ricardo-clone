@@ -267,6 +267,7 @@ export async function POST(request: NextRequest) {
               subject: emailContent.subject,
               html: emailContent.html,
               text: emailContent.text,
+              userId: receiverId,
             })
 
             console.log(`[messages] ✅ E-Mail-Benachrichtigung an ${receiver.email} gesendet`)

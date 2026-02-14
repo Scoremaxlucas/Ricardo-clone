@@ -298,6 +298,7 @@ export async function POST(request: NextRequest) {
           subject,
           html,
           text,
+          userId: session.user.id,
         })
 
         console.log(

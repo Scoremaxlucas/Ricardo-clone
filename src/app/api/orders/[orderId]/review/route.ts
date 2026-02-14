@@ -275,6 +275,7 @@ export async function POST(
           <p>Mit freundlichen Grüssen,<br>Ihr Helvenda Team</p>
         `,
         text: `Neue ${ratingLabel} Bewertung von ${reviewerName} für "${order.watch.title}".${comment ? ` Kommentar: "${comment.trim()}"` : ''}`,
+        userId: reviewedUserId,
       })
     } catch (notifyError) {
       console.error('[orders/review] Notification error:', notifyError)

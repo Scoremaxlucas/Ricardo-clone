@@ -505,10 +505,18 @@ export default function AccountPage() {
                 <div className="mt-4 rounded-lg border border-gray-200 bg-gray-50 p-3">
                   <div className="flex items-start gap-2">
                     <Info className="mt-0.5 h-4 w-4 flex-shrink-0 text-gray-500" />
-                    <p className="text-xs text-gray-600">
-                      Ihre Adresse wird nicht öffentlich angezeigt und nur bei Kauf/Versand
-                      relevant.
-                    </p>
+                    <div className="text-xs text-gray-600">
+                      <p>
+                        Ihre Adresse wird nicht öffentlich angezeigt und nur bei Kauf/Versand
+                        relevant.
+                      </p>
+                      <a
+                        href="/settings/addresses"
+                        className="mt-1 inline-block font-medium text-primary-600 hover:text-primary-700 hover:underline"
+                      >
+                        Alle Adressen verwalten (Liefer- & Rechnungsadresse) →
+                      </a>
+                    </div>
                   </div>
                 </div>
               </div>

@@ -328,6 +328,7 @@ export async function POST(request: NextRequest) {
             subject,
             html,
             text,
+            userId: purchase.watch.sellerId,
           })
 
           console.log(`[bids] ✅ Verkaufs-E-Mail gesendet an ${seller.email}`)
@@ -416,6 +417,7 @@ export async function POST(request: NextRequest) {
             subject,
             html,
             text,
+            userId: session.user.id,
           })
 
           console.log(
@@ -631,6 +633,7 @@ export async function POST(request: NextRequest) {
           subject,
           html,
           text,
+          userId: session.user.id,
         })
         console.log(`[bids] ✅ Gebotsbestätigungs-E-Mail gesendet an Käufer ${bid.user.email}`)
       } else {
@@ -661,6 +664,7 @@ export async function POST(request: NextRequest) {
           subject,
           html,
           text,
+          userId: watch.sellerId,
         })
         console.log(
           `[bids] ✅ Gebotsbenachrichtigungs-E-Mail gesendet an Verkäufer ${watch.seller.email}`
@@ -701,6 +705,7 @@ export async function POST(request: NextRequest) {
               subject,
               html,
               text,
+              userId: highestBid.userId,
             })
             console.log(
               `[bids] ✅ Überboten-Benachrichtigungs-E-Mail gesendet an ${previousBidder.email}`

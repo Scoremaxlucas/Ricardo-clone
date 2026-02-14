@@ -4,6 +4,7 @@
  * Zentrale Funktion zum Versenden von E-Mails via Resend oder SMTP Fallback
  */
 
+import { injectUnsubscribeLink } from './base-template'
 import { getFromEmail, resend, transporter } from './config'
 
 export interface SendEmailOptions {
@@ -11,6 +12,8 @@ export interface SendEmailOptions {
   subject: string
   html: string
   text?: string
+  /** If provided, an unsubscribe link is automatically added to the email footer */
+  userId?: string
 }
 
 export interface SendEmailResult {
@@ -26,7 +29,17 @@ export async function sendEmail({
   subject,
   html,
   text,
+  userId,
 }: SendEmailOptions): Promise<SendEmailResult> {
+  // Auto-inject unsubscribe link if userId is provided
+  if (userId) {
+    try {
+      html = injectUnsubscribeLink(html, userId)
+    } catch {
+      // Silently fail — don't break email sending
+    }
+  }
+
   console.log('\n📧 ===== E-MAIL-VERSAND START =====')
   console.log(`[sendEmail] Empfänger: ${to}`)
   console.log(`[sendEmail] Betreff: ${subject}`)

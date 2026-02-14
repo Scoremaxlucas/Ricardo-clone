@@ -20,6 +20,9 @@ const LazyServiceWorker = lazy(() =>
 const LazyEmmaChat = lazy(() => 
   import('@/components/emma/EmmaChat').then(m => ({ default: m.EmmaChat }))
 )
+const LazyInstallPrompt = lazy(() => 
+  import('@/components/pwa/InstallPrompt').then(m => ({ default: m.InstallPrompt }))
+)
 const LazyPrefetchOnHover = lazy(() => 
   import('@/hooks/usePrefetch').then(m => ({ default: m.PrefetchOnHover }))
 )
@@ -93,11 +96,16 @@ export function DeferredComponents({ children }: DeferredComponentsProps) {
         </Suspense>
       )}
 
-      {/* Phase 3: Idle - AI Chat laden */}
+      {/* Phase 3: Idle - AI Chat laden + PWA Install Prompt */}
       {idleComplete && (
-        <Suspense fallback={null}>
-          <LazyEmmaChat />
-        </Suspense>
+        <>
+          <Suspense fallback={null}>
+            <LazyEmmaChat />
+          </Suspense>
+          <Suspense fallback={null}>
+            <LazyInstallPrompt />
+          </Suspense>
+        </>
       )}
     </>
   )

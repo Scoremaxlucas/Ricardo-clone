@@ -41,6 +41,16 @@ export const metadata: Metadata = {
     statusBarStyle: 'default',
     title: 'Helvenda',
   },
+  icons: {
+    icon: [
+      { url: '/icons/favicon.svg', type: 'image/svg+xml' },
+      { url: '/icons/icon-192x192.svg', sizes: '192x192', type: 'image/svg+xml' },
+      { url: '/icons/icon-512x512.svg', sizes: '512x512', type: 'image/svg+xml' },
+    ],
+    apple: [
+      { url: '/icons/apple-touch-icon.svg', sizes: '180x180', type: 'image/svg+xml' },
+    ],
+  },
 }
 
 export const viewport: Viewport = {
@@ -55,6 +65,8 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
     <html lang="de" className="h-full">
       <head>
         <link rel="manifest" href="/manifest.json" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.svg" />
+        <link rel="icon" type="image/svg+xml" href="/icons/favicon.svg" />
         <meta name="theme-color" content="#0f766e" />
         {/* DNS Prefetch für kritische Domains */}
         <link rel="dns-prefetch" href="https://vercel.live" />

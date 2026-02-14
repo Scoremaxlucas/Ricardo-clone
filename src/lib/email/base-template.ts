@@ -5,6 +5,7 @@
  */
 
 import { getEmailBaseUrl } from './config'
+import { getUnsubscribeUrl } from './unsubscribe'
 
 export interface EmailTemplateOptions {
   title: string
@@ -12,6 +13,9 @@ export interface EmailTemplateOptions {
   content: string
   buttonText?: string
   buttonUrl?: string
+  unsubscribeUrl?: string
+  /** If provided and unsubscribeUrl is not set, auto-generates unsubscribe link */
+  userId?: string
 }
 
 /**
@@ -23,8 +27,18 @@ export function getHelvendaEmailTemplate({
   content,
   buttonText,
   buttonUrl,
+  unsubscribeUrl,
+  userId,
 }: EmailTemplateOptions): string {
   const baseUrl = getEmailBaseUrl()
+  // Auto-generate unsubscribe URL from userId if not explicitly provided
+  if (!unsubscribeUrl && userId) {
+    try {
+      unsubscribeUrl = getUnsubscribeUrl(userId)
+    } catch {
+      // Silently fail — don't break email sending if token generation fails
+    }
+  }
 
   return `
 <!DOCTYPE html>
@@ -134,6 +148,19 @@ export function getHelvendaEmailTemplate({
       color: #0f766e;
       text-decoration: none;
     }
+    .unsubscribe-section {
+      margin-top: 16px;
+      padding-top: 16px;
+      border-top: 1px solid #e5e7eb;
+    }
+    .unsubscribe-link {
+      color: #9ca3af;
+      text-decoration: underline;
+      font-size: 12px;
+    }
+    .unsubscribe-link:hover {
+      color: #6b7280;
+    }
     @media only screen and (max-width: 600px) {
       .header, .content { padding: 30px 20px; }
       .title { font-size: 22px; }
@@ -187,6 +214,18 @@ export function getHelvendaEmailTemplate({
         <p class="footer-text" style="font-size: 12px; color: #9ca3af;">
           Helvenda - Ihr vertrauensvoller Marktplatz für Artikel in der Schweiz.
         </p>
+        ${
+          unsubscribeUrl
+            ? `
+        <div class="unsubscribe-section">
+          <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+            Sie möchten keine E-Mails mehr erhalten?
+            <a href="${unsubscribeUrl}" class="unsubscribe-link">E-Mail-Benachrichtigungen verwalten</a>
+          </p>
+        </div>
+        `
+            : ''
+        }
       </div>
     </div>
   </div>
@@ -206,4 +245,36 @@ export function getHelvendaEmailTemplateLegacy(
   buttonUrl?: string
 ): string {
   return getHelvendaEmailTemplate({ title, greeting, content, buttonText, buttonUrl })
+}
+
+/**
+ * Injects an unsubscribe link into an already-generated email HTML.
+ * Useful for adding unsubscribe to emails from template functions
+ * without modifying their signatures.
+ *
+ * Usage:
+ *   const { subject, html } = getSaleNotificationEmail(...)
+ *   const htmlWithUnsub = injectUnsubscribeLink(html, userId)
+ *   await sendEmail({ to, subject, html: htmlWithUnsub })
+ */
+export function injectUnsubscribeLink(html: string, userId: string): string {
+  try {
+    const url = getUnsubscribeUrl(userId)
+    const unsubSection = `
+        <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
+          <p style="font-size: 12px; color: #9ca3af; margin: 0;">
+            Sie möchten keine E-Mails mehr erhalten?
+            <a href="${url}" style="color: #9ca3af; text-decoration: underline; font-size: 12px;">E-Mail-Benachrichtigungen verwalten</a>
+          </p>
+        </div>`
+
+    // Insert before the closing </div> of the footer
+    // The footer closing is: </div>\n    </div>\n  </div>\n</body>
+    return html.replace(
+      /(<\/div>\s*<\/div>\s*<\/div>\s*<\/body>)/,
+      `${unsubSection}\n      $1`
+    )
+  } catch {
+    return html // Fail silently
+  }
 }

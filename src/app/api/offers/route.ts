@@ -228,6 +228,7 @@ export async function POST(request: NextRequest) {
           subject,
           html,
           text,
+          userId: watch.sellerId,
         })
         console.log(
           `[offers] ✅ Preisvorschlag-Erhalten-E-Mail gesendet an Verkäufer ${priceOffer.watch.seller.email}`

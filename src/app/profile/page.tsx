@@ -4,7 +4,7 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { Card } from '@/components/ui/Card'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { Bell, Camera, CheckCircle, Lock, Settings, Wallet } from 'lucide-react'
+import { Bell, Camera, CheckCircle, Lock, MapPin, Settings, Wallet } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
@@ -707,6 +707,25 @@ export default function ProfilePage() {
                     <p className="font-medium">{t.profile.accountSettings}</p>
                     <p className="text-sm text-gray-500">
                       {t.profile.accountSettingsDesc}
+                    </p>
+                  </div>
+                </div>
+                <span className="text-gray-400">→</span>
+              </Link>
+            </Card>
+
+            {/* Adressen */}
+            <Card className="p-4">
+              <Link
+                href="/settings/addresses"
+                className="flex items-center justify-between text-gray-700 hover:text-primary-600"
+              >
+                <div className="flex items-center gap-3">
+                  <MapPin className="h-5 w-5" />
+                  <div>
+                    <p className="font-medium">Adressen</p>
+                    <p className="text-sm text-gray-500">
+                      Haupt-, Liefer- und Rechnungsadressen verwalten
                     </p>
                   </div>
                 </div>

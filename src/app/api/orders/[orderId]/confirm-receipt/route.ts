@@ -141,6 +141,7 @@ export async function POST(
           <p>Mit freundlichen Grüssen,<br>Ihr Helvenda Team</p>
         `,
         text: `Bewerten Sie Ihre Erfahrung mit ${sellerDisplayName} für "${order.watch.title}". Link: ${orderUrl}`,
+        userId: order.buyerId,
       })
 
       // Remind seller to review buyer
@@ -158,6 +159,7 @@ export async function POST(
           <p>Mit freundlichen Grüssen,<br>Ihr Helvenda Team</p>
         `,
         text: `Bewerten Sie ${buyerDisplayName} für Bestellung ${order.orderNumber}. Link: ${orderUrl}`,
+        userId: order.sellerId,
       })
 
       console.log(`[confirm-receipt] Review reminder emails sent for order ${order.orderNumber}`)
