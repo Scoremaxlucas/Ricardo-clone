@@ -1,30 +1,22 @@
 'use client'
 
 import {
-  checkIsNewListing,
   formatCHF,
-  formatCHFCompact,
   formatTimeLeft,
   getBoostType,
-  getDeliveryInfo,
   getListingBadges,
-  getTimeSinceCreated,
   hasVisibilityBoost,
   type ListingData,
 } from '@/lib/product-utils'
 import { useAuthGate } from '@/contexts/AuthGateContext'
 import {
   Award,
-  BadgeCheck,
   Clock,
   Gavel,
   Heart,
-  MapPin,
   Medal,
-  Package,
   Shield,
   Star,
-  Truck,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
@@ -198,16 +190,9 @@ export function ProductCard({
   // Get overlay badges (condition, sponsored only if isSponsored=true)
   const overlayBadges = getListingBadges(product)
 
-  // Get delivery info (shipping cost, pickup availability)
-  const deliveryInfo = getDeliveryInfo(product)
-
   // Check if listing has visibility boost (for subtle styling, NOT "Gesponsert" badge)
   const boostType = getBoostType(product)
   const isBoosted = hasVisibilityBoost(product)
-
-  // Check if new listing (for "Neu eingestellt" meta label)
-  const isNewListing = checkIsNewListing(product)
-  const timeSinceCreated = isNewListing ? getTimeSinceCreated(product) : ''
 
   // Determine price display
   const isAuction = product.isAuction === true
@@ -429,91 +414,35 @@ export function ProductCard({
           )}
         </div>
 
-        {/* Price Block - Different for Auction vs Fixed */}
-        {/* Consistent top margin to ensure same height regardless of badge */}
+        {/* Price Block - Ricardo-style: price + bid count + buy now */}
         {isAuction ? (
           <div className="mt-1">
-            {/* Current Bid Label */}
-            <div className="text-[11px] font-medium text-orange-600">Aktuelles Gebot</div>
-            {/* Price */}
-            <div className="flex items-baseline gap-2">
-              <span className="text-[12px] font-medium text-gray-600">CHF</span>
-              <span className="text-[20px] font-semibold leading-6 text-gray-900">
-                {formatCHFCompact(mainPrice)}
+            {/* Price + bid count on same line */}
+            <div className="flex items-baseline gap-1.5">
+              <span className="text-[15px] font-bold text-gray-900">
+                {formatCHF(mainPrice)}
+              </span>
+              <span className="text-[11px] text-gray-500">
+                ({bidCount} {bidCount === 1 ? 'Gebot' : 'Gebote'})
               </span>
             </div>
-            {/* Bid count + Sofort-Kaufen option */}
-            <div className="mt-0.5 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-[11px] text-gray-500">
-              <span>
-                {bidCount} {bidCount === 1 ? 'Gebot' : 'Gebote'}
-              </span>
-              {hasBuyNowPrice && (
-                <>
-                  <span>•</span>
-                  <span className="text-primary-600">
-                    Sofort: {formatCHF(product.buyNowPrice!)}
-                  </span>
-                </>
-              )}
-            </div>
+            {/* Buy now price - Ricardo-style */}
+            {hasBuyNowPrice && (
+              <div className="mt-0.5 text-[12px] text-gray-500">
+                {formatCHF(product.buyNowPrice!)} <span className="text-primary-600">Sofort kaufen</span>
+              </div>
+            )}
           </div>
         ) : (
-          <div className="mt-1 flex items-baseline gap-2">
-            <span className="text-[12px] font-medium text-gray-600">CHF</span>
-            <span className="text-[20px] font-semibold leading-6 text-gray-900">
-              {formatCHFCompact(mainPrice)}
-            </span>
-          </div>
-        )}
-
-        {/* Meta Row - Location + Delivery (Datum ausgeblendet) */}
-        <div className="mt-1.5 flex flex-wrap items-center gap-x-1.5 gap-y-0.5 text-[11px] text-gray-500">
-          {/* Location */}
-          {(product.city || product.postalCode) && (
-            <>
-              <span className="inline-flex items-center gap-0.5 truncate">
-                <MapPin className="h-3 w-3 flex-shrink-0" />
-                <span className="truncate">
-                  {product.postalCode && product.city
-                    ? `${product.postalCode} ${product.city}`
-                    : product.postalCode || product.city || ''}
-                </span>
-              </span>
-              <span className="text-gray-300">•</span>
-            </>
-          )}
-
-          {/* Delivery Info with Cost */}
-          <span className="inline-flex shrink-0 items-center gap-0.5">
-            {deliveryInfo.pickupOnly ? (
-              <>
-                <Package className="h-3 w-3" />
-                <span>Nur Abholung</span>
-              </>
-            ) : (
-              <>
-                <Truck className="h-3 w-3" />
-                {deliveryInfo.costLabel ? (
-                  <span className={deliveryInfo.costLabel === 'Gratis' ? 'text-green-600' : ''}>
-                    {deliveryInfo.costLabel === 'Gratis'
-                      ? 'Gratis Versand'
-                      : `Versand ${deliveryInfo.costLabel}`}
-                  </span>
-                ) : (
-                  <span>Versand</span>
-                )}
-              </>
+          <div className="mt-1">
+            <div className="text-[15px] font-bold text-gray-900">
+              {formatCHF(mainPrice)}
+            </div>
+            {hasBuyNowPrice && mainPrice !== product.buyNowPrice && (
+              <div className="mt-0.5 text-[12px] text-gray-500">
+                {formatCHF(product.buyNowPrice!)} <span className="text-primary-600">Sofort kaufen</span>
+              </div>
             )}
-          </span>
-        </div>
-
-        {/* Trust Row - Seller Verified only (Payment Protection shown as Ⓗ badge above) */}
-        {product.sellerVerified && (
-          <div className="mt-1.5 flex items-center gap-2 text-[10px] text-gray-500">
-            <span className="inline-flex items-center gap-0.5 text-blue-600">
-              <BadgeCheck className="h-3 w-3" />
-              <span className="hidden sm:inline">Verifiziert</span>
-            </span>
           </div>
         )}
       </div>
