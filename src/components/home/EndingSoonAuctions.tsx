@@ -2,11 +2,11 @@
 
 import { ProductCard } from '@/components/ui/ProductCard'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { History } from 'lucide-react'
+import { Clock, Flame } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useEffect, useState } from 'react'
 
-interface RecentProduct {
+interface EndingSoonProduct {
   id: string
   title: string
   brand: string
@@ -19,32 +19,30 @@ interface RecentProduct {
   condition: string
   createdAt: string
   boosters?: string[]
-  city?: string | null
-  postalCode?: string | null
   articleNumber?: number | null
   href?: string
   paymentProtectionEnabled?: boolean
   sellerId?: string
+  bidCount?: number
 }
 
-export function RecentlyViewed({ excludeIds = [] }: { excludeIds?: string[] }) {
+export function EndingSoonAuctions({ excludeIds = [] }: { excludeIds?: string[] }) {
   const { t } = useLanguage()
   const { data: session } = useSession()
-  const [products, setProducts] = useState<RecentProduct[]>([])
+  const [products, setProducts] = useState<EndingSoonProduct[]>([])
   const [favorites, setFavorites] = useState<Set<string>>(new Set())
   const [loaded, setLoaded] = useState(false)
 
   useEffect(() => {
-    // Only show for users who have browsed (need session or cookie)
     let mounted = true
     const controller = new AbortController()
 
-    fetch('/api/articles/recently-viewed?limit=12', { signal: controller.signal })
+    fetch('/api/articles/ending-soon?limit=10', { signal: controller.signal })
       .then(res => res.json())
       .then(data => {
         if (mounted && data.watches) {
-          const filtered = data.watches.filter((w: RecentProduct) => !excludeIds.includes(w.id))
-          setProducts(filtered.slice(0, 10))
+          const filtered = data.watches.filter((w: EndingSoonProduct) => !excludeIds.includes(w.id))
+          setProducts(filtered)
         }
       })
       .catch(() => {})
@@ -66,21 +64,23 @@ export function RecentlyViewed({ excludeIds = [] }: { excludeIds?: string[] }) {
     return () => { mounted = false }
   }, [session?.user])
 
-  // Don't render if no recently viewed products or still loading
   if (!loaded || products.length === 0) return null
 
   return (
-    <section className="bg-white py-8 md:py-10 lg:py-6">
+    <section className="bg-gradient-to-b from-amber-50/50 to-[#FAFAFA] py-8 md:py-10 lg:py-6">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center lg:mb-4">
           <div className="mb-2 flex items-center justify-center gap-2">
-            <History className="h-6 w-6 text-gray-600" />
+            <div className="flex items-center gap-1 rounded-full bg-red-100 px-3 py-1">
+              <Flame className="h-5 w-5 text-red-500" />
+              <Clock className="h-4 w-4 text-red-500" />
+            </div>
             <h2 className="text-2xl font-extrabold text-gray-900 md:text-3xl lg:text-2xl">
-              Kürzlich angesehen
+              Bald endend
             </h2>
           </div>
           <p className="text-base leading-relaxed text-gray-600 lg:text-sm">
-            Artikel, die Sie sich kürzlich angesehen haben
+            Auktionen, die in weniger als 24 Stunden enden
           </p>
         </div>
 

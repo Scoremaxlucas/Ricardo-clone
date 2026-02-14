@@ -20,6 +20,15 @@ import { toast } from 'react-hot-toast'
 const LazyDailyDeals = lazy(() =>
   import('@/components/home/DailyDeals').then(m => ({ default: m.DailyDeals }))
 )
+const LazyPopularProducts = lazy(() =>
+  import('@/components/home/PopularProducts').then(m => ({ default: m.PopularProducts }))
+)
+const LazyRecentlyViewed = lazy(() =>
+  import('@/components/home/RecentlyViewed').then(m => ({ default: m.RecentlyViewed }))
+)
+const LazyEndingSoonAuctions = lazy(() =>
+  import('@/components/home/EndingSoonAuctions').then(m => ({ default: m.EndingSoonAuctions }))
+)
 
 // Skeleton Components - Schneller als Spinner, kein JS-Overhead
 const SectionSkeleton = ({ bg = 'bg-gray-50' }: { bg?: string }) => (
@@ -106,6 +115,21 @@ export function HomeClient({ featuredProductIds = [] }: HomeClientProps) {
       {/* Erst rendern wenn sichtbar oder fast sichtbar */}
       {isVisible ? (
         <>
+          {/* Popular Products - most favorites/views */}
+          <Suspense fallback={null}>
+            <LazyPopularProducts excludeIds={featuredProductIds} />
+          </Suspense>
+
+          {/* Ending Soon Auctions */}
+          <Suspense fallback={null}>
+            <LazyEndingSoonAuctions excludeIds={featuredProductIds} />
+          </Suspense>
+
+          {/* Recently Viewed - personalized, only shows if user has history */}
+          <Suspense fallback={null}>
+            <LazyRecentlyViewed excludeIds={featuredProductIds} />
+          </Suspense>
+
           {/* Daily Deals */}
           <Suspense fallback={<SectionSkeleton bg="bg-gradient-to-br from-orange-50 to-red-50" />}>
             <LazyDailyDeals />
