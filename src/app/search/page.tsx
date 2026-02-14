@@ -12,10 +12,135 @@ import { ProductCard } from '@/components/ui/ProductCard'
 
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
-import { ChevronDown, Filter, Loader2, Package, Search, X } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Filter, Loader2, Package, Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+
+const RESULTS_PER_PAGE = 36
+
+// Ricardo-style pagination with numbered page buttons
+function PaginationControls({
+  currentPage,
+  totalPages,
+  totalResults,
+  onPageChange,
+}: {
+  currentPage: number
+  totalPages: number
+  totalResults: number
+  onPageChange: (page: number) => void
+}) {
+  // Build page number array with ellipsis like Ricardo:
+  // [1] ... [4] [5] [6] [7] [8] ... [20]
+  const getPageNumbers = (): (number | 'ellipsis')[] => {
+    const pages: (number | 'ellipsis')[] = []
+    const maxVisible = 7 // Max number of page buttons to show
+
+    if (totalPages <= maxVisible) {
+      // Show all pages
+      for (let i = 1; i <= totalPages; i++) pages.push(i)
+    } else {
+      // Always show first page
+      pages.push(1)
+
+      // Calculate the range around current page
+      let rangeStart = Math.max(2, currentPage - 2)
+      let rangeEnd = Math.min(totalPages - 1, currentPage + 2)
+
+      // Adjust range to always show ~5 middle pages
+      if (currentPage <= 4) {
+        rangeStart = 2
+        rangeEnd = Math.min(6, totalPages - 1)
+      } else if (currentPage >= totalPages - 3) {
+        rangeStart = Math.max(2, totalPages - 5)
+        rangeEnd = totalPages - 1
+      }
+
+      // Add left ellipsis
+      if (rangeStart > 2) {
+        pages.push('ellipsis')
+      }
+
+      // Add range pages
+      for (let i = rangeStart; i <= rangeEnd; i++) {
+        pages.push(i)
+      }
+
+      // Add right ellipsis
+      if (rangeEnd < totalPages - 1) {
+        pages.push('ellipsis')
+      }
+
+      // Always show last page
+      pages.push(totalPages)
+    }
+
+    return pages
+  }
+
+  const pageNumbers = getPageNumbers()
+  const startItem = (currentPage - 1) * RESULTS_PER_PAGE + 1
+  const endItem = Math.min(currentPage * RESULTS_PER_PAGE, totalResults)
+
+  return (
+    <div className="mt-8 flex flex-col items-center gap-4">
+      {/* Result range info */}
+      <p className="text-sm text-gray-500">
+        {startItem}–{endItem} von {totalResults.toLocaleString('de-CH')} Ergebnissen
+      </p>
+
+      {/* Page buttons */}
+      <nav className="flex items-center gap-1" aria-label="Seitennavigation">
+        {/* Previous button */}
+        <button
+          onClick={() => onPageChange(currentPage - 1)}
+          disabled={currentPage <= 1}
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:border-primary-500 hover:bg-primary-50 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-white disabled:hover:text-gray-600"
+          aria-label="Vorherige Seite"
+        >
+          <ChevronLeft className="h-4 w-4" />
+        </button>
+
+        {/* Page numbers */}
+        {pageNumbers.map((page, index) =>
+          page === 'ellipsis' ? (
+            <span
+              key={`ellipsis-${index}`}
+              className="flex h-10 w-10 items-center justify-center text-sm text-gray-400"
+            >
+              ...
+            </span>
+          ) : (
+            <button
+              key={page}
+              onClick={() => onPageChange(page)}
+              className={`flex h-10 min-w-[2.5rem] items-center justify-center rounded-lg border px-2 text-sm font-medium transition-colors ${
+                page === currentPage
+                  ? 'border-primary-600 bg-primary-600 text-white'
+                  : 'border-gray-200 bg-white text-gray-700 hover:border-primary-500 hover:bg-primary-50 hover:text-primary-600'
+              }`}
+              aria-label={`Seite ${page}`}
+              aria-current={page === currentPage ? 'page' : undefined}
+            >
+              {page}
+            </button>
+          )
+        )}
+
+        {/* Next button */}
+        <button
+          onClick={() => onPageChange(currentPage + 1)}
+          disabled={currentPage >= totalPages}
+          className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:border-primary-500 hover:bg-primary-50 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-white disabled:hover:text-gray-600"
+          aria-label="Nächste Seite"
+        >
+          <ChevronRight className="h-4 w-4" />
+        </button>
+      </nav>
+    </div>
+  )
+}
 
 interface WatchItem {
   id: string
@@ -71,6 +196,8 @@ function SearchPageContent() {
   const isAuction = urlParams?.get('isAuction') || ''
   const postalCode = urlParams?.get('postalCode') || ''
   const sortBy = urlParams?.get('sortBy') || 'relevance'
+  const pageParam = parseInt(urlParams?.get('page') || '1', 10)
+  const currentPage = Math.max(1, isNaN(pageParam) ? 1 : pageParam)
 
   const [selectedBrands, setSelectedBrands] = useState<string[]>([])
 
@@ -170,6 +297,13 @@ function SearchPageContent() {
       if (auction) searchParams.append('isAuction', auction)
       if (plz) searchParams.append('postalCode', plz)
       if (sort) searchParams.append('sortBy', sort)
+
+      // Pagination
+      const page = parseInt(params.get('page') || '1', 10) || 1
+      const limit = RESULTS_PER_PAGE
+      const offset = (page - 1) * limit
+      searchParams.append('limit', String(limit))
+      searchParams.append('offset', String(offset))
 
       if (searchParams.toString()) {
         url += '?' + searchParams.toString()
@@ -285,6 +419,11 @@ function SearchPageContent() {
         params.delete(key)
       }
 
+      // Reset to page 1 when filters change
+      if (key !== 'page') {
+        params.delete('page')
+      }
+
       const newUrl = `/search?${params.toString()}`
       router.replace(newUrl)
     },
@@ -302,9 +441,31 @@ function SearchPageContent() {
       params.delete('brand')
     }
 
+    // Reset to page 1 when brand filter changes
+    params.delete('page')
+
     const newUrl = `/search?${params.toString()}`
     router.replace(newUrl)
   }, [selectedBrands, searchParams, router])
+
+  // Navigate to a specific page
+  const goToPage = useCallback(
+    (page: number) => {
+      const params = new URLSearchParams(searchParams.toString())
+      if (page <= 1) {
+        params.delete('page')
+      } else {
+        params.set('page', String(page))
+      }
+      const newUrl = `/search?${params.toString()}`
+      router.push(newUrl)
+      // Scroll to top of results
+      window.scrollTo({ top: 0, behavior: 'smooth' })
+    },
+    [searchParams, router]
+  )
+
+  const totalPages = Math.max(1, Math.ceil(totalResults / RESULTS_PER_PAGE))
 
   const toggleBrand = (brandName: string) => {
     setSelectedBrands(prev => {
@@ -335,6 +496,9 @@ function SearchPageContent() {
       params.delete('maxPrice')
     }
 
+    // Reset to page 1 when price filter changes
+    params.delete('page')
+
     const newUrl = `/search?${params.toString()}`
     router.replace(newUrl)
   }, [localMinPrice, localMaxPrice, searchParams, router])
@@ -343,6 +507,8 @@ function SearchPageContent() {
     (newSort: string) => {
       const params = new URLSearchParams(searchParams.toString())
       params.set('sortBy', newSort)
+      // Reset to page 1 when sort changes
+      params.delete('page')
 
       const newUrl = `/search?${params.toString()}`
       router.replace(newUrl)
@@ -1047,26 +1213,38 @@ function SearchPageContent() {
             </div>
           ) : (
             // GRID VIEW - Mobile: 2 columns, tight spacing. Desktop: 4-6 columns
-            <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-              {watches.map(w => (
-                <ProductCard
-                  key={w.id}
-                  {...w}
-                  favorites={favorites}
-                  onFavoriteToggle={(id, isFavorite) => {
-                    setFavorites(prev => {
-                      const newSet = new Set(prev)
-                      if (isFavorite) {
-                        newSet.add(id)
-                      } else {
-                        newSet.delete(id)
-                      }
-                      return newSet
-                    })
-                  }}
+            <>
+              <div className="grid grid-cols-2 gap-3 md:grid-cols-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
+                {watches.map(w => (
+                  <ProductCard
+                    key={w.id}
+                    {...w}
+                    favorites={favorites}
+                    onFavoriteToggle={(id, isFavorite) => {
+                      setFavorites(prev => {
+                        const newSet = new Set(prev)
+                        if (isFavorite) {
+                          newSet.add(id)
+                        } else {
+                          newSet.delete(id)
+                        }
+                        return newSet
+                      })
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Pagination - Ricardo style */}
+              {totalPages > 1 && (
+                <PaginationControls
+                  currentPage={currentPage}
+                  totalPages={totalPages}
+                  totalResults={totalResults}
+                  onPageChange={goToPage}
                 />
-              ))}
-            </div>
+              )}
+            </>
           )}
         </div>
       </main>
