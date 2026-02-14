@@ -113,7 +113,9 @@ export async function GET(request: NextRequest) {
         ua.city,
         ua."postalCode",
         w.condition,
-        w."sellerId"
+        w."sellerId",
+        w."shippingMethod",
+        w."paymentProtectionEnabled"
       FROM watches w
       LEFT JOIN user_addresses ua ON w."sellerId" = ua."userId" AND ua.type = 'MAIN'
       WHERE ${whereClause}
@@ -210,6 +212,8 @@ export async function GET(request: NextRequest) {
           boosters: true,
           condition: true,
           sellerId: true,
+          shippingMethod: true,
+          paymentProtectionEnabled: true,
         },
         orderBy: { createdAt: 'desc' },
         take: Math.min(limit, 200), // OPTIMIERT: Max 200 Ergebnisse
@@ -255,6 +259,25 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Parse shippingMethod JSON to array
+      let shippingMethods: string[] = []
+      try {
+        if (w.shippingMethod) {
+          const parsed = typeof w.shippingMethod === 'string' ? JSON.parse(w.shippingMethod) : w.shippingMethod
+          shippingMethods = Array.isArray(parsed) ? parsed : []
+        }
+      } catch {
+        shippingMethods = []
+      }
+
+      const shippingOnlyMethods = shippingMethods.filter(m => m !== 'pickup')
+      let shippingMinCost: number | null = null
+      if (shippingOnlyMethods.length > 0) {
+        const rateMap: Record<string, number> = { 'b-post': 8.5, 'a-post': 12.5 }
+        const costs = shippingOnlyMethods.map(m => rateMap[m] || 8.5)
+        shippingMinCost = Math.min(...costs)
+      }
+
       return {
         id: w.id,
         title: w.title || '',
@@ -275,6 +298,9 @@ export async function GET(request: NextRequest) {
           : null,
         articleNumber: w.articleNumber,
         boosters,
+        shippingMethods,
+        shippingMinCost,
+        paymentProtectionEnabled: w.paymentProtectionEnabled || false,
         city: w.city,
         postalCode: w.postalCode,
         condition: w.condition || '',

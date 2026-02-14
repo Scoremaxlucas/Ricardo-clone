@@ -14,6 +14,7 @@ interface Message {
   sender: {
     id: string
     name: string | null
+    nickname?: string | null
     email: string | null
   }
   receiver: {
@@ -180,7 +181,7 @@ export function ProductChat({ watchId, sellerId }: ProductChatProps) {
                       ) : (
                         <UserName
                           userId={msg.sender.id}
-                          userName={msg.sender.name || msg.sender.email || 'Unbekannt'}
+                          userName={msg.sender.nickname || msg.sender.name || msg.sender.email || 'Unbekannt'}
                           badgeSize="sm"
                           className="font-semibold text-gray-900"
                         />

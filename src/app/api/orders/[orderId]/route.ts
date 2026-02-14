@@ -52,6 +52,7 @@ export async function GET(
           select: {
             id: true,
             name: true,
+            nickname: true,
             email: true,
             firstName: true,
             lastName: true,
@@ -61,6 +62,7 @@ export async function GET(
           select: {
             id: true,
             name: true,
+            nickname: true,
             email: true,
             firstName: true,
             lastName: true,

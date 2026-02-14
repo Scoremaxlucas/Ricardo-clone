@@ -60,6 +60,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           select: {
             id: true,
             name: true,
+            nickname: true,
             email: true,
           },
         },

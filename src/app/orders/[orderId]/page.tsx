@@ -55,6 +55,7 @@ interface Order {
   buyer: {
     id: string
     name: string | null
+    nickname?: string | null
     email: string
     firstName?: string | null
     lastName?: string | null
@@ -63,6 +64,7 @@ interface Order {
   seller: {
     id: string
     name: string | null
+    nickname?: string | null
     email: string
     firstName?: string | null
     lastName?: string | null
@@ -735,8 +737,8 @@ export default function OrderDetailPage() {
                   <User className="mr-2 h-4 w-4 text-gray-400" />
                   <span className="font-medium">
                     {isBuyer
-                      ? order.seller.name || order.seller.email
-                      : order.buyer.name || order.buyer.email}
+                      ? order.seller.nickname || order.seller.name || order.seller.email
+                      : order.buyer.nickname || order.buyer.name || order.buyer.email}
                   </span>
                 </div>
                 <div className="flex items-center">

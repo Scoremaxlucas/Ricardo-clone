@@ -50,6 +50,8 @@ export async function GET(request: NextRequest) {
         u.city,
         u."postalCode",
         w.condition,
+        w."shippingMethod",
+        w."paymentProtectionEnabled",
         COUNT(b.id)::bigint as "bidCount",
         MAX(b.amount) as "highestBid"
       FROM watches w
@@ -64,7 +66,7 @@ export async function GET(request: NextRequest) {
           AND p.status != 'cancelled'
         )
         AND (w."auctionEnd" IS NULL OR w."auctionEnd" > ${now})
-      GROUP BY w.id, u.city, u."postalCode"
+      GROUP BY w.id, u.city, u."postalCode", w."shippingMethod", w."paymentProtectionEnabled"
       ORDER BY
         CASE
           WHEN w.boosters LIKE '%super-boost%' THEN 4
@@ -111,6 +113,8 @@ export async function GET(request: NextRequest) {
           articleNumber: true,
           boosters: true,
           condition: true,
+          shippingMethod: true,
+          paymentProtectionEnabled: true,
           seller: {
             select: {
               id: true,
@@ -173,6 +177,25 @@ export async function GET(request: NextRequest) {
         }
       }
 
+      // Parse shippingMethod
+      let shippingMethods: string[] = []
+      try {
+        if ((w as any).shippingMethod) {
+          const parsed = typeof (w as any).shippingMethod === 'string' ? JSON.parse((w as any).shippingMethod) : (w as any).shippingMethod
+          shippingMethods = Array.isArray(parsed) ? parsed : []
+        }
+      } catch {
+        shippingMethods = []
+      }
+
+      const shippingOnlyMethods = shippingMethods.filter(m => m !== 'pickup')
+      let shippingMinCost: number | null = null
+      if (shippingOnlyMethods.length > 0) {
+        const rateMap: Record<string, number> = { 'b-post': 8.5, 'a-post': 12.5 }
+        const costs = shippingOnlyMethods.map(m => rateMap[m] || 8.5)
+        shippingMinCost = Math.min(...costs)
+      }
+
       return {
         id: w.id,
         title: w.title || '',
@@ -192,6 +215,9 @@ export async function GET(request: NextRequest) {
           : null,
         articleNumber: w.articleNumber,
         boosters,
+        shippingMethods,
+        shippingMinCost,
+        paymentProtectionEnabled: (w as any).paymentProtectionEnabled || false,
         city: w.city,
         postalCode: w.postalCode,
         condition: w.condition || '',

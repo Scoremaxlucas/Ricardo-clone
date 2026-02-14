@@ -64,9 +64,12 @@ export async function GET(request: NextRequest) {
         boosters: true,
         condition: true,
         paymentProtectionEnabled: true,
+        shippingMethod: true,
+        sellerId: true,
         seller: {
           select: {
             id: true,
+            verified: true,
           },
         },
       },
@@ -88,6 +91,27 @@ export async function GET(request: NextRequest) {
     // Transformiere Prisma-Format zu erwartetem Format
     const watchesFormatted = watches.map(w => {
       const sellerAddress = w.seller?.id ? addressMap.get(w.seller.id) : null
+
+      // Parse shippingMethod JSON to array
+      let shippingMethods: string[] = []
+      try {
+        if (w.shippingMethod) {
+          const parsed = typeof w.shippingMethod === 'string' ? JSON.parse(w.shippingMethod) : w.shippingMethod
+          shippingMethods = Array.isArray(parsed) ? parsed : []
+        }
+      } catch {
+        shippingMethods = []
+      }
+
+      // Calculate minimum shipping cost
+      const shippingOnlyMethods = shippingMethods.filter(m => m !== 'pickup')
+      let shippingMinCost: number | null = null
+      if (shippingOnlyMethods.length > 0) {
+        const rateMap: Record<string, number> = { 'b-post': 8.5, 'a-post': 12.5 }
+        const costs = shippingOnlyMethods.map(m => rateMap[m] || 8.5)
+        shippingMinCost = Math.min(...costs)
+      }
+
       return {
         id: w.id,
         title: w.title,
@@ -103,6 +127,10 @@ export async function GET(request: NextRequest) {
         boosters: w.boosters,
         condition: w.condition,
         paymentProtectionEnabled: w.paymentProtectionEnabled,
+        shippingMethods,
+        shippingMinCost,
+        sellerId: w.sellerId,
+        sellerVerified: w.seller?.verified || false,
         city: sellerAddress?.city || null,
         postalCode: sellerAddress?.postalCode || null,
       }

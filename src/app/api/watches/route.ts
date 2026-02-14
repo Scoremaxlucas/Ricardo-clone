@@ -230,11 +230,15 @@ export async function GET(request: NextRequest) {
         createdAt: true,
         boosters: true,
         articleNumber: true,
+        shippingMethod: true,
+        sellerId: true,
         seller: {
           select: {
             id: true,
             name: true,
+            nickname: true,
             email: true,
+            verified: true,
           },
         },
         categories: {
@@ -303,11 +307,36 @@ export async function GET(request: NextRequest) {
         images = []
       }
 
+      // Parse shippingMethod JSON to array
+      let shippingMethods: string[] = []
+      try {
+        if ((watch as any).shippingMethod) {
+          const parsed = typeof (watch as any).shippingMethod === 'string'
+            ? JSON.parse((watch as any).shippingMethod)
+            : (watch as any).shippingMethod
+          shippingMethods = Array.isArray(parsed) ? parsed : []
+        }
+      } catch {
+        shippingMethods = []
+      }
+
+      // Calculate minimum shipping cost
+      const shippingOnlyMethods = shippingMethods.filter(m => m !== 'pickup')
+      let shippingMinCost: number | null = null
+      if (shippingOnlyMethods.length > 0) {
+        const rateMap: Record<string, number> = { 'b-post': 8.5, 'a-post': 12.5 }
+        const costs = shippingOnlyMethods.map(m => rateMap[m] || 8.5)
+        shippingMinCost = Math.min(...costs)
+      }
+
       return {
         ...watch,
         price: currentPrice, // Überschreibe price mit aktuellem Preis
         images: images, // Geparste Bilder
         boosters: boosters,
+        shippingMethods,
+        shippingMinCost,
+        sellerVerified: watch.seller?.verified || false,
         city: sellerAddress?.city || null,
         postalCode: sellerAddress?.postalCode || null,
         buyNowPrice: watch.buyNowPrice || null,

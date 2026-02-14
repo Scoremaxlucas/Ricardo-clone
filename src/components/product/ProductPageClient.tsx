@@ -820,7 +820,7 @@ export function ProductPageClient({
               <div className="mb-4 rounded-lg border border-gray-200 bg-white">
                 <SellerProfile
                   sellerId={watch.sellerId}
-                  sellerName={seller?.name || t.common.unknown}
+                  sellerName={seller?.nickname || seller?.name || t.common.unknown}
                   sellerEmail={seller?.email || ''}
                   compact={true}
                 />
@@ -1045,7 +1045,7 @@ export function ProductPageClient({
             <div className="rounded-lg border border-gray-200 bg-white shadow-sm">
               <SellerProfile
                 sellerId={watch.sellerId}
-                sellerName={seller?.name || t.common.unknown}
+                sellerName={seller?.nickname || seller?.name || t.common.unknown}
                 sellerEmail={seller?.email || ''}
                 compact={true}
               />

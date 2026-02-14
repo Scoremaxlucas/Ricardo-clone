@@ -23,6 +23,7 @@ interface Watch {
   seller: {
     id: string
     name: string
+    nickname?: string | null
     email: string
   }
   fullset: boolean
@@ -366,7 +367,7 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
                 <div className="flex items-center space-x-3">
                   <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100">
                     <span className="font-semibold text-primary-600">
-                      {watch.seller.name.charAt(0)}
+                      {(watch.seller.nickname || watch.seller.name).charAt(0)}
                     </span>
                   </div>
                   <div>
@@ -374,7 +375,7 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
                       href={`/profile/${watch.seller.id}`}
                       className="font-medium text-gray-900 hover:text-primary-600"
                     >
-                      {watch.seller.name}
+                      {watch.seller.nickname || watch.seller.name}
                     </a>
                     <p className="text-sm text-gray-600">
                       Mitglied seit{' '}
