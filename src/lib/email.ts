@@ -44,9 +44,21 @@ interface SendEmailOptions {
   html: string
   text?: string
   useNoReply?: boolean // Wenn true, verwendet noreply@helvenda.ch statt support@helvenda.ch
+  /** If provided, an unsubscribe link is automatically added to the email footer */
+  userId?: string
 }
 
-export async function sendEmail({ to, subject, html, text, useNoReply = false }: SendEmailOptions) {
+export async function sendEmail({ to, subject, html, text, useNoReply = false, userId }: SendEmailOptions) {
+  // Auto-inject unsubscribe link if userId is provided
+  if (userId) {
+    try {
+      const { injectUnsubscribeLink } = await import('./email/base-template')
+      html = injectUnsubscribeLink(html, userId)
+    } catch {
+      // Silently fail — don't break email sending
+    }
+  }
+
   console.log('\n📧 ===== E-MAIL-VERSAND START =====')
   console.log(`[sendEmail] Empfänger: ${to}`)
   console.log(`[sendEmail] Betreff: ${subject}`)
