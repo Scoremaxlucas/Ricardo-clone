@@ -314,7 +314,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
               ) : (
                 <Link
                   href="/login"
-                  className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
+                  className="flex h-11 w-11 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.login}
                   aria-label={t.header.login}
                 >

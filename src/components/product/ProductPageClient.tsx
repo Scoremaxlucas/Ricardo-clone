@@ -562,11 +562,11 @@ export function ProductPageClient({
       </div>
 
       {/* Haupt-Grid: Links Bilder & Details, Rechts Sidebar */}
-      <div className="grid grid-cols-1 gap-4 md:gap-8 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 pb-20 md:gap-8 md:pb-0 lg:grid-cols-3">
         {/* Linke Spalte: Bilder & Details */}
         <div className="space-y-4 md:space-y-6 lg:col-span-2">
           {/* Artikelbilder & Hauptinfos */}
-          <div className="rounded-lg bg-white p-3 shadow-md md:p-6">
+          <div className="rounded-lg bg-white p-2 shadow-md sm:p-3 md:p-6">
             {/* Bild oder Video */}
             <div className="relative mb-3 md:mb-6">
               {watch.video ? (
@@ -740,7 +740,7 @@ export function ProductPageClient({
             {/* MOBILE ONLY: Titel, Datum, Preis, Buy/Offer, Seller - Wie Ricardo */}
             <div className="lg:hidden">
               {/* Titel */}
-              <h1 className="mb-2 text-xl font-bold leading-tight text-gray-900">
+              <h1 className="mb-2 break-words text-xl font-bold leading-tight text-gray-900">
                 {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
               </h1>
 
@@ -907,7 +907,7 @@ export function ProductPageClient({
               <h2 className="mb-2 text-base font-bold text-gray-900 md:mb-4 md:text-xl">{t.product.details}</h2>
 
               {watch.condition && (
-                <div className="flex text-sm md:text-base">
+                <div className="flex flex-wrap text-sm md:text-base">
                   <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">{t.product.condition}:</span>
                   <span className="w-2/3 text-gray-900">
                     {conditionMap[watch.condition] || watch.condition}
@@ -915,31 +915,31 @@ export function ProductPageClient({
                 </div>
               )}
               {watch.brand && (
-                <div className="flex text-sm md:text-base">
+                <div className="flex flex-wrap text-sm md:text-base">
                   <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">{t.product.brand}:</span>
                   <span className="w-2/3 text-gray-900">{watch.brand}</span>
                 </div>
               )}
               {watch.model && (
-                <div className="flex text-sm md:text-base">
+                <div className="flex flex-wrap text-sm md:text-base">
                   <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">{t.product.model}:</span>
                   <span className="w-2/3 text-gray-900">{watch.model}</span>
                 </div>
               )}
               {(watch as any).referenceNumber && (
-                <div className="flex text-sm md:text-base">
+                <div className="flex flex-wrap text-sm md:text-base">
                   <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Referenznummer:</span>
                   <span className="w-2/3 text-gray-900">{(watch as any).referenceNumber}</span>
                 </div>
               )}
               {(watch as any).year && (
-                <div className="flex text-sm md:text-base">
+                <div className="flex flex-wrap text-sm md:text-base">
                   <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Jahr:</span>
                   <span className="w-2/3 text-gray-900">{(watch as any).year}</span>
                 </div>
               )}
               {lieferumfang && (
-                <div className="flex text-sm md:text-base">
+                <div className="flex flex-wrap text-sm md:text-base">
                   <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Lieferumfang:</span>
                   <span className="w-2/3 text-gray-900">{lieferumfang}</span>
                 </div>
@@ -958,7 +958,7 @@ export function ProductPageClient({
             <div className="mt-3 space-y-2 border-t border-gray-200 pt-3 md:mt-6 md:space-y-3 md:pt-6">
               {/* Versandmethode - Mit korrekter Formatierung */}
               {(watch as any).shippingMethod && (
-                <div className="flex text-sm md:text-base">
+                <div className="flex flex-wrap text-sm md:text-base">
                   <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Lieferung:</span>
                   <span className="w-2/3 text-gray-900">
                     {formatShippingMethod((watch as any).shippingMethod)}
@@ -967,7 +967,7 @@ export function ProductPageClient({
               )}
 
               {/* Zahlungsmethode - Wie Ricardo */}
-              <div className="flex text-sm md:text-base">
+              <div className="flex flex-wrap text-sm md:text-base">
                 <span className="w-1/3 font-medium text-gray-600 md:font-semibold md:text-gray-700">Zahlungsmethode:</span>
                 <span className="w-2/3 text-gray-900">
                   {(watch as any).paymentProtectionEnabled
@@ -1007,7 +1007,7 @@ export function ProductPageClient({
             {/* Hauptkarte mit Titel, Datum, Preis */}
             <div className="rounded-lg border border-gray-200 bg-white p-5 shadow-sm">
               {/* Titel */}
-              <h1 className="mb-2 text-xl font-bold leading-tight text-gray-900">
+              <h1 className="mb-2 break-words text-xl font-bold leading-tight text-gray-900">
                 {watch.title?.replace(/^["']|["']$/g, '').trim() || watch.title}
               </h1>
 

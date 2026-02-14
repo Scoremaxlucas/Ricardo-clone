@@ -99,10 +99,10 @@ export default async function MySellingPage() {
           </div>
 
           {/* Secondary Navigation - Fees & Offers */}
-          <div className="mb-6 flex flex-wrap gap-3">
+          <div className="mb-6 flex flex-wrap gap-2 sm:gap-3">
             <Link
               href="/my-watches/selling/fees"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 sm:gap-2 sm:px-4"
             >
               <Receipt className="h-4 w-4 text-gray-500" />
               Gebühren & Rechnungen
@@ -114,7 +114,7 @@ export default async function MySellingPage() {
             </Link>
             <Link
               href="/my-watches/selling/offers"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 sm:gap-2 sm:px-4"
             >
               <Tag className="h-4 w-4 text-gray-500" />
               Preisvorschläge
@@ -126,7 +126,7 @@ export default async function MySellingPage() {
             </Link>
             <Link
               href="/my-watches/selling/cancel-request"
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50"
+              className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 shadow-sm transition-all hover:border-gray-300 hover:bg-gray-50 sm:gap-2 sm:px-4"
             >
               <X className="h-4 w-4 text-gray-500" />
               Stornierungsantrag

@@ -409,7 +409,7 @@ export function ProductCard({
           {product.brand && (
             <>
               {product.paymentProtectionEnabled && <span className="text-gray-400">|</span>}
-              <span className="font-medium text-primary-600">{product.brand}</span>
+              <span className="min-w-0 truncate font-medium text-primary-600">{product.brand}</span>
             </>
           )}
         </div>

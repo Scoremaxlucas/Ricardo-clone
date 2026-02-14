@@ -1403,6 +1403,8 @@ function SellPageContent() {
           <button
             onClick={() => setShowDraftRestored(false)}
             className="ml-1 text-green-600 hover:text-green-800"
+            aria-label="Hinweis schliessen"
+            title="Schliessen"
           >
             <X className="h-4 w-4" />
           </button>
@@ -1447,7 +1449,7 @@ function SellPageContent() {
         <form
           ref={formRef}
           onSubmit={e => e.preventDefault()}
-          className="overflow-hidden rounded-2xl bg-white p-4 pb-32 shadow-lg sm:p-6 sm:pb-28 md:p-8"
+          className="overflow-hidden rounded-2xl bg-white p-4 pb-36 shadow-lg sm:p-6 sm:pb-28 md:p-8"
           style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}
         >
           {/* Step 0: Category */}

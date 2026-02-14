@@ -19,7 +19,7 @@ export function HeroServer({ title = 'Finden Sie lokale Deals in der Schweiz' }:
   return (
     <section
       id="home-hero"
-      className="relative overflow-hidden py-8 text-white md:py-10"
+      className="relative overflow-hidden py-5 text-white sm:py-6 md:py-10"
       style={{
         background: 'linear-gradient(135deg, #0f766e 0%, #14b8a6 50%, #0d9488 100%)',
       }}

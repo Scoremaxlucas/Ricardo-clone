@@ -268,7 +268,7 @@ export default function PublicProfilePage() {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8">
           <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
             <div className="space-y-6 md:space-y-8">
               {/* Profile Header Skeleton */}
@@ -315,7 +315,7 @@ export default function PublicProfilePage() {
     return (
       <>
         <Header />
-        <div className="min-h-screen bg-gray-50 py-8">
+        <div className="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8">
           <div className="mx-auto max-w-6xl px-4">
             <div className="py-12 text-center">
               <p className="text-gray-600">{t.product.notFound}</p>
@@ -333,11 +333,11 @@ export default function PublicProfilePage() {
   return (
     <>
       <Header />
-      <div className="min-h-screen bg-gray-50 py-8">
+      <div className="min-h-screen bg-gray-50 py-4 sm:py-6 md:py-8">
         <div className="mx-auto w-full max-w-6xl px-4 md:px-6">
           <div className="space-y-6 md:space-y-8">
             {/* Profile Header Card - Compact & Trustworthy */}
-            <div className="rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
+            <div className="rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:p-6">
               {/* Desktop: Top row with avatar+identity left, actions right */}
               {/* Mobile: Stack avatar+identity, then actions */}
               <div className="flex flex-col gap-4 md:flex-row md:items-start md:justify-between md:gap-6">
@@ -363,7 +363,7 @@ export default function PublicProfilePage() {
                   {/* Identity */}
                   <div className="min-w-0 flex-1">
                     <div className="mb-2 flex flex-wrap items-center gap-2">
-                      <h1 className="text-xl font-semibold text-gray-900 md:text-2xl">
+                      <h1 className="break-words text-xl font-semibold text-gray-900 md:text-2xl">
                         {user.nickname || user.name || t.common.unknown}
                       </h1>
                       {verified && (

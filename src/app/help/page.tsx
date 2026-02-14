@@ -129,10 +129,10 @@ export default function HelpPage() {
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
-      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:py-12">
+      <main className="mx-auto w-full max-w-7xl flex-1 px-4 py-8 sm:py-12 md:py-16">
         {/* Header */}
         <div className="mb-6 sm:mb-8">
-          <h1 className="mb-2 text-2xl font-bold text-gray-900 sm:mb-4 sm:text-4xl">{t.help.title}</h1>
+          <h1 className="mb-2 text-xl font-bold text-gray-900 sm:mb-4 sm:text-2xl md:text-4xl">{t.help.title}</h1>
           <p className="text-sm text-gray-600 sm:text-lg">{t.help.subtitle}</p>
         </div>
 

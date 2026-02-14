@@ -64,9 +64,9 @@ export function ReportModal({ itemId, itemTitle, isOpen, onClose }: ReportModalP
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-      <div className="mx-4 w-full max-w-md rounded-lg bg-white shadow-xl">
-        <div className="flex items-center justify-between border-b p-6">
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-black bg-opacity-50 sm:items-center">
+      <div className="mx-0 w-full max-w-md rounded-t-2xl bg-white shadow-xl sm:mx-4 sm:rounded-lg">
+        <div className="flex items-center justify-between border-b p-4 sm:p-6">
           <div className="flex items-center gap-3">
             <AlertTriangle className="h-6 w-6 text-red-600" />
             <h2 className="text-xl font-bold text-gray-900">{t.moderation.reportOffer}</h2>
@@ -81,7 +81,7 @@ export function ReportModal({ itemId, itemTitle, isOpen, onClose }: ReportModalP
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6">
           <div className="mb-4">
             <p className="mb-4 text-sm text-gray-600">{t.moderation.description}</p>
             <p className="mb-2 text-sm font-medium text-gray-900">"{itemTitle}"</p>

@@ -70,7 +70,7 @@ export function RecentlyViewed({ excludeIds = [] }: { excludeIds?: string[] }) {
   if (!loaded || products.length === 0) return null
 
   return (
-    <section className="bg-white py-8 md:py-10 lg:py-6">
+    <section className="bg-white py-6 md:py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="mb-6 text-center lg:mb-4">
           <div className="mb-2 flex items-center justify-center gap-2">
@@ -84,7 +84,7 @@ export function RecentlyViewed({ excludeIds = [] }: { excludeIds?: string[] }) {
           </p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
           {products.map((product, index) => (
             <div
               key={product.id}

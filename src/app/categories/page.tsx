@@ -202,7 +202,7 @@ function CategoriesPageContent() {
           {/* Desktop Results Header - Hidden on mobile */}
           <div className="mb-6 hidden items-center justify-between md:flex">
             <div className="flex items-center gap-4">
-              <h1 className="text-3xl font-bold text-gray-900 md:text-4xl">
+              <h1 className="text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
                 {loading ? t.search.loading : `${watches.length} ${t.search.results}`}
               </h1>
             </div>

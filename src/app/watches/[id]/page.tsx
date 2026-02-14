@@ -211,7 +211,7 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
                 )}
               </div>
               {images.length > 1 && (
-                <div className="mt-4 grid grid-cols-4 gap-2">
+                <div className="mt-4 grid grid-cols-3 gap-2 sm:grid-cols-4">
                   {images.slice(1, 5).map((img, idx) => (
                     <div key={idx} className="relative aspect-square">
                       {isBase64Image(img) || img.includes('blob.vercel-storage.com') ? (

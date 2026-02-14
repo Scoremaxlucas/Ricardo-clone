@@ -97,7 +97,7 @@ function PaginationControls({
         <button
           onClick={() => onPageChange(currentPage - 1)}
           disabled={currentPage <= 1}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:border-primary-500 hover:bg-primary-50 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-white disabled:hover:text-gray-600"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:border-primary-500 hover:bg-primary-50 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-white disabled:hover:text-gray-600"
           aria-label="Vorherige Seite"
         >
           <ChevronLeft className="h-4 w-4" />
@@ -108,7 +108,7 @@ function PaginationControls({
           page === 'ellipsis' ? (
             <span
               key={`ellipsis-${index}`}
-              className="flex h-10 w-10 items-center justify-center text-sm text-gray-400"
+              className="flex h-11 w-11 items-center justify-center text-sm text-gray-400"
             >
               ...
             </span>
@@ -116,7 +116,7 @@ function PaginationControls({
             <button
               key={page}
               onClick={() => onPageChange(page)}
-              className={`flex h-10 min-w-[2.5rem] items-center justify-center rounded-lg border px-2 text-sm font-medium transition-colors ${
+              className={`flex h-11 min-w-[2.75rem] items-center justify-center rounded-lg border px-2 text-sm font-medium transition-colors ${
                 page === currentPage
                   ? 'border-primary-600 bg-primary-600 text-white'
                   : 'border-gray-200 bg-white text-gray-700 hover:border-primary-500 hover:bg-primary-50 hover:text-primary-600'
@@ -133,7 +133,7 @@ function PaginationControls({
         <button
           onClick={() => onPageChange(currentPage + 1)}
           disabled={currentPage >= totalPages}
-          className="flex h-10 w-10 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:border-primary-500 hover:bg-primary-50 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-white disabled:hover:text-gray-600"
+          className="flex h-11 w-11 items-center justify-center rounded-lg border border-gray-200 bg-white text-gray-600 transition-colors hover:border-primary-500 hover:bg-primary-50 hover:text-primary-600 disabled:cursor-not-allowed disabled:opacity-40 disabled:hover:border-gray-200 disabled:hover:bg-white disabled:hover:text-gray-600"
           aria-label="Nächste Seite"
         >
           <ChevronRight className="h-4 w-4" />
@@ -1037,7 +1037,7 @@ function SearchPageContent() {
           {/* Desktop Results Header - Hidden on mobile */}
           <div className="mb-6 hidden items-center justify-between md:flex">
             <div className="flex items-center gap-4">
-              <h1 className="flex items-center gap-3 text-3xl font-bold text-gray-900 md:text-4xl">
+              <h1 className="flex items-center gap-3 text-2xl font-bold text-gray-900 md:text-3xl lg:text-4xl">
                 {loading ? (
                   t.search.loading
                 ) : query ? (

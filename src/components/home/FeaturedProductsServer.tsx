@@ -370,7 +370,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
 
   if (loading) {
     return (
-      <section className="bg-[#FAFAFA] py-8 md:py-10 lg:py-6">
+      <section className="bg-[#FAFAFA] py-6 md:py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="mb-6 text-center lg:mb-4">
             <h2 className="mb-2 text-2xl font-extrabold text-gray-900 md:text-3xl lg:text-2xl">
@@ -389,7 +389,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
 
   if (products.length === 0) {
     return (
-      <section className="bg-[#FAFAFA] py-8 md:py-10 lg:py-6">
+      <section className="bg-[#FAFAFA] py-6 md:py-8">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
           <div className="text-center">
             <h2 className="mb-3 text-2xl font-bold text-gray-900 lg:text-xl">Neu eingestellt</h2>
@@ -401,7 +401,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
   }
 
   return (
-    <section className="bg-[#FAFAFA] py-8 md:py-10 lg:py-6">
+    <section className="bg-[#FAFAFA] py-6 md:py-8">
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* Header - kompakter auf Desktop */}
         <div className="mb-6 text-center lg:mb-4">
@@ -411,7 +411,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
           <p className="text-base leading-relaxed text-gray-600 lg:text-sm">Die neuesten Artikel auf Helvenda</p>
         </div>
 
-        <div className="grid grid-cols-2 gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5">
+        <div className="grid grid-cols-2 gap-3 sm:gap-4 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-5">
           {products.map((product, index) => (
             <div
               key={product.id}
@@ -461,7 +461,7 @@ export function FeaturedProductsServer({ initialProducts }: FeaturedProductsServ
             <button
               onClick={loadMoreProducts}
               disabled={loadingMore}
-              className="group flex items-center gap-2 rounded-full border-2 border-primary-600 bg-white px-8 py-3 font-semibold text-primary-600 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-600 hover:text-white hover:shadow-lg active:translate-y-0 active:shadow-md disabled:cursor-not-allowed disabled:opacity-50"
+              className="group flex items-center gap-2 rounded-full border-2 border-primary-600 bg-white px-6 py-2.5 font-semibold text-primary-600 shadow-sm transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-600 hover:text-white hover:shadow-lg active:translate-y-0 active:shadow-md disabled:cursor-not-allowed disabled:opacity-50 sm:px-8 sm:py-3"
             >
               {loadingMore ? (
                 <>

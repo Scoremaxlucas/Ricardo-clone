@@ -67,9 +67,9 @@ const brands = [
 export default function BrandsPage() {
   return (
     <div className="min-h-screen bg-gray-50">
-      <div className="mx-auto max-w-7xl px-4 py-16 sm:px-6 lg:px-8">
+      <div className="mx-auto max-w-7xl px-4 py-8 sm:px-6 sm:py-12 md:py-16 lg:px-8">
         <div className="mb-12 text-center">
-          <h1 className="mb-4 text-4xl font-bold text-gray-900">Marken</h1>
+          <h1 className="mb-4 text-2xl font-bold text-gray-900 sm:text-3xl md:text-4xl">Marken</h1>
           <p className="text-lg text-gray-600">
             Entdecken Sie Artikel von den weltweit führenden Marken
           </p>
