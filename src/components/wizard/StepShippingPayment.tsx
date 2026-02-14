@@ -158,7 +158,7 @@ export function StepShippingPayment({
         </div>
 
         <div
-          className={`grid grid-cols-1 gap-4 sm:grid-cols-3 ${hasShippingError ? 'rounded-xl border-2 border-red-300 bg-red-50/30 p-4' : ''}`}
+          className={`grid grid-cols-1 gap-2 sm:gap-4 sm:grid-cols-3 ${hasShippingError ? 'rounded-xl border-2 border-red-300 bg-red-50/30 p-2 sm:p-4' : ''}`}
         >
           {SHIPPING_OPTIONS.map(option => {
             const isSelected = formData.shippingMethods.includes(option.id)
@@ -169,7 +169,7 @@ export function StepShippingPayment({
             return (
               <label
                 key={option.id}
-                className={`group relative flex flex-col rounded-xl border-2 p-5 transition-all ${
+                className={`group relative flex items-center gap-3 rounded-xl border-2 p-3 transition-all sm:flex-col sm:items-stretch sm:p-5 ${
                   isShippingLocked ? 'cursor-not-allowed opacity-60' : 'cursor-pointer'
                 } ${
                   isSelected
@@ -177,8 +177,8 @@ export function StepShippingPayment({
                     : 'border-gray-200 bg-white hover:border-gray-300 hover:shadow-md'
                 }`}
               >
-                {/* Visible checkbox top-left */}
-                <div className="absolute left-3 top-3">
+                {/* Checkbox - inline on mobile, absolute on desktop */}
+                <div className="flex-shrink-0 sm:absolute sm:left-3 sm:top-3">
                   <input
                     type="checkbox"
                     checked={isSelected}
@@ -192,45 +192,56 @@ export function StepShippingPayment({
                   />
                 </div>
 
-                {/* Check indicator top-right (when selected) */}
+                {/* Check indicator top-right (when selected) - desktop only */}
                 {isSelected && (
-                  <div className="absolute right-3 top-3">
+                  <div className="absolute right-3 top-3 hidden sm:block">
                     <CheckCircle className="h-5 w-5 text-primary-600" />
                   </div>
                 )}
 
-                {/* Icon */}
+                {/* Icon - smaller on mobile */}
                 <div
-                  className={`mb-3 mt-8 flex h-12 w-12 items-center justify-center rounded-lg ${
+                  className={`flex h-9 w-9 flex-shrink-0 items-center justify-center rounded-lg sm:mb-3 sm:mt-8 sm:h-12 sm:w-12 ${
                     isSelected ? 'bg-primary-100' : 'bg-gray-100 group-hover:bg-gray-200'
                   }`}
                 >
                   <Icon
-                    className={`h-6 w-6 ${isSelected ? 'text-primary-600' : 'text-gray-500'}`}
+                    className={`h-4 w-4 sm:h-6 sm:w-6 ${isSelected ? 'text-primary-600' : 'text-gray-500'}`}
                   />
                 </div>
 
-                {/* Label */}
-                <h3
-                  className={`mb-1 font-semibold ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}
-                >
-                  {option.label}
-                </h3>
+                {/* Text content - horizontal on mobile, vertical on desktop */}
+                <div className="flex min-w-0 flex-1 items-center justify-between gap-2 sm:flex-col sm:items-stretch">
+                  <div className="min-w-0">
+                    {/* Label */}
+                    <h3
+                      className={`text-sm font-semibold sm:mb-1 sm:text-base ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}
+                    >
+                      {option.label}
+                    </h3>
 
-                {/* Weight info */}
-                {option.weight && <p className="mb-2 text-xs text-gray-500">{option.weight}</p>}
+                    {/* Description + Weight - single line on mobile */}
+                    <p className="text-xs text-gray-500 sm:mb-2 sm:text-sm sm:text-gray-600">
+                      {option.weight ? `${option.weight} · ` : ''}{option.description}
+                    </p>
+                  </div>
 
-                {/* Description */}
-                <p className="mb-3 flex-1 text-sm text-gray-600">{option.description}</p>
-
-                {/* Price */}
-                <div className="mt-auto flex items-center justify-between border-t border-gray-100 pt-3">
-                  <span
-                    className={`text-sm font-semibold ${option.priceValue === 0 ? 'text-green-600' : 'text-gray-900'}`}
-                  >
-                    {priceDisplay}
-                  </span>
+                  {/* Price - inline on mobile, bottom border on desktop */}
+                  <div className="flex-shrink-0 sm:mt-auto sm:border-t sm:border-gray-100 sm:pt-3">
+                    <span
+                      className={`text-sm font-semibold whitespace-nowrap ${option.priceValue === 0 ? 'text-green-600' : 'text-gray-900'}`}
+                    >
+                      {priceDisplay}
+                    </span>
+                  </div>
                 </div>
+
+                {/* Check indicator - mobile only, right side */}
+                {isSelected && (
+                  <div className="flex-shrink-0 sm:hidden">
+                    <CheckCircle className="h-5 w-5 text-primary-600" />
+                  </div>
+                )}
               </label>
             )
           })}
