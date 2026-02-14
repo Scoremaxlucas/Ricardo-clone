@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import Link from 'next/link'
-import { X, ChevronRight } from 'lucide-react'
+import { X, ChevronRight, ChevronLeft } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getCategoryConfig } from '@/data/categories'
 
@@ -625,27 +625,39 @@ interface Props {
 
 export function CategorySidebarNew({ isOpen, onClose }: Props) {
   const { t, translateSubcategory } = useLanguage()
+  // Desktop: hover flyout
   const [hovered, setHovered] = useState<number | null>(null)
   const [flyoutPosition, setFlyoutPosition] = useState({ top: 0, visible: false })
-  const [isAnimating, setIsAnimating] = useState(false)
   const sidebarRef = useRef<HTMLDivElement>(null)
   const flyoutTimeoutRef = useRef<NodeJS.Timeout | null>(null)
 
-  // Übersetzte Kategorien mit übersetzten Unterkategorien
+  // Mobile: drill-down navigation
+  const [selectedMobileCategory, setSelectedMobileCategory] = useState<number | null>(null)
+  const [isMobile, setIsMobile] = useState(false)
+
+  // Detect mobile (< 768px)
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    checkMobile()
+    window.addEventListener('resize', checkMobile)
+    return () => window.removeEventListener('resize', checkMobile)
+  }, [])
+
+  // Translated categories
   const translatedCategories = categories.map(cat => ({
     ...cat,
     name: t.categories[cat.slug as keyof typeof t.categories] || cat.name,
     subs: cat.subs.map(sub => translateSubcategory(sub)),
   }))
 
-  // Handle animation states
+  // Handle body scroll + cleanup
   useEffect(() => {
     if (isOpen) {
-      setIsAnimating(true)
-      // Prevent body scroll when sidebar is open
       document.body.style.overflow = 'hidden'
     } else {
       document.body.style.overflow = ''
+      // Reset mobile drill-down when sidebar closes
+      setSelectedMobileCategory(null)
     }
     return () => {
       document.body.style.overflow = ''
@@ -655,8 +667,9 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
     }
   }, [isOpen])
 
-  const handleCategoryEnter = (index: number, event: React.MouseEvent) => {
-    // Cancel any pending timeout
+  // Desktop hover handlers
+  const handleCategoryEnter = useCallback((index: number, event: React.MouseEvent) => {
+    if (isMobile) return
     if (flyoutTimeoutRef.current) {
       clearTimeout(flyoutTimeoutRef.current)
       flyoutTimeoutRef.current = null
@@ -666,29 +679,23 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
     const categoryTop = rect.top
     const viewportHeight = window.innerHeight
 
-    // Präzise Höhenberechnung
     const numSubs = categories[index].subs.length
-    const headerHeight = 85 // Header + Titel im Flyout
-    const rowHeight = 40 // Höhe pro Zeile
-    const padding = 50 // Top + Bottom Padding
-    const rows = Math.ceil(numSubs / 2) // 2 Spalten
+    const headerHeight = 85
+    const rowHeight = 40
+    const padding = 50
+    const rows = Math.ceil(numSubs / 2)
     const calculatedHeight = headerHeight + rows * rowHeight + padding
     const flyoutHeight = Math.min(600, calculatedHeight)
 
-    const topMargin = 60 // Mindestabstand oben (wegen Header)
-    const bottomMargin = 30 // Mindestabstand unten
+    const topMargin = 60
+    const bottomMargin = 30
 
     let finalTop = categoryTop
-
-    // Berechne verfügbaren Platz
     const spaceBelow = viewportHeight - categoryTop - bottomMargin
 
     if (flyoutHeight > spaceBelow) {
-      // Nicht genug Platz unten - verschiebe nach oben
       const overflow = flyoutHeight - spaceBelow
       finalTop = categoryTop - overflow
-
-      // Stelle sicher, dass wir nicht über den oberen Rand gehen
       if (finalTop < topMargin) {
         finalTop = topMargin
       }
@@ -696,29 +703,39 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
 
     setFlyoutPosition({ top: finalTop, visible: true })
     setHovered(index)
-  }
+  }, [isMobile])
 
-  const handleCategoryLeave = () => {
-    // Delay before closing to allow movement to flyout
+  const handleCategoryLeave = useCallback(() => {
+    if (isMobile) return
     flyoutTimeoutRef.current = setTimeout(() => {
       setHovered(null)
       setFlyoutPosition({ top: 0, visible: false })
     }, 200)
-  }
+  }, [isMobile])
 
-  const handleFlyoutEnter = (index: number) => {
-    // Cancel timeout if mouse enters flyout
+  const handleFlyoutEnter = useCallback((index: number) => {
     if (flyoutTimeoutRef.current) {
       clearTimeout(flyoutTimeoutRef.current)
       flyoutTimeoutRef.current = null
     }
     setHovered(index)
-  }
+  }, [])
 
-  const handleFlyoutLeave = () => {
+  const handleFlyoutLeave = useCallback(() => {
     setHovered(null)
     setFlyoutPosition({ top: 0, visible: false })
-  }
+  }, [])
+
+  // Mobile: tap to drill down
+  const handleMobileCategoryTap = useCallback((index: number, e: React.MouseEvent) => {
+    if (!isMobile) return
+    e.preventDefault()
+    setSelectedMobileCategory(index)
+  }, [isMobile])
+
+  const handleMobileBack = useCallback(() => {
+    setSelectedMobileCategory(null)
+  }, [])
 
   // Track animation state separately from open state
   const [shouldRender, setShouldRender] = useState(isOpen)
@@ -727,7 +744,6 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
   useEffect(() => {
     if (isOpen) {
       setShouldRender(true)
-      // Small delay to ensure DOM is ready before animating
       requestAnimationFrame(() => {
         requestAnimationFrame(() => {
           setAnimationState('entering')
@@ -739,13 +755,14 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
       setTimeout(() => {
         setAnimationState('exited')
         setShouldRender(false)
-      }, 300) // Match animation duration
+      }, 300)
     }
   }, [isOpen])
 
-  const handleClose = () => {
+  const handleClose = useCallback(() => {
+    setSelectedMobileCategory(null)
     onClose()
-  }
+  }, [onClose])
 
   if (!shouldRender) return null
 
@@ -753,7 +770,7 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
 
   return (
     <>
-      {/* Backdrop with smooth fade */}
+      {/* Backdrop */}
       <div
         onClick={handleClose}
         className="fixed inset-0 z-[998] transition-all duration-300 ease-out"
@@ -764,74 +781,184 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
         }}
       />
 
-      {/* Sidebar with smooth slide animation */}
+      {/* Sidebar */}
       <div
         ref={sidebarRef}
-        className="fixed top-0 left-0 bottom-0 w-[320px] bg-white z-[999] overflow-y-auto shadow-2xl transition-transform duration-300 ease-out"
+        className="fixed top-0 left-0 bottom-0 z-[999] w-full max-w-[320px] overflow-hidden bg-white shadow-2xl transition-transform duration-300 ease-out"
         style={{
           transform: isVisible ? 'translateX(0)' : 'translateX(-100%)',
         }}
       >
-        {/* Header */}
-        <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
-          <h2 className="text-lg font-bold text-gray-900">{t.selling.allCategories}</h2>
-          <button
-            onClick={handleClose}
-            className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-all duration-200 hover:bg-gray-100 hover:text-gray-600 active:scale-95"
-            aria-label="Close"
-          >
-            <X size={20} />
-          </button>
-        </div>
-
-        {/* Kategorie Liste */}
-        <div className="py-2">
-          {translatedCategories.map((cat, index) => {
-            const config = getCategoryConfig(cat.slug)
-            const IconComponent = config.icon
-            const isHovered = hovered === index
-
-            return (
-              <div
-                key={cat.slug}
-                onMouseEnter={e => handleCategoryEnter(index, e)}
-                onMouseLeave={handleCategoryLeave}
-                className="relative"
+        {/* 
+          Mobile: two-panel drill-down using translateX.
+          Panel 1 = category list, Panel 2 = subcategory list.
+          When a category is selected on mobile, both panels slide left together.
+        */}
+        <div
+          className="flex h-full transition-transform duration-300 ease-out"
+          style={{
+            width: '200%', // Two full-width panels side by side
+            transform: isMobile && selectedMobileCategory !== null ? 'translateX(-50%)' : 'translateX(0)',
+          }}
+        >
+          {/* ===== PANEL 1: Category List ===== */}
+          <div className="h-full w-1/2 overflow-y-auto">
+            {/* Header */}
+            <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-5 py-4">
+              <h2 className="text-lg font-bold text-gray-900">{t.selling.allCategories}</h2>
+              <button
+                onClick={handleClose}
+                className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-all duration-200 hover:bg-gray-100 hover:text-gray-600 active:scale-95"
+                aria-label="Close"
               >
-                {/* Kategorie Link */}
-                <Link
-                  href={`/search?category=${cat.slug}`}
-                  className={`flex items-center justify-between px-5 py-3 text-sm font-medium transition-all duration-200 ${
-                    isHovered
-                      ? 'bg-primary-50 text-primary-700'
-                      : 'bg-white text-gray-700 hover:bg-gray-50'
-                  }`}
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-primary-700">
-                      <IconComponent size={18} className="text-white" />
-                    </div>
-                    <span className="font-medium">{cat.name}</span>
+                <X size={20} />
+              </button>
+            </div>
+
+            {/* Category Items */}
+            <div className="py-2">
+              {translatedCategories.map((cat, index) => {
+                const config = getCategoryConfig(cat.slug)
+                const IconComponent = config.icon
+                const isHoveredItem = hovered === index
+                const isSelected = selectedMobileCategory === index
+
+                return (
+                  <div
+                    key={cat.slug}
+                    onMouseEnter={e => handleCategoryEnter(index, e)}
+                    onMouseLeave={handleCategoryLeave}
+                    className="relative"
+                  >
+                    {/* On mobile: tap opens drill-down. On desktop: link navigates, hover opens flyout. */}
+                    {isMobile ? (
+                      <button
+                        onClick={e => handleMobileCategoryTap(index, e)}
+                        className={`flex w-full items-center justify-between px-5 py-3 text-sm font-medium transition-all duration-200 ${
+                          isSelected
+                            ? 'bg-primary-50 text-primary-700'
+                            : 'bg-white text-gray-700 active:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-primary-700">
+                            <IconComponent size={18} className="text-white" />
+                          </div>
+                          <span className="font-medium">{cat.name}</span>
+                        </div>
+                        <ChevronRight
+                          size={16}
+                          className="text-gray-400"
+                        />
+                      </button>
+                    ) : (
+                      <Link
+                        href={`/search?category=${cat.slug}`}
+                        className={`flex items-center justify-between px-5 py-3 text-sm font-medium transition-all duration-200 ${
+                          isHoveredItem
+                            ? 'bg-primary-50 text-primary-700'
+                            : 'bg-white text-gray-700 hover:bg-gray-50'
+                        }`}
+                      >
+                        <div className="flex items-center gap-3">
+                          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-primary-700">
+                            <IconComponent size={18} className="text-white" />
+                          </div>
+                          <span className="font-medium">{cat.name}</span>
+                        </div>
+                        <ChevronRight
+                          size={16}
+                          className={`transition-transform duration-200 ${
+                            isHoveredItem ? 'text-primary-600 translate-x-0.5' : 'text-gray-400'
+                          }`}
+                        />
+                      </Link>
+                    )}
                   </div>
-                  <ChevronRight
-                    size={16}
-                    className={`transition-transform duration-200 ${
-                      isHovered ? 'text-primary-600 translate-x-0.5' : 'text-gray-400'
-                    }`}
-                  />
+                )
+              })}
+            </div>
+          </div>
+
+          {/* ===== PANEL 2: Subcategory List (Mobile drill-down) ===== */}
+          <div className="h-full w-1/2 overflow-y-auto bg-white">
+            {selectedMobileCategory !== null && (
+              <>
+                {/* Back header */}
+                <div className="sticky top-0 z-10 border-b border-gray-200 bg-white">
+                  <div className="flex items-center justify-between px-4 py-4">
+                    <button
+                      onClick={handleMobileBack}
+                      className="flex items-center gap-1.5 text-sm font-medium text-primary-600 active:opacity-70"
+                    >
+                      <ChevronLeft size={18} />
+                      <span>Zurück</span>
+                    </button>
+                    <button
+                      onClick={handleClose}
+                      className="flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition-all duration-200 hover:bg-gray-100 hover:text-gray-600 active:scale-95"
+                      aria-label="Close"
+                    >
+                      <X size={20} />
+                    </button>
+                  </div>
+                  {/* Category title with icon */}
+                  <div className="flex items-center gap-3 border-t border-gray-100 px-5 py-3">
+                    {(() => {
+                      const config = getCategoryConfig(translatedCategories[selectedMobileCategory].slug)
+                      const IconComponent = config.icon
+                      return (
+                        <>
+                          <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center rounded bg-primary-700">
+                            <IconComponent size={18} className="text-white" />
+                          </div>
+                          <h3 className="text-base font-bold text-gray-900">
+                            {translatedCategories[selectedMobileCategory].name}
+                          </h3>
+                          <span className="text-xs text-gray-400">
+                            ({categories[selectedMobileCategory].subs.length})
+                          </span>
+                        </>
+                      )
+                    })()}
+                  </div>
+                </div>
+
+                {/* "Alle anzeigen" link - navigates to category page */}
+                <Link
+                  href={`/search?category=${translatedCategories[selectedMobileCategory].slug}`}
+                  onClick={handleClose}
+                  className="flex items-center gap-2 border-b border-gray-100 px-5 py-3 text-sm font-semibold text-primary-600 active:bg-primary-50"
+                >
+                  Alle in {translatedCategories[selectedMobileCategory].name}
+                  <ChevronRight size={14} />
                 </Link>
-              </div>
-            )
-          })}
+
+                {/* Subcategory list */}
+                <div className="py-1">
+                  {translatedCategories[selectedMobileCategory].subs.map((sub, idx) => (
+                    <Link
+                      key={`mobile-${translatedCategories[selectedMobileCategory].slug}-${idx}`}
+                      href={`/search?category=${translatedCategories[selectedMobileCategory].slug}&subcategory=${encodeURIComponent(categories[selectedMobileCategory].subs[idx])}`}
+                      onClick={handleClose}
+                      className="block px-5 py-2.5 text-sm text-gray-700 transition-colors active:bg-gray-50"
+                    >
+                      {sub}
+                    </Link>
+                  ))}
+                </div>
+              </>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* FLYOUT - Außerhalb des Sidebars, als separates Element mit smooth animation */}
-      {hovered !== null && (
+      {/* Desktop FLYOUT - only shown on non-mobile */}
+      {!isMobile && hovered !== null && (
         <div
           onMouseEnter={() => handleFlyoutEnter(hovered)}
           onMouseLeave={handleFlyoutLeave}
-          className="fixed left-[320px] w-[520px] max-h-[calc(100vh-80px)] bg-white border-2 border-primary-600 rounded-r-xl shadow-2xl p-6 z-[1000] overflow-y-auto"
+          className="fixed left-[320px] z-[1000] max-h-[calc(100vh-80px)] w-[520px] overflow-y-auto rounded-r-xl border-2 border-primary-600 bg-white p-6 shadow-2xl"
           style={{
             top: `${flyoutPosition.top}px`,
             animation: 'flyoutFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',
