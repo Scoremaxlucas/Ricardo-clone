@@ -119,14 +119,12 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
     setSending(true)
     try {
       const isSeller = (session?.user as { id?: string })?.id === watch.seller.id
-      const receiverId = isSeller ? 'interessent-id' : watch.seller.id
 
       const res = await fetch(`/api/watches/${params.id}/messages`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           content: newMessage,
-          receiverId: receiverId,
           isPublic: isSeller ? isPublic : false,
         }),
       })

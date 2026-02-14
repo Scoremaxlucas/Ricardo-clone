@@ -13,10 +13,52 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
     }
 
     const body = await request.json()
-    const { content, receiverId, isPublic } = body
+    const { content, isPublic } = body
 
-    if (!content || !receiverId) {
+    if (!content) {
       return NextResponse.json({ message: 'Missing required fields' }, { status: 400 })
+    }
+
+    // Hole das Angebot, um sellerId zu bestimmen
+    const watch = await prisma.watch.findUnique({
+      where: { id },
+      select: { sellerId: true },
+    })
+
+    if (!watch) {
+      return NextResponse.json({ message: 'Watch not found' }, { status: 404 })
+    }
+
+    // Receiver-Logik (server-seitig bestimmt):
+    // - Käufer schreibt → Receiver ist der Verkäufer
+    // - Verkäufer antwortet → Receiver ist der letzte Fragesteller
+    let receiverId: string
+    if (session.user.id === watch.sellerId) {
+      // Verkäufer antwortet - finde den ursprünglichen Fragesteller
+      const lastBuyerMessage = await prisma.message.findFirst({
+        where: {
+          watchId: id,
+          senderId: { not: watch.sellerId },
+          receiverId: watch.sellerId,
+        },
+        orderBy: { createdAt: 'desc' },
+      })
+
+      if (!lastBuyerMessage) {
+        const anyBuyerMessage = await prisma.message.findFirst({
+          where: {
+            watchId: id,
+            senderId: { not: watch.sellerId },
+          },
+          orderBy: { createdAt: 'desc' },
+        })
+        receiverId = anyBuyerMessage?.senderId || watch.sellerId
+      } else {
+        receiverId = lastBuyerMessage.senderId
+      }
+    } else {
+      // Käufer stellt Frage → Receiver ist der Verkäufer
+      receiverId = watch.sellerId
     }
 
     const message = await prisma.message.create({
