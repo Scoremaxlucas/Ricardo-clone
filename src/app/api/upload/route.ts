@@ -87,13 +87,43 @@ export async function POST(request: NextRequest) {
 }
 
 /**
+ * Allowed CORS origins for upload endpoint
+ */
+function getAllowedOrigin(request?: NextRequest): string {
+  const origin = request?.headers.get('origin') || ''
+  const allowedOrigins = [
+    'https://helvenda.ch',
+    'https://www.helvenda.ch',
+  ]
+
+  // Allow Vercel preview deployments
+  if (origin.endsWith('.vercel.app')) {
+    return origin
+  }
+
+  // Allow localhost in development
+  if (process.env.NODE_ENV !== 'production' && origin.startsWith('http://localhost')) {
+    return origin
+  }
+
+  if (allowedOrigins.includes(origin)) {
+    return origin
+  }
+
+  // Default: same-origin requests (no CORS header needed)
+  return ''
+}
+
+/**
  * OPTIONS - CORS Preflight Handler
  */
-export async function OPTIONS() {
+export async function OPTIONS(request: NextRequest) {
+  const allowedOrigin = getAllowedOrigin(request)
+
   return new NextResponse(null, {
     status: 204,
     headers: {
-      'Access-Control-Allow-Origin': '*',
+      ...(allowedOrigin ? { 'Access-Control-Allow-Origin': allowedOrigin } : {}),
       'Access-Control-Allow-Methods': 'POST, OPTIONS',
       'Access-Control-Allow-Headers': 'Content-Type',
     },
