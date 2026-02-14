@@ -12,6 +12,7 @@ import {
   hasVisibilityBoost,
   type ListingData,
 } from '@/lib/product-utils'
+import { useAuthGate } from '@/contexts/AuthGateContext'
 import {
   Award,
   BadgeCheck,
@@ -63,6 +64,7 @@ export function ProductCard({
   className = '',
 }: ProductCardProps) {
   const { data: session } = useSession()
+  const { requireAuth } = useAuthGate()
   const [isFavorite, setIsFavorite] = useState(false)
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
 
@@ -136,12 +138,7 @@ export function ProductCard({
     e.preventDefault()
     e.stopPropagation()
 
-    if (!session?.user) {
-      const currentUrl =
-        typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
-      window.location.href = `/login?callbackUrl=${encodeURIComponent(currentUrl)}`
-      return
-    }
+    if (!requireAuth({ title: 'Favoriten', message: 'Melden Sie sich an, um Artikel zu Ihren Favoriten hinzuzufügen.' })) return
 
     if (isLoadingFavorite) return
 

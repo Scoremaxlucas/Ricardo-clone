@@ -43,7 +43,7 @@ export default function BexioAdminPage() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auth/signin')
+      router.push('/login')
     }
     if (status === 'authenticated' && !isAdminInSession) {
       router.push('/')

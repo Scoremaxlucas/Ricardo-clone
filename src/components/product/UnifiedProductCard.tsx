@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuthGate } from '@/contexts/AuthGateContext'
 import {
   Award,
   Clock,
@@ -70,6 +71,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
   priority = false,
 }: UnifiedProductCardProps) {
   const { data: session } = useSession()
+  const { requireAuth } = useAuthGate()
   const [isFavorite, setIsFavorite] = useState(false)
   const [imageError, setImageError] = useState(false)
   const [isLoadingFavorite, setIsLoadingFavorite] = useState(false)
@@ -168,10 +170,7 @@ export const UnifiedProductCard = memo(function UnifiedProductCard({
     e.preventDefault()
     e.stopPropagation()
 
-    if (!session?.user) {
-      // Could show a toast notification here
-      return
-    }
+    if (!requireAuth({ title: 'Favoriten', message: 'Melden Sie sich an, um Artikel zu Ihren Favoriten hinzuzufügen.' })) return
 
     if (isLoadingFavorite) return
 

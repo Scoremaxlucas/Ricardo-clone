@@ -1,5 +1,6 @@
 'use client'
 
+import { useAuthGate } from '@/contexts/AuthGateContext'
 import { Award, CheckCircle2, Clock, Gavel, Heart, MapPin, Medal, Sparkles, Star } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
@@ -56,6 +57,7 @@ export function ModernProductCard({
   sellerId,
 }: ModernProductCardProps) {
   const { data: session } = useSession()
+  const { requireAuth } = useAuthGate()
   const [isFavorite, setIsFavorite] = useState(favorites?.has(id) || false)
   const [imageError, setImageError] = useState(false)
 
@@ -66,7 +68,7 @@ export function ModernProductCard({
     e.preventDefault()
     e.stopPropagation()
 
-    if (!session?.user) return
+    if (!requireAuth({ title: 'Favoriten', message: 'Melden Sie sich an, um Artikel zu Ihren Favoriten hinzuzufügen.' })) return
 
     const newFavoriteState = !isFavorite
     setIsFavorite(newFavoriteState)

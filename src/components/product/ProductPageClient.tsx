@@ -9,6 +9,7 @@ import { ProductQuestions } from '@/components/product/ProductQuestions'
 import { ProductStats } from '@/components/product/ProductStats'
 import { SimilarProducts } from '@/components/product/SimilarProducts'
 import { SellerProfile } from '@/components/seller/SellerProfile'
+import { useAuthGate } from '@/contexts/AuthGateContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { CheckCircle, ChevronLeft, ChevronRight, Clock, Flag, Heart, ShoppingBag, X, Zap } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -46,6 +47,7 @@ export function ProductPageClient({
   const isSold = watch.isSold || !!saleInfo
   const { t } = useLanguage()
   const { data: session } = useSession()
+  const { requireAuth } = useAuthGate()
   const router = useRouter()
   const [showReportModal, setShowReportModal] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
@@ -146,11 +148,7 @@ export function ProductPageClient({
 
   // Toggle favorite mit globalem Event für Synchronisation
   const toggleFavorite = async () => {
-    if (!session?.user) {
-      const currentUrl = typeof window !== 'undefined' ? window.location.pathname : '/'
-      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`)
-      return
-    }
+    if (!requireAuth({ title: 'Favoriten', message: 'Melden Sie sich an, um Artikel zu Ihren Favoriten hinzuzufügen.' })) return
     if (favoriteLoading || !watch?.id) return
 
     setFavoriteLoading(true)
@@ -797,10 +795,10 @@ export function ProductPageClient({
                 </button>
               )}
 
-              {/* Nicht eingeloggte User: Favoriten-Button ohne Funktion - Nicht bei verkauften Artikeln */}
+              {/* Nicht eingeloggte User: Favoriten-Button mit Login-Modal */}
               {!isSold && !session?.user && (
                 <button
-                  onClick={() => router.push('/auth/signin')}
+                  onClick={() => requireAuth({ title: 'Favoriten', message: 'Melden Sie sich an, um Artikel zu Ihren Favoriten hinzuzufügen.' })}
                   className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-600 transition-colors hover:bg-gray-50"
                 >
                   <Heart className="h-4 w-4" />
@@ -1021,10 +1019,10 @@ export function ProductPageClient({
                 </button>
               )}
 
-              {/* Nicht eingeloggte User: Favoriten-Button - Nicht bei verkauften Artikeln */}
+              {/* Nicht eingeloggte User: Favoriten-Button mit Login-Modal */}
               {!isSold && !session?.user && (
                 <button
-                  onClick={() => router.push('/auth/signin')}
+                  onClick={() => requireAuth({ title: 'Favoriten', message: 'Melden Sie sich an, um Artikel zu Ihren Favoriten hinzuzufügen.' })}
                   className="mt-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-primary-600 transition-colors hover:bg-gray-50"
                 >
                   <Heart className="h-4 w-4" />

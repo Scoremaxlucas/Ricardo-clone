@@ -4,6 +4,7 @@
  * Consistent design matching Helvenda brand:
  * - Clean, modern modal with rounded corners
  * - Primary teal button for login action
+ * - Secondary register link (Ricardo-style)
  * - Subtle shadow and backdrop
  * - Mobile responsive
  * - Smooth animations (Ricardo-style)
@@ -12,7 +13,6 @@
 'use client'
 
 import { X } from 'lucide-react'
-import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import { Button } from './Button'
@@ -24,6 +24,7 @@ interface LoginPromptModalProps {
   title?: string
   message?: string
   loginButtonText?: string
+  registerButtonText?: string
   loginHref?: string
 }
 
@@ -31,8 +32,9 @@ export function LoginPromptModal({
   isOpen,
   onClose,
   title = 'Anmeldung erforderlich',
-  message = 'Bitte melden Sie sich an, um diese Funktion zu nutzen.',
+  message = 'Bitte melden Sie sich an oder erstellen Sie ein Konto, um diese Funktion zu nutzen.',
   loginButtonText = 'Anmelden',
+  registerButtonText = 'Konto erstellen',
   loginHref,
 }: LoginPromptModalProps) {
   const router = useRouter()
@@ -47,19 +49,43 @@ export function LoginPromptModal({
           setIsAnimating(true)
         })
       })
+      // Prevent body scroll when modal is open
+      document.body.style.overflow = 'hidden'
     } else {
       setIsAnimating(false)
+      document.body.style.overflow = ''
       const timer = setTimeout(() => setIsVisible(false), 200)
       return () => clearTimeout(timer)
     }
+    return () => {
+      document.body.style.overflow = ''
+    }
   }, [isOpen])
+
+  // Close on Escape key
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape' && isOpen) {
+        onClose()
+      }
+    }
+    document.addEventListener('keydown', handleKeyDown)
+    return () => document.removeEventListener('keydown', handleKeyDown)
+  }, [isOpen, onClose])
 
   if (!isVisible) return null
 
+  const callbackUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
+
   const handleLogin = () => {
-    const currentUrl = typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
-    const href = loginHref || `/login?callbackUrl=${encodeURIComponent(currentUrl)}`
+    const href = loginHref || `/login?callbackUrl=${encodeURIComponent(callbackUrl)}`
     router.push(href)
+    onClose()
+  }
+
+  const handleRegister = () => {
+    router.push(`/register?callbackUrl=${encodeURIComponent(callbackUrl)}`)
+    onClose()
   }
 
   return (
@@ -68,6 +94,9 @@ export function LoginPromptModal({
         isAnimating ? 'bg-black/40' : 'bg-black/0'
       }`}
       onClick={onClose}
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="login-prompt-title"
     >
       <div
         className={`relative w-full max-w-md rounded-2xl bg-white shadow-2xl ring-1 ring-gray-100 transition-all duration-300 ${
@@ -92,24 +121,38 @@ export function LoginPromptModal({
           </div>
 
           {/* Title */}
-          <h2 className="mb-3 text-2xl font-bold tracking-tight text-gray-900">
+          <h2 id="login-prompt-title" className="mb-3 text-2xl font-bold tracking-tight text-gray-900">
             {title}
           </h2>
 
           {/* Message */}
-          <p className="mb-6 text-sm text-gray-600">
+          <p className="mb-6 text-sm leading-relaxed text-gray-600">
             {message}
           </p>
 
           {/* Actions */}
-          <div className="flex justify-center">
+          <div className="flex flex-col gap-3">
             <Button
               variant="primary"
               onClick={handleLogin}
-              className="w-full sm:w-auto sm:px-8"
+              className="w-full"
             >
               {loginButtonText}
             </Button>
+
+            <button
+              onClick={handleRegister}
+              className="w-full rounded-lg border-2 border-primary-600 px-4 py-2.5 text-sm font-semibold text-primary-600 transition-colors hover:bg-primary-50 active:scale-[0.98]"
+            >
+              {registerButtonText}
+            </button>
+          </div>
+
+          {/* Divider + benefit text */}
+          <div className="mt-5 border-t border-gray-100 pt-4">
+            <p className="text-xs text-gray-400">
+              Kostenlos registrieren und alle Vorteile von Helvenda nutzen.
+            </p>
           </div>
         </div>
       </div>

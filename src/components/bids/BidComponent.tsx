@@ -2,6 +2,7 @@
 
 import { PaymentProtectionBadge } from '@/components/product/PaymentProtectionBadge'
 import { UserName } from '@/components/ui/UserName'
+import { useAuthGate } from '@/contexts/AuthGateContext'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { useRealtimeBids } from '@/hooks/useRealtimeBids'
 import { getShippingCost, ShippingMethod, ShippingMethodArray } from '@/lib/shipping'
@@ -46,6 +47,7 @@ export function BidComponent({
   paymentProtectionEnabled = false,
 }: BidComponentProps) {
   const { data: session } = useSession()
+  const { requireAuth } = useAuthGate()
   const router = useRouter()
   const { t } = useLanguage()
   const [bidAmount, setBidAmount] = useState('')
@@ -252,12 +254,7 @@ export function BidComponent({
   const minBid = highestBid ? highestBid + 1.0 : startPrice
 
   const handleBid = async () => {
-    if (!session?.user) {
-      const currentUrl =
-        typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
-      window.location.href = `/login?callbackUrl=${encodeURIComponent(currentUrl)}`
-      return
-    }
+    if (!requireAuth({ title: 'Bieten', message: 'Melden Sie sich an, um auf diesen Artikel zu bieten.' })) return
 
     // Keine Käufer-Verifizierung nötig (wie Ricardo)
     if (!bidAmount.trim()) {
@@ -328,11 +325,7 @@ export function BidComponent({
 
   // RICARDO-STYLE: Redirect to checkout page instead of direct purchase
   const handleBuyNowClick = () => {
-    if (!session?.user) {
-      const checkoutUrl = `/checkout?watchId=${itemId}`
-      window.location.href = `/login?callbackUrl=${encodeURIComponent(checkoutUrl)}`
-      return
-    }
+    if (!requireAuth({ title: 'Sofort kaufen', message: 'Melden Sie sich an, um diesen Artikel sofort zu kaufen.' })) return
 
     // Keine Käufer-Verifizierung nötig (wie Ricardo)
     if (!buyNowPrice) return
@@ -342,18 +335,16 @@ export function BidComponent({
   }
 
   if (!session?.user) {
-    const currentUrl =
-      typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
     return (
       <div className="mt-8 rounded-lg bg-white p-6 shadow">
         <p className="text-center text-gray-600">
           {t.product.pleaseLogin}{' '}
-          <Link
-            href={`/login?callbackUrl=${encodeURIComponent(currentUrl)}`}
+          <button
+            onClick={() => requireAuth({ title: 'Bieten', message: 'Melden Sie sich an, um auf diesen Artikel zu bieten oder ihn zu kaufen.' })}
             className="text-primary-600 hover:underline"
           >
             {t.product.toPlaceBids}
-          </Link>{' '}
+          </button>{' '}
           {t.product.toBidOrBuy}
         </p>
       </div>

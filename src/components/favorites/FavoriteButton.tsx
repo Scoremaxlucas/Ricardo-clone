@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useSession } from 'next-auth/react'
-import { useRouter } from 'next/navigation'
 import { Heart } from 'lucide-react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { useAuthGate } from '@/contexts/AuthGateContext'
 
 interface FavoriteButtonProps {
   watchId: string
@@ -12,7 +12,7 @@ interface FavoriteButtonProps {
 
 export function FavoriteButton({ watchId }: FavoriteButtonProps) {
   const { data: session } = useSession()
-  const router = useRouter()
+  const { requireAuth } = useAuthGate()
   const { t } = useLanguage()
   const [isFavorite, setIsFavorite] = useState(false)
   const [loading, setLoading] = useState(true)
@@ -41,12 +41,7 @@ export function FavoriteButton({ watchId }: FavoriteButtonProps) {
   }, [watchId, session?.user])
 
   const toggleFavorite = async () => {
-    if (!session?.user) {
-      const currentUrl =
-        typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
-      router.push(`/login?callbackUrl=${encodeURIComponent(currentUrl)}`)
-      return
-    }
+    if (!requireAuth({ title: 'Favoriten', message: 'Melden Sie sich an, um Artikel zu Ihren Favoriten hinzuzufügen.' })) return
 
     if (loading) return
 

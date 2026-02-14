@@ -436,7 +436,7 @@ export default function AnalyticsDashboard() {
 
   useEffect(() => {
     if (status === 'unauthenticated') {
-      router.push('/auth/login')
+      router.push('/login')
       return
     }
     if (session?.user) {

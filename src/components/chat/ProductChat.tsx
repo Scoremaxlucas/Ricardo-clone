@@ -1,6 +1,7 @@
 'use client'
 
 import { UserName } from '@/components/ui/UserName'
+import { useAuthGate } from '@/contexts/AuthGateContext'
 import { Globe, Lock, MessageCircle, Send, Zap } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useEffect, useRef, useState } from 'react'
@@ -36,6 +37,7 @@ const QUICK_REPLY_TEMPLATES = [
 
 export function ProductChat({ watchId, sellerId }: ProductChatProps) {
   const { data: session } = useSession()
+  const { requireAuth } = useAuthGate()
   const [messages, setMessages] = useState<Message[]>([])
   const [newMessage, setNewMessage] = useState('')
   const [isPublic, setIsPublic] = useState(false)
@@ -127,18 +129,16 @@ export function ProductChat({ watchId, sellerId }: ProductChatProps) {
   }
 
   if (!session?.user) {
-    const currentUrl =
-      typeof window !== 'undefined' ? window.location.pathname + window.location.search : '/'
     return (
       <div className="mt-8 rounded-lg bg-white p-6 shadow">
         <p className="text-center text-gray-600">
           Bitte{' '}
-          <a
-            href={`/login?callbackUrl=${encodeURIComponent(currentUrl)}`}
+          <button
+            onClick={() => requireAuth({ title: 'Fragen stellen', message: 'Melden Sie sich an, um dem Verkäufer Fragen zu stellen.' })}
             className="text-primary-600 hover:underline"
           >
             anmelden
-          </a>
+          </button>
           , um Fragen zu stellen.
         </p>
       </div>
