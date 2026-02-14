@@ -5,9 +5,11 @@ import { Header } from '@/components/layout/Header'
 import {
   AlertTriangle,
   CheckCircle,
+  ChevronDown,
   Clock,
   CreditCard,
   FileText,
+  RotateCcw,
   Shield,
   Truck,
   User,
@@ -87,6 +89,18 @@ export default function OrderDetailPage() {
   const [openingDispute, setOpeningDispute] = useState(false)
   const [disputeReason, setDisputeReason] = useState('')
   const [disputeDescription, setDisputeDescription] = useState('')
+
+  // Cancellation state
+  const [showCancelForm, setShowCancelForm] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const [cancelReason, setCancelReason] = useState('')
+  const [cancelDescription, setCancelDescription] = useState('')
+
+  // Return request state
+  const [showReturnForm, setShowReturnForm] = useState(false)
+  const [requestingReturn, setRequestingReturn] = useState(false)
+  const [returnReason, setReturnReason] = useState('')
+  const [returnDescription, setReturnDescription] = useState('')
 
   useEffect(() => {
     if (!session) {
@@ -180,6 +194,88 @@ export default function OrderDetailPage() {
       toast.error(err.message || 'Fehler beim Öffnen des Disputes')
     } finally {
       setOpeningDispute(false)
+    }
+  }
+
+  const handleCancelOrder = async () => {
+    if (!cancelReason) {
+      toast.error('Bitte wählen Sie einen Stornierungsgrund.')
+      return
+    }
+
+    if (!confirm('Möchten Sie diese Bestellung wirklich stornieren?')) {
+      return
+    }
+
+    setCancelling(true)
+    try {
+      const res = await fetch(`/api/orders/${orderId}/cancel`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: cancelReason,
+          description: cancelDescription.trim(),
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Fehler beim Stornieren')
+      }
+
+      toast.success(data.message || 'Bestellung erfolgreich storniert.')
+      setCancelReason('')
+      setCancelDescription('')
+      setShowCancelForm(false)
+      fetchOrder()
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler beim Stornieren')
+    } finally {
+      setCancelling(false)
+    }
+  }
+
+  const handleReturnRequest = async () => {
+    if (!returnReason) {
+      toast.error('Bitte wählen Sie einen Rückgabegrund.')
+      return
+    }
+    if (!returnDescription || returnDescription.trim().length < 10) {
+      toast.error('Bitte beschreiben Sie das Problem genauer (mind. 10 Zeichen).')
+      return
+    }
+
+    if (!confirm('Möchten Sie wirklich eine Rückgabe beantragen?')) {
+      return
+    }
+
+    setRequestingReturn(true)
+    try {
+      const res = await fetch(`/api/orders/${orderId}/return-request`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          reason: returnReason,
+          description: returnDescription.trim(),
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Fehler beim Einreichen des Rückgabe-Antrags')
+      }
+
+      toast.success(data.message || 'Rückgabe-Antrag erfolgreich eingereicht.')
+      setReturnReason('')
+      setReturnDescription('')
+      setShowReturnForm(false)
+      fetchOrder()
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler beim Einreichen des Rückgabe-Antrags')
+    } finally {
+      setRequestingReturn(false)
     }
   }
 
@@ -289,6 +385,37 @@ export default function OrderDetailPage() {
     !order.buyerConfirmedReceipt &&
     order.disputeStatus === 'none'
   const canOpenDispute = isBuyer && !isPickup && order.paymentStatus === 'paid' && order.disputeStatus === 'none'
+
+  // Cancellation: before payment, or pickup not yet completed, or paid but not shipped
+  const canCancel =
+    isBuyer &&
+    order.orderStatus !== 'canceled' &&
+    order.orderStatus !== 'completed' &&
+    !order.buyerConfirmedReceipt &&
+    (order.disputeStatus === 'none' || order.disputeStatus === 'resolved' || order.disputeStatus === 'closed') &&
+    (
+      // Before payment
+      order.paymentStatus === 'created' || order.paymentStatus === 'awaiting_payment' ||
+      // Pickup orders (any status before completed)
+      isPickup ||
+      // Paid but not shipped (after 14 days or to show the option with info)
+      (order.paymentStatus === 'paid' && !order.shippedAt)
+    )
+
+  // Return: after receipt confirmed, within 14 days, no active dispute
+  const canReturn =
+    isBuyer &&
+    !isPickup &&
+    order.buyerConfirmedReceipt &&
+    order.orderStatus !== 'canceled' &&
+    (order.disputeStatus === 'none' || order.disputeStatus === 'resolved' || order.disputeStatus === 'closed') &&
+    (() => {
+      if (!order.buyerConfirmedAt) return false
+      const daysSince = Math.floor(
+        (new Date().getTime() - new Date(order.buyerConfirmedAt).getTime()) / (1000 * 60 * 60 * 24)
+      )
+      return daysSince <= 14
+    })()
 
   return (
     <div className="flex min-h-screen flex-col">
@@ -522,6 +649,19 @@ export default function OrderDetailPage() {
                         </div>
                       </div>
                     )}
+                    {order.orderStatus === 'canceled' && (
+                      <div className="flex items-start">
+                        <XCircle className="mr-3 h-5 w-5 text-red-600" />
+                        <div>
+                          <p className="font-medium text-red-600">Bestellung storniert</p>
+                          {(order as any).autoCancelledAt && (
+                            <p className="text-sm text-gray-600">
+                              {new Date((order as any).autoCancelledAt).toLocaleString('de-CH')}
+                            </p>
+                          )}
+                        </div>
+                      </div>
+                    )}
                   </>
                 )}
               </div>
@@ -614,6 +754,198 @@ export default function OrderDetailPage() {
                         {openingDispute ? 'Wird verarbeitet...' : 'Dispute öffnen'}
                       </button>
                     </div>
+                  </div>
+                )}
+
+                {/* === CANCELLATION SECTION === */}
+                {canCancel && (
+                  <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                    <button
+                      onClick={() => setShowCancelForm(!showCancelForm)}
+                      className="flex w-full items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <XCircle className="h-5 w-5 text-red-500" />
+                        <h3 className="font-semibold text-gray-900">Bestellung stornieren</h3>
+                      </div>
+                      <ChevronDown
+                        className={`h-5 w-5 text-gray-400 transition-transform ${showCancelForm ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+
+                    {showCancelForm && (
+                      <div className="mt-4 space-y-4">
+                        {/* Info about cancellation eligibility */}
+                        {order.paymentStatus === 'paid' && !order.shippedAt && !isPickup && (() => {
+                          const paidDate = order.paidAt ? new Date(order.paidAt) : null
+                          const daysSincePaid = paidDate
+                            ? Math.floor((new Date().getTime() - paidDate.getTime()) / (1000 * 60 * 60 * 24))
+                            : 0
+                          if (daysSincePaid < 14) {
+                            return (
+                              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3">
+                                <p className="text-sm text-amber-800">
+                                  <strong>Hinweis:</strong> Die automatische Stornierung ist erst 14 Tage nach Zahlung möglich,
+                                  wenn der Verkäufer nicht versendet hat. Noch {14 - daysSincePaid} Tag(e) verbleibend.
+                                  Sie können alternativ einen <strong>Dispute</strong> öffnen.
+                                </p>
+                              </div>
+                            )
+                          }
+                          return null
+                        })()}
+
+                        <p className="text-sm text-gray-600">
+                          {order.paymentStatus === 'created' || order.paymentStatus === 'awaiting_payment'
+                            ? 'Sie können die Bestellung vor der Zahlung kostenlos stornieren.'
+                            : isPickup
+                              ? 'Sie können die Abholung stornieren, solange sie noch nicht stattgefunden hat.'
+                              : 'Sie können die Bestellung stornieren, da der Verkäufer nicht innerhalb von 14 Tagen versendet hat.'}
+                        </p>
+
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-gray-700">
+                            Grund der Stornierung
+                          </label>
+                          <select
+                            value={cancelReason}
+                            onChange={e => setCancelReason(e.target.value)}
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                            aria-label="Stornierungsgrund"
+                          >
+                            <option value="">Bitte wählen...</option>
+                            <option value="changed_mind">Meinung geändert</option>
+                            <option value="found_elsewhere">Anderswo gefunden</option>
+                            <option value="price_too_high">Preis zu hoch</option>
+                            <option value="seller_not_responding">Verkäufer antwortet nicht</option>
+                            <option value="seller_not_shipping">Verkäufer hat nicht versendet</option>
+                            <option value="other">Sonstiges</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-gray-700">
+                            Bemerkung <span className="text-gray-400">(optional)</span>
+                          </label>
+                          <textarea
+                            value={cancelDescription}
+                            onChange={e => setCancelDescription(e.target.value)}
+                            rows={3}
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                            placeholder="Zusätzliche Informationen..."
+                          />
+                        </div>
+
+                        <div className="flex gap-3">
+                          <button
+                            onClick={handleCancelOrder}
+                            disabled={cancelling || !cancelReason}
+                            className="rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50"
+                          >
+                            {cancelling ? 'Wird storniert...' : 'Bestellung stornieren'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowCancelForm(false)
+                              setCancelReason('')
+                              setCancelDescription('')
+                            }}
+                            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                          >
+                            Abbrechen
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {/* === RETURN REQUEST SECTION === */}
+                {canReturn && (
+                  <div className="rounded-lg border border-gray-200 bg-white p-6 shadow-sm">
+                    <button
+                      onClick={() => setShowReturnForm(!showReturnForm)}
+                      className="flex w-full items-center justify-between"
+                    >
+                      <div className="flex items-center gap-2">
+                        <RotateCcw className="h-5 w-5 text-blue-500" />
+                        <h3 className="font-semibold text-gray-900">Rückgabe beantragen</h3>
+                      </div>
+                      <ChevronDown
+                        className={`h-5 w-5 text-gray-400 transition-transform ${showReturnForm ? 'rotate-180' : ''}`}
+                      />
+                    </button>
+
+                    {showReturnForm && (
+                      <div className="mt-4 space-y-4">
+                        <div className="rounded-lg border border-blue-200 bg-blue-50 p-3">
+                          <p className="text-sm text-blue-800">
+                            Sie haben <strong>14 Tage</strong> nach Erhaltbestätigung Zeit, eine Rückgabe zu beantragen.
+                            {order.buyerConfirmedAt && (() => {
+                              const daysLeft = 14 - Math.floor(
+                                (new Date().getTime() - new Date(order.buyerConfirmedAt).getTime()) / (1000 * 60 * 60 * 24)
+                              )
+                              return daysLeft > 0
+                                ? ` Noch ${daysLeft} Tag(e) verbleibend.`
+                                : ' Frist läuft heute ab.'
+                            })()}
+                          </p>
+                        </div>
+
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-gray-700">
+                            Rückgabegrund *
+                          </label>
+                          <select
+                            value={returnReason}
+                            onChange={e => setReturnReason(e.target.value)}
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                            aria-label="Rückgabegrund"
+                          >
+                            <option value="">Bitte wählen...</option>
+                            <option value="item_not_as_described">Artikel entspricht nicht der Beschreibung</option>
+                            <option value="item_damaged">Artikel beschädigt</option>
+                            <option value="item_defective">Artikel defekt</option>
+                            <option value="wrong_item">Falscher Artikel erhalten</option>
+                            <option value="item_missing_parts">Teile fehlen</option>
+                            <option value="other">Sonstiges</option>
+                          </select>
+                        </div>
+
+                        <div>
+                          <label className="mb-2 block text-sm font-medium text-gray-700">
+                            Beschreibung des Problems * <span className="text-gray-400">(mind. 10 Zeichen)</span>
+                          </label>
+                          <textarea
+                            value={returnDescription}
+                            onChange={e => setReturnDescription(e.target.value)}
+                            rows={4}
+                            className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm"
+                            placeholder="Beschreiben Sie das Problem mit dem Artikel genau..."
+                          />
+                        </div>
+
+                        <div className="flex gap-3">
+                          <button
+                            onClick={handleReturnRequest}
+                            disabled={requestingReturn || !returnReason || returnDescription.trim().length < 10}
+                            className="rounded-md bg-blue-600 px-4 py-2 text-sm font-medium text-white hover:bg-blue-700 disabled:opacity-50"
+                          >
+                            {requestingReturn ? 'Wird eingereicht...' : 'Rückgabe beantragen'}
+                          </button>
+                          <button
+                            onClick={() => {
+                              setShowReturnForm(false)
+                              setReturnReason('')
+                              setReturnDescription('')
+                            }}
+                            className="rounded-md border border-gray-300 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
+                          >
+                            Abbrechen
+                          </button>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 )}
               </div>
