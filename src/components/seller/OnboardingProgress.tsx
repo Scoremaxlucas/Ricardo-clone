@@ -5,7 +5,6 @@ import {
   BadgeCheck,
   CheckCircle,
   Circle,
-  CreditCard,
   Loader2,
   Mail,
   ShieldCheck,
@@ -33,7 +32,8 @@ interface Step {
 }
 
 export function OnboardingProgress({ status }: { status: OnboardingStatus }) {
-  // Determine steps
+  // Determine steps — payout setup is NOT part of the onboarding flow.
+  // It is only required when a seller enables buyer protection (Käuferschutz) on a listing.
   const steps: Step[] = [
     {
       id: 'email',
@@ -68,21 +68,6 @@ export function OnboardingProgress({ status }: { status: OnboardingStatus }) {
         : status.identitySubmitted
           ? undefined
           : 'Jetzt verifizieren',
-    },
-    {
-      id: 'payout',
-      label: 'Auszahlung einrichten',
-      description: status.payoutSetup
-        ? 'Auszahlung ist bereit.'
-        : 'Stripe Connect für sichere Auszahlungen.',
-      icon: <CreditCard className="h-5 w-5" />,
-      status: status.payoutSetup
-        ? 'completed'
-        : status.identityApproved
-          ? 'current'
-          : 'pending',
-      href: !status.payoutSetup && status.identityApproved ? '/my-watches/account' : undefined,
-      actionLabel: !status.payoutSetup && status.identityApproved ? 'Einrichten' : undefined,
     },
     {
       id: 'ready',
