@@ -1,9 +1,10 @@
 import { getMainAddress } from '@/lib/address'
 import { prisma } from '@/lib/prisma'
+import { Prisma } from '@prisma/client'
 import { NextRequest, NextResponse } from 'next/server'
 
 // FAST SEARCH API: Optimierte Such-Route für schnelles Laden
-// Verwendet Raw SQL für maximale Performance
+// Verwendet Raw SQL mit Prisma.sql für sichere Parameterisierung
 export async function GET(request: NextRequest) {
   try {
     const { searchParams } = new URL(request.url)
@@ -18,66 +19,48 @@ export async function GET(request: NextRequest) {
 
     const now = new Date()
 
-    // OPTIMIERT: Baue WHERE-Klausel dynamisch mit serverseitiger Filterung
-    // RICARDO-STYLE: Exclude blocked, removed, ended (not just rejected)
-    let whereConditions = [
-      `(w."moderationStatus" IS NULL OR w."moderationStatus" NOT IN ('rejected', 'blocked', 'removed', 'ended'))`,
-      `NOT EXISTS (SELECT 1 FROM purchases p WHERE p."watchId" = w.id AND p.status != 'cancelled')`,
-      `(w."auctionEnd" IS NULL OR w."auctionEnd" > $1 OR EXISTS (SELECT 1 FROM purchases p2 WHERE p2."watchId" = w.id AND p2.status != 'cancelled'))`,
+    // Sichere WHERE-Bedingungen mit Prisma.sql Fragmenten
+    const whereConditions: Prisma.Sql[] = [
+      Prisma.sql`(w."moderationStatus" IS NULL OR w."moderationStatus" NOT IN ('rejected', 'blocked', 'removed', 'ended'))`,
+      Prisma.sql`NOT EXISTS (SELECT 1 FROM purchases p WHERE p."watchId" = w.id AND p.status != 'cancelled')`,
+      Prisma.sql`(w."auctionEnd" IS NULL OR w."auctionEnd" > ${now} OR EXISTS (SELECT 1 FROM purchases p2 WHERE p2."watchId" = w.id AND p2.status != 'cancelled'))`,
     ]
 
-    const params: any[] = [now]
-
-    // OPTIMIERT: Preis-Filter serverseitig
     if (minPrice) {
-      whereConditions.push(`w.price >= $${params.length + 1}`)
-      params.push(parseFloat(minPrice))
+      whereConditions.push(Prisma.sql`w.price >= ${parseFloat(minPrice)}`)
     }
 
     if (maxPrice) {
-      whereConditions.push(`w.price <= $${params.length + 1}`)
-      params.push(parseFloat(maxPrice))
+      whereConditions.push(Prisma.sql`w.price <= ${parseFloat(maxPrice)}`)
     }
 
     if (query) {
-      // OPTIMIERT: Suche auch in description für bessere Trefferquote
+      const likePattern = `%${query}%`
       whereConditions.push(
-        `(w.title ILIKE $${params.length + 1} OR w.brand ILIKE $${params.length + 1} OR w.model ILIKE $${params.length + 1} OR w.description ILIKE $${params.length + 1})`
+        Prisma.sql`(w.title ILIKE ${likePattern} OR w.brand ILIKE ${likePattern} OR w.model ILIKE ${likePattern} OR w.description ILIKE ${likePattern})`
       )
-      params.push(`%${query}%`)
     }
 
     if (category) {
       whereConditions.push(
-        `EXISTS (SELECT 1 FROM watch_categories wc INNER JOIN categories c ON wc."categoryId" = c.id WHERE wc."watchId" = w.id AND (c.slug = $${params.length + 1} OR c.name = $${params.length + 1}))`
+        Prisma.sql`EXISTS (SELECT 1 FROM watch_categories wc INNER JOIN categories c ON wc."categoryId" = c.id WHERE wc."watchId" = w.id AND (c.slug = ${category} OR c.name = ${category}))`
       )
-      params.push(category)
-    }
-
-    if (minPrice) {
-      whereConditions.push(`w.price >= $${params.length + 1}`)
-      params.push(parseFloat(minPrice))
-    }
-
-    if (maxPrice) {
-      whereConditions.push(`w.price <= $${params.length + 1}`)
-      params.push(parseFloat(maxPrice))
     }
 
     if (isAuction === 'true') {
-      whereConditions.push(`w."isAuction" = true`)
+      whereConditions.push(Prisma.sql`w."isAuction" = true`)
     } else if (isAuction === 'false') {
-      whereConditions.push(`(w."isAuction" = false OR w."isAuction" IS NULL)`)
+      whereConditions.push(Prisma.sql`(w."isAuction" = false OR w."isAuction" IS NULL)`)
     }
 
-    const whereClause = whereConditions.join(' AND ')
+    const whereClause = Prisma.join(whereConditions, ' AND ')
 
     // OPTIMIERT: Versuche Raw SQL, fallback zu Prisma bei Fehler
     let watches: any[] = []
 
     try {
-      // Versuche Raw SQL Query (schneller)
-      watches = await prisma.$queryRawUnsafe<
+      // Sichere Raw SQL Query mit Prisma.sql (automatische Parameterisierung)
+      watches = await prisma.$queryRaw<
         Array<{
           id: string
           title: string | null
@@ -96,7 +79,7 @@ export async function GET(request: NextRequest) {
           condition: string | null
         }>
       >(
-        `
+        Prisma.sql`
       SELECT
         w.id,
         w.title,
@@ -129,8 +112,7 @@ export async function GET(request: NextRequest) {
         w."createdAt" DESC
       LIMIT ${limit}
       OFFSET ${skip}
-    `,
-        ...params
+    `
       )
     } catch (sqlError) {
       // Fallback zu Prisma Query falls Raw SQL fehlschlägt

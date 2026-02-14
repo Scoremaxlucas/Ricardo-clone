@@ -158,17 +158,50 @@ export interface SearchResponse {
 }
 
 /**
+ * Sanitize search input: remove null bytes and limit length
+ */
+function sanitizeSearchInput(input: string): string {
+  return input
+    .replace(/\0/g, '') // Remove null bytes
+    .slice(0, 500) // Limit length to prevent abuse
+    .trim()
+}
+
+/**
+ * Sanitize filter string values
+ */
+function sanitizeFilters(filters: SearchFilters): SearchFilters {
+  const sanitized = { ...filters }
+  if (sanitized.category) sanitized.category = sanitizeSearchInput(sanitized.category)
+  if (sanitized.brand) sanitized.brand = sanitizeSearchInput(sanitized.brand)
+  if (sanitized.brands) sanitized.brands = sanitized.brands.map(b => sanitizeSearchInput(b))
+  if (sanitized.condition) sanitized.condition = sanitizeSearchInput(sanitized.condition)
+  if (sanitized.postalCode) sanitized.postalCode = sanitizeSearchInput(sanitized.postalCode)
+  if (sanitized.canton) sanitized.canton = sanitizeSearchInput(sanitized.canton).slice(0, 2)
+  // Clamp numeric values
+  if (sanitized.minPrice !== undefined) sanitized.minPrice = Math.max(0, Math.min(sanitized.minPrice, 99999999))
+  if (sanitized.maxPrice !== undefined) sanitized.maxPrice = Math.max(0, Math.min(sanitized.maxPrice, 99999999))
+  return sanitized
+}
+
+/**
  * Main search function using PostgreSQL FTS + Trigram
+ *
+ * SECURITY NOTE: This function uses $queryRawUnsafe with numbered parameter
+ * placeholders ($1, $2, ...) and a separate parameters array. All user input
+ * goes through the parameters array and is never interpolated into SQL strings.
+ * Input is additionally sanitized at the entry point below.
  */
 export async function searchListings(options: SearchOptions): Promise<SearchResponse> {
   const {
     query,
-    filters = {},
     sort = { field: 'relevance', direction: 'desc' },
-    limit = 20,
-    offset = 0,
+    limit = Math.min(Math.max(1, options.limit || 20), 200), // Clamp 1-200
+    offset = Math.max(0, options.offset || 0),
   } = options
 
+  // Sanitize all inputs before they enter the query builder
+  const filters = sanitizeFilters(options.filters || {})
   const now = new Date()
 
   // If no query, use simple Prisma query with filters
@@ -176,9 +209,11 @@ export async function searchListings(options: SearchOptions): Promise<SearchResp
     return searchWithoutQuery(filters, sort, limit, offset, now)
   }
 
+  const sanitizedQuery = sanitizeSearchInput(query)
+
   // Expand query with synonyms and get "did you mean" suggestions
-  const { ftsQuery, plainQuery, tokens, didYouMean, suggestions } = expandQuery(query.trim())
-  const normalizedQuery = normalizeQuery(query.trim())
+  const { ftsQuery, plainQuery, tokens, didYouMean, suggestions } = expandQuery(sanitizedQuery)
+  const normalizedQuery = normalizeQuery(sanitizedQuery)
 
   try {
     // Try FTS + Trigram search first (fast and accurate)
