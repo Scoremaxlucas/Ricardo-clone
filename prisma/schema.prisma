@@ -53,9 +53,9 @@ model User {
   emailVerificationTokenExpires DateTime?
 
   // === EMAIL CHANGE (mit Verifizierung) ===
-  pendingEmail                  String?   // Neue E-Mail-Adresse (noch nicht bestätigt)
-  pendingEmailToken             String?   // Token für Bestätigung
-  pendingEmailTokenExpires      DateTime? // Ablaufzeit des Tokens
+  pendingEmail             String? // Neue E-Mail-Adresse (noch nicht bestätigt)
+  pendingEmailToken        String? // Token für Bestätigung
+  pendingEmailTokenExpires DateTime? // Ablaufzeit des Tokens
 
   // === PASSWORD RESET ===
   passwordResetToken        String?
@@ -167,16 +167,16 @@ model User {
   bexioContactId Int? // Bexio Contact ID for syncing
 
   // === ACCOUNT DELETION (DSGVO/DSG) ===
-  deletionRequestedAt   DateTime?
-  deletionToken         String?
-  deletionTokenExpires  DateTime?
-  deletionScheduledAt   DateTime?  // Datum wann Löschung ausgeführt wird (14 Tage nach Bestätigung)
-  deletionConfirmedAt   DateTime?  // Wann User die Löschung bestätigt hat
-  deletionCancelledAt   DateTime?  // Wann User die Löschung widerrufen hat (falls)
+  deletionRequestedAt  DateTime?
+  deletionToken        String?
+  deletionTokenExpires DateTime?
+  deletionScheduledAt  DateTime? // Datum wann Löschung ausgeführt wird (14 Tage nach Bestätigung)
+  deletionConfirmedAt  DateTime? // Wann User die Löschung bestätigt hat
+  deletionCancelledAt  DateTime? // Wann User die Löschung widerrufen hat (falls)
 
   // === MARKETING CONSENT (DSGVO/DSG) ===
-  marketingConsent      Boolean   @default(false)
-  marketingConsentAt    DateTime?
+  marketingConsent   Boolean   @default(false)
+  marketingConsentAt DateTime?
 
   @@index([bexioContactId])
   @@index([deletionToken])
@@ -248,9 +248,13 @@ model Watch {
   auctionEnd               DateTime?
   auctionDuration          Int?
   autoRenew                Boolean   @default(false)
-  /** Sofortkauf: Laufzeitende. Wird automatisch verlängert (Cron). */
+  /**
+   * Sofortkauf: Laufzeitende. Wird automatisch verlängert (Cron).
+   */
   listingExpiresAt         DateTime?
-  /** Sofortkauf: Verlängerungsdauer in Tagen (z.B. 30). Default 30. */
+  /**
+   * Sofortkauf: Verlängerungsdauer in Tagen (z.B. 30). Default 30.
+   */
   listingDurationDays      Int?      @default(30)
   lastBidAt                DateTime?
   images                   String
@@ -325,7 +329,7 @@ model Bid {
   watchId   String
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  watch     Watch    @relation(fields: [watchId], references: [id])
+  watch     Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
 
   @@index([watchId]) // OPTIMIERT: Für schnelle Bid-Abfragen
   @@index([watchId, amount]) // OPTIMIERT: Für Sortierung nach amount bei watchId-Filter
@@ -342,7 +346,7 @@ model MaxBid {
   createdAt  DateTime @default(now())
   updatedAt  DateTime @updatedAt
   user       User     @relation(fields: [userId], references: [id])
-  watch      Watch    @relation(fields: [watchId], references: [id])
+  watch      Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
 
   @@unique([watchId, userId]) // Ein MaxBid pro User pro Watch
   @@index([watchId])
@@ -429,7 +433,7 @@ model Purchase {
   buyerId                        String
   priceOffers                    PriceOffer[]
   buyer                          User             @relation(fields: [buyerId], references: [id])
-  watch                          Watch            @relation(fields: [watchId], references: [id])
+  watch                          Watch            @relation(fields: [watchId], references: [id], onDelete: Restrict)
   reviews                        Review[]
   disputeComments                DisputeComment[]
 
@@ -510,7 +514,7 @@ model Favorite {
   watchId   String
   userId    String
   user      User     @relation(fields: [userId], references: [id])
-  watch     Watch    @relation(fields: [watchId], references: [id])
+  watch     Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
 
   @@unique([watchId, userId])
   @@map("favorites")
@@ -532,7 +536,7 @@ model WatchCategory {
   watchId    String
   categoryId String
   category   Category @relation(fields: [categoryId], references: [id])
-  watch      Watch    @relation(fields: [watchId], references: [id])
+  watch      Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
 
   @@unique([watchId, categoryId])
   @@map("watch_categories")
@@ -549,7 +553,7 @@ model Message {
   receiverId String
   receiver   User     @relation("MessageReceiver", fields: [receiverId], references: [id])
   sender     User     @relation("MessageSender", fields: [senderId], references: [id])
-  watch      Watch    @relation(fields: [watchId], references: [id])
+  watch      Watch    @relation(fields: [watchId], references: [id], onDelete: Cascade)
 
   @@map("messages")
 }
@@ -621,7 +625,7 @@ model InvoiceItem {
   amount      Float    @default(0) // Alias for total, used by Bexio sync
   total       Float
   createdAt   DateTime @default(now())
-  watch       Watch?   @relation(fields: [watchId], references: [id])
+  watch       Watch?   @relation(fields: [watchId], references: [id], onDelete: SetNull)
   invoice     Invoice  @relation(fields: [invoiceId], references: [id])
 
   @@map("invoice_items")
@@ -995,26 +999,26 @@ model UserPreferences {
 
   // === BENACHRICHTIGUNGS-EINSTELLUNGEN ===
   // Verkäufer-Benachrichtigungen
-  emailOnNewMessage     Boolean @default(true) // Neue Nachricht zu Inserat
-  emailOnNewBid         Boolean @default(true) // Neues Gebot auf Auktion
-  emailOnNewOffer       Boolean @default(true) // Neues Preisangebot
-  emailOnSaleCompleted  Boolean @default(true) // Verkauf abgeschlossen
+  emailOnNewMessage    Boolean @default(true) // Neue Nachricht zu Inserat
+  emailOnNewBid        Boolean @default(true) // Neues Gebot auf Auktion
+  emailOnNewOffer      Boolean @default(true) // Neues Preisangebot
+  emailOnSaleCompleted Boolean @default(true) // Verkauf abgeschlossen
 
   // Käufer-Benachrichtigungen
-  emailOnOutbid         Boolean @default(true) // Überboten bei Auktion
-  emailOnAuctionEnding  Boolean @default(true) // Auktion endet bald (30 min)
-  emailOnPurchase       Boolean @default(true) // Kauf bestätigt
-  emailOnShipping       Boolean @default(true) // Artikel versendet
+  emailOnOutbid        Boolean @default(true) // Überboten bei Auktion
+  emailOnAuctionEnding Boolean @default(true) // Auktion endet bald (30 min)
+  emailOnPurchase      Boolean @default(true) // Kauf bestätigt
+  emailOnShipping      Boolean @default(true) // Artikel versendet
 
   // Suchabo-Benachrichtigungen
-  emailOnSearchMatch    Boolean @default(true) // Neuer Treffer für Suchabo
+  emailOnSearchMatch Boolean @default(true) // Neuer Treffer für Suchabo
 
   // Favoriten-Benachrichtigungen
   emailOnFavoritePriceChange Boolean @default(false) // Preisänderung bei Favorit
 
   // Marketing & Sonstiges
-  emailMarketing        Boolean @default(false) // Newsletter & Angebote
-  emailDigestFrequency  String  @default("instant") // 'instant', 'daily', 'weekly', 'none'
+  emailMarketing       Boolean @default(false) // Newsletter & Angebote
+  emailDigestFrequency String  @default("instant") // 'instant', 'daily', 'weekly', 'none'
 
   @@index([userId])
   @@map("user_preferences")
@@ -1182,19 +1186,19 @@ model Order {
   paymentMethod String? // 'stripe' | 'bank_transfer' | 'cash_on_pickup'
 
   // === PAYMENT DEADLINE & REMINDERS (Ricardo-Style) ===
-  paymentDeadline           DateTime? // 14 Tage nach Bestellung für Direktzahlung
-  paymentReminderSentAt     DateTime? // Letzte Zahlungserinnerung
-  paymentReminderCount      Int       @default(0) // Anzahl gesendeter Erinnerungen
-  paymentDeadlineMissed     Boolean   @default(false) // Zahlungsfrist verstrichen
-  paymentDeadlineMissedAt   DateTime? // Wann die Frist verstrichen ist
-  autoCancelledAt           DateTime? // Wann automatisch storniert wurde
-  autoCancelReason          String?   // Grund für Auto-Stornierung
+  paymentDeadline         DateTime? // 14 Tage nach Bestellung für Direktzahlung
+  paymentReminderSentAt   DateTime? // Letzte Zahlungserinnerung
+  paymentReminderCount    Int       @default(0) // Anzahl gesendeter Erinnerungen
+  paymentDeadlineMissed   Boolean   @default(false) // Zahlungsfrist verstrichen
+  paymentDeadlineMissedAt DateTime? // Wann die Frist verstrichen ist
+  autoCancelledAt         DateTime? // Wann automatisch storniert wurde
+  autoCancelReason        String? // Grund für Auto-Stornierung
 
   // === CONTACT INFO (für Abholung/Direktzahlung) ===
-  contactDeadline       DateTime? // 7 Tage für Kontaktaufnahme
-  sellerContactedAt     DateTime? // Wann Verkäufer kontaktiert wurde
-  buyerContactedAt      DateTime? // Wann Käufer kontaktiert wurde
-  contactWarningSentAt  DateTime? // Kontakt-Warnung gesendet
+  contactDeadline      DateTime? // 7 Tage für Kontaktaufnahme
+  sellerContactedAt    DateTime? // Wann Verkäufer kontaktiert wurde
+  buyerContactedAt     DateTime? // Wann Käufer kontaktiert wurde
+  contactWarningSentAt DateTime? // Kontakt-Warnung gesendet
 
   // Stripe IDs
   stripePaymentIntentId   String?
@@ -1232,11 +1236,11 @@ model Order {
   trackingProvider String?
 
   // === INVOICE REFERENCE (Rechnung erst bei Zahlung) ===
-  invoiceId       String? // FK zur Rechnung (erstellt bei Zahlungsbestätigung)
+  invoiceId        String? // FK zur Rechnung (erstellt bei Zahlungsbestätigung)
   invoiceCreatedAt DateTime? // Wann Rechnung erstellt wurde
 
   // Relations
-  watch         Watch          @relation(fields: [watchId], references: [id])
+  watch         Watch          @relation(fields: [watchId], references: [id], onDelete: Restrict)
   buyer         User           @relation("OrderBuyer", fields: [buyerId], references: [id])
   seller        User           @relation("OrderSeller", fields: [sellerId], references: [id])
   paymentRecord PaymentRecord?
@@ -1252,7 +1256,7 @@ model Order {
   @@index([stripePaymentIntentId])
   @@index([autoReleaseAt])
   @@index([paymentDeadline]) // Für Cron-Job: Zahlungsfristen prüfen
-  @@index([paymentMethod])   // Für Filterung nach Zahlungsart
+  @@index([paymentMethod]) // Für Filterung nach Zahlungsart
   @@map("orders")
 }
 
