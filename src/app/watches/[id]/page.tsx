@@ -5,6 +5,7 @@ import { Footer } from '@/components/layout/Footer'
 import { Globe, Heart, Lock, Send } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
+import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
