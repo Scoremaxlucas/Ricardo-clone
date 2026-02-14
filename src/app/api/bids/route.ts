@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { createNotification } from '@/lib/create-notification'
 import { prisma } from '@/lib/prisma'
 import { broadcastBidEvent, broadcastAuctionUpdate } from '@/lib/realtime-broadcast'
 import { shouldSendNotification } from '@/lib/notification-preferences'
@@ -343,15 +344,13 @@ export async function POST(request: NextRequest) {
         const buyer = purchase.buyer
         const buyerName =
           buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Ein Käufer'
-        await prisma.notification.create({
-          data: {
-            userId: watch.sellerId,
-            type: 'PURCHASE',
-            title: 'Ihr Artikel wurde verkauft',
-            message: `${buyerName} hat "${watch.title}" für CHF ${(watch.buyNowPrice || watch.price).toFixed(2)} gekauft`,
-            watchId: watchId,
-            link: `/my-watches/selling/sold`,
-          },
+        await createNotification({
+          userId: watch.sellerId,
+          type: 'PURCHASE',
+          title: 'Ihr Artikel wurde verkauft',
+          message: `${buyerName} hat "${watch.title}" für CHF ${(watch.buyNowPrice || watch.price).toFixed(2)} gekauft`,
+          watchId: watchId,
+          link: `/my-watches/selling/sold`,
         })
         console.log(`[bids] ✅ Verkaufs-Benachrichtigung für Seller ${watch.sellerId} erstellt`)
       } catch (notificationError: any) {
@@ -602,15 +601,13 @@ export async function POST(request: NextRequest) {
     // Erstelle Benachrichtigung für Verkäufer
     try {
       const bidderName = bid.user.nickname || bid.user.name || bid.user.email
-      await prisma.notification.create({
-        data: {
-          userId: watch.sellerId,
-          type: 'BID',
-          title: 'Neues Gebot auf Ihren Artikel',
-          message: `${bidderName} hat CHF ${finalAmount.toFixed(2)} auf "${watch.title}" geboten`,
-          watchId: watchId,
-          bidId: bid.id,
-        },
+      await createNotification({
+        userId: watch.sellerId,
+        type: 'BID',
+        title: 'Neues Gebot auf Ihren Artikel',
+        message: `${bidderName} hat CHF ${finalAmount.toFixed(2)} auf "${watch.title}" geboten`,
+        watchId: watchId,
+        bidId: bid.id,
       })
     } catch (notifError) {
       console.error('Error creating notification:', notifError)

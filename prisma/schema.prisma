@@ -119,6 +119,7 @@ model User {
   receivedMessages              Message[]             @relation("MessageReceiver")
   messages                      Message[]             @relation("MessageSender")
   notifications                 Notification[]
+  pushSubscriptions             PushSubscription[]    @relation("PushSubscriptions")
   priceOffers                   PriceOffer[]
   purchases                     Purchase[]
   receivedReviews               Review[]              @relation("ReviewedUser")
@@ -685,6 +686,20 @@ model Notification {
   @@index([userId, archived])
   @@index([createdAt])
   @@map("notifications")
+}
+
+model PushSubscription {
+  id        String   @id @default(cuid())
+  userId    String
+  endpoint  String
+  p256dh    String   // Public key for encryption
+  auth      String   // Auth secret for encryption
+  createdAt DateTime @default(now())
+  user      User     @relation("PushSubscriptions", fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, endpoint])
+  @@index([userId])
+  @@map("push_subscriptions")
 }
 
 model SearchSubscription {

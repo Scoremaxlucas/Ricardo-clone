@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth'
+import { createNotification } from '@/lib/create-notification'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -78,15 +79,13 @@ export async function POST(
       })
       const sellerName = seller?.nickname || seller?.name || seller?.email || 'Verkäufer'
 
-      await prisma.notification.create({
-        data: {
-          userId: questionMessage.senderId, // Fragesteller erhält Benachrichtigung
-          type: 'QUESTION_ANSWERED',
-          title: 'Ihre Frage wurde beantwortet',
-          message: `${sellerName} hat Ihre Frage zu "${questionMessage.watch.title}" beantwortet`,
-          watchId: questionMessage.watchId,
-          questionId: questionMessage.id,
-        },
+      await createNotification({
+        userId: questionMessage.senderId,
+        type: 'QUESTION_ANSWERED',
+        title: 'Ihre Frage wurde beantwortet',
+        message: `${sellerName} hat Ihre Frage zu "${questionMessage.watch.title}" beantwortet`,
+        watchId: questionMessage.watchId,
+        questionId: questionMessage.id,
       })
     } catch (notifError: any) {
       console.error('Error creating notification for question answer:', notifError)

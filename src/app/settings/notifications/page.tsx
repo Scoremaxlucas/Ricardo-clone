@@ -3,9 +3,11 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { usePushNotifications } from '@/hooks/usePushNotifications'
 import {
   ArrowLeft,
   Bell,
+  BellRing,
   Gavel,
   Heart,
   Loader2,
@@ -14,6 +16,7 @@ import {
   Package,
   Search,
   ShoppingCart,
+  Smartphone,
   Sparkles,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -244,6 +247,68 @@ const translations = {
 }
 
 // Toggle Switch Component
+function PushNotificationSection() {
+  const { isSupported, isSubscribed, permission, loading, subscribe, unsubscribe } = usePushNotifications()
+
+  if (!isSupported) return null
+
+  const handleToggle = async () => {
+    if (isSubscribed) {
+      const ok = await unsubscribe()
+      if (ok) toast.success('Push-Benachrichtigungen deaktiviert')
+    } else {
+      const ok = await subscribe()
+      if (ok) {
+        toast.success('Push-Benachrichtigungen aktiviert!')
+      } else if (permission === 'denied') {
+        toast.error('Push-Benachrichtigungen sind in Ihrem Browser blockiert. Bitte erlauben Sie diese in den Browser-Einstellungen.')
+      }
+    }
+  }
+
+  return (
+    <div className="rounded-lg border-2 border-primary-200 bg-gradient-to-r from-primary-50 to-white p-4 shadow-sm sm:p-6">
+      <div className="flex items-center justify-between gap-4">
+        <div className="flex items-center gap-3">
+          <div className="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-full bg-primary-100">
+            <Smartphone className="h-5 w-5 text-primary-600" />
+          </div>
+          <div>
+            <h2 className="text-sm font-semibold text-gray-900 sm:text-base">Push-Benachrichtigungen</h2>
+            <p className="text-xs text-gray-500 sm:text-sm">
+              {isSubscribed
+                ? 'Sie erhalten Benachrichtigungen auf diesem Gerät.'
+                : 'Erhalten Sie Echtzeit-Benachrichtigungen direkt auf Ihrem Gerät.'}
+            </p>
+            {permission === 'denied' && (
+              <p className="mt-1 text-xs text-red-500">
+                Benachrichtigungen sind im Browser blockiert.
+              </p>
+            )}
+          </div>
+        </div>
+        <button
+          onClick={handleToggle}
+          disabled={loading || permission === 'denied'}
+          className={`flex-shrink-0 rounded-lg px-4 py-2 text-sm font-semibold transition-colors disabled:opacity-50 ${
+            isSubscribed
+              ? 'bg-gray-200 text-gray-700 hover:bg-gray-300'
+              : 'bg-primary-600 text-white hover:bg-primary-700'
+          }`}
+        >
+          {loading ? (
+            <Loader2 className="h-4 w-4 animate-spin" />
+          ) : isSubscribed ? (
+            'Deaktivieren'
+          ) : (
+            'Aktivieren'
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
 function Toggle({
   enabled,
   onChange,
@@ -430,6 +495,9 @@ export default function NotificationSettingsPage() {
         </div>
 
         <div className="space-y-4 sm:space-y-6">
+          {/* Push-Benachrichtigungen */}
+          <PushNotificationSection />
+
           {/* Verkäufer-Benachrichtigungen */}
           <div className="rounded-lg border border-gray-200 bg-white p-4 sm:p-6 shadow-sm">
             <div className="mb-4 flex items-center gap-3">
