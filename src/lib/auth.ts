@@ -2,6 +2,7 @@ import { isDebug } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
 
 export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET || 'development-secret-key',
@@ -10,6 +11,22 @@ export const authOptions = {
   // WICHTIG: Trust host für Vercel/Production
   trustHost: true,
   providers: [
+    // Google OAuth Provider
+    ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET
+      ? [
+          GoogleProvider({
+            clientId: process.env.GOOGLE_CLIENT_ID,
+            clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+            authorization: {
+              params: {
+                prompt: 'consent',
+                access_type: 'offline',
+                response_type: 'code',
+              },
+            },
+          }),
+        ]
+      : []),
     CredentialsProvider({
       name: 'credentials',
       credentials: {
@@ -180,7 +197,60 @@ export const authOptions = {
     strategy: 'jwt' as const,
   },
   callbacks: {
-    async jwt({ token, user }: any) {
+    async signIn({ user, account, profile }: any) {
+      // Handle Google OAuth sign-in: auto-create or link user
+      if (account?.provider === 'google') {
+        try {
+          const email = user.email?.toLowerCase().trim()
+          if (!email) return false
+
+          let dbUser = await prisma.user.findUnique({
+            where: { email },
+            select: { id: true, isBlocked: true, image: true },
+          })
+
+          if (dbUser?.isBlocked) {
+            console.log('[AUTH] Google OAuth blocked user:', email)
+            return false
+          }
+
+          if (!dbUser) {
+            // Auto-create user from Google profile
+            const nameParts = (user.name || '').split(' ')
+            dbUser = await prisma.user.create({
+              data: {
+                email,
+                name: user.name || email.split('@')[0],
+                firstName: nameParts[0] || '',
+                lastName: nameParts.slice(1).join(' ') || '',
+                image: user.image || null,
+                emailVerified: true, // Google emails are pre-verified
+                emailVerifiedAt: new Date(),
+                password: '', // No password for OAuth users
+              },
+              select: { id: true, isBlocked: true, image: true },
+            })
+            console.log('[AUTH] Created new user from Google OAuth:', email)
+          } else if (!dbUser.image && user.image) {
+            // Update profile image from Google if user doesn't have one
+            await prisma.user.update({
+              where: { id: dbUser.id },
+              data: { image: user.image },
+            })
+          }
+
+          // Store the DB user ID so the jwt callback can use it
+          user.id = dbUser.id
+          return true
+        } catch (error) {
+          console.error('[AUTH] Google OAuth error:', error)
+          return false
+        }
+      }
+
+      return true
+    },
+    async jwt({ token, user, account }: any) {
       // Beim Login: Setze alle Felder aus dem User-Objekt
       if (user) {
         token.id = user.id
@@ -188,6 +258,24 @@ export const authOptions = {
         token.nickname = user.nickname
         token.isAdmin = user.isAdmin === true || false
         token.email = user.email
+
+        // For OAuth users, fetch additional fields from DB
+        if (account?.provider === 'google') {
+          try {
+            const dbUser = await prisma.user.findUnique({
+              where: { id: user.id },
+              select: { nickname: true, isAdmin: true, image: true },
+            })
+            if (dbUser) {
+              token.nickname = dbUser.nickname
+              token.isAdmin = dbUser.isAdmin === true
+              token.image = dbUser.image || user.image
+            }
+          } catch {
+            // Non-critical
+          }
+        }
+
         console.log('[AUTH] JWT callback - User logged in:', {
           id: user.id,
           email: user.email,
