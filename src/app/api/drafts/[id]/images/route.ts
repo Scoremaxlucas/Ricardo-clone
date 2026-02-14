@@ -41,12 +41,43 @@ export async function POST(
       return NextResponse.json({ message: 'Keine Datei hochgeladen' }, { status: 400 })
     }
 
-    // Note: Image is already compressed on client-side, so we use the file directly
-    // If we wanted to compress server-side too, we'd need to convert the base64 string to File:
-    // const compressedBase64 = await compressImage(file)
-    // const base64Data = compressedBase64.split(',')[1]
-    // const buffer = Buffer.from(base64Data, 'base64')
-    // const compressedFile = new File([buffer], file.name, { type: 'image/jpeg' })
+    // Validiere Dateigrösse (max 5MB)
+    const maxSize = 5 * 1024 * 1024
+    if (file.size > maxSize) {
+      return NextResponse.json(
+        { message: 'Datei ist zu gross. Maximal 5MB erlaubt.' },
+        { status: 400 }
+      )
+    }
+
+    // Validiere Dateityp (MIME + Magic Bytes)
+    const allowedImageTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp']
+    if (!allowedImageTypes.includes(file.type)) {
+      return NextResponse.json(
+        { message: 'Nur Bilder erlaubt (JPEG, PNG, GIF, WebP).' },
+        { status: 400 }
+      )
+    }
+
+    const fileBuffer = await file.arrayBuffer()
+    const bytes = new Uint8Array(fileBuffer).slice(0, 12)
+    const isValidImage =
+      // JPEG
+      (bytes[0] === 0xff && bytes[1] === 0xd8 && bytes[2] === 0xff) ||
+      // PNG
+      (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4e && bytes[3] === 0x47) ||
+      // GIF
+      (bytes[0] === 0x47 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x38) ||
+      // WebP
+      (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+       bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50)
+
+    if (!isValidImage) {
+      return NextResponse.json(
+        { message: 'Dateiinhalt ist kein gültiges Bild. Upload abgelehnt.' },
+        { status: 400 }
+      )
+    }
 
     // Upload to Vercel Blob Storage (file is already compressed on client)
     const blob = await put(`drafts/${draftId}/${Date.now()}-${file.name}`, file, {
