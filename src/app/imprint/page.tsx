@@ -1,7 +1,6 @@
-// Server Component - kein 'use client' nötig für statische Seiten
-
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
+import { LegalPageWrapper } from '@/components/legal/LegalPageWrapper'
 
 export default function ImprintPage() {
   return (
@@ -9,8 +8,7 @@ export default function ImprintPage() {
       <Header />
       <main className="min-h-screen bg-gray-50">
         <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
-          <div className="rounded-lg border border-gray-200 bg-white p-4 shadow-sm sm:p-6 md:p-8 lg:p-12">
-            <h1 className="mb-6 text-2xl font-bold text-gray-900 sm:mb-8 sm:text-3xl">Impressum</h1>
+          <LegalPageWrapper titleKey="imprint">
 
             <div className="prose prose-sm max-w-none sm:prose-base lg:prose-lg">
               <div className="space-y-4 text-gray-700 sm:space-y-6">
@@ -86,7 +84,7 @@ export default function ImprintPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </LegalPageWrapper>
         </div>
       </main>
       <Footer />

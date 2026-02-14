@@ -2100,6 +2100,48 @@ export const de = {
     sonstiges: 'Sonstiges',
     'modellbau-hobby': 'Modellbau & Hobby',
   },
+
+  // Error Pages
+  errorPages: {
+    notFound: {
+      code: '404',
+      title: 'Seite nicht gefunden',
+      description: 'Die angeforderte Seite existiert nicht oder wurde verschoben.',
+      searchButton: 'Artikel suchen',
+      homeButton: 'Zur Startseite',
+      backButton: 'Zurück',
+      popularPages: 'Beliebte Seiten',
+    },
+    error: {
+      title: 'Ein Fehler ist aufgetreten',
+      description: 'Ein unerwarteter Fehler ist aufgetreten. Wir arbeiten daran, das Problem zu beheben.',
+      errorId: 'Fehler-ID',
+      sorry: 'Entschuldigung für die Unannehmlichkeiten.',
+      needHelp: 'Benötigen Sie Hilfe?',
+      retryButton: 'Erneut versuchen',
+      homeButton: 'Zur Startseite',
+      backButton: 'Zurück',
+      contactSupport: 'Kontaktieren Sie unseren Support',
+    },
+  },
+
+  // Legal Pages
+  legalPages: {
+    languageNotice: 'Dieses Dokument ist nur auf Deutsch verfügbar.',
+    validSince: 'Gültig seit',
+    terms: {
+      title: 'Allgemeine Geschäftsbedingungen',
+    },
+    privacy: {
+      title: 'Datenschutzerklärung',
+    },
+    fees: {
+      title: 'Gebührenreglement',
+    },
+    imprint: {
+      title: 'Impressum',
+    },
+  },
 }
 
 export type Translation = typeof de

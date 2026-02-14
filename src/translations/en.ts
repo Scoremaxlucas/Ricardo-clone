@@ -2102,4 +2102,46 @@ export const en: Translation = {
     sonstiges: 'Miscellaneous',
     'modellbau-hobby': 'Model Building & Hobby',
   },
+
+  // Error Pages
+  errorPages: {
+    notFound: {
+      code: '404',
+      title: 'Page not found',
+      description: 'The requested page does not exist or has been moved.',
+      searchButton: 'Search items',
+      homeButton: 'Go to homepage',
+      backButton: 'Go back',
+      popularPages: 'Popular pages',
+    },
+    error: {
+      title: 'An error occurred',
+      description: 'An unexpected error occurred. We are working on fixing it.',
+      errorId: 'Error ID',
+      sorry: 'Sorry for the inconvenience.',
+      needHelp: 'Need help?',
+      retryButton: 'Try again',
+      homeButton: 'Go to homepage',
+      backButton: 'Go back',
+      contactSupport: 'Contact our support',
+    },
+  },
+
+  // Legal Pages
+  legalPages: {
+    languageNotice: 'This document is only available in German.',
+    validSince: 'Valid since',
+    terms: {
+      title: 'Terms and Conditions',
+    },
+    privacy: {
+      title: 'Privacy Policy',
+    },
+    fees: {
+      title: 'Fee Schedule',
+    },
+    imprint: {
+      title: 'Legal Notice',
+    },
+  },
 }

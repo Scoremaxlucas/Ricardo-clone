@@ -2098,4 +2098,46 @@ export const fr: Translation = {
     sonstiges: 'Divers',
     'modellbau-hobby': 'Modélisme & Loisirs',
   },
+
+  // Error Pages
+  errorPages: {
+    notFound: {
+      code: '404',
+      title: 'Page introuvable',
+      description: 'La page demandée n\'existe pas ou a été déplacée.',
+      searchButton: 'Rechercher des articles',
+      homeButton: 'Retour à l\'accueil',
+      backButton: 'Retour',
+      popularPages: 'Pages populaires',
+    },
+    error: {
+      title: 'Une erreur est survenue',
+      description: 'Une erreur inattendue est survenue. Nous travaillons à la résoudre.',
+      errorId: 'ID de l\'erreur',
+      sorry: 'Nous nous excusons pour la gêne occasionnée.',
+      needHelp: 'Besoin d\'aide ?',
+      retryButton: 'Réessayer',
+      homeButton: 'Retour à l\'accueil',
+      backButton: 'Retour',
+      contactSupport: 'Contacter notre support',
+    },
+  },
+
+  // Legal Pages
+  legalPages: {
+    languageNotice: 'Ce document est uniquement disponible en allemand.',
+    validSince: 'Valable depuis le',
+    terms: {
+      title: 'Conditions générales',
+    },
+    privacy: {
+      title: 'Politique de confidentialité',
+    },
+    fees: {
+      title: 'Barème des frais',
+    },
+    imprint: {
+      title: 'Mentions légales',
+    },
+  },
 }

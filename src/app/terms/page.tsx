@@ -1,7 +1,6 @@
-// Server Component - kein 'use client' nötig für statische Seiten
-
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { LegalPageWrapper } from '@/components/legal/LegalPageWrapper'
 
 export default function TermsPage() {
   return (
@@ -9,9 +8,7 @@ export default function TermsPage() {
       <Header />
       <main className="min-h-screen bg-gray-50">
         <div className="max-w-4xl mx-auto px-4 py-8 sm:py-12">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 sm:p-6 md:p-8 lg:p-12">
-            <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-2">Allgemeine Geschäftsbedingungen</h1>
-            <p className="text-sm sm:text-base text-gray-600 mb-6 sm:mb-8">Gültig seit 17.01.2025</p>
+          <LegalPageWrapper titleKey="terms" validSince="17.01.2025">
 
             <div className="prose prose-sm sm:prose-base lg:prose-lg max-w-none">
               <div className="space-y-6 sm:space-y-8 text-gray-700">
@@ -595,12 +592,10 @@ export default function TermsPage() {
                 </div>
               </div>
             </div>
-          </div>
+          </LegalPageWrapper>
         </div>
       </main>
       <Footer />
     </>
   )
 }
-
-

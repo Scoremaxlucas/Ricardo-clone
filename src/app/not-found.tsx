@@ -1,11 +1,15 @@
 'use client'
 
-import Link from 'next/link'
-import { SearchX, Home, Search, ArrowLeft, TrendingUp } from 'lucide-react'
-import { Header } from '@/components/layout/Header'
 import { Footer } from '@/components/layout/Footer'
+import { Header } from '@/components/layout/Header'
+import { useLanguage } from '@/contexts/LanguageContext'
+import { ArrowLeft, Home, Search, SearchX, TrendingUp } from 'lucide-react'
+import Link from 'next/link'
 
 export default function NotFound() {
+  const { t } = useLanguage()
+  const e = t.errorPages.notFound
+
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
       <Header />
@@ -23,25 +27,23 @@ export default function NotFound() {
 
           {/* Error Code */}
           <div className="mb-4">
-            <span className="text-6xl font-bold text-primary-600">404</span>
+            <span className="text-6xl font-bold text-primary-600">{e.code}</span>
           </div>
 
           {/* Heading */}
           <h1 className="mb-4 text-3xl font-bold text-gray-900 md:text-4xl">
-            Seite nicht gefunden
+            {e.title}
           </h1>
 
           {/* Description */}
           <p className="mb-8 text-lg text-gray-600">
-            Die angeforderte Seite existiert nicht oder wurde verschoben.
-            <br />
-            Möglicherweise wurde der Link falsch eingegeben oder die Seite wurde gelöscht.
+            {e.description}
           </p>
 
           {/* Helpful Links */}
           <div className="mb-8 rounded-lg bg-white p-6 shadow-sm">
             <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-gray-500">
-              Beliebte Seiten
+              {e.popularPages}
             </h2>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               <Link
@@ -50,8 +52,7 @@ export default function NotFound() {
               >
                 <Search className="h-5 w-5 text-primary-600" />
                 <div>
-                  <div className="font-medium text-gray-900">Artikel suchen</div>
-                  <div className="text-sm text-gray-500">Durchsuchen Sie unsere Angebote</div>
+                  <div className="font-medium text-gray-900">{e.searchButton}</div>
                 </div>
               </Link>
               <Link
@@ -60,8 +61,7 @@ export default function NotFound() {
               >
                 <TrendingUp className="h-5 w-5 text-primary-600" />
                 <div>
-                  <div className="font-medium text-gray-900">Alle Artikel</div>
-                  <div className="text-sm text-gray-500">Alle verfügbaren Angebote</div>
+                  <div className="font-medium text-gray-900">{t.header.auctions}</div>
                 </div>
               </Link>
             </div>
@@ -71,28 +71,24 @@ export default function NotFound() {
           <div className="flex flex-col items-center justify-center gap-4 sm:flex-row">
             <Link
               href="/"
-              className="inline-flex items-center justify-center gap-2 rounded-[50px] px-6 py-3 font-bold text-white transition-all duration-300 hover:-translate-y-0.5 hover:scale-[1.02] active:translate-y-0 active:scale-[0.98]"
-              style={{
-                background: 'linear-gradient(135deg, #f97316 0%, #ea580c 100%)',
-                boxShadow: '0px 4px 20px rgba(249, 115, 22, 0.3)',
-              }}
+              className="inline-flex items-center justify-center gap-2 rounded-full bg-primary-600 px-6 py-3 font-bold text-white transition-all hover:bg-primary-700"
             >
               <Home className="h-4 w-4" />
-              Zur Startseite
+              {e.homeButton}
             </Link>
             <Link
               href="/search"
-              className="inline-flex items-center justify-center gap-2 rounded-[50px] border-2 border-primary-500 bg-white px-6 py-3 font-bold text-primary-600 transition-all duration-300 hover:-translate-y-0.5 hover:bg-primary-500 hover:text-white active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-primary-500 bg-white px-6 py-3 font-bold text-primary-600 transition-all hover:bg-primary-50"
             >
               <Search className="h-4 w-4" />
-              Artikel suchen
+              {e.searchButton}
             </Link>
             <button
               onClick={() => window.history.back()}
-              className="inline-flex items-center justify-center gap-2 rounded-[50px] border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition-all duration-300 hover:border-gray-400 hover:bg-gray-50 active:scale-[0.98]"
+              className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-gray-300 bg-white px-6 py-3 font-medium text-gray-700 transition-all hover:border-gray-400 hover:bg-gray-50"
             >
               <ArrowLeft className="h-4 w-4" />
-              Zurück
+              {e.backButton}
             </button>
           </div>
         </div>
