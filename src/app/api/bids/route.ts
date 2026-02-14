@@ -493,7 +493,7 @@ export async function POST(request: NextRequest) {
     })
 
     // Alle kritischen DB-Schreiboperationen in einer Transaktion ausführen
-    const { bid, finalAmount, automaticBidsCreated } = await prisma.$transaction(
+    const { bid, finalAmount, automaticBidsCreated, newAuctionEnd } = await prisma.$transaction(
       async (tx) => {
         // 1. Erhöhe automatische Gebote wenn nötig (batch statt N+1)
         const toCreate: { watchId: string; userId: string; amount: number }[] = []
@@ -599,6 +599,7 @@ export async function POST(request: NextRequest) {
           bid: createdBid,
           finalAmount: computedFinalAmount,
           automaticBidsCreated: toCreate.length,
+          newAuctionEnd,
         }
       }
     )
@@ -609,12 +610,7 @@ export async function POST(request: NextRequest) {
         `[bids] ✅ ${automaticBidsCreated} automatische(s) Gebot/Gebote erstellt`
       )
     }
-    if (
-      auctionEndDate &&
-      (auctionEndDate.getTime() - now.getTime() <= 3 * 60 * 1000) &&
-      auctionEndDate.getTime() - now.getTime() > 0
-    ) {
-      const newAuctionEnd = new Date(now.getTime() + 3 * 60 * 1000)
+    if (newAuctionEnd && newAuctionEnd !== auctionEndDate) {
       console.log(
         `[bids] ✅ Auktion verlängert um 3 Minuten. Neues Ende: ${newAuctionEnd.toISOString()}`
       )
