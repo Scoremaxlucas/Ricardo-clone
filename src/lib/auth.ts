@@ -90,15 +90,7 @@ export const authOptions = {
             return null
           }
 
-          console.log('[AUTH] User found:', {
-            id: user.id,
-            email: user.email,
-            hasPassword: !!user.password,
-            passwordLength: user.password?.length || 0,
-            isAdmin: user.isAdmin,
-            isBlocked: user.isBlocked,
-            emailVerified: user.emailVerified,
-          })
+          console.log('[AUTH] User found:', normalizedEmail)
 
           // Check if email is verified
           const isEmailVerified = user.emailVerified === true
@@ -117,91 +109,27 @@ export const authOptions = {
           const isBlocked = user.isBlocked === true
 
           if (isBlocked) {
-            console.log(
-              '[AUTH] User is blocked:',
-              normalizedEmail,
-              'isBlocked value:',
-              user.isBlocked
-            )
+            console.log('[AUTH] User is blocked:', normalizedEmail)
             return null
           }
-
-          console.log(
-            '[AUTH] User is NOT blocked:',
-            normalizedEmail,
-            'isBlocked value:',
-            user.isBlocked,
-            'type:',
-            typeof user.isBlocked
-          )
 
           if (!user.password) {
             console.log('[AUTH] User has no password set:', normalizedEmail)
-            console.log('[AUTH] User data:', {
-              id: user.id,
-              email: user.email,
-              hasPassword: !!user.password,
-            })
             return null
           }
 
-          // WICHTIG: Prüfe Passwort mit bcrypt
-          // Fallback: Wenn bcrypt fehlschlägt, versuche direkten Vergleich (für alte Passwörter)
+          // Passwort-Prüfung: NUR bcrypt, kein direkter Vergleich (Sicherheit!)
           let isPasswordValid = false
-          const passwordIsHashed =
-            user.password.startsWith('$2a$') ||
-            user.password.startsWith('$2b$') ||
-            user.password.startsWith('$2y$') ||
-            user.password.startsWith('$2x$')
 
-          console.log('[AUTH] Password check:', {
-            providedLength: credentials.password.length,
-            storedLength: user.password.length,
-            storedStartsWith: user.password.substring(0, 10),
-            isHashed: passwordIsHashed,
-          })
-
-          // WICHTIG: Versuche zuerst bcrypt, dann direkten Vergleich
-          if (passwordIsHashed) {
-            try {
-              // Passwort ist gehasht, verwende bcrypt
-              isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-              console.log('[AUTH] Bcrypt password valid:', isPasswordValid)
-            } catch (bcryptError: any) {
-              console.error('[AUTH] Bcrypt comparison error:', bcryptError)
-              // Bei bcrypt-Fehler, versuche direkten Vergleich als Fallback
-              console.log('[AUTH] Fallback: Trying direct password comparison after bcrypt error')
-              isPasswordValid = credentials.password === user.password
-              console.log('[AUTH] Direct comparison result:', isPasswordValid)
-            }
-          } else {
-            // Passwort ist nicht gehasht, direkter Vergleich
-            console.log('[AUTH] Password not hashed, trying direct comparison')
-            isPasswordValid = credentials.password === user.password
-            console.log('[AUTH] Direct comparison result:', isPasswordValid)
-
-            // WICHTIG: Wenn direkter Vergleich fehlschlägt, versuche auch bcrypt
-            // (für den Fall, dass das Passwort gehasht ist, aber nicht mit $2 beginnt)
-            if (!isPasswordValid) {
-              try {
-                console.log('[AUTH] Direct comparison failed, trying bcrypt as fallback')
-                isPasswordValid = await bcrypt.compare(credentials.password, user.password)
-                console.log('[AUTH] Bcrypt fallback result:', isPasswordValid)
-              } catch (bcryptError: any) {
-                console.error('[AUTH] Bcrypt fallback error:', bcryptError)
-                // Behalte isPasswordValid = false
-              }
-            }
+          try {
+            isPasswordValid = await bcrypt.compare(credentials.password, user.password)
+          } catch (bcryptError) {
+            console.error('[AUTH] Bcrypt comparison error for:', normalizedEmail)
+            return null
           }
 
           if (!isPasswordValid) {
             console.log('[AUTH] Invalid password for:', normalizedEmail)
-            console.log('[AUTH] Password check details:', {
-              providedLength: credentials.password.length,
-              storedLength: user.password.length,
-              storedStartsWith: user.password.substring(0, 10),
-              isHashed: passwordIsHashed,
-            })
             return null
           }
 
