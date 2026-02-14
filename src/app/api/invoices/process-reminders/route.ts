@@ -17,7 +17,7 @@ export async function POST(request: NextRequest) {
       const authHeader = request.headers.get('authorization')
       if (
         !authHeader ||
-        authHeader !== `Bearer ${process.env.CRON_SECRET || 'development-secret'}`
+        authHeader !== `Bearer ${process.env.CRON_SECRET || ''}`
       ) {
         return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
       }
@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 export async function GET(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
-    if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET || 'development-secret'}`) {
+    if (!authHeader || authHeader !== `Bearer ${process.env.CRON_SECRET || ''}`) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 

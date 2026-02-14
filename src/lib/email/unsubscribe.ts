@@ -8,7 +8,7 @@
 import crypto from 'crypto'
 import { getEmailBaseUrl } from './config'
 
-const getSecret = () => process.env.NEXTAUTH_SECRET || 'helvenda-default-secret'
+const getSecret = () => process.env.NEXTAUTH_SECRET || ''
 
 /**
  * Generate a signed unsubscribe token for a user

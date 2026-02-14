@@ -37,27 +37,26 @@ export async function POST(request: NextRequest) {
     }
 
     const results: {
-      purchases: { created: number; skipped: number; failed: number; details: string[] }
-      orders: { created: number; skipped: number; failed: number; details: string[] }
+      purchases: { attempted: number; created: number; skipped: number; failed: number; details: string[] }
+      orders: { attempted: number; created: number; skipped: number; failed: number; details: string[] }
     } = {
-      purchases: { created: 0, skipped: 0, failed: 0, details: [] },
-      orders: { created: 0, skipped: 0, failed: 0, details: [] },
+      purchases: { attempted: 0, created: 0, skipped: 0, failed: 0, details: [] },
+      orders: { attempted: 0, created: 0, skipped: 0, failed: 0, details: [] },
     }
 
     // === PURCHASES (altes System) ===
+    // Zuerst: saleIds die bereits eine Rechnung haben (Purchase/Order IDs sind in Invoice.saleId gespeichert)
+    const existingInvoiceSaleIds = await prisma.invoice.findMany({
+      where: { saleId: { not: null } },
+      select: { saleId: true },
+    })
+    const saleIdsWithInvoice = existingInvoiceSaleIds.map((i) => i.saleId as string)
+
     // Finde alle Purchases ohne Rechnung
     const purchasesWithoutInvoice = await prisma.purchase.findMany({
       where: {
         status: { notIn: ['cancelled'] },
-        // Keine existierende Rechnung
-        NOT: {
-          id: {
-            in: (await prisma.invoice.findMany({
-              where: { saleId: { not: null } },
-              select: { saleId: true },
-            })).map(i => i.saleId as string),
-          },
-        },
+        id: { notIn: saleIdsWithInvoice },
       },
       select: {
         id: true,
@@ -72,6 +71,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    results.purchases.attempted = purchasesWithoutInvoice.length
     console.log(`[create-all-missing] ${purchasesWithoutInvoice.length} Purchases ohne Rechnung gefunden`)
 
     for (const purchase of purchasesWithoutInvoice) {
@@ -80,9 +80,10 @@ export async function POST(request: NextRequest) {
         const invoice = await calculateInvoiceForSale(purchase.id)
         results.purchases.created++
         results.purchases.details.push(`✅ Purchase ${purchase.id}: ${invoice.invoiceNumber} (${purchase.watch?.title || 'Unbekannt'})`)
-      } catch (error: any) {
+      } catch (error: unknown) {
         results.purchases.failed++
-        results.purchases.details.push(`❌ Purchase ${purchase.id}: ${error.message}`)
+        const msg = error instanceof Error ? error.message : String(error)
+        results.purchases.details.push(`❌ Purchase ${purchase.id}: ${msg}`)
       }
     }
 
@@ -107,6 +108,7 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    results.orders.attempted = ordersWithoutInvoice.length
     console.log(`[create-all-missing] ${ordersWithoutInvoice.length} Orders ohne Rechnung gefunden`)
 
     for (const order of ordersWithoutInvoice) {
@@ -125,9 +127,10 @@ export async function POST(request: NextRequest) {
 
         results.orders.created++
         results.orders.details.push(`✅ Order ${order.orderNumber}: ${invoice.invoiceNumber} (${order.watch?.title || 'Unbekannt'})`)
-      } catch (error: any) {
+      } catch (error: unknown) {
         results.orders.failed++
-        results.orders.details.push(`❌ Order ${order.orderNumber || order.id}: ${error.message}`)
+        const msg = error instanceof Error ? error.message : String(error)
+        results.orders.details.push(`❌ Order ${order.orderNumber || order.id}: ${msg}`)
       }
     }
 
@@ -139,10 +142,11 @@ export async function POST(request: NextRequest) {
       message: `${totalCreated} Rechnungen erstellt, ${totalFailed} fehlgeschlagen`,
       results,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('[create-all-missing] Fehler:', error)
+    const msg = error instanceof Error ? error.message : String(error)
     return NextResponse.json(
-      { error: 'Fehler beim Erstellen der Rechnungen: ' + error.message },
+      { error: 'Fehler beim Erstellen der Rechnungen: ' + msg },
       { status: 500 }
     )
   }

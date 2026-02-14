@@ -11,7 +11,7 @@ import { NextRequest, NextResponse } from 'next/server'
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
-    const cronSecret = process.env.CRON_SECRET || 'your-secret-key'
+    const cronSecret = process.env.CRON_SECRET || ''
 
     if (authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })

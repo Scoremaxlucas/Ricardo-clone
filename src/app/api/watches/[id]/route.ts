@@ -139,7 +139,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       },
     })
   } catch (error: any) {
-    return NextResponse.json({ message: 'Fehler beim Laden: ' + error.message }, { status: 500 })
+    console.error('Error loading watch:', error)
+    return NextResponse.json({ message: 'Ein Fehler ist aufgetreten' }, { status: 500 })
   }
 }
 
@@ -270,7 +271,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   } catch (error: any) {
     console.error('Error updating watch:', error)
     return NextResponse.json(
-      { message: 'Fehler beim Aktualisieren: ' + error.message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }
@@ -565,7 +566,7 @@ export async function DELETE(
   } catch (error: any) {
     console.error('Error deleting watch:', error)
     return NextResponse.json(
-      { message: 'Fehler beim Löschen des Angebots: ' + error.message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

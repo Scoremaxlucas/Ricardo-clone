@@ -124,15 +124,17 @@ export async function POST(request: NextRequest) {
         ;(purchase.watch.seller as any).city = sellerAddress?.city || null
         ;(purchase.watch.seller as any).country = sellerAddress?.country || 'Schweiz'
       }
-    } catch (createError: any) {
+    } catch (createError: unknown) {
       console.error('[purchases/create] Fehler beim Erstellen des Purchases:', createError)
+      const errMsg = createError instanceof Error ? createError.message : 'Unknown'
+      const errCode = (createError as { code?: string })?.code
       console.error('[purchases/create] Fehler-Details:', {
         watchId,
         buyerId: session.user.id,
         watchExists: !!watch,
         buyerExists: !!buyer,
-        errorMessage: createError.message,
-        errorCode: createError.code,
+        errorMessage: errMsg,
+        errorCode: errCode,
       })
       throw createError
     }
@@ -165,7 +167,7 @@ export async function POST(request: NextRequest) {
       console.log(
         `[purchases/create] ✅ Rechnung erstellt: ${invoice.invoiceNumber} für Seller ${purchase.watch.sellerId} (sofort nach Verkauf)`
       )
-    } catch (invoiceError: any) {
+    } catch (invoiceError: unknown) {
       console.error('[purchases/create] ❌ Fehler bei Rechnungserstellung:', invoiceError)
       // Fehler wird geloggt, aber Purchase bleibt bestehen
       // Verkäufer kann später manuell Rechnung erstellen lassen
@@ -189,7 +191,7 @@ export async function POST(request: NextRequest) {
       console.log(
         `[purchases/create] ✅ Verkaufs-Benachrichtigung für Seller ${watch.sellerId} erstellt`
       )
-    } catch (notificationError: any) {
+    } catch (notificationError: unknown) {
       console.error(
         '[purchases/create] ❌ Fehler beim Erstellen der Verkaufs-Benachrichtigung:',
         notificationError
@@ -205,10 +207,12 @@ export async function POST(request: NextRequest) {
       console.log(
         `[purchases/create] ✅ Zahlungsinformationen generiert für Purchase ${purchase.id}`
       )
-    } catch (paymentInfoError: any) {
+    } catch (paymentInfoError: unknown) {
+      const msg =
+        paymentInfoError instanceof Error ? paymentInfoError.message : 'Ein Fehler ist aufgetreten'
       console.warn(
         '[purchases/create] ⚠️  Konnte Zahlungsinformationen nicht generieren:',
-        paymentInfoError.message
+        msg
       )
       // Fehler wird geloggt, aber Kauf bleibt bestehen
       // Käufer muss Verkäufer kontaktieren, um Zahlungsdetails zu erhalten
@@ -307,7 +311,7 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`[purchases/create] ⏭️ Kaufbestätigungs-E-Mail übersprungen (Präferenz deaktiviert)`)
       }
-    } catch (emailError: any) {
+    } catch (emailError: unknown) {
       console.error(
         '[purchases/create] ❌ Fehler beim Senden der Kaufbestätigungs-E-Mail:',
         emailError
@@ -332,10 +336,11 @@ export async function POST(request: NextRequest) {
           }
         : null,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating purchase:', error)
+    const message = error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten'
     return NextResponse.json(
-      { message: 'Fehler beim Erstellen des Kaufs: ' + error.message },
+      { message: 'Fehler beim Erstellen des Kaufs: ' + message },
       { status: 500 }
     )
   }

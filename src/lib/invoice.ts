@@ -2,6 +2,9 @@ import { sendInvoiceNotificationEmail } from './email'
 import { calculatePlatformFee, getPricingConfig } from './pricing-config'
 import { prisma } from './prisma'
 
+// Transaction client type for use in prisma.$transaction callbacks
+type TransactionClient = Parameters<Parameters<typeof prisma.$transaction>[0]>[0]
+
 // Verwende zentrale Pricing-Konfiguration
 const getInvoicePricing = async () => {
   const config = await getPricingConfig()
@@ -215,6 +218,104 @@ export async function calculateInvoiceForSale(purchaseId: string) {
     }
   } else {
     console.warn(`[invoice] ⚠️ BEXIO_API_TOKEN nicht gesetzt - kein Bexio-Sync!`)
+  }
+
+  return invoice
+}
+
+/**
+ * Erstellt eine Rechnung für eine Order innerhalb einer Transaktion.
+ * Verwendet tx für alle DB-Operationen. Keine E-Mails/Bexio-Sync.
+ * Order muss watch inkludieren (für title).
+ */
+export async function createInvoiceForOrderWithTransaction(
+  tx: TransactionClient,
+  order: {
+    id: string
+    itemPrice: number
+    sellerId: string
+    watchId: string
+    watch: { title: string }
+  }
+) {
+  const pricing = await getInvoicePricing()
+  const salePrice = order.itemPrice
+
+  const totalCommission = await calculatePlatformFee(salePrice, {
+    platformFeeRate: pricing.commissionRate,
+    minimumCommission: pricing.minimumCommission,
+    maximumCommission: pricing.maximumCommission,
+  })
+
+  const netCommission = totalCommission / (1 + pricing.vatRate)
+  const vatAmount = totalCommission - netCommission
+  const roundedVatAmount = Math.ceil(vatAmount * 20) / 20
+  const finalTotal = totalCommission
+  const finalSubtotal = finalTotal - roundedVatAmount
+
+  const year = new Date().getFullYear()
+  const lastInvoice = await tx.invoice.findFirst({
+    where: {
+      invoiceNumber: {
+        startsWith: `REV-${year}-`,
+      },
+    },
+    orderBy: {
+      invoiceNumber: 'desc',
+    },
+  })
+
+  let invoiceNumber = `REV-${year}-001`
+  if (lastInvoice) {
+    const lastNumber = parseInt(lastInvoice.invoiceNumber.split('-')[2])
+    if (!isNaN(lastNumber) && lastNumber > 0) {
+      invoiceNumber = `REV-${year}-${String(lastNumber + 1).padStart(3, '0')}`
+    }
+  }
+
+  const invoice = await tx.invoice.create({
+    data: {
+      invoiceNumber,
+      sellerId: order.sellerId,
+      saleId: order.id,
+      subtotal: finalSubtotal,
+      vatRate: pricing.vatRate,
+      vatAmount: roundedVatAmount,
+      total: finalTotal,
+      status: 'pending',
+      dueDate: new Date(Date.now() + 14 * 24 * 60 * 60 * 1000),
+      items: {
+        create: [
+          {
+            watchId: order.watchId,
+            description: `Kommission: ${order.watch.title}`,
+            quantity: 1,
+            price: finalSubtotal,
+            amount: finalSubtotal,
+            total: finalSubtotal,
+          },
+        ],
+      },
+    },
+    include: {
+      items: true,
+      seller: true,
+    },
+  })
+
+  // NEW_INVOICE Plattform-Benachrichtigung (DB, innerhalb Transaktion)
+  try {
+    await tx.notification.create({
+      data: {
+        userId: order.sellerId,
+        type: 'NEW_INVOICE',
+        title: 'Neue Rechnung erstellt',
+        message: `Eine neue Rechnung wurde für Sie erstellt: ${invoiceNumber} (CHF ${finalTotal.toFixed(2)}). Die Zahlungsaufforderung erhalten Sie in 14 Tagen.`,
+        link: `/my-watches/selling/fees?invoice=${invoice.id}`,
+      },
+    })
+  } catch {
+    // Silent fail
   }
 
   return invoice

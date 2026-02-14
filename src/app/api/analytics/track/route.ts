@@ -1,4 +1,6 @@
+import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Check if user agent is a bot/crawler
@@ -44,8 +46,7 @@ function parseUserAgent(ua: string | null) {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { path, referrer, sessionId, userId, screenWidth, duration, type } =
-      body
+    const { path, referrer, sessionId, screenWidth, duration, type } = body
 
     if (!path || !sessionId) {
       return NextResponse.json(
@@ -53,6 +54,26 @@ export async function POST(request: NextRequest) {
         { status: 400 }
       )
     }
+
+    // Input validation
+    const pathStr = typeof path === 'string' ? path : String(path ?? '')
+    const sessionIdStr = typeof sessionId === 'string' ? sessionId : String(sessionId ?? '')
+    if (pathStr.length > 500) {
+      return NextResponse.json(
+        { error: 'path exceeds maximum length of 500 characters' },
+        { status: 400 }
+      )
+    }
+    if (sessionIdStr.length > 100) {
+      return NextResponse.json(
+        { error: 'sessionId exceeds maximum length of 100 characters' },
+        { status: 400 }
+      )
+    }
+
+    // Get userId from session only - never accept from client
+    const session = await getServerSession(authOptions)
+    const userId = session?.user?.id ?? null
 
     const ua = request.headers.get('user-agent')
 
@@ -75,9 +96,9 @@ export async function POST(request: NextRequest) {
       await prisma.analyticsEvent.create({
         data: {
           name: body.eventName || 'unknown',
-          sessionId,
-          userId: userId || null,
-          path,
+          sessionId: sessionIdStr,
+          userId,
+          path: pathStr,
           metadata: body.metadata ? JSON.stringify(body.metadata) : null,
         },
       })
@@ -87,7 +108,7 @@ export async function POST(request: NextRequest) {
     if (type === 'duration') {
       // Update duration of an existing page view
       const existing = await prisma.pageView.findFirst({
-        where: { sessionId, path },
+        where: { sessionId: sessionIdStr, path: pathStr },
         orderBy: { createdAt: 'desc' },
       })
       if (existing) {
@@ -102,11 +123,11 @@ export async function POST(request: NextRequest) {
     // Default: track page view
     await prisma.pageView.create({
       data: {
-        path,
+        path: pathStr,
         referrer: referrer || null,
         userAgent: ua || null,
-        sessionId,
-        userId: userId || null,
+        sessionId: sessionIdStr,
+        userId,
         country,
         city,
         device,

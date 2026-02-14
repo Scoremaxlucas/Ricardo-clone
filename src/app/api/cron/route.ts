@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   try {
     // Vercel Cron Jobs senden einen Authorization Header
     const authHeader = request.headers.get('authorization')
-    const cronSecret = process.env.CRON_SECRET || 'development-secret'
+    const cronSecret = process.env.CRON_SECRET || ''
 
     if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
       console.error('[cron] Unauthorized request - missing or invalid authorization header')
@@ -50,7 +50,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     const authHeader = request.headers.get('authorization')
-    const cronSecret = process.env.CRON_SECRET || 'development-secret'
+    const cronSecret = process.env.CRON_SECRET || ''
 
     if (!authHeader || authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })

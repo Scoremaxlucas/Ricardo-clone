@@ -205,8 +205,7 @@ export function BidComponent({
     refreshBids,
   } = useRealtimeBids({
     watchId: itemId,
-    onNewBid: (bid) => {
-      console.log('[BidComponent] New bid received via realtime:', bid)
+    onNewBid: () => {
       // The hook already updates the bids state
     },
     onAuctionUpdate: handleAuctionUpdate,

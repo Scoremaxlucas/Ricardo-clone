@@ -63,8 +63,7 @@ function LoginPageContent() {
       if (result?.ok === true) {
         setEmail('')
         setPassword('')
-        const updatedSession = await getSession()
-        console.log('Session updated:', updatedSession?.user?.email)
+        await getSession()
         setTimeout(() => {
           router.push(callbackUrl)
           router.refresh()

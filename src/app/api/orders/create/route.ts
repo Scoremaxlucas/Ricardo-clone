@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth'
+import { createInvoiceForOrderWithTransaction } from '@/lib/invoice'
 import { calculateOrderFees } from '@/lib/order-fees'
 import { prisma } from '@/lib/prisma'
 import { calculateShippingCost, ShippingSelection } from '@/lib/shipping-calculator'
@@ -22,10 +23,11 @@ export async function POST(request: NextRequest) {
     try {
       await prisma.$queryRaw`SELECT 1`
       console.log('[orders/create] Database connection OK')
-    } catch (dbError: any) {
+    } catch (dbError: unknown) {
       console.error('[orders/create] Database connection failed:', dbError)
+      const msg = dbError instanceof Error ? dbError.message : 'Ein Fehler ist aufgetreten'
       return NextResponse.json(
-        { message: 'Datenbankverbindung fehlgeschlagen', error: dbError.message },
+        { message: 'Datenbankverbindung fehlgeschlagen', error: msg },
         { status: 500 }
       )
     }
@@ -216,35 +218,16 @@ export async function POST(request: NextRequest) {
     let fees
     try {
       fees = await calculateOrderFees(itemPrice, shippingCostChfFinal, true)
-    } catch (feeError: any) {
+    } catch (feeError: unknown) {
       console.error('[orders/create] Fee calculation error:', feeError)
+      const msg = feeError instanceof Error ? feeError.message : 'Ein Fehler ist aufgetreten'
       return NextResponse.json(
-        { message: 'Fehler bei der Gebührenberechnung', error: feeError.message },
+        { message: 'Fehler bei der Gebührenberechnung', error: msg },
         { status: 500 }
       )
     }
 
-    // Generiere Order-Nummer
     const year = new Date().getFullYear()
-    const lastOrder = await prisma.order.findFirst({
-      where: {
-        orderNumber: {
-          startsWith: `ORD-${year}-`,
-        },
-      },
-      orderBy: {
-        orderNumber: 'desc',
-      },
-    })
-
-    let orderNumber = `ORD-${year}-001`
-    if (lastOrder) {
-      const lastNumber = parseInt(lastOrder.orderNumber.split('-')[2])
-      if (!isNaN(lastNumber) && lastNumber > 0) {
-        orderNumber = `ORD-${year}-${String(lastNumber + 1).padStart(3, '0')}`
-      }
-    }
-    console.log('[orders/create] Generated order number:', orderNumber)
 
     // === RICARDO-STYLE: Bestimme Zahlungsmethode und Fristen ===
     const isPickup = selectedDeliveryMode === 'pickup'
@@ -297,7 +280,6 @@ export async function POST(request: NextRequest) {
     const actualProtectionFee = isPickup ? 0 : fees._processingFeeOnly
 
     const orderData = {
-      orderNumber,
       watchId,
       buyerId,
       sellerId: watch.sellerId,
@@ -320,89 +302,112 @@ export async function POST(request: NextRequest) {
     }
     console.log('[orders/create] Creating order with data:', JSON.stringify(orderData, null, 2))
 
-    let order
+    // Transaction: Order + Invoice + Order-Update + PURCHASE-Notification atomar
+    let order: Awaited<ReturnType<typeof prisma.order.create>>
+    let invoice: Awaited<ReturnType<typeof createInvoiceForOrderWithTransaction>> | null = null
     try {
-      order = await prisma.order.create({
-        data: orderData,
-        include: {
-          watch: {
-            select: {
-              id: true,
-              title: true,
-              brand: true,
-              model: true,
-              images: true,
+      const result = await prisma.$transaction(async (tx) => {
+        // Order-Nummer innerhalb Transaktion (Race-Sicherheit)
+        const lastOrder = await tx.order.findFirst({
+          where: {
+            orderNumber: {
+              startsWith: `ORD-${year}-`,
             },
           },
-          buyer: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
+          orderBy: {
+            orderNumber: 'desc',
+          },
+        })
+
+        let orderNumber = `ORD-${year}-001`
+        if (lastOrder) {
+          const lastNumber = parseInt(lastOrder.orderNumber.split('-')[2])
+          if (!isNaN(lastNumber) && lastNumber > 0) {
+            orderNumber = `ORD-${year}-${String(lastNumber + 1).padStart(3, '0')}`
+          }
+        }
+        console.log('[orders/create] Generated order number:', orderNumber)
+
+        const orderDataWithNumber = { ...orderData, orderNumber }
+
+        const createdOrder = await tx.order.create({
+          data: orderDataWithNumber,
+          include: {
+            watch: {
+              select: {
+                id: true,
+                title: true,
+                brand: true,
+                model: true,
+                images: true,
+              },
+            },
+            buyer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            seller: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
             },
           },
-          seller: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-            },
+        })
+
+        // Rechnung sofort erstellen (atomar mit Order)
+        const createdInvoice = await createInvoiceForOrderWithTransaction(tx, createdOrder)
+
+        await tx.order.update({
+          where: { id: createdOrder.id },
+          data: {
+            invoiceId: createdInvoice.id,
+            invoiceCreatedAt: new Date(),
           },
-        },
+        })
+
+        // PURCHASE-Benachrichtigung (DB) – innerhalb Transaktion
+        const buyerName = createdOrder.buyer.name || createdOrder.buyer.email || 'Ein Käufer'
+        await tx.notification.create({
+          data: {
+            userId: watch.sellerId,
+            type: 'PURCHASE',
+            title: 'Ihr Artikel wurde verkauft!',
+            message: `${buyerName} hat "${createdOrder.watch.title}" für CHF ${createdOrder.totalAmount.toFixed(2)} gekauft.`,
+            watchId: watchId,
+            link: `/my-watches/selling/sold`,
+          },
+        })
+
+        console.log(`[orders/create] ✅ Rechnung ${createdInvoice.invoiceNumber} erstellt für Order ${createdOrder.id} (sofort nach Verkauf)`)
+
+        return { order: createdOrder, invoice: createdInvoice }
       })
-    } catch (prismaError: any) {
+
+      order = result.order
+      invoice = result.invoice
+    } catch (prismaError: unknown) {
       console.error('[orders/create] Prisma error creating order:', prismaError)
-      console.error('[orders/create] Prisma error code:', prismaError.code)
-      console.error('[orders/create] Prisma error meta:', prismaError.meta)
+      const prismaErr = prismaError as { code?: string; meta?: unknown; message?: string }
+      console.error('[orders/create] Prisma error code:', prismaErr.code)
+      console.error('[orders/create] Prisma error meta:', prismaErr.meta)
+      const msg =
+        prismaError instanceof Error ? prismaError.message : 'Ein Fehler ist aufgetreten'
       return NextResponse.json(
         {
           message: 'Datenbankfehler beim Erstellen der Bestellung',
-          error: prismaError.message,
-          code: prismaError.code
+          error: msg,
+          code: prismaErr.code
         },
         { status: 500 }
       )
     }
 
-    // === RECHNUNG SOFORT ERSTELLEN (Ricardo-Style) ===
-    // Verkäufer-Kommission wird sofort berechnet, unabhängig vom Zahlungsstatus
-    let invoice = null
-    try {
-      const { calculateInvoiceForOrder } = await import('@/lib/invoice')
-      invoice = await calculateInvoiceForOrder(order.id)
-
-      // Update Order mit Invoice-Referenz
-      await prisma.order.update({
-        where: { id: order.id },
-        data: {
-          invoiceId: invoice.id,
-          invoiceCreatedAt: new Date(),
-        },
-      })
-
-      console.log(`[orders/create] ✅ Rechnung ${invoice.invoiceNumber} erstellt für Order ${order.id} (sofort nach Verkauf)`)
-    } catch (invoiceError: any) {
-      console.error('[orders/create] ❌ Fehler bei Rechnungserstellung:', invoiceError)
-      // Nicht kritisch - Order bleibt bestehen, Rechnung kann später erstellt werden
-    }
-
-    // === BENACHRICHTIGUNGEN SENDEN ===
-    // Benachrichtigung an Verkäufer
-    try {
-      const buyerName = order.buyer.name || order.buyer.email || 'Ein Käufer'
-      await prisma.notification.create({
-        data: {
-          userId: watch.sellerId,
-          type: 'PURCHASE',
-          title: 'Ihr Artikel wurde verkauft!',
-          message: `${buyerName} hat "${order.watch.title}" für CHF ${order.totalAmount.toFixed(2)} gekauft.`,
-          watchId: watchId,
-          link: `/my-watches/selling/sold`,
-        },
-      })
-    } catch (notifyError) {
-      console.error('[orders/create] Fehler bei Verkäufer-Benachrichtigung:', notifyError)
-    }
+    // === E-MAIL-BENACHRICHTIGUNGEN (außerhalb Transaktion) ===
 
     // E-Mail an Käufer mit Zahlungsinformationen (für Direktzahlungen)
     if (paymentMethod !== 'stripe') {
@@ -429,17 +434,22 @@ export async function POST(request: NextRequest) {
       requiresStripePayment: paymentMethod === 'stripe',
       isDirectPurchase: paymentMethod !== 'stripe',
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating order:', error)
-    console.error('Error stack:', error.stack)
-    console.error('Error name:', error.name)
-    console.error('Error code:', error.code)
+    const err = error instanceof Error ? error : null
+    const errObj = error as { code?: string; stack?: string }
+    if (err) {
+      console.error('Error stack:', err.stack)
+      console.error('Error name:', err.name)
+    }
+    console.error('Error code:', errObj.code)
+    const message = err?.message ?? 'Ein Fehler ist aufgetreten'
     return NextResponse.json(
       {
         message: 'Fehler beim Erstellen der Bestellung',
-        error: error.message,
-        code: error.code,
-        details: process.env.NODE_ENV === 'development' ? error.stack : undefined,
+        error: message,
+        code: errObj.code,
+        details: process.env.NODE_ENV === 'development' ? errObj.stack : undefined,
       },
       { status: 500 }
     )

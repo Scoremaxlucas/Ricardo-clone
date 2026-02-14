@@ -103,7 +103,7 @@ export async function GET(
   } catch (error: any) {
     console.error('[orders/review] GET error:', error)
     return NextResponse.json(
-      { message: 'Fehler beim Abrufen der Bewertung', error: error.message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }
@@ -294,7 +294,7 @@ export async function POST(
       )
     }
     return NextResponse.json(
-      { message: 'Fehler beim Erstellen der Bewertung', error: error.message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

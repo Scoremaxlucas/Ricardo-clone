@@ -37,6 +37,12 @@ export default function ContactPage() {
       return
     }
 
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(formData.email.trim())) {
+      toast.error('Bitte geben Sie eine gültige E-Mail-Adresse ein.')
+      return
+    }
+
     setSubmitting(true)
     try {
       const res = await fetch('/api/contact', {

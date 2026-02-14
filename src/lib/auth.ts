@@ -5,7 +5,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 
 export const authOptions = {
-  secret: process.env.NEXTAUTH_SECRET || 'development-secret-key',
+  secret: process.env.NEXTAUTH_SECRET || '',
   adapter: undefined, // Disable adapter for now
   debug: isDebug(), // Enable debug when DEBUG=true or NODE_ENV=development
   // WICHTIG: Trust host für Vercel/Production

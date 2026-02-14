@@ -1,6 +1,7 @@
 import { generateArticleNumber } from '@/lib/article-number'
 import { authOptions } from '@/lib/auth'
 import { moderateWatch } from '@/lib/auto-moderation'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { isBlobUrl, uploadImagesToBlob } from '@/lib/blob-storage'
 import { prisma } from '@/lib/prisma'
 import { canSell } from '@/lib/verification'
@@ -461,6 +462,22 @@ export async function POST(request: NextRequest) {
       return NextResponse.json(
         { message: 'Nicht autorisiert. Bitte melden Sie sich an.' },
         { status: 401 }
+      )
+    }
+
+    // SECURITY: Rate limiting - max 30 watch creations per user per hour
+    const rateLimitResult = await checkRateLimit({
+      identifier: `watches-create:${session.user.id}`,
+      limit: 30,
+      window: 3600, // 1 hour
+    })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          message: 'Zu viele Artikel-Erstellungen. Bitte versuchen Sie es später erneut.',
+          retryAfter: Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000),
+        },
+        { status: 429 }
       )
     }
 
@@ -1016,13 +1033,15 @@ export async function POST(request: NextRequest) {
             watchId: watch.id,
           })
         }
-      } catch (categoryError: any) {
+      } catch (categoryError: unknown) {
         console.error('[CREATE] Error linking category:', categoryError)
+        const errMsg = categoryError instanceof Error ? categoryError.message : 'Unknown'
+        const errStack = categoryError instanceof Error ? categoryError.stack : undefined
         console.error('[CREATE] Category error details:', {
           category,
           watchId: watch.id,
-          error: categoryError.message,
-          stack: categoryError.stack,
+          error: errMsg,
+          stack: errStack,
         })
         // Fehler bei Kategorie-Verknüpfung sollte nicht die Watch-Erstellung verhindern
       }
@@ -1159,21 +1178,22 @@ export async function POST(request: NextRequest) {
               const bexioResult = await createBexioInvoice(invoice.id)
               console.log(`[watches/create] ✅ Booster-Rechnung ${invoiceNumber} zu Bexio synchronisiert (ID: ${bexioResult.bexioInvoiceId})`)
             }
-          } catch (bexioError: any) {
-            console.error(`[watches/create] ⚠️ Bexio-Sync für Booster-Rechnung fehlgeschlagen:`, bexioError.message)
+          } catch (bexioError: unknown) {
+            const msg = bexioError instanceof Error ? bexioError.message : 'Ein Fehler ist aufgetreten'
+            console.error(`[watches/create] ⚠️ Bexio-Sync für Booster-Rechnung fehlgeschlagen:`, msg)
           }
 
           // Sende E-Mail-Benachrichtigung und erstelle Plattform-Benachrichtigung
           try {
             const { sendInvoiceNotificationAndEmail } = await import('@/lib/invoice')
             await sendInvoiceNotificationAndEmail(invoice)
-          } catch (notificationError: any) {
+          } catch (notificationError: unknown) {
             console.error('[watches/create] Fehler bei Benachrichtigung:', notificationError)
             // Fehler sollte nicht die Rechnungserstellung verhindern
           }
         }
       }
-    } catch (invoiceError: any) {
+    } catch (invoiceError: unknown) {
       console.error('[watches/create] ❌ Fehler bei Booster-Rechnungserstellung:', invoiceError)
       // Fehler wird ignoriert, Watch war erfolgreich erstellt
     }
@@ -1206,7 +1226,7 @@ export async function POST(request: NextRequest) {
         })
         console.log(`[watches/create] ✅ Angebotsbestätigungs-E-Mail gesendet an ${seller.email}`)
       }
-    } catch (emailError: any) {
+    } catch (emailError: unknown) {
       console.error(
         '[watches/create] ❌ Fehler beim Senden der Angebotsbestätigungs-E-Mail:',
         emailError
@@ -1268,11 +1288,13 @@ export async function POST(request: NextRequest) {
           `[watches/create] ℹ️  Keine Suchabo-Matches gefunden für Artikel: ${watch.title}`
         )
       }
-    } catch (matchError: any) {
+    } catch (matchError: unknown) {
       console.error('[watches/create] ❌ Fehler bei Suchabo-Matching:', matchError)
+      const matchMsg = matchError instanceof Error ? matchError.message : 'Unknown'
+      const matchStack = matchError instanceof Error ? matchError.stack : undefined
       console.error('[watches/create] Match error details:', {
-        error: matchError.message,
-        stack: matchError.stack,
+        error: matchMsg,
+        stack: matchStack,
       })
       // Fehler sollte nicht die Watch-Erstellung verhindern
     }
@@ -1298,11 +1320,14 @@ export async function POST(request: NextRequest) {
     try {
       const { updateWatchSearchText } = await import('@/lib/search/update-search-text')
       // Run in background without awaiting
-      updateWatchSearchText(watch.id).catch((err: any) => {
-        console.warn('[Watch Create] Could not update searchText:', err.message)
+      updateWatchSearchText(watch.id).catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : 'Ein Fehler ist aufgetreten'
+        console.warn('[Watch Create] Could not update searchText:', msg)
       })
-    } catch (searchTextError: any) {
-      console.warn('[Watch Create] Could not import search module:', searchTextError.message)
+    } catch (searchTextError: unknown) {
+      const msg =
+        searchTextError instanceof Error ? searchTextError.message : 'Ein Fehler ist aufgetreten'
+      console.warn('[Watch Create] Could not import search module:', msg)
     }
 
     return NextResponse.json({
@@ -1315,15 +1340,18 @@ export async function POST(request: NextRequest) {
         price: watch.price,
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating watch:', error)
-    console.error('Error stack:', error?.stack)
-    console.error('Error message:', error?.message)
+    const err = error instanceof Error ? error : null
+    if (err) {
+      console.error('Error stack:', err.stack)
+      console.error('Error message:', err.message)
+    }
     console.error('Error details:', JSON.stringify(error, null, 2))
 
     // Detaillierte Fehlermeldung für Debugging
-    const errorMessage = error?.message || 'Unbekannter Fehler'
-    const errorCode = error?.code || 'UNKNOWN'
+    const errorMessage = err?.message || 'Unbekannter Fehler'
+    const errorCode = (error as { code?: string })?.code || 'UNKNOWN'
 
     return NextResponse.json(
       {

@@ -958,7 +958,7 @@ export function CategorySidebarNew({ isOpen, onClose }: Props) {
         <div
           onMouseEnter={() => handleFlyoutEnter(hovered)}
           onMouseLeave={handleFlyoutLeave}
-          className="fixed left-[320px] z-[1000] max-h-[calc(100vh-80px)] w-[520px] overflow-y-auto rounded-r-xl border-2 border-primary-600 bg-white p-6 shadow-2xl"
+          className="fixed left-[320px] z-[1000] max-h-[calc(100vh-80px)] w-full max-w-[520px] overflow-y-auto rounded-r-xl border-2 border-primary-600 bg-white p-6 shadow-2xl"
           style={{
             top: `${flyoutPosition.top}px`,
             animation: 'flyoutFadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1)',

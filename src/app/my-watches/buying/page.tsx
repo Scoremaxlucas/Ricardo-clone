@@ -57,6 +57,10 @@ export default function MyBuyingPage() {
   })
 
   useEffect(() => {
+    document.title = 'Mein Kaufen — Helvenda.ch'
+  }, [])
+
+  useEffect(() => {
     // Warte bis Session geladen ist
     if (status === 'loading') {
       return

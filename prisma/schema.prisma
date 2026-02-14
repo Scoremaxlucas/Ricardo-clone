@@ -440,6 +440,7 @@ model Purchase {
 
   @@index([watchId]) // OPTIMIERT: Für schnelle Purchase-Abfragen
   @@index([watchId, status]) // OPTIMIERT: Für Filterung nach Status bei watchId-Filter
+  @@index([buyerId, status])
   @@index([disputeStatus]) // OPTIMIERT: Für Dispute-Übersicht
   @@map("purchases")
 }

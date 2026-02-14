@@ -299,7 +299,7 @@ export async function POST(request: NextRequest) {
         console.log(
           `[bids] ✅ Rechnung erstellt: ${invoice.invoiceNumber} für Seller ${purchase.watch.sellerId} (sofort nach Verkauf)`
         )
-      } catch (invoiceError: any) {
+      } catch (invoiceError: unknown) {
         console.error('[bids] ❌ Fehler bei Rechnungserstellung:', invoiceError)
         // Fehler wird geloggt, aber Purchase bleibt bestehen
       }
@@ -335,7 +335,7 @@ export async function POST(request: NextRequest) {
         } else {
           console.log(`[bids] ⏭️ Verkaufs-E-Mail übersprungen (Präferenz deaktiviert)`)
         }
-      } catch (emailError: any) {
+      } catch (emailError: unknown) {
         console.error('Fehler beim Senden der Verkaufs-E-Mail:', emailError)
         // E-Mail-Fehler sollte den Kauf nicht verhindern
       }
@@ -354,7 +354,7 @@ export async function POST(request: NextRequest) {
           link: `/my-watches/selling/sold`,
         })
         console.log(`[bids] ✅ Verkaufs-Benachrichtigung für Seller ${watch.sellerId} erstellt`)
-      } catch (notificationError: any) {
+      } catch (notificationError: unknown) {
         console.error(
           '[bids] ❌ Fehler beim Erstellen der Verkaufs-Benachrichtigung:',
           notificationError
@@ -393,10 +393,12 @@ export async function POST(request: NextRequest) {
             const { generatePaymentInfo } = await import('@/lib/payment-info')
             paymentInfo = await generatePaymentInfo(purchase.id)
             console.log(`[bids] ✅ Zahlungsinformationen generiert für Purchase ${purchase.id}`)
-          } catch (paymentInfoError: any) {
+          } catch (paymentInfoError: unknown) {
+            const paymentInfoMsg =
+              paymentInfoError instanceof Error ? paymentInfoError.message : 'Ein Fehler ist aufgetreten'
             console.warn(
               '[bids] ⚠️  Konnte Zahlungsinformationen nicht generieren:',
-              paymentInfoError.message
+              paymentInfoMsg
             )
           }
 
@@ -426,7 +428,7 @@ export async function POST(request: NextRequest) {
         } else {
           console.log(`[bids] ⏭️ Kaufbestätigungs-E-Mail übersprungen (Präferenz deaktiviert)`)
         }
-      } catch (emailError: any) {
+      } catch (emailError: unknown) {
         console.error('[bids] ❌ Fehler beim Senden der Kaufbestätigungs-E-Mail:', emailError)
         // E-Mail-Fehler sollte den Kauf nicht verhindern
       }
@@ -490,114 +492,132 @@ export async function POST(request: NextRequest) {
       orderBy: { maxAmount: 'desc' },
     })
 
-    // Erhöhe automatische Gebote wenn nötig
-    let automaticBidsCreated = 0
-    for (const maxBid of maxBids) {
-      if (maxBid.maxAmount >= minBid) {
-        const newBidAmount = Math.min(maxBid.maxAmount, amount + 1.0) // Biete CHF 1 mehr als das neue Gebot, aber nicht mehr als MaxBid
+    // Alle kritischen DB-Schreiboperationen in einer Transaktion ausführen
+    const { bid, finalAmount, automaticBidsCreated } = await prisma.$transaction(
+      async (tx) => {
+        // 1. Erhöhe automatische Gebote wenn nötig (batch statt N+1)
+        const toCreate: { watchId: string; userId: string; amount: number }[] = []
+        const toUpdateMaxBid: { id: string; currentBid: number }[] = []
 
-        if (newBidAmount > (maxBid.currentBid || 0)) {
-          // Erstelle automatisches Gebot
-          await prisma.bid.create({
-            data: {
-              watchId,
-              userId: maxBid.userId,
-              amount: newBidAmount,
-            },
-          })
+        for (const maxBid of maxBids) {
+          if (maxBid.maxAmount >= minBid) {
+            const newBidAmount = Math.min(maxBid.maxAmount, amount + 1.0) // Biete CHF 1 mehr als das neue Gebot, aber nicht mehr als MaxBid
 
-          // Aktualisiere MaxBid
-          await prisma.maxBid.update({
-            where: { id: maxBid.id },
-            data: {
-              currentBid: newBidAmount,
-            },
-          })
+            if (newBidAmount > (maxBid.currentBid || 0)) {
+              toCreate.push({
+                watchId,
+                userId: maxBid.userId,
+                amount: newBidAmount,
+              })
+              toUpdateMaxBid.push({ id: maxBid.id, currentBid: newBidAmount })
+            }
+          }
+        }
 
-          automaticBidsCreated++
-          console.log(
-            `[bids] ✅ Automatisches Gebot erstellt: User ${maxBid.userId} hat CHF ${newBidAmount.toFixed(2)} geboten (MaxBid: CHF ${maxBid.maxAmount.toFixed(2)})`
+        if (toCreate.length > 0) {
+          await tx.bid.createMany({ data: toCreate })
+          await Promise.all(
+            toUpdateMaxBid.map(({ id, currentBid }) =>
+              tx.maxBid.update({ where: { id }, data: { currentBid } })
+            )
           )
         }
-      }
-    }
 
-    // Hole aktuelles Höchstgebot nach automatischen Geboten
-    const currentHighestBid = await prisma.bid.findFirst({
-      where: { watchId },
-      orderBy: { amount: 'desc' },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            nickname: true,
+        // 2. Hole aktuelles Höchstgebot nach automatischen Geboten
+        const currentHighestBid = await tx.bid.findFirst({
+          where: { watchId },
+          orderBy: { amount: 'desc' },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                nickname: true,
+              },
+            },
           },
-        },
-      },
-    })
+        })
 
-    // Prüfe ob automatische Gebote das aktuelle Gebot überboten haben
-    const finalAmount =
-      currentHighestBid &&
-      currentHighestBid.userId !== session.user.id &&
-      currentHighestBid.amount >= amount
-        ? currentHighestBid.amount + 1.0 // Erhöhe um CHF 1 wenn automatisches Gebot vorhanden
-        : amount
+        // 3. Prüfe ob automatische Gebote das aktuelle Gebot überboten haben
+        const computedFinalAmount =
+          currentHighestBid &&
+          currentHighestBid.userId !== session.user.id &&
+          currentHighestBid.amount >= amount
+            ? currentHighestBid.amount + 1.0 // Erhöhe um CHF 1 wenn automatisches Gebot vorhanden
+            : amount
 
-    // Automatische Verlängerung: Wenn Gebot in den letzten 3 Minuten vor Ablauf
-    let newAuctionEnd = auctionEndDate
-    if (auctionEndDate) {
-      const timeUntilEnd = auctionEndDate.getTime() - now.getTime()
-      const threeMinutes = 3 * 60 * 1000 // 3 Minuten in Millisekunden
+        // 4. Automatische Verlängerung: Wenn Gebot in den letzten 3 Minuten vor Ablauf
+        let newAuctionEnd = auctionEndDate
+        if (auctionEndDate) {
+          const timeUntilEnd = auctionEndDate.getTime() - now.getTime()
+          const threeMinutes = 3 * 60 * 1000 // 3 Minuten in Millisekunden
 
-      if (timeUntilEnd <= threeMinutes && timeUntilEnd > 0) {
-        // Verlängere um 3 Minuten ab jetzt
-        newAuctionEnd = new Date(now.getTime() + threeMinutes)
-        console.log(`Auktion verlängert um 3 Minuten. Neues Ende: ${newAuctionEnd}`)
-      }
-    }
+          if (timeUntilEnd <= threeMinutes && timeUntilEnd > 0) {
+            newAuctionEnd = new Date(now.getTime() + threeMinutes)
+          }
+        }
 
-    // Erstelle Gebot
-    const bid = await prisma.bid.create({
-      data: {
-        watchId,
-        userId: session.user.id,
-        amount: finalAmount,
-      },
-      include: {
-        user: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            nickname: true,
+        // 5. Erstelle Hauptgebot
+        const createdBid = await tx.bid.create({
+          data: {
+            watchId,
+            userId: session.user.id,
+            amount: computedFinalAmount,
           },
-        },
-      },
-    })
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                nickname: true,
+              },
+            },
+          },
+        })
 
-    // Aktualisiere auctionEnd falls verlängert und setze lastBidAt
-    if (newAuctionEnd && newAuctionEnd !== auctionEndDate) {
-      await prisma.watch.update({
-        where: { id: watchId },
-        data: {
-          auctionEnd: newAuctionEnd,
-          lastBidAt: now, // Track Last-Minute-Gebot für Auto-Verlängerung
-        },
-      })
+        // 6. Aktualisiere auctionEnd falls verlängert und setze lastBidAt
+        if (newAuctionEnd && newAuctionEnd !== auctionEndDate) {
+          await tx.watch.update({
+            where: { id: watchId },
+            data: {
+              auctionEnd: newAuctionEnd,
+              lastBidAt: now, // Track Last-Minute-Gebot für Auto-Verlängerung
+            },
+          })
+        } else {
+          await tx.watch.update({
+            where: { id: watchId },
+            data: {
+              lastBidAt: now,
+            },
+          })
+        }
+
+        return {
+          bid: createdBid,
+          finalAmount: computedFinalAmount,
+          automaticBidsCreated: toCreate.length,
+        }
+      }
+    )
+
+    // Logs für automatische Gebote und Auktion-Verlängerung (außerhalb Transaktion)
+    if (automaticBidsCreated > 0) {
+      console.log(
+        `[bids] ✅ ${automaticBidsCreated} automatische(s) Gebot/Gebote erstellt`
+      )
+    }
+    if (
+      auctionEndDate &&
+      (auctionEndDate.getTime() - now.getTime() <= 3 * 60 * 1000) &&
+      auctionEndDate.getTime() - now.getTime() > 0
+    ) {
+      const newAuctionEnd = new Date(now.getTime() + 3 * 60 * 1000)
       console.log(
         `[bids] ✅ Auktion verlängert um 3 Minuten. Neues Ende: ${newAuctionEnd.toISOString()}`
       )
-    } else {
-      // Aktualisiere lastBidAt auch wenn keine Verlängerung
-      await prisma.watch.update({
-        where: { id: watchId },
-        data: {
-          lastBidAt: now,
-        },
-      })
     }
 
     // Erstelle Benachrichtigung für Verkäufer
@@ -639,7 +659,7 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`[bids] ⏭️ Gebotsbestätigungs-E-Mail übersprungen (Präferenz deaktiviert)`)
       }
-    } catch (emailError: any) {
+    } catch (emailError: unknown) {
       console.error('[bids] ❌ Fehler beim Senden der Gebotsbestätigungs-E-Mail:', emailError)
     }
 
@@ -672,7 +692,7 @@ export async function POST(request: NextRequest) {
       } else {
         console.log(`[bids] ⏭️ Gebotsbenachrichtigung übersprungen (Präferenz deaktiviert)`)
       }
-    } catch (emailError: any) {
+    } catch (emailError: unknown) {
       console.error('[bids] ❌ Fehler beim Senden der Gebotsbenachrichtigungs-E-Mail:', emailError)
     }
 
@@ -714,7 +734,7 @@ export async function POST(request: NextRequest) {
         } else {
           console.log(`[bids] ⏭️ Überboten-Benachrichtigung übersprungen (Präferenz deaktiviert)`)
         }
-      } catch (emailError: any) {
+      } catch (emailError: unknown) {
         console.error(
           '[bids] ❌ Fehler beim Senden der Überboten-Benachrichtigungs-E-Mail:',
           emailError
@@ -757,10 +777,11 @@ export async function POST(request: NextRequest) {
       auctionExtended: newAuctionEnd && newAuctionEnd !== auctionEndDate,
       automaticBidsCreated,
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error creating bid:', error)
+    const message = error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten'
     return NextResponse.json(
-      { message: 'Ein Fehler ist aufgetreten beim Abgeben des Gebots: ' + error.message },
+      { message: 'Ein Fehler ist aufgetreten beim Abgeben des Gebots: ' + message },
       { status: 500 }
     )
   }
@@ -793,10 +814,11 @@ export async function GET(request: NextRequest) {
     })
 
     return NextResponse.json({ bids })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching bids:', error)
+    const message = error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten'
     return NextResponse.json(
-      { message: 'Ein Fehler ist aufgetreten beim Laden der Gebote: ' + error.message },
+      { message: 'Ein Fehler ist aufgetreten beim Laden der Gebote: ' + message },
       { status: 500 }
     )
   }

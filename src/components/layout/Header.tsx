@@ -163,8 +163,8 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   const userId = (session?.user as { id?: string })?.id
   const { unreadCount, isUsingRealtime } = useRealtimeNotifications({
     userId,
-    onNewNotification: (notification) => {
-      console.log('[Header] New notification received:', notification.title)
+    onNewNotification: () => {
+      // Notification count updates via unreadCount
     },
     fallbackPollingInterval: 30000, // Fallback to 30s polling if realtime not available
   })

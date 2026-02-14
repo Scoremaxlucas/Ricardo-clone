@@ -198,7 +198,7 @@ export function DisputeChat({ purchaseId, disputeStatus, userRole }: DisputeChat
   }
 
   return (
-    <div className="flex h-[600px] flex-col rounded-lg bg-white shadow">
+    <div className="flex h-[400px] flex-col rounded-lg bg-white shadow sm:h-[600px]">
       {/* Header */}
       <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
         <div className="flex items-center gap-2">

@@ -3,6 +3,7 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { ProductPageClient } from '@/components/product/ProductPageClient'
+import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 
@@ -11,6 +12,7 @@ export default function ProductPage() {
   const id = params?.id as string
 
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState(false)
   const [data, setData] = useState<{
     watch: any
     images: string[]
@@ -33,9 +35,13 @@ export default function ProductPage() {
         if (res.ok) {
           const json = await res.json()
           setData(json)
+          setError(false)
+        } else {
+          setError(true)
         }
-      } catch (error) {
-        console.error('Error fetching product:', error)
+      } catch (err) {
+        console.error('Error fetching product:', err)
+        setError(true)
       } finally {
         setLoading(false)
       }
@@ -43,6 +49,33 @@ export default function ProductPage() {
 
     fetchProduct()
   }, [id])
+
+  if (error || (!loading && (!data || !data?.watch))) {
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="pb-8">
+          <div className="mx-auto max-w-[1400px] px-4 py-8">
+            <div className="rounded-lg border border-gray-200 bg-white p-8 text-center md:p-12">
+              <h2 className="mb-2 text-lg font-semibold text-gray-900 md:text-xl">
+                Dieser Artikel konnte nicht geladen werden
+              </h2>
+              <p className="mb-6 text-sm text-gray-600 md:text-base">
+                Bitte versuchen Sie es später erneut oder suchen Sie einen anderen Artikel.
+              </p>
+              <Link
+                href="/search"
+                className="inline-block rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-700 md:text-base"
+              >
+                Zur Suche
+              </Link>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
+  }
 
   if (loading) {
     return (

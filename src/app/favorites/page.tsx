@@ -74,6 +74,10 @@ export default function FavoritesPage() {
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
+    document.title = 'Favoriten — Helvenda.ch'
+  }, [])
+
+  useEffect(() => {
     if (status === 'unauthenticated') {
       router.push('/login?redirect=/favorites')
       return

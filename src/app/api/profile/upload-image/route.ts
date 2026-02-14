@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { deleteImageFromBlob, uploadImageToBlob } from '@/lib/blob-storage'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -22,6 +23,22 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    // SECURITY: Rate limiting - max 10 profile image uploads per user per hour
+    const rateLimitResult = await checkRateLimit({
+      identifier: `profile-upload:${session.user.id}`,
+      limit: 10,
+      window: 3600, // 1 hour
+    })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          message: 'Zu viele Profilbild-Uploads. Bitte versuchen Sie es später erneut.',
+          retryAfter: Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000),
+        },
+        { status: 429 }
+      )
     }
 
     const formData = await request.formData()
@@ -107,15 +124,22 @@ export async function POST(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    const { userId } = await request.json()
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+    }
 
-    if (!userId) {
-      return NextResponse.json({ message: 'User ID erforderlich' }, { status: 400 })
+    const { userId } = await request.json()
+    const effectiveUserId = userId || session.user.id
+
+    // Users can only delete their own profile image (admins could be exempted if needed)
+    if (effectiveUserId !== session.user.id) {
+      return NextResponse.json({ message: 'Keine Berechtigung' }, { status: 403 })
     }
 
     // Hole aktuelles Profilbild
     const user = await prisma.user.findUnique({
-      where: { id: userId },
+      where: { id: effectiveUserId },
       select: { image: true },
     })
 
@@ -132,7 +156,7 @@ export async function DELETE(request: NextRequest) {
 
     // Entferne Profilbild aus Datenbank
     await prisma.user.update({
-      where: { id: userId },
+      where: { id: effectiveUserId },
       data: { image: null },
     })
 

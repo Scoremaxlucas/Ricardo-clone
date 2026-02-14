@@ -9,6 +9,10 @@ import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
+export const metadata = {
+  title: 'Meine Angebote — Helvenda.ch',
+}
+
 export const revalidate = 30
 
 export default async function MySellingPage() {

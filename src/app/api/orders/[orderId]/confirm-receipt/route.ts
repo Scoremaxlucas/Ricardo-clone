@@ -176,10 +176,7 @@ export async function POST(
   } catch (error: any) {
     console.error('Error confirming receipt:', error)
     return NextResponse.json(
-      {
-        message: 'Fehler beim Bestätigen des Erhalts',
-        error: error.message,
-      },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

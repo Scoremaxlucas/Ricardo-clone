@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { uploadImageToBlob } from '@/lib/blob-storage'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -67,6 +68,22 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    // SECURITY: Rate limiting - max 20 uploads per user per hour
+    const rateLimitResult = await checkRateLimit({
+      identifier: `upload:${session.user.id}`,
+      limit: 20,
+      window: 3600, // 1 hour
+    })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          message: 'Zu viele Uploads. Bitte versuchen Sie es später erneut.',
+          retryAfter: Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000),
+        },
+        { status: 429 }
+      )
     }
 
     const formData = await request.formData()

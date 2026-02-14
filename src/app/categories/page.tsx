@@ -35,6 +35,10 @@ interface WatchItem {
 function CategoriesPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+
+  useEffect(() => {
+    document.title = 'Kategorien — Helvenda.ch'
+  }, [])
   const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [watches, setWatches] = useState<WatchItem[]>([])

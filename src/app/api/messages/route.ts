@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { checkRateLimit } from '@/lib/rate-limit'
 import { prisma } from '@/lib/prisma'
 import { sendEmail, getAnswerNotificationEmail } from '@/lib/email'
 import { shouldSendNotification } from '@/lib/notification-preferences'
@@ -118,6 +119,22 @@ export async function POST(request: NextRequest) {
     const session = await getServerSession(authOptions)
     if (!session?.user?.id) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    // SECURITY: Rate limiting - max 60 messages per user per hour
+    const rateLimitResult = await checkRateLimit({
+      identifier: `messages:${session.user.id}`,
+      limit: 60,
+      window: 3600, // 1 hour
+    })
+    if (!rateLimitResult.allowed) {
+      return NextResponse.json(
+        {
+          message: 'Zu viele Nachrichten. Bitte versuchen Sie es später erneut.',
+          retryAfter: Math.ceil((rateLimitResult.resetAt.getTime() - Date.now()) / 1000),
+        },
+        { status: 429 }
+      )
     }
 
     const data = await request.json()

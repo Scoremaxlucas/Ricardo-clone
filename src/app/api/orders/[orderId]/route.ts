@@ -166,12 +166,13 @@ export async function GET(
         isSeller: order.sellerId === session.user.id,
       },
     })
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching order:', error)
+    const message = error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten'
     return NextResponse.json(
       {
         message: 'Fehler beim Laden der Bestellung',
-        error: error.message,
+        error: message,
       },
       { status: 500 }
     )

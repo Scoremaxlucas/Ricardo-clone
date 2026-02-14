@@ -1,5 +1,7 @@
 'use client'
 
+import { Header } from '@/components/layout/Header'
+import { Footer } from '@/components/layout/Footer'
 import { Globe, Heart, Lock, Send } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
@@ -148,7 +150,30 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
   }
 
   if (!watch) {
-    return <div className="flex min-h-screen items-center justify-center">Artikel nicht gefunden</div>
+    return (
+      <div className="min-h-screen bg-gray-50">
+        <Header />
+        <main className="pb-8">
+          <div className="mx-auto max-w-[1400px] px-4 py-8">
+            <div className="rounded-lg border border-gray-200 bg-white p-8 text-center md:p-12">
+              <h2 className="mb-2 text-lg font-semibold text-gray-900 md:text-xl">
+                Dieser Artikel konnte nicht geladen werden
+              </h2>
+              <p className="mb-6 text-sm text-gray-600 md:text-base">
+                Der Artikel existiert möglicherweise nicht mehr oder ist nicht verfügbar.
+              </p>
+              <button
+                onClick={() => router.push('/search')}
+                className="inline-block rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-700 md:text-base"
+              >
+                Zur Suche
+              </button>
+            </div>
+          </div>
+        </main>
+        <Footer />
+      </div>
+    )
   }
 
   const isSeller = (session?.user as { id?: string })?.id === watch.seller.id
@@ -379,12 +404,12 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
                     </div>
                   )}
                   <div>
-                    <a
+                    <Link
                       href={`/users/${watch.seller.id}`}
                       className="font-medium text-gray-900 hover:text-primary-600"
                     >
                       {watch.seller.nickname || watch.seller.name}
-                    </a>
+                    </Link>
                     <p className="text-sm text-gray-600">
                       Mitglied seit{' '}
                       {new Date(watch.seller.createdAt || watch.createdAt).toLocaleDateString('de-CH', {
@@ -494,9 +519,9 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
             <div className="rounded-lg border border-t border-yellow-200 bg-yellow-50 p-4 pt-6 text-center">
               <p className="text-gray-700">
                 Bitte{' '}
-                <a href="/login" className="text-primary-600 hover:underline">
+                <Link href="/login" className="text-primary-600 hover:underline">
                   melden Sie sich an
-                </a>
+                </Link>
                 , um Fragen zu stellen.
               </p>
             </div>

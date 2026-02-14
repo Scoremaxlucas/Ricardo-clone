@@ -37,6 +37,10 @@ export default function AuctionsPage() {
   const [visibleCount, setVisibleCount] = useState(12) // Progressive loading
 
   useEffect(() => {
+    document.title = 'Auktionen — Helvenda.ch'
+  }, [])
+
+  useEffect(() => {
     const fetchAuctions = async () => {
       setLoading(true)
       try {

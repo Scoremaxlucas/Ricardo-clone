@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
   try {
     // Optional: API-Key oder Secret-Check für Sicherheit
     const authHeader = request.headers.get('authorization')
-    const cronSecret = process.env.CRON_SECRET || 'development-secret'
+    const cronSecret = process.env.CRON_SECRET || ''
 
     if (authHeader !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ message: 'Unauthorized' }, { status: 401 })

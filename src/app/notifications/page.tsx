@@ -102,15 +102,6 @@ export default function NotificationsPage() {
       )
       if (res.ok) {
         const data = await res.json()
-        const unreadCount = data.notifications?.filter((n: Notification) => !n.isRead).length || 0
-        console.log(
-          '[notifications] Benachrichtigungen geladen:',
-          data.notifications?.length || 0,
-          'ungelesen:',
-          unreadCount,
-          'filter:',
-          filter
-        )
 
         // Aktualisiere State direkt von der API
         setNotifications(data.notifications || [])
@@ -129,8 +120,6 @@ export default function NotificationsPage() {
 
   const markAsRead = async (notificationId: string): Promise<boolean> => {
     try {
-      console.log('[notifications] Markiere Benachrichtigung als gelesen:', notificationId)
-
       // Optimistic Update: Sofort State aktualisieren
       const notification = notifications.find(n => n.id === notificationId)
       const wasUnread = notification && !notification.isRead
@@ -154,8 +143,7 @@ export default function NotificationsPage() {
       })
 
       if (res.ok) {
-        const data = await res.json()
-        console.log('[notifications] Benachrichtigung erfolgreich als gelesen markiert:', data)
+        await res.json()
 
         // Aktualisiere Header-Badge erneut (sicherheitshalber)
         window.dispatchEvent(new CustomEvent('notifications-update'))
