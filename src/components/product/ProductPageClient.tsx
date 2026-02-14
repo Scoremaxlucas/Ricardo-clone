@@ -822,6 +822,7 @@ export function ProductPageClient({
                   sellerId={watch.sellerId}
                   sellerName={seller?.nickname || seller?.name || t.common.unknown}
                   sellerEmail={seller?.email || ''}
+                  sellerImage={seller?.image}
                   compact={true}
                 />
               </div>
@@ -1047,6 +1048,7 @@ export function ProductPageClient({
                 sellerId={watch.sellerId}
                 sellerName={seller?.nickname || seller?.name || t.common.unknown}
                 sellerEmail={seller?.email || ''}
+                sellerImage={seller?.image}
                 compact={true}
               />
             </div>

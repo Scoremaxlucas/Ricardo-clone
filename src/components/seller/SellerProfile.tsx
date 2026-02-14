@@ -11,6 +11,7 @@ interface SellerProfileProps {
   sellerId: string
   sellerName: string
   sellerEmail: string
+  sellerImage?: string | null
   compact?: boolean
 }
 
@@ -23,6 +24,9 @@ interface SellerData {
     averageRating: number
     positivePercentage: number
   }
+  user?: {
+    image?: string | null
+  }
   otherItems: Array<{
     id: string
     title: string
@@ -31,7 +35,7 @@ interface SellerData {
   }>
 }
 
-export function SellerProfile({ sellerId, sellerName, sellerEmail, compact = false }: SellerProfileProps) {
+export function SellerProfile({ sellerId, sellerName, sellerEmail, sellerImage, compact = false }: SellerProfileProps) {
   const { data: session } = useSession()
   const { requireAuth } = useAuthGate()
   const [sellerData, setSellerData] = useState<SellerData | null>(null)
@@ -184,9 +188,17 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail, compact = fal
 
         <div className="flex items-center gap-3">
           {/* Avatar */}
-          <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white">
-            {getInitials(sellerName)}
-          </div>
+          {(sellerImage || sellerData?.user?.image) ? (
+            <img
+              src={sellerImage || sellerData?.user?.image || ''}
+              alt={sellerName}
+              className="h-12 w-12 flex-shrink-0 rounded-full object-cover"
+            />
+          ) : (
+            <div className="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-sm font-bold text-white">
+              {getInitials(sellerName)}
+            </div>
+          )}
 
           <div className="min-w-0 flex-1">
             {/* Name */}
@@ -233,9 +245,17 @@ export function SellerProfile({ sellerId, sellerName, sellerEmail, compact = fal
 
       <div className="mb-4 flex items-start gap-4">
         {/* Verkäufer Avatar */}
-        <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-xl font-bold text-white">
-          {getInitials(sellerName)}
-        </div>
+        {(sellerImage || sellerData?.user?.image) ? (
+          <img
+            src={sellerImage || sellerData?.user?.image || ''}
+            alt={sellerName}
+            className="h-16 w-16 flex-shrink-0 rounded-full object-cover"
+          />
+        ) : (
+          <div className="flex h-16 w-16 flex-shrink-0 items-center justify-center rounded-full bg-primary-600 text-xl font-bold text-white">
+            {getInitials(sellerName)}
+          </div>
+        )}
 
         <div className="flex-1">
           {/* Verkäufer Name */}

@@ -60,7 +60,9 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
           name: true,
           nickname: true,
           email: true,
+          image: true,
           verified: true,
+          createdAt: true,
         },
       },
     }

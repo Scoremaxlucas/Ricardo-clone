@@ -25,6 +25,8 @@ interface Watch {
     name: string
     nickname?: string | null
     email: string
+    image?: string | null
+    createdAt?: string
   }
   fullset: boolean
   allLinks: boolean
@@ -363,21 +365,29 @@ export default function WatchDetailPage({ params }: { params: { id: string } }) 
               <div className="mt-6 border-t pt-6">
                 <h3 className="mb-2 font-semibold text-gray-900">Verkäufer</h3>
                 <div className="flex items-center space-x-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100">
-                    <span className="font-semibold text-primary-600">
-                      {(watch.seller.nickname || watch.seller.name).charAt(0)}
-                    </span>
-                  </div>
+                  {watch.seller.image ? (
+                    <img
+                      src={watch.seller.image}
+                      alt={watch.seller.nickname || watch.seller.name}
+                      className="h-10 w-10 rounded-full object-cover"
+                    />
+                  ) : (
+                    <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100">
+                      <span className="font-semibold text-primary-600">
+                        {(watch.seller.nickname || watch.seller.name).charAt(0).toUpperCase()}
+                      </span>
+                    </div>
+                  )}
                   <div>
                     <a
-                      href={`/profile/${watch.seller.id}`}
+                      href={`/users/${watch.seller.id}`}
                       className="font-medium text-gray-900 hover:text-primary-600"
                     >
                       {watch.seller.nickname || watch.seller.name}
                     </a>
                     <p className="text-sm text-gray-600">
                       Mitglied seit{' '}
-                      {new Date(watch.createdAt).toLocaleDateString('de-CH', {
+                      {new Date(watch.seller.createdAt || watch.createdAt).toLocaleDateString('de-CH', {
                         month: 'long',
                         year: 'numeric',
                       })}
