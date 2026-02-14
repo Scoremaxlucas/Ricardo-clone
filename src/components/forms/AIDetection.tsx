@@ -3965,7 +3965,6 @@ export function AIDetection({
     if (modelRef.current) return modelRef.current
 
     setModelLoading(true)
-    console.log('🤖 Lade PROFESSIONELLE KI-Modelle...')
 
     try {
       // Dynamically import to avoid SSR issues
@@ -3986,7 +3985,6 @@ export function AIDetection({
       })
 
       modelRef.current = model
-      console.log('✅ PROFESSIONELLES KI-Modell erfolgreich geladen! (MobileNet v2)')
       setModelLoading(false)
       return model
     } catch (error) {
@@ -4000,7 +3998,6 @@ export function AIDetection({
     setIsAnalyzing(true)
     setError(null)
     setAiSuggestion(null)
-    console.log('🔍 Analysiere Bild mit GPT-4 Vision (DEUTLICH VERBESSERTE KI)...')
 
     try {
       // PRIORITÄT 1: GPT-4 Vision API (DEUTLICH BESSER als Google Vision)
@@ -4036,8 +4033,6 @@ export function AIDetection({
         }
 
           if (visionData.model === 'gpt-4o-vision' && visionData.category) {
-            console.log('✅ GPT-4 Vision erfolgreich verwendet!', visionData)
-
             // Zeige Vorschlag an für UI
             setAiSuggestion({
               category: visionData.category,
@@ -4060,7 +4055,6 @@ export function AIDetection({
             setIsAnalyzing(false)
             return
           } else {
-          console.log('⚠️ GPT-4 Vision Antwort unvollständig, nutze Fallback')
         }
       } catch (visionError: any) {
         console.error('⚠️ GPT-4 Vision Fehler:', visionError)
@@ -4095,7 +4089,6 @@ export function AIDetection({
         if (visionResponse.ok) {
           const visionData = await visionResponse.json()
           if (visionData.model === 'google-vision-api' && visionData.predictions?.length > 0) {
-            console.log('✅ Google Vision API erfolgreich verwendet!')
             const predictions = visionData.predictions.map((p: any) => ({
               className: p.className,
               probability: p.probability,
@@ -4114,7 +4107,6 @@ export function AIDetection({
           }
         }
       } catch (visionError) {
-        console.log('⚠️ Google Vision API nicht verfügbar, nutze TensorFlow Fallback')
       }
 
       // PRIORITÄT 2: TensorFlow.js MobileNet v2 (Fallback)
@@ -4134,8 +4126,6 @@ export function AIDetection({
       })
 
       // PROFESSIONELLE KI-VORHERSAGE mit mehreren Durchläufen und Transformationen
-      console.log('🧠 Führe PROFESSIONELLE Bilderkennung durch...')
-
       // Führe Klassifizierung mehrfach durch für bessere Genauigkeit
       const allPredictions: any[] = []
 
@@ -4201,8 +4191,6 @@ export function AIDetection({
         .sort((a, b) => b.probability - a.probability)
         .slice(0, 20) // Top 20 (mehr Daten durch 4 Transformationen)
 
-      console.log('📊 PROFESSIONELLE KI Vorhersagen (kombiniert):', predictions)
-
       // Vorhersagen für UI speichern
       const predictionData = predictions.map((p: any) => ({
         label: p.className,
@@ -4227,8 +4215,6 @@ export function AIDetection({
         const label = prediction.className.toLowerCase().trim()
         const confidence = Math.round(prediction.probability * 100)
 
-        console.log(`   - ${prediction.className}: ${confidence}%`)
-
         // 1. Exaktes Match (höchste Priorität) - 100% Score
         if (categoryMapping[label]) {
           const mapping = categoryMapping[label]
@@ -4242,7 +4228,6 @@ export function AIDetection({
             )
             if (hasNegativeMatch) {
               negativePenalty = 0.5
-              console.log(`     ⚠️ Negative Keywords gefunden für ${label}, Score reduziert`)
             }
           }
 
@@ -4253,9 +4238,6 @@ export function AIDetection({
             confidence,
             hasNegativeMatch: negativePenalty > 0,
           })
-          console.log(
-            `     ✅ Exaktes Match gefunden: ${label} → ${mapping.productName} (Score: ${score.toFixed(1)})`
-          )
         }
 
         // 2. Partielles Match (Label enthält Key oder umgekehrt) - 70-80% Score
@@ -4291,9 +4273,6 @@ export function AIDetection({
               confidence,
               hasNegativeMatch: negativePenalty > 0,
             })
-            console.log(
-              `     🔍 Partielles Match: ${label} ≈ ${key} → ${value.productName} (Score: ${score.toFixed(1)})`
-            )
           }
         }
 
@@ -4312,9 +4291,6 @@ export function AIDetection({
             const priority = value.priority || 5
             const score = confidence * (priority / 10) * 0.5 // Fuzzy Match = 50% Score
             matches.push({ match: value, score, confidence })
-            console.log(
-              `     🔤 Fuzzy Match: ${label} ~ ${key} → ${value.productName} (Score: ${score.toFixed(1)})`
-            )
           }
         }
       }
@@ -4327,20 +4303,6 @@ export function AIDetection({
 
         matchesToUse.sort((a, b) => b.score - a.score)
         bestMatch = { ...matchesToUse[0].match, confidence: matchesToUse[0].confidence }
-        console.log(
-          `     🏆 Bestes Match: ${bestMatch.productName} (Score: ${matchesToUse[0].score.toFixed(1)}, Confidence: ${bestMatch.confidence}%)`
-        )
-
-        if (matchesToUse[0].hasNegativeMatch) {
-          console.warn(`     ⚠️ WARNUNG: Match hat negative Keywords, könnte falsch sein!`)
-        }
-
-        // Warnung wenn Score zu niedrig ist
-        if (matchesToUse[0].score < 30) {
-          console.warn(
-            `     ⚠️ Niedrige Erkennungsqualität - Score: ${matchesToUse[0].score.toFixed(1)}`
-          )
-        }
       }
 
       // Falls kein Match gefunden, nutze die beste Vorhersage
@@ -4353,16 +4315,7 @@ export function AIDetection({
           productName: productName,
           confidence: Math.round(topPrediction.probability * 100),
         }
-        console.log('⚠️ Keine direkte Kategorie gefunden, nutze Fallback:', productName)
       }
-
-      console.log(
-        '✅ Erkannt:',
-        bestMatch.productName,
-        '→',
-        bestMatch.category,
-        `(${bestMatch.confidence}%)`
-      )
 
       setIsAnalyzing(false)
       onCategoryDetected(
@@ -4400,8 +4353,6 @@ export function AIDetection({
       const label = prediction.className.toLowerCase().trim()
       const confidence = Math.round(prediction.probability * 100)
 
-      console.log(`   - ${prediction.className}: ${confidence}%`)
-
       // 1. Exaktes Match (höchste Priorität) - 100% Score
       if (categoryMapping[label]) {
         const mapping = categoryMapping[label]
@@ -4415,7 +4366,6 @@ export function AIDetection({
           )
           if (hasNegativeMatch) {
             negativePenalty = 0.5 // 50% Score-Reduktion
-            console.log(`     ⚠️ Negative Keywords gefunden für ${label}, Score reduziert`)
           }
         }
 
@@ -4426,9 +4376,6 @@ export function AIDetection({
           confidence,
           hasNegativeMatch: negativePenalty > 0,
         })
-        console.log(
-          `     ✅ Exaktes Match gefunden: ${label} → ${mapping.productName} (Score: ${score.toFixed(1)})`
-        )
       }
 
       // 2. Partielles Match - 70-80% Score
@@ -4464,9 +4411,6 @@ export function AIDetection({
             confidence,
             hasNegativeMatch: negativePenalty > 0,
           })
-          console.log(
-            `     🔍 Partielles Match: ${label} ≈ ${key} → ${value.productName} (Score: ${score.toFixed(1)})`
-          )
         }
       }
 
@@ -4484,9 +4428,6 @@ export function AIDetection({
           const priority = value.priority || 5
           const score = confidence * (priority / 10) * 0.5
           matches.push({ match: value, score, confidence })
-          console.log(
-            `     🔤 Fuzzy Match: ${label} ~ ${key} → ${value.productName} (Score: ${score.toFixed(1)})`
-          )
         }
       }
     }
@@ -4499,13 +4440,6 @@ export function AIDetection({
 
       matchesToUse.sort((a, b) => b.score - a.score)
       bestMatch = { ...matchesToUse[0].match, confidence: matchesToUse[0].confidence }
-      console.log(
-        `     🏆 Bestes Match: ${bestMatch.productName} (Score: ${matchesToUse[0].score.toFixed(1)}, Confidence: ${bestMatch.confidence}%)`
-      )
-
-      if (matchesToUse[0].hasNegativeMatch) {
-        console.warn(`     ⚠️ WARNUNG: Match hat negative Keywords, könnte falsch sein!`)
-      }
     }
 
     // Falls kein Match gefunden
@@ -4517,7 +4451,6 @@ export function AIDetection({
         productName: topPrediction.className,
         confidence: Math.round(topPrediction.probability * 100),
       }
-      console.log('⚠️ Keine direkte Kategorie gefunden, nutze Fallback:', topPrediction.className)
     }
 
     onCategoryDetected(
@@ -4807,8 +4740,6 @@ export function AIDetection({
     // Zusätzlich: Version ohne Leerzeichen für zusammengeschriebene Wörter
     const textNoSpaces = normalizedText.replace(/\s/g, '')
 
-    console.log('🔍 Text-Analyse:', { original: text, normalized: normalizedText, noSpaces: textNoSpaces })
-
     let result = textDetectionResults.find(r =>
       r.keywords.some(keyword => {
         const normalizedKeyword = keyword.toLowerCase().replace(/[-_]/g, ' ').replace(/\s+/g, ' ').trim()
@@ -4834,7 +4765,6 @@ export function AIDetection({
           r.keywords.some(keyword => keyword.toLowerCase().includes(word) || word.includes(keyword.toLowerCase()))
         )
         if (result) {
-          console.log('✅ Match gefunden durch Einzelwort:', word)
           break
         }
       }
@@ -4848,21 +4778,9 @@ export function AIDetection({
         subcategory: 'Sonstiges',
         productName: text.charAt(0).toUpperCase() + text.slice(1),
       }
-      console.log('⚠️ Keine Übereinstimmung gefunden - Fallback zu Sonstiges')
-    } else {
-      console.log('✅ Kategorie erkannt:', result.category, result.subcategory)
     }
 
     const confidence = 85 + Math.floor(Math.random() * 10)
-
-    console.log(
-      '🔍 Text analysiert:',
-      text,
-      '→',
-      result.productName,
-      '| Kategorie:',
-      result.category
-    )
     setIsAnalyzing(false)
     onCategoryDetected(result.category, result.subcategory, result.productName, null, confidence)
   }
@@ -4932,11 +4850,8 @@ export function AIDetection({
       e.preventDefault()
       e.stopPropagation()
     }
-    console.log('🔍 Starte Text-Analyse für:', textQuery)
     if (textQuery.trim()) {
       analyzeText(textQuery)
-    } else {
-      console.log('⚠️ Kein Text eingegeben')
     }
   }
 
@@ -5175,7 +5090,6 @@ export function AIDetection({
               onClick={e => {
                 e.preventDefault()
                 e.stopPropagation()
-                console.log('🖱️ Button geklickt für:', textQuery)
                 handleTextSearch()
               }}
               disabled={!textQuery.trim() || isAnalyzing}

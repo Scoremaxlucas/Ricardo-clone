@@ -22,33 +22,18 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'WatchId ist erforderlich' }, { status: 400 })
     }
 
-    // Prüfe ob der Artikel existiert
-    // WICHTIG: Explizites select für purchases um disputeInitiatedBy zu vermeiden
-    const watch = await prisma.watch.findUnique({
+    // Prüfe ob der Artikel existiert (basic check before transaction)
+    const watchCheck = await prisma.watch.findUnique({
       where: { id: watchId },
-      include: {
-        purchases: {
-          select: {
-            id: true,
-            status: true,
-          },
-        },
-      },
+      select: { id: true, sellerId: true },
     })
 
-    if (!watch) {
+    if (!watchCheck) {
       return NextResponse.json({ message: 'Artikel nicht gefunden' }, { status: 404 })
     }
 
-    // Prüfe ob bereits ein aktiver Purchase für diesen Artikel existiert (nur ein Kauf pro Artikel möglich)
-    // Stornierte Purchases zählen nicht - Artikel kann wieder gekauft werden
-    const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
-    if (activePurchases.length > 0) {
-      return NextResponse.json({ message: 'Diese Uhr wurde bereits verkauft' }, { status: 400 })
-    }
-
     // Prüfe ob der Käufer nicht der Verkäufer ist
-    if (watch.sellerId === session.user.id) {
+    if (watchCheck.sellerId === session.user.id) {
       return NextResponse.json(
         { message: 'Sie können nicht Ihren eigenen Artikel kaufen' },
         { status: 400 }
@@ -65,58 +50,74 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Käufer nicht gefunden' }, { status: 404 })
     }
 
-    // Debug: Log IDs für Troubleshooting
-    console.log(
-      `[purchases/create] Erstelle Purchase: watchId=${watchId}, buyerId=${session.user.id}, sellerId=${watch.sellerId}`
-    )
-
-    // Aktiviere Foreign Keys für SQLite
-    try {
-      await prisma.$executeRaw`PRAGMA foreign_keys = ON`
-    } catch (e) {
-      // Ignoriere Fehler wenn nicht SQLite
-    }
-
-    // Erstelle Purchase mit Status "pending"
-    // Berechne Kontaktfrist (7 Tage nach Purchase)
-    const contactDeadline = new Date()
-    contactDeadline.setDate(contactDeadline.getDate() + 7)
-
+    // RACE CONDITION FIX: Wrap check + create in a serializable transaction
+    // This prevents two concurrent requests from both passing the "no active purchase" check
     let purchase
     try {
-      purchase = await prisma.purchase.create({
-        data: {
-          watchId,
-          buyerId: session.user.id,
-          shippingMethod: shippingMethod || null,
-          price: price || watch.price,
-          status: 'pending',
-          itemReceived: false,
-          paymentConfirmed: false,
-          contactDeadline: contactDeadline, // 7-Tage-Kontaktfrist
-        },
-        include: {
-          watch: {
-            include: {
-              seller: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  phone: true,
-                  nickname: true,
-                  firstName: true,
-                  lastName: true,
-                },
+      purchase = await prisma.$transaction(async (tx) => {
+        // Re-check inside transaction for atomicity
+        const watch = await tx.watch.findUnique({
+          where: { id: watchId },
+          include: {
+            purchases: {
+              select: {
+                id: true,
+                status: true,
               },
             },
           },
-          buyer: true,
-        },
+        })
+
+        if (!watch) {
+          throw new Error('ARTICLE_NOT_FOUND')
+        }
+
+        // Check for active purchases atomically
+        const activePurchases = watch.purchases.filter(p => p.status !== 'cancelled')
+        if (activePurchases.length > 0) {
+          throw new Error('ALREADY_SOLD')
+        }
+
+        // Berechne Kontaktfrist (7 Tage nach Purchase)
+        const contactDeadline = new Date()
+        contactDeadline.setDate(contactDeadline.getDate() + 7)
+
+        const created = await tx.purchase.create({
+          data: {
+            watchId,
+            buyerId: session.user.id,
+            shippingMethod: shippingMethod || null,
+            price: price || watch.price,
+            status: 'pending',
+            itemReceived: false,
+            paymentConfirmed: false,
+            contactDeadline: contactDeadline,
+          },
+          include: {
+            watch: {
+              include: {
+                seller: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    phone: true,
+                    nickname: true,
+                    firstName: true,
+                    lastName: true,
+                  },
+                },
+              },
+            },
+            buyer: true,
+          },
+        })
+
+        return created
       })
 
-      // Fetch seller address from UserAddress table
-      const sellerAddress = await getMainAddress(watch.sellerId)
+      // Fetch seller address from UserAddress table (outside transaction - read-only)
+      const sellerAddress = await getMainAddress(watchCheck.sellerId)
       if (purchase.watch.seller) {
         ;(purchase.watch.seller as any).street = sellerAddress?.street || null
         ;(purchase.watch.seller as any).streetNumber = sellerAddress?.streetNumber || null
@@ -125,19 +126,18 @@ export async function POST(request: NextRequest) {
         ;(purchase.watch.seller as any).country = sellerAddress?.country || 'Schweiz'
       }
     } catch (createError: unknown) {
-      console.error('[purchases/create] Fehler beim Erstellen des Purchases:', createError)
       const errMsg = createError instanceof Error ? createError.message : 'Unknown'
-      const errCode = (createError as { code?: string })?.code
-      console.error('[purchases/create] Fehler-Details:', {
-        watchId,
-        buyerId: session.user.id,
-        watchExists: !!watch,
-        buyerExists: !!buyer,
-        errorMessage: errMsg,
-        errorCode: errCode,
-      })
+      if (errMsg === 'ARTICLE_NOT_FOUND') {
+        return NextResponse.json({ message: 'Artikel nicht gefunden' }, { status: 404 })
+      }
+      if (errMsg === 'ALREADY_SOLD') {
+        return NextResponse.json({ message: 'Diese Uhr wurde bereits verkauft' }, { status: 400 })
+      }
+      console.error('[purchases/create] Fehler beim Erstellen des Purchases:', createError)
       throw createError
     }
+
+    const watch = purchase.watch
 
     console.log(
       `[purchases/create] Purchase erstellt: ${purchase.id} für Watch ${watchId} von ${session.user.email}`
@@ -171,6 +171,27 @@ export async function POST(request: NextRequest) {
       console.error('[purchases/create] ❌ Fehler bei Rechnungserstellung:', invoiceError)
       // Fehler wird geloggt, aber Purchase bleibt bestehen
       // Verkäufer kann später manuell Rechnung erstellen lassen
+
+      // Notify admin about failed invoice
+      try {
+        const admins = await prisma.user.findMany({
+          where: { isAdmin: true },
+          select: { id: true },
+        })
+        for (const admin of admins) {
+          await prisma.notification.create({
+            data: {
+              userId: admin.id,
+              type: 'SYSTEM',
+              title: 'Rechnungserstellung fehlgeschlagen',
+              message: `Rechnung für Purchase ${purchase.id} konnte nicht erstellt werden. Manuelle Prüfung erforderlich.`,
+              link: `/admin/invoices`,
+            },
+          })
+        }
+      } catch {
+        /* silent - best effort */
+      }
     }
 
     // Erstelle Benachrichtigung für Verkäufer
@@ -338,9 +359,8 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: unknown) {
     console.error('Error creating purchase:', error)
-    const message = error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten'
     return NextResponse.json(
-      { message: 'Fehler beim Erstellen des Kaufs: ' + message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

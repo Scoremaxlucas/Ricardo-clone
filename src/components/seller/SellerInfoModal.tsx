@@ -1,7 +1,8 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { X, Shield, Loader2, CheckCircle, Mail, Phone, MapPin, CreditCard, User, Copy, Check } from 'lucide-react'
+import { useState, useEffect } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface SellerInfo {
@@ -46,6 +47,7 @@ export function SellerInfoModal({
   onPayViaStripe,
   isProcessingStripePayment,
 }: SellerInfoModalProps) {
+  const { t } = useLanguage()
   const [sellerInfo, setSellerInfo] = useState<SellerInfo | null>(null)
   const [loading, setLoading] = useState(false)
   const [isMarkingPaid, setIsMarkingPaid] = useState(false)
@@ -65,11 +67,11 @@ export function SellerInfoModal({
       } else {
         const errorData = await response.json()
         console.error('Error response:', errorData)
-        alert('Fehler beim Markieren als bezahlt: ' + (errorData.message || 'Unbekannter Fehler'))
+        alert(t.modals.sellerInfo.errorMarkingPaid + ': ' + (errorData.message || 'Unbekannter Fehler'))
       }
     } catch (error) {
       console.error('Error marking as paid:', error)
-      alert('Fehler beim Markieren als bezahlt')
+        alert(t.modals.sellerInfo.errorMarkingPaid)
     } finally {
       setIsMarkingPaid(false)
     }
@@ -99,7 +101,7 @@ export function SellerInfoModal({
   const copyToClipboard = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text)
     setCopiedField(fieldName)
-    toast.success('Kopiert!')
+    toast.success(t.modals.copied)
     setTimeout(() => setCopiedField(null), 2000)
   }
 
@@ -117,7 +119,7 @@ export function SellerInfoModal({
 
   const sellerFullName = sellerInfo?.firstName && sellerInfo?.lastName
     ? `${sellerInfo.firstName} ${sellerInfo.lastName}`
-    : sellerInfo?.name || 'Verkäufer'
+    : sellerInfo?.name || t.modals.sellerInfo.seller
 
   const sellerFullAddress = sellerInfo?.street || sellerInfo?.city
     ? `${sellerInfo.street || ''} ${sellerInfo.streetNumber || ''}, ${sellerInfo.postalCode || ''} ${sellerInfo.city || ''}`.trim()
@@ -130,13 +132,13 @@ export function SellerInfoModal({
         <div className="sticky top-0 z-10 border-b border-gray-100 bg-gradient-to-r from-primary-600 to-teal-500 px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white">Verkäuferinformationen</h2>
+              <h2 className="text-xl font-bold text-white">{t.modals.sellerInfo.title}</h2>
               <p className="mt-1 text-sm text-white/80">{watchTitle}</p>
             </div>
             <button
               onClick={onClose}
               className="rounded-full bg-white/20 p-2 text-white transition-colors hover:bg-white/30"
-              aria-label="Schliessen"
+              aria-label={t.modals.close}
             >
               <X className="h-5 w-5" />
             </button>
@@ -150,9 +152,9 @@ export function SellerInfoModal({
               <CheckCircle className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="font-semibold text-emerald-800">Kontaktdaten freigeschaltet</p>
+              <p className="font-semibold text-emerald-800">{t.modals.sellerInfo.contactDataUnlocked}</p>
               <p className="text-sm text-emerald-600">
-                Als Käufer haben Sie jetzt Zugriff auf die vollständigen Verkäuferdaten.
+                {t.modals.sellerInfo.contactDataUnlockedDesc}
               </p>
             </div>
           </div>
@@ -167,14 +169,14 @@ export function SellerInfoModal({
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
                 <div className="mb-3 flex items-center gap-2">
                   <User className="h-4 w-4 text-gray-500" />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Name</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t.modals.name}</span>
                 </div>
                 <div className="flex items-center justify-between">
                   <span className="text-lg font-semibold text-gray-900">{sellerFullName}</span>
                   <button
                     onClick={() => copyToClipboard(sellerFullName, 'name')}
                     className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-                    title="Kopieren"
+                    title={t.modals.copy}
                   >
                     {copiedField === 'name' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                   </button>
@@ -188,7 +190,7 @@ export function SellerInfoModal({
                   <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
                     <div className="mb-2 flex items-center gap-2">
                       <Mail className="h-4 w-4 text-gray-500" />
-                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">E-Mail</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t.modals.email}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <a
@@ -200,7 +202,7 @@ export function SellerInfoModal({
                       <button
                         onClick={() => copyToClipboard(sellerInfo.email!, 'email')}
                         className="flex-shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-                        title="Kopieren"
+                        title={t.modals.copy}
                       >
                         {copiedField === 'email' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                       </button>
@@ -213,7 +215,7 @@ export function SellerInfoModal({
                   <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
                     <div className="mb-2 flex items-center gap-2">
                       <Phone className="h-4 w-4 text-gray-500" />
-                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Telefon</span>
+                      <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t.modals.phone}</span>
                     </div>
                     <div className="flex items-center justify-between gap-2">
                       <a
@@ -225,7 +227,7 @@ export function SellerInfoModal({
                       <button
                         onClick={() => copyToClipboard(sellerInfo.phone!, 'phone')}
                         className="flex-shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-                        title="Kopieren"
+                        title={t.modals.copy}
                       >
                         {copiedField === 'phone' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                       </button>
@@ -239,7 +241,7 @@ export function SellerInfoModal({
                 <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
                   <div className="mb-2 flex items-center gap-2">
                     <MapPin className="h-4 w-4 text-gray-500" />
-                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Adresse</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t.modals.address}</span>
                   </div>
                   <div className="flex items-start justify-between gap-2">
                     <div>
@@ -257,7 +259,7 @@ export function SellerInfoModal({
                     <button
                       onClick={() => copyToClipboard(sellerFullAddress, 'address')}
                       className="flex-shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-                      title="Kopieren"
+                      title={t.modals.copy}
                     >
                       {copiedField === 'address' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                     </button>
@@ -271,7 +273,7 @@ export function SellerInfoModal({
                   <div className="mb-3 flex items-center gap-2">
                     <CreditCard className="h-4 w-4 text-gray-500" />
                     <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                      Zahlungsmethoden
+                      {t.modals.sellerInfo.paymentMethods}
                     </span>
                   </div>
                   <div className="space-y-3">
@@ -283,7 +285,7 @@ export function SellerInfoModal({
                         {method.type === 'twint' && (
                           <div>
                             <div className="mb-1 flex items-center gap-2">
-                              <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">TWINT</span>
+                              <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">{t.modals.twint}</span>
                             </div>
                             {method.phone && (
                               <div className="mt-2 flex items-center justify-between">
@@ -301,7 +303,7 @@ export function SellerInfoModal({
                         {method.type === 'bank' && (
                           <div>
                             <div className="mb-2 flex items-center gap-2">
-                              <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Bank</span>
+                              <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">{t.modals.bank}</span>
                             </div>
                             {method.iban && (
                               <div className="flex items-center justify-between rounded bg-gray-50 p-2">
@@ -316,7 +318,7 @@ export function SellerInfoModal({
                             )}
                             {(method.accountHolderFirstName || method.accountHolderLastName) && (
                               <p className="mt-2 text-sm text-gray-600">
-                                Kontoinhaber: {method.accountHolderFirstName} {method.accountHolderLastName}
+                                {t.modals.accountHolder}: {method.accountHolderFirstName} {method.accountHolderLastName}
                               </p>
                             )}
                             {method.bank && (
@@ -337,10 +339,10 @@ export function SellerInfoModal({
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-emerald-500">
                       <Shield className="h-4 w-4 text-white" />
                     </div>
-                    <h3 className="font-semibold text-emerald-800">Helvenda Zahlungsschutz</h3>
+                    <h3 className="font-semibold text-emerald-800">{t.modals.sellerInfo.paymentProtection}</h3>
                   </div>
                   <p className="mb-4 text-sm text-emerald-700">
-                    Bezahlen Sie sicher über unsere Plattform. Ihr Geld wird erst nach Erhalt und Prüfung der Ware an den Verkäufer freigegeben.
+                    {t.modals.sellerInfo.paymentProtectionDesc}
                   </p>
                   <button
                     onClick={() => {
@@ -353,12 +355,12 @@ export function SellerInfoModal({
                     {isProcessingStripePayment ? (
                       <>
                         <Loader2 className="h-5 w-5 animate-spin" />
-                        Wird vorbereitet...
+                        {t.modals.sellerInfo.preparing}
                       </>
                     ) : (
                       <>
                         <Shield className="h-5 w-5" />
-                        Sicher bezahlen
+                        {t.modals.sellerInfo.paySecurely}
                       </>
                     )}
                   </button>
@@ -367,7 +369,7 @@ export function SellerInfoModal({
             </div>
           ) : (
             <div className="py-12 text-center text-gray-500">
-              Fehler beim Laden der Verkäuferinformationen
+              {t.modals.sellerInfo.errorLoading}
             </div>
           )}
         </div>
@@ -378,7 +380,7 @@ export function SellerInfoModal({
             onClick={onClose}
             className="w-full rounded-xl bg-gray-200 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-300"
           >
-            Schliessen
+            {t.modals.close}
           </button>
         </div>
       </div>

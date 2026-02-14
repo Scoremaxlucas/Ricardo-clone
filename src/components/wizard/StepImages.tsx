@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/contexts/LanguageContext'
 import { EditPolicy } from '@/lib/edit-policy'
 import { compressImage } from '@/lib/image-compression'
 import { Loader2, Lock, Star, Upload, X } from 'lucide-react'
@@ -37,6 +38,7 @@ export function StepImages({
   policy,
   mode = 'create',
 }: StepImagesProps) {
+  const { t } = useLanguage()
   const [uploadingIndexes, setUploadingIndexes] = useState<Set<number>>(new Set())
   const [isCreatingDraft, setIsCreatingDraft] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -59,12 +61,12 @@ export function StepImages({
         const tempIndex = currentImageCount + i
 
         if (!file.type.startsWith('image/')) {
-          toast.error(`${file.name} ist kein Bild.`, { position: 'top-right', duration: 4000 })
+          toast.error(`${file.name} ${t.wizard.images.notAnImage}`, { position: 'top-right', duration: 4000 })
           continue
         }
 
         if (file.size > 10 * 1024 * 1024) {
-          toast.error(`${file.name} ist zu groß. Maximale Größe: 10MB`, {
+          toast.error(`${file.name} ${t.wizard.images.fileTooBig}`, {
             position: 'top-right',
             duration: 4000,
           })
@@ -83,7 +85,7 @@ export function StepImages({
           processedCount++
         } catch (error) {
           console.error('Error compressing image:', error)
-          toast.error(`Fehler beim Verarbeiten von ${file.name}`, {
+          toast.error(`${t.wizard.images.processingError} ${file.name}`, {
             position: 'top-right',
             duration: 4000,
           })
@@ -100,7 +102,7 @@ export function StepImages({
       if (newImageUrls.length > 0) {
         onImagesChange([...formData.images, ...newImageUrls])
         toast.success(
-          `${newImageUrls.length} Bild${newImageUrls.length > 1 ? 'er' : ''} hinzugefügt.`,
+          `${newImageUrls.length} ${newImageUrls.length > 1 ? t.wizard.images.images : t.wizard.images.image} ${t.wizard.images.imagesAdded}`,
           {
             position: 'top-right',
             duration: 3000,
@@ -129,7 +131,7 @@ export function StepImages({
 
       // Check file type
       if (!file.type.startsWith('image/')) {
-        toast.error(`${file.name} ist kein Bild. Bitte wählen Sie nur Bilddateien aus.`, {
+        toast.error(`${file.name} ${t.wizard.images.notAnImageSelect}`, {
           position: 'top-right',
           duration: 4000,
         })
@@ -138,7 +140,7 @@ export function StepImages({
 
       // Check file size (max 10MB per image)
       if (file.size > 10 * 1024 * 1024) {
-        toast.error(`${file.name} ist zu groß. Maximale Größe: 10MB`, {
+        toast.error(`${file.name} ${t.wizard.images.fileTooBig}`, {
           position: 'top-right',
           duration: 4000,
         })
@@ -158,7 +160,7 @@ export function StepImages({
 
         // Show progress for multiple images
         if (files.length > 1) {
-          toast.loading(`Bild ${newImageUrls.length + 1} von ${files.length} wird hochgeladen...`, {
+          toast.loading(`${t.wizard.images.image} ${newImageUrls.length + 1} von ${files.length} ${t.wizard.images.uploadProgress}`, {
             id: 'image-upload-progress',
             position: 'top-right',
           })
@@ -187,7 +189,7 @@ export function StepImages({
 
         if (!uploadResponse.ok) {
           const errorData = await uploadResponse.json().catch(() => ({}))
-          throw new Error(errorData.message || 'Upload fehlgeschlagen')
+          throw new Error(errorData.message || t.wizard.images.uploadFailed)
         }
 
         const { image } = await uploadResponse.json()
@@ -205,7 +207,7 @@ export function StepImages({
       } catch (error) {
         console.error('Error uploading image:', error)
         toast.error(
-          `Fehler beim Hochladen von ${file.name}: ${error instanceof Error ? error.message : 'Unbekannter Fehler'}`,
+          `${t.wizard.images.uploadError} ${file.name}: ${error instanceof Error ? error.message : t.wizard.images.unknownError}`,
           {
             position: 'top-right',
             duration: 5000,
@@ -226,7 +228,7 @@ export function StepImages({
 
     if (newImageUrls.length > 0) {
       toast.success(
-        `${newImageUrls.length} Bild${newImageUrls.length > 1 ? 'er' : ''} erfolgreich hochgeladen.`,
+        `${newImageUrls.length} ${newImageUrls.length > 1 ? t.wizard.images.images : t.wizard.images.image} ${t.wizard.images.imagesUploaded}`,
         {
           position: 'top-right',
           duration: 3000,
@@ -240,7 +242,7 @@ export function StepImages({
 
   const removeImage = async (index: number) => {
     if (!draftId) {
-      toast.error('Bitte warten Sie, bis der Entwurf geladen ist', {
+      toast.error(t.wizard.images.waitForDraft, {
         position: 'top-right',
         duration: 3000,
       })
@@ -264,7 +266,7 @@ export function StepImages({
           })
 
           if (!deleteResponse.ok) {
-            throw new Error('Löschen fehlgeschlagen')
+            throw new Error(t.wizard.images.deleteFailed)
           }
         }
       }
@@ -281,7 +283,7 @@ export function StepImages({
       }
     } catch (error) {
       console.error('Error removing image:', error)
-      toast.error('Fehler beim Löschen des Bildes', {
+      toast.error(t.wizard.images.deleteError, {
         position: 'top-right',
         duration: 3000,
       })
@@ -290,7 +292,7 @@ export function StepImages({
 
   const setAsTitleImage = async (index: number) => {
     await onTitleImageChange(index)
-    toast.success('Titelbild geändert', {
+    toast.success(t.wizard.images.titleImageChanged, {
       position: 'top-right',
       duration: 2000,
     })
@@ -300,12 +302,12 @@ export function StepImages({
     <div className="space-y-3 sm:space-y-4 md:space-y-6">
       <div className="text-center">
         <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
-          Bilder hochladen
+          {t.wizard.images.title}
         </h2>
         <p className="text-xs text-gray-600 sm:text-sm md:text-base">
           {isImagesAppendOnly
-            ? 'Sie können nur zusätzliche Bilder hinzufügen. Bestehende Bilder können nicht gelöscht oder geändert werden.'
-            : 'Fügen Sie bis zu 10 Bilder hinzu. Das erste Bild wird als Titelbild verwendet.'}
+            ? t.wizard.images.subtitleAppendOnly
+            : t.wizard.images.subtitleNormal}
         </p>
       </div>
 
@@ -315,8 +317,7 @@ export function StepImages({
           <div className="flex items-center gap-2">
             <Lock className="h-4 w-4 text-amber-600" />
             <p className="text-sm text-amber-800">
-              Bei vorhandenen Geboten können nur neue Bilder hinzugefügt werden. Bestehende Bilder
-              können nicht gelöscht oder neu angeordnet werden.
+              {t.wizard.images.appendOnlyBanner}
             </p>
           </div>
         </div>
@@ -350,12 +351,12 @@ export function StepImages({
                 }`}
               >
                 {isImagesAppendOnly
-                  ? 'Zusätzliche Bilder hinzufügen'
+                  ? t.wizard.images.addAdditional
                   : formData.images.length > 0
-                    ? 'Weitere Bilder hinzufügen'
-                    : 'Bilder hochladen'}
+                    ? t.wizard.images.addMore
+                    : t.wizard.images.uploadImages}
               </span>
-              <p className="mt-1 text-xs text-gray-500 sm:text-sm">JPG, PNG, max. 10MB pro Bild</p>
+              <p className="mt-1 text-xs text-gray-500 sm:text-sm">{t.wizard.images.fileFormats}</p>
             </div>
             <input
               type="file"
@@ -373,7 +374,7 @@ export function StepImages({
                   : 'bg-primary-600 text-white hover:bg-primary-700'
               }`}
             >
-              {uploadingIndexes.size > 0 ? 'Wird hochgeladen...' : 'Dateien auswählen'}
+              {uploadingIndexes.size > 0 ? t.wizard.images.uploading : t.wizard.images.selectFiles}
             </span>
           </label>
         </div>
@@ -384,19 +385,19 @@ export function StepImages({
         <div className="space-y-4">
           <div className="flex items-center justify-between">
             <h3 className="font-semibold text-gray-900">
-              {isImagesAppendOnly ? 'Bestehende Bilder' : 'Hochgeladene Bilder'} (
+              {isImagesAppendOnly ? t.wizard.images.existingImages : t.wizard.images.uploadedImages} (
               {formData.images.length}/10)
             </h3>
             {formData.images.length > 0 && !isImagesAppendOnly && (
               <span className="flex items-center gap-1 text-sm text-gray-500">
                 <Star className="h-4 w-4 text-yellow-500" />
-                Klicken Sie auf ein Bild, um es als Titelbild zu setzen
+                {t.wizard.images.clickToSetTitle}
               </span>
             )}
             {isImagesAppendOnly && (
               <span className="flex items-center gap-1 text-sm text-amber-600">
                 <Lock className="h-4 w-4" />
-                Bestehende Bilder können nicht geändert werden
+                {t.wizard.images.existingCannotChange}
               </span>
             )}
           </div>
@@ -422,7 +423,7 @@ export function StepImages({
                     <>
                       <img
                         src={image}
-                        alt={`Bild ${index + 1}`}
+                        alt={`${t.wizard.images.imageAlt} ${index + 1}`}
                         className={`h-full w-full object-cover transition-transform ${
                           isImagesAppendOnly
                             ? 'cursor-default'
@@ -435,7 +436,7 @@ export function StepImages({
                       {index === titleImageIndex && (
                         <div className="absolute left-2 top-2 flex items-center gap-1 rounded-full bg-primary-600 px-2 py-1 text-xs font-medium text-white">
                           <Star className="h-3 w-3" />
-                          Titelbild
+                          {t.wizard.images.titleImage}
                         </div>
                       )}
 
@@ -448,7 +449,7 @@ export function StepImages({
                             removeImage(index)
                           }}
                           disabled={!draftId}
-                          aria-label="Bild entfernen"
+                          aria-label={t.wizard.images.removeImage}
                           className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity hover:bg-red-600 disabled:opacity-50 group-hover:opacity-100"
                         >
                           <X className="h-4 w-4" />

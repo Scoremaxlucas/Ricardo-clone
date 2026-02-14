@@ -36,7 +36,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: 'Fehler: ' + error.message,
+        message: 'Ein Fehler ist aufgetreten',
         timestamp: new Date().toISOString(),
       },
       { status: 500 }
@@ -71,7 +71,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json(
       {
         success: false,
-        message: 'Fehler: ' + error.message,
+        message: 'Ein Fehler ist aufgetreten',
       },
       { status: 500 }
     )

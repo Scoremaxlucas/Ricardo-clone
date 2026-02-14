@@ -359,8 +359,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     console.error('Error updating price offer:', error)
     return NextResponse.json(
       {
-        message:
-          'Fehler beim Aktualisieren des Preisvorschlags: ' + (error.message || String(error)),
+        message: 'Ein Fehler ist aufgetreten',
       },
       { status: 500 }
     )
@@ -423,7 +422,7 @@ export async function DELETE(
   } catch (error: any) {
     console.error('Error deleting price offer:', error)
     return NextResponse.json(
-      { message: 'Fehler beim Löschen des Preisvorschlags: ' + (error.message || String(error)) },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

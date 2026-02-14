@@ -395,7 +395,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   } catch (error: any) {
     console.error(`[sales] Error fetching sale:`, error)
     return NextResponse.json(
-      { message: 'Fehler beim Laden des Verkaufs: ' + error.message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

@@ -217,74 +217,76 @@ export async function POST(request: NextRequest) {
         )
       }
 
-      // Erstelle Gebot für Sofortkauf
-      const bid = await prisma.bid.create({
-        data: {
-          watchId,
-          userId: session.user.id,
-          amount: watch.buyNowPrice,
-        },
-        include: {
-          user: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              nickname: true,
-              image: true,
-            },
-          },
-        },
-      })
-
-      // Beende das Angebot sofort (setze auctionEnd auf jetzt)
-      await prisma.watch.update({
-        where: { id: watchId },
-        data: {
-          auctionEnd: new Date(), // Beendet die Auktion sofort
-        },
-      })
-
-      // Berechne Kontaktfrist (7 Tage nach Purchase)
+      // Berechne Kontaktfrist (7 Tage nach Purchase) - vor Transaktion
       const contactDeadline = new Date()
       contactDeadline.setDate(contactDeadline.getDate() + 7)
 
-      // Erstelle Purchase-Eintrag
-      const purchase = await prisma.purchase.create({
-        data: {
-          watchId,
-          buyerId: session.user.id,
-          price: watch.buyNowPrice || watch.price, // Speichere den tatsächlichen Kaufpreis
-          contactDeadline: contactDeadline, // 7-Tage-Kontaktfrist
-        },
-        include: {
-          buyer: {
-            select: {
-              id: true,
-              name: true,
-              email: true,
-              firstName: true,
-              lastName: true,
-              nickname: true,
+      // Erstelle Gebot, beende Auktion und Purchase in einer Transaktion
+      const { bid, purchase } = await prisma.$transaction(async (tx) => {
+        const createdBid = await tx.bid.create({
+          data: {
+            watchId,
+            userId: session.user.id,
+            amount: watch.buyNowPrice!,
+          },
+          include: {
+            user: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                nickname: true,
+                image: true,
+              },
             },
           },
-          watch: {
-            select: {
-              title: true,
-              sellerId: true,
-              seller: {
-                select: {
-                  id: true,
-                  name: true,
-                  email: true,
-                  firstName: true,
-                  lastName: true,
-                  nickname: true,
+        })
+
+        await tx.watch.update({
+          where: { id: watchId },
+          data: {
+            auctionEnd: new Date(),
+          },
+        })
+
+        const createdPurchase = await tx.purchase.create({
+          data: {
+            watchId,
+            buyerId: session.user.id,
+            price: (watch.buyNowPrice ?? watch.price) as number,
+            contactDeadline: contactDeadline,
+          },
+          include: {
+            buyer: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+                firstName: true,
+                lastName: true,
+                nickname: true,
+              },
+            },
+            watch: {
+              select: {
+                title: true,
+                sellerId: true,
+                seller: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    firstName: true,
+                    lastName: true,
+                    nickname: true,
+                  },
                 },
               },
             },
           },
-        },
+        })
+
+        return { bid: createdBid, purchase: createdPurchase }
       })
 
       console.log(
@@ -693,20 +695,13 @@ export async function POST(request: NextRequest) {
     }
 
     // E-Mail: Überboten-Benachrichtigung an vorherigen Höchstbietenden (wenn vorhanden und aktiviert)
+    // Use highestBid.user from initial watch query - no separate N+1 lookup
     if (highestBid && highestBid.userId !== session.user.id) {
       try {
         const shouldSendOutbid = await shouldSendNotification(highestBid.userId, 'emailOnOutbid')
         if (shouldSendOutbid) {
           const { sendEmail, getOutbidNotificationEmail } = await import('@/lib/email')
-          const previousBidder = await prisma.user.findUnique({
-            where: { id: highestBid.userId },
-            select: {
-              email: true,
-              name: true,
-              nickname: true,
-              firstName: true,
-            },
-          })
+          const previousBidder = highestBid.user
           if (previousBidder && previousBidder.email) {
             const previousBidderName =
               previousBidder.nickname || previousBidder.firstName || previousBidder.name || 'Käufer'
@@ -775,9 +770,8 @@ export async function POST(request: NextRequest) {
     })
   } catch (error: unknown) {
     console.error('Error creating bid:', error)
-    const message = error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten'
     return NextResponse.json(
-      { message: 'Ein Fehler ist aufgetreten beim Abgeben des Gebots: ' + message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }
@@ -812,9 +806,8 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ bids })
   } catch (error: unknown) {
     console.error('Error fetching bids:', error)
-    const message = error instanceof Error ? error.message : 'Ein Fehler ist aufgetreten'
     return NextResponse.json(
-      { message: 'Ein Fehler ist aufgetreten beim Laden der Gebote: ' + message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

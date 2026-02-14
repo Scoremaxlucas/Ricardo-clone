@@ -289,7 +289,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { message: 'Fehler beim Erstellen des Preisvorschlags: ' + (error.message || String(error)) },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

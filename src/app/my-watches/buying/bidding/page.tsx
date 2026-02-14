@@ -38,6 +38,7 @@ export default function MyBiddingPage() {
   const router = useRouter()
   const [bids, setBids] = useState<BidWithWatch[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [processingBuyNow, setProcessingBuyNow] = useState<string | null>(null)
   const [buyNowError, setBuyNowError] = useState<string | null>(null)
   const [buyNowSuccess, setBuyNowSuccess] = useState<string | null>(null)
@@ -103,9 +104,12 @@ export default function MyBiddingPage() {
         if (res.ok) {
           const data = await res.json()
           setBids(data.bids || [])
+          setError(null)
+        } else {
+          setError('Fehler beim Laden')
         }
-      } catch (error) {
-        console.error('Error loading bids:', error)
+      } catch (err) {
+        setError('Fehler beim Laden')
       } finally {
         setLoading(false)
       }
@@ -250,6 +254,13 @@ export default function MyBiddingPage() {
               Suchaufträge
             </Link>
           </div>
+
+          {/* Fehler beim Laden */}
+          {error && (
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-center text-red-600">
+              {error}
+            </div>
+          )}
 
           {/* Erfolgs- und Fehlermeldungen */}
           {buyNowSuccess && (

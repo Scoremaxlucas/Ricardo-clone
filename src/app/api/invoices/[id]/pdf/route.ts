@@ -1010,8 +1010,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     console.error('Error details:', JSON.stringify(error, Object.getOwnPropertyNames(error), 2))
     return NextResponse.json(
       {
-        message: 'Fehler beim Erstellen des PDFs: ' + (error.message || 'Unbekannter Fehler'),
-        error: shouldShowDetailedErrors() ? error.message : undefined,
+        message: 'Ein Fehler ist aufgetreten',
       },
       { status: 500 }
     )

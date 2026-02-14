@@ -1,6 +1,7 @@
 'use client'
 
 import { CategoryFields } from '@/components/forms/category-fields'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { EditPolicy } from '@/lib/edit-policy'
 import { Lock, Sparkles } from 'lucide-react'
 
@@ -61,6 +62,7 @@ export function StepDetails({
   policy,
   mode = 'create',
 }: StepDetailsProps) {
+  const { t } = useLanguage()
   const isTitleLocked = policy?.uiLocks.title || false
   const isDescriptionLocked = policy?.uiLocks.description || false
   const isDescriptionAppendOnly = policy?.uiLocks.descriptionAppendOnly || false
@@ -68,17 +70,17 @@ export function StepDetails({
     <div className="space-y-3 sm:space-y-4 md:space-y-8">
       <div className="text-center">
         <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
-          Artikel-Details
+          {t.wizard.details.title}
         </h2>
         <p className="hidden text-sm text-gray-600 sm:block md:text-base">
-          Beschreiben Sie Ihren Artikel so genau wie möglich
+          {t.wizard.details.subtitle}
         </p>
       </div>
 
       {/* Title */}
       <div className="space-y-2">
         <div className="flex items-center justify-between">
-          <label className="block text-sm font-medium text-gray-700">
+          <label htmlFor="title-input" className="block text-sm font-medium text-gray-700">
             Titel <span className="text-red-500">*</span>
           </label>
           {formData.images.length > 0 && (
@@ -89,11 +91,12 @@ export function StepDetails({
               className="flex items-center gap-1 rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
             >
               <Sparkles className="h-3 w-3" />
-              {isGeneratingTitle ? 'Generiere...' : 'KI-Titel generieren'}
+              {isGeneratingTitle ? t.wizard.details.generating : t.wizard.details.generateTitle}
             </button>
           )}
         </div>
         <input
+          id="title-input"
           type="text"
           name="title"
           required
@@ -105,12 +108,12 @@ export function StepDetails({
               ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
               : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
           }`}
-          placeholder="z.B. Beschreibender Titel Ihres Artikels"
+          placeholder={t.wizard.details.titlePlaceholder}
         />
         {isTitleLocked && (
           <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
             <Lock className="h-3 w-3" />
-            Titel kann nicht mehr geändert werden
+            {t.wizard.details.titleLocked}
           </p>
         )}
       </div>
@@ -130,29 +133,29 @@ export function StepDetails({
             </div>
             {/* Addendum input */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
+              <label htmlFor="descriptionAddendum-textarea" className="block text-sm font-medium text-gray-700">
                 Ergänzung hinzufügen <span className="text-red-500">*</span>
               </label>
               <textarea
+                id="descriptionAddendum-textarea"
                 name="descriptionAddendum"
                 required
                 value={formData.descriptionAddendum || ''}
                 onChange={onInputChange}
                 rows={4}
                 className="w-full rounded-lg border border-gray-300 px-4 py-3 text-gray-900 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
-                placeholder="Fügen Sie hier eine Ergänzung zur Beschreibung hinzu..."
+                placeholder={t.wizard.details.addendumPlaceholder}
               />
               <p className="text-xs text-gray-500">
-                Die Ergänzung wird automatisch mit Datum und Uhrzeit zur bestehenden Beschreibung
-                hinzugefügt.
+                {t.wizard.details.addendumHint}
               </p>
             </div>
           </>
         ) : (
           <>
             <div className="flex items-center justify-between">
-              <label className="block text-sm font-medium text-gray-700">
-                Beschreibung <span className="text-red-500">*</span>
+              <label htmlFor="description-textarea" className="block text-sm font-medium text-gray-700">
+                {t.wizard.details.descriptionLabel} <span className="text-red-500">*</span>
               </label>
               {(formData.images.length > 0 || formData.title?.trim()) && !isDescriptionLocked && (
                 <button
@@ -162,11 +165,12 @@ export function StepDetails({
                   className="flex items-center gap-1 rounded-md bg-primary-50 px-3 py-1.5 text-xs font-medium text-primary-700 transition-colors hover:bg-primary-100 disabled:opacity-50"
                 >
                   <Sparkles className="h-3 w-3" />
-                  {isGeneratingDescription ? 'Generiere...' : 'KI-Beschreibung generieren'}
+                  {isGeneratingDescription ? t.wizard.details.generating : t.wizard.details.generateDescription}
                 </button>
               )}
             </div>
             <textarea
+              id="description-textarea"
               name="description"
               required
               value={formData.description}
@@ -178,12 +182,12 @@ export function StepDetails({
                   ? 'cursor-not-allowed border-gray-200 bg-gray-50 text-gray-500'
                   : 'border-gray-300 text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
               }`}
-              placeholder="Beschreiben Sie Ihren Artikel ausführlich: Zustand, Besonderheiten, Lieferumfang..."
+              placeholder={t.wizard.details.descriptionPlaceholder}
             />
             {isDescriptionLocked && (
               <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                 <Lock className="h-3 w-3" />
-                Beschreibung kann nicht mehr geändert werden
+                {t.wizard.details.descriptionLocked}
               </p>
             )}
           </>
@@ -192,23 +196,24 @@ export function StepDetails({
 
       {/* Condition */}
       <div className="space-y-2">
-        <label className="block text-sm font-medium text-gray-700">
+        <label htmlFor="condition-select" className="block text-sm font-medium text-gray-700">
           Zustand <span className="text-red-500">*</span>
         </label>
         <select
+          id="condition-select"
           name="condition"
           required
           value={formData.condition}
           onChange={onInputChange}
           className="w-full rounded-lg border border-gray-300 bg-white px-4 py-3 text-gray-900 transition-colors focus:border-primary-500 focus:ring-2 focus:ring-primary-200"
         >
-          <option value="">Bitte wählen</option>
-          <option value="new">Neu</option>
-          <option value="like-new">Wie neu</option>
-          <option value="very-good">Sehr gut</option>
-          <option value="good">Gut</option>
-          <option value="acceptable">Akzeptabel</option>
-          <option value="defective">Defekt</option>
+          <option value="">{t.wizard.details.conditionPlaceholder}</option>
+          <option value="new">{t.wizard.details.conditionNew}</option>
+          <option value="like-new">{t.wizard.details.conditionLikeNew}</option>
+          <option value="very-good">{t.wizard.details.conditionVeryGood}</option>
+          <option value="good">{t.wizard.details.conditionGood}</option>
+          <option value="acceptable">{t.wizard.details.conditionAcceptable}</option>
+          <option value="defective">{t.wizard.details.conditionDefective}</option>
         </select>
       </div>
 
@@ -229,13 +234,13 @@ export function StepDetails({
         <>
           {/* Supply scope */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Lieferumfang (inkl. Uhr selbst)</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t.wizard.details.supplyScope}</h3>
             <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
               {[
-                { key: 'fullset', label: 'Fullset (Box, Papiere, alle Links)' },
-                { key: 'onlyBox', label: 'Nur Box' },
-                { key: 'onlyPapers', label: 'Nur Papiere' },
-                { key: 'onlyAllLinks', label: 'Alle Links/Glieder' },
+                { key: 'fullset', label: t.wizard.details.supplyFullset },
+                { key: 'onlyBox', label: t.wizard.details.supplyOnlyBox },
+                { key: 'onlyPapers', label: t.wizard.details.supplyOnlyPapers },
+                { key: 'onlyAllLinks', label: t.wizard.details.supplyOnlyAllLinks },
               ].map(({ key, label }) => (
                 <label
                   key={key}
@@ -260,24 +265,26 @@ export function StepDetails({
 
           {/* Warranty */}
           <div className="space-y-4">
-            <h3 className="text-lg font-semibold text-gray-900">Garantie</h3>
+            <h3 className="text-lg font-semibold text-gray-900">{t.wizard.details.warranty}</h3>
             <div className="space-y-4">
-              <label className="flex items-center gap-3">
+              <label htmlFor="hasWarranty-checkbox" className="flex items-center gap-3">
                 <input
+                  id="hasWarranty-checkbox"
                   type="checkbox"
                   name="hasWarranty"
                   checked={formData.hasWarranty}
                   onChange={onInputChange}
                   className="h-5 w-5 rounded border-gray-300 text-primary-600"
                 />
-                <span className="font-medium text-gray-700">Herstellergarantie vorhanden</span>
+                <span className="font-medium text-gray-700">{t.wizard.details.manufacturerWarranty}</span>
               </label>
 
               {formData.hasWarranty && (
                 <div className="ml-8 grid grid-cols-2 gap-4">
                   <div>
-                    <label className="mb-1 block text-sm text-gray-600">Jahre</label>
+                    <label htmlFor="warrantyYears-input" className="mb-1 block text-sm text-gray-600">{t.wizard.details.years}</label>
                     <input
+                      id="warrantyYears-input"
                       type="number"
                       name="warrantyYears"
                       value={formData.warrantyYears}
@@ -288,8 +295,9 @@ export function StepDetails({
                     />
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm text-gray-600">Monate</label>
+                    <label htmlFor="warrantyMonths-input" className="mb-1 block text-sm text-gray-600">{t.wizard.details.months}</label>
                     <input
+                      id="warrantyMonths-input"
                       type="number"
                       name="warrantyMonths"
                       value={formData.warrantyMonths}
@@ -303,23 +311,25 @@ export function StepDetails({
                 </div>
               )}
 
-              <label className="flex items-center gap-3">
+              <label htmlFor="hasSellerWarranty-checkbox" className="flex items-center gap-3">
                 <input
+                  id="hasSellerWarranty-checkbox"
                   type="checkbox"
                   name="hasSellerWarranty"
                   checked={formData.hasSellerWarranty}
                   onChange={onInputChange}
                   className="h-5 w-5 rounded border-gray-300 text-primary-600"
                 />
-                <span className="font-medium text-gray-700">Verkäufergarantie</span>
+                <span className="font-medium text-gray-700">{t.wizard.details.sellerWarranty}</span>
               </label>
 
               {formData.hasSellerWarranty && (
                 <div className="ml-8 space-y-3">
                   <div className="grid grid-cols-2 gap-4">
                     <div>
-                      <label className="mb-1 block text-sm text-gray-600">Jahre</label>
+                      <label htmlFor="sellerWarrantyYears-input" className="mb-1 block text-sm text-gray-600">{t.wizard.details.years}</label>
                       <input
+                        id="sellerWarrantyYears-input"
                         type="number"
                         name="sellerWarrantyYears"
                         value={formData.sellerWarrantyYears}
@@ -330,8 +340,9 @@ export function StepDetails({
                       />
                     </div>
                     <div>
-                      <label className="mb-1 block text-sm text-gray-600">Monate</label>
+                      <label htmlFor="sellerWarrantyMonths-input" className="mb-1 block text-sm text-gray-600">{t.wizard.details.months}</label>
                       <input
+                        id="sellerWarrantyMonths-input"
                         type="number"
                         name="sellerWarrantyMonths"
                         value={formData.sellerWarrantyMonths}
@@ -344,14 +355,15 @@ export function StepDetails({
                     </div>
                   </div>
                   <div>
-                    <label className="mb-1 block text-sm text-gray-600">Garantiehinweis</label>
+                    <label htmlFor="sellerWarrantyNote-textarea" className="mb-1 block text-sm text-gray-600">{t.wizard.details.warrantyNote}</label>
                     <textarea
+                      id="sellerWarrantyNote-textarea"
                       name="sellerWarrantyNote"
                       value={formData.sellerWarrantyNote}
                       onChange={onInputChange}
                       rows={2}
                       className="w-full rounded-lg border border-gray-300 px-3 py-2"
-                      placeholder="Optionale Details zur Verkäufergarantie..."
+                      placeholder={t.wizard.details.warrantyNotePlaceholder}
                     />
                   </div>
                 </div>

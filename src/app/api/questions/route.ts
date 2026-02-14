@@ -85,7 +85,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json({ questions })
   } catch (error: any) {
     console.error('Fehler beim Abrufen der Fragen:', error)
-    return NextResponse.json({ error: 'Fehler beim Abrufen der Fragen: ' + error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Ein Fehler ist aufgetreten' }, { status: 500 })
   }
 }
 
@@ -165,6 +165,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ question: newQuestion }, { status: 201 })
   } catch (error: any) {
     console.error('Fehler beim Erstellen der Frage:', error)
-    return NextResponse.json({ error: 'Fehler beim Erstellen der Frage: ' + error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Ein Fehler ist aufgetreten' }, { status: 500 })
   }
 }

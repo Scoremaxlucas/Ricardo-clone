@@ -107,7 +107,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Error fetching messages:', error)
     return NextResponse.json(
-      { message: 'Fehler beim Laden der Nachrichten: ' + error.message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }
@@ -302,7 +302,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error creating message:', error)
     return NextResponse.json(
-      { message: 'Fehler beim Erstellen der Nachricht: ' + error.message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

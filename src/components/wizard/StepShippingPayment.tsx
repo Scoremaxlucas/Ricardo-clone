@@ -1,6 +1,7 @@
 'use client'
 
 import { ProfileCompletionGate } from '@/components/account/ProfileCompletionGate'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { EditPolicy } from '@/lib/edit-policy'
 import { formatCHF } from '@/lib/product-utils'
 import {
@@ -33,32 +34,6 @@ interface StepShippingPaymentProps {
   mode?: 'create' | 'edit'
 }
 
-const SHIPPING_OPTIONS = [
-  {
-    id: 'pickup',
-    label: 'Abholung',
-    description: 'Käufer holt den Artikel persönlich ab',
-    priceValue: 0,
-    icon: MapPin,
-  },
-  {
-    id: 'b-post',
-    label: 'Paket B-Post',
-    description: 'Zustellung innerhalb von 2-3 Werktagen',
-    priceValue: 8.5,
-    icon: Package,
-    weight: 'bis 2 kg',
-  },
-  {
-    id: 'a-post',
-    label: 'Paket A-Post',
-    description: 'Zustellung am nächsten Werktag',
-    priceValue: 12.5,
-    icon: Truck,
-    weight: 'bis 2 kg',
-  },
-]
-
 export function StepShippingPayment({
   formData,
   paymentProtectionEnabled,
@@ -69,7 +44,34 @@ export function StepShippingPayment({
   policy,
   mode = 'create',
 }: StepShippingPaymentProps) {
+  const { t } = useLanguage()
   const isShippingLocked = policy?.uiLocks.shipping || false
+
+  const SHIPPING_OPTIONS = [
+    {
+      id: 'pickup',
+      label: t.wizard.shippingPayment.pickup,
+      description: t.wizard.shippingPayment.pickupDesc,
+      priceValue: 0,
+      icon: MapPin,
+    },
+    {
+      id: 'b-post',
+      label: t.wizard.shippingPayment.bPost,
+      description: t.wizard.shippingPayment.bPostDesc,
+      priceValue: 8.5,
+      icon: Package,
+      weight: t.wizard.shippingPayment.weightUpTo,
+    },
+    {
+      id: 'a-post',
+      label: t.wizard.shippingPayment.aPost,
+      description: t.wizard.shippingPayment.aPostDesc,
+      priceValue: 12.5,
+      icon: Truck,
+      weight: t.wizard.shippingPayment.weightUpTo,
+    },
+  ]
   const [showPaymentDetails, setShowPaymentDetails] = useState(false)
   const [profileGateOpen, setProfileGateOpen] = useState(false)
   const [profileGateMissingFields, setProfileGateMissingFields] = useState<any[]>([])
@@ -129,10 +131,10 @@ export function StepShippingPayment({
     <div className="space-y-3 sm:space-y-4 md:space-y-8">
       <div className="text-center">
         <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
-          Versand & Zahlung
+          {t.wizard.shippingPayment.title}
         </h2>
         <p className="hidden text-sm text-gray-600 sm:block md:text-base">
-          Legen Sie fest, welche Versandoptionen Sie anbieten möchten
+          {t.wizard.shippingPayment.subtitle}
         </p>
       </div>
 
@@ -141,19 +143,19 @@ export function StepShippingPayment({
         <div>
           <div className="flex items-center justify-between">
             <label className="block text-sm font-medium text-gray-700">
-              Angebotene Lieferarten <span className="text-red-500">*</span>
+              {t.wizard.shippingPayment.offeredShipping} <span className="text-red-500">*</span>
             </label>
             {isShippingLocked && mode === 'edit' && (
               <div className="flex items-center gap-1 text-xs text-gray-500">
                 <Lock className="h-3 w-3" />
-                <span>Gesperrt</span>
+                <span>{t.wizard.price.locked}</span>
               </div>
             )}
           </div>
           <p className="mt-1 text-sm text-gray-500">
             {isShippingLocked && mode === 'edit'
-              ? 'Versandoptionen können nicht mehr geändert werden.'
-              : 'Hinweis: Versandkosten kommen zum Artikelpreis dazu. Wenn du mehrere Optionen anbietest, wählt der Käufer beim Kauf.'}
+              ? t.wizard.shippingPayment.shippingLockedHint
+              : t.wizard.shippingPayment.shippingHint}
           </p>
         </div>
 
@@ -164,7 +166,7 @@ export function StepShippingPayment({
             const isSelected = formData.shippingMethods.includes(option.id)
             const Icon = option.icon
             const priceDisplay =
-              option.priceValue === 0 ? formatCHF(0) + ' (kostenlos)' : formatCHF(option.priceValue)
+              option.priceValue === 0 ? `${formatCHF(0)} (${t.wizard.shippingPayment.free})` : formatCHF(option.priceValue)
 
             return (
               <label
@@ -249,7 +251,7 @@ export function StepShippingPayment({
 
         {/* Inline error - only show after validation */}
         {hasShippingError && (
-          <p className="text-sm text-red-600">Bitte wählen Sie mindestens eine Lieferart aus.</p>
+          <p className="text-sm text-red-600">{t.wizard.shippingPayment.selectAtLeastOne}</p>
         )}
       </div>
 
@@ -257,7 +259,7 @@ export function StepShippingPayment({
       <div className="space-y-4">
         <div className="flex items-center gap-2">
           <Shield className="h-5 w-5 text-primary-600" />
-          <h3 className="text-lg font-semibold text-gray-900">Helvenda Zahlungsschutz</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t.wizard.shippingPayment.helvendaPayment}</h3>
         </div>
 
         <div
@@ -279,21 +281,20 @@ export function StepShippingPayment({
             <div className="flex-1">
               <div className="flex items-center gap-2">
                 <span className="text-lg font-semibold text-gray-900">
-                  Zahlungsschutz aktivieren
+                  {t.wizard.shippingPayment.enableProtection}
                 </span>
                 {paymentProtectionEnabled && (
                   <span className="rounded-full bg-green-100 px-2.5 py-0.5 text-xs font-medium text-green-700">
-                    Aktiviert
+                    {t.wizard.shippingPayment.enabled}
                   </span>
                 )}
               </div>
               <p className="mt-1 text-sm text-gray-600">
-                Sichere Zahlungsabwicklung über Helvenda – für Käufer und Verkäufer.
+                {t.wizard.shippingPayment.protectionDesc}
               </p>
               {!paymentProtectionApplies && (
                 <p className="mt-2 text-xs text-amber-600">
-                  Zahlungsschutz ist nur bei Versand möglich. Bitte wählen Sie mindestens eine
-                  Versandoption zusätzlich zur Abholung.
+                  {t.wizard.shippingPayment.protectionShippingOnly}
                 </p>
               )}
             </div>
@@ -309,7 +310,7 @@ export function StepShippingPayment({
               >
                 <span className="flex items-center gap-2 text-sm font-medium text-gray-900">
                   <Info className="h-4 w-4 text-primary-500" />
-                  So funktioniert's
+                  {t.wizard.shippingPayment.howItWorks}
                 </span>
                 {showPaymentDetails ? (
                   <ChevronUp className="h-4 w-4 text-gray-400" />
@@ -325,19 +326,19 @@ export function StepShippingPayment({
                   <div className="mb-4 space-y-2.5">
                     <div className="flex items-start gap-2 text-sm text-gray-700">
                       <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-                      <span>Käufer zahlt sicher über Helvenda</span>
+                      <span>{t.wizard.shippingPayment.step1}</span>
                     </div>
                     <div className="flex items-start gap-2 text-sm text-gray-700">
                       <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-                      <span>Geld wird treuhänderisch verwahrt</span>
+                      <span>{t.wizard.shippingPayment.step2}</span>
                     </div>
                     <div className="flex items-start gap-2 text-sm text-gray-700">
                       <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-                      <span>Auszahlung nach Empfangsbestätigung</span>
+                      <span>{t.wizard.shippingPayment.step3}</span>
                     </div>
                     <div className="flex items-start gap-2 text-sm text-gray-700">
                       <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-500" />
-                      <span>Streitfall-Mediation durch Helvenda</span>
+                      <span>{t.wizard.shippingPayment.step4}</span>
                     </div>
                   </div>
 
@@ -345,17 +346,17 @@ export function StepShippingPayment({
                   <div className="rounded-lg bg-gray-50 p-4">
                     <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                       <div>
-                        <div className="text-xs font-medium text-gray-500">Gebühr</div>
+                        <div className="text-xs font-medium text-gray-500">{t.wizard.shippingPayment.fee}</div>
                         <div className="mt-0.5 text-sm font-semibold text-gray-900">
-                          3.9% + CHF 0.30
+                          {t.wizard.shippingPayment.feeValue}
                         </div>
-                        <div className="mt-1 text-xs text-gray-500">(vom Verkäufer)</div>
+                        <div className="mt-1 text-xs text-gray-500">{t.wizard.shippingPayment.feeFromSeller}</div>
                       </div>
                       <div>
-                        <div className="text-xs font-medium text-gray-500">Auszahlung</div>
+                        <div className="text-xs font-medium text-gray-500">{t.wizard.shippingPayment.payout}</div>
                         <div className="mt-0.5 flex items-center gap-1.5 text-sm text-gray-700">
                           <Clock className="h-3.5 w-3.5 text-gray-400" />
-                          <span>2-3 Werktage</span>
+                          <span>{t.wizard.shippingPayment.payoutDays}</span>
                         </div>
                       </div>
                       <div className="flex items-end">
@@ -365,7 +366,7 @@ export function StepShippingPayment({
                           rel="noopener noreferrer"
                           className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
                         >
-                          <span>Mehr erfahren</span>
+                          <span>{t.wizard.shippingPayment.learnMore}</span>
                           <ExternalLink className="h-3.5 w-3.5" />
                         </a>
                       </div>
@@ -375,10 +376,7 @@ export function StepShippingPayment({
                   {/* Activation notice */}
                   <div className="mt-4 flex items-start gap-2 rounded-lg bg-green-50 p-3 text-sm text-green-800">
                     <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-green-600" />
-                    <span>
-                      <strong>Zahlungsschutz aktiviert.</strong> Nach Veröffentlichung kann diese
-                      Option nicht mehr geändert werden.
-                    </span>
+                    <span>{t.wizard.shippingPayment.protectionActivated}</span>
                   </div>
 
                   {/* Payout onboarding hint - non-blocking */}
@@ -387,14 +385,14 @@ export function StepShippingPayment({
                       <AlertCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-amber-500" />
                       <div>
                         <span>
-                          Für Auszahlungen brauchst du einmalig Auszahlungsdaten.{' '}
+                          {t.wizard.shippingPayment.payoutSetupBefore}
                           <Link
                             href="/my-watches/account?setup_payout=1"
                             className="font-medium text-amber-700 underline hover:text-amber-800"
                           >
-                            Jetzt einrichten
-                          </Link>{' '}
-                          oder später erledigen.
+                            {t.wizard.shippingPayment.setupNow}
+                          </Link>
+                          {t.wizard.shippingPayment.payoutSetupAfter}
                         </span>
                       </div>
                     </div>

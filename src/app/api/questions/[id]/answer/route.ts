@@ -108,6 +108,6 @@ export async function POST(
     return NextResponse.json({ question: updatedQuestion }, { status: 200 })
   } catch (error: any) {
     console.error('Fehler beim Erstellen der Antwort:', error)
-    return NextResponse.json({ error: 'Fehler beim Erstellen der Antwort: ' + error.message }, { status: 500 })
+    return NextResponse.json({ error: 'Ein Fehler ist aufgetreten' }, { status: 500 })
   }
 }

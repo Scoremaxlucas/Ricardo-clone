@@ -753,13 +753,6 @@ function SellPageContent() {
     imageUrl: string | null,
     confidence: number
   ) => {
-    console.log('[sell/page] Kategorie erkannt:', {
-      category,
-      subcategory,
-      productName,
-      confidence,
-    })
-
     setSelectedCategory(category)
     setSelectedSubcategory(subcategory || '')
     setDetectedProductName(productName || '')
@@ -775,14 +768,12 @@ function SellPageContent() {
             // Stelle sicher dass ein Draft existiert
             let draftId = currentDraftId
             if (!draftId) {
-              console.log('[AI Scan] Kein Draft vorhanden, erstelle neuen...')
               const draftResponse = await fetch('/api/drafts/current')
               if (draftResponse.ok) {
                 const draftData = await draftResponse.json()
                 draftId = draftData.draft?.id
                 if (draftId) {
                   setCurrentDraftId(draftId)
-                  console.log('[AI Scan] Draft erstellt:', draftId)
                 }
               }
             }
@@ -812,15 +803,12 @@ function SellPageContent() {
                 const { image } = await uploadResponse.json()
                 // Verwende die Blob-URL statt base64
                 currentImages.push(image.url)
-                console.log('[AI Scan] Bild erfolgreich zum Draft hochgeladen mit sortOrder 0')
               } else {
                 // Fallback: verwende base64
                 currentImages.push(imageUrl)
-                console.warn('[AI Scan] Upload fehlgeschlagen, verwende base64')
               }
             } else {
               currentImages.push(imageUrl)
-              console.warn('[AI Scan] Kein Draft verfügbar, verwende base64')
             }
           } catch (error) {
             console.error('[AI Scan] Fehler beim Upload:', error)

@@ -101,8 +101,6 @@ export function PayoutOnboardingModal({
 
   // Handle onboarding exit (user completed or left early)
   const handleOnboardingExit = useCallback(() => {
-    console.log('[PayoutOnboardingModal] Onboarding exited')
-
     // Refresh status
     if (onStatusChange) {
       onStatusChange()
@@ -273,34 +271,6 @@ export function PayoutOnboardingModal({
           {/* Embedded Onboarding - Stripe Form */}
           {stripeConnectInstance && !loading && !fallbackMode && showStripeForm && (
             <>
-              <style
-                dangerouslySetInnerHTML={{
-                  __html: `
-                /* Ensure Stripe Connect content is fully visible */
-                [class*="ConnectAccountOnboarding"] {
-                  display: block !important;
-                  min-height: auto !important;
-                  height: auto !important;
-                  margin: 0 !important;
-                  padding: 0 !important;
-                }
-                [class*="ConnectAccountOnboarding"] iframe {
-                  display: block !important;
-                  border: none !important;
-                  margin: 0 !important;
-                  padding: 0 !important;
-                  min-height: 450px !important;
-                }
-                [class*="ConnectComponentsProvider"] {
-                  display: block !important;
-                  height: auto !important;
-                  min-height: auto !important;
-                  margin: 0 !important;
-                  padding: 0 !important;
-                }
-              `,
-                }}
-              />
               <div className="flex min-h-[450px] flex-col">
                 <ConnectComponentsProvider connectInstance={stripeConnectInstance}>
                   <ConnectAccountOnboarding onExit={handleOnboardingExit} />

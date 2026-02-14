@@ -469,10 +469,17 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
               console.log(`[dispute/resolve] ✅ Stripe refund processed: ${refundResult.refundId}`)
             } else {
               console.error(`[dispute/resolve] ❌ Stripe refund failed: ${refundResult.error}`)
-              // Don't fail the whole operation, just log the error
+              // Mark that the refund needs manual attention
+              updateData.stripeRefundStatus = 'failed'
+              updateData.disputeRefundRequired = true
+              updateData.disputeRefundNote = `Stripe Rückerstattung fehlgeschlagen: ${refundResult.error || 'Unbekannter Fehler'}. Manuelle Prüfung erforderlich.`
             }
           } catch (stripeError: any) {
             console.error('[dispute/resolve] ❌ Stripe refund error:', stripeError)
+            // Mark that the refund needs manual attention
+            updateData.stripeRefundStatus = 'failed'
+            updateData.disputeRefundRequired = true
+            updateData.disputeRefundNote = `Stripe Rückerstattung fehlgeschlagen: ${stripeError.message}. Manuelle Prüfung erforderlich.`
           }
         } else if (isStripeConfigured()) {
           console.log('[dispute/resolve] ℹ️  No Stripe PaymentIntent found, manual refund required')

@@ -49,7 +49,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('Error processing invoice reminders:', error)
     return NextResponse.json(
-      { message: 'Fehler bei Mahnprozess-Verarbeitung: ' + error.message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }
@@ -73,6 +73,6 @@ export async function GET(request: NextRequest) {
     })
   } catch (error: any) {
     console.error('Error processing invoice reminders:', error)
-    return NextResponse.json({ message: 'Fehler: ' + error.message }, { status: 500 })
+    return NextResponse.json({ message: 'Ein Fehler ist aufgetreten' }, { status: 500 })
   }
 }

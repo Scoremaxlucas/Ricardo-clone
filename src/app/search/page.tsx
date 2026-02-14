@@ -314,7 +314,6 @@ function SearchPageContent() {
         url += '?' + searchParams.toString()
       }
 
-      console.log(`🔍 Starting search for: "${q}"`)
       // CRITICAL: cache: 'no-store' ensures freshly published listings appear immediately
       const res = await fetch(url, { signal, cache: 'no-store' })
       if (signal?.aborted) return
@@ -671,24 +670,6 @@ function SearchPageContent() {
                             aria-label="Maximalpreis"
                           />
                         </div>
-                        <style
-                          dangerouslySetInnerHTML={{
-                            __html: `
-                        .price-filter-container input[type="range"] { pointer-events: none !important; }
-                        .price-filter-container input[type="range"]::-webkit-slider-thumb {
-                          -webkit-appearance: none; width: 22px; height: 22px; border-radius: 50%;
-                          background: #10b981; cursor: grab; border: 3px solid white;
-                          box-shadow: 0 2px 6px rgba(0,0,0,0.3); margin-top: -10px;
-                          pointer-events: auto !important;
-                        }
-                        .price-filter-container input[type="range"]::-moz-range-thumb {
-                          width: 22px; height: 22px; border-radius: 50%; background: #10b981;
-                          cursor: grab; border: 3px solid white; box-shadow: 0 2px 6px rgba(0,0,0,0.3);
-                          pointer-events: auto !important;
-                        }
-                      `,
-                          }}
-                        />
                       </div>
                       <div className="grid grid-cols-2 gap-3">
                         <div>

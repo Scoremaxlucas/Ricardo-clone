@@ -74,6 +74,10 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url)
     const statusFilter = searchParams.get('status') || 'active'
     const search = searchParams.get('search') || ''
+    const rawLimit = parseInt(searchParams.get('limit') || '50', 10)
+    const rawOffset = parseInt(searchParams.get('offset') || '0', 10)
+    const limit = Math.min(Math.max(1, isNaN(rawLimit) ? 50 : rawLimit), 200)
+    const offset = Math.max(0, isNaN(rawOffset) ? 0 : rawOffset)
     const now = new Date()
 
     // Base where clause for all queries
@@ -106,9 +110,51 @@ export async function GET(request: NextRequest) {
       }
     }
 
-    // Fetch all listings for this user to calculate counts
+    const notSoldBase = {
+      purchases: { none: { status: { not: 'cancelled' } } },
+      orders: { none: { orderStatus: { notIn: ['canceled', 'cancelled'] } } },
+    }
+
+    // Status filter for DB query (enables correct pagination)
+    let statusWhere: Record<string, unknown> = {}
+    if (statusFilter === 'sold') {
+      statusWhere = {
+        OR: [
+          { purchases: { some: { status: { not: 'cancelled' } } } },
+          { orders: { some: { orderStatus: { notIn: ['canceled', 'cancelled'] } } } },
+        ],
+      }
+    } else if (statusFilter === 'ended') {
+      statusWhere = {
+        ...notSoldBase,
+        isAuction: true,
+        auctionEnd: { lte: now },
+      }
+    } else if (statusFilter === 'active') {
+      statusWhere = {
+        ...notSoldBase,
+        OR: [{ isAuction: false }, { auctionEnd: { gt: now } }],
+      }
+    } else if (statusFilter === 'archive') {
+      statusWhere = {
+        ...notSoldBase,
+        isAuction: true,
+        auctionEnd: { lte: now },
+      }
+    }
+
+    const fetchWhere = { ...baseWhere, ...statusWhere }
+
+    // Fetch total count for pagination (for current status filter)
+    const totalCount = await prisma.watch.count({
+      where: fetchWhere,
+    })
+
+    // Fetch listings with pagination
     const allListings = await prisma.watch.findMany({
-      where: baseWhere,
+      where: fetchWhere,
+      skip: offset,
+      take: limit,
       select: {
         id: true,
         articleNumber: true,
@@ -231,28 +277,48 @@ export async function GET(request: NextRequest) {
       }
     })
 
-    // Calculate counts
-    const counts: ListingCounts = {
-      active: listingsWithStatus.filter(l => l.status === 'active').length,
-      drafts: draftsCount,
-      ended: listingsWithStatus.filter(l => l.status === 'ended').length,
-      sold: listingsWithStatus.filter(l => l.status === 'sold').length,
-    }
+    // Status filter already applied at DB level
+    const filteredListings = listingsWithStatus
 
-    // Filter by status
-    let filteredListings = listingsWithStatus
-    if (statusFilter !== 'all') {
-      if (statusFilter === 'archive') {
-        // Archive = ended (not sold)
-        filteredListings = listingsWithStatus.filter(l => l.status === 'ended')
-      } else {
-        filteredListings = listingsWithStatus.filter(l => l.status === statusFilter)
-      }
+    // Counts for tab badges - run in parallel for performance (reuse notSoldBase from above)
+    const [soldCount, endedCount, activeCount] = await Promise.all([
+      prisma.watch.count({
+        where: {
+          ...baseWhere,
+          OR: [
+            { purchases: { some: { status: { not: 'cancelled' } } } },
+            { orders: { some: { orderStatus: { notIn: ['canceled', 'cancelled'] } } } },
+          ],
+        },
+      }),
+      prisma.watch.count({
+        where: {
+          ...baseWhere,
+          ...notSoldBase,
+          isAuction: true,
+          auctionEnd: { lte: now },
+        },
+      }),
+      prisma.watch.count({
+        where: {
+          ...baseWhere,
+          ...notSoldBase,
+          OR: [{ isAuction: false }, { auctionEnd: { gt: now } }],
+        },
+      }),
+    ])
+
+    const counts: ListingCounts = {
+      active: activeCount,
+      drafts: draftsCount,
+      ended: endedCount,
+      sold: soldCount,
     }
 
     return NextResponse.json({
       listings: filteredListings,
       counts,
+      total: totalCount,
     })
   } catch (error: any) {
     console.error('[seller/listings] CRITICAL ERROR:', error.message)

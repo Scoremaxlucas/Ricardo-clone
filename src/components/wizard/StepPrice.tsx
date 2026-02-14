@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/contexts/LanguageContext'
 import { EditPolicy } from '@/lib/edit-policy'
 import { CheckCircle, Clock, Lock, Tag } from 'lucide-react'
 
@@ -33,6 +34,7 @@ export function StepPrice({
   policy,
   mode = 'create',
 }: StepPriceProps) {
+  const { t } = useLanguage()
   // Validate buy-now price against start price for auctions
   const buyNowValid =
     !formData.buyNowPrice || parseFloat(formData.buyNowPrice) > parseFloat(formData.price || '0')
@@ -48,21 +50,21 @@ export function StepPrice({
     <div className="space-y-3 sm:space-y-4 md:space-y-8">
       <div className="text-center">
         <h2 className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl">
-          Preis festlegen
+          {t.wizard.price.title}
         </h2>
-        <p className="text-xs text-gray-600 sm:text-sm">Wählen Sie zwischen Festpreis oder Auktion</p>
+        <p className="text-xs text-gray-600 sm:text-sm">{t.wizard.price.subtitle}</p>
       </div>
 
       {/* Sale type selection */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <label className="block text-sm font-medium text-gray-700">
-            Verkaufsart <span className="text-red-500">*</span>
+            {t.wizard.price.saleType} <span className="text-red-500">*</span>
           </label>
           {isSaleTypeLocked && mode === 'edit' && (
             <div className="flex items-center gap-1 text-xs text-gray-500">
               <Lock className="h-3 w-3" />
-              <span>Gesperrt</span>
+              <span>{t.wizard.price.locked}</span>
             </div>
           )}
         </div>
@@ -101,10 +103,10 @@ export function StepPrice({
               <h3
                 className={`text-sm font-semibold sm:text-base ${!formData.isAuction ? 'text-primary-700' : 'text-gray-700'}`}
               >
-                Festpreis
+                {t.wizard.price.fixedPrice}
               </h3>
               <p className="mt-0.5 hidden text-sm text-gray-500 sm:mt-1 sm:block">
-                Verkauf zu einem festen Preis
+                {t.wizard.price.fixedPriceDesc}
               </p>
             </div>
           </button>
@@ -140,10 +142,10 @@ export function StepPrice({
               <h3
                 className={`text-sm font-semibold sm:text-base ${formData.isAuction ? 'text-primary-700' : 'text-gray-700'}`}
               >
-                Auktion
+                {t.wizard.price.auction}
               </h3>
               <p className="mt-0.5 hidden text-sm text-gray-500 sm:mt-1 sm:block">
-                Bieter konkurrieren um Ihren Artikel
+                {t.wizard.price.auctionDesc}
               </p>
             </div>
           </button>
@@ -157,11 +159,12 @@ export function StepPrice({
           <div className="space-y-6">
             {/* Basispreis (für Preisvorschläge) */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Basispreis (CHF) <span className="text-red-500">*</span>
+              <label htmlFor="price-input" className="block text-sm font-medium text-gray-700">
+                {t.wizard.price.basePrice} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
+                  id="price-input"
                   type="number"
                   inputMode="decimal"
                   name="price"
@@ -182,7 +185,7 @@ export function StepPrice({
                 {isPriceLocked && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                     <Lock className="h-3 w-3" />
-                    Preis kann nicht mehr geändert werden
+                    {t.wizard.price.priceLocked}
                   </p>
                 )}
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-gray-500">
@@ -190,20 +193,21 @@ export function StepPrice({
                 </span>
               </div>
               <p className="text-xs text-gray-500 sm:text-sm">
-                Mindestpreis für Preisvorschläge. Käufer können Angebote machen.
+                {t.wizard.price.basePriceHint}
               </p>
             </div>
 
             {/* Sofortkaufpreis */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                Sofortkaufpreis (CHF)
+              <label htmlFor="buyNowPrice-input" className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                {t.wizard.price.buyNowPrice}
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-                  Optional
+                  {t.wizard.price.optional}
                 </span>
               </label>
               <div className="relative">
                 <input
+                  id="buyNowPrice-input"
                   type="number"
                   inputMode="decimal"
                   name="buyNowPrice"
@@ -225,7 +229,7 @@ export function StepPrice({
                 {isBuyNowPriceLocked && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                     <Lock className="h-3 w-3" />
-                    Sofortkaufpreis kann nicht mehr geändert werden
+                    {t.wizard.price.buyNowLocked}
                   </p>
                 )}
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-gray-500">
@@ -234,11 +238,11 @@ export function StepPrice({
               </div>
               {!buyNowValid && (
                 <p className="text-xs font-medium text-red-600 sm:text-sm">
-                  Der Sofortkaufpreis muss höher als der Basispreis sein.
+                  {t.wizard.price.buyNowMustBeHigher}
                 </p>
               )}
               <p className="text-xs text-gray-500 sm:text-sm">
-                Der Käufer kann den Artikel sofort zu diesem Preis kaufen.
+                {t.wizard.price.buyNowHint}
               </p>
             </div>
           </div>
@@ -247,11 +251,12 @@ export function StepPrice({
           <div className="space-y-6">
             {/* Start price */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Startpreis (CHF) <span className="text-red-500">*</span>
+              <label htmlFor="auction-price-input" className="block text-sm font-medium text-gray-700">
+                {t.wizard.price.startPrice} <span className="text-red-500">*</span>
               </label>
               <div className="relative">
                 <input
+                  id="auction-price-input"
                   type="number"
                   inputMode="decimal"
                   name="price"
@@ -272,7 +277,7 @@ export function StepPrice({
                 {isPriceLocked && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                     <Lock className="h-3 w-3" />
-                    Startpreis kann nach Veröffentlichung nicht mehr geändert werden
+                    {t.wizard.price.startPriceLocked}
                   </p>
                 )}
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-gray-500">
@@ -280,16 +285,17 @@ export function StepPrice({
                 </span>
               </div>
               <p className="text-xs text-gray-500 sm:text-sm">
-                Die Auktion startet bei diesem Preis. Bieter können darüber bieten.
+                {t.wizard.price.startPriceHint}
               </p>
             </div>
 
             {/* Auction duration */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-700">
-                Auktionsdauer <span className="text-red-500">*</span>
+              <label htmlFor="auctionDuration-select" className="block text-sm font-medium text-gray-700">
+                {t.wizard.price.auctionDuration} <span className="text-red-500">*</span>
               </label>
               <select
+                id="auctionDuration-select"
                 name="auctionDuration"
                 value={formData.auctionDuration}
                 onChange={onInputChange}
@@ -301,33 +307,34 @@ export function StepPrice({
                     : 'border-gray-300 bg-white text-gray-900 focus:border-primary-500 focus:ring-2 focus:ring-primary-200'
                 }`}
               >
-                <option value="">Bitte wählen</option>
-                <option value="1">1 Tag</option>
-                <option value="3">3 Tage</option>
-                <option value="5">5 Tage</option>
-                <option value="7">7 Tage</option>
-                <option value="10">10 Tage</option>
-                <option value="14">14 Tage</option>
-                <option value="30">30 Tage</option>
+                <option value="">{t.wizard.price.durationPlaceholder}</option>
+                <option value="1">{t.wizard.price.days1}</option>
+                <option value="3">{t.wizard.price.days3}</option>
+                <option value="5">{t.wizard.price.days5}</option>
+                <option value="7">{t.wizard.price.days7}</option>
+                <option value="10">{t.wizard.price.days10}</option>
+                <option value="14">{t.wizard.price.days14}</option>
+                <option value="30">{t.wizard.price.days30}</option>
               </select>
               {isAuctionDurationLocked && (
                 <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                   <Lock className="h-3 w-3" />
-                  Auktionsdauer kann nach Veröffentlichung nicht mehr geändert werden
+                  {t.wizard.price.durationLocked}
                 </p>
               )}
             </div>
 
             {/* Optional buy-now price for auctions */}
             <div className="space-y-2">
-              <label className="flex items-center gap-2 text-sm font-medium text-gray-700">
-                Sofortkaufpreis (CHF)
+              <label htmlFor="auction-buyNowPrice-input" className="flex items-center gap-2 text-sm font-medium text-gray-700">
+                {t.wizard.price.buyNowPrice}
                 <span className="rounded-full bg-gray-100 px-2 py-0.5 text-xs text-gray-500">
-                  Optional
+                  {t.wizard.price.optional}
                 </span>
               </label>
               <div className="relative">
                 <input
+                  id="auction-buyNowPrice-input"
                   type="number"
                   inputMode="decimal"
                   name="buyNowPrice"
@@ -349,7 +356,7 @@ export function StepPrice({
                 {isBuyNowPriceLocked && (
                   <p className="mt-1 flex items-center gap-1 text-xs text-gray-500">
                     <Lock className="h-3 w-3" />
-                    Sofortkaufpreis kann nach Veröffentlichung nicht mehr geändert werden
+                    {t.wizard.price.buyNowLockedAuction}
                   </p>
                 )}
                 <span className="absolute left-4 top-1/2 -translate-y-1/2 font-medium text-gray-500">
@@ -358,17 +365,18 @@ export function StepPrice({
               </div>
               {!buyNowValid && (
                 <p className="text-xs font-medium text-red-600 sm:text-sm">
-                  Der Sofortkaufpreis muss höher als der Startpreis sein.
+                  {t.wizard.price.buyNowMustBeHigherStart}
                 </p>
               )}
               <p className="text-xs text-gray-500 sm:text-sm">
-                Käufer können die Auktion sofort zum Sofortkaufpreis beenden.
+                {t.wizard.price.buyNowAuctionHint}
               </p>
             </div>
 
             {/* Auto-renew option */}
-            <label className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
+            <label htmlFor="autoRenew-checkbox" className="flex items-start gap-3 rounded-lg border border-gray-200 bg-white p-3 sm:p-4">
               <input
+                id="autoRenew-checkbox"
                 type="checkbox"
                 name="autoRenew"
                 checked={formData.autoRenew}
@@ -376,9 +384,9 @@ export function StepPrice({
                 className="mt-0.5 h-5 w-5 rounded border-gray-300 text-primary-600"
               />
               <div>
-                <span className="text-sm font-medium text-gray-700 sm:text-base">Automatisch erneuern</span>
+                <span className="text-sm font-medium text-gray-700 sm:text-base">{t.wizard.price.autoRenew}</span>
                 <p className="text-xs text-gray-500 sm:text-sm">
-                  Auktion wird automatisch erneuert, wenn keine Gebote eingehen.
+                  {t.wizard.price.autoRenewDesc}
                 </p>
               </div>
             </label>

@@ -1,6 +1,7 @@
 'use client'
 
 import { getCategoryConfig } from '@/data/categories'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { EditPolicy } from '@/lib/edit-policy'
 import { formatCHF } from '@/lib/product-utils'
 import {
@@ -57,29 +58,13 @@ interface StepReviewPublishProps {
   mode?: 'create' | 'edit'
 }
 
-const CONDITION_LABELS: Record<string, string> = {
-  new: 'Neu',
-  'like-new': 'Wie neu',
-  'very-good': 'Sehr gut',
-  good: 'Gut',
-  acceptable: 'Akzeptabel',
-  defective: 'Defekt',
-}
-
-const SHIPPING_LABELS: Record<string, string> = {
-  pickup: 'Abholung',
-  'b-post': 'B-Post (CHF 8.50)',
-  'a-post': 'A-Post (CHF 12.50)',
-}
-
-// Booster-Datenstruktur mit short/details/bullets (Watch-out.ch Style: Boost/Turbo-Boost/Super-Boost)
+// Booster structure - display strings come from t.wizard.review
 const BOOSTER_DETAILS: Record<
   string,
   {
-    short: string
-    detailsTitle: string
-    bullets: string[]
-    fineprint?: string
+    shortKey: string
+    bulletsKeys: string[]
+    fineprintKey: string
     icon: 'zap' | 'rocket' | 'crown'
     gradient: string
     iconBg: string
@@ -89,16 +74,9 @@ const BOOSTER_DETAILS: Record<
   }
 > = {
   boost: {
-    short: 'Verbesserte Sichtbarkeit für Ihr Angebot. Bessere Platzierung in Suchergebnissen und mehr Aufmerksamkeit.',
-    detailsTitle: 'Booster',
-    bullets: [
-      'Verbesserte Sichtbarkeit',
-      'Bessere Platzierung',
-      'Mehr Aufmerksamkeit',
-      'Erhöhte Klickrate',
-      'Standard-Boost-Funktionen',
-    ],
-    fineprint: 'pro Laufzeit',
+    shortKey: 'boosterShort',
+    bulletsKeys: ['boostBullet1', 'boostBullet2', 'boostBullet3', 'boostBullet4', 'boostBullet5'],
+    fineprintKey: 'perDuration',
     icon: 'zap',
     gradient: 'from-blue-500 to-cyan-400',
     iconBg: 'bg-gradient-to-br from-blue-500 to-cyan-400',
@@ -107,15 +85,9 @@ const BOOSTER_DETAILS: Record<
     borderColor: 'border-blue-200 hover:border-blue-400',
   },
   'turbo-boost': {
-    short: 'Sehr prominente Platzierung. Erhöhte Sichtbarkeit in Listen und bessere Positionierung.',
-    detailsTitle: 'Turbo-Boost',
-    bullets: [
-      'Sehr prominente Platzierung',
-      'Erhöhte Sichtbarkeit in Listen',
-      'Bessere Positionierung in Suchergebnissen',
-      'Mehr Aufmerksamkeit für Ihr Angebot',
-    ],
-    fineprint: 'pro Laufzeit',
+    shortKey: 'turboShort',
+    bulletsKeys: ['turboBullet1', 'turboBullet2', 'turboBullet3', 'turboBullet4'],
+    fineprintKey: 'perDuration',
     icon: 'rocket',
     gradient: 'from-violet-500 to-purple-400',
     iconBg: 'bg-gradient-to-br from-violet-500 to-purple-400',
@@ -124,16 +96,9 @@ const BOOSTER_DETAILS: Record<
     borderColor: 'border-violet-200 hover:border-violet-400',
   },
   'super-boost': {
-    short: 'Höchste Sichtbarkeit! Hervorgehobene Platzierung in Suchergebnissen, Top-Position in Kategorien, Priorität bei Empfehlungen und erhöhte Sichtbarkeit auf der Startseite.',
-    detailsTitle: 'Super-Boost',
-    bullets: [
-      'Hervorgehobene Platzierung in Suchergebnissen',
-      'Top-Position in Kategorie-Übersichten',
-      'Längere Laufzeit des Boosters',
-      'Priorität bei Empfehlungen',
-      'Erhöhte Sichtbarkeit auf der Startseite',
-    ],
-    fineprint: 'pro Laufzeit',
+    shortKey: 'superShort',
+    bulletsKeys: ['superBullet1', 'superBullet2', 'superBullet3', 'superBullet4', 'superBullet5'],
+    fineprintKey: 'perDuration',
     icon: 'crown',
     gradient: 'from-amber-400 to-orange-400',
     iconBg: 'bg-gradient-to-br from-amber-400 to-orange-400',
@@ -170,10 +135,26 @@ export function StepReviewPublish({
   policy,
   mode = 'create',
 }: StepReviewPublishProps) {
+  const { t } = useLanguage()
   const [boosters, setBoosters] = useState<BoosterOption[]>([])
   const [expandedBooster, setExpandedBooster] = useState<string | null>(null)
   const stepHeadingRef = useRef<HTMLHeadingElement | null>(null)
   const isBoostersLocked = policy?.uiLocks.boosters || false
+
+  const CONDITION_LABELS: Record<string, string> = {
+    new: t.wizard.review.conditionNew,
+    'like-new': t.wizard.review.conditionLikeNew,
+    'very-good': t.wizard.review.conditionVeryGood,
+    good: t.wizard.review.conditionGood,
+    acceptable: t.wizard.review.conditionAcceptable,
+    defective: t.wizard.review.conditionDefective,
+  }
+
+  const SHIPPING_LABELS: Record<string, string> = {
+    pickup: t.wizard.review.pickup,
+    'b-post': t.wizard.review.bPost,
+    'a-post': t.wizard.review.aPost,
+  }
 
   // Load boosters
   useEffect(() => {
@@ -182,21 +163,7 @@ export function StepReviewPublish({
         const response = await fetch('/api/boosters')
         if (response.ok) {
           const data = await response.json()
-          const boostersWithDetails = (data.boosters || []).map((booster: BoosterOption) => {
-            const details = BOOSTER_DETAILS[booster.id] || {
-              short: booster.description.substring(0, 60),
-              detailsTitle: `${booster.name} – Details`,
-              bullets: [booster.description],
-            }
-            return {
-              ...booster,
-              short: details.short,
-              detailsTitle: details.detailsTitle,
-              bullets: details.bullets,
-              fineprint: details.fineprint,
-            }
-          })
-          setBoosters(boostersWithDetails)
+          setBoosters(data.boosters || [])
         }
       } catch (error) {
         console.error('Error loading boosters:', error)
@@ -220,10 +187,10 @@ export function StepReviewPublish({
           tabIndex={-1}
           className="mb-1 text-xl font-bold text-gray-900 md:mb-2 md:text-2xl"
         >
-          Überprüfen & Veröffentlichen
+          {t.wizard.review.title}
         </h2>
         <p className="text-sm text-gray-600 md:text-base">
-          Überprüfen Sie Ihre Angaben und wählen Sie optional einen Booster
+          {t.wizard.review.subtitle}
         </p>
       </div>
 
@@ -235,13 +202,13 @@ export function StepReviewPublish({
             <div className="relative h-20 w-20 flex-shrink-0 overflow-hidden rounded-lg sm:h-24 sm:w-24 md:h-32 md:w-32 md:rounded-xl">
               <img src={titleImage} alt={formData.title} className="h-full w-full object-cover" />
               <div className="absolute bottom-0.5 right-0.5 rounded-full bg-black/60 px-1.5 py-0.5 text-[10px] text-white sm:bottom-1 sm:right-1 sm:px-2 sm:text-xs">
-                {formData.images.length} Bilder
+                {formData.images.length} {t.wizard.review.images}
               </div>
             </div>
           )}
           <div className="min-w-0 flex-1">
             <h3 className="mb-1 line-clamp-2 text-base font-bold text-gray-900 sm:mb-2 sm:text-lg md:text-xl">
-              {formData.title || 'Kein Titel'}
+              {formData.title || t.wizard.review.noTitle}
             </h3>
             {categoryConfig && (
               <div className="mb-2 flex flex-wrap items-center gap-1 sm:mb-3 sm:gap-2">
@@ -261,7 +228,7 @@ export function StepReviewPublish({
               </span>
               {formData.isAuction && (
                 <span className="rounded-full bg-orange-100 px-1.5 py-0.5 text-[10px] font-medium text-orange-700 sm:px-2 sm:text-xs">
-                  Auktion
+                  {t.wizard.price.auction}
                 </span>
               )}
             </div>
@@ -275,8 +242,8 @@ export function StepReviewPublish({
             <div className="flex items-center gap-2 sm:gap-3">
               <ImageIcon className="h-4 w-4 flex-shrink-0 text-gray-400 sm:h-5 sm:w-5" />
               <div>
-                <span className="text-sm font-medium text-gray-700 sm:text-base">Bilder</span>
-                <p className="text-xs text-gray-500 sm:text-sm">{formData.images.length} Bilder</p>
+                <span className="text-sm font-medium text-gray-700 sm:text-base">{t.wizard.review.images}</span>
+                <p className="text-xs text-gray-500 sm:text-sm">{formData.images.length} {t.wizard.review.images}</p>
               </div>
             </div>
             <button
@@ -285,7 +252,7 @@ export function StepReviewPublish({
               className="flex items-center gap-0.5 text-xs font-medium text-primary-600 hover:text-primary-700 sm:gap-1 sm:text-sm"
             >
               <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Bearbeiten</span>
+              <span className="hidden sm:inline">{t.wizard.review.edit}</span>
             </button>
           </div>
 
@@ -294,7 +261,7 @@ export function StepReviewPublish({
             <div className="flex items-center gap-2 sm:gap-3">
               <FileText className="h-4 w-4 flex-shrink-0 text-gray-400 sm:h-5 sm:w-5" />
               <div>
-                <span className="text-sm font-medium text-gray-700 sm:text-base">Details</span>
+                <span className="text-sm font-medium text-gray-700 sm:text-base">{t.wizard.review.details}</span>
                 <p className="text-xs text-gray-500 sm:text-sm">
                   {CONDITION_LABELS[formData.condition] || formData.condition || 'N/A'}
                 </p>
@@ -306,7 +273,7 @@ export function StepReviewPublish({
               className="flex items-center gap-0.5 text-xs font-medium text-primary-600 hover:text-primary-700 sm:gap-1 sm:text-sm"
             >
               <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Bearbeiten</span>
+              <span className="hidden sm:inline">{t.wizard.review.edit}</span>
             </button>
           </div>
 
@@ -315,7 +282,7 @@ export function StepReviewPublish({
             <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
               <Tag className="h-4 w-4 flex-shrink-0 text-gray-400 sm:h-5 sm:w-5" />
               <div className="min-w-0 flex-1">
-                <span className="text-sm font-medium text-gray-700 sm:text-base">Preis</span>
+                <span className="text-sm font-medium text-gray-700 sm:text-base">{t.wizard.review.price}</span>
                 <p className="truncate text-xs text-gray-500 sm:text-sm">
                   {formData.isAuction
                     ? `${formatCHF(parseFloat(formData.price || '0'))} • ${formData.auctionDuration}d`
@@ -329,7 +296,7 @@ export function StepReviewPublish({
               className="flex flex-shrink-0 items-center gap-0.5 text-xs font-medium text-primary-600 hover:text-primary-700 sm:gap-1 sm:text-sm"
             >
               <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Bearbeiten</span>
+              <span className="hidden sm:inline">{t.wizard.review.edit}</span>
             </button>
           </div>
 
@@ -338,11 +305,11 @@ export function StepReviewPublish({
             <div className="flex min-w-0 flex-1 items-center gap-2 sm:gap-3">
               <Truck className="h-4 w-4 flex-shrink-0 text-gray-400 sm:h-5 sm:w-5" />
               <div className="min-w-0 flex-1">
-                <span className="text-sm font-medium text-gray-700 sm:text-base">Versand</span>
+                <span className="text-sm font-medium text-gray-700 sm:text-base">{t.wizard.review.shipping}</span>
                 <p className="truncate text-xs text-gray-500 sm:text-sm">
                   {formData.shippingMethods.length > 0
                     ? formData.shippingMethods.map(m => SHIPPING_LABELS[m] || m).join(', ')
-                    : 'Keine'}
+                    : t.wizard.review.none}
                 </p>
               </div>
             </div>
@@ -352,7 +319,7 @@ export function StepReviewPublish({
               className="flex flex-shrink-0 items-center gap-0.5 text-xs font-medium text-primary-600 hover:text-primary-700 sm:gap-1 sm:text-sm"
             >
               <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Bearbeiten</span>
+              <span className="hidden sm:inline">{t.wizard.review.edit}</span>
             </button>
           </div>
 
@@ -363,9 +330,9 @@ export function StepReviewPublish({
                 className={`h-4 w-4 flex-shrink-0 sm:h-5 sm:w-5 ${paymentProtectionEnabled ? 'text-green-500' : 'text-gray-400'}`}
               />
               <div>
-                <span className="text-sm font-medium text-gray-700 sm:text-base">Schutz</span>
+                <span className="text-sm font-medium text-gray-700 sm:text-base">{t.wizard.review.protection}</span>
                 <p className="text-xs text-gray-500 sm:text-sm">
-                  {paymentProtectionEnabled ? 'Aktiv' : 'Inaktiv'}
+                  {paymentProtectionEnabled ? t.wizard.review.active : t.wizard.review.inactive}
                 </p>
               </div>
             </div>
@@ -375,7 +342,7 @@ export function StepReviewPublish({
               className="flex items-center gap-0.5 text-xs font-medium text-primary-600 hover:text-primary-700 sm:gap-1 sm:text-sm"
             >
               <Edit2 className="h-3.5 w-3.5 sm:h-4 sm:w-4" />
-              <span className="hidden sm:inline">Bearbeiten</span>
+              <span className="hidden sm:inline">{t.wizard.review.edit}</span>
             </button>
           </div>
         </div>
@@ -388,9 +355,9 @@ export function StepReviewPublish({
             <Sparkles className="h-4 w-4 text-primary-600 sm:h-6 sm:w-6" />
           </div>
           <div>
-            <h3 className="text-base font-bold text-gray-900 sm:text-lg md:text-xl">Ihr Angebot hervorheben?</h3>
+            <h3 className="text-base font-bold text-gray-900 sm:text-lg md:text-xl">{t.wizard.review.highlightOffer}</h3>
             <p className="text-xs text-gray-600 sm:text-sm">
-              Optional - Wählen Sie einen Booster für mehr Sichtbarkeit
+              {t.wizard.review.highlightSubtitle}
             </p>
           </div>
         </div>
@@ -433,12 +400,12 @@ export function StepReviewPublish({
 
                 {/* Description */}
                 <p className="mb-4 text-sm leading-relaxed text-gray-600">
-                  {details?.short || booster.description}
+                  {details ? (t.wizard.review as Record<string, string>)[details.shortKey] : booster.description}
                 </p>
 
                 {/* Bullet Points */}
                 <ul className="mb-4 flex-1 space-y-1.5">
-                  {details?.bullets?.slice(0, 4).map((bullet, index) => (
+                  {(details ? details.bulletsKeys.slice(0, 4).map(k => (t.wizard.review as Record<string, string>)[k]) : [booster.description]).map((bullet, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
                       <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500" />
                       <span>{bullet}</span>
@@ -451,8 +418,8 @@ export function StepReviewPublish({
                   <span className="text-xl font-bold sm:text-2xl" style={{ color: booster.badgeColor }}>
                     {formatCHF(booster.price)}
                   </span>
-                  {details?.fineprint && (
-                    <span className="ml-2 text-sm text-gray-500">{details.fineprint}</span>
+                  {details?.fineprintKey && (
+                    <span className="ml-2 text-sm text-gray-500">{(t.wizard.review as Record<string, string>)[details.fineprintKey]}</span>
                   )}
                 </div>
 
@@ -505,12 +472,12 @@ export function StepReviewPublish({
 
                 {/* Description */}
                 <p className="mb-4 text-sm leading-relaxed text-gray-600">
-                  {details?.short || booster.description}
+                  {details ? (t.wizard.review as Record<string, string>)[details.shortKey] : booster.description}
                 </p>
 
                 {/* Bullet Points */}
                 <ul className="mb-4 flex-1 space-y-1.5">
-                  {details?.bullets?.map((bullet, index) => (
+                  {(details ? details.bulletsKeys.map(k => (t.wizard.review as Record<string, string>)[k]) : [booster.description]).map((bullet, index) => (
                     <li key={index} className="flex items-start gap-2 text-sm text-gray-700">
                       <CheckCircle className="mt-0.5 h-4 w-4 flex-shrink-0 text-primary-500" />
                       <span>{bullet}</span>
@@ -523,8 +490,8 @@ export function StepReviewPublish({
                   <span className="text-xl font-bold sm:text-2xl" style={{ color: booster.badgeColor }}>
                     {formatCHF(booster.price)}
                   </span>
-                  {details?.fineprint && (
-                    <span className="ml-2 text-sm text-gray-500">{details.fineprint}</span>
+                  {details?.fineprintKey && (
+                    <span className="ml-2 text-sm text-gray-500">{(t.wizard.review as Record<string, string>)[details.fineprintKey]}</span>
                   )}
                 </div>
 
@@ -555,16 +522,16 @@ export function StepReviewPublish({
               <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gray-200 sm:h-12 sm:w-12">
                 <Sparkles className="h-5 w-5 text-gray-500 sm:h-6 sm:w-6" />
               </div>
-              <h4 className="text-lg font-bold text-gray-900 sm:text-xl">Kein Booster</h4>
+              <h4 className="text-lg font-bold text-gray-900 sm:text-xl">{t.wizard.review.noBooster}</h4>
             </div>
 
             <p className="mb-4 flex-1 text-sm leading-relaxed text-gray-600">
-              Das Angebot wird ohne besondere Hervorhebung veröffentlicht.
+              {t.wizard.review.noBoosterDesc}
             </p>
 
             <div className="mt-auto border-t border-gray-100 pt-3">
               <span className="text-xl font-bold text-gray-700 sm:text-2xl">CHF 0.–</span>
-              <span className="ml-2 text-sm text-gray-500">kostenlos</span>
+              <span className="ml-2 text-sm text-gray-500">{t.wizard.review.free}</span>
             </div>
 
             {selectedBooster === 'none' && (
@@ -585,10 +552,10 @@ export function StepReviewPublish({
             </div>
             <div className="flex-1">
               <p className="text-sm font-medium text-gray-900">
-                {selectedBoosterData.name} ausgewählt
+                {selectedBoosterData.name} {t.wizard.review.selected}
               </p>
               <p className="text-xs text-gray-600">
-                Die Booster-Gebühr von <strong>{formatCHF(selectedBoosterData.price)}</strong> wird bei Veröffentlichung fällig.
+                {t.wizard.review.boosterFeeNoteBefore}<strong>{formatCHF(selectedBoosterData.price)}</strong>{t.wizard.review.boosterFeeNoteAfter}
               </p>
             </div>
           </div>
@@ -600,12 +567,10 @@ export function StepReviewPublish({
       <div className="rounded-lg bg-green-50 p-4 text-center sm:rounded-xl sm:p-5 md:p-6">
         <CheckCircle className="mx-auto mb-2 h-8 w-8 text-green-500 sm:mb-3 sm:h-10 sm:w-10 md:h-12 md:w-12" />
         <h3 className="mb-1 text-base font-semibold text-green-800 sm:mb-2 sm:text-lg">
-          {mode === 'edit' ? 'Bereit zum Speichern' : 'Bereit zur Veröffentlichung'}
+          {mode === 'edit' ? t.wizard.review.readyToSave : t.wizard.review.readyToPublish}
         </h3>
         <p className="text-xs text-green-700 sm:text-sm">
-          {mode === 'edit'
-            ? 'Klicken Sie auf "Änderungen speichern", um Ihre Bearbeitungen zu speichern.'
-            : 'Klicken Sie auf "Artikel veröffentlichen", um Ihren Artikel zu listen.'}
+          {mode === 'edit' ? t.wizard.review.saveHint : t.wizard.review.publishHint}
         </p>
       </div>
     </div>

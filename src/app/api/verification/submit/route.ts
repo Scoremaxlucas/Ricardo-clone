@@ -4,8 +4,6 @@ import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { encrypt } from '@/lib/crypto'
 import { getIbanLast4 } from '@/lib/iban-validator'
-import { upsertUserAddress, deleteUserAddress, validateSwissPostalCode } from '@/lib/address'
-
 // Vercel body limit 4.5 MB; client compresses images to fit
 const MAX_PAYLOAD_SIZE = 4 * 1024 * 1024 // 4 MB to stay under 4.5 MB
 
@@ -250,64 +248,89 @@ export async function POST(request: NextRequest) {
     // Speichere Zahlungsmittel als JSON
     const paymentMethodsJson = JSON.stringify(paymentMethods)
 
-    // Update User (personal data only - addresses go to UserAddress table)
-    await prisma.user.update({
-      where: { id: session.user.id },
-      data: {
-        // Persönliche Daten
-        title,
-        firstName,
-        lastName,
-        // Geburtsdatum
-        dateOfBirth: new Date(dateOfBirth),
-        // Ausweiskopie
-        idDocument: idDocument,
-        idDocumentPage1: idDocumentPage1,
-        idDocumentPage2: idDocumentPage2,
-        idDocumentType: idDocumentType,
-        // Zahlungsmittel
-        paymentMethods: paymentMethodsJson,
-        // Verifizierung
-        verified: true,
-        verifiedAt: new Date(),
-        verificationStatus: 'pending', // Status auf "pending" setzen, bis Admin prüft
-      },
-    })
-
-    // Save addresses to UserAddress table (primary storage)
-    // Save main address
-    await upsertUserAddress(session.user.id, 'MAIN', {
-      street,
-      streetNumber,
-      postalCode,
-      city,
-      country,
-    })
-
-    // Save or delete delivery address
-    if (hasDeliveryAddress && deliveryStreet && deliveryCity) {
-      await upsertUserAddress(session.user.id, 'DELIVERY', {
-        street: deliveryStreet,
-        streetNumber: deliveryStreetNumber,
-        postalCode: deliveryPostalCode,
-        city: deliveryCity,
-        country: deliveryCountry,
-      })
-    } else {
-      // Remove delivery address if checkbox is unchecked
-      await deleteUserAddress(session.user.id, 'DELIVERY')
-    }
-
-    // Wenn Bankdaten vorhanden, automatisch PayoutProfile erstellen
+    // Pre-compute bank data for transaction (encryption is CPU-only)
+    let ibanEncrypted: string | undefined
+    let ibanLast4: string | undefined
+    let accountHolderName: string | undefined
     if (bankMethod) {
       const ibanCleaned = bankMethod.iban.replace(/[\s-]/g, '').toUpperCase()
-      const accountHolderName = `${bankMethod.accountHolderFirstName} ${bankMethod.accountHolderLastName}`
+      accountHolderName = `${bankMethod.accountHolderFirstName} ${bankMethod.accountHolderLastName}`
+      ibanEncrypted = encrypt(ibanCleaned)
+      ibanLast4 = getIbanLast4(ibanCleaned)
+    }
 
-      try {
-        const ibanEncrypted = encrypt(ibanCleaned)
-        const ibanLast4 = getIbanLast4(ibanCleaned)
+    // Update User, addresses, and payout profile in a single transaction
+    await prisma.$transaction(async (tx) => {
+      // 1. Update user
+      await tx.user.update({
+        where: { id: session.user.id },
+        data: {
+          title,
+          firstName,
+          lastName,
+          dateOfBirth: new Date(dateOfBirth),
+          idDocument: idDocument,
+          idDocumentPage1: idDocumentPage1,
+          idDocumentPage2: idDocumentPage2,
+          idDocumentType: idDocumentType,
+          paymentMethods: paymentMethodsJson,
+          verified: true,
+          verifiedAt: new Date(),
+          verificationStatus: 'pending',
+        },
+      })
 
-        await prisma.payoutProfile.upsert({
+      // 2. Upsert main address
+      await tx.userAddress.upsert({
+        where: { userId_type: { userId: session.user.id, type: 'MAIN' } },
+        create: {
+          userId: session.user.id,
+          type: 'MAIN',
+          street: street.trim(),
+          streetNumber: streetNumber.trim(),
+          postalCode: postalCode.trim(),
+          city: city.trim(),
+          country: country?.trim() || 'Schweiz',
+        },
+        update: {
+          street: street.trim(),
+          streetNumber: streetNumber.trim(),
+          postalCode: postalCode.trim(),
+          city: city.trim(),
+          country: country?.trim() || 'Schweiz',
+        },
+      })
+
+      // 3. Delivery address
+      if (hasDeliveryAddress && deliveryStreet && deliveryCity) {
+        await tx.userAddress.upsert({
+          where: { userId_type: { userId: session.user.id, type: 'DELIVERY' } },
+          create: {
+            userId: session.user.id,
+            type: 'DELIVERY',
+            street: deliveryStreet.trim(),
+            streetNumber: deliveryStreetNumber.trim(),
+            postalCode: deliveryPostalCode.trim(),
+            city: deliveryCity.trim(),
+            country: deliveryCountry?.trim() || 'Schweiz',
+          },
+          update: {
+            street: deliveryStreet.trim(),
+            streetNumber: deliveryStreetNumber.trim(),
+            postalCode: deliveryPostalCode.trim(),
+            city: deliveryCity.trim(),
+            country: deliveryCountry?.trim() || 'Schweiz',
+          },
+        })
+      } else {
+        await tx.userAddress.deleteMany({
+          where: { userId: session.user.id, type: 'DELIVERY' },
+        })
+      }
+
+      // 4. Payout profile (if bank method)
+      if (bankMethod && ibanEncrypted && ibanLast4 && accountHolderName) {
+        await tx.payoutProfile.upsert({
           where: { userId: session.user.id },
           create: {
             userId: session.user.id,
@@ -325,11 +348,8 @@ export async function POST(request: NextRequest) {
           },
         })
         console.log('PayoutProfile erstellt für User:', session.user.id)
-      } catch (payoutError: any) {
-        console.error('Fehler beim Erstellen des PayoutProfile:', payoutError)
-        // Fehler nicht blockierend - User kann später manuell hinzufügen
       }
-    }
+    })
 
     return NextResponse.json({
       message:

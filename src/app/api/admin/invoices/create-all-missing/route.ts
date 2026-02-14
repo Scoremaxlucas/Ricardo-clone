@@ -52,7 +52,7 @@ export async function POST(request: NextRequest) {
     })
     const saleIdsWithInvoice = existingInvoiceSaleIds.map((i) => i.saleId as string)
 
-    // Finde alle Purchases ohne Rechnung
+    // Finde alle Purchases ohne Rechnung (batched to prevent timeout/OOM)
     const purchasesWithoutInvoice = await prisma.purchase.findMany({
       where: {
         status: { notIn: ['cancelled'] },
@@ -69,6 +69,7 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+      take: 200, // Process max 200 at a time to prevent timeout
     })
 
     results.purchases.attempted = purchasesWithoutInvoice.length
@@ -106,6 +107,7 @@ export async function POST(request: NextRequest) {
           },
         },
       },
+      take: 200, // Process max 200 at a time to prevent timeout
     })
 
     results.orders.attempted = ordersWithoutInvoice.length

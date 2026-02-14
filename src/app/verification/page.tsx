@@ -293,7 +293,6 @@ export default function VerificationPage() {
     
     // KRITISCH: Verhindere doppeltes Absenden (z.B. bei schlechter Verbindung, Doppelklick)
     if (submitInProgressRef.current) {
-      console.log('Submit bereits in Bearbeitung, ignoriere doppelten Aufruf')
       return
     }
     submitInProgressRef.current = true
@@ -301,12 +300,6 @@ export default function VerificationPage() {
     setLoading(true)
     setError('')
     setSuccess('')
-
-    console.log('Form Submit - Ausweistyp vor Validierung:', {
-      idDocumentType: idDocumentType,
-      value: idDocumentType,
-      isEmpty: !idDocumentType || (idDocumentType as any) === '' || (idDocumentType as any).trim?.() === '',
-    })
 
     // Validierung
     if (
@@ -395,16 +388,6 @@ export default function VerificationPage() {
     }
 
     // Validierung Ausweiskopie
-    console.log('Ausweistyp Validierung:', {
-      idDocumentType: idDocumentType,
-      type: typeof idDocumentType,
-      length: idDocumentType?.length,
-      isEmpty: !idDocumentType || (idDocumentType as any) === '',
-      isID: idDocumentType === 'ID',
-      isPassport: idDocumentType === 'Passport',
-      strictCheck: idDocumentType !== 'ID' && idDocumentType !== 'Passport',
-    })
-
     // Prüfe ob ein gültiger Ausweistyp gewählt wurde
     if (
       !idDocumentType ||
@@ -524,16 +507,6 @@ export default function VerificationPage() {
         .replace(/[\s\-]/g, '')
         .toUpperCase()
         .trim()
-
-      console.log('IBAN Validierung:', {
-        original: bankMethod.iban,
-        formatted: ibanFormatted,
-        cleaned: ibanCleaned,
-        length: ibanCleaned.length,
-        afterCH: ibanCleaned.substring(4),
-        afterCHLength: ibanCleaned.substring(4).length,
-        matchesPattern: /^CH\d{2}[A-Z0-9]{17}$/.test(ibanCleaned),
-      })
 
       // Schweizer IBAN Format: CH + 2 Ziffern + 17 alphanumerische Zeichen = 21 Zeichen total
       const ibanRegex = /^CH\d{2}[A-Z0-9]{17}$/
@@ -675,8 +648,6 @@ export default function VerificationPage() {
         clearTimeout(timeoutId)
       }
 
-      console.log('API Response Status:', res.status)
-
       // Robustes JSON-Parsing: Erst Text lesen, dann parsen
       let data: { message?: string; [key: string]: any }
       const responseText = await res.text()
@@ -697,8 +668,6 @@ export default function VerificationPage() {
         submitInProgressRef.current = false
         return
       }
-      
-      console.log('API Response Data:', data)
 
       if (res.ok) {
         // Erfolg: Ref wird NICHT zurückgesetzt, da wir weiterleiten
@@ -1016,7 +985,6 @@ export default function VerificationPage() {
                     value={idDocumentType || ''}
                     onChange={e => {
                       const selectedValue = e.target.value as 'ID' | 'Passport' | ''
-                      console.log('Ausweistyp geändert:', selectedValue)
                       setIdDocumentType(selectedValue)
                       // Lösche alle vorherigen Uploads beim Wechsel
                       if (selectedValue !== 'ID') {

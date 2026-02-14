@@ -170,8 +170,10 @@ export default function StatusPage() {
         </div>
 
         {error && (
-          <div className="mb-6 rounded-lg bg-red-50 p-4 text-red-700">
-            <p>{error}</p>
+          <div className="mx-auto max-w-3xl px-4">
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-center text-red-600">
+              {error}
+            </div>
           </div>
         )}
 

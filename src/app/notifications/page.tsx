@@ -62,13 +62,11 @@ export default function NotificationsPage() {
   useEffect(() => {
     const handleFocus = () => {
       if (session?.user) {
-        console.log('[notifications] Seite fokussiert, lade Benachrichtigungen neu')
         fetchNotifications()
       }
     }
     const handleVisibilityChange = () => {
       if (document.visibilityState === 'visible' && session?.user) {
-        console.log('[notifications] Seite sichtbar, lade Benachrichtigungen neu')
         fetchNotifications()
       }
     }
@@ -76,7 +74,6 @@ export default function NotificationsPage() {
     // Aktualisiere auch beim Zurückkommen (popstate event)
     const handlePopState = () => {
       if (session?.user) {
-        console.log('[notifications] Zurück navigiert, lade Benachrichtigungen neu')
         setTimeout(() => fetchNotifications(), 100)
       }
     }

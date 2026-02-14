@@ -56,7 +56,7 @@ export async function GET(request: NextRequest) {
   } catch (error: any) {
     console.error('Error fetching admin status:', error)
     return NextResponse.json(
-      { message: 'Fehler beim Laden des Admin-Status', error: error.message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

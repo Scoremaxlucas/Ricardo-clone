@@ -53,7 +53,7 @@ export async function GET() {
       timestamp: new Date().toISOString(),
       database: {
         connected: false,
-        error: error.message,
+        error: 'Ein Fehler ist aufgetreten',
       },
       performance: {
         totalResponseTime: `${totalTime}ms`,

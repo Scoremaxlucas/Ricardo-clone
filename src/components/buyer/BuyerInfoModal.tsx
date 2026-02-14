@@ -1,7 +1,8 @@
 'use client'
 
-import { useState } from 'react'
+import { useLanguage } from '@/contexts/LanguageContext'
 import { X, CheckCircle, Mail, Phone, MapPin, CreditCard, User, Copy, Check } from 'lucide-react'
+import { useState } from 'react'
 import { toast } from 'react-hot-toast'
 
 interface BuyerInfo {
@@ -37,12 +38,13 @@ export function BuyerInfoModal({
   onClose,
   onMarkPaid,
 }: BuyerInfoModalProps) {
+  const { t } = useLanguage()
   const [copiedField, setCopiedField] = useState<string | null>(null)
 
   const copyToClipboard = (text: string, fieldName: string) => {
     navigator.clipboard.writeText(text)
     setCopiedField(fieldName)
-    toast.success('Kopiert!')
+    toast.success(t.modals.copied)
     setTimeout(() => setCopiedField(null), 2000)
   }
 
@@ -60,7 +62,7 @@ export function BuyerInfoModal({
 
   const buyerFullName = buyer.firstName && buyer.lastName
     ? `${buyer.firstName} ${buyer.lastName}`
-    : buyer.name || 'Käufer'
+    : buyer.name || t.modals.buyerInfo.buyer
 
   const buyerFullAddress = buyer.street || buyer.city
     ? `${buyer.street || ''} ${buyer.streetNumber || ''}, ${buyer.postalCode || ''} ${buyer.city || ''}`.trim()
@@ -73,13 +75,13 @@ export function BuyerInfoModal({
         <div className="sticky top-0 z-10 border-b border-gray-100 bg-gradient-to-r from-primary-600 to-teal-500 px-6 py-5">
           <div className="flex items-center justify-between">
             <div>
-              <h2 className="text-xl font-bold text-white">Käuferinformationen</h2>
+              <h2 className="text-xl font-bold text-white">{t.modals.buyerInfo.title}</h2>
               <p className="mt-1 text-sm text-white/80">{watchTitle}</p>
             </div>
             <button
               onClick={onClose}
               className="rounded-full bg-white/20 p-2 text-white transition-colors hover:bg-white/30"
-              aria-label="Schliessen"
+              aria-label={t.modals.close}
             >
               <X className="h-5 w-5" />
             </button>
@@ -93,9 +95,9 @@ export function BuyerInfoModal({
               <CheckCircle className="h-5 w-5 text-white" />
             </div>
             <div>
-              <p className="font-semibold text-emerald-800">Käuferdaten freigeschaltet</p>
+              <p className="font-semibold text-emerald-800">{t.modals.buyerInfo.buyerDataUnlocked}</p>
               <p className="text-sm text-emerald-600">
-                Als Verkäufer haben Sie Zugriff auf die vollständigen Käuferdaten für den Versand.
+                {t.modals.buyerInfo.buyerDataUnlockedDesc}
               </p>
             </div>
           </div>
@@ -105,14 +107,14 @@ export function BuyerInfoModal({
             <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
               <div className="mb-3 flex items-center gap-2">
                 <User className="h-4 w-4 text-gray-500" />
-                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Name</span>
+                <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t.modals.name}</span>
               </div>
               <div className="flex items-center justify-between">
                 <span className="text-lg font-semibold text-gray-900">{buyerFullName}</span>
                 <button
                   onClick={() => copyToClipboard(buyerFullName, 'name')}
                   className="rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-                  title="Kopieren"
+                  title={t.modals.copy}
                 >
                   {copiedField === 'name' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                 </button>
@@ -126,7 +128,7 @@ export function BuyerInfoModal({
                 <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
                   <div className="mb-2 flex items-center gap-2">
                     <Mail className="h-4 w-4 text-gray-500" />
-                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">E-Mail</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t.modals.email}</span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <a
@@ -138,7 +140,7 @@ export function BuyerInfoModal({
                     <button
                       onClick={() => copyToClipboard(buyer.email!, 'email')}
                       className="flex-shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-                      title="Kopieren"
+                      title={t.modals.copy}
                     >
                       {copiedField === 'email' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                     </button>
@@ -151,7 +153,7 @@ export function BuyerInfoModal({
                 <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
                   <div className="mb-2 flex items-center gap-2">
                     <Phone className="h-4 w-4 text-gray-500" />
-                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Telefon</span>
+                    <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t.modals.phone}</span>
                   </div>
                   <div className="flex items-center justify-between gap-2">
                     <a
@@ -163,7 +165,7 @@ export function BuyerInfoModal({
                     <button
                       onClick={() => copyToClipboard(buyer.phone!, 'phone')}
                       className="flex-shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-                      title="Kopieren"
+                      title={t.modals.copy}
                     >
                       {copiedField === 'phone' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                     </button>
@@ -177,7 +179,7 @@ export function BuyerInfoModal({
               <div className="rounded-xl border border-gray-100 bg-gray-50/50 p-4">
                 <div className="mb-2 flex items-center gap-2">
                   <MapPin className="h-4 w-4 text-gray-500" />
-                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">Lieferadresse</span>
+                  <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">{t.modals.deliveryAddress}</span>
                 </div>
                 <div className="flex items-start justify-between gap-2">
                   <div>
@@ -195,7 +197,7 @@ export function BuyerInfoModal({
                   <button
                     onClick={() => copyToClipboard(buyerFullAddress, 'address')}
                     className="flex-shrink-0 rounded-lg p-2 text-gray-400 transition-colors hover:bg-gray-200 hover:text-gray-600"
-                    title="Kopieren"
+                    title={t.modals.copy}
                   >
                     {copiedField === 'address' ? <Check className="h-4 w-4 text-emerald-500" /> : <Copy className="h-4 w-4" />}
                   </button>
@@ -209,7 +211,7 @@ export function BuyerInfoModal({
                 <div className="mb-3 flex items-center gap-2">
                   <CreditCard className="h-4 w-4 text-gray-500" />
                   <span className="text-xs font-semibold uppercase tracking-wider text-gray-500">
-                    Zahlungsmethoden des Käufers
+                    {t.modals.buyerInfo.buyerPaymentMethods}
                   </span>
                 </div>
                 <div className="space-y-3">
@@ -221,7 +223,7 @@ export function BuyerInfoModal({
                       {method.type === 'twint' && (
                         <div>
                           <div className="mb-1 flex items-center gap-2">
-                            <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">TWINT</span>
+                            <span className="rounded bg-purple-100 px-2 py-0.5 text-xs font-semibold text-purple-700">{t.modals.twint}</span>
                           </div>
                           {method.phone && (
                             <div className="mt-2 flex items-center justify-between">
@@ -239,7 +241,7 @@ export function BuyerInfoModal({
                       {method.type === 'bank' && (
                         <div>
                           <div className="mb-2 flex items-center gap-2">
-                            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">Bank</span>
+                            <span className="rounded bg-blue-100 px-2 py-0.5 text-xs font-semibold text-blue-700">{t.modals.bank}</span>
                           </div>
                           {method.iban && (
                             <div className="flex items-center justify-between rounded bg-gray-50 p-2">
@@ -254,7 +256,7 @@ export function BuyerInfoModal({
                           )}
                           {(method.accountHolderFirstName || method.accountHolderLastName) && (
                             <p className="mt-2 text-sm text-gray-600">
-                              Kontoinhaber: {method.accountHolderFirstName} {method.accountHolderLastName}
+                              {t.modals.accountHolder}: {method.accountHolderFirstName} {method.accountHolderLastName}
                             </p>
                           )}
                           {method.bank && (
@@ -265,7 +267,7 @@ export function BuyerInfoModal({
                       {method.type === 'creditcard' && (
                         <div>
                           <div className="mb-1 flex items-center gap-2">
-                            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">Kreditkarte</span>
+                            <span className="rounded bg-gray-100 px-2 py-0.5 text-xs font-semibold text-gray-700">{t.modals.creditCard}</span>
                           </div>
                           {method.cardNumber && (
                             <div className="mt-2 flex items-center justify-between">
@@ -287,9 +289,9 @@ export function BuyerInfoModal({
                   <CheckCircle className="h-5 w-5 text-white" />
                 </div>
                 <div>
-                  <p className="font-semibold text-emerald-800">Zahlung bestätigt</p>
+                  <p className="font-semibold text-emerald-800">{t.modals.buyerInfo.paymentConfirmed}</p>
                   <p className="text-sm text-emerald-600">
-                    Die Zahlung für diesen Artikel wurde als erhalten markiert.
+                    {t.modals.buyerInfo.paymentConfirmedDesc}
                   </p>
                 </div>
               </div>
@@ -303,7 +305,7 @@ export function BuyerInfoModal({
             onClick={onClose}
             className="w-full rounded-xl bg-gray-200 px-4 py-3 font-medium text-gray-700 transition-colors hover:bg-gray-300"
           >
-            Schliessen
+            {t.modals.close}
           </button>
         </div>
       </div>

@@ -29,6 +29,9 @@ async function checkAdmin(session: any): Promise<boolean> {
   return isAdminInSession || isAdminInDb
 }
 
+// Timeout in ms for stats export (prevents long-running queries)
+const EXPORT_TIMEOUT_MS = 60_000
+
 // GET: CSV-Export für Statistiken
 export async function GET(request: NextRequest) {
   try {
@@ -37,7 +40,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ message: 'Zugriff verweigert' }, { status: 403 })
     }
 
-    // Lade Statistiken vom Statistics-Endpoint
+    const timeoutPromise = new Promise<never>((_, reject) =>
+      setTimeout(() => reject(new Error('Export timeout')), EXPORT_TIMEOUT_MS)
+    )
+
+    const exportPromise = (async () => {
+      // Lade Statistiken vom Statistics-Endpoint
     // Wir verwenden die gleiche Logik wie /api/admin/statistics
     const now = new Date()
     const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
@@ -60,7 +68,9 @@ export async function GET(request: NextRequest) {
       expiredWatches,
       newWatchesLast30Days,
       newWatchesLast7Days,
-      allPurchases,
+      totalPurchaseCount,
+      totalRevenueAgg,
+      completedRevenueAgg,
       completedPurchases,
       pendingPurchases,
       cancelledPurchases,
@@ -112,17 +122,12 @@ export async function GET(request: NextRequest) {
       }),
       prisma.watch.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
       prisma.watch.count({ where: { createdAt: { gte: sevenDaysAgo } } }),
-      // WICHTIG: Explizites select verwenden, um disputeInitiatedBy zu vermeiden
-      prisma.purchase.findMany({
-        select: {
-          id: true,
-          price: true,
-          status: true,
-          watch: {
-            select: { price: true, buyNowPrice: true, isAuction: true },
-          },
-          // Nur benötigte Felder selektieren (disputeInitiatedBy wird NICHT selektiert)
-        },
+      // Use count + aggregate instead of findMany to avoid loading all purchases (timeout risk)
+      prisma.purchase.count(),
+      prisma.purchase.aggregate({ _sum: { price: true } }),
+      prisma.purchase.aggregate({
+        where: { status: 'completed' },
+        _sum: { price: true },
       }),
       prisma.purchase.count({ where: { status: 'completed' } }),
       prisma.purchase.count({
@@ -136,6 +141,7 @@ export async function GET(request: NextRequest) {
       prisma.purchase.count({ where: { disputeStatus: 'closed' } }),
       prisma.watchCategory
         .findMany({
+          take: 5000,
           include: {
             category: {
               select: { name: true },
@@ -165,17 +171,9 @@ export async function GET(request: NextRequest) {
       }),
     ])
 
-    // Berechne abgeleitete Werte
-    const totalRevenue = allPurchases.reduce((sum, purchase) => {
-      return sum + (purchase.price || purchase.watch?.price || 0)
-    }, 0)
-
-    const completedRevenue = allPurchases
-      .filter(p => p.status === 'completed')
-      .reduce((sum, purchase) => {
-        return sum + (purchase.price || purchase.watch?.price || 0)
-      }, 0)
-
+    // Berechne abgeleitete Werte (using aggregate results)
+    const totalRevenue = totalRevenueAgg._sum?.price ?? 0
+    const completedRevenue = completedRevenueAgg._sum?.price ?? 0
     const averagePurchasePrice = completedPurchases > 0 ? completedRevenue / completedPurchases : 0
     const successRate = totalWatches > 0 ? (soldWatches / totalWatches) * 100 : 0
 
@@ -190,6 +188,7 @@ export async function GET(request: NextRequest) {
           orderBy: { createdAt: 'asc' },
         },
       },
+      take: 10_000,
     })
 
     const saleDurations = soldWatchesWithDates
@@ -307,8 +306,14 @@ export async function GET(request: NextRequest) {
         'Content-Disposition': `attachment; filename="${filename}"`,
       },
     })
+    })()
+
+    return await Promise.race([exportPromise, timeoutPromise])
   } catch (error: any) {
     console.error('Error exporting statistics:', error)
+    if (error?.message === 'Export timeout') {
+      return NextResponse.json({ message: 'Export-Timeout. Bitte versuchen Sie es später erneut.' }, { status: 504 })
+    }
     return NextResponse.json({ message: 'Fehler beim Export: ' + error.message }, { status: 500 })
   }
 }

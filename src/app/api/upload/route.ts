@@ -161,7 +161,7 @@ export async function POST(request: NextRequest) {
   } catch (error: any) {
     console.error('[upload] Error uploading file:', error)
     return NextResponse.json(
-      { message: 'Fehler beim Hochladen: ' + (error.message || 'Unbekannter Fehler') },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

@@ -59,7 +59,7 @@ export async function GET(
       console.warn('Could not load user activities:', error)
     }
 
-    // 2. Erstellte Watches
+    // 2. Erstellte Watches (paginated)
     const watches = await prisma.watch.findMany({
       where: { sellerId: userId },
       select: {
@@ -69,6 +69,7 @@ export async function GET(
         createdAt: true,
       },
       orderBy: { createdAt: 'desc' },
+      take: 100,
     })
     watches.forEach(watch => {
       activities.push({
@@ -84,9 +85,10 @@ export async function GET(
       })
     })
 
-    // 3. Verkaufte Watches
+    // 3. Verkaufte Watches (paginated)
     const sales = await prisma.sale.findMany({
       where: { sellerId: userId },
+      take: 100,
       include: {
         watch: {
           select: {
@@ -134,9 +136,10 @@ export async function GET(
       })
     })
 
-    // 4. Käufe
+    // 4. Käufe (paginated)
     const purchases = await prisma.purchase.findMany({
       where: { buyerId: userId },
+      take: 100,
       include: {
         watch: {
           select: {
@@ -254,23 +257,19 @@ export async function GET(
       console.warn('Could not load user reports received:', error)
     }
 
-    // 7. Kontaktformular-Anfragen (wenn userId vorhanden)
+    // 7. Kontaktformular-Anfragen (filter in DB, not in JS)
     try {
-      const contactRequests = await prisma.contactRequest.findMany({
-        where: {
-          // ContactRequest hat kein userId, aber wir können nach Email suchen
-          // Das ist nicht ideal, aber für jetzt ok
-        },
-        orderBy: { createdAt: 'desc' },
-      })
-      // Nur wenn wir die Email des Users haben
-      const user = await prisma.user.findUnique({
+      const userForEmail = await prisma.user.findUnique({
         where: { id: userId },
         select: { email: true },
       })
-      if (user) {
-        const userContactRequests = contactRequests.filter(cr => cr.email === user.email)
-        userContactRequests.forEach(request => {
+      if (userForEmail?.email) {
+        const contactRequests = await prisma.contactRequest.findMany({
+          where: { email: userForEmail.email },
+          orderBy: { createdAt: 'desc' },
+          take: 50,
+        })
+        contactRequests.forEach(request => {
           activities.push({
             id: request.id,
             action: 'contact_form_sent',
@@ -356,13 +355,10 @@ export async function GET(
     activities.sort((a, b) => b.createdAt.getTime() - a.createdAt.getTime())
 
     return NextResponse.json(activities)
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error('Error fetching user activity:', error)
     return NextResponse.json(
-      {
-        message: 'Fehler beim Laden der Aktivitäten',
-        error: error.message,
-      },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

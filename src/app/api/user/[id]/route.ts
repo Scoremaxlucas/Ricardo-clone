@@ -55,7 +55,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
   } catch (error: any) {
     console.error('Error fetching user:', error)
     return NextResponse.json(
-      { message: 'Fehler beim Laden der Benutzerdaten: ' + error.message },
+      { message: 'Ein Fehler ist aufgetreten' },
       { status: 500 }
     )
   }

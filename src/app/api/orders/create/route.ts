@@ -25,9 +25,8 @@ export async function POST(request: NextRequest) {
       console.log('[orders/create] Database connection OK')
     } catch (dbError: unknown) {
       console.error('[orders/create] Database connection failed:', dbError)
-      const msg = dbError instanceof Error ? dbError.message : 'Ein Fehler ist aufgetreten'
       return NextResponse.json(
-        { message: 'Datenbankverbindung fehlgeschlagen', error: msg },
+        { message: 'Ein Fehler ist aufgetreten' },
         { status: 500 }
       )
     }
@@ -63,71 +62,35 @@ export async function POST(request: NextRequest) {
     const buyerId = session.user.id
     console.log('[orders/create] BuyerId:', buyerId)
 
-    // Lade Watch mit Verkäufer - use select to avoid missing columns
+    // Pre-check: Load watch for validation (lightweight, before transaction)
     console.log('[orders/create] Loading watch:', watchId)
-    const watch = await prisma.watch.findUnique({
+    const watchPreCheck = await prisma.watch.findUnique({
       where: { id: watchId },
       select: {
         id: true,
-        title: true,
+        sellerId: true,
         price: true,
         buyNowPrice: true,
-        sellerId: true,
         shippingMethod: true,
-        paymentProtectionEnabled: true, // Wichtig für Zahlungsmethode
-        seller: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-            stripeConnectedAccountId: true,
-            stripeOnboardingComplete: true,
-          },
-        },
-        orders: {
-          where: {
-            buyerId: buyerId, // Only check orders for THIS buyer
-            orderStatus: {
-              not: 'canceled',
-            },
-          },
-        },
+        paymentProtectionEnabled: true,
       },
     })
 
-    if (!watch) {
+    if (!watchPreCheck) {
       console.error('[orders/create] Watch not found:', watchId)
       return NextResponse.json({ message: 'Artikel nicht gefunden' }, { status: 404 })
     }
-    console.log('[orders/create] Watch loaded:', { id: watch.id, price: watch.price, buyNowPrice: watch.buyNowPrice, sellerId: watch.sellerId })
 
-    // Prüfe ob bereits eine aktive Order für DIESEN Käufer existiert
-    const existingOrder = (watch.orders || []).find(
-      o => o.orderStatus !== 'canceled' && o.paymentStatus !== 'refunded'
-    )
-
-    // If an active order exists for this buyer, return it (idempotent)
-    if (existingOrder) {
-      return NextResponse.json({
-        success: true,
-        order: {
-          id: existingOrder.id,
-          orderNumber: existingOrder.orderNumber,
-          totalAmount: existingOrder.totalAmount,
-          orderStatus: existingOrder.orderStatus,
-          paymentStatus: existingOrder.paymentStatus,
-        },
-        existing: true, // Indicate this was an existing order
-      })
-    }
-
-    // Prüfe ob Käufer nicht Verkäufer ist
-    if (watch.sellerId === buyerId) {
+    // Prüfe ob Käufer nicht Verkäufer ist (can check early)
+    if (watchPreCheck.sellerId === buyerId) {
       return NextResponse.json(
         { message: 'Sie können nicht Ihren eigenen Artikel kaufen' },
         { status: 400 }
       )
     }
+
+    // Use pre-check data for price/shipping calculations
+    const watch = watchPreCheck
 
     // JUST-IN-TIME ONBOARDING: Keine Prüfung ob Verkäufer Stripe hat
     // Die Zahlung geht an Helvenda (Platform), Auszahlung an Verkäufer erfolgt später
@@ -220,9 +183,8 @@ export async function POST(request: NextRequest) {
       fees = await calculateOrderFees(itemPrice, shippingCostChfFinal, true)
     } catch (feeError: unknown) {
       console.error('[orders/create] Fee calculation error:', feeError)
-      const msg = feeError instanceof Error ? feeError.message : 'Ein Fehler ist aufgetreten'
       return NextResponse.json(
-        { message: 'Fehler bei der Gebührenberechnung', error: msg },
+        { message: 'Ein Fehler ist aufgetreten' },
         { status: 500 }
       )
     }
@@ -302,11 +264,31 @@ export async function POST(request: NextRequest) {
     }
     console.log('[orders/create] Creating order with data:', JSON.stringify(orderData, null, 2))
 
-    // Transaction: Order + Invoice + Order-Update + PURCHASE-Notification atomar
+    // RACE CONDITION FIX: All checks + creation inside one transaction
     let order: Awaited<ReturnType<typeof prisma.order.create>>
     let invoice: Awaited<ReturnType<typeof createInvoiceForOrderWithTransaction>> | null = null
     try {
       const result = await prisma.$transaction(async (tx) => {
+        // Re-check for existing active orders INSIDE transaction to prevent race condition
+        const existingOrders = await tx.order.findMany({
+          where: {
+            watchId,
+            buyerId,
+            orderStatus: { not: 'canceled' },
+            paymentStatus: { not: 'refunded' },
+          },
+          take: 1,
+        })
+
+        if (existingOrders.length > 0) {
+          const existingOrder = existingOrders[0]
+          return {
+            existing: true as const,
+            order: existingOrder,
+            invoice: null,
+          }
+        }
+
         // Order-Nummer innerhalb Transaktion (Race-Sicherheit)
         const lastOrder = await tx.order.findFirst({
           where: {
@@ -385,8 +367,23 @@ export async function POST(request: NextRequest) {
 
         console.log(`[orders/create] ✅ Rechnung ${createdInvoice.invoiceNumber} erstellt für Order ${createdOrder.id} (sofort nach Verkauf)`)
 
-        return { order: createdOrder, invoice: createdInvoice }
+        return { existing: false as const, order: createdOrder, invoice: createdInvoice }
       })
+
+      // Handle idempotent return for existing orders
+      if (result.existing) {
+        return NextResponse.json({
+          success: true,
+          order: {
+            id: result.order.id,
+            orderNumber: result.order.orderNumber,
+            totalAmount: result.order.totalAmount,
+            orderStatus: result.order.orderStatus,
+            paymentStatus: result.order.paymentStatus,
+          },
+          existing: true,
+        })
+      }
 
       order = result.order
       invoice = result.invoice
@@ -395,13 +392,9 @@ export async function POST(request: NextRequest) {
       const prismaErr = prismaError as { code?: string; meta?: unknown; message?: string }
       console.error('[orders/create] Prisma error code:', prismaErr.code)
       console.error('[orders/create] Prisma error meta:', prismaErr.meta)
-      const msg =
-        prismaError instanceof Error ? prismaError.message : 'Ein Fehler ist aufgetreten'
       return NextResponse.json(
         {
-          message: 'Datenbankfehler beim Erstellen der Bestellung',
-          error: msg,
-          code: prismaErr.code
+          message: 'Ein Fehler ist aufgetreten',
         },
         { status: 500 }
       )
@@ -443,13 +436,9 @@ export async function POST(request: NextRequest) {
       console.error('Error name:', err.name)
     }
     console.error('Error code:', errObj.code)
-    const message = err?.message ?? 'Ein Fehler ist aufgetreten'
     return NextResponse.json(
       {
-        message: 'Fehler beim Erstellen der Bestellung',
-        error: message,
-        code: errObj.code,
-        details: process.env.NODE_ENV === 'development' ? errObj.stack : undefined,
+        message: 'Ein Fehler ist aufgetreten',
       },
       { status: 500 }
     )

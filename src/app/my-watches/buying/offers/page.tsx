@@ -34,6 +34,7 @@ export default function OffersPage() {
   const router = useRouter()
   const [offers, setOffers] = useState<PriceOffer[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     // Warte bis Session geladen ist
@@ -57,8 +58,9 @@ export default function OffersPage() {
     try {
       const response = await fetch('/api/offers?type=sent')
       const data = await response.json()
-      if (data.offers) {
+      if (response.ok && data.offers) {
         setOffers(data.offers)
+        setError(null)
 
         // Markiere alle Preisvorschläge als gelesen (user-specific key)
         const currentUserId = (session?.user as { id?: string })?.id
@@ -71,9 +73,11 @@ export default function OffersPage() {
 
         // Trigger event für Badge-Update
         window.dispatchEvent(new CustomEvent('offers-viewed'))
+      } else {
+        setError('Fehler beim Laden')
       }
-    } catch (error) {
-      console.error('Error fetching offers:', error)
+    } catch (err) {
+      setError('Fehler beim Laden')
     } finally {
       setLoading(false)
     }
@@ -234,6 +238,12 @@ export default function OffersPage() {
               Suchaufträge
             </Link>
           </div>
+
+          {error && (
+            <div className="mb-6 rounded-lg border border-red-200 bg-red-50 p-4 text-center text-red-600">
+              {error}
+            </div>
+          )}
 
           {offers.length === 0 ? (
             <div className="rounded-lg bg-white p-8 shadow-md">
