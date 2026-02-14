@@ -1,5 +1,6 @@
 'use client'
 
+import { useLanguage } from '@/contexts/LanguageContext'
 import { Download, Smartphone, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
 
@@ -9,6 +10,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 export function InstallPrompt() {
+  const { t } = useLanguage()
   const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null)
   const [showPrompt, setShowPrompt] = useState(false)
   const [isInstalled, setIsInstalled] = useState(false)
@@ -81,11 +83,10 @@ export function InstallPrompt() {
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-sm font-semibold text-gray-900">
-              Helvenda installieren
+              {t.pwa.installTitle}
             </h3>
             <p className="mt-0.5 text-xs text-gray-500">
-              Fügen Sie Helvenda zu Ihrem Startbildschirm hinzu für schnelleren Zugriff und
-              Benachrichtigungen.
+              {t.pwa.installDesc}
             </p>
           </div>
           <button
@@ -103,14 +104,14 @@ export function InstallPrompt() {
             onClick={handleDismiss}
             className="flex-1 rounded-lg border border-gray-300 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
           >
-            Später
+            {t.pwa.later}
           </button>
           <button
             onClick={handleInstall}
             className="flex flex-1 items-center justify-center gap-1.5 rounded-lg bg-primary-600 px-3 py-2 text-xs font-semibold text-white hover:bg-primary-700"
           >
             <Download className="h-3.5 w-3.5" />
-            Installieren
+            {t.pwa.installButton}
           </button>
         </div>
       </div>

@@ -233,6 +233,7 @@ export function HeaderSearch({
     <div ref={containerRef} className={`relative ${className}`}>
       {/* Ricardo-Style Search Form: Input + Button */}
       <form
+        role="search"
         onSubmit={e => {
           e.preventDefault()
           handleSubmit()
@@ -245,6 +246,7 @@ export function HeaderSearch({
           <input
             ref={inputRef}
             type="text"
+            aria-label="Suche"
             value={query}
             onChange={e => {
               setQuery(e.target.value)

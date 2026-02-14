@@ -264,6 +264,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   href="/favorites"
                   className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.favorites}
+                  aria-label={t.header.favorites}
                 >
                   <Heart className="h-5 w-5" />
                   {deferredData.favoritesCount > 0 && (
@@ -280,6 +281,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   href="/notifications"
                   className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.notifications}
+                  aria-label={t.header.notifications}
                 >
                   <Bell className="h-5 w-5" />
                   {deferredData.unreadNotifications > 0 && (
@@ -297,6 +299,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   onClick={() => setIsProfileMenuOpen(!isProfileMenuOpen)}
                   className="relative flex h-11 w-11 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-600 text-white transition-all hover:bg-primary-700"
                   title={t.header.profileMenu}
+                  aria-label={t.header.profileMenu}
                 >
                   {getProfileImage() ? (
                     <img
@@ -313,6 +316,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   href="/login"
                   className="flex h-10 w-10 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.login}
+                  aria-label={t.header.login}
                 >
                   <User className="h-5 w-5" />
                 </Link>
@@ -324,6 +328,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 onClick={() => setIsMobileMenuOpen(true)}
                 className="flex h-11 w-11 flex-shrink-0 items-center justify-center rounded-md text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                 title="Menü"
+                aria-label="Menü öffnen"
               >
                 <ChevronDown className="h-5 w-5" />
               </button>
@@ -451,6 +456,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   onMouseEnter={() => handlePrefetch('/favorites')}
                   className="relative flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.favorites}
+                  aria-label={t.header.favorites}
                 >
                   <Heart className="h-4 w-4" />
                   <span className="text-sm font-medium">{t.header.favorites}</span>
@@ -465,6 +471,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   onClick={() => setIsLoginModalOpen(true)}
                   className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.favorites}
+                  aria-label={t.header.favorites}
                 >
                   <Heart className="h-4 w-4" />
                   <span className="text-sm font-medium">{t.header.favorites}</span>
@@ -478,6 +485,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 onMouseEnter={() => handlePrefetch('/notifications')}
                 className="relative flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                 title={t.header.notifications}
+                aria-label={t.header.notifications}
               >
                 <Bell className="h-4 w-4" />
                 <span className="hidden text-sm font-medium lg:inline">Benachrichtigungen</span>
@@ -505,6 +513,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                     type="button"
                     className="flex flex-shrink-0 items-center gap-1.5 rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100"
                     title={t.header.profileMenu}
+                    aria-label={t.header.profileMenu}
                   >
                     <div className="flex h-7 w-7 flex-shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary-600 text-white">
                       {getProfileImage() ? (
@@ -638,6 +647,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   onMouseEnter={() => handlePrefetch('/login')}
                   className="flex items-center gap-1.5 rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.login}
+                  aria-label={t.header.login}
                 >
                   <User className="h-4 w-4" />
                   <span className="text-sm font-medium">{t.header.login}</span>
@@ -658,6 +668,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   type="button"
                   className="flex items-center gap-1 rounded-md px-2 py-2 text-gray-700 transition-colors hover:bg-gray-100"
                   title={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
+                  aria-label={`${t.header.selectLanguage}: ${languages.find(l => l.code === language)?.name}`}
                 >
                   <span className="text-base">
                     {languages.find(l => l.code === language)?.flag}

@@ -1,4 +1,4 @@
-import { ProductJsonLd } from '@/components/seo/ProductJsonLd'
+import { BreadcrumbJsonLd, ProductJsonLd } from '@/components/seo/JsonLd'
 import { abs, getProductMeta } from '@/lib/seo'
 import type { Metadata } from 'next'
 
@@ -43,18 +43,31 @@ export default async function ProductLayout({ children, params }: LayoutProps) {
   const { id } = params
   const meta = await getProductMeta(id)
 
+  const productUrl = meta ? abs(`/products/${id}`) : ''
+  const breadcrumbItems = meta
+    ? [
+        { name: 'Helvenda', url: abs('') },
+        { name: 'Produkte', url: abs('/search') },
+        { name: meta.title, url: productUrl },
+      ]
+    : []
+
   return (
     <>
       {meta && (
-        <ProductJsonLd
-          id={id}
-          name={meta.title}
-          description={meta.description}
-          image={meta.image}
-          price={meta.price}
-          isAuction={meta.isAuction}
-          condition={meta.condition}
-        />
+        <>
+          <ProductJsonLd
+            name={meta.title}
+            description={meta.description}
+            image={meta.image}
+            price={meta.price}
+            condition={meta.condition}
+            seller={{ name: meta.sellerName || 'Helvenda' }}
+            url={productUrl}
+            sku={meta.articleNumber?.toString()}
+          />
+          <BreadcrumbJsonLd items={breadcrumbItems} />
+        </>
       )}
       {children}
     </>

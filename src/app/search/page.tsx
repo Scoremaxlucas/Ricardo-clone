@@ -9,10 +9,11 @@ import { MobileSearchControls } from '@/components/search/MobileSearchControls'
 import { MobileSortSheet } from '@/components/search/MobileSortSheet'
 import { FilterChips } from '@/components/ui/FilterChips'
 import { ProductCard } from '@/components/ui/ProductCard'
+import { SearchResultsSkeleton } from '@/components/ui/Skeleton'
 
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
-import { ChevronDown, ChevronLeft, ChevronRight, Filter, Loader2, Package, Search, X } from 'lucide-react'
+import { ChevronDown, ChevronLeft, ChevronRight, Filter, Package, Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
@@ -1151,19 +1152,7 @@ function SearchPageContent() {
 
           {/* Results */}
           {loading ? (
-            // Loading state - skeleton grid
-            <div className="grid grid-cols-2 gap-3 md:gap-4 lg:grid-cols-4 xl:grid-cols-5 2xl:grid-cols-6">
-              {Array.from({ length: 12 }).map((_, i) => (
-                <div key={i} className="animate-pulse rounded-lg border border-gray-200 bg-white">
-                  <div className="aspect-square bg-gray-200" />
-                  <div className="p-3">
-                    <div className="mb-2 h-4 rounded bg-gray-200" />
-                    <div className="mb-2 h-3 w-2/3 rounded bg-gray-200" />
-                    <div className="h-5 w-1/2 rounded bg-gray-200" />
-                  </div>
-                </div>
-              ))}
-            </div>
+            <SearchResultsSkeleton />
           ) : watches.length === 0 ? (
             // Empty state
             <div className="rounded-lg border border-gray-200 bg-white p-8 text-center md:p-12">
@@ -1270,12 +1259,11 @@ export default function SearchPage() {
       fallback={
         <div className="flex min-h-screen flex-col bg-gray-50">
           <Header />
-          <div className="flex flex-1 items-center justify-center">
-            <div className="text-center">
-              <Loader2 className="mx-auto mb-4 h-12 w-12 animate-spin text-primary-600" />
-              <p className="text-gray-600">Laden...</p>
+          <main className="flex-1 pb-8">
+            <div className="mx-auto w-full max-w-[1400px] px-4 py-4 md:py-8">
+              <SearchResultsSkeleton />
             </div>
-          </div>
+          </main>
           <Footer />
         </div>
       }

@@ -2,6 +2,7 @@
 
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
+import { useLanguage } from '@/contexts/LanguageContext'
 import {
   ArrowLeft,
   Home,
@@ -45,6 +46,7 @@ const ADDRESS_TYPES = [
 ] as const
 
 export default function AddressesPage() {
+  const { t } = useLanguage()
   const { data: session, status } = useSession()
   const [addresses, setAddresses] = useState<Record<string, Address>>({})
   const [loading, setLoading] = useState(true)

@@ -19,6 +19,8 @@ export interface ProductMeta {
   price: number
   isAuction: boolean
   condition: string
+  sellerName?: string
+  articleNumber?: number | null
 }
 
 /** Fetch minimal product data for SEO metadata (server-only). */
@@ -31,6 +33,8 @@ export async function getProductMeta(id: string): Promise<ProductMeta | null> {
     buyNowPrice: true,
     isAuction: true,
     condition: true,
+    articleNumber: true,
+    seller: { select: { nickname: true, name: true } },
   }
   let w = await prisma.watch.findUnique({ where: { id }, select })
   if (!w && /^\d+$/.test(id)) {
@@ -79,6 +83,7 @@ export async function getProductMeta(id: string): Promise<ProductMeta | null> {
     conditionLabel +
     ' · Helvenda'
 
+  const sellerName = w.seller?.nickname || w.seller?.name || 'Helvenda'
   return {
     title,
     description: desc.slice(0, 160),
@@ -86,5 +91,7 @@ export async function getProductMeta(id: string): Promise<ProductMeta | null> {
     price,
     isAuction: Boolean(w.isAuction),
     condition: conditionLabel,
+    sellerName,
+    articleNumber: w.articleNumber,
   }
 }

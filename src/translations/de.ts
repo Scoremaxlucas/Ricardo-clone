@@ -2142,6 +2142,120 @@ export const de = {
       title: 'Impressum',
     },
   },
+
+  // Settings - Addresses
+  addresses: {
+    title: 'Meine Adressen',
+    subtitle: 'Verwalten Sie Ihre Haupt-, Liefer- und Rechnungsadressen.',
+    backToProfile: 'Zurück zum Profil',
+    main: 'Hauptadresse',
+    mainSub: 'Wohnadresse',
+    delivery: 'Lieferadresse',
+    deliverySub: 'Für den Versand',
+    billing: 'Rechnungsadresse',
+    billingSub: 'Für Rechnungen',
+    edit: 'Bearbeiten',
+    delete: 'Adresse löschen',
+    add: 'hinzufügen',
+    save: 'Speichern',
+    cancel: 'Abbrechen',
+    street: 'Strasse',
+    streetNr: 'Nr.',
+    addressExtra: 'Adresszusatz',
+    addressExtraPlaceholder: 'c/o, Wohnung, etc.',
+    postalCode: 'PLZ',
+    city: 'Ort',
+    country: 'Land',
+    saved: 'Adresse gespeichert.',
+    deleted: 'Adresse gelöscht.',
+    confirmDelete: 'Möchten Sie diese Adresse wirklich löschen?',
+    errorRequired: 'Strasse, PLZ und Ort sind erforderlich.',
+    errorPostalCode: 'PLZ muss 4 Ziffern lang sein.',
+    errorSave: 'Fehler beim Speichern.',
+    errorDelete: 'Fehler beim Löschen.',
+    manageAll: 'Alle Adressen verwalten (Liefer- & Rechnungsadresse) →',
+  },
+
+  // Settings - Notifications Push
+  pushNotifications: {
+    title: 'Push-Benachrichtigungen',
+    enabled: 'Push-Benachrichtigungen aktiviert!',
+    disabled: 'Push-Benachrichtigungen deaktiviert',
+    blocked: 'Push-Benachrichtigungen sind in Ihrem Browser blockiert. Bitte erlauben Sie diese in den Browser-Einstellungen.',
+    activeDesc: 'Sie erhalten Benachrichtigungen auf diesem Gerät.',
+    inactiveDesc: 'Erhalten Sie Echtzeit-Benachrichtigungen direkt auf Ihrem Gerät.',
+    blockedShort: 'Benachrichtigungen sind im Browser blockiert.',
+    activate: 'Aktivieren',
+    deactivate: 'Deaktivieren',
+    notSupported: 'Push-Benachrichtigungen werden von Ihrem Browser nicht unterstützt.',
+  },
+
+  // Account Page
+  account: {
+    title: 'Benutzerkonto',
+    backToSelling: 'Zurück zu Mein Verkaufen',
+    name: 'Name',
+    nameRequired: 'Name ist erforderlich',
+    nameNote: '(bei Rechnungen erforderlich)',
+    nickname: 'Nickname',
+    nicknameNote: '(öffentlich sichtbar statt Name)',
+    email: 'E-Mail',
+    emailNote: '(kann nicht geändert werden)',
+    phone: 'Telefonnummer (optional)',
+    phoneNote: '(Format: +41...)',
+    address: 'Adresse',
+    addressNote: 'Diese Angaben werden nur benötigt, wenn Sie Versand/Zahlungsschutz nutzen oder Rechnungen erhalten.',
+    addressPrivacy: 'Ihre Adresse wird nicht öffentlich angezeigt und nur bei Kauf/Versand relevant.',
+    saving: 'Wird gespeichert...',
+    saved: 'Gespeichert',
+    redirecting: 'Weiterleitung zur Anmeldung...',
+    errorLoad: 'Fehler beim Laden der Benutzerdaten',
+    errorSave: 'Fehler beim Speichern',
+    invalidStreetNr: 'Ungültige Hausnummer (z.B. 6a, 12B, 4-6)',
+    invalidPostalCode: 'Postleitzahl muss 4 Ziffern haben (z.B. 8000)',
+  },
+
+  // Selling Dashboard
+  sellingDashboard: {
+    title: 'Meine Angebote',
+    subtitle: 'Verwalten Sie Ihre Verkaufsanzeigen',
+    createListing: 'Artikel anbieten',
+    feesAndInvoices: 'Gebühren & Rechnungen',
+    priceOffers: 'Preisvorschläge',
+    cancelRequests: 'Stornierungsantrag',
+    home: 'Startseite',
+    myListings: 'Meine Angebote',
+  },
+
+  // Purchases
+  purchases: {
+    searchPlaceholder: 'Suche nach Artikel, Marke, Modell oder Verkäufer...',
+    sortLabel: 'Sortierung',
+    sortNewest: 'Neueste zuerst',
+    sortDeadline: 'Frist bald ablaufend',
+    sortPriceHigh: 'Preis: Hoch → Niedrig',
+    sortPriceLow: 'Preis: Niedrig → Hoch',
+    confirmReceipt: 'Erhalt bestätigen',
+    receiptConfirmed: 'Erhalt bestätigt!',
+    receiptError: 'Fehler beim Bestätigen des Erhalts',
+    orderError: 'Fehler beim Erstellen der Bestellung',
+    paymentError: 'Fehler beim Starten der Zahlung',
+    review: 'Bewerten',
+  },
+
+  // PWA Install
+  pwa: {
+    installTitle: 'Helvenda installieren',
+    installDesc: 'Fügen Sie Helvenda zu Ihrem Startbildschirm hinzu für schnelleren Zugriff und Benachrichtigungen.',
+    installButton: 'Installieren',
+    later: 'Später',
+  },
+
+  // Share
+  share: {
+    share: 'TEILEN',
+    linkCopied: 'LINK KOPIERT!',
+  },
 }
 
 export type Translation = typeof de

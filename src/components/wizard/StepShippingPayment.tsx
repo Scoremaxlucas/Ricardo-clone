@@ -362,6 +362,7 @@ export function StepShippingPayment({
                         <a
                           href="/help/payment-protection"
                           target="_blank"
+                          rel="noopener noreferrer"
                           className="flex items-center gap-1 text-sm font-medium text-primary-600 hover:text-primary-700"
                         >
                           <span>Mehr erfahren</span>

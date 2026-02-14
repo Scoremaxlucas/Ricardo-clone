@@ -1197,6 +1197,7 @@ export function ProductPageClient({
               <button
                 onClick={toggleFavorite}
                 disabled={favoriteLoading}
+                aria-label="Zu Favoriten hinzufügen"
                 className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
                   isFavorite
                     ? 'border-red-400 bg-red-50 text-red-500'

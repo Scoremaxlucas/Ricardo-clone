@@ -9,6 +9,7 @@ import { MyPurchaseItem } from '@/lib/my-purchases'
 import { getOrderUIState } from '@/lib/order-ui-state'
 import { getPurchaseStateInfo } from '@/lib/purchase-state-machine'
 import { getShippingCost } from '@/lib/shipping'
+import { PageSkeleton } from '@/components/ui/Skeleton'
 import {
   AlertCircle,
   AlertTriangle,

@@ -448,6 +448,7 @@ export function StepImages({
                             removeImage(index)
                           }}
                           disabled={!draftId}
+                          aria-label="Bild entfernen"
                           className="absolute right-2 top-2 flex h-7 w-7 items-center justify-center rounded-full bg-red-500 text-white opacity-0 transition-opacity hover:bg-red-600 disabled:opacity-50 group-hover:opacity-100"
                         >
                           <X className="h-4 w-4" />

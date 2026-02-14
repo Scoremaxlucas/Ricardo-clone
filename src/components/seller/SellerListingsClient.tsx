@@ -265,6 +265,7 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
             <input
               type="text"
               placeholder="Suche nach Titel, Marke, Modell oder Artikelnummer..."
+              aria-label="Suche nach Titel, Marke, Modell oder Artikelnummer"
               value={searchQuery}
               onChange={e => setSearchQuery(e.target.value)}
               className="w-full rounded-xl border border-gray-200 bg-white py-3 pl-12 pr-4 text-sm shadow-sm transition-shadow focus:border-primary-500 focus:outline-none focus:ring-2 focus:ring-primary-500/20"

@@ -1,4 +1,4 @@
-import { WebSiteJsonLd } from '@/components/seo/WebSiteJsonLd'
+import { OrganizationJsonLd, WebSiteJsonLd } from '@/components/seo/JsonLd'
 import { FeaturedProductsServer } from '@/components/home/FeaturedProductsServer'
 import { HeroServer } from '@/components/home/HeroServer'
 import { HomeClient } from '@/components/home/HomeClient'
@@ -68,6 +68,7 @@ export default async function Home() {
 
   return (
     <div className="flex min-h-screen flex-col bg-[#FAFAFA]">
+      <OrganizationJsonLd />
       <WebSiteJsonLd />
       <Header />
       <main id="main-content" className="flex-1 pb-8" tabIndex={-1}>
