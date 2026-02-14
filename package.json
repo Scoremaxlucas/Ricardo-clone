@@ -109,6 +109,7 @@
     "@types/jsonwebtoken": "^9.0.0",
     "@types/pdfkit": "^0.17.4",
     "@types/pino": "^7.0.4",
+    "@types/web-push": "^3.6.4",
     "@vitejs/plugin-react": "^5.1.2",
     "dotenv": "^17.2.3",
     "jsdom": "^27.4.0",
