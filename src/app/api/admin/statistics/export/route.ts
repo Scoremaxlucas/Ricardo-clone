@@ -264,7 +264,7 @@ export async function GET(request: NextRequest) {
     rows.push('Angebote,Ø Verkaufsdauer (Tage),' + averageSaleDuration.toFixed(2) + ',')
 
     // Transaktions-Statistiken
-    rows.push('Transaktionen,Gesamt,' + allPurchases.length + ',')
+    rows.push('Transaktionen,Gesamt,' + totalPurchaseCount + ',')
     rows.push('Transaktionen,Abgeschlossen,' + completedPurchases + ',')
     rows.push('Transaktionen,Ausstehend,' + pendingPurchases + ',')
     rows.push('Transaktionen,Storniert,' + cancelledPurchases + ',')
