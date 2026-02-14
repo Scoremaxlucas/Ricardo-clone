@@ -11,6 +11,7 @@ import {
   FileText,
   RotateCcw,
   Shield,
+  Star,
   Truck,
   User,
   XCircle,
@@ -102,6 +103,15 @@ export default function OrderDetailPage() {
   const [returnReason, setReturnReason] = useState('')
   const [returnDescription, setReturnDescription] = useState('')
 
+  // Review state
+  const [reviewData, setReviewData] = useState<{
+    review: { id: string; rating: string; comment: string | null; createdAt: string } | null
+    canReview: boolean
+  } | null>(null)
+  const [reviewRating, setReviewRating] = useState<'positive' | 'neutral' | 'negative' | ''>('')
+  const [reviewComment, setReviewComment] = useState('')
+  const [submittingReview, setSubmittingReview] = useState(false)
+
   useEffect(() => {
     if (!session) {
       router.push('/login')
@@ -129,6 +139,19 @@ export default function OrderDetailPage() {
       // Use the isBuyer/isSeller flags from API (more reliable than comparing IDs)
       setIsBuyer(orderData.isBuyer === true)
       setIsSeller(orderData.isSeller === true)
+
+      // Fetch review status if receipt is confirmed
+      if (orderData.buyerConfirmedReceipt || orderData.orderStatus === 'completed') {
+        try {
+          const reviewRes = await fetch(`/api/orders/${orderId}/review`)
+          if (reviewRes.ok) {
+            const reviewInfo = await reviewRes.json()
+            setReviewData(reviewInfo)
+          }
+        } catch (reviewErr) {
+          console.error('[OrderDetail] Review fetch error:', reviewErr)
+        }
+      }
     } catch (err: any) {
       console.error('[OrderDetail] Error:', err)
       // Don't redirect - show error state instead
@@ -276,6 +299,40 @@ export default function OrderDetailPage() {
       toast.error(err.message || 'Fehler beim Einreichen des Rückgabe-Antrags')
     } finally {
       setRequestingReturn(false)
+    }
+  }
+
+  const handleSubmitReview = async () => {
+    if (!reviewRating) {
+      toast.error('Bitte wählen Sie eine Bewertung.')
+      return
+    }
+
+    setSubmittingReview(true)
+    try {
+      const res = await fetch(`/api/orders/${orderId}/review`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          rating: reviewRating,
+          comment: reviewComment.trim() || null,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Fehler beim Abgeben der Bewertung')
+      }
+
+      toast.success('Bewertung erfolgreich abgegeben. Vielen Dank!')
+      setReviewData({ review: data.review, canReview: false })
+      setReviewRating('')
+      setReviewComment('')
+    } catch (err: any) {
+      toast.error(err.message || 'Fehler beim Abgeben der Bewertung')
+    } finally {
+      setSubmittingReview(false)
     }
   }
 
@@ -680,6 +737,102 @@ export default function OrderDetailPage() {
                   <p className="text-sm text-orange-800">
                     <strong>Beschreibung:</strong> {order.disputeDescription}
                   </p>
+                )}
+              </div>
+            )}
+
+            {/* === REVIEW PROMPT === */}
+            {reviewData?.canReview && (
+              <div className="rounded-lg border-2 border-primary-200 bg-primary-50 p-6 shadow-sm">
+                <div className="mb-4 flex items-center gap-3">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-full bg-primary-100">
+                    <Star className="h-5 w-5 text-primary-600" />
+                  </div>
+                  <div>
+                    <h3 className="font-semibold text-gray-900">
+                      {isBuyer ? 'Wie war Ihre Erfahrung mit dem Verkäufer?' : 'Wie war Ihre Erfahrung mit dem Käufer?'}
+                    </h3>
+                    <p className="text-sm text-gray-600">
+                      Ihre Bewertung hilft anderen Nutzern bei der Kaufentscheidung.
+                    </p>
+                  </div>
+                </div>
+
+                {/* Rating Selection */}
+                <div className="mb-4 flex gap-3">
+                  <button
+                    onClick={() => setReviewRating('positive')}
+                    className={`flex flex-1 items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all ${
+                      reviewRating === 'positive'
+                        ? 'border-green-500 bg-green-50 text-green-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-green-300 hover:bg-green-50'
+                    }`}
+                  >
+                    <CheckCircle className="h-5 w-5" />
+                    Positiv
+                  </button>
+                  <button
+                    onClick={() => setReviewRating('neutral')}
+                    className={`flex flex-1 items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all ${
+                      reviewRating === 'neutral'
+                        ? 'border-gray-500 bg-gray-50 text-gray-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-400 hover:bg-gray-50'
+                    }`}
+                  >
+                    <Clock className="h-5 w-5" />
+                    Neutral
+                  </button>
+                  <button
+                    onClick={() => setReviewRating('negative')}
+                    className={`flex flex-1 items-center justify-center gap-2 rounded-lg border-2 px-4 py-3 text-sm font-medium transition-all ${
+                      reviewRating === 'negative'
+                        ? 'border-red-500 bg-red-50 text-red-700'
+                        : 'border-gray-200 bg-white text-gray-600 hover:border-red-300 hover:bg-red-50'
+                    }`}
+                  >
+                    <XCircle className="h-5 w-5" />
+                    Negativ
+                  </button>
+                </div>
+
+                {/* Optional Comment */}
+                <div className="mb-4">
+                  <textarea
+                    value={reviewComment}
+                    onChange={e => setReviewComment(e.target.value)}
+                    rows={3}
+                    className="w-full rounded-lg border border-gray-300 px-4 py-3 text-sm placeholder-gray-400 focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                    placeholder="Kommentar (optional) — Was war besonders gut oder schlecht?"
+                  />
+                </div>
+
+                <button
+                  onClick={handleSubmitReview}
+                  disabled={submittingReview || !reviewRating}
+                  className="w-full rounded-lg bg-primary-600 px-4 py-3 text-sm font-semibold text-white transition-colors hover:bg-primary-700 disabled:opacity-50"
+                >
+                  {submittingReview ? 'Wird gespeichert...' : 'Bewertung abgeben'}
+                </button>
+              </div>
+            )}
+
+            {/* Review Already Submitted */}
+            {reviewData?.review && (
+              <div className="rounded-lg border border-green-200 bg-green-50 p-4">
+                <div className="flex items-center gap-2">
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span className="font-medium text-green-800">Bewertung abgegeben</span>
+                  <span className={`ml-auto rounded-full px-2.5 py-0.5 text-xs font-semibold ${
+                    reviewData.review.rating === 'positive' ? 'bg-green-100 text-green-700' :
+                    reviewData.review.rating === 'neutral' ? 'bg-gray-100 text-gray-700' :
+                    'bg-red-100 text-red-700'
+                  }`}>
+                    {reviewData.review.rating === 'positive' ? 'Positiv' :
+                     reviewData.review.rating === 'neutral' ? 'Neutral' : 'Negativ'}
+                  </span>
+                </div>
+                {reviewData.review.comment && (
+                  <p className="mt-2 text-sm text-green-700 italic">"{reviewData.review.comment}"</p>
                 )}
               </div>
             )}

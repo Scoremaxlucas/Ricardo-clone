@@ -27,6 +27,7 @@ import {
   Search,
   Shield,
   ShoppingBag,
+  Star,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -952,6 +953,16 @@ export function MyPurchasesClient({ initialPurchases }: MyPurchasesClientProps) 
                         >
                           Angebot ansehen
                         </Link>
+                        {/* Bewerten - für abgeschlossene Bestellungen */}
+                        {purchase.status === 'completed' && purchase.orderId && (
+                          <Link
+                            href={`/orders/${purchase.orderId}`}
+                            className="inline-flex items-center gap-2 rounded-lg border-2 border-primary-200 bg-primary-50 px-4 py-2 text-sm font-semibold text-primary-700 transition-colors hover:bg-primary-100"
+                          >
+                            <Star className="h-4 w-4" />
+                            Bewerten
+                          </Link>
+                        )}
                         {/* Problem melden - nur wenn noch kein Dispute */}
                         {!purchase.disputeOpenedAt && purchase.status !== 'completed' && (
                           <button
