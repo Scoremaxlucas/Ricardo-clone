@@ -11,7 +11,7 @@ import { SimilarProducts } from '@/components/product/SimilarProducts'
 import { SellerProfile } from '@/components/seller/SellerProfile'
 import { useAuthGate } from '@/contexts/AuthGateContext'
 import { useLanguage } from '@/contexts/LanguageContext'
-import { CheckCircle, ChevronLeft, ChevronRight, Clock, Flag, Heart, ShoppingBag, X, Zap } from 'lucide-react'
+import { CheckCircle, ChevronLeft, ChevronRight, Clock, Flag, Heart, Link2, Share2, ShoppingBag, X, Zap } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -50,6 +50,7 @@ export function ProductPageClient({
   const { requireAuth } = useAuthGate()
   const router = useRouter()
   const [showReportModal, setShowReportModal] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
   const [selectedImageIndex, setSelectedImageIndex] = useState(0)
   const [isZoomed, setIsZoomed] = useState(false)
   const [isFavorite, setIsFavorite] = useState(false)
@@ -145,6 +146,43 @@ export function ProductPageClient({
       window.removeEventListener('focus', handleFocus)
     }
   }, [watch?.id, session?.user])
+
+  // Share product
+  const handleShare = async () => {
+    const url = `${window.location.origin}/products/${watch.id}`
+    const shareData = {
+      title: watch.title || 'Artikel auf Helvenda',
+      text: `${watch.title} — CHF ${watch.price}`,
+      url,
+    }
+
+    // Use native share API on mobile if available
+    if (navigator.share && /Mobi|Android/i.test(navigator.userAgent)) {
+      try {
+        await navigator.share(shareData)
+        return
+      } catch {
+        // User cancelled or API failed — fall through to clipboard
+      }
+    }
+
+    // Fallback: copy link to clipboard
+    try {
+      await navigator.clipboard.writeText(url)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    } catch {
+      // Fallback for older browsers
+      const input = document.createElement('input')
+      input.value = url
+      document.body.appendChild(input)
+      input.select()
+      document.execCommand('copy')
+      document.body.removeChild(input)
+      setLinkCopied(true)
+      setTimeout(() => setLinkCopied(false), 2000)
+    }
+  }
 
   // Toggle favorite mit globalem Event für Synchronisation
   const toggleFavorite = async () => {
@@ -806,6 +844,24 @@ export function ProductPageClient({
                 </button>
               )}
 
+              {/* Share Button — Mobile */}
+              <button
+                onClick={handleShare}
+                className="mb-4 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-gray-600 transition-colors hover:bg-gray-50"
+              >
+                {linkCopied ? (
+                  <>
+                    <Link2 className="h-4 w-4 text-green-600" />
+                    <span className="text-green-600">LINK KOPIERT!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-4 w-4" />
+                    TEILEN
+                  </>
+                )}
+              </button>
+
               {/* Lieferung Info */}
               {(watch as any).shippingMethod && (
                 <div className="mb-4">
@@ -1031,6 +1087,24 @@ export function ProductPageClient({
                 </button>
               )}
 
+              {/* Share Button — Desktop */}
+              <button
+                onClick={handleShare}
+                className="mt-3 flex w-full items-center justify-center gap-2 rounded-lg border-2 border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold uppercase tracking-wide text-gray-600 transition-colors hover:bg-gray-50"
+              >
+                {linkCopied ? (
+                  <>
+                    <Link2 className="h-4 w-4 text-green-600" />
+                    <span className="text-green-600">LINK KOPIERT!</span>
+                  </>
+                ) : (
+                  <>
+                    <Share2 className="h-4 w-4" />
+                    TEILEN
+                  </>
+                )}
+              </button>
+
               {/* Lieferung - Wie Ricardo */}
               {(watch as any).shippingMethod && (
                 <div className="mt-4 border-t border-gray-100 pt-4">
@@ -1106,6 +1180,19 @@ export function ProductPageClient({
 
             {/* Action Button */}
             <div className="flex items-center gap-2">
+              {/* Share Button */}
+              <button
+                onClick={handleShare}
+                className={`flex h-11 w-11 items-center justify-center rounded-full border-2 transition-all ${
+                  linkCopied
+                    ? 'border-green-400 bg-green-50 text-green-600'
+                    : 'border-gray-200 bg-white text-gray-400 hover:border-gray-300'
+                }`}
+                aria-label="Teilen"
+              >
+                {linkCopied ? <Link2 className="h-5 w-5" /> : <Share2 className="h-5 w-5" />}
+              </button>
+
               {/* Favorite Button */}
               <button
                 onClick={toggleFavorite}

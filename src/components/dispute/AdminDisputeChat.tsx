@@ -106,9 +106,15 @@ export function AdminDisputeChat({ purchaseId, disputeStatus }: AdminDisputeChat
 
     setUploading(true)
     try {
+      const allowedTypes = ['image/jpeg', 'image/jpg', 'image/png', 'image/gif', 'image/webp', 'application/pdf']
       for (const file of Array.from(files)) {
         if (file.size > 5 * 1024 * 1024) {
           toast.error(`${file.name} ist zu gross (max. 5MB)`)
+          continue
+        }
+
+        if (!allowedTypes.includes(file.type)) {
+          toast.error(`${file.name}: Ungültiges Format. Erlaubt: JPG, PNG, GIF, WebP, PDF.`)
           continue
         }
 
@@ -310,7 +316,7 @@ export function AdminDisputeChat({ purchaseId, disputeStatus }: AdminDisputeChat
                 ref={fileInputRef}
                 type="file"
                 multiple
-                accept="image/*,.pdf,.doc,.docx"
+                accept="image/jpeg,image/png,image/gif,image/webp,application/pdf"
                 onChange={handleFileSelect}
                 className="hidden"
               />

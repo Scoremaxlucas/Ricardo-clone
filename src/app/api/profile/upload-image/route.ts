@@ -1,11 +1,29 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { deleteImageFromBlob, uploadImageToBlob } from '@/lib/blob-storage'
 import { prisma } from '@/lib/prisma'
-import { uploadImageToBlob, deleteImageFromBlob } from '@/lib/blob-storage'
+import { getServerSession } from 'next-auth/next'
+import { NextRequest, NextResponse } from 'next/server'
+
+const MAX_FILE_SIZE = 5 * 1024 * 1024 // 5 MB
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp']
+
+/** Validate actual file content via magic bytes */
+function detectFileType(buffer: ArrayBuffer): string | null {
+  const bytes = new Uint8Array(buffer).slice(0, 12)
+  if (bytes[0] === 0xFF && bytes[1] === 0xD8 && bytes[2] === 0xFF) return 'image/jpeg'
+  if (bytes[0] === 0x89 && bytes[1] === 0x50 && bytes[2] === 0x4E && bytes[3] === 0x47) return 'image/png'
+  if (bytes[0] === 0x52 && bytes[1] === 0x49 && bytes[2] === 0x46 && bytes[3] === 0x46 &&
+      bytes[8] === 0x57 && bytes[9] === 0x45 && bytes[10] === 0x42 && bytes[11] === 0x50) return 'image/webp'
+  return null
+}
 
 export async function POST(request: NextRequest) {
   try {
+    const session = await getServerSession(authOptions)
+    if (!session?.user?.id) {
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+    }
+
     const formData = await request.formData()
     const file = formData.get('image') as File
     const userId = formData.get('userId') as string
@@ -14,12 +32,41 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Datei und User ID erforderlich' }, { status: 400 })
     }
 
-    console.log('Uploading profile image for user:', userId)
-    console.log('Image size:', file.size, 'bytes')
+    // Authorization: users can only upload their own profile image
+    if (userId !== session.user.id) {
+      return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 403 })
+    }
 
-    // KRITISCH: Upload zu Vercel Blob Storage statt Base64
-    const blobPath = `profiles/${userId}/${Date.now()}.${file.name.split('.').pop() || 'jpg'}`
-    const blobUrl = await uploadImageToBlob(file, blobPath)
+    // File size validation
+    if (file.size > MAX_FILE_SIZE) {
+      return NextResponse.json(
+        { message: `Datei zu gross. Maximal ${MAX_FILE_SIZE / 1024 / 1024} MB erlaubt.` },
+        { status: 400 }
+      )
+    }
+
+    // MIME type validation
+    if (!ALLOWED_MIME_TYPES.includes(file.type)) {
+      return NextResponse.json(
+        { message: 'Ungültiges Dateiformat. Erlaubt: JPG, PNG, WebP.' },
+        { status: 400 }
+      )
+    }
+
+    // Magic byte validation
+    const buffer = await file.arrayBuffer()
+    const detectedType = detectFileType(buffer)
+    if (!detectedType) {
+      return NextResponse.json(
+        { message: 'Datei konnte nicht als gültiges Bild erkannt werden.' },
+        { status: 400 }
+      )
+    }
+
+    // Upload to Vercel Blob Storage
+    const ext = detectedType === 'image/png' ? 'png' : detectedType === 'image/webp' ? 'webp' : 'jpg'
+    const blobPath = `profiles/${userId}/${Date.now()}.${ext}`
+    const blobUrl = await uploadImageToBlob(new File([buffer], `profile.${ext}`, { type: detectedType }), blobPath)
 
     console.log('Uploaded to Blob Storage:', blobUrl)
 
