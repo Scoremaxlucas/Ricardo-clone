@@ -754,6 +754,23 @@ export default function VerificationPage() {
     <div className="min-h-screen bg-gray-50">
       <Header />
       <div className="mx-auto max-w-4xl px-4 py-8 sm:py-12">
+        {/* Onboarding step indicator */}
+        <div className="mb-6 flex items-center justify-center gap-2 text-sm text-gray-500">
+          <span className="flex items-center gap-1.5 rounded-full bg-green-100 px-3 py-1 text-green-700">
+            <CheckCircle className="h-4 w-4" />
+            E-Mail bestätigt
+          </span>
+          <span className="text-gray-300">→</span>
+          <span className="flex items-center gap-1.5 rounded-full bg-primary-100 px-3 py-1 font-medium text-primary-700">
+            <span className="flex h-5 w-5 items-center justify-center rounded-full bg-primary-600 text-xs text-white">2</span>
+            Identität verifizieren
+          </span>
+          <span className="text-gray-300">→</span>
+          <span className="flex items-center gap-1.5 rounded-full bg-gray-100 px-3 py-1 text-gray-400">
+            Verkaufen
+          </span>
+        </div>
+
         <div className="rounded-lg bg-white p-6 shadow-md sm:p-8">
           <div className="mb-6">
             <h1 className="mb-2 text-3xl font-bold text-gray-900">{t.verification.title}</h1>

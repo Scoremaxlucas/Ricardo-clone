@@ -1,6 +1,7 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { SellerListingsClient } from '@/components/seller'
+import { OnboardingProgress, type OnboardingStatus } from '@/components/seller/OnboardingProgress'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { Package, Plus, Receipt, Tag, X } from 'lucide-react'
@@ -17,8 +18,8 @@ export default async function MySellingPage() {
     redirect('/login?callbackUrl=/my-watches/selling')
   }
 
-  // Fetch counts for secondary nav badges
-  const [pendingInvoicesCount, pendingOffersCount] = await Promise.all([
+  // Fetch counts for secondary nav badges + user verification status
+  const [pendingInvoicesCount, pendingOffersCount, user] = await Promise.all([
     prisma.invoice.count({
       where: {
         sellerId: session.user.id,
@@ -31,7 +32,27 @@ export default async function MySellingPage() {
         status: { in: ['pending', 'new'] },
       },
     }),
+    prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: {
+        emailVerified: true,
+        verified: true,
+        verificationStatus: true,
+        profileComplete: true,
+        stripeOnboardingComplete: true,
+        payoutsEnabled: true,
+      },
+    }),
   ])
+
+  const onboardingStatus: OnboardingStatus = {
+    emailVerified: user?.emailVerified ?? false,
+    identitySubmitted: user?.verified === true,
+    identityApproved: user?.verificationStatus === 'approved',
+    identityRejected: user?.verificationStatus === 'rejected',
+    payoutSetup: user?.stripeOnboardingComplete === true || user?.payoutsEnabled === true,
+    profileComplete: user?.profileComplete === true,
+  }
 
   return (
     <div className="flex min-h-screen flex-col bg-gray-50">
@@ -107,6 +128,9 @@ export default async function MySellingPage() {
               Stornierungsantrag
             </Link>
           </div>
+
+          {/* Onboarding Progress Tracker */}
+          <OnboardingProgress status={onboardingStatus} />
 
           {/* Client Component with Tabs and Grid */}
           <SellerListingsClient />

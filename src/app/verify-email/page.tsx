@@ -31,10 +31,7 @@ function VerifyEmailPageContent() {
 
         if (response.ok) {
           setStatus('success')
-          setMessage(data.message || 'Email address successfully confirmed!')
-          setTimeout(() => {
-            router.push('/login')
-          }, 3000)
+          setMessage(data.message || 'Ihre E-Mail-Adresse wurde erfolgreich bestätigt!')
         } else {
           setStatus('error')
           setMessage(data.message || 'Error confirming email address')
@@ -113,17 +110,35 @@ function VerifyEmailPageContent() {
 
             {status === 'success' && (
               <>
-                <h1 className="mb-4 text-3xl font-semibold text-gray-900">Account Confirmed</h1>
-                <p className="mb-8 text-lg text-gray-600">{message}</p>
-                <p className="mb-8 text-sm text-gray-500">
-                  You will be redirected to the login page shortly...
+                <h1 className="mb-4 text-3xl font-semibold text-gray-900">Konto bestätigt!</h1>
+                <p className="mb-6 text-lg text-gray-600">{message}</p>
+
+                {/* Next step indicator */}
+                <div className="mb-6 rounded-xl border border-primary-100 bg-primary-50 p-4 text-left">
+                  <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-primary-600">Nächster Schritt</p>
+                  <p className="text-sm text-gray-700">
+                    Um auf Helvenda <strong>verkaufen</strong> zu können, verifizieren Sie Ihre Identität. Dies dauert nur wenige Minuten.
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-3">
+                  <Link
+                    href="/verification"
+                    className="inline-flex w-full items-center justify-center gap-2 rounded-2xl bg-primary-600 px-6 py-3 font-medium text-white transition-all duration-200 hover:bg-primary-700 hover:shadow-md"
+                  >
+                    Identität verifizieren →
+                  </Link>
+                  <Link
+                    href="/login"
+                    className="inline-flex w-full items-center justify-center rounded-2xl border border-gray-200 bg-white px-6 py-3 font-medium text-gray-700 transition-all duration-200 hover:bg-gray-50"
+                  >
+                    Erst einmal stöbern
+                  </Link>
+                </div>
+
+                <p className="mt-4 text-xs text-gray-400">
+                  Sie können die Identitätsverifizierung auch später unter &quot;Meine Angebote&quot; nachholen.
                 </p>
-                <Link
-                  href="/login"
-                  className="inline-flex w-full items-center justify-center rounded-2xl bg-primary-600 px-6 py-3 font-medium text-white transition-all duration-200 hover:bg-primary-700 hover:shadow-md"
-                >
-                  Go to login →
-                </Link>
               </>
             )}
 

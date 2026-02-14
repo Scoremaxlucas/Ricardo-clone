@@ -16,6 +16,7 @@ import {
 import { useLanguage } from '@/contexts/LanguageContext'
 import { clearDraft, clearOtherUserDrafts } from '@/lib/draft-storage'
 import { compressDataUrl } from '@/lib/image-compression'
+import { OnboardingProgress, type OnboardingStatus } from '@/components/seller/OnboardingProgress'
 import { canSell, getVerificationStatus } from '@/lib/verification'
 import { AlertCircle, CheckCircle, FileEdit, Loader2, Shield, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
@@ -1286,29 +1287,30 @@ function SellPageContent() {
   // Use single source of truth: canSell logic
   const userCanSell = isVerified === true
   if (isVerified === false) {
-    const returnUrl = encodeURIComponent('/sell')
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
         <div className="mx-auto max-w-2xl px-4 py-16">
-          <div className="rounded-2xl bg-white p-8 text-center shadow-lg">
+          <div className="mb-6 rounded-2xl bg-white p-8 text-center shadow-lg">
             <AlertCircle className="mx-auto mb-6 h-16 w-16 text-yellow-500" />
             <h2 className="mb-4 text-2xl font-bold text-gray-900">
               Verifizierung erforderlich zum Verkaufen
             </h2>
-            <p className="mb-6 text-gray-600">
+            <p className="mb-2 text-gray-600">
               {verificationInProgress
                 ? 'Die Verifizierung ist im Gange. Sie erhalten eine Benachrichtigung, sobald die Verifizierung abgeschlossen ist.'
                 : 'Um Artikel auf Helvenda verkaufen zu können, müssen Sie sich zuerst als Verkäufer verifizieren. Dies schützt sowohl Käufer als auch Verkäufer.'}
             </p>
-            <Link
-              href={`/verification?return_url=${returnUrl}`}
-              className="inline-flex items-center gap-2 rounded-full bg-primary-600 px-8 py-3 font-semibold text-white transition-colors hover:bg-primary-700"
-            >
-              <Shield className="h-5 w-5" />
-              {verificationInProgress ? 'Verifizierung ansehen' : 'Jetzt verifizieren'}
-            </Link>
+            <p className="text-sm text-gray-500">
+              Folgen Sie den Schritten unten, um loszulegen.
+            </p>
           </div>
+
+          {/* Onboarding progress steps */}
+          <SellPageOnboarding
+            verificationStatus={verificationStatus}
+            verificationInProgress={verificationInProgress}
+          />
         </div>
         <Footer />
       </div>
@@ -1635,6 +1637,69 @@ function SellPageContent() {
       <Footer />
     </div>
   )
+}
+
+/**
+ * Sub-component for the sell page: shows onboarding steps when user is not verified.
+ * Fetches user's onboarding status from the API.
+ */
+function SellPageOnboarding({
+  verificationStatus,
+  verificationInProgress,
+}: {
+  verificationStatus: string | null
+  verificationInProgress: boolean
+}) {
+  const [status, setStatus] = useState<OnboardingStatus | null>(null)
+
+  useEffect(() => {
+    async function fetchStatus() {
+      try {
+        const res = await fetch('/api/verification/get')
+        if (res.ok) {
+          const data = await res.json()
+          setStatus({
+            emailVerified: true, // Must be true to be logged in
+            identitySubmitted: data.verification?.verificationStatus === 'pending' || data.verification?.verificationStatus === 'approved',
+            identityApproved: data.verification?.verificationStatus === 'approved',
+            identityRejected: data.verification?.verificationStatus === 'rejected',
+            payoutSetup: data.verification?.stripeOnboardingComplete === true || data.verification?.payoutsEnabled === true,
+            profileComplete: data.verification?.profileComplete === true,
+          })
+        } else {
+          // Fallback from props
+          setStatus({
+            emailVerified: true,
+            identitySubmitted: verificationInProgress || verificationStatus === 'pending',
+            identityApproved: verificationStatus === 'approved',
+            identityRejected: verificationStatus === 'rejected',
+            payoutSetup: false,
+            profileComplete: false,
+          })
+        }
+      } catch {
+        setStatus({
+          emailVerified: true,
+          identitySubmitted: verificationInProgress || verificationStatus === 'pending',
+          identityApproved: verificationStatus === 'approved',
+          identityRejected: verificationStatus === 'rejected',
+          payoutSetup: false,
+          profileComplete: false,
+        })
+      }
+    }
+    fetchStatus()
+  }, [verificationStatus, verificationInProgress])
+
+  if (!status) {
+    return (
+      <div className="flex justify-center py-8">
+        <Loader2 className="h-6 w-6 animate-spin text-primary-600" />
+      </div>
+    )
+  }
+
+  return <OnboardingProgress status={status} />
 }
 
 export default function SellPage() {
