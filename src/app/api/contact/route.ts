@@ -300,6 +300,21 @@ Diese E-Mail wurde automatisch generiert. Bitte antworten Sie nicht direkt auf d
 
     console.log(`[contact] Support-Anfrage erhalten von ${email}, Kategorie: ${categoryLabel}`)
 
+    // Auto-add to marketing contacts (contact-form source)
+    try {
+      await prisma.marketingContact.upsert({
+        where: { email: email.toLowerCase() },
+        update: {},
+        create: {
+          email: email.toLowerCase(),
+          tags: JSON.stringify(['contact-form']),
+          source: 'contact-form',
+        },
+      })
+    } catch {
+      // Non-critical
+    }
+
     return NextResponse.json({
       message: 'Ihre Nachricht wurde erfolgreich gesendet',
       success: true,

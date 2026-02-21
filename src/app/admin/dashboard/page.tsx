@@ -13,6 +13,7 @@ import {
   Database,
   DollarSign,
   FileCheck,
+  Mail,
   Receipt,
   Shield,
   ShoppingBag,
@@ -325,6 +326,12 @@ export default function AdminDashboard() {
             icon={Database}
             href="/admin/bexio"
             color="blue"
+          />
+          <ActionCard
+            title="Marketing E-Mails"
+            icon={Mail}
+            href="/admin/marketing"
+            color="green"
           />
         </div>
       </div>

@@ -278,6 +278,24 @@ export async function POST(request: NextRequest) {
       console.error(`[register] ⚠️ Bexio sync failed for user ${user.id}:`, bexioError.message)
     }
 
+    // Auto-add to marketing contacts if consent given
+    if (marketingConsent === true) {
+      try {
+        await prisma.marketingContact.upsert({
+          where: { email: user.email },
+          update: { userId: user.id, tags: JSON.stringify(['marketing', 'registration']) },
+          create: {
+            email: user.email,
+            tags: JSON.stringify(['marketing', 'registration']),
+            source: 'registration',
+            userId: user.id,
+          },
+        })
+      } catch {
+        // Non-critical: don't fail registration
+      }
+    }
+
     // Remove password from response
     const { password: _, ...userWithoutPassword } = user
 

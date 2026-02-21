@@ -70,6 +70,20 @@ export async function POST(request: NextRequest) {
       },
     })
 
+    // Also update MarketingContact status when unsubscribing from marketing or all
+    if (type === 'marketing' || type === 'all') {
+      try {
+        if (user.email) {
+          await prisma.marketingContact.updateMany({
+            where: { email: user.email },
+            data: { status: 'unsubscribed' },
+          })
+        }
+      } catch {
+        // Non-critical
+      }
+    }
+
     return NextResponse.json({ success: true, type })
   } catch (error: any) {
     console.error('[email/unsubscribe] Error:', error)

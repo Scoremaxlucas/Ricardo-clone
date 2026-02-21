@@ -163,6 +163,7 @@ model User {
   outagesCreated                SystemOutage[]        @relation("OutageCreator")
   outagesResolved               SystemOutage[]        @relation("OutageResolver")
   outagesExtended               SystemOutage[]        @relation("OutageExtender")
+  marketingContacts             MarketingContact[]
 
   // === BEXIO INTEGRATION ===
   bexioContactId Int? // Bexio Contact ID for syncing
@@ -1606,4 +1607,62 @@ model AnalyticsEvent {
   @@index([createdAt])
   @@index([name, createdAt])
   @@map("analytics_events")
+}
+
+// === MARKETING E-MAIL SYSTEM ===
+
+model MarketingContact {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  tags      String   @default("[]") // JSON array: ["marketing", "newsletter"]
+  source    String   @default("manual") // "manual", "registration", "contact-form"
+  status    String   @default("active") // "active" | "unsubscribed"
+  userId    String?
+  user      User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  recipients MarketingRecipient[]
+
+  @@index([status])
+  @@index([source])
+  @@index([createdAt])
+  @@map("marketing_contacts")
+}
+
+model MarketingCampaign {
+  id          String    @id @default(cuid())
+  subject     String
+  content     String    @db.Text
+  tag         String?
+  status      String    @default("draft") // "draft" | "sending" | "sent" | "failed"
+  totalCount  Int       @default(0)
+  sentCount   Int       @default(0)
+  failedCount Int       @default(0)
+  sentBy      String?
+  sentAt      DateTime?
+  createdAt   DateTime  @default(now())
+
+  recipients MarketingRecipient[]
+
+  @@index([status])
+  @@index([createdAt])
+  @@map("marketing_campaigns")
+}
+
+model MarketingRecipient {
+  id         String    @id @default(cuid())
+  campaignId String
+  campaign   MarketingCampaign @relation(fields: [campaignId], references: [id], onDelete: Cascade)
+  contactId  String
+  contact    MarketingContact  @relation(fields: [contactId], references: [id], onDelete: Cascade)
+  status     String    @default("pending") // "pending" | "sent" | "failed"
+  sentAt     DateTime?
+  error      String?
+
+  @@unique([campaignId, contactId])
+  @@index([campaignId])
+  @@index([contactId])
+  @@index([status])
+  @@map("marketing_recipients")
 }
