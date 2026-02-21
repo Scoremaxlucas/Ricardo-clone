@@ -14,6 +14,8 @@ export interface SendEmailOptions {
   text?: string
   /** If provided, an unsubscribe link is automatically added to the email footer */
   userId?: string
+  /** Override the default From address (e.g. 'Helvenda <noreply@helvenda.ch>') */
+  from?: string
 }
 
 export interface SendEmailResult {
@@ -30,6 +32,7 @@ export async function sendEmail({
   html,
   text,
   userId,
+  from,
 }: SendEmailOptions): Promise<SendEmailResult> {
   // Auto-inject unsubscribe link if userId is provided
   if (userId) {
@@ -48,7 +51,7 @@ export async function sendEmail({
   // Priorität 1: Resend (professionell, skalierbar)
   if (resend) {
     try {
-      const fromEmail = getFromEmail()
+      const fromEmail = from || getFromEmail()
 
       console.log(`[sendEmail] Versende E-Mail via Resend:`)
       console.log(`  From: ${fromEmail}`)

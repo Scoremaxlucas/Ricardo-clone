@@ -2,6 +2,8 @@ import { authOptions } from '@/lib/auth'
 import { getHelvendaEmailTemplate } from '@/lib/email/base-template'
 import { getEmailBaseUrl } from '@/lib/email/config'
 import { sendEmail } from '@/lib/email/sender'
+
+const MARKETING_FROM = 'Helvenda <noreply@helvenda.ch>'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -119,6 +121,7 @@ export async function POST(request: NextRequest) {
           to: contact.email,
           subject,
           html,
+          from: MARKETING_FROM,
           userId: contact.userId || undefined,
         })
 
@@ -202,6 +205,7 @@ async function resendFailed(
           to: recipient.contact.email,
           subject,
           html,
+          from: MARKETING_FROM,
           userId: recipient.contact.userId || undefined,
         })
 
