@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
+import { removeKeineArtikelTag } from '@/lib/marketing-tags'
 import { prisma } from '@/lib/prisma'
 import { generateArticleNumber } from '@/lib/article-number'
 
@@ -164,6 +165,10 @@ export async function POST(request: NextRequest) {
         console.error(`Error creating product ${i + 1}:`, error)
         errors.push(`Artikel ${i + 1}: ${error.message || 'Unbekannter Fehler'}`)
       }
+    }
+
+    if (createdProducts.length > 0) {
+      removeKeineArtikelTag(session.user.id).catch(() => {})
     }
 
     return NextResponse.json({

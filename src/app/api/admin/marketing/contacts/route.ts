@@ -15,6 +15,90 @@ async function checkAdmin(session: any): Promise<boolean> {
 }
 
 /**
+ * PATCH /api/admin/marketing/contacts
+ * Update a contact: { id, email?, tags?, status? }
+ */
+export async function PATCH(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!(await checkAdmin(session))) {
+    return NextResponse.json({ error: 'Admin-Rechte erforderlich' }, { status: 403 })
+  }
+
+  const body = await request.json()
+  const { id, email, tags, status } = body
+
+  if (!id) {
+    return NextResponse.json({ error: 'Kontakt-ID ist erforderlich' }, { status: 400 })
+  }
+
+  const existing = await prisma.marketingContact.findUnique({ where: { id } })
+  if (!existing) {
+    return NextResponse.json({ error: 'Kontakt nicht gefunden' }, { status: 404 })
+  }
+
+  const updateData: any = {}
+
+  if (email !== undefined) {
+    const trimmed = email.trim().toLowerCase()
+    if (!trimmed || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(trimmed)) {
+      return NextResponse.json({ error: 'Ungültige E-Mail-Adresse' }, { status: 400 })
+    }
+    if (trimmed !== existing.email) {
+      const duplicate = await prisma.marketingContact.findUnique({ where: { email: trimmed } })
+      if (duplicate) {
+        return NextResponse.json({ error: 'Diese E-Mail-Adresse existiert bereits' }, { status: 409 })
+      }
+    }
+    updateData.email = trimmed
+
+    const user = await prisma.user.findUnique({ where: { email: trimmed }, select: { id: true } })
+    updateData.userId = user?.id || null
+  }
+
+  if (tags !== undefined) {
+    updateData.tags = JSON.stringify(Array.isArray(tags) ? tags : [])
+  }
+
+  if (status !== undefined) {
+    updateData.status = status
+  }
+
+  const updated = await prisma.marketingContact.update({
+    where: { id },
+    data: updateData,
+  })
+
+  const parsedTags: string[] = (() => {
+    try { return JSON.parse(updated.tags) } catch { return [] }
+  })()
+
+  return NextResponse.json({ contact: { ...updated, tags: parsedTags } })
+}
+
+/**
+ * DELETE /api/admin/marketing/contacts
+ * Delete a contact: { id }
+ */
+export async function DELETE(request: NextRequest) {
+  const session = await getServerSession(authOptions)
+  if (!(await checkAdmin(session))) {
+    return NextResponse.json({ error: 'Admin-Rechte erforderlich' }, { status: 403 })
+  }
+
+  const { searchParams } = new URL(request.url)
+  const id = searchParams.get('id')
+
+  if (!id) {
+    return NextResponse.json({ error: 'Kontakt-ID ist erforderlich' }, { status: 400 })
+  }
+
+  await prisma.marketingRecipient.deleteMany({ where: { contactId: id } })
+  await prisma.marketingContact.delete({ where: { id } })
+
+  return NextResponse.json({ success: true })
+}
+
+/**
  * GET /api/admin/marketing/contacts
  * List contacts with search, tag filter, pagination, show/hide unsubscribed
  */

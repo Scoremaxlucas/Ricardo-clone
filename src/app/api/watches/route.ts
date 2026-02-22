@@ -1,6 +1,7 @@
 import { getMainAddress } from '@/lib/address'
 import { apiCache, generateCacheKey } from '@/lib/api-cache'
 import { authOptions } from '@/lib/auth'
+import { removeKeineArtikelTag } from '@/lib/marketing-tags'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -80,7 +81,6 @@ export async function POST(request: NextRequest) {
             : null,
         images: imagesString,
         sellerId: session.user.id,
-        // Additional fields for the detailed form
         lastRevision: lastRevision ? new Date(lastRevision) : null,
         accuracy: accuracy || '',
         fullset: fullset || false,
@@ -92,9 +92,10 @@ export async function POST(request: NextRequest) {
         warrantyYears: warrantyYears ? parseInt(warrantyYears) : null,
         warrantyNote: warrantyNote || '',
         warrantyDescription: warrantyDescription || '',
-        // Note: Shipping columns (deliveryMode, freeShippingThresholdChf, etc.) don't exist in DB
       },
     })
+
+    removeKeineArtikelTag(session.user.id).catch(() => {})
 
     return NextResponse.json(
       {

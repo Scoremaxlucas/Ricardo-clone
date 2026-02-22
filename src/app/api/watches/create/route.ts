@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth'
 import { moderateWatch } from '@/lib/auto-moderation'
 import { checkRateLimit } from '@/lib/rate-limit'
 import { isBlobUrl, uploadImagesToBlob } from '@/lib/blob-storage'
+import { removeKeineArtikelTag } from '@/lib/marketing-tags'
 import { prisma } from '@/lib/prisma'
 import { canSell } from '@/lib/verification'
 import { getServerSession } from 'next-auth/next'
@@ -826,6 +827,8 @@ export async function POST(request: NextRequest) {
     const watch = await prisma.watch.create({
       data: watchData,
     })
+
+    removeKeineArtikelTag(watchData.sellerId).catch(() => {})
 
     // =========================================================================
     // VISIBILITY PIPELINE INSTRUMENTATION

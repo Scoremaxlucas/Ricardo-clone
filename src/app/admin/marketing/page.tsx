@@ -4,13 +4,17 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import {
   ArrowLeft,
+  Check,
   ChevronLeft,
   ChevronRight,
   Download,
   Mail,
+  Pencil,
   Search,
+  Trash2,
   Upload,
   Users,
+  X,
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
@@ -46,6 +50,12 @@ export default function MarketingContactsPage() {
   const [importSource, setImportSource] = useState('manual')
   const [importLoading, setImportLoading] = useState(false)
   const [importResult, setImportResult] = useState<string | null>(null)
+
+  // Inline edit state
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [editEmail, setEditEmail] = useState('')
+  const [editError, setEditError] = useState<string | null>(null)
+  const [saving, setSaving] = useState(false)
 
   const loadContacts = useCallback(async () => {
     setLoading(true)
@@ -102,6 +112,53 @@ export default function MarketingContactsPage() {
       setImportResult('Fehler beim Import')
     } finally {
       setImportLoading(false)
+    }
+  }
+
+  const startEdit = (contact: Contact) => {
+    setEditingId(contact.id)
+    setEditEmail(contact.email)
+    setEditError(null)
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    setEditEmail('')
+    setEditError(null)
+  }
+
+  const saveEdit = async (id: string) => {
+    setSaving(true)
+    setEditError(null)
+    try {
+      const res = await fetch('/api/admin/marketing/contacts', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id, email: editEmail }),
+      })
+      const data = await res.json()
+      if (res.ok) {
+        setContacts(prev => prev.map(c => c.id === id ? { ...c, email: data.contact.email } : c))
+        setEditingId(null)
+      } else {
+        setEditError(data.error)
+      }
+    } catch {
+      setEditError('Fehler beim Speichern')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const deleteContact = async (id: string, email: string) => {
+    if (!confirm(`Kontakt "${email}" wirklich löschen?`)) return
+    try {
+      const res = await fetch(`/api/admin/marketing/contacts?id=${id}`, { method: 'DELETE' })
+      if (res.ok) {
+        loadContacts()
+      }
+    } catch {
+      console.error('Error deleting contact')
     }
   }
 
@@ -294,13 +351,54 @@ export default function MarketingContactsPage() {
                       <th className="pb-3 pr-4">E-Mail</th>
                       <th className="pb-3 pr-4">Tags</th>
                       <th className="pb-3 pr-4">Quelle</th>
-                      <th className="pb-3">Status</th>
+                      <th className="pb-3 pr-4">Status</th>
+                      <th className="pb-3 text-right">Aktionen</th>
                     </tr>
                   </thead>
                   <tbody className="divide-y divide-gray-100">
                     {contacts.map(contact => (
                       <tr key={contact.id} className="hover:bg-gray-50">
-                        <td className="py-3 pr-4 font-mono text-sm">{contact.email}</td>
+                        <td className="py-3 pr-4">
+                          {editingId === contact.id ? (
+                            <div className="flex flex-col gap-1">
+                              <div className="flex items-center gap-1">
+                                <input
+                                  type="email"
+                                  value={editEmail}
+                                  onChange={e => setEditEmail(e.target.value)}
+                                  onKeyDown={e => {
+                                    if (e.key === 'Enter') saveEdit(contact.id)
+                                    if (e.key === 'Escape') cancelEdit()
+                                  }}
+                                  aria-label="E-Mail bearbeiten"
+                                  className="w-full rounded border border-primary-300 px-2 py-1 font-mono text-sm focus:border-primary-500 focus:outline-none focus:ring-1 focus:ring-primary-500"
+                                  autoFocus
+                                  disabled={saving}
+                                />
+                                <button
+                                  onClick={() => saveEdit(contact.id)}
+                                  disabled={saving}
+                                  className="rounded p-1 text-green-600 hover:bg-green-50 disabled:opacity-50"
+                                  title="Speichern"
+                                >
+                                  <Check className="h-4 w-4" />
+                                </button>
+                                <button
+                                  onClick={cancelEdit}
+                                  className="rounded p-1 text-gray-400 hover:bg-gray-100"
+                                  title="Abbrechen"
+                                >
+                                  <X className="h-4 w-4" />
+                                </button>
+                              </div>
+                              {editError && (
+                                <p className="text-xs text-red-600">{editError}</p>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="font-mono text-sm">{contact.email}</span>
+                          )}
+                        </td>
                         <td className="py-3 pr-4">
                           <div className="flex flex-wrap gap-1">
                             {contact.tags.map((tag: string, i: number) => (
@@ -314,7 +412,7 @@ export default function MarketingContactsPage() {
                           </div>
                         </td>
                         <td className="py-3 pr-4 text-gray-600">{contact.source}</td>
-                        <td className="py-3">
+                        <td className="py-3 pr-4">
                           <span
                             className={`rounded-full px-2 py-0.5 text-xs font-medium ${
                               contact.status === 'active'
@@ -325,11 +423,33 @@ export default function MarketingContactsPage() {
                             {contact.status === 'active' ? 'aktiv' : 'abgemeldet'}
                           </span>
                         </td>
+                        <td className="py-3 text-right">
+                          <div className="flex items-center justify-end gap-1">
+                            {editingId !== contact.id && (
+                              <>
+                                <button
+                                  onClick={() => startEdit(contact)}
+                                  className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-gray-600"
+                                  title="E-Mail bearbeiten"
+                                >
+                                  <Pencil className="h-3.5 w-3.5" />
+                                </button>
+                                <button
+                                  onClick={() => deleteContact(contact.id, contact.email)}
+                                  className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-red-600"
+                                  title="Löschen"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                </button>
+                              </>
+                            )}
+                          </div>
+                        </td>
                       </tr>
                     ))}
                     {contacts.length === 0 && (
                       <tr>
-                        <td colSpan={4} className="py-8 text-center text-gray-500">
+                        <td colSpan={5} className="py-8 text-center text-gray-500">
                           Keine Kontakte gefunden
                         </td>
                       </tr>
