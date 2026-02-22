@@ -68,6 +68,29 @@ Schauen Sie sich um und entdecken Sie aktuelle Angebote:`,
     productCount: 4,
   },
   {
+    id: 'verkaufen',
+    name: 'Verkaufe auf Helvenda',
+    subject: 'Verkaufen Sie jetzt auf Helvenda.ch – gratis & einfach',
+    content: `Sie haben noch keine Artikel auf **Helvenda.ch** eingestellt? Jetzt ist der perfekte Zeitpunkt!
+
+Egal ob Uhren, Elektronik, Mode oder Sammlerstücke – auf Helvenda.ch erreichen Sie Käufer in der ganzen Schweiz.
+
+**So einfach geht's:**
+• Artikel in wenigen Minuten einstellen
+• Gratis inserieren – keine Einstellgebühren
+• Sichere Zahlungsabwicklung über Stripe
+• Käuferschutz für mehr Vertrauen bei Ihren Käufern
+
+**Ihre Vorteile als Verkäufer:**
+• Sofortkauf oder Auktion – Sie entscheiden
+• Übersichtliches Dashboard für Ihre Verkäufe
+• Schweizer Plattform mit persönlichem Support
+
+Starten Sie jetzt und stellen Sie Ihren ersten Artikel ein:`,
+    includeProducts: false,
+    productCount: 4,
+  },
+  {
     id: 'leer',
     name: 'Leeres Template',
     subject: '',
