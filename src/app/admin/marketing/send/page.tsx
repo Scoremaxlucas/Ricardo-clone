@@ -29,18 +29,84 @@ interface Campaign {
   createdAt: string
 }
 
+interface EmailTemplate {
+  id: string
+  name: string
+  subject: string
+  content: string
+  includeProducts: boolean
+  productCount: number
+}
+
+const EMAIL_TEMPLATES: EmailTemplate[] = [
+  {
+    id: 'standard-mit-produkten',
+    name: 'Standard (mit Produkten)',
+    subject: 'Entdecken Sie aktuelle Angebote auf Helvenda.ch',
+    content: `Schauen Sie sich die neuesten Angebote auf **Helvenda.ch** an – Ihrem vertrauensvollen Schweizer Online-Marktplatz.
+
+Ob Uhren, Elektronik oder Mode – entdecken Sie geprüfte Angebote von verifizierten Verkäufern.`,
+    includeProducts: true,
+    productCount: 4,
+  },
+  {
+    id: 'willkommen',
+    name: 'Willkommen / Neu auf Helvenda',
+    subject: 'Neu auf Helvenda.ch – Ihr Schweizer Online-Marktplatz',
+    content: `Helvenda.ch ist der neue **Schweizer Online-Marktplatz** – sicher, einfach und fair.
+
+Ob Uhren, Elektronik oder Mode – bei uns finden Sie geprüfte Angebote von verifizierten Verkäufern in der Schweiz.
+
+**Warum Helvenda?**
+• Sichere Zahlungsabwicklung via Stripe
+• Käuferschutz & verifizierte Verkäufer
+• Keine versteckten Gebühren
+• Gratis inserieren
+
+Schauen Sie sich um und entdecken Sie aktuelle Angebote:`,
+    includeProducts: true,
+    productCount: 4,
+  },
+  {
+    id: 'leer',
+    name: 'Leeres Template',
+    subject: '',
+    content: '',
+    includeProducts: false,
+    productCount: 4,
+  },
+]
+
 export default function MarketingSendPage() {
   const { data: session } = useSession()
   const isAdmin = (session?.user as any)?.isAdmin === true
 
-  // Form state
-  const [subject, setSubject] = useState('')
+  // Template state – default to the standard template with products
+  const defaultTemplate = EMAIL_TEMPLATES[0]
+  const [selectedTemplateId, setSelectedTemplateId] = useState(defaultTemplate.id)
+
+  // Form state – pre-filled from default template
+  const [subject, setSubject] = useState(defaultTemplate.subject)
   const [tag, setTag] = useState('marketing')
   const [limit, setLimit] = useState(5000)
-  const [content, setContent] = useState('')
+  const [content, setContent] = useState(defaultTemplate.content)
   const [resendCampaignId, setResendCampaignId] = useState('')
-  const [includeProducts, setIncludeProducts] = useState(true)
-  const [productCount, setProductCount] = useState(4)
+  const [includeProducts, setIncludeProducts] = useState(defaultTemplate.includeProducts)
+  const [productCount, setProductCount] = useState(defaultTemplate.productCount)
+
+  const applyTemplate = (templateId: string) => {
+    const tpl = EMAIL_TEMPLATES.find(t => t.id === templateId)
+    if (!tpl) return
+    setSelectedTemplateId(tpl.id)
+    setSubject(tpl.subject)
+    setContent(tpl.content)
+    setIncludeProducts(tpl.includeProducts)
+    setProductCount(tpl.productCount)
+    setPreviewHtml(null)
+    setResult(null)
+    setError(null)
+    setConfirmSend(false)
+  }
 
   // Campaigns history
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -203,6 +269,29 @@ export default function MarketingSendPage() {
 
         {/* Compose Form */}
         <div className="mb-8 rounded-lg bg-white p-6 shadow">
+          {/* Template Selector */}
+          <div className="mb-6">
+            <label className="mb-2 block text-sm font-medium text-gray-700">
+              Vorlage wählen
+            </label>
+            <div className="flex flex-wrap gap-2">
+              {EMAIL_TEMPLATES.map(tpl => (
+                <button
+                  key={tpl.id}
+                  onClick={() => applyTemplate(tpl.id)}
+                  className={`flex items-center gap-2 rounded-lg border px-4 py-2 text-sm font-medium transition-colors ${
+                    selectedTemplateId === tpl.id
+                      ? 'border-primary-500 bg-primary-50 text-primary-700 ring-1 ring-primary-500'
+                      : 'border-gray-300 bg-white text-gray-700 hover:bg-gray-50'
+                  }`}
+                >
+                  <Mail className="h-4 w-4" />
+                  {tpl.name}
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div className="mb-4 grid grid-cols-1 gap-4 md:grid-cols-2">
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Betreff</label>
