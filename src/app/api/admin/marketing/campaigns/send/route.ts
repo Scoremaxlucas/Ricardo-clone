@@ -1,6 +1,7 @@
 import { authOptions } from '@/lib/auth'
 import { getHelvendaEmailTemplate } from '@/lib/email/base-template'
 import { getEmailBaseUrl } from '@/lib/email/config'
+import { buildMarketingEmailWithProducts, type ProductCard } from '@/lib/email/marketing-template'
 import { sendEmail } from '@/lib/email/sender'
 
 const MARKETING_FROM = 'Helvenda <noreply@helvenda.ch>'
@@ -38,6 +39,8 @@ export async function POST(request: NextRequest) {
     limit: recipientLimit = 5000,
     dryRun = false,
     campaignId: resendCampaignId,
+    includeProducts = false,
+    productCount = 4,
   } = body
 
   if (!subject || !content) {
@@ -47,9 +50,15 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Fetch product cards if requested
+  let products: ProductCard[] = []
+  if (includeProducts) {
+    products = await fetchActiveListings(Math.min(productCount, 8))
+  }
+
   // If resending a failed campaign, get its failed recipients
   if (resendCampaignId) {
-    return await resendFailed(resendCampaignId, subject, content, session)
+    return await resendFailed(resendCampaignId, subject, content, session, products)
   }
 
   // Build recipient query
@@ -73,13 +82,16 @@ export async function POST(request: NextRequest) {
 
   // Dry run: return preview data without sending
   if (dryRun) {
-    const previewHtml = buildEmailHtml(subject, content)
+    const previewHtml = includeProducts && products.length > 0
+      ? buildMarketingEmailWithProducts(subject, content, products)
+      : buildEmailHtml(subject, content)
     return NextResponse.json({
       dryRun: true,
       recipientCount: contacts.length,
       subject,
       tag: tag || 'alle',
       previewHtml,
+      productCount: products.length,
       sampleRecipients: contacts.slice(0, 10).map(c => c.email),
     })
   }
@@ -116,7 +128,9 @@ export async function POST(request: NextRequest) {
 
     const results = await Promise.allSettled(
       batch.map(async (contact) => {
-        const html = buildEmailHtml(subject, content, contact.userId || undefined)
+        const html = includeProducts && products.length > 0
+          ? buildMarketingEmailWithProducts(subject, content, products, contact.userId || undefined)
+          : buildEmailHtml(subject, content, contact.userId || undefined)
         const result = await sendEmail({
           to: contact.email,
           subject,
@@ -176,7 +190,8 @@ async function resendFailed(
   campaignId: string,
   subject: string,
   content: string,
-  session: any
+  session: any,
+  products: ProductCard[] = []
 ) {
   const failedRecipients = await prisma.marketingRecipient.findMany({
     where: { campaignId, status: 'failed' },
@@ -200,7 +215,9 @@ async function resendFailed(
 
     const results = await Promise.allSettled(
       batch.map(async (recipient) => {
-        const html = buildEmailHtml(subject, content, recipient.contact.userId || undefined)
+        const html = products.length > 0
+          ? buildMarketingEmailWithProducts(subject, content, products, recipient.contact.userId || undefined)
+          : buildEmailHtml(subject, content, recipient.contact.userId || undefined)
         const result = await sendEmail({
           to: recipient.contact.email,
           subject,
@@ -290,5 +307,73 @@ function buildEmailHtml(subject: string, content: string, userId?: string): stri
     greeting: '',
     content: htmlContent,
     userId,
+  })
+}
+
+/**
+ * Fetch the latest active (not sold, not rejected) listings for product cards
+ */
+async function fetchActiveListings(count: number): Promise<ProductCard[]> {
+  const now = new Date()
+
+  const watches = await prisma.watch.findMany({
+    where: {
+      AND: [
+        {
+          OR: [
+            { moderationStatus: null },
+            { moderationStatus: { notIn: ['rejected', 'blocked', 'removed', 'ended'] } },
+          ],
+        },
+        {
+          OR: [
+            { purchases: { none: {} } },
+            { purchases: { every: { status: 'cancelled' } } },
+          ],
+        },
+        {
+          OR: [
+            { auctionEnd: null },
+            { auctionEnd: { gt: now } },
+          ],
+        },
+      ],
+    },
+    select: {
+      id: true,
+      title: true,
+      price: true,
+      buyNowPrice: true,
+      brand: true,
+      images: true,
+      articleNumber: true,
+    },
+    orderBy: { createdAt: 'desc' },
+    take: count,
+  })
+
+  return watches.map(w => {
+    let imageUrl: string | null = null
+    try {
+      const imgs: string[] = JSON.parse(w.images)
+      if (imgs.length > 0) {
+        const first = imgs[0]
+        // Use blob URLs directly; skip base64 in emails (too large)
+        if (first.startsWith('http')) {
+          imageUrl = first
+        }
+      }
+    } catch {
+      // No valid images
+    }
+
+    return {
+      id: w.id,
+      title: w.title,
+      price: w.buyNowPrice || w.price,
+      imageUrl,
+      brand: w.brand,
+      articleNumber: w.articleNumber,
+    }
   })
 }

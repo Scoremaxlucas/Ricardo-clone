@@ -39,6 +39,8 @@ export default function MarketingSendPage() {
   const [limit, setLimit] = useState(5000)
   const [content, setContent] = useState('')
   const [resendCampaignId, setResendCampaignId] = useState('')
+  const [includeProducts, setIncludeProducts] = useState(true)
+  const [productCount, setProductCount] = useState(4)
 
   // Campaigns history
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
@@ -83,7 +85,7 @@ export default function MarketingSendPage() {
       const res = await fetch('/api/admin/marketing/campaigns/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, content, tag, limit, dryRun: true }),
+        body: JSON.stringify({ subject, content, tag, limit, dryRun: true, includeProducts, productCount }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -116,7 +118,7 @@ export default function MarketingSendPage() {
       const res = await fetch('/api/admin/marketing/campaigns/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, content, tag, limit }),
+        body: JSON.stringify({ subject, content, tag, limit, includeProducts, productCount }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -341,6 +343,42 @@ export default function MarketingSendPage() {
               <p>Bild: Bild [Beschreibung](https://example.com/bild.jpg)</p>
               <p>Klickbares Bild: Bild [Flyer](https://example.com/bild.jpg)(https://helvenda.ch/)</p>
             </div>
+          </div>
+
+          {/* Product Preview Toggle */}
+          <div className="mb-4 rounded-lg border border-gray-200 bg-gray-50 p-4">
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                checked={includeProducts}
+                onChange={e => setIncludeProducts(e.target.checked)}
+                className="h-4 w-4 rounded border-gray-300 text-primary-600"
+              />
+              <div>
+                <span className="text-sm font-medium text-gray-900">
+                  Aktuelle Angebote einfügen
+                </span>
+                <p className="text-xs text-gray-500">
+                  Zeigt Produktkarten mit Bild, Titel und Preis aus den neuesten Listings
+                </p>
+              </div>
+            </label>
+            {includeProducts && (
+              <div className="mt-3 flex items-center gap-2">
+                <label className="text-sm text-gray-600">Anzahl Produkte:</label>
+                <select
+                  value={productCount}
+                  onChange={e => setProductCount(parseInt(e.target.value))}
+                  aria-label="Anzahl Produkte"
+                  className="rounded border border-gray-300 px-2 py-1 text-sm"
+                >
+                  <option value={2}>2</option>
+                  <option value={4}>4</option>
+                  <option value={6}>6</option>
+                  <option value={8}>8</option>
+                </select>
+              </div>
+            )}
           </div>
 
           {/* Preview */}
