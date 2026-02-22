@@ -61,7 +61,7 @@ export async function POST(request: NextRequest) {
 
   // If resending a failed campaign, get its failed recipients
   if (resendCampaignId) {
-    return await resendFailed(resendCampaignId, subject, content, session, products)
+    return await resendFailed(resendCampaignId, subject, content, session, products, buttonText, buttonUrl)
   }
 
   // Build recipient query
@@ -194,7 +194,9 @@ async function resendFailed(
   subject: string,
   content: string,
   session: any,
-  products: ProductCard[] = []
+  products: ProductCard[] = [],
+  buttonText?: string,
+  buttonUrl?: string,
 ) {
   const failedRecipients = await prisma.marketingRecipient.findMany({
     where: { campaignId, status: 'failed' },
