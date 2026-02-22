@@ -36,6 +36,8 @@ interface EmailTemplate {
   content: string
   includeProducts: boolean
   productCount: number
+  buttonText?: string
+  buttonUrl?: string
 }
 
 const EMAIL_TEMPLATES: EmailTemplate[] = [
@@ -87,6 +89,8 @@ Egal ob Uhren, Elektronik, Mode oder Sammlerstücke – auf Helvenda.ch erreiche
 Starten Sie jetzt und stellen Sie Ihren ersten Artikel ein:`,
     includeProducts: false,
     productCount: 4,
+    buttonText: 'Jetzt verkaufen',
+    buttonUrl: 'https://helvenda.ch/sell',
   },
   {
     id: 'leer',
@@ -114,6 +118,8 @@ export default function MarketingSendPage() {
   const [resendCampaignId, setResendCampaignId] = useState('')
   const [includeProducts, setIncludeProducts] = useState(defaultTemplate.includeProducts)
   const [productCount, setProductCount] = useState(defaultTemplate.productCount)
+  const [buttonText, setButtonText] = useState(defaultTemplate.buttonText || '')
+  const [buttonUrl, setButtonUrl] = useState(defaultTemplate.buttonUrl || '')
 
   const applyTemplate = (templateId: string) => {
     const tpl = EMAIL_TEMPLATES.find(t => t.id === templateId)
@@ -123,6 +129,8 @@ export default function MarketingSendPage() {
     setContent(tpl.content)
     setIncludeProducts(tpl.includeProducts)
     setProductCount(tpl.productCount)
+    setButtonText(tpl.buttonText || '')
+    setButtonUrl(tpl.buttonUrl || '')
     setPreviewHtml(null)
     setResult(null)
     setError(null)
@@ -172,7 +180,7 @@ export default function MarketingSendPage() {
       const res = await fetch('/api/admin/marketing/campaigns/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, content, tag, limit, dryRun: true, includeProducts, productCount }),
+        body: JSON.stringify({ subject, content, tag, limit, dryRun: true, includeProducts, productCount, buttonText: buttonText || undefined, buttonUrl: buttonUrl || undefined }),
       })
       const data = await res.json()
       if (res.ok) {
@@ -205,7 +213,7 @@ export default function MarketingSendPage() {
       const res = await fetch('/api/admin/marketing/campaigns/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ subject, content, tag, limit, includeProducts, productCount }),
+        body: JSON.stringify({ subject, content, tag, limit, includeProducts, productCount, buttonText: buttonText || undefined, buttonUrl: buttonUrl || undefined }),
       })
       const data = await res.json()
       if (res.ok) {

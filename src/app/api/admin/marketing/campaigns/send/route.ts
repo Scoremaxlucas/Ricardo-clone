@@ -42,6 +42,8 @@ export async function POST(request: NextRequest) {
     campaignId: resendCampaignId,
     includeProducts = false,
     productCount = 4,
+    buttonText,
+    buttonUrl,
   } = body
 
   if (!subject || !content) {
@@ -84,8 +86,8 @@ export async function POST(request: NextRequest) {
   // Dry run: return preview data without sending
   if (dryRun) {
     const previewHtml = includeProducts && products.length > 0
-      ? buildMarketingEmailWithProducts(subject, content, products)
-      : buildEmailHtml(subject, content)
+      ? buildMarketingEmailWithProducts(subject, content, products, undefined, buttonText, buttonUrl)
+      : buildEmailHtml(subject, content, undefined, buttonText, buttonUrl)
     return NextResponse.json({
       dryRun: true,
       recipientCount: contacts.length,
@@ -130,8 +132,8 @@ export async function POST(request: NextRequest) {
     const results = await Promise.allSettled(
       batch.map(async (contact) => {
         const html = includeProducts && products.length > 0
-          ? buildMarketingEmailWithProducts(subject, content, products, contact.email)
-          : buildEmailHtml(subject, content, contact.email)
+          ? buildMarketingEmailWithProducts(subject, content, products, contact.email, buttonText, buttonUrl)
+          : buildEmailHtml(subject, content, contact.email, buttonText, buttonUrl)
         const result = await sendEmail({
           to: contact.email,
           subject,
@@ -217,8 +219,8 @@ async function resendFailed(
     const results = await Promise.allSettled(
       batch.map(async (recipient) => {
         const html = products.length > 0
-          ? buildMarketingEmailWithProducts(subject, content, products, recipient.contact.email)
-          : buildEmailHtml(subject, content, recipient.contact.email)
+          ? buildMarketingEmailWithProducts(subject, content, products, recipient.contact.email, buttonText, buttonUrl)
+          : buildEmailHtml(subject, content, recipient.contact.email, buttonText, buttonUrl)
         const result = await sendEmail({
           to: recipient.contact.email,
           subject,
@@ -282,7 +284,13 @@ async function resendFailed(
  * - Bild: [alt](url) → <img>
  * - Newlines → <br>
  */
-function buildEmailHtml(subject: string, content: string, recipientEmail?: string): string {
+function buildEmailHtml(
+  subject: string,
+  content: string,
+  recipientEmail?: string,
+  customButtonText?: string,
+  customButtonUrl?: string,
+): string {
   const baseUrl = getEmailBaseUrl()
 
   let htmlContent = content
@@ -311,6 +319,8 @@ function buildEmailHtml(subject: string, content: string, recipientEmail?: strin
     title: subject,
     greeting: '',
     content: htmlContent,
+    buttonText: customButtonText,
+    buttonUrl: customButtonUrl || (customButtonText ? `${baseUrl}/sell` : undefined),
     unsubscribeUrl,
   })
 }

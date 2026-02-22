@@ -89,7 +89,9 @@ export function buildMarketingEmailWithProducts(
   subject: string,
   introText: string,
   products: ProductCard[],
-  recipientEmail?: string
+  recipientEmail?: string,
+  customButtonText?: string,
+  customButtonUrl?: string,
 ): string {
   const baseUrl = getEmailBaseUrl()
 
@@ -100,10 +102,12 @@ export function buildMarketingEmailWithProducts(
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2" style="color: #0f766e; text-decoration: underline;">$1</a>')
     .replace(/\n/g, '<br>')
 
+  const btnText = customButtonText || 'Alle Angebote entdecken'
+  const btnUrl = customButtonUrl || `${baseUrl}/search`
   const ctaButton = `
     <div style="text-align: center; margin: 32px 0;">
-      <a href="${baseUrl}/search" style="display: inline-block; background-color: #0f766e; color: #ffffff !important; padding: 14px 32px; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);">
-        Alle Angebote entdecken
+      <a href="${btnUrl}" style="display: inline-block; background-color: #0f766e; color: #ffffff !important; padding: 14px 32px; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);">
+        ${btnText}
       </a>
     </div>`
 
