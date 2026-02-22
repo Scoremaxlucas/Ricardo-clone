@@ -1,6 +1,7 @@
 import { authOptions } from '@/lib/auth'
 import { getHelvendaEmailTemplate } from '@/lib/email/base-template'
 import { getEmailBaseUrl } from '@/lib/email/config'
+import { getMarketingUnsubscribeUrl } from '@/lib/email/marketing-unsubscribe'
 import { buildMarketingEmailWithProducts, type ProductCard } from '@/lib/email/marketing-template'
 import { sendEmail } from '@/lib/email/sender'
 
@@ -129,8 +130,8 @@ export async function POST(request: NextRequest) {
     const results = await Promise.allSettled(
       batch.map(async (contact) => {
         const html = includeProducts && products.length > 0
-          ? buildMarketingEmailWithProducts(subject, content, products, contact.userId || undefined)
-          : buildEmailHtml(subject, content, contact.userId || undefined)
+          ? buildMarketingEmailWithProducts(subject, content, products, contact.email)
+          : buildEmailHtml(subject, content, contact.email)
         const result = await sendEmail({
           to: contact.email,
           subject,
@@ -216,8 +217,8 @@ async function resendFailed(
     const results = await Promise.allSettled(
       batch.map(async (recipient) => {
         const html = products.length > 0
-          ? buildMarketingEmailWithProducts(subject, content, products, recipient.contact.userId || undefined)
-          : buildEmailHtml(subject, content, recipient.contact.userId || undefined)
+          ? buildMarketingEmailWithProducts(subject, content, products, recipient.contact.email)
+          : buildEmailHtml(subject, content, recipient.contact.email)
         const result = await sendEmail({
           to: recipient.contact.email,
           subject,
@@ -281,32 +282,36 @@ async function resendFailed(
  * - Bild: [alt](url) → <img>
  * - Newlines → <br>
  */
-function buildEmailHtml(subject: string, content: string, userId?: string): string {
+function buildEmailHtml(subject: string, content: string, recipientEmail?: string): string {
   const baseUrl = getEmailBaseUrl()
 
   let htmlContent = content
-    // Images: Bild: [alt](url) or Bild [alt](url)
     .replace(/Bild:?\s*\[([^\]]*)\]\(([^)]+)\)/gi,
       '<img src="$2" alt="$1" style="max-width: 100%; height: auto; border-radius: 8px; margin: 16px 0;">')
-    // Links: [text](url)
     .replace(/\[([^\]]+)\]\(([^)]+)\)/g,
       '<a href="$2" style="color: #0f766e; text-decoration: underline;">$1</a>')
-    // Bold: **text**
     .replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
-    // Line breaks
     .replace(/\n/g, '<br>')
 
-  // Clickable Bild link syntax: Klickbares Bild: [Flyer](imageUrl)(linkUrl)
   htmlContent = htmlContent.replace(
     /<img src="([^"]+)" alt="([^"]*)"([^>]*)>\(([^)]+)\)/g,
     '<a href="$4"><img src="$1" alt="$2"$3></a>'
   )
 
+  let unsubscribeUrl: string | undefined
+  if (recipientEmail) {
+    try {
+      unsubscribeUrl = getMarketingUnsubscribeUrl(recipientEmail)
+    } catch {
+      // Silently fail
+    }
+  }
+
   return getHelvendaEmailTemplate({
     title: subject,
     greeting: '',
     content: htmlContent,
-    userId,
+    unsubscribeUrl,
   })
 }
 

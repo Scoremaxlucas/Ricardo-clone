@@ -19,7 +19,7 @@ async function main() {
   type ProductCard = import('../src/lib/email/marketing-template').ProductCard
   const { sendEmail } = await import('../src/lib/email/sender')
 
-  const to = 'lucasrodrigues.gafner@outlook.com'
+  const to = 'gregor.gafner@me.com'
   const subject = 'Entdecken Sie aktuelle Angebote auf Helvenda.ch'
 
   // Fetch real active listings
@@ -89,7 +89,7 @@ async function main() {
 
 Ob Uhren, Elektronik oder Mode – entdecken Sie geprüfte Angebote von verifizierten Verkäufern.`
 
-  const html = buildMarketingEmailWithProducts(subject, introText, products)
+  const html = buildMarketingEmailWithProducts(subject, introText, products, to)
 
   console.log(`\nSending to ${to}...`)
 

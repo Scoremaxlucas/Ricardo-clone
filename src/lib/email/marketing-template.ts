@@ -6,6 +6,7 @@
  */
 
 import { getEmailBaseUrl } from './config'
+import { getMarketingUnsubscribeUrl } from './marketing-unsubscribe'
 
 export interface ProductCard {
   id: string
@@ -32,23 +33,23 @@ function buildProductCardsHtml(products: ProductCard[], baseUrl: string): string
       `${baseUrl}/products/${p.articleNumber || p.id}`
 
     const cardHtml = (p: ProductCard) => `
-      <td width="50%" style="padding: 8px; vertical-align: top;">
+      <td width="50%" style="padding: 4px; vertical-align: top;">
         <a href="${productLink(p)}" style="text-decoration: none; color: inherit; display: block;">
-          <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 8px; overflow: hidden; background: #ffffff;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="border: 1px solid #e5e7eb; border-radius: 6px; overflow: hidden; background: #ffffff;">
             <tr>
-              <td style="padding: 0; text-align: center; background: #f9fafb; height: 180px;">
+              <td style="padding: 0; text-align: center; background: #f9fafb; height: 100px;">
                 ${
                   p.imageUrl
-                    ? `<img src="${p.imageUrl}" alt="${p.title}" width="100%" style="display: block; max-height: 180px; object-fit: cover; border-radius: 8px 8px 0 0;" />`
-                    : `<div style="height: 180px; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 14px;">Kein Bild</div>`
+                    ? `<img src="${p.imageUrl}" alt="${p.title}" width="100%" style="display: block; max-height: 100px; object-fit: cover; border-radius: 6px 6px 0 0;" />`
+                    : `<div style="height: 100px; display: flex; align-items: center; justify-content: center; color: #9ca3af; font-size: 12px;">Kein Bild</div>`
                 }
               </td>
             </tr>
             <tr>
-              <td style="padding: 12px;">
-                <p style="margin: 0 0 4px 0; font-size: 11px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">${p.brand}</p>
-                <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1f2937; line-height: 1.3; max-height: 38px; overflow: hidden;">${p.title}</p>
-                <p style="margin: 0; font-size: 16px; font-weight: 700; color: #0f766e;">CHF ${p.price.toFixed(0)}</p>
+              <td style="padding: 8px;">
+                <p style="margin: 0 0 2px 0; font-size: 10px; color: #6b7280; text-transform: uppercase; letter-spacing: 0.5px;">${p.brand}</p>
+                <p style="margin: 0 0 4px 0; font-size: 12px; font-weight: 600; color: #1f2937; line-height: 1.2; max-height: 30px; overflow: hidden;">${p.title}</p>
+                <p style="margin: 0; font-size: 14px; font-weight: 700; color: #0f766e;">CHF ${p.price.toFixed(0)}</p>
               </td>
             </tr>
           </table>
@@ -63,10 +64,10 @@ function buildProductCardsHtml(products: ProductCard[], baseUrl: string): string
   }
 
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 24px 0;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin: 16px 0 8px 0;">
       <tr>
         <td>
-          <p style="font-size: 18px; font-weight: 700; color: #1f2937; margin: 0 0 16px 0; text-align: center;">
+          <p style="font-size: 15px; font-weight: 700; color: #1f2937; margin: 0 0 8px 0; text-align: center;">
             Aktuelle Angebote auf Helvenda.ch
           </p>
         </td>
@@ -88,7 +89,7 @@ export function buildMarketingEmailWithProducts(
   subject: string,
   introText: string,
   products: ProductCard[],
-  userId?: string
+  recipientEmail?: string
 ): string {
   const baseUrl = getEmailBaseUrl()
 
@@ -106,17 +107,15 @@ export function buildMarketingEmailWithProducts(
       </a>
     </div>`
 
-  // Unsubscribe link
   let unsubscribeHtml = ''
-  if (userId) {
+  if (recipientEmail) {
     try {
-      const { getUnsubscribeUrl } = require('./unsubscribe')
-      const url = getUnsubscribeUrl(userId)
+      const url = getMarketingUnsubscribeUrl(recipientEmail)
       unsubscribeHtml = `
         <div style="margin-top: 16px; padding-top: 16px; border-top: 1px solid #e5e7eb;">
           <p style="font-size: 12px; color: #9ca3af; margin: 0;">
-            Sie möchten keine E-Mails mehr erhalten?
-            <a href="${url}" style="color: #9ca3af; text-decoration: underline; font-size: 12px;">E-Mail-Benachrichtigungen verwalten</a>
+            Sie möchten keine Marketing-E-Mails mehr erhalten?
+            <a href="${url}" style="color: #9ca3af; text-decoration: underline; font-size: 12px;">Abmelden</a>
           </p>
         </div>`
     } catch {
