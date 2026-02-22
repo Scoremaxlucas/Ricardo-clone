@@ -78,8 +78,6 @@ Egal ob Uhren, Elektronik, Mode oder Sammlerstücke – auf Helvenda.ch erreiche
 **So einfach geht's:**
 • Artikel in wenigen Minuten einstellen
 • Gratis inserieren – keine Einstellgebühren
-• Sichere Zahlungsabwicklung über Stripe
-• Käuferschutz für mehr Vertrauen bei Ihren Käufern
 
 **Ihre Vorteile als Verkäufer:**
 • Sofortkauf oder Auktion – Sie entscheiden
