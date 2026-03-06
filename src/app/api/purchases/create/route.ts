@@ -194,6 +194,42 @@ export async function POST(request: NextRequest) {
       }
     }
 
+    // Sende E-Mail-Benachrichtigung an Verkäufer (wenn aktiviert)
+    try {
+      const shouldSendSale = await shouldSendNotification(watch.sellerId, 'emailOnSaleCompleted')
+      if (shouldSendSale) {
+        const { sendEmail, getSaleNotificationEmail } = await import('@/lib/email')
+        const seller = purchase.watch.seller
+        const buyer = purchase.buyer
+        const sellerName = seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
+        const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
+
+        const { subject, html, text } = getSaleNotificationEmail(
+          sellerName,
+          buyerName,
+          watch.title,
+          purchase.price || watch.price,
+          watch.isAuction ? 'auction' : 'buy-now',
+          watchId
+        )
+
+        await sendEmail({
+          to: seller.email,
+          subject,
+          html,
+          text,
+          userId: watch.sellerId,
+        })
+
+        console.log(`[purchases/create] ✅ Verkaufs-E-Mail gesendet an Verkäufer ${seller.email}`)
+      } else {
+        console.log(`[purchases/create] ⏭️ Verkaufs-E-Mail übersprungen (Präferenz deaktiviert)`)
+      }
+    } catch (emailError: unknown) {
+      console.error('[purchases/create] ❌ Fehler beim Senden der Verkaufs-E-Mail:', emailError)
+      // E-Mail-Fehler sollte den Kauf nicht verhindern
+    }
+
     // Erstelle Benachrichtigung für Verkäufer
     try {
       const buyer = purchase.buyer

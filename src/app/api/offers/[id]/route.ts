@@ -209,6 +209,47 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
         // Fehler sollte den Kauf nicht verhindern
       }
 
+      // Sende E-Mail-Benachrichtigung an Verkäufer (wenn aktiviert)
+      try {
+        const { shouldSendNotification } = await import('@/lib/notification-preferences')
+        const shouldSendSale = await shouldSendNotification(
+          priceOffer.watch.sellerId,
+          'emailOnSaleCompleted'
+        )
+        if (shouldSendSale) {
+          const { sendEmail, getSaleNotificationEmail } = await import('@/lib/email')
+          const seller = priceOffer.watch.seller
+          const buyer = priceOffer.buyer
+          const sellerName =
+            seller.nickname || seller.firstName || seller.name || seller.email || 'Verkäufer'
+          const buyerName = buyer.nickname || buyer.firstName || buyer.name || buyer.email || 'Käufer'
+
+          const { subject, html, text } = getSaleNotificationEmail(
+            sellerName,
+            buyerName,
+            priceOffer.watch.title,
+            priceOffer.amount,
+            'buy-now',
+            priceOffer.watchId
+          )
+
+          await sendEmail({
+            to: seller.email,
+            subject,
+            html,
+            text,
+            userId: priceOffer.watch.sellerId,
+          })
+
+          console.log(`[offers] ✅ Verkaufs-E-Mail gesendet an Verkäufer ${seller.email}`)
+        } else {
+          console.log(`[offers] ⏭️ Verkaufs-E-Mail übersprungen (Präferenz deaktiviert)`)
+        }
+      } catch (emailError: any) {
+        console.error('[offers] ❌ Fehler beim Senden der Verkaufs-E-Mail:', emailError)
+        // E-Mail-Fehler sollte den Kauf nicht verhindern
+      }
+
       // Erstelle Rechnung SOFORT nach erfolgreichem Verkauf
       try {
         const invoice = await calculateInvoiceForSale(purchase.id)
