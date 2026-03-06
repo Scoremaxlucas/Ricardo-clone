@@ -5,7 +5,7 @@ import { getInvoiceNotificationEmail as getInvoiceNotificationEmailNew } from '.
 import { getPaymentReceivedEmail as getPaymentReceivedEmailNew } from './email/templates/notifications'
 import { getDisputeOpenedEmail as getDisputeOpenedEmailNew } from './email/templates/dispute'
 import { getPriceOfferRejectedEmail as getPriceOfferRejectedEmailNew } from './email/templates/notifications'
-import { sanitizeEmailHtmlLinks, sanitizeEmailUrl } from './email/url-safety'
+import { sanitizeEmailHtmlLinks, sanitizeEmailTextLinks, sanitizeEmailUrl } from './email/url-safety'
 
 // Resend Client initialisieren (falls API Key vorhanden)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
@@ -62,6 +62,9 @@ export async function sendEmail({ to, subject, html, text, useNoReply = false, u
 
   // Final safeguard: sanitize all outbound links in the email HTML.
   html = sanitizeEmailHtmlLinks(html)
+  if (text) {
+    text = sanitizeEmailTextLinks(text)
+  }
 
   console.log('\n📧 ===== E-MAIL-VERSAND START =====')
   console.log(`[sendEmail] Empfänger: ${to}`)

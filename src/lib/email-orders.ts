@@ -8,8 +8,9 @@
 import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
 import { getMainAddress } from '@/lib/address'
+import { getEmailBaseUrl } from '@/lib/email/config'
 
-const BASE_URL = process.env.NEXTAUTH_URL || 'https://www.helvenda.ch'
+const BASE_URL = getEmailBaseUrl()
 
 /**
  * Sendet Bestellbestätigung an Käufer

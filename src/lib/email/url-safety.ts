@@ -57,3 +57,19 @@ export function sanitizeEmailHtmlLinks(html: string): string {
   })
 }
 
+/**
+ * Sanitizes URL-like strings in plain text email bodies.
+ * Prevents auto-linking to untrusted domains by mail clients.
+ */
+export function sanitizeEmailTextLinks(text: string): string {
+  const baseUrl = getEmailBaseUrl().replace(/\/$/, '')
+  const safeFallback = `${baseUrl}/`
+  let output = text.replace(/\bhttps?:\/\/[^\s<>"')]+/gi, (match) =>
+    sanitizeEmailUrl(match, safeFallback)
+  )
+  output = output.replace(/\bwww\.[^\s<>"')]+/gi, (match) =>
+    sanitizeEmailUrl(`https://${match}`, safeFallback)
+  )
+  return output
+}
+
