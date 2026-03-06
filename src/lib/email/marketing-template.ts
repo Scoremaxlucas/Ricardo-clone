@@ -7,6 +7,7 @@
 
 import { getEmailBaseUrl } from './config'
 import { getMarketingUnsubscribeUrl } from './marketing-unsubscribe'
+import { sanitizeEmailUrl } from './url-safety'
 
 export interface ProductCard {
   id: string
@@ -103,7 +104,7 @@ export function buildMarketingEmailWithProducts(
     .replace(/\n/g, '<br>')
 
   const btnText = customButtonText || 'Alle Angebote entdecken'
-  const btnUrl = customButtonUrl || `${baseUrl}/search`
+  const btnUrl = sanitizeEmailUrl(customButtonUrl, `${baseUrl}/search`)
   const ctaButton = `
     <div style="text-align: center; margin: 32px 0;">
       <a href="${btnUrl}" style="display: inline-block; background-color: #0f766e; color: #ffffff !important; padding: 14px 32px; text-decoration: none; border-radius: 16px; font-weight: 600; font-size: 16px; box-shadow: 0 4px 12px rgba(13, 148, 136, 0.4);">

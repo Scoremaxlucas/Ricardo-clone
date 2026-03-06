@@ -5,6 +5,7 @@ import { getInvoiceNotificationEmail as getInvoiceNotificationEmailNew } from '.
 import { getPaymentReceivedEmail as getPaymentReceivedEmailNew } from './email/templates/notifications'
 import { getDisputeOpenedEmail as getDisputeOpenedEmailNew } from './email/templates/dispute'
 import { getPriceOfferRejectedEmail as getPriceOfferRejectedEmailNew } from './email/templates/notifications'
+import { sanitizeEmailHtmlLinks, sanitizeEmailUrl } from './email/url-safety'
 
 // Resend Client initialisieren (falls API Key vorhanden)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
@@ -58,6 +59,9 @@ export async function sendEmail({ to, subject, html, text, useNoReply = false, u
       // Silently fail — don't break email sending
     }
   }
+
+  // Final safeguard: sanitize all outbound links in the email HTML.
+  html = sanitizeEmailHtmlLinks(html)
 
   console.log('\n📧 ===== E-MAIL-VERSAND START =====')
   console.log(`[sendEmail] Empfänger: ${to}`)
@@ -2361,6 +2365,7 @@ export function getHelvendaEmailTemplate(
 ): string {
   const baseUrl = getEmailBaseUrl()
   const currentYear = new Date().getFullYear()
+  const safeButtonUrl = sanitizeEmailUrl(buttonUrl, `${baseUrl}/`)
 
   return `
 <!DOCTYPE html>
@@ -2699,10 +2704,10 @@ export function getHelvendaEmailTemplate(
 
               <!-- Button -->
               ${
-                buttonText && buttonUrl
+                buttonText && safeButtonUrl
                   ? `
               <div style="text-align: center; margin: 32px 0;">
-                <a href="${buttonUrl}" style="display: inline-block; background-color: #0f766e; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">${buttonText}</a>
+                <a href="${safeButtonUrl}" style="display: inline-block; background-color: #0f766e; color: #ffffff; padding: 14px 32px; text-decoration: none; border-radius: 8px; font-weight: 600; font-size: 15px;">${buttonText}</a>
               </div>
               `
                   : ''

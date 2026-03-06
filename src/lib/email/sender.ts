@@ -6,6 +6,7 @@
 
 import { injectUnsubscribeLink } from './base-template'
 import { getFromEmail, resend, transporter } from './config'
+import { sanitizeEmailHtmlLinks } from './url-safety'
 
 export interface SendEmailOptions {
   to: string
@@ -42,6 +43,9 @@ export async function sendEmail({
       // Silently fail — don't break email sending
     }
   }
+
+  // Final safeguard: sanitize all outbound links in the email HTML.
+  html = sanitizeEmailHtmlLinks(html)
 
   console.log('\n📧 ===== E-MAIL-VERSAND START =====')
   console.log(`[sendEmail] Empfänger: ${to}`)

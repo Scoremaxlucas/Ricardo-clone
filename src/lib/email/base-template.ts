@@ -6,6 +6,7 @@
 
 import { getEmailBaseUrl } from './config'
 import { getUnsubscribeUrl } from './unsubscribe'
+import { sanitizeEmailUrl } from './url-safety'
 
 export interface EmailTemplateOptions {
   title: string
@@ -39,6 +40,8 @@ export function getHelvendaEmailTemplate({
       // Silently fail — don't break email sending if token generation fails
     }
   }
+  const safeButtonUrl = sanitizeEmailUrl(buttonUrl, `${baseUrl}/`)
+  const safeUnsubscribeUrl = unsubscribeUrl ? sanitizeEmailUrl(unsubscribeUrl, `${baseUrl}/`) : undefined
 
   return `
 <!DOCTYPE html>
@@ -193,10 +196,10 @@ export function getHelvendaEmailTemplate({
         <h2 class="title">${title}</h2>
         <div class="description">${content}</div>
         ${
-          buttonText && buttonUrl
+          buttonText && safeButtonUrl
             ? `
         <div class="button-container">
-          <a href="${buttonUrl}" class="button" style="color: #ffffff !important;">${buttonText}</a>
+          <a href="${safeButtonUrl}" class="button" style="color: #ffffff !important;">${buttonText}</a>
         </div>
         `
             : ''
@@ -215,12 +218,12 @@ export function getHelvendaEmailTemplate({
           Helvenda - Ihr vertrauensvoller Marktplatz für Artikel in der Schweiz.
         </p>
         ${
-          unsubscribeUrl
+          safeUnsubscribeUrl
             ? `
         <div class="unsubscribe-section">
           <p style="font-size: 12px; color: #9ca3af; margin: 0;">
             Sie möchten keine E-Mails mehr erhalten?
-            <a href="${unsubscribeUrl}" class="unsubscribe-link">E-Mail-Benachrichtigungen verwalten</a>
+            <a href="${safeUnsubscribeUrl}" class="unsubscribe-link">E-Mail-Benachrichtigungen verwalten</a>
           </p>
         </div>
         `
