@@ -10,6 +10,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { sendPaymentReminderEmail, sendAutoCancellationEmail } from '@/lib/email-orders'
+import { cancelInvoiceForOrder } from '@/lib/invoice'
 import { NextRequest, NextResponse } from 'next/server'
 
 // Vercel Cron Authorization
@@ -145,6 +146,24 @@ export async function GET(request: NextRequest) {
           // Bei Helvenda wird der Artikel durch den Order-Status gesteuert
           // Keine zusätzliche Aktion nötig - der Artikel ist wieder verfügbar
         })
+
+        try {
+          const cancelledInvoice = await cancelInvoiceForOrder(
+            order.id,
+            'Zahlungsfrist von 14 Tagen abgelaufen (Auto-Storno)'
+          )
+          if (cancelledInvoice) {
+            console.log(
+              `[cron/payment-reminders] ✅ Rechnung ${cancelledInvoice.invoiceNumber} für ${order.orderNumber} storniert`
+            )
+          }
+        } catch (invoiceError: any) {
+          results.errors.push(`Rechnungsstorno ${order.orderNumber}: ${invoiceError.message}`)
+          console.error(
+            `[cron/payment-reminders] Fehler beim Stornieren der Rechnung von ${order.orderNumber}:`,
+            invoiceError
+          )
+        }
 
         // 3. Benachrichtigungen senden
         await sendAutoCancellationEmail(order.id, 'Zahlungsfrist von 14 Tagen abgelaufen')

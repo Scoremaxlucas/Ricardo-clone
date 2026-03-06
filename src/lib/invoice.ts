@@ -480,6 +480,46 @@ export async function calculateInvoiceForOrder(orderId: string) {
   return invoice
 }
 
+/**
+ * Storniert die zugehörige Rechnung einer Order (falls vorhanden und noch aktiv).
+ * Wird bei Order-Stornos (manuell/automatisch) aufgerufen.
+ */
+export async function cancelInvoiceForOrder(orderId: string, reason: string) {
+  const order = await prisma.order.findUnique({
+    where: { id: orderId },
+    select: { id: true, invoiceId: true },
+  })
+
+  if (!order) {
+    throw new Error('Order nicht gefunden')
+  }
+
+  const invoice = order.invoiceId
+    ? await prisma.invoice.findUnique({ where: { id: order.invoiceId } })
+    : await prisma.invoice.findFirst({ where: { saleId: orderId } })
+
+  if (!invoice) {
+    return null
+  }
+
+  if (invoice.status === 'cancelled') {
+    return invoice
+  }
+
+  const updated = await prisma.invoice.update({
+    where: { id: invoice.id },
+    data: {
+      status: 'cancelled',
+      refundedAt: new Date(),
+      adminNotes: invoice.adminNotes
+        ? `${invoice.adminNotes}\n[Auto-Order-Storno] ${reason}`
+        : `[Auto-Order-Storno] ${reason}`,
+    },
+  })
+
+  return updated
+}
+
 // Hilfsfunktion zum Versenden von Rechnungs-Benachrichtigungen (E-Mail + Plattform)
 export async function sendInvoiceNotificationAndEmail(invoice: any) {
   try {

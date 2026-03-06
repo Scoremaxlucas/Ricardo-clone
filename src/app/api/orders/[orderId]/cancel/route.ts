@@ -1,4 +1,5 @@
 import { authOptions } from '@/lib/auth'
+import { cancelInvoiceForOrder } from '@/lib/invoice'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -96,6 +97,20 @@ export async function POST(
         },
       })
 
+      try {
+        const cancelledInvoice = await cancelInvoiceForOrder(
+          orderId,
+          `Käufer-Stornierung vor Zahlung (${reason})`
+        )
+        if (cancelledInvoice) {
+          console.log(
+            `[cancel-order] ✅ Rechnung ${cancelledInvoice.invoiceNumber} für Order ${orderId} storniert`
+          )
+        }
+      } catch (invoiceError) {
+        console.error('[cancel-order] Fehler beim Stornieren der Rechnung:', invoiceError)
+      }
+
       // Notify seller
       await createCancellationNotifications(order, 'Käufer hat vor Zahlung storniert', reason, description)
 
@@ -147,6 +162,22 @@ export async function POST(
         },
       })
 
+      try {
+        const cancelledInvoice = await cancelInvoiceForOrder(
+          orderId,
+          isPickup
+            ? `Käufer-Stornierung Abholung (${reason})`
+            : `Käufer-Stornierung nach Zahlung, nicht versendet (${reason})`
+        )
+        if (cancelledInvoice) {
+          console.log(
+            `[cancel-order] ✅ Rechnung ${cancelledInvoice.invoiceNumber} für Order ${orderId} storniert`
+          )
+        }
+      } catch (invoiceError) {
+        console.error('[cancel-order] Fehler beim Stornieren der Rechnung:', invoiceError)
+      }
+
       // Notify both parties
       const message = isPickup
         ? 'Käufer hat die Abholung storniert'
@@ -174,6 +205,20 @@ export async function POST(
           autoCancelReason: `Käufer-Stornierung (Abholung): ${reason}`,
         },
       })
+
+      try {
+        const cancelledInvoice = await cancelInvoiceForOrder(
+          orderId,
+          `Käufer-Stornierung Abholung (${reason})`
+        )
+        if (cancelledInvoice) {
+          console.log(
+            `[cancel-order] ✅ Rechnung ${cancelledInvoice.invoiceNumber} für Order ${orderId} storniert`
+          )
+        }
+      } catch (invoiceError) {
+        console.error('[cancel-order] Fehler beim Stornieren der Rechnung:', invoiceError)
+      }
 
       await createCancellationNotifications(order, 'Käufer hat die Abholung storniert', reason, description)
 
