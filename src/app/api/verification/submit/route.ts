@@ -14,6 +14,20 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
     }
 
+    const existingUser = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { verificationStatus: true },
+    })
+    if (existingUser?.verificationStatus === 'rejected') {
+      return NextResponse.json(
+        {
+          message:
+            'Ihr Verkäuferkonto wurde abgelehnt und kann nicht erneut eingereicht werden. Bitte kontaktieren Sie den Support.',
+        },
+        { status: 403 }
+      )
+    }
+
     // Check content-length header if available
     const contentLength = request.headers.get('content-length')
     if (contentLength && parseInt(contentLength) > MAX_PAYLOAD_SIZE) {

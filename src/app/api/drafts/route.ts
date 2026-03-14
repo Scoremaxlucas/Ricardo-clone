@@ -77,7 +77,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Note: We allow draft saving even if not verified (for UX during verification process)
-    // Publishing will be blocked by /api/watches/create which checks verificationStatus === 'approved'
+    // Publishing is guarded by /api/watches/create using canSell()
 
     const body = await request.json()
     const {

@@ -7,7 +7,8 @@ export type VerificationStatus = 'unverified' | 'pending' | 'approved' | 'reject
 
 /**
  * Check if user can sell (is verified)
- * User must have verified=true AND verificationStatus='approved'
+ * Users can sell as long as they are not blocked or explicitly rejected.
+ * This enables immediate selling after registration while admin review remains possible.
  */
 export function canSell(user: {
   verified?: boolean
@@ -17,7 +18,11 @@ export function canSell(user: {
   if (user.isBlocked) {
     return false
   }
-  return user.verified === true && user.verificationStatus === 'approved'
+  if (user.verified !== true) {
+    return false
+  }
+  const status = user.verificationStatus?.toLowerCase()
+  return status !== 'rejected'
 }
 
 /**

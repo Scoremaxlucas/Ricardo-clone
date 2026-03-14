@@ -29,6 +29,7 @@ import { Footer } from '@/components/layout/Footer'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { categoryConfig } from '@/data/categories'
 import { CategoryFields } from '@/components/forms/CategoryFieldsNew'
+import { canSell, getVerificationStatus } from '@/lib/verification'
 
 interface ProductForm {
   id: string
@@ -106,14 +107,23 @@ export default function BulkUploadPage() {
   // Prüfe Verifizierungsstatus und lade Booster
   useEffect(() => {
     const loadVerificationStatus = async () => {
-      if ((session?.user as { id?: string })?.id) {
+      const userId = (session?.user as { id?: string })?.id
+      if (userId) {
         try {
-          const res = await fetch('/api/verification/get')
+          const res = await fetch(`/api/user/${userId}`)
           if (res.ok) {
             const data = await res.json()
-            const isApproved = data.verified === true && data.verificationStatus === 'approved'
-            setIsVerified(isApproved)
-            setVerificationStatus(data.verificationStatus || null)
+            const userCanSell = canSell({
+              verified: data.verified,
+              verificationStatus: data.verificationStatus,
+              isBlocked: data.isBlocked,
+            })
+            const vStatus = getVerificationStatus({
+              verified: data.verified,
+              verificationStatus: data.verificationStatus,
+            })
+            setIsVerified(userCanSell)
+            setVerificationStatus(vStatus)
           }
         } catch (error) {
           console.error('Error loading verification status:', error)
@@ -161,7 +171,7 @@ export default function BulkUploadPage() {
     return null
   }
 
-  if (isVerified === false || verificationStatus !== 'approved') {
+  if (isVerified === false) {
     return (
       <div className="min-h-screen bg-gray-50">
         <Header />
@@ -174,11 +184,11 @@ export default function BulkUploadPage() {
                   Verifizierung erforderlich
                 </h3>
                 <p className="mb-4 text-yellow-800">
-                  {verificationStatus === 'pending'
-                    ? 'Ihre Verifizierung wird derzeit geprüft. Sie können Artikel verkaufen, sobald die Verifizierung abgeschlossen ist.'
+                  {verificationStatus === 'rejected'
+                    ? 'Ihre Verifizierung wurde abgelehnt. Sie können aktuell nicht verkaufen.'
                     : 'Sie müssen sich zuerst verifizieren, bevor Sie Artikel verkaufen können.'}
                 </p>
-                {verificationStatus !== 'pending' && (
+                {verificationStatus !== 'rejected' && (
                   <Link
                     href="/verification"
                     className="inline-block rounded-md bg-yellow-600 px-4 py-2 text-white transition-colors hover:bg-yellow-700"

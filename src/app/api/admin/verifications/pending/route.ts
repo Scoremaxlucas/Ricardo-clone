@@ -29,12 +29,7 @@ export async function GET(request: NextRequest) {
     const users = await prisma.user.findMany({
       where: {
         verificationStatus: 'pending',
-        verified: true, // Nur die, die bereits verifiziert wurden, aber noch geprüft werden müssen
-        OR: [
-          { idDocument: { not: null } },
-          { idDocumentPage1: { not: null } },
-          { idDocumentPage2: { not: null } },
-        ],
+        verified: true, // Auto-verifiziert, bis Admin ggf. ablehnt
       },
       select: {
         id: true,

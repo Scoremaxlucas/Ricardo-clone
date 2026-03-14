@@ -1,5 +1,4 @@
 import { authOptions } from '@/lib/auth'
-import { getVerificationApprovalEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -63,50 +62,7 @@ export async function POST(request: NextRequest, { params }: { params: { userId:
       },
     })
 
-    // Erstelle Benachrichtigung für den Benutzer
-    try {
-      await prisma.notification.create({
-        data: {
-          userId: userId,
-          type: 'VERIFICATION_APPROVED',
-          title: 'Verifizierung erfolgreich',
-          message:
-            'Ihre Verifizierung wurde erfolgreich abgeschlossen. Sie können jetzt Artikel verkaufen!',
-          link: '/sell',
-        },
-      })
-      console.log(`[notifications] Verifizierungs-Benachrichtigung erstellt für Benutzer ${userId}`)
-    } catch (notifError) {
-      console.error(
-        '[notifications] Fehler beim Erstellen der Verifizierungs-Benachrichtigung:',
-        notifError
-      )
-      // Benachrichtigungs-Fehler sollte die Verifizierung nicht verhindern
-    }
-
-    // E-Mail an Benutzer senden, dass Verifizierung genehmigt wurde
-    try {
-      const userName = user.nickname || user.firstName || user.name || 'Benutzer'
-      const { subject, html, text } = getVerificationApprovalEmail(userName, user.email)
-
-      const emailResult = await sendEmail({
-        to: user.email,
-        subject,
-        html,
-        text,
-        useNoReply: true, // Verifizierungs-Bestätigung: automatische System-E-Mail
-      })
-
-      if (emailResult.success) {
-        console.log(`Verifizierungs-Bestätigungs-E-Mail gesendet an ${user.email}`)
-      } else {
-        console.error(`Fehler beim Senden der Verifizierungs-E-Mail:`, emailResult.error)
-        // E-Mail-Fehler sollte die Verifizierung nicht verhindern
-      }
-    } catch (emailError: any) {
-      console.error('Fehler beim Senden der Verifizierungs-E-Mail:', emailError)
-      // E-Mail-Fehler sollte die Verifizierung nicht verhindern
-    }
+    // Intentionally silent: approval should not notify users in the new flow.
 
     return NextResponse.json({ message: 'Verifizierung wurde genehmigt' })
   } catch (error: any) {

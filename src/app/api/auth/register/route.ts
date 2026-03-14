@@ -165,6 +165,10 @@ export async function POST(request: NextRequest) {
         firstName: trimmedFirstName,
         lastName: trimmedLastName,
         name: fullName || null,
+        // Auto-verify sellers on registration; admin can still reject later.
+        verified: true,
+        verificationStatus: 'pending',
+        verifiedAt: new Date(),
         emailVerified: false,
         emailVerificationToken: verificationToken,
         emailVerificationTokenExpires: tokenExpires,

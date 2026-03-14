@@ -247,6 +247,8 @@ function AdminVerificationsPageContent() {
                         setSelectedUser(null)
                         router.push('/admin/verifications', { scroll: false })
                       }}
+                      aria-label="Zurück zur Verifizierungsliste"
+                      title="Zurück"
                       className="text-gray-400 hover:text-gray-600"
                     >
                       <ArrowLeft className="h-5 w-5" />
@@ -315,7 +317,11 @@ function AdminVerificationsPageContent() {
                     <div className="mb-4">
                       <label className="mb-2 block text-sm font-medium text-gray-700">
                         Ausweistyp:{' '}
-                        {selectedUser.idDocumentType === 'ID' ? 'Identitätskarte' : 'Reisepass'}
+                        {selectedUser.idDocumentType === 'ID'
+                          ? 'Identitätskarte'
+                          : selectedUser.idDocumentType === 'Passport'
+                            ? 'Reisepass'
+                            : 'Nicht eingereicht'}
                       </label>
 
                       {selectedUser.idDocumentType === 'ID' ? (

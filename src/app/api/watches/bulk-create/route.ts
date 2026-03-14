@@ -4,6 +4,7 @@ import { authOptions } from '@/lib/auth'
 import { removeKeineArtikelTag } from '@/lib/marketing-tags'
 import { prisma } from '@/lib/prisma'
 import { generateArticleNumber } from '@/lib/article-number'
+import { canSell } from '@/lib/verification'
 
 export async function POST(request: NextRequest) {
   try {
@@ -19,7 +20,7 @@ export async function POST(request: NextRequest) {
       select: { verificationStatus: true, verified: true },
     })
 
-    if (!user || user.verificationStatus !== 'approved' || !user.verified) {
+    if (!user || !canSell(user)) {
       return NextResponse.json(
         { message: 'Sie müssen verifiziert sein, um Artikel zu verkaufen.' },
         { status: 403 }

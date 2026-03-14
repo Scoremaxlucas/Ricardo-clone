@@ -226,6 +226,9 @@ export const authOptions = {
                 image: user.image || null,
                 emailVerified: true, // Google emails are pre-verified
                 emailVerifiedAt: new Date(),
+                verified: true,
+                verificationStatus: 'pending',
+                verifiedAt: new Date(),
                 password: '', // No password for OAuth users
               },
               select: { id: true, isBlocked: true, image: true },
