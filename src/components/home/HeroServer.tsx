@@ -9,7 +9,7 @@
  * Search ist jetzt im Header (Ricardo-Style) - Hero zeigt nur Branding.
  */
 
-import { Shield, Truck, Star } from 'lucide-react'
+import { Percent, Coins, MapPin } from 'lucide-react'
 
 interface HeroServerProps {
   title?: string
@@ -64,19 +64,19 @@ export function HeroServer({ title = 'Verkaufen ohne hohe Gebühren – nur 5%, 
           <div className="mt-5 flex flex-wrap items-center justify-center gap-x-6 gap-y-3 md:gap-x-8">
             <div className="flex items-center gap-2 text-sm text-white/90">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20">
-                <Shield className="h-4 w-4" />
+                <Percent className="h-4 w-4" />
               </div>
               <span className="font-medium">Nur 5% Verkäufergebühren</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-white/90">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20">
-                <Truck className="h-4 w-4" />
+                <Coins className="h-4 w-4" />
               </div>
               <span className="font-medium">Max. CHF 150 pro Verkauf</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-white/90">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20">
-                <Star className="h-4 w-4" />
+                <MapPin className="h-4 w-4" />
               </div>
               <span className="font-medium">100% Schweizer Marktplatz</span>
             </div>
