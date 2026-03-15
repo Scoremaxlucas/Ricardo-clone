@@ -6,6 +6,7 @@ import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { getFeaturedProducts } from '@/lib/products'
 import type { Metadata } from 'next'
+import Link from 'next/link'
 import { Suspense } from 'react'
 
 /**
@@ -76,7 +77,27 @@ export default async function Home() {
           Server Component rendert H1 sofort
           Search ist jetzt im Header (Ricardo-Style)
         */}
-        <HeroServer title="Finden Sie lokale Deals in der Schweiz" />
+        <HeroServer title="Verkaufen ohne hohe Gebühren – nur 5%, max. CHF 150." />
+
+        {/* Seller Value Callout */}
+        <section className="bg-white">
+          <div className="mx-auto max-w-[1600px] px-4 py-5 sm:px-6 lg:px-8">
+            <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 sm:p-6">
+              <h2 className="text-lg font-bold text-emerald-900 sm:text-xl">Warum Helvenda?</h2>
+              <p className="mt-2 max-w-4xl text-sm text-emerald-800 sm:text-base">
+                Bei Ricardo zahlst du bis zu CHF 260 Gebühren pro Verkauf. Bei uns maximal CHF 150 – egal wie teuer dein Artikel ist.
+              </p>
+              <div className="mt-4">
+                <Link
+                  href="/sell"
+                  className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
+                >
+                  Jetzt verkaufen
+                </Link>
+              </div>
+            </div>
+          </div>
+        </section>
 
         {/* Featured Products - Server-Side gerendert */}
         <FeaturedProductsServer initialProducts={featuredProducts} />

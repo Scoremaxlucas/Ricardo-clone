@@ -15,7 +15,7 @@ interface HeroServerProps {
   title?: string
 }
 
-export function HeroServer({ title = 'Finden Sie lokale Deals in der Schweiz' }: HeroServerProps) {
+export function HeroServer({ title = 'Verkaufen ohne hohe Gebühren – nur 5%, max. CHF 150.' }: HeroServerProps) {
   return (
     <section
       id="home-hero"
@@ -57,7 +57,7 @@ export function HeroServer({ title = 'Finden Sie lokale Deals in der Schweiz' }:
             {title}
           </h1>
           <p className="mt-2 text-base text-white/90 md:text-lg">
-            Kaufen &amp; Verkaufen · Schweizer Marktplatz
+            Der Schweizer Marktplatz mit den tiefsten Verkäufergebühren. Bis zu CHF 110 günstiger als die Konkurrenz.
           </p>
 
           {/* Trust Badges - Kompakt und modern */}
@@ -66,19 +66,19 @@ export function HeroServer({ title = 'Finden Sie lokale Deals in der Schweiz' }:
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20">
                 <Shield className="h-4 w-4" />
               </div>
-              <span className="font-medium">Käuferschutz</span>
+              <span className="font-medium">Nur 5% Verkäufergebühren</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-white/90">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20">
                 <Truck className="h-4 w-4" />
               </div>
-              <span className="font-medium">Schneller Versand</span>
+              <span className="font-medium">Max. CHF 150 pro Verkauf</span>
             </div>
             <div className="flex items-center gap-2 text-sm text-white/90">
               <div className="flex h-7 w-7 items-center justify-center rounded-full bg-white/20">
                 <Star className="h-4 w-4" />
               </div>
-              <span className="font-medium">Schweizer Qualität</span>
+              <span className="font-medium">100% Schweizer Marktplatz</span>
             </div>
           </div>
         </div>
