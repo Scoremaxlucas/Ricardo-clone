@@ -11,6 +11,14 @@ const nextConfig = {
   // Power optimization
   poweredByHeader: false,
 
+  // Production: strip console.* (keeps error/warn for debugging)
+  compiler: {
+    removeConsole:
+      process.env.NODE_ENV === 'production'
+        ? { exclude: ['error', 'warn'] }
+        : false,
+  },
+
   // ESLint: Ignore during builds
   eslint: {
     ignoreDuringBuilds: true,
@@ -27,6 +35,8 @@ const nextConfig = {
     },
     // OPTIMIERT: Optimistic Client Cache für schnellere Navigation
     optimisticClientCache: true,
+    // Tree-shake barrel imports → kleinere Client-Bundles (lucide, recharts)
+    optimizePackageImports: ['lucide-react', 'recharts'],
   },
 
   // Optimize images

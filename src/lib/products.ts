@@ -1,5 +1,5 @@
 import { prisma } from '@/lib/prisma'
-import { getMainAddress } from './address'
+import { getMainAddressesForUserIds } from './address'
 
 export interface ProductItem {
   id: string
@@ -103,15 +103,9 @@ export async function getFeaturedProducts(limit: number = 6): Promise<ProductIte
       take: limit,
     })
 
-    // Fetch seller addresses from UserAddress table
+    // Fetch seller addresses — one query instead of N× getMainAddress
     const sellerIds = Array.from(new Set(watches.map(w => w.seller?.id).filter(Boolean))) as string[]
-    const sellerAddresses = await Promise.all(
-      sellerIds.map(async id => ({
-        id,
-        address: await getMainAddress(id),
-      }))
-    )
-    const addressMap = new Map(sellerAddresses.map(sa => [sa.id, sa.address]))
+    const addressMap = await getMainAddressesForUserIds(sellerIds)
 
     return watches.map(w => {
       let images: string[] = []

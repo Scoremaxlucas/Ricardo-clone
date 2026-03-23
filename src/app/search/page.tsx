@@ -2,11 +2,8 @@
 
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
-import { AISearchAssistant } from '@/components/search/AISearchAssistant'
 import { MobileActiveFilterChips } from '@/components/search/MobileActiveFilterChips'
-import { MobileFilterSheet } from '@/components/search/MobileFilterSheet'
 import { MobileSearchControls } from '@/components/search/MobileSearchControls'
-import { MobileSortSheet } from '@/components/search/MobileSortSheet'
 import { FilterChips } from '@/components/ui/FilterChips'
 import { ProductCard } from '@/components/ui/ProductCard'
 import { SearchResultsSkeleton } from '@/components/ui/Skeleton'
@@ -15,9 +12,27 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
 import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import { ChevronDown, ChevronLeft, ChevronRight, Filter, Package, Search, X } from 'lucide-react'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+
+/** Lazy chunks: KI-Assistent, Mobile Sheets — nicht im kritischen Erst-Bundle */
+const AISearchAssistant = dynamic(
+  () =>
+    import('@/components/search/AISearchAssistant').then(m => ({ default: m.AISearchAssistant })),
+  { ssr: false, loading: () => null }
+)
+const MobileFilterSheet = dynamic(
+  () =>
+    import('@/components/search/MobileFilterSheet').then(m => ({ default: m.MobileFilterSheet })),
+  { ssr: false, loading: () => null }
+)
+const MobileSortSheet = dynamic(
+  () =>
+    import('@/components/search/MobileSortSheet').then(m => ({ default: m.MobileSortSheet })),
+  { ssr: false, loading: () => null }
+)
 
 const RESULTS_PER_PAGE = 36
 

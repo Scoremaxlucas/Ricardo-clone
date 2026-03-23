@@ -92,6 +92,35 @@ export async function getMainAddress(userId: string): Promise<Address | null> {
 }
 
 /**
+ * Batch-load MAIN addresses for many users (single query; replaces N× getMainAddress).
+ */
+export async function getMainAddressesForUserIds(
+  userIds: string[]
+): Promise<Map<string, Address | null>> {
+  const unique = Array.from(new Set(userIds.filter(Boolean)))
+  const result = new Map<string, Address | null>()
+  for (const id of unique) {
+    result.set(id, null)
+  }
+  if (unique.length === 0) return result
+
+  const rows = await prisma.userAddress.findMany({
+    where: {
+      userId: { in: unique },
+      type: 'MAIN',
+    },
+  })
+
+  for (const addr of rows) {
+    result.set(addr.userId, {
+      ...addr,
+      type: addr.type as AddressType,
+    })
+  }
+  return result
+}
+
+/**
  * Get delivery address for a user
  */
 export async function getDeliveryAddress(userId: string): Promise<Address | null> {
