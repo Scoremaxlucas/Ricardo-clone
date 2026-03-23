@@ -17,7 +17,15 @@ export async function POST(request: NextRequest) {
     // Prüfe Verifizierungsstatus
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { verificationStatus: true, verified: true },
+      select: {
+        verificationStatus: true,
+        verified: true,
+        isBlocked: true,
+        idDocument: true,
+        idDocumentPage1: true,
+        idDocumentPage2: true,
+        idDocumentType: true,
+      },
     })
 
     if (!user || !canSell(user)) {

@@ -9,6 +9,7 @@ import { prisma } from '@/lib/prisma'
 import { sendEmail } from '@/lib/email'
 import { getMainAddress } from '@/lib/address'
 import { getEmailBaseUrl } from '@/lib/email/config'
+import { getUserPreferredLanguage } from '@/lib/user-language'
 
 const BASE_URL = getEmailBaseUrl()
 
@@ -60,6 +61,7 @@ export async function sendOrderConfirmationEmail(orderId: string) {
 
   const buyerName = order.buyer.nickname || order.buyer.firstName || order.buyer.name || 'Käufer'
   const sellerName = order.seller.nickname || order.seller.firstName || order.seller.name || 'Verkäufer'
+  const buyerLocale = await getUserPreferredLanguage(order.buyer.id)
 
   // Bild-URL parsen
   let imageUrl = ''
@@ -114,7 +116,40 @@ export async function sendOrderConfirmationEmail(orderId: string) {
     </div>
   `
 
-  const subject = `Bestellbestätigung #${order.orderNumber} - ${order.watch.title}`
+  const localizedOrderText =
+    buyerLocale === 'fr'
+      ? {
+          subject: `Confirmation de commande #${order.orderNumber} - ${order.watch.title}`,
+          greeting: `Bonjour ${buyerName},`,
+          intro: `Votre commande #${order.orderNumber} a été créée avec succès.`,
+          cta: 'Voir la commande',
+          closing: "L'équipe Helvenda",
+        }
+      : buyerLocale === 'it'
+        ? {
+            subject: `Conferma ordine #${order.orderNumber} - ${order.watch.title}`,
+            greeting: `Ciao ${buyerName},`,
+            intro: `Il tuo ordine #${order.orderNumber} è stato creato con successo.`,
+            cta: "Vedi l'ordine",
+            closing: 'Il team Helvenda',
+          }
+        : buyerLocale === 'en'
+          ? {
+              subject: `Order confirmation #${order.orderNumber} - ${order.watch.title}`,
+              greeting: `Hello ${buyerName},`,
+              intro: `Your order #${order.orderNumber} has been created successfully.`,
+              cta: 'View order',
+              closing: 'The Helvenda team',
+            }
+          : {
+              subject: `Bestellbestätigung #${order.orderNumber} - ${order.watch.title}`,
+              greeting: `Hallo ${buyerName},`,
+              intro: `Ihre Bestellung #${order.orderNumber} wurde erfolgreich aufgegeben.`,
+              cta: 'Bestellung ansehen',
+              closing: 'Ihr Helvenda-Team',
+            }
+
+  const subject = localizedOrderText.subject
 
   const html = `
     <!DOCTYPE html>
@@ -128,9 +163,9 @@ export async function sendOrderConfirmationEmail(orderId: string) {
         <h1 style="color: #0d9488; margin: 0;">🎉 Vielen Dank für Ihren Kauf!</h1>
       </div>
 
-      <p>Hallo ${buyerName},</p>
+      <p>${localizedOrderText.greeting}</p>
 
-      <p>Ihre Bestellung <strong>#${order.orderNumber}</strong> wurde erfolgreich aufgegeben.</p>
+      <p>${localizedOrderText.intro}</p>
 
       <!-- Artikel-Details -->
       <div style="background-color: #ffffff; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin: 16px 0;">
@@ -191,13 +226,13 @@ export async function sendOrderConfirmationEmail(orderId: string) {
       <div style="text-align: center; margin: 24px 0;">
         <a href="${BASE_URL}/my-watches/buying/orders"
            style="display: inline-block; background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
-          Bestellung ansehen
+          ${localizedOrderText.cta}
         </a>
       </div>
 
       <p style="color: #6b7280; font-size: 12px; margin-top: 32px;">
         Bei Fragen können Sie uns jederzeit kontaktieren.<br>
-        Ihr Helvenda-Team
+        ${localizedOrderText.closing}
       </p>
     </body>
     </html>
@@ -253,7 +288,7 @@ export async function sendPaymentReminderEmail(orderId: string, reminderNumber: 
         select: { title: true, brand: true, model: true },
       },
       buyer: {
-        select: { email: true, name: true, firstName: true, nickname: true },
+        select: { id: true, email: true, name: true, firstName: true, nickname: true },
       },
       seller: {
         select: { name: true, firstName: true, nickname: true },
@@ -267,14 +302,23 @@ export async function sendPaymentReminderEmail(orderId: string, reminderNumber: 
 
   const buyerName = order.buyer.nickname || order.buyer.firstName || order.buyer.name || 'Käufer'
   const sellerName = order.seller.nickname || order.seller.firstName || order.seller.name || 'Verkäufer'
+  const buyerLocale = await getUserPreferredLanguage(order.buyer.id)
   const daysRemaining = order.paymentDeadline
     ? Math.ceil((new Date(order.paymentDeadline).getTime() - Date.now()) / (1000 * 60 * 60 * 24))
     : 0
 
   const urgencyColor = daysRemaining <= 3 ? '#dc2626' : daysRemaining <= 7 ? '#f59e0b' : '#3b82f6'
   const urgencyText = daysRemaining <= 3 ? 'DRINGEND' : daysRemaining <= 7 ? 'Erinnerung' : 'Freundliche Erinnerung'
+  const localizedReminder =
+    buyerLocale === 'fr'
+      ? `Rappel: paiement en attente pour la commande #${order.orderNumber}`
+      : buyerLocale === 'it'
+        ? `Promemoria: pagamento in sospeso per ordine #${order.orderNumber}`
+        : buyerLocale === 'en'
+          ? `Reminder: payment pending for order #${order.orderNumber}`
+          : `${urgencyText}: Zahlung für Bestellung #${order.orderNumber} ausstehend`
 
-  const subject = `${urgencyText}: Zahlung für Bestellung #${order.orderNumber} ausstehend`
+  const subject = localizedReminder
 
   const html = `
     <!DOCTYPE html>
@@ -373,10 +417,10 @@ export async function sendAutoCancellationEmail(orderId: string, reason: string)
         select: { title: true, brand: true, model: true },
       },
       buyer: {
-        select: { email: true, name: true, firstName: true, nickname: true },
+        select: { id: true, email: true, name: true, firstName: true, nickname: true },
       },
       seller: {
-        select: { email: true, name: true, firstName: true, nickname: true },
+        select: { id: true, email: true, name: true, firstName: true, nickname: true },
       },
     },
   })
@@ -387,9 +431,18 @@ export async function sendAutoCancellationEmail(orderId: string, reason: string)
 
   const buyerName = order.buyer.nickname || order.buyer.firstName || order.buyer.name || 'Käufer'
   const sellerName = order.seller.nickname || order.seller.firstName || order.seller.name || 'Verkäufer'
+  const buyerLocale = await getUserPreferredLanguage(order.buyer.id)
+  const sellerLocale = await getUserPreferredLanguage(order.seller.id)
 
   // E-Mail an Käufer
-  const buyerSubject = `Bestellung #${order.orderNumber} wurde storniert`
+  const buyerSubject =
+    buyerLocale === 'fr'
+      ? `Commande #${order.orderNumber} annulée`
+      : buyerLocale === 'it'
+        ? `Ordine #${order.orderNumber} annullato`
+        : buyerLocale === 'en'
+          ? `Order #${order.orderNumber} was canceled`
+          : `Bestellung #${order.orderNumber} wurde storniert`
   const buyerHtml = `
     <!DOCTYPE html>
     <html>
@@ -427,7 +480,14 @@ export async function sendAutoCancellationEmail(orderId: string, reason: string)
   `
 
   // E-Mail an Verkäufer
-  const sellerSubject = `Bestellung #${order.orderNumber} - Käufer hat nicht bezahlt`
+  const sellerSubject =
+    sellerLocale === 'fr'
+      ? `Commande #${order.orderNumber} - l'acheteur n'a pas payé`
+      : sellerLocale === 'it'
+        ? `Ordine #${order.orderNumber} - acquirente non ha pagato`
+        : sellerLocale === 'en'
+          ? `Order #${order.orderNumber} - buyer did not pay`
+          : `Bestellung #${order.orderNumber} - Käufer hat nicht bezahlt`
   const sellerHtml = `
     <!DOCTYPE html>
     <html>
@@ -450,7 +510,7 @@ export async function sendAutoCancellationEmail(orderId: string, reason: string)
         <p>Ihr Artikel wurde automatisch wieder für andere Käufer freigegeben.</p>
 
         <div style="text-align: center; margin: 24px 0;">
-          <a href="${BASE_URL}/my-watches/selling/active"
+          <a href="${BASE_URL}/my-watches/selling"
              style="display: inline-block; background-color: #0d9488; color: white; padding: 12px 24px; text-decoration: none; border-radius: 8px; font-weight: bold;">
             Meine Angebote ansehen
           </a>

@@ -32,6 +32,10 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
         verified: true,
         verificationStatus: true,
         isBlocked: true,
+        idDocument: true,
+        idDocumentPage1: true,
+        idDocumentPage2: true,
+        idDocumentType: true,
       },
     })
 

@@ -1,6 +1,7 @@
 import { getMainAddress } from '@/lib/address'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { prismaWherePendingSellerVerificationReview } from '@/lib/verification'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -25,12 +26,9 @@ export async function GET(request: NextRequest) {
       )
     }
 
-    // Lade alle Benutzer mit ausstehender Verifizierung
+    // Nur Benutzer mit eingereichtem Ausweis, die auf Prüfung warten
     const users = await prisma.user.findMany({
-      where: {
-        verificationStatus: 'pending',
-        verified: true, // Auto-verifiziert, bis Admin ggf. ablehnt
-      },
+      where: prismaWherePendingSellerVerificationReview,
       select: {
         id: true,
         email: true,

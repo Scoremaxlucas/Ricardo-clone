@@ -117,6 +117,10 @@ export default function BulkUploadPage() {
               verified: data.verified,
               verificationStatus: data.verificationStatus,
               isBlocked: data.isBlocked,
+              idDocument: data.idDocument,
+              idDocumentPage1: data.idDocumentPage1,
+              idDocumentPage2: data.idDocumentPage2,
+              idDocumentType: data.idDocumentType,
             })
             const vStatus = getVerificationStatus({
               verified: data.verified,

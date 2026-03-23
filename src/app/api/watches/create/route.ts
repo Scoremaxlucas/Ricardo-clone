@@ -491,6 +491,10 @@ export async function POST(request: NextRequest) {
         verified: true,
         verificationStatus: true,
         isBlocked: true,
+        idDocument: true,
+        idDocumentPage1: true,
+        idDocumentPage2: true,
+        idDocumentType: true,
       },
     })
 

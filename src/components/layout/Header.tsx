@@ -58,6 +58,8 @@ interface DeferredData {
   isVerified: boolean
   favoritesCount: number
   unreadNotifications: number
+  /** Eingereichte Verkäufer-Verifizierungen, die auf Admin-Review warten */
+  pendingVerificationCount: number
 }
 
 export const HeaderOptimized = memo(function HeaderOptimized() {
@@ -85,6 +87,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
     isVerified: false,
     favoritesCount: 0,
     unreadNotifications: 0,
+    pendingVerificationCount: 0,
   })
   const [profileImage, setProfileImage] = useState<string | null>(null)
 
@@ -140,6 +143,10 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
           favoritesRes.status === 'fulfilled' ? favoritesRes.value.favorites?.length || 0 : 0,
         unreadNotifications:
           notificationsRes.status === 'fulfilled' ? notificationsRes.value.count || 0 : 0,
+        pendingVerificationCount:
+          adminRes.status === 'fulfilled'
+            ? Number(adminRes.value.pendingVerificationCount) || 0
+            : 0,
       })
     }
 
@@ -616,9 +623,21 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                             onClick={() => setIsProfileMenuOpen(false)}
                             className="block px-4 py-2 text-sm font-semibold text-primary-600 transition-colors hover:bg-gray-50 hover:text-primary-700"
                           >
-                            <div className="flex items-center">
-                              <Shield className="mr-2 h-4 w-4" />
-                              {t.header.adminDashboard}
+                            <div className="flex items-center justify-between gap-2">
+                              <div className="flex items-center">
+                                <Shield className="mr-2 h-4 w-4" />
+                                {t.header.adminDashboard}
+                              </div>
+                              {deferredData.pendingVerificationCount > 0 && (
+                                <span
+                                  className="rounded-full bg-red-500 px-2 py-0.5 text-xs font-bold text-white"
+                                  title="Ausstehende Verkäufer-Verifizierungen"
+                                >
+                                  {deferredData.pendingVerificationCount > 99
+                                    ? '99+'
+                                    : deferredData.pendingVerificationCount}
+                                </span>
+                              )}
                             </div>
                           </Link>
                         </>
@@ -839,7 +858,14 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                       className="flex w-full items-center gap-3 px-5 py-3 text-gray-700 transition-all duration-200 hover:bg-gray-50"
                     >
                       <Shield className="h-5 w-5 text-gray-500" />
-                      <span className="text-[15px]">{t.header.adminDashboard}</span>
+                      <span className="flex-1 text-[15px]">{t.header.adminDashboard}</span>
+                      {deferredData.pendingVerificationCount > 0 && (
+                        <span className="rounded-full bg-red-500 px-2 py-0.5 text-[11px] font-bold text-white">
+                          {deferredData.pendingVerificationCount > 99
+                            ? '99+'
+                            : deferredData.pendingVerificationCount}
+                        </span>
+                      )}
                     </Link>
                   )}
 

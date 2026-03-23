@@ -5,8 +5,9 @@ import { getShippingCostForMethod } from '@/lib/shipping'
 import { ArrowLeft, CreditCard, Loader2, Shield, ShoppingCart, MapPin, Package, Check, Truck } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense, useEffect, useState } from 'react'
+import { Suspense, useEffect, useMemo, useState } from 'react'
 import { toast } from 'react-hot-toast'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Watch {
   id: string
@@ -38,6 +39,7 @@ const formatCondition = (condition: string): string => {
 function CheckoutPageContent() {
   const router = useRouter()
   const searchParams = useSearchParams()
+  const { language } = useLanguage()
   const { data: session, status } = useSession()
   const watchId = searchParams.get('watchId')
   const [watch, setWatch] = useState<Watch | null>(null)
@@ -47,6 +49,159 @@ function CheckoutPageContent() {
   const [error, setError] = useState('')
   const [pricingConfig, setPricingConfig] = useState<any>(null)
   const [isMobile, setIsMobile] = useState(false)
+  const copy = useMemo(() => (
+    language === 'fr'
+    ? {
+        checkoutLoading: 'Chargement du paiement...',
+        noItem: 'Aucun article selectionne',
+        itemNotFound: 'Article introuvable',
+        loadError: 'Erreur lors du chargement des donnees',
+        chooseShipping: 'Veuillez choisir un mode de livraison',
+        orderCreateError: 'Erreur lors de la creation de la commande',
+        checkoutError: 'Erreur lors du paiement',
+        checkoutSessionError: 'Erreur lors de la creation de la session de paiement',
+        noCheckoutUrl: "Aucune URL de paiement n'a ete recue",
+        errorTitle: 'Une erreur est survenue',
+        back: 'Retour',
+        checkout: 'Paiement',
+        completeOrder: 'Finaliser la commande',
+        item: 'Article',
+        chooseDelivery: 'Choisir le mode de livraison',
+        pickup: 'Retrait',
+        packageB: 'Colis B-Post',
+        packageA: 'Colis A-Post',
+        pickupDesc: 'Retrait direct chez le vendeur',
+        bDesc: 'Livraison en 3-4 jours ouvrables, jusqu a 2 kg',
+        aDesc: 'Livraison en 1-2 jours ouvrables, jusqu a 2 kg',
+        free: 'Gratuit',
+        summary: 'Resume',
+        itemPrice: "Prix de l'article",
+        delivery: 'Livraison',
+        buyerProtection: 'Protection acheteur',
+        included: 'Inclus',
+        total: 'Total',
+        totalToPay: 'Total a payer',
+        processing: 'Traitement en cours...',
+        buyNow: 'Acheter maintenant',
+        paySecurely: 'Payer en securite',
+        secure: 'Securise',
+        easy: 'Simple',
+        fast: 'Rapide',
+      }
+    : language === 'it'
+      ? {
+          checkoutLoading: 'Caricamento checkout...',
+          noItem: 'Nessun articolo selezionato',
+          itemNotFound: 'Articolo non trovato',
+          loadError: 'Errore durante il caricamento',
+          chooseShipping: 'Seleziona un metodo di spedizione',
+          orderCreateError: "Errore durante la creazione dell'ordine",
+          checkoutError: 'Errore durante il checkout',
+          checkoutSessionError: 'Errore nella creazione della sessione checkout',
+          noCheckoutUrl: 'Nessun URL checkout ricevuto',
+          errorTitle: 'Si e verificato un errore',
+          back: 'Indietro',
+          checkout: 'Checkout',
+          completeOrder: "Completa l'ordine",
+          item: 'Articolo',
+          chooseDelivery: 'Scegli consegna',
+          pickup: 'Ritiro',
+          packageB: 'Pacco B-Post',
+          packageA: 'Pacco A-Post',
+          pickupDesc: 'Ritiro diretto dal venditore',
+          bDesc: 'Consegna in 3-4 giorni lavorativi, fino a 2 kg',
+          aDesc: 'Consegna in 1-2 giorni lavorativi, fino a 2 kg',
+          free: 'Gratis',
+          summary: 'Riepilogo',
+          itemPrice: 'Prezzo articolo',
+          delivery: 'Consegna',
+          buyerProtection: 'Protezione acquirente',
+          included: 'Inclusa',
+          total: 'Totale',
+          totalToPay: 'Totale da pagare',
+          processing: 'Elaborazione...',
+          buyNow: 'Acquista ora',
+          paySecurely: 'Paga in sicurezza',
+          secure: 'Sicuro',
+          easy: 'Facile',
+          fast: 'Rapido',
+        }
+      : language === 'en'
+        ? {
+            checkoutLoading: 'Loading checkout...',
+            noItem: 'No item selected',
+            itemNotFound: 'Item not found',
+            loadError: 'Error loading data',
+            chooseShipping: 'Please choose a shipping method',
+            orderCreateError: 'Error creating order',
+            checkoutError: 'Checkout error',
+            checkoutSessionError: 'Error creating checkout session',
+            noCheckoutUrl: 'No checkout URL received',
+            errorTitle: 'An error occurred',
+            back: 'Back',
+            checkout: 'Checkout',
+            completeOrder: 'Complete your order',
+            item: 'Item',
+            chooseDelivery: 'Choose delivery',
+            pickup: 'Pickup',
+            packageB: 'Package B-Post',
+            packageA: 'Package A-Post',
+            pickupDesc: 'Pick up directly from seller',
+            bDesc: 'Delivery in 3-4 business days, up to 2 kg',
+            aDesc: 'Delivery in 1-2 business days, up to 2 kg',
+            free: 'Free',
+            summary: 'Summary',
+            itemPrice: 'Item price',
+            delivery: 'Delivery',
+            buyerProtection: 'Buyer protection',
+            included: 'Included',
+            total: 'Total',
+            totalToPay: 'Total to pay',
+            processing: 'Processing...',
+            buyNow: 'Buy now',
+            paySecurely: 'Pay securely',
+            secure: 'Secure',
+            easy: 'Easy',
+            fast: 'Fast',
+          }
+        : {
+            checkoutLoading: 'Kasse wird geladen...',
+            noItem: 'Kein Artikel ausgewählt',
+            itemNotFound: 'Artikel nicht gefunden',
+            loadError: 'Fehler beim Laden der Daten',
+            chooseShipping: 'Bitte wählen Sie eine Versandart aus',
+            orderCreateError: 'Fehler beim Erstellen der Bestellung',
+            checkoutError: 'Fehler beim Checkout',
+            checkoutSessionError: 'Fehler beim Erstellen der Checkout Session',
+            noCheckoutUrl: 'Keine Checkout URL erhalten',
+            errorTitle: 'Ein Fehler ist aufgetreten',
+            back: 'Zurück',
+            checkout: 'Kasse',
+            completeOrder: 'Bestellung abschließen',
+            item: 'Artikel',
+            chooseDelivery: 'Lieferart wählen',
+            pickup: 'Abholung',
+            packageB: 'Paket B-Post',
+            packageA: 'Paket A-Post',
+            pickupDesc: 'Direkt beim Verkäufer abholen',
+            bDesc: 'Lieferung in 3-4 Werktagen, bis 2 kg',
+            aDesc: 'Lieferung in 1-2 Werktagen, bis 2 kg',
+            free: 'Gratis',
+            summary: 'Zusammenfassung',
+            itemPrice: 'Artikelpreis',
+            delivery: 'Lieferung',
+            buyerProtection: 'Käuferschutz',
+            included: 'Inklusive',
+            total: 'Total',
+            totalToPay: 'Total zu zahlen',
+            processing: 'Wird verarbeitet...',
+            buyNow: 'Jetzt kaufen',
+            paySecurely: 'Sicher bezahlen',
+            secure: 'Sicher',
+            easy: 'Einfach',
+            fast: 'Schnell',
+          }
+  ), [language])
 
   // Detect mobile device
   useEffect(() => {
@@ -69,7 +224,7 @@ function CheckoutPageContent() {
     }
 
     if (!watchId) {
-      setError('Kein Artikel ausgewählt')
+      setError(copy.noItem)
       setLoading(false)
       return
     }
@@ -88,7 +243,7 @@ function CheckoutPageContent() {
         }
         if (!watchRes.ok) {
           console.error('Watch fetch error:', watchRes.status)
-          setError('Artikel nicht gefunden')
+          setError(copy.itemNotFound)
           setLoading(false)
           return
         }
@@ -132,22 +287,22 @@ function CheckoutPageContent() {
             }
           }
         } else {
-          setError('Artikel nicht gefunden')
+          setError(copy.itemNotFound)
         }
       } catch (err) {
         console.error('Error loading data:', err)
-        setError('Fehler beim Laden der Daten')
+        setError(copy.loadError)
       } finally {
         setLoading(false)
       }
     }
 
     loadData()
-  }, [watchId, status, router])
+  }, [watchId, status, router, copy, language])
 
   const handleCheckout = async () => {
     if (!watch || !selectedShipping) {
-      toast.error('Bitte wählen Sie eine Versandart aus')
+      toast.error(copy.chooseShipping)
       return
     }
 
@@ -179,7 +334,7 @@ function CheckoutPageContent() {
       })
 
       if (!createOrderRes.ok) {
-        let errorMsg = 'Fehler beim Erstellen der Bestellung'
+        let errorMsg = copy.orderCreateError
         try {
           const errorData = await createOrderRes.json()
           console.error('Order creation error response:', JSON.stringify(errorData, null, 2))
@@ -208,7 +363,7 @@ function CheckoutPageContent() {
 
         if (!checkoutRes.ok) {
           const errorData = await checkoutRes.json()
-          throw new Error(errorData.message || 'Fehler beim Erstellen der Checkout Session')
+          throw new Error(errorData.message || copy.checkoutSessionError)
         }
 
         const checkoutData = await checkoutRes.json()
@@ -217,7 +372,7 @@ function CheckoutPageContent() {
         if (checkoutData.checkoutUrl) {
           window.location.href = checkoutData.checkoutUrl
         } else {
-          throw new Error('Keine Checkout URL erhalten')
+          throw new Error(copy.noCheckoutUrl)
         }
       } else {
         // ABHOLUNG ODER VERSAND OHNE ZAHLUNGSSCHUTZ
@@ -229,8 +384,8 @@ function CheckoutPageContent() {
       }
     } catch (err: any) {
       console.error('Error during checkout:', err)
-      setError(err.message || 'Fehler beim Checkout')
-      toast.error(err.message || 'Fehler beim Checkout')
+      setError(err.message || copy.checkoutError)
+      toast.error(err.message || copy.checkoutError)
       setIsProcessing(false)
     }
   }
@@ -242,7 +397,7 @@ function CheckoutPageContent() {
           <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-white shadow-lg">
             <Loader2 className="h-8 w-8 animate-spin text-primary-600" />
           </div>
-          <p className="text-sm font-medium text-gray-600">Kasse wird geladen...</p>
+          <p className="text-sm font-medium text-gray-600">{copy.checkoutLoading}</p>
         </div>
       </div>
     )
@@ -257,7 +412,7 @@ function CheckoutPageContent() {
               <Package className="h-8 w-8 text-red-500" />
             </div>
             <h2 className="mb-2 text-xl font-semibold text-gray-900">
-              {error ? 'Ein Fehler ist aufgetreten' : 'Artikel nicht gefunden'}
+              {error ? copy.errorTitle : copy.itemNotFound}
             </h2>
             <p className="mb-6 text-sm text-gray-600">
               {error || 'Der gesuchte Artikel konnte leider nicht gefunden werden.'}
@@ -271,7 +426,7 @@ function CheckoutPageContent() {
               }}
             >
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Zurück
+              {copy.back}
             </button>
           </div>
         </Card>
@@ -323,12 +478,14 @@ function CheckoutPageContent() {
           <button
             onClick={() => router.back()}
             className="mr-3 rounded-full p-2 text-gray-600 transition-colors hover:bg-white hover:text-gray-900 hover:shadow-sm"
+            aria-label={copy.back}
+            title={copy.back}
           >
             <ArrowLeft className="h-5 w-5" />
           </button>
           <div>
-            <h1 className="text-xl font-bold text-gray-900 md:text-2xl">Kasse</h1>
-            <p className="text-sm text-gray-500">Bestellung abschließen</p>
+            <h1 className="text-xl font-bold text-gray-900 md:text-2xl">{copy.checkout}</h1>
+            <p className="text-sm text-gray-500">{copy.completeOrder}</p>
           </div>
         </div>
 
@@ -340,7 +497,7 @@ function CheckoutPageContent() {
               <div className="bg-white p-4 md:p-6">
                 <h2 className="mb-4 flex items-center text-sm font-semibold uppercase tracking-wide text-gray-500">
                   <Package className="mr-2 h-4 w-4" />
-                  Artikel
+                  {copy.item}
                 </h2>
 
                 <div className="flex gap-4">
@@ -381,7 +538,7 @@ function CheckoutPageContent() {
                     </div>
                     <div className="mt-3">
                       <p className="text-lg font-bold text-primary-600">
-                        CHF {itemPrice.toLocaleString('de-CH', { minimumFractionDigits: 2 })}
+                        CHF {itemPrice.toLocaleString(language === 'fr' ? 'fr-CH' : language === 'it' ? 'it-CH' : language === 'en' ? 'en-CH' : 'de-CH', { minimumFractionDigits: 2 })}
                       </p>
                     </div>
                   </div>
@@ -395,7 +552,7 @@ function CheckoutPageContent() {
                 <div className="bg-white p-4 md:p-6">
                   <h2 className="mb-4 flex items-center text-sm font-semibold uppercase tracking-wide text-gray-500">
                     <Truck className="mr-2 h-4 w-4" />
-                    Lieferart wählen
+                    {copy.chooseDelivery}
                   </h2>
                   <div className="space-y-2">
                     {shippingMethods.map(method => {
@@ -435,19 +592,19 @@ function CheckoutPageContent() {
                                 <Package className="mr-2 h-4 w-4 text-gray-500" />
                               )}
                               <span className={`font-medium ${isSelected ? 'text-primary-700' : 'text-gray-900'}`}>
-                                {isPickup ? 'Abholung' : method === 'b-post' ? 'Paket B-Post' : 'Paket A-Post'}
+                                {isPickup ? copy.pickup : method === 'b-post' ? copy.packageB : copy.packageA}
                               </span>
                             </div>
                             <p className="ml-6 mt-0.5 text-xs text-gray-500">
                               {isPickup
-                                ? 'Direkt beim Verkäufer abholen'
+                                ? copy.pickupDesc
                                 : method === 'b-post'
-                                  ? 'Lieferung in 3-4 Werktagen, bis 2 kg'
-                                  : 'Lieferung in 1-2 Werktagen, bis 2 kg'}
+                                  ? copy.bDesc
+                                  : copy.aDesc}
                             </p>
                           </div>
                           <div className={`text-sm font-bold ${isSelected ? 'text-primary-600' : 'text-gray-900'}`}>
-                            {isPickup ? 'Gratis' : `+ CHF ${price.toFixed(2)}`}
+                            {isPickup ? copy.free : `+ CHF ${price.toFixed(2)}`}
                           </div>
                         </label>
                       )
@@ -462,31 +619,31 @@ function CheckoutPageContent() {
               <div className="bg-white p-4 md:p-6">
                 <h2 className="mb-4 flex items-center text-sm font-semibold uppercase tracking-wide text-gray-500">
                   <CreditCard className="mr-2 h-4 w-4" />
-                  Zusammenfassung
+                  {copy.summary}
                 </h2>
                 <div className="space-y-3">
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Artikelpreis</span>
+                    <span className="text-gray-600">{copy.itemPrice}</span>
                     <span className="font-medium text-gray-900">CHF {itemPrice.toFixed(2)}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-600">Lieferung</span>
+                    <span className="text-gray-600">{copy.delivery}</span>
                     <span className={`font-medium ${shippingCost === 0 ? 'text-green-600' : 'text-gray-900'}`}>
-                      {shippingCost === 0 ? 'Gratis' : `CHF ${shippingCost.toFixed(2)}`}
+                      {shippingCost === 0 ? copy.free : `CHF ${shippingCost.toFixed(2)}`}
                     </span>
                   </div>
                   {watch.paymentProtectionEnabled && (
                     <div className="flex justify-between text-sm">
                       <span className="flex items-center text-gray-600">
                         <Shield className="mr-1.5 h-3.5 w-3.5 text-green-500" />
-                        Käuferschutz
+                        {copy.buyerProtection}
                       </span>
-                      <span className="font-medium text-green-600">Inklusive</span>
+                      <span className="font-medium text-green-600">{copy.included}</span>
                     </div>
                   )}
                   <div className="border-t border-gray-200 pt-3">
                     <div className="flex items-center justify-between">
-                      <span className="text-base font-semibold text-gray-900">Total</span>
+                      <span className="text-base font-semibold text-gray-900">{copy.total}</span>
                       <span className="text-xl font-bold text-gray-900">
                         CHF {totalPrice.toFixed(2)}
                       </span>
@@ -554,7 +711,7 @@ function CheckoutPageContent() {
                 {/* Total prominenter anzeigen */}
                 <div className="mb-5 rounded-lg bg-gray-50 p-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Total zu zahlen</span>
+                    <span className="text-sm font-medium text-gray-600">{copy.totalToPay}</span>
                     <span className="text-2xl font-bold text-gray-900">
                       CHF {totalPrice.toFixed(2)}
                     </span>
@@ -574,22 +731,22 @@ function CheckoutPageContent() {
                   {isProcessing ? (
                     <span className="flex items-center justify-center">
                       <Loader2 className="mr-2 h-5 w-5 animate-spin" />
-                      Wird verarbeitet...
+                      {copy.processing}
                     </span>
                   ) : selectedShipping === 'pickup' ? (
                     <span className="flex items-center justify-center">
                       <ShoppingCart className="mr-2 h-5 w-5" />
-                      Jetzt kaufen
+                      {copy.buyNow}
                     </span>
                   ) : watch.paymentProtectionEnabled ? (
                     <span className="flex items-center justify-center">
                       <Shield className="mr-2 h-5 w-5" />
-                      Sicher bezahlen
+                      {copy.paySecurely}
                     </span>
                   ) : (
                     <span className="flex items-center justify-center">
                       <ShoppingCart className="mr-2 h-5 w-5" />
-                      Jetzt kaufen
+                      {copy.buyNow}
                     </span>
                   )}
                 </button>
@@ -609,15 +766,15 @@ function CheckoutPageContent() {
                 <div className="mt-4 flex items-center justify-center gap-6 border-t border-gray-100 pt-4">
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">
                     <Shield className="h-4 w-4 text-primary-500" />
-                    <span>Sicher</span>
+                    <span>{copy.secure}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">
                     <Check className="h-4 w-4 text-primary-500" />
-                    <span>Einfach</span>
+                    <span>{copy.easy}</span>
                   </div>
                   <div className="flex items-center gap-1.5 text-xs text-gray-500">
                     <Truck className="h-4 w-4 text-primary-500" />
-                    <span>Schnell</span>
+                    <span>{copy.fast}</span>
                   </div>
                 </div>
               </div>

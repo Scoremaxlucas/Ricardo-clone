@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { getUserAddresses, type AddressType } from '@/lib/address'
+import { hasSellerIdentityDocumentsSubmitted } from '@/lib/verification'
 
 export async function GET(request: NextRequest) {
   try {
@@ -27,6 +28,9 @@ export async function GET(request: NextRequest) {
         idDocumentPage2: true,
         idDocumentType: true,
         paymentMethods: true,
+        profileComplete: true,
+        stripeOnboardingComplete: true,
+        payoutsEnabled: true,
       },
     })
 
@@ -45,6 +49,10 @@ export async function GET(request: NextRequest) {
       verified: user.verified === true && user.verificationStatus === 'approved',
       verifiedAt: user.verifiedAt,
       verificationStatus: user.verificationStatus,
+      sellerIdentitySubmitted: hasSellerIdentityDocumentsSubmitted(user),
+      stripeOnboardingComplete: user.stripeOnboardingComplete,
+      payoutsEnabled: user.payoutsEnabled,
+      profileComplete: user.profileComplete,
       user: {
         title: user.title,
         firstName: user.firstName,

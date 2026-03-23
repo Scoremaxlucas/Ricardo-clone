@@ -7,6 +7,7 @@
 
 import { requireAdmin } from '@/lib/admin-auth'
 import { prisma } from '@/lib/prisma'
+import { prismaWherePendingSellerVerificationReview } from '@/lib/verification'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -62,15 +63,7 @@ export async function GET(request: NextRequest) {
       prisma.user.count({ where: { isBlocked: true } }),
       prisma.user.count({ where: { verified: true, verificationStatus: 'approved' } }),
       prisma.user.count({
-        where: {
-          verificationStatus: 'pending',
-          verified: true,
-          OR: [
-            { idDocument: { not: null } },
-            { idDocumentPage1: { not: null } },
-            { idDocumentPage2: { not: null } },
-          ],
-        },
+        where: prismaWherePendingSellerVerificationReview,
       }),
       prisma.user.count({ where: { createdAt: { gte: thirtyDaysAgo } } }),
       prisma.user.count({ where: { createdAt: { gte: sevenDaysAgo } } }),

@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { prismaWherePendingSellerVerificationReview } from '@/lib/verification'
 
 export async function GET(request: NextRequest) {
   try {
@@ -46,8 +47,16 @@ export async function GET(request: NextRequest) {
 
     console.log('Final isAdmin value:', isAdminValue)
 
+    let pendingVerificationCount = 0
+    if (isAdminValue) {
+      pendingVerificationCount = await prisma.user.count({
+        where: prismaWherePendingSellerVerificationReview,
+      })
+    }
+
     return NextResponse.json({
       isAdmin: isAdminValue,
+      pendingVerificationCount,
       debug: {
         rawIsAdmin: user?.isAdmin,
         type: typeof user?.isAdmin,

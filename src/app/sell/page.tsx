@@ -17,7 +17,11 @@ import { useLanguage } from '@/contexts/LanguageContext'
 import { clearDraft, clearOtherUserDrafts } from '@/lib/draft-storage'
 import { compressDataUrl } from '@/lib/image-compression'
 import { OnboardingProgress, type OnboardingStatus } from '@/components/seller/OnboardingProgress'
-import { canSell, getVerificationStatus } from '@/lib/verification'
+import {
+  canSell,
+  getVerificationStatus,
+  hasSellerIdentityDocumentsSubmitted,
+} from '@/lib/verification'
 import { AlertCircle, CheckCircle, FileEdit, Loader2, Shield, X } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
@@ -727,6 +731,10 @@ function SellPageContent() {
             verified: userData.verified,
             verificationStatus: userData.verificationStatus,
             isBlocked: userData.isBlocked,
+            idDocument: userData.idDocument,
+            idDocumentPage1: userData.idDocumentPage1,
+            idDocumentPage2: userData.idDocumentPage2,
+            idDocumentType: userData.idDocumentType,
           })
           const vStatus = getVerificationStatus({
             verified: userData.verified,
@@ -734,7 +742,8 @@ function SellPageContent() {
           })
           setIsVerified(userCanSell)
           setVerificationStatus(vStatus)
-          setVerificationInProgress(vStatus === 'pending')
+          const identitySubmitted = hasSellerIdentityDocumentsSubmitted(userData)
+          setVerificationInProgress(vStatus === 'pending' && identitySubmitted)
         }
       } catch (error) {
         console.error('Error loading verification status:', error)
@@ -1286,8 +1295,8 @@ function SellPageContent() {
             </h2>
             <p className="mb-2 text-gray-600">
               {verificationInProgress
-                ? 'Die Verifizierung ist im Gange. Sie erhalten eine Benachrichtigung, sobald die Verifizierung abgeschlossen ist.'
-                : 'Um Artikel auf Helvenda verkaufen zu können, müssen Sie sich zuerst als Verkäufer verifizieren. Dies schützt sowohl Käufer als auch Verkäufer.'}
+                ? 'Ihre Unterlagen wurden eingereicht und werden geprüft. Sie können bereits verkaufen; bei Ablehnung wird der Verkauf gesperrt.'
+                : 'Um Artikel auf Helvenda verkaufen zu können, müssen Sie den Verkäufer-Nachweis mit Ausweis abschließen (Identität & Adresse).'}
             </p>
             <p className="text-sm text-gray-500">
               Folgen Sie den Schritten unten, um loszulegen.
@@ -1650,11 +1659,14 @@ function SellPageOnboarding({
           const data = await res.json()
           setStatus({
             emailVerified: true, // Must be true to be logged in
-            identitySubmitted: data.verification?.verificationStatus === 'pending' || data.verification?.verificationStatus === 'approved',
-            identityApproved: data.verification?.verificationStatus === 'approved',
-            identityRejected: data.verification?.verificationStatus === 'rejected',
-            payoutSetup: data.verification?.stripeOnboardingComplete === true || data.verification?.payoutsEnabled === true,
-            profileComplete: data.verification?.profileComplete === true,
+            identitySubmitted:
+              data.sellerIdentitySubmitted === true ||
+              data.verificationStatus === 'approved',
+            identityApproved: data.verificationStatus === 'approved',
+            identityRejected: data.verificationStatus === 'rejected',
+            payoutSetup:
+              data.stripeOnboardingComplete === true || data.payoutsEnabled === true,
+            profileComplete: data.profileComplete === true,
           })
         } else {
           // Fallback from props
