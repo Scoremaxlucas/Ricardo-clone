@@ -6,6 +6,7 @@ import Link from 'next/link'
 import { Heart } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import { useLanguage } from '@/contexts/LanguageContext'
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 
 interface Product {
   id: string
@@ -201,7 +202,10 @@ export function SuggestedProducts() {
             <p className="mb-4 text-lg text-gray-500">{t.home.noItemsAvailable}</p>
             <p className="text-sm text-gray-400">
               {t.home.beFirstToSell}{' '}
-              <Link href="/sell" className="font-medium text-primary-600 hover:text-primary-700">
+              <Link
+                href={sellLinkWithReturn('/')}
+                className="font-medium text-primary-600 hover:text-primary-700"
+              >
                 {t.home.sellNowItem}
               </Link>
             </p>

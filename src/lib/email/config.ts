@@ -31,7 +31,22 @@ export function getEmailBaseUrl(): string {
   if (process.env.NODE_ENV === 'production' || process.env.VERCEL) {
     return 'https://helvenda.ch'
   }
-  return process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'
+  const candidate = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'
+  try {
+    const parsed = new URL(candidate)
+    const host = parsed.hostname.toLowerCase()
+    // In non-production we allow localhost for local testing.
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return candidate
+    }
+    // Any non-local invalid host falls back to canonical domain for safety.
+    if (host === 'helvenda.ch' || host === 'www.helvenda.ch' || host.endsWith('.helvenda.ch')) {
+      return candidate
+    }
+    return 'https://helvenda.ch'
+  } catch {
+    return 'https://helvenda.ch'
+  }
 }
 
 // Absender-E-Mail

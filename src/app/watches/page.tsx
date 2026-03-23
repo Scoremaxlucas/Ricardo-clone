@@ -3,6 +3,7 @@
 import { ArticleSkeleton } from '@/components/ui/ArticleSkeleton'
 import Image from 'next/image'
 import Link from 'next/link'
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import { useEffect, useState } from 'react'
 
 interface Watch {
@@ -76,7 +77,7 @@ export default function WatchesPage() {
           <div className="rounded-lg bg-white p-12 text-center shadow-md">
             <p className="mb-4 text-gray-600">Noch keine Artikel verfügbar.</p>
             <Link
-              href="/sell"
+              href={sellLinkWithReturn('/watches')}
               className="inline-block rounded-md bg-primary-600 px-6 py-3 text-white hover:bg-primary-700"
             >
               Erste Uhr verkaufen

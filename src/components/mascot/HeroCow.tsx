@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { HelvendaCow } from './HelvendaCow'
 import { ArrowRight } from 'lucide-react'
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import Link from 'next/link'
 
 export function HeroCow() {
@@ -37,7 +38,7 @@ export function HeroCow() {
           Dein Schweizer Marktplatz für Kaufen und Verkaufen
         </p>
         <Link
-          href="/sell"
+          href={sellLinkWithReturn('/')}
           className="inline-flex items-center gap-2 rounded-[50px] bg-orange-500 px-6 py-3 text-base font-bold text-white shadow-xl transition-all duration-300 hover:-translate-y-1 hover:scale-105 hover:bg-orange-600 hover:shadow-2xl"
         >
           Jetzt verkaufen

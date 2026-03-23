@@ -1,6 +1,7 @@
 import { getPasswordChangedEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getUserPreferredLanguage } from '@/lib/user-language'
 import bcrypt from 'bcryptjs'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -99,7 +100,8 @@ export async function POST(request: NextRequest) {
 
     // Send confirmation email
     const userName = user.firstName || user.nickname || 'Benutzer'
-    const { subject, html, text } = getPasswordChangedEmail(userName, ipAddress, userAgent)
+    const locale = await getUserPreferredLanguage(user.id)
+    const { subject, html, text } = getPasswordChangedEmail(userName, ipAddress, userAgent, locale)
 
     await sendEmail({
       to: user.email,

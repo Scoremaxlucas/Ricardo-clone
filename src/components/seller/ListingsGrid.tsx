@@ -1,6 +1,7 @@
 'use client'
 
 import { Package, Plus } from 'lucide-react'
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import Link from 'next/link'
 import { ListingCard, ListingCardProps } from './ListingCard'
 import { TabType } from './ListingsTabs'
@@ -87,7 +88,7 @@ export function ListingsGrid({
         <p className="mb-6 max-w-sm text-center text-gray-500">{empty.description}</p>
         {empty.showCTA && (
           <Link
-            href="/sell"
+            href={sellLinkWithReturn('/my-watches/selling')}
             className="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-6 py-3 font-medium text-white transition-colors hover:bg-primary-700"
           >
             <Plus className="h-5 w-5" />

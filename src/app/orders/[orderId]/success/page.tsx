@@ -22,6 +22,7 @@ import {
 import Link from 'next/link'
 import { useParams, useSearchParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
+import { useLanguage } from '@/contexts/LanguageContext'
 
 interface Order {
   id: string
@@ -63,8 +64,147 @@ interface Order {
 export default function PurchaseSuccessPage() {
   const params = useParams()
   const searchParams = useSearchParams()
+  const { language } = useLanguage()
   const orderId = params.orderId as string
   const fromStripe = searchParams.get('session_id') !== null
+  const copy = language === 'fr'
+    ? {
+        orderNotFound: 'Commande introuvable',
+        loadingOrder: 'Chargement de la commande...',
+        orderCouldNotLoad: 'Impossible de charger la commande.',
+        toMyPurchases: 'Vers mes achats',
+        congrats: 'Felicitations !',
+        stripeOk: 'Votre paiement a reussi. Cet article est a vous !',
+        purchaseConfirmed: 'Votre achat a ete confirme !',
+        orderNumber: 'Numero de commande',
+        yourPurchase: 'Votre achat',
+        pickup: 'Retrait',
+        shipping: 'Livraison',
+        paid: 'Paye',
+        includingShipping: 'livraison incluse',
+        itemPrice: "Prix de l'article",
+        shippingCost: 'Frais de livraison',
+        totalAmount: 'Total',
+        nextSteps: 'Prochaines etapes',
+        contactSeller: 'Contacter le vendeur',
+        payOnPickup: 'Payer au retrait',
+        makePayment: 'Effectuer le paiement',
+        pickUpItem: "Recuperer l'article",
+        receiveItem: "Recevoir l'article",
+        confirmAndRate: 'Confirmer la reception et evaluer',
+        contactDeadline: 'Delai de contact',
+        contactSellerBy: 'Veuillez contacter le vendeur avant le',
+        paymentProtectionActive: 'Protection acheteur Helvenda active',
+        protectionDesc: "Votre argent reste securise jusqu'a confirmation de reception.",
+        sellerContactBtn: 'Contacter le vendeur',
+        questions: 'Des questions ?',
+        helpCenter: "Centre d'aide",
+        contactSupport: 'Contacter le support',
+      }
+    : language === 'it'
+      ? {
+          orderNotFound: 'Ordine non trovato',
+          loadingOrder: 'Caricamento ordine...',
+          orderCouldNotLoad: "Impossibile caricare l'ordine.",
+          toMyPurchases: 'Vai ai miei acquisti',
+          congrats: 'Complimenti!',
+          stripeOk: 'Pagamento riuscito. Articolo acquistato con successo!',
+          purchaseConfirmed: 'Acquisto confermato!',
+          orderNumber: "Numero d'ordine",
+          yourPurchase: 'Il tuo acquisto',
+          pickup: 'Ritiro',
+          shipping: 'Spedizione',
+          paid: 'Pagato',
+          includingShipping: 'incl. spedizione',
+          itemPrice: 'Prezzo articolo',
+          shippingCost: 'Spedizione',
+          totalAmount: 'Totale',
+          nextSteps: 'Prossimi passi',
+          contactSeller: 'Contatta il venditore',
+          payOnPickup: 'Paga al ritiro',
+          makePayment: 'Effettua il pagamento',
+          pickUpItem: "Ritira l'articolo",
+          receiveItem: "Ricevi l'articolo",
+          confirmAndRate: 'Conferma ricezione e recensione',
+          contactDeadline: 'Scadenza contatto',
+          contactSellerBy: 'Contatta il venditore entro il',
+          paymentProtectionActive: 'Protezione acquisti Helvenda attiva',
+          protectionDesc: 'Il tuo denaro resta protetto fino alla conferma di ricezione.',
+          sellerContactBtn: 'Contatta il venditore',
+          questions: 'Hai domande?',
+          helpCenter: 'Centro assistenza',
+          contactSupport: 'Contatta il supporto',
+        }
+      : language === 'en'
+        ? {
+            orderNotFound: 'Order not found',
+            loadingOrder: 'Loading order...',
+            orderCouldNotLoad: 'Could not load order.',
+            toMyPurchases: 'Go to my purchases',
+            congrats: 'Congratulations!',
+            stripeOk: 'Your payment was successful. This item is now yours!',
+            purchaseConfirmed: 'Your purchase has been confirmed!',
+            orderNumber: 'Order number',
+            yourPurchase: 'Your purchase',
+            pickup: 'Pickup',
+            shipping: 'Shipping',
+            paid: 'Paid',
+            includingShipping: 'incl. shipping',
+            itemPrice: 'Item price',
+            shippingCost: 'Shipping',
+            totalAmount: 'Total amount',
+            nextSteps: 'Next steps',
+            contactSeller: 'Contact seller',
+            payOnPickup: 'Pay on pickup',
+            makePayment: 'Make payment',
+            pickUpItem: 'Pick up item',
+            receiveItem: 'Receive item',
+            confirmAndRate: 'Confirm receipt & rate',
+            contactDeadline: 'Contact deadline',
+            contactSellerBy: 'Please contact the seller by',
+            paymentProtectionActive: 'Helvenda buyer protection active',
+            protectionDesc: 'Your money is held securely until you confirm delivery.',
+            sellerContactBtn: 'Contact seller',
+            questions: 'Questions?',
+            helpCenter: 'Help center',
+            contactSupport: 'Contact support',
+          }
+        : {
+            orderNotFound: 'Bestellung nicht gefunden',
+            loadingOrder: 'Bestellung wird geladen...',
+            orderCouldNotLoad: 'Die Bestellung konnte nicht geladen werden.',
+            toMyPurchases: 'Zu meinen Käufen',
+            congrats: 'Herzlichen Glückwunsch!',
+            stripeOk: 'Ihre Zahlung war erfolgreich. Der Artikel gehört Ihnen!',
+            purchaseConfirmed: 'Ihr Kauf wurde bestätigt!',
+            orderNumber: 'Bestellnummer',
+            yourPurchase: 'Ihr Kauf',
+            pickup: 'Abholung',
+            shipping: 'Versand',
+            paid: 'Bezahlt',
+            includingShipping: 'inkl. Versand',
+            itemPrice: 'Artikelpreis',
+            shippingCost: 'Versandkosten',
+            totalAmount: 'Gesamtbetrag',
+            nextSteps: 'Nächste Schritte',
+            contactSeller: 'Verkäufer kontaktieren',
+            payOnPickup: 'Bei Abholung bezahlen',
+            makePayment: 'Zahlung tätigen',
+            pickUpItem: 'Artikel abholen',
+            receiveItem: 'Artikel erhalten',
+            confirmAndRate: 'Erhalt bestätigen & bewerten',
+            contactDeadline: 'Kontaktfrist',
+            contactSellerBy: 'Bitte kontaktieren Sie den Verkäufer bis',
+            paymentProtectionActive: 'Helvenda Zahlungsschutz aktiv',
+            protectionDesc: 'Ihr Geld wird sicher verwahrt, bis Sie den Erhalt der Ware bestätigen.',
+            sellerContactBtn: 'Verkäufer kontaktieren',
+            questions: 'Haben Sie Fragen?',
+            helpCenter: 'Hilfe-Center',
+            contactSupport: 'Support kontaktieren',
+          }
+
+  const dateLocale = language === 'fr' ? 'fr-CH' : language === 'it' ? 'it-CH' : language === 'en' ? 'en-CH' : 'de-CH'
+
 
   const [order, setOrder] = useState<Order | null>(null)
   const [loading, setLoading] = useState(true)
@@ -113,7 +253,7 @@ export default function PurchaseSuccessPage() {
   // Format date
   const formatDate = (dateStr: string | null) => {
     if (!dateStr) return null
-    return new Date(dateStr).toLocaleDateString('de-CH', {
+    return new Date(dateStr).toLocaleDateString(dateLocale, {
       weekday: 'long',
       day: '2-digit',
       month: 'long',
@@ -123,11 +263,17 @@ export default function PurchaseSuccessPage() {
 
   // Format deadline
   const formatDeadline = (dateStr: string | null) => {
-    if (!dateStr) return '7 Tagen'
+    if (!dateStr) return language === 'en' ? '7 days' : language === 'fr' ? '7 jours' : language === 'it' ? '7 giorni' : '7 Tagen'
     const deadline = new Date(dateStr)
     const now = new Date()
     const diffDays = Math.ceil((deadline.getTime() - now.getTime()) / (1000 * 60 * 60 * 24))
-    return diffDays > 0 ? `${diffDays} Tagen` : 'heute'
+    if (diffDays > 0) {
+      if (language === 'fr') return `${diffDays} jours`
+      if (language === 'it') return `${diffDays} giorni`
+      if (language === 'en') return `${diffDays} days`
+      return `${diffDays} Tagen`
+    }
+    return language === 'fr' ? "aujourd'hui" : language === 'it' ? 'oggi' : language === 'en' ? 'today' : 'heute'
   }
 
   if (loading) {
@@ -137,7 +283,7 @@ export default function PurchaseSuccessPage() {
         <main className="flex flex-1 items-center justify-center">
           <div className="text-center">
             <div className="mx-auto mb-4 h-12 w-12 animate-spin rounded-full border-4 border-emerald-200 border-t-emerald-600"></div>
-            <p className="text-gray-600">Bestellung wird geladen...</p>
+            <p className="text-gray-600">{copy.loadingOrder}</p>
           </div>
         </main>
         <Footer />
@@ -154,13 +300,13 @@ export default function PurchaseSuccessPage() {
             <div className="mx-auto mb-4 flex h-16 w-16 items-center justify-center rounded-full bg-red-100">
               <Package className="h-8 w-8 text-red-500" />
             </div>
-            <h1 className="mb-2 text-xl font-bold text-gray-900">Bestellung nicht gefunden</h1>
-            <p className="mb-6 text-gray-600">{error || 'Die Bestellung konnte nicht geladen werden.'}</p>
+            <h1 className="mb-2 text-xl font-bold text-gray-900">{copy.orderNotFound}</h1>
+            <p className="mb-6 text-gray-600">{error || copy.orderCouldNotLoad}</p>
             <Link
               href="/my-watches/buying/purchased"
               className="inline-flex items-center rounded-xl bg-primary-600 px-6 py-3 font-semibold text-white transition-all hover:bg-primary-700"
             >
-              Zu meinen Käufen
+              {copy.toMyPurchases}
               <ArrowRight className="ml-2 h-4 w-4" />
             </Link>
           </div>
@@ -213,17 +359,17 @@ export default function PurchaseSuccessPage() {
               </div>
 
               <h1 className="mb-3 text-3xl font-bold tracking-tight sm:text-4xl">
-                🎉 Herzlichen Glückwunsch!
+                🎉 {copy.congrats}
               </h1>
               <p className="text-lg text-emerald-100">
                 {isStripePayment
-                  ? 'Ihre Zahlung war erfolgreich. Der Artikel gehört Ihnen!'
-                  : 'Ihr Kauf wurde bestätigt!'}
+                  ? copy.stripeOk
+                  : copy.purchaseConfirmed}
               </p>
 
               {/* Order Number Badge */}
               <div className="mt-6 inline-flex items-center gap-2 rounded-full bg-white/20 px-4 py-2 backdrop-blur-sm">
-                <span className="text-sm text-emerald-100">Bestellnummer:</span>
+                <span className="text-sm text-emerald-100">{copy.orderNumber}:</span>
                 <span className="font-mono font-bold">{order.orderNumber}</span>
               </div>
             </div>
@@ -234,7 +380,7 @@ export default function PurchaseSuccessPage() {
             <div className="border-b border-gray-100 bg-gray-50 px-6 py-4">
               <h2 className="flex items-center text-lg font-semibold text-gray-900">
                 <Package className="mr-2 h-5 w-5 text-emerald-600" />
-                Ihr Kauf
+                {copy.yourPurchase}
               </h2>
             </div>
 
@@ -272,18 +418,18 @@ export default function PurchaseSuccessPage() {
                     {isPickup ? (
                       <span className="inline-flex items-center rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
                         <MapPin className="mr-1.5 h-3.5 w-3.5" />
-                        Abholung
+                        {copy.pickup}
                       </span>
                     ) : (
                       <span className="inline-flex items-center rounded-full bg-amber-100 px-3 py-1 text-sm font-medium text-amber-700">
                         <Truck className="mr-1.5 h-3.5 w-3.5" />
-                        Versand
+                        {copy.shipping}
                       </span>
                     )}
                     {isStripePayment && (
                       <span className="inline-flex items-center rounded-full bg-green-100 px-3 py-1 text-sm font-medium text-green-700">
                         <Shield className="mr-1.5 h-3.5 w-3.5" />
-                        Bezahlt
+                        {copy.paid}
                       </span>
                     )}
                   </div>
@@ -295,7 +441,7 @@ export default function PurchaseSuccessPage() {
                     CHF {(order.itemPrice + (order.shippingCost || 0)).toFixed(2)}
                   </div>
                   {order.shippingCost > 0 && (
-                    <p className="mt-1 text-xs text-gray-500">inkl. Versand</p>
+                    <p className="mt-1 text-xs text-gray-500">{copy.includingShipping}</p>
                   )}
                 </div>
               </div>
@@ -304,12 +450,12 @@ export default function PurchaseSuccessPage() {
               <div className="mt-6 rounded-xl bg-gray-50 p-4">
                 <div className="space-y-2 text-sm">
                   <div className="flex justify-between">
-                    <span className="text-gray-600">Artikelpreis</span>
+                    <span className="text-gray-600">{copy.itemPrice}</span>
                     <span className="font-medium">CHF {order.itemPrice.toFixed(2)}</span>
                   </div>
                   {order.shippingCost > 0 && (
                     <div className="flex justify-between">
-                      <span className="text-gray-600">Versandkosten</span>
+                      <span className="text-gray-600">{copy.shippingCost}</span>
                       <span className="font-medium">CHF {order.shippingCost.toFixed(2)}</span>
                     </div>
                   )}
@@ -317,7 +463,7 @@ export default function PurchaseSuccessPage() {
                   {/* So we don't show them here */}
                   <div className="border-t border-gray-200 pt-2">
                     <div className="flex justify-between font-semibold">
-                      <span className="text-gray-900">Gesamtbetrag</span>
+                      <span className="text-gray-900">{copy.totalAmount}</span>
                       <span className="text-emerald-600">
                         CHF {(order.itemPrice + (order.shippingCost || 0)).toFixed(2)}
                       </span>
@@ -333,7 +479,7 @@ export default function PurchaseSuccessPage() {
             <div className="border-b border-gray-100 bg-gray-50 px-6 py-4">
               <h2 className="flex items-center text-lg font-semibold text-gray-900">
                 <Clock className="mr-2 h-5 w-5 text-emerald-600" />
-                Nächste Schritte
+                {copy.nextSteps}
               </h2>
             </div>
 
@@ -346,7 +492,7 @@ export default function PurchaseSuccessPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">
-                      Verkäufer kontaktieren
+                      {copy.contactSeller}
                     </h3>
                     <p className="mt-1 text-sm text-gray-600">
                       {isPickup
@@ -364,7 +510,7 @@ export default function PurchaseSuccessPage() {
                     </div>
                     <div className="flex-1">
                       <h3 className="font-semibold text-gray-900">
-                        {isPickup ? 'Bei Abholung bezahlen' : 'Zahlung tätigen'}
+                        {isPickup ? copy.payOnPickup : copy.makePayment}
                       </h3>
                       <p className="mt-1 text-sm text-gray-600">
                         {isPickup
@@ -382,7 +528,7 @@ export default function PurchaseSuccessPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">
-                      {isPickup ? 'Artikel abholen' : 'Artikel erhalten'}
+                      {isPickup ? copy.pickUpItem : copy.receiveItem}
                     </h3>
                     <p className="mt-1 text-sm text-gray-600">
                       {isPickup
@@ -399,7 +545,7 @@ export default function PurchaseSuccessPage() {
                   </div>
                   <div className="flex-1">
                     <h3 className="font-semibold text-gray-900">
-                      Erhalt bestätigen & bewerten
+                      {copy.confirmAndRate}
                     </h3>
                     <p className="mt-1 text-sm text-gray-600">
                       Bestätigen Sie den Erhalt der Ware und hinterlassen Sie eine Bewertung für den Verkäufer.
@@ -413,8 +559,8 @@ export default function PurchaseSuccessPage() {
                 <div className="mt-6 flex items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 p-4">
                   <Calendar className="h-5 w-5 flex-shrink-0 text-amber-600" />
                   <p className="text-sm text-amber-800">
-                    <span className="font-semibold">Kontaktfrist:</span>{' '}
-                    Bitte kontaktieren Sie den Verkäufer bis {formatDate(order.contactDeadline)}.
+                    <span className="font-semibold">{copy.contactDeadline}:</span>{' '}
+                    {copy.contactSellerBy} {formatDate(order.contactDeadline)}.
                   </p>
                 </div>
               )}
@@ -431,10 +577,10 @@ export default function PurchaseSuccessPage() {
                   </div>
                   <div>
                     <h3 className="text-lg font-semibold text-emerald-900">
-                      Helvenda Zahlungsschutz aktiv
+                      {copy.paymentProtectionActive}
                     </h3>
                     <p className="mt-2 text-sm text-emerald-700">
-                      Ihr Geld wird sicher verwahrt, bis Sie den Erhalt der Ware bestätigen.
+                      {copy.protectionDesc}
                       Sie haben 72 Stunden Zeit, die Ware zu prüfen und bei Problemen einen Dispute zu eröffnen.
                     </p>
                     <ul className="mt-3 space-y-1.5 text-sm text-emerald-700">
@@ -464,20 +610,20 @@ export default function PurchaseSuccessPage() {
               className="flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 px-8 py-4 font-semibold text-white shadow-lg shadow-emerald-200 transition-all hover:from-emerald-700 hover:to-teal-700 hover:shadow-xl"
             >
               <MessageCircle className="h-5 w-5" />
-              Verkäufer kontaktieren
+              {copy.sellerContactBtn}
             </Link>
           </div>
 
           {/* Helpful Links */}
           <div className="mt-8 text-center">
             <p className="text-sm text-gray-500">
-              Haben Sie Fragen?{' '}
+              {copy.questions}{' '}
               <Link href="/help" className="font-medium text-primary-600 hover:underline">
-                Hilfe-Center
+                {copy.helpCenter}
               </Link>
               {' · '}
               <Link href="/contact" className="font-medium text-primary-600 hover:underline">
-                Support kontaktieren
+                {copy.contactSupport}
               </Link>
             </p>
           </div>

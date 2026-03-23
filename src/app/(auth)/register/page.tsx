@@ -89,6 +89,7 @@ export default function RegisterPage() {
           nickname: formData.nickname.trim(),
           email: formData.email.trim(),
           password: formData.password,
+          language: (localStorage.getItem('language') || 'de').toLowerCase(),
         }),
       })
 

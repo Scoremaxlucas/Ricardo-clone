@@ -29,6 +29,7 @@ import { Footer } from '@/components/layout/Footer'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { categoryConfig } from '@/data/categories'
 import { CategoryFields } from '@/components/forms/CategoryFieldsNew'
+import { buildSellUrl } from '@/lib/sell-navigation'
 import { canSell, getVerificationStatus } from '@/lib/verification'
 
 interface ProductForm {
@@ -94,7 +95,7 @@ export default function BulkUploadPage() {
       // Check if screen width is mobile (less than 768px)
       const isMobile = window.innerWidth < 768
       if (isMobile) {
-        router.push('/sell')
+        router.push(buildSellUrl({ returnTo: '/sell/bulk' }))
       }
     }
 
@@ -649,7 +650,7 @@ export default function BulkUploadPage() {
       <div className="mx-auto max-w-7xl px-4 py-8">
         <div className="mb-6">
           <Link
-            href="/sell"
+            href={buildSellUrl({ returnTo: '/sell/bulk' })}
             className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700"
           >
             ← {t.bulk.backToSelling}

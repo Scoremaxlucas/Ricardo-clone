@@ -10,7 +10,9 @@ import {
   ShieldCheck,
   UserCheck,
 } from 'lucide-react'
+import { sellEntryHref } from '@/lib/sell-navigation'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export interface OnboardingStatus {
   emailVerified: boolean
@@ -32,6 +34,7 @@ interface Step {
 }
 
 export function OnboardingProgress({ status }: { status: OnboardingStatus }) {
+  const pathname = usePathname()
   // Determine steps — payout setup is NOT part of the onboarding flow.
   // It is only required when a seller enables buyer protection (Käuferschutz) on a listing.
   const steps: Step[] = [
@@ -75,7 +78,7 @@ export function OnboardingProgress({ status }: { status: OnboardingStatus }) {
       description: 'Erstellen Sie Ihr erstes Angebot.',
       icon: <BadgeCheck className="h-5 w-5" />,
       status: status.identityApproved ? 'completed' : 'pending',
-      href: status.identityApproved ? '/sell' : undefined,
+      href: status.identityApproved ? sellEntryHref(pathname) : undefined,
       actionLabel: status.identityApproved ? 'Artikel anbieten' : undefined,
     },
   ]

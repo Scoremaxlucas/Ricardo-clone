@@ -1,6 +1,7 @@
 import { getPasswordResetEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getUserPreferredLanguage } from '@/lib/user-language'
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -78,7 +79,8 @@ export async function POST(request: NextRequest) {
 
     // Send email
     const userName = user.firstName || user.nickname || 'Benutzer'
-    const { subject, html, text } = getPasswordResetEmail(userName, resetUrl)
+    const locale = await getUserPreferredLanguage(user.id)
+    const { subject, html, text } = getPasswordResetEmail(userName, resetUrl, locale)
 
     const emailResult = await sendEmail({
       to: user.email,

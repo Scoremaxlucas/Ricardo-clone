@@ -1,5 +1,6 @@
 import { getEmailVerificationEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
+import { getUserPreferredLanguage } from '@/lib/user-language'
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
 
@@ -81,7 +82,8 @@ export async function POST(request: NextRequest) {
 
     // Versende E-Mail
     const userName = user.firstName || user.name || 'Benutzer'
-    const { subject, html, text } = getEmailVerificationEmail(userName, verificationUrl)
+    const locale = await getUserPreferredLanguage(user.id)
+    const { subject, html, text } = getEmailVerificationEmail(userName, verificationUrl, locale)
 
     const emailResult = await sendEmail({
       to: user.email,

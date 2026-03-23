@@ -6,6 +6,7 @@ import { getPaymentReceivedEmail as getPaymentReceivedEmailNew } from './email/t
 import { getDisputeOpenedEmail as getDisputeOpenedEmailNew } from './email/templates/dispute'
 import { getPriceOfferRejectedEmail as getPriceOfferRejectedEmailNew } from './email/templates/notifications'
 import { sanitizeEmailHtmlLinks, sanitizeEmailTextLinks, sanitizeEmailUrl } from './email/url-safety'
+import { normalizeLanguage, type AppLanguage } from './user-language'
 
 // Resend Client initialisieren (falls API Key vorhanden)
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
@@ -25,7 +26,20 @@ export function getEmailBaseUrl(): string {
   }
 
   // In Development: localhost verwenden
-  return process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'
+  const candidate = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3002'
+  try {
+    const parsed = new URL(candidate)
+    const host = parsed.hostname.toLowerCase()
+    if (host === 'localhost' || host === '127.0.0.1') {
+      return candidate
+    }
+    if (host === 'helvenda.ch' || host === 'www.helvenda.ch' || host.endsWith('.helvenda.ch')) {
+      return candidate
+    }
+    return 'https://helvenda.ch'
+  } catch {
+    return 'https://helvenda.ch'
+  }
 }
 
 // E-Mail-Transporter konfigurieren (für SMTP Fallback)
@@ -47,6 +61,117 @@ interface SendEmailOptions {
   useNoReply?: boolean // Wenn true, verwendet noreply@helvenda.ch statt support@helvenda.ch
   /** If provided, an unsubscribe link is automatically added to the email footer */
   userId?: string
+}
+
+type EmailLocale = AppLanguage
+
+function getVerificationCopy(locale: EmailLocale) {
+  const lang = normalizeLanguage(locale)
+  if (lang === 'fr') {
+    return {
+      subject: 'Bienvenue sur Helvenda - Veuillez confirmer votre e-mail',
+      title: 'Veuillez confirmer votre adresse e-mail',
+      greeting: 'Bonjour',
+      intro:
+        "Bienvenue sur Helvenda.ch ! Merci pour votre inscription sur la place de marché suisse sécurisée pour acheteurs et vendeurs.",
+      body:
+        "Pour activer votre compte et utiliser toutes les fonctionnalités — acheter, vendre et enchérir — veuillez confirmer votre adresse e-mail.",
+      button: "Confirmer l'e-mail",
+      note:
+        "<strong>Remarque :</strong> Ce lien de confirmation est valable <strong>48 heures</strong>. Ensuite, vous devrez vous inscrire à nouveau.",
+      footer: 'Helvenda.ch - La place de marché sécurisée pour acheteurs et vendeurs en Suisse',
+    }
+  }
+  if (lang === 'it') {
+    return {
+      subject: 'Benvenuto su Helvenda - Conferma la tua e-mail',
+      title: 'Conferma il tuo indirizzo e-mail',
+      greeting: 'Ciao',
+      intro:
+        "Benvenuto su Helvenda.ch! Grazie per la tua registrazione sul marketplace svizzero sicuro per acquirenti e venditori.",
+      body:
+        "Per attivare il tuo account e utilizzare tutte le funzioni — acquistare, vendere e fare offerte — conferma il tuo indirizzo e-mail.",
+      button: "Conferma l'e-mail",
+      note:
+        "<strong>Nota:</strong> Questo link di conferma è valido per <strong>48 ore</strong>. Dopo dovrai registrarti di nuovo.",
+      footer:
+        'Helvenda.ch - Il marketplace sicuro per acquirenti e venditori in Svizzera',
+    }
+  }
+  if (lang === 'en') {
+    return {
+      subject: 'Welcome to Helvenda - Please verify your email',
+      title: 'Please verify your email address',
+      greeting: 'Hello',
+      intro:
+        'Welcome to Helvenda.ch! Thank you for registering on the secure Swiss marketplace for buyers and sellers.',
+      body:
+        'To activate your account and use all features — buying, selling, and bidding — please verify your email address.',
+      button: 'Verify email',
+      note:
+        '<strong>Note:</strong> This verification link is valid for <strong>48 hours</strong>. After that, you need to register again.',
+      footer: 'Helvenda.ch - The secure marketplace for buyers and sellers in Switzerland',
+    }
+  }
+  return {
+    subject: 'Willkommen bei Helvenda - Bitte bestätigen Sie Ihre E-Mail',
+    title: 'Bitte bestätigen Sie Ihre E-Mail-Adresse',
+    greeting: 'Hallo',
+    intro:
+      'Herzlich willkommen bei Helvenda.ch! Vielen Dank für Ihre Registrierung auf dem sicheren Schweizer Marktplatz für Käufer und Verkäufer.',
+    body:
+      'Um Ihr Konto zu aktivieren und alle Funktionen nutzen zu können – wie das Kaufen, Verkaufen und Bieten auf Artikel – bestätigen Sie bitte Ihre E-Mail-Adresse.',
+    button: 'E-Mail bestätigen',
+    note:
+      '<strong>Hinweis:</strong> Dieser Bestätigungslink ist <strong>48 Stunden</strong> gültig. Danach müssen Sie sich erneut registrieren.',
+    footer: 'Helvenda.ch - Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz',
+  }
+}
+
+function getVerificationApprovedCopy(locale: EmailLocale) {
+  const lang = normalizeLanguage(locale)
+  if (lang === 'fr') {
+    return {
+      subject: 'Votre compte a été vérifié - Helvenda',
+      title: 'Votre vérification a été confirmée avec succès !',
+      greeting: 'Bonjour',
+      body: 'Votre compte a été vérifié et approuvé par notre équipe.',
+      features: ['Publier des articles à vendre', 'Participer aux enchères', 'Effectuer des achats immédiats'],
+      button: 'Vers votre profil',
+      footer: 'Helvenda.ch - La place de marché sécurisée pour acheteurs et vendeurs en Suisse',
+    }
+  }
+  if (lang === 'it') {
+    return {
+      subject: 'Il tuo account è stato verificato - Helvenda',
+      title: 'La tua verifica è stata confermata con successo!',
+      greeting: 'Ciao',
+      body: 'Il tuo account è stato controllato e approvato dal nostro team.',
+      features: ['Pubblicare articoli in vendita', 'Partecipare alle aste', 'Effettuare acquisti immediati'],
+      button: 'Vai al tuo profilo',
+      footer: 'Helvenda.ch - Il marketplace sicuro per acquirenti e venditori in Svizzera',
+    }
+  }
+  if (lang === 'en') {
+    return {
+      subject: 'Your account has been verified - Helvenda',
+      title: 'Your verification has been successfully confirmed!',
+      greeting: 'Hello',
+      body: 'Your account has been reviewed and approved by our team.',
+      features: ['List items for sale', 'Bid in auctions', 'Make instant purchases'],
+      button: 'Go to your profile',
+      footer: 'Helvenda.ch - The secure marketplace for buyers and sellers in Switzerland',
+    }
+  }
+  return {
+    subject: 'Ihr Konto wurde verifiziert - Helvenda',
+    title: 'Ihre Verifizierung wurde erfolgreich bestätigt!',
+    greeting: 'Hallo',
+    body: 'Ihr Konto wurde von unserem Team geprüft und freigegeben.',
+    features: ['Artikel zum Verkauf anbieten', 'Bei Auktionen mitbieten', 'Sofortkäufe tätigen'],
+    button: 'Zu Ihrem Profil',
+    footer: 'Helvenda.ch - Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz',
+  }
 }
 
 export async function sendEmail({ to, subject, html, text, useNoReply = false, userId }: SendEmailOptions) {
@@ -806,45 +931,49 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 // ============================================================================
 // E-MAIL VERIFICATION (Watch-Out Style)
 // ============================================================================
-export function getEmailVerificationEmail(userName: string, verificationUrl: string) {
-  const subject = 'Willkommen bei Helvenda - Bitte bestätigen Sie Ihre E-Mail'
+export function getEmailVerificationEmail(
+  userName: string,
+  verificationUrl: string,
+  locale: EmailLocale = 'de'
+) {
+  const copy = getVerificationCopy(locale)
+  const subject = copy.subject
 
   const html = getHelvendaEmailTemplate(
-    'Bitte bestätigen Sie Ihre E-Mail-Adresse',
-    `Hallo ${userName},`,
+    copy.title,
+    `${copy.greeting} ${userName},`,
     `
-      <p style="margin: 0 0 16px 0;">Herzlich willkommen bei Helvenda.ch! Vielen Dank für Ihre Registrierung auf dem sicheren Schweizer Marktplatz für Käufer und Verkäufer.</p>
+      <p style="margin: 0 0 16px 0;">${copy.intro}</p>
 
       <div style="background-color: #f0fdfa; border-left: 4px solid #0f766e; padding: 16px 20px; margin: 24px 0; border-radius: 0 8px 8px 0;">
         <p style="margin: 0; font-size: 14px; color: #134e4a;">
-          Um Ihr Konto zu aktivieren und alle Funktionen nutzen zu können – wie das Kaufen, Verkaufen und Bieten auf Artikel – bestätigen Sie bitte Ihre E-Mail-Adresse.
+          ${copy.body}
         </p>
       </div>
     `,
-    'E-Mail bestätigen',
+    copy.button,
     verificationUrl,
     {
       titleIcon: '📧',
-      noteText:
-        '<strong>Hinweis:</strong> Dieser Bestätigungslink ist <strong>48 Stunden</strong> gültig. Danach müssen Sie sich erneut registrieren.',
+      noteText: copy.note,
     }
   )
 
   const text = `
-Willkommen bei Helvenda - Bitte bestätigen Sie Ihre E-Mail
+${copy.subject}
 
-Hallo ${userName},
+${copy.greeting} ${userName},
 
-Herzlich willkommen bei Helvenda.ch! Vielen Dank für Ihre Registrierung auf dem sicheren Schweizer Marktplatz für Käufer und Verkäufer.
+${copy.intro}
 
-Um Ihr Konto zu aktivieren und alle Funktionen nutzen zu können – wie das Kaufen, Verkaufen und Bieten auf Artikel – bestätigen Sie bitte Ihre E-Mail-Adresse.
+${copy.body}
 
-E-Mail bestätigen: ${verificationUrl}
+${copy.button}: ${verificationUrl}
 
-Hinweis: Dieser Bestätigungslink ist 48 Stunden gültig. Danach müssen Sie sich erneut registrieren.
+${copy.note.replace(/<[^>]*>/g, '')}
 
 ---
-Helvenda.ch - Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz
+${copy.footer}
   `.trim()
 
   return { subject, html, text }
@@ -853,53 +982,58 @@ Helvenda.ch - Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz
 // ============================================================================
 // VERIFICATION APPROVAL (Watch-Out Style)
 // ============================================================================
-export function getVerificationApprovalEmail(userName: string, userEmail: string) {
+export function getVerificationApprovalEmail(
+  userName: string,
+  userEmail: string,
+  locale: EmailLocale = 'de'
+) {
   const baseUrl = getEmailBaseUrl()
   const profileUrl = `${baseUrl}/profile`
+  const copy = getVerificationApprovedCopy(locale)
 
-  const subject = `Ihr Konto wurde verifiziert - Helvenda`
+  const subject = copy.subject
 
   const html = getHelvendaEmailTemplate(
-    'Ihre Verifizierung wurde erfolgreich bestätigt!',
-    `Hallo ${userName},`,
+    copy.title,
+    `${copy.greeting} ${userName},`,
     `
       <div style="text-align: center; margin: 24px 0;">
         <div style="display: inline-block; width: 64px; height: 64px; background-color: #d1fae5; border-radius: 50%; line-height: 64px; font-size: 32px;">✓</div>
       </div>
 
-      <p style="margin: 0 0 20px 0; text-align: center;">Ihr Konto wurde von unserem Team geprüft und freigegeben.</p>
+      <p style="margin: 0 0 20px 0; text-align: center;">${copy.body}</p>
 
       <p style="margin: 0 0 12px 0;">Sie können nun alle Funktionen unserer Plattform nutzen:</p>
 
       <ul style="margin: 0 0 24px 20px; padding: 0; color: #4b5563;">
-        <li style="margin-bottom: 8px;">Artikel zum Verkauf anbieten</li>
-        <li style="margin-bottom: 8px;">Bei Auktionen mitbieten</li>
-        <li style="margin-bottom: 8px;">Sofortkäufe tätigen</li>
+        <li style="margin-bottom: 8px;">${copy.features[0]}</li>
+        <li style="margin-bottom: 8px;">${copy.features[1]}</li>
+        <li style="margin-bottom: 8px;">${copy.features[2]}</li>
       </ul>
     `,
-    'Zu Ihrem Profil',
+    copy.button,
     profileUrl,
     { titleIcon: '✓', showNote: true }
   )
 
   const text = `
-Ihr Konto wurde verifiziert - Helvenda
+${copy.subject}
 
-Hallo ${userName},
+${copy.greeting} ${userName},
 
-✓ Ihre Verifizierung wurde erfolgreich bestätigt!
+✓ ${copy.title}
 
-Ihr Konto wurde von unserem Team geprüft und freigegeben.
+${copy.body}
 
 Sie können nun alle Funktionen unserer Plattform nutzen:
-• Artikel zum Verkauf anbieten
-• Bei Auktionen mitbieten
-• Sofortkäufe tätigen
+• ${copy.features[0]}
+• ${copy.features[1]}
+• ${copy.features[2]}
 
-Zu Ihrem Profil: ${profileUrl}
+${copy.button}: ${profileUrl}
 
 ---
-Helvenda.ch - Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz
+${copy.footer}
   `.trim()
 
   return { subject, html, text }
@@ -3516,8 +3650,54 @@ Helvenda.ch - Der sichere Marktplatz für Käufer und Verkäufer in der Schweiz
 // =====================================================
 
 // === PASSWORT ZURÜCKSETZEN ===
-export function getPasswordResetEmail(userName: string, resetUrl: string) {
-  const subject = '🔐 Passwort zurücksetzen - Helvenda'
+export function getPasswordResetEmail(
+  userName: string,
+  resetUrl: string,
+  locale: EmailLocale = 'de'
+) {
+  const lang = normalizeLanguage(locale)
+  const subject =
+    lang === 'fr'
+      ? '🔐 Réinitialiser le mot de passe - Helvenda'
+      : lang === 'it'
+        ? '🔐 Reimposta la password - Helvenda'
+        : lang === 'en'
+          ? '🔐 Reset your password - Helvenda'
+          : '🔐 Passwort zurücksetzen - Helvenda'
+
+  if (lang !== 'de') {
+    const copy =
+      lang === 'fr'
+        ? {
+            title: 'Réinitialiser le mot de passe',
+            greeting: `Bonjour ${userName},`,
+            body: 'Vous avez demandé la réinitialisation de votre mot de passe. Cliquez sur le bouton ci-dessous pour définir un nouveau mot de passe.',
+            button: 'Réinitialiser le mot de passe',
+            note: 'Ce lien est valable pendant 1 heure.',
+          }
+        : lang === 'it'
+          ? {
+              title: 'Reimposta password',
+              greeting: `Ciao ${userName},`,
+              body: 'Hai richiesto di reimpostare la password. Clicca sul pulsante qui sotto per impostarne una nuova.',
+              button: 'Reimposta password',
+              note: 'Questo link è valido per 1 ora.',
+            }
+          : {
+              title: 'Reset your password',
+              greeting: `Hello ${userName},`,
+              body: 'You requested a password reset. Click the button below to set a new password.',
+              button: 'Reset password',
+              note: 'This link is valid for 1 hour.',
+            }
+
+    const html = getHelvendaEmailTemplate(copy.title, copy.greeting, `<p>${copy.body}</p>`, copy.button, resetUrl, {
+      titleIcon: '🔐',
+      noteText: copy.note,
+    })
+    const text = `${subject}\n\n${copy.greeting}\n\n${copy.body}\n\n${copy.button}: ${resetUrl}\n\n${copy.note}`
+    return { subject, html, text }
+  }
 
   const html = `
 <!DOCTYPE html>
@@ -3678,14 +3858,66 @@ Diese E-Mail wurde automatisch von Helvenda.ch gesendet.
 }
 
 // === PASSWORT GEÄNDERT BESTÄTIGUNG ===
-export function getPasswordChangedEmail(userName: string, ipAddress?: string, device?: string) {
+export function getPasswordChangedEmail(
+  userName: string,
+  ipAddress?: string,
+  device?: string,
+  locale: EmailLocale = 'de'
+) {
+  const lang = normalizeLanguage(locale)
+  const dateLocale = lang === 'fr' ? 'fr-CH' : lang === 'it' ? 'it-CH' : lang === 'en' ? 'en-CH' : 'de-CH'
   const baseUrl = getEmailBaseUrl()
-  const subject = 'Passwort erfolgreich geändert - Helvenda'
+  const subject =
+    lang === 'fr'
+      ? 'Mot de passe modifié avec succès - Helvenda'
+      : lang === 'it'
+        ? 'Password modificata con successo - Helvenda'
+        : lang === 'en'
+          ? 'Password changed successfully - Helvenda'
+          : 'Passwort erfolgreich geändert - Helvenda'
+
+  if (lang !== 'de') {
+    const copy =
+      lang === 'fr'
+        ? {
+            title: 'Mot de passe modifié',
+            greeting: `Bonjour ${userName},`,
+            body: 'Votre mot de passe a été modifié avec succès.',
+            security: "Si vous n'êtes pas à l'origine de ce changement, contactez immédiatement support@helvenda.ch.",
+            button: 'Voir mon compte',
+          }
+        : lang === 'it'
+          ? {
+              title: 'Password modificata',
+              greeting: `Ciao ${userName},`,
+              body: 'La tua password è stata modificata con successo.',
+              security: 'Se non sei stato tu, contatta immediatamente support@helvenda.ch.',
+              button: 'Vai al mio account',
+            }
+          : {
+              title: 'Password changed',
+              greeting: `Hello ${userName},`,
+              body: 'Your password has been changed successfully.',
+              security: "If this wasn't you, contact support@helvenda.ch immediately.",
+              button: 'Open my account',
+            }
+    const baseUrl = getEmailBaseUrl()
+    const html = getHelvendaEmailTemplate(
+      copy.title,
+      copy.greeting,
+      `<p>${copy.body}</p><p>${copy.security}</p>`,
+      copy.button,
+      `${baseUrl}/profile`,
+      { titleIcon: '✅' }
+    )
+    const text = `${subject}\n\n${copy.greeting}\n\n${copy.body}\n${copy.security}`
+    return { subject, html, text }
+  }
 
   const changeInfo = `
     <div style="background-color: #f3f4f6; padding: 16px 20px; margin: 20px 0; border-radius: 8px;">
       <p style="margin: 0; font-size: 14px; color: #374151;">
-        <strong>📅 Zeitpunkt:</strong> ${new Date().toLocaleString('de-CH', { dateStyle: 'full', timeStyle: 'short' })}<br>
+        <strong>📅 Zeitpunkt:</strong> ${new Date().toLocaleString(dateLocale, { dateStyle: 'full', timeStyle: 'short' })}<br>
         ${ipAddress ? `<strong>🌐 IP-Adresse:</strong> ${ipAddress}<br>` : ''}
         ${device ? `<strong>📱 Gerät:</strong> ${device}` : ''}
       </p>
@@ -3719,7 +3951,7 @@ Hallo ${userName},
 
 Ihr Passwort wurde erfolgreich geändert.
 
-Zeitpunkt: ${new Date().toLocaleString('de-CH', { dateStyle: 'full', timeStyle: 'short' })}
+Zeitpunkt: ${new Date().toLocaleString(dateLocale, { dateStyle: 'full', timeStyle: 'short' })}
 ${ipAddress ? `IP-Adresse: ${ipAddress}` : ''}
 ${device ? `Gerät: ${device}` : ''}
 
@@ -4880,9 +5112,47 @@ Ihr Helvenda-Team
 export function getEmailChangeVerificationEmail(
   userName: string,
   newEmail: string,
-  confirmationUrl: string
+  confirmationUrl: string,
+  locale: EmailLocale = 'de'
 ) {
-  const subject = 'Bestätigen Sie Ihre neue E-Mail-Adresse - Helvenda'
+  const lang = normalizeLanguage(locale)
+  const subject =
+    lang === 'fr'
+      ? 'Confirmez votre nouvelle adresse e-mail - Helvenda'
+      : lang === 'it'
+        ? 'Conferma il tuo nuovo indirizzo e-mail - Helvenda'
+        : lang === 'en'
+          ? 'Confirm your new email address - Helvenda'
+          : 'Bestätigen Sie Ihre neue E-Mail-Adresse - Helvenda'
+
+  if (lang !== 'de') {
+    const copy =
+      lang === 'fr'
+        ? {
+            title: 'Confirmez votre nouvelle adresse e-mail',
+            greeting: `Bonjour ${userName},`,
+            body: `Vous avez demandé de modifier votre adresse e-mail vers ${newEmail}.`,
+            button: 'Confirmer la nouvelle adresse',
+          }
+        : lang === 'it'
+          ? {
+              title: 'Conferma il nuovo indirizzo e-mail',
+              greeting: `Ciao ${userName},`,
+              body: `Hai richiesto di cambiare il tuo indirizzo e-mail in ${newEmail}.`,
+              button: 'Conferma nuovo indirizzo',
+            }
+          : {
+              title: 'Confirm your new email address',
+              greeting: `Hello ${userName},`,
+              body: `You requested to change your email address to ${newEmail}.`,
+              button: 'Confirm new address',
+            }
+    const html = getHelvendaEmailTemplate(copy.title, copy.greeting, `<p>${copy.body}</p>`, copy.button, confirmationUrl, {
+      titleIcon: '📧',
+    })
+    const text = `${subject}\n\n${copy.greeting}\n\n${copy.body}\n\n${copy.button}: ${confirmationUrl}`
+    return { subject, html, text }
+  }
 
   const html = `
 <!DOCTYPE html>
@@ -4979,9 +5249,44 @@ Ihr Helvenda-Team
 export function getEmailChangedNotificationEmail(
   userName: string,
   oldEmail: string,
-  newEmail: string
+  newEmail: string,
+  locale: EmailLocale = 'de'
 ) {
-  const subject = 'Ihre E-Mail-Adresse wurde geändert - Helvenda'
+  const lang = normalizeLanguage(locale)
+  const subject =
+    lang === 'fr'
+      ? 'Votre adresse e-mail a été modifiée - Helvenda'
+      : lang === 'it'
+        ? 'Il tuo indirizzo e-mail è stato modificato - Helvenda'
+        : lang === 'en'
+          ? 'Your email address has been changed - Helvenda'
+          : 'Ihre E-Mail-Adresse wurde geändert - Helvenda'
+
+  if (lang !== 'de') {
+    const copy =
+      lang === 'fr'
+        ? {
+            title: 'Adresse e-mail modifiée',
+            greeting: `Bonjour ${userName},`,
+            body: `Votre adresse e-mail a été modifiée de ${oldEmail} vers ${newEmail}.`,
+          }
+        : lang === 'it'
+          ? {
+              title: 'Indirizzo e-mail modificato',
+              greeting: `Ciao ${userName},`,
+              body: `Il tuo indirizzo e-mail è stato modificato da ${oldEmail} a ${newEmail}.`,
+            }
+          : {
+              title: 'Email address changed',
+              greeting: `Hello ${userName},`,
+              body: `Your email address has been changed from ${oldEmail} to ${newEmail}.`,
+            }
+    const html = getHelvendaEmailTemplate(copy.title, copy.greeting, `<p>${copy.body}</p>`, undefined, undefined, {
+      titleIcon: 'ℹ️',
+    })
+    const text = `${subject}\n\n${copy.greeting}\n\n${copy.body}`
+    return { subject, html, text }
+  }
 
   const html = `
 <!DOCTYPE html>

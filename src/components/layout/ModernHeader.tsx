@@ -6,9 +6,12 @@ import { useSession } from 'next-auth/react'
 import { Search, Bell, Plus, Menu, Heart, Gavel } from 'lucide-react'
 import { ModernInput } from '@/components/ui/ModernInput'
 import { ModernButton } from '@/components/ui/ModernButton'
+import { sellEntryHref } from '@/lib/sell-navigation'
+import { usePathname } from 'next/navigation'
 
 export function ModernHeader() {
   const { data: session } = useSession()
+  const pathname = usePathname()
   const [searchQuery, setSearchQuery] = useState('')
   const [favoritesCount, setFavoritesCount] = useState(0)
 
@@ -120,7 +123,7 @@ export function ModernHeader() {
               <ModernButton
                 variant="primary"
                 size="md"
-                onClick={() => (window.location.href = '/sell')}
+                onClick={() => (window.location.href = sellEntryHref(pathname))}
                 className="hidden items-center gap-2 sm:flex"
               >
                 <Plus className="h-4 w-4" />

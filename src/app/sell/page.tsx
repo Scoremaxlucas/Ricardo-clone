@@ -15,6 +15,12 @@ import {
 } from '@/components/wizard'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { clearDraft, clearOtherUserDrafts } from '@/lib/draft-storage'
+import {
+  buildSellUrl,
+  parseSellReturnTo,
+  sellBackTarget,
+  SELL_RETURN_QUERY,
+} from '@/lib/sell-navigation'
 import { compressDataUrl } from '@/lib/image-compression'
 import { OnboardingProgress, type OnboardingStatus } from '@/components/seller/OnboardingProgress'
 import {
@@ -27,7 +33,7 @@ import { useSession } from 'next-auth/react'
 import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Suspense, useCallback, useEffect, useRef, useState } from 'react'
+import { Suspense, useCallback, useEffect, useMemo, useRef, useState } from 'react'
 import toast from 'react-hot-toast'
 
 // Lazy load AIDetection to avoid bundling TensorFlow.js on every page
@@ -49,10 +55,18 @@ const WIZARD_STEPS = [
   { id: 'review', title: 'Überprüfung', shortTitle: 'Fertig' },
 ]
 
+/** Header scrolls with page on /sell (non-sticky); small padding is enough */
+const WIZARD_SCROLL_PADDING = 12
+
 function SellPageContent() {
   const { data: session, status } = useSession()
   const router = useRouter()
   const searchParams = useSearchParams()
+  const validReturnTo = useMemo(
+    () => parseSellReturnTo(searchParams.get(SELL_RETURN_QUERY)),
+    [searchParams]
+  )
+  const sellBack = useMemo(() => sellBackTarget(validReturnTo), [validReturnTo])
   const { t } = useLanguage()
   const formRef = useRef<HTMLFormElement>(null)
   const typingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null)
@@ -254,10 +268,8 @@ function SellPageContent() {
       // Find the form element (wizard content)
       const formElement = formRef.current
       if (formElement) {
-        // Calculate offset to show form with some padding
-        const headerOffset = 80 // Account for sticky header if any
         const elementPosition = formElement.getBoundingClientRect().top
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+        const offsetPosition = elementPosition + window.pageYOffset - WIZARD_SCROLL_PADDING
 
         window.scrollTo({
           top: Math.max(0, offsetPosition),
@@ -266,9 +278,8 @@ function SellPageContent() {
       } else {
         // Fallback: scroll to wizard container
         if (wizardContainerRef.current) {
-          const headerOffset = 60
           const elementPosition = wizardContainerRef.current.getBoundingClientRect().top
-          const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+          const offsetPosition = elementPosition + window.pageYOffset - WIZARD_SCROLL_PADDING
           window.scrollTo({
             top: Math.max(0, offsetPosition),
             behavior: 'smooth',
@@ -286,7 +297,7 @@ function SellPageContent() {
       // Always allow backward navigation
       if (clampedStep < currentStep) {
         setCurrentStep(clampedStep)
-        router.push(`/sell?step=${clampedStep}`, { scroll: false })
+        router.push(buildSellUrl({ step: clampedStep, returnTo: validReturnTo }), { scroll: false })
         scrollToWizardContent()
         return
       }
@@ -306,16 +317,16 @@ function SellPageContent() {
       const maxAllowed = computeMaxAllowedStep()
       if (clampedStep > maxAllowed) {
         setCurrentStep(maxAllowed)
-        router.push(`/sell?step=${maxAllowed}`, { scroll: false })
+        router.push(buildSellUrl({ step: maxAllowed, returnTo: validReturnTo }), { scroll: false })
         scrollToWizardContent()
         return
       }
 
       setCurrentStep(clampedStep)
-      router.push(`/sell?step=${clampedStep}`, { scroll: false })
+      router.push(buildSellUrl({ step: clampedStep, returnTo: validReturnTo }), { scroll: false })
       scrollToWizardContent()
     },
-    [currentStep, router, selectedCategory, formData, scrollToWizardContent]
+    [currentStep, router, selectedCategory, formData, scrollToWizardContent, validReturnTo]
   )
 
   const nextStep = async () => {
@@ -421,9 +432,9 @@ function SellPageContent() {
     setLastSavedAt(new Date(draft.updatedAt))
     setShowDraftPrompt(false)
     setPendingDraft(null)
-    router.push(`/sell?step=${draft.currentStep}`)
+    router.push(buildSellUrl({ step: draft.currentStep, returnTo: validReturnTo }))
     toast.success('Entwurf wiederhergestellt', { icon: '📝' })
-  }, [pendingDraft, router])
+  }, [pendingDraft, router, validReturnTo])
 
   // Handler: Entwurf verwerfen (löscht den Entwurf permanent)
   const handleStartFresh = useCallback(async () => {
@@ -469,9 +480,8 @@ function SellPageContent() {
       // Scroll to form element so user sees the content directly
       const formElement = formRef.current
       if (formElement) {
-        const headerOffset = 80
         const elementPosition = formElement.getBoundingClientRect().top
-        const offsetPosition = elementPosition + window.pageYOffset - headerOffset
+        const offsetPosition = elementPosition + window.pageYOffset - WIZARD_SCROLL_PADDING
         window.scrollTo({
           top: Math.max(0, offsetPosition),
           behavior: 'smooth',
@@ -534,7 +544,13 @@ function SellPageContent() {
             setShowDraftRestored(true)
             setLastSavedAt(new Date(draft.updatedAt))
             hasActiveDraftRef.current = true
-            router.push(`/sell?step=${draft.currentStep}`)
+            router.push(
+              buildSellUrl({
+                step: draft.currentStep,
+                draft: urlDraftId,
+                returnTo: validReturnTo,
+              })
+            )
             return
           }
         } catch (error) {
@@ -575,7 +591,7 @@ function SellPageContent() {
             setShowDraftRestored(true)
             setLastSavedAt(new Date(draft.updatedAt))
             hasActiveDraftRef.current = true
-            router.push(`/sell?step=${draft.currentStep}`)
+            router.push(buildSellUrl({ step: draft.currentStep, returnTo: validReturnTo }))
             return
           }
         } catch (error) {
@@ -648,7 +664,7 @@ function SellPageContent() {
 
     restoreDraft()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [(session?.user as { id?: string })?.id]) // Only depend on user ID, not the whole session object
+  }, [(session?.user as { id?: string })?.id, validReturnTo]) // returnTo preserved when restoring drafts
 
   // Auto-save on changes (debounced) - Server-seitig
   // ONLY save when user has meaningful content AND hasn't just published
@@ -753,6 +769,23 @@ function SellPageContent() {
     }
     loadVerificationStatus()
   }, [(session?.user as { id?: string })?.id])
+
+  /** Scroll wizard into view so the site header scrolls away; header is non-sticky on /sell */
+  const didInitialWizardScrollRef = useRef(false)
+  useEffect(() => {
+    if (status !== 'authenticated' || isVerified !== true) return
+    if (didInitialWizardScrollRef.current) return
+    didInitialWizardScrollRef.current = true
+    const id = requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        const el = wizardContainerRef.current
+        if (!el) return
+        const top = el.getBoundingClientRect().top + window.scrollY - WIZARD_SCROLL_PADDING
+        window.scrollTo({ top: Math.max(0, top), behavior: 'auto' })
+      })
+    })
+    return () => cancelAnimationFrame(id)
+  }, [status, isVerified])
 
   // Category detection handler
   const handleCategoryDetected = async (
@@ -1423,15 +1456,15 @@ function SellPageContent() {
       {/* Wizard container with min-height to prevent global footer interference */}
       <div
         ref={wizardContainerRef}
-        className="mx-auto min-h-[calc(100vh-200px)] max-w-4xl px-4 py-4 md:py-8"
+        className="mx-auto flex min-h-[100dvh] max-w-4xl flex-col justify-center px-4 py-6 md:py-10"
       >
         {/* Back link */}
         <div className="mb-6">
           <Link
-            href="/my-watches"
+            href={sellBack.href}
             className="inline-flex items-center text-sm font-medium text-primary-600 hover:text-primary-700"
           >
-            ← Zurück zu Mein Verkaufen
+            ← {sellBack.label}
           </Link>
         </div>
 

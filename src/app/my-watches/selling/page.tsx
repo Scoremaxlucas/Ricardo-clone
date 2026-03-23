@@ -4,6 +4,7 @@ import { SellerListingsClient } from '@/components/seller'
 import { OnboardingProgress, type OnboardingStatus } from '@/components/seller/OnboardingProgress'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import { Package, Plus, Receipt, Tag, X } from 'lucide-react'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
@@ -90,7 +91,7 @@ export default async function MySellingPage() {
 
             {/* Primary CTA */}
             <Link
-              href="/sell"
+              href={sellLinkWithReturn('/my-watches/selling')}
               className="inline-flex items-center justify-center gap-2 rounded-xl bg-primary-600 px-5 py-3 font-semibold text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md"
             >
               <Plus className="h-5 w-5" />

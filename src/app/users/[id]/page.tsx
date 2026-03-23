@@ -22,6 +22,7 @@ import {
 } from 'lucide-react'
 import { useSession } from 'next-auth/react'
 import Link from 'next/link'
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
 import toast from 'react-hot-toast'
@@ -525,7 +526,7 @@ export default function PublicProfilePage() {
                         </p>
                         {isOwnProfile ? (
                           <Link
-                            href="/sell"
+                            href={sellLinkWithReturn(`/users/${params.id}`)}
                             className="inline-flex items-center rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow"
                           >
                             <Package className="h-4 w-4" />

@@ -3,6 +3,7 @@
 import { AlertTriangle, Loader2, Search, Trash2 } from 'lucide-react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
+import { buildSellUrl } from '@/lib/sell-navigation'
 import { toast } from 'react-hot-toast'
 import { ListingCardProps } from './ListingCard'
 import { ListingsGrid } from './ListingsGrid'
@@ -193,7 +194,7 @@ export function SellerListingsClient({ initialTab = 'active' }: SellerListingsCl
         toast.success('Entwurf erstellt')
         // Save draft ID for restoration and redirect
         localStorage.setItem('helvenda_restore_draft_id', data.draftId)
-        router.push('/sell?step=1')
+        router.push(buildSellUrl({ step: 1, returnTo: '/my-watches/selling' }))
       } else {
         toast.error(data.error || 'Fehler beim Erstellen des Entwurfs')
       }

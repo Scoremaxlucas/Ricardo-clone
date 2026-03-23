@@ -13,6 +13,7 @@ import { SearchResultsSkeleton } from '@/components/ui/Skeleton'
 
 import { useLanguage } from '@/contexts/LanguageContext'
 import { getBrandsForCategory, searchBrands } from '@/data/brands'
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import { ChevronDown, ChevronLeft, ChevronRight, Filter, Package, Search, X } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
@@ -1178,7 +1179,7 @@ function SearchPageContent() {
                   {t.search.browseCategories}
                 </Link>
                 <Link
-                  href="/sell"
+                  href={sellLinkWithReturn('/search')}
                   className="rounded-lg bg-primary-600 px-6 py-3 text-sm font-medium text-white hover:bg-primary-700 md:text-base"
                 >
                   {t.search.sellFirstItem}

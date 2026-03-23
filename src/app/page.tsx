@@ -5,6 +5,7 @@ import { HomeClient } from '@/components/home/HomeClient'
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { getFeaturedProducts } from '@/lib/products'
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import type { Metadata } from 'next'
 import Link from 'next/link'
 import { Suspense } from 'react'
@@ -89,7 +90,7 @@ export default async function Home() {
               </p>
               <div className="mt-4">
                 <Link
-                  href="/sell"
+                  href={sellLinkWithReturn('/')}
                   className="inline-flex items-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-emerald-700"
                 >
                   Jetzt verkaufen

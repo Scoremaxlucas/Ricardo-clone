@@ -1,6 +1,7 @@
 import { authOptions } from '@/lib/auth'
 import { getEmailBaseUrl, getEmailChangeVerificationEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
+import { getUserPreferredLanguage } from '@/lib/user-language'
 import crypto from 'crypto'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
@@ -142,10 +143,12 @@ export async function POST(request: NextRequest) {
 
     // E-Mail senden
     const userName = user.firstName || user.name || user.nickname || 'Benutzer'
+    const locale = await getUserPreferredLanguage(user.id)
     const emailContent = getEmailChangeVerificationEmail(
       userName,
       normalizedNewEmail,
-      confirmationUrl
+      confirmationUrl,
+      locale
     )
 
     try {

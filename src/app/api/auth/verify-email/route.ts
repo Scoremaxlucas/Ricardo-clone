@@ -1,5 +1,6 @@
 import { getVerificationApprovalEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
+import { getUserPreferredLanguage } from '@/lib/user-language'
 import { NextRequest, NextResponse } from 'next/server'
 
 export async function GET(request: NextRequest) {
@@ -49,7 +50,8 @@ export async function GET(request: NextRequest) {
     // Send verification approval email (the preferred email template)
     const userName = user.firstName || user.nickname || 'Benutzer'
     try {
-      const { subject, html, text } = getVerificationApprovalEmail(userName, user.email)
+      const locale = await getUserPreferredLanguage(user.id)
+      const { subject, html, text } = getVerificationApprovalEmail(userName, user.email, locale)
       await sendEmail({
         to: user.email,
         subject,

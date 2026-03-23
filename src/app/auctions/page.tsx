@@ -7,6 +7,7 @@ import { ArticleSkeleton } from '@/components/ui/ArticleSkeleton'
 import { useLanguage } from '@/contexts/LanguageContext'
 import { Gavel, Grid3x3, List } from 'lucide-react'
 import { useSession } from 'next-auth/react'
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import Link from 'next/link'
 import { useEffect, useState } from 'react'
 
@@ -225,7 +226,7 @@ export default function AuctionsPage() {
             <h2 className="mb-2 text-lg font-semibold text-gray-900 md:text-xl">Keine Auktionen gefunden</h2>
             <p className="mb-4 text-sm text-gray-600 md:mb-6 md:text-base">Aktuell gibt es keine laufenden Auktionen.</p>
             <Link
-              href="/sell"
+              href={sellLinkWithReturn('/auctions')}
               className="inline-block rounded-lg bg-primary-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-primary-700 md:px-6 md:py-3 md:text-base"
             >
               Erste Auktion erstellen

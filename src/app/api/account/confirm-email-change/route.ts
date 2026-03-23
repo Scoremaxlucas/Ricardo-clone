@@ -1,5 +1,6 @@
 import { getEmailChangedNotificationEmail, sendEmail } from '@/lib/email'
 import { prisma } from '@/lib/prisma'
+import { getUserPreferredLanguage } from '@/lib/user-language'
 import { NextRequest, NextResponse } from 'next/server'
 
 export const dynamic = 'force-dynamic'
@@ -131,7 +132,13 @@ export async function GET(request: NextRequest) {
     if (oldEmail) {
       try {
         const userName = user.firstName || user.name || user.nickname || 'Benutzer'
-        const notificationEmail = getEmailChangedNotificationEmail(userName, oldEmail, newEmail)
+        const locale = await getUserPreferredLanguage(user.id)
+        const notificationEmail = getEmailChangedNotificationEmail(
+          userName,
+          oldEmail,
+          newEmail,
+          locale
+        )
         await sendEmail({
           to: oldEmail,
           subject: notificationEmail.subject,

@@ -46,8 +46,9 @@ import {
   X,
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
+import { sellEntryHref } from '@/lib/sell-navigation'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
+import { usePathname, useRouter } from 'next/navigation'
 import { memo, useCallback, useEffect, useRef, useState, useTransition } from 'react'
 import { CategorySidebarNew } from './CategorySidebarNew'
 
@@ -66,6 +67,9 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   // === CRITICAL STATE (sofort benötigt) ===
   const { data: session, status } = useSession()
   const router = useRouter()
+  const pathname = usePathname() ?? ''
+  const sellFromHere = sellEntryHref(pathname)
+  const isSellWizardRoute = pathname.startsWith('/sell')
   const { language, setLanguage, t } = useLanguage()
   const [isPending, startTransition] = useTransition()
 
@@ -252,7 +256,11 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
     deferredData.nickname || (session?.user as any)?.nickname || session?.user?.name || 'Benutzer'
 
   return (
-    <header id="navigation" className="sticky top-0 z-50 border-b bg-white shadow-md" tabIndex={-1}>
+    <header
+      id="navigation"
+      className={`z-50 border-b bg-white shadow-md ${isSellWizardRoute ? 'relative' : 'sticky top-0'}`}
+      tabIndex={-1}
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         {/* MOBILE HEADER - Ricardo-Style */}
         <div className="md:hidden">
@@ -412,7 +420,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 onMouseLeave={() => handleMenuLeave(setIsSellMenuOpen)}
               >
                 <Link
-                  href="/sell"
+                  href={sellFromHere}
                   prefetch={true}
                   className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.sell}
@@ -432,7 +440,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                       style={{ pointerEvents: 'auto' }}
                     >
                       <Link
-                        href="/sell"
+                        href={sellFromHere}
                         prefetch={true}
                         onClick={() => setIsSellMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
@@ -872,7 +880,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   {/* CTA Button - Ricardo style with + icon */}
                   <div className="px-4 py-4">
                     <Link
-                      href="/sell"
+                      href={sellFromHere}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-5 py-3.5 text-sm font-semibold uppercase tracking-wide text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow-md active:scale-[0.98]"
                     >

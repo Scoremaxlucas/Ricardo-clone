@@ -2,6 +2,7 @@ import { getEmailVerificationEmail, sendEmail } from '@/lib/email'
 import { shouldShowDetailedErrors } from '@/lib/env'
 import { prisma } from '@/lib/prisma'
 import { checkRateLimit } from '@/lib/rate-limit'
+import { getUserPreferredLanguage, normalizeLanguage, setUserPreferredLanguage } from '@/lib/user-language'
 import bcrypt from 'bcryptjs'
 import crypto from 'crypto'
 import { NextRequest, NextResponse } from 'next/server'
@@ -44,7 +45,7 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    const { firstName, lastName, nickname, email, password, marketingConsent } = await request.json()
+    const { firstName, lastName, nickname, email, password, marketingConsent, language } = await request.json()
 
     // Normalize and trim all input fields first
     const trimmedFirstName = firstName?.trim() || ''
@@ -243,6 +244,11 @@ export async function POST(request: NextRequest) {
     try {
       user = await createUserWithFallback()
       userCreated = true // Mark that user was created
+      try {
+        await setUserPreferredLanguage(user.id, normalizeLanguage(language))
+      } catch {
+        // Non-critical: keep registration successful even if language persistence fails.
+      }
     } catch (createError: any) {
       console.error('[register] All user creation attempts failed:', {
         code: createError?.code,
@@ -258,7 +264,8 @@ export async function POST(request: NextRequest) {
     const userName = trimmedFirstName || trimmedNickname || 'Benutzer'
 
     try {
-      const { subject, html, text } = getEmailVerificationEmail(userName, verificationUrl)
+      const locale = await getUserPreferredLanguage(user.id)
+      const { subject, html, text } = getEmailVerificationEmail(userName, verificationUrl, locale)
       await sendEmail({
         to: normalizedEmail,
         subject,

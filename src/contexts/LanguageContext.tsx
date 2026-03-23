@@ -6,6 +6,7 @@ import { subcategories_de } from '@/translations/subcategories-de'
 import { subcategories_en } from '@/translations/subcategories-en'
 import { subcategories_fr } from '@/translations/subcategories-fr'
 import { subcategories_it } from '@/translations/subcategories-it'
+import { useSession } from 'next-auth/react'
 
 const subcategoryTranslations = {
   de: subcategories_de,
@@ -25,6 +26,7 @@ const LanguageContext = createContext<LanguageContextType | undefined>(undefined
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [language, setLanguageState] = useState<Language>('de')
+  const { data: session, status } = useSession()
 
   // Load language from localStorage on mount
   useEffect(() => {
@@ -36,11 +38,38 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     }
   }, [])
 
+  // Sync language from server when authenticated (used for locale-aware emails).
+  useEffect(() => {
+    const syncFromServer = async () => {
+      if (status !== 'authenticated' || !(session?.user as { id?: string })?.id) return
+      try {
+        const res = await fetch('/api/user/language')
+        if (!res.ok) return
+        const data = await res.json()
+        const serverLanguage = data?.language as Language | undefined
+        if (serverLanguage && translations[serverLanguage] && serverLanguage !== language) {
+          setLanguageState(serverLanguage)
+          localStorage.setItem('language', serverLanguage)
+        }
+      } catch {
+        // Non-fatal: local language still works.
+      }
+    }
+    syncFromServer()
+  }, [status, (session?.user as { id?: string })?.id])
+
   // Save language to localStorage when it changes
   const setLanguage = (lang: Language) => {
     setLanguageState(lang)
     if (typeof window !== 'undefined') {
       localStorage.setItem('language', lang)
+    }
+    if (status === 'authenticated' && (session?.user as { id?: string })?.id) {
+      fetch('/api/user/language', {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ language: lang }),
+      }).catch(() => {})
     }
   }
 

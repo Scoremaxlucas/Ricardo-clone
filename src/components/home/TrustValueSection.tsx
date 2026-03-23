@@ -13,6 +13,7 @@
  */
 
 import { ChevronRight, MessageCircle, Shield, ShieldCheck, Zap } from 'lucide-react'
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import Link from 'next/link'
 
 const TRUST_ITEMS = [
@@ -38,7 +39,7 @@ const TRUST_ITEMS = [
     title: 'Schnell eingestellt',
     subtitle: 'In wenigen Minuten online',
     icon: Zap,
-    href: '/sell',
+    href: sellLinkWithReturn('/'),
   },
 ]
 

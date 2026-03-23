@@ -1,7 +1,9 @@
 'use client'
 
 import { AlertTriangle, Clock, Copy, Edit, Eye, Gavel, Package, ShoppingBag, Trash2 } from 'lucide-react'
+import { buildSellUrl } from '@/lib/sell-navigation'
 import Link from 'next/link'
+import { usePathname } from 'next/navigation'
 
 export type ListingStatus = 'active' | 'ended' | 'sold' | 'draft'
 
@@ -70,6 +72,9 @@ export function ListingCard({
   onDuplicate,
   onSaleClick,
 }: ListingCardProps) {
+  const pathname = usePathname() ?? '/my-watches/selling'
+  const returnToPath = pathname.startsWith('/sell') ? '/my-watches/selling' : pathname
+  const draftSellHref = buildSellUrl({ draft: id, returnTo: returnToPath })
   const mainImage = images[0] || null
   const articleUrl = `/products/${id}`
   const displayPrice = highestBid || price
@@ -178,7 +183,7 @@ export function ListingCard({
           ) : status === 'draft' ? (
             // Draft items: Edit in sell wizard
             <Link
-              href={`/sell?draft=${id}`}
+              href={draftSellHref}
               className="rounded-full bg-white p-2 text-gray-700 transition-colors hover:bg-gray-100"
               aria-label="Entwurf bearbeiten"
             >

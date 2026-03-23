@@ -1,5 +1,6 @@
 'use client'
 
+import { sellLinkWithReturn } from '@/lib/sell-navigation'
 import { cn } from '@/lib/utils'
 import { Package, Heart, Search, ShoppingBag, Inbox, FileQuestion, AlertCircle, LucideIcon } from 'lucide-react'
 import Link from 'next/link'
@@ -244,7 +245,10 @@ export function NoProducts() {
       type="products"
       title="Noch keine Artikel"
       description="Erstellen Sie Ihren ersten Artikel und starten Sie mit dem Verkaufen."
-      action={{ label: 'Artikel einstellen', href: '/sell' }}
+      action={{
+        label: 'Artikel einstellen',
+        href: sellLinkWithReturn('/my-watches/selling'),
+      }}
     />
   )
 }
