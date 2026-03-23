@@ -164,3 +164,10 @@ npm run analyze
 
 Setzt `ANALYZE=true` und führt `next build` aus. Größte Chunks gezielt mit `next/dynamic` oder `optimizePackageImports` angehen.
 
+### Produktdetail `/products/[id]`
+
+- **Server Component** lädt Daten über `getProductDetailForPage` (Prisma), kein clientseitiger Fetch-Waterfall mehr.
+- Gleiche Logik nutzt **GET `/api/products/[id]`** (eine Quelle der Wahrheit).
+- `getProductDetailForPage` ist mit **`react` `cache()`** umschlossen — bei mehrfachen Aufrufen pro Request dedupliziert.
+- Interaktives UI bleibt in **`ProductPageClient`** (`next/dynamic`, eigener Chunk).
+
