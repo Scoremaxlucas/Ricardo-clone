@@ -13,6 +13,7 @@
     "postinstall": "rm -rf node_modules/.prisma && prisma generate",
     "prepare:schema": "node scripts/prepare-schema.js",
     "build": "rm -rf node_modules/.prisma .next && prisma generate && next build",
+    "analyze": "ANALYZE=true next build",
     "pre-deploy-check": "tsx scripts/pre-deployment-check.ts",
     "start": "next start",
     "lint": "next lint",
@@ -103,6 +104,7 @@
     "zustand": "^4.4.0"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.1",
     "@testing-library/jest-dom": "^6.9.1",
     "@testing-library/react": "^16.3.1",
     "@types/bcryptjs": "^2.4.0",

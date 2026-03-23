@@ -154,3 +154,13 @@ Recommended settings:
 - `connection_limit=20` - Maximum concurrent connections
 - `pool_timeout=10` - Connection timeout in seconds
 
+## Bundle analysis (webpack)
+
+Nach dem Build öffnet der Analyzer interaktive HTML-Reports (Client / Server):
+
+```bash
+npm run analyze
+```
+
+Setzt `ANALYZE=true` und führt `next build` aus. Größte Chunks gezielt mit `next/dynamic` oder `optimizePackageImports` angehen.
+

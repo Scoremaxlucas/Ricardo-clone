@@ -2,10 +2,28 @@
 
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
-import { ProductPageClient } from '@/components/product/ProductPageClient'
+import dynamic from 'next/dynamic'
 import Link from 'next/link'
 import { useParams } from 'next/navigation'
 import { useEffect, useState } from 'react'
+
+/** Eigener Chunk — Galerie, Gebote, Chat, … erst nach Daten-Fetch laden */
+const ProductPageClient = dynamic(
+  () =>
+    import('@/components/product/ProductPageClient').then(m => ({ default: m.ProductPageClient })),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex min-h-[400px] items-center justify-center" aria-busy="true">
+        <div
+          className="h-10 w-10 animate-spin rounded-full border-2 border-primary-600 border-t-transparent"
+          role="status"
+          aria-label="Laden"
+        />
+      </div>
+    ),
+  }
+)
 
 export default function ProductPage() {
   const params = useParams()
