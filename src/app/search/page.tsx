@@ -182,6 +182,20 @@ function SearchPageContent() {
   const searchParams = useSearchParams()
 
   useEffect(() => {
+    if (searchParams.get('type') === 'rental') {
+      const p = new URLSearchParams(searchParams.toString())
+      p.delete('type')
+      p.delete('q')
+      p.delete('category')
+      p.delete('subcategory')
+      p.delete('brands')
+      p.delete('brand')
+      const qs = p.toString()
+      router.replace(qs ? `/wohnungen?${qs}` : '/wohnungen')
+    }
+  }, [searchParams, router])
+
+  useEffect(() => {
     document.title = 'Suche — Helvenda.ch'
   }, [])
   const { t, translateSubcategory } = useLanguage()

@@ -46,7 +46,7 @@ import {
   X,
 } from 'lucide-react'
 import { signOut, useSession } from 'next-auth/react'
-import { sellEntryHref } from '@/lib/sell-navigation'
+import { sellEntryHref, sellRentEntryHref } from '@/lib/sell-navigation'
 import Link from 'next/link'
 import { usePathname, useRouter } from 'next/navigation'
 import { memo, useCallback, useEffect, useRef, useState, useTransition } from 'react'
@@ -69,6 +69,7 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
   const router = useRouter()
   const pathname = usePathname() ?? ''
   const sellFromHere = sellEntryHref(pathname)
+  const sellRentFromHere = sellRentEntryHref(pathname)
   const isSellWizardRoute = pathname.startsWith('/sell')
   const { language, setLanguage, t } = useLanguage()
   const [isPending, startTransition] = useTransition()
@@ -416,21 +417,24 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   setIsProfileMenuOpen(false)
                   handleMenuEnter(setIsSellMenuOpen)
                   handlePrefetch('/sell')
+                  handlePrefetch('/sell/rent')
                 }}
                 onMouseLeave={() => handleMenuLeave(setIsSellMenuOpen)}
               >
-                <Link
-                  href={sellFromHere}
-                  prefetch={true}
+                <button
+                  type="button"
                   className="flex items-center gap-1.5 whitespace-nowrap rounded-md px-3 py-2 text-gray-700 transition-colors hover:bg-gray-100 hover:text-primary-600"
                   title={t.header.sell}
+                  onClick={() => setIsSellMenuOpen(o => !o)}
+                  aria-expanded={isSellMenuOpen}
+                  aria-haspopup="menu"
                 >
                   <Plus className="h-4 w-4" />
                   <span className="text-sm font-medium">Angebot erstellen</span>
                   <ChevronDown
                     className={`h-3 w-3 transition-transform ${isSellMenuOpen ? 'rotate-180' : ''}`}
                   />
-                </Link>
+                </button>
 
                 {isSellMenuOpen && (
                   <>
@@ -445,18 +449,17 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                         onClick={() => setIsSellMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                       >
-                        <div className="font-medium">{t.header.singleItem}</div>
+                        <div className="font-medium">Artikel verkaufen</div>
                         <div className="text-xs text-gray-500">{t.header.singleItemDesc}</div>
                       </Link>
                       <Link
-                        href="/sell/bulk"
+                        href={sellRentFromHere}
                         prefetch={true}
-                        onMouseEnter={() => handlePrefetch('/sell/bulk')}
                         onClick={() => setIsSellMenuOpen(false)}
                         className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
                       >
-                        <div className="font-medium">{t.header.multipleItems}</div>
-                        <div className="text-xs text-gray-500">{t.header.multipleItemsDesc}</div>
+                        <div className="font-medium">Wohnung inserieren</div>
+                        <div className="text-xs text-gray-500">Mietwohnung schalten</div>
                       </Link>
                     </div>
                   </>
@@ -877,15 +880,22 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                     </Link>
                   )}
 
-                  {/* CTA Button - Ricardo style with + icon */}
-                  <div className="px-4 py-4">
+                  {/* CTA: Artikel vs. Mietwohnung */}
+                  <div className="space-y-2 px-4 py-4">
                     <Link
                       href={sellFromHere}
                       onClick={() => setIsMobileMenuOpen(false)}
                       className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-5 py-3.5 text-sm font-semibold uppercase tracking-wide text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow-md active:scale-[0.98]"
                     >
                       <Plus className="h-4 w-4 stroke-[2.5]" />
-                      <span>Angebot erstellen</span>
+                      <span>Artikel verkaufen</span>
+                    </Link>
+                    <Link
+                      href={sellRentFromHere}
+                      onClick={() => setIsMobileMenuOpen(false)}
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-primary-600 bg-white px-5 py-3.5 text-sm font-semibold uppercase tracking-wide text-primary-700 transition-all duration-200 hover:bg-primary-50 active:scale-[0.98]"
+                    >
+                      <span>Wohnung inserieren</span>
                     </Link>
                   </div>
 

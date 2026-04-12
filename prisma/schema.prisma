@@ -164,6 +164,8 @@ model User {
   outagesResolved               SystemOutage[]        @relation("OutageResolver")
   outagesExtended               SystemOutage[]        @relation("OutageExtender")
   marketingContacts             MarketingContact[]
+  rentalListings                RentalListing[]
+  rentalContactRequests         RentalContactRequest[] @relation("RentalContactInterested")
 
   // === BEXIO INTEGRATION ===
   bexioContactId Int? // Bexio Contact ID for syncing
@@ -1665,4 +1667,57 @@ model MarketingRecipient {
   @@index([contactId])
   @@index([status])
   @@map("marketing_recipients")
+}
+
+// ============================================
+// MIETWOHNUNGEN (separat von Watch / Artikel)
+// ============================================
+
+model RentalListing {
+  id                    String   @id @default(cuid())
+  sellerId              String
+  title                 String
+  address               String
+  postalCode            String
+  canton                String
+  rooms                 Float
+  livingAreaM2          Float
+  floor                 String // z. B. "EG", "3", "UG"
+  monthlyRentChf        Float
+  extraCostsChf         Float
+  availableFrom         DateTime
+  depositChf            Float?
+  description           String   @db.Text
+  requiresCreditCheck   Boolean  @default(true)
+  images                String // JSON array of image URLs (min. 3 in App validiert)
+  moderationStatus      String?  @default("approved")
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  seller          User                     @relation(fields: [sellerId], references: [id], onDelete: Cascade)
+  contactRequests RentalContactRequest[]
+
+  @@index([sellerId])
+  @@index([postalCode])
+  @@index([canton])
+  @@index([monthlyRentChf])
+  @@index([availableFrom])
+  @@map("rental_listings")
+}
+
+model RentalContactRequest {
+  id                  String   @id @default(cuid())
+  rentalListingId     String
+  interestedUserId    String
+  message             String   @db.Text
+  creditReportBlobUrl String? // PDF in Blob Storage (nur wenn requiresCreditCheck)
+  createdAt           DateTime @default(now())
+
+  listing          RentalListing @relation(fields: [rentalListingId], references: [id], onDelete: Cascade)
+  interestedUser   User          @relation("RentalContactInterested", fields: [interestedUserId], references: [id], onDelete: Cascade)
+
+  @@unique([rentalListingId, interestedUserId])
+  @@index([rentalListingId])
+  @@index([interestedUserId])
+  @@map("rental_contact_requests")
 }

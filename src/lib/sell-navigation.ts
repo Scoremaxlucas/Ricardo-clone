@@ -47,6 +47,8 @@ function labelForReturnPath(path: string): string {
   if (path.startsWith('/favorites')) return 'Zurück zu Favoriten'
   if (path.startsWith('/users/')) return 'Zurück zum Profil'
   if (path.startsWith('/sell/bulk')) return 'Zurück zum Sammel-Upload'
+  if (path.startsWith('/wohnungen')) return 'Zurück zu Mietwohnungen'
+  if (path.startsWith('/sell/rent')) return 'Zurück'
   return 'Zurück'
 }
 
@@ -64,4 +66,15 @@ export function sellEntryHref(pathname: string | null | undefined): string {
 export function sellLinkWithReturn(path: string): string {
   const v = parseSellReturnTo(path)
   return buildSellUrl({ returnTo: v || undefined })
+}
+
+/** Eintrag Mietwohnung — gleiche returnTo-Logik wie /sell */
+export function sellRentEntryHref(pathname: string | null | undefined): string {
+  const p = pathname ?? '/'
+  const from = p.startsWith('/sell') ? '/wohnungen' : p
+  const v = parseSellReturnTo(from)
+  const sp = new URLSearchParams()
+  if (v) sp.set(SELL_RETURN_QUERY, v)
+  const q = sp.toString()
+  return q ? `/sell/rent?${q}` : '/sell/rent'
 }
