@@ -84,15 +84,15 @@ ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paymentArrangement" BOOLEAN DEF
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paymentArrangementDate" TIMESTAMP(3);
 ALTER TABLE "invoices" ADD COLUMN IF NOT EXISTS "paymentArrangementNotes" TEXT;
 
--- Sofortkauf Listing Expiry (Auto-Renew) Fields
-ALTER TABLE "Watch" ADD COLUMN IF NOT EXISTS "listingExpiresAt" TIMESTAMP(3);
-ALTER TABLE "Watch" ADD COLUMN IF NOT EXISTS "listingDurationDays" INTEGER DEFAULT 30;
+-- Sofortkauf Listing Expiry (Auto-Renew) Fields (Prisma @@map("watches"))
+ALTER TABLE "watches" ADD COLUMN IF NOT EXISTS "listingExpiresAt" TIMESTAMP(3);
+ALTER TABLE "watches" ADD COLUMN IF NOT EXISTS "listingDurationDays" INTEGER DEFAULT 30;
 SQLEOF
 echo "✅ All required columns ensured"
 
 # Create monitoring tables if they don't exist
 echo "📊 Creating monitoring tables..."
-npx prisma db execute --stdin <<'SQLEOF' || true
+npx prisma db execute --schema prisma/schema.prisma --stdin <<'SQLEOF' || true
 -- RateLimit table for rate limiting
 CREATE TABLE IF NOT EXISTS "rate_limits" (
     "id" TEXT NOT NULL,
