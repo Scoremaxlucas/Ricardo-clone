@@ -22,7 +22,10 @@ export function SellRentPageClient() {
   const router = useRouter()
   const searchParams = useSearchParams()
   const sellBack = useMemo(
-    () => sellBackTarget(parseSellReturnTo(searchParams.get(SELL_RETURN_QUERY))),
+    () =>
+      sellBackTarget(parseSellReturnTo(searchParams.get(SELL_RETURN_QUERY)), {
+        listingWizard: 'rent',
+      }),
     [searchParams]
   )
 

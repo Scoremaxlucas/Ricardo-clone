@@ -4,12 +4,46 @@ import bcrypt from 'bcryptjs'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import GoogleProvider from 'next-auth/providers/google'
 
+const useSecureCookies = process.env.NODE_ENV === 'production'
+const nextAuthSharedCookieDomain =
+  process.env.NEXTAUTH_COOKIE_DOMAIN ||
+  (process.env.VERCEL_ENV === 'production' ? '.helvenda.ch' : undefined)
+
+const crossSubdomainCookies =
+  nextAuthSharedCookieDomain != null
+    ? {
+        cookies: {
+          sessionToken: {
+            name: `${useSecureCookies ? '__Secure-' : ''}next-auth.session-token`,
+            options: {
+              httpOnly: true,
+              sameSite: 'lax' as const,
+              path: '/',
+              secure: useSecureCookies,
+              domain: nextAuthSharedCookieDomain,
+            },
+          },
+          callbackUrl: {
+            name: `${useSecureCookies ? '__Secure-' : ''}next-auth.callback-url`,
+            options: {
+              httpOnly: true,
+              sameSite: 'lax' as const,
+              path: '/',
+              secure: useSecureCookies,
+              domain: nextAuthSharedCookieDomain,
+            },
+          },
+        },
+      }
+    : {}
+
 export const authOptions = {
   secret: process.env.NEXTAUTH_SECRET || '',
   adapter: undefined, // Disable adapter for now
   debug: isDebug(), // Enable debug when DEBUG=true or NODE_ENV=development
   // WICHTIG: Trust host für Vercel/Production
   trustHost: true,
+  ...crossSubdomainCookies,
   providers: [
     // Google OAuth Provider
     ...(process.env.GOOGLE_CLIENT_ID && process.env.GOOGLE_CLIENT_SECRET

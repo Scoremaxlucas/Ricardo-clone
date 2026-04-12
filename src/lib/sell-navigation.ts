@@ -30,9 +30,15 @@ export function buildSellUrl(options: {
 }
 
 /** Link target + short German label for the back control on /sell */
-export function sellBackTarget(returnTo: string | null): { href: string; label: string } {
+export function sellBackTarget(
+  returnTo: string | null,
+  options?: { listingWizard?: 'rent' }
+): { href: string; label: string } {
   if (returnTo) {
     return { href: returnTo, label: labelForReturnPath(returnTo) }
+  }
+  if (options?.listingWizard === 'rent') {
+    return { href: '/wohnungen', label: 'Zurück zu Mietwohnungen' }
   }
   return { href: '/my-watches/selling', label: 'Zurück zu Mein Verkaufen' }
 }
