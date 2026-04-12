@@ -57,7 +57,7 @@ export function HeroServer({ title = 'Verkaufen ohne hohe Gebühren – nur 5%, 
             {title}
           </h1>
           <p className="mt-2 text-base text-white/90 md:text-lg">
-            Der Schweizer Marktplatz mit den tiefsten Verkäufergebühren. Bis zu CHF 110 günstiger als die Konkurrenz.
+            Der Schweizer Marktplatz mit den tiefsten Verkäufergebühren. Bis zu CHF 140 günstiger als die Konkurrenz.
           </p>
 
           {/* Trust Badges - Kompakt und modern */}

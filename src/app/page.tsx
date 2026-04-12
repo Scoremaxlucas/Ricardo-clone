@@ -86,7 +86,7 @@ export default async function Home() {
             <div className="rounded-2xl border border-emerald-100 bg-emerald-50 p-5 sm:p-6">
               <h2 className="text-lg font-bold text-emerald-900 sm:text-xl">Warum Helvenda?</h2>
               <p className="mt-2 max-w-4xl text-sm text-emerald-800 sm:text-base">
-                Bei Ricardo zahlst du bis zu CHF 260 Gebühren pro Verkauf. Bei uns maximal CHF 150 – egal wie teuer dein Artikel ist.
+                Bei Ricardo zahlst du bis zu CHF 290 Gebühren pro Verkauf. Bei uns maximal CHF 150 – egal wie teuer dein Artikel ist.
               </p>
               <div className="mt-4">
                 <Link
