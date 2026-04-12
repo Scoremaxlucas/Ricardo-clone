@@ -11,12 +11,13 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     }
 
     const listing = await prisma.rentalListing.findFirst({
-      where: { id, moderationStatus: { not: 'rejected' } },
+      where: { id, status: 'active' },
       include: {
-        seller: {
+        user: {
           select: {
             id: true,
             name: true,
+            firstName: true,
             nickname: true,
             image: true,
             verified: true,
@@ -32,7 +33,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     let imageUrls: string[] = []
     try {
-      imageUrls = JSON.parse(listing.images)
+      imageUrls = JSON.parse(listing.photos)
       if (!Array.isArray(imageUrls)) imageUrls = []
     } catch {
       imageUrls = []
@@ -40,21 +41,42 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     return NextResponse.json({
       listing: {
-        ...listing,
+        id: listing.id,
+        title: listing.title,
+        description: listing.description,
+        address: listing.address,
+        zip: listing.zip,
+        city: listing.city,
+        canton: listing.canton,
+        rooms: listing.rooms,
+        areaSqm: listing.areaSqm,
+        floor: listing.floor,
+        rentPerMonth: listing.rentPerMonth,
+        utilitiesPerMonth: listing.utilitiesPerMonth,
+        depositAmount: listing.depositAmount,
         availableFrom: listing.availableFrom.toISOString(),
+        requiresCreditCheck: listing.requiresCreditCheck,
+        status: listing.status,
+        userId: listing.userId,
         createdAt: listing.createdAt.toISOString(),
         updatedAt: listing.updatedAt.toISOString(),
-        seller: listing.seller
+        landlord: listing.user
           ? {
-              ...listing.seller,
-              createdAt: listing.seller.createdAt.toISOString(),
+              id: listing.user.id,
+              name: listing.user.name,
+              firstName: listing.user.firstName,
+              nickname: listing.user.nickname,
+              image: listing.user.image,
+              verified: listing.user.verified,
+              createdAt: listing.user.createdAt.toISOString(),
             }
           : null,
         images: imageUrls,
       },
     })
-  } catch (e: any) {
+  } catch (e: unknown) {
     console.error('[rental-listings/[id] GET]', e)
-    return NextResponse.json({ message: e?.message || 'Fehler' }, { status: 500 })
+    const msg = e instanceof Error ? e.message : 'Fehler'
+    return NextResponse.json({ message: msg }, { status: 500 })
   }
 }

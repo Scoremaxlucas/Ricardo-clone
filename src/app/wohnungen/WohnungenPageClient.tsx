@@ -3,7 +3,7 @@
 import { Footer } from '@/components/layout/Footer'
 import { Header } from '@/components/layout/Header'
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
-import { Loader2, MapPin } from 'lucide-react'
+import { Loader2, MapPin, ShieldCheck } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
@@ -11,16 +11,16 @@ import { useCallback, useEffect, useState } from 'react'
 type RentalCard = {
   id: string
   title: string
-  postalCode: string
+  zip: string
+  city: string
   canton: string
   rooms: number
-  livingAreaM2: number
-  floor: string
-  monthlyRentChf: number
-  extraCostsChf: number
+  areaSqm: number
+  rentPerMonth: number
+  utilitiesPerMonth: number | null
   availableFrom: string
+  requiresCreditCheck: boolean
   imageUrls: string[]
-  seller: { nickname: string | null; name: string | null }
 }
 
 export function WohnungenPageClient() {
@@ -29,21 +29,19 @@ export function WohnungenPageClient() {
   const [loading, setLoading] = useState(true)
   const [listings, setListings] = useState<RentalCard[]>([])
 
-  const postalCode = searchParams.get('postalCode') || ''
   const canton = searchParams.get('canton') || ''
   const minRooms = searchParams.get('minRooms') || ''
-  const maxRooms = searchParams.get('maxRooms') || ''
   const maxRent = searchParams.get('maxRent') || ''
+  const availableFrom = searchParams.get('availableFrom') || ''
 
   const fetchListings = useCallback(async () => {
     setLoading(true)
     try {
       const sp = new URLSearchParams()
-      if (postalCode) sp.set('postalCode', postalCode)
       if (canton) sp.set('canton', canton)
       if (minRooms) sp.set('minRooms', minRooms)
-      if (maxRooms) sp.set('maxRooms', maxRooms)
       if (maxRent) sp.set('maxRent', maxRent)
+      if (availableFrom) sp.set('availableFrom', availableFrom)
       const res = await fetch(`/api/rental-listings?${sp.toString()}`)
       const data = await res.json()
       setListings(data.listings || [])
@@ -52,7 +50,7 @@ export function WohnungenPageClient() {
     } finally {
       setLoading(false)
     }
-  }, [postalCode, canton, minRooms, maxRooms, maxRent])
+  }, [canton, minRooms, maxRent, availableFrom])
 
   useEffect(() => {
     fetchListings()
@@ -62,16 +60,14 @@ export function WohnungenPageClient() {
     e.preventDefault()
     const fd = new FormData(e.currentTarget)
     const sp = new URLSearchParams()
-    const pc = (fd.get('postalCode') as string)?.trim()
     const ct = (fd.get('canton') as string)?.trim()
     const minR = (fd.get('minRooms') as string)?.trim()
-    const maxR = (fd.get('maxRooms') as string)?.trim()
     const maxM = (fd.get('maxRent') as string)?.trim()
-    if (pc) sp.set('postalCode', pc)
+    const av = (fd.get('availableFrom') as string)?.trim()
     if (ct) sp.set('canton', ct)
     if (minR) sp.set('minRooms', minR)
-    if (maxR) sp.set('maxRooms', maxR)
     if (maxM) sp.set('maxRent', maxM)
+    if (av) sp.set('availableFrom', av)
     router.push(sp.toString() ? `/wohnungen?${sp.toString()}` : '/wohnungen')
   }
 
@@ -80,18 +76,12 @@ export function WohnungenPageClient() {
       <Header />
       <main className="mx-auto max-w-6xl px-4 py-8">
         <h1 className="mb-2 text-2xl font-bold text-gray-900">Mietwohnungen</h1>
-        <p className="mb-6 text-sm text-gray-600">Inserate von Helvenda-Nutzern — Filter nach Region und Budget.</p>
+        <p className="mb-6 text-sm text-gray-600">Aktive Inserate auf Helvenda — nach Region und Budget filtern.</p>
 
         <form
           onSubmit={applyFilters}
-          className="mb-8 grid gap-3 rounded-xl border border-gray-200 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-6"
+          className="mb-8 grid gap-3 rounded-xl border border-teal-100 bg-white p-4 shadow-sm sm:grid-cols-2 lg:grid-cols-5"
         >
-          <input
-            name="postalCode"
-            defaultValue={postalCode}
-            placeholder="PLZ"
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          />
           <select
             name="canton"
             defaultValue={canton}
@@ -100,7 +90,7 @@ export function WohnungenPageClient() {
             <option value="">Kanton (alle)</option>
             {SWISS_CANTONS.map(c => (
               <option key={c.code} value={c.code}>
-                {c.code}
+                {c.code} — {c.name}
               </option>
             ))}
           </select>
@@ -114,20 +104,17 @@ export function WohnungenPageClient() {
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
           />
           <input
-            name="maxRooms"
-            type="number"
-            step={0.5}
-            min={0.5}
-            defaultValue={maxRooms}
-            placeholder="Zimmer max."
-            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
-          />
-          <input
             name="maxRent"
             type="number"
             min={0}
             defaultValue={maxRent}
-            placeholder="Max. Miete CHF"
+            placeholder="Max. Miete CHF / Monat"
+            className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
+          />
+          <input
+            name="availableFrom"
+            type="date"
+            defaultValue={availableFrom}
             className="rounded-lg border border-gray-300 px-3 py-2 text-sm"
           />
           <button
@@ -150,25 +137,39 @@ export function WohnungenPageClient() {
               <Link
                 key={l.id}
                 href={`/wohnungen/${l.id}`}
-                className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:shadow-md"
+                className="overflow-hidden rounded-xl border border-gray-200 bg-white shadow-sm transition hover:border-teal-200 hover:shadow-md"
               >
-                <div className="aspect-[4/3] bg-gray-100">
+                <div className="relative aspect-[4/3] bg-gray-100">
                   {l.imageUrls[0] ? (
                     // eslint-disable-next-line @next/next/no-img-element
                     <img src={l.imageUrls[0]} alt="" className="h-full w-full object-cover" />
                   ) : null}
+                  {l.requiresCreditCheck && (
+                    <span className="absolute bottom-2 left-2 inline-flex items-center gap-1 rounded-full bg-teal-700/95 px-2 py-0.5 text-[11px] font-medium text-white">
+                      <ShieldCheck className="h-3 w-3" />
+                      Betreibungsregister
+                    </span>
+                  )}
                 </div>
                 <div className="p-4">
                   <h2 className="font-semibold text-gray-900 line-clamp-2">{l.title}</h2>
                   <p className="mt-1 flex items-center gap-1 text-sm text-gray-600">
                     <MapPin className="h-4 w-4 shrink-0" />
-                    {l.postalCode} {l.canton} · {l.rooms} Zi. · {l.livingAreaM2} m²
+                    {l.zip} {l.city} · {l.rooms} Zi. · {l.areaSqm} m²
                   </p>
                   <p className="mt-2 text-lg font-bold text-primary-700">
-                    CHF {Math.round(l.monthlyRentChf).toLocaleString('de-CH')}{' '}
-                    <span className="text-sm font-normal text-gray-500">
-                      + NK CHF {Math.round(l.extraCostsChf).toLocaleString('de-CH')}
-                    </span>
+                    CHF {l.rentPerMonth.toLocaleString('de-CH')} / Monat
+                    {l.utilitiesPerMonth != null ? (
+                      <span className="text-sm font-normal text-gray-500">
+                        {' '}
+                        + NK CHF {l.utilitiesPerMonth.toLocaleString('de-CH')}
+                      </span>
+                    ) : (
+                      <span className="text-sm font-normal text-gray-500"> · NK optional</span>
+                    )}
+                  </p>
+                  <p className="mt-1 text-xs text-gray-500">
+                    Verfügbar ab {new Date(l.availableFrom).toLocaleDateString('de-CH')}
                   </p>
                 </div>
               </Link>

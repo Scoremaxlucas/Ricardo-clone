@@ -12,23 +12,25 @@ import toast from 'react-hot-toast'
 type ListingDetail = {
   id: string
   title: string
+  description: string
   address: string
-  postalCode: string
+  zip: string
+  city: string
   canton: string
   rooms: number
-  livingAreaM2: number
-  floor: string
-  monthlyRentChf: number
-  extraCostsChf: number
+  areaSqm: number
+  floor: number | null
+  rentPerMonth: number
+  utilitiesPerMonth: number | null
+  depositAmount: number | null
   availableFrom: string
-  depositChf: number | null
-  description: string
   requiresCreditCheck: boolean
   images: string[]
-  sellerId: string
-  seller: {
+  userId: string
+  landlord: {
     id: string
     name: string | null
+    firstName: string | null
     nickname: string | null
     image: string | null
     verified: boolean
@@ -44,6 +46,7 @@ export default function WohnungDetailPage() {
   const [listing, setListing] = useState<ListingDetail | null>(null)
   const [message, setMessage] = useState('')
   const [pdfFile, setPdfFile] = useState<File | null>(null)
+  const [confirmPersonal, setConfirmPersonal] = useState(false)
   const [sending, setSending] = useState(false)
   const [sent, setSent] = useState(false)
 
@@ -78,15 +81,24 @@ export default function WohnungDetailPage() {
       return
     }
     if (!listing) return
-    if (listing.requiresCreditCheck && !pdfFile) {
-      toast.error('Bitte Betreibungsregisterauszug (PDF) hochladen.')
-      return
+    if (listing.requiresCreditCheck) {
+      if (!pdfFile) {
+        toast.error('Bitte Betreibungsregisterauszug (PDF) hochladen.')
+        return
+      }
+      if (!confirmPersonal) {
+        toast.error('Bitte die Bestätigung zum Dokument ankreuzen.')
+        return
+      }
     }
     setSending(true)
     try {
       const fd = new FormData()
       fd.append('message', message)
       if (pdfFile) fd.append('file', pdfFile)
+      if (listing.requiresCreditCheck) {
+        fd.append('confirmPersonal', confirmPersonal ? 'true' : 'false')
+      }
       const res = await fetch(`/api/rental-listings/${id}/contact`, {
         method: 'POST',
         body: fd,
@@ -96,10 +108,11 @@ export default function WohnungDetailPage() {
         toast.error(data.message || 'Senden fehlgeschlagen')
         return
       }
-      toast.success('Anfrage gesendet')
+      toast.success(data.message || 'Anfrage gesendet')
       setSent(true)
       setMessage('')
       setPdfFile(null)
+      setConfirmPersonal(false)
     } finally {
       setSending(false)
     }
@@ -128,7 +141,7 @@ export default function WohnungDetailPage() {
     )
   }
 
-  const isOwner = (session?.user as { id?: string })?.id === listing.sellerId
+  const isOwner = (session?.user as { id?: string })?.id === listing.userId
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -139,21 +152,33 @@ export default function WohnungDetailPage() {
         </Link>
 
         <h1 className="mt-4 text-2xl font-bold text-gray-900">{listing.title}</h1>
-        <p className="mt-1 flex items-center gap-1 text-gray-600">
-          <MapPin className="h-4 w-4" />
-          {listing.address}, {listing.postalCode} {listing.canton}
+        <p className="mt-1 flex flex-wrap items-center gap-2 text-gray-600">
+          <span className="inline-flex items-center gap-1">
+            <MapPin className="h-4 w-4" />
+            {listing.address}, {listing.zip} {listing.city} ({listing.canton})
+          </span>
+          {listing.requiresCreditCheck && (
+            <span className="rounded-full bg-teal-100 px-2 py-0.5 text-xs font-medium text-teal-800">
+              Betreibungsregister erforderlich
+            </span>
+          )}
         </p>
         <p className="mt-2 text-xl font-semibold text-primary-700">
-          CHF {Math.round(listing.monthlyRentChf).toLocaleString('de-CH')} / Monat
-          <span className="ml-2 text-base font-normal text-gray-600">
-            + NK CHF {Math.round(listing.extraCostsChf).toLocaleString('de-CH')}
-          </span>
+          CHF {listing.rentPerMonth.toLocaleString('de-CH')} / Monat
+          {listing.utilitiesPerMonth != null && (
+            <span className="ml-2 text-base font-normal text-gray-600">
+              + NK CHF {listing.utilitiesPerMonth.toLocaleString('de-CH')}
+            </span>
+          )}
         </p>
-        {listing.depositChf != null && (
-          <p className="text-sm text-gray-600">Kaution: CHF {Math.round(listing.depositChf).toLocaleString('de-CH')}</p>
+        {listing.depositAmount != null && (
+          <p className="text-sm text-gray-600">
+            Kaution: CHF {listing.depositAmount.toLocaleString('de-CH')}
+          </p>
         )}
         <p className="mt-1 text-sm text-gray-600">
-          {listing.rooms} Zimmer · {listing.livingAreaM2} m² · Etage {listing.floor} · verfügbar ab{' '}
+          {listing.rooms} Zimmer · {listing.areaSqm} m²
+          {listing.floor != null ? ` · Etage ${listing.floor}` : ''} · verfügbar ab{' '}
           {new Date(listing.availableFrom).toLocaleDateString('de-CH')}
         </p>
 
@@ -169,48 +194,62 @@ export default function WohnungDetailPage() {
           <p className="mt-2 whitespace-pre-wrap text-sm text-gray-700">{listing.description}</p>
         </div>
 
-        {listing.seller && (
+        {listing.landlord && (
           <div className="mt-6 text-sm text-gray-600">
-            Inserent: {listing.seller.nickname || listing.seller.name || 'Privat'}
-            {listing.seller.verified ? ' · verifiziert' : ''}
+            Inserent: {listing.landlord.nickname || listing.landlord.name || 'Privat'}
+            {listing.landlord.verified ? ' · verifiziert' : ''}
           </div>
         )}
 
         {!isOwner && (
-          <div className="mt-10 rounded-xl border border-gray-200 bg-white p-6 shadow-sm">
-            <h2 className="text-lg font-semibold text-gray-900">Vermieter kontaktieren</h2>
+          <div className="mt-10 rounded-xl border border-teal-100 bg-white p-6 shadow-sm">
+            <h2 className="text-lg font-semibold text-gray-900">Anfrage senden</h2>
             {sent ? (
               <p className="mt-2 text-sm text-green-700">Deine Anfrage wurde übermittelt.</p>
             ) : (
               <form onSubmit={submitContact} className="mt-4 space-y-4">
                 {listing.requiresCreditCheck && (
-                  <div>
-                    <label className="mb-1 block text-sm font-medium text-gray-700">
-                      Betreibungsregisterauszug (PDF) *
+                  <>
+                    <div>
+                      <label className="mb-1 block text-sm font-medium text-gray-700">
+                        Betreibungsregisterauszug (PDF) *
+                      </label>
+                      <input
+                        type="file"
+                        accept="application/pdf,.pdf"
+                        required={listing.requiresCreditCheck}
+                        onChange={e => setPdfFile(e.target.files?.[0] || null)}
+                        className="w-full text-sm"
+                      />
+                      <p className="mt-2 text-xs text-gray-600">
+                        Lade deinen Betreibungsregisterauszug hoch (max. 3 Monate alt). Dein Dokument wird
+                        verschlüsselt gespeichert — dem Vermieter werden nur relevante Informationen angezeigt.
+                      </p>
+                    </div>
+                    <label className="flex cursor-pointer items-start gap-2 text-sm text-gray-700">
+                      <input
+                        type="checkbox"
+                        checked={confirmPersonal}
+                        onChange={e => setConfirmPersonal(e.target.checked)}
+                        className="mt-1"
+                        required={listing.requiresCreditCheck}
+                      />
+                      <span>
+                        Ich bestätige, dass dieses Dokument auf mich ausgestellt ist und aktuell ist. *
+                      </span>
                     </label>
-                    <input
-                      type="file"
-                      accept="application/pdf,.pdf"
-                      required={listing.requiresCreditCheck}
-                      onChange={e => setPdfFile(e.target.files?.[0] || null)}
-                      className="w-full text-sm"
-                    />
-                    <p className="mt-2 text-xs text-gray-500">
-                      Dein Dokument wird verschlüsselt gespeichert und nur relevante Informationen werden dem
-                      Vermieter angezeigt.
-                    </p>
-                  </div>
+                  </>
                 )}
                 <div>
                   <label className="mb-1 block text-sm font-medium text-gray-700">Nachricht *</label>
                   <textarea
                     required
-                    minLength={10}
+                    minLength={20}
                     rows={4}
                     value={message}
                     onChange={e => setMessage(e.target.value)}
                     className="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm"
-                    placeholder="Stelle dich kurz vor und beschrebe dein Interesse."
+                    placeholder="Stelle dich kurz vor und beschreibe dein Interesse."
                   />
                 </div>
                 <button

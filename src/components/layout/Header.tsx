@@ -22,6 +22,7 @@ import { useRealtimeNotifications } from '@/hooks/useRealtimeNotifications'
 import {
   Baby,
   Bell,
+  Building2,
   Car,
   ChevronDown,
   ChevronRight,
@@ -374,6 +375,14 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                 </button>
 
                 {/* Top Categories - Horizontal Scroll with smooth animations */}
+                <Link
+                  href="/wohnungen"
+                  prefetch={true}
+                  className="flex flex-shrink-0 items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50 px-2.5 py-1.5 text-xs font-semibold text-teal-900 transition-all duration-200 hover:bg-teal-100 active:scale-95"
+                >
+                  <Building2 className="h-3.5 w-3.5 flex-shrink-0" />
+                  <span className="whitespace-nowrap">Mietwohnungen</span>
+                </Link>
                 {[
                   { slug: 'kleidung-accessoires', name: 'Kleidung', icon: Shirt },
                   { slug: 'auto-motorrad', name: 'Fahrzeuge', icon: Car },
@@ -440,25 +449,26 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                   <>
                     <div className="absolute left-0 top-full z-[10001] h-1 w-full" />
                     <div
-                      className="absolute left-0 top-full z-[10002] mt-1 w-56 rounded-lg border border-gray-100 bg-white py-1 shadow-lg"
+                      className="absolute left-0 top-full z-[10002] mt-1 w-60 overflow-hidden rounded-lg border border-teal-100 bg-white py-1 shadow-lg ring-1 ring-teal-500/10"
                       style={{ pointerEvents: 'auto' }}
                     >
                       <Link
                         href={sellFromHere}
                         prefetch={true}
                         onClick={() => setIsSellMenuOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                        className="block px-4 py-2.5 text-sm text-gray-800 transition-colors hover:bg-teal-50 hover:text-primary-700"
                       >
-                        <div className="font-medium">Artikel verkaufen</div>
+                        <div className="font-medium">📦 Artikel verkaufen</div>
                         <div className="text-xs text-gray-500">{t.header.singleItemDesc}</div>
                       </Link>
+                      <div className="mx-2 border-t border-teal-100" />
                       <Link
                         href={sellRentFromHere}
                         prefetch={true}
                         onClick={() => setIsSellMenuOpen(false)}
-                        className="block px-4 py-2 text-sm text-gray-700 transition-colors hover:bg-gray-50 hover:text-primary-600"
+                        className="block px-4 py-2.5 text-sm text-gray-800 transition-colors hover:bg-teal-50 hover:text-primary-700"
                       >
-                        <div className="font-medium">Wohnung inserieren</div>
+                        <div className="font-medium">🏠 Wohnung inserieren</div>
                         <div className="text-xs text-gray-500">Mietwohnung schalten</div>
                       </Link>
                     </div>
@@ -772,6 +782,16 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
             {/* Divider */}
             <div className="mx-1 h-5 w-px bg-gray-300" />
 
+            <Link
+              href="/wohnungen"
+              prefetch={true}
+              onMouseEnter={() => handlePrefetch('/wohnungen')}
+              className="group flex items-center gap-1.5 rounded-md border border-teal-200 bg-teal-50/90 px-3 py-1.5 text-[13px] font-semibold text-teal-900 transition-all duration-200 hover:bg-teal-100 hover:shadow-md focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-1 active:translate-y-0"
+            >
+              <Building2 className="h-4 w-4 flex-shrink-0 transition-transform duration-200 group-hover:scale-110" />
+              <span className="whitespace-nowrap">Mietwohnungen</span>
+            </Link>
+
             {/* Top 8 Categories with smooth hover animations */}
             {[
               { slug: 'auto-motorrad', name: 'Auto & Motorrad', icon: Car },
@@ -885,17 +905,17 @@ export const HeaderOptimized = memo(function HeaderOptimized() {
                     <Link
                       href={sellFromHere}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-5 py-3.5 text-sm font-semibold uppercase tracking-wide text-white shadow-sm transition-all duration-200 hover:bg-primary-700 hover:shadow-md active:scale-[0.98]"
+                      className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary-600 px-5 py-3.5 text-sm font-semibold text-white shadow-sm ring-1 ring-teal-600/20 transition-all duration-200 hover:bg-primary-700 hover:shadow-md active:scale-[0.98]"
                     >
                       <Plus className="h-4 w-4 stroke-[2.5]" />
-                      <span>Artikel verkaufen</span>
+                      <span>📦 Artikel verkaufen</span>
                     </Link>
                     <Link
                       href={sellRentFromHere}
                       onClick={() => setIsMobileMenuOpen(false)}
-                      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-primary-600 bg-white px-5 py-3.5 text-sm font-semibold uppercase tracking-wide text-primary-700 transition-all duration-200 hover:bg-primary-50 active:scale-[0.98]"
+                      className="flex w-full items-center justify-center gap-2 rounded-lg border-2 border-teal-500 bg-white px-5 py-3.5 text-sm font-semibold text-primary-800 transition-all duration-200 hover:bg-teal-50 active:scale-[0.98]"
                     >
-                      <span>Wohnung inserieren</span>
+                      <span>🏠 Wohnung inserieren</span>
                     </Link>
                   </div>
 

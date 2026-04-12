@@ -8,12 +8,14 @@ import {
   SELL_RETURN_QUERY,
 } from '@/lib/sell-navigation'
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
-import { Loader2 } from 'lucide-react'
+import { HelpCircle, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
 import toast from 'react-hot-toast'
+
+const ROOM_OPTIONS = ['1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5+'] as const
 
 export function SellRentPageClient() {
   const { data: session, status } = useSession()
@@ -26,20 +28,23 @@ export function SellRentPageClient() {
 
   const [title, setTitle] = useState('')
   const [address, setAddress] = useState('')
-  const [postalCode, setPostalCode] = useState('')
+  const [zip, setZip] = useState('')
+  const [city, setCity] = useState('')
   const [canton, setCanton] = useState('')
-  const [rooms, setRooms] = useState('3')
-  const [livingAreaM2, setLivingAreaM2] = useState('')
+  const [rooms, setRooms] = useState<string>('3')
+  const [areaSqm, setAreaSqm] = useState('')
   const [floor, setFloor] = useState('')
-  const [monthlyRentChf, setMonthlyRentChf] = useState('')
-  const [extraCostsChf, setExtraCostsChf] = useState('')
+  const [rentPerMonth, setRentPerMonth] = useState('')
+  const [utilitiesPerMonth, setUtilitiesPerMonth] = useState('')
   const [availableFrom, setAvailableFrom] = useState('')
-  const [depositChf, setDepositChf] = useState('')
+  const [depositAmount, setDepositAmount] = useState('')
   const [description, setDescription] = useState('')
   const [requiresCreditCheck, setRequiresCreditCheck] = useState(true)
   const [imageUrls, setImageUrls] = useState<string[]>([])
   const [uploading, setUploading] = useState(false)
   const [submitting, setSubmitting] = useState(false)
+
+  const roomsValue = rooms === '5+' ? 5 : parseFloat(rooms)
 
   const uploadFiles = async (files: FileList | null) => {
     const userId = (session?.user as { id?: string })?.id
@@ -48,6 +53,10 @@ export function SellRentPageClient() {
     try {
       const next = [...imageUrls]
       for (let i = 0; i < files.length; i++) {
+        if (next.length >= 10) {
+          toast.error('Maximal 10 Fotos')
+          break
+        }
         const file = files[i]
         if (!file.type.startsWith('image/')) {
           toast.error('Nur Bilder erlaubt')
@@ -80,6 +89,10 @@ export function SellRentPageClient() {
       toast.error('Mindestens 3 Fotos erforderlich')
       return
     }
+    if (description.trim().length < 50) {
+      toast.error('Beschreibung mindestens 50 Zeichen')
+      return
+    }
     setSubmitting(true)
     try {
       const res = await fetch('/api/rental-listings', {
@@ -88,18 +101,19 @@ export function SellRentPageClient() {
         body: JSON.stringify({
           title,
           address,
-          postalCode,
+          zip,
+          city,
           canton,
-          rooms: parseFloat(rooms),
-          livingAreaM2: parseFloat(livingAreaM2),
-          floor,
-          monthlyRentChf: parseFloat(monthlyRentChf),
-          extraCostsChf: parseFloat(extraCostsChf),
+          rooms: roomsValue,
+          areaSqm: parseInt(areaSqm, 10),
+          floor: floor.trim() === '' ? null : floor,
+          rentPerMonth: parseInt(rentPerMonth, 10),
+          utilitiesPerMonth: utilitiesPerMonth.trim() === '' ? null : utilitiesPerMonth,
+          depositAmount: depositAmount.trim() === '' ? null : depositAmount,
           availableFrom,
-          depositChf: depositChf.trim() === '' ? null : depositChf,
           description,
           requiresCreditCheck,
-          images: imageUrls,
+          photos: imageUrls,
         }),
       })
       const data = await res.json().catch(() => ({}))
@@ -108,7 +122,11 @@ export function SellRentPageClient() {
         return
       }
       toast.success('Inserat erstellt')
-      router.push('/wohnungen')
+      if (data.id) {
+        router.push(`/wohnungen/${data.id}`)
+      } else {
+        router.push('/wohnungen')
+      }
     } finally {
       setSubmitting(false)
     }
@@ -144,10 +162,10 @@ export function SellRentPageClient() {
         </div>
         <h1 className="mb-2 text-2xl font-bold text-gray-900">Mietwohnung inserieren</h1>
         <p className="mb-8 text-sm text-gray-600">
-          Pflichtfelder ausfüllen. Fotos werden über den bestehenden Upload sicher gespeichert.
+          Pflichtfelder ausfüllen. Fotos werden über den bestehenden Upload sicher gespeichert (3–10 Bilder).
         </p>
 
-        <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl bg-white p-6 shadow">
+        <form onSubmit={handleSubmit} className="space-y-5 rounded-2xl border border-teal-100 bg-white p-6 shadow-sm">
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Titel *</label>
             <input
@@ -158,7 +176,7 @@ export function SellRentPageClient() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Adresse *</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Adresse (Strasse, Nr.) *</label>
             <input
               required
               value={address}
@@ -171,42 +189,52 @@ export function SellRentPageClient() {
               <label className="mb-1 block text-sm font-medium text-gray-700">PLZ *</label>
               <input
                 required
-                value={postalCode}
-                onChange={e => setPostalCode(e.target.value.replace(/\D/g, '').slice(0, 4))}
+                value={zip}
+                onChange={e => setZip(e.target.value.replace(/\D/g, '').slice(0, 4))}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Kanton *</label>
-              <select
+              <label className="mb-1 block text-sm font-medium text-gray-700">Ort *</label>
+              <input
                 required
-                value={canton}
-                onChange={e => setCanton(e.target.value)}
+                value={city}
+                onChange={e => setCity(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
-              >
-                <option value="">Bitte wählen</option>
-                {SWISS_CANTONS.map(c => (
-                  <option key={c.code} value={c.code}>
-                    {c.code} — {c.name}
-                  </option>
-                ))}
-              </select>
+              />
             </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Kanton *</label>
+            <select
+              required
+              value={canton}
+              onChange={e => setCanton(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            >
+              <option value="">Bitte wählen</option>
+              {SWISS_CANTONS.map(c => (
+                <option key={c.code} value={c.code}>
+                  {c.code} — {c.name}
+                </option>
+              ))}
+            </select>
           </div>
           <div className="grid gap-4 sm:grid-cols-2">
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">
-                Zimmer * (0,5er Schritte)
-              </label>
-              <input
+              <label className="mb-1 block text-sm font-medium text-gray-700">Anzahl Zimmer *</label>
+              <select
                 required
-                type="number"
-                step={0.5}
-                min={0.5}
                 value={rooms}
                 onChange={e => setRooms(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
-              />
+              >
+                {ROOM_OPTIONS.map(r => (
+                  <option key={r} value={r}>
+                    {r}
+                  </option>
+                ))}
+              </select>
             </div>
             <div>
               <label className="mb-1 block text-sm font-medium text-gray-700">Wohnfläche m² *</label>
@@ -215,19 +243,19 @@ export function SellRentPageClient() {
                 type="number"
                 min={1}
                 step={1}
-                value={livingAreaM2}
-                onChange={e => setLivingAreaM2(e.target.value)}
+                value={areaSqm}
+                onChange={e => setAreaSqm(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
               />
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Etage *</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Etage (optional)</label>
             <input
-              required
+              type="number"
               value={floor}
               onChange={e => setFloor(e.target.value)}
-              placeholder="z. B. EG, 3, UG"
+              placeholder="z. B. 3"
               className="w-full rounded-lg border border-gray-300 px-3 py-2"
             />
           </div>
@@ -239,23 +267,33 @@ export function SellRentPageClient() {
                 type="number"
                 min={0}
                 step={1}
-                value={monthlyRentChf}
-                onChange={e => setMonthlyRentChf(e.target.value)}
+                value={rentPerMonth}
+                onChange={e => setRentPerMonth(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm font-medium text-gray-700">Nebenkosten CHF *</label>
+              <label className="mb-1 block text-sm font-medium text-gray-700">Nebenkosten CHF (optional)</label>
               <input
-                required
                 type="number"
                 min={0}
                 step={1}
-                value={extraCostsChf}
-                onChange={e => setExtraCostsChf(e.target.value)}
+                value={utilitiesPerMonth}
+                onChange={e => setUtilitiesPerMonth(e.target.value)}
                 className="w-full rounded-lg border border-gray-300 px-3 py-2"
               />
             </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Kaution CHF (optional)</label>
+            <input
+              type="number"
+              min={0}
+              step={1}
+              value={depositAmount}
+              onChange={e => setDepositAmount(e.target.value)}
+              className="w-full rounded-lg border border-gray-300 px-3 py-2"
+            />
           </div>
           <div>
             <label className="mb-1 block text-sm font-medium text-gray-700">Verfügbar ab *</label>
@@ -268,18 +306,7 @@ export function SellRentPageClient() {
             />
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Kaution CHF (optional)</label>
-            <input
-              type="number"
-              min={0}
-              step={1}
-              value={depositChf}
-              onChange={e => setDepositChf(e.target.value)}
-              className="w-full rounded-lg border border-gray-300 px-3 py-2"
-            />
-          </div>
-          <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Fotos * (mind. 3)</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Fotos * (3–10)</label>
             <input
               type="file"
               accept="image/*"
@@ -304,34 +331,45 @@ export function SellRentPageClient() {
                 </div>
               ))}
             </div>
-            <p className="mt-1 text-xs text-gray-500">{imageUrls.length} / mind. 3 Fotos</p>
+            <p className="mt-1 text-xs text-gray-500">
+              {imageUrls.length} / 3–10 Fotos · Beschreibung mind. 50 Zeichen ({description.trim().length})
+            </p>
           </div>
           <div>
-            <label className="mb-1 block text-sm font-medium text-gray-700">Beschreibung *</label>
+            <label className="mb-1 block text-sm font-medium text-gray-700">Beschreibung * (min. 50 Zeichen)</label>
             <textarea
               required
+              minLength={50}
               rows={6}
               value={description}
               onChange={e => setDescription(e.target.value)}
               className="w-full rounded-lg border border-gray-300 px-3 py-2"
             />
           </div>
-          <label className="flex cursor-pointer items-start gap-3">
+          <label className="flex cursor-pointer items-start gap-3 rounded-lg border border-teal-100 bg-teal-50/40 p-3">
             <input
               type="checkbox"
               checked={requiresCreditCheck}
               onChange={e => setRequiresCreditCheck(e.target.checked)}
               className="mt-1"
             />
-            <span className="text-sm text-gray-700">
-              Betreibungsregisterauszug von Interessenten erforderlich (empfohlen)
+            <span className="flex flex-1 items-start gap-2 text-sm text-gray-700">
+              <span>
+                Betreibungsregisterauszug von Interessenten erforderlich (empfohlen)
+              </span>
+              <span
+                className="inline-flex shrink-0 text-teal-700"
+                title="Schützt dich vor ungeeigneten Anfragen. Interessenten müssen einen max. 3 Monate alten Auszug hochladen."
+              >
+                <HelpCircle className="h-4 w-4" aria-hidden />
+              </span>
             </span>
           </label>
 
           <button
             type="submit"
-            disabled={submitting || imageUrls.length < 3}
-            className="w-full rounded-xl bg-primary-600 py-3 font-semibold text-white hover:bg-primary-700 disabled:opacity-50"
+            disabled={submitting || imageUrls.length < 3 || description.trim().length < 50}
+            className="w-full rounded-xl bg-primary-600 py-3 font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-50"
           >
             {submitting ? 'Wird gespeichert…' : 'Inserat veröffentlichen'}
           </button>
