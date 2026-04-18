@@ -15,6 +15,9 @@ npx prisma generate
 echo "📦 Applying Prisma migrations (prisma migrate deploy)..."
 MATCH_PHASE2="20260405120000_matching_mvp_phase2"
 
+# Nach P3018 (fehlgeschlagene Migration): Eintrag zurücksetzen, damit korrigierte SQL erneut laufen darf
+npx prisma migrate resolve --rolled-back "$MATCH_PHASE2" 2>/dev/null || true
+
 set +e
 DEPLOY_OUT=$(npx prisma migrate deploy 2>&1)
 DEPLOY_CODE=$?
@@ -34,6 +37,7 @@ if [ "$DEPLOY_CODE" -ne 0 ]; then
       npx prisma migrate resolve --applied "$name" || true
     done < <(find prisma/migrations -mindepth 2 -maxdepth 2 -name migration.sql | sort)
     echo "📦 Erneuter prisma migrate deploy (erwartet: nur $MATCH_PHASE2)..."
+    npx prisma migrate resolve --rolled-back "$MATCH_PHASE2" 2>/dev/null || true
     npx prisma migrate deploy
   else
     exit "$DEPLOY_CODE"
