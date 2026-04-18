@@ -167,6 +167,13 @@ model User {
   rentalListings                RentalListing[]
   rentalApplicationsAsApplicant RentalApplication[]   @relation("RentalApplicationApplicant")
 
+  // === HELVENDA MATCHING (eigenes Datenmodell, nicht RentalListing) ===
+  landlordMemberships              LandlordMembership[]
+  seekerProfile                    SeekerProfile?
+  matchingDocumentsUploaded        MatchingDocument[]     @relation("MatchingDocumentUploader")
+  documentVerificationsAsVerifier  DocumentVerification[] @relation("DocumentVerificationVerifier")
+  matchingAuditLogsAsActor         MatchingAuditLog[]     @relation("MatchingAuditActor")
+
   // === BEXIO INTEGRATION ===
   bexioContactId Int? // Bexio Contact ID for syncing
 
@@ -1735,4 +1742,366 @@ model RentalApplication {
   @@index([applicantUserId])
   @@index([status])
   @@map("rental_applications")
+}
+
+// ============================================
+// HELVENDA MATCHING MVP (Phase 2 — getrennt von Miet-Inseraten)
+// ============================================
+
+enum LandlordMembershipRole {
+  owner
+  admin
+  member
+}
+
+enum MatchPropertySource {
+  manual
+  csv
+  api
+}
+
+enum MatchPropertyStatus {
+  draft
+  active
+  paused
+  archived
+}
+
+enum HousingMatchStatus {
+  active
+  stale
+  hidden
+  hard_rejected
+}
+
+enum MatchingApplicationStatus {
+  draft
+  submitted
+  withdrawn
+  landlord_reviewing
+  landlord_accepted
+  landlord_rejected
+  closed
+}
+
+enum MatchingDocumentSubject {
+  seeker_profile
+  property
+  matching_application
+}
+
+enum MatchingDocumentKind {
+  id_proof
+  income
+  other
+}
+
+enum MatchingDocumentStatus {
+  pending
+  verified
+  rejected
+}
+
+enum DocumentVerificationStatus {
+  pending
+  approved
+  rejected
+}
+
+enum MatchingOutboxStatus {
+  pending
+  processing
+  completed
+  failed
+}
+
+model LandlordAccount {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  displayName String?
+
+  memberships LandlordMembership[]
+  properties  MatchingProperty[]
+
+  @@map("matching_landlord_accounts")
+}
+
+model LandlordMembership {
+  id                String                 @id @default(cuid())
+  createdAt         DateTime               @default(now())
+  landlordAccountId String
+  userId            String
+  role              LandlordMembershipRole @default(member)
+
+  landlordAccount LandlordAccount @relation(fields: [landlordAccountId], references: [id], onDelete: Cascade)
+  user            User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([landlordAccountId, userId])
+  @@index([userId])
+  @@map("matching_landlord_memberships")
+}
+
+model MatchingProperty {
+  id                String              @id @default(cuid())
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+  landlordAccountId String
+  source            MatchPropertySource @default(manual)
+  title             String
+  description       String?             @db.Text
+  addressLine       String?
+  zip               String
+  city              String
+  canton            String
+  rooms             Decimal             @db.Decimal(4, 1)
+  areaSqm           Int?
+  floor             Int?
+  rentPerMonth      Int
+  availableFrom     DateTime?
+  availableTo       DateTime?
+  petPolicyNote     String?             @db.Text
+  rulesJson         Json?
+  status            MatchPropertyStatus @default(draft)
+
+  landlordAccount LandlordAccount        @relation(fields: [landlordAccountId], references: [id], onDelete: Cascade)
+  matches         HousingMatch[]
+  applications    MatchingApplication[]
+
+  @@index([landlordAccountId, status])
+  @@index([canton, zip])
+  @@index([status, rentPerMonth])
+  @@map("matching_properties")
+}
+
+model SeekerProfile {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  userId    String   @unique
+
+  user            User                    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  searchProfile   SeekerSearchProfile?
+  household       HouseholdProfile?
+  employment      EmploymentProfile?
+  financial       FinancialProfile?
+  housingHistory  HousingHistoryEntry[]
+  matches         HousingMatch[]
+  applications    MatchingApplication[]
+
+  @@map("matching_seeker_profiles")
+}
+
+model SeekerSearchProfile {
+  id                String   @id @default(cuid())
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+  seekerProfileId   String   @unique
+  cantonPreference  String?
+  postalCodesWanted String?  @db.Text
+  budgetMin         Int?
+  budgetMax         Int?
+  minRooms          Decimal? @db.Decimal(4, 1)
+  maxRooms          Decimal? @db.Decimal(4, 1)
+  moveInEarliest    DateTime?
+  moveInLatest      DateTime?
+
+  seekerProfile SeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([cantonPreference])
+  @@map("matching_seeker_search_profiles")
+}
+
+model HouseholdProfile {
+  id               String   @id @default(cuid())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+  seekerProfileId  String   @unique
+  adults           Int      @default(1)
+  children         Int      @default(0)
+  petsDescription  String?  @db.Text
+
+  seekerProfile SeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+
+  @@map("matching_household_profiles")
+}
+
+model EmploymentProfile {
+  id                 String   @id @default(cuid())
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  seekerProfileId    String   @unique
+  employmentStatus   String?
+  employerName       String?
+
+  seekerProfile SeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+
+  @@map("matching_employment_profiles")
+}
+
+model FinancialProfile {
+  id                     String   @id @default(cuid())
+  createdAt              DateTime @default(now())
+  updatedAt              DateTime @updatedAt
+  seekerProfileId       String   @unique
+  monthlyNetIncomeBand  String?
+
+  seekerProfile SeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+
+  @@map("matching_financial_profiles")
+}
+
+model HousingHistoryEntry {
+  id              String    @id @default(cuid())
+  createdAt       DateTime  @default(now())
+  seekerProfileId String
+  fromDate        DateTime?
+  toDate          DateTime?
+  label           String?
+  notes           String?   @db.Text
+
+  seekerProfile SeekerProfile @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+
+  @@index([seekerProfileId])
+  @@map("matching_housing_history_entries")
+}
+
+model MatchingDocument {
+  id               String                  @id @default(cuid())
+  createdAt        DateTime                @default(now())
+  updatedAt        DateTime                @updatedAt
+  subjectType      MatchingDocumentSubject
+  subjectId        String
+  uploadedByUserId String
+  fileKey          String
+  mimeType         String?
+  kind             MatchingDocumentKind    @default(other)
+  status           MatchingDocumentStatus  @default(pending)
+
+  uploadedBy   User                  @relation("MatchingDocumentUploader", fields: [uploadedByUserId], references: [id], onDelete: Restrict)
+  verification DocumentVerification?
+
+  @@index([subjectType, subjectId])
+  @@index([uploadedByUserId])
+  @@map("matching_documents")
+}
+
+model DocumentVerification {
+  id                String                     @id @default(cuid())
+  createdAt         DateTime                   @default(now())
+  updatedAt         DateTime                   @updatedAt
+  documentId        String                     @unique
+  verifiedByUserId String?
+  status            DocumentVerificationStatus @default(pending)
+  notes             String?                    @db.Text
+  verifiedAt        DateTime?
+
+  document       MatchingDocument @relation(fields: [documentId], references: [id], onDelete: Cascade)
+  verifiedByUser User?            @relation("DocumentVerificationVerifier", fields: [verifiedByUserId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@map("matching_document_verifications")
+}
+
+model HousingMatch {
+  id               String             @id @default(cuid())
+  createdAt        DateTime           @default(now())
+  updatedAt        DateTime           @updatedAt
+  seekerProfileId  String
+  propertyId       String
+  score            Float              @default(0)
+  hardFailed       Boolean            @default(false)
+  status           HousingMatchStatus @default(active)
+  computedAt       DateTime           @default(now())
+
+  seekerProfile SeekerProfile           @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+  property       MatchingProperty      @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  reasons        HousingMatchReason[]
+  application    MatchingApplication?
+
+  @@index([seekerProfileId, status, computedAt])
+  @@index([propertyId, status, score])
+  @@unique([seekerProfileId, propertyId])
+  @@map("matching_matches")
+}
+
+model HousingMatchReason {
+  id        String   @id @default(cuid())
+  createdAt DateTime @default(now())
+  matchId   String
+  code      String
+  detail    String?  @db.Text
+
+  match HousingMatch @relation(fields: [matchId], references: [id], onDelete: Cascade)
+
+  @@index([matchId])
+  @@map("matching_match_reasons")
+}
+
+model MatchingApplication {
+  id               String                     @id @default(cuid())
+  createdAt        DateTime                   @default(now())
+  updatedAt        DateTime                   @updatedAt
+  propertyId       String
+  seekerProfileId  String
+  housingMatchId   String?                    @unique
+  status           MatchingApplicationStatus @default(draft)
+  message          String?                    @db.Text
+
+  property      MatchingProperty @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  seekerProfile SeekerProfile    @relation(fields: [seekerProfileId], references: [id], onDelete: Cascade)
+  housingMatch  HousingMatch?    @relation(fields: [housingMatchId], references: [id], onDelete: SetNull)
+  consentShares ConsentShare[]
+
+  @@index([propertyId, status])
+  @@index([seekerProfileId, status])
+  @@map("matching_applications")
+}
+
+model ConsentShare {
+  id            String    @id @default(cuid())
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+  applicationId String
+  scope         String
+  grantedAt     DateTime?
+  revokedAt     DateTime?
+
+  application MatchingApplication @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@unique([applicationId, scope])
+  @@index([applicationId])
+  @@map("matching_consent_shares")
+}
+
+model MatchingAuditLog {
+  id          String   @id @default(cuid())
+  createdAt   DateTime @default(now())
+  actorUserId String?
+  action      String
+  entityType  String
+  entityId    String
+  metadata    Json?
+
+  actorUser User? @relation("MatchingAuditActor", fields: [actorUserId], references: [id], onDelete: SetNull)
+
+  @@index([entityType, entityId])
+  @@index([actorUserId, createdAt])
+  @@map("matching_audit_logs")
+}
+
+model MatchingOutboxEvent {
+  id          String               @id @default(cuid())
+  createdAt   DateTime             @default(now())
+  updatedAt   DateTime             @updatedAt
+  type        String
+  payload     Json
+  status      MatchingOutboxStatus @default(pending)
+  processedAt DateTime?
+  attempts    Int                  @default(0)
+  lastError   String?              @db.Text
+
+  @@index([status, createdAt])
+  @@index([type])
+  @@map("matching_outbox_events")
 }
