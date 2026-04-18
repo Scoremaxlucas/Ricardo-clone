@@ -4,6 +4,7 @@ import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile
 import { prisma } from '@/lib/prisma'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
+import { formatDate } from '@/lib/utils/formatDate'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
@@ -66,7 +67,7 @@ export default async function ProfilPage() {
               </div>
               <div>
                 <dt className="text-slate-500">Geburtsdatum</dt>
-                <dd className="font-medium">{profile.dateOfBirth.toLocaleDateString('de-CH')}</dd>
+                <dd className="font-medium">{formatDate(profile.dateOfBirth)}</dd>
               </div>
               <div>
                 <dt className="text-slate-500">Adresse</dt>

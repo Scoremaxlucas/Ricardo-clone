@@ -3,6 +3,7 @@
 import type { CreditCheckStatus } from '@prisma/client'
 import { CreditCheckBadge } from '@/components/rental/CreditCheckBadge'
 import type { CreditCheckResult } from '@/lib/rental/types'
+import { formatDate } from '@/lib/utils/formatDate'
 import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 
@@ -62,7 +63,7 @@ export function ProfilCreditPanel({ creditCheckStatus, creditCheckResult, credit
           <CreditCheckBadge status="approved" creditCheckResult={creditCheckResult} />
           <p className="text-sm text-teal-900">
             Gültig bis{' '}
-            {creditCheckExpiresAt ? creditCheckExpiresAt.toLocaleDateString('de-CH') : '—'}
+            {creditCheckExpiresAt ? formatDate(creditCheckExpiresAt) : '—'}
           </p>
           <Link href="/profil/betreibungsregister" className="text-xs font-semibold text-teal-800 underline-offset-2 hover:underline">
             Neuen Auszug hochladen

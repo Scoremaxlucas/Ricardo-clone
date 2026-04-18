@@ -2,6 +2,7 @@
 
 import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
 import { employmentLabelDe } from '@/lib/tenant-profile/labels'
+import { wohnenToast } from '@/lib/wohnen-toast'
 import { useRouter } from 'next/navigation'
 import { useCallback, useMemo, useState } from 'react'
 
@@ -219,8 +220,11 @@ export function ProfilErstellenClient({ mode, initial, redirectAfterSave }: Prop
         else setErrors({ _form: data.message || 'Speichern fehlgeschlagen' })
         return
       }
+      wohnenToast.profileSaved()
       router.push(redirectAfterSave.startsWith('/') ? redirectAfterSave : '/profil')
       router.refresh()
+    } catch {
+      wohnenToast.genericError()
     } finally {
       setSubmitting(false)
     }

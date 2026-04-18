@@ -1,6 +1,8 @@
 import { ImageResponse } from 'next/og'
 
-export const alt = 'Helvenda – Schweizer Online-Marktplatz'
+export const runtime = 'edge'
+
+export const alt = 'Helvenda Wohnungen'
 export const size = { width: 1200, height: 630 }
 export const contentType = 'image/png'
 
@@ -9,42 +11,18 @@ export default function OgImage() {
     (
       <div
         style={{
-          alignItems: 'center',
-          background: 'linear-gradient(135deg, #0f766e 0%, #0d9488 50%, #14b8a6 100%)',
-          display: 'flex',
-          flexDirection: 'column',
-          height: '100%',
-          justifyContent: 'center',
+          background: '#18a87c',
           width: '100%',
+          height: '100%',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          flexDirection: 'column',
         }}
       >
-        <div
-          style={{
-            color: 'white',
-            fontSize: 64,
-            fontWeight: 800,
-            letterSpacing: '-0.02em',
-          }}
-        >
-          Helvenda
-        </div>
-        <div
-          style={{
-            color: 'rgba(255,255,255,0.9)',
-            fontSize: 28,
-            marginTop: 12,
-          }}
-        >
-          Der Schweizer Online-Marktplatz
-        </div>
-        <div
-          style={{
-            color: 'rgba(255,255,255,0.75)',
-            fontSize: 20,
-            marginTop: 8,
-          }}
-        >
-          Kaufen & verkaufen – einfach und sicher
+        <div style={{ color: 'white', fontSize: 64, fontWeight: 'bold' }}>Helvenda Wohnungen</div>
+        <div style={{ color: 'rgba(255,255,255,0.85)', fontSize: 32, marginTop: 16 }}>
+          Fair mieten und vermieten in der Schweiz
         </div>
       </div>
     ),

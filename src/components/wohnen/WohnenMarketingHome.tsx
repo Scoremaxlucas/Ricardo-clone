@@ -1,9 +1,10 @@
 import { CreditCheckBadge } from '@/components/rental/CreditCheckBadge'
 import { RentalListingCard } from '@/components/rental/RentalListingCard'
+import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import { loadWohnenHomeListings } from '@/lib/rental/wohnen-home-listings'
 import type { CreditCheckResult } from '@/lib/rental/types'
-import { FileText, Home, MapPin, Rocket, ShieldCheck, User } from 'lucide-react'
+import { Building2, FileText, Home, MapPin, Rocket, ShieldCheck, User } from 'lucide-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
@@ -61,7 +62,7 @@ export async function WohnenMarketingHome() {
       <section className="bg-gradient-to-b from-teal-50/50 via-white to-white px-4 pb-16 pt-10 sm:px-6 sm:pb-20 sm:pt-14 lg:px-8">
         <div className="mx-auto max-w-3xl text-center">
           <p className="text-sm font-semibold uppercase tracking-wide text-teal-800">🇨🇭 Der faire Schweizer Mietmarkt</p>
-          <h1 className="mt-4 text-3xl font-bold tracking-tight text-slate-900 sm:text-4xl lg:text-[2.75rem] lg:leading-tight">
+          <h1 className="mt-4 text-[2.25rem] font-bold leading-tight tracking-tight text-slate-900 sm:text-4xl lg:text-[3.5rem] lg:leading-[1.1]">
             Die Wohnungsplattform, die auf deiner Seite ist.
           </h1>
           <p className="mt-5 text-lg text-slate-600 sm:text-xl">
@@ -102,7 +103,21 @@ export async function WohnenMarketingHome() {
           <p className="mx-auto mt-3 max-w-2xl text-center text-slate-600">
             Wir haben das Modell der grossen Portale auf den Kopf gestellt.
           </p>
-          <div className="mt-10 overflow-x-auto rounded-2xl border border-slate-200 shadow-sm">
+          <div className="mt-10 space-y-3 md:hidden">
+            {[
+              ['Inserat inserieren', 'CHF 14–28 pro Tag', 'Kostenlos'],
+              ['Mieter kontaktieren', 'CHF 39.95 / Monat Pflicht-Abo', 'Kostenlos, sofort'],
+              ['Bewerbungsqualität', 'Unstrukturierte E-Mails', 'Verifiziert mit Betreibungsregister'],
+              ['Login', 'Separates Konto pro Plattform', 'Ein Helvenda-Konto für alles'],
+            ].map(([thema, comp, hel]) => (
+              <div key={String(thema)} className="rounded-2xl border border-slate-200 bg-white p-4 text-sm shadow-sm">
+                <p className="font-semibold text-slate-900">{thema}</p>
+                <p className="mt-2 text-slate-500 line-through decoration-slate-400">{comp}</p>
+                <p className="mt-2 rounded-lg bg-[#e8f7f2] px-3 py-2 font-bold text-teal-800">{hel}</p>
+              </div>
+            ))}
+          </div>
+          <div className="mt-10 hidden overflow-x-auto rounded-2xl border border-slate-200 shadow-sm md:block">
             <table className="w-full min-w-[640px] border-collapse text-left text-sm">
               <thead>
                 <tr className="border-b border-slate-200 bg-slate-50">
@@ -139,7 +154,7 @@ export async function WohnenMarketingHome() {
       <section className="border-t border-slate-100 bg-slate-50/40 px-4 py-14 sm:px-6 lg:px-8">
         <div className="mx-auto max-w-6xl">
           <h2 className="text-center text-2xl font-bold text-slate-900 sm:text-3xl">So einfach funktioniert es</h2>
-          <div className="mt-10 grid gap-8 lg:grid-cols-2">
+          <div className="mt-10 grid grid-cols-1 gap-8 lg:grid-cols-2">
             <div>
               <div className="rounded-t-xl bg-teal-700 px-4 py-2 text-center text-sm font-bold text-white">Für Vermieter</div>
               <div className="space-y-4 rounded-b-xl rounded-tr-xl border border-t-0 border-slate-200 bg-white p-4 sm:p-5">
@@ -235,20 +250,21 @@ export async function WohnenMarketingHome() {
           <p className="mt-2 text-center text-slate-600">Neu eingestellt auf Helvenda Wohnungen</p>
 
           {listings.length === 0 ? (
-            <div className="mx-auto mt-12 max-w-md rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-12 text-center">
-              <p className="text-slate-700">Noch keine Inserate — sei der Erste!</p>
-              <Link
-                href="/matching/properties/new"
-                className="mt-6 inline-flex rounded-xl bg-[#18a87c] px-5 py-2.5 text-sm font-semibold text-white"
-              >
-                Wohnung kostenlos inserieren
-              </Link>
+            <div className="mt-12">
+              <WohnenEmptyState
+                icon={Building2}
+                title="Noch keine Wohnungen inseriert"
+                description="Sobald neue Inserate live sind, erscheinen sie hier."
+                actionHref="/matching/properties/new"
+                actionLabel="Erste Wohnung inserieren"
+              />
             </div>
           ) : (
             <div className="mt-10 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-              {listings.map(l => (
+              {listings.map((l, idx) => (
                 <RentalListingCard
                   key={l.id}
+                  imagePriority={idx === 0}
                   listing={{
                     id: l.id,
                     title: l.title,

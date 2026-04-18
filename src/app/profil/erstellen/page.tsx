@@ -5,9 +5,12 @@ import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
 import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Mieterprofil erstellen | Helvenda Wohnungen',
-  description: 'Persönliche Angaben, Beschäftigung und Referenz — einmal ausfüllen für alle Bewerbungen.',
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: 'Mieterprofil erstellen — Helvenda Wohnungen',
+    description: 'Persönliche Angaben, Beschäftigung und Referenz — einmal ausfüllen für alle Bewerbungen.',
+    robots: { index: false, follow: false },
+  }
 }
 
 export default async function ProfilErstellenPage({

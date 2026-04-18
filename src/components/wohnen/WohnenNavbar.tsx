@@ -283,18 +283,18 @@ export function WohnenNavbar() {
     if (!signedIn) {
       return (
         <>
-          <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
             Wohnungen suchen
           </Link>
-          <Link href="/matching/properties/new" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          <Link href="/matching/properties/new" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
             Wohnung inserieren
           </Link>
-          <Link href="/login" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          <Link href="/login" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
             Anmelden
           </Link>
           <Link
             href="/register"
-            className="mt-2 block rounded-lg bg-[#18a87c] px-3 py-2.5 text-center font-semibold text-white"
+            className="mt-2 flex min-h-[44px] items-center justify-center rounded-lg bg-[#18a87c] px-3 py-2.5 text-center font-semibold text-white"
             onClick={closeAll}
           >
             Registrieren
@@ -309,25 +309,25 @@ export function WohnenNavbar() {
       <>
         {showLandlordNav ?
           <>
-            <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Wohnungen suchen
             </Link>
-            <Link href="/matching/properties" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/matching/properties" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Meine Inserate
             </Link>
-            <Link href="/matching/properties/new" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/matching/properties/new" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Neues Inserat
             </Link>
           </>
         : null}
         {showIncompleteNav ?
           <>
-            <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Wohnungen suchen
             </Link>
             <Link
               href="/profil/erstellen"
-              className="block rounded-lg bg-amber-100 px-3 py-2.5 font-semibold text-amber-950 hover:bg-amber-200"
+              className="flex min-h-[44px] items-center rounded-lg bg-amber-100 px-3 py-2.5 font-semibold text-amber-950 hover:bg-amber-200"
               onClick={closeAll}
             >
               ⚠️ Profil erstellen
@@ -336,12 +336,12 @@ export function WohnenNavbar() {
         : null}
         {showCreditRenew && !showLandlordNav ?
           <>
-            <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Wohnungen suchen
             </Link>
             <Link
               href="/profil/betreibungsregister"
-              className="block rounded-lg bg-orange-100 px-3 py-2.5 font-semibold text-orange-950 hover:bg-orange-200"
+              className="flex min-h-[44px] items-center rounded-lg bg-orange-100 px-3 py-2.5 font-semibold text-orange-950 hover:bg-orange-200"
               onClick={closeAll}
             >
               ⚠️ Auszug erneuern
@@ -350,19 +350,19 @@ export function WohnenNavbar() {
         : null}
         {showTenantCompleteNav ?
           <>
-            <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Wohnungen suchen
             </Link>
-            <Link href="/meine-bewerbungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/meine-bewerbungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Meine Bewerbungen
             </Link>
-            <Link href="/matching/properties/new" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+            <Link href="/matching/properties/new" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
               Wohnung inserieren
             </Link>
           </>
         : null}
         {!showLandlordNav && !showIncompleteNav && !showCreditRenew && !showTenantCompleteNav ?
-          <Link href="/wohnungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          <Link href="/wohnungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
             Wohnungen suchen
           </Link>
         : null}
@@ -374,14 +374,14 @@ export function WohnenNavbar() {
           <p className="truncate text-sm font-semibold text-slate-900">{user?.name || 'Benutzer/in'}</p>
           <p className="truncate text-xs text-slate-500">{user?.email || ''}</p>
         </div>
-        <Link href="/profil" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+        <Link href="/profil" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
           Mein Profil
         </Link>
-        <Link href="/meine-bewerbungen" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+        <Link href="/meine-bewerbungen" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
           Meine Bewerbungen
         </Link>
         {hasListings ?
-          <Link href="/matching/properties" className="block rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
+          <Link href="/matching/properties" className="flex min-h-[44px] items-center rounded-lg px-3 py-2.5 hover:bg-slate-100" onClick={closeAll}>
             Meine Inserate
           </Link>
         : null}

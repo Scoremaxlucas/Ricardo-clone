@@ -1,18 +1,21 @@
 import { RentalListingCard } from '@/components/rental/RentalListingCard'
 import { WohnungenSearchFilters } from '@/components/rental/WohnungenSearchFilters'
+import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
 import {
   countActiveRentalListings,
   fetchActiveRentalListingsFiltered,
   rentalListingRowToCardData,
 } from '@/lib/rental/rental-listings-public'
-import { Building2 } from 'lucide-react'
+import { Building2, Search } from 'lucide-react'
 import type { Metadata } from 'next'
-import Link from 'next/link'
 import { Suspense } from 'react'
 
-export const metadata: Metadata = {
-  title: 'Wohnungen suchen | Helvenda Wohnungen',
-  description: 'Aktive Mietwohnungen in der Schweiz filtern und kostenlos bewerben — Helvenda Wohnungen.',
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: 'Wohnungen mieten in der Schweiz — Helvenda Wohnungen',
+    description:
+      'Mietwohnungen in der ganzen Schweiz — kostenlos suchen, sofort bewerben. Nur verifizierte Inserate mit Betreibungsregister-Check.',
+  }
 }
 
 type PageProps = {
@@ -43,15 +46,14 @@ export default async function WohnungenPage({ searchParams }: PageProps) {
         </p>
 
         {globalEmpty ? (
-          <div className="mx-auto mt-16 flex max-w-md flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-14 text-center shadow-sm">
-            <Building2 className="h-14 w-14 text-slate-300" aria-hidden />
-            <p className="mt-4 text-lg font-semibold text-slate-800">Noch keine Wohnungen inseriert</p>
-            <Link
-              href="/matching/properties/new"
-              className="mt-6 inline-flex rounded-xl bg-[#18a87c] px-5 py-2.5 text-sm font-semibold text-white shadow-md transition hover:opacity-95"
-            >
-              Erste Wohnung inserieren →
-            </Link>
+          <div className="mt-16">
+            <WohnenEmptyState
+              icon={Building2}
+              title="Noch keine Wohnungen inseriert"
+              description="Sobald Inserate live sind, erscheinen sie hier."
+              actionHref="/matching/properties/new"
+              actionLabel="Erste Wohnung inserieren"
+            />
           </div>
         ) : (
           <>
@@ -65,13 +67,23 @@ export default async function WohnungenPage({ searchParams }: PageProps) {
               )}
             </p>
 
-            {!filteredEmpty ? (
+            {filteredEmpty ? (
+              <div className="mt-10">
+                <WohnenEmptyState
+                  icon={Search}
+                  title="Keine Wohnungen gefunden"
+                  description="Passe die Filter an oder setze sie zurück."
+                  actionHref="/wohnungen"
+                  actionLabel="Filter zurücksetzen"
+                />
+              </div>
+            ) : (
               <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {listings.map(row => (
                   <RentalListingCard key={row.id} listing={rentalListingRowToCardData(row)} />
                 ))}
               </div>
-            ) : null}
+            )}
           </>
         )}
       </main>

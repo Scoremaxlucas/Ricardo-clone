@@ -1,5 +1,6 @@
 'use client'
 
+import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
 import type { RentalApplicationStatus } from '@prisma/client'
 import { ChevronDown, ChevronUp, Inbox } from 'lucide-react'
 import Link from 'next/link'
@@ -115,16 +116,13 @@ function BewerbungCard({ app }: { app: MeineBewerbungRow }) {
 export function MeineBewerbungenClient({ applications }: { applications: MeineBewerbungRow[] }) {
   if (applications.length === 0) {
     return (
-      <div className="mx-auto flex max-w-md flex-col items-center rounded-2xl border border-dashed border-slate-200 bg-white px-6 py-14 text-center">
-        <Inbox className="h-12 w-12 text-slate-300" aria-hidden />
-        <p className="mt-4 text-slate-700">Du hast dich noch auf keine Wohnung beworben.</p>
-        <Link
-          href="/wohnungen"
-          className="mt-6 inline-flex rounded-xl bg-[#18a87c] px-5 py-2.5 text-sm font-semibold text-white shadow-sm"
-        >
-          Wohnungen suchen →
-        </Link>
-      </div>
+      <WohnenEmptyState
+        icon={Inbox}
+        title="Noch keine Bewerbungen"
+        description="Bewirb dich auf passende Inserate — der Vermieter wird automatisch informiert."
+        actionHref="/wohnungen"
+        actionLabel="Wohnungen suchen"
+      />
     )
   }
 

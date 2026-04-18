@@ -6,6 +6,7 @@ import { isCreditCheckResult } from '@/lib/rental/types'
 import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import { CheckCircle2 } from 'lucide-react'
 import Link from 'next/link'
+import { wohnenToast } from '@/lib/wohnen-toast'
 import { useRouter } from 'next/navigation'
 import { useMemo, useState } from 'react'
 
@@ -87,13 +88,17 @@ export function BewerbenClient({ listing, tenant, requiresCreditCheck }: Props) 
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         if (data.code === 'ALREADY_APPLIED') {
+          wohnenToast.alreadyApplied()
           router.replace('/meine-bewerbungen?already=true')
           return
         }
         setError(typeof data.message === 'string' ? data.message : 'Senden fehlgeschlagen')
         return
       }
+      wohnenToast.applicationSuccess()
       setDone(true)
+    } catch {
+      wohnenToast.genericError()
     } finally {
       setSubmitting(false)
     }

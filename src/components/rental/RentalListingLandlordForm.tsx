@@ -7,6 +7,7 @@ import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
 import { useSession } from 'next-auth/react'
+import { wohnenToast } from '@/lib/wohnen-toast'
 import toast from 'react-hot-toast'
 
 const ROOM_OPTIONS = ['1', '1.5', '2', '2.5', '3', '3.5', '4', '4.5', '5+'] as const
@@ -166,7 +167,7 @@ export function RentalListingLandlordForm({ mode, listingId, initial, backHref =
         toast.error((data as { message?: string }).message || 'Speichern fehlgeschlagen')
         return
       }
-      toast.success(mode === 'edit' ? 'Inserat aktualisiert' : 'Inserat erstellt')
+      wohnenToast.listingSaved()
       router.push(mode === 'edit' ? '/matching/properties' : '/matching/properties')
       router.refresh()
     } finally {

@@ -6,9 +6,12 @@ import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
 import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Meine Inserate',
-  description: 'Deine Miet-Inserate auf Helvenda Wohnungen verwalten.',
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: 'Meine Inserate | Helvenda Wohnungen',
+    description: 'Deine Miet-Inserate auf Helvenda Wohnungen verwalten.',
+    robots: { index: false, follow: false },
+  }
 }
 
 export default async function LandlordRentalPropertiesPage() {

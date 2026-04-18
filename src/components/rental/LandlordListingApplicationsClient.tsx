@@ -1,12 +1,14 @@
 'use client'
 
 import { CreditCheckBadge } from '@/components/rental/CreditCheckBadge'
+import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
 import type { RentalApplicationBadgeStatus } from '@/components/rental/CreditCheckBadge'
 import { employmentSummaryDe, incomeCategoryLabelDe } from '@/lib/tenant-profile/labels'
 import type { CreditCheckResult } from '@/lib/rental/types'
 import { isCreditCheckResult } from '@/lib/rental/types'
 import type { EmploymentStatus, IncomeCategory, RentalApplicationStatus } from '@prisma/client'
-import { Loader2 } from 'lucide-react'
+import { wohnenToast } from '@/lib/wohnen-toast'
+import { Inbox, Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useMemo, useState } from 'react'
@@ -190,7 +192,7 @@ function LandlordApplicationCard({
           type="button"
           disabled={Boolean(busyId) || rejected || hasViewing}
           onClick={() => onOpenView(row)}
-          className="rounded-xl bg-[#18a87c] px-3 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-[44px] rounded-xl bg-[#18a87c] px-3 py-2.5 text-sm font-bold text-white shadow-sm hover:opacity-95 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Besichtigung anfragen
         </button>
@@ -198,7 +200,7 @@ function LandlordApplicationCard({
           type="button"
           disabled={Boolean(busyId) || rejected || hasViewing}
           onClick={() => onOpenReject(row)}
-          className="rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
+          className="min-h-[44px] rounded-xl border border-slate-300 px-3 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-40"
         >
           Ablehnen
         </button>
@@ -269,11 +271,17 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
             )
           )
         }
-        toast.success('Gespeichert')
+        if (body.action === 'request_viewing') {
+          wohnenToast.viewingRequested()
+        } else if (body.action === 'reject') {
+          wohnenToast.applicationRejected()
+        } else {
+          toast.success('Gespeichert')
+        }
         router.refresh()
       } catch {
         setRows(prev)
-        toast.error('Netzwerkfehler')
+        wohnenToast.genericError()
       } finally {
         setBusyId(null)
         setViewModal(null)
@@ -344,28 +352,38 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
 
       <h1 className="mt-8 text-2xl font-bold text-slate-900">Bewerbungen ({rows.length})</h1>
 
-      <div className="mt-4 flex flex-wrap gap-1 border-b border-slate-200">
-        {(['all', 'neu', 'viewing', 'rejected'] as const).map(t => (
-          <button
-            key={t}
-            type="button"
-            onClick={() => setTab(t)}
-            className={`border-b-2 px-3 py-2 text-sm font-semibold transition ${
-              tab === t ? 'border-[#18a87c] text-teal-900' : 'border-transparent text-slate-600 hover:text-slate-900'
-            }`}
-          >
-            {tabLabel(t)}
-          </button>
-        ))}
-      </div>
+      {rows.length === 0 ?
+        <div className="mt-10">
+          <WohnenEmptyState
+            icon={Inbox}
+            title="Noch keine Bewerbungen für dieses Inserat"
+            description="Sobald sich Mieter bewerben, erscheinen sie hier."
+          />
+        </div>
+      : (
+        <>
+          <div className="mt-4 flex flex-wrap gap-1 border-b border-slate-200">
+            {(['all', 'neu', 'viewing', 'rejected'] as const).map(t => (
+              <button
+                key={t}
+                type="button"
+                onClick={() => setTab(t)}
+                className={`min-h-[44px] border-b-2 px-3 py-2 text-sm font-semibold transition ${
+                  tab === t ? 'border-[#18a87c] text-teal-900' : 'border-transparent text-slate-600 hover:text-slate-900'
+                }`}
+              >
+                {tabLabel(t)}
+              </button>
+            ))}
+          </div>
 
-      <ul className="mt-6 space-y-4">
-        {filtered.length === 0 ?
-          <li className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center text-sm text-slate-600">
-            Keine Bewerbungen in dieser Ansicht.
-          </li>
-        : null}
-        {filtered.map(row => (
+          <ul className="mt-6 space-y-4">
+            {filtered.length === 0 ?
+              <li className="rounded-xl border border-dashed border-slate-200 bg-slate-50 py-10 text-center text-sm text-slate-600">
+                Keine Bewerbungen in dieser Ansicht.
+              </li>
+            : null}
+            {filtered.map(row => (
           <LandlordApplicationCard
             key={row.id}
             row={row}
@@ -378,12 +396,18 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
             }}
             onOpenReject={setRejectModal}
           />
-        ))}
-      </ul>
+            ))}
+          </ul>
+        </>
+      )}
 
       {viewModal ?
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
-          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-2xl bg-white p-6 shadow-xl">
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="max-h-[90vh] w-full max-w-md overflow-y-auto rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
             <h2 className="text-lg font-bold text-slate-900">Besichtigung anfragen</h2>
             <div className="mt-4 space-y-3">
               <div>
@@ -421,11 +445,11 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
                 />
               </div>
             </div>
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
                 onClick={() => setViewModal(null)}
-                className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-800"
+                className="min-h-[44px] w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-800 sm:w-auto"
               >
                 Abbrechen
               </button>
@@ -433,7 +457,7 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
                 type="button"
                 onClick={onSubmitViewing}
                 disabled={Boolean(busyId)}
-                className="rounded-xl bg-[#18a87c] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                className="min-h-[44px] w-full rounded-xl bg-[#18a87c] px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50 sm:w-auto"
               >
                 Anfrage senden
               </button>
@@ -443,17 +467,21 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
       : null}
 
       {rejectModal ?
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" role="dialog" aria-modal="true">
-          <div className="w-full max-w-md rounded-2xl bg-white p-6 shadow-xl">
+        <div
+          className="fixed inset-0 z-50 flex items-end justify-center bg-black/50 p-0 sm:items-center sm:p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="w-full max-w-md rounded-t-2xl bg-white p-6 shadow-xl sm:rounded-2xl">
             <h2 className="text-lg font-bold text-slate-900">Bewerbung ablehnen</h2>
             <p className="mt-3 text-sm text-slate-600">
               Der Bewerber wird nicht benachrichtigt — die Ablehnung ist nur intern sichtbar.
             </p>
-            <div className="mt-6 flex flex-wrap gap-2">
+            <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:flex-wrap">
               <button
                 type="button"
                 onClick={() => setRejectModal(null)}
-                className="rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-800"
+                className="min-h-[44px] w-full rounded-xl border border-slate-300 px-4 py-2.5 text-sm font-semibold text-slate-800 sm:w-auto"
               >
                 Abbrechen
               </button>
@@ -461,7 +489,7 @@ export function LandlordListingApplicationsClient({ listing, applications: initi
                 type="button"
                 onClick={onConfirmReject}
                 disabled={Boolean(busyId)}
-                className="rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50"
+                className="min-h-[44px] w-full rounded-xl bg-red-600 px-4 py-2.5 text-sm font-bold text-white disabled:opacity-50 sm:w-auto"
               >
                 Ablehnen
               </button>

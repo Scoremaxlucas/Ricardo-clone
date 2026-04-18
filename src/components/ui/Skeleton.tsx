@@ -1,14 +1,34 @@
 'use client'
 
+import { cn } from '@/lib/utils'
+import type { CSSProperties } from 'react'
+
 /**
  * Reusable skeleton/shimmer loading components
  */
 
+type SkeletonProps = {
+  className?: string
+  /** Inline-Breite (px oder CSS), optional */
+  width?: string | number
+  /** Inline-Höhe (px oder CSS), optional */
+  height?: string | number
+  borderRadius?: string | number
+  style?: CSSProperties
+}
+
 // Base skeleton with shimmer animation
-export function Skeleton({ className = '' }: { className?: string }) {
+export function Skeleton({ className = '', width, height, borderRadius, style: styleProp }: SkeletonProps) {
+  const style: CSSProperties = { ...styleProp }
+  if (width !== undefined) style.width = typeof width === 'number' ? `${width}px` : width
+  if (height !== undefined) style.height = typeof height === 'number' ? `${height}px` : height
+  if (borderRadius !== undefined) {
+    style.borderRadius = typeof borderRadius === 'number' ? `${borderRadius}px` : borderRadius
+  }
   return (
     <div
-      className={`animate-pulse rounded-md bg-gray-200 ${className}`}
+      className={cn('animate-pulse rounded-md bg-gray-200', className)}
+      style={Object.keys(style).length ? style : undefined}
       role="status"
       aria-label="Wird geladen"
     />
@@ -20,10 +40,10 @@ export function ProductCardSkeleton() {
   return (
     <div className="overflow-hidden rounded-lg border border-gray-200 bg-white">
       <Skeleton className="aspect-square w-full rounded-none" />
-      <div className="p-3 space-y-2">
+      <div className="space-y-2 p-3">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-1/2" />
-        <div className="flex justify-between items-center pt-1">
+        <div className="flex items-center justify-between pt-1">
           <Skeleton className="h-5 w-20" />
           <Skeleton className="h-3 w-16" />
         </div>
@@ -48,7 +68,7 @@ export function ProfileSkeleton() {
   return (
     <div className="flex items-center gap-4 p-4">
       <Skeleton className="h-16 w-16 rounded-full" />
-      <div className="space-y-2 flex-1">
+      <div className="flex flex-1 flex-col space-y-2">
         <Skeleton className="h-5 w-32" />
         <Skeleton className="h-3 w-48" />
         <Skeleton className="h-3 w-24" />
@@ -60,7 +80,7 @@ export function ProfileSkeleton() {
 // Page header skeleton (title + subtitle)
 export function PageHeaderSkeleton() {
   return (
-    <div className="space-y-2 mb-6">
+    <div className="mb-6 space-y-2">
       <Skeleton className="h-8 w-48" />
       <Skeleton className="h-4 w-72" />
     </div>
@@ -70,9 +90,9 @@ export function PageHeaderSkeleton() {
 // List item skeleton
 export function ListItemSkeleton() {
   return (
-    <div className="flex items-center gap-4 p-4 border-b border-gray-100">
+    <div className="flex items-center gap-4 border-b border-gray-100 p-4">
       <Skeleton className="h-16 w-16 rounded-lg" />
-      <div className="space-y-2 flex-1">
+      <div className="flex flex-1 flex-col space-y-2">
         <Skeleton className="h-4 w-3/4" />
         <Skeleton className="h-3 w-1/2" />
       </div>
@@ -84,7 +104,7 @@ export function ListItemSkeleton() {
 // Full page skeleton with header placeholder
 export function PageSkeleton({ rows = 5 }: { rows?: number }) {
   return (
-    <div className="mx-auto max-w-7xl px-4 py-8 space-y-6">
+    <div className="mx-auto max-w-7xl space-y-6 px-4 py-8">
       <PageHeaderSkeleton />
       {Array.from({ length: rows }).map((_, i) => (
         <ListItemSkeleton key={i} />

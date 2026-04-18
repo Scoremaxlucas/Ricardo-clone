@@ -101,7 +101,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
             position="top-right"
             containerStyle={{ zIndex: 99999 }}
             toastOptions={{
-              duration: 3000,
+              duration: 3500,
               success: {
                 style: {
                   background: '#10b981',
@@ -114,6 +114,15 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               error: {
                 style: {
                   background: '#ef4444',
+                  color: '#fff',
+                  borderRadius: '8px',
+                  padding: '12px 16px',
+                  fontSize: '14px',
+                },
+              },
+              loading: {
+                style: {
+                  background: '#334155',
                   color: '#fff',
                   borderRadius: '8px',
                   padding: '12px 16px',

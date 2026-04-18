@@ -1,11 +1,14 @@
 'use client'
 
+import { WohnenEmptyState } from '@/components/wohnen/WohnenEmptyState'
 import type { LandlordListingRowSerialized } from '@/lib/rental/landlord-rental-listings'
 import type { RentalListingStatus } from '@prisma/client'
 import { Building2, ChevronDown, Loader2, MoreHorizontal } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useEffect, useState } from 'react'
+import { formatDate } from '@/lib/utils/formatDate'
+import { wohnenToast } from '@/lib/wohnen-toast'
 import toast from 'react-hot-toast'
 
 type Props = {
@@ -61,7 +64,7 @@ export function LandlordRentalListingsClient({ initialListings }: Props) {
           toast.error((data as { message?: string }).message || 'Aktion fehlgeschlagen')
           return
         }
-        toast.success('Gespeichert')
+        wohnenToast.listingSaved()
         router.refresh()
       } catch {
         setRows(prev)
@@ -103,15 +106,14 @@ export function LandlordRentalListingsClient({ initialListings }: Props) {
 
   if (rows.length === 0) {
     return (
-      <div className="mt-16 flex flex-col items-center justify-center rounded-2xl border border-dashed border-slate-200 bg-slate-50/80 px-6 py-16 text-center">
-        <Building2 className="h-12 w-12 text-slate-400" aria-hidden />
-        <p className="mt-4 text-sm font-medium text-slate-800">Du hast noch keine Inserate erstellt.</p>
-        <Link
-          href="/matching/properties/new"
-          className="mt-6 inline-flex rounded-xl bg-[#18a87c] px-5 py-3 text-sm font-bold text-white shadow-md hover:opacity-95"
-        >
-          Erstes Inserat erstellen →
-        </Link>
+      <div className="mt-16">
+        <WohnenEmptyState
+          icon={Building2}
+          title="Noch keine Inserate"
+          description="Erstelle dein erstes Mietinserat — kostenlos auf Helvenda Wohnungen."
+          actionHref="/matching/properties/new"
+          actionLabel="Erstes Inserat erstellen"
+        />
       </div>
     )
   }
@@ -140,11 +142,7 @@ export function LandlordRentalListingsClient({ initialListings }: Props) {
               </p>
               <p className="mt-1 text-xs text-slate-500">
                 Verfügbar ab{' '}
-                {new Date(l.availableFrom).toLocaleDateString('de-CH', {
-                  day: '2-digit',
-                  month: '2-digit',
-                  year: 'numeric',
-                })}
+                {formatDate(l.availableFrom)}
               </p>
             </div>
           </div>

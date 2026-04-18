@@ -5,9 +5,12 @@ import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
 import { redirect } from 'next/navigation'
 
-export const metadata: Metadata = {
-  title: 'Profil bearbeiten | Helvenda Wohnungen',
-  description: 'Mieterprofil anpassen.',
+export async function generateMetadata(): Promise<Metadata> {
+  return {
+    title: 'Profil bearbeiten | Helvenda Wohnungen',
+    description: 'Mieterprofil anpassen.',
+    robots: { index: false, follow: false },
+  }
 }
 
 export default async function ProfilBearbeitenPage() {

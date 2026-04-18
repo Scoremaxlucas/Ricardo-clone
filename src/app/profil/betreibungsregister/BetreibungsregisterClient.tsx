@@ -4,6 +4,7 @@ import { Loader2 } from 'lucide-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 import { useCallback, useRef, useState } from 'react'
+import { wohnenToast } from '@/lib/wohnen-toast'
 import toast from 'react-hot-toast'
 
 type Phase = 'idle' | 'upload' | 'analyze'
@@ -90,6 +91,7 @@ export function BetreibungsregisterClient() {
       }
       if (status === 'REJECTED') {
         setPhase('idle')
+        wohnenToast.creditInvalid()
         setError(message || 'Dokument ungültig oder zu alt. Bitte erneut versuchen.')
         return
       }

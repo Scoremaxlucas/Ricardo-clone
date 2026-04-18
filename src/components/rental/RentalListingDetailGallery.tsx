@@ -1,5 +1,7 @@
 'use client'
 
+import { isVercelBlobImageUrl } from '@/lib/rental/remote-image'
+import Image from 'next/image'
 import { useState } from 'react'
 
 type Props = { imageUrls: string[] }
@@ -9,7 +11,6 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
   const urls = imageUrls.filter(u => typeof u === 'string' && u.length > 0)
   const main = urls[0]
   const thumbs = urls.slice(1, 5)
-  const rest = urls.length - 1 - thumbs.length
 
   if (urls.length === 0) {
     return (
@@ -27,35 +28,53 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
     <>
       <div className="border-b border-slate-200 bg-slate-50">
         <div className="mx-auto max-w-6xl px-0 lg:px-4">
-          {/* Mobile: horizontal scroll */}
-          <div className="flex gap-2 overflow-x-auto px-4 py-3 lg:hidden">
+          <div className="flex snap-x snap-mandatory gap-2 overflow-x-auto scroll-smooth px-4 py-3 lg:hidden">
             {urls.map((src, i) => (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <div
                 key={i}
-                src={src}
-                alt=""
-                className="h-52 w-[85vw] max-w-md shrink-0 rounded-xl object-cover"
-              />
+                className="relative h-52 w-[85vw] max-w-md shrink-0 snap-center overflow-hidden rounded-xl bg-slate-200"
+              >
+                <Image
+                  src={src}
+                  alt=""
+                  fill
+                  className="object-cover"
+                  sizes="100vw"
+                  priority={i === 0}
+                  unoptimized={!isVercelBlobImageUrl(src)}
+                />
+              </div>
             ))}
           </div>
 
-          {/* Desktop */}
           <div className="hidden gap-3 py-4 lg:flex">
-            <div className="w-[60%] shrink-0 overflow-hidden rounded-2xl bg-slate-200">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={main} alt="" className="aspect-[4/3] h-full w-full object-cover" />
+            <div className="relative aspect-[4/3] w-[60%] shrink-0 overflow-hidden rounded-2xl bg-slate-200">
+              <Image
+                src={main}
+                alt=""
+                fill
+                className="object-cover"
+                sizes="(max-width: 1280px) 60vw, 720px"
+                priority
+                unoptimized={!isVercelBlobImageUrl(main)}
+              />
             </div>
             <div className="flex min-w-0 flex-1 flex-col gap-2">
               <div className="grid flex-1 grid-cols-2 gap-2">
                 {thumbs.map((src, i) => (
-                  <div key={i} className="overflow-hidden rounded-xl bg-slate-200">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={src} alt="" className="aspect-[4/3] h-full w-full object-cover" />
+                  <div key={i} className="relative aspect-[4/3] overflow-hidden rounded-xl bg-slate-200">
+                    <Image
+                      src={src}
+                      alt=""
+                      fill
+                      className="object-cover"
+                      sizes="(max-width: 1280px) 20vw, 240px"
+                      unoptimized={!isVercelBlobImageUrl(src)}
+                    />
                   </div>
                 ))}
               </div>
-              {urls.length > 1 ? (
+              {urls.length > 1 ?
                 <button
                   type="button"
                   onClick={() => setLightbox(true)}
@@ -63,13 +82,13 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
                 >
                   Alle {urls.length} Fotos
                 </button>
-              ) : null}
+              : null}
             </div>
           </div>
         </div>
       </div>
 
-      {lightbox ? (
+      {lightbox ?
         <div
           className="fixed inset-0 z-[100] flex flex-col bg-black/80 p-4"
           role="dialog"
@@ -92,7 +111,7 @@ export function RentalListingDetailGallery({ imageUrls }: Props) {
             ))}
           </div>
         </div>
-      ) : null}
+      : null}
     </>
   )
 }

@@ -10,6 +10,8 @@ import {
   parseRentalListingPhotosJson,
   rentalListingRowToCardData,
 } from '@/lib/rental/rental-listings-public'
+import { formatCHF } from '@/lib/utils/formatCurrency'
+import { formatDate } from '@/lib/utils/formatDate'
 import { SWISS_CANTONS } from '@/lib/swiss-cantons'
 import { WOHNEN_SITE_ORIGIN } from '@/lib/site-urls'
 import { Calendar, MapPin } from 'lucide-react'
@@ -42,7 +44,7 @@ export async function generateMetadata({ params }: PageProps): Promise<Metadata>
   const rooms = Number(listing.rooms)
   const zi = Number.isFinite(rooms) ? String(rooms).replace('.', ',') : String(listing.rooms)
   const title = `${listing.title} — ${zi} Zi, ${listing.city} | Helvenda Wohnungen`
-  const desc = `${zi}-Zimmer-Wohnung in ${listing.city} für CHF ${listing.rentPerMonth.toLocaleString('de-CH')}/Monat. Jetzt auf Helvenda Wohnungen bewerben — kostenlos und ohne Abo.`
+  const desc = `${zi}-Zimmer-Wohnung in ${listing.city} für ${formatCHF(listing.rentPerMonth)} pro Monat. Jetzt kostenlos bewerben auf Helvenda Wohnungen.`
   const photos = parseRentalListingPhotosJson(listing.photos)
   const og = photos[0] ? absOgImage(photos[0]) : undefined
   return {
@@ -95,10 +97,10 @@ export default async function WohnungDetailPage({ params }: PageProps) {
 
   const pills: string[] = [`${Number(listing.rooms)} Zimmer`, `${listing.areaSqm} m²`]
   if (listing.floor != null) pills.push(`Etage ${listing.floor}`)
-  pills.push(`Verfügbar ab ${listing.availableFrom.toLocaleDateString('de-CH')}`)
+  pills.push(`Verfügbar ab ${formatDate(listing.availableFrom)}`)
 
   return (
-    <main className="pb-16">
+    <main className="pb-28 lg:pb-16">
       <RentalListingDetailGallery imageUrls={photos} />
 
       <div className="mx-auto max-w-6xl px-4 py-6">
@@ -137,16 +139,14 @@ export default async function WohnungDetailPage({ params }: PageProps) {
             <hr className="my-8 border-slate-200" />
 
             <p className="text-3xl font-bold text-[#18a87c] sm:text-4xl">
-              CHF {listing.rentPerMonth.toLocaleString('de-CH')}.—{' '}
+              {formatCHF(listing.rentPerMonth)}{' '}
               <span className="text-lg font-semibold text-slate-600 sm:text-xl">/ Monat</span>
             </p>
             {listing.utilitiesPerMonth != null ? (
-              <p className="mt-2 text-slate-600">
-                NK: + CHF {listing.utilitiesPerMonth.toLocaleString('de-CH')}.— / Monat
-              </p>
+              <p className="mt-2 text-slate-600">NK: + {formatCHF(listing.utilitiesPerMonth)} / Monat</p>
             ) : null}
             {listing.depositAmount != null ? (
-              <p className="mt-1 text-slate-600">Kaution: CHF {listing.depositAmount.toLocaleString('de-CH')}.—</p>
+              <p className="mt-1 text-slate-600">Kaution: {formatCHF(listing.depositAmount)}</p>
             ) : null}
 
             <hr className="my-8 border-slate-200" />
@@ -157,7 +157,7 @@ export default async function WohnungDetailPage({ params }: PageProps) {
             </div>
           </div>
 
-          <aside className="lg:sticky lg:top-24">
+          <aside className="hidden lg:block lg:sticky lg:top-24">
             <WohnungBewerbungsBox
               listingId={listing.id}
               rentPerMonth={listing.rentPerMonth}
@@ -184,6 +184,28 @@ export default async function WohnungDetailPage({ params }: PageProps) {
             </div>
           </section>
         ) : null}
+      </div>
+
+      <div className="pointer-events-none fixed inset-x-0 bottom-0 z-40 lg:hidden">
+        <div
+          className="pointer-events-auto border-t border-slate-200 bg-white/95 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)] backdrop-blur supports-[backdrop-filter]:bg-white/90"
+          style={{ paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))' }}
+        >
+          <div className="mx-auto max-w-6xl">
+            <WohnungBewerbungsBox
+              listingId={listing.id}
+              rentPerMonth={listing.rentPerMonth}
+              requiresCreditCheck={listing.requiresCreditCheck}
+              userId={userId}
+              profileComplete={profileComplete}
+              creditCheckOk={creditCheckOk}
+              tenantApplyReady={tenantApplyReady}
+              alreadyApplied={alreadyApplied}
+              isOwner={isOwner}
+              compact
+            />
+          </div>
+        </div>
       </div>
     </main>
   )

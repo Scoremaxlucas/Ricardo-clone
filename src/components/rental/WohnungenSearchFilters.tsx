@@ -53,7 +53,7 @@ export function WohnungenSearchFilters() {
   }
 
   const filterFields = (
-    <div className="flex flex-col gap-3 lg:flex-row lg:flex-wrap lg:items-end lg:gap-3">
+    <div className="flex flex-col gap-3 md:flex-row md:flex-wrap md:items-end md:gap-3">
       <label className="flex min-w-[140px] flex-1 flex-col gap-1 text-xs font-medium text-slate-600">
         Kanton
         <select
@@ -111,7 +111,7 @@ export function WohnungenSearchFilters() {
       <button
         type="button"
         onClick={reset}
-        className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 lg:shrink-0"
+        className="rounded-lg border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 transition hover:bg-slate-50 md:shrink-0"
       >
         Filter zurücksetzen
       </button>
@@ -121,7 +121,7 @@ export function WohnungenSearchFilters() {
   return (
     <div className="sticky top-0 z-30 border-b border-slate-200 bg-white/95 shadow-sm backdrop-blur">
       <div className="mx-auto max-w-6xl px-4 py-3">
-        <div className="flex items-center justify-between gap-2 lg:hidden">
+        <div className="flex items-center justify-between gap-2 md:hidden">
           <span className="text-sm font-semibold text-slate-800">Filter</span>
           <button
             type="button"
@@ -139,7 +139,7 @@ export function WohnungenSearchFilters() {
             )}
           </button>
         </div>
-        <div className={mobileOpen ? 'mt-3 block' : 'mt-0 hidden lg:block'}>{filterFields}</div>
+        <div className={mobileOpen ? 'mt-3 block' : 'mt-0 hidden md:block'}>{filterFields}</div>
       </div>
     </div>
   )
