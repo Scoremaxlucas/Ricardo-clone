@@ -32,6 +32,9 @@ function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/matching')) return true
   if (pathname.startsWith('/api/upload')) return true
   if (pathname.startsWith('/api/user/')) return true
+  if (pathname.startsWith('/api/rental-listings')) return true
+  if (pathname === '/wohnungen' || pathname.startsWith('/wohnungen/')) return true
+  if (pathname === '/') return true
   if (pathname === '/matching' || pathname.startsWith('/matching/')) return true
   if (
     pathname === '/login' ||
@@ -93,11 +96,6 @@ export function middleware(request: NextRequest) {
   }
 
   if (isWohnenTenant(request)) {
-    if (pathname === '/') {
-      const internal = request.nextUrl.clone()
-      internal.pathname = '/matching'
-      return NextResponse.rewrite(internal)
-    }
     if (!isAllowedOnWohnen(pathname)) {
       return redirectToMain(pathname, search)
     }
