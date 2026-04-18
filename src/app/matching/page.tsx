@@ -71,6 +71,12 @@ export default async function MatchingLandingPage() {
             >
               Suchprofil einrichten
             </Link>
+            <Link
+              href="/matching/matches"
+              className="inline-flex rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            >
+              Treffer & Bewerbung
+            </Link>
           </>
         ) : (
           <>

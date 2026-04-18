@@ -49,12 +49,32 @@ export default async function MatchingLayout({ children }: { children: React.Rea
               Import
             </Link>
             {userId ? (
-              <Link
-                href="/matching/onboarding"
-                className="rounded-md px-2 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
-              >
-                Suchprofil
-              </Link>
+              <>
+                <Link
+                  href="/matching/onboarding"
+                  className="rounded-md px-2 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Suchprofil
+                </Link>
+                <Link
+                  href="/matching/matches"
+                  className="rounded-md px-2 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Treffer
+                </Link>
+                <Link
+                  href="/matching/applications"
+                  className="rounded-md px-2 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Bewerbungen
+                </Link>
+                <Link
+                  href="/matching/landlord/applications"
+                  className="rounded-md px-2 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+                >
+                  Vermieter
+                </Link>
+              </>
             ) : null}
             {isAdmin ? (
               <Link
