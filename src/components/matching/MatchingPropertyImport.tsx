@@ -6,7 +6,12 @@ import { useRouter } from 'next/navigation'
 import { useRef, useState, useTransition } from 'react'
 import toast from 'react-hot-toast'
 
-export function MatchingPropertyImport() {
+type MatchingPropertyImportProps = {
+  /** Innerhalb des Import-Hubs: kein doppelter Seitentitel / weniger Aussenabstand. */
+  embedded?: boolean
+}
+
+export function MatchingPropertyImport({ embedded = false }: MatchingPropertyImportProps) {
   const router = useRouter()
   const inputRef = useRef<HTMLInputElement>(null)
   const [isPending, startTransition] = useTransition()
@@ -50,10 +55,16 @@ export function MatchingPropertyImport() {
   }
 
   return (
-    <div className="mx-auto max-w-2xl px-4 py-10 sm:py-14">
-      <p className="text-sm font-medium uppercase tracking-wide text-teal-700">Import</p>
-      <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">CSV / Excel importieren</h1>
-      <p className="mt-3 text-slate-600">
+    <div className={embedded ? '' : 'mx-auto max-w-2xl px-4 py-10 sm:py-14'}>
+      {embedded ? (
+        <h2 className="text-lg font-bold text-slate-900">CSV / Excel</h2>
+      ) : (
+        <>
+          <p className="text-sm font-medium uppercase tracking-wide text-teal-700">Import</p>
+          <h1 className="mt-2 text-2xl font-bold tracking-tight text-slate-900 sm:text-3xl">CSV / Excel importieren</h1>
+        </>
+      )}
+      <p className={embedded ? 'mt-2 text-sm text-slate-600' : 'mt-3 text-slate-600'}>
         Erste Zeile = Spaltenüberschriften (Deutsch oder Englisch). Pro Zeile ein Objekt — gleiche Pflichtfelder wie
         beim manuellen Erfassen (Titel, PLZ, Ort, Kanton, Zimmer, Miete, Einzug ab).
       </p>

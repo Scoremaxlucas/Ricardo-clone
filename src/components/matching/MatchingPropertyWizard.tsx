@@ -3,6 +3,7 @@
 import { createMatchingPropertyFromWizard } from '@/lib/matching/create-property-action'
 import type { MatchingPropertyWizardSnapshot } from '@/lib/matching/landlord-matching-properties'
 import { updateMatchingPropertyFromWizard } from '@/lib/matching/update-matching-property-action'
+import { useSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import { useCallback, useMemo, useState, useTransition } from 'react'
 import toast from 'react-hot-toast'
@@ -94,25 +95,42 @@ function formFromSnapshot(s: MatchingPropertyWizardSnapshot): FormState {
   }
 }
 
+export type UrlImportReviewMeta = {
+  filledFieldCount: number
+  confidence: 'high' | 'medium' | 'low'
+  platformLabel: string
+  cantonFromAi: boolean
+}
+
 type MatchingPropertyWizardProps = {
   mode?: 'create' | 'edit'
   propertyId?: string
   initialSnapshot?: MatchingPropertyWizardSnapshot | null
+  /** Nach URL-Import: Banner, Fotos (min. 3), Pflicht-Checkbox, Highlights. */
+  urlImportReview?: UrlImportReviewMeta | null
+  cancelHref?: string
 }
 
 export function MatchingPropertyWizard({
   mode = 'create',
   propertyId,
   initialSnapshot = null,
+  urlImportReview = null,
+  cancelHref,
 }: MatchingPropertyWizardProps) {
   const router = useRouter()
+  const { data: session } = useSession()
   const isEdit = mode === 'edit'
+  const isUrlImport = Boolean(urlImportReview)
   const [step, setStep] = useState(0)
   const [form, setForm] = useState<FormState>(() =>
-    isEdit && initialSnapshot ? formFromSnapshot(initialSnapshot) : emptyForm()
+    initialSnapshot ? formFromSnapshot(initialSnapshot) : emptyForm()
   )
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({})
   const [isPending, startTransition] = useTransition()
+  const [importPhotoUrls, setImportPhotoUrls] = useState<string[]>([])
+  const [rightsConfirmed, setRightsConfirmed] = useState(false)
+  const [uploadingPhotos, setUploadingPhotos] = useState(false)
 
   const set = useCallback(<K extends keyof FormState>(key: K, value: FormState[K]) => {
     setForm(prev => ({ ...prev, [key]: value }))
@@ -180,16 +198,112 @@ export function MatchingPropertyWizard({
     }
   }, [form])
 
+  const importRequiredOk = useMemo(() => {
+    const titleOk = form.title.trim().length >= 3
+    const zipOk = /^\d{4}$/.test(form.zip.trim())
+    const cityOk = form.city.trim().length > 0
+    const roomsN = Number(form.rooms)
+    const roomsOk = Number.isFinite(roomsN) && roomsN >= 0.5
+    const rentN = Number(form.rentPerMonth)
+    const rentOk = Number.isFinite(rentN) && rentN >= 1
+    const dateOk = Boolean(form.availableFrom)
+    return titleOk && zipOk && cityOk && roomsOk && rentOk && dateOk
+  }, [form])
+
+  const highlightImportRequired = useCallback(
+    (key: keyof FormState) => {
+      if (!urlImportReview) return false
+      if (key === 'title') return form.title.trim().length < 3
+      if (key === 'zip') return !/^\d{4}$/.test(form.zip.trim())
+      if (key === 'city') return !form.city.trim()
+      if (key === 'rooms') {
+        const n = Number(form.rooms)
+        return !form.rooms.trim() || !Number.isFinite(n) || n < 0.5
+      }
+      if (key === 'rentPerMonth') {
+        const n = Number(form.rentPerMonth)
+        return !Number.isFinite(n) || n < 1
+      }
+      if (key === 'availableFrom') return !form.availableFrom
+      if (key === 'canton') return !urlImportReview.cantonFromAi
+      return false
+    },
+    [form, urlImportReview]
+  )
+
+  const inputRing = (key: keyof FormState) =>
+    highlightImportRequired(key)
+      ? 'border-amber-400 ring-2 ring-amber-200 focus:border-teal-600 focus:ring-teal-600'
+      : 'border-slate-300 focus:border-teal-600 focus:ring-1 focus:ring-teal-600'
+
+  const uploadImportPhotos = async (files: FileList | null) => {
+    const userId = (session?.user as { id?: string } | undefined)?.id
+    if (!files?.length || !userId) return
+    setUploadingPhotos(true)
+    try {
+      const next = [...importPhotoUrls]
+      for (let i = 0; i < files.length; i++) {
+        if (next.length >= 10) {
+          toast.error('Maximal 10 Fotos')
+          break
+        }
+        const file = files[i]
+        if (!file.type.startsWith('image/')) {
+          toast.error('Nur Bilder erlaubt')
+          continue
+        }
+        const fd = new FormData()
+        fd.append('file', file)
+        fd.append('folder', 'matching-listing-import')
+        const res = await fetch('/api/upload', { method: 'POST', body: fd })
+        const data = (await res.json().catch(() => ({}))) as { url?: string; message?: string }
+        if (!res.ok) {
+          toast.error(data.message || 'Upload fehlgeschlagen')
+          continue
+        }
+        if (data.url) next.push(data.url)
+      }
+      setImportPhotoUrls(next)
+    } finally {
+      setUploadingPhotos(false)
+    }
+  }
+
+  const removeImportPhoto = (idx: number) => {
+    setImportPhotoUrls(prev => prev.filter((_, i) => i !== idx))
+  }
+
   const submit = () => {
     if (!validateStep(0) || !validateStep(1) || !validateStep(2)) {
       toast.error('Bitte Eingaben prüfen.')
       return
     }
+    if (urlImportReview) {
+      if (!importRequiredOk) {
+        toast.error('Bitte alle markierten Pflichtfelder ausfüllen.')
+        return
+      }
+      if (importPhotoUrls.length < 3) {
+        toast.error('Mindestens 3 Fotos hochladen.')
+        return
+      }
+      if (!rightsConfirmed) {
+        toast.error('Bitte die Bestätigung am Ende des Formulars aktivieren.')
+        return
+      }
+    }
     startTransition(async () => {
+      let submitPayload: typeof payload = payload
+      if (urlImportReview && importPhotoUrls.length > 0) {
+        const base = (form.description || '').trim()
+        const block = `\n\n[Referenzfotos Import]\n${importPhotoUrls.map((u, i) => `${i + 1}. ${u}`).join('\n')}`
+        const merged = (base + block).slice(0, 12000)
+        submitPayload = { ...payload, description: merged || null }
+      }
       const res =
         isEdit && propertyId
-          ? await updateMatchingPropertyFromWizard(propertyId, payload)
-          : await createMatchingPropertyFromWizard(payload)
+          ? await updateMatchingPropertyFromWizard(propertyId, submitPayload)
+          : await createMatchingPropertyFromWizard(submitPayload)
       if (!res.ok) {
         if (res.fieldErrors) setFieldErrors(res.fieldErrors)
         toast.error(res.error)
@@ -203,17 +317,78 @@ export function MatchingPropertyWizard({
     })
   }
 
+  const cancelTarget = cancelHref ?? (isEdit ? '/matching/properties' : '/matching')
+  const finalSubmitDisabled =
+    isPending ||
+    (urlImportReview ? !rightsConfirmed || importPhotoUrls.length < 3 || !importRequiredOk : false)
+
   return (
     <main className="mx-auto max-w-2xl px-4 py-8 sm:py-10">
       <div className="mb-8">
         <p className="text-xs font-semibold uppercase tracking-wide text-teal-700">Matching · Vermieter</p>
-        <h1 className="mt-1 text-2xl font-bold text-slate-900">{isEdit ? 'Objekt bearbeiten' : 'Objekt erfassen'}</h1>
+        <h1 className="mt-1 text-2xl font-bold text-slate-900">
+          {isEdit ? 'Objekt bearbeiten' : isUrlImport ? 'Inserat prüfen & speichern' : 'Objekt erfassen'}
+        </h1>
         <p className="mt-2 text-sm text-slate-600">
           {isEdit
             ? 'Stammdaten, Miete und Veröffentlichungsstatus anpassen — getrennt vom klassischen Marktplatz.'
-            : 'Manuelles Erfassen eines Matching-Objekts (getrennt von klassischen Miet-Inseraten).'}
+            : isUrlImport
+              ? 'Die Angaben wurden aus dem externen Inserat übernommen. Bitte alles prüfen und bei Bedarf anpassen.'
+              : 'Manuelles Erfassen eines Matching-Objekts (getrennt von klassischen Miet-Inseraten).'}
         </p>
       </div>
+
+      {urlImportReview ? (
+        <div className="mb-6 space-y-3">
+          <div className="rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-950">
+            Wir haben {urlImportReview.filledFieldCount} Felder automatisch ausgefüllt. Bitte prüfe alle Angaben vor
+            dem Speichern.
+          </div>
+          {urlImportReview.confidence === 'low' ? (
+            <div className="rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-950">
+              Einige Felder konnten nicht automatisch erkannt werden. Bitte fülle die markierten Pflichtfelder manuell
+              aus.
+            </div>
+          ) : null}
+          <p className="text-sm text-slate-600">
+            <span className="font-medium text-slate-800">Erkannte Plattform:</span>{' '}
+            {urlImportReview.platformLabel || 'Unbekannt'} ✓
+          </p>
+          <p className="rounded-md border border-slate-200 bg-slate-50 px-3 py-2 text-xs text-slate-700">
+            Fotos können nicht automatisch importiert werden. Bitte mindestens 3 Bilder hochladen (Referenz-URLs werden
+            der Beschreibung angehängt).
+          </p>
+          <div>
+            <label className="block text-sm font-medium text-slate-800">Referenzfotos (mind. 3)</label>
+            <input
+              type="file"
+              accept="image/*"
+              multiple
+              disabled={uploadingPhotos}
+              aria-label="Referenzfotos hochladen"
+              title="Referenzfotos hochladen"
+              onChange={e => void uploadImportPhotos(e.target.files)}
+              className="mt-2 block w-full text-sm text-slate-700 file:mr-4 file:rounded-md file:border-0 file:bg-teal-700 file:px-4 file:py-2 file:text-sm file:font-semibold file:text-white hover:file:bg-teal-800 disabled:opacity-50"
+            />
+            {importPhotoUrls.length > 0 ? (
+              <ul className="mt-3 flex flex-wrap gap-2">
+                {importPhotoUrls.map((u, idx) => (
+                  <li
+                    key={`${u}-${idx}`}
+                    className="flex items-center gap-1 rounded-md border border-slate-200 bg-white px-2 py-1 text-xs text-slate-700"
+                  >
+                    <span className="max-w-[180px] truncate">{u}</span>
+                    <button type="button" className="text-red-600 hover:underline" onClick={() => removeImportPhoto(idx)}>
+                      ×
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            ) : null}
+            <p className="mt-1 text-xs text-slate-500">{importPhotoUrls.length} / mind. 3 Fotos</p>
+          </div>
+        </div>
+      ) : null}
 
       <div className="mb-6 flex gap-1">
         {STEPS.map((label, i) => (
@@ -238,7 +413,7 @@ export function MatchingPropertyWizard({
             <label className="block">
               <span className="text-sm font-medium text-slate-800">Titel *</span>
               <input
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm focus:border-teal-600 focus:outline-none focus:ring-1 focus:ring-teal-600"
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${inputRing('title')}`}
                 value={form.title}
                 onChange={e => set('title', e.target.value)}
                 placeholder="z. B. Helle 3.5-Zi.-Wohnung nahe Bahnhof"
@@ -262,7 +437,7 @@ export function MatchingPropertyWizard({
             <label className="block">
               <span className="text-sm font-medium text-slate-800">Strasse, Nr. (optional)</span>
               <input
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm outline-none"
                 value={form.addressLine}
                 onChange={e => set('addressLine', e.target.value)}
               />
@@ -271,7 +446,7 @@ export function MatchingPropertyWizard({
               <label className="block">
                 <span className="text-sm font-medium text-slate-800">PLZ *</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${inputRing('zip')}`}
                   value={form.zip}
                   onChange={e => set('zip', e.target.value)}
                   inputMode="numeric"
@@ -282,7 +457,7 @@ export function MatchingPropertyWizard({
               <label className="block">
                 <span className="text-sm font-medium text-slate-800">Ort *</span>
                 <input
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${inputRing('city')}`}
                   value={form.city}
                   onChange={e => set('city', e.target.value)}
                 />
@@ -292,7 +467,7 @@ export function MatchingPropertyWizard({
             <label className="block">
               <span className="text-sm font-medium text-slate-800">Kanton *</span>
               <select
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${inputRing('canton')}`}
                 value={form.canton}
                 onChange={e => set('canton', e.target.value)}
               >
@@ -316,7 +491,7 @@ export function MatchingPropertyWizard({
                   type="number"
                   step="0.5"
                   min={0.5}
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${inputRing('rooms')}`}
                   value={form.rooms}
                   onChange={e => set('rooms', e.target.value)}
                 />
@@ -346,7 +521,7 @@ export function MatchingPropertyWizard({
               <input
                 type="number"
                 min={1}
-                className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${inputRing('rentPerMonth')}`}
                 value={form.rentPerMonth}
                 onChange={e => set('rentPerMonth', e.target.value)}
               />
@@ -359,7 +534,7 @@ export function MatchingPropertyWizard({
                 <span className="text-sm font-medium text-slate-800">Verfügbar ab *</span>
                 <input
                   type="date"
-                  className="mt-1 w-full rounded-md border border-slate-300 px-3 py-2 text-sm"
+                  className={`mt-1 w-full rounded-md border px-3 py-2 text-sm outline-none ${inputRing('availableFrom')}`}
                   value={form.availableFrom}
                   onChange={e => set('availableFrom', e.target.value)}
                 />
@@ -444,6 +619,23 @@ export function MatchingPropertyWizard({
           </div>
         )}
 
+        {urlImportReview && step === STEPS.length - 1 ? (
+          <div className="mt-6 rounded-lg border border-slate-200 bg-slate-50/90 px-4 py-3">
+            <label className="flex cursor-pointer items-start gap-3 text-sm text-slate-800">
+              <input
+                type="checkbox"
+                checked={rightsConfirmed}
+                onChange={e => setRightsConfirmed(e.target.checked)}
+                className="mt-1 h-4 w-4 shrink-0 rounded border-slate-300 text-teal-700"
+              />
+              <span>
+                Ich bestätige, dass ich berechtigt bin, dieses Objekt auf Helvenda zu inserieren, und dass alle Angaben
+                korrekt sind.
+              </span>
+            </label>
+          </div>
+        ) : null}
+
         <div className="mt-8 flex flex-wrap justify-between gap-3 border-t border-slate-100 pt-5">
           <button
             type="button"
@@ -466,7 +658,7 @@ export function MatchingPropertyWizard({
             <button
               type="button"
               onClick={submit}
-              disabled={isPending}
+              disabled={finalSubmitDisabled}
               className="rounded-md bg-teal-700 px-5 py-2 text-sm font-semibold text-white hover:bg-teal-800 disabled:opacity-50"
             >
               {isPending ? 'Speichern…' : 'Speichern'}
@@ -476,11 +668,7 @@ export function MatchingPropertyWizard({
       </div>
 
       <p className="mt-6 text-center text-xs text-slate-500">
-        <button
-          type="button"
-          onClick={() => router.push(isEdit ? '/matching/properties' : '/matching')}
-          className="text-teal-800 underline"
-        >
+        <button type="button" onClick={() => router.push(cancelTarget)} className="text-teal-800 underline">
           Abbrechen
         </button>
       </p>

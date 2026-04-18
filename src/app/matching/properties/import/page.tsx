@@ -1,4 +1,4 @@
-import { MatchingPropertyImport } from '@/components/matching/MatchingPropertyImport'
+import { MatchingPropertyImportHub } from '@/components/matching/MatchingPropertyImportHub'
 import { authOptions } from '@/lib/auth'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
@@ -16,5 +16,5 @@ export default async function MatchingPropertyImportPage() {
     redirect('/login?callbackUrl=' + encodeURIComponent('/matching/properties/import'))
   }
 
-  return <MatchingPropertyImport />
+  return <MatchingPropertyImportHub />
 }
