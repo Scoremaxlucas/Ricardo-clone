@@ -27,6 +27,7 @@ function isWohnenTenant(request: NextRequest): boolean {
  */
 function isAllowedOnWohnen(pathname: string): boolean {
   if (pathname.startsWith('/api/auth')) return true
+  if (pathname.startsWith('/api/internal/matching-maintenance')) return true
   if (pathname.startsWith('/api/matching')) return true
   if (pathname.startsWith('/api/upload')) return true
   if (pathname.startsWith('/api/user/')) return true

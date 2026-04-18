@@ -2,6 +2,7 @@ import { HousingMatchStatus, MatchPropertyStatus, type Prisma } from '@prisma/cl
 import { prisma } from '@/lib/prisma'
 import { evaluateMatch } from './evaluate-match'
 import { parseLandlordRules } from './landlord-rules'
+import { recordMatchingJobFailure } from './matching-outbox'
 import type { PropertyMatchingInput, SeekerMatchingInput } from './types'
 
 function decimalToNumber(d: Prisma.Decimal | null | undefined): number {
@@ -121,50 +122,59 @@ async function upsertOneMatch(
  * Alle aktiven Objekte gegen ein Suchprofil neu bewerten; Treffer zu inaktiven Objekten → `stale`.
  */
 export async function recomputeMatchesForSeeker(seekerProfileId: string): Promise<void> {
-  const profile = await prisma.seekerProfile.findUnique({
-    where: { id: seekerProfileId },
-    include: { searchProfile: true, household: true },
-  })
-  if (!profile) return
+  try {
+    const profile = await prisma.seekerProfile.findUnique({
+      where: { id: seekerProfileId },
+      include: { searchProfile: true, household: true },
+    })
+    if (!profile) return
 
-  const seekerInput = toSeekerInput(profile.searchProfile, profile.household)
+    const seekerInput = toSeekerInput(profile.searchProfile, profile.household)
 
-  const properties = await prisma.matchingProperty.findMany({
-    where: { status: MatchPropertyStatus.active },
-    select: {
-      id: true,
-      canton: true,
-      zip: true,
-      rooms: true,
-      rentPerMonth: true,
-      availableFrom: true,
-      status: true,
-      rulesJson: true,
-    },
-  })
+    const properties = await prisma.matchingProperty.findMany({
+      where: { status: MatchPropertyStatus.active },
+      select: {
+        id: true,
+        canton: true,
+        zip: true,
+        rooms: true,
+        rentPerMonth: true,
+        availableFrom: true,
+        status: true,
+        rulesJson: true,
+      },
+    })
 
-  const activeIds = properties.map(p => p.id)
+    const activeIds = properties.map(p => p.id)
 
-  await prisma.$transaction(async tx => {
-    if (activeIds.length === 0) {
+    await prisma.$transaction(async tx => {
+      if (activeIds.length === 0) {
+        await tx.housingMatch.updateMany({
+          where: { seekerProfileId },
+          data: { status: HousingMatchStatus.stale, updatedAt: new Date() },
+        })
+        return
+      }
+      for (const property of properties) {
+        await upsertOneMatch(tx, seekerProfileId, property, seekerInput)
+      }
       await tx.housingMatch.updateMany({
-        where: { seekerProfileId },
+        where: {
+          seekerProfileId,
+          propertyId: { notIn: activeIds },
+          status: { not: HousingMatchStatus.stale },
+        },
         data: { status: HousingMatchStatus.stale, updatedAt: new Date() },
       })
-      return
-    }
-    for (const property of properties) {
-      await upsertOneMatch(tx, seekerProfileId, property, seekerInput)
-    }
-    await tx.housingMatch.updateMany({
-      where: {
-        seekerProfileId,
-        propertyId: { notIn: activeIds },
-        status: { not: HousingMatchStatus.stale },
-      },
-      data: { status: HousingMatchStatus.stale, updatedAt: new Date() },
     })
-  })
+  } catch (e) {
+    console.error('recomputeMatchesForSeeker', seekerProfileId, e)
+    await recordMatchingJobFailure({
+      type: 'recompute.seeker.failed',
+      payload: { seekerProfileId },
+      lastError: e instanceof Error ? e.message : String(e),
+    })
+  }
 }
 
 /**
@@ -172,47 +182,56 @@ export async function recomputeMatchesForSeeker(seekerProfileId: string): Promis
  * übrige Match-Zeilen für dieses Objekt → `stale`.
  */
 export async function recomputeMatchesForProperty(propertyId: string): Promise<void> {
-  const property = await prisma.matchingProperty.findUnique({
-    where: { id: propertyId },
-    select: {
-      id: true,
-      canton: true,
-      zip: true,
-      rooms: true,
-      rentPerMonth: true,
-      availableFrom: true,
-      status: true,
-      rulesJson: true,
-    },
-  })
-  if (!property) return
+  try {
+    const property = await prisma.matchingProperty.findUnique({
+      where: { id: propertyId },
+      select: {
+        id: true,
+        canton: true,
+        zip: true,
+        rooms: true,
+        rentPerMonth: true,
+        availableFrom: true,
+        status: true,
+        rulesJson: true,
+      },
+    })
+    if (!property) return
 
-  const seekers = await prisma.seekerProfile.findMany({
-    where: { searchProfile: { isNot: null } },
-    include: { searchProfile: true, household: true },
-  })
+    const seekers = await prisma.seekerProfile.findMany({
+      where: { searchProfile: { isNot: null } },
+      include: { searchProfile: true, household: true },
+    })
 
-  const seekerIds = seekers.map(s => s.id)
+    const seekerIds = seekers.map(s => s.id)
 
-  await prisma.$transaction(async tx => {
-    if (seekerIds.length === 0) {
+    await prisma.$transaction(async tx => {
+      if (seekerIds.length === 0) {
+        await tx.housingMatch.updateMany({
+          where: { propertyId },
+          data: { status: HousingMatchStatus.stale, updatedAt: new Date() },
+        })
+        return
+      }
+      for (const sp of seekers) {
+        const seekerInput = toSeekerInput(sp.searchProfile!, sp.household)
+        await upsertOneMatch(tx, sp.id, property, seekerInput)
+      }
       await tx.housingMatch.updateMany({
-        where: { propertyId },
+        where: {
+          propertyId,
+          seekerProfileId: { notIn: seekerIds },
+          status: { not: HousingMatchStatus.stale },
+        },
         data: { status: HousingMatchStatus.stale, updatedAt: new Date() },
       })
-      return
-    }
-    for (const sp of seekers) {
-      const seekerInput = toSeekerInput(sp.searchProfile!, sp.household)
-      await upsertOneMatch(tx, sp.id, property, seekerInput)
-    }
-    await tx.housingMatch.updateMany({
-      where: {
-        propertyId,
-        seekerProfileId: { notIn: seekerIds },
-        status: { not: HousingMatchStatus.stale },
-      },
-      data: { status: HousingMatchStatus.stale, updatedAt: new Date() },
     })
-  })
+  } catch (e) {
+    console.error('recomputeMatchesForProperty', propertyId, e)
+    await recordMatchingJobFailure({
+      type: 'recompute.property.failed',
+      payload: { propertyId },
+      lastError: e instanceof Error ? e.message : String(e),
+    })
+  }
 }

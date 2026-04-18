@@ -4,6 +4,7 @@ import { MatchPropertySource } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { bulkImportMatchingProperties } from './bulk-import-matching-properties'
+import { checkMatchingImportUploadRateLimit } from './matching-rate-limit'
 import { parseMatchingImportCsvText, parseMatchingImportXlsxBuffer } from './import-parse'
 
 export type ImportMatchingPropertiesFormResult =
@@ -19,6 +20,12 @@ export async function importMatchingPropertiesFromUpload(formData: FormData): Pr
   const userId = (session?.user as { id?: string } | undefined)?.id
   if (!userId) {
     return { ok: false, error: 'Nicht angemeldet.' }
+  }
+
+  const rl = await checkMatchingImportUploadRateLimit(userId)
+  if (!rl.allowed) {
+    const s = Math.max(1, Math.ceil((rl.resetAt.getTime() - Date.now()) / 1000))
+    return { ok: false, error: `Zu viele Importe. Bitte in ca. ${s}s erneut versuchen.` }
   }
 
   const file = formData.get('file')

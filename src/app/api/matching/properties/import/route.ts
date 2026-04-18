@@ -1,8 +1,28 @@
 import { MatchPropertySource } from '@prisma/client'
 import { authOptions } from '@/lib/auth'
 import { bulkImportMatchingPropertiesFromJsonItems } from '@/lib/matching/bulk-import-matching-properties'
+import { matchingApiImportBodySchema } from '@/lib/matching/matching-api-import-schema'
+import {
+  completeMatchingOutboxJob,
+  createMatchingOutboxJob,
+  failMatchingOutboxJob,
+} from '@/lib/matching/matching-outbox'
+import {
+  checkMatchingImportPostIpRateLimit,
+  checkMatchingImportPostUserRateLimit,
+} from '@/lib/matching/matching-rate-limit'
+import type { Prisma } from '@prisma/client'
 import { getServerSession } from 'next-auth/next'
 import { NextRequest, NextResponse } from 'next/server'
+
+function clientIp(request: NextRequest): string {
+  const xff = request.headers.get('x-forwarded-for')
+  if (xff) {
+    const first = xff.split(',')[0]?.trim()
+    if (first) return first
+  }
+  return request.headers.get('x-real-ip')?.trim() || 'unknown'
+}
 
 async function getAuthorizedImportUserId(request: NextRequest): Promise<string | null> {
   const session = await getServerSession(authOptions)
@@ -21,7 +41,7 @@ async function getAuthorizedImportUserId(request: NextRequest): Promise<string |
 
 /**
  * POST /api/matching/properties/import
- * Body: { "items": [ { …wizard fields… }, … ] }
+ * Body: { "items": [ { …wizard fields… }, … ] } — strikt validiert, ohne Zusatzfelder.
  * Auth: Session oder Bearer-Token (siehe MATCHING_IMPORT_*).
  */
 export async function POST(request: NextRequest) {
@@ -34,6 +54,25 @@ export async function POST(request: NextRequest) {
       )
     }
 
+    const rlUser = await checkMatchingImportPostUserRateLimit(userId)
+    if (!rlUser.allowed) {
+      const retry = Math.max(1, Math.ceil((rlUser.resetAt.getTime() - Date.now()) / 1000))
+      return NextResponse.json(
+        { message: 'Zu viele Import-Anfragen für dieses Konto.', retryAfter: retry },
+        { status: 429, headers: { 'Retry-After': String(retry) } }
+      )
+    }
+
+    const ip = clientIp(request)
+    const rlIp = await checkMatchingImportPostIpRateLimit(ip)
+    if (!rlIp.allowed) {
+      const retry = Math.max(1, Math.ceil((rlIp.resetAt.getTime() - Date.now()) / 1000))
+      return NextResponse.json(
+        { message: 'Zu viele Import-Anfragen von dieser Adresse.', retryAfter: retry },
+        { status: 429, headers: { 'Retry-After': String(retry) } }
+      )
+    }
+
     let body: unknown
     try {
       body = await request.json()
@@ -41,30 +80,45 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ message: 'Ungültiges JSON' }, { status: 400 })
     }
 
-    if (!body || typeof body !== 'object' || !('items' in body)) {
-      return NextResponse.json({ message: 'Body muss { items: [] } enthalten.' }, { status: 400 })
+    const parsed = matchingApiImportBodySchema.safeParse(body)
+    if (!parsed.success) {
+      const msg = parsed.error.issues.map(i => `${i.path.join('.')}: ${i.message}`).slice(0, 8)
+      return NextResponse.json({ message: 'Validierung fehlgeschlagen.', details: msg }, { status: 400 })
     }
 
-    const items = (body as { items: unknown }).items
-    if (!Array.isArray(items)) {
-      return NextResponse.json({ message: 'items muss ein Array sein.' }, { status: 400 })
-    }
+    const items = parsed.data.items
 
-    if (items.length > 500) {
-      return NextResponse.json({ message: 'Maximal 500 Einträge pro Anfrage.' }, { status: 400 })
-    }
-
-    const { createdIds, errors } = await bulkImportMatchingPropertiesFromJsonItems({
-      userId,
-      items,
-      source: MatchPropertySource.api,
+    const job = await createMatchingOutboxJob({
+      type: 'matching.import.api',
+      payload: { userId, itemCount: items.length } as unknown as Prisma.InputJsonValue,
     })
 
-    return NextResponse.json({
-      created: createdIds.length,
-      propertyIds: createdIds,
-      errors,
-    })
+    try {
+      const { createdIds, errors } = await bulkImportMatchingPropertiesFromJsonItems({
+        userId,
+        items,
+        source: MatchPropertySource.api,
+      })
+
+      await completeMatchingOutboxJob(job.id, {
+        userId,
+        itemCount: items.length,
+        created: createdIds.length,
+        errorRows: errors.length,
+      } as unknown as Prisma.InputJsonValue)
+
+      return NextResponse.json({
+        created: createdIds.length,
+        propertyIds: createdIds,
+        errors,
+        jobId: job.id,
+      })
+    } catch (e) {
+      const err = e instanceof Error ? e.message : String(e)
+      await failMatchingOutboxJob(job.id, err)
+      console.error('[POST /api/matching/properties/import]', e)
+      return NextResponse.json({ message: 'Import fehlgeschlagen', jobId: job.id }, { status: 500 })
+    }
   } catch (e) {
     console.error('[POST /api/matching/properties/import]', e)
     return NextResponse.json({ message: 'Serverfehler' }, { status: 500 })

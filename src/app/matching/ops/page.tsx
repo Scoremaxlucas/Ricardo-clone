@@ -1,7 +1,11 @@
 import { authOptions } from '@/lib/auth'
 import { requireMatchingAdmin } from '@/lib/matching/matching-ops-auth'
 import { prisma } from '@/lib/prisma'
-import { DocumentVerificationStatus, MatchingApplicationStatus } from '@prisma/client'
+import {
+  DocumentVerificationStatus,
+  MatchingApplicationStatus,
+  MatchingOutboxStatus,
+} from '@prisma/client'
 import type { Metadata } from 'next'
 import { getServerSession } from 'next-auth/next'
 import Link from 'next/link'
@@ -21,7 +25,7 @@ export default async function MatchingOpsHubPage() {
   const gate = await requireMatchingAdmin()
   if (!gate.ok) redirect('/matching')
 
-  const [pendingDocs, submittedApps] = await Promise.all([
+  const [pendingDocs, submittedApps, failedJobsWeek] = await Promise.all([
     prisma.documentVerification.count({
       where: { status: DocumentVerificationStatus.pending },
     }),
@@ -35,6 +39,12 @@ export default async function MatchingOpsHubPage() {
         },
       },
     }),
+    prisma.matchingOutboxEvent.count({
+      where: {
+        status: MatchingOutboxStatus.failed,
+        createdAt: { gte: new Date(Date.now() - 7 * 86400000) },
+      },
+    }),
   ])
 
   return (
@@ -45,7 +55,7 @@ export default async function MatchingOpsHubPage() {
         Warteschlangen und Audit-Log für interne Abläufe. Nur für Helvenda-Admins sichtbar.
       </p>
 
-      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+      <div className="mt-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <Link
           href="/matching/ops/documents"
           className="rounded-xl border border-amber-200 bg-amber-50/90 p-5 shadow-sm transition hover:border-amber-300 hover:shadow"
@@ -65,8 +75,17 @@ export default async function MatchingOpsHubPage() {
         </Link>
 
         <Link
+          href="/matching/ops/jobs"
+          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow"
+        >
+          <h2 className="text-lg font-semibold text-slate-900">Jobs / Outbox</h2>
+          <p className="mt-2 text-3xl font-bold text-red-700">{failedJobsWeek}</p>
+          <p className="mt-1 text-sm text-slate-600">Fehlschläge (7 Tage) — Liste aller letzten Jobs</p>
+        </Link>
+
+        <Link
           href="/matching/ops/audit"
-          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow sm:col-span-2 lg:col-span-1"
+          className="rounded-xl border border-slate-200 bg-white p-5 shadow-sm transition hover:border-slate-300 hover:shadow"
         >
           <h2 className="text-lg font-semibold text-slate-900">Audit-Suche</h2>
           <p className="mt-2 text-sm text-slate-600">
@@ -74,6 +93,12 @@ export default async function MatchingOpsHubPage() {
           </p>
         </Link>
       </div>
+
+      <p className="mt-8 rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-xs text-slate-600">
+        Datenhaltung: per Cron <code className="rounded bg-white px-1">POST /api/internal/matching-maintenance</code>{' '}
+        mit Header <code className="rounded bg-white px-1">x-matching-maintenance-secret</code> (siehe{' '}
+        <code className="rounded bg-white px-1">MATCHING_MAINTENANCE_SECRET</code> in den Umgebungsvariablen).
+      </p>
 
       <p className="mt-12 text-sm text-slate-500">
         <Link href="/matching" className="font-medium text-teal-800 underline-offset-2 hover:underline">

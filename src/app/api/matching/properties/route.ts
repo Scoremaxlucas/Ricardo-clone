@@ -1,5 +1,6 @@
 import { authOptions } from '@/lib/auth'
 import { ensureLandlordAccountForUser } from '@/lib/matching/landlord-account'
+import { checkMatchingPropertiesGetRateLimit } from '@/lib/matching/matching-rate-limit'
 import { prisma } from '@/lib/prisma'
 import { getServerSession } from 'next-auth/next'
 import { NextResponse } from 'next/server'
@@ -14,6 +15,15 @@ export async function GET() {
     const userId = session?.user?.id
     if (!userId) {
       return NextResponse.json({ message: 'Nicht autorisiert' }, { status: 401 })
+    }
+
+    const rl = await checkMatchingPropertiesGetRateLimit(userId)
+    if (!rl.allowed) {
+      const retry = Math.max(1, Math.ceil((rl.resetAt.getTime() - Date.now()) / 1000))
+      return NextResponse.json(
+        { message: 'Zu viele Anfragen. Bitte später erneut versuchen.', retryAfter: retry },
+        { status: 429, headers: { 'Retry-After': String(retry) } }
+      )
     }
 
     const landlordAccountId = await ensureLandlordAccountForUser(userId)

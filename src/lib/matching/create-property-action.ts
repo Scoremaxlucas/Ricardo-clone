@@ -5,6 +5,7 @@ import { getServerSession } from 'next-auth/next'
 import { authOptions } from '@/lib/auth'
 import { ensureLandlordAccountForUser } from './landlord-account'
 import { insertMatchingPropertyForLandlord } from './insert-matching-property'
+import { checkMatchingPropertyCreateRateLimit } from './matching-rate-limit'
 import { matchingPropertyWizardSchema } from './property-wizard-schema'
 
 export type CreateMatchingPropertyResult =
@@ -18,6 +19,12 @@ export async function createMatchingPropertyFromWizard(
   const userId = (session?.user as { id?: string } | undefined)?.id
   if (!userId) {
     return { ok: false, error: 'Nicht angemeldet.' }
+  }
+
+  const rl = await checkMatchingPropertyCreateRateLimit(userId)
+  if (!rl.allowed) {
+    const s = Math.max(1, Math.ceil((rl.resetAt.getTime() - Date.now()) / 1000))
+    return { ok: false, error: `Zu viele Objekt-Erfassungen. Bitte in ca. ${s}s erneut versuchen.` }
   }
 
   const parsed = matchingPropertyWizardSchema.safeParse(raw)

@@ -57,6 +57,11 @@ export default async function AdminMatchingOpsEntryPage() {
             Audit-Suche →
           </a>
         </li>
+        <li>
+          <a href={`${opsBase}/jobs`} className="font-medium underline-offset-2 hover:underline">
+            Jobs / Outbox →
+          </a>
+        </li>
       </ul>
       <p className="mt-10 text-sm text-slate-500">
         <Link href="/admin/dashboard" className="text-teal-800 hover:underline">

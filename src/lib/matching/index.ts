@@ -18,3 +18,12 @@ export { MATCHING_CONSENT_SCOPES, grantedScopesFromRows, isConsentEffective } fr
 export { buildLandlordStagedSeekerView } from './matching-landlord-view'
 export { appendMatchingAuditLog, searchMatchingAuditLogs, MATCHING_AUDIT_ENTITY_TYPES } from './matching-audit-log'
 export { requireMatchingAdmin } from './matching-ops-auth'
+export { matchingApiImportBodySchema, type MatchingApiImportBody } from './matching-api-import-schema'
+export {
+  createMatchingOutboxJob,
+  completeMatchingOutboxJob,
+  failMatchingOutboxJob,
+  recordMatchingJobFailure,
+} from './matching-outbox'
+export { runMatchingDataRetention } from './matching-retention'
+export { loadRecentMatchingOutboxEvents } from './ops-outbox-list'

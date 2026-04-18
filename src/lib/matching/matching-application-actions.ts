@@ -11,6 +11,10 @@ import { z } from 'zod'
 import { authOptions } from '@/lib/auth'
 import { prisma } from '@/lib/prisma'
 import { appendMatchingAuditLog } from './matching-audit-log'
+import {
+  checkMatchingApplicationCreateRateLimit,
+  checkMatchingApplicationMutateRateLimit,
+} from './matching-rate-limit'
 import { ensureLandlordAccountForUser } from './landlord-account'
 import { ensureSeekerProfileForUser } from './seeker-account'
 import { MATCHING_CONSENT_SCOPES, isMatchingConsentScope } from './consent-scopes'
@@ -40,6 +44,11 @@ const landlordDecisionSchema = z.object({
 
 export type ActionResult = { ok: true } | { ok: false; error: string }
 
+function rateLimitHitMessage(resetAt: Date): string {
+  const s = Math.max(1, Math.ceil((resetAt.getTime() - Date.now()) / 1000))
+  return `Zu viele Anfragen. Bitte in ca. ${s}s erneut versuchen.`
+}
+
 async function userOwnsLandlordProperty(userId: string, propertyId: string): Promise<boolean> {
   const landlordAccountId = await ensureLandlordAccountForUser(userId)
   const p = await prisma.matchingProperty.findFirst({
@@ -64,6 +73,9 @@ export async function createMatchingApplicationFromMatchAction(raw: unknown): Pr
   const session = await getServerSession(authOptions)
   const userId = session?.user?.id
   if (!userId) return { ok: false, error: 'Nicht angemeldet.' }
+
+  const rl = await checkMatchingApplicationCreateRateLimit(userId)
+  if (!rl.allowed) return { ok: false, error: rateLimitHitMessage(rl.resetAt) }
 
   const parsed = createSchema.safeParse(raw)
   if (!parsed.success) return { ok: false, error: 'Ungültige Eingabe.' }
@@ -141,6 +153,9 @@ export async function updateMatchingApplicationMessageAction(raw: unknown): Prom
   const userId = session?.user?.id
   if (!userId) return { ok: false, error: 'Nicht angemeldet.' }
 
+  const rl0 = await checkMatchingApplicationMutateRateLimit(userId)
+  if (!rl0.allowed) return { ok: false, error: rateLimitHitMessage(rl0.resetAt) }
+
   const schema = z.object({
     applicationId: z.string().min(1),
     message: messageSchema,
@@ -181,6 +196,9 @@ export async function submitMatchingApplicationAction(applicationId: string): Pr
   const userId = session?.user?.id
   if (!userId) return { ok: false, error: 'Nicht angemeldet.' }
 
+  const rl0 = await checkMatchingApplicationMutateRateLimit(userId)
+  if (!rl0.allowed) return { ok: false, error: rateLimitHitMessage(rl0.resetAt) }
+
   const seekerProfileId = await ensureSeekerProfileForUser(userId)
   const app = await prisma.matchingApplication.findFirst({
     where: { id: applicationId, seekerProfileId, status: MatchingApplicationStatus.draft },
@@ -211,6 +229,9 @@ export async function withdrawMatchingApplicationAction(applicationId: string): 
   const session = await getServerSession(authOptions)
   const userId = session?.user?.id
   if (!userId) return { ok: false, error: 'Nicht angemeldet.' }
+
+  const rl0 = await checkMatchingApplicationMutateRateLimit(userId)
+  if (!rl0.allowed) return { ok: false, error: rateLimitHitMessage(rl0.resetAt) }
 
   const seekerProfileId = await ensureSeekerProfileForUser(userId)
   const app = await prisma.matchingApplication.findFirst({
@@ -247,6 +268,9 @@ export async function setMatchingConsentShareAction(raw: unknown): Promise<Actio
   const session = await getServerSession(authOptions)
   const userId = session?.user?.id
   if (!userId) return { ok: false, error: 'Nicht angemeldet.' }
+
+  const rl0 = await checkMatchingApplicationMutateRateLimit(userId)
+  if (!rl0.allowed) return { ok: false, error: rateLimitHitMessage(rl0.resetAt) }
 
   const parsed = consentSchema.safeParse(raw)
   if (!parsed.success || !isMatchingConsentScope(parsed.data.scope)) {
@@ -298,6 +322,9 @@ export async function landlordDecideMatchingApplicationAction(raw: unknown): Pro
   const session = await getServerSession(authOptions)
   const userId = session?.user?.id
   if (!userId) return { ok: false, error: 'Nicht angemeldet.' }
+
+  const rl0 = await checkMatchingApplicationMutateRateLimit(userId)
+  if (!rl0.allowed) return { ok: false, error: rateLimitHitMessage(rl0.resetAt) }
 
   const parsed = landlordDecisionSchema.safeParse(raw)
   if (!parsed.success) return { ok: false, error: 'Ungültige Eingabe.' }
