@@ -8,9 +8,37 @@ set -e
 echo "🔨 Generating Prisma client..."
 npx prisma generate
 
-# Versionierte Schema-Änderungen (z. B. Matching Phase 2) — nutzt DATABASE_URL aus Vercel
+# Versionierte Schema-Änderungen — nutzt DATABASE_URL aus Vercel.
+# P3005: DB hat Tabellen, aber keine (oder leere) Prisma-Migrations-Historie (häufig nach langem db push).
+# Dann: alle Migrationen außer Matching Phase 2 als "bereits angewendet" markieren, danach nur Phase 2 ausführen
+# (Rental-Migration 20260406 würde sonst DROP/CREATE auf bestehende rental_* laufen).
 echo "📦 Applying Prisma migrations (prisma migrate deploy)..."
-npx prisma migrate deploy
+MATCH_PHASE2="20260405120000_matching_mvp_phase2"
+
+set +e
+DEPLOY_OUT=$(npx prisma migrate deploy 2>&1)
+DEPLOY_CODE=$?
+set -e
+echo "$DEPLOY_OUT"
+
+if [ "$DEPLOY_CODE" -ne 0 ]; then
+  if echo "$DEPLOY_OUT" | grep -q "P3005"; then
+    echo "⚠️ P3005: baseline — markiere historische Migrationen als angewendet, Matching Phase 2 bleibt pending."
+    while IFS= read -r sqlfile; do
+      dir=$(dirname "$sqlfile")
+      name=$(basename "$dir")
+      if [ "$name" = "$MATCH_PHASE2" ]; then
+        continue
+      fi
+      echo "  prisma migrate resolve --applied \"$name\""
+      npx prisma migrate resolve --applied "$name" || true
+    done < <(find prisma/migrations -mindepth 2 -maxdepth 2 -name migration.sql | sort)
+    echo "📦 Erneuter prisma migrate deploy (erwartet: nur $MATCH_PHASE2)..."
+    npx prisma migrate deploy
+  else
+    exit "$DEPLOY_CODE"
+  fi
+fi
 
 # CRITICAL: Push database schema to ensure all columns exist
 echo "🗄️ Pushing database schema..."
