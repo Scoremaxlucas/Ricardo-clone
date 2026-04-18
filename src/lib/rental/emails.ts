@@ -1,4 +1,11 @@
 import { sendEmail } from '@/lib/email/sender'
+
+function wohnenBccFromEnv(): string[] | undefined {
+  const raw = process.env.WOHNEN_EMAIL_BCC
+  if (!raw?.trim()) return undefined
+  const list = raw.split(/[,;]+/).map(s => s.trim()).filter(Boolean)
+  return list.length ? list : undefined
+}
 import type { EmploymentStatus, IncomeCategory } from '@prisma/client'
 import {
   templateAdminCreditManualReview,
@@ -29,14 +36,20 @@ async function sendWohnenEmail(opts: {
   text: string
   userId?: string
 }): Promise<void> {
-  await sendEmail({
+  const result = await sendEmail({
     to: opts.to,
     subject: opts.subject,
     html: opts.html,
     text: opts.text,
     userId: opts.userId,
     from: WOHNEN_FROM,
+    bcc: wohnenBccFromEnv(),
   })
+  if (!result.success) {
+    const err = result.error || 'E-Mail konnte nicht versendet werden'
+    console.error('[wohnen-email] Versand fehlgeschlagen:', { to: opts.to, subject: opts.subject, err })
+    throw new Error(`[wohnen-email] ${err}`)
+  }
 }
 
 export async function sendRentalLandlordNewApplicationEmail(opts: {

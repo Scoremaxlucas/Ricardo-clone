@@ -124,32 +124,38 @@ export async function POST(request: NextRequest) {
     const applicantFullName = `${tenantProfile.firstName} ${tenantProfile.lastName}`.trim() || applicantDisplay
     const addressLine = `${listing.address}, ${listing.zip} ${listing.city}`
 
-    void sendRentalLandlordNewApplicationEmail({
-      landlordEmail: listing.user.email,
-      landlordUserId: listing.userId,
-      landlordFirst: listing.user,
-      listingId: listing.id,
-      listingTitle: listing.title,
-      applicantFullName,
-      applicantMessage: message,
-      requiresCreditCheck: listing.requiresCreditCheck,
-      creditCheckResult: tenantProfile.creditCheckResult,
-      employmentStatus: tenantProfile.employmentStatus,
-      employer: tenantProfile.employer,
-      monthlyIncomeCategory: tenantProfile.monthlyIncomeCategory,
-      referenceName: tenantProfile.referenceName,
-      referencePhone: tenantProfile.referencePhone,
-    }).catch(err => console.error('[rental-applications] landlord email', err))
-
-    void sendRentalApplicantSuccessEmail({
-      applicantEmail: applicant.email,
-      applicantUserId: userId,
-      applicantFirst: applicant,
-      listingTitle: listing.title,
-      addressLine,
-      rooms: listing.rooms,
-      rentPerMonth: listing.rentPerMonth,
-    }).catch(err => console.error('[rental-applications] applicant email', err))
+    const emailResults = await Promise.allSettled([
+      sendRentalLandlordNewApplicationEmail({
+        landlordEmail: listing.user.email,
+        landlordUserId: listing.userId,
+        landlordFirst: listing.user,
+        listingId: listing.id,
+        listingTitle: listing.title,
+        applicantFullName,
+        applicantMessage: message,
+        requiresCreditCheck: listing.requiresCreditCheck,
+        creditCheckResult: tenantProfile.creditCheckResult,
+        employmentStatus: tenantProfile.employmentStatus,
+        employer: tenantProfile.employer,
+        monthlyIncomeCategory: tenantProfile.monthlyIncomeCategory,
+        referenceName: tenantProfile.referenceName,
+        referencePhone: tenantProfile.referencePhone,
+      }),
+      sendRentalApplicantSuccessEmail({
+        applicantEmail: applicant.email,
+        applicantUserId: userId,
+        applicantFirst: applicant,
+        listingTitle: listing.title,
+        addressLine,
+        rooms: listing.rooms,
+        rentPerMonth: listing.rentPerMonth,
+      }),
+    ])
+    emailResults.forEach((r, i) => {
+      if (r.status === 'rejected') {
+        console.error('[rental-applications] E-Mail fehlgeschlagen', { index: i, reason: r.reason })
+      }
+    })
 
     return NextResponse.json({ success: true, applicationId })
   } catch (e: unknown) {

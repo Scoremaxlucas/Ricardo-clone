@@ -75,9 +75,11 @@ export async function sendEmail({
       console.log(`  To: ${to}`)
 
       const bccList = normalizeBcc(bcc)
+      const replyTo = process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
       const result = await resend.emails.send({
         from: fromEmail,
         to: [to],
+        replyTo: [replyTo],
         ...(bccList?.length ? { bcc: bccList } : {}),
         subject,
         html,
@@ -89,19 +91,14 @@ export async function sendEmail({
       })
 
       if (result.error) {
-        console.error('❌ Resend Fehler:', result.error)
-        return {
-          success: false,
-          error: result.error.message || `Resend Fehler: ${result.error.statusCode || 'Unknown'}`,
-          method: 'resend',
-          statusCode: result.error.statusCode ?? undefined,
-        }
+        console.error('❌ Resend Fehler (SMTP-Fallback wird versucht):', result.error)
+        // Nicht returnen — oft Domain/Absender nur bei Resend falsch, SMTP liefert trotzdem.
+      } else {
+        console.log('✅ E-Mail via Resend erfolgreich versendet!')
+        console.log(`   Message ID: ${result.data?.id}`)
+        console.log('📧 ===== E-MAIL-VERSAND ERFOLGREICH =====\n')
+        return { success: true, messageId: result.data?.id, method: 'resend' }
       }
-
-      console.log('✅ E-Mail via Resend erfolgreich versendet!')
-      console.log(`   Message ID: ${result.data?.id}`)
-      console.log('📧 ===== E-MAIL-VERSAND ERFOLGREICH =====\n')
-      return { success: true, messageId: result.data?.id, method: 'resend' }
     } catch (error) {
       console.error('❌ Resend Exception:', error)
     }
@@ -112,8 +109,11 @@ export async function sendEmail({
     try {
       console.log('[sendEmail] Versuche SMTP Fallback...')
       const bccList = normalizeBcc(bcc)
+      const smtpFrom = from || process.env.SMTP_FROM || process.env.SMTP_USER
+      const replyTo = process.env.RESEND_REPLY_TO || 'support@helvenda.ch'
       const info = await transporter.sendMail({
-        from: process.env.SMTP_FROM || process.env.SMTP_USER,
+        from: smtpFrom.includes('<') ? smtpFrom : `Helvenda <${smtpFrom}>`,
+        replyTo,
         to,
         ...(bccList?.length ? { bcc: bccList } : {}),
         subject,

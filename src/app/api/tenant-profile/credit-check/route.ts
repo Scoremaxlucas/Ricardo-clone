@@ -111,17 +111,21 @@ export async function POST(request: NextRequest) {
     ) {
       const display =
         userRow.nickname?.trim() || userRow.name?.trim() || userRow.firstName?.trim() || userRow.email
-      void sendTenantProfileCreditCheckEmails({
-        tenantEmail: userRow.email,
-        tenantUserId: userId,
-        tenantFirst: userRow,
-        finalStatus,
-        creditResult: creditJson,
-        validUntil: expires,
-        userDisplayName: display,
-        uploadedAt: now,
-        encryptedFileRef,
-      }).catch(err => console.error('[tenant-profile/credit-check] email', err))
+      try {
+        await sendTenantProfileCreditCheckEmails({
+          tenantEmail: userRow.email,
+          tenantUserId: userId,
+          tenantFirst: userRow,
+          finalStatus,
+          creditResult: creditJson,
+          validUntil: expires,
+          userDisplayName: display,
+          uploadedAt: now,
+          encryptedFileRef,
+        })
+      } catch (err) {
+        console.error('[tenant-profile/credit-check] email', err)
+      }
     }
 
     let message = 'Auswertung abgeschlossen.'

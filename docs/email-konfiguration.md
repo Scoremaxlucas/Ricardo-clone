@@ -51,8 +51,19 @@ Falls Sie einen eigenen SMTP-Server verwenden möchten:
 Helvenda versucht E-Mails in folgender Reihenfolge zu versenden:
 
 1. **Resend** (wenn `RESEND_API_KEY` gesetzt ist)
-2. **SMTP** (wenn `SMTP_USER` und `SMTP_PASS` gesetzt sind)
+2. **SMTP** (wenn `SMTP_USER` und `SMTP_PASS` gesetzt sind) — wird **auch** versucht, wenn Resend einen API-Fehler zurückgibt (z. B. nicht verifizierte Absender-Domain)
 3. **Fallback:** E-Mail wird geloggt, Link wird auf der Registrierungsseite angezeigt
+
+## Helvenda Wohnungen (Mieter / Vermieter)
+
+Zusätzlich optional:
+
+```bash
+# Immer Blindkopie an interne Adresse(n) — z. B. zum Testen der Zustellung (kommagetrennt)
+WOHNEN_EMAIL_BCC=team@example.com
+```
+
+Antwort-Adresse für Resend/SMTP-Fallback: `RESEND_REPLY_TO` (Standard `support@helvenda.ch`).
 
 ## Testen
 

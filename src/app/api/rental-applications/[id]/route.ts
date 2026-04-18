@@ -196,15 +196,19 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     if (sendViewingEmail && viewingAtIso && app.applicant?.email && app.listing) {
       const listingAddress = `${app.listing.address}, ${app.listing.zip} ${app.listing.city}`
-      void sendRentalApplicantViewingInvitationEmail({
-        applicantEmail: app.applicant.email,
-        applicantUserId: app.applicant.id,
-        applicantFirst: { firstName: app.applicant.firstName, name: app.applicant.name },
-        listingTitle: app.listing.title,
-        listingAddress,
-        viewingAtIso,
-        note: viewingNote,
-      }).catch(err => console.error('[rental-applications PATCH] viewing email', err))
+      try {
+        await sendRentalApplicantViewingInvitationEmail({
+          applicantEmail: app.applicant.email,
+          applicantUserId: app.applicant.id,
+          applicantFirst: { firstName: app.applicant.firstName, name: app.applicant.name },
+          listingTitle: app.listing.title,
+          listingAddress,
+          viewingAtIso,
+          note: viewingNote,
+        })
+      } catch (err) {
+        console.error('[rental-applications PATCH] viewing email', err)
+      }
     }
 
     revalidatePath(`/matching/properties/${app.listing.id}/bewerbungen`)
