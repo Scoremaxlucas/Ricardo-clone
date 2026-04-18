@@ -65,6 +65,12 @@ export default async function MatchingLandingPage() {
             >
               CSV / Excel import
             </Link>
+            <Link
+              href="/matching/onboarding"
+              className="inline-flex rounded-lg border border-slate-300 bg-white px-5 py-2.5 text-sm font-semibold text-slate-800 transition hover:bg-slate-50"
+            >
+              Suchprofil einrichten
+            </Link>
           </>
         ) : (
           <>

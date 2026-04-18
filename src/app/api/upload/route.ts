@@ -175,6 +175,7 @@ function getAllowedOrigin(request?: NextRequest): string {
   const allowedOrigins = [
     'https://helvenda.ch',
     'https://www.helvenda.ch',
+    'https://wohnen.helvenda.ch',
   ]
 
   // Allow Vercel preview deployments

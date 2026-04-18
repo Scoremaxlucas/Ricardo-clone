@@ -1,7 +1,9 @@
 import { Logo } from '@/components/ui/Logo'
+import { authOptions } from '@/lib/auth'
 import { MAIN_SHOP_ORIGIN } from '@/lib/site-urls'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { getServerSession } from 'next-auth/next'
 
 export const metadata: Metadata = {
   title: {
@@ -12,7 +14,11 @@ export const metadata: Metadata = {
     'Helvenda Matching: strukturierte Wohnungssuche, erklärbare Treffer und gestufte Freigaben — eigenständiges Produkt neben dem Marktplatz.',
 }
 
-export default function MatchingLayout({ children }: { children: React.ReactNode }) {
+export default async function MatchingLayout({ children }: { children: React.ReactNode }) {
+  const session = await getServerSession(authOptions)
+  const userId = session?.user?.id
+  const isAdmin = session?.user?.isAdmin === true
+
   return (
     <div className="flex min-h-screen flex-col bg-gradient-to-b from-slate-50 to-white text-slate-900">
       <header className="sticky top-0 z-20 border-b border-slate-200/80 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80">
@@ -42,6 +48,22 @@ export default function MatchingLayout({ children }: { children: React.ReactNode
             >
               Import
             </Link>
+            {userId ? (
+              <Link
+                href="/matching/onboarding"
+                className="rounded-md px-2 py-1.5 font-medium text-slate-600 transition hover:bg-slate-100 hover:text-slate-900"
+              >
+                Suchprofil
+              </Link>
+            ) : null}
+            {isAdmin ? (
+              <Link
+                href="/matching/ops/documents"
+                className="rounded-md px-2 py-1.5 font-medium text-amber-900 transition hover:bg-amber-50"
+              >
+                Ops
+              </Link>
+            ) : null}
             <Link
               href="/login"
               className="rounded-md bg-teal-700 px-3 py-1.5 font-medium text-white transition hover:bg-teal-800"
