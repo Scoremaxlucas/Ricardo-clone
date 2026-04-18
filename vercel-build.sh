@@ -2,11 +2,15 @@
 set -e
 
 # NOTE: npm install is already done by Vercel before this script runs
-# We just need to generate Prisma client and apply DB migrations
+# We generate the client, apply versioned migrations (Phase 2+), then legacy db push / fixes.
 
 # Generate Prisma client (in case cache is stale)
 echo "🔨 Generating Prisma client..."
 npx prisma generate
+
+# Versionierte Schema-Änderungen (z. B. Matching Phase 2) — nutzt DATABASE_URL aus Vercel
+echo "📦 Applying Prisma migrations (prisma migrate deploy)..."
+npx prisma migrate deploy
 
 # CRITICAL: Push database schema to ensure all columns exist
 echo "🗄️ Pushing database schema..."
